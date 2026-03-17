@@ -26,7 +26,6 @@ import {
   CheckCircle2,
   Link2,
   Link2Off,
-  Trash2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -202,8 +201,8 @@ function calculateMatch(
   // DATE: use order_date (real date), not created_at
   const orderDate = order.shipped_at
     ? new Date(order.shipped_at)
-    : new Date(order.order_date || order.created_at);
-  const txDate = new Date(transaction.settled_at || transaction.emitted_at);
+    : new Date(order.order_date ?? order.created_at);
+  const txDate = new Date(transaction.settled_at ?? transaction.emitted_at);
   const daysDiff = Math.abs(
     (txDate.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24)
   );
@@ -222,8 +221,8 @@ function calculateMatch(
   const orderNames = [order.customer_name, order.customer_name_alt]
     .filter(Boolean)
     .map(n => (n as string).toLowerCase().trim());
-  const txLabel = (transaction.label || '').toLowerCase().trim();
-  const txCounterparty = (transaction.counterparty_name || '')
+  const txLabel = (transaction.label ?? '').toLowerCase().trim();
+  const txCounterparty = (transaction.counterparty_name ?? '')
     .toLowerCase()
     .trim();
 
@@ -248,9 +247,9 @@ function calculateMatch(
   }
 
   // --- STEP 0: Exact reference match (short-circuit) ---
-  const searchText = (transaction.label || '').toUpperCase();
+  const searchText = (transaction.label ?? '').toUpperCase();
   const txCounterpartyUpper = (
-    transaction.counterparty_name || ''
+    transaction.counterparty_name ?? ''
   ).toUpperCase();
   const orderRef = order.order_number.toUpperCase();
   if (searchText.includes(orderRef) || txCounterpartyUpper.includes(orderRef)) {
@@ -273,8 +272,8 @@ function calculateMatch(
 
   // --- STEP 2: Among exact-amount, how many match the supplier name? ---
   const exactAmountAndNameTxs = exactAmountTxs.filter(tx => {
-    const label = (tx.label || '').toLowerCase().trim();
-    const counterparty = (tx.counterparty_name || '').toLowerCase().trim();
+    const label = (tx.label ?? '').toLowerCase().trim();
+    const counterparty = (tx.counterparty_name ?? '').toLowerCase().trim();
     for (const oName of orderNames) {
       if (oName.length < 3) continue;
       const nameWords = oName.split(/[\s,.-]+/).filter(w => w.length >= 3);
@@ -349,8 +348,8 @@ function calculateMatch(
     if (nameMatches) {
       // Sort by date proximity, give decreasing scores
       const sortedByDate = [...exactAmountAndNameTxs].sort((a, b) => {
-        const dateA = new Date(a.settled_at || a.emitted_at);
-        const dateB = new Date(b.settled_at || b.emitted_at);
+        const dateA = new Date(a.settled_at ?? a.emitted_at);
+        const dateB = new Date(b.settled_at ?? b.emitted_at);
         return (
           Math.abs(dateA.getTime() - orderDate.getTime()) -
           Math.abs(dateB.getTime() - orderDate.getTime())
@@ -575,8 +574,8 @@ export function RapprochementContent({
       if (recentResult.error) throw recentResult.error;
 
       // Merge and deduplicate: amount-matched first (higher relevance)
-      const recentTxs = (recentResult.data as CreditTransaction[]) || [];
-      const amountTxs = (amountResult.data as CreditTransaction[]) || [];
+      const recentTxs = (recentResult.data as CreditTransaction[]) ?? [];
+      const amountTxs = (amountResult.data as CreditTransaction[]) ?? [];
       const recentIds = new Set(recentTxs.map(t => t.id));
       const extraAmountTxs = amountTxs.filter(t => !recentIds.has(t.id));
 
@@ -632,7 +631,7 @@ export function RapprochementContent({
             transaction_id: row.transaction_id ?? '',
             transaction_label: row.label ?? '',
             counterparty_name: row.counterparty_name,
-            transaction_date: row.settled_at || row.emitted_at || '',
+            transaction_date: row.settled_at ?? row.emitted_at ?? '',
             allocated_amount:
               (ld?.allocated_amount as number | null) ??
               Math.abs(row.amount ?? 0),
@@ -657,7 +656,7 @@ export function RapprochementContent({
       setUnlinkingId(linkId);
       try {
         // Use atomic RPC: delete link + recalculate paid_amount + reset matching_status
-        const { error: unlinkError } = await (supabase.rpc as CallableFunction)(
+        const { error: unlinkError } = await supabase.rpc(
           'unlink_transaction_document',
           { p_link_id: linkId }
         );
@@ -675,7 +674,7 @@ export function RapprochementContent({
         setUnlinkingId(null);
       }
     },
-    [order, orderType, supabase, fetchExistingLinks, fetchLinkedIds, onSuccess]
+    [order, supabase, fetchExistingLinks, fetchLinkedIds, onSuccess]
   );
 
   useEffect(() => {
@@ -736,7 +735,7 @@ export function RapprochementContent({
             .limit(50);
 
           if (searchError) throw searchError;
-          setSearchResults((data as CreditTransaction[]) || []);
+          setSearchResults((data as CreditTransaction[]) ?? []);
         } catch (err) {
           console.error('[RapprochementContent] Server search failed:', err);
         } finally {
@@ -806,9 +805,9 @@ export function RapprochementContent({
     const query = searchQuery.toLowerCase();
     return suggestions.filter(
       tx =>
-        tx.label?.toLowerCase().includes(query) ||
-        tx.counterparty_name?.toLowerCase().includes(query) ||
-        tx.transaction_id?.toLowerCase().includes(query)
+        (tx.label?.toLowerCase().includes(query) ?? false) ||
+        (tx.counterparty_name?.toLowerCase().includes(query) ?? false) ||
+        (tx.transaction_id?.toLowerCase().includes(query) ?? false)
     );
   }, [suggestions, searchQuery]);
 
@@ -821,9 +820,9 @@ export function RapprochementContent({
       const query = searchQuery.toLowerCase();
       others = others.filter(
         tx =>
-          tx.label?.toLowerCase().includes(query) ||
-          tx.counterparty_name?.toLowerCase().includes(query) ||
-          tx.transaction_id?.toLowerCase().includes(query)
+          (tx.label?.toLowerCase().includes(query) ?? false) ||
+          (tx.counterparty_name?.toLowerCase().includes(query) ?? false) ||
+          (tx.transaction_id?.toLowerCase().includes(query) ?? false)
       );
     }
     return others;
@@ -860,7 +859,7 @@ export function RapprochementContent({
               p_allocated_amount: transactionAmount,
             };
 
-      const { error: linkError } = await (supabase.rpc as CallableFunction)(
+      const { error: linkError } = await supabase.rpc(
         'link_transaction_to_document',
         rpcParams
       );
@@ -931,7 +930,7 @@ export function RapprochementContent({
             <p className="text-xs text-slate-500 flex items-center gap-1">
               <Calendar className="h-3 w-3" />
               {new Date(
-                order.order_date || order.created_at
+                order.order_date ?? order.created_at
               ).toLocaleDateString('fr-FR')}
               {order.shipped_at &&
                 ` • Expédiée ${new Date(order.shipped_at).toLocaleDateString('fr-FR')}`}
@@ -965,7 +964,7 @@ export function RapprochementContent({
                   <div className="flex items-center gap-2">
                     <Link2 className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
                     <span className="font-medium truncate">
-                      {link.counterparty_name || link.transaction_label}
+                      {link.counterparty_name ?? link.transaction_label}
                     </span>
                     <span
                       className={`font-bold ${isDebitSide ? 'text-red-700' : 'text-blue-700'}`}
@@ -1046,7 +1045,7 @@ export function RapprochementContent({
                       </span>
                       <span className="text-xs text-slate-500">
                         {new Date(
-                          tx.settled_at || tx.emitted_at
+                          tx.settled_at ?? tx.emitted_at
                         ).toLocaleDateString('fr-FR')}
                         {tx.counterparty_name && ` • ${tx.counterparty_name}`}
                       </span>
@@ -1146,7 +1145,7 @@ export function RapprochementContent({
                         <p className="font-medium text-sm">{tx.label}</p>
                         <p className="text-xs text-slate-500">
                           {new Date(
-                            tx.settled_at || tx.emitted_at
+                            tx.settled_at ?? tx.emitted_at
                           ).toLocaleDateString('fr-FR')}
                           {tx.counterparty_name && ` • ${tx.counterparty_name}`}
                         </p>
@@ -1224,7 +1223,7 @@ export function RapprochementContent({
                       <p className="font-medium text-sm">{tx.label}</p>
                       <p className="text-xs text-slate-500">
                         {new Date(
-                          tx.settled_at || tx.emitted_at
+                          tx.settled_at ?? tx.emitted_at
                         ).toLocaleDateString('fr-FR')}
                         {tx.counterparty_name && ` • ${tx.counterparty_name}`}
                       </p>

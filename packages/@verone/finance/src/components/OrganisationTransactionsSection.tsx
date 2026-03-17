@@ -70,7 +70,7 @@ export function OrganisationTransactionsSection({
             <p className="font-medium">Erreur de chargement</p>
             <p className="text-sm text-gray-500 mt-1">{error}</p>
             <button
-              onClick={() => refresh()}
+              onClick={() => void refresh()}
               className="mt-4 text-blue-600 hover:underline text-sm flex items-center gap-1"
             >
               <RefreshCw className="h-4 w-4" />
@@ -163,7 +163,7 @@ export function OrganisationTransactionsSection({
               )}
             </CardTitle>
             <button
-              onClick={() => refresh()}
+              onClick={() => void refresh()}
               className="text-gray-500 hover:text-gray-700 p-1 rounded"
               title="Actualiser"
             >

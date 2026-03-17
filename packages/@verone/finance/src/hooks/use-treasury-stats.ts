@@ -16,7 +16,6 @@ import { useState, useEffect } from 'react';
 
 import { featureFlags } from '@verone/utils/feature-flags';
 import { createClient } from '@verone/utils/supabase/client';
-import { toast } from 'react-hot-toast';
 
 // =====================================================================
 // TYPES
@@ -153,9 +152,9 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
 
   // Dates par défaut : 30 derniers jours
   const defaultStartDate =
-    startDate ||
+    startDate ??
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-  const defaultEndDate = endDate || new Date().toISOString().split('T')[0];
+  const defaultEndDate = endDate ?? new Date().toISOString().split('T')[0];
 
   // ===================================================================
   // HOOKS: useEffect placés AVANT early return (React Rules)
@@ -181,17 +180,17 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
       const cachedData = getCachedBalance();
       if (cachedData) {
         setBankData(cachedData);
-        currentTotalBalance = cachedData.totalBalance || 0;
+        currentTotalBalance = cachedData.totalBalance ?? 0;
         setBankLoading(false);
       } else {
         // Pas de cache valide, faire l'appel API
         try {
           const response = await fetch('/api/qonto/balance');
           if (response.ok) {
-            const data: BankBalanceData = await response.json();
+            const data = (await response.json()) as BankBalanceData;
             setCachedBalance(data); // Mettre en cache
             setBankData(data);
-            currentTotalBalance = data.totalBalance || 0;
+            currentTotalBalance = data.totalBalance ?? 0;
           }
         } catch (err) {
           console.warn('Failed to fetch bank balance:', err);
@@ -228,7 +227,12 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
           { inbound: number; outbound: number }
         > = {};
 
-        transactionsData?.forEach((tx: any) => {
+        interface TreasuryTxRow {
+          emitted_at: string;
+          amount: number;
+          side: 'credit' | 'debit';
+        }
+        (transactionsData as TreasuryTxRow[] | null)?.forEach(tx => {
           const month = tx.emitted_at.substring(0, 7); // YYYY-MM
           if (!monthlyData[month]) {
             monthlyData[month] = { inbound: 0, outbound: 0 };
@@ -268,7 +272,7 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
         const sortedMonths = Object.keys(monthlyData).sort().reverse();
         const lastSixMonths = sortedMonths.slice(0, 6);
         const totalOutboundSixMonths = lastSixMonths.reduce(
-          (sum, m) => sum + (monthlyData[m]?.outbound || 0),
+          (sum, m) => sum + (monthlyData[m]?.outbound ?? 0),
           0
         );
         const avgBurnRate =
@@ -292,14 +296,18 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
         // Stats basées sur les transactions réelles
         const totalInbound =
           transactionsData
-            ?.filter((tx: any) => tx.side === 'credit')
-            .reduce((sum: number, tx: any) => sum + Math.abs(tx.amount), 0) ||
-          0;
+            ?.filter((tx: TreasuryTxRow) => tx.side === 'credit')
+            .reduce(
+              (sum: number, tx: TreasuryTxRow) => sum + Math.abs(tx.amount),
+              0
+            ) ?? 0;
         const totalOutbound =
           transactionsData
-            ?.filter((tx: any) => tx.side === 'debit')
-            .reduce((sum: number, tx: any) => sum + Math.abs(tx.amount), 0) ||
-          0;
+            ?.filter((tx: TreasuryTxRow) => tx.side === 'debit')
+            .reduce(
+              (sum: number, tx: TreasuryTxRow) => sum + Math.abs(tx.amount),
+              0
+            ) ?? 0;
 
         // Récupérer AR/AP depuis financial_documents (factures réelles)
         let arTotal = 0;
@@ -316,13 +324,18 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
             .not('status', 'in', '(paid,cancelled)');
 
           if (arData) {
-            arData.forEach((doc: any) => {
-              const unpaid = (doc.total_ttc || 0) - (doc.amount_paid || 0);
-              if (unpaid > 0) {
-                arTotal += unpaid;
-                arCount++;
+            arData.forEach(
+              (doc: {
+                total_ttc: number | null;
+                amount_paid: number | null;
+              }) => {
+                const unpaid = (doc.total_ttc ?? 0) - (doc.amount_paid ?? 0);
+                if (unpaid > 0) {
+                  arTotal += unpaid;
+                  arCount++;
+                }
               }
-            });
+            );
           }
 
           // AP (Accounts Payable) - Factures fournisseurs impayées
@@ -333,13 +346,18 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
             .not('status', 'in', '(paid,cancelled)');
 
           if (apData) {
-            apData.forEach((doc: any) => {
-              const unpaid = (doc.total_ttc || 0) - (doc.amount_paid || 0);
-              if (unpaid > 0) {
-                apTotal += unpaid;
-                apCount++;
+            apData.forEach(
+              (doc: {
+                total_ttc: number | null;
+                amount_paid: number | null;
+              }) => {
+                const unpaid = (doc.total_ttc ?? 0) - (doc.amount_paid ?? 0);
+                if (unpaid > 0) {
+                  apTotal += unpaid;
+                  apCount++;
+                }
               }
-            });
+            );
           }
         } catch (err) {
           console.warn('Error fetching AR/AP from financial_documents:', err);
@@ -375,7 +393,7 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
           const projectedOutbound = avgBurnRate * monthsAhead;
           const avgInbound =
             lastSixMonths.reduce(
-              (sum, m) => sum + (monthlyData[m]?.inbound || 0),
+              (sum, m) => sum + (monthlyData[m]?.inbound ?? 0),
               0
             ) / Math.max(lastSixMonths.length, 1);
           const projectedInbound = avgInbound * monthsAhead;
@@ -390,15 +408,17 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
         }
 
         setForecasts(forecastsArray);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error fetching treasury stats:', err);
-        setError(err.message || 'Erreur chargement statistiques');
+        setError(
+          err instanceof Error ? err.message : 'Erreur chargement statistiques'
+        );
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAllData();
+    void fetchAllData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -458,7 +478,12 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
       const monthlyData: Record<string, { inbound: number; outbound: number }> =
         {};
 
-      transactionsData?.forEach((tx: any) => {
+      interface TreasuryTxRow {
+        emitted_at: string;
+        amount: number;
+        side: 'credit' | 'debit';
+      }
+      (transactionsData as TreasuryTxRow[] | null)?.forEach(tx => {
         const month = tx.emitted_at.substring(0, 7); // YYYY-MM
         if (!monthlyData[month]) {
           monthlyData[month] = { inbound: 0, outbound: 0 };
@@ -498,7 +523,7 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
       const sortedMonths = Object.keys(monthlyData).sort().reverse();
       const lastSixMonths = sortedMonths.slice(0, 6);
       const totalOutboundSixMonths = lastSixMonths.reduce(
-        (sum, m) => sum + (monthlyData[m]?.outbound || 0),
+        (sum, m) => sum + (monthlyData[m]?.outbound ?? 0),
         0
       );
       const avgBurnRate =
@@ -521,12 +546,18 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
       // Stats basées sur les transactions réelles
       const totalInbound =
         transactionsData
-          ?.filter((tx: any) => tx.side === 'credit')
-          .reduce((sum: number, tx: any) => sum + Math.abs(tx.amount), 0) || 0;
+          ?.filter((tx: TreasuryTxRow) => tx.side === 'credit')
+          .reduce(
+            (sum: number, tx: TreasuryTxRow) => sum + Math.abs(tx.amount),
+            0
+          ) ?? 0;
       const totalOutbound =
         transactionsData
-          ?.filter((tx: any) => tx.side === 'debit')
-          .reduce((sum: number, tx: any) => sum + Math.abs(tx.amount), 0) || 0;
+          ?.filter((tx: TreasuryTxRow) => tx.side === 'debit')
+          .reduce(
+            (sum: number, tx: TreasuryTxRow) => sum + Math.abs(tx.amount),
+            0
+          ) ?? 0;
 
       // Récupérer AR/AP depuis financial_documents (factures réelles)
       let arTotal = 0;
@@ -543,13 +574,15 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
           .not('status', 'in', '(paid,cancelled)');
 
         if (arData) {
-          arData.forEach((doc: any) => {
-            const unpaid = (doc.total_ttc || 0) - (doc.amount_paid || 0);
-            if (unpaid > 0) {
-              arTotal += unpaid;
-              arCount++;
+          arData.forEach(
+            (doc: { total_ttc: number | null; amount_paid: number | null }) => {
+              const unpaid = (doc.total_ttc ?? 0) - (doc.amount_paid ?? 0);
+              if (unpaid > 0) {
+                arTotal += unpaid;
+                arCount++;
+              }
             }
-          });
+          );
         }
 
         // AP (Accounts Payable) - Factures fournisseurs impayées
@@ -560,13 +593,15 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
           .not('status', 'in', '(paid,cancelled)');
 
         if (apData) {
-          apData.forEach((doc: any) => {
-            const unpaid = (doc.total_ttc || 0) - (doc.amount_paid || 0);
-            if (unpaid > 0) {
-              apTotal += unpaid;
-              apCount++;
+          apData.forEach(
+            (doc: { total_ttc: number | null; amount_paid: number | null }) => {
+              const unpaid = (doc.total_ttc ?? 0) - (doc.amount_paid ?? 0);
+              if (unpaid > 0) {
+                apTotal += unpaid;
+                apCount++;
+              }
             }
-          });
+          );
         }
       } catch (err) {
         console.warn('Error fetching AR/AP from financial_documents:', err);
@@ -589,14 +624,14 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
       setMetrics({
         burnRate: avgBurnRate,
         runwayMonths:
-          avgBurnRate > 0 ? (bankData?.totalBalance || 0) / avgBurnRate : 999,
+          avgBurnRate > 0 ? (bankData?.totalBalance ?? 0) / avgBurnRate : 999,
         cashFlowNet,
         cashFlowVariation: variation,
       });
 
       // 3. Prévisions basées sur le burn rate moyen
       const forecasts: TreasuryForecast[] = [];
-      const currentBalance = bankData?.totalBalance || 0;
+      const currentBalance = bankData?.totalBalance ?? 0;
 
       for (const days of [30, 60, 90]) {
         const monthsAhead = days / 30;
@@ -605,7 +640,7 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
         // Estimation entrées basée sur moyenne des crédits
         const avgInbound =
           lastSixMonths.reduce(
-            (sum, m) => sum + (monthlyData[m]?.inbound || 0),
+            (sum, m) => sum + (monthlyData[m]?.inbound ?? 0),
             0
           ) / Math.max(lastSixMonths.length, 1);
         const projectedInbound = avgInbound * monthsAhead;
@@ -635,8 +670,13 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
           {};
         let totalExpenses = 0;
 
-        expensesCategoryData.forEach((exp: any) => {
-          const cat = exp.category || 'other';
+        (
+          expensesCategoryData as Array<{
+            category: string | null;
+            amount: number;
+          }>
+        ).forEach(exp => {
+          const cat = exp.category ?? 'other';
           if (!categoryData[cat]) {
             categoryData[cat] = { total: 0, count: 0 };
           }
@@ -658,9 +698,11 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
 
         setExpenseBreakdown(breakdownArray);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching treasury stats:', err);
-      setError(err.message || 'Erreur chargement statistiques');
+      setError(
+        err instanceof Error ? err.message : 'Erreur chargement statistiques'
+      );
     } finally {
       setLoading(false);
     }
@@ -684,7 +726,7 @@ export function useTreasuryStats(startDate?: string, endDate?: string) {
     try {
       const response = await fetch('/api/qonto/balance');
       if (response.ok) {
-        const data: BankBalanceData = await response.json();
+        const data = (await response.json()) as BankBalanceData;
         setCachedBalance(data); // Mettre en cache
         setBankData(data);
       }

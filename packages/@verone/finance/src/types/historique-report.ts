@@ -32,9 +32,9 @@ export function buildHistoriqueReportData(
     topReasons: Array<{ code: string; description: string; count: number }>;
   } | null
 ): HistoriqueReportData {
-  const totalIn = stats?.byType.IN || 0;
-  const totalOut = stats?.byType.OUT || 0;
-  const totalAdjust = stats?.byType.ADJUST || 0;
+  const totalIn = stats?.byType.IN ?? 0;
+  const totalOut = stats?.byType.OUT ?? 0;
+  const totalAdjust = stats?.byType.ADJUST ?? 0;
   const totalMovements = totalIn + totalOut + totalAdjust;
 
   const byType = [
@@ -70,7 +70,7 @@ export function buildHistoriqueReportData(
       net_change: netChange,
     },
     by_type: byType,
-    top_reasons: stats?.topReasons || [],
+    top_reasons: stats?.topReasons ?? [],
     movements,
     generated_at: new Date().toISOString(),
   };

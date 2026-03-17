@@ -94,7 +94,7 @@ export function CreditNoteCreateModal({
           </DialogTitle>
           <DialogDescription>
             Sur facture {invoice.invoice_number} -{' '}
-            {invoice.client?.name || 'Client'}
+            {invoice.client?.name ?? 'Client'}
           </DialogDescription>
         </DialogHeader>
 

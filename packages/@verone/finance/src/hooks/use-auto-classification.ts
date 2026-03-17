@@ -111,7 +111,7 @@ function getMatchType(
  * @deprecated Use getMatchType instead
  * Vérifie si un label correspond à une règle de matching (compatibilité)
  */
-function matchRule(
+function _matchRule(
   label: string | null | undefined,
   rule: MatchingRule
 ): boolean {

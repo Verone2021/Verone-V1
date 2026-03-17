@@ -270,19 +270,25 @@ export function QuoteCreateServiceModal({
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+        quote?: CreatedQuote;
+      };
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to create quote');
+        throw new Error(data.error ?? 'Failed to create quote');
       }
 
-      setCreatedQuote(data.quote);
+      setCreatedQuote(data.quote ?? null);
       setStatus('success');
-      toast({
-        title: 'Devis créé',
-        description: `Devis ${data.quote.quote_number} créé avec succès`,
-      });
-      onSuccess?.(data.quote.id);
+      if (data.quote) {
+        toast({
+          title: 'Devis créé',
+          description: `Devis ${data.quote.quote_number} créé avec succès`,
+        });
+        onSuccess?.(data.quote.id);
+      }
     } catch (error) {
       setStatus('error');
       toast({
@@ -318,7 +324,7 @@ export function QuoteCreateServiceModal({
         title: 'PDF téléchargé',
         description: 'Le devis a été téléchargé',
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Erreur',
         description: 'Impossible de télécharger le PDF',
@@ -343,7 +349,7 @@ export function QuoteCreateServiceModal({
             </DialogTitle>
             <DialogDescription>
               {status === 'success'
-                ? `Devis ${createdQuote?.quote_number} - ${formatAmount(createdQuote?.total_amount || 0)}`
+                ? `Devis ${createdQuote?.quote_number} - ${formatAmount(createdQuote?.total_amount ?? 0)}`
                 : 'Créez un devis pour des prestations de services ou des produits du catalogue'}
             </DialogDescription>
           </DialogHeader>

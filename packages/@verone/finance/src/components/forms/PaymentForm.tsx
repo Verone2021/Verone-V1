@@ -108,15 +108,15 @@ export function PaymentForm({
 
     try {
       // Insérer paiement dans table payments
-      const { data: payment, error: paymentError } = await supabase
+      const { error: paymentError } = await supabase
         .from('payments')
         .insert({
           invoice_id: values.invoiceId,
           amount_paid: parseFloat(values.amount),
           payment_date: values.paymentDate,
           payment_method: values.paymentMethod,
-          reference: values.reference || null,
-          notes: values.notes || null,
+          reference: values.reference ?? null,
+          notes: values.notes ?? null,
         })
         .select('id')
         .single();
@@ -136,10 +136,14 @@ export function PaymentForm({
         throw fetchError;
       }
 
+      const invoiceData = currentInvoice as {
+        amount_paid: number | null;
+        total_ttc: number;
+      };
       const newAmountPaid =
-        ((currentInvoice as any).amount_paid || 0) + parseFloat(values.amount);
+        (invoiceData.amount_paid ?? 0) + parseFloat(values.amount);
       const newStatus =
-        newAmountPaid >= (currentInvoice as any).total_ttc
+        newAmountPaid >= invoiceData.total_ttc
           ? 'paid'
           : newAmountPaid > 0
             ? 'partially_paid'
@@ -206,7 +210,10 @@ export function PaymentForm({
 
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            onSubmit={e => void form.handleSubmit(onSubmit)(e)}
+            className="space-y-6"
+          >
             {/* Montant */}
             <FormField
               control={form.control}

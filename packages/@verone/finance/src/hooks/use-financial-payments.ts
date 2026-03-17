@@ -99,17 +99,19 @@ export function useFinancialPayments(documentId?: string) {
 
         if (fetchError) throw fetchError;
 
-        setPayments((data as any) || []);
-      } catch (err: any) {
+        setPayments((data as unknown as FinancialPayment[]) ?? []);
+      } catch (err: unknown) {
         console.error('Error fetching financial payments:', err);
-        setError(err.message || 'Erreur chargement paiements');
-        toast.error(err.message || 'Erreur chargement');
+        const message =
+          err instanceof Error ? err.message : 'Erreur chargement paiements';
+        setError(message);
+        toast.error(message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    void fetchData();
   }, [documentId, supabase]);
 
   // ===================================================================
@@ -180,15 +182,19 @@ export function useFinancialPayments(documentId?: string) {
     notes?: string;
   }) => {
     try {
-      const { data, error: rpcError } = (await supabase.rpc('record_payment', {
+      /* eslint-disable @typescript-eslint/no-unsafe-call */
+      const { data, error: rpcError } = (await (
+        supabase.rpc as CallableFunction
+      )('record_payment', {
         p_document_id: params.document_id,
         p_amount_paid: params.amount_paid,
         p_payment_date: params.payment_date,
         p_payment_method: params.payment_method,
-        p_transaction_reference: params.transaction_reference || undefined,
-        p_bank_transaction_id: params.bank_transaction_id || undefined,
-        p_notes: params.notes || undefined,
-      })) as any;
+        p_transaction_reference: params.transaction_reference ?? undefined,
+        p_bank_transaction_id: params.bank_transaction_id ?? undefined,
+        p_notes: params.notes ?? undefined,
+      })) as { data: unknown; error: { message: string } | null };
+      /* eslint-enable @typescript-eslint/no-unsafe-call */
 
       if (rpcError) throw rpcError;
 
@@ -231,8 +237,8 @@ export function useFinancialPayments(documentId?: string) {
       total_amount: payments.reduce((sum, p) => sum + p.amount_paid, 0),
       by_method: payments.reduce(
         (acc, p) => {
-          const method = p.payment_method || 'unknown';
-          acc[method] = (acc[method] || 0) + p.amount_paid;
+          const method = p.payment_method ?? 'unknown';
+          acc[method] = (acc[method] ?? 0) + p.amount_paid;
           return acc;
         },
         {} as Record<string, number>

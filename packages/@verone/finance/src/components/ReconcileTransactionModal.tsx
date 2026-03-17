@@ -79,8 +79,9 @@ export function ReconcileTransactionModal({
   // Load transactions when modal opens
   useEffect(() => {
     if (open) {
-      loadTransactions();
+      void loadTransactions();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot on open
   }, [open]);
 
   const loadTransactions = async () => {
@@ -94,15 +95,19 @@ export function ReconcileTransactionModal({
       const response = await fetch(
         `/api/qonto/transactions?side=credit&minAmount=${minAmount}&maxAmount=${maxAmount}&perPage=50`
       );
-      const data = await response.json();
+      const data = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+        transactions?: IQontoTransaction[];
+      };
 
       if (!response.ok || !data.success) {
         throw new Error(
-          data.error || 'Erreur lors du chargement des transactions'
+          data.error ?? 'Erreur lors du chargement des transactions'
         );
       }
 
-      setTransactions(data.transactions || []);
+      setTransactions(data.transactions ?? []);
       setStatus('idle');
     } catch (error) {
       console.error('[ReconcileTransactionModal] Load error:', error);
@@ -144,10 +149,13 @@ export function ReconcileTransactionModal({
         }
       );
 
-      const data = await response.json();
+      const data = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+      };
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Erreur lors du rapprochement');
+        throw new Error(data.error ?? 'Erreur lors du rapprochement');
       }
 
       setStatus('success');
@@ -175,6 +183,7 @@ export function ReconcileTransactionModal({
       });
       setTimeout(() => setStatus('idle'), 2000);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleClose would cause circular deps
   }, [selectedTransaction, invoiceId, invoiceNumber, toast, onSuccess]);
 
   const handleClose = useCallback(() => {
@@ -230,7 +239,7 @@ export function ReconcileTransactionModal({
               <Button
                 variant="outline"
                 size="icon"
-                onClick={loadTransactions}
+                onClick={() => void loadTransactions()}
                 disabled={status === 'loading'}
               >
                 <RefreshCw
@@ -355,7 +364,7 @@ export function ReconcileTransactionModal({
                 Annuler
               </Button>
               <Button
-                onClick={handleReconcile}
+                onClick={() => void handleReconcile()}
                 disabled={!selectedTransaction || status === 'reconciling'}
               >
                 {status === 'reconciling' ? (

@@ -1,4 +1,4 @@
-import { StyleSheet, Font } from '@react-pdf/renderer';
+import { StyleSheet } from '@react-pdf/renderer';
 
 // Register Helvetica (built-in, no custom font needed)
 // @react-pdf/renderer includes Helvetica by default

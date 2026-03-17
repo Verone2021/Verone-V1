@@ -122,8 +122,8 @@ export function useExpenses(
     try {
       const supabase = createClient();
 
-      // Récupérer les expenses depuis la vue
-      // Cast as any car la vue n'est pas dans les types générés
+      // Récupérer les expenses depuis la vue (not in generated types)
+      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
       let query = (supabase as { from: CallableFunction })
         .from('v_expenses_with_details')
         .select('*')
@@ -165,12 +165,13 @@ export function useExpenses(
       }
 
       const { data, error: fetchError } = await query.limit(500);
+      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
       if (fetchError) {
-        throw new Error(fetchError.message);
+        throw new Error((fetchError as { message: string }).message);
       }
 
-      const expenseData = (data || []) as Expense[];
+      const expenseData = (data ?? []) as Expense[];
       setExpenses(expenseData);
 
       // Calculer les stats
@@ -197,7 +198,7 @@ export function useExpenses(
   }, [filters]);
 
   useEffect(() => {
-    fetchExpenses();
+    void fetchExpenses();
   }, [fetchExpenses]);
 
   return {

@@ -68,13 +68,13 @@ export function PdfPreviewModal({
 
   const handleDownload = () => {
     if (blobRef.current) {
-      saveAs(blobRef.current, filename || 'rapport.pdf');
+      saveAs(blobRef.current, filename ?? 'rapport.pdf');
     } else {
       // Fallback: regenerate
       void pdf(pdfDocument)
         .toBlob()
         .then(blob => {
-          saveAs(blob, filename || 'rapport.pdf');
+          saveAs(blob, filename ?? 'rapport.pdf');
         })
         .catch((err: unknown) => {
           console.error('[PdfPreviewModal] Download failed:', err);

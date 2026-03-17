@@ -64,7 +64,7 @@ import { useMatchingRules } from '../hooks/use-matching-rules';
 import {
   PCG_THEMES,
   getPcgEntriesByTheme,
-  type PcgThemeId,
+  type PcgThemeId as _PcgThemeId,
 } from '../lib/pcg-themes';
 import {
   ALL_PCG_CATEGORIES,
@@ -317,7 +317,7 @@ function ThematicCategoryGrid({
       )}
     >
       {visibleThemes.map(theme => {
-        const entries = entriesByTheme[theme.id as PcgThemeId] ?? [];
+        const entries = entriesByTheme[theme.id] ?? [];
         if (entries.length === 0) return null;
 
         return (
@@ -423,7 +423,7 @@ export function QuickClassificationModal({
   // Info de la catégorie actuelle (pour affichage comparaison)
   const currentCategoryInfo = useMemo(() => {
     if (!currentCategory) return null;
-    return ALL_PCG_CATEGORIES.find(c => c.code === currentCategory) || null;
+    return ALL_PCG_CATEGORIES.find(c => c.code === currentCategory) ?? null;
   }, [currentCategory]);
 
   // Catégories populaires selon le type de transaction
@@ -436,7 +436,7 @@ export function QuickClassificationModal({
   );
 
   // Catégories "plus" selon le type de transaction
-  const moreCategories = useMemo(
+  const _moreCategories = useMemo(
     () => (transactionSide === 'credit' ? [] : MORE_CATEGORIES),
     [transactionSide]
   );
@@ -480,7 +480,7 @@ export function QuickClassificationModal({
   // Si currentVatBreakdown existe, on active le mode ventilation et on pré-remplit
   const hasVatBreakdown = currentVatBreakdown && currentVatBreakdown.length > 0;
   const [isVentilationMode, setIsVentilationMode] = useState(
-    hasVatBreakdown || false
+    hasVatBreakdown ?? false
   );
   const [vatLines, setVatLines] = useState<VatLine[]>(
     hasVatBreakdown
@@ -605,7 +605,7 @@ export function QuickClassificationModal({
   const handleSelectCategory = useCallback((code: string) => {
     setSelectedCategory(code);
     const info = ALL_PCG_CATEGORIES.find(c => c.code === code);
-    setSelectedCategoryInfo(info || null);
+    setSelectedCategoryInfo(info ?? null);
     setSearchQuery('');
   }, []);
 
@@ -799,7 +799,7 @@ export function QuickClassificationModal({
                   {isIncome ? "Classifier l'entrée" : 'Classifier la dépense'}
                 </DialogTitle>
                 <p className="text-sm text-slate-600 mt-0.5 max-w-md truncate">
-                  {counterpartyName || label}
+                  {counterpartyName ?? label}
                 </p>
               </div>
             </div>
@@ -1414,7 +1414,7 @@ export function QuickClassificationModal({
             Annuler
           </Button>
           <Button
-            onClick={handleSubmit}
+            onClick={() => void handleSubmit()}
             disabled={!selectedCategory || isSubmitting}
             className="min-w-[160px] gap-2 h-12 text-base"
             size="lg"

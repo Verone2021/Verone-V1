@@ -98,7 +98,7 @@ export function BFAReportModal() {
       const data = (await response.json()) as BFAReportData;
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur chargement rapport BFA');
+        throw new Error(data.error ?? 'Erreur chargement rapport BFA');
       }
 
       if (data.success && data.data) {
@@ -123,7 +123,7 @@ export function BFAReportModal() {
   // Handler changement année
   const handleYearChange = (year: string) => {
     setSelectedYear(year);
-    fetchBFAReport(year);
+    void fetchBFAReport(year);
   };
 
   // Handler ouverture modal
@@ -131,7 +131,7 @@ export function BFAReportModal() {
     setIsOpen(open);
     if (open && !reportData) {
       // Charger données au premier affichage
-      fetchBFAReport(selectedYear);
+      void fetchBFAReport(selectedYear);
     }
   };
 

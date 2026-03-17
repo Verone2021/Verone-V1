@@ -137,11 +137,14 @@ export function PaymentRecordModal({
         }
       );
 
-      const data = await response.json();
+      const data = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+      };
 
       if (!response.ok || !data.success) {
         throw new Error(
-          data.error || "Erreur lors de l'enregistrement du paiement"
+          data.error ?? "Erreur lors de l'enregistrement du paiement"
         );
       }
 
@@ -314,7 +317,7 @@ export function PaymentRecordModal({
                 Annuler
               </Button>
               <Button
-                onClick={handleRecordPayment}
+                onClick={() => void handleRecordPayment()}
                 disabled={status === 'recording'}
               >
                 {status === 'recording' ? (

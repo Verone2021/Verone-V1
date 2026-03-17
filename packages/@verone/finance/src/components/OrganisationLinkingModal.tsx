@@ -33,7 +33,7 @@ import { useMatchingRules } from '../hooks/use-matching-rules';
 import { getPcgCategory } from '../lib/pcg-categories';
 
 // Types
-interface IOrganisation {
+interface _IOrganisation {
   id: string;
   legal_name: string;
   type: string;
@@ -160,8 +160,8 @@ export function OrganisationLinkingModal({
         match_patterns: matchingRule.match_patterns ?? null,
         default_category: matchingRule.default_category,
         organisation_id: matchingRule.organisation_id,
-        individual_customer_id: (matchingRule as any).individual_customer_id,
-        counterparty_type: (matchingRule as any).counterparty_type,
+        individual_customer_id: matchingRule.individual_customer_id,
+        counterparty_type: matchingRule.counterparty_type,
       });
     } else {
       setExistingRule(null);
@@ -456,7 +456,7 @@ export function OrganisationLinkingModal({
           const newPatterns = [...currentPatterns, normalizedLabel];
           await updateMatchingRule(orgRuleFromOrg.id, {
             match_patterns: newPatterns,
-          } as any);
+          });
 
           // Auto-sync: appliquer la règle aux transactions
           await supabase.rpc('apply_rule_to_all_matching', {
@@ -480,7 +480,7 @@ export function OrganisationLinkingModal({
             individual_customer_id: isIndividual ? counterpartyToUse.id : null,
             counterparty_type: dbCounterpartyType,
             default_role_type: ruleRoleType,
-          } as any);
+          });
         } else {
           // CREATE new rule
           await createMatchingRule({
@@ -493,7 +493,7 @@ export function OrganisationLinkingModal({
             default_category: null,
             default_role_type: ruleRoleType,
             priority: 100,
-          } as any);
+          });
         }
       }
 

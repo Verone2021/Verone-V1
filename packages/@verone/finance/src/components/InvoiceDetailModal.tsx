@@ -202,10 +202,10 @@ function formatAddress(address: AddressData | null): string {
   if (!address) return 'Adresse non renseignee';
   const parts = [
     address.street,
-    `${address.postal_code || ''} ${address.city || ''}`.trim(),
+    `${address.postal_code ?? ''} ${address.city ?? ''}`.trim(),
     address.country,
   ].filter(Boolean);
-  return parts.join(', ') || 'Adresse non renseignee';
+  return parts.join(', ') ?? 'Adresse non renseignee';
 }
 
 function generateTempId(): string {
@@ -240,39 +240,39 @@ export function InvoiceDetailModal({
       if (!invoiceId) throw new Error('No invoice ID');
       const res = await fetch(`/api/qonto/invoices/${invoiceId}/details`);
       if (!res.ok) throw new Error('Failed to fetch invoice details');
-      return res.json();
+      return res.json() as Promise<InvoiceDetailsResponse>;
     },
     enabled: open && !!invoiceId,
   });
 
   const invoice = data?.invoice;
-  const isEditable = invoice && invoice.status === 'draft';
+  const isEditable = invoice?.status === 'draft';
 
   // Initialiser l'etat d'edition quand on entre en mode edition
   const initEditState = useCallback(() => {
     if (!invoice) return;
 
     setEditState({
-      due_date: invoice.due_date || '',
-      notes: invoice.notes || '',
-      billing_address: invoice.billing_address ||
-        invoice.partner?.billing_address || {
+      due_date: invoice.due_date ?? '',
+      notes: invoice.notes ?? '',
+      billing_address: invoice.billing_address ??
+        invoice.partner?.billing_address ?? {
           street: '',
           city: '',
           postal_code: '',
           country: 'FR',
         },
-      shipping_address: invoice.shipping_address ||
-        invoice.sales_order?.shipping_address || {
+      shipping_address: invoice.shipping_address ??
+        invoice.sales_order?.shipping_address ?? {
           street: '',
           city: '',
           postal_code: '',
           country: 'FR',
         },
-      shipping_cost_ht: invoice.shipping_cost_ht || 0,
-      handling_cost_ht: invoice.handling_cost_ht || 0,
-      insurance_cost_ht: invoice.insurance_cost_ht || 0,
-      fees_vat_rate: invoice.fees_vat_rate || 0.2,
+      shipping_cost_ht: invoice.shipping_cost_ht ?? 0,
+      handling_cost_ht: invoice.handling_cost_ht ?? 0,
+      insurance_cost_ht: invoice.insurance_cost_ht ?? 0,
+      fees_vat_rate: invoice.fees_vat_rate ?? 0.2,
       items: invoice.items.map(item => ({
         id: item.id,
         description: item.description,
@@ -420,7 +420,7 @@ export function InvoiceDetailModal({
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            dueDate: editState.due_date || undefined,
+            dueDate: editState.due_date ?? undefined,
             items: qontoItems,
             // Donnees locales
             notes: editState.notes,
@@ -443,8 +443,9 @@ export function InvoiceDetailModal({
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erreur lors de la sauvegarde');
+        const errorData: { error?: string } =
+          await (response.json() as Promise<{ error?: string }>);
+        throw new Error(errorData.error ?? 'Erreur lors de la sauvegarde');
       }
 
       // Rafraichir les donnees
@@ -483,19 +484,19 @@ export function InvoiceDetailModal({
         total_vat_amount: invoice.tva_amount,
         subtotal_amount: invoice.total_ht,
         currency: 'EUR',
-        client_id: invoice.partner?.id || '',
+        client_id: invoice.partner?.id ?? '',
         client: invoice.partner
           ? {
               name:
-                invoice.partner.legal_name ||
-                invoice.partner.trade_name ||
+                invoice.partner.legal_name ??
+                invoice.partner.trade_name ??
                 'Client',
               email: invoice.partner.email,
             }
           : null,
         items: invoice.items.map(item => ({
           id: item.id,
-          title: item.product?.name || item.description,
+          title: item.product?.name ?? item.description,
           description: item.description,
           quantity: item.quantity,
           unit: 'piece',
@@ -528,17 +529,24 @@ export function InvoiceDetailModal({
         }
       );
 
-      const data = await response.json();
+      const responseData = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+        quote?: { id: string; quote_number: string; pdf_url: string | null };
+        pdf_url?: string;
+      };
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Erreur lors de la creation du devis');
+      if (!response.ok || !responseData.success) {
+        throw new Error(
+          responseData.error ?? 'Erreur lors de la creation du devis'
+        );
       }
 
-      setQuoteData(data.quote);
+      setQuoteData(responseData.quote ?? null);
 
       // Ouvrir le PDF automatiquement si disponible
-      if (data.pdf_url) {
-        window.open(data.pdf_url, '_blank');
+      if (responseData.pdf_url) {
+        window.open(responseData.pdf_url, '_blank');
       }
     } catch (error) {
       console.error('Create quote error:', error);
@@ -694,7 +702,7 @@ export function InvoiceDetailModal({
                   <div className="space-y-3">
                     <OrganisationNameDisplay
                       legalName={
-                        invoice.partner.legal_name || 'Client sans nom'
+                        invoice.partner.legal_name ?? 'Client sans nom'
                       }
                       tradeName={invoice.partner.trade_name}
                     />
@@ -736,7 +744,7 @@ export function InvoiceDetailModal({
                         </p>
                         <p className="text-sm">
                           {formatAddress(
-                            invoice.billing_address ||
+                            invoice.billing_address ??
                               invoice.partner.billing_address
                           )}
                         </p>
@@ -750,7 +758,7 @@ export function InvoiceDetailModal({
             </Card>
 
             {/* Adresse de livraison (si differente) */}
-            {(invoice.shipping_address ||
+            {(invoice.shipping_address ??
               invoice.sales_order?.shipping_address) && (
               <Card>
                 <CardHeader className="pb-2">
@@ -762,8 +770,8 @@ export function InvoiceDetailModal({
                 <CardContent>
                   <p className="text-sm">
                     {formatAddress(
-                      invoice.shipping_address ||
-                        invoice.sales_order?.shipping_address ||
+                      invoice.shipping_address ??
+                        invoice.sales_order?.shipping_address ??
                         null
                     )}
                   </p>
@@ -796,7 +804,7 @@ export function InvoiceDetailModal({
                           <TableCell>
                             <div>
                               <p className="font-medium">
-                                {item.product?.name || item.description}
+                                {item.product?.name ?? item.description}
                               </p>
                               {item.product?.name &&
                                 item.description !== item.product.name && (
@@ -883,7 +891,7 @@ export function InvoiceDetailModal({
             </Card>
 
             {/* Notes */}
-            {(invoice.description || invoice.notes) && (
+            {(invoice.description ?? invoice.notes) && (
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm">Notes</CardTitle>
@@ -903,8 +911,8 @@ export function InvoiceDetailModal({
 
             {/* Documents lies */}
             {((invoice.related_credit_notes &&
-              invoice.related_credit_notes.length > 0) ||
-              invoice.source_quote ||
+              invoice.related_credit_notes.length > 0) ??
+              invoice.source_quote ??
               invoice.sales_order) && (
               <Card>
                 <CardHeader className="pb-2">
@@ -1053,7 +1061,7 @@ export function InvoiceDetailModal({
                     <Label htmlFor="billing_street">Rue</Label>
                     <Input
                       id="billing_street"
-                      value={editState.billing_address.street || ''}
+                      value={editState.billing_address.street ?? ''}
                       onChange={e =>
                         handleAddressChange('billing', 'street', e.target.value)
                       }
@@ -1063,7 +1071,7 @@ export function InvoiceDetailModal({
                     <Label htmlFor="billing_postal_code">Code postal</Label>
                     <Input
                       id="billing_postal_code"
-                      value={editState.billing_address.postal_code || ''}
+                      value={editState.billing_address.postal_code ?? ''}
                       onChange={e =>
                         handleAddressChange(
                           'billing',
@@ -1077,7 +1085,7 @@ export function InvoiceDetailModal({
                     <Label htmlFor="billing_city">Ville</Label>
                     <Input
                       id="billing_city"
-                      value={editState.billing_address.city || ''}
+                      value={editState.billing_address.city ?? ''}
                       onChange={e =>
                         handleAddressChange('billing', 'city', e.target.value)
                       }
@@ -1087,7 +1095,7 @@ export function InvoiceDetailModal({
                     <Label htmlFor="billing_country">Pays</Label>
                     <Input
                       id="billing_country"
-                      value={editState.billing_address.country || 'FR'}
+                      value={editState.billing_address.country ?? 'FR'}
                       onChange={e =>
                         handleAddressChange(
                           'billing',
@@ -1115,7 +1123,7 @@ export function InvoiceDetailModal({
                     <Label htmlFor="shipping_street">Rue</Label>
                     <Input
                       id="shipping_street"
-                      value={editState.shipping_address.street || ''}
+                      value={editState.shipping_address.street ?? ''}
                       onChange={e =>
                         handleAddressChange(
                           'shipping',
@@ -1129,7 +1137,7 @@ export function InvoiceDetailModal({
                     <Label htmlFor="shipping_postal_code">Code postal</Label>
                     <Input
                       id="shipping_postal_code"
-                      value={editState.shipping_address.postal_code || ''}
+                      value={editState.shipping_address.postal_code ?? ''}
                       onChange={e =>
                         handleAddressChange(
                           'shipping',
@@ -1143,7 +1151,7 @@ export function InvoiceDetailModal({
                     <Label htmlFor="shipping_city">Ville</Label>
                     <Input
                       id="shipping_city"
-                      value={editState.shipping_address.city || ''}
+                      value={editState.shipping_address.city ?? ''}
                       onChange={e =>
                         handleAddressChange('shipping', 'city', e.target.value)
                       }
@@ -1153,7 +1161,7 @@ export function InvoiceDetailModal({
                     <Label htmlFor="shipping_country">Pays</Label>
                     <Input
                       id="shipping_country"
-                      value={editState.shipping_address.country || 'FR'}
+                      value={editState.shipping_address.country ?? 'FR'}
                       onChange={e =>
                         handleAddressChange(
                           'shipping',
@@ -1425,7 +1433,7 @@ export function InvoiceDetailModal({
               {invoice.status === 'draft' && (
                 <Button
                   variant="outline"
-                  onClick={handleCreateQuote}
+                  onClick={() => void handleCreateQuote()}
                   disabled={isCreatingQuote}
                 >
                   {isCreatingQuote ? (
@@ -1438,7 +1446,7 @@ export function InvoiceDetailModal({
               )}
 
               {/* Afficher les actions du devis si cree */}
-              {quoteData && quoteData.pdf_url && (
+              {quoteData?.pdf_url && (
                 <Button
                   variant="outline"
                   onClick={() => window.open(quoteData.pdf_url!, '_blank')}
@@ -1490,7 +1498,7 @@ export function InvoiceDetailModal({
                 <X className="mr-2 h-4 w-4" />
                 Annuler
               </Button>
-              <Button onClick={handleSave} disabled={isSaving}>
+              <Button onClick={() => void handleSave()} disabled={isSaving}>
                 {isSaving ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
@@ -1514,7 +1522,7 @@ export function InvoiceDetailModal({
         invoice={invoiceForCreditNote}
         open={showCreditNoteModal}
         onOpenChange={setShowCreditNoteModal}
-        onSuccess={handleCreditNoteSuccess}
+        onSuccess={() => void handleCreditNoteSuccess()}
       />
     </Dialog>
   );

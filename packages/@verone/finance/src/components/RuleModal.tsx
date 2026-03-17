@@ -293,7 +293,7 @@ export function RuleModal({
   const [selectedCategoryInfo, setSelectedCategoryInfo] =
     useState<PcgCategory | null>(null);
   const [categorySearchQuery, setCategorySearchQuery] = useState('');
-  const [showCategorySearch, setShowCategorySearch] = useState(false);
+  const [_showCategorySearch, setShowCategorySearch] = useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
 
   // State - Organisation
@@ -344,11 +344,11 @@ export function RuleModal({
       } else {
         // Mode création
         setEnabled(true);
-        setMatchValue(initialLabel || '');
+        setMatchValue(initialLabel ?? '');
         setMatchPatterns(initialLabel ? [initialLabel] : []);
         setAllowMultipleCategories(false);
         setJustificationOptional(false);
-        setSelectedCategory(initialCategory || null);
+        setSelectedCategory(initialCategory ?? null);
         const catInfo = initialCategory
           ? getPcgCategory(initialCategory)
           : null;
@@ -405,7 +405,7 @@ export function RuleModal({
         setOrgSearchResults(
           ((data ?? []) as FoundOrganisation[]).map(org => ({
             ...org,
-            trade_name: (org as { trade_name?: string }).trade_name || null,
+            trade_name: (org as { trade_name?: string }).trade_name ?? null,
           }))
         );
       } catch (err) {
@@ -431,7 +431,10 @@ export function RuleModal({
     abortControllerRef.current = new AbortController();
 
     const timer = setTimeout(() => {
-      searchOrganisations(orgSearchQuery, abortControllerRef.current?.signal);
+      void searchOrganisations(
+        orgSearchQuery,
+        abortControllerRef.current?.signal
+      );
     }, 300);
 
     return () => clearTimeout(timer);
@@ -441,7 +444,7 @@ export function RuleModal({
   const handleSelectCategory = useCallback((code: string) => {
     setSelectedCategory(code);
     const info = ALL_PCG_CATEGORIES.find(c => c.code === code);
-    setSelectedCategoryInfo(info || null);
+    setSelectedCategoryInfo(info ?? null);
     setCategorySearchQuery('');
     setShowCategorySearch(false);
   }, []);
@@ -1000,7 +1003,7 @@ export function RuleModal({
             Annuler
           </Button>
           <Button
-            onClick={handleSubmit}
+            onClick={() => void handleSubmit()}
             disabled={isSubmitting || !matchValue.trim()}
             className="min-w-[140px] gap-2"
           >
@@ -1025,12 +1028,12 @@ export function RuleModal({
       </DialogContent>
 
       {/* Wizard ApplyExisting */}
-      {(rule || createdRule) && previewApply && confirmApply && (
+      {(rule ?? createdRule) && previewApply && confirmApply && (
         <ApplyExistingWizard
           open={showApplyWizard}
           onOpenChange={setShowApplyWizard}
-          rule={(rule || createdRule)!}
-          newCategory={selectedCategory || undefined}
+          rule={(rule ?? createdRule)!}
+          newCategory={selectedCategory ?? undefined}
           previewApply={previewApply}
           confirmApply={confirmApply}
           onSuccess={handleWizardSuccess}

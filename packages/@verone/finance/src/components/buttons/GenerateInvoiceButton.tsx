@@ -95,7 +95,7 @@ export function GenerateInvoiceButton({
         }
 
         // Erreur générique
-        throw new Error(data.error || 'Erreur génération facture');
+        throw new Error(data.error ?? 'Erreur génération facture');
       }
 
       // Succès
@@ -128,7 +128,7 @@ export function GenerateInvoiceButton({
 
   return (
     <ButtonV2
-      onClick={handleGenerateInvoice}
+      onClick={() => void handleGenerateInvoice()}
       disabled={disabled || isLoading}
       variant={variant}
       size={size}

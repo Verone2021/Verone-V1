@@ -343,7 +343,7 @@ export function InvoiceUploadModal({
             Annuler
           </Button>
           <Button
-            onClick={handleUpload}
+            onClick={() => void handleUpload()}
             disabled={!file || status === 'uploading' || status === 'success'}
           >
             {status === 'uploading' ? (

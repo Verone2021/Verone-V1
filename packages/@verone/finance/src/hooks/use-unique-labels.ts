@@ -39,19 +39,21 @@ export function useUniqueLabels(): UseUniqueLabelsReturn {
     try {
       const supabase = createClient();
 
-      // Query la vue v_unique_unclassified_labels
+      // Query la vue v_unique_unclassified_labels (not in generated types)
+      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
       const { data, error: fetchError } = await (
         supabase as { from: CallableFunction }
       )
         .from('v_unique_unclassified_labels')
         .select('*')
         .order('transaction_count', { ascending: false });
+      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
       if (fetchError) {
-        throw new Error(fetchError.message);
+        throw new Error((fetchError as { message: string }).message);
       }
 
-      setLabels((data || []) as UniqueLabel[]);
+      setLabels((data ?? []) as UniqueLabel[]);
     } catch (err) {
       console.error('[useUniqueLabels] Error:', err);
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -61,7 +63,7 @@ export function useUniqueLabels(): UseUniqueLabelsReturn {
   }, []);
 
   useEffect(() => {
-    fetchLabels();
+    void fetchLabels();
   }, [fetchLabels]);
 
   return {

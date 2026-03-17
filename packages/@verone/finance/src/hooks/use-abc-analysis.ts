@@ -129,9 +129,9 @@ export function useABCAnalysis() {
           id: product.id,
           name: product.name || 'Sans nom',
           sku: product.sku || '',
-          stock_quantity: product.stock_quantity || 0,
-          cost_price: product.cost_price || 0,
-          value: (product.stock_quantity || 0) * (product.cost_price || 0),
+          stock_quantity: product.stock_quantity ?? 0,
+          cost_price: product.cost_price ?? 0,
+          value: (product.stock_quantity ?? 0) * (product.cost_price ?? 0),
         }))
         .sort((a, b) => b.value - a.value); // Tri décroissant par valeur
 
@@ -283,9 +283,11 @@ export function useABCAnalysis() {
       });
 
       return reportData;
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMessage =
-        err.message || 'Erreur lors de la génération du rapport ABC';
+        err instanceof Error
+          ? err.message
+          : 'Erreur lors de la génération du rapport ABC';
       setError(errorMessage);
       toast({
         title: 'Erreur',
