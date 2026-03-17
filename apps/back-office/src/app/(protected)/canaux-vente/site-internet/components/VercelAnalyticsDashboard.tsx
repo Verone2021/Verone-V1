@@ -206,7 +206,7 @@ export function VercelAnalyticsDashboard() {
         <KPICard
           title="Produits Éligibles"
           value={productsStats?.eligible ?? 0}
-          subtitle={`${productsStats?.publishedPercentage.toFixed(0)}% publiés`}
+          subtitle={`${(productsStats?.publishedPercentage ?? 0).toFixed(0)}% publiés`}
           icon={CheckCircle}
           color="green"
         />

@@ -29,7 +29,9 @@ import {
   PopoverContent,
 } from '@verone/ui';
 import { formatPrice } from '@verone/utils';
-import { ShoppingCart, Heart, Truck, Shield, Info } from 'lucide-react';
+import { ShoppingCart, Heart, Truck, Shield, Info, Check } from 'lucide-react';
+
+import { useCart } from '@/contexts/CartContext';
 
 interface ProductSidebarProps {
   product: {
@@ -63,6 +65,8 @@ export function ProductSidebar({
   const [quantity, setQuantity] = useState(1);
   const [includeAssembly, setIncludeAssembly] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false); // Mock state
+  const [addedToCart, setAddedToCart] = useState(false);
+  const { addItem } = useCart();
 
   // Prix calculé avec éco-participation
   const hasDiscount =
@@ -260,21 +264,34 @@ export function ProductSidebar({
 
         {/* CTA "Ajouter au panier" */}
         <ButtonUnified
-          variant="default"
+          variant={addedToCart ? 'secondary' : 'default'}
           size="lg"
-          icon={ShoppingCart}
+          icon={addedToCart ? Check : ShoppingCart}
           className="w-full"
           onClick={() => {
-            // TODO: Implémenter ajout panier
-            console.warn('[ProductSidebar] Ajout panier:', {
+            void addItem({
               product_id: product.product_id,
+              variant_group_id: product.variant_group_id,
               quantity,
-              includeAssembly,
-              totalPrice,
-            });
+              include_assembly: includeAssembly,
+              name: product.name,
+              slug: '', // Not needed for cart display
+              price_ttc: priceTTC,
+              assembly_price: product.assembly_price ?? 0,
+              eco_participation: ecoParticipation,
+              primary_image_url: null, // Will use product images from context
+              sku: null,
+            })
+              .then(() => {
+                setAddedToCart(true);
+                setTimeout(() => setAddedToCart(false), 2000);
+              })
+              .catch(error => {
+                console.error('[ProductSidebar] Ajout panier failed:', error);
+              });
           }}
         >
-          Ajouter au panier
+          {addedToCart ? 'Ajouté au panier !' : 'Ajouter au panier'}
         </ButtonUnified>
 
         {/* Délai livraison */}
