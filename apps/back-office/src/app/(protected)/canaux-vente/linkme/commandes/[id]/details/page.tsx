@@ -129,6 +129,7 @@ interface OrderWithDetails {
   notes: string | null;
   customer_id: string | null;
   expected_delivery_date: string | null;
+  pending_admin_validation: boolean;
   created_by_affiliate_id: string | null;
   linkme_selection_id: string | null;
   created_by: string | null;
@@ -491,6 +492,9 @@ export default function LinkMeOrderDetailsPage() {
         notes: orderData.notes,
         customer_id: orderData.customer_id,
         expected_delivery_date: orderData.expected_delivery_date,
+        pending_admin_validation:
+          (orderData as unknown as { pending_admin_validation?: boolean })
+            .pending_admin_validation ?? false,
         created_by_affiliate_id: orderData.created_by_affiliate_id ?? null,
         linkme_selection_id: orderData.linkme_selection_id ?? null,
         created_by: createdByUserId,
@@ -2056,43 +2060,45 @@ export default function LinkMeOrderDetailsPage() {
             </>
           )}
 
-          {/* PAIEMENT + RAPPROCHEMENT (intégrés) */}
-          <PaymentSection
-            orderId={order.id}
-            orderNumber={order.order_number}
-            orderStatus={order.status}
-            totalHt={order.total_ht ?? 0}
-            totalTtc={order.total_ttc ?? 0}
-            taxRate={order.tax_rate ?? 20}
-            currency={order.currency ?? 'EUR'}
-            paymentTerms={order.payment_terms ?? 'immediate'}
-            paymentStatus={
-              order.payment_status_v2 ?? order.payment_status ?? 'pending'
-            }
-            customerName={
-              order.organisation?.trade_name ??
-              order.organisation?.legal_name ??
-              'Client inconnu'
-            }
-            customerEmail={order.organisation?.email ?? null}
-            customerType="organization"
-            shippingCostHt={order.shipping_cost_ht ?? 0}
-            handlingCostHt={order.handling_cost_ht ?? 0}
-            insuranceCostHt={order.insurance_cost_ht ?? 0}
-            feesVatRate={order.fees_vat_rate ?? 0.2}
-            orderItems={order.items.map(item => ({
-              id: item.id,
-              quantity: item.quantity,
-              unit_price_ht: item.unit_price_ht,
-              tax_rate: order.tax_rate ?? 20,
-              products: item.product ? { name: item.product.name } : null,
-            }))}
-            isMatched={order.is_matched}
-            matchedTransactionLabel={order.matched_transaction_label}
-            matchedTransactionAmount={order.matched_transaction_amount}
-            matchedTransactionEmittedAt={order.matched_transaction_emitted_at}
-            matchedTransactionId={order.matched_transaction_id}
-          />
+          {/* PAIEMENT + RAPPROCHEMENT (intégrés) — masqué si commande en attente d'approbation */}
+          {!order.pending_admin_validation && (
+            <PaymentSection
+              orderId={order.id}
+              orderNumber={order.order_number}
+              orderStatus={order.status}
+              totalHt={order.total_ht ?? 0}
+              totalTtc={order.total_ttc ?? 0}
+              taxRate={order.tax_rate ?? 20}
+              currency={order.currency ?? 'EUR'}
+              paymentTerms={order.payment_terms ?? 'immediate'}
+              paymentStatus={
+                order.payment_status_v2 ?? order.payment_status ?? 'pending'
+              }
+              customerName={
+                order.organisation?.trade_name ??
+                order.organisation?.legal_name ??
+                'Client inconnu'
+              }
+              customerEmail={order.organisation?.email ?? null}
+              customerType="organization"
+              shippingCostHt={order.shipping_cost_ht ?? 0}
+              handlingCostHt={order.handling_cost_ht ?? 0}
+              insuranceCostHt={order.insurance_cost_ht ?? 0}
+              feesVatRate={order.fees_vat_rate ?? 0.2}
+              orderItems={order.items.map(item => ({
+                id: item.id,
+                quantity: item.quantity,
+                unit_price_ht: item.unit_price_ht,
+                tax_rate: order.tax_rate ?? 20,
+                products: item.product ? { name: item.product.name } : null,
+              }))}
+              isMatched={order.is_matched}
+              matchedTransactionLabel={order.matched_transaction_label}
+              matchedTransactionAmount={order.matched_transaction_amount}
+              matchedTransactionEmittedAt={order.matched_transaction_emitted_at}
+              matchedTransactionId={order.matched_transaction_id}
+            />
+          )}
 
           {/* FACTURES */}
           <InvoicesSection orderId={order.id} />

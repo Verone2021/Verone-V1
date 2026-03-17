@@ -858,7 +858,7 @@ function TransactionsPageV2() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={prevPage}
+                  onClick={() => void prevPage()}
                   disabled={currentPage <= 1 || isLoading}
                   className="gap-1"
                 >
@@ -871,7 +871,7 @@ function TransactionsPageV2() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={nextPage}
+                  onClick={() => void nextPage()}
                   disabled={currentPage >= totalPages || isLoading}
                   className="gap-1"
                 >

@@ -149,8 +149,8 @@ export default defineConfig([
       // =====================================================================
       // NULLISH COALESCING - Prevents bugs with 0, false, ""
       // =====================================================================
-      '@typescript-eslint/prefer-nullish-coalescing': 'warn',
-      '@typescript-eslint/prefer-optional-chain': 'warn',
+      '@typescript-eslint/prefer-nullish-coalescing': 'error',
+      '@typescript-eslint/prefer-optional-chain': 'error',
 
       // =====================================================================
       // CODE QUALITY
@@ -163,20 +163,20 @@ export default defineConfig([
       '@typescript-eslint/explicit-function-return-type': 'off',
 
       // Allow empty object types (common in React props)
-      '@typescript-eslint/no-empty-object-type': 'warn',
+      '@typescript-eslint/no-empty-object-type': 'error',
 
       // Unnecessary assertions
-      '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'error',
 
       // Ban ts-comment: Relaxed (sometimes needed)
-      '@typescript-eslint/ban-ts-comment': 'warn',
+      '@typescript-eslint/ban-ts-comment': 'error',
 
       // Require imports: Relaxed for scripts
-      '@typescript-eslint/no-require-imports': 'warn',
+      '@typescript-eslint/no-require-imports': 'error',
 
       // No Unused Vars (with exceptions for _prefixed)
       '@typescript-eslint/no-unused-vars': [
-        'warn',
+        'error',
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
@@ -190,23 +190,23 @@ export default defineConfig([
 
       // Hooks Rules (CRITICAL - prevents bugs)
       'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
+      'react-hooks/exhaustive-deps': 'error',
 
       // React Best Practices
       'react/jsx-no-target-blank': ['error', { allowReferrer: true }],
-      'react/self-closing-comp': 'warn',
-      'react/jsx-boolean-value': ['warn', 'never'],
+      'react/self-closing-comp': 'error',
+      'react/jsx-boolean-value': ['error', 'never'],
       'react/no-unescaped-entities': 'off',
 
       // Next.js Image Optimization
-      '@next/next/no-img-element': 'warn',
+      '@next/next/no-img-element': 'error',
 
       // =====================================================================
       // GENERAL CODE QUALITY
       // =====================================================================
 
       // Console Statements (allow warn, error)
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-console': ['error', { allow: ['warn', 'error'] }],
 
       // Debugger Statements
       'no-debugger': 'error',
@@ -221,17 +221,17 @@ export default defineConfig([
       'require-await': 'off', // Disabled - too noisy
 
       // Prefer const over let
-      'prefer-const': 'warn',
+      'prefer-const': 'error',
       'no-var': 'error',
 
       // Disable ESLint core no-unused-vars (use TypeScript version)
       'no-unused-vars': 'off',
 
       // Case declarations
-      'no-case-declarations': 'warn',
+      'no-case-declarations': 'error',
 
       // Prettier (formatting only)
-      'prettier/prettier': 'warn',
+      'prettier/prettier': 'warn',  // Keep warn: formatting-only, auto-fixable
     },
   },
 
@@ -317,86 +317,18 @@ export default defineConfig([
   },
 
   // ==========================================================================
-  // GRADUAL MIGRATION: back-office & linkme (7000+ errors to fix)
-  // These overrides are TEMPORARY - target removal: Q2 2026
+  // GRADUAL MIGRATION OVERRIDES: REMOVED (2026-03-17)
   //
-  // Strategy: Fix files incrementally by domain, then remove overrides
-  // Priority order:
-  //   1. API routes (security-critical)
-  //   2. Hooks (data fetching)
-  //   3. Components (UI layer)
-  //   4. Types (definitions)
+  // All 7800+ warnings have been fixed. Type-safety rules now enforced as
+  // ERROR everywhere (inherited from base config lines 120-125).
   //
-  // Track progress: Run `npx eslint <path> --format json | jq '[.[] | .errorCount] | add'`
+  // Anti-regression strategy:
+  //   1. Every package has "lint": "eslint src --max-warnings=0"
+  //   2. lint-staged blocks new warnings at commit time
+  //   3. turbo lint covers ALL packages in CI
+  //   4. All type-safety rules are ERROR (not warn)
+  //
+  // If you create a NEW package, add "lint": "eslint src --max-warnings=0"
+  // to its package.json scripts. Without it, turbo lint won't cover it.
   // ==========================================================================
-  {
-    files: [
-      // Back-office - all source files (gradual migration)
-      'apps/back-office/src/**/*.ts',
-      'apps/back-office/src/**/*.tsx',
-    ],
-    rules: {
-      // Type safety - WARN during migration (6000+ occurrences)
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn',
-      '@typescript-eslint/no-unsafe-assignment': 'warn',
-      '@typescript-eslint/no-unsafe-call': 'warn',
-      '@typescript-eslint/no-unsafe-member-access': 'warn',
-      '@typescript-eslint/no-unsafe-return': 'warn',
-
-      // ⚠️ ASYNC SAFETY KEPT AS ERROR - CRITICAL (prevents production bugs)
-      // These are NOT downgraded to 'warn' because they represent real bugs
-      // '@typescript-eslint/no-floating-promises': 'error', // Inherited from base config
-      // '@typescript-eslint/no-misused-promises': 'error',   // Inherited from base config
-      // '@typescript-eslint/await-thenable': 'error',        // Inherited from base config
-    },
-  },
-
-  // LinkMe - Similar gradual migration
-  {
-    files: [
-      'apps/linkme/src/lib/hooks/**/*.ts',
-      'apps/linkme/src/hooks/**/*.ts',
-      'apps/linkme/src/contexts/**/*.tsx',
-      'apps/linkme/src/app/api/**/*.ts',
-      'apps/linkme/src/types/**/*.ts',
-      'apps/linkme/src/lib/**/*.ts',
-      'apps/linkme/src/components/**/*.tsx',
-      'apps/linkme/src/app/**/*.tsx',
-    ],
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn',
-      '@typescript-eslint/no-unsafe-assignment': 'warn',
-      '@typescript-eslint/no-unsafe-call': 'warn',
-      '@typescript-eslint/no-unsafe-member-access': 'warn',
-      '@typescript-eslint/no-unsafe-return': 'warn',
-
-      // ⚠️ ASYNC SAFETY KEPT AS ERROR - CRITICAL
-      // '@typescript-eslint/no-floating-promises': 'error', // Inherited
-      // '@typescript-eslint/no-misused-promises': 'error',   // Inherited
-    },
-  },
-
-  // Packages - Gradual migration: type-safety rules as warnings for ALL packages
-  // Covers all @verone/* packages uniformly (same treatment as apps during migration)
-  {
-    files: [
-      'packages/@verone/*/src/**/*.ts',
-      'packages/@verone/*/src/**/*.tsx',
-    ],
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn',
-      '@typescript-eslint/no-unsafe-assignment': 'warn',
-      '@typescript-eslint/no-unsafe-call': 'warn',
-      '@typescript-eslint/no-unsafe-member-access': 'warn',
-      '@typescript-eslint/no-unsafe-return': 'warn',
-      // Async safety - also warn during migration (packages have ~500 violations)
-      // Will be promoted to error package-by-package as they are cleaned up
-      '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-misused-promises': 'warn',
-      '@typescript-eslint/await-thenable': 'warn',
-    },
-  },
 ]);
