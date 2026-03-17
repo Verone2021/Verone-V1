@@ -84,7 +84,7 @@ export function useExpeditionsPendingCount(options?: {
       // qui ont encore des items à expédier
       const { count: totalCount, error: countError } = await supabase
         .from('sales_orders')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .in('status', ['validated', 'partially_shipped']);
 
       if (countError) {
