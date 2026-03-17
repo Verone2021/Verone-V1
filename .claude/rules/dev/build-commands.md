@@ -69,3 +69,19 @@ Avant de lancer un build/type-check :
 ## Exceptions
 
 Aucune. Cette règle est absolue pour éviter de faire perdre du temps à l'utilisateur.
+
+## RÈGLE : Nouveau Package = Script Lint OBLIGATOIRE
+
+**Quand tu crées un nouveau package `packages/@verone/*/package.json`, TOUJOURS ajouter :**
+
+```json
+"scripts": {
+  "lint": "eslint src --max-warnings=0",
+  "type-check": "tsc --noEmit"
+}
+```
+
+**Sans `"lint"`, `turbo lint` ignore le package → warnings invisibles → régression silencieuse.**
+
+C'est exactement ce qui a causé 7800 warnings invisibles pendant 5 semaines en 2026.
+Cette règle est NON NÉGOCIABLE.
