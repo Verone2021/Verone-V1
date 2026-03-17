@@ -1,3 +1,12 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Politique de confidentialité',
+  description:
+    'Politique de confidentialité Vérone : données collectées, finalités, droits RGPD et contact DPO.',
+  alternates: { canonical: '/confidentialite' },
+};
+
 export default function ConfidentialitePage() {
   return (
     <div className="max-w-4xl mx-auto px-6 lg:px-8 py-16">

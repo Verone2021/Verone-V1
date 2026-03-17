@@ -1,6 +1,14 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { ArrowLeftRight, CheckCircle, Clock, Mail } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Retours et échanges',
+  description:
+    'Politique de retour Vérone : 30 jours pour retourner vos articles. Procédure simple et remboursement rapide.',
+  alternates: { canonical: '/retours' },
+};
 
 export default function RetoursPage() {
   return (

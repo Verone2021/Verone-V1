@@ -14,10 +14,13 @@
 
 import { useEffect, useState } from 'react';
 
+import Link from 'next/link';
+
 import { useQuery } from '@tanstack/react-query';
 
 import type { CatalogueProduct } from '@/hooks/use-catalogue-products';
 import { createClient } from '@/lib/supabase/client';
+import { JsonLdProduct } from '@/components/seo/JsonLdProduct';
 
 import { ProductAccordions } from './components/ProductAccordions';
 import { ProductCrossSell } from './components/ProductCrossSell';
@@ -158,17 +161,43 @@ export default function ProductPage({
   // ===== PRODUCT PAGE LAYOUT =====
   return (
     <div className="container max-w-7xl mx-auto px-4 py-8">
-      {/* Breadcrumb (optionnel, à implémenter plus tard)
-      <nav className="mb-6 text-sm text-muted-foreground">
+      {/* JSON-LD Product Schema */}
+      <JsonLdProduct
+        name={product.name}
+        description={product.description}
+        slug={product.slug}
+        price={product.price_ttc}
+        imageUrl={product.primary_image_url}
+        brand={product.brand}
+        sku={product.sku}
+      />
+
+      {/* Breadcrumb */}
+      <nav className="mb-6 text-sm text-verone-gray-500">
         <ol className="flex items-center gap-2">
-          <li><Link href="/">Accueil</Link></li>
+          <li>
+            <Link
+              href="/"
+              className="hover:text-verone-black transition-colors"
+            >
+              Accueil
+            </Link>
+          </li>
           <li>/</li>
-          <li><Link href="/catalogue">Catalogue</Link></li>
+          <li>
+            <Link
+              href="/catalogue"
+              className="hover:text-verone-black transition-colors"
+            >
+              Catalogue
+            </Link>
+          </li>
           <li>/</li>
-          <li className="text-foreground">{product.name}</li>
+          <li className="text-verone-black truncate max-w-[200px]">
+            {product.name}
+          </li>
         </ol>
       </nav>
-      */}
 
       {/* Layout 2 colonnes 60/40 */}
       <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 lg:gap-12">

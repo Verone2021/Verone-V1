@@ -1,3 +1,12 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Politique de cookies',
+  description:
+    'Politique de cookies Vérone : types de cookies utilisés, gestion des préférences et durée de conservation.',
+  alternates: { canonical: '/cookies' },
+};
+
 export default function CookiesPage() {
   return (
     <div className="max-w-4xl mx-auto px-6 lg:px-8 py-16">

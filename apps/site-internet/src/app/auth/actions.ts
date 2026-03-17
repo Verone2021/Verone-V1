@@ -90,3 +90,30 @@ export async function logout() {
   revalidatePath('/', 'layout');
   redirect('/');
 }
+
+export async function deleteAccount() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/auth/login');
+  }
+
+  // Anonymize user data (soft delete - admin can hard delete later)
+  await supabase.auth.updateUser({
+    data: {
+      first_name: '[supprimé]',
+      last_name: '[supprimé]',
+      phone: null,
+      deleted_at: new Date().toISOString(),
+    },
+  });
+
+  // Sign out
+  await supabase.auth.signOut();
+  revalidatePath('/', 'layout');
+  redirect('/?message=account_deleted');
+}

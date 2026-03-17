@@ -1,10 +1,16 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
-import { LogOut, Package, User } from 'lucide-react';
+import type { Metadata } from 'next';
+import { LogOut, Package, Trash2, User } from 'lucide-react';
 
 import { createClient } from '@/lib/supabase/server';
-import { logout } from '@/app/auth/actions';
+import { deleteAccount, logout } from '@/app/auth/actions';
+
+export const metadata: Metadata = {
+  title: 'Mon compte',
+  robots: { index: false, follow: false },
+};
 
 export default async function ComptePage() {
   const supabase = await createClient();
@@ -125,6 +131,27 @@ export default async function ComptePage() {
                 Découvrir notre catalogue
               </Link>
             </div>
+          </div>
+
+          {/* GDPR - Delete account */}
+          <div className="border border-red-200 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-verone-black mb-2">
+              Supprimer mon compte
+            </h2>
+            <p className="text-sm text-verone-gray-500 mb-4">
+              Conformément au RGPD, vous pouvez demander la suppression de votre
+              compte et de toutes vos données personnelles. Cette action est
+              irréversible.
+            </p>
+            <form>
+              <button
+                formAction={deleteAccount}
+                className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+                Supprimer mon compte
+              </button>
+            </form>
           </div>
         </div>
       </div>

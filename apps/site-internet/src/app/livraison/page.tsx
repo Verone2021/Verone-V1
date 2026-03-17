@@ -1,4 +1,12 @@
+import type { Metadata } from 'next';
 import { Clock, Home, MapPin, Phone, Truck } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Livraison',
+  description:
+    'Informations livraison Vérone : modes, délais, zones et suivi. Livraison offerte dès 500€ en France métropolitaine.',
+  alternates: { canonical: '/livraison' },
+};
 
 export default function LivraisonPage() {
   return (

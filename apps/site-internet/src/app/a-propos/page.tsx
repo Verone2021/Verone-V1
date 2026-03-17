@@ -1,3 +1,12 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'À propos',
+  description:
+    "Découvrez l'histoire de Vérone, maison française de mobilier et décoration d'intérieur haut de gamme. Nos valeurs : excellence artisanale, design intemporel, engagement responsable.",
+  alternates: { canonical: '/a-propos' },
+};
+
 export default function AProposPage() {
   return (
     <div className="max-w-4xl mx-auto px-6 lg:px-8 py-16">
