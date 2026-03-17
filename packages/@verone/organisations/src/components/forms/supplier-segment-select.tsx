@@ -9,7 +9,7 @@
 
 import React from 'react';
 
-import { Target, Star, CheckCircle, Package, Palette } from 'lucide-react';
+import { Target, Star, CheckCircle, Package } from 'lucide-react';
 
 import { Label } from '@verone/ui';
 import {
@@ -92,7 +92,7 @@ export function SupplierSegmentSelect({
       )}
 
       <Select
-        value={value || 'null'}
+        value={value ?? 'null'}
         onValueChange={handleValueChange}
         disabled={disabled}
       >
@@ -142,7 +142,7 @@ export function useSegmentConfig(
   segment: SupplierSegmentType | null | undefined
 ) {
   if (!segment) return null;
-  return SEGMENT_OPTIONS.find(s => s.value === segment) || null;
+  return SEGMENT_OPTIONS.find(s => s.value === segment) ?? null;
 }
 
 /**
@@ -153,5 +153,5 @@ export function getSegmentLabel(
 ): string {
   if (!segment) return 'Non défini';
   const config = SEGMENT_OPTIONS.find(s => s.value === segment);
-  return config?.label || segment;
+  return config?.label ?? segment;
 }

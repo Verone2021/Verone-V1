@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
@@ -41,13 +41,7 @@ export function OrganisationContactsManager({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
 
-  useEffect(() => {
-    if (mode === 'edit' && organisationId) {
-      loadContacts();
-    }
-  }, [mode, organisationId]);
-
-  const loadContacts = async () => {
+  const loadContacts = useCallback(async () => {
     if (!organisationId) return;
 
     setLoading(true);
@@ -62,13 +56,19 @@ export function OrganisationContactsManager({
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setContacts((data || []) as Contact[]);
+      setContacts((data ?? []) as Contact[]);
     } catch (err) {
       console.error('Erreur chargement contacts:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [organisationId]);
+
+  useEffect(() => {
+    if (mode === 'edit' && organisationId) {
+      void loadContacts();
+    }
+  }, [mode, organisationId, loadContacts]);
 
   const handleCreateContact = () => {
     setSelectedContact(null);
@@ -97,7 +97,7 @@ export function OrganisationContactsManager({
         .eq('id', contact.id);
 
       if (error) throw error;
-      console.log('✅ Contact supprimé avec succès');
+      console.warn('✅ Contact supprimé avec succès');
       await loadContacts();
     } catch (err) {
       console.error('❌ Erreur suppression contact:', err);
@@ -332,7 +332,7 @@ export function OrganisationContactsManager({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleDeleteContact(contact)}
+                  onClick={() => void handleDeleteContact(contact)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -349,7 +349,7 @@ export function OrganisationContactsManager({
           onClose={handleModalClose}
           organisationId={organisationId}
           contact={selectedContact}
-          onSuccess={handleContactSuccess}
+          onSuccess={() => void handleContactSuccess()}
         />
       )}
     </div>

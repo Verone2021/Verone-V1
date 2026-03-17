@@ -89,6 +89,7 @@ export function useEnseigneMapData(enseigneId: string | null) {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- supabase client is stable singleton
   }, [enseigneId]);
 
   useEffect(() => {

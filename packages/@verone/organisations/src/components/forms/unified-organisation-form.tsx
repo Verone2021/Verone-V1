@@ -125,7 +125,7 @@ export type OrganisationFormData = z.output<typeof baseOrganisationSchema>;
 // CONSTANTS
 // ========================
 
-const COUNTRIES = [
+const _COUNTRIES = [
   { value: 'FR', label: 'France' },
   { value: 'BE', label: 'Belgique' },
   { value: 'CH', label: 'Suisse' },
@@ -165,7 +165,7 @@ const PAYMENT_TERMS_OPTIONS = [
   { value: 'CUSTOM', label: 'Personnalisé' },
 ];
 
-const SUPPLIER_SEGMENTS = [
+const _SUPPLIER_SEGMENTS = [
   { value: 'STRATEGIC', label: 'Stratégique' },
   { value: 'TACTICAL', label: 'Tactique' },
   { value: 'OPERATIONAL', label: 'Opérationnel' },
@@ -217,35 +217,35 @@ const getDefaultValues = (
 
   return {
     name: organisation.name,
-    country: organisation.country || 'FR',
+    country: organisation.country ?? 'FR',
     is_active: organisation.is_active ?? true,
-    notes: organisation.notes || '',
+    notes: organisation.notes ?? '',
     // Adresse de facturation
-    billing_address_line1: organisation.billing_address_line1 || '',
-    billing_address_line2: organisation.billing_address_line2 || '',
-    billing_postal_code: organisation.billing_postal_code || '',
-    billing_city: organisation.billing_city || '',
-    billing_region: organisation.billing_region || '',
-    billing_country: organisation.billing_country || 'FR',
+    billing_address_line1: organisation.billing_address_line1 ?? '',
+    billing_address_line2: organisation.billing_address_line2 ?? '',
+    billing_postal_code: organisation.billing_postal_code ?? '',
+    billing_city: organisation.billing_city ?? '',
+    billing_region: organisation.billing_region ?? '',
+    billing_country: organisation.billing_country ?? 'FR',
     // Adresse de livraison
-    shipping_address_line1: organisation.shipping_address_line1 || '',
-    shipping_address_line2: organisation.shipping_address_line2 || '',
-    shipping_postal_code: organisation.shipping_postal_code || '',
-    shipping_city: organisation.shipping_city || '',
-    shipping_region: organisation.shipping_region || '',
-    shipping_country: organisation.shipping_country || 'FR',
+    shipping_address_line1: organisation.shipping_address_line1 ?? '',
+    shipping_address_line2: organisation.shipping_address_line2 ?? '',
+    shipping_postal_code: organisation.shipping_postal_code ?? '',
+    shipping_city: organisation.shipping_city ?? '',
+    shipping_region: organisation.shipping_region ?? '',
+    shipping_country: organisation.shipping_country ?? 'FR',
     has_different_shipping_address:
-      organisation.has_different_shipping_address || false,
+      organisation.has_different_shipping_address ?? false,
     has_different_trade_name: organisation.has_different_trade_name ?? false,
-    trade_name: organisation.trade_name || '',
-    siren: organisation.siren || '',
-    legal_form: organisation.legal_form || '',
-    siret: organisation.siret || '',
-    vat_number: organisation.vat_number || '',
-    industry_sector: organisation.industry_sector || '',
-    currency: organisation.currency || 'EUR',
-    payment_terms: organisation.payment_terms || '',
-    supplier_segment: organisation.supplier_segment || '',
+    trade_name: organisation.trade_name ?? '',
+    siren: organisation.siren ?? '',
+    legal_form: organisation.legal_form ?? '',
+    siret: organisation.siret ?? '',
+    vat_number: organisation.vat_number ?? '',
+    industry_sector: organisation.industry_sector ?? '',
+    currency: organisation.currency ?? 'EUR',
+    payment_terms: organisation.payment_terms ?? '',
+    supplier_segment: organisation.supplier_segment ?? '',
     enseigne_id: organisation.enseigne_id ?? null,
     ownership_type: organisation.ownership_type ?? null,
     latitude: organisation.latitude ?? null,
@@ -288,7 +288,7 @@ export function UnifiedOrganisationForm({
   isOpen,
   onClose,
   onSubmit,
-  onSuccess,
+  onSuccess: _onSuccess,
   organisationType,
   organisation = null,
   mode = 'create',
@@ -312,6 +312,7 @@ export function UnifiedOrganisationForm({
     if (isOpen) {
       form.reset(getDefaultValues(organisation));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- form.reset is stable, adding form causes infinite loop
   }, [isOpen, organisation]);
 
   // Handlers pour AddressAutocomplete
@@ -319,11 +320,11 @@ export function UnifiedOrganisationForm({
     form.setValue('billing_address_line1', address.streetAddress);
     form.setValue('billing_city', address.city);
     form.setValue('billing_postal_code', address.postalCode);
-    form.setValue('billing_region', address.region || '');
-    form.setValue('billing_country', address.countryCode || 'FR');
+    form.setValue('billing_region', address.region ?? '');
+    form.setValue('billing_country', address.countryCode ?? 'FR');
     if (!form.getValues('has_different_shipping_address')) {
-      form.setValue('latitude', address.latitude || null);
-      form.setValue('longitude', address.longitude || null);
+      form.setValue('latitude', address.latitude ?? null);
+      form.setValue('longitude', address.longitude ?? null);
     }
   };
 
@@ -331,10 +332,10 @@ export function UnifiedOrganisationForm({
     form.setValue('shipping_address_line1', address.streetAddress);
     form.setValue('shipping_city', address.city);
     form.setValue('shipping_postal_code', address.postalCode);
-    form.setValue('shipping_region', address.region || '');
-    form.setValue('shipping_country', address.countryCode || 'FR');
-    form.setValue('latitude', address.latitude || null);
-    form.setValue('longitude', address.longitude || null);
+    form.setValue('shipping_region', address.region ?? '');
+    form.setValue('shipping_country', address.countryCode ?? 'FR');
+    form.setValue('latitude', address.latitude ?? null);
+    form.setValue('longitude', address.longitude ?? null);
   };
 
   const handleSubmit: SubmitHandler<OrganisationFormData> = async data => {
@@ -343,7 +344,7 @@ export function UnifiedOrganisationForm({
       // Auto-fill country from billing_country (évite champ redondant)
       const enrichedData = {
         ...data,
-        country: data.billing_country || data.country || 'FR',
+        country: data.billing_country ?? data.country ?? 'FR',
       };
       await onSubmit(enrichedData, organisation?.id);
     } catch (error) {
@@ -361,7 +362,7 @@ export function UnifiedOrganisationForm({
   };
 
   const displayTitle =
-    title ||
+    title ??
     `${mode === 'edit' ? 'Modifier' : 'Créer'} ${getOrganisationTypeLabel(organisationType)}`;
 
   return (
@@ -600,7 +601,7 @@ export function UnifiedOrganisationForm({
                 }}
               >
                 <AddressAutocomplete
-                  value={form.watch('billing_address_line1') || ''}
+                  value={form.watch('billing_address_line1') ?? ''}
                   onChange={value =>
                     form.setValue('billing_address_line1', value)
                   }
@@ -677,7 +678,7 @@ export function UnifiedOrganisationForm({
                     Adresse de livraison
                   </h3>
                   <AddressAutocomplete
-                    value={form.watch('shipping_address_line1') || ''}
+                    value={form.watch('shipping_address_line1') ?? ''}
                     onChange={value =>
                       form.setValue('shipping_address_line1', value)
                     }
@@ -701,7 +702,7 @@ export function UnifiedOrganisationForm({
               )}
 
               {/* Coordonnées GPS (lecture seule) */}
-              {(form.watch('latitude') || form.watch('longitude')) && (
+              {(form.watch('latitude') ?? form.watch('longitude')) && (
                 <div
                   style={{
                     marginTop: spacing[3],
@@ -770,7 +771,7 @@ export function UnifiedOrganisationForm({
                           form.setValue('enseigne_id', value);
                         }
                       }}
-                      disabled={isSubmitting || enseignesLoading}
+                      disabled={isSubmitting ?? enseignesLoading}
                     >
                       <SelectTrigger
                         style={{

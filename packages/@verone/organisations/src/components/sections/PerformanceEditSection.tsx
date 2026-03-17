@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 import { useInlineEdit, type EditableSection } from '@verone/common/hooks';
 import { ButtonV2 } from '@verone/ui';
 import { cn } from '@verone/utils';
@@ -49,7 +47,7 @@ export function PerformanceEditSection({
     hasChanges,
   } = useInlineEdit({
     organisationId: organisation.id,
-    onUpdate: updatedData => {
+    onUpdate: (updatedData: Partial<Organisation>) => {
       onUpdate(updatedData);
     },
     onError: error => {
@@ -58,15 +56,20 @@ export function PerformanceEditSection({
   });
 
   const section: EditableSection = 'performance';
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as {
+    rating?: number;
+    certification_labels?: string[];
+    preferred_supplier?: boolean;
+    notes?: string;
+  } | null;
   const error = getError(section);
 
   const handleStartEdit = () => {
     startEdit(section, {
-      rating: organisation.rating || 0,
-      certification_labels: organisation.certification_labels || [],
-      preferred_supplier: organisation.preferred_supplier || false,
-      notes: organisation.notes || '',
+      rating: organisation.rating ?? 0,
+      certification_labels: organisation.certification_labels ?? [],
+      preferred_supplier: organisation.preferred_supplier ?? false,
+      notes: organisation.notes ?? '',
     });
   };
 
@@ -79,7 +82,7 @@ export function PerformanceEditSection({
 
     const success = await saveChanges(section);
     if (success) {
-      console.log('✅ Performance mise à jour avec succès');
+      console.warn('✅ Performance mise à jour avec succès');
     }
   };
 
@@ -155,7 +158,7 @@ export function PerformanceEditSection({
             <ButtonV2
               variant="secondary"
               size="sm"
-              onClick={handleSave}
+              onClick={() => void handleSave()}
               disabled={!hasChanges(section) || isSaving(section)}
             >
               <Save className="h-3 w-3 mr-1" />
@@ -173,7 +176,7 @@ export function PerformanceEditSection({
               </label>
               <div className="flex items-center space-x-2">
                 <div className="flex space-x-1">
-                  {renderStars(editData?.rating || 0, true)}
+                  {renderStars(editData?.rating ?? 0, true)}
                 </div>
                 <span className="text-sm text-gray-600 ml-3">
                   {editData?.rating ? `${editData.rating}/5` : 'Non évalué'}
@@ -205,7 +208,7 @@ export function PerformanceEditSection({
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
-                checked={editData?.preferred_supplier || false}
+                checked={editData?.preferred_supplier ?? false}
                 onChange={e =>
                   updateEditedData(section, {
                     preferred_supplier: e.target.checked,
@@ -224,7 +227,7 @@ export function PerformanceEditSection({
                 Certifications & Labels qualité
               </label>
               <textarea
-                value={editData?.certification_labels?.join(', ') || ''}
+                value={editData?.certification_labels?.join(', ') ?? ''}
                 onChange={e => handleCertificationChange(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                 placeholder="ISO 9001, FSC, CE..."
@@ -246,7 +249,7 @@ export function PerformanceEditSection({
                       type="button"
                       onClick={() => {
                         const currentCerts =
-                          editData?.certification_labels || [];
+                          editData?.certification_labels ?? [];
                         if (!currentCerts.includes(cert)) {
                           const newCerts = [...currentCerts, cert];
                           updateEditedData(section, {
@@ -270,7 +273,7 @@ export function PerformanceEditSection({
               Notes internes
             </label>
             <textarea
-              value={editData?.notes || ''}
+              value={editData?.notes ?? ''}
               onChange={e =>
                 updateEditedData(section, { notes: e.target.value })
               }
@@ -286,8 +289,8 @@ export function PerformanceEditSection({
           {/* Résumé de performance */}
           {editData &&
             (editData.rating > 0 ||
-              editData.preferred_supplier ||
-              editData.certification_labels?.length > 0) && (
+              !!editData.preferred_supplier ||
+              (editData.certification_labels?.length ?? 0) > 0) && (
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                 <h4 className="text-sm font-medium text-blue-800 mb-3 flex items-center">
                   <TrendingUp className="h-4 w-4 mr-1" />
@@ -340,10 +343,10 @@ export function PerformanceEditSection({
 
   // Mode affichage
   const hasPerformanceData =
-    organisation.rating ||
-    organisation.preferred_supplier ||
+    !!organisation.rating ||
+    !!organisation.preferred_supplier ||
     (organisation.certification_labels?.length ?? 0) > 0 ||
-    organisation.notes;
+    !!organisation.notes;
 
   return (
     <div className={cn('card-verone p-4', className)}>

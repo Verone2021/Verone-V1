@@ -49,7 +49,7 @@ export function OrganisationStatsCard({
               Produits référencés:
             </span>
             <span className="text-2xl font-bold text-black">
-              {organisation._count?.products || 0}
+              {organisation._count?.products ?? 0}
             </span>
           </div>
         )}

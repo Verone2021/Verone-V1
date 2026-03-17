@@ -24,6 +24,16 @@ import {
 import { formatCurrency } from '@verone/utils';
 import { useProducts } from '@verone/products/hooks';
 
+interface OrganisationProduct {
+  id: string;
+  name: string;
+  sku: string;
+  supplier_id: string | null;
+  primary_image_url: string | null;
+  selling_price_ht: number | null;
+  stock_quantity: number | null;
+}
+
 interface OrganisationProductsSectionProps {
   organisationId: string;
   organisationName: string;
@@ -36,23 +46,28 @@ export function OrganisationProductsSection({
   organisationId,
   organisationName,
   organisationType,
-  onUpdate,
-  className,
+  onUpdate: _onUpdate,
+  className: _className,
 }: OrganisationProductsSectionProps) {
   const { products, loading, refetch: fetchProducts } = useProducts();
-  const [organisationProducts, setOrganisationProducts] = useState<any[]>([]);
+  const [organisationProducts, setOrganisationProducts] = useState<
+    OrganisationProduct[]
+  >([]);
 
   // Charger les produits
   useEffect(() => {
-    fetchProducts();
+    void fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only fetch on mount
   }, []);
 
   // Filtrer les produits pour cette organisation
   useEffect(() => {
-    let filtered: any[] = [];
+    let filtered: OrganisationProduct[] = [];
 
     if (organisationType === 'supplier') {
-      filtered = products.filter(p => p.supplier_id === organisationId);
+      filtered = (products as OrganisationProduct[]).filter(
+        p => p.supplier_id === organisationId
+      );
     }
     // Pour les clients, on pourrait filtrer autrement (commandes clients, etc.)
 
@@ -100,12 +115,12 @@ export function OrganisationProductsSection({
   // Calculer stats
   const stats = {
     total: organisationProducts.length,
-    inStock: organisationProducts.filter(p => (p.stock_quantity || 0) > 0)
+    inStock: organisationProducts.filter(p => (p.stock_quantity ?? 0) > 0)
       .length,
-    outOfStock: organisationProducts.filter(p => (p.stock_quantity || 0) === 0)
+    outOfStock: organisationProducts.filter(p => (p.stock_quantity ?? 0) === 0)
       .length,
     totalValue: organisationProducts.reduce(
-      (sum, p) => sum + (p.selling_price_ht || 0) * (p.stock_quantity || 0),
+      (sum, p) => sum + (p.selling_price_ht ?? 0) * (p.stock_quantity ?? 0),
       0
     ),
   };
@@ -196,24 +211,24 @@ export function OrganisationProductsSection({
                   <div className="flex items-center gap-1 text-sm">
                     <Euro className="h-4 w-4 text-gray-400" />
                     <span className="font-medium text-black">
-                      {formatCurrency(product.selling_price_ht || 0)} HT
+                      {formatCurrency(product.selling_price_ht ?? 0)} HT
                     </span>
                   </div>
 
                   <Badge
                     variant={
-                      (product.stock_quantity || 0) > 0
+                      (product.stock_quantity ?? 0) > 0
                         ? 'secondary'
                         : 'destructive'
                     }
                     className={
-                      (product.stock_quantity || 0) > 0
+                      (product.stock_quantity ?? 0) > 0
                         ? 'bg-green-100 text-green-800'
                         : ''
                     }
                   >
                     <Box className="h-3 w-3 mr-1" />
-                    Stock: {product.stock_quantity || 0}
+                    Stock: {product.stock_quantity ?? 0}
                   </Badge>
                 </div>
 

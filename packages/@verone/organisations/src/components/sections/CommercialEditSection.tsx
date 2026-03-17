@@ -93,11 +93,11 @@ export function CommercialEditSection({
 
   const handleStartEdit = () => {
     startEdit(section, {
-      payment_terms: organisation.payment_terms || '',
-      delivery_time_days: organisation.delivery_time_days || 0,
-      minimum_order_amount: organisation.minimum_order_amount || 0,
-      currency: organisation.currency || 'EUR',
-      prepayment_required: organisation.prepayment_required || false,
+      payment_terms: organisation.payment_terms ?? '',
+      delivery_time_days: organisation.delivery_time_days ?? 0,
+      minimum_order_amount: organisation.minimum_order_amount ?? 0,
+      currency: organisation.currency ?? 'EUR',
+      prepayment_required: organisation.prepayment_required ?? false,
     });
   };
 
@@ -127,11 +127,11 @@ export function CommercialEditSection({
     let processedValue: string | number | boolean | null = value;
 
     if (field === 'delivery_time_days') {
-      processedValue = parseInt(value.toString()) || 0;
+      processedValue = parseInt(value.toString()) ?? 0;
     }
 
     if (field === 'minimum_order_amount') {
-      processedValue = parseFloat(value.toString()) || 0;
+      processedValue = parseFloat(value.toString()) ?? 0;
     }
 
     updateEditedData(section, { [field]: processedValue });
@@ -192,7 +192,7 @@ export function CommercialEditSection({
                 Conditions de paiement
               </label>
               <select
-                value={editData?.payment_terms || ''}
+                value={editData?.payment_terms ?? ''}
                 onChange={e =>
                   handleFieldChange('payment_terms', e.target.value)
                 }
@@ -212,7 +212,7 @@ export function CommercialEditSection({
                 Devise
               </label>
               <select
-                value={editData?.currency || 'EUR'}
+                value={editData?.currency ?? 'EUR'}
                 onChange={e => handleFieldChange('currency', e.target.value)}
                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               >
@@ -234,7 +234,7 @@ export function CommercialEditSection({
               <div className="relative">
                 <input
                   type="number"
-                  value={editData?.delivery_time_days || ''}
+                  value={editData?.delivery_time_days ?? ''}
                   onChange={e =>
                     handleFieldChange('delivery_time_days', e.target.value)
                   }
@@ -259,7 +259,7 @@ export function CommercialEditSection({
               <div className="relative">
                 <input
                   type="number"
-                  value={editData?.minimum_order_amount || ''}
+                  value={editData?.minimum_order_amount ?? ''}
                   onChange={e =>
                     handleFieldChange('minimum_order_amount', e.target.value)
                   }
@@ -272,7 +272,7 @@ export function CommercialEditSection({
                   <span className="text-xs text-gray-500">
                     {
                       currencies.find(
-                        c => c.code === (editData?.currency || 'EUR')
+                        c => c.code === (editData?.currency ?? 'EUR')
                       )?.symbol
                     }
                   </span>
@@ -283,7 +283,7 @@ export function CommercialEditSection({
 
           {/* Résumé des conditions en temps réel */}
           {editData &&
-            (editData.payment_terms ||
+            (!!editData.payment_terms ||
               (editData.delivery_time_days ?? 0) > 0 ||
               (editData.minimum_order_amount ?? 0) > 0) && (
               <div className="bg-blue-50 p-2 rounded-lg border border-blue-200">
@@ -342,9 +342,9 @@ export function CommercialEditSection({
 
   // Mode affichage
   const hasCommercialInfo =
-    organisation.payment_terms ||
-    organisation.delivery_time_days ||
-    organisation.minimum_order_amount;
+    !!organisation.payment_terms ||
+    !!organisation.delivery_time_days ||
+    !!organisation.minimum_order_amount;
 
   return (
     <div className={cn('card-verone p-4', className)}>
@@ -403,7 +403,7 @@ export function CommercialEditSection({
                 <div className="text-sm font-semibold text-green-800">
                   {paymentTermsOptions.find(
                     opt => opt.value === organisation.payment_terms
-                  )?.label || organisation.payment_terms}
+                  )?.label ?? organisation.payment_terms}
                 </div>
               </div>
             )}
@@ -433,7 +433,7 @@ export function CommercialEditSection({
                   </div>
                   <div className="text-sm font-semibold text-gray-900">
                     {organisation.minimum_order_amount.toFixed(2)}{' '}
-                    {organisation.currency || 'EUR'}
+                    {organisation.currency ?? 'EUR'}
                   </div>
                 </div>
               )}

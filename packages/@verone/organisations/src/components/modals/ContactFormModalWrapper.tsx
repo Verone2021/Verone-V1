@@ -44,7 +44,7 @@ export function ContactFormModalWrapper({
   contact,
   onSuccess,
 }: ContactFormModalWrapperProps) {
-  const handleSave = async (contactData: any) => {
+  const handleSave = async (_contactData: unknown) => {
     // TODO: Implémenter save logic ici ou dans le modal
     // Pour l'instant on appelle juste onSuccess
     onSuccess();
@@ -54,8 +54,12 @@ export function ContactFormModalWrapper({
     <CustomerContactFormModal
       isOpen={isOpen}
       onClose={onClose}
-      onSave={handleSave}
-      contact={contact as any}
+      onSave={(data: unknown) => void handleSave(data)}
+      contact={
+        contact as unknown as Parameters<
+          typeof CustomerContactFormModal
+        >[0]['contact']
+      }
       organisationId={organisationId}
       organisationName="Organisation" // TODO: Récupérer nom réel
     />

@@ -31,7 +31,7 @@ export function PartnerFormModal({
 
   const handleSubmit = async (
     data: OrganisationFormData,
-    organisationId?: string
+    _organisationId?: string
   ) => {
     const partnerData = {
       ...data,
@@ -45,65 +45,65 @@ export function PartnerFormModal({
       result = await updateOrganisation({
         id: partner.id,
         legal_name: partnerData.legal_name,
-        email: partnerData.email || undefined,
-        secondary_email: partnerData.secondary_email || undefined,
+        email: partnerData.email ?? undefined,
+        secondary_email: partnerData.secondary_email ?? undefined,
         country: partnerData.country,
-        phone: partnerData.phone || undefined,
-        website: partnerData.website || undefined,
+        phone: partnerData.phone ?? undefined,
+        website: partnerData.website ?? undefined,
         is_active: partnerData.is_active,
-        notes: partnerData.notes || undefined,
+        notes: partnerData.notes ?? undefined,
 
         // Adresse principale
-        address_line1: partnerData.address_line1 || undefined,
-        address_line2: partnerData.address_line2 || undefined,
-        postal_code: partnerData.postal_code || undefined,
-        city: partnerData.city || undefined,
-        region: partnerData.region || undefined,
+        address_line1: partnerData.address_line1 ?? undefined,
+        address_line2: partnerData.address_line2 ?? undefined,
+        postal_code: partnerData.postal_code ?? undefined,
+        city: partnerData.city ?? undefined,
+        region: partnerData.region ?? undefined,
 
         // Légal
-        legal_form: partnerData.legal_form || undefined,
-        siret: partnerData.siret || undefined,
-        vat_number: partnerData.vat_number || undefined,
-        industry_sector: partnerData.industry_sector || undefined,
+        legal_form: partnerData.legal_form ?? undefined,
+        siret: partnerData.siret ?? undefined,
+        vat_number: partnerData.vat_number ?? undefined,
+        industry_sector: partnerData.industry_sector ?? undefined,
 
         // Commercial
-        currency: partnerData.currency || 'EUR',
-        payment_terms: partnerData.payment_terms || undefined,
+        currency: partnerData.currency ?? 'EUR',
+        payment_terms: partnerData.payment_terms ?? undefined,
       });
     } else {
       // Création
       result = await createOrganisation({
-        legal_name: partnerData.legal_name || partnerData.name, // Fallback to name if legal_name empty
+        legal_name: partnerData.legal_name ?? partnerData.name, // Fallback to name if legal_name empty
         type: 'partner',
-        email: partnerData.email || undefined,
-        secondary_email: partnerData.secondary_email || undefined,
+        email: partnerData.email ?? undefined,
+        secondary_email: partnerData.secondary_email ?? undefined,
         country: partnerData.country,
-        phone: partnerData.phone || undefined,
-        website: partnerData.website || undefined,
+        phone: partnerData.phone ?? undefined,
+        website: partnerData.website ?? undefined,
         is_active: partnerData.is_active,
-        notes: partnerData.notes || undefined,
+        notes: partnerData.notes ?? undefined,
 
         // Adresse principale
-        address_line1: partnerData.address_line1 || undefined,
-        address_line2: partnerData.address_line2 || undefined,
-        postal_code: partnerData.postal_code || undefined,
-        city: partnerData.city || undefined,
-        region: partnerData.region || undefined,
+        address_line1: partnerData.address_line1 ?? undefined,
+        address_line2: partnerData.address_line2 ?? undefined,
+        postal_code: partnerData.postal_code ?? undefined,
+        city: partnerData.city ?? undefined,
+        region: partnerData.region ?? undefined,
 
         // Légal
-        legal_form: partnerData.legal_form || undefined,
-        siret: partnerData.siret || undefined,
-        vat_number: partnerData.vat_number || undefined,
-        industry_sector: partnerData.industry_sector || undefined,
+        legal_form: partnerData.legal_form ?? undefined,
+        siret: partnerData.siret ?? undefined,
+        vat_number: partnerData.vat_number ?? undefined,
+        industry_sector: partnerData.industry_sector ?? undefined,
 
         // Commercial
-        currency: partnerData.currency || 'EUR',
-        payment_terms: partnerData.payment_terms || undefined,
+        currency: partnerData.currency ?? 'EUR',
+        payment_terms: partnerData.payment_terms ?? undefined,
       });
     }
 
     if (result) {
-      console.log('✅ Prestataire sauvegardé avec succès');
+      console.warn('✅ Prestataire sauvegardé avec succès');
       onSuccess?.(result as Organisation);
       onClose();
     } else {

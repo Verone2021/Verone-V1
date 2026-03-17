@@ -102,7 +102,7 @@ function TableSkeleton() {
  */
 export function EnseigneOrganisationsTable({
   organisations,
-  parentOrganisation,
+  parentOrganisation: _parentOrganisation,
   onAddOrganisations,
   onRemoveOrganisation,
   loading = false,
@@ -137,7 +137,7 @@ export function EnseigneOrganisationsTable({
   const handleViewOrganisation = (orgId: string) => {
     // Construire l'URL de retour si fournie ou si enseigneId est disponible
     const effectiveReturnUrl =
-      returnUrl ||
+      returnUrl ??
       (enseigneId ? `/canaux-vente/linkme/enseignes/${enseigneId}` : null);
 
     if (effectiveReturnUrl) {
@@ -198,7 +198,7 @@ export function EnseigneOrganisationsTable({
             </TableHeader>
             <TableBody>
               {sortedOrganisations.map(org => {
-                const displayName = org.trade_name || org.legal_name;
+                const displayName = org.trade_name ?? org.legal_name;
                 const isParent = org.is_enseigne_parent;
 
                 return (
@@ -318,7 +318,7 @@ export function EnseigneOrganisationsTable({
                           <ButtonV2
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleRemove(org.id)}
+                            onClick={() => void handleRemove(org.id)}
                             disabled={removingId === org.id}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
                             title="Retirer de l'enseigne"

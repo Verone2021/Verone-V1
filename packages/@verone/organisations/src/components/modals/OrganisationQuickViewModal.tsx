@@ -59,7 +59,7 @@ function AddressBlock({
   region?: string | null;
   country?: string | null;
 }) {
-  const hasAddress = line1 || city || postalCode;
+  const hasAddress = line1 ?? city ?? postalCode;
   if (!hasAddress) return null;
 
   return (
