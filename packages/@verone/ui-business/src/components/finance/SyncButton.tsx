@@ -97,7 +97,7 @@ export function SyncButton({
       setInternalStatus('success');
       // Revenir à idle après 2s
       setTimeout(() => setInternalStatus('idle'), 2000);
-    } catch (error) {
+    } catch (_error) {
       setInternalStatus('error');
       // Revenir à idle après 3s
       setTimeout(() => setInternalStatus('idle'), 3000);
@@ -124,8 +124,10 @@ export function SyncButton({
     <Button
       variant={isError ? 'destructive' : isSuccess ? 'outline' : 'secondary'}
       size="sm"
-      onClick={handleClick}
-      disabled={disabled || isSyncing}
+      onClick={() => {
+        void handleClick();
+      }}
+      disabled={disabled ?? isSyncing}
       className={cn(
         'min-w-[140px]',
         isSuccess && 'border-green-500 text-green-600',

@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 import { ButtonV2 } from '@verone/ui';
 import { Checkbox } from '@verone/ui';
 import { AddressAutocomplete, type AddressResult } from '@verone/ui';
@@ -75,7 +73,7 @@ export function AddressEditSection({
     hasChanges,
   } = useInlineEdit({
     organisationId: organisation.id,
-    onUpdate: updatedData => {
+    onUpdate: (updatedData: Partial<Organisation>) => {
       onUpdate(updatedData);
     },
     onError: error => {
@@ -91,50 +89,50 @@ export function AddressEditSection({
     // Utiliser les données legacy comme fallback si les nouveaux champs sont vides
     const billingData = {
       billing_address_line1:
-        organisation.billing_address_line1 || organisation.address_line1 || '',
+        organisation.billing_address_line1 ?? organisation.address_line1 ?? '',
       billing_address_line2:
-        organisation.billing_address_line2 || organisation.address_line2 || '',
+        organisation.billing_address_line2 ?? organisation.address_line2 ?? '',
       billing_postal_code:
-        organisation.billing_postal_code || organisation.postal_code || '',
-      billing_city: organisation.billing_city || organisation.city || '',
-      billing_region: organisation.billing_region || organisation.region || '',
+        organisation.billing_postal_code ?? organisation.postal_code ?? '',
+      billing_city: organisation.billing_city ?? organisation.city ?? '',
+      billing_region: organisation.billing_region ?? organisation.region ?? '',
       billing_country:
-        organisation.billing_country || organisation.country || 'FR',
+        organisation.billing_country ?? organisation.country ?? 'FR',
     };
 
     startEdit(section, {
       // Garder les champs legacy pour compatibilité
-      address_line1: organisation.address_line1 || '',
-      address_line2: organisation.address_line2 || '',
-      postal_code: organisation.postal_code || '',
-      city: organisation.city || '',
-      region: organisation.region || '',
-      country: organisation.country || 'FR',
+      address_line1: organisation.address_line1 ?? '',
+      address_line2: organisation.address_line2 ?? '',
+      postal_code: organisation.postal_code ?? '',
+      city: organisation.city ?? '',
+      region: organisation.region ?? '',
+      country: organisation.country ?? 'FR',
 
       // Adresses billing avec fallback
       ...billingData,
 
       // Adresses shipping
-      shipping_address_line1: organisation.shipping_address_line1 || '',
-      shipping_address_line2: organisation.shipping_address_line2 || '',
-      shipping_postal_code: organisation.shipping_postal_code || '',
-      shipping_city: organisation.shipping_city || '',
-      shipping_region: organisation.shipping_region || '',
-      shipping_country: organisation.shipping_country || 'FR',
+      shipping_address_line1: organisation.shipping_address_line1 ?? '',
+      shipping_address_line2: organisation.shipping_address_line2 ?? '',
+      shipping_postal_code: organisation.shipping_postal_code ?? '',
+      shipping_city: organisation.shipping_city ?? '',
+      shipping_region: organisation.shipping_region ?? '',
+      shipping_country: organisation.shipping_country ?? 'FR',
 
       // Coordonnées GPS (adresse de livraison)
-      latitude: organisation.latitude || null,
-      longitude: organisation.longitude || null,
+      latitude: organisation.latitude ?? null,
+      longitude: organisation.longitude ?? null,
 
       has_different_shipping_address:
-        organisation.has_different_shipping_address || false,
+        organisation.has_different_shipping_address ?? false,
     });
   };
 
   const handleSave = async () => {
     // Nettoyer les données avant sauvegarde (trim des espaces)
     const cleanedData = Object.fromEntries(
-      Object.entries(editData || {}).map(([key, val]) => {
+      Object.entries(editData ?? {}).map(([key, val]) => {
         if (typeof val === 'string') {
           const trimmed = val.trim();
           // Convertir les chaînes vides en null pour les champs optionnels
@@ -153,7 +151,7 @@ export function AddressEditSection({
 
     const success = await saveChanges(section);
     if (success) {
-      console.log('✅ Adresse mise à jour avec succès');
+      console.warn('✅ Adresse mise à jour avec succès');
     }
   };
 
@@ -161,13 +159,16 @@ export function AddressEditSection({
     cancelEdit(section);
   };
 
-  const copyAddressToClipboard = async (addressData: any, title: string) => {
+  const copyAddressToClipboard = async (
+    addressData: Record<string, string | null | undefined>,
+    title: string
+  ) => {
     const lines = [
       addressData.line1,
       addressData.line2,
       addressData.postal_code && addressData.city
         ? `${addressData.postal_code} ${addressData.city}`
-        : addressData.city || addressData.postal_code,
+        : (addressData.city ?? addressData.postal_code),
       addressData.region,
       addressData.country && addressData.country !== 'FR'
         ? countries.find(c => c.code === addressData.country)?.name
@@ -178,7 +179,7 @@ export function AddressEditSection({
 
     try {
       await navigator.clipboard.writeText(text);
-      console.log(`✅ ${title} copiée dans le presse-papiers`);
+      console.warn(`✅ ${title} copiée dans le presse-papiers`);
       // TODO: Ajouter un toast si disponible
     } catch (err) {
       console.error('❌ Erreur lors de la copie:', err);
@@ -210,7 +211,7 @@ export function AddressEditSection({
         .join(' ');
     }
 
-    updateEditedData(section, { [field]: processedValue || null });
+    updateEditedData(section, { [field]: processedValue ?? null });
   };
 
   // Handler pour l'autocomplete d'adresse de facturation
@@ -219,14 +220,14 @@ export function AddressEditSection({
       billing_address_line1: address.streetAddress,
       billing_city: address.city,
       billing_postal_code: address.postalCode,
-      billing_region: address.region || '',
-      billing_country: address.countryCode || 'FR',
+      billing_region: address.region ?? '',
+      billing_country: address.countryCode ?? 'FR',
     };
 
     // Si adresse de livraison = facturation, mettre à jour les coordonnées GPS
     if (!editData?.has_different_shipping_address) {
-      updates.latitude = address.latitude || null;
-      updates.longitude = address.longitude || null;
+      updates.latitude = address.latitude ?? null;
+      updates.longitude = address.longitude ?? null;
     }
 
     updateEditedData(section, updates);
@@ -238,11 +239,11 @@ export function AddressEditSection({
       shipping_address_line1: address.streetAddress,
       shipping_city: address.city,
       shipping_postal_code: address.postalCode,
-      shipping_region: address.region || '',
-      shipping_country: address.countryCode || 'FR',
+      shipping_region: address.region ?? '',
+      shipping_country: address.countryCode ?? 'FR',
       // Coordonnées GPS automatiquement mises à jour
-      latitude: address.latitude || null,
-      longitude: address.longitude || null,
+      latitude: address.latitude ?? null,
+      longitude: address.longitude ?? null,
     });
   };
 
@@ -281,7 +282,7 @@ export function AddressEditSection({
             <ButtonV2
               variant="secondary"
               size="sm"
-              onClick={handleSave}
+              onClick={() => void handleSave()}
               disabled={!hasChanges(section) || isSaving(section)}
             >
               <Save className="h-3 w-3 mr-1" />
@@ -306,13 +307,13 @@ export function AddressEditSection({
                   // Copier l'adresse de livraison vers facturation
                   updateEditedData(section, {
                     billing_address_line1:
-                      editData?.shipping_address_line1 || '',
+                      editData?.shipping_address_line1 ?? '',
                     billing_address_line2:
-                      editData?.shipping_address_line2 || '',
-                    billing_postal_code: editData?.shipping_postal_code || '',
-                    billing_city: editData?.shipping_city || '',
-                    billing_region: editData?.shipping_region || '',
-                    billing_country: editData?.shipping_country || 'FR',
+                      editData?.shipping_address_line2 ?? '',
+                    billing_postal_code: editData?.shipping_postal_code ?? '',
+                    billing_city: editData?.shipping_city ?? '',
+                    billing_region: editData?.shipping_region ?? '',
+                    billing_country: editData?.shipping_country ?? 'FR',
                   });
                 }}
                 className="flex items-center gap-2"
@@ -326,7 +327,7 @@ export function AddressEditSection({
             {/* Autocomplete adresse de facturation */}
             <div className="md:col-span-2 mb-4">
               <AddressAutocomplete
-                value={editData?.billing_address_line1 || ''}
+                value={editData?.billing_address_line1 ?? ''}
                 onChange={value =>
                   handleFieldChange('billing_address_line1', value)
                 }
@@ -344,7 +345,7 @@ export function AddressEditSection({
                 </label>
                 <input
                   type="text"
-                  value={editData?.billing_address_line2 || ''}
+                  value={editData?.billing_address_line2 ?? ''}
                   onChange={e =>
                     handleFieldChange('billing_address_line2', e.target.value)
                   }
@@ -359,7 +360,7 @@ export function AddressEditSection({
                 </label>
                 <input
                   type="text"
-                  value={editData?.billing_postal_code || ''}
+                  value={editData?.billing_postal_code ?? ''}
                   onChange={e =>
                     handleFieldChange('billing_postal_code', e.target.value)
                   }
@@ -375,7 +376,7 @@ export function AddressEditSection({
                 </label>
                 <input
                   type="text"
-                  value={editData?.billing_city || ''}
+                  value={editData?.billing_city ?? ''}
                   onChange={e =>
                     handleFieldChange('billing_city', e.target.value)
                   }
@@ -390,7 +391,7 @@ export function AddressEditSection({
                 </label>
                 <input
                   type="text"
-                  value={editData?.billing_region || ''}
+                  value={editData?.billing_region ?? ''}
                   onChange={e =>
                     handleFieldChange('billing_region', e.target.value)
                   }
@@ -404,7 +405,7 @@ export function AddressEditSection({
                   Pays
                 </label>
                 <select
-                  value={editData?.billing_country || 'FR'}
+                  value={editData?.billing_country ?? 'FR'}
                   onChange={e =>
                     updateEditedData(section, {
                       billing_country: e.target.value,
@@ -426,7 +427,7 @@ export function AddressEditSection({
           <div className="flex items-center space-x-2">
             <Checkbox
               id="different_shipping"
-              checked={editData?.has_different_shipping_address || false}
+              checked={editData?.has_different_shipping_address ?? false}
               onCheckedChange={checked => {
                 updateEditedData(section, {
                   has_different_shipping_address: checked,
@@ -463,7 +464,7 @@ export function AddressEditSection({
               {/* Autocomplete adresse de livraison */}
               <div className="md:col-span-2">
                 <AddressAutocomplete
-                  value={editData?.shipping_address_line1 || ''}
+                  value={editData?.shipping_address_line1 ?? ''}
                   onChange={value =>
                     handleFieldChange('shipping_address_line1', value)
                   }
@@ -481,7 +482,7 @@ export function AddressEditSection({
                   </label>
                   <input
                     type="text"
-                    value={editData?.shipping_address_line2 || ''}
+                    value={editData?.shipping_address_line2 ?? ''}
                     onChange={e =>
                       handleFieldChange(
                         'shipping_address_line2',
@@ -499,7 +500,7 @@ export function AddressEditSection({
                   </label>
                   <input
                     type="text"
-                    value={editData?.shipping_postal_code || ''}
+                    value={editData?.shipping_postal_code ?? ''}
                     onChange={e =>
                       handleFieldChange('shipping_postal_code', e.target.value)
                     }
@@ -515,7 +516,7 @@ export function AddressEditSection({
                   </label>
                   <input
                     type="text"
-                    value={editData?.shipping_city || ''}
+                    value={editData?.shipping_city ?? ''}
                     onChange={e =>
                       handleFieldChange('shipping_city', e.target.value)
                     }
@@ -530,7 +531,7 @@ export function AddressEditSection({
                   </label>
                   <input
                     type="text"
-                    value={editData?.shipping_region || ''}
+                    value={editData?.shipping_region ?? ''}
                     onChange={e =>
                       handleFieldChange('shipping_region', e.target.value)
                     }
@@ -544,7 +545,7 @@ export function AddressEditSection({
                     Pays
                   </label>
                   <select
-                    value={editData?.shipping_country || 'FR'}
+                    value={editData?.shipping_country ?? 'FR'}
                     onChange={e =>
                       updateEditedData(section, {
                         shipping_country: e.target.value,
@@ -564,7 +565,7 @@ export function AddressEditSection({
           )}
 
           {/* Coordonnées GPS (lecture seule) */}
-          {(editData?.latitude || editData?.longitude) && (
+          {(editData?.latitude ?? editData?.longitude) && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-3">
               <div className="flex items-center gap-2 text-green-700">
                 <Navigation className="h-4 w-4" />
@@ -574,8 +575,13 @@ export function AddressEditSection({
                 </span>
               </div>
               <div className="mt-2 pl-6 text-sm text-green-800 font-mono">
-                {editData?.latitude?.toFixed(6)},{' '}
-                {editData?.longitude?.toFixed(6)}
+                {typeof editData?.latitude === 'number'
+                  ? editData.latitude.toFixed(6)
+                  : ''}
+                ,{' '}
+                {typeof editData?.longitude === 'number'
+                  ? editData.longitude.toFixed(6)
+                  : ''}
               </div>
             </div>
           )}
@@ -593,12 +599,12 @@ export function AddressEditSection({
 
   // Mode affichage - avec fallback vers legacy comme dans l'édition
   const billingData = {
-    line1: organisation.billing_address_line1 || organisation.address_line1,
-    line2: organisation.billing_address_line2 || organisation.address_line2,
-    postal_code: organisation.billing_postal_code || organisation.postal_code,
-    city: organisation.billing_city || organisation.city,
-    region: organisation.billing_region || organisation.region,
-    country: organisation.billing_country || organisation.country,
+    line1: organisation.billing_address_line1 ?? organisation.address_line1,
+    line2: organisation.billing_address_line2 ?? organisation.address_line2,
+    postal_code: organisation.billing_postal_code ?? organisation.postal_code,
+    city: organisation.billing_city ?? organisation.city,
+    region: organisation.billing_region ?? organisation.region,
+    country: organisation.billing_country ?? organisation.country,
   };
 
   const shippingData = {
@@ -611,15 +617,15 @@ export function AddressEditSection({
   };
 
   const hasBillingAddress =
-    billingData.line1 || billingData.city || billingData.country;
+    billingData.line1 ?? billingData.city ?? billingData.country;
   const hasShippingAddress =
-    shippingData.line1 || shippingData.city || shippingData.country;
+    shippingData.line1 ?? shippingData.city ?? shippingData.country;
   const hasLegacyAddress =
-    organisation.address_line1 || organisation.city || organisation.country;
+    organisation.address_line1 ?? organisation.city ?? organisation.country;
 
   const renderAddress = (
-    prefix: string,
-    addressData: any,
+    _prefix: string,
+    addressData: Record<string, string | null | undefined>,
     icon: React.ReactNode,
     title: string
   ) => {
@@ -638,7 +644,7 @@ export function AddressEditSection({
           <ButtonV2
             variant="outline"
             size="md"
-            onClick={() => copyAddressToClipboard(addressData, title)}
+            onClick={() => void copyAddressToClipboard(addressData, title)}
             title={`Copier ${title}`}
           >
             <Copy className="h-4 w-4" />
@@ -653,7 +659,7 @@ export function AddressEditSection({
               {addressData.line2}
             </div>
           )}
-          {(addressData.postal_code || addressData.city) && (
+          {(addressData.postal_code ?? addressData.city) && (
             <div className="text-sm text-black mt-1">
               {addressData.postal_code && `${addressData.postal_code} `}
               {addressData.city}
@@ -666,7 +672,7 @@ export function AddressEditSection({
           )}
           {addressData.country && addressData.country !== 'FR' && (
             <div className="text-sm text-black font-medium mt-1">
-              {countries.find(c => c.code === addressData.country)?.name ||
+              {countries.find(c => c.code === addressData.country)?.name ??
                 addressData.country}
             </div>
           )}
@@ -718,7 +724,7 @@ export function AddressEditSection({
         )}
 
         {/* Coordonnées GPS (lecture seule) */}
-        {(organisation.latitude || organisation.longitude) && (
+        {(organisation.latitude ?? organisation.longitude) && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-3">
             <div className="flex items-center gap-2 text-green-700">
               <Navigation className="h-4 w-4" />

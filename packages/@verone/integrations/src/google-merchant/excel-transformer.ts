@@ -7,6 +7,34 @@
 
 import { GOOGLE_MERCHANT_CONFIG } from './config';
 
+// Types pour les données produit
+interface ProductImage {
+  public_url: string;
+  is_primary: boolean;
+  alt_text?: string;
+  display_order: number;
+}
+
+interface ProductInput {
+  id?: string;
+  sku: string;
+  name: string;
+  slug?: string;
+  description?: string;
+  technical_description?: string;
+  price_ht: number;
+  status: string;
+  condition?: string;
+  brand?: string;
+  gtin?: string;
+  supplier_reference?: string;
+  variant_attributes?: Record<string, string>;
+  selling_points?: string[];
+  dimensions?: Record<string, number>;
+  item_group_id?: string;
+  images?: ProductImage[];
+}
+
 // Interface pour représenter une ligne Excel Google Merchant
 interface GoogleMerchantExcelRow {
   // Colonnes obligatoires (1-7)
@@ -108,22 +136,22 @@ function mapAvailabilityForExcel(status: string): string {
     discontinued: 'out_of_stock',
   } as const;
 
-  return mapping[status as keyof typeof mapping] || 'out_of_stock';
+  return mapping[status as keyof typeof mapping] ?? 'out_of_stock';
 }
 
 /**
  * Génère l'URL du produit pour Excel
  */
-function generateProductUrlForExcel(product: any): string {
-  const slug = product.slug || product.sku.toLowerCase();
+function generateProductUrlForExcel(product: ProductInput): string {
+  const slug = product.slug ?? product.sku.toLowerCase();
   return `${GOOGLE_MERCHANT_CONFIG.productBaseUrl}/products/${slug}`;
 }
 
 /**
  * Extrait l'image principale pour Excel
  */
-function extractPrimaryImageForExcel(product: any): string {
-  const primaryImage = product.images?.find((img: any) => img.is_primary);
+function extractPrimaryImageForExcel(product: ProductInput): string {
+  const primaryImage = product.images?.find(img => img.is_primary);
   const fallbackImage = product.images?.[0];
 
   // Placeholder image pour tests - à remplacer par une vraie image en production
@@ -131,20 +159,20 @@ function extractPrimaryImageForExcel(product: any): string {
     'https://via.placeholder.com/800x600/CCCCCC/000000?text=Product+Image';
 
   return (
-    primaryImage?.public_url || fallbackImage?.public_url || placeholderImage
+    primaryImage?.public_url ?? fallbackImage?.public_url ?? placeholderImage
   );
 }
 
 /**
  * Extrait et concatène les images supplémentaires pour Excel
  */
-function extractAdditionalImagesForExcel(product: any): string {
+function extractAdditionalImagesForExcel(product: ProductInput): string {
   if (!product.images || product.images.length <= 1) return '';
 
   const additionalImages = product.images
-    .filter((img: any) => !img.is_primary)
-    .sort((a: any, b: any) => a.display_order - b.display_order)
-    .map((img: any) => img.public_url)
+    .filter(img => !img.is_primary)
+    .sort((a, b) => a.display_order - b.display_order)
+    .map(img => img.public_url)
     .slice(0, 10); // Google limite à 10 images supplémentaires
 
   return additionalImages.join(',');
@@ -153,7 +181,7 @@ function extractAdditionalImagesForExcel(product: any): string {
 /**
  * Extrait les points forts depuis selling_points pour Excel
  */
-function extractProductHighlightsForExcel(product: any): string {
+function extractProductHighlightsForExcel(product: ProductInput): string {
   if (!product.selling_points || product.selling_points.length === 0) return '';
 
   return product.selling_points
@@ -165,7 +193,7 @@ function extractProductHighlightsForExcel(product: any): string {
 /**
  * Formate les détails techniques pour Excel
  */
-function formatProductDetailsForExcel(product: any): string {
+function formatProductDetailsForExcel(product: ProductInput): string {
   if (!product.technical_description) return '';
 
   // Format Google: "section:attribute:value"
@@ -175,18 +203,18 @@ function formatProductDetailsForExcel(product: any): string {
 /**
  * Extrait les attributs variants pour Excel
  */
-function extractVariantAttributesForExcel(product: any) {
-  const variants = product.variant_attributes || {};
+function extractVariantAttributesForExcel(product: ProductInput) {
+  const variants = product.variant_attributes ?? {};
 
   return {
-    color: variants.color || variants.couleur || '',
-    material: variants.material || variants.materiau || variants.matiere || '',
+    color: variants.color ?? variants.couleur ?? '',
+    material: variants.material ?? variants.materiau ?? variants.matiere ?? '',
     size:
-      variants.size ||
-      variants.taille ||
-      extractSizeFromDimensionsForExcel(product.dimensions) ||
+      variants.size ??
+      variants.taille ??
+      extractSizeFromDimensionsForExcel(product.dimensions) ??
       '',
-    pattern: variants.pattern || variants.motif || '',
+    pattern: variants.pattern ?? variants.motif ?? '',
   };
 }
 
@@ -194,7 +222,7 @@ function extractVariantAttributesForExcel(product: any) {
  * Extrait la taille depuis les dimensions pour Excel
  */
 function extractSizeFromDimensionsForExcel(
-  dimensions?: Record<string, any>
+  dimensions?: Record<string, number>
 ): string {
   if (!dimensions) return '';
 
@@ -221,37 +249,23 @@ function formatPriceForExcel(priceHt: number): string {
 /**
  * Détermine si le produit a des identifiants uniques
  */
-function hasIdentifiersForExcel(product: any): string {
-  return product.gtin || product.supplier_reference ? 'yes' : 'no';
-}
-
-/**
- * Récupère l'item_group_id depuis les groupes de variantes
- */
-async function getItemGroupIdForProduct(
-  productId: string
-): Promise<string | null> {
-  try {
-    // Note: Dans un contexte serveur, cette fonction devrait utiliser createAdminClient
-    // Pour l'instant, retourne null - sera implémenté avec les vraies données
-    return null;
-  } catch (error) {
-    console.error('Error fetching item_group_id:', error);
-    return null;
-  }
+function hasIdentifiersForExcel(product: ProductInput): string {
+  return (product.gtin ?? product.supplier_reference) ? 'yes' : 'no';
 }
 
 /**
  * FONCTION PRINCIPALE : Transforme un produit Vérone vers une ligne Excel Google Merchant
  */
-export function transformProductForExcel(product: any): GoogleMerchantExcelRow {
+export function transformProductForExcel(
+  product: ProductInput
+): GoogleMerchantExcelRow {
   const variants = extractVariantAttributesForExcel(product);
 
   const excelRow: GoogleMerchantExcelRow = {
     // COLONNES OBLIGATOIRES (1-7)
     id: product.sku,
     title: product.name.substring(0, 150),
-    description: (product.description || product.name).substring(0, 200),
+    description: (product.description ?? product.name).substring(0, 200),
     availability: mapAvailabilityForExcel(product.status),
     link: generateProductUrlForExcel(product),
     'image link': extractPrimaryImageForExcel(product),
@@ -275,7 +289,7 @@ export function transformProductForExcel(product: any): GoogleMerchantExcelRow {
     ...(extractAdditionalImagesForExcel(product) && {
       'additional image link': extractAdditionalImagesForExcel(product),
     }),
-    condition: product.condition || 'new',
+    condition: product.condition ?? 'new',
     adult: 'no', // Par défaut pour décoration/mobilier
 
     // COLONNES VARIANTES PRODUIT (17-19)
@@ -308,7 +322,7 @@ export function transformProductForExcel(product: any): GoogleMerchantExcelRow {
  * Transforme un tableau de produits en données Excel
  */
 export function transformProductsForExcel(
-  products: any[]
+  products: ProductInput[]
 ): GoogleMerchantExcelRow[] {
   return products.map(product => transformProductForExcel(product));
 }
@@ -346,7 +360,7 @@ export function validateExcelRow(row: GoogleMerchantExcelRow): {
 /**
  * Prépare les données pour l'export Excel avec validation
  */
-export function prepareExcelData(products: any[]): {
+export function prepareExcelData(products: ProductInput[]): {
   data: GoogleMerchantExcelRow[];
   errors: Array<{ productId: string; errors: string[] }>;
   summary: { total: number; valid: number; invalid: number };
@@ -362,7 +376,7 @@ export function prepareExcelData(products: any[]): {
       validProducts.push(row);
     } else {
       errors.push({
-        productId: products[index]?.id || `index-${index}`,
+        productId: products[index]?.id ?? `index-${index}`,
         errors: validation.errors,
       });
     }

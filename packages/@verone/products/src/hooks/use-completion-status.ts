@@ -54,5 +54,6 @@ export function useCompletionStatus(
       variant: 'destructive',
       icon: '⚠️',
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Using product.completion_percentage directly; adding product object would cause unnecessary recalculations
   }, [product.completion_percentage]);
 }

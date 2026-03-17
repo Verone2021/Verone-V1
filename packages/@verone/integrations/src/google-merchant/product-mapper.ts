@@ -18,7 +18,7 @@ type Subcategory = Database['public']['Tables']['subcategories']['Row'] & {
 // Constantes Configuration
 const DEFAULT_MARGIN_PERCENTAGE = 30; // 30% margin par défaut si non spécifié
 const MAX_ADDITIONAL_IMAGES = 10; // Google limite à 10 images supplémentaires
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
 
 /**
  * Données produit complètes avec relations chargées
@@ -125,7 +125,7 @@ function calculateSellingPrice(
  * Génère l'URL publique du produit sur le site Vérone
  */
 function generateProductUrl(product: Product): string {
-  const slug = product.slug || product.sku.toLowerCase();
+  const slug = product.slug ?? product.sku.toLowerCase();
   return `${BASE_URL}/produits/${slug}`;
 }
 
@@ -138,7 +138,7 @@ function extractImageUrls(images: ProductImage[]): {
 } {
   // Trier par display_order ASC
   const sortedImages = [...images].sort(
-    (a, b) => (a.display_order || 0) - (b.display_order || 0)
+    (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
   );
 
   // Filtrer images avec public_url valide
@@ -227,12 +227,12 @@ export function mapSupabaseToGoogleMerchant(
 
   // Mapping availability (priorité stock_status, fallback product_status)
   const availability =
-    STOCK_STATUS_AVAILABILITY_MAP[product.stock_status || ''] ||
-    PRODUCT_STATUS_AVAILABILITY_MAP[product.product_status || ''] ||
+    STOCK_STATUS_AVAILABILITY_MAP[product.stock_status ?? ''] ??
+    PRODUCT_STATUS_AVAILABILITY_MAP[product.product_status ?? ''] ??
     'out of stock';
 
   // Mapping condition
-  const condition = CONDITION_MAP[product.condition || 'new'] || 'new';
+  const condition = CONDITION_MAP[product.condition ?? 'new'] ?? 'new';
 
   // Génération URL produit
   const productUrl = generateProductUrl(product);
@@ -244,7 +244,7 @@ export function mapSupabaseToGoogleMerchant(
   const productInput: GoogleMerchantProductInput = {
     offerId: product.sku,
     title: product.name,
-    description: product.description || product.name, // Fallback sur title si pas de description
+    description: product.description ?? product.name, // Fallback sur title si pas de description
     link: productUrl,
     imageLink,
     contentLanguage: GOOGLE_MERCHANT_CONFIG.contentLanguage,

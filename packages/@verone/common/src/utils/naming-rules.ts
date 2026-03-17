@@ -20,7 +20,7 @@ interface Product {
   display_order?: number;
 }
 
-interface Collection {
+interface _Collection {
   id: string;
   name: string;
   description?: string;
@@ -58,7 +58,7 @@ export function generateCollectionItemName(
   }
 
   // Étape 4: Utiliser le nom nettoyé ou le nom de la collection par défaut
-  return cleanedName || collectionName;
+  return cleanedName ?? collectionName;
 }
 
 /**
@@ -174,8 +174,7 @@ function areSimilarNames(name1: string, name2: string): boolean {
 
   // Similaires si identiques ou si l'un contient l'autre
   return (
-    normalized1 === normalized2 ||
-    normalized1.includes(normalized2) ||
+    (normalized1 === normalized2 || normalized1.includes(normalized2)) ??
     normalized2.includes(normalized1)
   );
 }
@@ -201,8 +200,8 @@ export function sortVariantSiblings(
 
     if (aInStock && bInStock) {
       // Toutes deux en stock : trier par display_order puis nom
-      const aSortOrder = a.display_order || 999;
-      const bSortOrder = b.display_order || 999;
+      const aSortOrder = a.display_order ?? 999;
+      const bSortOrder = b.display_order ?? 999;
 
       if (aSortOrder !== bSortOrder) {
         return aSortOrder - bSortOrder;
@@ -231,16 +230,16 @@ export function generateSKU(
   if (variantAttributes) {
     // Extraire et encoder les attributs principaux
     const colorCode =
-      extractAttributeCode(variantAttributes, 'couleur', 'color') || 'DEF';
+      extractAttributeCode(variantAttributes, 'couleur', 'color') ?? 'DEF';
     const materialCode =
       extractAttributeCode(
         variantAttributes,
         'matiere',
         'material',
         'matière'
-      ) || 'DEF';
+      ) ?? 'DEF';
     const sizeCode =
-      extractAttributeCode(variantAttributes, 'taille', 'size', 'dimension') ||
+      extractAttributeCode(variantAttributes, 'taille', 'size', 'dimension') ??
       '';
 
     parts.push(colorCode, materialCode);
@@ -259,8 +258,8 @@ function extractAttributeCode(
 ): string | null {
   for (const key of possibleKeys) {
     const value =
-      attributes[key] ||
-      attributes[key.toLowerCase()] ||
+      attributes[key] ??
+      attributes[key.toLowerCase()] ??
       attributes[key.toUpperCase()];
     if (value) {
       return encodeAttributeValue(value);
@@ -383,10 +382,10 @@ function findAttributeValue(
 ): string | null {
   for (const key of possibleKeys) {
     const value =
-      attributes[key] ||
-      attributes[key.toLowerCase()] ||
+      attributes[key] ??
+      attributes[key.toLowerCase()] ??
       attributes[key.toUpperCase()];
-    if (value && value.trim()) {
+    if (value?.trim()) {
       return value.trim();
     }
   }

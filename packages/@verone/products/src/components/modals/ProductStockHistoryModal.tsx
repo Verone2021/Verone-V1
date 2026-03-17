@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises */
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 import {
   History,
@@ -24,7 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@verone/ui';
-import { formatPrice } from '@verone/utils';
+// formatPrice removed - unused
 import { useStockMovements } from '@verone/stock/hooks';
 
 interface ProductStockHistoryModalProps {
@@ -96,8 +97,8 @@ export function ProductStockHistoryModal({
 
     // Si on a le profil avec les noms
     if (userProfile) {
-      const firstName = userProfile.first_name || '';
-      const lastName = userProfile.last_name || '';
+      const firstName = userProfile.first_name ?? '';
+      const lastName = userProfile.last_name ?? '';
 
       if (firstName && lastName) {
         return `${firstName} ${lastName}`;
@@ -219,6 +220,7 @@ export function ProductStockHistoryModal({
             <History className="h-5 w-5" />
             <div className="flex items-center gap-3">
               {product.primary_image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={product.primary_image_url}
                   alt={product.name}

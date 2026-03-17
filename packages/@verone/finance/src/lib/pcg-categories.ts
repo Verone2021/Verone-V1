@@ -1222,7 +1222,7 @@ export function getPcgPath(code: string): string[] {
  */
 export function getPcgFullLabel(code: string): string {
   const path = getPcgPath(code);
-  return path.map(c => getPcgCategory(c)?.label || c).join(' > ');
+  return path.map(c => getPcgCategory(c)?.label ?? c).join(' > ');
 }
 
 /**
@@ -1243,7 +1243,7 @@ export function groupByPcgClass(
 
   for (const item of items) {
     const classCode = item.pcgCode.substring(0, 2);
-    const current = grouped.get(classCode) || 0;
+    const current = grouped.get(classCode) ?? 0;
     grouped.set(classCode, current + Math.abs(item.amount));
   }
 
@@ -1252,7 +1252,7 @@ export function groupByPcgClass(
       const category = getPcgCategory(code);
       return {
         code,
-        label: category?.label || `Classe ${code}`,
+        label: category?.label ?? `Classe ${code}`,
         total,
       };
     })

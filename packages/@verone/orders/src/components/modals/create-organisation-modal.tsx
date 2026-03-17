@@ -120,8 +120,8 @@ export function CreateOrganisationModal({
       billing_address_line1: address.streetAddress,
       billing_city: address.city,
       billing_postal_code: address.postalCode,
-      billing_region: address.region || '',
-      billing_country: address.countryCode || 'FR',
+      billing_region: address.region ?? '',
+      billing_country: address.countryCode ?? 'FR',
     }));
   };
 
@@ -132,8 +132,8 @@ export function CreateOrganisationModal({
       shipping_address_line1: address.streetAddress,
       shipping_city: address.city,
       shipping_postal_code: address.postalCode,
-      shipping_region: address.region || '',
-      shipping_country: address.countryCode || 'FR',
+      shipping_region: address.region ?? '',
+      shipping_country: address.countryCode ?? 'FR',
     }));
   };
 
@@ -157,7 +157,7 @@ export function CreateOrganisationModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {trigger || (
+        {trigger ?? (
           <ButtonV2 variant="outline" size="sm" className="border-black">
             <Plus className="h-4 w-4 mr-2" />
             {getDefaultLabel()}
@@ -202,7 +202,7 @@ export function CreateOrganisationModal({
                     </Label>
                     <Input
                       id="name"
-                      value={formData.legal_name || ''}
+                      value={formData.legal_name ?? ''}
                       onChange={e =>
                         handleInputChange('legal_name', e.target.value)
                       }
@@ -239,7 +239,7 @@ export function CreateOrganisationModal({
                     <Input
                       id="email"
                       type="email"
-                      value={formData.email || ''}
+                      value={formData.email ?? ''}
                       onChange={e => handleInputChange('email', e.target.value)}
                       placeholder="contact@entreprise.fr"
                       className="border-black"
@@ -251,7 +251,7 @@ export function CreateOrganisationModal({
                     <Label htmlFor="phone">Téléphone</Label>
                     <Input
                       id="phone"
-                      value={formData.phone || ''}
+                      value={formData.phone ?? ''}
                       onChange={e => handleInputChange('phone', e.target.value)}
                       placeholder="+33 1 23 45 67 89"
                       className="border-black"
@@ -264,7 +264,7 @@ export function CreateOrganisationModal({
                     <Input
                       id="website"
                       type="url"
-                      value={formData.website || ''}
+                      value={formData.website ?? ''}
                       onChange={e =>
                         handleInputChange('website', e.target.value)
                       }
@@ -278,7 +278,7 @@ export function CreateOrganisationModal({
                     <Label htmlFor="country">Pays</Label>
                     <Input
                       id="country"
-                      value={formData.country || ''}
+                      value={formData.country ?? ''}
                       onChange={e =>
                         handleInputChange('country', e.target.value)
                       }
@@ -315,7 +315,7 @@ export function CreateOrganisationModal({
                   {/* Autocomplete adresse de facturation */}
                   <div className="col-span-2">
                     <AddressAutocomplete
-                      value={formData.billing_address_line1 || ''}
+                      value={formData.billing_address_line1 ?? ''}
                       onChange={value =>
                         handleInputChange('billing_address_line1', value)
                       }
@@ -333,7 +333,7 @@ export function CreateOrganisationModal({
                       </Label>
                       <Input
                         id="billing_address_line2"
-                        value={formData.billing_address_line2 || ''}
+                        value={formData.billing_address_line2 ?? ''}
                         onChange={e =>
                           handleInputChange(
                             'billing_address_line2',
@@ -349,7 +349,7 @@ export function CreateOrganisationModal({
                       <Label htmlFor="billing_postal_code">Code postal</Label>
                       <Input
                         id="billing_postal_code"
-                        value={formData.billing_postal_code || ''}
+                        value={formData.billing_postal_code ?? ''}
                         onChange={e =>
                           handleInputChange(
                             'billing_postal_code',
@@ -365,7 +365,7 @@ export function CreateOrganisationModal({
                       <Label htmlFor="billing_city">Ville</Label>
                       <Input
                         id="billing_city"
-                        value={formData.billing_city || ''}
+                        value={formData.billing_city ?? ''}
                         onChange={e =>
                           handleInputChange('billing_city', e.target.value)
                         }
@@ -378,7 +378,7 @@ export function CreateOrganisationModal({
                       <Label htmlFor="billing_region">Région</Label>
                       <Input
                         id="billing_region"
-                        value={formData.billing_region || ''}
+                        value={formData.billing_region ?? ''}
                         onChange={e =>
                           handleInputChange('billing_region', e.target.value)
                         }
@@ -391,7 +391,7 @@ export function CreateOrganisationModal({
                       <Label htmlFor="billing_country">Pays</Label>
                       <Input
                         id="billing_country"
-                        value={formData.billing_country || ''}
+                        value={formData.billing_country ?? ''}
                         onChange={e =>
                           handleInputChange('billing_country', e.target.value)
                         }
@@ -429,7 +429,7 @@ export function CreateOrganisationModal({
                       {/* Autocomplete adresse de livraison */}
                       <div className="col-span-2">
                         <AddressAutocomplete
-                          value={formData.shipping_address_line1 || ''}
+                          value={formData.shipping_address_line1 ?? ''}
                           onChange={value =>
                             handleInputChange('shipping_address_line1', value)
                           }
@@ -447,7 +447,7 @@ export function CreateOrganisationModal({
                           </Label>
                           <Input
                             id="shipping_address_line2"
-                            value={formData.shipping_address_line2 || ''}
+                            value={formData.shipping_address_line2 ?? ''}
                             onChange={e =>
                               handleInputChange(
                                 'shipping_address_line2',
@@ -465,7 +465,7 @@ export function CreateOrganisationModal({
                           </Label>
                           <Input
                             id="shipping_postal_code"
-                            value={formData.shipping_postal_code || ''}
+                            value={formData.shipping_postal_code ?? ''}
                             onChange={e =>
                               handleInputChange(
                                 'shipping_postal_code',
@@ -481,7 +481,7 @@ export function CreateOrganisationModal({
                           <Label htmlFor="shipping_city">Ville</Label>
                           <Input
                             id="shipping_city"
-                            value={formData.shipping_city || ''}
+                            value={formData.shipping_city ?? ''}
                             onChange={e =>
                               handleInputChange('shipping_city', e.target.value)
                             }
@@ -494,7 +494,7 @@ export function CreateOrganisationModal({
                           <Label htmlFor="shipping_region">Région</Label>
                           <Input
                             id="shipping_region"
-                            value={formData.shipping_region || ''}
+                            value={formData.shipping_region ?? ''}
                             onChange={e =>
                               handleInputChange(
                                 'shipping_region',
@@ -510,7 +510,7 @@ export function CreateOrganisationModal({
                           <Label htmlFor="shipping_country">Pays</Label>
                           <Input
                             id="shipping_country"
-                            value={formData.shipping_country || ''}
+                            value={formData.shipping_country ?? ''}
                             onChange={e =>
                               handleInputChange(
                                 'shipping_country',
@@ -536,7 +536,7 @@ export function CreateOrganisationModal({
                     <Label htmlFor="siret">SIRET</Label>
                     <Input
                       id="siret"
-                      value={formData.siret || ''}
+                      value={formData.siret ?? ''}
                       onChange={e => handleInputChange('siret', e.target.value)}
                       placeholder="123 456 789 00012"
                       className="border-black"
@@ -547,7 +547,7 @@ export function CreateOrganisationModal({
                     <Label htmlFor="vat_number">Numéro TVA</Label>
                     <Input
                       id="vat_number"
-                      value={formData.vat_number || ''}
+                      value={formData.vat_number ?? ''}
                       onChange={e =>
                         handleInputChange('vat_number', e.target.value)
                       }
@@ -560,7 +560,7 @@ export function CreateOrganisationModal({
                     <Label htmlFor="legal_form">Forme juridique</Label>
                     <Input
                       id="legal_form"
-                      value={formData.legal_form || ''}
+                      value={formData.legal_form ?? ''}
                       onChange={e =>
                         handleInputChange('legal_form', e.target.value)
                       }
@@ -573,7 +573,7 @@ export function CreateOrganisationModal({
                     <Label htmlFor="industry_sector">Secteur d'activité</Label>
                     <Input
                       id="industry_sector"
-                      value={formData.industry_sector || ''}
+                      value={formData.industry_sector ?? ''}
                       onChange={e =>
                         handleInputChange('industry_sector', e.target.value)
                       }
@@ -595,7 +595,7 @@ export function CreateOrganisationModal({
                     </Label>
                     <Input
                       id="payment_terms"
-                      value={formData.payment_terms || ''}
+                      value={formData.payment_terms ?? ''}
                       onChange={e =>
                         handleInputChange('payment_terms', e.target.value)
                       }
@@ -624,7 +624,7 @@ export function CreateOrganisationModal({
                     <Label htmlFor="notes">Notes internes</Label>
                     <Textarea
                       id="notes"
-                      value={formData.notes || ''}
+                      value={formData.notes ?? ''}
                       onChange={e => handleInputChange('notes', e.target.value)}
                       placeholder="Informations complémentaires..."
                       className="border-black min-h-[100px]"

@@ -9,7 +9,7 @@ import type { Database } from '@verone/utils/supabase/types';
 type ProductImage = Database['public']['Tables']['product_images']['Row'];
 type ProductImageInsert =
   Database['public']['Tables']['product_images']['Insert'];
-type ProductImageUpdate =
+type _ProductImageUpdate =
   Database['public']['Tables']['product_images']['Update'];
 
 // Types enum simplifiés selon la nouvelle table
@@ -71,7 +71,7 @@ export function useProductImages({
         productId,
         imagesCount: data?.length || 0,
       });
-      setImages((data || []) as any);
+      setImages((data ?? []) as ProductImage[]);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Erreur chargement images';
@@ -128,7 +128,7 @@ export function useProductImages({
 
         const nextOrder =
           existingImages && existingImages.length > 0
-            ? (existingImages[0].display_order || 0) + 1
+            ? (existingImages[0].display_order ?? 0) + 1
             : 0;
 
         // 🎯 Create database record - triggers gèrent primary + URL automatiquement
@@ -136,11 +136,11 @@ export function useProductImages({
           product_id: productId,
           storage_path: uploadData.path,
           display_order: nextOrder,
-          is_primary: options.isPrimary || false,
-          image_type: options.imageType || 'gallery',
-          alt_text: options.altText || file.name,
+          is_primary: options.isPrimary ?? false,
+          image_type: options.imageType ?? 'gallery',
+          alt_text: options.altText ?? file.name,
           file_size: file.size,
-          format: fileExt || 'jpg',
+          format: fileExt ?? 'jpg',
           width: undefined, // Sera ajouté plus tard si nécessaire
           height: undefined,
           created_by: undefined, // Supabase auth automatique
@@ -182,6 +182,7 @@ export function useProductImages({
         setUploading(false);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchImages causes infinite loop if added
     [productId, bucketName, supabase]
   );
 
@@ -201,7 +202,7 @@ export function useProductImages({
         const file = files[i];
         try {
           const result = await uploadImage(file, {
-            imageType: options.imageType || 'gallery',
+            imageType: options.imageType ?? 'gallery',
             altText: options.altTextPrefix
               ? `${options.altTextPrefix} ${i + 1}`
               : file.name,
@@ -220,6 +221,7 @@ export function useProductImages({
 
       return results;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- productId accessed via closure, adding it would cause refetch loop
     [uploadImage]
   );
 
@@ -272,6 +274,7 @@ export function useProductImages({
         throw err;
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchImages causes infinite loop if added
     [bucketName, supabase]
   );
 
@@ -307,6 +310,7 @@ export function useProductImages({
         throw err;
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchImages and productId cause infinite loop if added
     [supabase]
   );
 
@@ -340,6 +344,7 @@ export function useProductImages({
         throw err;
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchImages causes infinite loop if added
     [supabase]
   );
 
@@ -379,12 +384,13 @@ export function useProductImages({
         throw err;
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchImages causes infinite loop if added
     [supabase]
   );
 
   // 🎯 Helpers optimisés
   const getPrimaryImage = useCallback(() => {
-    return images.find(img => img.is_primary) || images[0] || null;
+    return images.find(img => img.is_primary) ?? images[0] ?? null;
   }, [images]);
 
   const getImagesByType = useCallback(
@@ -401,9 +407,10 @@ export function useProductImages({
         operation: 'auto_fetch_images',
         productId,
       });
-      fetchImages();
+      void fetchImages();
     }
-  }, [productId, autoFetch]); // Supprimé fetchImages des dépendances
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchImages causes infinite loop if added
+  }, [productId, autoFetch]);
 
   return {
     // 📊 Data
@@ -485,8 +492,8 @@ export function useProductImagesBatch(productIds: string[]) {
 
         // Grouper par product_id (cast as ProductImage pour compatibilité)
         const map = new Map<string, ProductImage[]>();
-        ((data || []) as ProductImage[]).forEach(img => {
-          const existing = map.get(img.product_id) || [];
+        ((data ?? []) as ProductImage[]).forEach(img => {
+          const existing = map.get(img.product_id) ?? [];
           existing.push(img);
           map.set(img.product_id, existing);
         });
@@ -494,7 +501,7 @@ export function useProductImagesBatch(productIds: string[]) {
         logger.info('Batch images chargées', {
           operation: 'batch_fetch_product_images',
           productCount: validIds.length,
-          imageCount: data?.length || 0,
+          imageCount: data?.length ?? 0,
         });
 
         setImagesMap(map);
@@ -510,7 +517,7 @@ export function useProductImagesBatch(productIds: string[]) {
       }
     };
 
-    fetchBatch();
+    void fetchBatch();
   }, [productIdsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Helper pour obtenir image primaire d'un produit
@@ -518,7 +525,7 @@ export function useProductImagesBatch(productIds: string[]) {
     (productId: string): ProductImage | null => {
       const images = imagesMap.get(productId);
       if (!images || images.length === 0) return null;
-      return images.find(img => img.is_primary) || images[0] || null;
+      return images.find(img => img.is_primary) ?? images[0] ?? null;
     },
     [imagesMap]
   );
@@ -528,6 +535,6 @@ export function useProductImagesBatch(productIds: string[]) {
     loading,
     error,
     getPrimaryImage,
-    getImagesForProduct: (productId: string) => imagesMap.get(productId) || [],
+    getImagesForProduct: (productId: string) => imagesMap.get(productId) ?? [],
   };
 }

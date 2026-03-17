@@ -60,9 +60,9 @@ export function LegalIdentityEditSection({
   const handleStartEdit = () => {
     startEdit(section, {
       legal_name: organisation.legal_name,
-      trade_name: organisation.trade_name || '',
-      has_different_trade_name: organisation.has_different_trade_name || false,
-      siret: organisation.siret || '',
+      trade_name: organisation.trade_name ?? '',
+      has_different_trade_name: organisation.has_different_trade_name ?? false,
+      siret: organisation.siret ?? '',
     });
   };
 
@@ -132,7 +132,7 @@ export function LegalIdentityEditSection({
       }
     }
 
-    updateEditedData(section, { [field]: processedValue || null });
+    updateEditedData(section, { [field]: processedValue ?? null });
 
     // Si on décoche has_different_trade_name, vider trade_name
     if (field === 'has_different_trade_name' && !value) {
@@ -180,7 +180,7 @@ export function LegalIdentityEditSection({
             </label>
             <input
               type="text"
-              value={editData?.legal_name || ''}
+              value={editData?.legal_name ?? ''}
               onChange={e => handleFieldChange('legal_name', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="Nom officiel enregistré au RCS"
@@ -197,7 +197,7 @@ export function LegalIdentityEditSection({
             <input
               type="checkbox"
               id="has_different_trade_name"
-              checked={editData?.has_different_trade_name || false}
+              checked={editData?.has_different_trade_name ?? false}
               onChange={e =>
                 handleFieldChange('has_different_trade_name', e.target.checked)
               }
@@ -219,7 +219,7 @@ export function LegalIdentityEditSection({
               </label>
               <input
                 type="text"
-                value={editData?.trade_name || ''}
+                value={editData?.trade_name ?? ''}
                 onChange={e => handleFieldChange('trade_name', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                 placeholder="Nom utilisé publiquement"
@@ -238,7 +238,7 @@ export function LegalIdentityEditSection({
             </label>
             <input
               type="text"
-              value={editData?.siret || ''}
+              value={editData?.siret ?? ''}
               onChange={e => handleFieldChange('siret', e.target.value)}
               className={cn(
                 'w-full px-3 py-2 font-mono border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black',

@@ -29,14 +29,7 @@ import {
 } from '@verone/ui';
 import { formatCurrency, formatDate } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
-import {
-  FlaskConical,
-  Eye,
-  Package,
-  Calendar,
-  Euro,
-  ShoppingCart,
-} from 'lucide-react';
+import { FlaskConical, Eye } from 'lucide-react';
 
 interface SampleItem {
   id: string;
@@ -78,7 +71,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 export function CustomerSamplesSection({
   customerId,
   customerName,
-  className,
+  className: _className,
 }: CustomerSamplesSectionProps) {
   const [samples, setSamples] = useState<SampleItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -132,15 +125,18 @@ export function CustomerSamplesSection({
       }
 
       // Mapper les données avec les bons types
-      const mappedSamples: SampleItem[] = (data || []).map((item: any) => ({
-        id: item.id,
-        product_id: item.product_id,
-        quantity: item.quantity,
-        unit_price_ht: item.unit_price_ht,
-        total_ht: item.total_ht,
-        product: item.product,
-        sales_order: item.sales_order,
-      }));
+
+      const mappedSamples: SampleItem[] = (data ?? []).map(
+        (item: Record<string, unknown>) => ({
+          id: item.id as string,
+          product_id: item.product_id as string,
+          quantity: item.quantity as number,
+          unit_price_ht: item.unit_price_ht as number,
+          total_ht: item.total_ht as number,
+          product: item.product as SampleItem['product'],
+          sales_order: item.sales_order as SampleItem['sales_order'],
+        })
+      );
 
       setSamples(mappedSamples);
     } catch (err) {
@@ -152,7 +148,7 @@ export function CustomerSamplesSection({
   }, [customerId]);
 
   useEffect(() => {
-    fetchSamples();
+    void fetchSamples();
   }, [fetchSamples]);
 
   // Calculer statistiques
@@ -285,7 +281,7 @@ export function CustomerSamplesSection({
                   <TableCell>
                     <div>
                       <div className="font-medium text-black">
-                        {sample.product?.name || 'Produit inconnu'}
+                        {sample.product?.name ?? 'Produit inconnu'}
                       </div>
                       {sample.product?.sku && (
                         <div className="text-xs text-gray-500">
@@ -305,7 +301,7 @@ export function CustomerSamplesSection({
                   </TableCell>
                   <TableCell>
                     <span className="font-mono text-sm">
-                      {sample.sales_order?.order_number || '-'}
+                      {sample.sales_order?.order_number ?? '-'}
                     </span>
                   </TableCell>
                   <TableCell className="text-sm text-gray-600">

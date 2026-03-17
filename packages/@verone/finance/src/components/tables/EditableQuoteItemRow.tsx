@@ -83,7 +83,15 @@ export function EditableQuoteItemRow({
         ? String((item.retrocession_rate * 100).toFixed(1))
         : ''
     );
-  }, [item.id, item.retrocession_rate]);
+  }, [
+    item.id,
+    item.retrocession_rate,
+    item.quantity,
+    item.unit_price_ht,
+    item.tva_rate,
+    item.discount_percentage,
+    item.description,
+  ]);
 
   // Is this a catalogue item (linked to a product)?
   const isCatalogue = item.product_id !== null;
@@ -182,6 +190,7 @@ export function EditableQuoteItemRow({
           <div className="flex gap-3 items-center">
             <div className="flex-shrink-0">
               {item.product!.image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={item.product!.image_url}
                   alt={item.product!.name}

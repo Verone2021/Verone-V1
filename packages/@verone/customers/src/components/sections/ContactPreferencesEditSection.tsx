@@ -1,4 +1,3 @@
-// @ts-nocheck - Types manquants
 'use client';
 
 import {
@@ -42,8 +41,8 @@ export function ContactPreferencesEditSection({
     hasChanges,
   } = useInlineEdit({
     contactId: contact.id,
-    onUpdate: updatedData => {
-      onUpdate(updatedData);
+    onUpdate: (updatedData: unknown) => {
+      onUpdate(updatedData as Partial<Contact>);
     },
     onError: error => {
       console.error('❌ Erreur mise à jour préférences:', error);
@@ -51,23 +50,25 @@ export function ContactPreferencesEditSection({
   });
 
   const section: EditableSection = 'preferences';
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as
+    | Record<string, string | boolean | null>
+    | undefined;
   const error = getError(section);
 
   const handleStartEdit = () => {
     startEdit(section, {
       preferred_communication_method:
-        contact.preferred_communication_method || 'email',
-      accepts_marketing: contact.accepts_marketing || false,
-      accepts_notifications: contact.accepts_notifications || false,
-      language_preference: contact.language_preference || 'fr',
+        contact.preferred_communication_method ?? 'email',
+      accepts_marketing: contact.accepts_marketing ?? false,
+      accepts_notifications: contact.accepts_notifications ?? false,
+      language_preference: contact.language_preference ?? 'fr',
     });
   };
 
   const handleSave = async () => {
     const success = await saveChanges(section);
     if (success) {
-      console.log('✅ Préférences mises à jour avec succès');
+      console.warn('✅ Préférences mises à jour avec succès');
     }
   };
 
@@ -75,7 +76,7 @@ export function ContactPreferencesEditSection({
     cancelEdit(section);
   };
 
-  const handleFieldChange = (field: string, value: any) => {
+  const handleFieldChange = (field: string, value: string | boolean) => {
     updateEditedData(section, { [field]: value });
   };
 
@@ -143,7 +144,9 @@ export function ContactPreferencesEditSection({
             <ButtonV2
               variant="secondary"
               size="sm"
-              onClick={handleSave}
+              onClick={() => {
+                void handleSave();
+              }}
               disabled={!hasChanges(section) || isSaving(section)}
             >
               <Save className="h-3 w-3 mr-1" />
@@ -183,7 +186,8 @@ export function ContactPreferencesEditSection({
                     name="communication_method"
                     value={option.value}
                     checked={
-                      editData?.preferred_communication_method === option.value
+                      (editData?.preferred_communication_method as string) ===
+                      option.value
                     }
                     onChange={e =>
                       handleFieldChange(
@@ -213,7 +217,7 @@ export function ContactPreferencesEditSection({
               Langue préférée
             </label>
             <select
-              value={editData?.language_preference || 'fr'}
+              value={(editData?.language_preference as string) ?? 'fr'}
               onChange={e =>
                 handleFieldChange('language_preference', e.target.value)
               }
@@ -233,7 +237,7 @@ export function ContactPreferencesEditSection({
               <input
                 type="checkbox"
                 id="accepts_marketing"
-                checked={editData?.accepts_marketing || false}
+                checked={(editData?.accepts_marketing as boolean) ?? false}
                 onChange={e =>
                   handleFieldChange('accepts_marketing', e.target.checked)
                 }
@@ -256,7 +260,7 @@ export function ContactPreferencesEditSection({
               <input
                 type="checkbox"
                 id="accepts_notifications"
-                checked={editData?.accepts_notifications || false}
+                checked={(editData?.accepts_notifications as boolean) ?? false}
                 onChange={e =>
                   handleFieldChange('accepts_notifications', e.target.checked)
                 }

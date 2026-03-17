@@ -158,7 +158,7 @@ export function checkSLOCompliance(
  * @param wait Délai en ms
  * @returns Fonction debouncée
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: Parameters<T>) => ReturnType<T>>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {

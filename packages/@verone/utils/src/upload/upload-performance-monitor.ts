@@ -156,7 +156,7 @@ export class UploadPerformanceMonitor {
    * 🚀 Initialisation du monitoring
    */
   private initializeMonitoring(): void {
-    console.log('📊 Initialisation monitoring performance uploads');
+    console.warn('📊 Initialisation monitoring performance uploads');
 
     // Nettoyer métriques anciennes (>24h)
     this.cleanupOldMetrics();
@@ -176,7 +176,7 @@ export class UploadPerformanceMonitor {
       metrics => now - metrics.timing.startTime < maxAge
     );
 
-    console.log(
+    console.warn(
       `🧹 Nettoyage: ${this.sessionMetrics.length} métriques conservées`
     );
   }
@@ -191,7 +191,7 @@ export class UploadPerformanceMonitor {
       const stored = localStorage.getItem('verone_upload_trends');
       if (stored) {
         // TODO: Intégrer avec Upstash MCP pour persistance
-        console.log('📈 Tendances historiques chargées');
+        console.warn('📈 Tendances historiques chargées');
       }
     } catch (error) {
       console.warn('⚠️ Impossible de charger tendances:', error);
@@ -261,7 +261,7 @@ export class UploadPerformanceMonitor {
     };
 
     this.metrics.set(uploadId, metrics);
-    console.log(`📊 Monitoring démarré: ${uploadId}`);
+    console.warn(`📊 Monitoring démarré: ${uploadId}`);
   }
 
   /**
@@ -289,7 +289,7 @@ export class UploadPerformanceMonitor {
     // Vérifier seuils optimisation
     this.checkOptimizationThresholds(uploadId, metrics);
 
-    console.log(
+    console.warn(
       `⏱️ Optimisation: ${optimizationTimeMs}ms, compression: ${details.compressionRatio}%`
     );
   }
@@ -364,7 +364,7 @@ export class UploadPerformanceMonitor {
     // Escalade si nécessaire
     this.handleAlertEscalation(report.alerts);
 
-    console.log(
+    console.warn(
       `🎉 Monitoring terminé: ${uploadId}, score: ${report.score.overall}/100`
     );
 
@@ -435,7 +435,7 @@ export class UploadPerformanceMonitor {
 
     // Log alerts
     alerts.forEach(alert => {
-      console.log(`⚠️ ${alert.type.toUpperCase()}: ${alert.message}`);
+      console.warn(`⚠️ ${alert.type.toUpperCase()}: ${alert.message}`);
     });
   }
 
@@ -448,14 +448,14 @@ export class UploadPerformanceMonitor {
   ): void {
     // Vitesse upload
     if (metrics.network.uploadSpeedKbps < this.thresholds.speedKbpsMin) {
-      console.log(
+      console.warn(
         `🐌 Vitesse lente: ${metrics.network.uploadSpeedKbps}Kbps < ${this.thresholds.speedKbpsMin}Kbps`
       );
     }
 
     // Retry excessifs
     if (metrics.network.retryCount > 3) {
-      console.log(`🔄 Retries excessifs: ${metrics.network.retryCount}`);
+      console.warn(`🔄 Retries excessifs: ${metrics.network.retryCount}`);
     }
   }
 
@@ -691,7 +691,7 @@ export class UploadPerformanceMonitor {
 
     criticalAlerts.forEach(alert => {
       if (alert.mcpAction === 'console_escalation') {
-        console.log(`🚨 Escalade alerte critique: ${alert.message}`);
+        console.warn(`🚨 Escalade alerte critique: ${alert.message}`);
       }
     });
   }
@@ -699,7 +699,10 @@ export class UploadPerformanceMonitor {
   /**
    * 💥 Escalade erreur critique
    */
-  private escalateCriticalError(uploadId: string, error: any): void {
+  private escalateCriticalError(
+    uploadId: string,
+    error: { type: string; message: string; critical: boolean; phase: string }
+  ): void {
     console.error(`💥 Erreur critique upload ${uploadId}:`, error);
 
     // TODO: Notification temps réel si configuré

@@ -27,8 +27,6 @@ import type {
   ValidateShipmentPayload,
   ShipmentHistory,
   ReceptionShipmentStats,
-  ShipmentCarrierInfo,
-  ShippingAddress,
 } from '@verone/types';
 import { createClient } from '@verone/utils/supabase/client';
 import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
@@ -49,7 +47,7 @@ export interface SalesOrderForShipment {
   customer_name?: string; // Chargé dynamiquement selon customer_type
 
   // Shipping address (pré-remplir formulaire)
-  shipping_address?: any;
+  shipping_address?: Record<string, unknown>;
 
   // Relations jointes (polymorphiques)
   organisations?: {
@@ -153,7 +151,8 @@ export function useSalesShipments() {
 
         // Charger nom client selon customer_type (relation polymorphique)
         let customerName = 'Client inconnu';
-        let organisationData: any = null;
+        let organisationData: SalesOrderForShipment['organisations'] | null =
+          null;
 
         if (data.customer_type === 'organization' && data.customer_id) {
           const { data: org } = await supabase
@@ -206,17 +205,17 @@ export function useSalesShipments() {
     (salesOrder: SalesOrderForShipment): ShipmentItem[] => {
       return salesOrder.sales_order_items.map(item => {
         const quantityOrdered = item.quantity;
-        const quantityAlreadyShipped = item.quantity_shipped || 0;
+        const quantityAlreadyShipped = item.quantity_shipped ?? 0;
         const quantityRemaining = quantityOrdered - quantityAlreadyShipped;
-        const stockAvailable = item.products.stock_real || 0;
+        const stockAvailable = item.products.stock_real ?? 0;
 
         // Extraire l'image principale du produit
         const primaryImage = item.products.product_images?.find(
           img => img.is_primary
         );
         const imageUrl =
-          primaryImage?.public_url ||
-          item.products.product_images?.[0]?.public_url ||
+          primaryImage?.public_url ??
+          item.products.product_images?.[0]?.public_url ??
           null;
 
         return {
@@ -294,9 +293,7 @@ export function useSalesShipments() {
           // Résoudre les noms des expéditeurs (shipped_by UUID → nom)
           const shippedByIds = [
             ...new Set(
-              shipments
-                .filter(s => s.shipped_by)
-                .map(s => s.shipped_by as string)
+              shipments.filter(s => s.shipped_by).map(s => s.shipped_by)
             ),
           ];
           const profilesMap = new Map<string, string>();
@@ -332,8 +329,8 @@ export function useSalesShipments() {
               img => img.is_primary
             );
             const imageUrl =
-              primaryImage?.public_url ||
-              product?.product_images?.[0]?.public_url ||
+              primaryImage?.public_url ??
+              product?.product_images?.[0]?.public_url ??
               undefined;
 
             if (!grouped.has(key)) {
@@ -344,17 +341,17 @@ export function useSalesShipments() {
                 items: [],
                 total_quantity: 0,
                 delivery_status: 'delivered',
-                tracking_number: s.tracking_number || undefined,
+                tracking_number: s.tracking_number ?? undefined,
                 shipped_by_name: s.shipped_by
-                  ? profilesMap.get(s.shipped_by) || undefined
+                  ? (profilesMap.get(s.shipped_by) ?? undefined)
                   : undefined,
-                notes: s.notes || undefined,
+                notes: s.notes ?? undefined,
               });
             }
             const h = grouped.get(key)!;
             h.items.push({
-              product_name: product?.name || 'Produit inconnu',
-              product_sku: product?.sku || '-',
+              product_name: product?.name ?? 'Produit inconnu',
+              product_sku: product?.sku ?? '-',
               quantity_shipped: s.quantity_shipped,
               product_image_url: imageUrl,
             });
@@ -394,8 +391,8 @@ export function useSalesShipments() {
             grouped.set(key, {
               shipment_id: m.id,
               shipped_at: m.performed_at,
-              carrier_name: m.carrier_name || 'Manuel',
-              tracking_number: m.tracking_number || undefined,
+              carrier_name: m.carrier_name ?? 'Manuel',
+              tracking_number: m.tracking_number ?? undefined,
               items: [],
               total_quantity: 0,
               delivery_status: 'delivered',
@@ -468,11 +465,11 @@ export function useSalesShipments() {
           .lte('expected_delivery_date', threeDays.toISOString().split('T')[0]);
 
         return {
-          total_pending: pending || 0,
-          total_partial: partial || 0,
-          total_completed_today: completedToday || 0,
-          total_overdue: overdue || 0,
-          total_urgent: urgent || 0,
+          total_pending: pending ?? 0,
+          total_partial: partial ?? 0,
+          total_completed_today: completedToday ?? 0,
+          total_overdue: overdue ?? 0,
+          total_urgent: urgent ?? 0,
         };
       } catch (err) {
         console.error('Erreur chargement stats expéditions:', err);
@@ -576,7 +573,7 @@ export function useSalesShipments() {
             )
           `
             )
-            .eq('status', filters.status as any)
+            .eq('status', filters.status)
             .order('expected_delivery_date', {
               ascending: true,
               nullsFirst: false,
@@ -602,17 +599,14 @@ export function useSalesShipments() {
 
         // Charger noms clients selon customer_type (relation polymorphique)
         const orgIds = orders
-          .filter(
-            (o: any) => o.customer_type === 'organization' && o.customer_id
-          )
-          .map((o: any) => o.customer_id);
+          .filter(o => o.customer_type === 'organization' && o.customer_id)
+          .map(o => o.customer_id);
 
         const indivIds = orders
           .filter(
-            (o: any) =>
-              o.customer_type === 'individual' && o.individual_customer_id
+            o => o.customer_type === 'individual' && o.individual_customer_id
           )
-          .map((o: any) => o.individual_customer_id);
+          .map(o => o.individual_customer_id);
 
         // Query organisations si nécessaire
         const organisationsMap = new Map();
@@ -623,8 +617,8 @@ export function useSalesShipments() {
             .in('id', orgIds);
 
           if (orgs) {
-            orgs.forEach((org: any) =>
-              organisationsMap.set(org.id, org.trade_name || org.legal_name)
+            orgs.forEach(org =>
+              organisationsMap.set(org.id, org.trade_name ?? org.legal_name)
             );
           }
         }
@@ -638,7 +632,7 @@ export function useSalesShipments() {
             .in('id', indivIds);
 
           if (indivs) {
-            indivs.forEach((indiv: any) =>
+            indivs.forEach(indiv =>
               individualsMap.set(
                 indiv.id,
                 `${indiv.first_name} ${indiv.last_name}`
@@ -648,15 +642,17 @@ export function useSalesShipments() {
         }
 
         // Enrichir orders avec customer_name
-        const enrichedOrders = orders.map((order: any) => ({
+        const enrichedOrders = orders.map(order => ({
           ...order,
           customer_name:
             order.customer_type === 'organization'
-              ? organisationsMap.get(order.customer_id) ||
-                'Organisation inconnue'
+              ? ((organisationsMap.get(order.customer_id) as
+                  | string
+                  | undefined) ?? 'Organisation inconnue')
               : order.individual_customer_id
-                ? individualsMap.get(order.individual_customer_id) ||
-                  'Client inconnu'
+                ? ((individualsMap.get(order.individual_customer_id) as
+                    | string
+                    | undefined) ?? 'Client inconnu')
                 : 'Particulier',
         }));
 
@@ -743,17 +739,14 @@ export function useSalesShipments() {
 
         // Charger noms clients selon customer_type (relation polymorphique)
         const orgIds = orders
-          .filter(
-            (o: any) => o.customer_type === 'organization' && o.customer_id
-          )
-          .map((o: any) => o.customer_id);
+          .filter(o => o.customer_type === 'organization' && o.customer_id)
+          .map(o => o.customer_id);
 
         const indivIds = orders
           .filter(
-            (o: any) =>
-              o.customer_type === 'individual' && o.individual_customer_id
+            o => o.customer_type === 'individual' && o.individual_customer_id
           )
-          .map((o: any) => o.individual_customer_id);
+          .map(o => o.individual_customer_id);
 
         // Query organisations si nécessaire
         const organisationsMap = new Map();
@@ -764,8 +757,8 @@ export function useSalesShipments() {
             .in('id', orgIds);
 
           if (orgs) {
-            orgs.forEach((org: any) =>
-              organisationsMap.set(org.id, org.trade_name || org.legal_name)
+            orgs.forEach(org =>
+              organisationsMap.set(org.id, org.trade_name ?? org.legal_name)
             );
           }
         }
@@ -779,7 +772,7 @@ export function useSalesShipments() {
             .in('id', indivIds);
 
           if (indivs) {
-            indivs.forEach((indiv: any) =>
+            indivs.forEach(indiv =>
               individualsMap.set(
                 indiv.id,
                 `${indiv.first_name} ${indiv.last_name}`
@@ -789,15 +782,17 @@ export function useSalesShipments() {
         }
 
         // Enrichir orders avec customer_name
-        const enrichedOrders = orders.map((order: any) => ({
+        const enrichedOrders = orders.map(order => ({
           ...order,
           customer_name:
             order.customer_type === 'organization'
-              ? organisationsMap.get(order.customer_id) ||
-                'Organisation inconnue'
+              ? ((organisationsMap.get(order.customer_id) as
+                  | string
+                  | undefined) ?? 'Organisation inconnue')
               : order.individual_customer_id
-                ? individualsMap.get(order.individual_customer_id) ||
-                  'Client inconnu'
+                ? ((individualsMap.get(order.individual_customer_id) as
+                    | string
+                    | undefined) ?? 'Client inconnu')
                 : 'Particulier',
         }));
 

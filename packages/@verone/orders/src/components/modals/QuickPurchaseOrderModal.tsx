@@ -128,21 +128,25 @@ export function QuickPurchaseOrderModal({
             .eq('id', productData.supplier_id)
             .single();
 
-          supplierInfo = supplierData || undefined;
+          supplierInfo = supplierData ?? undefined;
         }
 
         // Extraire l'image principale
         const primaryImageUrl =
-          (productData as any).product_images?.[0]?.public_url || null;
+          (
+            productData as unknown as {
+              product_images?: Array<{ public_url: string }>;
+            }
+          ).product_images?.[0]?.public_url ?? null;
 
         const formattedProduct: ProductData = {
           id: productData.id,
           name: productData.name,
           sku: productData.sku,
-          supplier_id: productData.supplier_id || '',
-          cost_price: productData.cost_price || 0,
-          supplier_moq: productData.supplier_moq || 1,
-          eco_tax_default: productData.eco_tax_default || 0,
+          supplier_id: productData.supplier_id ?? '',
+          cost_price: productData.cost_price ?? 0,
+          supplier_moq: productData.supplier_moq ?? 1,
+          eco_tax_default: productData.eco_tax_default ?? 0,
           primary_image_url: primaryImageUrl,
           supplier: supplierInfo,
         };
@@ -178,7 +182,7 @@ export function QuickPurchaseOrderModal({
       }
     }
 
-    loadData();
+    void loadData();
   }, [open, productId, supabase]);
 
   // ✅ Phase 2.5: Pré-remplir quantité avec MAX(shortage_quantity, MOQ)
@@ -464,7 +468,9 @@ export function QuickPurchaseOrderModal({
             Annuler
           </Button>
           <Button
-            onClick={handleSubmit}
+            onClick={() => {
+              void handleSubmit();
+            }}
             disabled={isLoadingData || isSubmitting || !product}
           >
             {isSubmitting ? (
@@ -491,8 +497,8 @@ export function QuickPurchaseOrderModal({
                 <p>
                   Il manque{' '}
                   <strong>
-                    {(shortageQuantity || 0) - quantity} unité
-                    {(shortageQuantity || 0) - quantity > 1 ? 's' : ''}
+                    {(shortageQuantity ?? 0) - quantity} unité
+                    {(shortageQuantity ?? 0) - quantity > 1 ? 's' : ''}
                   </strong>{' '}
                   pour atteindre le seuil minimum ({shortageQuantity}).
                 </p>
@@ -516,7 +522,7 @@ export function QuickPurchaseOrderModal({
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                setQuantity(shortageQuantity || quantity);
+                setQuantity(shortageQuantity ?? quantity);
                 setShowConfirmModal(false);
                 // L'utilisateur voit la nouvelle quantité, doit re-cliquer pour valider
               }}

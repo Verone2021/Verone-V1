@@ -62,7 +62,7 @@ export function useConsultationsCount(options?: {
     enableRealtime = true,
     refetchInterval = 30000,
     includeBreakdown = false,
-  } = options || {};
+  } = options ?? {};
 
   const [count, setCount] = useState<number>(0);
   const [breakdown, setBreakdown] = useState<{
@@ -111,7 +111,7 @@ export function useConsultationsCount(options?: {
         return; // Sortie anticipée sans exception
       }
 
-      setCount(totalCount || 0);
+      setCount(totalCount ?? 0);
 
       // Breakdown si demandé
       if (includeBreakdown) {
@@ -132,8 +132,8 @@ export function useConsultationsCount(options?: {
           ]);
 
         setBreakdown({
-          pending: pendingCount || 0,
-          inProgress: inProgressCount || 0,
+          pending: pendingCount ?? 0,
+          inProgress: inProgressCount ?? 0,
         });
       }
 
@@ -168,7 +168,9 @@ export function useConsultationsCount(options?: {
       }
 
       // Initial fetch (authentifié)
-      fetchCount();
+      void fetchCount().catch((err: unknown) => {
+        console.error('[useConsultationsCount] Initial fetch error:', err);
+      });
 
       // Setup Realtime si activé ET authentifié
       if (enableRealtime) {
@@ -182,14 +184,10 @@ export function useConsultationsCount(options?: {
               table: 'client_consultations',
             },
             payload => {
-              console.log(
-                '[useConsultationsCount] Realtime change detected:',
-                payload
-              );
               // Refetch seulement si changement impact statut actif
               const eventType = payload.eventType;
-              const newRow = payload.new as any;
-              const oldRow = payload.old as any;
+              const newRow = payload.new as Record<string, unknown>;
+              const oldRow = payload.old as Record<string, unknown>;
 
               // Refetch si:
               // - INSERT avec status actif
@@ -197,7 +195,9 @@ export function useConsultationsCount(options?: {
               // - DELETE (décrémente count)
               const shouldRefetch =
                 (eventType === 'INSERT' &&
-                  ['en_attente', 'en_cours'].includes(newRow?.status)) ||
+                  ['en_attente', 'en_cours'].includes(
+                    newRow?.status as string
+                  )) ||
                 (eventType === 'UPDATE' &&
                   (newRow?.status !== oldRow?.status ||
                     newRow?.archived_at !== oldRow?.archived_at ||
@@ -205,13 +205,15 @@ export function useConsultationsCount(options?: {
                 eventType === 'DELETE';
 
               if (shouldRefetch) {
-                fetchCount();
+                void fetchCount().catch((err: unknown) => {
+                  console.error('[useConsultationsCount] Refetch error:', err);
+                });
               }
             }
           )
           .subscribe(status => {
             if (status === 'SUBSCRIBED') {
-              console.log('[useConsultationsCount] Realtime subscribed ✓');
+              // Realtime subscribed successfully
             } else if (status === 'CHANNEL_ERROR') {
               // Log silencieux, pas setError pour éviter bruit sur page login
               console.warn(
@@ -224,18 +226,22 @@ export function useConsultationsCount(options?: {
       // Polling fallback (seulement si authentifié)
       if (!enableRealtime || refetchInterval > 0) {
         intervalRef.current = setInterval(() => {
-          fetchCount();
+          void fetchCount().catch((err: unknown) => {
+            console.error('[useConsultationsCount] Polling error:', err);
+          });
         }, refetchInterval);
       }
     };
 
-    setupSubscriptions();
+    void setupSubscriptions().catch((err: unknown) => {
+      console.error('[useConsultationsCount] Setup error:', err);
+    });
 
     // Cleanup
     return () => {
       isMounted = false;
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
+        void supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
       if (intervalRef.current) {

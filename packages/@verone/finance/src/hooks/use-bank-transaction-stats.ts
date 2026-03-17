@@ -236,11 +236,18 @@ export function useBankTransactionStats(
         }
       >();
 
-      rules?.forEach((rule: any) => {
-        const key = rule.match_value?.toLowerCase() || '';
+      interface MatchRuleRow {
+        match_value: string | null;
+        organisation_id: string | null;
+        organisation_name: string | null;
+        display_label: string | null;
+        default_category: string | null;
+      }
+      (rules as MatchRuleRow[] | null)?.forEach(rule => {
+        const key = rule.match_value?.toLowerCase() ?? '';
         rulesMap.set(key, {
           organisationId: rule.organisation_id,
-          organisationName: rule.organisation_name || rule.display_label,
+          organisationName: rule.organisation_name ?? rule.display_label,
           category: rule.default_category,
         });
       });
@@ -274,21 +281,33 @@ export function useBankTransactionStats(
 
       const enrichedTransactions: RecentTransaction[] = [];
 
-      transactions?.forEach((tx: any) => {
+      interface BankTxRow {
+        id: string;
+        label: string;
+        amount: number;
+        side: 'credit' | 'debit';
+        settled_at: string | null;
+        emitted_at: string;
+        counterparty_name: string | null;
+        matching_status: string | null;
+        matched_document_id: string | null;
+        category_pcg: string | null;
+      }
+      (transactions as BankTxRow[] | null)?.forEach(tx => {
         const amount = Math.abs(tx.amount);
         const isCredit = tx.side === 'credit';
         const settledDate = tx.settled_at
           ? new Date(tx.settled_at)
           : new Date(tx.emitted_at);
         const month =
-          tx.settled_at?.substring(0, 7) || tx.emitted_at?.substring(0, 7);
+          tx.settled_at?.substring(0, 7) ?? tx.emitted_at?.substring(0, 7);
         const categoryPcg: string | null = tx.category_pcg;
 
         // Totaux globaux
         if (isCredit) {
           totalCredit += amount;
           // CA comptable = seulement classe 7 (codes commençant par 7)
-          if (categoryPcg && categoryPcg.startsWith('7')) {
+          if (categoryPcg?.startsWith('7')) {
             revenue += amount;
           } else if (!categoryPcg) {
             uncategorizedCredit += amount;
@@ -325,8 +344,8 @@ export function useBankTransactionStats(
 
         // Matching avec règles pour répartition par organisation
         const matchedRule = matchTransaction(tx.label);
-        const orgKey = matchedRule?.organisationId || 'unclassified';
-        const orgName = matchedRule?.organisationName || 'Non classé';
+        const orgKey = matchedRule?.organisationId ?? 'unclassified';
+        const orgName = matchedRule?.organisationName ?? 'Non classé';
 
         // Seulement les débits pour la répartition dépenses
         if (!isCredit) {
@@ -335,7 +354,7 @@ export function useBankTransactionStats(
               name: orgName,
               total: 0,
               count: 0,
-              category: matchedRule?.category || null,
+              category: matchedRule?.category ?? null,
             };
           }
           orgData[orgKey].total += amount;
@@ -350,8 +369,8 @@ export function useBankTransactionStats(
           side: tx.side,
           settledAt: tx.settled_at,
           counterpartyName: tx.counterparty_name,
-          matchedOrganisation: matchedRule?.organisationName || null,
-          category: matchedRule?.category || null,
+          matchedOrganisation: matchedRule?.organisationName ?? null,
+          category: matchedRule?.category ?? null,
         });
       });
 
@@ -449,7 +468,7 @@ export function useBankTransactionStats(
       const categoryData: Record<string, { total: number; count: number }> = {};
 
       Object.entries(orgData).forEach(([, data]) => {
-        const cat = data.category || 'unclassified';
+        const cat = data.category ?? 'unclassified';
         // Prendre le compte de niveau 2 (3 premiers chiffres) ou le code complet
         const catCode = cat.length >= 3 ? cat.substring(0, 3) : cat;
 
@@ -483,7 +502,7 @@ export function useBankTransactionStats(
         totalCredit,
         totalDebit,
         netBalance: totalCredit - totalDebit,
-        transactionCount: transactions?.length || 0,
+        transactionCount: transactions?.length ?? 0,
         revenue,
         uncategorizedCredit,
         creditVariation,
@@ -496,17 +515,22 @@ export function useBankTransactionStats(
       setOrganisationBreakdown(breakdownArray);
       setCategoryBreakdown(categoryArray);
       setRecentTransactions(enrichedTransactions.slice(0, 20)); // Top 20
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching bank transaction stats:', err);
-      setError(err.message || 'Erreur lors du chargement des statistiques');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Erreur lors du chargement des statistiques'
+      );
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase, startDateStr, endDateStr]);
 
   // Auto-fetch on mount
   useEffect(() => {
-    fetchStats();
+    void fetchStats();
   }, [fetchStats]);
 
   return {

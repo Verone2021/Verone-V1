@@ -159,7 +159,7 @@ export function useEnseigneStats(
       // 6. Distribution par ville
       const cityMap: Record<string, { count: number; revenue: number }> = {};
       organisationsWithRevenue.forEach(org => {
-        const cityKey = org.city || 'Non renseigne';
+        const cityKey = org.city ?? 'Non renseigne';
         if (!cityMap[cityKey]) {
           cityMap[cityKey] = { count: 0, revenue: 0 };
         }
@@ -181,7 +181,7 @@ export function useEnseigneStats(
 
       // 7. Identifier la societe mere
       const parentOrganisation =
-        organisationsWithRevenue.find(org => org.is_enseigne_parent) || null;
+        organisationsWithRevenue.find(org => org.is_enseigne_parent) ?? null;
 
       setStats({
         totalOrganisations,
@@ -203,6 +203,7 @@ export function useEnseigneStats(
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- supabase client is stable singleton
   }, [enseigneId, year]);
 
   useEffect(() => {

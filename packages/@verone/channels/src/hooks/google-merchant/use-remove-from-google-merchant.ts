@@ -45,14 +45,17 @@ export function useRemoveFromGoogleMerchant() {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        const errorData: { error?: string } = (await response.json()) as {
+          error?: string;
+        };
+        throw new Error(errorData.error ?? `HTTP ${response.status}`);
       }
 
-      const data: RemoveProductResponse = await response.json();
+      const data: RemoveProductResponse =
+        (await response.json()) as RemoveProductResponse;
 
       if (!data.success) {
-        throw new Error(data.error || 'Failed to remove product');
+        throw new Error(data.error ?? 'Failed to remove product');
       }
 
       return data;
@@ -63,11 +66,15 @@ export function useRemoveFromGoogleMerchant() {
       toast.success('Produit retiré de Google Merchant');
 
       // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ['google-merchant-products'] });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
+        queryKey: ['google-merchant-products'],
+      });
+      void queryClient.invalidateQueries({
         queryKey: ['google-merchant-eligible-products'],
       });
-      queryClient.invalidateQueries({ queryKey: ['google-merchant-stats'] });
+      void queryClient.invalidateQueries({
+        queryKey: ['google-merchant-stats'],
+      });
     },
     onError: error => {
       logger.error(`[useRemoveFromGoogleMerchant] Failed: ${error.message}`);

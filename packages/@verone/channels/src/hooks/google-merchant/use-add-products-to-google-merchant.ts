@@ -53,20 +53,23 @@ export function useAddProductsToGoogleMerchant() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        const errorData: { error?: string } = (await response.json()) as {
+          error?: string;
+        };
+        throw new Error(errorData.error ?? `HTTP ${response.status}`);
       }
 
-      const data: AddProductsResponse = await response.json();
+      const data: AddProductsResponse =
+        (await response.json()) as AddProductsResponse;
 
       if (!data.success) {
-        throw new Error(data.error || 'Failed to add products');
+        throw new Error(data.error ?? 'Failed to add products');
       }
 
       return data;
     },
     onSuccess: data => {
-      const { successCount, errorCount } = data.data || {};
+      const { successCount, errorCount } = data.data ?? {};
 
       logger.info('[useAddProductsToGoogleMerchant] Success', {
         successCount,
@@ -78,11 +81,15 @@ export function useAddProductsToGoogleMerchant() {
       );
 
       // Invalidate queries pour refresh
-      queryClient.invalidateQueries({ queryKey: ['google-merchant-products'] });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
+        queryKey: ['google-merchant-products'],
+      });
+      void queryClient.invalidateQueries({
         queryKey: ['google-merchant-eligible-products'],
       });
-      queryClient.invalidateQueries({ queryKey: ['google-merchant-stats'] });
+      void queryClient.invalidateQueries({
+        queryKey: ['google-merchant-stats'],
+      });
     },
     onError: error => {
       logger.error(`[useAddProductsToGoogleMerchant] Failed: ${error.message}`);

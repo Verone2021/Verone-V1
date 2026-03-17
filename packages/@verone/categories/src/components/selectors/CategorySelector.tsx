@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { Button } from '@verone/ui';
 import { cn } from '@verone/utils';
@@ -26,6 +26,24 @@ interface Subcategory {
   name: string;
   description?: string;
   category_id: string;
+}
+
+interface SubcategoryWithRelations {
+  id: string;
+  name: string;
+  description: string | null;
+  category_id: string;
+  categories: {
+    id: string;
+    name: string;
+    description: string | null;
+    family_id: string;
+    families: {
+      id: string;
+      name: string;
+      description: string | null;
+    };
+  };
 }
 
 interface CategorySelectorProps {
@@ -70,80 +88,75 @@ export function CategorySelector({
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Charger les familles au montage
-  useEffect(() => {
-    loadFamilies();
-  }, []);
-
-  // Charger valeur initiale si fournie
-  useEffect(() => {
-    if (value && !selectedSubcategory) {
-      loadInitialSelection(value);
-    }
-  }, [value]);
-
-  const loadFamilies = async () => {
+  const loadFamilies = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('families')
         .select('id, name, description')
         .order('name');
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
 
-      setFamilies((data as any) || []);
-    } catch (err) {
+      setFamilies(data ?? []);
+    } catch (_err) {
       setError('Erreur de chargement');
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
 
-  const loadCategories = async (familyId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('id, name, description, family_id')
-        .eq('family_id', familyId)
-        .order('name');
+  const loadCategories = useCallback(
+    async (familyId: string) => {
+      try {
+        const { data, error: fetchError } = await supabase
+          .from('categories')
+          .select('id, name, description, family_id')
+          .eq('family_id', familyId)
+          .order('name');
 
-      if (error) throw error;
+        if (fetchError) throw fetchError;
 
-      setCategories((data as any) || []);
-      setSubcategories([]); // Reset sous-catégories
-      setSelectedCategory(null);
-      setSelectedSubcategory(null);
-    } catch (err) {
-      setError('Erreur de chargement');
-    }
-  };
+        setCategories(data ?? []);
+        setSubcategories([]); // Reset sous-catégories
+        setSelectedCategory(null);
+        setSelectedSubcategory(null);
+      } catch (_err) {
+        setError('Erreur de chargement');
+      }
+    },
+    [supabase]
+  );
 
-  const loadSubcategories = async (categoryId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('subcategories')
-        .select('id, name, description, category_id')
-        .eq('category_id', categoryId)
-        .order('name');
+  const loadSubcategories = useCallback(
+    async (categoryId: string) => {
+      try {
+        const { data, error: fetchError } = await supabase
+          .from('subcategories')
+          .select('id, name, description, category_id')
+          .eq('category_id', categoryId)
+          .order('name');
 
-      if (error) throw error;
+        if (fetchError) throw fetchError;
 
-      setSubcategories((data as any) || []);
-      setSelectedSubcategory(null);
-    } catch (err) {
-      setError('Erreur de chargement');
-    }
-  };
+        setSubcategories(data ?? []);
+        setSelectedSubcategory(null);
+      } catch (_err) {
+        setError('Erreur de chargement');
+      }
+    },
+    [supabase]
+  );
 
-  const loadInitialSelection = async (subcategoryId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('subcategories')
-        .select(
-          `
+  const loadInitialSelection = useCallback(
+    async (subcategoryId: string) => {
+      try {
+        const { data, error: fetchError } = await supabase
+          .from('subcategories')
+          .select(
+            `
           id,
           name,
           description,
@@ -160,48 +173,64 @@ export function CategorySelector({
             )
           )
         `
-        )
-        .eq('id', subcategoryId)
-        .single();
+          )
+          .eq('id', subcategoryId)
+          .single();
 
-      if (error) throw error;
+        if (fetchError) throw fetchError;
 
-      if (data && (data as any).categories?.families) {
-        const family = (data as any).categories.families;
-        const category = {
-          id: (data as any).categories.id,
-          name: (data as any).categories.name,
-          description: (data as any).categories.description,
-          family_id: (data as any).categories.family_id,
-        };
-        const subcategory = {
-          id: data.id,
-          name: data.name,
-          description: data.description,
-          category_id: data.category_id,
-        };
+        const typedData = data as unknown as SubcategoryWithRelations | null;
 
-        setSelectedFamily(family);
-        setSelectedCategory(category);
-        setSelectedSubcategory(subcategory as any);
+        if (typedData?.categories?.families) {
+          const family: Family = typedData.categories.families;
+          const category: Category = {
+            id: typedData.categories.id,
+            name: typedData.categories.name,
+            description: typedData.categories.description ?? undefined,
+            family_id: typedData.categories.family_id,
+          };
+          const subcategory: Subcategory = {
+            id: typedData.id,
+            name: typedData.name,
+            description: typedData.description ?? undefined,
+            category_id: typedData.category_id,
+          };
 
-        // Charger les listes dépendantes
-        await loadCategories(family.id);
-        await loadSubcategories(category.id);
+          setSelectedFamily(family);
+          setSelectedCategory(category);
+          setSelectedSubcategory(subcategory);
+
+          // Charger les listes dépendantes
+          await loadCategories(family.id);
+          await loadSubcategories(category.id);
+        }
+      } catch (_err) {
+        // Silence initial selection errors
       }
-    } catch (err) {
-      // Silence initial selection errors
+    },
+    [supabase, loadCategories, loadSubcategories]
+  );
+
+  // Charger les familles au montage
+  useEffect(() => {
+    void loadFamilies();
+  }, [loadFamilies]);
+
+  // Charger valeur initiale si fournie
+  useEffect(() => {
+    if (value && !selectedSubcategory) {
+      void loadInitialSelection(value);
     }
-  };
+  }, [value, loadInitialSelection, selectedSubcategory]);
 
   const handleFamilySelect = (family: Family) => {
     setSelectedFamily(family);
-    loadCategories(family.id);
+    void loadCategories(family.id);
   };
 
   const handleCategorySelect = (category: Category) => {
     setSelectedCategory(category);
-    loadSubcategories(category.id);
+    void loadSubcategories(category.id);
   };
 
   const handleSubcategorySelect = (subcategory: Subcategory) => {

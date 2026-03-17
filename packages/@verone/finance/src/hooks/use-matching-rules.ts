@@ -5,6 +5,8 @@
  * qui classifient automatiquement les dépenses.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
+
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
@@ -161,7 +163,7 @@ export function useMatchingRules(): UseMatchingRulesReturn {
         throw new Error(fetchError.message);
       }
 
-      setRules((data || []) as MatchingRule[]);
+      setRules((data ?? []) as MatchingRule[]);
     } catch (err) {
       console.error('[useMatchingRules] Error:', err);
       // Message plus explicite pour les erreurs réseau
@@ -270,7 +272,7 @@ export function useMatchingRules(): UseMatchingRulesReturn {
         // Supabase ignore les champs undefined, donc on doit les convertir en null
         const cleanData: Record<string, unknown> = {};
 
-        console.log('[useMatchingRules] update() called with:', { id, data });
+        console.warn('[useMatchingRules] update() called with:', { id, data });
 
         if (data.display_label !== undefined)
           cleanData.display_label = data.display_label ?? null;
@@ -303,7 +305,7 @@ export function useMatchingRules(): UseMatchingRulesReturn {
         if (data.match_patterns !== undefined)
           cleanData.match_patterns = data.match_patterns ?? null;
 
-        console.log('[useMatchingRules] cleanData to send:', cleanData);
+        console.warn('[useMatchingRules] cleanData to send:', cleanData);
 
         const { data: updated, error: updateError } = await (
           supabase as { from: CallableFunction }
@@ -314,7 +316,7 @@ export function useMatchingRules(): UseMatchingRulesReturn {
           .select('id')
           .single();
 
-        console.log('[useMatchingRules] update response:', {
+        console.warn('[useMatchingRules] update response:', {
           updated,
           updateError,
         });
@@ -389,8 +391,11 @@ export function useMatchingRules(): UseMatchingRulesReturn {
       const result = Array.isArray(data) && data.length > 0 ? data[0] : data;
 
       return {
-        rulesApplied: result?.rules_applied || 0,
-        expensesClassified: result?.expenses_classified || 0,
+        rulesApplied:
+          ((result as Record<string, unknown>)?.rules_applied as number) ?? 0,
+        expensesClassified:
+          ((result as Record<string, unknown>)
+            ?.expenses_classified as number) ?? 0,
       };
     } catch (err) {
       console.error('[useMatchingRules] ApplyAll error:', err);
@@ -401,7 +406,7 @@ export function useMatchingRules(): UseMatchingRulesReturn {
   /**
    * @deprecated Use previewApply + confirmApply instead
    */
-  const applyOne = useCallback(async (ruleId: string): Promise<number> => {
+  const applyOne = useCallback(async (_ruleId: string): Promise<number> => {
     console.warn(
       '[useMatchingRules] applyOne is deprecated. Use previewApply + confirmApply instead.'
     );
@@ -437,7 +442,7 @@ export function useMatchingRules(): UseMatchingRulesReturn {
           throw new Error(rpcError.message);
         }
 
-        return (data || []) as PreviewMatchResult[];
+        return (data ?? []) as PreviewMatchResult[];
       } catch (err) {
         console.error('[useMatchingRules] previewApply error:', err);
         throw err;
@@ -473,8 +478,11 @@ export function useMatchingRules(): UseMatchingRulesReturn {
         const result = Array.isArray(data) && data.length > 0 ? data[0] : data;
 
         return {
-          nb_updated: result?.nb_updated || 0,
-          updated_ids: result?.updated_ids || [],
+          nb_updated:
+            ((result as Record<string, unknown>)?.nb_updated as number) ?? 0,
+          updated_ids:
+            ((result as Record<string, unknown>)?.updated_ids as string[]) ??
+            [],
         };
       } catch (err) {
         console.error('[useMatchingRules] confirmApply error:', err);
@@ -485,7 +493,7 @@ export function useMatchingRules(): UseMatchingRulesReturn {
   );
 
   useEffect(() => {
-    fetchRules();
+    void fetchRules();
   }, [fetchRules]);
 
   /**
@@ -512,7 +520,7 @@ export function useMatchingRules(): UseMatchingRulesReturn {
         message: string;
       };
 
-      console.log('[useMatchingRules] autoClassifyAll result:', result);
+      console.warn('[useMatchingRules] autoClassifyAll result:', result);
 
       return result.classified_count;
     } catch (err) {

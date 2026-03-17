@@ -108,26 +108,26 @@ export class QontoClient {
 
   constructor(config?: Partial<QontoConfig>) {
     // Déterminer le mode d'auth
-    this.authMode = config?.authMode || resolveAuthMode();
+    this.authMode = config?.authMode ?? resolveAuthMode();
 
     this.config = {
       authMode: this.authMode,
       // Credentials API Key
       organizationId:
-        config?.organizationId || process.env.QONTO_ORGANIZATION_ID,
-      apiKey: config?.apiKey || process.env.QONTO_API_KEY,
+        config?.organizationId ?? process.env.QONTO_ORGANIZATION_ID,
+      apiKey: config?.apiKey ?? process.env.QONTO_API_KEY,
       // Credentials OAuth
-      accessToken: config?.accessToken || process.env.QONTO_ACCESS_TOKEN,
-      refreshToken: config?.refreshToken || process.env.QONTO_REFRESH_TOKEN,
+      accessToken: config?.accessToken ?? process.env.QONTO_ACCESS_TOKEN,
+      refreshToken: config?.refreshToken ?? process.env.QONTO_REFRESH_TOKEN,
       // Endpoint
       baseUrl:
-        config?.baseUrl ||
-        process.env.QONTO_API_BASE_URL ||
+        config?.baseUrl ??
+        process.env.QONTO_API_BASE_URL ??
         'https://thirdparty.qonto.com',
       // Timeouts
-      timeout: config?.timeout || 30000,
-      maxRetries: config?.maxRetries || 3,
-      retryDelay: config?.retryDelay || 1000,
+      timeout: config?.timeout ?? 30000,
+      maxRetries: config?.maxRetries ?? 3,
+      retryDelay: config?.retryDelay ?? 1000,
     };
 
     this.baseUrl = this.config.baseUrl;
@@ -190,7 +190,7 @@ export class QontoClient {
     body?: unknown,
     options?: { retryCount?: number }
   ): Promise<T> {
-    const { retryCount = 0 } = options || {};
+    const { retryCount = 0 } = options ?? {};
     const url = `${this.baseUrl}${endpoint}`;
 
     const controller = new AbortController();
@@ -222,12 +222,15 @@ export class QontoClient {
         if (!text || text.trim() === '') {
           return {} as T;
         }
-        const data = JSON.parse(text);
+        const data: unknown = JSON.parse(text);
         return data as T;
       }
 
       // Error handling
-      const errorData = await response.json().catch(() => ({}));
+      const errorData = (await response.json().catch(() => ({}))) as Record<
+        string,
+        unknown
+      >;
       const error = this.createErrorFromResponse(response.status, errorData);
 
       // Retry logic
@@ -314,11 +317,14 @@ export class QontoClient {
         if (!text || text.trim() === '') {
           return {} as T;
         }
-        const data = JSON.parse(text);
+        const data: unknown = JSON.parse(text);
         return data as T;
       }
 
-      const errorData = await response.json().catch(() => ({}));
+      const errorData = (await response.json().catch(() => ({}))) as Record<
+        string,
+        unknown
+      >;
       throw this.createErrorFromResponse(response.status, errorData);
     } catch (err) {
       clearTimeout(timeout);
@@ -604,7 +610,7 @@ export class QontoClient {
     params: CreateClientInvoiceParams,
     idempotencyKey?: string
   ): Promise<QontoClientInvoice> {
-    const key = idempotencyKey || generateIdempotencyKey();
+    const key = idempotencyKey ?? generateIdempotencyKey();
 
     const response = await this.requestWithIdempotency<
       QontoApiResponse<{ client_invoice: QontoClientInvoice }>
@@ -613,8 +619,8 @@ export class QontoClient {
       '/v2/client_invoices',
       {
         client_id: params.clientId,
-        currency: params.currency || 'EUR',
-        status: params.status || 'draft',
+        currency: params.currency ?? 'EUR',
+        status: params.status ?? 'draft',
         issue_date: params.issueDate,
         due_date: params.dueDate,
         payment_methods: {
@@ -631,7 +637,7 @@ export class QontoClient {
           title: item.title,
           description: item.description,
           quantity: item.quantity,
-          unit: item.unit || 'unit',
+          unit: item.unit ?? 'unit',
           unit_price: {
             value: item.unitPrice.value,
             currency: item.unitPrice.currency,
@@ -676,7 +682,7 @@ export class QontoClient {
         title: item.title,
         description: item.description,
         quantity: item.quantity,
-        unit: item.unit || 'unit',
+        unit: item.unit ?? 'unit',
         unit_price: {
           value: item.unitPrice.value,
           currency: item.unitPrice.currency,
@@ -712,7 +718,7 @@ export class QontoClient {
     const response = await this.request<
       QontoApiResponse<{ client_invoice: QontoClientInvoice }>
     >('POST', `/v2/client_invoices/${invoiceId}/mark_as_paid`, {
-      paid_at: paidAt || new Date().toISOString().split('T')[0],
+      paid_at: paidAt ?? new Date().toISOString().split('T')[0],
     });
     return response.client_invoice;
   }
@@ -806,11 +812,11 @@ export class QontoClient {
       name: params.name,
       type: params.type, // Required by Qonto API ('company' | 'individual')
       email: params.email,
-      currency: params.currency || 'EUR',
+      currency: params.currency ?? 'EUR',
       vat_number: params.vatNumber,
       // tax_identification_number = TIN (SIRET pour France) - requis pour facturation
       tax_identification_number:
-        params.taxIdentificationNumber || params.vatNumber,
+        params.taxIdentificationNumber ?? params.vatNumber,
       // billing_address est le champ requis pour la facturation
       billing_address: params.address
         ? {
@@ -821,7 +827,7 @@ export class QontoClient {
           }
         : undefined,
       phone: params.phone,
-      locale: params.locale || 'fr',
+      locale: params.locale ?? 'fr',
     });
 
     return response.client;
@@ -844,7 +850,7 @@ export class QontoClient {
       vat_number: params.vatNumber,
       // tax_identification_number = TIN (SIRET pour France) - requis pour facturation
       tax_identification_number:
-        params.taxIdentificationNumber || params.vatNumber,
+        params.taxIdentificationNumber ?? params.vatNumber,
       billing_address: params.address
         ? {
             street_address: params.address.streetAddress,
@@ -865,19 +871,19 @@ export class QontoClient {
    */
   async findClientByEmail(email: string): Promise<QontoClientEntity | null> {
     const { clients } = await this.getClients({ perPage: 100 });
-    return clients.find(c => c.email === email) || null;
+    return clients.find(c => c.email === email) ?? null;
   }
 
   async findClientByName(name: string): Promise<QontoClientEntity | null> {
     const { clients } = await this.getClients({ perPage: 100 });
-    return clients.find(c => c.name === name) || null;
+    return clients.find(c => c.name === name) ?? null;
   }
 
   async findClientByVatNumber(
     vatNumber: string
   ): Promise<QontoClientEntity | null> {
     const { clients } = await this.getClients({ perPage: 100 });
-    return clients.find(c => c.vat_number === vatNumber) || null;
+    return clients.find(c => c.vat_number === vatNumber) ?? null;
   }
 
   // ===================================================================
@@ -900,7 +906,7 @@ export class QontoClient {
     filename: string,
     idempotencyKey?: string
   ): Promise<QontoAttachment> {
-    const key = idempotencyKey || generateIdempotencyKey();
+    const key = idempotencyKey ?? generateIdempotencyKey();
     const formData = new FormData();
     formData.append('file', file, filename);
 
@@ -916,20 +922,23 @@ export class QontoClient {
     });
 
     // Log response details for debugging
-    console.log('[QontoClient] uploadAttachmentToTransaction response:', {
+    console.warn('[QontoClient] uploadAttachmentToTransaction response:', {
       status: response.status,
       statusText: response.statusText,
       headers: Object.fromEntries(response.headers.entries()),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorData = (await response.json().catch(() => ({}))) as Record<
+        string,
+        unknown
+      >;
       throw this.createErrorFromResponse(response.status, errorData);
     }
 
     // Handle 204 No Content or empty response - fetch real attachment ID
     const responseText = await response.text();
-    console.log('[QontoClient] Response body:', responseText);
+    console.warn('[QontoClient] Response body:', responseText);
 
     const needsAttachmentFetch =
       response.status === 204 ||
@@ -949,7 +958,7 @@ export class QontoClient {
         if (attachments.length > 0) {
           // Return the latest attachment (the one we just uploaded)
           const latestAttachment = attachments[attachments.length - 1];
-          console.log(
+          console.warn(
             '[QontoClient] Found real attachment ID:',
             latestAttachment.id
           );
@@ -980,7 +989,7 @@ export class QontoClient {
       }
     }
 
-    const data = JSON.parse(responseText);
+    const data = JSON.parse(responseText) as { attachment?: QontoAttachment };
 
     // Validate response structure - Qonto should return { attachment: { id, ... } }
     if (!data.attachment) {
@@ -1008,7 +1017,7 @@ export class QontoClient {
     filename: string,
     idempotencyKey?: string
   ): Promise<QontoAttachment> {
-    const key = idempotencyKey || generateIdempotencyKey();
+    const key = idempotencyKey ?? generateIdempotencyKey();
     const formData = new FormData();
     formData.append('file', file, filename);
 
@@ -1024,11 +1033,14 @@ export class QontoClient {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorData = (await response.json().catch(() => ({}))) as Record<
+        string,
+        unknown
+      >;
       throw this.createErrorFromResponse(response.status, errorData);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as { attachment: QontoAttachment };
     return data.attachment;
   }
 
@@ -1116,15 +1128,19 @@ export class QontoClient {
     });
 
     // Note: Cet endpoint retourne toujours 200, vérifier le champ errors
-    const data = await response.json();
+    const data = (await response.json()) as UploadSupplierInvoicesResult &
+      Record<string, unknown>;
 
     if (!response.ok) {
-      throw this.createErrorFromResponse(response.status, data);
+      throw this.createErrorFromResponse(
+        response.status,
+        data as Record<string, unknown>
+      );
     }
 
     return {
-      supplier_invoices: data.supplier_invoices || [],
-      errors: data.errors || [],
+      supplier_invoices: data.supplier_invoices ?? [],
+      errors: data.errors ?? [],
     };
   }
 
@@ -1138,7 +1154,7 @@ export class QontoClient {
     return this.uploadSupplierInvoicesBulk([
       {
         file,
-        idempotencyKey: idempotencyKey || generateIdempotencyKey(),
+        idempotencyKey: idempotencyKey ?? generateIdempotencyKey(),
       },
     ]);
   }
@@ -1325,7 +1341,7 @@ export class QontoClient {
         title: item.title,
         description: item.description,
         quantity: item.quantity,
-        unit: item.unit || 'unit',
+        unit: item.unit ?? 'unit',
         unit_price: {
           value: item.unitPrice.value,
           currency: item.unitPrice.currency,
@@ -1408,7 +1424,7 @@ export class QontoClient {
     params: CreateClientQuoteParams,
     idempotencyKey?: string
   ): Promise<QontoClientQuote> {
-    const key = idempotencyKey || generateIdempotencyKey();
+    const key = idempotencyKey ?? generateIdempotencyKey();
 
     // Qonto API uses /v2/quotes (not /v2/client_quotes)
     const response = await this.requestWithIdempotency<
@@ -1418,20 +1434,20 @@ export class QontoClient {
       '/v2/quotes',
       {
         client_id: params.clientId,
-        currency: params.currency || 'EUR',
+        currency: params.currency ?? 'EUR',
         issue_date: params.issueDate,
         expiry_date: params.expiryDate,
         purchase_order_number: params.purchaseOrderNumber,
         header: params.header,
         footer: params.footer,
         terms_and_conditions:
-          params.termsAndConditions ||
+          params.termsAndConditions ??
           'Conditions générales de vente applicables.',
         items: params.items.map(item => ({
           title: item.title,
           description: item.description,
           quantity: String(item.quantity),
-          unit: item.unit || 'unit',
+          unit: item.unit ?? 'unit',
           unit_price: {
             value: String(item.unitPrice.value),
             currency: item.unitPrice.currency,
@@ -1469,7 +1485,7 @@ export class QontoClient {
         title: item.title,
         description: item.description,
         quantity: String(item.quantity),
-        unit: item.unit || 'unit',
+        unit: item.unit ?? 'unit',
         unit_price: {
           value: String(item.unitPrice.value),
           currency: item.unitPrice.currency,
@@ -1561,7 +1577,7 @@ export class QontoClient {
     data: Record<string, unknown>
   ): QontoError {
     const message = String(
-      data?.message || data?.error || `Qonto API error (${status})`
+      data?.message ?? data?.error ?? `Qonto API error (${status})`
     );
 
     switch (status) {
@@ -1633,8 +1649,6 @@ export class QontoClient {
 let qontoClient: QontoClient | null = null;
 
 export function getQontoClient(): QontoClient {
-  if (!qontoClient) {
-    qontoClient = new QontoClient();
-  }
+  qontoClient ??= new QontoClient();
   return qontoClient;
 }

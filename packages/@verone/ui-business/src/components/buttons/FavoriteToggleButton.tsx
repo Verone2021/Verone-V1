@@ -64,7 +64,9 @@ export function FavoriteToggleButton({
     <ButtonUnified
       variant="ghost"
       size="icon"
-      onClick={handleClick}
+      onClick={e => {
+        void handleClick(e);
+      }}
       disabled={isDisabled}
       loading={isLoading}
       className={cn(

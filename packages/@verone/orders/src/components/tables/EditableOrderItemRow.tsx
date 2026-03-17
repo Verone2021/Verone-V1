@@ -69,21 +69,22 @@ export function EditableOrderItemRow({
   // Parse/validation uniquement sur onBlur
   const [localPrice, setLocalPrice] = useState(String(item.unit_price_ht));
   const [localDiscount, setLocalDiscount] = useState(
-    String(item.discount_percentage || 0)
+    String(item.discount_percentage ?? 0)
   );
-  const [localEcoTax, setLocalEcoTax] = useState(String(item.eco_tax || 0));
+  const [localEcoTax, setLocalEcoTax] = useState(String(item.eco_tax ?? 0));
   const [localTaxRate, setLocalTaxRate] = useState(
-    String((item.tax_rate || 0.2) * 100)
+    String((item.tax_rate ?? 0.2) * 100)
   );
   const [localQuantity, setLocalQuantity] = useState(String(item.quantity));
 
   // Synchroniser si item change de l'extérieur (changement d'item sélectionné)
   useEffect(() => {
     setLocalPrice(String(item.unit_price_ht));
-    setLocalDiscount(String(item.discount_percentage || 0));
-    setLocalEcoTax(String(item.eco_tax || 0));
-    setLocalTaxRate(String((item.tax_rate || 0.2) * 100));
+    setLocalDiscount(String(item.discount_percentage ?? 0));
+    setLocalEcoTax(String(item.eco_tax ?? 0));
+    setLocalTaxRate(String((item.tax_rate ?? 0.2) * 100));
     setLocalQuantity(String(item.quantity));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id]);
 
   // Calculer total ligne HT
@@ -92,16 +93,18 @@ export function EditableOrderItemRow({
     const subtotal =
       item.quantity *
       item.unit_price_ht *
-      (1 - (item.discount_percentage || 0) / 100);
-    return subtotal + (item.eco_tax || 0) * item.quantity;
+      (1 - (item.discount_percentage ?? 0) / 100);
+    return subtotal + (item.eco_tax ?? 0) * item.quantity;
   };
 
   // Récupérer image primaire produit
   const getPrimaryImage = (): string | null => {
-    const images = item.products?.product_images as ProductImage[] | undefined;
+    const images = (
+      item.products as unknown as { product_images?: ProductImage[] }
+    )?.product_images;
     return (
-      images?.find(img => img.is_primary)?.public_url ||
-      images?.[0]?.public_url ||
+      images?.find(img => img.is_primary)?.public_url ??
+      images?.[0]?.public_url ??
       null
     );
   };
@@ -146,7 +149,7 @@ export function EditableOrderItemRow({
       : Math.min(100, Math.max(0, parsed));
     setLocalDiscount(String(validDiscount));
     if (
-      validDiscount !== (item.discount_percentage || 0) &&
+      validDiscount !== (item.discount_percentage ?? 0) &&
       onUpdate &&
       !readonly
     ) {
@@ -163,7 +166,7 @@ export function EditableOrderItemRow({
     const parsed = parseFloat(localEcoTax);
     const validEcoTax = isNaN(parsed) || parsed < 0 ? 0 : parsed;
     setLocalEcoTax(String(validEcoTax));
-    if (validEcoTax !== (item.eco_tax || 0) && onUpdate && !readonly) {
+    if (validEcoTax !== (item.eco_tax ?? 0) && onUpdate && !readonly) {
       onUpdate(item.id, { eco_tax: validEcoTax });
     }
   };
@@ -178,7 +181,7 @@ export function EditableOrderItemRow({
     const validTaxRate = (isNaN(parsed) || parsed < 0 ? 20 : parsed) / 100;
     setLocalTaxRate(String(validTaxRate * 100));
     if (
-      validTaxRate !== (item.tax_rate || 0.2) &&
+      validTaxRate !== (item.tax_rate ?? 0.2) &&
       onUpdate &&
       !readonly &&
       orderType === 'sales'
@@ -210,9 +213,13 @@ export function EditableOrderItemRow({
           {/* Image produit */}
           <div className="flex-shrink-0">
             {primaryImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={primaryImage}
-                alt={item.products?.name ?? 'Produit'}
+                alt={
+                  (item.products as unknown as { name?: string })?.name ??
+                  'Produit'
+                }
                 className="w-12 h-12 object-cover rounded border"
               />
             ) : (
@@ -252,15 +259,15 @@ export function EditableOrderItemRow({
             )}
 
             {/* Badge client assigné (traçabilité échantillon) */}
-            {(item.customer_organisation || item.customer_individual) && (
+            {(item.customer_organisation ?? item.customer_individual) && (
               <Badge variant="warning" className="mt-1 text-xs">
                 {item.customer_individual ? (
                   <User className="h-3 w-3 mr-1" />
                 ) : (
                   <Building2 className="h-3 w-3 mr-1" />
                 )}
-                {item.customer_organisation?.trade_name ||
-                  item.customer_organisation?.legal_name ||
+                {item.customer_organisation?.trade_name ??
+                  item.customer_organisation?.legal_name ??
                   (item.customer_individual &&
                     `${item.customer_individual.first_name} ${item.customer_individual.last_name}`)}
               </Badge>
@@ -305,7 +312,7 @@ export function EditableOrderItemRow({
       {/* Colonne 4: Remise % */}
       <TableCell>
         {readonly ? (
-          <span className="text-sm">{item.discount_percentage || 0}%</span>
+          <span className="text-sm">{item.discount_percentage ?? 0}%</span>
         ) : (
           <Input
             type="number"
@@ -323,7 +330,7 @@ export function EditableOrderItemRow({
       {/* Colonne 5: Éco-taxe € */}
       <TableCell>
         {readonly ? (
-          <span className="text-sm">{formatCurrency(item.eco_tax || 0)}</span>
+          <span className="text-sm">{formatCurrency(item.eco_tax ?? 0)}</span>
         ) : (
           <Input
             type="number"
@@ -342,7 +349,7 @@ export function EditableOrderItemRow({
         <TableCell>
           {readonly ? (
             <span className="text-sm">
-              {((item.tax_rate || 0.2) * 100).toFixed(1)}%
+              {((item.tax_rate ?? 0.2) * 100).toFixed(1)}%
             </span>
           ) : (
             <Input

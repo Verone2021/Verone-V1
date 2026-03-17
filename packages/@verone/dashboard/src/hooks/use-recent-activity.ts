@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
@@ -44,75 +44,75 @@ interface UseRecentActivityResult {
  * Hook pour récupérer l'activité récente utilisateur
  * Utilise la fonction RPC `get_user_recent_actions` de la DB
  */
+function transformActivityToTimeline(log: UserActivityLog): TimelineItem {
+  // Mapper les actions vers des types de timeline
+  const getType = (
+    action: string,
+    tableName: string | null
+  ): TimelineItem['type'] => {
+    if (action.includes('order') || tableName === 'orders') return 'order';
+    if (action.includes('product') || tableName === 'products')
+      return 'product';
+    if (action.includes('stock') || tableName === 'stocks') return 'stock';
+    if (
+      action.includes('customer') ||
+      tableName === 'individual_customers' ||
+      tableName === 'b2b_customers'
+    )
+      return 'customer';
+    return 'system';
+  };
+
+  // Générer titre et description lisibles
+  const getTitle = (action: string, _tableName: string | null): string => {
+    // Actions spécifiques
+    if (action === 'create_product') return 'Nouveau produit créé';
+    if (action === 'update_product') return 'Produit modifié';
+    if (action === 'delete_product') return 'Produit supprimé';
+    if (action === 'create_order') return 'Nouvelle commande créée';
+    if (action === 'update_order') return 'Commande mise à jour';
+    if (action === 'stock_movement') return 'Mouvement de stock';
+    if (action === 'page_view') return 'Page visitée';
+
+    // Fallback: formatter action
+    return action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const getDescription = (activityLog: UserActivityLog): string => {
+    const { action, table_name, record_id, page_url } = activityLog;
+
+    if (action === 'page_view' && page_url) {
+      const path = page_url.split('/').filter(Boolean).join(' › ');
+      return `Navigation: ${path}`;
+    }
+
+    if (table_name && record_id) {
+      return `${table_name} #${record_id.substring(0, 8)}`;
+    }
+
+    if (table_name) {
+      return `Table: ${table_name}`;
+    }
+
+    return action.replace(/_/g, ' ');
+  };
+
+  return {
+    id: `${log.created_at}-${log.action}`,
+    type: getType(log.action, log.table_name),
+    title: getTitle(log.action, log.table_name),
+    description: getDescription(log),
+    timestamp: new Date(log.created_at),
+    severity: log.severity as TimelineItem['severity'],
+  };
+}
+
 export function useRecentActivity(limit = 10): UseRecentActivityResult {
   const [activities, setActivities] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const transformActivityToTimeline = (log: UserActivityLog): TimelineItem => {
-    // Mapper les actions vers des types de timeline
-    const getType = (
-      action: string,
-      tableName: string | null
-    ): TimelineItem['type'] => {
-      if (action.includes('order') || tableName === 'orders') return 'order';
-      if (action.includes('product') || tableName === 'products')
-        return 'product';
-      if (action.includes('stock') || tableName === 'stocks') return 'stock';
-      if (
-        action.includes('customer') ||
-        tableName === 'individual_customers' ||
-        tableName === 'b2b_customers'
-      )
-        return 'customer';
-      return 'system';
-    };
-
-    // Générer titre et description lisibles
-    const getTitle = (action: string, tableName: string | null): string => {
-      // Actions spécifiques
-      if (action === 'create_product') return 'Nouveau produit créé';
-      if (action === 'update_product') return 'Produit modifié';
-      if (action === 'delete_product') return 'Produit supprimé';
-      if (action === 'create_order') return 'Nouvelle commande créée';
-      if (action === 'update_order') return 'Commande mise à jour';
-      if (action === 'stock_movement') return 'Mouvement de stock';
-      if (action === 'page_view') return 'Page visitée';
-
-      // Fallback: formatter action
-      return action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    };
-
-    const getDescription = (log: UserActivityLog): string => {
-      const { action, table_name, record_id, page_url } = log;
-
-      if (action === 'page_view' && page_url) {
-        const path = page_url.split('/').filter(Boolean).join(' › ');
-        return `Navigation: ${path}`;
-      }
-
-      if (table_name && record_id) {
-        return `${table_name} #${record_id.substring(0, 8)}`;
-      }
-
-      if (table_name) {
-        return `Table: ${table_name}`;
-      }
-
-      return action.replace(/_/g, ' ');
-    };
-
-    return {
-      id: `${log.created_at}-${log.action}`,
-      type: getType(log.action, log.table_name),
-      title: getTitle(log.action, log.table_name),
-      description: getDescription(log),
-      timestamp: new Date(log.created_at),
-      severity: log.severity as TimelineItem['severity'],
-    };
-  };
-
-  const fetchActivities = async () => {
+  const fetchActivities = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -137,7 +137,10 @@ export function useRecentActivity(limit = 10): UseRecentActivityResult {
           p_user_id: user.id,
           p_limit: limit,
         }
-      )) as { data: UserActivityLog[] | null; error: any };
+      )) as {
+        data: UserActivityLog[] | null;
+        error: { message: string } | null;
+      };
 
       if (rpcError) {
         console.error('Erreur RPC get_user_recent_actions:', rpcError);
@@ -153,17 +156,21 @@ export function useRecentActivity(limit = 10): UseRecentActivityResult {
       // Transformer les logs DB en items timeline
       const timeline = data.map(transformActivityToTimeline);
       setActivities(timeline);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur chargement activité récente:', err);
-      setError(err.message || "Erreur lors du chargement de l'activité");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Erreur lors du chargement de l'activité"
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, [limit]);
 
   useEffect(() => {
-    fetchActivities();
-  }, [limit]);
+    void fetchActivities();
+  }, [fetchActivities]);
 
   return {
     activities,

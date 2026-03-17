@@ -46,15 +46,16 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 export function OrganisationPurchaseOrdersSection({
   organisationId,
   organisationName,
-  onUpdate,
-  className,
+  onUpdate: _onUpdate,
+  className: _className,
 }: OrganisationPurchaseOrdersSectionProps) {
   const { orders, loading, fetchOrders } = usePurchaseOrders();
   const [supplierOrders, setSupplierOrders] = useState<PurchaseOrder[]>([]);
 
   // Charger les commandes du fournisseur
   useEffect(() => {
-    fetchOrders({ supplier_id: organisationId });
+    void fetchOrders({ supplier_id: organisationId });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organisationId]);
 
   // Filtrer les commandes pour ce fournisseur
@@ -199,7 +200,7 @@ export function OrganisationPurchaseOrdersSection({
                       <div>
                         <div className="text-gray-600">Articles</div>
                         <div className="font-medium text-black">
-                          {order.purchase_order_items?.length || 0} produit(s)
+                          {order.purchase_order_items?.length ?? 0} produit(s)
                         </div>
                       </div>
                     </div>

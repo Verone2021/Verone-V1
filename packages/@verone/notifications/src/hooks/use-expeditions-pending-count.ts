@@ -49,7 +49,7 @@ export function useExpeditionsPendingCount(options?: {
   enableRealtime?: boolean;
   refetchInterval?: number;
 }): ExpeditionsPendingCountHook {
-  const { enableRealtime = true, refetchInterval = 30000 } = options || {};
+  const { enableRealtime = true, refetchInterval = 30000 } = options ?? {};
 
   const [count, setCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -94,7 +94,7 @@ export function useExpeditionsPendingCount(options?: {
         return; // Sortie anticipée sans exception
       }
 
-      setCount(totalCount || 0);
+      setCount(totalCount ?? 0);
       setLastUpdated(new Date());
     } catch (err) {
       const errorObj =
@@ -126,7 +126,9 @@ export function useExpeditionsPendingCount(options?: {
       }
 
       // Initial fetch (authentifié)
-      fetchCount();
+      void fetchCount().catch((err: unknown) => {
+        console.error('[useExpeditionsPendingCount] Initial fetch error:', err);
+      });
 
       // Setup Realtime si activé ET authentifié
       if (enableRealtime) {
@@ -140,8 +142,8 @@ export function useExpeditionsPendingCount(options?: {
               table: 'sales_orders',
             },
             payload => {
-              const newRow = payload.new as any;
-              const oldRow = payload.old as any;
+              const newRow = payload.new as Record<string, unknown>;
+              const oldRow = payload.old as Record<string, unknown>;
               const expeditionStatuses = [
                 'validated',
                 'partially_shipped',
@@ -153,22 +155,21 @@ export function useExpeditionsPendingCount(options?: {
                 payload.eventType === 'INSERT' ||
                 payload.eventType === 'DELETE' ||
                 (payload.eventType === 'UPDATE' &&
-                  (expeditionStatuses.includes(newRow?.status) ||
-                    expeditionStatuses.includes(oldRow?.status)));
+                  (expeditionStatuses.includes(newRow?.status as string) ||
+                    expeditionStatuses.includes(oldRow?.status as string)));
 
               if (shouldRefetch) {
-                console.log(
-                  '[useExpeditionsPendingCount] Realtime change detected:',
-                  payload.eventType
-                );
-                fetchCount();
+                void fetchCount().catch((err: unknown) => {
+                  console.error(
+                    '[useExpeditionsPendingCount] Refetch error:',
+                    err
+                  );
+                });
               }
             }
           )
           .subscribe(status => {
-            if (status === 'SUBSCRIBED') {
-              console.log('[useExpeditionsPendingCount] Realtime subscribed');
-            } else if (status === 'CHANNEL_ERROR') {
+            if (status === 'CHANNEL_ERROR') {
               // Log silencieux, pas setError pour éviter bruit sur page login
               console.warn(
                 '[useExpeditionsPendingCount] Realtime subscription failed'
@@ -180,18 +181,22 @@ export function useExpeditionsPendingCount(options?: {
       // Polling fallback (seulement si authentifié)
       if (!enableRealtime || refetchInterval > 0) {
         intervalRef.current = setInterval(() => {
-          fetchCount();
+          void fetchCount().catch((err: unknown) => {
+            console.error('[useExpeditionsPendingCount] Polling error:', err);
+          });
         }, refetchInterval);
       }
     };
 
-    setupSubscriptions();
+    void setupSubscriptions().catch((err: unknown) => {
+      console.error('[useExpeditionsPendingCount] Setup error:', err);
+    });
 
     // Cleanup
     return () => {
       isMounted = false;
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
+        void supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
       if (intervalRef.current) {

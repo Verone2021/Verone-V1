@@ -17,7 +17,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  TooltipProps,
 } from 'recharts';
 
 import type { ProductsDataPoint } from '@verone/dashboard/hooks';
@@ -28,10 +27,16 @@ interface ProductsChartProps {
 }
 
 // Custom Tooltip
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ value?: number; payload?: ProductsDataPoint }>;
+}) => {
   if (!active || !payload?.length) return null;
 
-  const count = payload[0].value || 0;
+  const count = payload[0].value ?? 0;
   const dataPoint = payload[0].payload as ProductsDataPoint;
 
   return (

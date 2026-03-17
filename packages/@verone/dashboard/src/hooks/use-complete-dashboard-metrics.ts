@@ -203,7 +203,7 @@ export function useCompleteDashboardMetrics() {
         { data: allInvoices }, // Fusionnée: récupère mois + mois précédent
         { data: products },
         { data: allLinkmeCommissions }, // Table linkme_commissions sans filtre temporel
-        { data: pendingPayments },
+        { data: _pendingPayments },
         { data: affiliates },
         { data: selections },
       ] = await Promise.all([
@@ -254,20 +254,20 @@ export function useCompleteDashboardMetrics() {
           .gte('created_at', startOfMonth.toISOString()),
       ]);
 
-      setStockAlertsFromRPC(stockAlertsCount || 0);
+      setStockAlertsFromRPC(stockAlertsCount ?? 0);
 
       // ========================================
       // Filtrage client-side des factures (rapide)
       // ========================================
-      const monthInvoices = (allInvoices || []).filter(
+      const monthInvoices = (allInvoices ?? []).filter(
         i => new Date(i.created_at) >= startOfMonth
       );
-      const prevMonthInvoices = (allInvoices || []).filter(
+      const prevMonthInvoices = (allInvoices ?? []).filter(
         i =>
           new Date(i.created_at) >= startOfPrevMonth &&
           new Date(i.created_at) < startOfMonth
       );
-      const todayInvoices = (allInvoices || []).filter(
+      const todayInvoices = (allInvoices ?? []).filter(
         i => new Date(i.created_at) >= startOfToday
       );
 
@@ -281,37 +281,37 @@ export function useCompleteDashboardMetrics() {
       // ========================================
       const pending =
         monthOrders?.filter(o => ['draft', 'validated'].includes(o.status))
-          .length || 0;
+          .length ?? 0;
       const processing =
-        monthOrders?.filter(o => o.status === 'partially_shipped').length || 0;
+        monthOrders?.filter(o => o.status === 'partially_shipped').length ?? 0;
       const completed =
         monthOrders?.filter(o => ['shipped', 'delivered'].includes(o.status))
-          .length || 0;
+          .length ?? 0;
       const cancelled =
-        monthOrders?.filter(o => o.status === 'cancelled').length || 0;
+        monthOrders?.filter(o => o.status === 'cancelled').length ?? 0;
 
       // CA du mois = somme des factures (pas des commandes)
       const monthRevenue = monthInvoices.reduce(
-        (sum, i) => sum + parseFloat(String(i.total_ht || 0)),
+        (sum, i) => sum + parseFloat(String(i.total_ht ?? 0)),
         0
       );
 
       const prevMonthRevenue = prevMonthInvoices.reduce(
-        (sum, i) => sum + parseFloat(String(i.total_ht || 0)),
+        (sum, i) => sum + parseFloat(String(i.total_ht ?? 0)),
         0
       );
 
       const dayRevenue = todayInvoices.reduce(
-        (sum, i) => sum + parseFloat(String(i.total_ht || 0)),
+        (sum, i) => sum + parseFloat(String(i.total_ht ?? 0)),
         0
       );
 
       // AOV = Total HT commandes / nombre de commandes non annulées
-      const validMonthOrders = (monthOrders || []).filter(
+      const validMonthOrders = (monthOrders ?? []).filter(
         o => o.status !== 'cancelled'
       );
       const totalOrdersRevenue = validMonthOrders.reduce(
-        (sum, o) => sum + parseFloat(String(o.total_ht || 0)),
+        (sum, o) => sum + parseFloat(String(o.total_ht ?? 0)),
         0
       );
       const averageOrderValue =
@@ -327,7 +327,7 @@ export function useCompleteDashboardMetrics() {
         orderTrend = 100;
       }
 
-      setSalesOrdersCount(monthOrders?.length || 0);
+      setSalesOrdersCount(monthOrders?.length ?? 0);
       setOrderMetrics({
         pending,
         processing,
@@ -347,9 +347,9 @@ export function useCompleteDashboardMetrics() {
       let lowStock = 0;
       let critical = 0;
 
-      (products || []).forEach(p => {
-        const stockQty = p.stock_real || 0;
-        const threshold = p.min_stock || 5;
+      (products ?? []).forEach(p => {
+        const stockQty = p.stock_real ?? 0;
+        const threshold = p.min_stock ?? 5;
 
         if (stockQty === 0) {
           outOfStock++;
@@ -368,14 +368,14 @@ export function useCompleteDashboardMetrics() {
       // LinkMe Metrics - Source: table linkme_commissions
       // ========================================
       // Total des commissions = somme de affiliate_commission_ttc (TOUTES les commissions)
-      const linkmeCommissions = (allLinkmeCommissions || []).reduce(
-        (sum, c) => sum + parseFloat(String(c.affiliate_commission_ttc || 0)),
+      const linkmeCommissions = (allLinkmeCommissions ?? []).reduce(
+        (sum, c) => sum + parseFloat(String(c.affiliate_commission_ttc ?? 0)),
         0
       );
 
       // CA LinkMe = somme des order_amount_ht
-      const linkmeRevenue = (allLinkmeCommissions || []).reduce(
-        (sum, c) => sum + parseFloat(String(c.order_amount_ht || 0)),
+      const linkmeRevenue = (allLinkmeCommissions ?? []).reduce(
+        (sum, c) => sum + parseFloat(String(c.order_amount_ht ?? 0)),
         0
       );
 
@@ -384,8 +384,8 @@ export function useCompleteDashboardMetrics() {
         linkmeRevenue > 0 ? (linkmeCommissions / linkmeRevenue) * 100 : 0;
 
       // Taux de conversion (commandes / sélections)
-      const selectionsCount = selections?.length || 0;
-      const commissionsCount = (allLinkmeCommissions || []).length;
+      const selectionsCount = selections?.length ?? 0;
+      const commissionsCount = (allLinkmeCommissions ?? []).length;
       const conversionRate =
         selectionsCount > 0 ? (commissionsCount / selectionsCount) * 100 : 0;
 
@@ -393,7 +393,7 @@ export function useCompleteDashboardMetrics() {
         revenue: linkmeRevenue,
         commissions: linkmeCommissions,
         ordersCount: commissionsCount,
-        activeAffiliates: affiliates?.length || 0,
+        activeAffiliates: affiliates?.length ?? 0,
         trend: 0, // Pas de trend sans filtre temporel
         averageMargin: Math.round(avgMargin * 10) / 10,
         conversionRate: Math.round(conversionRate * 10) / 10,
@@ -407,7 +407,7 @@ export function useCompleteDashboardMetrics() {
 
   // Charger les données au montage
   useEffect(() => {
-    fetchAdditionalData();
+    void fetchAdditionalData();
   }, [fetchAdditionalData]);
 
   // Calcul statistiques organisations (excluant particuliers)
@@ -430,7 +430,7 @@ export function useCompleteDashboardMetrics() {
 
   // Phase 2 - Données réelles depuis Supabase
   const stocksData = {
-    totalValue: stockOrdersMetrics?.stock_value || 0,
+    totalValue: stockOrdersMetrics?.stock_value ?? 0,
     lowStockItems: stockAlertsFromRPC, // Source de vérité: RPC get_stock_alerts_count()
     recentMovements: 0,
     inStock: stockMetrics.inStock,
@@ -440,10 +440,10 @@ export function useCompleteDashboardMetrics() {
   };
 
   const ordersData = {
-    purchaseOrders: stockOrdersMetrics?.purchase_orders_count || 0,
+    purchaseOrders: stockOrdersMetrics?.purchase_orders_count ?? 0,
     salesOrders: salesOrdersCount,
     monthRevenue:
-      orderMetrics.monthRevenue || stockOrdersMetrics?.month_revenue || 0,
+      orderMetrics.monthRevenue ?? stockOrdersMetrics?.month_revenue ?? 0,
     dayRevenue: orderMetrics.dayRevenue,
     averageOrderValue: orderMetrics.averageOrderValue,
     pending: orderMetrics.pending,
@@ -454,22 +454,22 @@ export function useCompleteDashboardMetrics() {
   };
 
   const sourcingData = {
-    productsToSource: stockOrdersMetrics?.products_to_source || 0,
+    productsToSource: stockOrdersMetrics?.products_to_source ?? 0,
     samplesWaiting: 0,
   };
 
   // Treasury data
   const treasuryData = {
-    balance: bankBalance || 0,
-    accountsReceivable: treasuryStats?.total_invoiced_ar || 0,
-    accountsPayable: treasuryStats?.total_invoiced_ap || 0,
+    balance: bankBalance ?? 0,
+    accountsReceivable: treasuryStats?.total_invoiced_ar ?? 0,
+    accountsPayable: treasuryStats?.total_invoiced_ap ?? 0,
     unpaidInvoices:
-      (treasuryStats?.unpaid_count_ar || 0) +
-      (treasuryStats?.unpaid_count_ap || 0),
-    burnRate: treasuryMetrics?.burnRate || 0,
-    runwayMonths: treasuryMetrics?.runwayMonths || 0,
-    cashFlowNet: treasuryMetrics?.cashFlowNet || 0,
-    trend: treasuryMetrics?.cashFlowVariation || 0,
+      (treasuryStats?.unpaid_count_ar ?? 0) +
+      (treasuryStats?.unpaid_count_ap ?? 0),
+    burnRate: treasuryMetrics?.burnRate ?? 0,
+    runwayMonths: treasuryMetrics?.runwayMonths ?? 0,
+    cashFlowNet: treasuryMetrics?.cashFlowNet ?? 0,
+    trend: treasuryMetrics?.cashFlowVariation ?? 0,
   };
 
   // LinkMe data
@@ -485,12 +485,12 @@ export function useCompleteDashboardMetrics() {
 
   const metrics: CompleteDashboardMetrics = {
     catalogue: {
-      totalProducts: catalogueMetrics?.products.total || 0,
-      activeProducts: catalogueMetrics?.products.active || 0,
-      publishedProducts: catalogueMetrics?.products.published || 0,
-      collections: catalogueMetrics?.collections.total || 0,
-      variantGroups: catalogueMetrics?.variantGroups.total || 0,
-      trend: catalogueMetrics?.products.trend || 0,
+      totalProducts: catalogueMetrics?.products.total ?? 0,
+      activeProducts: catalogueMetrics?.products.active ?? 0,
+      publishedProducts: catalogueMetrics?.products.published ?? 0,
+      collections: catalogueMetrics?.collections.total ?? 0,
+      variantGroups: catalogueMetrics?.variantGroups.total ?? 0,
+      trend: catalogueMetrics?.products.trend ?? 0,
     },
     organisations: organisationsStats,
     stocks: stocksData,
@@ -500,14 +500,14 @@ export function useCompleteDashboardMetrics() {
     linkme: linkmeData,
     // Compatibilité avec sections de détail du dashboard
     collections: {
-      total: catalogueMetrics?.collections.total || 0,
-      active: catalogueMetrics?.collections.active || 0,
+      total: catalogueMetrics?.collections.total ?? 0,
+      active: catalogueMetrics?.collections.active ?? 0,
     },
     variantGroups: {
-      total: catalogueMetrics?.variantGroups.total || 0,
+      total: catalogueMetrics?.variantGroups.total ?? 0,
     },
     products: {
-      trend: catalogueMetrics?.products.trend || 0,
+      trend: catalogueMetrics?.products.trend ?? 0,
     },
   };
 

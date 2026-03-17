@@ -5,10 +5,10 @@
  *
  * FONCTIONNALITÉS :
  * - Arborescence à 3 niveaux (Famille > Catégorie > Sous-catégorie)
- * - ☑ Checkbox à TOUS les niveaux (pas juste sous-catégories)
- * - Sélectionner une Famille → Voir tous les produits de cette famille
- * - Sélectionner une Catégorie → Voir tous les produits de cette catégorie
- * - Sélectionner une Sous-catégorie → Voir les produits de cette sous-catégorie
+ * - Checkbox à TOUS les niveaux (pas juste sous-catégories)
+ * - Sélectionner une Famille -> Voir tous les produits de cette famille
+ * - Sélectionner une Catégorie -> Voir tous les produits de cette catégorie
+ * - Sélectionner une Sous-catégorie -> Voir les produits de cette sous-catégorie
  * - Compteurs de produits à chaque niveau
  * - N'affiche que les éléments avec produits (>0)
  * - Design minimaliste noir/blanc Vérone
@@ -121,7 +121,7 @@ export function CategoryTreeFilter({
       products.forEach(product => {
         if (product.subcategory_id) {
           const count =
-            subcategoryProductCounts.get(product.subcategory_id) || 0;
+            subcategoryProductCounts.get(product.subcategory_id) ?? 0;
           subcategoryProductCounts.set(product.subcategory_id, count + 1);
         }
       });
@@ -130,7 +130,7 @@ export function CategoryTreeFilter({
     // Enrichir sous-catégories
     const enrichedSubcategories = subcategories.map(sub => ({
       ...sub,
-      productCount: subcategoryProductCounts.get(sub.id) || 0,
+      productCount: subcategoryProductCounts.get(sub.id) ?? 0,
     }));
 
     // Regrouper par catégorie

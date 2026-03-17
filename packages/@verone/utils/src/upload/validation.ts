@@ -189,7 +189,7 @@ function isValidFileName(fileName: string): boolean {
 export function generateSecureFileName(originalName: string): string {
   const timestamp = Date.now();
   const randomSuffix = Math.random().toString(36).substring(2, 8);
-  const extension = originalName.split('.').pop()?.toLowerCase() || 'jpg';
+  const extension = originalName.split('.').pop()?.toLowerCase() ?? 'jpg';
 
   // Nettoyer le nom original
   const cleanName = originalName

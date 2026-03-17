@@ -90,7 +90,7 @@ const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
           <span
             className="h-1.5 w-1.5 rounded-full"
             style={{
-              backgroundColor: dotColor || 'currentColor',
+              backgroundColor: dotColor ?? 'currentColor',
             }}
           />
         )}

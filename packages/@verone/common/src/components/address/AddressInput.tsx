@@ -39,8 +39,8 @@ export function AddressInput({
   useEffect(() => {
     if (selectedOrganisation) {
       const hasAddress = !!(
-        selectedOrganisation.address_line1 ||
-        selectedOrganisation.city ||
+        selectedOrganisation.address_line1 ??
+        selectedOrganisation.city ??
         selectedOrganisation.postal_code
       );
       setShowCopyButton(hasAddress);
@@ -50,6 +50,7 @@ export function AddressInput({
     } else {
       setShowCopyButton(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedOrganisation, selectedCustomer, addressType]);
 
   // Vérifier si le client a une adresse disponible
@@ -60,18 +61,18 @@ export function AddressInput({
       // Client B2B
       if (addressType === 'billing') {
         return !!(
-          selectedCustomer.billing_address_line1 ||
-          selectedCustomer.billing_city ||
+          selectedCustomer.billing_address_line1 ??
+          selectedCustomer.billing_city ??
           selectedCustomer.billing_postal_code
         );
       } else {
         // Pour la livraison, vérifier d'abord l'adresse de livraison, puis celle de facturation
         return !!(
-          selectedCustomer.shipping_address_line1 ||
-          selectedCustomer.shipping_city ||
-          selectedCustomer.shipping_postal_code ||
-          selectedCustomer.billing_address_line1 ||
-          selectedCustomer.billing_city ||
+          selectedCustomer.shipping_address_line1 ??
+          selectedCustomer.shipping_city ??
+          selectedCustomer.shipping_postal_code ??
+          selectedCustomer.billing_address_line1 ??
+          selectedCustomer.billing_city ??
           selectedCustomer.billing_postal_code
         );
       }
@@ -80,18 +81,18 @@ export function AddressInput({
       if (addressType === 'billing') {
         // Vérifier d'abord l'adresse de facturation spécifique, puis l'adresse principale
         return !!(
-          selectedCustomer.billing_address_line1_individual ||
-          selectedCustomer.billing_city_individual ||
-          selectedCustomer.billing_postal_code_individual ||
-          selectedCustomer.address_line1 ||
-          selectedCustomer.city ||
+          selectedCustomer.billing_address_line1_individual ??
+          selectedCustomer.billing_city_individual ??
+          selectedCustomer.billing_postal_code_individual ??
+          selectedCustomer.address_line1 ??
+          selectedCustomer.city ??
           selectedCustomer.postal_code
         );
       } else {
         // Pour la livraison, utiliser l'adresse principale
         return !!(
-          selectedCustomer.address_line1 ||
-          selectedCustomer.city ||
+          selectedCustomer.address_line1 ??
+          selectedCustomer.city ??
           selectedCustomer.postal_code
         );
       }
@@ -131,8 +132,8 @@ export function AddressInput({
       } else {
         // Livraison : utiliser adresse de livraison si disponible, sinon adresse de facturation
         const useShipping = !!(
-          customer.shipping_address_line1 ||
-          customer.shipping_city ||
+          customer.shipping_address_line1 ??
+          customer.shipping_city ??
           customer.shipping_postal_code
         );
         const parts = [
@@ -160,8 +161,8 @@ export function AddressInput({
       if (addressType === 'billing') {
         // Utiliser adresse de facturation spécifique si disponible, sinon adresse principale
         const useSpecificBilling = !!(
-          customer.billing_address_line1_individual ||
-          customer.billing_city_individual ||
+          customer.billing_address_line1_individual ??
+          customer.billing_city_individual ??
           customer.billing_postal_code_individual
         );
         const parts = [
@@ -239,7 +240,7 @@ export function AddressInput({
         <Label htmlFor={label.toLowerCase().replace(/\s+/g, '-')}>
           {label}
         </Label>
-        {showCopyButton && (selectedOrganisation || selectedCustomer) && (
+        {showCopyButton && (selectedOrganisation ?? selectedCustomer) && (
           <ButtonV2
             type="button"
             variant="outline"
@@ -256,14 +257,14 @@ export function AddressInput({
 
       <Textarea
         id={label.toLowerCase().replace(/\s+/g, '-')}
-        placeholder={placeholder || `${label} complète...`}
+        placeholder={placeholder ?? `${label} complète...`}
         value={value}
         onChange={e => onChange(e.target.value)}
         className="min-h-[100px] resize-none"
         disabled={disabled}
       />
 
-      {showCopyButton && (selectedOrganisation || selectedCustomer) && (
+      {showCopyButton && (selectedOrganisation ?? selectedCustomer) && (
         <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded border">
           <div className="flex items-center space-x-1 mb-1">
             <MapPin className="h-3 w-3" />

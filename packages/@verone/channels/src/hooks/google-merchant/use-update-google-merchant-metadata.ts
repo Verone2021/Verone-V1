@@ -58,14 +58,17 @@ export function useUpdateGoogleMerchantMetadata() {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        const errorData: { error?: string } = (await response.json()) as {
+          error?: string;
+        };
+        throw new Error(errorData.error ?? `HTTP ${response.status}`);
       }
 
-      const data: UpdateMetadataResponse = await response.json();
+      const data: UpdateMetadataResponse =
+        (await response.json()) as UpdateMetadataResponse;
 
       if (!data.success) {
-        throw new Error(data.error || 'Failed to update metadata');
+        throw new Error(data.error ?? 'Failed to update metadata');
       }
 
       return data;
@@ -76,7 +79,9 @@ export function useUpdateGoogleMerchantMetadata() {
       toast.success('Métadonnées mises à jour avec succès');
 
       // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ['google-merchant-products'] });
+      void queryClient.invalidateQueries({
+        queryKey: ['google-merchant-products'],
+      });
     },
     onError: error => {
       logger.error(

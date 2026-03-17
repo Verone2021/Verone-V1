@@ -77,15 +77,19 @@ export function OrderItemsTable({ orderId, orderType }: OrderItemsTableProps) {
         if (fetchError) throw fetchError;
 
         // Transformer les données
-        const transformedItems: OrderItem[] = (data || []).map(item => {
-          const product = item.products as any;
+        const transformedItems: OrderItem[] = (data ?? []).map(item => {
+          const product = item.products as unknown as {
+            name?: string;
+            sku?: string;
+            product_images?: Array<{ public_url: string }>;
+          } | null;
           const primaryImage = product?.product_images?.[0];
 
           return {
             id: item.id,
             product_id: item.product_id,
-            product_name: product?.name || 'Produit inconnu',
-            product_image_url: primaryImage?.public_url || null,
+            product_name: product?.name ?? 'Produit inconnu',
+            product_image_url: primaryImage?.public_url ?? null,
             sku: product?.sku,
             quantity: item.quantity,
             unit_price: item.unit_price_ht,
@@ -101,7 +105,7 @@ export function OrderItemsTable({ orderId, orderType }: OrderItemsTableProps) {
       }
     }
 
-    fetchOrderItems();
+    void fetchOrderItems();
   }, [orderId, orderType]);
 
   if (loading) {

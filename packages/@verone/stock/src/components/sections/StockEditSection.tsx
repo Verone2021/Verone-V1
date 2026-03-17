@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import type React from 'react';
 
 import { useInlineEdit, type EditableSection } from '@verone/common/hooks';
-import { Badge } from '@verone/ui';
+
 import { Button } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { Truck, Save, X } from 'lucide-react';
@@ -77,7 +77,9 @@ export const StockEditSection = React.memo(
       cancelEdit(section);
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleFieldChange = (field: string, value: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       updateEditedData(section, { [field]: value });
     };
 
@@ -102,7 +104,9 @@ export const StockEditSection = React.memo(
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={handleSave}
+                onClick={() => {
+                  void handleSave();
+                }}
                 disabled={!hasChanges(section) || isSaving(section)}
               >
                 <Save className="h-3 w-3 mr-1" />
@@ -119,9 +123,9 @@ export const StockEditSection = React.memo(
               </label>
               <input
                 type="number"
-                value={editData?.min_stock || 0}
+                value={editData?.min_stock ?? 0}
                 onChange={e =>
-                  handleFieldChange('min_stock', parseInt(e.target.value) || 0)
+                  handleFieldChange('min_stock', parseInt(e.target.value) ?? 0)
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                 min="0"

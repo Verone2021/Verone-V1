@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 import type { Database } from '@verone/utils/supabase/types';
@@ -20,6 +20,24 @@ export interface SubcategoryWithDetails extends Subcategory {
   };
 }
 
+interface SubcategoryRow {
+  id: string;
+  name: string;
+  slug: string;
+  category_id: string;
+  description: string | null;
+  image_url: string | null;
+  is_active: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+  categories: {
+    id: string;
+    name: string;
+    family_id: string;
+  } | null;
+}
+
 export function useSubcategories(categoryId?: string) {
   const [subcategories, setSubcategories] = useState<SubcategoryWithDetails[]>(
     []
@@ -28,7 +46,7 @@ export function useSubcategories(categoryId?: string) {
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
 
-  const fetchSubcategories = async () => {
+  const fetchSubcategories = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -47,59 +65,62 @@ export function useSubcategories(categoryId?: string) {
         baseQuery = baseQuery.eq('category_id', categoryId);
       }
 
-      const { data: subcategoriesData, error } = await baseQuery
+      const { data: subcategoriesData, error: fetchError } = await baseQuery
         .order('display_order')
         .order('name');
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
 
       // Obtenir les comptages pour chaque sous-catégorie
-      const subcategoriesWithDetails = await Promise.all(
-        (subcategoriesData || []).map(async sub => {
-          // FIX CORS: Utiliser select sans head:true pour éviter requêtes HEAD directes
-          let productCount = 0;
-          try {
-            const { count, error: countError } = await supabase
-              .from('products')
-              .select('id', { count: 'exact', head: false })
-              .eq('subcategory_id', sub.id);
+      const subcategoriesWithDetails: SubcategoryWithDetails[] =
+        await Promise.all(
+          ((subcategoriesData ?? []) as unknown as SubcategoryRow[]).map(
+            async sub => {
+              // FIX CORS: Utiliser select sans head:true pour éviter requêtes HEAD directes
+              let productCount = 0;
+              try {
+                const { count, error: countError } = await supabase
+                  .from('products')
+                  .select('id', { count: 'exact', head: false })
+                  .eq('subcategory_id', sub.id);
 
-            if (countError) {
-              console.warn(
-                '⚠️ Comptage produits échoué pour',
-                sub.name,
-                '- Compteur à 0'
-              );
-            } else {
-              productCount = count || 0;
-            }
-          } catch (err) {
-            // Silencieux - le comptage n'est pas critique
-            console.warn('⚠️ Comptage produits impossible pour', sub.name);
-          }
-
-          return {
-            ...sub,
-            products_count: productCount, // FIX: products_count (plural) pour cohérence avec interface
-            category: sub.categories
-              ? {
-                  id: sub.categories.id,
-                  name: sub.categories.name,
-                  family_id: sub.categories.family_id,
+                if (countError) {
+                  console.warn(
+                    'Comptage produits échoué pour',
+                    sub.name,
+                    '- Compteur à 0'
+                  );
+                } else {
+                  productCount = count ?? 0;
                 }
-              : undefined,
-          };
-        })
-      );
+              } catch (_err) {
+                // Silencieux - le comptage n'est pas critique
+                console.warn('Comptage produits impossible pour', sub.name);
+              }
 
-      setSubcategories(subcategoriesWithDetails as any);
+              return {
+                ...sub,
+                products_count: productCount,
+                category: sub.categories
+                  ? {
+                      id: sub.categories.id,
+                      name: sub.categories.name,
+                      family_id: sub.categories.family_id,
+                    }
+                  : undefined,
+              } as SubcategoryWithDetails;
+            }
+          )
+        );
+
+      setSubcategories(subcategoriesWithDetails);
     } catch (err) {
-      console.error('❌ Erreur lors du chargement des sous-catégories:', err);
+      console.error('Erreur lors du chargement des sous-catégories:', err);
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase, categoryId]);
 
   const createSubcategory = async (
     subcategoryData: Omit<SubcategoryInsert, 'id' | 'created_at' | 'updated_at'>
@@ -114,7 +135,7 @@ export function useSubcategories(categoryId?: string) {
           {
             ...subcategoryData,
             slug,
-            display_order: subcategoryData.display_order || 0,
+            display_order: subcategoryData.display_order ?? 0,
           },
         ])
         .select(
@@ -126,7 +147,7 @@ export function useSubcategories(categoryId?: string) {
         // Gestion spécifique des erreurs de contrainte unique
         if (error.code === '23505') {
           // Créer une erreur avec le code préservé pour le form
-          const duplicateError: any = new Error(
+          const duplicateError: Error & { code?: string } = new Error(
             'Une sous-catégorie avec ce nom existe déjà dans cette catégorie. Veuillez choisir un nom différent.'
           );
           duplicateError.code = '23505';
@@ -135,14 +156,14 @@ export function useSubcategories(categoryId?: string) {
         throw error;
       }
 
-      console.log('✅ Sous-catégorie créée:', data.name);
+      console.warn('Sous-catégorie créée:', data.name);
 
       // Recharger les données pour synchroniser l'état
       await fetchSubcategories();
 
       return data;
     } catch (err) {
-      console.error('❌ Erreur lors de la création de la sous-catégorie:', err);
+      console.error('Erreur lors de la création de la sous-catégorie:', err);
       throw err;
     }
   };
@@ -170,7 +191,7 @@ export function useSubcategories(categoryId?: string) {
 
       if (error) throw error;
 
-      console.log('✅ Sous-catégorie modifiée:', data.name);
+      console.warn('Sous-catégorie modifiée:', data.name);
 
       // Recharger les données pour synchroniser l'état
       await fetchSubcategories();
@@ -178,7 +199,7 @@ export function useSubcategories(categoryId?: string) {
       return data;
     } catch (err) {
       console.error(
-        '❌ Erreur lors de la modification de la sous-catégorie:',
+        'Erreur lors de la modification de la sous-catégorie:',
         err
       );
       throw err;
@@ -200,15 +221,12 @@ export function useSubcategories(categoryId?: string) {
 
       if (error) throw error;
 
-      console.log('✅ Sous-catégorie supprimée');
+      console.warn('Sous-catégorie supprimée');
 
       // Recharger les données pour synchroniser l'état
       await fetchSubcategories();
     } catch (err) {
-      console.error(
-        '❌ Erreur lors de la suppression de la sous-catégorie:',
-        err
-      );
+      console.error('Erreur lors de la suppression de la sous-catégorie:', err);
       throw err;
     }
   };
@@ -229,8 +247,8 @@ export function useSubcategories(categoryId?: string) {
 
       if (error) throw error;
 
-      console.log(
-        `✅ Sous-catégorie ${isActive ? 'activée' : 'désactivée'}:`,
+      console.warn(
+        `Sous-catégorie ${isActive ? 'activée' : 'désactivée'}:`,
         data.name
       );
 
@@ -239,7 +257,7 @@ export function useSubcategories(categoryId?: string) {
 
       return data;
     } catch (err) {
-      console.error('❌ Erreur lors du changement de statut:', err);
+      console.error('Erreur lors du changement de statut:', err);
       throw err;
     }
   };
@@ -258,23 +276,23 @@ export function useSubcategories(categoryId?: string) {
 
       if (error) throw error;
 
-      console.log('✅ Ordre de la sous-catégorie mis à jour:', data.name);
+      console.warn('Ordre de la sous-catégorie mis à jour:', data.name);
 
       // Recharger les données pour synchroniser l'état
       await fetchSubcategories();
 
       return data;
     } catch (err) {
-      console.error("❌ Erreur lors de la mise à jour de l'ordre:", err);
+      console.error("Erreur lors de la mise à jour de l'ordre:", err);
       throw err;
     }
   };
 
   const getSubcategoriesByCategory = async (
-    categoryId: string
+    catId: string
   ): Promise<SubcategoryWithDetails[]> => {
     try {
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('subcategories')
         .select(
           `
@@ -286,13 +304,13 @@ export function useSubcategories(categoryId?: string) {
           )
         `
         )
-        .eq('category_id', categoryId)
+        .eq('category_id', catId)
         .order('display_order')
         .order('name');
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
 
-      return (data || []).map(sub => ({
+      return ((data ?? []) as unknown as SubcategoryRow[]).map(sub => ({
         ...sub,
         products_count: 0,
         category: sub.categories
@@ -302,10 +320,10 @@ export function useSubcategories(categoryId?: string) {
               family_id: sub.categories.family_id,
             }
           : undefined,
-      })) as any;
+      })) as SubcategoryWithDetails[];
     } catch (err) {
       console.error(
-        '❌ Erreur lors du chargement des sous-catégories par catégorie:',
+        'Erreur lors du chargement des sous-catégories par catégorie:',
         err
       );
       throw err;
@@ -325,8 +343,8 @@ export function useSubcategories(categoryId?: string) {
 
   // Charger les sous-catégories au montage du hook
   useEffect(() => {
-    fetchSubcategories();
-  }, [categoryId]);
+    void fetchSubcategories();
+  }, [fetchSubcategories]);
 
   const refreshSubcategories = async () => {
     await fetchSubcategories();

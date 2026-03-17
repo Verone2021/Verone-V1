@@ -14,7 +14,6 @@ import {
   ExternalLink,
   CheckCircle,
   Clock,
-  AlertCircle,
   XCircle,
   BarChart,
 } from 'lucide-react';
@@ -295,7 +294,7 @@ export function GoogleMerchantProductCard({
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() =>
-                        handleAction(() => onResync(product.product_id))
+                        void handleAction(() => onResync(product.product_id))
                       }
                     >
                       <RefreshCw className="h-4 w-4 mr-2" />
@@ -304,7 +303,7 @@ export function GoogleMerchantProductCard({
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() =>
-                        handleAction(() => onHide(product.product_id))
+                        void handleAction(() => onHide(product.product_id))
                       }
                     >
                       <EyeOff className="h-4 w-4 mr-2" />
@@ -312,7 +311,7 @@ export function GoogleMerchantProductCard({
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() =>
-                        handleAction(() => onRemove(product.product_id))
+                        void handleAction(() => onRemove(product.product_id))
                       }
                       className="text-[#ff4d6b] focus:text-[#ff4d6b]"
                     >
@@ -409,7 +408,7 @@ export function GoogleMerchantProductCard({
           cost_price: product.cost_price,
           custom_price_ht: product.custom_price_ht,
         }}
-        onSave={handleUpdatePrice}
+        onSave={(...args) => void handleUpdatePrice(...args)}
         onCancel={() => setIsPriceEditorOpen(false)}
         open={isPriceEditorOpen}
       />
@@ -423,7 +422,7 @@ export function GoogleMerchantProductCard({
           custom_title: product.custom_title,
           custom_description: product.custom_description,
         }}
-        onSave={handleUpdateMetadata}
+        onSave={(...args) => void handleUpdateMetadata(...args)}
         onCancel={() => setIsMetadataEditorOpen(false)}
         open={isMetadataEditorOpen}
       />

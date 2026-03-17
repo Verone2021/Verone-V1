@@ -195,7 +195,7 @@ export function useConsultations() {
 
         if (error) throw error;
 
-        setConsultations((data || []) as any);
+        setConsultations((data ?? []) as ClientConsultation[]);
       } catch (err) {
         const message =
           err instanceof Error
@@ -221,15 +221,15 @@ export function useConsultations() {
         .from('client_consultations')
         .insert([
           {
-            enseigne_id: data.enseigne_id || null,
-            organisation_id: data.organisation_id || null,
+            enseigne_id: data.enseigne_id ?? null,
+            organisation_id: data.organisation_id ?? null,
             client_email: data.client_email,
             client_phone: data.client_phone,
             descriptif: data.descriptif,
             image_url: data.image_url,
             tarif_maximum: data.tarif_maximum,
-            priority_level: data.priority_level || 2,
-            source_channel: data.source_channel || 'website',
+            priority_level: data.priority_level ?? 2,
+            source_channel: data.source_channel ?? 'website',
             estimated_response_date: data.estimated_response_date,
           },
         ])
@@ -241,14 +241,17 @@ export function useConsultations() {
       if (error) throw error;
 
       // Ajouter à la liste locale
-      setConsultations(prev => [newConsultation, ...prev] as any);
+      setConsultations(prev => [
+        newConsultation as ClientConsultation,
+        ...prev,
+      ]);
 
       toast({
         title: 'Consultation créée',
         description: 'La consultation a été créée avec succès',
       });
 
-      return newConsultation as any;
+      return newConsultation as ClientConsultation;
     } catch (err) {
       const message =
         err instanceof Error
@@ -391,7 +394,9 @@ export function useConsultations() {
 
       const { error } = await supabase
         .from('client_consultations')
-        .update({ archived_at: new Date().toISOString() } as any)
+        .update({
+          archived_at: new Date().toISOString(),
+        } as Partial<ClientConsultation>)
         .eq('id', consultationId);
 
       if (error) throw error;
@@ -433,7 +438,7 @@ export function useConsultations() {
 
       const { error } = await supabase
         .from('client_consultations')
-        .update({ archived_at: null } as any)
+        .update({ archived_at: null } as unknown as Partial<ClientConsultation>)
         .eq('id', consultationId);
 
       if (error) throw error;
@@ -476,7 +481,9 @@ export function useConsultations() {
 
       const { error } = await supabase
         .from('client_consultations')
-        .update({ deleted_at: new Date().toISOString() } as any)
+        .update({
+          deleted_at: new Date().toISOString(),
+        } as Partial<ClientConsultation>)
         .eq('id', consultationId);
 
       if (error) throw error;
@@ -562,15 +569,15 @@ export function useConsultationProducts(consultationId?: string) {
     eligibleProducts,
     loading,
     error,
-    fetchConsultationProducts: (id: string) => {}, // Noop - le nouveau hook gère automatiquement
+    fetchConsultationProducts: (_id: string) => {}, // Noop - le nouveau hook gère automatiquement
     fetchEligibleProducts: () => {}, // Noop - le nouveau hook gère automatiquement
     assignProduct: async (data: AssignProductData) => {
       return addItem({
         consultation_id: data.consultation_id,
         product_id: data.product_id,
-        quantity: data.quantity || 1,
+        quantity: data.quantity ?? 1,
         unit_price: data.proposed_price,
-        is_free: data.is_free || false,
+        is_free: data.is_free ?? false,
         notes: data.notes,
       });
     },
@@ -594,7 +601,7 @@ export function useConsultationItems(consultationId?: string) {
   const [consultationItems, setConsultationItems] = useState<
     ConsultationItem[]
   >([]);
-  const [eligibleProducts, setEligibleProducts] = useState<any[]>([]);
+  const [eligibleProducts, setEligibleProducts] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -634,13 +641,13 @@ export function useConsultationItems(consultationId?: string) {
       if (error) throw error;
 
       // Transform to ConsultationItem format
-      const items = (data || []).map(item => ({
+      const items = (data ?? []).map(item => ({
         id: item.id,
         consultation_id: item.consultation_id,
         product_id: item.product_id,
-        quantity: item.quantity || 1,
-        unit_price: item.proposed_price || item.product?.cost_price,
-        is_free: item.is_free || false,
+        quantity: item.quantity ?? 1,
+        unit_price: item.proposed_price ?? item.product?.cost_price,
+        is_free: item.is_free ?? false,
         notes: item.notes ?? undefined,
         created_at: item.created_at,
         created_by: item.created_by,
@@ -662,12 +669,12 @@ export function useConsultationItems(consultationId?: string) {
                   }
                 ).product_images?.find(
                   (img: { is_primary: boolean }) => img.is_primary
-                )?.public_url ||
+                )?.public_url ??
                 (
                   item.product as unknown as {
                     product_images?: Array<{ public_url: string }>;
                   }
-                ).product_images?.[0]?.public_url ||
+                ).product_images?.[0]?.public_url ??
                 null,
             }
           : undefined,
@@ -695,13 +702,13 @@ export function useConsultationItems(consultationId?: string) {
         const { data, error } = await supabase.rpc(
           'get_consultation_eligible_products',
           {
-            target_consultation_id: targetConsultationId || undefined,
+            target_consultation_id: targetConsultationId ?? undefined,
           }
         );
 
         if (error) throw error;
 
-        setEligibleProducts(data || []);
+        setEligibleProducts(data ?? []);
       } catch (err) {
         const message =
           err instanceof Error
@@ -737,10 +744,17 @@ export function useConsultationItems(consultationId?: string) {
         }),
       });
 
-      const result = await response.json();
+      const result: unknown = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Erreur lors de l'ajout de l'item");
+        const errorMessage =
+          result != null &&
+          typeof result === 'object' &&
+          'error' in result &&
+          typeof (result as { error: unknown }).error === 'string'
+            ? (result as { error: string }).error
+            : "Erreur lors de l'ajout de l'item";
+        throw new Error(errorMessage);
       }
 
       // Recharger les items
@@ -775,7 +789,7 @@ export function useConsultationItems(consultationId?: string) {
     try {
       setError(null);
 
-      const updateData: any = {};
+      const updateData: Record<string, unknown> = {};
       if (updates.quantity !== undefined)
         updateData.quantity = updates.quantity;
       if (updates.unit_price !== undefined)
@@ -870,7 +884,7 @@ export function useConsultationItems(consultationId?: string) {
   const calculateTotal = () => {
     return consultationItems.reduce((total, item) => {
       if (item.is_free) return total;
-      const price = item.unit_price || 0;
+      const price = item.unit_price ?? 0;
       return total + price * item.quantity;
     }, 0);
   };

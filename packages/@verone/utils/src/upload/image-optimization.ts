@@ -301,11 +301,11 @@ export class ImageOptimizer {
       const originalDimensions = await this.getImageDimensions(file);
       const originalSize = file.size;
 
-      console.log(`🎨 Optimisation image: ${file.name}`);
-      console.log(
+      console.warn(`🎨 Optimisation image: ${file.name}`);
+      console.warn(
         `📏 Dimensions originales: ${originalDimensions.width}x${originalDimensions.height}`
       );
-      console.log(`📊 Taille originale: ${Math.round(originalSize / 1024)}KB`);
+      console.warn(`📊 Taille originale: ${Math.round(originalSize / 1024)}KB`);
 
       const optimizedVariants: OptimizedVariant[] = [];
       let totalOptimizedSize = 0;
@@ -317,8 +317,8 @@ export class ImageOptimizer {
         const resizedDimensions = this.calculateResizedDimensions(
           originalDimensions.width,
           originalDimensions.height,
-          (targetDimensions as any).width,
-          (targetDimensions as any).height
+          (targetDimensions as { width: number; height: number }).width,
+          (targetDimensions as { width: number; height: number }).height
         );
 
         // Générer variantes pour chaque format
@@ -334,7 +334,7 @@ export class ImageOptimizer {
             );
 
             const variant: OptimizedVariant = {
-              size: sizeName as any,
+              size: sizeName as OptimizedVariant['size'],
               format,
               file: optimizedFile,
               dimensions: resizedDimensions,
@@ -345,7 +345,7 @@ export class ImageOptimizer {
             optimizedVariants.push(variant);
             totalOptimizedSize += optimizedFile.size;
 
-            console.log(
+            console.warn(
               `✅ Variante ${sizeName}-${format}: ${Math.round(optimizedFile.size / 1024)}KB`
             );
           } catch (error) {
@@ -403,7 +403,7 @@ export class ImageOptimizer {
         );
       }
 
-      console.log(
+      console.warn(
         `🎉 Optimisation terminée: ${Math.round(compressionRatio)}% de compression`
       );
 

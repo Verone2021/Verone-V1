@@ -226,15 +226,18 @@ export function useStockAnalytics() {
         // ÉTAPE 1: Appel RPC get_stock_analytics
         // ============================================
         // RPC function not yet in generated Supabase types - using any cast
-        const { data, error: rpcError } = await (supabase as any).rpc(
-          'get_stock_analytics',
-          { p_period_days: periodDays, p_organisation_id: null }
-        );
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+        const { data, error: rpcError } = await (
+          supabase as readonly string[]
+        ).rpc('get_stock_analytics', {
+          p_period_days: periodDays,
+          p_organisation_id: null,
+        });
 
         if (rpcError) throw rpcError;
 
         // Cast manuel du résultat (types Supabase non générés pour cette RPC)
-        const rawProducts = (data || []) as unknown as StockAnalyticsRaw[];
+        const rawProducts = (data ?? []) as unknown as StockAnalyticsRaw[];
 
         if (!rawProducts || rawProducts.length === 0) {
           toast({
@@ -502,12 +505,17 @@ export function useStockAnalytics() {
         });
 
         return reportData;
-      } catch (err: any) {
+      } catch (err: unknown) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const error = err instanceof Error ? err : new Error(String(err));
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const errorMessage =
-          err.message || 'Erreur lors de la génération du rapport analytics';
+          err.message ?? 'Erreur lors de la génération du rapport analytics';
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         setError(errorMessage);
         toast({
           title: 'Erreur',
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           description: errorMessage,
           variant: 'destructive',
         });

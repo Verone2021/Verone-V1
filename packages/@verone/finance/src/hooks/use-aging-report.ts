@@ -157,20 +157,20 @@ export function useAgingReport() {
             Math.floor(ageMs / (1000 * 60 * 60 * 24))
           );
           const value =
-            (product.stock_quantity || 0) * (product.cost_price || 0);
+            (product.stock_quantity ?? 0) * (product.cost_price ?? 0);
 
           // Déterminer la tranche (bucket)
           const bucket =
-            AGING_BUCKETS.find(b => ageDays >= b.min && ageDays <= b.max)?.id ||
+            AGING_BUCKETS.find(b => ageDays >= b.min && ageDays <= b.max)?.id ??
             '180+';
 
           return {
             id: product.id,
-            name: product.name || 'Sans nom',
-            sku: product.sku || '',
-            stock_quantity: product.stock_quantity || 0,
-            cost_price: product.cost_price || 0,
-            last_movement_date: lastMovementDate || null,
+            name: product.name ?? 'Sans nom',
+            sku: product.sku ?? '',
+            stock_quantity: product.stock_quantity ?? 0,
+            cost_price: product.cost_price ?? 0,
+            last_movement_date: lastMovementDate ?? null,
             age_days: ageDays,
             value,
             bucket,

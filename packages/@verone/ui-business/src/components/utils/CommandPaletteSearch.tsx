@@ -164,8 +164,8 @@ export function CommandPaletteSearch({
     if (!searchQuery) return false;
     const query = searchQuery.toLowerCase();
     return (
-      item.title.toLowerCase().includes(query) ||
-      item.subtitle?.toLowerCase().includes(query) ||
+      (item.title.toLowerCase().includes(query) ||
+        item.subtitle?.toLowerCase().includes(query)) ??
       false
     );
   });
@@ -184,7 +184,10 @@ export function CommandPaletteSearch({
     <CommandDialog
       open={open}
       onOpenChange={onOpenChange}
-      {...({ className: cn('top-[10%]', className) } as any)}
+      {...({ className: cn('top-[10%]', className) } as Record<
+        string,
+        unknown
+      >)}
     >
       {/* Accessibilité : Titre et description cachés visuellement */}
       <VisuallyHidden>

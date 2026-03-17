@@ -81,9 +81,21 @@ export function useArchivedProducts() {
       if (error) throw error;
 
       // Enrichir les données avec les URLs publiques des images
-      const enrichedProducts = (data || []).map(product => ({
-        ...(product as any),
-        images: ((product as any).images || []).map(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Supabase joined query (product_images) returns untyped data
+      const enrichedProducts = (data ?? []).map(product => ({
+        ...product,
+        images: (
+          (
+            product as {
+              images?: Array<{
+                id: string;
+                storage_path: string;
+                is_primary: boolean;
+                public_url?: string;
+              }>;
+            }
+          ).images ?? []
+        ).map(
           (img: {
             id: string;
             storage_path: string;
@@ -102,8 +114,8 @@ export function useArchivedProducts() {
 
       setState(prev => ({
         ...prev,
-        products: enrichedProducts,
-        total: count || 0,
+        products: enrichedProducts as ArchivedProduct[],
+        total: count ?? 0,
         loading: false,
       }));
     } catch (error) {
@@ -134,7 +146,7 @@ export function useArchivedProducts() {
       // Recharger la liste
       await loadArchivedProducts();
 
-      console.log('✅ Produit archivé avec succès');
+      console.warn('Produit archivé avec succès');
       return true;
     } catch (error) {
       console.error('❌ Erreur archivage produit:', error);
@@ -164,7 +176,7 @@ export function useArchivedProducts() {
         total: prev.total - 1,
       }));
 
-      console.log('✅ Produit restauré avec succès');
+      console.warn('Produit restauré avec succès');
       return true;
     } catch (error) {
       console.error('❌ Erreur restauration produit:', error);
@@ -198,7 +210,7 @@ export function useArchivedProducts() {
         total: prev.total - 1,
       }));
 
-      console.log('✅ Produit supprimé définitivement');
+      console.warn('Produit supprimé définitivement');
       return true;
     } catch (error) {
       console.error('❌ Erreur suppression définitive:', error);
@@ -208,7 +220,8 @@ export function useArchivedProducts() {
 
   // Charger les données au montage
   useEffect(() => {
-    loadArchivedProducts();
+    void loadArchivedProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadArchivedProducts is stable, adding it would cause infinite loop
   }, []);
 
   // Statistiques

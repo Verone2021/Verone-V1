@@ -26,7 +26,7 @@ export function TabsNavigation({
   onTabChange,
   className,
 }: TabsNavigationProps) {
-  const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.id);
+  const [activeTab, setActiveTab] = useState(defaultTab ?? tabs[0]?.id);
 
   const handleTabClick = (tabId: string, disabled?: boolean) => {
     if (disabled) return;

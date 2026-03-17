@@ -42,11 +42,11 @@ interface AgingReportViewProps {
 
 export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
   const { report, loading, error, generateReport } = useAgingReport();
-  const { toast } = useToast();
+  const { toast: _toast } = useToast();
   const [showPdfPreview, setShowPdfPreview] = useState(false);
 
   useEffect(() => {
-    generateReport(dateFrom, dateTo);
+    void generateReport(dateFrom, dateTo);
   }, [dateFrom, dateTo, generateReport]);
 
   const handleExportPDF = () => {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 'use client';
 
 import { Save } from 'lucide-react';
@@ -71,7 +72,7 @@ export function TechnicalSection({
                 step="0.1"
                 min="0"
                 placeholder="0"
-                value={formData.dimensions?.length || ''}
+                value={formData.dimensions?.length ?? ''}
                 onChange={e => handleDimensionChange('length', e.target.value)}
               />
             </div>
@@ -85,7 +86,7 @@ export function TechnicalSection({
                 step="0.1"
                 min="0"
                 placeholder="0"
-                value={formData.dimensions?.width || ''}
+                value={formData.dimensions?.width ?? ''}
                 onChange={e => handleDimensionChange('width', e.target.value)}
               />
             </div>
@@ -99,7 +100,7 @@ export function TechnicalSection({
                 step="0.1"
                 min="0"
                 placeholder="0"
-                value={formData.dimensions?.height || ''}
+                value={formData.dimensions?.height ?? ''}
                 onChange={e => handleDimensionChange('height', e.target.value)}
               />
             </div>

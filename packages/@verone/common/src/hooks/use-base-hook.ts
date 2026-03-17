@@ -14,7 +14,7 @@ type TableName = keyof Database['public']['Tables'];
 type TableRow<T extends TableName> = Database['public']['Tables'][T]['Row'];
 type TableInsert<T extends TableName> =
   Database['public']['Tables'][T]['Insert'];
-type TableUpdate<T extends TableName> =
+type _TableUpdate<T extends TableName> =
   Database['public']['Tables'][T]['Update'];
 
 /**
@@ -79,7 +79,7 @@ export function useBaseHook<T>(
 
   return {
     data,
-    setData: setData as any,
+    setData: setData as <U>(data: U) => void,
     loading,
     error,
     setLoading,
@@ -102,7 +102,7 @@ export function useBaseListHook<T>(initialData: T[] = []): BaseHookState<T[]> &
   } {
   const base = useBaseHook<T[]>(initialData);
 
-  const setData = (newData: T[]) => {
+  const _setData = (_newData: T[]) => {
     // Cette fonction sera retournée pour permettre la mise à jour des données
   };
 
@@ -113,18 +113,22 @@ export function useBaseListHook<T>(initialData: T[] = []): BaseHookState<T[]> &
   const updateItem = (id: string, updates: Partial<T>) => {
     base.setData?.(
       base.data.map(item =>
-        (item as any).id === id ? { ...item, ...updates } : item
+        (item as unknown as { id: string }).id === id
+          ? { ...item, ...updates }
+          : item
       )
     );
   };
 
   const removeItem = (id: string) => {
-    base.setData?.(base.data.filter(item => (item as any).id !== id));
+    base.setData?.(
+      base.data.filter(item => (item as unknown as { id: string }).id !== id)
+    );
   };
 
   return {
     ...base,
-    setData: setData as any,
+    setData: setData as <U>(data: U) => void,
     addItem,
     updateItem,
     removeItem,
@@ -176,8 +180,8 @@ export function createCrudOperations<
 
       const { data: newItem, error } = await baseHook.supabase
         .from(tableName)
-        .insert([data as any])
-        .select(selectFields || '*')
+        .insert([data as Record<string, unknown>])
+        .select(selectFields ?? '*')
         .single();
 
       if (error) throw error;
@@ -202,9 +206,9 @@ export function createCrudOperations<
 
       const { data: updatedItem, error } = await baseHook.supabase
         .from(tableName)
-        .update(data as any)
-        .eq('id' as any, id)
-        .select(selectFields || '*')
+        .update(data as Record<string, unknown>)
+        .eq('id' as string, id)
+        .select(selectFields ?? '*')
         .single();
 
       if (error) throw error;
@@ -233,7 +237,7 @@ export function createCrudOperations<
       const { error } = await baseHook.supabase
         .from(tableName)
         .delete()
-        .eq('id' as any, id);
+        .eq('id' as string, id);
 
       if (error) throw error;
 
@@ -261,12 +265,12 @@ export function createCrudOperations<
 
       const { data, error } = await baseHook.supabase
         .from(tableName)
-        .select(selectFields || '*')
+        .select(selectFields ?? '*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      baseHook.setData(data || []);
+      baseHook.setData(data ?? []);
     } catch (err) {
       baseHook.handleError(err, `Erreur lors du chargement de ${tableName}`);
     } finally {

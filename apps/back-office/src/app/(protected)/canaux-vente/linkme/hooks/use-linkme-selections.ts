@@ -365,7 +365,6 @@ export function useUpdateSelection() {
         // Vérifier unicité (exclure la sélection courante)
         slug = baseSlug;
         let suffix = 2;
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- loop until unique slug found
         while (true) {
           const { data: existing } = await supabase
             .from('linkme_selections')

@@ -46,14 +46,14 @@ export function SupplierFormModal({
     if (isEditing && supplier) {
       setTaxonomyData({
         supplier_segment:
-          (supplier.supplier_segment as SupplierSegmentType) || undefined,
+          (supplier.supplier_segment as SupplierSegmentType) ?? undefined,
       });
     }
   });
 
   const handleSubmit = async (
     data: OrganisationFormData,
-    organisationId?: string
+    _organisationId?: string
   ) => {
     const supplierData = {
       ...data,
@@ -69,29 +69,29 @@ export function SupplierFormModal({
       result = await updateOrganisation({
         id: supplier.id,
         legal_name: supplierData.legal_name,
-        email: supplierData.email || undefined,
+        email: supplierData.email ?? undefined,
         country: supplierData.country,
-        phone: supplierData.phone || undefined,
-        website: supplierData.website || undefined,
+        phone: supplierData.phone ?? undefined,
+        website: supplierData.website ?? undefined,
         is_active: supplierData.is_active,
-        notes: supplierData.notes || undefined,
+        notes: supplierData.notes ?? undefined,
 
         // Adresse principale
-        address_line1: supplierData.address_line1 || undefined,
-        address_line2: supplierData.address_line2 || undefined,
-        postal_code: supplierData.postal_code || undefined,
-        city: supplierData.city || undefined,
-        region: supplierData.region || undefined,
+        address_line1: supplierData.address_line1 ?? undefined,
+        address_line2: supplierData.address_line2 ?? undefined,
+        postal_code: supplierData.postal_code ?? undefined,
+        city: supplierData.city ?? undefined,
+        region: supplierData.region ?? undefined,
 
         // Légal
-        legal_form: supplierData.legal_form || undefined,
-        siret: supplierData.siret || undefined,
-        vat_number: supplierData.vat_number || undefined,
-        industry_sector: supplierData.industry_sector || undefined,
+        legal_form: supplierData.legal_form ?? undefined,
+        siret: supplierData.siret ?? undefined,
+        vat_number: supplierData.vat_number ?? undefined,
+        industry_sector: supplierData.industry_sector ?? undefined,
 
         // Commercial
-        currency: supplierData.currency || 'EUR',
-        payment_terms: supplierData.payment_terms || undefined,
+        currency: supplierData.currency ?? 'EUR',
+        payment_terms: supplierData.payment_terms ?? undefined,
 
         // Taxonomie fournisseur (convertir UI uppercase → DB lowercase)
         supplier_segment: (supplierData.supplier_segment?.toLowerCase() ??
@@ -100,31 +100,31 @@ export function SupplierFormModal({
     } else {
       // Création
       result = await createOrganisation({
-        legal_name: supplierData.legal_name || supplierData.name, // Fallback to name
+        legal_name: supplierData.legal_name ?? supplierData.name, // Fallback to name
         type: 'supplier',
-        email: supplierData.email || undefined,
+        email: supplierData.email ?? undefined,
         country: supplierData.country,
-        phone: supplierData.phone || undefined,
-        website: supplierData.website || undefined,
+        phone: supplierData.phone ?? undefined,
+        website: supplierData.website ?? undefined,
         is_active: supplierData.is_active,
-        notes: supplierData.notes || undefined,
+        notes: supplierData.notes ?? undefined,
 
         // Adresse principale
-        address_line1: supplierData.address_line1 || undefined,
-        address_line2: supplierData.address_line2 || undefined,
-        postal_code: supplierData.postal_code || undefined,
-        city: supplierData.city || undefined,
-        region: supplierData.region || undefined,
+        address_line1: supplierData.address_line1 ?? undefined,
+        address_line2: supplierData.address_line2 ?? undefined,
+        postal_code: supplierData.postal_code ?? undefined,
+        city: supplierData.city ?? undefined,
+        region: supplierData.region ?? undefined,
 
         // Légal
-        legal_form: supplierData.legal_form || undefined,
-        siret: supplierData.siret || undefined,
-        vat_number: supplierData.vat_number || undefined,
-        industry_sector: supplierData.industry_sector || undefined,
+        legal_form: supplierData.legal_form ?? undefined,
+        siret: supplierData.siret ?? undefined,
+        vat_number: supplierData.vat_number ?? undefined,
+        industry_sector: supplierData.industry_sector ?? undefined,
 
         // Commercial
-        currency: supplierData.currency || 'EUR',
-        payment_terms: supplierData.payment_terms || undefined,
+        currency: supplierData.currency ?? 'EUR',
+        payment_terms: supplierData.payment_terms ?? undefined,
 
         // Taxonomie fournisseur (convertir UI uppercase → DB lowercase)
         supplier_segment: (supplierData.supplier_segment?.toLowerCase() ??
@@ -133,7 +133,7 @@ export function SupplierFormModal({
     }
 
     if (result) {
-      console.log('✅ Fournisseur sauvegardé avec succès');
+      console.warn('✅ Fournisseur sauvegardé avec succès');
       onSuccess?.(result as Organisation);
       onClose();
     } else {

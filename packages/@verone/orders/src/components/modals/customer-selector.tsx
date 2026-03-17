@@ -82,23 +82,24 @@ export function CustomerSelector({
   // Charger les clients selon le type sélectionné (et l'enseigne si fournie)
   useEffect(() => {
     void loadCustomers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customerType, enseigneId]);
 
   const loadCustomers = async () => {
-    console.log(
+    console.warn(
       '🔍 [CustomerSelector] Début loadCustomers, type:',
       customerType
     );
     try {
       setLoading(true);
-      console.log('🔄 [CustomerSelector] Loading state = true');
+      console.warn('🔄 [CustomerSelector] Loading state = true');
       setError(null);
 
       const supabase = createClient();
 
       if (customerType === 'professional') {
         // Charger les organisations professionnelles (B2B)
-        console.log('🏢 [CustomerSelector] Chargement organisations B2B...');
+        console.warn('🏢 [CustomerSelector] Chargement organisations B2B...');
         let orgQuery = supabase
           .from('organisations')
           .select(
@@ -146,20 +147,21 @@ export function CustomerSelector({
           throw orgError;
         }
 
-        console.log(
+        console.warn(
           '✅ [CustomerSelector] Organisations chargées:',
-          organisations?.length || 0
+          organisations?.length ?? 0
         );
+
         setCustomers(
-          (organisations || []).map(org => ({
+          (organisations ?? []).map(org => ({
             ...org,
             name: getOrganisationCardName(org),
             type: 'professional' as const,
-          })) as any
+          })) as unknown as UnifiedCustomer[]
         );
       } else {
         // Charger les clients particuliers (B2C)
-        console.log('👤 [CustomerSelector] Chargement clients B2C...');
+        console.warn('👤 [CustomerSelector] Chargement clients B2C...');
         const { data: individuals, error: indError } = await supabase
           .from('individual_customers')
           .select(
@@ -195,12 +197,13 @@ export function CustomerSelector({
           throw indError;
         }
 
-        console.log(
+        console.warn(
           '✅ [CustomerSelector] Clients B2C chargés:',
-          individuals?.length || 0
+          individuals?.length ?? 0
         );
+
         setCustomers(
-          (individuals || []).map(ind => ({
+          (individuals ?? []).map(ind => ({
             id: ind.id,
             name: `${ind.first_name} ${ind.last_name}`,
             type: 'individual' as const,
@@ -219,14 +222,14 @@ export function CustomerSelector({
             billing_region_individual: ind.billing_region_individual,
             billing_country_individual: ind.billing_country_individual,
             has_different_billing_address: ind.has_different_billing_address,
-          })) as any
+          })) as unknown as UnifiedCustomer[]
         );
       }
     } catch (err) {
       console.error('❌ [CustomerSelector] Exception dans loadCustomers:', err);
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
-      console.log('✔️ [CustomerSelector] Fin loadCustomers, loading = false');
+      console.warn('✔️ [CustomerSelector] Fin loadCustomers, loading = false');
       setLoading(false);
     }
   };
@@ -346,7 +349,9 @@ export function CustomerSelector({
           <div className="p-3 bg-red-50 border border-red-200 rounded-md">
             <p className="text-red-600 text-sm">❌ {error}</p>
             <button
-              onClick={loadCustomers}
+              onClick={() => {
+                void loadCustomers();
+              }}
               className="mt-1 text-red-700 underline text-xs"
               disabled={disabled}
             >
@@ -358,7 +363,7 @@ export function CustomerSelector({
             <div className="flex-1">
               <Combobox
                 options={customerOptions}
-                value={selectedCustomer?.id || ''}
+                value={selectedCustomer?.id ?? ''}
                 onValueChange={handleCustomerChange}
                 placeholder={
                   loading
@@ -371,19 +376,23 @@ export function CustomerSelector({
                     : 'Rechercher un client...'
                 }
                 emptyMessage="Aucun client trouvé."
-                disabled={disabled || loading}
+                disabled={!!disabled || loading}
               />
             </div>
 
             {/* Bouton création selon le type */}
             {customerType === 'professional' ? (
               <CreateOrganisationModal
-                onOrganisationCreated={handleOrganisationCreated}
+                onOrganisationCreated={(...args) => {
+                  void handleOrganisationCreated(...args);
+                }}
                 defaultType="customer"
               />
             ) : (
               <CreateIndividualCustomerModal
-                onCustomerCreated={handleIndividualCustomerCreated}
+                onCustomerCreated={(...args) => {
+                  void handleIndividualCustomerCreated(...args);
+                }}
               />
             )}
           </div>

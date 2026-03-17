@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 import type { Database } from '@verone/utils/supabase/types';
@@ -20,7 +20,7 @@ export function useFamilies() {
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
 
-  const fetchFamilies = async () => {
+  const fetchFamilies = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -40,20 +40,20 @@ export function useFamilies() {
       if (error) throw error;
 
       // Calculer les statistiques pour chaque famille
-      const familiesWithStats: FamilyWithStats[] = (data || []).map(family => ({
+      const familiesWithStats: FamilyWithStats[] = (data ?? []).map(family => ({
         ...family,
-        categories_count: family.categories?.length || 0,
+        categories_count: family.categories?.length ?? 0,
         products_count: 0, // TODO: Calculer via join avec products si nécessaire
       }));
 
       setFamilies(familiesWithStats);
     } catch (err) {
-      console.error('❌ Erreur lors du chargement des familles:', err);
+      console.error('Erreur lors du chargement des familles:', err);
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
 
   const createFamily = async (
     familyData: Omit<FamilyInsert, 'id' | 'created_at' | 'updated_at'>
@@ -68,7 +68,7 @@ export function useFamilies() {
           {
             ...familyData,
             slug,
-            display_order: familyData.display_order || 0,
+            display_order: familyData.display_order ?? 0,
           },
         ])
         .select(
@@ -80,7 +80,7 @@ export function useFamilies() {
         // Gestion spécifique des erreurs de contrainte unique
         if (error.code === '23505') {
           // Créer une erreur avec le code préservé pour le form
-          const duplicateError: any = new Error(
+          const duplicateError: Error & { code?: string } = new Error(
             'Une famille avec ce nom existe déjà. Veuillez choisir un nom différent.'
           );
           duplicateError.code = '23505';
@@ -89,19 +89,19 @@ export function useFamilies() {
         throw error;
       }
 
-      console.log('✅ Famille créée:', data.name);
+      console.warn('Famille créée:', data.name);
 
       // Recharger les données pour synchroniser l'état
       await fetchFamilies();
 
       return data;
     } catch (err) {
-      console.error('❌ Erreur lors de la création de la famille:', err);
+      console.error('Erreur lors de la création de la famille:', err);
       console.error(
-        "❌ Message d'erreur:",
+        "Message d'erreur:",
         err instanceof Error ? err.message : 'Erreur inconnue'
       );
-      console.error('❌ Détails complets:', JSON.stringify(err, null, 2));
+      console.error('Détails complets:', JSON.stringify(err, null, 2));
       throw err;
     }
   };
@@ -126,14 +126,14 @@ export function useFamilies() {
 
       if (error) throw error;
 
-      console.log('✅ Famille modifiée:', data.name);
+      console.warn('Famille modifiée:', data.name);
 
       // Recharger les données pour synchroniser l'état
       await fetchFamilies();
 
       return data;
     } catch (err) {
-      console.error('❌ Erreur lors de la modification de la famille:', err);
+      console.error('Erreur lors de la modification de la famille:', err);
       throw err;
     }
   };
@@ -158,12 +158,12 @@ export function useFamilies() {
 
       if (error) throw error;
 
-      console.log('✅ Famille supprimée');
+      console.warn('Famille supprimée');
 
       // Recharger les données pour synchroniser l'état
       await fetchFamilies();
     } catch (err) {
-      console.error('❌ Erreur lors de la suppression de la famille:', err);
+      console.error('Erreur lors de la suppression de la famille:', err);
       throw err;
     }
   };
@@ -184,8 +184,8 @@ export function useFamilies() {
 
       if (error) throw error;
 
-      console.log(
-        `✅ Famille ${isActive ? 'activée' : 'désactivée'}:`,
+      console.warn(
+        `Famille ${isActive ? 'activée' : 'désactivée'}:`,
         data.name
       );
 
@@ -194,7 +194,7 @@ export function useFamilies() {
 
       return data;
     } catch (err) {
-      console.error('❌ Erreur lors du changement de statut:', err);
+      console.error('Erreur lors du changement de statut:', err);
       throw err;
     }
   };
@@ -213,14 +213,14 @@ export function useFamilies() {
 
       if (error) throw error;
 
-      console.log('✅ Ordre de la famille mis à jour:', data.name);
+      console.warn('Ordre de la famille mis à jour:', data.name);
 
       // Recharger les données pour synchroniser l'état
       await fetchFamilies();
 
       return data;
     } catch (err) {
-      console.error("❌ Erreur lors de la mise à jour de l'ordre:", err);
+      console.error("Erreur lors de la mise à jour de l'ordre:", err);
       throw err;
     }
   };
@@ -238,8 +238,8 @@ export function useFamilies() {
 
   // Charger les familles au montage du hook
   useEffect(() => {
-    fetchFamilies();
-  }, []);
+    void fetchFamilies();
+  }, [fetchFamilies]);
 
   return {
     families,

@@ -35,8 +35,8 @@ export function TreasuryDashboard() {
   const isLoading = loading || bankLoading;
 
   const handleRefresh = () => {
-    refresh();
-    refreshBankBalance();
+    void refresh();
+    void refreshBankBalance();
   };
 
   return (
@@ -81,7 +81,7 @@ export function TreasuryDashboard() {
         totalBalance={totalBalance}
         currency={bankData?.currency}
         isLoading={bankLoading}
-        onRefresh={refreshBankBalance}
+        onRefresh={() => void refreshBankBalance()}
       />
 
       {/* KPI Cards */}

@@ -82,6 +82,7 @@ function ProductItem({ product }: ProductItemProps) {
               className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-orange-100 text-orange-700"
             >
               {field === 'description' && <FileText className="h-2.5 w-2.5" />}
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
               {field === 'images' && <Image className="h-2.5 w-2.5" />}
               {field}
             </span>
@@ -152,16 +153,16 @@ export function ProductsIncompleteDropdown({
       }
 
       // Enrichir avec les champs manquants
-      const enrichedProducts: IncompleteProduct[] = (data || []).map(
-        (p: any) => {
+      const enrichedProducts: IncompleteProduct[] = (data ?? []).map(
+        (p: Record<string, unknown>) => {
           const missing: string[] = [];
           if (!p.description || p.description === '')
             missing.push('description');
           return {
-            id: p.id,
-            name: p.name,
-            sku: p.sku || '',
-            description: p.description,
+            id: p.id as string,
+            name: p.name as string,
+            sku: (p.sku as string | undefined) ?? '',
+            description: p.description as string | null,
             missing_fields: missing,
           };
         }
@@ -178,7 +179,9 @@ export function ProductsIncompleteDropdown({
 
   useEffect(() => {
     if (open) {
-      fetchProducts();
+      void fetchProducts().catch((err: unknown) => {
+        console.error('[ProductsIncompleteDropdown] Fetch error:', err);
+      });
       onOpen?.();
     }
   }, [open, fetchProducts, onOpen]);
@@ -212,7 +215,14 @@ export function ProductsIncompleteDropdown({
             variant="ghost"
             size="sm"
             className="h-7 w-7 p-0"
-            onClick={handleRefresh}
+            onClick={() => {
+              void handleRefresh().catch((err: unknown) => {
+                console.error(
+                  '[ProductsIncompleteDropdown] Refresh error:',
+                  err
+                );
+              });
+            }}
             disabled={loading}
           >
             <RefreshCw
@@ -225,7 +235,7 @@ export function ProductsIncompleteDropdown({
         <ScrollArea className="max-h-80">
           {loading && products.length === 0 ? (
             <div className="p-4 space-y-3">
-              {[...Array(3)].map((_, i) => (
+              {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <Skeleton className="w-8 h-8 rounded-md" />
                   <div className="flex-1 space-y-1.5">
@@ -242,7 +252,14 @@ export function ProductsIncompleteDropdown({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleRefresh}
+                onClick={() => {
+                  void handleRefresh().catch((err: unknown) => {
+                    console.error(
+                      '[ProductsIncompleteDropdown] Retry error:',
+                      err
+                    );
+                  });
+                }}
                 className="mt-2"
               >
                 Réessayer

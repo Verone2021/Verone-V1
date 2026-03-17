@@ -91,7 +91,7 @@ export function SupplierCell({
         </Link>
         {showCategory && suggestedCategory && (
           <Badge variant="outline" className="text-xs">
-            {getPcgCategory(suggestedCategory)?.label || suggestedCategory}
+            {getPcgCategory(suggestedCategory)?.label ?? suggestedCategory}
           </Badge>
         )}
       </div>
@@ -126,7 +126,7 @@ export function SupplierCell({
         {/* Catégorie PCG */}
         {showCategory && suggestedCategory && (
           <Badge variant="outline" className="text-xs">
-            {getPcgCategory(suggestedCategory)?.label || suggestedCategory}
+            {getPcgCategory(suggestedCategory)?.label ?? suggestedCategory}
           </Badge>
         )}
 
@@ -159,9 +159,9 @@ export function SupplierCell({
           <OrganisationLinkingModal
             open={isLinkingModalOpen}
             onOpenChange={setIsLinkingModalOpen}
-            label={label || counterpartyName || 'Transaction'}
+            label={label ?? counterpartyName ?? 'Transaction'}
             onSuccess={() => {
-              onLink?.(suggestedOrganisationId || '');
+              onLink?.(suggestedOrganisationId ?? '');
               setIsLinkingModalOpen(false);
             }}
           />
@@ -172,7 +172,7 @@ export function SupplierCell({
 
   // Cas 3: Pas d'organisation ni de suggestion
   // Afficher counterpartyName ou "Inconnu" + bouton lier
-  const displayName = counterpartyName || label || 'Inconnu';
+  const displayName = counterpartyName ?? label ?? 'Inconnu';
   const isUnknown = !counterpartyName && !label;
 
   return (
@@ -188,7 +188,7 @@ export function SupplierCell({
       {/* Catégorie PCG suggérée (même sans organisation) */}
       {showCategory && suggestedCategory && (
         <Badge variant="outline" className="text-xs">
-          {getPcgCategory(suggestedCategory)?.label || suggestedCategory}
+          {getPcgCategory(suggestedCategory)?.label ?? suggestedCategory}
         </Badge>
       )}
 
@@ -215,7 +215,7 @@ export function SupplierCell({
           <OrganisationLinkingModal
             open={isLinkingModalOpen}
             onOpenChange={setIsLinkingModalOpen}
-            label={label || counterpartyName || 'Transaction'}
+            label={label ?? counterpartyName ?? 'Transaction'}
             onSuccess={() => {
               onLink?.('');
               setIsLinkingModalOpen(false);
@@ -284,7 +284,7 @@ export function SupplierCellReadOnly({
   }
 
   // Fallback
-  const displayName = counterpartyName || label || 'Inconnu';
+  const displayName = counterpartyName ?? label ?? 'Inconnu';
   return (
     <span
       className={cn(

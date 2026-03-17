@@ -89,7 +89,7 @@ export function useAutoRoadmap(
     minPriority = 'low',
     maxTasks = 10,
     enableRealtime = true,
-  } = options || {};
+  } = options ?? {};
 
   // Collecter les données des badges via les hooks existants
   const {
@@ -185,7 +185,7 @@ export function useAutoRoadmap(
 
   // États dérivés
   const loading = stockLoading || consultationsLoading || linkmeLoading;
-  const error = stockError || consultationsError || linkmeError;
+  const error = stockError ?? consultationsError ?? linkmeError;
 
   // Refresh function
   const refetch = async () => {

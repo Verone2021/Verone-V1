@@ -42,12 +42,6 @@ export function ForecastBreakdownModal({
   const [outgoingOrders, setOutgoingOrders] = useState<ForecastOrder[]>([]);
   const supabase = createClient();
 
-  useEffect(() => {
-    if (isOpen && productId) {
-      fetchForecastDetails();
-    }
-  }, [isOpen, productId]);
-
   const fetchForecastDetails = async () => {
     if (!productId) return;
     setLoading(true);
@@ -67,7 +61,7 @@ export function ForecastBreakdownModal({
           quantity: item.quantity,
           status: item.sales_orders.status,
           type: 'sales' as const,
-        })) || [];
+        })) ?? [];
 
       // Commandes fournisseurs (entrées prévues)
       const { data: purchaseOrders } = await supabase
@@ -83,7 +77,7 @@ export function ForecastBreakdownModal({
           quantity: item.quantity,
           status: item.purchase_orders.status,
           type: 'purchase' as const,
-        })) || [];
+        })) ?? [];
 
       setIncomingOrders(incoming);
       setOutgoingOrders(outgoing);
@@ -93,6 +87,13 @@ export function ForecastBreakdownModal({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isOpen && productId) {
+      void fetchForecastDetails();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, productId]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

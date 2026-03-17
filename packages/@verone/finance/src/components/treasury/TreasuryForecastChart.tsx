@@ -155,8 +155,9 @@ export function TreasuryForecastChart({
               />
               <Tooltip
                 content={({ active, payload, label }) => {
-                  if (active && payload && payload.length) {
-                    const data = payload[0].payload as ChartDataPoint;
+                  if (active && payload?.length) {
+                    const data = (payload[0] as { payload: ChartDataPoint })
+                      .payload;
                     return (
                       <div className="bg-background border rounded-lg shadow-lg p-3">
                         <p className="font-medium">{label}</p>

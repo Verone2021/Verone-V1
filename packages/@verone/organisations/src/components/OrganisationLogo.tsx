@@ -84,10 +84,10 @@ export function OrganisationLogo({
     ? supabase.storage.from('organisation-logos').getPublicUrl(logoUrl, {
         transform: {
           width: parseInt(
-            sizeConfig.transform.match(/width=(\d+)/)?.[1] || '96'
+            sizeConfig.transform.match(/width=(\d+)/)?.[1] ?? '96'
           ),
           height: parseInt(
-            sizeConfig.transform.match(/height=(\d+)/)?.[1] || '96'
+            sizeConfig.transform.match(/height=(\d+)/)?.[1] ?? '96'
           ),
           quality: 80,
         },
@@ -159,6 +159,7 @@ export function OrganisationLogo({
       )}
 
       {/* Image */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={publicUrl}
         alt={`Logo ${organisationName}`}

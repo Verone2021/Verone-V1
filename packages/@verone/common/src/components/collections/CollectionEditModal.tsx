@@ -27,12 +27,7 @@ import {
 import { Textarea } from '@verone/ui';
 import type { Collection } from '@verone/collections/hooks';
 import type { CollectionStyle } from '@verone/types';
-import {
-  COLLECTION_STYLE_OPTIONS,
-  ROOM_CATEGORY_OPTIONS,
-  RoomCategory,
-} from '@verone/types';
-import type { RoomType } from '@verone/types';
+import { COLLECTION_STYLE_OPTIONS } from '@verone/types';
 
 interface CollectionEditModalProps {
   collection: Collection | null;
@@ -49,12 +44,12 @@ export function CollectionEditModal({
 }: CollectionEditModalProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: collection?.name || '',
-    description: collection?.description || '',
-    visibility: collection?.visibility || 'private',
+    name: collection?.name ?? '',
+    description: collection?.description ?? '',
+    visibility: collection?.visibility ?? 'private',
     is_active: collection?.is_active ?? true,
-    style: collection?.style || null,
-    suitable_rooms: collection?.suitable_rooms || [],
+    style: collection?.style ?? null,
+    suitable_rooms: collection?.suitable_rooms ?? [],
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -65,7 +60,7 @@ export function CollectionEditModal({
       await onSave({
         id: collection?.id,
         ...formData,
-      } as any);
+      } as Partial<Collection>);
       onClose();
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
@@ -83,7 +78,7 @@ export function CollectionEditModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={e => void handleSubmit(e)}>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nom de la collection</Label>
@@ -132,7 +127,7 @@ export function CollectionEditModal({
             <div className="space-y-2">
               <Label htmlFor="style">Style décoratif</Label>
               <Select
-                value={formData.style || ''}
+                value={formData.style ?? ''}
                 onValueChange={(value: CollectionStyle) =>
                   setFormData({ ...formData, style: value })
                 }
@@ -199,7 +194,7 @@ export function CollectionEditModal({
             </ButtonV2>
             <ButtonV2
               type="submit"
-              disabled={loading || !formData.name}
+              disabled={loading ?? !formData.name}
               className="bg-black text-white hover:bg-gray-800"
             >
               {loading ? 'Enregistrement...' : 'Enregistrer'}

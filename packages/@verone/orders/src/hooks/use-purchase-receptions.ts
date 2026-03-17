@@ -143,7 +143,7 @@ export function usePurchaseReceptions() {
     (purchaseOrder: PurchaseOrderForReception): ReceptionItem[] => {
       return purchaseOrder.purchase_order_items.map(item => {
         const quantityOrdered = item.quantity;
-        const quantityAlreadyReceived = item.quantity_received || 0;
+        const quantityAlreadyReceived = item.quantity_received ?? 0;
         const quantityRemaining = quantityOrdered - quantityAlreadyReceived;
 
         // Extraire l'image principale du produit
@@ -151,8 +151,8 @@ export function usePurchaseReceptions() {
           img => img.is_primary
         );
         const imageUrl =
-          primaryImage?.public_url ||
-          item.products.product_images?.[0]?.public_url ||
+          primaryImage?.public_url ??
+          item.products.product_images?.[0]?.public_url ??
           null;
 
         return {
@@ -191,7 +191,7 @@ export function usePurchaseReceptions() {
         const result = await validatePurchaseReception(payload);
 
         if (!result.success) {
-          throw new Error(result.error || 'Erreur validation réception');
+          throw new Error(result.error ?? 'Erreur validation réception');
         }
 
         return result;
@@ -279,8 +279,8 @@ export function usePurchaseReceptions() {
             last_name: string | null;
           } | null;
           const userName = userProfile
-            ? `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim()
-            : movement.received_by_name || 'Utilisateur';
+            ? `${userProfile.first_name ?? ''} ${userProfile.last_name ?? ''}`.trim()
+            : (movement.received_by_name ?? 'Utilisateur');
 
           if (!grouped.has(key)) {
             grouped.set(key, {
@@ -288,22 +288,26 @@ export function usePurchaseReceptions() {
               received_at: movement.performed_at,
               received_by: movement.performed_by,
               received_by_name: userName,
-              carrier_name: movement.carrier_name || undefined,
-              tracking_number: movement.tracking_number || undefined,
-              delivery_note: movement.delivery_note || undefined,
+              carrier_name: movement.carrier_name ?? undefined,
+              tracking_number: movement.tracking_number ?? undefined,
+              delivery_note: movement.delivery_note ?? undefined,
               items: [],
-              notes: movement.notes || undefined,
+              notes: movement.notes ?? undefined,
               total_quantity: 0,
             });
           }
 
           const history = grouped.get(key)!;
-          const productData = movement.products as any;
+          const productData = movement.products as {
+            name: string;
+            sku: string;
+            product_images?: Array<{ public_url: string; is_primary: boolean }>;
+          } | null;
           history.items.push({
-            product_name: productData.name,
-            product_sku: productData.sku,
+            product_name: productData?.name ?? 'Produit inconnu',
+            product_sku: productData?.sku ?? 'N/A',
             product_image_url:
-              productData.product_images?.[0]?.public_url || null,
+              productData?.product_images?.[0]?.public_url ?? null,
             quantity_received: movement.quantity_change,
             stock_before: movement.quantity_before,
             stock_after: movement.quantity_after,
@@ -369,14 +373,14 @@ export function usePurchaseReceptions() {
         return cancellations.map(c => {
           const product = c.products as { name: string; sku: string } | null;
           // quantity_change est négatif (-2), on prend la valeur absolue
-          const quantityCancelled = Math.abs(c.quantity_change || 0);
+          const quantityCancelled = Math.abs(c.quantity_change ?? 0);
           return {
             id: c.id,
             performed_at: c.performed_at,
             notes: c.notes,
             quantity_cancelled: quantityCancelled,
-            product_name: product?.name || 'Produit inconnu',
-            product_sku: product?.sku || 'N/A',
+            product_name: product?.name ?? 'Produit inconnu',
+            product_sku: product?.sku ?? 'N/A',
           };
         });
       } catch (err) {
@@ -436,11 +440,11 @@ export function usePurchaseReceptions() {
           .lte('expected_delivery_date', threeDays.toISOString().split('T')[0]);
 
         return {
-          total_pending: pending || 0,
-          total_partial: partial || 0,
-          total_completed_today: completedToday || 0,
-          total_overdue: overdue || 0,
-          total_urgent: urgent || 0,
+          total_pending: pending ?? 0,
+          total_partial: partial ?? 0,
+          total_completed_today: completedToday ?? 0,
+          total_overdue: overdue ?? 0,
+          total_urgent: urgent ?? 0,
         };
       } catch (err) {
         console.error('Erreur chargement stats réceptions:', err);
@@ -521,7 +525,7 @@ export function usePurchaseReceptions() {
           query = query.eq('status', 'partially_received');
         } else {
           // Autres cas : appliquer filtre tel quel
-          query = query.eq('status', filters.status as any);
+          query = query.eq('status', filters.status);
         }
 
         if (filters?.search) {
@@ -539,12 +543,19 @@ export function usePurchaseReceptions() {
         }
 
         // Mapper les données pour ajouter supplier_name
-        const mappedData = (data || []).map((po: any) => ({
-          ...po,
-          supplier_name: po.organisations
-            ? po.organisations.trade_name || po.organisations.legal_name
-            : 'Fournisseur inconnu',
-        }));
+        type PORow = typeof data extends Array<infer T> ? T : never;
+        const mappedData = (data ?? []).map((po: PORow) => {
+          const org = po.organisations as {
+            trade_name: string | null;
+            legal_name: string;
+          } | null;
+          return {
+            ...po,
+            supplier_name: org
+              ? (org.trade_name ?? org.legal_name)
+              : 'Fournisseur inconnu',
+          };
+        });
 
         return mappedData;
       } catch (err) {
@@ -591,7 +602,7 @@ export function usePurchaseReceptions() {
         });
 
         if (!result.success) {
-          setError(result.error || 'Erreur annulation reliquat');
+          setError(result.error ?? 'Erreur annulation reliquat');
         }
 
         return result;
@@ -677,21 +688,32 @@ export function usePurchaseReceptions() {
         }
 
         // Mapper les données pour un format cohérent
-        const mappedData = (data || []).map((reception: any) => ({
-          ...reception,
-          affiliate_name:
-            reception.linkme_affiliates?.display_name || 'Affilié inconnu',
-          enseigne_name:
-            reception.linkme_affiliates?.enseignes?.name || 'Enseigne inconnue',
-          product_name: reception.products?.name || 'Produit inconnu',
-          product_sku: reception.products?.sku || 'N/A',
-          product_image_url:
-            reception.products?.product_images?.find(
-              (img: any) => img.is_primary
-            )?.public_url ||
-            reception.products?.product_images?.[0]?.public_url ||
-            null,
-        }));
+        type ReceptionRow = NonNullable<typeof data>[number];
+        type ImageRow = { public_url: string; is_primary: boolean };
+        const mappedData = (data ?? []).map((reception: ReceptionRow) => {
+          const affiliateData = reception.linkme_affiliates as {
+            display_name?: string;
+            enseignes?: { name?: string } | null;
+          } | null;
+          const productData = reception.products as {
+            name?: string;
+            sku?: string;
+            product_images?: ImageRow[];
+          } | null;
+          return {
+            ...reception,
+            affiliate_name: affiliateData?.display_name ?? 'Affilié inconnu',
+            enseigne_name:
+              affiliateData?.enseignes?.name ?? 'Enseigne inconnue',
+            product_name: productData?.name ?? 'Produit inconnu',
+            product_sku: productData?.sku ?? 'N/A',
+            product_image_url:
+              productData?.product_images?.find(img => img.is_primary)
+                ?.public_url ??
+              productData?.product_images?.[0]?.public_url ??
+              null,
+          };
+        });
 
         return mappedData;
       } catch (err) {
@@ -718,7 +740,7 @@ export function usePurchaseReceptions() {
         setValidating(true);
         setError(null);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */
         const { error: rpcError } = await (supabase.rpc as any)(
           'confirm_affiliate_reception',
           {
@@ -727,9 +749,10 @@ export function usePurchaseReceptions() {
             p_notes: notes,
           }
         );
+        /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */
 
         if (rpcError) {
-          throw new Error(rpcError.message);
+          throw new Error((rpcError as { message: string }).message);
         }
 
         return { success: true };
@@ -760,7 +783,7 @@ export function usePurchaseReceptions() {
         setValidating(true);
         setError(null);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */
         const { error: rpcError } = await (supabase.rpc as any)(
           'cancel_affiliate_remainder',
           {
@@ -768,9 +791,10 @@ export function usePurchaseReceptions() {
             p_reason: reason,
           }
         );
+        /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */
 
         if (rpcError) {
-          throw new Error(rpcError.message);
+          throw new Error((rpcError as { message: string }).message);
         }
 
         return { success: true };

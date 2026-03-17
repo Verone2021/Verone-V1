@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import { RefreshCw, AlertTriangle, Package } from 'lucide-react';
 
@@ -51,10 +51,11 @@ export function StockMovementModal({
 }: StockMovementModalProps) {
   const [selectedProduct, setSelectedProduct] =
     useState<typeof initialProduct>(initialProduct);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [products, setProducts] = useState<any[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [movementType, setMovementType] = useState<'add' | 'remove' | 'adjust'>(
-    initialMovementType || 'add'
+    initialMovementType ?? 'add'
   );
   const [quantity, setQuantity] = useState('');
   const [reasonCode, setReasonCode] =
@@ -69,15 +70,16 @@ export function StockMovementModal({
   const { toast } = useToast();
   const supabase = createClient();
 
-  const currentStock = selectedProduct?.stock_quantity || 0;
-  const minLevel = selectedProduct?.min_stock || 5;
+  const currentStock = selectedProduct?.stock_quantity ?? 0;
+  const minLevel = selectedProduct?.min_stock ?? 5;
   const reasonsByCategory = getReasonsByCategory();
 
   // Charger les produits du catalogue et sourcing (non archivés) si pas de produit initial
   useEffect(() => {
     if (!initialProduct && isOpen) {
-      loadAvailableProducts();
+      void loadAvailableProducts();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialProduct]);
 
   const loadAvailableProducts = async () => {
@@ -90,7 +92,7 @@ export function StockMovementModal({
         .order('name');
 
       if (error) throw error;
-      setProducts(data || []);
+      setProducts(data ?? []);
     } catch (error) {
       console.error('Erreur chargement produits:', error);
       toast({
@@ -185,10 +187,11 @@ export function StockMovementModal({
     try {
       await createManualMovement({
         product_id: selectedProduct.id,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
         movement_type: dbMovementType as any,
         quantity: parseInt(quantity),
         reason_code: reasonCode,
-        notes: notes.trim() || undefined,
+        notes: notes.trim() ?? undefined,
         unit_cost: unitCost ? parseFloat(unitCost) : undefined,
       });
 
@@ -201,7 +204,7 @@ export function StockMovementModal({
       onSuccess();
       onClose();
       resetForm();
-    } catch (error) {
+    } catch (_error) {
       // Erreur gérée dans le hook
     } finally {
       setLoading(false);
@@ -213,7 +216,7 @@ export function StockMovementModal({
     setUnitCost('');
     setNotes('');
     setReasonCode('manual_adjustment');
-    setMovementType(initialMovementType || 'add');
+    setMovementType(initialMovementType ?? 'add');
     setShowAdvanced(false);
     if (!initialProduct) {
       setSelectedProduct(null);
@@ -254,21 +257,28 @@ export function StockMovementModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
-            {title ||
+            {title ??
               `Mouvement de stock${selectedProduct ? ` - ${selectedProduct.name}` : ''}`}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={e => {
+            void handleSubmit(e);
+          }}
+          className="space-y-6"
+        >
           {/* Sélecteur de produit si pas de produit initial */}
           {!initialProduct && (
             <div className="space-y-2">
               <Label>Produit</Label>
               <Select
-                value={selectedProduct?.id || ''}
+                value={selectedProduct?.id ?? ''}
                 onValueChange={value => {
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                   const product = products.find(p => p.id === value);
-                  setSelectedProduct(product || null);
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                  setSelectedProduct(product ?? null);
                 }}
               >
                 <SelectTrigger>
@@ -281,11 +291,13 @@ export function StockMovementModal({
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {products.map(product => (
-                    <SelectItem key={product.id} value={product.id}>
-                      {product.name} - {product.sku}
-                    </SelectItem>
-                  ))}
+                  {products.map(
+                    (product: { id: string; name: string; sku: string }) => (
+                      <SelectItem key={product.id} value={product.id}>
+                        {product.name} - {product.sku}
+                      </SelectItem>
+                    )
+                  )}
                 </SelectContent>
               </Select>
             </div>

@@ -6,14 +6,7 @@ import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { cn } from '@verone/utils';
-import {
-  X,
-  Bell,
-  AlertTriangle,
-  CheckCircle,
-  Info,
-  XCircle,
-} from 'lucide-react';
+import { X, AlertTriangle, CheckCircle, Info, XCircle } from 'lucide-react';
 
 export type NotificationType = 'success' | 'warning' | 'error' | 'info';
 
@@ -103,7 +96,7 @@ export function NotificationWidget({
     // Gestion de l'auto-close
     activeNotifications.forEach(notification => {
       if (notification.autoClose !== false) {
-        const duration = notification.duration || 5000;
+        const duration = notification.duration ?? 5000;
         setTimeout(() => {
           onDismiss(notification.id);
         }, duration);

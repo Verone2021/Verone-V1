@@ -165,7 +165,7 @@ export function useOrganisationTransactions(
   }, [organisationId, supabase]);
 
   useEffect(() => {
-    fetchTransactions();
+    void fetchTransactions();
   }, [fetchTransactions]);
 
   return {

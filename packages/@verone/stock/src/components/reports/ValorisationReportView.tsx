@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 
-import { useToast } from '@verone/common/hooks';
 import { PdfPreviewModalDynamic as PdfPreviewModal } from '@verone/finance/components';
 import { useValorisationReport } from '@verone/finance/hooks';
 import { ValorisationReportPdf } from '@verone/finance/pdf-templates';
@@ -36,7 +35,6 @@ import {
 
 export function ValorisationReportView() {
   const { report, loading, error, generateReport } = useValorisationReport();
-  const { toast } = useToast();
   const [showPdfPreview, setShowPdfPreview] = useState(false);
 
   useEffect(() => {

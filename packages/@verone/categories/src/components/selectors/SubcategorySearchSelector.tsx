@@ -52,14 +52,14 @@ export function SubcategorySearchSelector({
       .toLowerCase()
       .includes(searchLower);
 
-    return subcategoryMatch || categoryMatch || familyMatch;
+    return subcategoryMatch ?? categoryMatch ?? familyMatch;
   });
 
   // Mettre à jour la sélection quand la valeur change
   useEffect(() => {
     if (value) {
       const selected = subcategories.find(sub => sub.id === value);
-      setSelectedSubcategory(selected || null);
+      setSelectedSubcategory(selected ?? null);
     } else {
       setSelectedSubcategory(null);
     }

@@ -153,9 +153,7 @@ export interface QontoTransaction {
 // API RESPONSES
 // =====================================================================
 
-export interface QontoApiResponse<T> {
-  [key: string]: any;
-}
+export type QontoApiResponse<T> = T;
 
 export interface QontoTransactionsResponse {
   transactions: QontoTransaction[];
@@ -188,7 +186,7 @@ export interface QontoWebhookPayload {
   created_at: string;
   data: {
     transaction?: QontoTransaction;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 

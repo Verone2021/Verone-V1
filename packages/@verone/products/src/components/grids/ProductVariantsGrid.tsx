@@ -153,16 +153,17 @@ export function ProductVariantsGrid({
               name: variant.name,
               sku: variant.sku,
               selling_price: null, // Pas dans le hook actuel
-              price_ht: (typeof variant.cost_price === 'number'
-                ? variant.cost_price
-                : null) as any, // Utiliser cost_price comme fallback
+              price_ht:
+                typeof variant.cost_price === 'number'
+                  ? variant.cost_price
+                  : null,
               status: variant.status,
-              primary_image_url: variant.image_url || null,
+              primary_image_url: variant.image_url ?? null,
               variant_attributes: null, // Pas dans le hook actuel
               is_primary: false, // TODO: ajouter is_primary au hook
             }}
             onClick={handleVariantClick}
-            isCurrentProduct={variant.id === (currentProductId || productId)}
+            isCurrentProduct={variant.id === (currentProductId ?? productId)}
           />
         ))}
       </div>

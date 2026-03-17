@@ -51,20 +51,23 @@ export function useToggleGoogleMerchantVisibility() {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        const errorData: { error?: string } = (await response.json()) as {
+          error?: string;
+        };
+        throw new Error(errorData.error ?? `HTTP ${response.status}`);
       }
 
-      const data: ToggleVisibilityResponse = await response.json();
+      const data: ToggleVisibilityResponse =
+        (await response.json()) as ToggleVisibilityResponse;
 
       if (!data.success) {
-        throw new Error(data.error || 'Failed to toggle visibility');
+        throw new Error(data.error ?? 'Failed to toggle visibility');
       }
 
       return data;
     },
     onSuccess: data => {
-      const { visible } = data.data || {};
+      const { visible } = data.data ?? {};
 
       logger.info('[useToggleGoogleMerchantVisibility] Success', {
         visible,
@@ -77,8 +80,12 @@ export function useToggleGoogleMerchantVisibility() {
       );
 
       // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ['google-merchant-products'] });
-      queryClient.invalidateQueries({ queryKey: ['google-merchant-stats'] });
+      void queryClient.invalidateQueries({
+        queryKey: ['google-merchant-products'],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['google-merchant-stats'],
+      });
     },
     onError: error => {
       logger.error(

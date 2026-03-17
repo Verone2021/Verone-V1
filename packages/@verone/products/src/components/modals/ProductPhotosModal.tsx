@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-floating-promises, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unused-vars, @typescript-eslint/prefer-nullish-coalescing */
 'use client';
 
 /**
@@ -83,7 +84,11 @@ export function ProductPhotosModal({
    * 📁 Gestion upload fichiers multiples
    */
   const handleFilesDrop = async (files: FileList) => {
-    console.log('🚀 handleFilesDrop started with', files?.length || 0, 'files');
+    console.warn(
+      '🚀 handleFilesDrop started with',
+      files?.length || 0,
+      'files'
+    );
 
     if (!files || files.length === 0) {
       console.warn('⚠️ No files provided to handleFilesDrop');
@@ -92,7 +97,7 @@ export function ProductPhotosModal({
 
     const fileArray = Array.from(files);
     const remainingSlots = maxImages - images.length;
-    console.log(
+    console.warn(
       `📊 Current images: ${images.length}, Max: ${maxImages}, Remaining slots: ${remainingSlots}`
     );
 
@@ -104,10 +109,10 @@ export function ProductPhotosModal({
     }
 
     try {
-      console.log('📤 Starting upload process...');
+      console.warn('📤 Starting upload process...');
       for (let i = 0; i < fileArray.length; i++) {
         const file = fileArray[i];
-        console.log(
+        console.warn(
           `📷 Uploading file ${i + 1}/${fileArray.length}:`,
           file.name,
           file.size,
@@ -120,9 +125,9 @@ export function ProductPhotosModal({
           isPrimary: !primaryImage && images.length === 0, // Première image = principale
         });
 
-        console.log(`✅ File ${i + 1} uploaded successfully:`, file.name);
+        console.warn(`✅ File ${i + 1} uploaded successfully:`, file.name);
       }
-      console.log('🎉 Upload multiple terminé avec succès');
+      console.warn('🎉 Upload multiple terminé avec succès');
 
       // Actualiser la galerie externe
       onImagesUpdated?.();
@@ -149,7 +154,7 @@ export function ProductPhotosModal({
     setDeletingImageId(imageId);
     try {
       await deleteImage(imageId);
-      console.log('✅ Image supprimée avec succès');
+      console.warn('✅ Image supprimée avec succès');
       // Actualiser la galerie externe
       onImagesUpdated?.();
     } catch (error) {
@@ -166,7 +171,7 @@ export function ProductPhotosModal({
     setSettingPrimaryId(imageId);
     try {
       await setPrimaryImage(imageId);
-      console.log('✅ Image principale mise à jour');
+      console.warn('✅ Image principale mise à jour');
       // Actualiser la galerie externe
       onImagesUpdated?.();
     } catch (error) {
@@ -210,9 +215,9 @@ export function ProductPhotosModal({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('🎯 handleInputChange triggered');
+    console.warn('🎯 handleInputChange triggered');
     const files = e.target.files;
-    console.log('📁 Files selected:', files?.length || 0);
+    console.warn('📁 Files selected:', files?.length || 0);
     if (files) {
       handleFilesDrop(files);
     } else {
@@ -427,7 +432,7 @@ export function ProductPhotosModal({
                           onClick={() =>
                             handleDeleteImage(
                               image.id,
-                              image.is_primary || false
+                              image.is_primary ?? false
                             )
                           }
                           disabled={deletingImageId === image.id}

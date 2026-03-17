@@ -74,9 +74,9 @@ export function OrderHeaderEditSection({
             <Input
               id="expected_delivery_date"
               type="date"
-              value={formatDate(data.expected_delivery_date || null)}
+              value={formatDate(data.expected_delivery_date ?? null)}
               onChange={e =>
-                onChange('expected_delivery_date', e.target.value || null)
+                onChange('expected_delivery_date', e.target.value ?? null)
               }
               disabled={readonly}
               className="mt-1"
@@ -98,10 +98,10 @@ export function OrderHeaderEditSection({
               </Label>
               <Textarea
                 id="billing_address"
-                value={data.billing_address || ''}
+                value={data.billing_address ?? ''}
                 onChange={e => {
                   const value = e.target.value;
-                  onChange('billing_address', value || null);
+                  onChange('billing_address', value ?? null);
                 }}
                 disabled={readonly}
                 placeholder='Format JSONB: {"street": "...", "city": "...", "zip": "..."}'
@@ -126,10 +126,10 @@ export function OrderHeaderEditSection({
               </Label>
               <Textarea
                 id="shipping_address"
-                value={data.shipping_address || ''}
+                value={data.shipping_address ?? ''}
                 onChange={e => {
                   const value = e.target.value;
-                  onChange('shipping_address', value || null);
+                  onChange('shipping_address', value ?? null);
                 }}
                 disabled={readonly}
                 placeholder='Format JSONB: {"street": "...", "city": "...", "zip": "..."}'
@@ -158,10 +158,10 @@ export function OrderHeaderEditSection({
             </Label>
             <Textarea
               id="delivery_address"
-              value={data.delivery_address || ''}
+              value={data.delivery_address ?? ''}
               onChange={e => {
                 const value = e.target.value;
-                onChange('delivery_address', value || null);
+                onChange('delivery_address', value ?? null);
               }}
               disabled={readonly}
               placeholder='Format JSONB: {"street": "...", "city": "...", "zip": "..."}'
@@ -192,8 +192,8 @@ export function OrderHeaderEditSection({
           </Label>
           <Input
             id="payment_terms"
-            value={data.payment_terms || ''}
-            onChange={e => onChange('payment_terms', e.target.value || null)}
+            value={data.payment_terms ?? ''}
+            onChange={e => onChange('payment_terms', e.target.value ?? null)}
             disabled={readonly}
             placeholder="Ex: Net 30 jours, Comptant, etc."
             className="mt-1"

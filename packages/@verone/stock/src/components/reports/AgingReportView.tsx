@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 
-import { useToast } from '@verone/common/hooks';
 import { PdfPreviewModalDynamic as PdfPreviewModal } from '@verone/finance/components';
 import { useAgingReport, AGING_BUCKETS } from '@verone/finance/hooks';
 import { AgingReportPdf } from '@verone/finance/pdf-templates';
@@ -41,11 +40,10 @@ interface AgingReportViewProps {
 
 export function AgingReportView({ dateFrom, dateTo }: AgingReportViewProps) {
   const { report, loading, error, generateReport } = useAgingReport();
-  const { toast } = useToast();
   const [showPdfPreview, setShowPdfPreview] = useState(false);
 
   useEffect(() => {
-    generateReport(dateFrom, dateTo);
+    void generateReport(dateFrom, dateTo);
   }, [dateFrom, dateTo, generateReport]);
 
   const handleExportPDF = () => {

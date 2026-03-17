@@ -25,7 +25,7 @@ import { createClient } from '@verone/utils/supabase/client';
 export interface Supplier {
   id: string;
   name: string;
-  contact_info?: any;
+  contact_info?: unknown;
   payment_terms?: string;
   delivery_time_days?: number;
   is_active?: boolean;
@@ -53,7 +53,7 @@ export function useSuppliers() {
 
       try {
         const { data, error: fetchError } = await supabase
-          .from('suppliers' as any)
+          .from('suppliers' as unknown as 'organisations')
           .select(
             'id, name, contact_info, payment_terms, delivery_time_days, is_active'
           )
@@ -66,7 +66,7 @@ export function useSuppliers() {
           return;
         }
 
-        setSuppliers((data || []) as any);
+        setSuppliers((data ?? []) as Supplier[]);
       } catch (err) {
         console.error('Erreur fetch suppliers:', err);
         setError('Impossible de charger les fournisseurs');
@@ -75,7 +75,7 @@ export function useSuppliers() {
       }
     };
 
-    fetchSuppliers();
+    void fetchSuppliers();
   }, [supabase]);
 
   return { suppliers, loading, error };

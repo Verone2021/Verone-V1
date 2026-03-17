@@ -228,7 +228,9 @@ export function StockAlertsDropdown({
    */
   useEffect(() => {
     if (open) {
-      fetchAlerts();
+      void fetchAlerts().catch((err: unknown) => {
+        console.error('[StockAlertsDropdown] Fetch error:', err);
+      });
       onOpen?.();
     }
   }, [open, fetchAlerts, onOpen]);
@@ -265,7 +267,11 @@ export function StockAlertsDropdown({
             variant="ghost"
             size="sm"
             className="h-7 w-7 p-0"
-            onClick={handleRefresh}
+            onClick={() => {
+              void handleRefresh().catch((err: unknown) => {
+                console.error('[StockAlertsDropdown] Refresh error:', err);
+              });
+            }}
             disabled={loading}
           >
             <RefreshCw
@@ -278,7 +284,7 @@ export function StockAlertsDropdown({
         <ScrollArea className="max-h-80">
           {loading && alerts.length === 0 ? (
             <div className="p-4 space-y-3">
-              {[...Array(3)].map((_, i) => (
+              {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <Skeleton className="w-8 h-8 rounded-md" />
                   <div className="flex-1 space-y-1.5">
@@ -295,7 +301,11 @@ export function StockAlertsDropdown({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleRefresh}
+                onClick={() => {
+                  void handleRefresh().catch((err: unknown) => {
+                    console.error('[StockAlertsDropdown] Retry error:', err);
+                  });
+                }}
                 className="mt-2"
               >
                 Réessayer

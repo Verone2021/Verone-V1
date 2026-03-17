@@ -27,7 +27,7 @@ export interface GoogleMerchantProduct {
   google_product_id: string;
   sync_status: 'success' | 'pending' | 'error' | 'skipped';
   google_status: 'approved' | 'pending' | 'rejected' | 'not_synced' | null;
-  google_status_detail: any; // JSONB détails erreurs
+  google_status_detail: unknown; // JSONB détails erreurs
   impressions: number;
   clicks: number;
   conversions: number;
@@ -72,7 +72,8 @@ export function useGoogleMerchantProducts() {
 
       // Type assertion temporaire en attendant régénération types Supabase
       const { data, error } = await supabase.rpc(
-        'get_google_merchant_products' as any
+        'get_google_merchant_products' as 'get_google_merchant_products' &
+          string
       );
 
       if (error) {
@@ -84,11 +85,12 @@ export function useGoogleMerchantProducts() {
         );
       }
 
+      const typedData = data as unknown as GoogleMerchantProduct[] | null;
       logger.info('[useGoogleMerchantProducts] Products fetched successfully', {
-        count: data?.length || 0,
+        count: typedData?.length ?? 0,
       });
 
-      return (data as GoogleMerchantProduct[]) || [];
+      return typedData ?? [];
     },
     staleTime: 60000, // 1 minute (données changent peu)
     gcTime: 300000, // 5 minutes
@@ -112,7 +114,7 @@ export function useGoogleMerchantStats() {
 
       // Type assertion temporaire en attendant régénération types Supabase
       const { data, error } = await supabase.rpc(
-        'get_google_merchant_stats' as any
+        'get_google_merchant_stats' as 'get_google_merchant_stats' & string
       );
 
       if (error) {
@@ -125,7 +127,7 @@ export function useGoogleMerchantStats() {
       }
 
       // Si aucune donnée (table vide), retourner null pour afficher UI vide
-      const statsData = data;
+      const statsData = data as unknown as GoogleMerchantStats[] | null;
       if (!statsData || statsData.length === 0) {
         logger.info(
           '[useGoogleMerchantStats] No stats available (empty table)'
@@ -139,7 +141,7 @@ export function useGoogleMerchantStats() {
         conversion_rate: statsData[0].conversion_rate,
       });
 
-      return statsData[0] as GoogleMerchantStats; // Vue materialized retourne array avec 1 row
+      return statsData[0]; // Vue materialized retourne array avec 1 row
     },
     staleTime: 60000, // 1 minute
     gcTime: 300000, // 5 minutes
@@ -161,7 +163,8 @@ export function useRefreshGoogleMerchantStats() {
 
     // Type assertion temporaire en attendant régénération types Supabase
     const { error } = await supabase.rpc(
-      'refresh_google_merchant_stats' as any
+      'refresh_google_merchant_stats' as 'refresh_google_merchant_stats' &
+        string
     );
 
     if (error) {

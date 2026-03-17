@@ -204,21 +204,21 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
             name: data.name,
             base_sku: data.base_sku, // SKU de base pour génération automatique
             subcategory_id: data.subcategory_id,
-            variant_type: data.variant_type || 'color', // Type de variante (color/material)
+            variant_type: data.variant_type ?? 'color', // Type de variante (color/material)
             // Dimensions en colonnes séparées (aligné avec schéma SQL)
-            dimensions_length: data.dimensions_length || null,
-            dimensions_width: data.dimensions_width || null,
-            dimensions_height: data.dimensions_height || null,
-            dimensions_unit: data.dimensions_unit || 'cm',
+            dimensions_length: data.dimensions_length ?? null,
+            dimensions_width: data.dimensions_width ?? null,
+            dimensions_height: data.dimensions_height ?? null,
+            dimensions_unit: data.dimensions_unit ?? 'cm',
             // Poids commun
-            common_weight: data.common_weight || null,
-            has_common_weight: data.has_common_weight || false,
+            common_weight: data.common_weight ?? null,
+            has_common_weight: data.has_common_weight ?? false,
             // Catégorisation
-            style: data.style || null,
-            suitable_rooms: data.suitable_rooms || null,
+            style: data.style ?? null,
+            suitable_rooms: data.suitable_rooms ?? null,
             // Fournisseur commun
-            supplier_id: data.supplier_id || null, // Fournisseur commun (si has_common_supplier = true)
-            has_common_supplier: data.has_common_supplier || false, // Flag fournisseur commun
+            supplier_id: data.supplier_id ?? null, // Fournisseur commun (si has_common_supplier = true)
+            has_common_supplier: data.has_common_supplier ?? false, // Flag fournisseur commun
             product_count: 0,
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase strict enum types pour suitable_rooms nécessitent cast
@@ -305,19 +305,19 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         return false;
       }
 
-      const currentCount = groupData?.product_count || 0;
+      const currentCount = groupData?.product_count ?? 0;
 
       // Préparer les dimensions et poids du groupe pour propagation
       const hasDimensions =
-        groupData?.dimensions_length ||
-        groupData?.dimensions_width ||
+        groupData?.dimensions_length ??
+        groupData?.dimensions_width ??
         groupData?.dimensions_height;
       const dimensions = hasDimensions
         ? {
-            length: groupData?.dimensions_length || null,
-            width: groupData?.dimensions_width || null,
-            height: groupData?.dimensions_height || null,
-            unit: groupData?.dimensions_unit || 'cm',
+            length: groupData?.dimensions_length ?? null,
+            width: groupData?.dimensions_width ?? null,
+            height: groupData?.dimensions_height ?? null,
+            unit: groupData?.dimensions_unit ?? 'cm',
           }
         : null;
 
@@ -338,7 +338,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           .single();
 
         // Construire le nom et SKU basés sur le groupe et les attributs variantes
-        let productName = groupData?.name || 'Produit';
+        let productName = groupData?.name ?? 'Produit';
         let productSKU = '';
 
         if (productData?.variant_attributes) {
@@ -346,12 +346,12 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
             string,
             unknown
           >;
-          const variantType = groupData?.variant_type || 'color';
+          const variantType = groupData?.variant_type ?? 'color';
           const variantValue = attrs[variantType] as string | undefined;
           if (variantValue) {
             productName = `${groupData?.name} - ${variantValue}`;
             productSKU = generateProductSKU(
-              groupData?.base_sku || '',
+              groupData?.base_sku ?? '',
               variantValue
             );
           }
@@ -488,7 +488,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           unit?: string;
         } | null;
         const hasDimensions =
-          commonDims?.length || commonDims?.width || commonDims?.height;
+          commonDims?.length ?? commonDims?.width ?? commonDims?.height;
 
         // 6. Créer le produit avec les attributs hérités du groupe
         const newProduct = {
@@ -496,7 +496,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           sku,
           subcategory_id: group.subcategory_id,
           variant_group_id: groupId,
-          variant_position: (group.product_count || 0) + 1,
+          variant_position: (group.product_count ?? 0) + 1,
           variant_attributes: { [variantType]: variantValue },
           status: 'pret_a_commander' as const, // Statut initial pour compléter plus tard
           creation_mode: 'complete' as const, // Contrainte: 'sourcing' ou 'complete' uniquement
@@ -504,10 +504,10 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           // ❌ RETIRÉ: style, suitable_rooms, common_weight (n'existent PAS dans products, seulement dans variant_groups)
           ...(hasDimensions && {
             dimensions: {
-              length: commonDims.length || null,
-              width: commonDims.width || null,
-              height: commonDims.height || null,
-              unit: commonDims.unit || 'cm',
+              length: commonDims.length ?? null,
+              width: commonDims.width ?? null,
+              height: commonDims.height ?? null,
+              unit: commonDims.unit ?? 'cm',
             },
           }),
           // ✅ Hériter du fournisseur commun si défini dans le groupe
@@ -551,7 +551,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
         const { error: updateError } = await supabase
           .from('variant_groups')
           .update({
-            product_count: (group.product_count || 0) + 1,
+            product_count: (group.product_count ?? 0) + 1,
             updated_at: new Date().toISOString(),
           })
           .eq('id', groupId);
@@ -617,7 +617,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           }
 
           // Extraire la valeur de variante depuis les nouveaux attributs
-          const variantType = group.variant_type || 'color';
+          const variantType = group.variant_type ?? 'color';
           const variantValue = updates.variant_attributes[variantType];
 
           if (variantValue) {
@@ -728,7 +728,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
       const { error: countError } = await supabase
         .from('variant_groups')
         .update({
-          product_count: remainingProducts?.length || 0,
+          product_count: remainingProducts?.length ?? 0,
           updated_at: new Date().toISOString(),
         })
         .eq('id', product.variant_group_id);
@@ -1106,7 +1106,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
               .eq('id', groupId)
               .single();
 
-            const variantType = groupInfo?.variant_type || 'color';
+            const variantType = groupInfo?.variant_type ?? 'color';
 
             // Mettre à jour chaque produit avec le nouveau nom
             for (const product of products) {
@@ -1512,7 +1512,7 @@ export function useProductVariantEditing() {
 
       // Si le produit appartient à un groupe, régénérer automatiquement nom ET SKU
       if (groupData?.name && groupData.base_sku) {
-        const variantType = groupData.variant_type || attributeKey;
+        const variantType = groupData.variant_type ?? attributeKey;
         const variantValue = updatedAttributes[variantType] as
           | string
           | undefined;
@@ -1645,7 +1645,7 @@ export function useVariantGroup(groupId: string) {
           .eq('variant_group_id', groupId)
           .order('variant_position', { ascending: true });
 
-        const products = productsData || [];
+        const products = productsData ?? [];
 
         // Récupérer les images des produits
         const productIds = products.map(p => p.id);

@@ -77,14 +77,17 @@ export function SampleHistoryCompact({
 
         // Trouver la date de la dernière commande
         const dates = data
-          .map((item: any) => item.purchase_order?.created_at)
-          .filter(Boolean)
+          .map(item => {
+            const po = item.purchase_order as { created_at?: string } | null;
+            return po?.created_at;
+          })
+          .filter((d): d is string => Boolean(d))
           .sort(
             (a: string, b: string) =>
               new Date(b).getTime() - new Date(a).getTime()
           );
 
-        const lastOrderDate = dates.length > 0 ? dates[0] : null;
+        const lastOrderDate: string | null = dates.length > 0 ? dates[0] : null;
 
         setStats({
           totalOrders,
@@ -99,7 +102,7 @@ export function SampleHistoryCompact({
       }
     };
 
-    fetchSampleStats();
+    void fetchSampleStats();
   }, [productId]);
 
   // Ne rien afficher si pas de données ou en chargement
@@ -129,7 +132,7 @@ export function SampleHistoryCompact({
 
   return (
     <div
-      className={`bg-purple-50 rounded-lg shadow-sm border border-purple-200 p-3 ${className || ''}`}
+      className={`bg-purple-50 rounded-lg shadow-sm border border-purple-200 p-3 ${className ?? ''}`}
     >
       <div className="flex items-center gap-2 mb-2">
         <FlaskConical className="h-4 w-4 text-purple-600" />

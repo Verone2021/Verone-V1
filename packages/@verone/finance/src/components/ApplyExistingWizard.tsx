@@ -469,7 +469,7 @@ export function ApplyExistingWizard({
                   Annuler
                 </Button>
                 <Button
-                  onClick={handleConfirm}
+                  onClick={() => void handleConfirm()}
                   disabled={selectedLabels.size === 0}
                   className="gap-2 bg-amber-500 hover:bg-amber-600"
                 >

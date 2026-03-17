@@ -9,6 +9,8 @@
  * - Validation règles métier
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { logger } from '@verone/utils/logger';
@@ -140,7 +142,7 @@ export function usePriceLists(filters?: {
     queryKey: ['price-lists', filters],
     queryFn: async (): Promise<PriceList[]> => {
       try {
-        let query = (supabase as any)
+        let query = (supabase as { from: CallableFunction })
           .from('price_lists')
           .select(
             'id, code, name, description, list_type, priority, currency, valid_from, valid_until, is_active, created_at, updated_at, created_by, updated_by'
@@ -168,10 +170,10 @@ export function usePriceLists(filters?: {
 
         logger.info('Price lists fetched successfully', {
           operation: 'usePriceLists',
-          count: data?.length || 0,
+          count: data?.length ?? 0,
         });
 
-        return (data as unknown as PriceList[]) || [];
+        return (data as unknown as PriceList[]) ?? [];
       } catch (error) {
         logger.error('Exception in usePriceLists', undefined, {
           operation: 'usePriceLists',
@@ -198,7 +200,7 @@ export function usePriceList(priceListId: string | null) {
       if (!priceListId) return null;
 
       try {
-        const { data, error } = await (supabase as any)
+        const { data, error } = await (supabase as { from: CallableFunction })
           .from('price_lists')
           .select(
             'id, code, name, description, list_type, priority, currency, valid_from, valid_until, is_active, created_at, updated_at, created_by, updated_by'
@@ -243,7 +245,7 @@ export function usePriceListItems(priceListId: string | null) {
       if (!priceListId) return [];
 
       try {
-        const { data, error } = await (supabase as any)
+        const { data, error } = await (supabase as { from: CallableFunction })
           .from('price_list_items')
           .select(
             `
@@ -294,20 +296,29 @@ export function usePriceListItems(priceListId: string | null) {
         logger.info('Price list items fetched successfully', {
           operation: 'usePriceListItems',
           priceListId,
-          count: data?.length || 0,
+          count: data?.length ?? 0,
         });
 
         // Enrichir les produits avec primary_image_url (BR-TECH-002)
-        const enrichedItems = (data || []).map((item: any) => ({
-          ...item,
-          products: item.products
-            ? {
-                ...item.products,
-                primary_image_url:
-                  item.products.product_images?.[0]?.public_url || null,
-              }
-            : null,
-        }));
+        interface PriceListItemRow {
+          products: {
+            product_images?: Array<{ public_url: string; is_primary: boolean }>;
+            [key: string]: unknown;
+          } | null;
+          [key: string]: unknown;
+        }
+        const enrichedItems = ((data ?? []) as PriceListItemRow[]).map(
+          item => ({
+            ...item,
+            products: item.products
+              ? {
+                  ...item.products,
+                  primary_image_url:
+                    item.products.product_images?.[0]?.public_url ?? null,
+                }
+              : null,
+          })
+        );
 
         return enrichedItems as unknown as PriceListItem[];
       } catch (error) {
@@ -338,19 +349,21 @@ export function useCreatePriceList() {
       try {
         const { data: user } = await supabase.auth.getUser();
 
-        const { data: priceList, error } = await (supabase as any)
+        const { data: priceList, error } = await (
+          supabase as { from: CallableFunction }
+        )
           .from('price_lists')
           .insert({
             code: data.code,
             name: data.name,
-            description: data.description || null,
+            description: data.description ?? null,
             list_type: data.list_type,
-            priority: data.priority || 100,
-            currency: data.currency || 'EUR',
-            valid_from: data.valid_from || null,
-            valid_until: data.valid_until || null,
-            is_active: data.is_active !== undefined ? data.is_active : true,
-            created_by: user.user?.id || null,
+            priority: data.priority ?? 100,
+            currency: data.currency ?? 'EUR',
+            valid_from: data.valid_from ?? null,
+            valid_until: data.valid_until ?? null,
+            is_active: data.is_active ?? true,
+            created_by: user.user?.id ?? null,
           })
           .select('id')
           .single();
@@ -382,8 +395,8 @@ export function useCreatePriceList() {
         throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['price-lists'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['price-lists'] });
       toast({
         title: 'Succès',
         description: 'Liste de prix créée avec succès',
@@ -422,11 +435,13 @@ export function useUpdatePriceList() {
       try {
         const { data: user } = await supabase.auth.getUser();
 
-        const { data: priceList, error } = await (supabase as any)
+        const { data: priceList, error } = await (
+          supabase as { from: CallableFunction }
+        )
           .from('price_lists')
           .update({
             ...data,
-            updated_by: user.user?.id || null,
+            updated_by: user.user?.id ?? null,
             updated_at: new Date().toISOString(),
           })
           .eq('id', priceListId)
@@ -456,9 +471,9 @@ export function useUpdatePriceList() {
         throw error;
       }
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['price-lists'] });
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({ queryKey: ['price-lists'] });
+      await queryClient.invalidateQueries({
         queryKey: ['price-list', variables.priceListId],
       });
       toast({
@@ -491,7 +506,7 @@ export function useDeletePriceList() {
   return useMutation({
     mutationFn: async (priceListId: string): Promise<void> => {
       try {
-        const { error } = await (supabase as any)
+        const { error } = await (supabase as { from: CallableFunction })
           .from('price_lists')
           .delete()
           .eq('id', priceListId);
@@ -517,8 +532,8 @@ export function useDeletePriceList() {
         throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['price-lists'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['price-lists'] });
       toast({
         title: 'Succès',
         description: 'Liste de prix supprimée avec succès',
@@ -551,21 +566,23 @@ export function useCreatePriceListItem() {
       data: CreatePriceListItemData
     ): Promise<PriceListItem> => {
       try {
-        const { data: item, error } = await (supabase as any)
+        const { data: item, error } = await (
+          supabase as { from: CallableFunction }
+        )
           .from('price_list_items')
           .insert({
             price_list_id: data.price_list_id,
             product_id: data.product_id,
             cost_price: data.cost_price,
-            discount_rate: data.discount_rate || null,
-            min_quantity: data.min_quantity || 1,
-            max_quantity: data.max_quantity || null,
-            margin_rate: data.margin_rate || null,
-            currency: data.currency || 'EUR',
-            valid_from: data.valid_from || null,
-            valid_until: data.valid_until || null,
-            is_active: data.is_active !== undefined ? data.is_active : true,
-            notes: data.notes || null,
+            discount_rate: data.discount_rate ?? null,
+            min_quantity: data.min_quantity ?? 1,
+            max_quantity: data.max_quantity ?? null,
+            margin_rate: data.margin_rate ?? null,
+            currency: data.currency ?? 'EUR',
+            valid_from: data.valid_from ?? null,
+            valid_until: data.valid_until ?? null,
+            is_active: data.is_active ?? true,
+            notes: data.notes ?? null,
           })
           .select('id')
           .single();
@@ -597,11 +614,11 @@ export function useCreatePriceListItem() {
         throw error;
       }
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['price-list-items', variables.price_list_id],
       });
-      queryClient.invalidateQueries({ queryKey: ['pricing-v2'] });
+      await queryClient.invalidateQueries({ queryKey: ['pricing-v2'] });
       toast({
         title: 'Succès',
         description: 'Item de prix ajouté avec succès',
@@ -639,7 +656,9 @@ export function useUpdatePriceListItem() {
       data: UpdatePriceListItemData;
     }): Promise<PriceListItem> => {
       try {
-        const { data: item, error } = await (supabase as any)
+        const { data: item, error } = await (
+          supabase as { from: CallableFunction }
+        )
           .from('price_list_items')
           .update({
             ...data,
@@ -672,11 +691,11 @@ export function useUpdatePriceListItem() {
         throw error;
       }
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['price-list-items', variables.priceListId],
       });
-      queryClient.invalidateQueries({ queryKey: ['pricing-v2'] });
+      await queryClient.invalidateQueries({ queryKey: ['pricing-v2'] });
       toast({
         title: 'Succès',
         description: 'Item de prix mis à jour avec succès',
@@ -712,7 +731,7 @@ export function useDeletePriceListItem() {
       priceListId: string; // Garde pour compatibilité interface mais non utilisé
     }): Promise<void> => {
       try {
-        const { error } = await (supabase as any)
+        const { error } = await (supabase as { from: CallableFunction })
           .from('price_list_items')
           .delete()
           .eq('id', itemId);
@@ -738,11 +757,11 @@ export function useDeletePriceListItem() {
         throw error;
       }
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: ['price-list-items', variables.priceListId],
       });
-      queryClient.invalidateQueries({ queryKey: ['pricing-v2'] });
+      await queryClient.invalidateQueries({ queryKey: ['pricing-v2'] });
       toast({
         title: 'Succès',
         description: 'Item de prix supprimé avec succès',

@@ -46,7 +46,8 @@ export function useGoogleMerchantEligibleProducts() {
       );
 
       const { data, error } = await supabase.rpc(
-        'get_google_merchant_eligible_products' as any
+        'get_google_merchant_eligible_products' as 'get_google_merchant_eligible_products' &
+          string
       );
 
       if (error) {
@@ -56,11 +57,14 @@ export function useGoogleMerchantEligibleProducts() {
         throw new Error(`Failed to fetch eligible products: ${error.message}`);
       }
 
+      const typedData = data as unknown as
+        | GoogleMerchantEligibleProduct[]
+        | null;
       logger.info('[useGoogleMerchantEligibleProducts] Success', {
-        count: data?.length || 0,
+        count: typedData?.length ?? 0,
       });
 
-      return (data as GoogleMerchantEligibleProduct[]) || [];
+      return typedData ?? [];
     },
     staleTime: 300_000, // 5 minutes
     gcTime: 300000, // 5 minutes

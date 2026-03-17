@@ -62,7 +62,7 @@ export function useConsultationImages({
 
   // Calculer les propriétés dérivées
   const updateDerivedState = useCallback((images: ConsultationImage[]) => {
-    const primaryImage = images.find(img => img.is_primary) || null;
+    const primaryImage = images.find(img => img.is_primary) ?? null;
     const galleryImages = images.filter(img => !img.is_primary);
     const hasImages = images.length > 0;
 
@@ -91,14 +91,14 @@ export function useConsultationImages({
       if (error) throw error;
 
       // Générer les URLs publiques pour chaque image (utilise le même bucket que les produits)
-      const imagesWithUrls = (data || []).map(image => ({
+      const imagesWithUrls: ConsultationImage[] = (data ?? []).map(image => ({
         ...image,
         public_url: supabase.storage
           .from('product-images')
           .getPublicUrl(image.storage_path).data.publicUrl,
       }));
 
-      updateDerivedState(imagesWithUrls as any);
+      updateDerivedState(imagesWithUrls);
     } catch (err) {
       console.error('❌ Erreur récupération images consultation:', err);
       setState(prev => ({
@@ -142,11 +142,11 @@ export function useConsultationImages({
           consultation_id: consultationId,
           storage_path: uploadData.path,
           display_order: displayOrder,
-          is_primary: data.isPrimary || state.images.length === 0, // Première image = principale
-          image_type: data.imageType || 'gallery',
-          alt_text: data.altText || `Photo consultation`,
+          is_primary: data.isPrimary ?? state.images.length === 0, // Première image = principale
+          image_type: data.imageType ?? 'gallery',
+          alt_text: data.altText ?? `Photo consultation`,
           file_size: data.file.size,
-          format: fileExt || 'jpg',
+          format: fileExt ?? 'jpg',
         };
 
         const { data: newImage, error: dbError } = await supabase
@@ -166,7 +166,7 @@ export function useConsultationImages({
         }
 
         // 5. Ajouter l'URL publique
-        const imageWithUrl = {
+        const imageWithUrl: ConsultationImage = {
           ...newImage,
           public_url: supabase.storage
             .from('product-images')
@@ -174,11 +174,14 @@ export function useConsultationImages({
         };
 
         // 6. Mettre à jour le state local
-        const updatedImages = [...state.images, imageWithUrl];
-        updateDerivedState(updatedImages as any);
+        const updatedImages: ConsultationImage[] = [
+          ...state.images,
+          imageWithUrl,
+        ];
+        updateDerivedState(updatedImages);
 
-        console.log('✅ Image consultation uploadée:', fileName);
-        return imageWithUrl as any;
+        console.warn('[ConsultationImages] Image uploaded:', fileName);
+        return imageWithUrl;
       } catch (err) {
         console.error('❌ Erreur upload image consultation:', err);
         setState(prev => ({
@@ -227,7 +230,7 @@ export function useConsultationImages({
         const updatedImages = state.images.filter(img => img.id !== imageId);
         updateDerivedState(updatedImages);
 
-        console.log('✅ Image consultation supprimée');
+        console.warn('[ConsultationImages] Image deleted');
         return true;
       } catch (err) {
         console.error('❌ Erreur suppression image consultation:', err);
@@ -258,7 +261,7 @@ export function useConsultationImages({
         // la désactivation des autres images principales
         await fetchImages(); // Recharger pour avoir l'état à jour
 
-        console.log('✅ Image principale consultation définie');
+        console.warn('[ConsultationImages] Primary image set');
         return true;
       } catch (err) {
         console.error(
@@ -305,7 +308,7 @@ export function useConsultationImages({
   // Auto-fetch au montage si demandé
   useEffect(() => {
     if (autoFetch && consultationId) {
-      fetchImages();
+      void fetchImages();
     }
   }, [autoFetch, consultationId, fetchImages]);
 
@@ -314,7 +317,7 @@ export function useConsultationImages({
     total: state.images.length,
     primary: state.images.filter(img => img.is_primary).length,
     gallery: state.galleryImages.length,
-    totalSize: state.images.reduce((sum, img) => sum + (img.file_size || 0), 0),
+    totalSize: state.images.reduce((sum, img) => sum + (img.file_size ?? 0), 0),
   };
 
   return {

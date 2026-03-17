@@ -193,7 +193,7 @@ export function KPICardUnified({
     elegant: 18,
     detailed: 20,
   };
-  const iconSize = iconSizeMap[variant || 'compact'];
+  const iconSize = iconSizeMap[variant ?? 'compact'];
 
   // Icon container size selon variant
   const iconContainerSizeMap = {
@@ -201,7 +201,7 @@ export function KPICardUnified({
     elegant: 'w-9 h-9',
     detailed: 'w-10 h-10',
   };
-  const iconContainerSize = iconContainerSizeMap[variant || 'compact'];
+  const iconContainerSize = iconContainerSizeMap[variant ?? 'compact'];
 
   return (
     <div

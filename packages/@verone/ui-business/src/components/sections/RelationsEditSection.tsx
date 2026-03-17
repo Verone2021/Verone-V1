@@ -89,24 +89,20 @@ export function RelationsEditSection({
     hasChanges,
   } = useInlineEdit({
     productId: product.id,
-    onUpdate: updatedData => {
+    onUpdate: (updatedData: Partial<Product>) => {
       onUpdate(updatedData);
     },
-    onError: error => {
-      console.error('❌ Erreur mise à jour relations:', error);
+    onError: (error: string) => {
+      console.error('Erreur mise a jour relations:', error);
     },
   });
 
   const section: EditableSection = 'relations';
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as
+    | Record<string, unknown>
+    | undefined;
   const error = getError(section);
-
-  // Charger les groupes de produits disponibles
-  useEffect(() => {
-    if (isEditing(section)) {
-      fetchProductGroups();
-    }
-  }, [isEditing(section)]);
+  const isSectionEditing = isEditing(section);
 
   const fetchProductGroups = async () => {
     setLoadingGroups(true);
@@ -139,13 +135,21 @@ export function RelationsEditSection({
         .limit(50);
 
       if (error) throw error;
-      setProductGroups((data as any) || []);
+      setProductGroups((data as ProductGroup[]) ?? []);
     } catch (err) {
-      console.error('❌ Erreur chargement groupes produits:', err);
+      console.error('Erreur chargement groupes produits:', err);
     } finally {
       setLoadingGroups(false);
     }
   };
+
+  // Charger les groupes de produits disponibles
+  useEffect(() => {
+    if (isSectionEditing) {
+      void fetchProductGroups();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSectionEditing]);
 
   const handleStartEdit = () => {
     startEdit(section, {
@@ -173,14 +177,14 @@ export function RelationsEditSection({
 
   const filteredGroups = productGroups.filter(
     group =>
-      searchTerm === '' ||
-      group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      group.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (searchTerm === '' ||
+        group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        group.brand?.toLowerCase().includes(searchTerm.toLowerCase())) ??
       group.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const selectedGroup = productGroups.find(
-    g => g.id === editData?.product_group_id
+    g => g.id === (editData?.product_group_id as string | undefined)
   );
 
   const renderHierarchy = (group: ProductGroup) => {
@@ -215,7 +219,9 @@ export function RelationsEditSection({
             <ButtonV2
               variant="secondary"
               size="sm"
-              onClick={handleSave}
+              onClick={() => {
+                void handleSave();
+              }}
               disabled={!hasChanges(section) || isSaving(section)}
             >
               <Save className="h-3 w-3 mr-1" />
@@ -283,7 +289,8 @@ export function RelationsEditSection({
                       onClick={() => handleSelectGroup(group.id)}
                       className={cn(
                         'w-full p-3 text-left hover:bg-gray-50 transition-colors',
-                        group.id === editData?.product_group_id &&
+                        group.id ===
+                          (editData?.product_group_id as string | undefined) &&
                           'bg-blue-50 border-blue-200'
                       )}
                     >
@@ -304,7 +311,10 @@ export function RelationsEditSection({
                             </div>
                           )}
                         </div>
-                        {group.id === editData?.product_group_id && (
+                        {group.id ===
+                          (editData?.product_group_id as
+                            | string
+                            | undefined) && (
                           <Badge variant="outline" className="ml-2">
                             Actuel
                           </Badge>
@@ -318,7 +328,8 @@ export function RelationsEditSection({
           )}
 
           {/* Avertissement */}
-          {editData?.product_group_id !== product.product_group_id && (
+          {(editData?.product_group_id as string | undefined) !==
+            product.product_group_id && (
             <div className="bg-gray-50 border border-gray-200 p-3 rounded-md">
               <div className="flex items-start">
                 <AlertCircle className="h-4 w-4 text-black mr-2 mt-0.5" />
@@ -395,7 +406,7 @@ export function RelationsEditSection({
             className="w-full text-xs h-7"
             onClick={() => {
               // TODO: Naviguer vers la page du groupe de produit
-              console.log(
+              console.warn(
                 'Navigate to product group:',
                 product.product_group_id
               );

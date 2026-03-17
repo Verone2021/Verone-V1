@@ -24,14 +24,9 @@ import {
 } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
-  ArrowDownRight,
-  ArrowUpRight,
   CalendarDays,
   Check,
-  Minus,
   RefreshCw,
-  TrendingDown,
-  TrendingUp,
   Wallet,
   Landmark,
   FileText,
@@ -39,7 +34,6 @@ import {
 } from 'lucide-react';
 import {
   Bar,
-  BarChart,
   Cell,
   Line,
   ComposedChart,
@@ -194,8 +188,8 @@ export function FinanceDashboard() {
   }, [filters.year]);
 
   const handleRefreshAll = () => {
-    refresh();
-    refreshBankBalance();
+    void refresh();
+    void refreshBankBalance();
   };
 
   const isAllTime = filters.year === ALL_YEARS_VALUE;
@@ -204,11 +198,11 @@ export function FinanceDashboard() {
   // Metrics
   // CA = uniquement classe 7 (ventes réelles), pas tous les crédits bancaires
   // stats.revenue exclut les apports associés (455), remboursements non-ventes, etc.
-  const chiffreAffaires = stats?.revenue || 0;
-  const totalEncaissements = stats?.totalCredit || 0;
-  const charges = stats?.totalDebit || 0;
+  const chiffreAffaires = stats?.revenue ?? 0;
+  const totalEncaissements = stats?.totalCredit ?? 0;
+  const charges = stats?.totalDebit ?? 0;
   const resultat = chiffreAffaires - charges;
-  const hasUncategorizedCredit = (stats?.uncategorizedCredit || 0) > 0;
+  const hasUncategorizedCredit = (stats?.uncategorizedCredit ?? 0) > 0;
 
   // AR/AP from treasury
   const facturesEnAttente = treasuryStats?.unpaid_count_ar ?? 0;
@@ -334,7 +328,7 @@ export function FinanceDashboard() {
                 color="green"
                 subtitle={
                   hasUncategorizedCredit
-                    ? `${formatCurrency(stats?.uncategorizedCredit || 0)} non catégorisé`
+                    ? `${formatCurrency(stats?.uncategorizedCredit ?? 0)} non catégorisé`
                     : chiffreAffaires !== totalEncaissements
                       ? `Encaissements: ${formatCurrency(totalEncaissements)}`
                       : undefined

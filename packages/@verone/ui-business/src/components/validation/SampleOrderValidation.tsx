@@ -12,14 +12,10 @@ import {
   Euro,
   Calendar,
   Truck,
-  AlertTriangle,
   Eye,
-  Edit,
   X,
-  Plus,
   ArrowRight,
   Loader2,
-  Star,
 } from 'lucide-react';
 
 import { Badge } from '@verone/ui';
@@ -40,19 +36,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@verone/ui';
-import { Input } from '@verone/ui';
-import { Label } from '@verone/ui';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
-import { useSourcingProducts } from '@verone/products/hooks';
 
 interface SampleOrder {
   id: string;
@@ -101,7 +87,7 @@ interface SampleOrderValidationProps {
 }
 
 export function SampleOrderValidation({
-  className,
+  className: _className,
 }: SampleOrderValidationProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -120,7 +106,10 @@ export function SampleOrderValidation({
   const [loading, setLoading] = useState(true);
   const [validationNotes, setValidationNotes] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [workflowMetrics, setWorkflowMetrics] = useState<any>(null);
+  const [workflowMetrics, setWorkflowMetrics] = useState<Record<
+    string,
+    number
+  > | null>(null);
 
   const supabase = createClient();
 
@@ -150,14 +139,17 @@ export function SampleOrderValidation({
     result: 'approved' | 'rejected',
     notes?: string
   ) => {
-    const { error } = await (supabase as any)
-      .from('product_drafts')
-      .update({ status: result, validation_notes: notes } as any)
+    const { error } = await supabase
+      .from('product_drafts' as 'sample_orders')
+      .update({ status: result, validation_notes: notes } as Record<
+        string,
+        unknown
+      >)
       .in('id', draftIds);
     if (error) throw error;
   };
 
-  const transferToProductCatalog = async (draftId: string) => {
+  const transferToProductCatalog = async (_draftId: string) => {
     // Implement transfer logic here
     throw new Error('transferToProductCatalog not yet implemented');
   };
@@ -192,7 +184,7 @@ export function SampleOrderValidation({
 
       if (error) throw error;
 
-      setSampleOrders((orders as any) || []);
+      setSampleOrders((orders as unknown as SampleOrder[]) ?? []);
 
       // Charger les métriques du workflow
       try {
@@ -392,7 +384,8 @@ export function SampleOrderValidation({
 
   // Chargement initial
   useEffect(() => {
-    loadSampleOrders();
+    void loadSampleOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) {
@@ -430,13 +423,13 @@ export function SampleOrderValidation({
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-gray-50 rounded-lg">
               <div className="text-2xl font-bold text-black">
-                {workflowMetrics.total_sourcing || 0}
+                {workflowMetrics.total_sourcing ?? 0}
               </div>
               <div className="text-sm text-gray-600">Total sourcing</div>
             </div>
             <div className="text-center p-4 bg-gray-50 rounded-lg">
               <div className="text-2xl font-bold text-black">
-                {workflowMetrics.requiring_samples || 0}
+                {workflowMetrics.requiring_samples ?? 0}
               </div>
               <div className="text-sm text-gray-600">
                 Nécessitent échantillons
@@ -444,13 +437,13 @@ export function SampleOrderValidation({
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg">
               <div className="text-2xl font-bold text-green-600">
-                {workflowMetrics.samples_validated || 0}
+                {workflowMetrics.samples_validated ?? 0}
               </div>
               <div className="text-sm text-gray-600">Échantillons validés</div>
             </div>
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <div className="text-2xl font-bold text-blue-600">
-                {workflowMetrics.approved_products || 0}
+                {workflowMetrics.approved_products ?? 0}
               </div>
               <div className="text-sm text-gray-600">Produits approuvés</div>
             </div>
@@ -534,7 +527,9 @@ export function SampleOrderValidation({
                       {order.status === 'approved' && (
                         <ButtonV2
                           size="sm"
-                          onClick={() => handleMarkDelivered(order.id)}
+                          onClick={() => {
+                            void handleMarkDelivered(order.id);
+                          }}
                           className="bg-blue-600 hover:bg-blue-700 text-white"
                         >
                           <Truck className="h-4 w-4 mr-2" />
@@ -664,13 +659,13 @@ export function SampleOrderValidation({
                                 Annuler
                               </ButtonV2>
                               <ButtonV2
-                                onClick={() =>
-                                  handleValidateSamples(
+                                onClick={() => {
+                                  void handleValidateSamples(
                                     selectedItems,
                                     'rejected',
                                     validationNotes
-                                  )
-                                }
+                                  );
+                                }}
                                 className="bg-red-600 hover:bg-red-700 text-white"
                               >
                                 Confirmer Rejet
@@ -717,13 +712,17 @@ export function SampleOrderValidation({
                                 Annuler
                               </ButtonV2>
                               <ButtonV2
-                                onClick={async () => {
-                                  await handleValidateSamples(
-                                    selectedItems,
-                                    'approved',
-                                    validationNotes
-                                  );
-                                  await handleTransferToCatalog(selectedItems);
+                                onClick={() => {
+                                  void (async () => {
+                                    await handleValidateSamples(
+                                      selectedItems,
+                                      'approved',
+                                      validationNotes
+                                    );
+                                    await handleTransferToCatalog(
+                                      selectedItems
+                                    );
+                                  })();
                                 }}
                                 className="bg-green-600 hover:bg-green-700 text-white"
                               >
@@ -790,9 +789,9 @@ export function SampleOrderValidation({
                 Annuler
               </ButtonV2>
               <ButtonV2
-                onClick={() =>
-                  handleApproveOrder(selectedOrder.id, validationNotes)
-                }
+                onClick={() => {
+                  void handleApproveOrder(selectedOrder.id, validationNotes);
+                }}
                 className="bg-green-600 hover:bg-green-700 text-white"
               >
                 Confirmer Approbation

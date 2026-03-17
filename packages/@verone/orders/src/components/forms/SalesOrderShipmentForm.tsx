@@ -71,7 +71,18 @@ export function SalesOrderShipmentForm({
   );
   const [trackingNumber, setTrackingNumber] = useState('');
   const [notes, setNotes] = useState('');
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<
+    Array<{
+      shipped_at: string;
+      tracking_number?: string;
+      total_quantity: number;
+      items?: Array<{
+        product_sku: string;
+        product_name: string;
+        quantity_shipped: number;
+      }>;
+    }>
+  >([]);
   const [shipmentResult, setShipmentResult] =
     useState<ShipmentResultSummary | null>(null);
 
@@ -84,7 +95,7 @@ export function SalesOrderShipmentForm({
 
   // Charger historique expéditions
   useEffect(() => {
-    loadShipmentHistory(salesOrder.id).then(setHistory);
+    void loadShipmentHistory(salesOrder.id).then(setHistory);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [salesOrder.id]);
 
@@ -478,11 +489,11 @@ export function SalesOrderShipmentForm({
 
                 {/* Détails par produit */}
                 <div className="space-y-1 ml-6">
-                  {h.items?.map((item: any, itemIdx: number) => {
+                  {h.items?.map((item, itemIdx) => {
                     const orderItem = items.find(
                       i => i.product_sku === item.product_sku
                     );
-                    const qtyOrdered = orderItem?.quantity_ordered || '?';
+                    const qtyOrdered = orderItem?.quantity_ordered ?? '?';
 
                     return (
                       <div
@@ -492,7 +503,7 @@ export function SalesOrderShipmentForm({
                         <div className="flex items-center gap-2">
                           <span className="text-gray-400">├─</span>
                           <span className="font-medium text-gray-700">
-                            {item.product_name || item.product_sku}
+                            {item.product_name ?? item.product_sku}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -517,7 +528,9 @@ export function SalesOrderShipmentForm({
           Annuler
         </ButtonV2>
         <ButtonV2
-          onClick={handleValidate}
+          onClick={() => {
+            void handleValidate();
+          }}
           disabled={
             validating ||
             totals.totalQuantityToShip === 0 ||

@@ -30,8 +30,8 @@ export function ContactPersonalEditSection({
     hasChanges,
   } = useInlineEdit({
     contactId: contact.id,
-    onUpdate: updatedData => {
-      onUpdate(updatedData);
+    onUpdate: (updatedData: unknown) => {
+      onUpdate(updatedData as Partial<Contact>);
     },
     onError: error => {
       console.error('❌ Erreur mise à jour informations personnelles:', error);
@@ -39,22 +39,24 @@ export function ContactPersonalEditSection({
   });
 
   const section: EditableSection = 'personal';
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as
+    | Record<string, string | null>
+    | undefined;
   const error = getError(section);
 
   const handleStartEdit = () => {
     startEdit(section, {
       first_name: contact.first_name,
       last_name: contact.last_name,
-      title: contact.title || '',
-      department: contact.department || '',
+      title: contact.title ?? '',
+      department: contact.department ?? '',
     });
   };
 
   const handleSave = async () => {
     const success = await saveChanges(section);
     if (success) {
-      console.log('✅ Informations personnelles mises à jour avec succès');
+      console.warn('✅ Informations personnelles mises à jour avec succès');
     }
   };
 
@@ -87,7 +89,9 @@ export function ContactPersonalEditSection({
             <ButtonV2
               variant="secondary"
               size="sm"
-              onClick={handleSave}
+              onClick={() => {
+                void handleSave();
+              }}
               disabled={!hasChanges(section) || isSaving(section)}
             >
               <Save className="h-3 w-3 mr-1" />
@@ -104,7 +108,7 @@ export function ContactPersonalEditSection({
             </label>
             <input
               type="text"
-              value={editData?.first_name || ''}
+              value={editData?.first_name ?? ''}
               onChange={e => handleFieldChange('first_name', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="Prénom"
@@ -119,7 +123,7 @@ export function ContactPersonalEditSection({
             </label>
             <input
               type="text"
-              value={editData?.last_name || ''}
+              value={editData?.last_name ?? ''}
               onChange={e => handleFieldChange('last_name', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="Nom de famille"
@@ -134,7 +138,7 @@ export function ContactPersonalEditSection({
             </label>
             <input
               type="text"
-              value={editData?.title || ''}
+              value={editData?.title ?? ''}
               onChange={e => handleFieldChange('title', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="Directeur Commercial, Chef de Projet..."
@@ -148,7 +152,7 @@ export function ContactPersonalEditSection({
             </label>
             <input
               type="text"
-              value={editData?.department || ''}
+              value={editData?.department ?? ''}
               onChange={e => handleFieldChange('department', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="Commercial, Support, Production..."

@@ -53,7 +53,7 @@ export interface PurchaseOrder {
   total_ttc: number;
   order_date?: string | null;
   expected_delivery_date?: string;
-  delivery_address?: any;
+  delivery_address?: Record<string, unknown>;
   payment_terms?: string;
   notes?: string;
 
@@ -133,7 +133,7 @@ export interface PurchaseOrderItem {
 export interface CreatePurchaseOrderData {
   supplier_id: string;
   expected_delivery_date?: string;
-  delivery_address?: any;
+  delivery_address?: Record<string, unknown>;
   payment_terms?: string;
   notes?: string;
   eco_tax_vat_rate?: number | null;
@@ -156,7 +156,7 @@ export interface CreatePurchaseOrderItemData {
 
 export interface UpdatePurchaseOrderData {
   expected_delivery_date?: string;
-  delivery_address?: any;
+  delivery_address?: Record<string, unknown>;
   payment_terms?: string;
   notes?: string;
 }
@@ -192,7 +192,7 @@ export function usePurchaseOrders() {
   const { toast } = useToast();
   // ✅ FIX: useMemo pour éviter recréation du client à chaque render
   const supabase = useMemo(() => createClient(), []);
-  const { createMovement } = useStockMovements();
+  const { createMovement: _createMovement } = useStockMovements();
 
   // PERFORMANCE FIX #3: Payload Optimization (+200ms gain)
   // SELECT colonnes explicites au lieu de *
@@ -308,11 +308,11 @@ export function usePurchaseOrders() {
 
         if (error) throw error;
 
-        // Cast as any car les types Supabase ne sont pas à jour (colonnes payment_status_v2, manual_payment_*)
-        const ordersData = (data || []) as any[];
+        // Cast needed: Supabase types might be stale (payment_status_v2, manual_payment_*)
+        const ordersData = (data ?? []) as Array<Record<string, unknown>>;
 
         // 🆕 Récupérer les transactions liées (rapprochement bancaire)
-        const orderIds = ordersData.map(o => o.id);
+        const orderIds = ordersData.map(o => o.id as string);
         const matchedOrdersMap = new Map<
           string,
           {
@@ -341,14 +341,19 @@ export function usePurchaseOrders() {
             .in('purchase_order_id', orderIds)
             .eq('link_type', 'purchase_order');
 
-          for (const link of links || []) {
+          for (const link of links ?? []) {
             if (link.purchase_order_id && link.bank_transactions) {
-              const bt = link.bank_transactions as any;
+              const bt = link.bank_transactions as {
+                id: string;
+                label: string | null;
+                amount: number | null;
+                emitted_at: string | null;
+              };
               matchedOrdersMap.set(link.purchase_order_id, {
                 transaction_id: bt.id,
-                label: bt.label || '',
-                amount: bt.amount || 0,
-                emitted_at: bt.emitted_at || null,
+                label: bt.label ?? '',
+                amount: bt.amount ?? 0,
+                emitted_at: bt.emitted_at ?? null,
               });
             }
           }
@@ -356,31 +361,39 @@ export function usePurchaseOrders() {
 
         // Enrichir les produits avec primary_image_url (BR-TECH-002) + rapprochement
         const enrichedOrders = ordersData.map(order => {
-          const matchInfo = matchedOrdersMap.get(order.id);
+          const matchInfo = matchedOrdersMap.get(order.id as string);
+          const poItems = (order.purchase_order_items ?? []) as Array<
+            Record<string, unknown>
+          >;
           return {
             ...order,
             // 🆕 Rapprochement bancaire
             is_matched: !!matchInfo,
-            matched_transaction_id: matchInfo?.transaction_id || null,
-            matched_transaction_label: matchInfo?.label || null,
-            matched_transaction_amount: matchInfo?.amount || null,
-            matched_transaction_emitted_at: matchInfo?.emitted_at || null,
-            purchase_order_items: (order.purchase_order_items || []).map(
-              item => ({
+            matched_transaction_id: matchInfo?.transaction_id ?? null,
+            matched_transaction_label: matchInfo?.label ?? null,
+            matched_transaction_amount: matchInfo?.amount ?? null,
+            matched_transaction_emitted_at: matchInfo?.emitted_at ?? null,
+            purchase_order_items: poItems.map(item => {
+              const products = item.products as Record<string, unknown> | null;
+              return {
                 ...item,
-                products: item.products
+                products: products
                   ? {
-                      ...item.products,
+                      ...products,
                       primary_image_url:
-                        item.products.product_images?.[0]?.public_url || null,
+                        (
+                          products.product_images as Array<{
+                            public_url: string;
+                          }> | null
+                        )?.[0]?.public_url ?? null,
                     }
                   : null,
-              })
-            ),
+              };
+            }),
           };
         });
 
-        setOrders(enrichedOrders as any);
+        setOrders(enrichedOrders as PurchaseOrder[]);
       } catch (error) {
         console.error('Erreur lors de la récupération des commandes:', error);
         toast({
@@ -490,13 +503,13 @@ export function usePurchaseOrders() {
         if (error) throw error;
 
         // Enrichir les produits avec primary_image_url (BR-TECH-002)
-        const enrichedItems = (data.purchase_order_items || []).map(item => ({
+        const enrichedItems = (data.purchase_order_items ?? []).map(item => ({
           ...item,
           products: item.products
             ? {
                 ...item.products,
                 primary_image_url:
-                  item.products.product_images?.[0]?.public_url || null,
+                  item.products.product_images?.[0]?.public_url ?? null,
               }
             : null,
         }));
@@ -506,7 +519,7 @@ export function usePurchaseOrders() {
           purchase_order_items: enrichedItems,
         };
 
-        setCurrentOrder(enrichedOrder as any);
+        setCurrentOrder(enrichedOrder as PurchaseOrder);
         return enrichedOrder;
       } catch (error) {
         console.error('Erreur lors de la récupération de la commande:', error);
@@ -538,17 +551,25 @@ export function usePurchaseOrders() {
           query = query.lte('created_at', filters.date_to);
         }
 
-        // ⚠️ Type cast needed: Supabase types might be stale, eco_tax_total exists in DB
-        const { data, error } = (await query) as any;
+        const { data, error } = await query;
 
         if (error) throw error;
 
-        const statsData = data?.reduce(
+        // Type narrowing for Supabase result (eco_tax_total may not be in generated types)
+        type StatsRow = {
+          status: string;
+          total_ht: number | null;
+          eco_tax_total?: number | null;
+          total_ttc: number | null;
+        };
+        const typedData = (data ?? []) as unknown as StatsRow[];
+
+        const statsData = typedData.reduce(
           (acc, order) => {
             acc.total_orders++;
-            acc.total_value += order.total_ht || 0;
-            acc.eco_tax_total += order.eco_tax_total || 0;
-            acc.total_ttc += order.total_ttc || 0;
+            acc.total_value += order.total_ht ?? 0;
+            acc.eco_tax_total += order.eco_tax_total ?? 0;
+            acc.total_ttc += order.total_ttc ?? 0;
 
             switch (order.status) {
               case 'draft':
@@ -576,7 +597,7 @@ export function usePurchaseOrders() {
           }
         );
 
-        setStats(statsData || null);
+        setStats(statsData);
       } catch (error) {
         console.error(
           'Erreur lors de la récupération des statistiques:',
@@ -603,13 +624,13 @@ export function usePurchaseOrders() {
           const subtotal =
             item.quantity *
             item.unit_price_ht *
-            (1 - (item.discount_percentage || 0) / 100);
-          const itemEcoTax = (item.eco_tax || 0) * item.quantity;
+            (1 - (item.discount_percentage ?? 0) / 100);
+          const itemEcoTax = (item.eco_tax ?? 0) * item.quantity;
           return sum + subtotal + itemEcoTax;
         }, 0);
 
         const ecoTaxTotal = data.items.reduce((sum, item) => {
-          return sum + (item.eco_tax || 0) * item.quantity;
+          return sum + (item.eco_tax ?? 0) * item.quantity;
         }, 0);
 
         const totalTTC = totalHT * (1 + 0.2); // Default VAT 20%
@@ -633,9 +654,9 @@ export function usePurchaseOrders() {
             total_ttc: totalTTC,
             eco_tax_total: ecoTaxTotal,
             eco_tax_vat_rate: data.eco_tax_vat_rate ?? null,
-            shipping_cost_ht: data.shipping_cost_ht || 0,
-            customs_cost_ht: data.customs_cost_ht || 0,
-            insurance_cost_ht: data.insurance_cost_ht || 0,
+            shipping_cost_ht: data.shipping_cost_ht ?? 0,
+            customs_cost_ht: data.customs_cost_ht ?? 0,
+            insurance_cost_ht: data.insurance_cost_ht ?? 0,
             created_by: user.id,
           })
           .select('id, po_number, status')
@@ -652,8 +673,8 @@ export function usePurchaseOrders() {
               product_id: item.product_id,
               quantity: item.quantity,
               unit_price_ht: item.unit_price_ht,
-              discount_percentage: item.discount_percentage || 0,
-              eco_tax: item.eco_tax || 0,
+              discount_percentage: item.discount_percentage ?? 0,
+              eco_tax: item.eco_tax ?? 0,
               expected_delivery_date: item.expected_delivery_date,
               notes: item.notes,
             }))
@@ -710,12 +731,13 @@ export function usePurchaseOrders() {
         if (currentOrder?.id === orderId) {
           await fetchOrder(orderId);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erreur lors de la mise à jour:', error);
         toast({
           title: 'Erreur',
           description:
-            error.message || 'Impossible de mettre à jour la commande',
+            (error instanceof Error ? error.message : null) ??
+            'Impossible de mettre à jour la commande',
           variant: 'destructive',
         });
         throw error;
@@ -728,7 +750,7 @@ export function usePurchaseOrders() {
 
   // Changer le statut d'une commande (utilise Server Action pour bypasser RLS)
   const updateStatus = useCallback(
-    async (orderId: string, newStatus: PurchaseOrderStatus) => {
+    async (orderId: string, _newStatus: PurchaseOrderStatus) => {
       setLoading(true);
       try {
         // Récupérer l'utilisateur courant
@@ -761,11 +783,13 @@ export function usePurchaseOrders() {
         if (currentOrder?.id === orderId) {
           await fetchOrder(orderId);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erreur lors du changement de statut:', error);
         toast({
           title: 'Erreur',
-          description: error.message || 'Impossible de changer le statut',
+          description:
+            (error instanceof Error ? error.message : null) ??
+            'Impossible de changer le statut',
           variant: 'destructive',
         });
         throw error;
@@ -773,7 +797,8 @@ export function usePurchaseOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, fetchOrders, fetchStats, currentOrder, fetchOrder]
+
+    [supabase, toast, fetchStats, currentOrder, fetchOrder]
   );
 
   // Réceptionner des items (totalement ou partiellement)
@@ -838,11 +863,13 @@ export function usePurchaseOrders() {
           title: 'Succès',
           description: 'Réception enregistrée avec succès',
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erreur lors de la réception:', error);
         toast({
           title: 'Erreur',
-          description: error.message || "Impossible d'enregistrer la réception",
+          description:
+            (error instanceof Error ? error.message : null) ??
+            "Impossible d'enregistrer la réception",
           variant: 'destructive',
         });
         throw error;
@@ -850,7 +877,8 @@ export function usePurchaseOrders() {
         setLoading(false);
       }
     },
-    [supabase, toast, createMovement, updateStatus]
+
+    [supabase, toast, updateStatus]
   );
 
   // Supprimer une commande (draft ou cancelled seulement)
@@ -876,11 +904,13 @@ export function usePurchaseOrders() {
         if (currentOrder?.id === orderId) {
           setCurrentOrder(null);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erreur lors de la suppression:', error);
         toast({
           title: 'Erreur',
-          description: error.message || 'Impossible de supprimer la commande',
+          description:
+            (error instanceof Error ? error.message : null) ??
+            'Impossible de supprimer la commande',
           variant: 'destructive',
         });
         throw error;
@@ -904,15 +934,15 @@ export function usePurchaseOrders() {
         if (error) throw error;
 
         return {
-          stock_real: data?.stock_real || 0,
-          stock_forecasted_in: data?.stock_forecasted_in || 0,
-          stock_forecasted_out: data?.stock_forecasted_out || 0,
+          stock_real: data?.stock_real ?? 0,
+          stock_forecasted_in: data?.stock_forecasted_in ?? 0,
+          stock_forecasted_out: data?.stock_forecasted_out ?? 0,
           stock_available:
-            (data?.stock_real || 0) +
-            (data?.stock_forecasted_in || 0) -
-            (data?.stock_forecasted_out || 0),
+            (data?.stock_real ?? 0) +
+            (data?.stock_forecasted_in ?? 0) -
+            (data?.stock_forecasted_out ?? 0),
           stock_future:
-            (data?.stock_real || 0) + (data?.stock_forecasted_in || 0),
+            (data?.stock_real ?? 0) + (data?.stock_forecasted_in ?? 0),
         };
       } catch (error) {
         console.error('Erreur lors de la récupération du stock:', error);

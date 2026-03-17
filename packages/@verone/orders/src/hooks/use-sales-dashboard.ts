@@ -8,7 +8,7 @@ import { createClient } from '@verone/utils/supabase/client';
 // =============================================
 // DASHBOARD VENTES - VRAIES DONNÉES (pas mock)
 // Consultations (client_consultations) + Commandes (sales_orders)
-// ✅ FIX: Utilise des JOINs Supabase au lieu de boucles N+1
+// FIX: Utilise des JOINs Supabase au lieu de boucles N+1
 // =============================================
 
 interface SalesStats {
@@ -46,12 +46,48 @@ export interface SalesDashboardMetrics {
   recentOrders: SalesOrder[];
 }
 
+// Internal row types for Supabase untyped queries
+interface ConsultationRow {
+  id: string;
+  organisation_id: string | null;
+  enseigne_id: string | null;
+  client_email: string;
+  status: string;
+  created_at: string;
+  tarif_maximum: number | null;
+  organisation: { legal_name: string; trade_name: string | null } | null;
+  enseigne: { name: string } | null;
+}
+
+interface OrderRow {
+  id: string;
+  order_number: string;
+  customer_id: string;
+  customer_type: 'organization' | 'individual';
+  individual_customer_id?: string | null;
+  status: string;
+  total_ttc: number;
+  created_at: string;
+}
+
+interface OrgRow {
+  id: string;
+  legal_name: string;
+  trade_name: string | null;
+}
+
+interface IndivRow {
+  id: string;
+  first_name: string;
+  last_name: string;
+}
+
 export function useSalesDashboard() {
   const [metrics, setMetrics] = useState<SalesDashboardMetrics | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  // ✅ FIX: useMemo pour éviter recréation du client
+  // FIX: useMemo pour éviter recréation du client
   const supabase = useMemo(() => createClient(), []);
 
   const fetchDashboardMetrics = useCallback(async () => {
@@ -61,8 +97,9 @@ export function useSalesDashboard() {
     try {
       // ============================================
       // QUERY 1: Consultations actives avec JOINs (1 requête au lieu de N+1)
-      // ✅ FIX: Utilise les relations Supabase au lieu de boucles
+      // FIX: Utilise les relations Supabase au lieu de boucles
       // ============================================
+      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
       const { data: rawConsultations, error: consultationsError } = await (
         supabase as any
       )
@@ -76,33 +113,33 @@ export function useSalesDashboard() {
         )
         .neq('status', 'closed')
         .order('created_at', { ascending: false });
+      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
       if (consultationsError) throw consultationsError;
 
       // Mapper les résultats avec noms enrichis (pas de requêtes supplémentaires)
-      const consultations: Consultation[] = (rawConsultations || []).map(
-        (c: any) => {
-          let organisationName = 'Client inconnu';
-          if (c.organisation) {
-            organisationName =
-              c.organisation.trade_name ||
-              c.organisation.legal_name ||
-              'Organisation inconnue';
-          } else if (c.enseigne) {
-            organisationName = c.enseigne.name || 'Enseigne inconnue';
-          }
-          return {
-            id: c.id,
-            organisation_id: c.organisation_id,
-            enseigne_id: c.enseigne_id,
-            client_email: c.client_email,
-            status: c.status,
-            created_at: c.created_at,
-            tarif_maximum: c.tarif_maximum,
-            organisation_name: organisationName,
-          };
+      const typedConsultations = (rawConsultations ?? []) as ConsultationRow[];
+      const consultations: Consultation[] = typedConsultations.map(c => {
+        let organisationName = 'Client inconnu';
+        if (c.organisation) {
+          organisationName =
+            c.organisation.trade_name ??
+            c.organisation.legal_name ??
+            'Organisation inconnue';
+        } else if (c.enseigne) {
+          organisationName = c.enseigne.name ?? 'Enseigne inconnue';
         }
-      );
+        return {
+          id: c.id,
+          organisation_id: c.organisation_id,
+          enseigne_id: c.enseigne_id,
+          client_email: c.client_email,
+          status: c.status,
+          created_at: c.created_at,
+          tarif_maximum: c.tarif_maximum,
+          organisation_name: organisationName,
+        };
+      });
 
       // ============================================
       // QUERY 2: Commandes en cours (sans JOIN car customer_id est polymorphique)
@@ -119,16 +156,16 @@ export function useSalesDashboard() {
 
       if (ordersError) throw ordersError;
 
-      // ✅ FIX: Batch fetch des noms clients (2 requêtes au lieu de N)
-      const orgCustomerIds = (orders || [])
-        .filter((o: any) => o.customer_type === 'organization' && o.customer_id)
-        .map((o: any) => o.customer_id);
-      const indivCustomerIds = (orders || [])
+      // FIX: Batch fetch des noms clients (2 requêtes au lieu de N)
+      const typedOrders = (orders ?? []) as unknown as OrderRow[];
+      const orgCustomerIds = typedOrders
+        .filter(o => o.customer_type === 'organization' && o.customer_id)
+        .map(o => o.customer_id);
+      const indivCustomerIds = typedOrders
         .filter(
-          (o: any) =>
-            o.customer_type === 'individual' && o.individual_customer_id
+          o => o.customer_type === 'individual' && o.individual_customer_id
         )
-        .map((o: any) => o.individual_customer_id);
+        .map(o => o.individual_customer_id as string);
 
       const [orgsResult, indivsResult] = await Promise.all([
         orgCustomerIds.length > 0
@@ -136,23 +173,23 @@ export function useSalesDashboard() {
               .from('organisations')
               .select('id, legal_name, trade_name')
               .in('id', orgCustomerIds)
-          : { data: [] },
+          : { data: [] as OrgRow[] },
         indivCustomerIds.length > 0
           ? supabase
               .from('individual_customers')
               .select('id, first_name, last_name')
               .in('id', indivCustomerIds)
-          : { data: [] },
+          : { data: [] as IndivRow[] },
       ]);
 
       const orgsMap = new Map(
-        (orgsResult.data || []).map((o: any) => [
+        ((orgsResult.data ?? []) as OrgRow[]).map(o => [
           o.id,
-          o.trade_name || o.legal_name || 'Organisation inconnue',
+          o.trade_name ?? o.legal_name ?? 'Organisation inconnue',
         ])
       );
       const indivsMap = new Map(
-        (indivsResult.data || []).map((i: any) => [
+        ((indivsResult.data ?? []) as IndivRow[]).map(i => [
           i.id,
           `${i.first_name} ${i.last_name}`,
         ])
@@ -172,23 +209,23 @@ export function useSalesDashboard() {
 
       if (monthlyError) throw monthlyError;
 
-      const chiffreAffaireMois = (monthlyOrders || []).reduce(
-        (sum, order) => sum + (order.total_ttc || 0),
+      const chiffreAffaireMois = (monthlyOrders ?? []).reduce(
+        (sum, order) => sum + (order.total_ttc ?? 0),
         0
       );
 
       // Mapper les commandes avec noms enrichis depuis les Maps
-      const enrichedOrders: SalesOrder[] = (orders || []).map((order: any) => {
+      const enrichedOrders: SalesOrder[] = typedOrders.map(order => {
         let customerName = 'Client inconnu';
         if (order.customer_type === 'organization' && order.customer_id) {
           customerName =
-            orgsMap.get(order.customer_id) || 'Organisation inconnue';
+            orgsMap.get(order.customer_id) ?? 'Organisation inconnue';
         } else if (
           order.customer_type === 'individual' &&
           order.individual_customer_id
         ) {
           customerName =
-            indivsMap.get(order.individual_customer_id) ||
+            indivsMap.get(order.individual_customer_id) ??
             'Particulier inconnu';
         }
         return {
@@ -226,9 +263,10 @@ export function useSalesDashboard() {
         recentConsultations: consultations.slice(0, 3), // Top 3
         recentOrders: enrichedOrders.slice(0, 3), // Top 3
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMessage =
-        err.message || 'Erreur lors du chargement du dashboard ventes';
+        (err instanceof Error ? err.message : null) ??
+        'Erreur lors du chargement du dashboard ventes';
       setError(errorMessage);
       toast({
         title: 'Erreur',
@@ -242,7 +280,7 @@ export function useSalesDashboard() {
 
   // Chargement automatique au montage
   useEffect(() => {
-    fetchDashboardMetrics();
+    void fetchDashboardMetrics();
   }, [fetchDashboardMetrics]);
 
   return {

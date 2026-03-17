@@ -1,16 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import {
-  X,
   AlertTriangle,
   TrendingUp,
   TrendingDown,
   RotateCcw,
 } from 'lucide-react';
 
-import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
 import {
   Dialog,
@@ -74,10 +72,12 @@ export function CancelMovementModal({
         method: 'DELETE',
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Erreur lors de l'annulation");
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        throw new Error(data.error ?? "Erreur lors de l'annulation");
       }
 
       toast({
@@ -87,10 +87,11 @@ export function CancelMovementModal({
 
       onSuccess();
       onClose();
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
       toast({
         title: 'Erreur',
-        description: error.message || "Impossible d'annuler le mouvement",
+        description: error.message ?? "Impossible d'annuler le mouvement",
         variant: 'destructive',
       });
     } finally {
@@ -202,7 +203,7 @@ export function CancelMovementModal({
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Effectué par</span>
                 <span className="text-sm font-medium">
-                  {movement.user_name || 'Inconnu'}
+                  {movement.user_name ?? 'Inconnu'}
                 </span>
               </div>
             </div>
@@ -220,7 +221,9 @@ export function CancelMovementModal({
           </Button>
           <Button
             variant="destructive"
-            onClick={handleCancel}
+            onClick={() => {
+              void handleCancel();
+            }}
             disabled={cancelling}
             className="bg-red-600 hover:bg-red-700"
           >

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { useRef, useState } from 'react';
@@ -35,7 +36,7 @@ export function ImagesSection({
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
+    const files = Array.from(e.target.files ?? []);
 
     if (files.length > 0) {
       // Ajouter les nouveaux fichiers

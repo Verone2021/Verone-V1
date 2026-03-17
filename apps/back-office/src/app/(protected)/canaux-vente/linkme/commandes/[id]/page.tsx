@@ -28,7 +28,6 @@ import {
   Button,
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
   Checkbox,
@@ -69,7 +68,6 @@ import {
   UserPlus,
   Users,
   Building2,
-  CreditCard,
   Package,
   Calendar,
   Mail,
@@ -1067,20 +1065,24 @@ export default function LinkMeOrderDetailPage() {
                 year: 'numeric',
               })}
             </span>
-            {(order.linkmeDetails?.requester_name ||
+            {(order.linkmeDetails?.requester_name ??
               order.createdByProfile) && (
               <span className="text-xs text-blue-600">
                 par{' '}
-                {order.linkmeDetails?.requester_name
-                  ? order.linkmeDetails.requester_name
-                  : order.createdByProfile
-                    ? [
-                        order.createdByProfile.first_name,
-                        order.createdByProfile.last_name,
-                      ]
-                        .filter(Boolean)
-                        .join(' ') || 'Inconnu'
-                    : 'Visiteur anonyme'}
+                {(() => {
+                  if (order.linkmeDetails?.requester_name)
+                    return order.linkmeDetails.requester_name;
+                  if (order.createdByProfile) {
+                    const name = [
+                      order.createdByProfile.first_name,
+                      order.createdByProfile.last_name,
+                    ]
+                      .filter(Boolean)
+                      .join(' ');
+                    return name.length > 0 ? name : 'Inconnu';
+                  }
+                  return 'Visiteur anonyme';
+                })()}
               </span>
             )}
           </div>
@@ -2029,7 +2031,7 @@ export default function LinkMeOrderDetailPage() {
           )}
 
           {/* DEMANDEUR — compact */}
-          {(order.createdByProfile || order.linkmeDetails?.requester_name) && (
+          {(order.createdByProfile ?? order.linkmeDetails?.requester_name) && (
             <Card>
               <CardContent className="p-3">
                 <div className="flex items-center gap-2">
@@ -2039,17 +2041,23 @@ export default function LinkMeOrderDetailPage() {
                       Demandeur
                     </p>
                     <p className="text-sm font-semibold text-gray-900">
-                      {order.createdByProfile
-                        ? [
+                      {(() => {
+                        if (order.createdByProfile) {
+                          const name = [
                             order.createdByProfile.first_name,
                             order.createdByProfile.last_name,
                           ]
                             .filter(Boolean)
-                            .join(' ') || 'Utilisateur inconnu'
-                        : (order.linkmeDetails?.requester_name ??
-                          'Visiteur anonyme')}
+                            .join(' ');
+                          return name.length > 0 ? name : 'Utilisateur inconnu';
+                        }
+                        return (
+                          order.linkmeDetails?.requester_name ??
+                          'Visiteur anonyme'
+                        );
+                      })()}
                     </p>
-                    {(order.createdByProfile?.email ||
+                    {(order.createdByProfile?.email ??
                       order.linkmeDetails?.requester_email) && (
                       <p className="text-xs text-gray-500">
                         {order.createdByProfile?.email ??

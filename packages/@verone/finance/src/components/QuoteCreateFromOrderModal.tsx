@@ -155,19 +155,25 @@ export function QuoteCreateFromOrderModal({
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+        quote?: ICreatedQuote;
+      };
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to create quote');
+        throw new Error(data.error ?? 'Failed to create quote');
       }
 
-      setCreatedQuote(data.quote);
+      setCreatedQuote(data.quote ?? null);
       setStatus('success');
-      toast({
-        title: 'Devis créé',
-        description: `Devis ${data.quote.quote_number} créé en brouillon`,
-      });
-      onSuccess?.(data.quote.id);
+      if (data.quote) {
+        toast({
+          title: 'Devis créé',
+          description: `Devis ${data.quote.quote_number} créé en brouillon`,
+        });
+        onSuccess?.(data.quote.id);
+      }
     } catch (error) {
       setStatus('error');
       toast({
@@ -190,13 +196,17 @@ export function QuoteCreateFromOrderModal({
         { method: 'POST' }
       );
 
-      const data = await response.json();
+      const data = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+        quote?: ICreatedQuote;
+      };
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to finalize quote');
+        throw new Error(data.error ?? 'Failed to finalize quote');
       }
 
-      setCreatedQuote(data.quote);
+      setCreatedQuote(data.quote ?? null);
       toast({
         title: 'Devis finalisé',
         description: 'Devis finalisé et envoyable au client',
@@ -237,7 +247,7 @@ export function QuoteCreateFromOrderModal({
         title: 'PDF téléchargé',
         description: 'Le devis a été téléchargé',
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Erreur',
         description: 'Impossible de télécharger le PDF',
@@ -255,10 +265,13 @@ export function QuoteCreateFromOrderModal({
         { method: 'POST' }
       );
 
-      const data = await response.json();
+      const data = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+      };
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to convert quote');
+        throw new Error(data.error ?? 'Failed to convert quote');
       }
 
       toast({
@@ -282,9 +295,9 @@ export function QuoteCreateFromOrderModal({
   if (!order) return null;
 
   const customerName =
-    order.organisations?.name ||
-    `${order.individual_customers?.first_name || ''} ${order.individual_customers?.last_name || ''}`.trim() ||
-    'Client';
+    order.organisations?.name ??
+    (`${order.individual_customers?.first_name ?? ''} ${order.individual_customers?.last_name ?? ''}`.trim() ||
+      'Client');
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -296,7 +309,7 @@ export function QuoteCreateFromOrderModal({
           </DialogTitle>
           <DialogDescription>
             {status === 'success'
-              ? `Devis ${createdQuote?.quote_number} - ${formatAmount(createdQuote?.total_amount || 0)}`
+              ? `Devis ${createdQuote?.quote_number} - ${formatAmount(createdQuote?.total_amount ?? 0)}`
               : `Commande ${order.order_number} - ${customerName}`}
           </DialogDescription>
         </DialogHeader>
@@ -319,7 +332,7 @@ export function QuoteCreateFromOrderModal({
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
-                onClick={handleDownloadPdf}
+                onClick={() => void handleDownloadPdf()}
                 disabled={!createdQuote.pdf_url}
               >
                 <Download className="mr-2 h-4 w-4" />
@@ -337,7 +350,10 @@ export function QuoteCreateFromOrderModal({
               )}
 
               {createdQuote.status === 'finalized' && (
-                <Button variant="default" onClick={handleConvertToInvoice}>
+                <Button
+                  variant="default"
+                  onClick={() => void handleConvertToInvoice()}
+                >
                   <FileEdit className="mr-2 h-4 w-4" />
                   Convertir en facture
                 </Button>
@@ -367,7 +383,7 @@ export function QuoteCreateFromOrderModal({
               <CardContent>
                 <p className="font-medium">{customerName}</p>
                 <p className="text-sm text-muted-foreground">
-                  {order.organisations?.email ||
+                  {order.organisations?.email ??
                     order.individual_customers?.email}
                 </p>
               </CardContent>
@@ -393,7 +409,7 @@ export function QuoteCreateFromOrderModal({
                     {order.sales_order_items?.map(item => (
                       <TableRow key={item.id}>
                         <TableCell>
-                          {item.products?.name || 'Article'}
+                          {item.products?.name ?? 'Article'}
                         </TableCell>
                         <TableCell className="text-right">
                           {item.quantity}
@@ -695,7 +711,7 @@ export function QuoteCreateFromOrderModal({
                 Annuler
               </Button>
               <Button
-                onClick={handleCreateQuote}
+                onClick={() => void handleCreateQuote()}
                 disabled={status === 'creating'}
               >
                 {status === 'creating' ? (
@@ -738,7 +754,7 @@ export function QuoteCreateFromOrderModal({
             <AlertDialogCancel onClick={() => setShowFinalizeWarning(false)}>
               Annuler
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleFinalizeQuote}>
+            <AlertDialogAction onClick={() => void handleFinalizeQuote()}>
               Finaliser le devis
             </AlertDialogAction>
           </AlertDialogFooter>

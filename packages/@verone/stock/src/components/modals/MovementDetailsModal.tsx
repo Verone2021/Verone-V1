@@ -1,7 +1,5 @@
 'use client';
 
-import React from 'react';
-
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -9,14 +7,12 @@ import { Badge } from '@verone/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { formatPrice } from '@verone/utils';
 import {
-  X,
   Package,
   Clock,
   User,
   TrendingUp,
   TrendingDown,
   RotateCcw,
-  FileText,
   Euro,
   MessageSquare,
   Settings,
@@ -102,7 +98,7 @@ export function MovementDetailsModal({
         : referenceType.includes('sale')
           ? 'VENTE'
           : 'COMMANDE';
-      const orderRef = movement.reference_id?.substring(0, 8) || 'INCONNUE';
+      const orderRef = movement.reference_id?.substring(0, 8) ?? 'INCONNUE';
 
       return {
         icon: <ShoppingCart className="h-4 w-4 text-purple-600" />,
@@ -113,8 +109,8 @@ export function MovementDetailsModal({
 
     return {
       icon: <Clock className="h-4 w-4 text-gray-600" />,
-      text: referenceType || 'Non spécifié',
-      badge: <Badge variant="secondary">{referenceType || 'Autre'}</Badge>,
+      text: referenceType ?? 'Non spécifié',
+      badge: <Badge variant="secondary">{referenceType ?? 'Autre'}</Badge>,
     };
   };
 
@@ -168,7 +164,7 @@ export function MovementDetailsModal({
                 <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
                   <Image
                     src={movement.product_image_url}
-                    alt={movement.product_name || 'Produit'}
+                    alt={movement.product_name ?? 'Produit'}
                     fill
                     className="object-cover"
                     sizes="64px"
@@ -183,10 +179,10 @@ export function MovementDetailsModal({
               {/* Nom + SKU */}
               <div>
                 <div className="font-medium">
-                  {movement.product_name || 'Produit supprimé'}
+                  {movement.product_name ?? 'Produit supprimé'}
                 </div>
                 <div className="text-sm text-gray-500">
-                  SKU: {movement.product_sku || 'Inconnu'}
+                  SKU: {movement.product_sku ?? 'Inconnu'}
                 </div>
               </div>
             </Link>
@@ -255,7 +251,7 @@ export function MovementDetailsModal({
             <div className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg">
               <User className="h-4 w-4 text-gray-400" />
               <span className="font-medium">
-                {movement.user_name || 'Utilisateur inconnu'}
+                {movement.user_name ?? 'Utilisateur inconnu'}
               </span>
             </div>
           </div>

@@ -116,9 +116,9 @@ export async function validateSalesShipment(
         };
       }
 
-      if ((product.stock_real || 0) < item.quantity_to_ship) {
+      if ((product.stock_real ?? 0) < item.quantity_to_ship) {
         console.warn(
-          `[Shipment] Stock bas pour ${product.name}: ${product.stock_real || 0} disponibles, ${item.quantity_to_ship} expédiés. Le stock sera ajusté par le trigger.`
+          `[Shipment] Stock bas pour ${product.name}: ${product.stock_real ?? 0} disponibles, ${item.quantity_to_ship} expédiés. Le stock sera ajusté par le trigger.`
         );
       }
 
@@ -129,7 +129,7 @@ export async function validateSalesShipment(
           sales_order_id: validatedData.sales_order_id,
           product_id: item.product_id,
           quantity_shipped: item.quantity_to_ship,
-          shipped_at: validatedData.shipped_at || new Date().toISOString(),
+          shipped_at: validatedData.shipped_at ?? new Date().toISOString(),
           shipped_by: validatedData.shipped_by,
           tracking_number: validatedData.tracking_number,
           notes: validatedData.notes,

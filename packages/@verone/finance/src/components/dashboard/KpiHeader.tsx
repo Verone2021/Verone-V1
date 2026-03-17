@@ -52,7 +52,7 @@ export function KpiHeader({
       {/* Solde Bancaire */}
       <KpiCard
         title="Solde bancaire"
-        value={bankBalance || 0}
+        value={bankBalance ?? 0}
         format="currency"
         icon={<Banknote size={18} className="text-blue-500" />}
         isLoading={isLoading}
@@ -62,7 +62,7 @@ export function KpiHeader({
       {/* Entrées du mois */}
       <KpiCard
         title="Entrées"
-        value={stats?.total_paid_ar || 0}
+        value={stats?.total_paid_ar ?? 0}
         format="currency"
         icon={<ArrowUpCircle size={18} className="text-green-500" />}
         variant="positive"
@@ -73,7 +73,7 @@ export function KpiHeader({
       {/* Sorties du mois */}
       <KpiCard
         title="Sorties"
-        value={stats?.total_paid_ap || 0}
+        value={stats?.total_paid_ap ?? 0}
         format="currency"
         icon={<ArrowDownCircle size={18} className="text-red-500" />}
         variant="negative"
@@ -84,13 +84,13 @@ export function KpiHeader({
       {/* Variation */}
       <KpiCard
         title="Cash Flow Net"
-        value={stats?.net_cash_flow || 0}
+        value={stats?.net_cash_flow ?? 0}
         format="currency"
         icon={<TrendingUp size={18} className="text-violet-500" />}
         trend={
-          (stats?.net_cash_flow || 0) > 0
+          (stats?.net_cash_flow ?? 0) > 0
             ? 'up'
-            : (stats?.net_cash_flow || 0) < 0
+            : (stats?.net_cash_flow ?? 0) < 0
               ? 'down'
               : 'neutral'
         }

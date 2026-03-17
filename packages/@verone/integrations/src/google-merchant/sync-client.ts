@@ -91,8 +91,8 @@ export class GoogleMerchantSyncClient {
     attempt: number = 1
   ): Promise<Response> {
     try {
-      console.log('[DEBUG] Fetching URL:', url);
-      console.log('[DEBUG] Fetch options:', {
+      console.warn('[DEBUG] Fetching URL:', url);
+      console.warn('[DEBUG] Fetch options:', {
         method: options.method,
         hasBody: !!options.body,
         bodyLength: options.body ? String(options.body).length : 0,
@@ -101,7 +101,7 @@ export class GoogleMerchantSyncClient {
 
       const response = await fetch(url, options);
 
-      console.log('[DEBUG] Fetch response:', {
+      console.warn('[DEBUG] Fetch response:', {
         status: response.status,
         statusText: response.statusText,
         ok: response.ok,
@@ -184,21 +184,24 @@ export class GoogleMerchantSyncClient {
         body: JSON.stringify(productInput), // 🔧 FIX: Envoyer productInput directement, pas wrapped
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as {
+        error?: { message?: string };
+        productId?: string;
+      };
 
       if (!response.ok) {
         logger.error('Failed to insert product', undefined, {
           operation: 'product_insert',
           offerId: productInput.offerId,
           status: response.status,
-          error: data,
+          error: String(data.error?.message ?? ''),
         });
 
         return {
           success: false,
           offerId: productInput.offerId,
           operation: 'insert',
-          error: data.error?.message || `HTTP ${response.status}`,
+          error: data.error?.message ?? `HTTP ${response.status}`,
           statusCode: response.status,
         };
       }
@@ -206,7 +209,7 @@ export class GoogleMerchantSyncClient {
       logger.info('Product inserted successfully', {
         operation: 'product_insert',
         offerId: productInput.offerId,
-        productId: data.productId,
+        productId: data.productId ?? '',
         duration: Date.now() - startTime,
       });
 
@@ -218,20 +221,25 @@ export class GoogleMerchantSyncClient {
       };
     } catch (error) {
       // Enhanced error logging pour diagnostic
-      const errorDetails = {
+      const errorDetails: Record<string, unknown> = {
         operation: 'product_insert',
         offerId: productInput.offerId,
         errorType: typeof error,
-        errorConstructor: error?.constructor?.name,
+        errorConstructor:
+          error instanceof Error ? error.constructor.name : undefined,
         errorMessage: error instanceof Error ? error.message : String(error),
         errorStack: error instanceof Error ? error.stack : undefined,
-        errorKeys: error ? Object.keys(error) : [],
-        errorJSON: error
-          ? JSON.stringify(error, Object.getOwnPropertyNames(error))
-          : null,
+        errorKeys:
+          error !== null && error !== undefined && typeof error === 'object'
+            ? Object.keys(error)
+            : [],
+        errorJSON:
+          error !== null && error !== undefined
+            ? JSON.stringify(error, Object.getOwnPropertyNames(error as object))
+            : null,
       };
 
-      logger.error('Exception inserting product', errorDetails as any);
+      logger.error('Exception inserting product', undefined, errorDetails);
 
       return {
         success: false,
@@ -288,20 +296,22 @@ export class GoogleMerchantSyncClient {
       });
 
       if (!response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as {
+          error?: { message?: string };
+        };
 
         logger.error('Failed to delete product', undefined, {
           operation: 'product_delete',
           offerId,
           status: response.status,
-          error: data,
+          error: String(data.error?.message ?? ''),
         });
 
         return {
           success: false,
           offerId,
           operation: 'delete',
-          error: data.error?.message || `HTTP ${response.status}`,
+          error: data.error?.message ?? `HTTP ${response.status}`,
           statusCode: response.status,
         };
       }

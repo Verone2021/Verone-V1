@@ -37,7 +37,7 @@ export interface ConnectionTestResult {
     productListTest?: {
       success: boolean;
       productCount: number;
-      data?: any;
+      data?: unknown;
       error?: string;
     };
   };
@@ -66,21 +66,33 @@ export function useGoogleMerchantConfig() {
 
     try {
       // Étape 1 : Test authentification de base
-      console.log('[useGoogleMerchantConfig] Testing basic authentication...');
+      console.warn('[useGoogleMerchantConfig] Testing basic authentication...');
 
-      const authResponse = await fetch('/api/google-merchant/test-connection');
-      const authData = await authResponse.json();
-
-      if (!authResponse.ok || !authData.success) {
-        throw new Error(authData.error || 'Authentication failed');
+      interface AuthResponseData {
+        success: boolean;
+        error?: string;
       }
 
-      console.log('[useGoogleMerchantConfig] Authentication: ✅ Success');
+      const authResponse = await fetch('/api/google-merchant/test-connection');
+      const authData: AuthResponseData =
+        (await authResponse.json()) as AuthResponseData;
+
+      if (!authResponse.ok || !authData.success) {
+        throw new Error(authData.error ?? 'Authentication failed');
+      }
+
+      console.warn('[useGoogleMerchantConfig] Authentication: Success');
 
       // Étape 2 : Test API connection avec liste produits
-      console.log(
+      console.warn(
         '[useGoogleMerchantConfig] Testing API connection + product list...'
       );
+
+      interface ApiResponseData {
+        success: boolean;
+        error?: string;
+        data: ConnectionTestResult;
+      }
 
       const apiResponse = await fetch('/api/google-merchant/test-connection', {
         method: 'POST',
@@ -90,14 +102,15 @@ export function useGoogleMerchantConfig() {
           testProduct: null,
         }),
       });
-      const apiData = await apiResponse.json();
+      const apiData: ApiResponseData =
+        (await apiResponse.json()) as ApiResponseData;
 
       if (!apiResponse.ok || !apiData.success) {
-        throw new Error(apiData.error || 'API connection test failed');
+        throw new Error(apiData.error ?? 'API connection test failed');
       }
 
-      console.log('[useGoogleMerchantConfig] API Connection: ✅ Success');
-      console.log(
+      console.warn('[useGoogleMerchantConfig] API Connection: Success');
+      console.warn(
         '[useGoogleMerchantConfig] Product List Test:',
         apiData.data.details?.productListTest
       );
@@ -111,27 +124,26 @@ export function useGoogleMerchantConfig() {
         dataSourceId: apiData.data.dataSourceId,
         authenticated: apiData.data.authentication,
         apiConnected: apiData.data.apiConnection,
-        productCount: apiData.data.details?.productListTest?.productCount || 0,
+        productCount: apiData.data.details?.productListTest?.productCount ?? 0,
         contentLanguage:
-          apiData.data.details?.configuration?.contentLanguage || 'fr',
-        feedLabel: apiData.data.details?.configuration?.targetCountry || 'FR',
+          apiData.data.details?.configuration?.contentLanguage ?? 'fr',
+        feedLabel: apiData.data.details?.configuration?.targetCountry ?? 'FR',
         targetCountry:
-          apiData.data.details?.configuration?.targetCountry || 'FR',
+          apiData.data.details?.configuration?.targetCountry ?? 'FR',
         currency: 'EUR',
       };
 
       setConfig(merchantConfig);
       setConnectionStatus('success');
-      console.log(
-        '[useGoogleMerchantConfig] ✅ Connection test complete:',
+      console.warn(
+        '[useGoogleMerchantConfig] Connection test complete:',
         merchantConfig
       );
-    } catch (err: any) {
-      console.error(
-        '[useGoogleMerchantConfig] ❌ Connection test failed:',
-        err
-      );
-      setError(err.message || 'Unknown error occurred');
+    } catch (err: unknown) {
+      console.error('[useGoogleMerchantConfig] Connection test failed:', err);
+      const errorMessage =
+        err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMessage);
       setConnectionStatus('error');
     } finally {
       setTesting(false);

@@ -11,7 +11,7 @@ import type { SalesOrder } from '@verone/orders/hooks';
 // import { ShipmentRecapData } from './shipment-recap-modal'
 
 // Temporary type until shipment-recap-modal is implemented
-type ShipmentRecapData = any;
+type ShipmentRecapData = unknown;
 
 interface ChronotruckShipmentFormProps {
   order: SalesOrder;

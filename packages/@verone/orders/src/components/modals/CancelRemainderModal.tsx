@@ -59,7 +59,7 @@ export function CancelRemainderModal({
     if (result.success) {
       toast({
         title: 'Reliquat annulé',
-        description: `${result.details?.total_quantity_cancelled || totalRemaining} unités annulées. Commande ${poNumber} clôturée.`,
+        description: `${result.details?.total_quantity_cancelled ?? totalRemaining} unités annulées. Commande ${poNumber} clôturée.`,
         variant: 'default',
       });
       onSuccess?.();
@@ -67,7 +67,7 @@ export function CancelRemainderModal({
     } else {
       toast({
         title: 'Erreur',
-        description: result.error || "Impossible d'annuler le reliquat",
+        description: result.error ?? "Impossible d'annuler le reliquat",
         variant: 'destructive',
       });
     }
@@ -165,7 +165,9 @@ export function CancelRemainderModal({
           </ButtonV2>
           <ButtonV2
             variant="destructive"
-            onClick={handleConfirm}
+            onClick={() => {
+              void handleConfirm();
+            }}
             loading={cancelling}
           >
             <XCircle className="h-4 w-4 mr-2" />

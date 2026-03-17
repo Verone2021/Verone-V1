@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
@@ -150,7 +150,7 @@ export function useCollections(filters?: CollectionFilters) {
 
       // Charger les produits pour les premières collections seulement
       const collectionsWithProducts = await Promise.all(
-        (data || []).slice(0, 5).map(async collection => {
+        (data ?? []).slice(0, 5).map(async collection => {
           const { data: products } = await supabase
             .from('collection_products')
             .select(
@@ -170,12 +170,13 @@ export function useCollections(filters?: CollectionFilters) {
 
           // Extraire l'image primaire de la collection
           const primaryImage = collection.collection_images?.find(
-            (img: any) => img.is_primary
+            (img: { public_url: string | null; is_primary: boolean }) =>
+              img.is_primary
           );
 
           return {
             ...collection,
-            cover_image_url: primaryImage?.public_url || collection.image_url, // Fallback sur ancien champ
+            cover_image_url: primaryImage?.public_url ?? collection.image_url, // Fallback sur ancien champ
             products:
               products
                 ?.map(cp => {
@@ -187,19 +188,20 @@ export function useCollections(filters?: CollectionFilters) {
                     image_url: cp.products.product_images?.[0]?.public_url,
                   };
                 })
-                .filter(Boolean) || [],
+                .filter(Boolean) ?? [],
           };
         })
       );
 
       // Ajouter les collections restantes sans produits pour optimiser
-      const remainingCollections = (data || []).slice(5).map(collection => {
+      const remainingCollections = (data ?? []).slice(5).map(collection => {
         const primaryImage = collection.collection_images?.find(
-          (img: any) => img.is_primary
+          (img: { public_url: string | null; is_primary: boolean }) =>
+            img.is_primary
         );
         return {
           ...collection,
-          cover_image_url: primaryImage?.public_url || collection.image_url,
+          cover_image_url: primaryImage?.public_url ?? collection.image_url,
           products: [],
         };
       });
@@ -227,7 +229,7 @@ export function useCollections(filters?: CollectionFilters) {
 
       if (error) throw error;
 
-      return (data || []) as Collection[];
+      return (data ?? []) as Collection[];
     } catch (err) {
       console.error('Erreur chargement collections archivées:', err);
       setError(
@@ -243,7 +245,7 @@ export function useCollections(filters?: CollectionFilters) {
   useEffect(() => {
     const timeoutId = setTimeout(
       () => {
-        fetchCollections();
+        void fetchCollections();
       },
       filters?.search ? 300 : 0
     ); // Debounce de 300ms sur la recherche
@@ -276,13 +278,13 @@ export function useCollections(filters?: CollectionFilters) {
         .insert([
           {
             name: data.name,
-            description: data.description || null,
+            description: data.description ?? null,
             is_active: data.is_active ?? true,
-            visibility: data.visibility || 'private',
+            visibility: data.visibility ?? 'private',
             created_by: user.id, // Ajouter l'ID de l'utilisateur (Owner/Admin)
-            suitable_rooms: data.suitable_rooms || null,
-            style: data.style || null,
-            theme_tags: data.theme_tags || null,
+            suitable_rooms: data.suitable_rooms ?? null,
+            style: data.style ?? null,
+            theme_tags: data.theme_tags ?? null,
           },
         ])
         .select(
@@ -316,8 +318,7 @@ export function useCollections(filters?: CollectionFilters) {
     data: UpdateCollectionData
   ): Promise<Collection | null> => {
     try {
-      const updateData: any = { ...data };
-      delete updateData.id;
+      const { id: _id, ...updateData } = data;
 
       const { data: updatedCollection, error } = await supabase
         .from('collections')
@@ -601,7 +602,7 @@ export function useCollections(filters?: CollectionFilters) {
         {
           collection_id: collectionId,
           share_type: shareType,
-          recipient_email: recipientEmail || null,
+          recipient_email: recipientEmail ?? null,
         },
       ]);
 
@@ -649,7 +650,7 @@ export function useCollection(id: string) {
 
   const supabase = createClient();
 
-  const fetchCollection = async () => {
+  const fetchCollection = useCallback(async () => {
     if (!id) {
       setLoading(false);
       return;
@@ -727,13 +728,14 @@ export function useCollection(id: string) {
 
       // Extraire l'image primaire de la collection
       const primaryImage = data.collection_images?.find(
-        (img: any) => img.is_primary
+        (img: { public_url: string | null; is_primary: boolean }) =>
+          img.is_primary
       );
 
       // ✅ État de succès unifié - un seul setState groupé
       const collectionWithProducts = {
         ...data,
-        cover_image_url: primaryImage?.public_url || data.image_url, // Fallback sur ancien champ
+        cover_image_url: primaryImage?.public_url ?? data.image_url, // Fallback sur ancien champ
         products:
           products
             ?.map(cp => {
@@ -748,11 +750,11 @@ export function useCollection(id: string) {
                 image_url: cp.products.product_images?.[0]?.public_url,
               };
             })
-            .filter(Boolean) || [],
+            .filter(Boolean) ?? [],
       };
 
       // 🎯 Batch setState pour éviter multiples re-renders
-      setCollection(collectionWithProducts as any);
+      setCollection(collectionWithProducts as Collection);
       setLoading(false);
       setError(null);
     } catch (err) {
@@ -763,11 +765,11 @@ export function useCollection(id: string) {
       setError(errorMessage);
       setCollection(null);
     }
-  };
+  }, [id, supabase]);
 
   useEffect(() => {
-    fetchCollection();
-  }, [id, supabase]);
+    void fetchCollection();
+  }, [fetchCollection]);
 
   return { collection, loading, error, refetch: fetchCollection };
 }

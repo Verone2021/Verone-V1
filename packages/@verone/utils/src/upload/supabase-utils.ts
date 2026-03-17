@@ -23,7 +23,7 @@ export type SupabaseErrorType =
 export interface UploadError {
   type: SupabaseErrorType;
   message: string;
-  originalError?: any;
+  originalError?: unknown;
   retryable: boolean;
 }
 
@@ -62,9 +62,19 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
 /**
  * 🔍 Analyse l'erreur Supabase et la catégorise
  */
-export function categorizeSupabaseError(error: any): UploadError {
-  const message = error?.message || error?.toString() || 'Erreur inconnue';
-  const code = error?.code || error?.status;
+export function categorizeSupabaseError(error: unknown): UploadError {
+  const errorObj = error as {
+    message?: string;
+    toString?: () => string;
+    code?: string | number;
+    status?: number;
+  } | null;
+  const message: string =
+    errorObj?.message ??
+    (typeof errorObj?.toString === 'function'
+      ? errorObj.toString()
+      : 'Erreur inconnue');
+  const code: string | number | undefined = errorObj?.code ?? errorObj?.status;
 
   // Erreurs de bucket
   if (message.includes('Bucket not found') || code === 'bucket_not_found') {
@@ -110,7 +120,7 @@ export function categorizeSupabaseError(error: any): UploadError {
     message.includes('network') ||
     message.includes('timeout') ||
     message.includes('fetch') ||
-    code >= 500
+    (typeof code === 'number' && code >= 500)
   ) {
     return {
       type: 'NETWORK_ERROR',
@@ -238,7 +248,7 @@ export async function uploadWithRetry(
     attempt++;
 
     try {
-      console.log(
+      console.warn(
         `🚀 Tentative upload ${attempt}/${retryConfig.maxRetries + 1}:`,
         filePath
       );
@@ -272,7 +282,7 @@ export async function uploadWithRetry(
         throw uploadError;
       }
 
-      console.log('✅ Upload Storage réussi:', uploadData.path);
+      console.warn('✅ Upload Storage réussi:', uploadData.path);
 
       // Progress à 50% après upload
       onProgress?.({
@@ -297,7 +307,7 @@ export async function uploadWithRetry(
         percentage: 100,
       });
 
-      console.log('🎉 Upload terminé avec succès:', urlData.publicUrl);
+      console.warn('🎉 Upload terminé avec succès:', urlData.publicUrl);
 
       return {
         success: true,
@@ -314,7 +324,7 @@ export async function uploadWithRetry(
 
       // Si l'erreur n'est pas retryable, arrêter immédiatement
       if (!lastError.retryable) {
-        console.log('🚫 Erreur non retryable, arrêt des tentatives');
+        console.warn('🚫 Erreur non retryable, arrêt des tentatives');
         break;
       }
 
@@ -325,7 +335,7 @@ export async function uploadWithRetry(
 
       // Calculer et attendre le délai de retry
       const retryDelay = calculateRetryDelay(attempt, retryConfig);
-      console.log(`⏳ Attente ${retryDelay}ms avant nouvelle tentative...`);
+      console.warn(`⏳ Attente ${retryDelay}ms avant nouvelle tentative...`);
 
       await delay(retryDelay);
     }
@@ -336,7 +346,7 @@ export async function uploadWithRetry(
 
   return {
     success: false,
-    error: lastError || {
+    error: lastError ?? {
       type: 'UNKNOWN_ERROR',
       message: "Échec de l'upload après plusieurs tentatives",
       retryable: false,
@@ -360,7 +370,7 @@ export async function deleteFile(
       throw error;
     }
 
-    console.log('🗑️ Fichier supprimé:', filePath);
+    console.warn('🗑️ Fichier supprimé:', filePath);
     return { success: true };
   } catch (error) {
     console.error('❌ Erreur suppression fichier:', error);
@@ -386,7 +396,7 @@ export async function listFiles(
   try {
     const { data, error } = await supabase.storage
       .from(bucket)
-      .list(folder || '', {
+      .list(folder ?? '', {
         limit,
         sortBy: { column: 'created_at', order: 'desc' },
       });

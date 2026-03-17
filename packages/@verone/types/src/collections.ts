@@ -308,7 +308,7 @@ export interface CollectionError {
   code: string;
   message: string;
   field?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 // ===== HOOKS RETURN TYPES =====
@@ -563,25 +563,51 @@ export const ROOM_TYPES = [
  * Pattern utilisé par ProductSelectorModal - standardisé
  */
 export function getPrimaryImageUrl(
-  images: ProductImage[] | any[]
+  images: ProductImage[] | Array<Partial<ProductImage>>
 ): string | null {
   if (!images || images.length === 0) return null;
 
   // Chercher l'image primaire
-  const primaryImage = images.find((img: any) => img.is_primary);
+  const primaryImage = images.find(img => img.is_primary);
   if (primaryImage?.public_url) return primaryImage.public_url;
 
   // Fallback : première image disponible
   const firstImage = images[0];
-  return firstImage?.public_url || null;
+  return firstImage?.public_url ?? null;
+}
+
+/** Raw product image data from Supabase before transformation */
+interface RawProductImage {
+  id?: string;
+  public_url?: string;
+  storage_path?: string;
+  is_primary?: boolean;
+  display_order?: number;
+  image_type?: string;
+  alt_text?: string;
+}
+
+/** Raw product data from Supabase before transformation */
+interface RawCollectionProduct {
+  id: string;
+  name: string;
+  sku?: string;
+  status: string;
+  creation_mode?: string;
+  cost_price?: number;
+  position?: number;
+  added_at?: string;
+  product_images?: RawProductImage[];
 }
 
 /**
  * Transforme les données produit brutes vers CollectionProduct
  * avec gestion correcte des images selon relations Supabase
  */
-export function formatCollectionProduct(rawProduct: any): CollectionProduct {
-  const productImages = rawProduct.product_images || [];
+export function formatCollectionProduct(
+  rawProduct: RawCollectionProduct
+): CollectionProduct {
+  const productImages = rawProduct.product_images ?? [];
 
   return {
     id: rawProduct.id,
@@ -590,17 +616,19 @@ export function formatCollectionProduct(rawProduct: any): CollectionProduct {
     status: rawProduct.status,
     creation_mode: rawProduct.creation_mode,
     cost_price: rawProduct.cost_price,
-    position: rawProduct.position || 0,
-    added_at: rawProduct.added_at || new Date().toISOString(),
-    product_images: productImages.map((img: any) => ({
-      id: img.id,
-      public_url: img.public_url,
-      storage_path: img.storage_path || '',
-      is_primary: img.is_primary || false,
-      display_order: img.display_order || 0,
-      image_type: img.image_type || 'gallery',
+    position: rawProduct.position ?? 0,
+    added_at: rawProduct.added_at ?? new Date().toISOString(),
+    product_images: productImages.map(img => ({
+      id: img.id ?? '',
+      public_url: img.public_url ?? '',
+      storage_path: img.storage_path ?? '',
+      is_primary: img.is_primary ?? false,
+      display_order: img.display_order ?? 0,
+      image_type: (img.image_type as ProductImage['image_type']) ?? 'gallery',
       alt_text: img.alt_text,
     })),
-    primary_image_url: getPrimaryImageUrl(productImages),
+    primary_image_url: getPrimaryImageUrl(
+      productImages as Array<Partial<ProductImage>>
+    ),
   };
 }

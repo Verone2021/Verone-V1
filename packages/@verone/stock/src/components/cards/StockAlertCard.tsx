@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useProductImages } from '@verone/products/hooks';
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
-import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { Card, CardContent } from '@verone/ui';
 import { AlertTriangle, XCircle, Package, ExternalLink } from 'lucide-react';
 
 // Type définition pour StockAlert
@@ -63,8 +63,8 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
     // stock_forecasted_in = quantité des PO validées (en transit)
     const stock_previsionnel_valide =
       alert.stock_real +
-      (alert.stock_forecasted_in || 0) -
-      (alert.stock_forecasted_out || 0);
+      (alert.stock_forecasted_in ?? 0) -
+      (alert.stock_forecasted_out ?? 0);
 
     // ✅ WORKFLOW : ROUGE → ORANGE (brouillon) → VERT (validé suffisant) → DISPARAÎT
 
@@ -103,8 +103,8 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
   // Calcul stock prévisionnel pour condition bouton
   const stock_previsionnel =
     alert.stock_real +
-    (alert.stock_forecasted_in || 0) -
-    (alert.stock_forecasted_out || 0);
+    (alert.stock_forecasted_in ?? 0) -
+    (alert.stock_forecasted_out ?? 0);
 
   // Seuil atteint = bouton grisé (ne peut plus commander)
   const seuilAtteint = stock_previsionnel >= alert.min_stock;
@@ -211,8 +211,8 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
               <span
                 className={`${
                   alert.stock_real +
-                    (alert.stock_forecasted_in || 0) -
-                    (alert.stock_forecasted_out || 0) >=
+                    (alert.stock_forecasted_in ?? 0) -
+                    (alert.stock_forecasted_out ?? 0) >=
                   alert.min_stock
                     ? 'text-green-600'
                     : 'text-red-600'
@@ -221,8 +221,8 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
                 · Prévisionnel:{' '}
                 <strong>
                   {alert.stock_real +
-                    (alert.stock_forecasted_in || 0) -
-                    (alert.stock_forecasted_out || 0)}
+                    (alert.stock_forecasted_in ?? 0) -
+                    (alert.stock_forecasted_out ?? 0)}
                 </strong>
               </span>
               <span>

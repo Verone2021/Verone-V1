@@ -11,7 +11,10 @@ import {
 } from '@verone/ui';
 
 import { PurchaseOrderReceptionForm } from '@verone/orders/components/forms/PurchaseOrderReceptionForm';
-import type { PurchaseOrder } from '@verone/orders/hooks';
+import type {
+  PurchaseOrder,
+  PurchaseOrderForReception,
+} from '@verone/orders/hooks';
 import { usePurchaseReceptions } from '@verone/orders/hooks';
 
 interface PurchaseOrderReceptionModalProps {
@@ -28,13 +31,14 @@ export function PurchaseOrderReceptionModal({
   onSuccess,
 }: PurchaseOrderReceptionModalProps) {
   const { loadPurchaseOrderForReception } = usePurchaseReceptions();
-  const [enrichedOrder, setEnrichedOrder] = useState<any>(null);
+  const [enrichedOrder, setEnrichedOrder] =
+    useState<PurchaseOrderForReception | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (open && order?.id) {
       setLoading(true);
-      loadPurchaseOrderForReception(order.id).then(data => {
+      void loadPurchaseOrderForReception(order.id).then(data => {
         setEnrichedOrder(data);
         setLoading(false);
       });
@@ -57,7 +61,7 @@ export function PurchaseOrderReceptionModal({
             <DialogDescription>
               {enrichedOrder.po_number}
               {enrichedOrder.organisations &&
-                ` • ${enrichedOrder.organisations.trade_name || enrichedOrder.organisations.legal_name}`}
+                ` • ${enrichedOrder.organisations.trade_name ?? enrichedOrder.organisations.legal_name}`}
             </DialogDescription>
           )}
         </DialogHeader>

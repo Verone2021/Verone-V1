@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -21,7 +21,6 @@ import {
   TrendingUp,
   TrendingDown,
   RotateCcw,
-  FileText,
   ExternalLink,
   Trash2,
 } from 'lucide-react';
@@ -55,7 +54,7 @@ export function MovementsTable({
     const productRunningTotals = new Map<string, number>();
 
     return sorted.map(movement => {
-      const currentTotal = productRunningTotals.get(movement.product_id) || 0;
+      const currentTotal = productRunningTotals.get(movement.product_id) ?? 0;
       const newTotal = currentTotal + movement.quantity_change;
 
       productRunningTotals.set(movement.product_id, newTotal);
@@ -204,7 +203,7 @@ export function MovementsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {[...Array(10)].map((_, i) => (
+            {Array.from({ length: 10 }).map((_, i) => (
               <TableRow key={i}>
                 <TableCell className="p-2">
                   <div className="h-8 w-8 bg-gray-200 rounded animate-pulse" />
@@ -285,7 +284,7 @@ export function MovementsTable({
                 {movement.product_image_url ? (
                   <Image
                     src={movement.product_image_url}
-                    alt={movement.product_name || 'Produit'}
+                    alt={movement.product_name ?? 'Produit'}
                     width={32}
                     height={32}
                     className="rounded object-cover border border-gray-200"
@@ -318,7 +317,7 @@ export function MovementsTable({
                 >
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm group-hover:underline">
-                      {movement.product_name || 'Produit supprimé'}
+                      {movement.product_name ?? 'Produit supprimé'}
                     </div>
                   </div>
                   <ExternalLink className="h-3 w-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />

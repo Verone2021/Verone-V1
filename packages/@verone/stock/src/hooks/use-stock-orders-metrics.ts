@@ -129,16 +129,20 @@ export function useStockOrdersMetrics(): UseStockOrdersMetricsReturn {
 
       // Vérifier status AVANT json() (éviter erreur parsing)
       if (!response.ok) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const data = await response.json().catch(() => ({}));
         throw new Error(
-          data.error ||
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+          data.error ??
             `Erreur serveur (${response.status}): ${response.statusText}`
         );
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const data = await response.json();
 
       if (isMountedRef.current) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
         setMetrics(data.metrics);
         setIsLoading(false);
       }
@@ -208,10 +212,10 @@ export function useStockOrdersMetrics(): UseStockOrdersMetricsReturn {
       }
 
       // Utilisateur authentifié → fetcher les métriques
-      fetchMetrics();
+      void fetchMetrics();
     };
 
-    checkAuthAndFetch();
+    void checkAuthAndFetch();
 
     // ✅ CLEANUP - Éviter memory leaks (pattern React 18+)
     return () => {
@@ -220,12 +224,15 @@ export function useStockOrdersMetrics(): UseStockOrdersMetricsReturn {
         abortControllerRef.current.abort();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return {
     metrics,
     isLoading,
     error,
-    refetch: fetchMetrics,
+    refetch: () => {
+      void fetchMetrics();
+    },
   };
 }
