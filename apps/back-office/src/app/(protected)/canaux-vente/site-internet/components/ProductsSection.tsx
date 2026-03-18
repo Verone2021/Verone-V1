@@ -53,6 +53,8 @@ import {
   Loader2,
 } from 'lucide-react';
 
+import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
+
 import { EditSiteInternetProductModal } from './EditSiteInternetProductModal';
 import { ProductPreviewModal } from './ProductPreviewModal';
 
@@ -61,6 +63,7 @@ import {
   useSiteInternetProducts,
   useToggleProductPublication,
   useRemoveProductFromSiteInternet,
+  useAddProductsToSiteInternet,
 } from '../hooks/use-site-internet-products';
 import type { SiteInternetProduct } from '../types';
 
@@ -82,6 +85,7 @@ export function ProductsSection() {
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [previewProduct, setPreviewProduct] =
     useState<SiteInternetProduct | null>(null);
+  const [addProductsOpen, setAddProductsOpen] = useState(false);
 
   // Hooks
   const {
@@ -93,6 +97,7 @@ export function ProductsSection() {
   } = useSiteInternetProducts();
   const togglePublication = useToggleProductPublication();
   const removeProduct = useRemoveProductFromSiteInternet();
+  const addProducts = useAddProductsToSiteInternet();
 
   // Filtrage produits (memoized avec debounce)
   const filteredProducts = useMemo(
@@ -205,14 +210,7 @@ export function ProductsSection() {
                 {products.filter(p => p.is_published).length} publiés)
               </CardDescription>
             </div>
-            <ButtonV2
-              onClick={() => {
-                toast({
-                  title: 'Fonctionnalité à venir',
-                  description: "Modal d'ajout de produits (à implémenter)",
-                });
-              }}
-            >
+            <ButtonV2 onClick={() => setAddProductsOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Ajouter des produits
             </ButtonV2>
@@ -465,6 +463,25 @@ export function ProductsSection() {
           setPreviewModalOpen(false);
           setPreviewProduct(null);
         }}
+      />
+
+      {/* Modal ajout produits au canal */}
+      <UniversalProductSelectorV2
+        open={addProductsOpen}
+        onClose={() => setAddProductsOpen(false)}
+        onSelect={async selected => {
+          await addProducts.mutateAsync(selected.map(p => p.id));
+          setAddProductsOpen(false);
+          toast({
+            title: 'Produits ajoutés',
+            description: `${String(selected.length)} produit(s) ajouté(s) au site internet`,
+          });
+        }}
+        mode="multi"
+        title="Ajouter des produits au site internet"
+        description="Sélectionnez les produits du catalogue à publier sur le site"
+        excludeProductIds={products.map(p => p.product_id)}
+        showImages
       />
     </div>
   );

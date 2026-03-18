@@ -16,6 +16,7 @@ const navigationLinks = [
   { href: '/collections', label: 'Collections' },
   { href: '/a-propos', label: 'À propos' },
   { href: '/contact', label: 'Contact' },
+  { href: '/compte/favoris', label: 'Mes favoris' },
   { href: '/compte', label: 'Mon compte' },
 ];
 

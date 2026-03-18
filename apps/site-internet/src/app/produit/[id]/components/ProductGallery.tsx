@@ -47,7 +47,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
           src={selectedImage}
           alt={productName}
           fill
-          className="object-contain p-4 transition-transform duration-200 group-hover:scale-105"
+          className="object-contain p-4"
           priority
         />
       </button>

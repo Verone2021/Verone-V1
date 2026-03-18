@@ -138,7 +138,11 @@ export function withLogging<T extends unknown[]>(
     }
 
     // Log de fin de requête
-    logger[logLevel](message, endContext, metrics);
+    if (logLevel === 'error') {
+      logger.error(message, error ?? undefined, endContext, metrics);
+    } else {
+      logger[logLevel](message, endContext, metrics);
+    }
 
     // Log response body si activé
     if (opts.logResponseBody && statusCode >= 400) {

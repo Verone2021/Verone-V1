@@ -142,7 +142,39 @@ export function useAddProductsToSiteInternet() {
 
       if (metadataError) throw metadataError;
 
-      // 3. Publier produits
+      // 3. Créer channel_pricing pour chaque produit (prix = cost_price * 2.5 par défaut)
+      const { data: productsData } = await supabase
+        .from('products')
+        .select('id, cost_price, cost_price_last, eco_tax_default')
+        .in('id', productIds);
+
+      if (productsData && productsData.length > 0) {
+        const pricingRows = productsData
+          .filter(p => (p.cost_price ?? p.cost_price_last ?? 0) > 0)
+          .map(p => {
+            const costPrice = Number(p.cost_price ?? p.cost_price_last ?? 0);
+            const sellingPriceHt = Math.round(costPrice * 2.5 * 100) / 100;
+            return {
+              product_id: p.id,
+              channel_id: channel.id,
+              custom_price_ht: sellingPriceHt,
+              eco_participation_amount: Number(p.eco_tax_default ?? 0),
+              is_active: true,
+            };
+          });
+
+        if (pricingRows.length > 0) {
+          const { error: pricingError } = await supabase
+            .from('channel_pricing')
+            .upsert(pricingRows, { onConflict: 'product_id,channel_id' });
+
+          if (pricingError) {
+            console.error('Erreur création channel_pricing:', pricingError);
+          }
+        }
+      }
+
+      // 4. Publier produits
       const { error: publishError } = await supabase
         .from('products')
         .update({
@@ -268,7 +300,8 @@ export function useSiteInternetProductsStats() {
         published,
         eligible,
         withVariants,
-        publishedPercentage: (published / products.length) * 100,
+        publishedPercentage:
+          products.length > 0 ? (published / products.length) * 100 : 0,
       };
     },
     staleTime: 60000, // 1 minute

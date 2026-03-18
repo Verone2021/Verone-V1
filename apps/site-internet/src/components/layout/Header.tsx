@@ -5,13 +5,22 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { ShoppingCart, Menu, Search, User } from 'lucide-react';
+import { ShoppingCart, Menu, Search, User, Heart } from 'lucide-react';
+
+import { useCart } from '@/contexts/CartContext';
+import { useAuthUser } from '@/hooks/use-auth-user';
+import { useWishlist } from '@/hooks/use-wishlist';
+import { SearchOverlay } from '@/components/SearchOverlay';
 
 import { MobileNav } from './MobileNav';
+import { MegaMenu } from './MegaMenu';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const cartItemsCount = 0; // TODO: Connect to cart state
+  const [searchOpen, setSearchOpen] = useState(false);
+  const { itemCount: cartItemsCount } = useCart();
+  const { user } = useAuthUser();
+  const { itemCount: wishlistCount } = useWishlist(user?.id);
 
   return (
     <>
@@ -33,12 +42,7 @@ export function Header() {
 
               {/* Desktop Navigation */}
               <nav className="hidden lg:flex items-center space-x-8">
-                <Link
-                  href="/catalogue"
-                  className="text-sm font-medium text-verone-gray-600 hover:text-verone-black uppercase tracking-wide transition-colors duration-300"
-                >
-                  Catalogue
-                </Link>
+                <MegaMenu />
                 <Link
                   href="/collections"
                   className="text-sm font-medium text-verone-gray-600 hover:text-verone-black uppercase tracking-wide transition-colors duration-300"
@@ -65,11 +69,26 @@ export function Header() {
               {/* Search Icon */}
               <button
                 type="button"
+                onClick={() => setSearchOpen(true)}
                 className="p-2.5 text-verone-gray-600 hover:text-verone-black hover:bg-verone-gray-50 rounded-full transition-all duration-300"
                 aria-label="Rechercher"
               >
                 <Search className="h-5 w-5" />
               </button>
+
+              {/* Wishlist */}
+              <Link
+                href="/compte/favoris"
+                className="hidden md:inline-flex relative p-2.5 text-verone-gray-600 hover:text-verone-black hover:bg-verone-gray-50 rounded-full transition-all duration-300"
+                aria-label="Favoris"
+              >
+                <Heart className="h-5 w-5" />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center bg-red-500 text-verone-white text-[10px] font-semibold rounded-full">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
 
               {/* Account */}
               <Link
@@ -113,6 +132,9 @@ export function Header() {
         open={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
       />
+
+      {/* Search Overlay */}
+      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
 }
