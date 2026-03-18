@@ -7,6 +7,7 @@ import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
 import { CookieConsent } from '@/components/CookieConsent';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
+import { PromoBanner } from '@/components/layout/PromoBanner';
 import { JsonLdOrganization } from '@/components/seo/JsonLdOrganization';
 
 import { Providers } from './providers';
@@ -73,6 +74,7 @@ export default function RootLayout({
         <Providers>
           <div className="flex flex-col min-h-screen">
             <Header />
+            <PromoBanner />
             <main className="flex-1">{children}</main>
             <Footer />
           </div>

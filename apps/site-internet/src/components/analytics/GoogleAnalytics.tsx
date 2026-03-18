@@ -87,3 +87,22 @@ export function trackBeginCheckout(value: number, itemCount: number) {
     items: [{ quantity: itemCount }],
   });
 }
+
+export function trackPurchase(transaction: {
+  transactionId: string;
+  value: number;
+  shipping: number;
+  itemCount: number;
+}) {
+  if (typeof window === 'undefined' || !GA_ID) return;
+  const w = window as unknown as {
+    gtag?: (...args: unknown[]) => void;
+  };
+  w.gtag?.('event', 'purchase', {
+    transaction_id: transaction.transactionId,
+    currency: 'EUR',
+    value: transaction.value,
+    shipping: transaction.shipping,
+    items: [{ quantity: transaction.itemCount }],
+  });
+}

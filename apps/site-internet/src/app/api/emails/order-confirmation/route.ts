@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
 import { buildVeroneEmailHtml } from '@/emails/verone-email-template';
+import { getLogoAttachments } from '../_shared/email-logo';
 
 function getResendClient(): Resend | null {
   const apiKey = process.env.RESEND_API_KEY;
@@ -129,6 +130,7 @@ export async function POST(request: NextRequest) {
       subject: `Commande #${body.orderId.slice(0, 8).toUpperCase()} confirm\u00e9e`,
       html: emailHtml,
       replyTo: process.env.RESEND_REPLY_TO ?? 'contact@veronecollections.fr',
+      attachments: getLogoAttachments(),
     });
 
     return NextResponse.json({

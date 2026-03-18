@@ -20,15 +20,21 @@ import {
   Settings,
   Package,
   Users,
+  Star,
+  FileText,
+  Tag,
 } from 'lucide-react';
 
 // Local Components
 import { CategoriesSection } from './components/CategoriesSection';
 import { ClientsSection } from './components/ClientsSection';
+import { CMSSection } from './components/CMSSection';
 import { CollectionsSection } from './components/CollectionsSection';
 import { ConfigurationSection } from './components/ConfigurationSection';
 import { OrdersSection } from './components/OrdersSection';
 import { ProductsSection } from './components/ProductsSection';
+import { PromoCodesSection } from './components/PromoCodesSection';
+import { ReviewsSection } from './components/ReviewsSection';
 import { VercelAnalyticsDashboard } from './components/VercelAnalyticsDashboard';
 
 // Local Hooks
@@ -111,7 +117,7 @@ export default function SiteInternetPage() {
           className="space-y-6"
         >
           {/* Navigation Tabs */}
-          <TabsList className="grid grid-cols-7 w-full">
+          <TabsList className="grid grid-cols-10 w-full">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <BarChart className="h-4 w-4" />
               Dashboard
@@ -142,6 +148,18 @@ export default function SiteInternetPage() {
             <TabsTrigger value="clients" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Clients
+            </TabsTrigger>
+            <TabsTrigger value="avis" className="flex items-center gap-2">
+              <Star className="h-4 w-4" />
+              Avis
+            </TabsTrigger>
+            <TabsTrigger value="contenu" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Contenu
+            </TabsTrigger>
+            <TabsTrigger value="promotions" className="flex items-center gap-2">
+              <Tag className="h-4 w-4" />
+              Promos
             </TabsTrigger>
           </TabsList>
 
@@ -178,6 +196,21 @@ export default function SiteInternetPage() {
           {/* Tab: Clients */}
           <TabsContent value="clients" className="space-y-6">
             <ClientsSection />
+          </TabsContent>
+
+          {/* Tab: Avis */}
+          <TabsContent value="avis" className="space-y-6">
+            <ReviewsSection />
+          </TabsContent>
+
+          {/* Tab: Contenu CMS */}
+          <TabsContent value="contenu" className="space-y-6">
+            <CMSSection />
+          </TabsContent>
+
+          {/* Tab: Promotions */}
+          <TabsContent value="promotions" className="space-y-6">
+            <PromoCodesSection />
           </TabsContent>
         </Tabs>
       </div>

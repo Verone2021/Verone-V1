@@ -5,9 +5,9 @@
 
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 import {
   Card,
@@ -28,6 +28,13 @@ import {
   TableRow,
 } from '@verone/ui';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
+import {
   Package,
   Clock,
   CreditCard,
@@ -36,6 +43,7 @@ import {
   ShoppingCart,
   Loader2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -162,6 +170,7 @@ function formatCurrency(amount: number, currency: string): string {
  * Section Commandes Principale
  */
 export function OrdersSection() {
+  const queryClient = useQueryClient();
   const {
     data: orders = [],
     isLoading,
@@ -174,6 +183,88 @@ export function OrdersSection() {
     staleTime: 300_000,
     refetchOnWindowFocus: true,
   });
+
+  // Update order status + trigger email
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({
+      orderId,
+      newStatus,
+      customerEmail,
+      customerName,
+    }: {
+      orderId: string;
+      newStatus: string;
+      customerEmail: string;
+      customerName: string;
+    }) => {
+      const { error: updateError } = await supabase
+        .from('site_orders')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', orderId);
+
+      if (updateError) throw updateError;
+
+      // Trigger status-specific email (non-blocking)
+      const siteUrl =
+        process.env.NEXT_PUBLIC_SITE_INTERNET_URL ?? 'http://localhost:3001';
+
+      const emailEndpoints: Record<string, string> = {
+        shipped: '/api/emails/shipping-notification',
+        delivered: '/api/emails/delivery-confirmation',
+      };
+
+      const endpoint = emailEndpoints[newStatus];
+      if (endpoint) {
+        void fetch(`${siteUrl}${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: customerEmail,
+            customerName,
+            orderId,
+          }),
+        }).catch(emailErr => {
+          console.error('[OrdersSection] Email trigger failed:', emailErr);
+        });
+      }
+
+      // Generic status update email for other statuses
+      if (!endpoint && newStatus !== 'paid') {
+        void fetch(`${siteUrl}/api/emails/order-status-update`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: customerEmail,
+            customerName,
+            orderId,
+            newStatus,
+          }),
+        }).catch(emailErr => {
+          console.error('[OrdersSection] Status email failed:', emailErr);
+        });
+      }
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['site-orders'] });
+      toast.success('Statut mis \u00e0 jour');
+    },
+    onError: (err: Error) => {
+      console.error('[OrdersSection] Status update failed:', err);
+      toast.error('Erreur : ' + err.message);
+    },
+  });
+
+  const handleStatusChange = useCallback(
+    (order: SiteOrder, newStatus: string) => {
+      updateStatusMutation.mutate({
+        orderId: order.id,
+        newStatus,
+        customerEmail: order.customer_email,
+        customerName: order.customer_name,
+      });
+    },
+    [updateStatusMutation]
+  );
 
   // Stats
   const stats = useMemo(() => {
@@ -309,14 +400,37 @@ export function OrdersSection() {
                       {formatCurrency(order.total, order.currency)}
                     </TableCell>
 
-                    {/* Statut */}
+                    {/* Statut - Dropdown changement */}
                     <TableCell>
-                      <Badge
-                        variant={getStatusBadgeVariant(order.status)}
-                        className={getStatusColor(order.status)}
+                      <Select
+                        value={order.status}
+                        onValueChange={newStatus =>
+                          handleStatusChange(order, newStatus)
+                        }
+                        disabled={updateStatusMutation.isPending}
                       >
-                        {getStatusLabel(order.status)}
-                      </Badge>
+                        <SelectTrigger className="w-[140px] h-8">
+                          <SelectValue>
+                            <Badge
+                              variant={getStatusBadgeVariant(order.status)}
+                              className={getStatusColor(order.status)}
+                            >
+                              {getStatusLabel(order.status)}
+                            </Badge>
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">En attente</SelectItem>
+                          <SelectItem value="paid">Pay\u00e9e</SelectItem>
+                          <SelectItem value="shipped">
+                            Exp\u00e9di\u00e9e
+                          </SelectItem>
+                          <SelectItem value="delivered">Livr\u00e9e</SelectItem>
+                          <SelectItem value="cancelled">
+                            Annul\u00e9e
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                     </TableCell>
 
                     {/* Articles */}

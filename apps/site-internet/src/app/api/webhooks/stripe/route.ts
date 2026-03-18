@@ -70,7 +70,7 @@ export async function POST(request: Request) {
           } else {
             console.warn('[Stripe Webhook] Order created:', orderId);
 
-            // Send confirmation email (non-blocking)
+            // Send confirmation email to customer (non-blocking)
             const siteUrl =
               process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3001';
             void fetch(`${siteUrl}/api/emails/order-confirmation`, {
@@ -88,7 +88,26 @@ export async function POST(request: Request) {
               }),
             }).catch(emailError => {
               console.error(
-                '[Stripe Webhook] Email sending failed:',
+                '[Stripe Webhook] Customer email failed:',
+                emailError
+              );
+            });
+
+            // Send notification email to admin team (non-blocking)
+            void fetch(`${siteUrl}/api/emails/admin-order-notification`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                orderId,
+                customerName: metadata.customer_name ?? 'Client',
+                customerEmail: session.customer_email ?? '',
+                total: totalAmount,
+                itemCount: 0,
+                shippingAddress: metadata.shipping_address ?? '',
+              }),
+            }).catch(emailError => {
+              console.error(
+                '[Stripe Webhook] Admin notification failed:',
                 emailError
               );
             });

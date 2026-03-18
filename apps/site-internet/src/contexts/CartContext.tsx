@@ -11,6 +11,8 @@ import {
 
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
+import { useAuthUser } from '@/hooks/use-auth-user';
+
 // ============================================
 // Types
 // ============================================
@@ -91,6 +93,7 @@ function getSessionId(): string {
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuthUser();
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -134,11 +137,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           .delete()
           .eq('session_id', sessionId);
 
-        // Insert current items
+        // Insert current items with user_id + email if authenticated
         if (updatedItems.length > 0) {
           await supabase.from('shopping_carts').insert(
             updatedItems.map(item => ({
               session_id: sessionId,
+              user_id: user?.id ?? null,
+              customer_email: user?.email ?? null,
               product_id: item.product_id,
               variant_group_id: item.variant_group_id,
               quantity: item.quantity,
@@ -150,7 +155,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         console.error('[CartContext] Sync to Supabase failed:', error);
       }
     },
-    [getSupabase]
+    [getSupabase, user]
   );
 
   const addItem = useCallback(

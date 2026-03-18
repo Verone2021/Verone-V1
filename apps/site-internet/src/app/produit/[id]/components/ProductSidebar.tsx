@@ -32,6 +32,7 @@ import {
 import { formatPrice } from '@verone/utils';
 import { ShoppingCart, Heart, Truck, Shield, Info, Check } from 'lucide-react';
 
+import { trackAddToCart } from '@/components/analytics/GoogleAnalytics';
 import { useCart } from '@/contexts/CartContext';
 import { useAuthUser } from '@/hooks/use-auth-user';
 import { useWishlist } from '@/hooks/use-wishlist';
@@ -309,6 +310,12 @@ export function ProductSidebar({
               .then(() => {
                 setAddedToCart(true);
                 setTimeout(() => setAddedToCart(false), 2000);
+                trackAddToCart({
+                  id: product.product_id,
+                  name: product.name,
+                  price: priceTTC,
+                  quantity,
+                });
               })
               .catch(error => {
                 console.error('[ProductSidebar] Ajout panier failed:', error);

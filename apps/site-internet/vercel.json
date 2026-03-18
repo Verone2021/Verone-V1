@@ -10,5 +10,19 @@
   "ignoreCommand": "npx turbo-ignore --fallback=HEAD^1",
   "buildCommand": "cd ../.. && pnpm turbo run build --filter=@verone/site-internet",
   "outputDirectory": ".next",
-  "installCommand": "cd ../.. && pnpm install"
+  "installCommand": "cd ../.. && pnpm install",
+  "crons": [
+    {
+      "path": "/api/cron/abandoned-cart-check",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/review-request-check",
+      "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/win-back-check",
+      "schedule": "0 10 * * 1"
+    }
+  ]
 }

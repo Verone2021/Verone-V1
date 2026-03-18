@@ -6,11 +6,44 @@ import { Mail, MapPin, Phone } from 'lucide-react';
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // TODO: Integrate with Supabase Edge Function or DB insert
-    setSubmitted(true);
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    const formData = new FormData(e.currentTarget);
+    const payload = {
+      name: formData.get('name') as string,
+      email: formData.get('email') as string,
+      subject: formData.get('subject') as string,
+      message: formData.get('message') as string,
+    };
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = (await response.json()) as {
+        success: boolean;
+        error?: string;
+      };
+
+      if (data.success) {
+        setSubmitted(true);
+      } else {
+        setSubmitError(data.error ?? 'Une erreur est survenue');
+      }
+    } catch {
+      setSubmitError('Erreur de connexion. Veuillez réessayer.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -173,11 +206,17 @@ export default function ContactPage() {
                   className="w-full px-4 py-3 border border-verone-gray-300 rounded-lg focus:ring-2 focus:ring-verone-black focus:border-transparent outline-none transition-all text-sm resize-none"
                 />
               </div>
+              {submitError && (
+                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">
+                  {submitError}
+                </p>
+              )}
               <button
                 type="submit"
-                className="w-full bg-verone-black text-verone-white py-3 rounded-lg font-medium hover:bg-verone-gray-800 transition-colors text-sm"
+                disabled={isSubmitting}
+                className="w-full bg-verone-black text-verone-white py-3 rounded-lg font-medium hover:bg-verone-gray-800 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Envoyer le message
+                {isSubmitting ? 'Envoi en cours...' : 'Envoyer le message'}
               </button>
             </form>
           )}

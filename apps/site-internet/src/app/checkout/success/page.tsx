@@ -1,12 +1,34 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 import { CheckCircle, Package } from 'lucide-react';
 
+import { trackPurchase } from '@/components/analytics/GoogleAnalytics';
 import { useCart } from '@/contexts/CartContext';
+
+function PurchaseTracker() {
+  const searchParams = useSearchParams();
+  const hasTracked = useRef(false);
+
+  useEffect(() => {
+    if (hasTracked.current) return;
+    hasTracked.current = true;
+
+    const sessionId = searchParams.get('session_id');
+    trackPurchase({
+      transactionId: sessionId ?? crypto.randomUUID().slice(0, 8),
+      value: parseFloat(searchParams.get('total') ?? '0'),
+      shipping: parseFloat(searchParams.get('shipping') ?? '0'),
+      itemCount: parseInt(searchParams.get('items') ?? '1', 10),
+    });
+  }, [searchParams]);
+
+  return null;
+}
 
 export default function CheckoutSuccessPage() {
   const { clearCart } = useCart();
@@ -19,6 +41,9 @@ export default function CheckoutSuccessPage() {
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-6">
+      <Suspense fallback={null}>
+        <PurchaseTracker />
+      </Suspense>
       <div className="text-center max-w-lg">
         <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-6" />
         <h1 className="text-3xl font-playfair font-bold text-verone-black mb-3">

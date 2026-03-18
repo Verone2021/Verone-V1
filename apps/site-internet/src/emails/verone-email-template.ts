@@ -88,7 +88,7 @@ export function buildVeroneEmailHtml(options: EmailTemplateOptions): string {
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
     <!-- Logo -->
     <div style="text-align: center; padding: 32px 0 24px 0;">
-      <span style="font-size: 28px; font-weight: 700; letter-spacing: 3px; color: #1a1a1a; text-transform: uppercase;">V&Eacute;RONE</span>
+      <img src="cid:verone-logo" alt="V&Eacute;RONE" width="180" height="60" style="display: inline-block; max-width: 180px; height: auto;" />
       <p style="font-size: 11px; color: #9ca3af; letter-spacing: 2px; margin: 4px 0 0 0; text-transform: uppercase;">Mobilier &amp; D&eacute;coration</p>
     </div>
 

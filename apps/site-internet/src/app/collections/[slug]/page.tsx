@@ -9,7 +9,7 @@ import { ArrowLeft, Package } from 'lucide-react';
 
 import { CardProductLuxury } from '@/components/ui/CardProductLuxury';
 import { useCollectionBySlug } from '@/hooks/use-collections';
-import { useCatalogueProducts } from '@/hooks/use-catalogue-products';
+import { useCollectionProducts } from '@/hooks/use-collection-products';
 
 export default function CollectionDetailPage({
   params,
@@ -28,13 +28,9 @@ export default function CollectionDetailPage({
     error: collectionError,
   } = useCollectionBySlug(slug);
 
-  const { data: allProducts, isLoading: productsLoading } =
-    useCatalogueProducts();
-
-  // Filter products that belong to this collection
-  // Since we don't have collection_id on CatalogueProduct, we use collectionSlug option
-  // For now, show all products - TODO: filter by collection via RPC or join
-  const products = allProducts;
+  const { data: products, isLoading: productsLoading } = useCollectionProducts(
+    collection?.id
+  );
 
   const isLoading = collectionLoading || productsLoading;
 

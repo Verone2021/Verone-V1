@@ -3,6 +3,8 @@ import Link from 'next/link';
 
 import { cn } from '@verone/utils';
 
+import { StarRating } from './StarRating';
+
 /**
  * CardProductLuxury - Design System Vérone
  *
@@ -22,6 +24,8 @@ export interface CardProductLuxuryProps {
   href: string;
   className?: string;
   priority?: boolean;
+  averageRating?: number;
+  reviewCount?: number;
 }
 
 export function CardProductLuxury({
@@ -32,6 +36,8 @@ export function CardProductLuxury({
   href,
   className,
   priority = false,
+  averageRating,
+  reviewCount,
 }: CardProductLuxuryProps) {
   return (
     <Link
@@ -64,9 +70,16 @@ export function CardProductLuxury({
       {/* Content */}
       <div className="p-6">
         {/* Title Playfair */}
-        <h4 className="font-playfair text-xl font-semibold text-verone-black mb-2 group-hover:text-verone-gray-700 transition-colors duration-300">
+        <h4 className="font-playfair text-xl font-semibold text-verone-black mb-1 group-hover:text-verone-gray-700 transition-colors duration-300">
           {name}
         </h4>
+
+        {/* Star Rating */}
+        {averageRating != null && reviewCount != null && reviewCount > 0 && (
+          <div className="mb-2">
+            <StarRating average={averageRating} count={reviewCount} size="sm" />
+          </div>
+        )}
 
         {/* Description */}
         {description && (

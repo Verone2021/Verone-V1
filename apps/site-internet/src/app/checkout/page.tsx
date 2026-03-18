@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -17,6 +17,7 @@ import {
   Truck,
 } from 'lucide-react';
 
+import { trackBeginCheckout } from '@/components/analytics/GoogleAnalytics';
 import { useCart } from '@/contexts/CartContext';
 
 interface PromoResult {
@@ -43,6 +44,15 @@ export default function CheckoutPage() {
   const [promoResult, setPromoResult] = useState<PromoResult | null>(null);
   const [promoError, setPromoError] = useState('');
   const [promoLoading, setPromoLoading] = useState(false);
+  const hasTrackedCheckout = useRef(false);
+
+  // GA4: track begin_checkout once
+  useEffect(() => {
+    if (items.length > 0 && !hasTrackedCheckout.current) {
+      trackBeginCheckout(subtotal, itemCount);
+      hasTrackedCheckout.current = true;
+    }
+  }, [items.length, subtotal, itemCount]);
 
   const applyPromo = async () => {
     if (!promoCode.trim()) return;
