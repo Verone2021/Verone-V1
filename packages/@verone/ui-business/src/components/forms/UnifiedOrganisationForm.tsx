@@ -394,7 +394,9 @@ export function UnifiedOrganisationForm({
 
         <form
           onSubmit={e => {
-            void form.handleSubmit(handleSubmit)(e);
+            void form.handleSubmit(
+              handleSubmit as unknown as Parameters<typeof form.handleSubmit>[0]
+            )(e);
           }}
         >
           <div

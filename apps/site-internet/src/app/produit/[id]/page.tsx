@@ -14,10 +14,20 @@
 
 import { useEffect, useState } from 'react';
 
+import Link from 'next/link';
+
 import { useQuery } from '@tanstack/react-query';
 
 import type { CatalogueProduct } from '@/hooks/use-catalogue-products';
 import { createClient } from '@/lib/supabase/client';
+import { trackViewItem } from '@/components/analytics/GoogleAnalytics';
+import { ShareButtons } from '@/components/product/ShareButtons';
+import { StickyAddToCart } from '@/components/product/StickyAddToCart';
+import { JsonLdProduct } from '@/components/seo/JsonLdProduct';
+import { useReviewStats } from '@/hooks/use-reviews';
+import { useCart } from '@/contexts/CartContext';
+
+import { ProductReviews } from '@/components/product/ProductReviews';
 
 import { ProductAccordions } from './components/ProductAccordions';
 import { ProductCrossSell } from './components/ProductCrossSell';
@@ -37,7 +47,9 @@ export default function ProductPage({
   params: Promise<{ id: string }>;
 }) {
   const [slug, setSlug] = useState<string | null>(null);
+  const [stickyAdded, setStickyAdded] = useState(false);
   const supabase = createClient();
+  const { addItem } = useCart();
 
   // ✅ Next.js 15 async params
   useEffect(() => {
@@ -115,6 +127,22 @@ export default function ProductPage({
     staleTime: 60000,
   });
 
+  // Review stats for JSON-LD
+  const reviewStats = useReviewStats(product?.product_id);
+
+  // GA4: track view_item when product loads
+  useEffect(() => {
+    if (product) {
+      trackViewItem({
+        id: product.product_id,
+        name: product.name,
+        price: product.price_ttc ?? 0,
+        brand: product.brand ?? undefined,
+        category: product.subcategory_name ?? undefined,
+      });
+    }
+  }, [product]);
+
   // ===== LOADING STATE =====
   if (isLoading) {
     return (
@@ -158,17 +186,45 @@ export default function ProductPage({
   // ===== PRODUCT PAGE LAYOUT =====
   return (
     <div className="container max-w-7xl mx-auto px-4 py-8">
-      {/* Breadcrumb (optionnel, à implémenter plus tard)
-      <nav className="mb-6 text-sm text-muted-foreground">
+      {/* JSON-LD Product Schema */}
+      <JsonLdProduct
+        name={product.name}
+        description={product.description}
+        slug={product.slug}
+        price={product.price_ttc}
+        imageUrl={product.primary_image_url}
+        brand={product.brand}
+        sku={product.sku}
+        reviewCount={reviewStats.count}
+        averageRating={reviewStats.average}
+      />
+
+      {/* Breadcrumb */}
+      <nav className="mb-6 text-sm text-verone-gray-500">
         <ol className="flex items-center gap-2">
-          <li><Link href="/">Accueil</Link></li>
+          <li>
+            <Link
+              href="/"
+              className="hover:text-verone-black transition-colors"
+            >
+              Accueil
+            </Link>
+          </li>
           <li>/</li>
-          <li><Link href="/catalogue">Catalogue</Link></li>
+          <li>
+            <Link
+              href="/catalogue"
+              className="hover:text-verone-black transition-colors"
+            >
+              Catalogue
+            </Link>
+          </li>
           <li>/</li>
-          <li className="text-foreground">{product.name}</li>
+          <li className="text-verone-black truncate max-w-[200px]">
+            {product.name}
+          </li>
         </ol>
       </nav>
-      */}
 
       {/* Layout 2 colonnes 60/40 */}
       <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 lg:gap-12">
@@ -206,7 +262,8 @@ export default function ProductPage({
           product={{
             product_id: product.product_id,
             name: product.name,
-            brand: product.brand, // Affichage conditionnel dans composant
+            slug: product.slug,
+            brand: product.brand,
             price_ttc: product.price_ttc,
             discount_rate: product.discount_rate,
             eco_participation_amount: product.eco_participation_amount,
@@ -216,14 +273,59 @@ export default function ProductPage({
             delivery_delay_weeks_max: product.delivery_delay_weeks_max,
             variant_group_id: product.variant_group_id,
             eligible_variants_count: product.eligible_variants_count,
+            primary_image_url: product.primary_image_url,
+            sku: product.sku,
           }}
           variants={variants}
           currentProductId={product.product_id}
         />
       </div>
 
-      {/* ===== CROSS-SELL (Mock) ===== */}
-      <ProductCrossSell />
+      {/* Share + Cross-sell */}
+      <div className="mt-8 flex justify-end">
+        <ShareButtons
+          url={`/produit/${product.slug}`}
+          title={product.name}
+          imageUrl={product.primary_image_url}
+        />
+      </div>
+
+      <ProductCrossSell currentProductId={product.product_id} />
+
+      {/* Reviews */}
+      <ProductReviews
+        productId={product.product_id}
+        productName={product.name}
+      />
+
+      {/* Sticky mobile add-to-cart */}
+      <StickyAddToCart
+        productName={product.name}
+        priceTTC={product.price_ttc ?? 0}
+        isAdded={stickyAdded}
+        onAddToCart={() => {
+          void addItem({
+            product_id: product.product_id,
+            variant_group_id: product.variant_group_id,
+            quantity: 1,
+            include_assembly: false,
+            name: product.name,
+            slug: product.slug,
+            price_ttc: product.price_ttc ?? 0,
+            assembly_price: product.assembly_price ?? 0,
+            eco_participation: product.eco_participation_amount ?? 0,
+            primary_image_url: product.primary_image_url,
+            sku: product.sku,
+          })
+            .then(() => {
+              setStickyAdded(true);
+              setTimeout(() => setStickyAdded(false), 2000);
+            })
+            .catch(error => {
+              console.error('[StickyCart] Add failed:', error);
+            });
+        }}
+      />
     </div>
   );
 }

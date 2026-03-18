@@ -83,25 +83,19 @@ export const ChannelSelector = memo(function ChannelSelector({
           </SelectItem>
         )}
 
-        {channels?.map(
-          (channel: {
-            id: string;
-            name: string;
-            default_discount_rate?: number;
-          }) => (
-            <SelectItem key={channel.id} value={channel.id}>
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{channel.name}</span>
-                {channel.default_discount_rate != null &&
-                  channel.default_discount_rate > 0 && (
-                    <span className="text-xs text-green-600">
-                      -{(channel.default_discount_rate * 100).toFixed(0)}%
-                    </span>
-                  )}
-              </div>
-            </SelectItem>
-          )
-        )}
+        {channels?.map(channel => (
+          <SelectItem key={channel.id} value={channel.id}>
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{channel.name}</span>
+              {channel.default_discount_rate != null &&
+                channel.default_discount_rate > 0 && (
+                  <span className="text-xs text-green-600">
+                    -{(channel.default_discount_rate * 100).toFixed(0)}%
+                  </span>
+                )}
+            </div>
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );

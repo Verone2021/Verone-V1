@@ -147,7 +147,7 @@ export function QuickPurchaseOrderModal({
           cost_price: productData.cost_price ?? 0,
           supplier_moq: productData.supplier_moq ?? 1,
           eco_tax_default: productData.eco_tax_default ?? 0,
-          primary_image_url: primaryImageUrl,
+          primary_image_url: primaryImageUrl ?? undefined,
           supplier: supplierInfo,
         };
 

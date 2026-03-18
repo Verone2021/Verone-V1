@@ -490,32 +490,36 @@ export function useInvalidatePricing() {
   const queryClient = useQueryClient();
 
   return {
-    invalidateAll: () => {
-      void queryClient.invalidateQueries({ queryKey: ['pricing-v2'] });
-      void queryClient.invalidateQueries({ queryKey: ['channel-pricing'] });
-      void queryClient.invalidateQueries({ queryKey: ['customer-pricing'] });
-      void queryClient.invalidateQueries({ queryKey: ['quantity-breaks'] });
+    invalidateAll: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['pricing-v2'] }),
+        queryClient.invalidateQueries({ queryKey: ['channel-pricing'] }),
+        queryClient.invalidateQueries({ queryKey: ['customer-pricing'] }),
+        queryClient.invalidateQueries({ queryKey: ['quantity-breaks'] }),
+      ]);
       logger.info('All pricing caches invalidated (V2)', {
         operation: 'invalidatePricing',
       });
     },
-    invalidateProduct: (productId: string) => {
-      void queryClient.invalidateQueries({
-        queryKey: ['pricing-v2', { productId }],
-      });
-      void queryClient.invalidateQueries({
-        queryKey: ['channel-pricing', productId],
-      });
-      void queryClient.invalidateQueries({
-        queryKey: ['quantity-breaks', productId],
-      });
+    invalidateProduct: async (productId: string) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['pricing-v2', { productId }],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['channel-pricing', productId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['quantity-breaks', productId],
+        }),
+      ]);
       logger.info('Product pricing cache invalidated (V2)', {
         operation: 'invalidatePricing',
         productId,
       });
     },
-    invalidateCustomer: (customerId: string) => {
-      void queryClient.invalidateQueries({
+    invalidateCustomer: async (customerId: string) => {
+      await queryClient.invalidateQueries({
         queryKey: ['customer-pricing', customerId],
       });
       logger.info('Customer pricing cache invalidated (V2)', {

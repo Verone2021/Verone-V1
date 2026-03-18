@@ -17,6 +17,7 @@ import { useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import {
   ButtonUnified,
@@ -29,12 +30,18 @@ import {
   PopoverContent,
 } from '@verone/ui';
 import { formatPrice } from '@verone/utils';
-import { ShoppingCart, Heart, Truck, Shield, Info } from 'lucide-react';
+import { ShoppingCart, Heart, Truck, Shield, Info, Check } from 'lucide-react';
+
+import { trackAddToCart } from '@/components/analytics/GoogleAnalytics';
+import { useCart } from '@/contexts/CartContext';
+import { useAuthUser } from '@/hooks/use-auth-user';
+import { useWishlist } from '@/hooks/use-wishlist';
 
 interface ProductSidebarProps {
   product: {
     product_id: string;
     name: string;
+    slug: string;
     brand: string | null; // Afficher UNIQUEMENT si renseigné
     price_ttc: number | null;
     discount_rate: number | null;
@@ -45,6 +52,8 @@ interface ProductSidebarProps {
     delivery_delay_weeks_max: number | null;
     variant_group_id: string | null;
     eligible_variants_count: number;
+    primary_image_url: string | null;
+    sku: string | null;
   };
   variants?: Array<{
     product_id: string;
@@ -62,7 +71,17 @@ export function ProductSidebar({
 }: ProductSidebarProps) {
   const [quantity, setQuantity] = useState(1);
   const [includeAssembly, setIncludeAssembly] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false); // Mock state
+  const [addedToCart, setAddedToCart] = useState(false);
+  const { addItem } = useCart();
+  const { user } = useAuthUser();
+  const {
+    isInWishlist,
+    toggle: toggleWishlist,
+    isToggling,
+  } = useWishlist(user?.id);
+  const router = useRouter();
+
+  const isFavorite = isInWishlist(product.product_id);
 
   // Prix calculé avec éco-participation
   const hasDiscount =
@@ -83,8 +102,15 @@ export function ProductSidebar({
       <div className="bg-white border rounded-lg p-6 space-y-6 relative">
         {/* Icône Favoris (absolute top-right) */}
         <button
-          onClick={() => setIsFavorite(!isFavorite)}
-          className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+          disabled={isToggling}
+          onClick={() => {
+            if (!user) {
+              router.push('/auth/login');
+              return;
+            }
+            toggleWishlist(product.product_id);
+          }}
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50"
           aria-label={
             isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'
           }
@@ -150,6 +176,12 @@ export function ProductSidebar({
           )}
 
           <p className="text-xs text-muted-foreground">TVA incluse</p>
+
+          {/* Stock status */}
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className="w-2 h-2 rounded-full bg-green-500" />
+            <span className="text-xs font-medium text-green-700">En stock</span>
+          </div>
         </div>
 
         {/* Variantes (SI eligible_variants_count > 1) */}
@@ -260,21 +292,40 @@ export function ProductSidebar({
 
         {/* CTA "Ajouter au panier" */}
         <ButtonUnified
-          variant="default"
+          variant={addedToCart ? 'secondary' : 'default'}
           size="lg"
-          icon={ShoppingCart}
+          icon={addedToCart ? Check : ShoppingCart}
           className="w-full"
           onClick={() => {
-            // TODO: Implémenter ajout panier
-            console.warn('[ProductSidebar] Ajout panier:', {
+            void addItem({
               product_id: product.product_id,
+              variant_group_id: product.variant_group_id,
               quantity,
-              includeAssembly,
-              totalPrice,
-            });
+              include_assembly: includeAssembly,
+              name: product.name,
+              slug: product.slug,
+              price_ttc: priceTTC,
+              assembly_price: product.assembly_price ?? 0,
+              eco_participation: ecoParticipation,
+              primary_image_url: product.primary_image_url,
+              sku: product.sku,
+            })
+              .then(() => {
+                setAddedToCart(true);
+                setTimeout(() => setAddedToCart(false), 2000);
+                trackAddToCart({
+                  id: product.product_id,
+                  name: product.name,
+                  price: priceTTC,
+                  quantity,
+                });
+              })
+              .catch(error => {
+                console.error('[ProductSidebar] Ajout panier failed:', error);
+              });
           }}
         >
-          Ajouter au panier
+          {addedToCart ? 'Ajouté au panier !' : 'Ajouter au panier'}
         </ButtonUnified>
 
         {/* Délai livraison */}

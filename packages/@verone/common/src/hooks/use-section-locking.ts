@@ -187,6 +187,16 @@ export function useSectionLocking(
     useState<DeploymentPhase>('development');
 
   const supabase = createClient();
+  // Typed client that bypasses strict DB table types for test/prototype tables
+  const supabaseRaw = supabase as unknown as {
+    from: (table: string) => {
+      insert: (data: Record<string, unknown>) => Promise<unknown>;
+      upsert: (
+        data: Record<string, unknown>,
+        opts?: Record<string, unknown>
+      ) => Promise<{ error: { message: string } | null }>;
+    };
+  };
 
   // Calculer le statut de lock pour chaque section
   const sectionLockStatuses = useMemo(() => {
@@ -299,7 +309,7 @@ export function useSectionLocking(
 
       // Sauvegarder dans Supabase
       try {
-        await supabase.from('test_sections_lock_events' as string).insert({
+        await supabaseRaw.from('test_sections_lock_events').insert({
           id: lockEvent.id,
           section_id: lockEvent.sectionId,
           event_type: lockEvent.eventType,
@@ -316,7 +326,7 @@ export function useSectionLocking(
       setLockEvents(prev => [lockEvent, ...prev.slice(0, 99)]); // Garder max 100 événements
       return lockEvent;
     },
-    [supabase]
+    [supabase, supabaseRaw]
   );
 
   // Verrouiller une section
@@ -358,21 +368,19 @@ export function useSectionLocking(
 
       try {
         // Mettre à jour dans Supabase
-        const { error } = await supabase
-          .from('test_sections_lock' as string)
-          .upsert(
-            {
-              section_id: sectionId,
-              locked: true,
-              locked_at: new Date().toISOString(),
-              completion_rate: sectionStatus.completionRate,
-              phase: sectionStatus.config.phase,
-              locked_reason: reason,
-            },
-            {
-              onConflict: 'section_id',
-            }
-          );
+        const { error } = await supabaseRaw.from('test_sections_lock').upsert(
+          {
+            section_id: sectionId,
+            locked: true,
+            locked_at: new Date().toISOString(),
+            completion_rate: sectionStatus.completionRate,
+            phase: sectionStatus.config.phase,
+            locked_reason: reason,
+          },
+          {
+            onConflict: 'section_id',
+          }
+        );
 
         if (error) throw error;
 
@@ -406,7 +414,7 @@ export function useSectionLocking(
     },
     [
       sectionLockStatuses,
-      supabase,
+      supabaseRaw,
       logLockEvent,
       validationRequired,
       enableNotifications,
@@ -428,19 +436,17 @@ export function useSectionLocking(
 
       try {
         // Mettre à jour dans Supabase
-        const { error } = await supabase
-          .from('test_sections_lock' as string)
-          .upsert(
-            {
-              section_id: sectionId,
-              locked: false,
-              unlocked_at: new Date().toISOString(),
-              unlock_reason: reason,
-            },
-            {
-              onConflict: 'section_id',
-            }
-          );
+        const { error } = await supabaseRaw.from('test_sections_lock').upsert(
+          {
+            section_id: sectionId,
+            locked: false,
+            unlocked_at: new Date().toISOString(),
+            unlock_reason: reason,
+          },
+          {
+            onConflict: 'section_id',
+          }
+        );
 
         if (error) throw error;
 
@@ -463,7 +469,7 @@ export function useSectionLocking(
         return false;
       }
     },
-    [sectionLockStatuses, supabase, logLockEvent, enableNotifications]
+    [sectionLockStatuses, supabaseRaw, logLockEvent, enableNotifications]
   );
 
   // Validation manuelle d'une section

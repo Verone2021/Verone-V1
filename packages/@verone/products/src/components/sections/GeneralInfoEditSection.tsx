@@ -53,7 +53,7 @@ export function GeneralInfoEditSection({
   });
 
   const section: EditableSection = 'general';
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as Product | null;
   const error = getError(section);
 
   const handleStartEdit = () => {

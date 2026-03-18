@@ -135,7 +135,7 @@ export function RelationsEditSection({
         .limit(50);
 
       if (error) throw error;
-      setProductGroups((data as ProductGroup[]) ?? []);
+      setProductGroups((data as unknown as ProductGroup[]) ?? []);
     } catch (err) {
       console.error('Erreur chargement groupes produits:', err);
     } finally {

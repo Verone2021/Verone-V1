@@ -3,8 +3,12 @@ import { Playfair_Display, Inter } from 'next/font/google';
 import type { Metadata } from 'next';
 
 import './globals.css';
+import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
+import { CookieConsent } from '@/components/CookieConsent';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
+import { PromoBanner } from '@/components/layout/PromoBanner';
+import { JsonLdOrganization } from '@/components/seo/JsonLdOrganization';
 
 import { Providers } from './providers';
 
@@ -23,9 +27,38 @@ const inter = Inter({
   display: 'swap',
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://verone.fr';
+
 export const metadata: Metadata = {
-  title: 'Vérone - Mobilier Haut de Gamme',
-  description: "E-commerce mobilier et décoration d'intérieur haut de gamme",
+  title: {
+    default: 'Vérone — Concept Store Déco & Mobilier Original',
+    template: '%s | Vérone',
+  },
+  description:
+    'Vérone déniche pour vous des pièces originales de décoration et mobilier. Sourcing créatif, produits introuvables ailleurs, prix justes. Livraison soignée en France.',
+  metadataBase: new URL(siteUrl),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'fr_FR',
+    siteName: 'Vérone',
+    title: 'Vérone — Concept Store Déco & Mobilier Original',
+    description:
+      'Concept store en ligne — produits originaux de déco et mobilier, sourcés avec soin, au juste prix.',
+    url: siteUrl,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Vérone — Concept Store Déco & Mobilier Original',
+    description:
+      'Concept store en ligne — produits originaux de déco et mobilier, sourcés avec soin, au juste prix.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
@@ -36,12 +69,16 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`${playfairDisplay.variable} ${inter.variable}`}>
       <body className="min-h-screen bg-verone-white font-inter antialiased">
+        <GoogleAnalytics />
+        <JsonLdOrganization />
         <Providers>
           <div className="flex flex-col min-h-screen">
             <Header />
+            <PromoBanner />
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
+          <CookieConsent />
         </Providers>
       </body>
     </html>

@@ -210,9 +210,9 @@ export function useUpdateLinkMePageConfig() {
       pageId: string;
       updates: PageConfigUpdate;
     }) => updatePageConfiguration(pageId, updates),
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalider le cache pour recharger les données
-      void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+      await queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
     },
     onError: error => {
       console.error('Erreur mutation page config:', error);

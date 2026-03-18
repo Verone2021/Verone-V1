@@ -291,6 +291,47 @@ export function CommandPalette({
     }
   }, []);
 
+  // Exécuter une commande
+  const executeCommand = useCallback(
+    async (command: CommandAction) => {
+      try {
+        // Ajouter aux commandes récentes
+        const updatedRecent = [
+          command.id,
+          ...recentCommands.filter(id => id !== command.id),
+        ].slice(0, 5);
+        setRecentCommands(updatedRecent);
+        localStorage.setItem(
+          'verone-recent-commands',
+          JSON.stringify(updatedRecent)
+        );
+
+        // Confirmation si nécessaire
+        if (command.requiresConfirmation) {
+          const confirmed = confirm(
+            `Êtes-vous sûr de vouloir exécuter "${command.title}" ?`
+          );
+          if (!confirmed) return;
+        }
+
+        // Fermer la palette
+        setOpen(false);
+        setSearch('');
+
+        // Exécuter la commande
+        await command.handler();
+
+        // Callback externe
+        if (onCommandExecute) {
+          onCommandExecute(command);
+        }
+      } catch (error) {
+        console.error('Erreur exécution commande:', error);
+      }
+    },
+    [recentCommands, onCommandExecute]
+  );
+
   // Gestion des raccourcis clavier globaux
   useEffect(() => {
     if (!mounted) return;
@@ -402,47 +443,6 @@ export function CommandPalette({
 
     return groups;
   }, [filteredCommands]);
-
-  // Exécuter une commande
-  const executeCommand = useCallback(
-    async (command: CommandAction) => {
-      try {
-        // Ajouter aux commandes récentes
-        const updatedRecent = [
-          command.id,
-          ...recentCommands.filter(id => id !== command.id),
-        ].slice(0, 5);
-        setRecentCommands(updatedRecent);
-        localStorage.setItem(
-          'verone-recent-commands',
-          JSON.stringify(updatedRecent)
-        );
-
-        // Confirmation si nécessaire
-        if (command.requiresConfirmation) {
-          const confirmed = confirm(
-            `Êtes-vous sûr de vouloir exécuter "${command.title}" ?`
-          );
-          if (!confirmed) return;
-        }
-
-        // Fermer la palette
-        setOpen(false);
-        setSearch('');
-
-        // Exécuter la commande
-        await command.handler();
-
-        // Callback externe
-        if (onCommandExecute) {
-          onCommandExecute(command);
-        }
-      } catch (error) {
-        console.error('Erreur exécution commande:', error);
-      }
-    },
-    [recentCommands, onCommandExecute]
-  );
 
   // Toggle favori
   const toggleFavorite = useCallback(

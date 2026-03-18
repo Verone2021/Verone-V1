@@ -1,127 +1,77 @@
-/**
- * ProductCrossSell - Carrousel produits similaires
- * Features:
- * - Carrousel horizontal avec navigation arrows
- * - "Les clients ont également consulté"
- * - 6 produits mock (à implémenter réellement plus tard)
- * - Cards produits responsive
- */
-
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { formatPrice } from '@verone/utils';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Package } from 'lucide-react';
 
-// Mock data (à remplacer par vraies données plus tard)
-// Note: Placeholders couleurs pour éviter erreur Next.js Image (Unsplash non configuré)
-const MOCK_PRODUCTS = [
-  {
-    id: '1',
-    slug: 'canape-wolke',
-    name: 'Canapé Wolke 3 places',
-    placeholder_color: 'bg-blue-100',
-    price_ttc: 1999,
-  },
-  {
-    id: '2',
-    slug: 'table-basse-oslo',
-    name: 'Table basse Oslo',
-    placeholder_color: 'bg-amber-100',
-    price_ttc: 449,
-  },
-  {
-    id: '3',
-    slug: 'lampadaire-arc',
-    name: 'Lampadaire Arc moderne',
-    placeholder_color: 'bg-purple-100',
-    price_ttc: 299,
-  },
-  {
-    id: '4',
-    slug: 'buffet-scandinave',
-    name: 'Buffet scandinave',
-    placeholder_color: 'bg-green-100',
-    price_ttc: 899,
-  },
-  {
-    id: '5',
-    slug: 'tapis-berbere',
-    name: 'Tapis berbère 200x300',
-    placeholder_color: 'bg-rose-100',
-    price_ttc: 349,
-  },
-  {
-    id: '6',
-    slug: 'miroir-laiton',
-    name: 'Miroir rond laiton',
-    placeholder_color: 'bg-yellow-100',
-    price_ttc: 179,
-  },
-];
+import {
+  useCatalogueProducts,
+  type CatalogueProduct,
+} from '@/hooks/use-catalogue-products';
 
-export function ProductCrossSell() {
+interface ProductCrossSellProps {
+  currentProductId: string;
+}
+
+export function ProductCrossSell({ currentProductId }: ProductCrossSellProps) {
+  const { data: allProducts } = useCatalogueProducts({ sortBy: 'newest' });
+
+  // Filter out current product and take up to 6
+  const recommendations =
+    allProducts
+      ?.filter((p: CatalogueProduct) => p.product_id !== currentProductId)
+      .slice(0, 6) ?? [];
+
+  if (recommendations.length === 0) {
+    return null;
+  }
+
   return (
     <section className="mt-16 mb-8">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-semibold">
-          Les clients ont également consulté
-        </h2>
+      <h2 className="text-2xl font-semibold mb-6">
+        Les clients ont également consulté
+      </h2>
 
-        {/* Navigation arrows (placeholder pour carrousel futur) */}
-        <div className="flex gap-2">
-          <button
-            className="p-2 rounded-full border hover:bg-gray-100 transition-colors disabled:opacity-50"
-            aria-label="Produit précédent"
-            disabled
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            className="p-2 rounded-full border hover:bg-gray-100 transition-colors disabled:opacity-50"
-            aria-label="Produit suivant"
-            disabled
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Grid produits (responsive) */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {MOCK_PRODUCTS.map(product => (
+        {recommendations.map(product => (
           <Link
-            key={product.id}
+            key={product.product_id}
             href={`/produit/${product.slug}`}
             className="group"
           >
             <div className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-              {/* Placeholder image (mock data) */}
-              <div
-                className={`relative aspect-[4/3] ${product.placeholder_color} flex items-center justify-center text-gray-400 text-xs`}
-              >
-                Mock Image
+              <div className="relative aspect-[4/3] bg-verone-gray-50">
+                {product.primary_image_url ? (
+                  <Image
+                    src={product.primary_image_url}
+                    alt={product.name}
+                    fill
+                    sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 16vw"
+                    className="object-contain p-2"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <Package className="h-6 w-6 text-verone-gray-300" />
+                  </div>
+                )}
               </div>
 
-              {/* Info produit */}
               <div className="p-3 space-y-1">
-                <h3 className="text-sm font-medium line-clamp-2 group-hover:text-gray-600 transition-colors">
+                <h3 className="text-sm font-medium line-clamp-2 group-hover:text-verone-gray-600 transition-colors">
                   {product.name}
                 </h3>
                 <p className="text-base font-semibold">
-                  {formatPrice(product.price_ttc)}
+                  {product.price_ttc
+                    ? formatPrice(product.price_ttc)
+                    : 'Sur demande'}
                 </p>
               </div>
             </div>
           </Link>
         ))}
       </div>
-
-      {/* Note mock data */}
-      <p className="text-xs text-muted-foreground text-center mt-6">
-        (Mock data - À remplacer par recommandations réelles)
-      </p>
     </section>
   );
 }

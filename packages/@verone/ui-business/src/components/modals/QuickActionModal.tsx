@@ -400,8 +400,10 @@ export const StockAdjustmentModal = (
         label: 'Nouvelle quantité',
         type: 'number',
         required: true,
-        validation: value =>
-          value < 0 ? 'La quantité ne peut pas être négative' : null,
+        validation: (value: unknown) =>
+          (value as number) < 0
+            ? 'La quantité ne peut pas être négative'
+            : null,
       },
       {
         name: 'reason',
@@ -445,8 +447,8 @@ export const QuickOrderModal = (
         label: 'Quantité',
         type: 'number',
         required: true,
-        validation: value =>
-          value <= 0 ? 'La quantité doit être positive' : null,
+        validation: (value: unknown) =>
+          (value as number) <= 0 ? 'La quantité doit être positive' : null,
       },
       {
         name: 'unit_price',

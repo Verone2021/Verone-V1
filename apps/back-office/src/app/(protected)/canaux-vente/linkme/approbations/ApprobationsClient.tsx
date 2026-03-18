@@ -566,8 +566,7 @@ function CommandesTab() {
                             onClick={e => e.stopPropagation()}
                           >
                             <AlertTriangle className="h-3 w-3" />
-                            {missingFields.total} manquant
-                            {missingFields.total > 1 ? 's' : ''}
+                            {missingFields.totalCategories} à compléter
                           </Link>
                         ) : missingFields?.isComplete ? (
                           <span className="inline-flex items-center gap-1 text-xs text-green-600">

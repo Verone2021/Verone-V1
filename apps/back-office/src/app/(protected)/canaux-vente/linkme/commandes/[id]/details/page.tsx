@@ -403,17 +403,10 @@ export default function LinkMeOrderDetailsPage() {
 
       if (orderError) throw orderError;
 
-      let organisation: OrderWithDetails['organisation'] = null;
-      if (orderData.customer_type === 'organization' && orderData.customer_id) {
-        const { data: orgData } = await supabase
-          .from('organisations')
-          .select(
-            'id, trade_name, legal_name, approval_status, enseigne_id, address_line1, address_line2, postal_code, city, billing_address_line1, billing_address_line2, billing_city, billing_postal_code, shipping_address_line1, shipping_address_line2, shipping_city, shipping_postal_code, has_different_shipping_address, phone, email, siret'
-          )
-          .eq('id', orderData.customer_id)
-          .single();
-        organisation = (orgData ?? null) as OrderWithDetails['organisation'];
-      }
+      // Organisation data comes from the JOIN in the main query (no separate fetch needed)
+      const orgJoinData = (orderData as Record<string, unknown>).organisations;
+      const organisation = (orgJoinData ??
+        null) as OrderWithDetails['organisation'];
 
       const linkmeDetailsRaw: unknown = orderData.sales_order_linkme_details;
       const linkmeData = (
@@ -428,21 +421,35 @@ export default function LinkMeOrderDetailsPage() {
         Array.isArray(infoRequestsRaw) ? infoRequestsRaw : []
       ) as InfoRequest[];
 
-      let createdByProfile: CreatedByProfile | null = null;
+      // Fetch user profile + bank transaction match in parallel (independent queries)
       const createdByUserId = (orderData as Record<string, unknown>)
         .created_by as string | null;
-      if (createdByUserId) {
-        const { data: profileData } = await supabase
-          .from('user_profiles')
-          .select('first_name, last_name, email')
-          .eq('user_id', createdByUserId)
-          .single();
-        if (profileData) {
-          createdByProfile = profileData as CreatedByProfile;
-        }
-      }
+      const [profileResult, linkResult] = await Promise.all([
+        createdByUserId
+          ? supabase
+              .from('user_profiles')
+              .select('first_name, last_name, email')
+              .eq('user_id', createdByUserId)
+              .single()
+          : Promise.resolve({ data: null }),
+        supabase
+          .from('transaction_document_links')
+          .select(
+            `
+            sales_order_id,
+            transaction_id,
+            bank_transactions!inner (
+              id, label, amount, emitted_at, attachment_ids
+            )
+          `
+          )
+          .eq('sales_order_id', orderId)
+          .eq('link_type', 'sales_order')
+          .limit(1),
+      ]);
 
-      // Fetch rapprochement bancaire
+      const createdByProfile = (profileResult.data as CreatedByProfile) ?? null;
+
       let matchInfo: {
         transaction_id: string;
         label: string;
@@ -450,21 +457,7 @@ export default function LinkMeOrderDetailsPage() {
         emitted_at: string | null;
         attachment_ids: string[] | null;
       } | null = null;
-      const { data: linkData } = await supabase
-        .from('transaction_document_links')
-        .select(
-          `
-          sales_order_id,
-          transaction_id,
-          bank_transactions!inner (
-            id, label, amount, emitted_at, attachment_ids
-          )
-        `
-        )
-        .eq('sales_order_id', orderId)
-        .eq('link_type', 'sales_order')
-        .limit(1);
-
+      const linkData = linkResult.data;
       if (linkData && linkData.length > 0) {
         const link = linkData[0];
         if (link.bank_transactions) {
@@ -546,7 +539,9 @@ export default function LinkMeOrderDetailsPage() {
       // Enriched items with commission info
       const { data: enrichedData } = await supabase
         .from('linkme_order_items_enriched')
-        .select('*')
+        .select(
+          'id, product_id, product_name, product_sku, product_image_url, quantity, unit_price_ht, total_ht, base_price_ht, margin_rate, commission_rate, selling_price_ht, affiliate_margin, retrocession_rate'
+        )
         .eq('sales_order_id', orderId);
 
       if (enrichedData && enrichedData.length > 0) {

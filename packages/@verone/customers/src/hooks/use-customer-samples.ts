@@ -115,9 +115,7 @@ export function useCustomerSamples(filters?: SampleFilters) {
       setLoading(true);
       setError(null);
 
-      // @ts-expect-error - View customer_samples_view not yet in generated types
       let query = supabase
-        // @ts-expect-error - View customer_samples_view type missing
         .from('customer_samples_view')
         .select('*')
         .order('sample_created_at', { ascending: false });
@@ -183,7 +181,6 @@ export function useCustomerSamples(filters?: SampleFilters) {
       // Trigger database vérifie automatiquement que PO status = 'draft'
       const { error: updateError } = await supabase
         .from('purchase_order_items')
-        // @ts-expect-error - archived_at column not yet in generated types
         .update({ archived_at: new Date().toISOString() })
         .eq('id', sampleId);
 
@@ -218,7 +215,6 @@ export function useCustomerSamples(filters?: SampleFilters) {
     try {
       const { error: updateError } = await supabase
         .from('purchase_order_items')
-        // @ts-expect-error - archived_at column not yet in generated types
         .update({ archived_at: null })
         .eq('id', sampleId);
 
@@ -261,7 +257,6 @@ export function useCustomerSamples(filters?: SampleFilters) {
 
       if (sampleError) throw sampleError;
 
-      // @ts-expect-error - Nested relation type inference
       const supplierId: string = (
         sampleData.purchase_orders as { supplier_id: string }
       ).supplier_id;
@@ -286,14 +281,24 @@ export function useCustomerSamples(filters?: SampleFilters) {
         toast.success('Ajout à la commande brouillon existante');
       } else {
         // Créer nouveau PO draft
+        const { data: poNumber, error: poNumberError } =
+          await supabase.rpc('generate_po_number');
+        if (poNumberError) throw poNumberError;
+
+        const {
+          data: { user: currentUser },
+        } = await supabase.auth.getUser();
+        if (!currentUser) throw new Error('Utilisateur non authentifié');
+
         const { data: newPO, error: createPOError } = await supabase
           .from('purchase_orders')
-          // @ts-expect-error - created_by handled by database trigger
           .insert({
             supplier_id: supplierId,
-            status: 'draft',
+            status: 'draft' as const,
             total_ht: 0,
             total_ttc: 0,
+            po_number: poNumber,
+            created_by: currentUser.id,
           })
           .select('id')
           .single();
@@ -305,7 +310,6 @@ export function useCustomerSamples(filters?: SampleFilters) {
       }
 
       // 3. Mettre à jour l'échantillon avec le nouveau PO
-      // @ts-expect-error - archived_at column not yet in generated types
       const { error: updateError } = await supabase
         .from('purchase_order_items')
         .update({

@@ -525,7 +525,15 @@ export function usePurchaseReceptions() {
           query = query.eq('status', 'partially_received');
         } else {
           // Autres cas : appliquer filtre tel quel
-          query = query.eq('status', filters.status);
+          query = query.eq(
+            'status',
+            filters.status as
+              | 'draft'
+              | 'cancelled'
+              | 'received'
+              | 'validated'
+              | 'partially_received'
+          );
         }
 
         if (filters?.search) {

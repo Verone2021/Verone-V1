@@ -46,7 +46,6 @@ const CHANNEL_TABS: Record<string, Tab[]> = {
   ],
   'site-internet': [
     { label: 'Dashboard', href: '/canaux-vente/site-internet' },
-    { label: 'Produits', href: '/canaux-vente/site-internet/produits' },
     { label: 'Commandes', href: '/canaux-vente/site-internet/commandes' },
   ],
   'google-merchant': [

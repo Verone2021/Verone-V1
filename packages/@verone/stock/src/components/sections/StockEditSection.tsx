@@ -1,6 +1,6 @@
 'use client';
 
-import type React from 'react';
+import React from 'react';
 
 import { useInlineEdit, type EditableSection } from '@verone/common/hooks';
 
@@ -123,7 +123,7 @@ export const StockEditSection = React.memo(
               </label>
               <input
                 type="number"
-                value={editData?.min_stock ?? 0}
+                value={(editData?.min_stock as number | undefined) ?? 0}
                 onChange={e =>
                   handleFieldChange('min_stock', parseInt(e.target.value) ?? 0)
                 }

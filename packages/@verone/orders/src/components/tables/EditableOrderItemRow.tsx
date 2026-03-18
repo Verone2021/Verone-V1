@@ -232,10 +232,10 @@ export function EditableOrderItemRow({
           {/* Info produit */}
           <div className="min-w-0">
             <p className="font-medium text-sm line-clamp-2">
-              {item.products?.name ?? 'Produit inconnu'}
+              {(item.products?.name as string | undefined) ?? 'Produit inconnu'}
             </p>
             <p className="text-xs text-gray-500">
-              {item.products?.sku ?? 'SKU inconnu'}
+              {(item.products?.sku as string | undefined) ?? 'SKU inconnu'}
             </p>
 
             {/* Badge quantité reçue/expédiée (info) */}

@@ -66,8 +66,7 @@ export function GeneralStockMovementModal({
   // Pré-remplir le coût unitaire avec le prix d'achat du produit
   useEffect(() => {
     if (selectedProduct && movementType === 'add') {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const costPrice = (selectedProduct as readonly string[]).cost_price;
+      const costPrice = selectedProduct.cost_price;
       if (costPrice && costPrice > 0) {
         setUnitCost(String(costPrice));
       } else {
@@ -294,20 +293,13 @@ export function GeneralStockMovementModal({
               <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                 <span>
                   <strong>Prix d'achat:</strong>{' '}
-                  {formatPrice(
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                    (selectedProduct as readonly string[]).cost_price ?? 0
-                  )}
+                  {formatPrice(selectedProduct.cost_price ?? 0)}
                 </span>
-                {(selectedProduct as readonly string[]).eco_tax_default &&
-                  (selectedProduct as readonly string[]).eco_tax_default >
-                    0 && (
+                {selectedProduct.eco_tax_default &&
+                  selectedProduct.eco_tax_default > 0 && (
                     <span>
                       <strong>Éco-taxe:</strong>{' '}
-                      {formatPrice(
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                        (selectedProduct as readonly string[]).eco_tax_default
-                      )}
+                      {formatPrice(selectedProduct.eco_tax_default)}
                     </span>
                   )}
               </div>
@@ -485,17 +477,11 @@ export function GeneralStockMovementModal({
             <div className="space-y-2">
               <Label>
                 Coût unitaire (optionnel)
-                {selectedProduct &&
-                  (selectedProduct as readonly string[]).cost_price > 0 && (
-                    <span className="text-xs text-gray-500 ml-2 font-normal">
-                      (indicatif:{' '}
-                      {formatPrice(
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                        (selectedProduct as readonly string[]).cost_price
-                      )}
-                      )
-                    </span>
-                  )}
+                {selectedProduct && (selectedProduct.cost_price ?? 0) > 0 && (
+                  <span className="text-xs text-gray-500 ml-2 font-normal">
+                    (indicatif: {formatPrice(selectedProduct.cost_price ?? 0)})
+                  </span>
+                )}
               </Label>
               <Input
                 type="number"

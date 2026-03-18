@@ -7,13 +7,6 @@ import { useRouter } from 'next/navigation';
 // UI Components
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@verone/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 
 // Icons
@@ -27,13 +20,21 @@ import {
   Settings,
   Package,
   Users,
+  Star,
+  FileText,
+  Tag,
 } from 'lucide-react';
 
 // Local Components
 import { CategoriesSection } from './components/CategoriesSection';
+import { ClientsSection } from './components/ClientsSection';
+import { CMSSection } from './components/CMSSection';
 import { CollectionsSection } from './components/CollectionsSection';
 import { ConfigurationSection } from './components/ConfigurationSection';
+import { OrdersSection } from './components/OrdersSection';
 import { ProductsSection } from './components/ProductsSection';
+import { PromoCodesSection } from './components/PromoCodesSection';
+import { ReviewsSection } from './components/ReviewsSection';
 import { VercelAnalyticsDashboard } from './components/VercelAnalyticsDashboard';
 
 // Local Hooks
@@ -50,8 +51,8 @@ import { useVercelAnalytics } from './hooks/use-vercel-analytics';
  * - Collections: Toggle visibilité collections
  * - Catégories: Gestion arborescence catégories
  * - Configuration: Domaine, SEO, contact, analytics
- * - Commandes: Placeholder (futur)
- * - Clients: Placeholder (futur)
+ * - Commandes: Suivi commandes e-commerce (site_orders)
+ * - Clients: Clients uniques agrégés depuis site_orders
  */
 export default function SiteInternetPage() {
   const router = useRouter();
@@ -116,7 +117,7 @@ export default function SiteInternetPage() {
           className="space-y-6"
         >
           {/* Navigation Tabs */}
-          <TabsList className="grid grid-cols-7 w-full">
+          <TabsList className="grid grid-cols-10 w-full">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <BarChart className="h-4 w-4" />
               Dashboard
@@ -148,6 +149,18 @@ export default function SiteInternetPage() {
               <Users className="h-4 w-4" />
               Clients
             </TabsTrigger>
+            <TabsTrigger value="avis" className="flex items-center gap-2">
+              <Star className="h-4 w-4" />
+              Avis
+            </TabsTrigger>
+            <TabsTrigger value="contenu" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Contenu
+            </TabsTrigger>
+            <TabsTrigger value="promotions" className="flex items-center gap-2">
+              <Tag className="h-4 w-4" />
+              Promos
+            </TabsTrigger>
           </TabsList>
 
           {/* Tab: Dashboard */}
@@ -175,56 +188,29 @@ export default function SiteInternetPage() {
             <ConfigurationSection />
           </TabsContent>
 
-          {/* Tab: Commandes (Placeholder) */}
+          {/* Tab: Commandes */}
           <TabsContent value="commandes" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Commandes Site Internet</CardTitle>
-                <CardDescription>
-                  Gestion des commandes e-commerce (prochainement)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-16">
-                  <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 mb-4">
-                    <Package className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">
-                    Gestion des Commandes
-                  </h3>
-                  <p className="text-muted-foreground mb-4">
-                    Cette fonctionnalité sera disponible prochainement.
-                  </p>
-                  <Badge variant="outline">Prochainement</Badge>
-                </div>
-              </CardContent>
-            </Card>
+            <OrdersSection />
           </TabsContent>
 
-          {/* Tab: Clients (Placeholder) */}
+          {/* Tab: Clients */}
           <TabsContent value="clients" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Clients Site Internet</CardTitle>
-                <CardDescription>
-                  Gestion des inscriptions et profils clients (prochainement)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-16">
-                  <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900 mb-4">
-                    <Users className="h-8 w-8 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">
-                    Gestion des Clients
-                  </h3>
-                  <p className="text-muted-foreground mb-4">
-                    Cette fonctionnalité sera disponible prochainement.
-                  </p>
-                  <Badge variant="outline">Prochainement</Badge>
-                </div>
-              </CardContent>
-            </Card>
+            <ClientsSection />
+          </TabsContent>
+
+          {/* Tab: Avis */}
+          <TabsContent value="avis" className="space-y-6">
+            <ReviewsSection />
+          </TabsContent>
+
+          {/* Tab: Contenu CMS */}
+          <TabsContent value="contenu" className="space-y-6">
+            <CMSSection />
+          </TabsContent>
+
+          {/* Tab: Promotions */}
+          <TabsContent value="promotions" className="space-y-6">
+            <PromoCodesSection />
           </TabsContent>
         </Tabs>
       </div>

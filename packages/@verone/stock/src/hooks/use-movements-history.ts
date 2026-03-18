@@ -10,7 +10,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@verone/common/hooks';
 import { createClient } from '@verone/utils/supabase/client';
 
-import { useStockMovements } from './use-stock-movements';
+import {
+  useStockMovements,
+  type MovementType,
+  type StockReasonCode,
+} from './use-stock-movements';
 
 // Types pour l'historique des mouvements
 export interface MovementHistoryFilters {
@@ -18,8 +22,8 @@ export interface MovementHistoryFilters {
     from: Date;
     to: Date;
   };
-  movementTypes?: string[];
-  reasonCodes?: string[];
+  movementTypes?: MovementType[];
+  reasonCodes?: StockReasonCode[];
   userIds?: string[];
   productSearch?: string;
   affects_forecast?: boolean;
@@ -256,25 +260,36 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
             ? `${userProfile.first_name ?? ''} ${userProfile.last_name ?? ''}`.trim()
             : 'Utilisateur inconnu';
 
+          type ProductWithImages = {
+            id: string;
+            name: string;
+            sku: string;
+            product_images: Array<{ public_url: string | null }> | null;
+          };
+          const typedProduct = product as unknown as
+            | ProductWithImages
+            | undefined;
+
           return {
             ...movement,
-            product_name: product?.name ?? 'Produit supprimé',
-            product_sku: product?.sku ?? 'SKU inconnu',
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            product_name: typedProduct?.name ?? 'Produit supprimé',
+            product_sku: typedProduct?.sku ?? 'SKU inconnu',
             product_image_url:
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-              (product as readonly string[])?.product_images?.[0]?.public_url ??
-              null, // ✅ NOUVEAU - Image produit
+              typedProduct?.product_images?.[0]?.public_url ?? null, // ✅ NOUVEAU - Image produit
             user_name: userName,
             user_first_name: userProfile?.first_name,
             user_last_name: userProfile?.last_name,
             reason_description: movement.reason_code
-              ? getReasonDescription(movement.reason_code as readonly string[])
+              ? getReasonDescription(
+                  movement.reason_code as Parameters<
+                    typeof getReasonDescription
+                  >[0]
+                )
               : undefined,
           };
         });
 
-        setMovements(enrichedMovements as readonly string[]);
+        setMovements(enrichedMovements as unknown as MovementWithDetails[]);
         setTotal(count ?? 0);
       } catch (error) {
         console.error('Erreur lors de la récupération des mouvements:', error);
@@ -685,7 +700,11 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
             'Stock Après': movement.quantity_after,
             'Coût Unitaire': movement.unit_cost ?? '',
             Motif: movement.reason_code
-              ? getReasonDescription(movement.reason_code as readonly string[])
+              ? getReasonDescription(
+                  movement.reason_code as Parameters<
+                    typeof getReasonDescription
+                  >[0]
+                )
               : '',
             Utilisateur: userName,
             Notes: movement.notes ?? '',

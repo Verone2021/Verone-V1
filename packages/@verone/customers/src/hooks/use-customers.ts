@@ -83,7 +83,9 @@ async function fetchCustomers(
   ) {
     let orgQuery = supabase
       .from('organisations')
-      .select('*')
+      .select(
+        'id, email, is_active, legal_name, trade_name, siret, vat_number, billing_address_line1, billing_city, billing_postal_code, billing_country, shipping_address_line1, shipping_city, shipping_postal_code, shipping_country, has_different_shipping_address'
+      )
       .eq('type', 'customer')
       .eq('is_active', filters?.is_active ?? true)
       .is('archived_at', null)
@@ -135,7 +137,9 @@ async function fetchCustomers(
   ) {
     let individualQuery = supabase
       .from('individual_customers')
-      .select('*')
+      .select(
+        'id, email, is_active, first_name, last_name, phone, address_line1, address_line2, city, postal_code, region, country, billing_address_line1, billing_city, billing_postal_code, billing_country, has_different_billing_address'
+      )
       .eq('is_active', filters?.is_active ?? true)
       .order('last_name', { ascending: true });
 
@@ -200,7 +204,9 @@ async function fetchCustomerById(
   if (type === 'professional') {
     const { data, error } = await supabase
       .from('organisations')
-      .select('*')
+      .select(
+        'id, email, is_active, legal_name, trade_name, siret, vat_number, billing_address_line1, billing_city, billing_postal_code, billing_country, shipping_address_line1, shipping_city, shipping_postal_code, shipping_country, has_different_shipping_address'
+      )
       .eq('id', id)
       .eq('type', 'customer')
       .single();
@@ -228,7 +234,9 @@ async function fetchCustomerById(
   } else {
     const { data, error } = await supabase
       .from('individual_customers')
-      .select('*')
+      .select(
+        'id, email, is_active, first_name, last_name, phone, address_line1, address_line2, city, postal_code, region, country, billing_address_line1, billing_city, billing_postal_code, billing_country, has_different_billing_address'
+      )
       .eq('id', id)
       .single();
 

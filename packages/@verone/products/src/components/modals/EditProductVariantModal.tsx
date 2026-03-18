@@ -96,7 +96,11 @@ export function EditProductVariantModal({
   // Initialiser les valeurs depuis le produit
   useEffect(() => {
     if (isOpen) {
-      setVariantValue(product.variant_attributes?.[variantType] ?? '');
+      setVariantValue(
+        (product.variant_attributes as Record<string, string> | null)?.[
+          variantType
+        ] ?? ''
+      );
       setCostPrice(
         typeof product.cost_price === 'string'
           ? parseFloat(product.cost_price)

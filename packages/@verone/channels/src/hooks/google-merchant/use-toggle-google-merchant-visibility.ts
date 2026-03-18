@@ -66,7 +66,7 @@ export function useToggleGoogleMerchantVisibility() {
 
       return data;
     },
-    onSuccess: data => {
+    onSuccess: async data => {
       const { visible } = data.data ?? {};
 
       logger.info('[useToggleGoogleMerchantVisibility] Success', {
@@ -80,10 +80,10 @@ export function useToggleGoogleMerchantVisibility() {
       );
 
       // Invalidate queries
-      void queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['google-merchant-products'],
       });
-      void queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['google-merchant-stats'],
       });
     },

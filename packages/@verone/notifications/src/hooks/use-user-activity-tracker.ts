@@ -111,7 +111,7 @@ export function useUserActivityTracker() {
               created_at: new Date().toISOString(),
               ...(appSource ? { app_source: appSource } : {}),
             };
-          })
+          }) as unknown as import('@verone/types').Database['public']['Tables']['user_activity_logs']['Insert'][]
         );
 
       if (error) {

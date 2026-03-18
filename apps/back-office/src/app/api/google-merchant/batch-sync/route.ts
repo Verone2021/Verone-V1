@@ -134,7 +134,11 @@ export async function POST(
 
     // 4. Synchronisation batch
     const googleClient = getGoogleMerchantClient();
-    const results = await googleClient.batchSyncProducts(eligibleProducts);
+    const results = await googleClient.batchSyncProducts(
+      eligibleProducts as unknown as Parameters<
+        typeof googleClient.batchSyncProducts
+      >[0]
+    );
 
     // 5. Agrégation des résultats
     const successCount = results.filter(r => r.success).length;

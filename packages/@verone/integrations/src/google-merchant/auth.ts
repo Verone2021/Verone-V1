@@ -178,7 +178,7 @@ export class GoogleMerchantAuth {
 
       this.auth = new GoogleAuth({
         credentials,
-        scopes: GOOGLE_MERCHANT_CONFIG.scopes as string[],
+        scopes: GOOGLE_MERCHANT_CONFIG.scopes as unknown as string[],
       });
 
       // Log de configuration (sans les clés sensibles)

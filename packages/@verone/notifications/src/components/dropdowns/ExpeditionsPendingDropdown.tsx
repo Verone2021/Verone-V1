@@ -218,24 +218,22 @@ export function ExpeditionsPendingDropdown({
         throw new Error(queryError.message);
       }
 
-      const enrichedExpeditions: PendingExpedition[] = (data ?? []).map(
-        (o: Record<string, unknown>) => {
-          const org = o.organisation as Record<string, unknown> | null;
-          const items = o.items as unknown[] | null;
-          return {
-            id: o.id as string,
-            order_number: (o.order_number as string | undefined) ?? 'N/A',
-            status: o.status as string,
-            customer_name:
-              (org?.name as string | undefined) ?? 'Client inconnu',
-            customer_city: (org?.city as string | undefined) ?? null,
-            items_count: items?.length ?? 0,
-            validated_at:
-              (o.validated_at as string | undefined) ??
-              (o.created_at as string),
-          };
-        }
-      );
+      const enrichedExpeditions: PendingExpedition[] = (
+        (data ?? []) as unknown as Record<string, unknown>[]
+      ).map((o: Record<string, unknown>) => {
+        const org = o.organisation as Record<string, unknown> | null;
+        const items = o.items as unknown[] | null;
+        return {
+          id: o.id as string,
+          order_number: (o.order_number as string | undefined) ?? 'N/A',
+          status: o.status as string,
+          customer_name: (org?.name as string | undefined) ?? 'Client inconnu',
+          customer_city: (org?.city as string | undefined) ?? null,
+          items_count: items?.length ?? 0,
+          validated_at:
+            (o.validated_at as string | undefined) ?? (o.created_at as string),
+        };
+      });
 
       setExpeditions(enrichedExpeditions);
     } catch (err) {

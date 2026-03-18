@@ -73,7 +73,7 @@ export function useUpdateGoogleMerchantPrice() {
 
       return data;
     },
-    onSuccess: data => {
+    onSuccess: async data => {
       const { priceHtCents, priceTtcCents } = data.data ?? {};
 
       logger.info('[useUpdateGoogleMerchantPrice] Success', {
@@ -86,7 +86,7 @@ export function useUpdateGoogleMerchantPrice() {
       );
 
       // Invalidate queries
-      void queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['google-merchant-products'],
       });
     },

@@ -81,18 +81,19 @@ export function useCollectionProducts(
         )
       )
     `,
-      filters: (query: {
-        limit: (n: number) => unknown;
-        eq: (
-          col: string,
-          val: string
-        ) => { eq: (col: string, val: string) => unknown };
-      }) => {
-        if (!collectionId) return query.limit(0); // Return empty if no collection
-        return query
+      filters: ((query: unknown) => {
+        const q = query as {
+          limit: (n: number) => unknown;
+          eq: (
+            col: string,
+            val: string
+          ) => { eq: (col: string, val: string) => unknown };
+        };
+        if (!collectionId) return q.limit(0); // Return empty if no collection
+        return q
           .eq('collection_id', collectionId)
           .eq('products.creation_mode', 'complete'); // Exclure sourcing
-      },
+      }) as Parameters<typeof useSupabaseQuery>[0]['filters'],
       orderBy: { column: 'position', ascending: true },
       autoFetch: !!collectionId, // Only fetch if collectionId exists
     });

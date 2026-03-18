@@ -52,18 +52,9 @@ import {
 
 import { PhaseIndicator } from '@/components/ui/phase-indicator';
 
-// Hooks et Dropdowns pour badges dynamiques (Phase 2 - 2026-01-23)
+// Hook consolidé sidebar + dropdowns (Phase 2 - 2026-01-23 / optimisé 2026-03-17)
 import {
-  useStockAlertsCount,
-  useConsultationsCount,
-  useLinkmePendingCount,
-  useProductsIncompleteCount,
-  useOrdersPendingCount,
-  useExpeditionsPendingCount,
-  useTransactionsUnreconciledCount,
-  useLinkmeApprovalsCount,
-  useFormSubmissionsCount,
-  useLinkmeMissingInfoCount,
+  useSidebarCounts,
   useDatabaseNotifications,
   StockAlertsDropdown,
   ConsultationsDropdown,
@@ -372,19 +363,19 @@ function SidebarContent() {
   const { isExpanded, onMouseEnter, onMouseLeave, onFocus } =
     useHoverExpand(150);
 
-  // Phase 2 : Badges dynamiques avec Realtime (2026-01-23)
-  const { count: stockAlertsCount } = useStockAlertsCount();
-  const { count: consultationsCount } = useConsultationsCount();
-  const { count: linkmePendingCount } = useLinkmePendingCount();
-  // Phase 2b : Nouveaux badges (2026-01-23)
-  const { count: productsIncompleteCount } = useProductsIncompleteCount();
-  const { count: ordersPendingCount } = useOrdersPendingCount();
-  const { count: expeditionsPendingCount } = useExpeditionsPendingCount();
-  const { count: transactionsUnreconciledCount } =
-    useTransactionsUnreconciledCount();
-  const { count: linkmeApprovalsCount } = useLinkmeApprovalsCount();
-  const { count: formSubmissionsCount } = useFormSubmissionsCount();
-  const { count: linkmeMissingInfoCount } = useLinkmeMissingInfoCount();
+  // Badges dynamiques — hook consolidé (1 auth + Promise.all + 7 canaux Realtime)
+  const {
+    stockAlerts: stockAlertsCount,
+    consultations: consultationsCount,
+    linkmePending: linkmePendingCount,
+    productsIncomplete: productsIncompleteCount,
+    ordersPending: ordersPendingCount,
+    expeditionsPending: expeditionsPendingCount,
+    transactionsUnreconciled: transactionsUnreconciledCount,
+    linkmeApprovals: linkmeApprovalsCount,
+    formSubmissions: formSubmissionsCount,
+    linkmeMissingInfo: linkmeMissingInfoCount,
+  } = useSidebarCounts();
   const { unreadCount: unreadNotificationsCount } = useDatabaseNotifications();
 
   /**

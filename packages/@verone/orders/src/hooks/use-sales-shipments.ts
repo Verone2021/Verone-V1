@@ -165,7 +165,16 @@ export function useSalesShipments() {
 
           if (org) {
             customerName = getOrganisationDisplayName(org);
-            organisationData = org;
+            organisationData = {
+              ...org,
+              email: org.email ?? undefined,
+              phone: org.phone ?? undefined,
+              address_line1: org.address_line1 ?? undefined,
+              address_line2: org.address_line2 ?? undefined,
+              postal_code: org.postal_code ?? undefined,
+              city: org.city ?? undefined,
+              region: org.region ?? undefined,
+            };
           }
         } else if (
           data.customer_type === 'individual' &&
@@ -573,7 +582,18 @@ export function useSalesShipments() {
             )
           `
             )
-            .eq('status', filters.status)
+            .eq(
+              'status',
+              filters.status as
+                | 'draft'
+                | 'partially_shipped'
+                | 'shipped'
+                | 'delivered'
+                | 'cancelled'
+                | 'pending_approval'
+                | 'validated'
+                | 'closed'
+            )
             .order('expected_delivery_date', {
               ascending: true,
               nullsFirst: false,
@@ -600,13 +620,15 @@ export function useSalesShipments() {
         // Charger noms clients selon customer_type (relation polymorphique)
         const orgIds = orders
           .filter(o => o.customer_type === 'organization' && o.customer_id)
-          .map(o => o.customer_id);
+          .map(o => o.customer_id)
+          .filter((id): id is string => id !== null);
 
         const indivIds = orders
           .filter(
             o => o.customer_type === 'individual' && o.individual_customer_id
           )
-          .map(o => o.individual_customer_id);
+          .map(o => o.individual_customer_id)
+          .filter((id): id is string => id !== null);
 
         // Query organisations si nécessaire
         const organisationsMap = new Map();
@@ -740,13 +762,15 @@ export function useSalesShipments() {
         // Charger noms clients selon customer_type (relation polymorphique)
         const orgIds = orders
           .filter(o => o.customer_type === 'organization' && o.customer_id)
-          .map(o => o.customer_id);
+          .map(o => o.customer_id)
+          .filter((id): id is string => id !== null);
 
         const indivIds = orders
           .filter(
             o => o.customer_type === 'individual' && o.individual_customer_id
           )
-          .map(o => o.individual_customer_id);
+          .map(o => o.individual_customer_id)
+          .filter((id): id is string => id !== null);
 
         // Query organisations si nécessaire
         const organisationsMap = new Map();

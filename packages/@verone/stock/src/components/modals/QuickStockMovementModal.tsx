@@ -175,7 +175,7 @@ export function QuickStockMovementModal({
         >
           <Tabs
             value={movementType}
-            onValueChange={v => setMovementType(v as readonly string[])}
+            onValueChange={v => setMovementType(v as 'IN' | 'OUT' | 'ADJUST')}
             className="w-full"
           >
             <TabsList className="grid w-full grid-cols-3">

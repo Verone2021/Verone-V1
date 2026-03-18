@@ -9,6 +9,7 @@ import {
   useSupabaseMutation,
   clearQueryCache,
 } from '@verone/common/hooks/use-supabase-query';
+import type { StockReasonCode } from './use-stock-movements';
 
 export interface StockMovement {
   id: string;
@@ -58,8 +59,8 @@ export interface LowStockProduct {
 
 export interface StockFilters {
   productId?: string;
-  movementTypes?: string[];
-  reasonCodes?: string[];
+  movementTypes?: ('IN' | 'OUT' | 'ADJUST' | 'TRANSFER')[];
+  reasonCodes?: StockReasonCode[]; // Subset of DB enum values
   performedBy?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -268,7 +269,19 @@ export function useStockOptimized(filters: StockFilters = {}) {
     }
 
     // Créer le mouvement
-    const { data, error } = await supabase
+    const supabaseGeneric = supabase as unknown as {
+      from: (t: string) => {
+        insert: (d: unknown[]) => {
+          select: (s: string) => {
+            single: () => Promise<{
+              data: { id: string } | null;
+              error: { message: string } | null;
+            }>;
+          };
+        };
+      };
+    };
+    const { data, error } = await supabaseGeneric
       .from('stock_movements')
       .insert([
         {
@@ -277,7 +290,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
           quantity_after: newStock,
           performed_at: new Date().toISOString(),
         },
-      ] as readonly string[])
+      ])
       .select('id')
       .single();
 
@@ -295,7 +308,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
     if (updateError) throw updateError;
 
     return { data, error: null };
-  }) as readonly string[]);
+  }) as Parameters<typeof useSupabaseMutation<StockMovement>>[0]);
 
   const adjustStockMutation = useSupabaseMutation<boolean>(
     async (
@@ -329,7 +342,14 @@ export function useStockOptimized(filters: StockFilters = {}) {
       }
 
       // Créer le mouvement d'ajustement
-      const { error: movementError } = await supabase
+      const supabaseAdjust = supabase as unknown as {
+        from: (t: string) => {
+          insert: (
+            d: unknown[]
+          ) => Promise<{ error: { message: string } | null }>;
+        };
+      };
+      const { error: movementError } = await supabaseAdjust
         .from('stock_movements')
         .insert([
           {
@@ -342,7 +362,7 @@ export function useStockOptimized(filters: StockFilters = {}) {
             notes: notes,
             performed_at: new Date().toISOString(),
           },
-        ] as readonly string[]);
+        ]);
 
       if (movementError) throw movementError;
 
