@@ -640,14 +640,12 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
         return;
       }
 
-      // LinkMe price formula
+      // LinkMe price formula (additive margin model)
       const commissionRate = (selItem.commission_rate ?? 0) / 100;
       const marginRate = selItem.margin_rate / 100;
       const sellingPrice =
         Math.round(
-          (selItem.base_price_ht / (1 - marginRate)) *
-            (1 + commissionRate) *
-            100
+          selItem.base_price_ht * (1 + marginRate) * (1 + commissionRate) * 100
         ) / 100;
 
       setEditFields(prev => ({
@@ -1630,7 +1628,8 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
                 const marginRate = selItem.margin_rate / 100;
                 const sellingPrice =
                   Math.round(
-                    (selItem.base_price_ht / (1 - marginRate)) *
+                    selItem.base_price_ht *
+                      (1 + marginRate) *
                       (1 + commissionRate) *
                       100
                   ) / 100;

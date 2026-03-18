@@ -248,9 +248,9 @@ export function ProductDetailSheet({
     ? basePrice
     : basePrice * (1 + platformFeeRate);
 
-  // Selling price with margin (taux de marque)
+  // Selling price with margin (taux de marge additif)
   const sellingPriceWithMargin =
-    marginRateDecimal < 1 ? basePrice / (1 - marginRateDecimal) : basePrice;
+    marginRateDecimal > 0 ? basePrice * (1 + marginRateDecimal) : basePrice;
 
   // Final price for client
   const finalPrice = isAffiliateProduct

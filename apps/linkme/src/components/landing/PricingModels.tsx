@@ -50,8 +50,8 @@ function calculatePricing(
   basePrice: number,
   marginRate: number
 ): IPricingResult {
-  // Prix de vente HT = prix base / (1 - marge)
-  const sellingPriceHT = basePrice / (1 - marginRate / 100);
+  // Prix de vente HT = prix base * (1 + marge)
+  const sellingPriceHT = basePrice * (1 + marginRate / 100);
 
   // Commission LinkMe
   const linkmeCommission = sellingPriceHT * LINKME_COMMISSION_RATE;
