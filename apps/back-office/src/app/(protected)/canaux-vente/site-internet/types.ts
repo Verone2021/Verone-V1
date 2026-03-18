@@ -179,8 +179,30 @@ export interface SiteInternetConfig {
       enable_live_chat?: boolean;
     };
     shipping?: {
-      free_shipping_threshold?: number;
-      regions?: string[];
+      // Livraison standard
+      standard_enabled: boolean;
+      standard_label: string;
+      standard_price_cents: number;
+      standard_min_days: number;
+      standard_max_days: number;
+
+      // Livraison express
+      express_enabled: boolean;
+      express_label: string;
+      express_price_cents: number;
+      express_min_days: number;
+      express_max_days: number;
+
+      // Seuil livraison gratuite
+      free_shipping_enabled: boolean;
+      free_shipping_threshold_cents: number;
+      free_shipping_applies_to: 'standard' | 'all';
+
+      // Zones autorisées
+      allowed_countries: string[];
+
+      // Message informatif
+      shipping_info_message?: string;
     };
   };
   is_active: boolean;
