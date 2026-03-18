@@ -1185,13 +1185,16 @@ export function usePendingOrders() {
           total_ht: order.total_ht,
           total_ttc: order.total_ttc,
           created_at: order.created_at,
+          organisation_siret: null,
+          organisation_country: null,
+          organisation_vat_number: null,
           requester_name: linkmeDetails?.requester_name ?? null,
           requester_email: linkmeDetails?.requester_email ?? null,
           requester_type: linkmeDetails?.requester_type ?? null,
           organisation_name: organisationName,
           enseigne_name: enseigneName,
           linkme_details: linkmeDetails
-            ? {
+            ? ({
                 is_new_restaurant: linkmeDetails.is_new_restaurant ?? false,
                 requester_type: linkmeDetails.requester_type,
                 requester_name: linkmeDetails.requester_name,
@@ -1214,10 +1217,10 @@ export function usePendingOrders() {
                 billing_phone: linkmeDetails.billing_phone,
                 desired_delivery_date: linkmeDetails.desired_delivery_date,
                 mall_form_required: linkmeDetails.mall_form_required,
-              }
+              } as PendingOrderLinkMeDetails)
             : null,
           items,
-        });
+        } as PendingOrder);
       }
 
       return enrichedOrders;

@@ -84,7 +84,7 @@ export interface UseImageUploadReturn {
 
 export function useImageUpload({
   bucket,
-  _autoUpload = true,
+  autoUpload: _autoUpload = true,
   onUploadSuccess,
   onUploadError,
   onProgress,

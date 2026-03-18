@@ -81,9 +81,9 @@ export function useArchivedProducts() {
       if (error) throw error;
 
       // Enrichir les données avec les URLs publiques des images
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Supabase joined query (product_images) returns untyped data
+
       const enrichedProducts = (data ?? []).map(product => ({
-        ...product,
+        ...(product as unknown as Record<string, unknown>),
         images: (
           (
             product as {

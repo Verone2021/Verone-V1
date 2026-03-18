@@ -270,8 +270,8 @@ export function useVariantProducts() {
             sku: newSku,
             name: data.name,
             cost_price: data.cost_price,
-            stock_status: 'in_stock',
-            product_status: 'active',
+            stock_status: 'in_stock' as const,
+            product_status: 'active' as const,
             variant_attributes: data.variant_attributes,
             variant_group_id: variantGroupId,
             variant_position: nextPosition,
@@ -281,7 +281,7 @@ export function useVariantProducts() {
             brand: baseProduct.brand,
             description: baseProduct.description,
             technical_description: baseProduct.technical_description,
-          },
+          } as unknown as import('@verone/types').Database['public']['Tables']['products']['Insert'],
         ])
         .select(
           'id, name, sku, cost_price, stock_status, product_status, variant_attributes, variant_group_id, variant_position, created_at, updated_at'
@@ -306,7 +306,7 @@ export function useVariantProducts() {
             is_primary: true,
             display_order: 1,
           },
-        ] as Record<string, unknown>[]);
+        ] as unknown as import('@verone/types').Database['public']['Tables']['product_images']['Insert'][]);
       }
 
       toast({

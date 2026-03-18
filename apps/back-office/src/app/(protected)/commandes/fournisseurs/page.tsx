@@ -210,6 +210,21 @@ export default function PurchaseOrdersPage() {
     }>
   >([]);
 
+  // User ID courant — initialisé une seule fois au montage (évite 4 appels getUser() redondants)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    void supabase.auth
+      .getUser()
+      .then(({ data: { user } }) => {
+        setCurrentUserId(user?.id ?? null);
+      })
+      .catch(error => {
+        console.error('[PurchaseOrders] getUser failed:', error);
+      });
+  }, []);
+
   const toggleRow = (orderId: string) => {
     setExpandedRows(prev => {
       const next = new Set(prev);
@@ -609,13 +624,7 @@ export default function PurchaseOrdersPage() {
 
     // Sinon, exécuter directement
     try {
-      // Récupérer l'utilisateur courant
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user?.id) {
+      if (!currentUserId) {
         toast({
           title: 'Erreur',
           description: 'Utilisateur non authentifié',
@@ -628,7 +637,7 @@ export default function PurchaseOrdersPage() {
       const result = await updatePurchaseOrderStatus(
         orderId,
         newStatus as PurchaseOrderStatus, // Cast nécessaire car database types pas encore à jour
-        user.id
+        currentUserId
       );
 
       if (!result.success) {
@@ -659,13 +668,7 @@ export default function PurchaseOrdersPage() {
     if (!orderToValidate) return;
 
     try {
-      // Récupérer l'utilisateur courant
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user?.id) {
+      if (!currentUserId) {
         toast({
           title: 'Erreur',
           description: 'Utilisateur non authentifié',
@@ -678,7 +681,7 @@ export default function PurchaseOrdersPage() {
       const result = await updatePurchaseOrderStatus(
         orderToValidate,
         'validated',
-        user.id
+        currentUserId
       );
 
       if (!result.success) {
@@ -712,12 +715,7 @@ export default function PurchaseOrdersPage() {
     if (!orderToDevalidate) return;
 
     try {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user?.id) {
+      if (!currentUserId) {
         toast({
           title: 'Erreur',
           description: 'Utilisateur non authentifié',
@@ -729,7 +727,7 @@ export default function PurchaseOrdersPage() {
       const result = await updatePurchaseOrderStatus(
         orderToDevalidate,
         'draft',
-        user.id
+        currentUserId
       );
 
       if (!result.success) {
@@ -794,13 +792,7 @@ export default function PurchaseOrdersPage() {
   const handleCancelConfirmed = async () => {
     if (!orderToCancel) return;
     try {
-      // Récupérer l'utilisateur courant
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user?.id) {
+      if (!currentUserId) {
         toast({
           title: 'Erreur',
           description: 'Utilisateur non authentifié',
@@ -813,7 +805,7 @@ export default function PurchaseOrdersPage() {
       const result = await updatePurchaseOrderStatus(
         orderToCancel,
         'cancelled',
-        user.id
+        currentUserId
       );
 
       if (!result.success) {

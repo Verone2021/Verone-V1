@@ -87,7 +87,7 @@ export function CharacteristicsEditSection({
   });
 
   const section = 'characteristics' as EditableSection;
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as Product | null;
   const error = getError(section);
 
   const handleStartEdit = () => {

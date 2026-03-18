@@ -789,7 +789,11 @@ export default function CollectionsPage() {
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
         onSubmit={handleSaveCollection}
-        editingCollection={editingCollection}
+        editingCollection={
+          editingCollection as unknown as Parameters<
+            typeof CollectionCreationWizard
+          >[0]['editingCollection']
+        }
       />
 
       {/* Modal de gestion des produits - V2 Universel */}

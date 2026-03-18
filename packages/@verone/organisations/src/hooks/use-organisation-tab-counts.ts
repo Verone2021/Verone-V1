@@ -104,7 +104,8 @@ export function useOrganisationTabCounts({
       products.length > 0
     ) {
       const orgProducts = products.filter(
-        (p: { supplier_id?: string | null }) => p.supplier_id === organisationId
+        p =>
+          (p as { supplier_id?: string | null }).supplier_id === organisationId
       );
       setCounts(prev => ({ ...prev, products: orgProducts.length }));
     }

@@ -42,10 +42,44 @@ export interface UseInlineEditOptions {
   onError?: (error: string) => void;
 }
 
+// Type pour les données de section d'édition
+// Utilise unknown pour rester flexible pour tous les types de champs
+export type SectionData = Record<string, unknown>;
+
+/** Helper pour lire un champ string depuis les données de section éditée */
+export function getStringField(
+  data: SectionData | null | undefined,
+  key: string,
+  fallback = ''
+): string {
+  const val = data?.[key];
+  return typeof val === 'string' ? val : fallback;
+}
+
+/** Helper pour lire un champ number depuis les données de section éditée */
+export function getNumberField(
+  data: SectionData | null | undefined,
+  key: string,
+  fallback = 0
+): number {
+  const val = data?.[key];
+  return typeof val === 'number' ? val : fallback;
+}
+
+/** Helper pour lire un champ boolean depuis les données de section éditée */
+export function getBooleanField(
+  data: SectionData | null | undefined,
+  key: string,
+  fallback = false
+): boolean {
+  const val = data?.[key];
+  return typeof val === 'boolean' ? val : fallback;
+}
+
 // État d'édition par section
 interface SectionEditState {
   isEditing: boolean;
-  editedData: Record<string, unknown> | null;
+  editedData: SectionData | null;
   isSaving: boolean;
   error: string | null;
   hasChanges: boolean;
@@ -93,7 +127,7 @@ export function useInlineEdit(options: UseInlineEditOptions) {
   );
 
   const getEditedData = useCallback(
-    (section: EditableSection) => {
+    (section: EditableSection): SectionData | null => {
       return sections[section]?.editedData ?? null;
     },
     [sections]
@@ -108,7 +142,7 @@ export function useInlineEdit(options: UseInlineEditOptions) {
 
   // Actions par section
   const startEdit = useCallback(
-    (section: EditableSection, initialData: Record<string, unknown>) => {
+    (section: EditableSection, initialData: SectionData) => {
       setSections(prev => ({
         ...prev,
         [section]: {
@@ -137,7 +171,7 @@ export function useInlineEdit(options: UseInlineEditOptions) {
   }, []);
 
   const updateEditedData = useCallback(
-    (section: EditableSection, updates: Record<string, unknown>) => {
+    (section: EditableSection, updates: SectionData) => {
       setSections(prev => ({
         ...prev,
         [section]: {

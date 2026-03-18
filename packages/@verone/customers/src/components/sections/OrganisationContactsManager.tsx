@@ -352,7 +352,11 @@ export function OrganisationContactsManager({
           onClose={handleModalClose}
           organisationId={organisationId}
           organisationName=""
-          contact={selectedContact as Contact | undefined}
+          contact={
+            selectedContact as unknown as
+              | import('@verone/types').Contact
+              | undefined
+          }
           onSave={() => {
             void handleContactSuccess();
           }}

@@ -288,7 +288,7 @@ export function PerformanceEditSection({
 
           {/* Résumé de performance */}
           {editData &&
-            (editData.rating > 0 ||
+            ((editData.rating ?? 0) > 0 ||
               !!editData.preferred_supplier ||
               (editData.certification_labels?.length ?? 0) > 0) && (
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
@@ -298,11 +298,11 @@ export function PerformanceEditSection({
                 </h4>
 
                 <div className="space-y-2 text-sm">
-                  {editData.rating > 0 && (
+                  {(editData.rating ?? 0) > 0 && (
                     <div className="flex justify-between items-center">
                       <span className="text-blue-700">Évaluation:</span>
                       <div className="flex space-x-1">
-                        {renderStars(editData.rating)}
+                        {renderStars(editData.rating ?? 0)}
                       </div>
                     </div>
                   )}
@@ -317,12 +317,14 @@ export function PerformanceEditSection({
                     </div>
                   )}
 
-                  {editData.certification_labels?.length > 0 && (
+                  {(editData.certification_labels?.length ?? 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-blue-700">Certifications:</span>
                       <span className="font-medium text-blue-800">
-                        {editData.certification_labels.length} label
-                        {editData.certification_labels.length > 1 ? 's' : ''}
+                        {editData.certification_labels?.length ?? 0} label
+                        {(editData.certification_labels?.length ?? 0) > 1
+                          ? 's'
+                          : ''}
                       </span>
                     </div>
                   )}

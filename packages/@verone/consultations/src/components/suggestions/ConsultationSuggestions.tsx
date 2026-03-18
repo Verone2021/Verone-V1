@@ -171,7 +171,10 @@ export function ConsultationSuggestions({
                   {/* En-tête consultation */}
                   <div className="flex items-center space-x-2">
                     <h4 className="font-medium text-gray-900">
-                      {consultation.organisation_name}
+                      {consultation.organisation?.trade_name ??
+                        consultation.organisation?.legal_name ??
+                        consultation.enseigne?.name ??
+                        'Client'}
                     </h4>
                     <Badge className={getStatusColor(consultation.status)}>
                       {consultation.status.replace('_', ' ')}

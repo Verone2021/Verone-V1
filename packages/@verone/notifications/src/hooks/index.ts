@@ -24,3 +24,6 @@ export * from './use-linkme-missing-info-count';
 
 // Aggregated count hook (2026-03-05)
 export * from './use-all-notifications-count';
+
+// Sidebar consolidated counts hook (2026-03-17)
+export * from './use-sidebar-counts';

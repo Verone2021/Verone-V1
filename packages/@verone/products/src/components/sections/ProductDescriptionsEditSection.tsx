@@ -53,7 +53,7 @@ export function ProductDescriptionsEditSection({
   });
 
   const section = 'descriptions' as EditableSection;
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as Product | null;
   const error = getError(section);
 
   // Données actuelles
@@ -87,7 +87,7 @@ export function ProductDescriptionsEditSection({
 
   const handleAddSellingPoint = () => {
     if (newSellingPoint.trim() && editData?.selling_points) {
-      const currentPoints = editData.selling_points as string[];
+      const currentPoints = editData.selling_points;
       if (!currentPoints.includes(newSellingPoint.trim())) {
         handleFieldChange('selling_points', [
           ...currentPoints,
@@ -100,7 +100,7 @@ export function ProductDescriptionsEditSection({
 
   const handleRemoveSellingPoint = (index: number) => {
     if (editData?.selling_points) {
-      const currentPoints = editData.selling_points as string[];
+      const currentPoints = editData.selling_points;
       handleFieldChange(
         'selling_points',
         currentPoints.filter((_, i) => i !== index)

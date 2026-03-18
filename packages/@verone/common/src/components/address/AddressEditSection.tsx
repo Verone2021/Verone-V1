@@ -82,7 +82,7 @@ export function AddressEditSection({
   });
 
   const section: EditableSection = 'address';
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as Organisation | null;
   const error = getError(section);
 
   const handleStartEdit = () => {

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 'use client';
 
 import Image from 'next/image';
@@ -39,7 +38,32 @@ import {
   ShoppingCart,
 } from 'lucide-react';
 
-// Types
+// Types locaux pour les données de sections éditables
+interface InfoSectionData {
+  name: string;
+  supplier_page_url: string;
+  supplier_reference: string;
+}
+interface PricingSectionData {
+  cost_price: number;
+  eco_tax_default: number;
+}
+interface SupplierSectionData {
+  supplier_id: string | null;
+}
+interface DetailsSectionData {
+  brand: string;
+  description: string;
+  supplier_moq: number | null;
+  weight: number;
+  dimensions_length: number;
+  dimensions_width: number;
+  dimensions_height: number;
+}
+interface NotesSectionData {
+  internal_notes: string;
+}
+
 interface SourcingProduct {
   id: string;
   name: string;
@@ -131,7 +155,7 @@ export function SourcingProductEditCard({
   // ZONE INFO - Nom + URL Fournisseur
   // ═══════════════════════════════════════════════════════════════════════════
   const infoSection: EditableSection = 'general';
-  const infoData = getEditedData(infoSection);
+  const infoData = getEditedData(infoSection) as InfoSectionData | null;
   const infoError = getError(infoSection);
 
   const handleStartInfoEdit = () => {
@@ -165,7 +189,9 @@ export function SourcingProductEditCard({
   // ZONE PRIX - Prix d'achat + Éco-participation
   // ═══════════════════════════════════════════════════════════════════════════
   const pricingSection: EditableSection = 'pricing';
-  const pricingData = getEditedData(pricingSection);
+  const pricingData = getEditedData(
+    pricingSection
+  ) as PricingSectionData | null;
   const pricingError = getError(pricingSection);
 
   const handleStartPricingEdit = () => {
@@ -190,7 +216,9 @@ export function SourcingProductEditCard({
   // ZONE FOURNISSEUR - Sélection fournisseur
   // ═══════════════════════════════════════════════════════════════════════════
   const supplierSection: EditableSection = 'supplier';
-  const supplierData = getEditedData(supplierSection);
+  const supplierData = getEditedData(
+    supplierSection
+  ) as SupplierSectionData | null;
   const supplierError = getError(supplierSection);
 
   const handleStartSupplierEdit = () => {
@@ -210,7 +238,9 @@ export function SourcingProductEditCard({
   // ZONE DÉTAILS PRODUIT - Brand, Description, MOQ, Dimensions, Weight
   // ═══════════════════════════════════════════════════════════════════════════
   const detailsSection: EditableSection = 'details';
-  const detailsData = getEditedData(detailsSection);
+  const detailsData = getEditedData(
+    detailsSection
+  ) as DetailsSectionData | null;
   const detailsError = getError(detailsSection);
 
   const handleStartDetailsEdit = () => {
@@ -259,7 +289,7 @@ export function SourcingProductEditCard({
   // ZONE NOTES INTERNES
   // ═══════════════════════════════════════════════════════════════════════════
   const notesSection: EditableSection = 'notes';
-  const notesData = getEditedData(notesSection);
+  const notesData = getEditedData(notesSection) as NotesSectionData | null;
   const notesError = getError(notesSection);
 
   const handleStartNotesEdit = () => {

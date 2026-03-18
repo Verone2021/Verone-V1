@@ -128,7 +128,6 @@ export function useBaseListHook<T>(initialData: T[] = []): BaseHookState<T[]> &
 
   return {
     ...base,
-    setData: setData as <U>(data: U) => void,
     addItem,
     updateItem,
     removeItem,
@@ -174,11 +173,35 @@ export function createCrudOperations<
   baseHook: ReturnType<typeof useBaseListHook<TRow>>,
   selectFields?: string
 ): CrudOperations<TRow, TInsert, TUpdate> {
+  // Cast to a looser client type to allow generic CRUD operations across tables
+  const supabaseGeneric = baseHook.supabase as unknown as {
+    from: (table: string) => {
+      insert: (data: unknown[]) => {
+        select: (fields: string) => {
+          single: () => Promise<{ data: unknown; error: unknown }>;
+        };
+      };
+      update: (data: unknown) => {
+        eq: (
+          col: string,
+          val: string
+        ) => {
+          select: (fields: string) => {
+            single: () => Promise<{ data: unknown; error: unknown }>;
+          };
+        };
+      };
+      delete: () => {
+        eq: (col: string, val: string) => Promise<{ error: unknown }>;
+      };
+    };
+  };
+
   const create = async (data: TInsert): Promise<TRow | null> => {
     try {
       baseHook.setError(null);
 
-      const { data: newItem, error } = await baseHook.supabase
+      const { data: newItem, error } = await supabaseGeneric
         .from(tableName)
         .insert([data as Record<string, unknown>])
         .select(selectFields ?? '*')
@@ -186,9 +209,9 @@ export function createCrudOperations<
 
       if (error) throw error;
 
-      baseHook.addItem(newItem as unknown as TRow);
+      baseHook.addItem(newItem as TRow);
       baseHook.showToast('Succès', `${tableName} créé avec succès`);
-      return newItem as unknown as TRow;
+      return newItem as TRow;
     } catch (err) {
       baseHook.handleError(err, `Erreur lors de la création de ${tableName}`);
       baseHook.showToast(
@@ -204,18 +227,18 @@ export function createCrudOperations<
     try {
       baseHook.setError(null);
 
-      const { data: updatedItem, error } = await baseHook.supabase
+      const { data: updatedItem, error } = await supabaseGeneric
         .from(tableName)
         .update(data as Record<string, unknown>)
-        .eq('id' as string, id)
+        .eq('id', id)
         .select(selectFields ?? '*')
         .single();
 
       if (error) throw error;
 
-      baseHook.updateItem(id, updatedItem as unknown as Partial<TRow>);
+      baseHook.updateItem(id, updatedItem as Partial<TRow>);
       baseHook.showToast('Succès', `${tableName} mis à jour avec succès`);
-      return updatedItem as unknown as TRow;
+      return updatedItem as TRow;
     } catch (err) {
       baseHook.handleError(
         err,
@@ -234,10 +257,10 @@ export function createCrudOperations<
     try {
       baseHook.setError(null);
 
-      const { error } = await baseHook.supabase
+      const { error } = await supabaseGeneric
         .from(tableName)
         .delete()
-        .eq('id' as string, id);
+        .eq('id', id);
 
       if (error) throw error;
 

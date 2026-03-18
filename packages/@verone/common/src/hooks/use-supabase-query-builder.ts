@@ -47,9 +47,13 @@ export function useSupabaseQuery<T>(options: QueryOptions<T>): QueryState<T> {
       setLoading(true);
       setError(null);
 
-      let query = supabase
+      let query = (
+        supabase as unknown as {
+          from: (table: string) => { select: (cols: string) => unknown };
+        }
+      )
         .from(options.tableName)
-        .select(options.select ?? '*') as unknown as SupabaseQuery;
+        .select(options.select ?? '*') as SupabaseQuery;
 
       // Apply filters
       if (options.filters) {

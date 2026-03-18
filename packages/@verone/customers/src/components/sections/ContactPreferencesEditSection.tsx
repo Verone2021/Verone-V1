@@ -313,10 +313,12 @@ export function ContactPreferencesEditSection({
             Communication préférée:
           </span>
           <div className="flex items-center mt-1">
-            {getCommunicationMethodIcon(contact.preferred_communication_method)}
+            {getCommunicationMethodIcon(
+              contact.preferred_communication_method ?? 'email'
+            )}
             <span className="ml-2 text-sm text-black font-medium">
               {getCommunicationMethodLabel(
-                contact.preferred_communication_method
+                contact.preferred_communication_method ?? 'email'
               )}
             </span>
           </div>
@@ -329,7 +331,7 @@ export function ContactPreferencesEditSection({
             Langue:
           </span>
           <div className="text-sm text-black font-medium">
-            {getLanguageLabel(contact.language_preference)}
+            {getLanguageLabel(contact.language_preference ?? 'fr')}
           </div>
         </div>
 

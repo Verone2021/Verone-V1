@@ -519,7 +519,7 @@ export function usePurchaseOrders() {
           purchase_order_items: enrichedItems,
         };
 
-        setCurrentOrder(enrichedOrder as PurchaseOrder);
+        setCurrentOrder(enrichedOrder as unknown as PurchaseOrder);
         return enrichedOrder;
       } catch (error) {
         console.error('Erreur lors de la récupération de la commande:', error);
@@ -647,7 +647,9 @@ export function usePurchaseOrders() {
             po_number: poNumber,
             supplier_id: data.supplier_id,
             expected_delivery_date: data.expected_delivery_date,
-            delivery_address: data.delivery_address,
+            delivery_address: data.delivery_address as
+              | import('@verone/types').Json
+              | undefined,
             payment_terms: data.payment_terms,
             notes: data.notes,
             total_ht: totalHT,
@@ -716,7 +718,15 @@ export function usePurchaseOrders() {
       try {
         const { error } = await supabase
           .from('purchase_orders')
-          .update(data)
+          .update({
+            expected_delivery_date: data.expected_delivery_date,
+            payment_terms: data.payment_terms,
+            notes: data.notes,
+            ...(data.delivery_address !== undefined && {
+              delivery_address:
+                data.delivery_address as import('@verone/types').Json,
+            }),
+          })
           .eq('id', orderId);
 
         if (error) throw error;

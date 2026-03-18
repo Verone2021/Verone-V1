@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unused-vars */
 'use client';
 
 import { useState, useTransition } from 'react';
@@ -66,7 +66,7 @@ export function IdentifiersEditSection({
   });
 
   const section: EditableSection = 'identifiers';
-  const editData = getEditedData(section);
+  const editData = getEditedData(section) as Product | null;
   const error = getError(section);
 
   const handleStartEdit = () => {

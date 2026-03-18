@@ -96,7 +96,7 @@ const _ROOM_CATEGORIES: { value: string; label: string; icon: string }[] = [
 interface CollectionFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateCollectionData) => Promise<void>;
+  onSubmit: (data: Omit<CreateCollectionData, 'created_by'>) => Promise<void>;
   collection?: Collection;
   mode: 'create' | 'edit';
 }
@@ -125,8 +125,10 @@ export function CollectionFormModal({
       setStyle(collection.style as CollectionStyle | undefined);
       setSuitableRooms(collection.suitable_rooms ?? []);
       setTags(collection.theme_tags ?? []);
-      setVisibility(collection.visibility);
-      setIsActive(collection.is_active);
+      setVisibility(
+        (collection.visibility as 'public' | 'private') ?? 'private'
+      );
+      setIsActive(collection.is_active ?? true);
     } else {
       setName('');
       setDescription('');
