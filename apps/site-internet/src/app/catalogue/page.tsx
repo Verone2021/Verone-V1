@@ -273,7 +273,7 @@ export default function CataloguePage() {
               key={i}
               className="border border-verone-gray-200 animate-pulse"
             >
-              <div className="bg-verone-gray-200 h-80" />
+              <div className="bg-verone-gray-200 aspect-square" />
               <div className="p-6 space-y-3">
                 <div className="h-6 bg-verone-gray-200 rounded" />
                 <div className="h-4 bg-verone-gray-100 rounded w-2/3" />

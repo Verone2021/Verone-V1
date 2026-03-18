@@ -79,7 +79,7 @@ export default function CollectionDetailPage({
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {[1, 2, 3, 4].map(i => (
               <div key={i} className="animate-pulse">
-                <div className="bg-verone-gray-200 h-64 rounded-lg" />
+                <div className="bg-verone-gray-200 aspect-square rounded-lg" />
                 <div className="mt-4 space-y-2">
                   <div className="h-5 bg-verone-gray-200 rounded w-3/4" />
                   <div className="h-4 bg-verone-gray-100 rounded w-1/2" />
