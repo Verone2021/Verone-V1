@@ -41,6 +41,7 @@ interface ProductSidebarProps {
   product: {
     product_id: string;
     name: string;
+    slug: string;
     brand: string | null; // Afficher UNIQUEMENT si renseigné
     price_ttc: number | null;
     discount_rate: number | null;
@@ -51,6 +52,8 @@ interface ProductSidebarProps {
     delivery_delay_weeks_max: number | null;
     variant_group_id: string | null;
     eligible_variants_count: number;
+    primary_image_url: string | null;
+    sku: string | null;
   };
   variants?: Array<{
     product_id: string;
@@ -300,12 +303,12 @@ export function ProductSidebar({
               quantity,
               include_assembly: includeAssembly,
               name: product.name,
-              slug: '', // Not needed for cart display
+              slug: product.slug,
               price_ttc: priceTTC,
               assembly_price: product.assembly_price ?? 0,
               eco_participation: ecoParticipation,
-              primary_image_url: null, // Will use product images from context
-              sku: null,
+              primary_image_url: product.primary_image_url,
+              sku: product.sku,
             })
               .then(() => {
                 setAddedToCart(true);

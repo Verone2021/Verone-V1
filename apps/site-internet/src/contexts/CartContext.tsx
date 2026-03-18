@@ -167,13 +167,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
         let updated: CartItem[];
         if (existingIndex >= 0) {
-          // Update quantity
+          // Update quantity + refresh metadata (slug, image, sku may have been missing)
           updated = prev.map((item, idx) =>
             idx === existingIndex
               ? {
                   ...item,
                   quantity: item.quantity + input.quantity,
                   include_assembly: input.include_assembly,
+                  slug: input.slug || item.slug,
+                  primary_image_url:
+                    input.primary_image_url ?? item.primary_image_url,
+                  sku: input.sku ?? item.sku,
+                  price_ttc: input.price_ttc,
+                  assembly_price: input.assembly_price,
+                  eco_participation: input.eco_participation,
                 }
               : item
           );

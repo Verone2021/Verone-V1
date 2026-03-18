@@ -262,7 +262,8 @@ export default function ProductPage({
           product={{
             product_id: product.product_id,
             name: product.name,
-            brand: product.brand, // Affichage conditionnel dans composant
+            slug: product.slug,
+            brand: product.brand,
             price_ttc: product.price_ttc,
             discount_rate: product.discount_rate,
             eco_participation_amount: product.eco_participation_amount,
@@ -272,6 +273,8 @@ export default function ProductPage({
             delivery_delay_weeks_max: product.delivery_delay_weeks_max,
             variant_group_id: product.variant_group_id,
             eligible_variants_count: product.eligible_variants_count,
+            primary_image_url: product.primary_image_url,
+            sku: product.sku,
           }}
           variants={variants}
           currentProductId={product.product_id}
