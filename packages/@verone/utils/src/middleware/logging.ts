@@ -139,7 +139,12 @@ export function withLogging<T extends unknown[]>(
 
     // Log de fin de requête
     if (logLevel === 'error') {
-      logger.error(message, error ?? undefined, endContext, metrics);
+      logger.error(
+        message,
+        error instanceof Error ? error : undefined,
+        endContext,
+        metrics
+      );
     } else {
       logger[logLevel](message, endContext, metrics);
     }
