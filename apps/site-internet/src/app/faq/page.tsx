@@ -81,7 +81,7 @@ const faqData: FaqSection[] = [
       {
         question: "D'où viennent vos produits ?",
         answer:
-          "Nos produits sont sélectionnés auprès des meilleurs artisans et manufactures d'Europe. Chaque pièce est choisie pour sa qualité de fabrication, ses matériaux nobles et son design.",
+          'Nous sourcons nos produits auprès de fabricants et créateurs du monde entier. Chaque pièce est sélectionnée pour son originalité, sa qualité et son rapport qualité-prix.',
       },
       {
         question: 'Proposez-vous des articles sur mesure ?',

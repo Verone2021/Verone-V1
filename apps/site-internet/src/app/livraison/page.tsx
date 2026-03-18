@@ -16,7 +16,7 @@ export default function LivraisonPage() {
           Livraison
         </h1>
         <p className="text-verone-gray-500 max-w-2xl mx-auto leading-relaxed">
-          Un service de livraison premium adapté au mobilier haut de gamme
+          Un service de livraison soigné, adapté à chaque commande
         </p>
       </div>
 

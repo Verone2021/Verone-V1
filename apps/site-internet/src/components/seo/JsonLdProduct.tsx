@@ -29,7 +29,8 @@ export function JsonLdProduct({
     '@context': 'https://schema.org',
     '@type': 'Product',
     name,
-    description: description ?? `${name} — Vérone, mobilier haut de gamme`,
+    description:
+      description ?? `${name} — Vérone, concept store déco & mobilier`,
     url: `${siteUrl}/produit/${slug}`,
     ...(imageUrl ? { image: imageUrl } : {}),
     ...(sku ? { sku } : {}),

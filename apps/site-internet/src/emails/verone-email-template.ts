@@ -1,6 +1,6 @@
 /**
  * Shared email template for Vérone site-internet
- * Branding: noir/blanc, Playfair Display, tons sobres luxe
+ * Branding: noir/blanc, Playfair Display, tons sobres
  */
 
 type AccentColor = 'green' | 'black' | 'blue' | 'gold';
@@ -89,7 +89,7 @@ export function buildVeroneEmailHtml(options: EmailTemplateOptions): string {
     <!-- Logo -->
     <div style="text-align: center; padding: 32px 0 24px 0;">
       <img src="cid:verone-logo" alt="V&Eacute;RONE" width="180" height="60" style="display: inline-block; max-width: 180px; height: auto;" />
-      <p style="font-size: 11px; color: #9ca3af; letter-spacing: 2px; margin: 4px 0 0 0; text-transform: uppercase;">Mobilier &amp; D&eacute;coration</p>
+      <p style="font-size: 11px; color: #9ca3af; letter-spacing: 2px; margin: 4px 0 0 0; text-transform: uppercase;">Concept Store D&eacute;co</p>
     </div>
 
     <!-- Main card -->

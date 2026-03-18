@@ -53,8 +53,8 @@ export async function POST(request: NextRequest) {
           Nous sommes ravis de vous accueillir. Votre compte a &eacute;t&eacute; cr&eacute;&eacute; avec succ&egrave;s.
         </p>
         <p style="font-size: 15px; color: #374151; margin: 0 0 16px 0;">
-          D&eacute;couvrez notre s&eacute;lection de mobilier et d&eacute;coration d'int&eacute;rieur haut de gamme,
-          s&eacute;lectionn&eacute;e avec soin aupr&egrave;s des meilleurs artisans.
+          D&eacute;couvrez notre concept store : des pi&egrave;ces originales de d&eacute;co et mobilier,
+          sourc&eacute;es avec soin, au juste prix.
         </p>
         <p style="font-size: 15px; color: #374151; margin: 0 0 8px 0;">
           <strong>Votre compte vous permet de :</strong>

@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Collections',
   description:
-    'Découvrez nos collections de mobilier et décoration haut de gamme, soigneusement composées pour sublimer votre intérieur.',
+    'Découvrez nos collections de déco et mobilier original. Des pièces sourcées avec soin, pour un intérieur qui vous ressemble.',
   alternates: { canonical: '/collections' },
 };
 

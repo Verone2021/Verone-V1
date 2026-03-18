@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'À propos',
   description:
-    "Découvrez l'histoire de Vérone, maison française de mobilier et décoration d'intérieur haut de gamme. Nos valeurs : excellence artisanale, design intemporel, engagement responsable.",
+    'Vérone, concept store en ligne de décoration et mobilier original. Notre mission : dénicher des pièces uniques, au juste prix, grâce à un sourcing créatif.',
   alternates: { canonical: '/a-propos' },
 };
 
@@ -15,7 +15,8 @@ export default function AProposPage() {
           À propos de Vérone
         </h1>
         <p className="text-verone-gray-500 max-w-2xl mx-auto leading-relaxed">
-          L&apos;art de vivre à l&apos;italienne, au service de votre intérieur
+          Concept store en ligne — des trouvailles déco et mobilier, sourcées
+          avec soin
         </p>
       </div>
 
@@ -26,20 +27,19 @@ export default function AProposPage() {
             Notre histoire
           </h2>
           <p className="text-verone-gray-600 leading-relaxed">
-            Née de la passion pour le design et l&apos;artisanat
-            d&apos;excellence, Vérone est une maison française spécialisée dans
-            le mobilier et la décoration d&apos;intérieur haut de gamme.
-            Inspirée par l&apos;élégance intemporelle de la ville italienne dont
-            elle porte le nom, notre maison sélectionne avec soin chaque pièce
-            pour son caractère unique, sa qualité de fabrication et sa capacité
-            à sublimer les espaces de vie.
+            Vérone est née d&apos;une frustration simple : trouver des pièces de
+            déco et de mobilier originales sans se ruiner, c&apos;est un
+            parcours du combattant. D&apos;un côté, les enseignes grand public
+            où tout le monde a les mêmes meubles. De l&apos;autre, les boutiques
+            de créateurs aux prix inaccessibles. On a voulu créer une troisième
+            voie.
           </p>
           <p className="text-verone-gray-600 leading-relaxed">
-            Depuis notre création, nous collaborons avec les meilleurs artisans
-            et manufactures d&apos;Europe pour proposer des collections qui
-            allient tradition du savoir-faire et design contemporain. Chaque
-            pièce raconte une histoire, chaque matériau est choisi pour sa
-            noblesse et sa durabilité.
+            Notre métier, c&apos;est le sourcing. On parcourt les salons
+            professionnels, on rencontre des fabricants, on teste des matériaux.
+            On sélectionne uniquement les pièces qui nous font dire « ça,
+            c&apos;est une trouvaille ». Des produits qu&apos;on ne trouve pas
+            partout, à des prix qui restent justes.
           </p>
         </section>
 
@@ -49,65 +49,60 @@ export default function AProposPage() {
             Nos valeurs
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="border border-verone-gray-200 p-6 rounded-lg">
+            <div className="border border-verone-gray-200 p-6">
               <h3 className="font-semibold text-verone-black mb-2">
-                Excellence artisanale
+                Originalité
               </h3>
               <p className="text-sm text-verone-gray-600 leading-relaxed">
-                Nous travaillons exclusivement avec des artisans et manufactures
-                reconnus pour leur savoir-faire. Chaque pièce est le fruit
-                d&apos;un processus de fabrication exigeant, où la qualité prime
-                sur la quantité.
+                On cherche des pièces qui sortent de l&apos;ordinaire. Des
+                designs qui racontent quelque chose, des matières qu&apos;on a
+                envie de toucher, des objets qui font la conversation.
               </p>
             </div>
-            <div className="border border-verone-gray-200 p-6 rounded-lg">
+            <div className="border border-verone-gray-200 p-6">
               <h3 className="font-semibold text-verone-black mb-2">
-                Design intemporel
+                Rapport qualité-prix
               </h3>
               <p className="text-sm text-verone-gray-600 leading-relaxed">
-                Nos collections sont pensées pour traverser les modes. Nous
-                privilégions les lignes épurées, les matériaux nobles et les
-                finitions soignées qui garantissent une élégance durable dans le
-                temps.
+                Pas de marges excessives. On travaille en direct avec les
+                fabricants pour proposer des produits de qualité à des prix
+                accessibles. Le bon prix, c&apos;est le prix juste.
               </p>
             </div>
-            <div className="border border-verone-gray-200 p-6 rounded-lg">
-              <h3 className="font-semibold text-verone-black mb-2">
-                Engagement responsable
-              </h3>
+            <div className="border border-verone-gray-200 p-6">
+              <h3 className="font-semibold text-verone-black mb-2">Curation</h3>
               <p className="text-sm text-verone-gray-600 leading-relaxed">
-                Nous favorisons les circuits courts, les matériaux durables et
-                les partenaires engagés dans une démarche écoresponsable.
-                Choisir la qualité, c&apos;est aussi choisir la durabilité.
+                Notre catalogue n&apos;est pas un entrepôt. On sélectionne peu,
+                mais bien. Chaque produit passe par notre filtre : originalité,
+                qualité, prix. Si ça ne coche pas les trois, on passe.
               </p>
             </div>
-            <div className="border border-verone-gray-200 p-6 rounded-lg">
+            <div className="border border-verone-gray-200 p-6">
               <h3 className="font-semibold text-verone-black mb-2">
-                Service personnalisé
+                Service client
               </h3>
               <p className="text-sm text-verone-gray-600 leading-relaxed">
-                Notre équipe de conseillers vous accompagne dans vos projets
-                d&apos;aménagement. Du choix des pièces à la livraison, nous
-                sommes à vos côtés pour créer l&apos;intérieur qui vous
-                ressemble.
+                On est une petite équipe, et c&apos;est notre force. Quand vous
+                nous écrivez, vous parlez à quelqu&apos;un qui connaît les
+                produits. On vous conseille, on vous guide, on s&apos;assure que
+                tout se passe bien.
               </p>
             </div>
           </div>
         </section>
 
         {/* Promise */}
-        <section className="bg-verone-gray-50 p-8 rounded-lg">
+        <section className="bg-verone-gray-50 p-8">
           <h2 className="font-playfair text-2xl font-bold text-verone-black mb-4">
             Notre promesse
           </h2>
           <p className="text-verone-gray-600 leading-relaxed">
-            Chez Vérone, nous croyons que chaque intérieur mérite des pièces
-            d&apos;exception. C&apos;est pourquoi nous nous engageons à vous
-            offrir une sélection rigoureuse de mobilier et d&apos;objets de
-            décoration, un service client attentif et une livraison soignée
-            jusque chez vous. Parce que votre intérieur est le reflet de qui
-            vous êtes, nous mettons tout en oeuvre pour qu&apos;il soit à la
-            hauteur de vos attentes.
+            Chez Vérone, on ne prétend pas réinventer la déco. On fait un
+            travail simple mais exigeant : trouver les bonnes pièces, les rendre
+            accessibles, et s&apos;assurer qu&apos;elles arrivent chez vous en
+            parfait état. Notre catalogue évolue au fil de nos découvertes —
+            revenez souvent, il y a toujours quelque chose de nouveau à
+            découvrir.
           </p>
         </section>
       </div>

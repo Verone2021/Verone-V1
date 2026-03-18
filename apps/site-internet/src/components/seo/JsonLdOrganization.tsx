@@ -6,7 +6,7 @@ export function JsonLdOrganization() {
     url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://verone.fr',
     logo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://verone.fr'}/logo-verone.png`,
     description:
-      "Mobilier et décoration d'intérieur haut de gamme pour sublimer votre espace de vie.",
+      'Concept store en ligne de déco et mobilier original. Sourcing créatif, prix justes, sélection curatée.',
     contactPoint: {
       '@type': 'ContactPoint',
       telephone: '+33-1-23-45-67-89',

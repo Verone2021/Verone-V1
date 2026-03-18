@@ -31,11 +31,11 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://verone.fr';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Vérone — Mobilier & Décoration Haut de Gamme',
+    default: 'Vérone — Concept Store Déco & Mobilier Original',
     template: '%s | Vérone',
   },
   description:
-    "Découvrez notre sélection de mobilier et décoration d'intérieur haut de gamme. Livraison soignée en France métropolitaine.",
+    'Vérone déniche pour vous des pièces originales de décoration et mobilier. Sourcing créatif, produits introuvables ailleurs, prix justes. Livraison soignée en France.',
   metadataBase: new URL(siteUrl),
   alternates: {
     canonical: '/',
@@ -44,16 +44,16 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'fr_FR',
     siteName: 'Vérone',
-    title: 'Vérone — Mobilier & Décoration Haut de Gamme',
+    title: 'Vérone — Concept Store Déco & Mobilier Original',
     description:
-      "Mobilier et décoration d'intérieur haut de gamme pour sublimer votre espace de vie.",
+      'Concept store en ligne — produits originaux de déco et mobilier, sourcés avec soin, au juste prix.',
     url: siteUrl,
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Vérone — Mobilier & Décoration Haut de Gamme',
+    title: 'Vérone — Concept Store Déco & Mobilier Original',
     description:
-      "Mobilier et décoration d'intérieur haut de gamme pour sublimer votre espace de vie.",
+      'Concept store en ligne — produits originaux de déco et mobilier, sourcés avec soin, au juste prix.',
   },
   robots: {
     index: true,

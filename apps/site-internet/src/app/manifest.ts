@@ -2,10 +2,10 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Vérone — Mobilier & Décoration Haut de Gamme',
+    name: 'Vérone — Concept Store Déco & Mobilier Original',
     short_name: 'Vérone',
     description:
-      "Mobilier et décoration d'intérieur haut de gamme pour sublimer votre espace de vie.",
+      'Concept store en ligne — produits originaux de déco et mobilier, sourcés avec soin, au juste prix.',
     start_url: '/',
     display: 'standalone',
     background_color: '#ffffff',

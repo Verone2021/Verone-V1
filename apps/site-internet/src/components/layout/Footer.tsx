@@ -42,8 +42,8 @@ export function Footer() {
               Vérone
             </h3>
             <p className="text-sm text-verone-gray-400 leading-relaxed">
-              Mobilier et décoration d&apos;intérieur haut de gamme pour
-              sublimer votre espace de vie.
+              Concept store en ligne — déco et mobilier original, sourcé avec
+              soin, au juste prix.
             </p>
           </div>
 

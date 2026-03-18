@@ -5,6 +5,10 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
 import { HeroSection } from '@/components/home/HeroSection';
+import { CategoryTiles } from '@/components/home/CategoryTiles';
+import { InspirationBanner } from '@/components/home/InspirationBanner';
+import { HomepageReviews } from '@/components/home/HomepageReviews';
+import { NewsletterSection } from '@/components/home/NewsletterSection';
 import { CardProductLuxury } from '@/components/ui/CardProductLuxury';
 import { useCatalogueProducts } from '@/hooks/use-catalogue-products';
 import { useCollections } from '@/hooks/use-collections';
@@ -21,33 +25,56 @@ export default function HomePage() {
   const featuredCollections = collections?.slice(0, 3);
   const { data: reassuranceContent } = useReassuranceContent();
 
-  const reassuranceItems = reassuranceContent?.items ?? [
+  const defaultValues: Array<{
+    title: string;
+    description: string;
+    icon: string;
+  }> = [
     {
-      title: 'Livraison soignée',
+      title: 'Sourcing créatif',
       description:
-        'Chaque pièce est emballée avec soin et livrée à domicile avec prise de rendez-vous.',
+        'On chine, on déniche, on sélectionne : chaque pièce est choisie pour son originalité et sa qualité.',
+      icon: '🔍',
     },
     {
-      title: 'Qualité garantie',
+      title: 'Qualité-prix',
       description:
-        'Des matériaux nobles sélectionnés auprès des meilleurs artisans et manufactures.',
+        'Des produits de qualité à des prix justes, sans les marges excessives du circuit traditionnel.',
+      icon: '💰',
     },
     {
-      title: 'Conseil personnalisé',
+      title: 'Sélection curatée',
       description:
-        'Notre équipe vous accompagne dans le choix de vos pièces de mobilier et décoration.',
+        'Notre catalogue est petit, mais chaque pièce y est pour une bonne raison. On ne vend que ce qui nous plaît.',
+      icon: '✨',
+    },
+    {
+      title: 'Service attentif',
+      description:
+        'Une petite équipe qui connaît ses produits. On répond vite, on conseille bien.',
+      icon: '🤝',
     },
   ];
+  const reassuranceItems = reassuranceContent?.items ?? defaultValues;
 
   return (
     <div>
+      {/* 1. Hero — split layout avec image produit */}
       <HeroSection />
 
-      {/* Featured Products */}
+      {/* 2. Catégories — tuiles visuelles */}
+      {products && products.length > 0 && <CategoryTiles products={products} />}
+
+      {/* 3. Produits vedettes — "Nos trouvailles" */}
       <section className="max-w-7xl mx-auto px-6 lg:px-8 py-24">
-        <h3 className="font-playfair text-4xl font-bold text-verone-black text-center mb-16">
-          Sélection du moment
-        </h3>
+        <div className="text-center mb-12">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
+            Pièces sélectionnées
+          </p>
+          <h2 className="font-playfair text-4xl font-bold text-verone-black">
+            Nos trouvailles
+          </h2>
+        </div>
 
         {productsLoading && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -76,6 +103,14 @@ export default function HomePage() {
                   imageUrl={p.primary_image_url}
                   href={`/produit/${p.slug}`}
                   priority={index < 3}
+                  subcategoryName={p.subcategory_name ?? undefined}
+                  discountRate={p.discount_rate ?? undefined}
+                  publicationDate={p.publication_date ?? undefined}
+                  variantsCount={
+                    p.eligible_variants_count > 1
+                      ? p.eligible_variants_count
+                      : undefined
+                  }
                 />
               ))}
             </div>
@@ -84,7 +119,7 @@ export default function HomePage() {
                 href="/catalogue"
                 className="inline-flex items-center gap-2 px-8 py-3 border border-verone-black text-verone-black text-sm uppercase tracking-wide hover:bg-verone-black hover:text-verone-white transition-all duration-300"
               >
-                Voir tout le catalogue
+                Découvrir la sélection
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -92,13 +127,48 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* Featured Collections */}
+      {/* 4. Valeurs / Reassurance — fond noir, 4 colonnes avec icônes */}
+      <section className="bg-verone-black py-24">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400 mb-3">
+              Notre philosophie
+            </p>
+            <h2 className="font-playfair text-4xl font-bold text-verone-white">
+              Ce qui nous différencie
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 text-center">
+            {defaultValues.map((item, index) => (
+              <div key={index}>
+                <p className="text-4xl mb-4">{item.icon}</p>
+                <h4 className="font-playfair text-lg font-semibold text-verone-white mb-3">
+                  {reassuranceItems[index]?.title ?? item.title}
+                </h4>
+                <p className="text-sm text-verone-gray-400 leading-relaxed">
+                  {reassuranceItems[index]?.description ?? item.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Inspiration — bannière plein écran */}
+      <InspirationBanner />
+
+      {/* 6. Collections */}
       {featuredCollections && featuredCollections.length > 0 && (
-        <section className="bg-verone-gray-50 py-24">
+        <section className="py-24">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <h3 className="font-playfair text-4xl font-bold text-verone-black text-center mb-16">
-              Nos Collections
-            </h3>
+            <div className="text-center mb-12">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
+                Thématiques
+              </p>
+              <h2 className="font-playfair text-4xl font-bold text-verone-black">
+                Nos Collections
+              </h2>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {featuredCollections.map(collection => (
                 <Link
@@ -140,21 +210,11 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Reassurance (CMS-driven) */}
-      <section className="max-w-7xl mx-auto px-6 lg:px-8 py-24">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
-          {reassuranceItems.map((item, index) => (
-            <div key={index}>
-              <h4 className="font-playfair text-lg font-semibold text-verone-black mb-2">
-                {item.title}
-              </h4>
-              <p className="text-sm text-verone-gray-500 leading-relaxed">
-                {item.description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* 7. Avis clients */}
+      <HomepageReviews />
+
+      {/* 8. Newsletter */}
+      <NewsletterSection />
     </div>
   );
 }

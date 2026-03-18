@@ -68,6 +68,8 @@ export interface CatalogueProduct {
   } | null;
   weight: number | null;
   suitable_rooms: string[] | null;
+  style: string | null;
+  color: string | null;
   subcategory_id: string | null;
   subcategory_name: string | null;
   product_type: string | null;

@@ -37,7 +37,7 @@ export async function generateMetadata({
     description:
       product.seo_meta_description ??
       product.description ??
-      `${product.name} — Mobilier haut de gamme Vérone`,
+      `${product.name} — Vérone, concept store déco & mobilier`,
     alternates: {
       canonical: `/produit/${slug}`,
     },
