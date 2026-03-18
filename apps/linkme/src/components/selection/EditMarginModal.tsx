@@ -329,13 +329,13 @@ export function EditMarginModal({
                 <div className="flex justify-between text-xs font-medium">
                   <span className="text-gray-500">{marginLimits.min}%</span>
                   <span className="text-green-600">
-                    {marginLimits.greenEnd.toFixed(1)}%
+                    {marginLimits.greenEnd.toFixed(2)}%
                   </span>
                   <span className="text-orange-500">
-                    {marginLimits.orangeEnd.toFixed(1)}%
+                    {marginLimits.orangeEnd.toFixed(2)}%
                   </span>
                   <span className="text-gray-500">
-                    {marginLimits.max.toFixed(1)}%
+                    {marginLimits.max.toFixed(2)}%
                   </span>
                 </div>
 

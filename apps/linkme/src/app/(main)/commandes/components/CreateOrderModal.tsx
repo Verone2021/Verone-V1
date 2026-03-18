@@ -1151,7 +1151,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                                               €
                                             </span>
                                             <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded">
-                                              {product.marginRate.toFixed(0)}%
+                                              {product.marginRate.toFixed(2)}%
                                             </span>
                                           </div>
                                         </div>
@@ -2375,7 +2375,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                                           {product.sellingPriceHt.toFixed(2)} €
                                         </span>
                                         <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded">
-                                          {product.marginRate.toFixed(0)}%
+                                          {product.marginRate.toFixed(2)}%
                                         </span>
                                       </div>
                                     </div>

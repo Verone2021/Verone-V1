@@ -350,7 +350,7 @@ function CatalogueTable({
               </td>
               <td className="py-1.5 text-center text-gray-600">
                 {item.retrocession_rate != null
-                  ? `${(item.retrocession_rate * 100).toFixed(0)}%`
+                  ? `${(item.retrocession_rate * 100).toFixed(2)}%`
                   : '-'}
               </td>
               <td className="py-1.5 text-right text-emerald-600">

@@ -389,7 +389,7 @@ export function AddToSelectionModal({
                         </span>
                       </div>
                       <span className="text-sm text-gray-600">
-                        {marginLimits.max.toFixed(0)}%
+                        {marginLimits.max.toFixed(2)}%
                       </span>
                     </div>
 
@@ -461,23 +461,23 @@ export function AddToSelectionModal({
                     <div className="flex justify-between mt-2 text-xs font-medium">
                       <span className="text-gray-500">{marginLimits.min}%</span>
                       <span className="text-green-600">
-                        {marginLimits.greenEnd.toFixed(1)}%
+                        {marginLimits.greenEnd.toFixed(2)}%
                       </span>
                       <span className="text-orange-500">
-                        {marginLimits.orangeEnd.toFixed(1)}%
+                        {marginLimits.orangeEnd.toFixed(2)}%
                       </span>
                       <span className="text-gray-500">
-                        {marginLimits.max.toFixed(1)}%
+                        {marginLimits.max.toFixed(2)}%
                       </span>
                     </div>
 
                     {/* Légende complète des plages */}
                     <div className="mt-1 text-center text-xs text-gray-400">
-                      Vert: 0-{marginLimits.greenEnd.toFixed(1)}% | Orange:{' '}
-                      {marginLimits.greenEnd.toFixed(1)}-
-                      {marginLimits.orangeEnd.toFixed(1)}% | Rouge:{' '}
-                      {marginLimits.orangeEnd.toFixed(1)}-
-                      {marginLimits.max.toFixed(1)}%
+                      Vert: 0-{marginLimits.greenEnd.toFixed(2)}% | Orange:{' '}
+                      {marginLimits.greenEnd.toFixed(2)}-
+                      {marginLimits.orangeEnd.toFixed(2)}% | Rouge:{' '}
+                      {marginLimits.orangeEnd.toFixed(2)}-
+                      {marginLimits.max.toFixed(2)}%
                     </div>
                   </div>
 
