@@ -365,9 +365,29 @@ export function AddToSelectionModal({
                       <span className="text-sm text-gray-600">
                         {marginLimits.min}%
                       </span>
-                      <span className="text-lg font-bold text-gray-900">
-                        {marginRate.toFixed(1)}%
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          min={marginLimits.min}
+                          max={marginLimits.max}
+                          step={0.01}
+                          value={marginRate.toFixed(2)}
+                          onChange={e => {
+                            const val = parseFloat(e.target.value);
+                            if (
+                              !isNaN(val) &&
+                              val >= marginLimits.min &&
+                              val <= marginLimits.max
+                            ) {
+                              setMarginRate(Math.round(val * 100) / 100);
+                            }
+                          }}
+                          className="w-20 text-right text-lg font-bold text-gray-900 border border-gray-300 rounded-md px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <span className="text-lg font-bold text-gray-900">
+                          %
+                        </span>
+                      </div>
                       <span className="text-sm text-gray-600">
                         {marginLimits.max.toFixed(0)}%
                       </span>
@@ -394,9 +414,13 @@ export function AddToSelectionModal({
                       type="range"
                       min={marginLimits.min}
                       max={marginLimits.max}
-                      step={0.5}
+                      step={0.01}
                       value={marginRate}
-                      onChange={e => setMarginRate(parseFloat(e.target.value))}
+                      onChange={e =>
+                        setMarginRate(
+                          Math.round(parseFloat(e.target.value) * 100) / 100
+                        )
+                      }
                       className="w-full mt-2 appearance-none h-2 bg-transparent cursor-pointer
                         [&::-webkit-slider-thumb]:appearance-none
                         [&::-webkit-slider-thumb]:w-5
