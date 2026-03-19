@@ -1776,7 +1776,8 @@ export default function LinkMeOrderDetailPage() {
                             </span>
                           </div>
                         )}
-                        {!details.reception_contact_name &&
+                        {details.step4_token &&
+                          !details.reception_contact_name &&
                           !details.confirmed_delivery_date && (
                             <div className="p-3 bg-amber-50 rounded-lg text-sm text-amber-700">
                               <Clock className="h-4 w-4 inline mr-1" />
