@@ -20,3 +20,9 @@ export {
 } from './customer-selector';
 export { CreateIndividualCustomerModal } from './create-individual-customer-modal';
 export { CreateLinkMeOrderModal } from './CreateLinkMeOrderModal';
+export {
+  SendOrderDocumentsModal,
+  type LinkedDocument,
+  type OrderContact,
+  type SendOrderDocumentsModalProps,
+} from './SendOrderDocumentsModal';

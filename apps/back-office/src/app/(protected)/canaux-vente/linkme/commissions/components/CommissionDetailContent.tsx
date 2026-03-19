@@ -317,9 +317,12 @@ export function CommissionDetailContent({
                           {formatPrice(item.total_ht)}
                         </TableCell>
                         <TableCell className="text-xs text-center">
-                          {item.retrocession_rate != null
-                            ? `${(item.retrocession_rate * 100).toFixed(0)}%`
-                            : '-'}
+                          {item.base_price_ht_locked != null &&
+                          item.base_price_ht_locked > 0
+                            ? `${(((item.unit_price_ht - item.base_price_ht_locked) / item.base_price_ht_locked) * 100).toFixed(2)}%`
+                            : item.retrocession_rate != null
+                              ? `${(item.retrocession_rate * 100).toFixed(0)}%`
+                              : '-'}
                         </TableCell>
                         <TableCell className="text-xs text-right font-medium text-blue-600">
                           {formatPrice(item.retrocession_amount ?? 0)}

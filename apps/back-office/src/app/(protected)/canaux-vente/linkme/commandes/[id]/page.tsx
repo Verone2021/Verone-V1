@@ -78,6 +78,7 @@ import {
   Clock,
   Check,
   MapPin,
+  FileText,
 } from 'lucide-react';
 
 import {
@@ -88,7 +89,15 @@ import {
   type LinkMeOrderDetails,
 } from '../../hooks/use-linkme-order-actions';
 
-import { useOrderHistory, OrderTimeline } from '@verone/orders';
+import {
+  useOrderHistory,
+  OrderTimeline,
+  SendOrderDocumentsModal,
+  type LinkedDocument,
+  type OrderContact,
+} from '@verone/orders';
+
+import { FeesSection } from '@/components/orders/FeesSection';
 
 import {
   getOrderMissingFields,
@@ -330,6 +339,10 @@ export default function LinkMeOrderDetailPage() {
   const [selectedContactId, setSelectedContactId] = useState<string | null>(
     null
   );
+
+  // Send documents modal
+  const [showSendDocsModal, setShowSendDocsModal] = useState(false);
+  const [linkedDocuments, setLinkedDocuments] = useState<LinkedDocument[]>([]);
 
   // Order history timeline
   const { events: historyEvents, loading: historyLoading } =
@@ -652,13 +665,47 @@ export default function LinkMeOrderDetailPage() {
     }
   }, [orderId]);
 
+  // Fetch linked financial documents (quotes + invoices)
+  const fetchLinkedDocuments = useCallback(async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('financial_documents')
+      .select(
+        'id, document_number, document_type, qonto_invoice_id, qonto_pdf_url, total_ttc, status, quote_status'
+      )
+      .eq('sales_order_id', orderId)
+      .in('document_type', ['customer_quote', 'customer_invoice'])
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
+
+    if (data) {
+      setLinkedDocuments(
+        data.map(d => ({
+          id: d.id,
+          document_number: d.document_number,
+          document_type: d.document_type as
+            | 'customer_quote'
+            | 'customer_invoice',
+          qonto_invoice_id: d.qonto_invoice_id,
+          qonto_pdf_url: d.qonto_pdf_url,
+          total_ttc: d.total_ttc,
+          status: d.status,
+          quote_status: d.quote_status,
+        }))
+      );
+    }
+  }, [orderId]);
+
   useEffect(() => {
     if (orderId) {
       void fetchOrder().catch(error => {
         console.error('[LinkMeOrderDetail] Initial fetch failed:', error);
       });
+      void fetchLinkedDocuments().catch(error => {
+        console.error('[LinkMeOrderDetail] Fetch linked docs failed:', error);
+      });
     }
-  }, [orderId, fetchOrder]);
+  }, [orderId, fetchOrder, fetchLinkedDocuments]);
 
   // Handlers Actions
   const handleApprove = async () => {
@@ -1259,10 +1306,19 @@ export default function LinkMeOrderDetailPage() {
                                 item.base_price_ht || item.unit_price_ht
                               )}
                             </TableCell>
-                            {/* Commission % */}
+                            {/* Marge % (calculée depuis prix de la commande) */}
                             <TableCell className="text-center">
                               <span className="text-teal-600">
-                                {`${Math.round(item.margin_rate * 100)}%`}
+                                {(() => {
+                                  const rate =
+                                    item.base_price_ht > 0
+                                      ? ((item.unit_price_ht -
+                                          item.base_price_ht) /
+                                          item.base_price_ht) *
+                                        100
+                                      : 0;
+                                  return `${rate % 1 === 0 ? rate.toFixed(0) : rate.toFixed(2)}%`;
+                                })()}
                               </span>
                             </TableCell>
                             {/* Commission EUR (per unit) */}
@@ -1729,7 +1785,8 @@ export default function LinkMeOrderDetailPage() {
                             </span>
                           </div>
                         )}
-                        {!details.reception_contact_name &&
+                        {details.step4_token &&
+                          !details.reception_contact_name &&
                           !details.confirmed_delivery_date && (
                             <div className="p-3 bg-amber-50 rounded-lg text-sm text-amber-700">
                               <Clock className="h-4 w-4 inline mr-1" />
@@ -1789,8 +1846,33 @@ export default function LinkMeOrderDetailPage() {
                   </Button>
                 </div>
               )}
+
+              {/* Send documents button — always available */}
+              <Separator className="my-1" />
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => setShowSendDocsModal(true)}
+              >
+                <FileText className="h-4 w-4" />
+                Envoyer documents
+                {linkedDocuments.length > 0 && (
+                  <Badge variant="secondary" className="ml-auto text-xs">
+                    {linkedDocuments.length}
+                  </Badge>
+                )}
+              </Button>
             </CardContent>
           </Card>
+
+          {/* FRAIS DE SERVICE */}
+          <FeesSection
+            orderId={order.id}
+            shippingCostHt={order.shipping_cost_ht ?? 0}
+            handlingCostHt={order.handling_cost_ht ?? 0}
+            insuranceCostHt={order.insurance_cost_ht ?? 0}
+            feesVatRate={order.fees_vat_rate ?? 0.2}
+          />
 
           {/* CONTACTS — compact fusionnés */}
           {fusedContacts.length > 0
@@ -3112,6 +3194,70 @@ export default function LinkMeOrderDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ============================================ */}
+      {/* MODAL: ENVOI DOCUMENTS PAR EMAIL */}
+      {/* ============================================ */}
+      <SendOrderDocumentsModal
+        open={showSendDocsModal}
+        onClose={() => setShowSendDocsModal(false)}
+        salesOrderId={order?.id ?? ''}
+        orderNumber={order?.linkme_display_number ?? order?.order_number ?? ''}
+        customerName={
+          order?.organisation?.trade_name ??
+          order?.organisation?.legal_name ??
+          'Client'
+        }
+        contacts={(() => {
+          const c: OrderContact[] = [];
+          if (order?.billing_contact?.email) {
+            c.push({
+              label: `Facturation (${order.billing_contact.first_name} ${order.billing_contact.last_name})`,
+              email: order.billing_contact.email,
+            });
+          }
+          if (order?.responsable_contact?.email) {
+            c.push({
+              label: `Responsable (${order.responsable_contact.first_name} ${order.responsable_contact.last_name})`,
+              email: order.responsable_contact.email,
+            });
+          }
+          if (order?.linkmeDetails?.requester_email) {
+            c.push({
+              label: `Demandeur (${order.linkmeDetails.requester_name ?? ''})`,
+              email: order.linkmeDetails.requester_email,
+            });
+          }
+          if (order?.delivery_contact?.email) {
+            c.push({
+              label: `Livraison (${order.delivery_contact.first_name} ${order.delivery_contact.last_name})`,
+              email: order.delivery_contact.email,
+            });
+          }
+          if (order?.organisation?.email) {
+            c.push({
+              label: `Organisation (${order.organisation.trade_name ?? order.organisation.legal_name})`,
+              email: order.organisation.email,
+            });
+          }
+          // Deduplicate by email
+          const seen = new Set<string>();
+          return c.filter(contact => {
+            if (seen.has(contact.email)) return false;
+            seen.add(contact.email);
+            return true;
+          });
+        })()}
+        linkedDocuments={linkedDocuments}
+        onSent={() => {
+          void fetchLinkedDocuments().catch(error => {
+            console.error(
+              '[LinkMeOrderDetail] Refresh docs after send:',
+              error
+            );
+          });
+        }}
+      />
     </div>
   );
 }
