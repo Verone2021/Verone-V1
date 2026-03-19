@@ -1673,7 +1673,13 @@ export function CreateLinkMeOrderModal({
                               </p>
                               <p className="text-xs text-orange-600">
                                 Marge:{' '}
-                                {(item.retrocession_rate * 100).toFixed(1)}% (
+                                {(item.base_price_ht > 0
+                                  ? ((item.unit_price_ht - item.base_price_ht) /
+                                      item.base_price_ht) *
+                                    100
+                                  : 0
+                                ).toFixed(1)}
+                                % (
                                 {(
                                   (item.unit_price_ht - item.base_price_ht) *
                                   item.quantity
