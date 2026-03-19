@@ -398,7 +398,7 @@ export function useSalesOrders() {
           delivery_contact:contacts!sales_orders_delivery_contact_id_fkey(id, first_name, last_name, email, phone),
           responsable_contact:contacts!sales_orders_responsable_contact_id_fkey(id, first_name, last_name, email, phone),
           sales_order_items (
-            id, product_id, quantity, unit_price_ht, total_ht,
+            id, product_id, quantity, unit_price_ht, total_ht, tax_rate,
             products (
               id,
               name,

@@ -559,7 +559,7 @@ export default function CommandesPage(): JSX.Element {
                                   Commission
                                 </p>
                                 <p className="font-semibold text-[#5DBEBB]">
-                                  +{order.total_affiliate_margin.toFixed(2)} €
+                                  +{order.total_payout_ht.toFixed(2)} €
                                 </p>
                               </div>
                             )}
@@ -637,7 +637,7 @@ export default function CommandesPage(): JSX.Element {
                               </span>
                               {canViewCommissions && (
                                 <span className="text-[#5DBEBB] font-semibold">
-                                  +{order.total_affiliate_margin.toFixed(2)} €
+                                  +{order.total_payout_ht.toFixed(2)} €
                                 </span>
                               )}
                             </div>

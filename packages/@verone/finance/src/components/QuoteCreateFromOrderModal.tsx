@@ -137,6 +137,31 @@ export function QuoteCreateFromOrderModal({
         body: JSON.stringify({
           salesOrderId: order.id,
           expiryDays,
+          // Adresse de facturation (résolution: billing_address commande > org)
+          billingAddress: order.billing_address
+            ? {
+                address_line1: order.billing_address?.address_line1 ?? '',
+                postal_code: order.billing_address?.postal_code ?? '',
+                city: order.billing_address?.city ?? '',
+                country: order.billing_address?.country ?? 'FR',
+              }
+            : order.organisations
+              ? {
+                  address_line1:
+                    order.organisations.billing_address_line1 ??
+                    order.organisations.address_line1 ??
+                    '',
+                  postal_code:
+                    order.organisations.billing_postal_code ??
+                    order.organisations.postal_code ??
+                    '',
+                  city:
+                    order.organisations.billing_city ??
+                    order.organisations.city ??
+                    '',
+                  country: order.organisations.billing_country ?? 'FR',
+                }
+              : undefined,
           // Frais de service
           fees: {
             shipping_cost_ht: shippingCostHt,
@@ -301,7 +326,7 @@ export function QuoteCreateFromOrderModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileEdit className="h-5 w-5" />
@@ -649,39 +674,116 @@ export function QuoteCreateFromOrderModal({
               </CardContent>
             </Card>
 
-            {/* Totaux avec TVA groupée par taux */}
-            <div className="flex justify-end">
-              <div className="w-64 space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total HT</span>
-                  <span>{formatAmount(order.total_ht)}</span>
+            {/* Totaux avec TVA groupée par taux - incluant frais et lignes personnalisées */}
+            <Card className="bg-muted/50">
+              <CardContent className="pt-4">
+                <div className="space-y-2 text-sm">
+                  {(() => {
+                    // Calculer les totaux incluant frais et lignes personnalisées
+                    const vatByRate: Record<number, number> = {};
+                    let totalHt = 0;
+
+                    // 1. Articles de la commande
+                    order.sales_order_items?.forEach(item => {
+                      const rate = item.tax_rate || 0;
+                      const lineHt = item.quantity * item.unit_price_ht;
+                      const lineVat = lineHt * rate;
+                      totalHt += lineHt;
+                      vatByRate[rate] = (vatByRate[rate] || 0) + lineVat;
+                    });
+
+                    // 2. Frais de service
+                    const totalFees =
+                      shippingCostHt + handlingCostHt + insuranceCostHt;
+                    if (totalFees > 0) {
+                      totalHt += totalFees;
+                      const feesVat = totalFees * feesVatRate;
+                      vatByRate[feesVatRate] =
+                        (vatByRate[feesVatRate] || 0) + feesVat;
+                    }
+
+                    // 3. Lignes personnalisées
+                    customLines.forEach(line => {
+                      const lineHt = line.quantity * line.unit_price_ht;
+                      const lineVat = lineHt * line.vat_rate;
+                      totalHt += lineHt;
+                      vatByRate[line.vat_rate] =
+                        (vatByRate[line.vat_rate] || 0) + lineVat;
+                    });
+
+                    // Calculer total TVA et TTC
+                    const totalVat = Object.values(vatByRate).reduce(
+                      (sum, v) => sum + v,
+                      0
+                    );
+                    const totalTtc = totalHt + totalVat;
+
+                    return (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            Articles commande
+                          </span>
+                          <span>
+                            {formatAmount(
+                              order.sales_order_items?.reduce(
+                                (sum, item) =>
+                                  sum + item.quantity * item.unit_price_ht,
+                                0
+                              ) ?? 0
+                            )}
+                          </span>
+                        </div>
+                        {totalFees > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Frais de service
+                            </span>
+                            <span>{formatAmount(totalFees)}</span>
+                          </div>
+                        )}
+                        {customLines.length > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Lignes personnalisées
+                            </span>
+                            <span>
+                              {formatAmount(
+                                customLines.reduce(
+                                  (sum, l) =>
+                                    sum + l.quantity * l.unit_price_ht,
+                                  0
+                                )
+                              )}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between border-t pt-2 mt-2">
+                          <span className="font-medium">Total HT</span>
+                          <span className="font-medium">
+                            {formatAmount(totalHt)}
+                          </span>
+                        </div>
+                        {Object.entries(vatByRate)
+                          .sort(([a], [b]) => Number(b) - Number(a))
+                          .map(([rate, amount]) => (
+                            <div key={rate} className="flex justify-between">
+                              <span className="text-muted-foreground">
+                                TVA {Math.round(Number(rate) * 100)}%
+                              </span>
+                              <span>{formatAmount(amount)}</span>
+                            </div>
+                          ))}
+                        <div className="flex justify-between border-t pt-2 mt-2 font-bold text-base">
+                          <span>Total TTC</span>
+                          <span>{formatAmount(totalTtc)}</span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
-                {/* Calculer TVA par taux */}
-                {(() => {
-                  const vatByRate: Record<number, number> = {};
-                  order.sales_order_items?.forEach(item => {
-                    const rate = item.tax_rate || 0;
-                    const lineHt = item.quantity * item.unit_price_ht;
-                    const lineVat = lineHt * rate;
-                    vatByRate[rate] = (vatByRate[rate] || 0) + lineVat;
-                  });
-                  return Object.entries(vatByRate)
-                    .sort(([a], [b]) => Number(b) - Number(a))
-                    .map(([rate, amount]) => (
-                      <div key={rate} className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          TVA {Math.round(Number(rate) * 100)}%
-                        </span>
-                        <span>{formatAmount(amount)}</span>
-                      </div>
-                    ));
-                })()}
-                <div className="flex justify-between border-t pt-1 font-bold">
-                  <span>Total TTC</span>
-                  <span>{formatAmount(order.total_ttc)}</span>
-                </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
             {/* Options */}
             <div className="space-y-2">
