@@ -15,7 +15,7 @@
 3. [Architecture Technique](#3-architecture-technique)
 4. [Catalogue et Types de Produits](#4-catalogue-et-types-de-produits)
 5. [Selections (Coeur de LinkMe)](#5-selections-coeur-de-linkme)
-6. [Taux de Marque](#6-taux-de-marque)
+6. [Taux de Marge Additif](#6-taux-de-marge-additif)
 7. [Feux Tricolores](#7-feux-tricolores)
 8. [Page Publique](#8-page-publique)
 9. [Commandes](#9-commandes)
@@ -138,7 +138,7 @@ AUTHENTIFICATION                        DONNEES BUSINESS
                                        | linkme_selection_items         |
                                        | - selection_id, product_id     |
                                        | - base_price_ht (from channel) |
-                                       | - margin_rate (taux de marque) |
+                                       | - margin_rate (taux de marge additif) |
                                        | - selling_price_ht (GENERATED) |
                                        +-------------------------------+
 ```
@@ -274,13 +274,13 @@ Une selection est une **mini-boutique** creee par un affilie. Elle contient :
 Produit "Table basse design" (base: 100 EUR HT)
 
 Selection A (Pokawa Restaurants):
-  margin_rate = 15% -> selling_price = 117.65 EUR
+  margin_rate = 15% -> selling_price = 115.00 EUR
 
 Selection B (Pokawa Catering):
-  margin_rate = 25% -> selling_price = 133.33 EUR
+  margin_rate = 25% -> selling_price = 125.00 EUR
 
 Selection C (Autre affilie):
-  margin_rate = 10% -> selling_price = 111.11 EUR
+  margin_rate = 10% -> selling_price = 110.00 EUR
 ```
 
 C'est pourquoi les calculs de commission partent TOUJOURS de `linkme_selection_items`, jamais de `products` directement.
@@ -321,8 +321,8 @@ draft ----------> active (publication)
 | `selection_id`     | FK      | Lien vers la selection                                |
 | `product_id`       | FK      | Lien vers le produit                                  |
 | `base_price_ht`    | decimal | Copie depuis `channel_pricing.public_price_ht`        |
-| `margin_rate`      | decimal | Taux de marque (ex: 15.00 = 15%)                      |
-| `selling_price_ht` | decimal | **GENERATED ALWAYS** = `base / (1 - margin_rate/100)` |
+| `margin_rate`      | decimal | Taux de marge additif (ex: 15.00 = 15%)               |
+| `selling_price_ht` | decimal | **GENERATED ALWAYS** = `base * (1 + margin_rate/100)` |
 
 La colonne `selling_price_ht` est **calculee automatiquement par PostgreSQL** (GENERATED COLUMN). On ne la modifie JAMAIS directement.
 
@@ -337,23 +337,23 @@ Les calculs internes restent TOUJOURS en HT.
 
 ---
 
-## 6. Taux de Marque
+## 6. Taux de Marge Additif
 
-### Distinction Cruciale
+### Distinction avec l'ancien modele
 
-|                 | Taux de Marque (utilise par LinkMe) | Taux de Marge                     |
-| --------------- | ----------------------------------- | --------------------------------- |
-| **Formule**     | `marge / prix_vente`                | `marge / prix_achat`              |
-| **Calcul prix** | `selling = base / (1 - taux/100)`   | `selling = base * (1 + taux/100)` |
-| **Exemple**     | base=100, taux=15% -> vente=117.65  | base=100, taux=15% -> vente=115   |
+|                 | Taux de Marge Additif (utilise par LinkMe) | Taux de Marque (ancien modele)     |
+| --------------- | ------------------------------------------ | ---------------------------------- |
+| **Formule**     | `marge / prix_achat`                       | `marge / prix_vente`               |
+| **Calcul prix** | `selling = base * (1 + taux/100)`          | `selling = base / (1 - taux/100)`  |
+| **Exemple**     | base=100, taux=15% -> vente=115.00         | base=100, taux=15% -> vente=117.65 |
 
-**LinkMe utilise le TAUX DE MARQUE**, pas le taux de marge. C'est une distinction fondamentale.
+**LinkMe utilise le TAUX DE MARGE ADDITIF** (migration `20260318200000_switch_to_additive_margin_model.sql`).
 
 ### Formules Officielles (SSOT)
 
 ```sql
 -- Prix de vente (GENERATED COLUMN)
-selling_price_ht = base_price_ht / (1 - margin_rate / 100)
+selling_price_ht = base_price_ht * (1 + margin_rate / 100)
 
 -- Retrocession (gain affilie) par ligne
 retrocession = selling_price_ht * (margin_rate / 100) * quantity
@@ -368,14 +368,14 @@ retrocession = (selling_price_ht - base_price_ht) * quantity  -- Equivalent
 base_price_ht   = 20.19 EUR
 margin_rate     = 15%
 
-selling_price_ht = 20.19 / (1 - 0.15)
-                 = 20.19 / 0.85
-                 = 23.75 EUR
+selling_price_ht = 20.19 * (1 + 0.15)
+                 = 20.19 * 1.15
+                 = 23.22 EUR
 
-gain_affilie_ht  = 23.75 - 20.19 = 3.56 EUR
-verification     = 23.75 * 15%  = 3.56 EUR (correct)
+gain_affilie_ht  = 23.22 - 20.19 = 3.03 EUR
+verification     = 23.22 * 15%  = 3.48 EUR (retrocession sur prix de vente)
 
-ERREUR COMMUNE : 20.19 * 15% = 3.03 EUR (FAUX - c'est un taux de marge, pas de marque)
+ERREUR COMMUNE : 20.19 * 15% = 3.03 EUR (FAUX si applique au base_price au lieu du selling_price)
 ```
 
 ### Source de Verite TypeScript
@@ -594,7 +594,7 @@ END as commission
 
 ```
 L'affilie definit margin_rate dans sa selection.
-selling_price = base_price / (1 - margin_rate / 100)   -- Taux de MARQUE
+selling_price = base_price * (1 + margin_rate / 100)   -- Taux de marge additif
 retrocession = selling_price * margin_rate / 100 * qty
 -> Stocke dans linkme_commissions.affiliate_commission
 ```
@@ -634,22 +634,22 @@ Payout affilie = prix_vente - commission
 ```
 Panier:
 1. Plateau bois x2 (catalogue, marge 15%)
-   base=20.19, selling=23.75, gain=3.56 x 2 = 7.12 EUR
-   -> affiliate_commission += 7.12
+   base=20.19, selling=23.22, gain=3.03 x 2 = 6.06 EUR
+   -> affiliate_commission += 6.06
 
 2. Chaise design x1 (catalogue, marge 20%)
-   base=80, selling=100, gain=20 x 1 = 20 EUR
-   -> affiliate_commission += 20
+   base=80, selling=96, gain=16 x 1 = 16 EUR
+   -> affiliate_commission += 16
 
 3. Meuble custom x1 (affilie, commission plateforme 10%)
    prix=500, commission LinkMe=50, payout=450 EUR
    -> linkme_commission += 50
 
 Totaux:
-- affiliate_commission (affilie gagne) : 7.12 + 20 = 27.12 EUR HT
+- affiliate_commission (affilie gagne) : 6.06 + 16 = 22.06 EUR HT
 - linkme_commission (Verone preleve) : 50 EUR HT
 - Payout affilie produit affilie: 450 EUR HT
-- Total recu affilie: 477.12 EUR HT
+- Total recu affilie: 472.06 EUR HT
 ```
 
 ### 10.9 Constantes
@@ -930,29 +930,29 @@ APRES (avec particuliers):
 
 ## 16. Glossaire
 
-| Terme                     | Definition                                                                    |
-| ------------------------- | ----------------------------------------------------------------------------- |
-| **Affilie**               | Profil business d'une enseigne/organisation dans LinkMe (`linkme_affiliates`) |
-| **affiliate_commission**  | Montant HT **gagne** par l'affilie (marge sur produits catalogue)             |
-| **Base price**            | Prix d'achat HT du produit (depuis `channel_pricing`)                         |
-| **Channel pricing**       | Table des prix par canal de vente (LinkMe = canal specifique)                 |
-| **Commission plateforme** | Pourcentage preleve par Verone sur les ventes (5% par defaut)                 |
-| **Enseigne**              | Chaine de magasins avec plusieurs points de vente (ex: Pokawa)                |
-| **Feux tricolores**       | Indicateur visuel vert/orange/rouge pour guider le choix de marge             |
-| **linkme_commission**     | Montant HT **preleve** par Verone (taxe sur produits affilies)                |
-| **Margin rate**           | Taux de MARQUE (sur prix de vente), PAS taux de marge (sur cout)              |
-| **Org independante**      | Organisation professionnelle sans enseigne parente                            |
-| **Ownership type**        | Type de point de vente : `propre` (succursale) ou `franchise`                 |
-| **Particulier**           | (FUTUR) Individu non professionnel utilisant LinkMe                           |
-| **Price locking**         | Mecanisme qui fige les prix au moment de l'expedition                         |
-| **Retrocession**          | Montant gagne par l'affilie sur une ligne de commande                         |
-| **Selection**             | Mini-boutique creee par un affilie avec ses produits et marges                |
-| **Selling price**         | Prix de vente HT configure par l'affilie (inclut sa marge)                    |
-| **Slug**                  | Identifiant URL-friendly d'une selection (ex: `/s/pokawa-mobilier`)           |
-| **Taux de marque**        | `marge / prix_vente` - Utilise par LinkMe (different de taux de marge)        |
-| **Taux de marge**         | `marge / prix_achat` - PAS utilise par LinkMe                                 |
-| **Utilisateur LinkMe**    | Personne avec `user_app_roles` (app='linkme')                                 |
-| **XOR**                   | Contrainte : exactement un des deux champs doit etre renseigne                |
+| Terme                     | Definition                                                                       |
+| ------------------------- | -------------------------------------------------------------------------------- |
+| **Affilie**               | Profil business d'une enseigne/organisation dans LinkMe (`linkme_affiliates`)    |
+| **affiliate_commission**  | Montant HT **gagne** par l'affilie (marge sur produits catalogue)                |
+| **Base price**            | Prix d'achat HT du produit (depuis `channel_pricing`)                            |
+| **Channel pricing**       | Table des prix par canal de vente (LinkMe = canal specifique)                    |
+| **Commission plateforme** | Pourcentage preleve par Verone sur les ventes (5% par defaut)                    |
+| **Enseigne**              | Chaine de magasins avec plusieurs points de vente (ex: Pokawa)                   |
+| **Feux tricolores**       | Indicateur visuel vert/orange/rouge pour guider le choix de marge                |
+| **linkme_commission**     | Montant HT **preleve** par Verone (taxe sur produits affilies)                   |
+| **Margin rate**           | Taux de marge additif : l'affilie ajoute margin_rate% au prix de base            |
+| **Org independante**      | Organisation professionnelle sans enseigne parente                               |
+| **Ownership type**        | Type de point de vente : `propre` (succursale) ou `franchise`                    |
+| **Particulier**           | (FUTUR) Individu non professionnel utilisant LinkMe                              |
+| **Price locking**         | Mecanisme qui fige les prix au moment de l'expedition                            |
+| **Retrocession**          | Montant gagne par l'affilie sur une ligne de commande                            |
+| **Selection**             | Mini-boutique creee par un affilie avec ses produits et marges                   |
+| **Selling price**         | Prix de vente HT configure par l'affilie (inclut sa marge)                       |
+| **Slug**                  | Identifiant URL-friendly d'une selection (ex: `/s/pokawa-mobilier`)              |
+| **Taux de marge additif** | `selling = base * (1 + taux/100)` - Utilise par LinkMe depuis migration 20260318 |
+| **Taux de marque**        | `selling = base / (1 - taux/100)` - Ancien modele, remplace en mars 2026         |
+| **Utilisateur LinkMe**    | Personne avec `user_app_roles` (app='linkme')                                    |
+| **XOR**                   | Contrainte : exactement un des deux champs doit etre renseigne                   |
 
 ---
 
@@ -1069,8 +1069,8 @@ const { data, error } = await supabase.rpc(
 | `selection_id`     | uuid FK | Selection parente                                     |
 | `product_id`       | uuid FK | Produit                                               |
 | `base_price_ht`    | decimal | Prix achat (copie depuis `channel_pricing`)           |
-| `margin_rate`      | decimal | Taux de marque (15.00 = 15%)                          |
-| `selling_price_ht` | decimal | **GENERATED ALWAYS** : `base / (1 - margin_rate/100)` |
+| `margin_rate`      | decimal | Taux de marge additif (15.00 = 15%)                   |
+| `selling_price_ht` | decimal | **GENERATED ALWAYS** : `base * (1 + margin_rate/100)` |
 
 ---
 
@@ -1318,7 +1318,7 @@ packages/@verone/utils/src/linkme/
 
 ## Regles Absolues
 
-1. **JAMAIS** confondre taux de marque et taux de marge
+1. **JAMAIS** confondre taux de marge additif et taux de marque (ancien modele)
 2. **TOUJOURS** utiliser `selling_price_ht` pour calcul commission (pas `base_price`)
 3. **JAMAIS** acceder aux affiliates sans passer par `user_app_roles`
 4. **TOUJOURS** verifier la contrainte XOR (`enseigne_id` / `organisation_id`)

@@ -163,7 +163,7 @@ export function CartStep({
                                     : 'bg-red-100 text-red-700'
                               )}
                             >
-                              Marge {item.marginRate}%
+                              Marge {item.marginRate.toFixed(2)}%
                             </span>
                           ) : null}
                         </div>

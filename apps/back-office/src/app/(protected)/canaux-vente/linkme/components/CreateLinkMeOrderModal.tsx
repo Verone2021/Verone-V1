@@ -501,10 +501,10 @@ export function CreateLinkMeOrderModal({
       };
     } else {
       // PRODUIT CATALOGUE: selling_price_ht déjà calculé en DB (GENERATED column)
-      // Formule DB: base_price_ht / (1 - margin_rate/100) — sans commission
+      // Formule DB: base_price_ht * (1 + margin_rate/100) — taux de marge additif
       const marginRate = item.margin_rate / 100;
       const sellingPrice = roundMoney(
-        item.selling_price_ht ?? item.base_price_ht / (1 - marginRate)
+        item.selling_price_ht ?? item.base_price_ht * (1 + marginRate)
       );
       const retrocessionRate = marginRate;
 

@@ -175,7 +175,7 @@ function ProductRow({
           </span>
           {!item.is_affiliate_product ? (
             <span className="text-xs text-linkme-turquoise font-medium">
-              M:{item.margin_rate.toFixed(0)}%
+              M:{item.margin_rate.toFixed(2)}%
             </span>
           ) : (
             <span className="text-xs text-indigo-500 font-medium">Affilie</span>

@@ -175,7 +175,7 @@ function MarginTrafficLight({
         {color === 'green' && <TrendingUp className="h-3 w-3" />}
         {color === 'orange' && <AlertTriangle className="h-3 w-3" />}
         {color === 'red' && <AlertCircle className="h-3 w-3" />}
-        <span>Marge actuelle : {(marginRate * 100).toFixed(1)}%</span>
+        <span>Marge actuelle : {(marginRate * 100).toFixed(2)}%</span>
       </div>
     </div>
   );
@@ -248,9 +248,9 @@ export function ProductDetailSheet({
     ? basePrice
     : basePrice * (1 + platformFeeRate);
 
-  // Selling price with margin (taux de marque)
+  // Selling price with margin (taux de marge additif)
   const sellingPriceWithMargin =
-    marginRateDecimal < 1 ? basePrice / (1 - marginRateDecimal) : basePrice;
+    marginRateDecimal > 0 ? basePrice * (1 + marginRateDecimal) : basePrice;
 
   // Final price for client
   const finalPrice = isAffiliateProduct
@@ -392,11 +392,11 @@ export function ProductDetailSheet({
                           : 'border-red-400 text-red-600 bg-red-50'
                     }`}
                   >
-                    {(marginRateDecimal * 100).toFixed(1)}%
+                    {(marginRateDecimal * 100).toFixed(2)}%
                   </span>
                 ) : (
                   <span className="text-xs font-mono text-gray-500">
-                    {(marginRateDecimal * 100).toFixed(1)}%
+                    {(marginRateDecimal * 100).toFixed(2)}%
                   </span>
                 )}
               </div>
@@ -467,7 +467,7 @@ export function ProductDetailSheet({
                   </span>
 
                   <span className="text-gray-400">
-                    Marge affilie ({(marginRateDecimal * 100).toFixed(1)}%)
+                    Marge affilie ({(marginRateDecimal * 100).toFixed(2)}%)
                   </span>
                   <span className="font-mono text-right text-gray-500">
                     +{formatPrice(marginAmountEuro)}

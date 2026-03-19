@@ -965,6 +965,7 @@ export interface PendingOrder {
   // Organisation
   organisation_name: string | null;
   enseigne_name: string | null;
+  // Organisation info for missing fields
   organisation_siret: string | null;
   organisation_country: string | null;
   organisation_vat_number: string | null;

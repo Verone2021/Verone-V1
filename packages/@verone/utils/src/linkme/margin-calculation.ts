@@ -4,12 +4,12 @@
  * IMPORTANT: Ce fichier est la SEULE source de calcul de marge.
  * NE JAMAIS dupliquer ces formules ailleurs !
  *
- * Formule utilisée: TAUX DE MARQUE (cohérent avec la colonne GENERATED en DB)
- * - selling_price = base_price / (1 - margin_rate/100)
+ * Formule utilisée: TAUX DE MARGE ADDITIF (cohérent avec la colonne GENERATED en DB)
+ * - selling_price = base_price * (1 + margin_rate/100)
  * - gain = selling_price - base_price
  *
  * Cette formule est identique à celle de la migration:
- * 20251216_001_taux_de_marque_formula.sql
+ * 20260318200000_switch_to_additive_margin_model.sql
  *
  * @module margin-calculation
  * @since 2026-01-20
@@ -27,7 +27,7 @@ export interface MarginCalculationInput {
 }
 
 export interface MarginCalculationResult {
-  /** Prix de vente HT calculé avec le taux de marque */
+  /** Prix de vente HT calculé avec le taux de marge additif */
   sellingPriceHt: number;
   /** Gain affilié en euros (selling_price - base_price) */
   gainEuros: number;
@@ -58,13 +58,13 @@ export interface AffiliateCommissionResult {
 /**
  * Calcule le prix de vente et le gain affilié pour un produit CATALOGUE
  *
- * Utilise la formule TAUX DE MARQUE:
- * - selling_price_ht = base_price_ht / (1 - margin_rate/100)
+ * Utilise la formule TAUX DE MARGE ADDITIF:
+ * - selling_price_ht = base_price_ht * (1 + margin_rate/100)
  * - gain_euros = selling_price_ht - base_price_ht
  *
  * Exemple avec base=100€ et marge=15%:
- * - selling_price = 100 / (1 - 0.15) = 100 / 0.85 = 117.65€
- * - gain = 117.65 - 100 = 17.65€
+ * - selling_price = 100 * (1 + 0.15) = 100 * 1.15 = 115.00€
+ * - gain = 115.00 - 100 = 15.00€
  *
  * @param input - Prix de base et taux de marge
  * @returns Prix de vente, gain en euros, et taux de marge
@@ -91,9 +91,9 @@ export function calculateMargin(
     };
   }
 
-  // Formule TAUX DE MARQUE (identique à la DB)
-  // selling_price_ht = base_price_ht / (1 - margin_rate/100)
-  const sellingPriceHt = basePriceHt / (1 - marginRate / 100);
+  // Formule TAUX DE MARGE ADDITIF (identique à la DB)
+  // selling_price_ht = base_price_ht * (1 + margin_rate/100)
+  const sellingPriceHt = basePriceHt * (1 + marginRate / 100);
   const gainEuros = sellingPriceHt - basePriceHt;
 
   return {
@@ -123,8 +123,8 @@ export function calculateGainFromSellingPrice(
 /**
  * Calcule le taux de marge depuis les prix (reverse engineering)
  *
- * Formule inverse du taux de marque:
- * margin_rate = 1 - (base_price / selling_price)
+ * Formule inverse du taux de marge additif:
+ * margin_rate = ((selling_price - base_price) / base_price) * 100
  *
  * @param basePriceHt - Prix de base HT
  * @param sellingPriceHt - Prix de vente HT
@@ -137,14 +137,14 @@ export function calculateMarginRateFromPrices(
   if (sellingPriceHt <= 0) {
     throw new Error('Le prix de vente doit être positif');
   }
-  if (basePriceHt < 0) {
-    throw new Error('Le prix de base ne peut pas être négatif');
+  if (basePriceHt <= 0) {
+    throw new Error('Le prix de base doit être positif');
   }
   if (basePriceHt >= sellingPriceHt) {
     return 0;
   }
 
-  const marginRate = (1 - basePriceHt / sellingPriceHt) * 100;
+  const marginRate = ((sellingPriceHt - basePriceHt) / basePriceHt) * 100;
   return roundToTwoDecimals(marginRate);
 }
 
@@ -251,7 +251,7 @@ export function calculateCartTotals(
     // Utiliser le taux spécifique de l'item ou le taux par défaut de l'organisation
     const effectiveItemTaxRate = taxRate ?? defaultTaxRate;
 
-    // Calcul du prix de vente avec la formule TAUX DE MARQUE
+    // Calcul du prix de vente avec la formule TAUX DE MARGE ADDITIF
     const { sellingPriceHt, gainEuros } = calculateMargin({
       basePriceHt,
       marginRate,

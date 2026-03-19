@@ -806,13 +806,13 @@ export default function SelectionDetailPage({
                           // Prix de vente LinkMe Final HT = Prix × (1 + commission)
                           prixVenteFinalHT =
                             selectionPriceHT * (1 + commissionRate);
-                          // Taux de marque: PVHT = PAHT / (1 - taux%)
+                          // Taux de marge additif: PVHT = PAHT × (1 + taux%)
                           const sellingPriceWithMargin =
-                            selectionPriceHT / (1 - marginRate / 100);
-                          // Marge € = Prix avec taux de marque - Prix de base
+                            selectionPriceHT * (1 + marginRate / 100);
+                          // Marge € = Prix avec marge - Prix de base
                           marginEuros =
                             sellingPriceWithMargin - selectionPriceHT;
-                          // Prix affilié HT = Prix avec taux de marque × (1 + commission)
+                          // Prix affilié HT = Prix avec marge × (1 + commission)
                           prixAffilieHT =
                             sellingPriceWithMargin * (1 + commissionRate);
                         }

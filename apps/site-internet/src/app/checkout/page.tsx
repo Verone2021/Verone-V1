@@ -29,6 +29,19 @@ interface PromoResult {
   discount_amount: number;
 }
 
+interface ShippingConfigPublic {
+  standard_enabled: boolean;
+  standard_label: string;
+  standard_price_cents: number;
+  express_enabled: boolean;
+  express_label: string;
+  express_price_cents: number;
+  free_shipping_enabled: boolean;
+  free_shipping_threshold_cents: number;
+  free_shipping_applies_to: 'standard' | 'all';
+  shipping_info_message?: string;
+}
+
 const CHECKOUT_STEPS = [
   { label: 'Panier', icon: ShoppingCart, done: true },
   { label: 'Livraison', icon: Truck, done: false },
@@ -44,7 +57,19 @@ export default function CheckoutPage() {
   const [promoResult, setPromoResult] = useState<PromoResult | null>(null);
   const [promoError, setPromoError] = useState('');
   const [promoLoading, setPromoLoading] = useState(false);
+  const [shippingConfig, setShippingConfig] =
+    useState<ShippingConfigPublic | null>(null);
   const hasTrackedCheckout = useRef(false);
+
+  // Fetch shipping config from API
+  useEffect(() => {
+    void fetch('/api/shipping-config')
+      .then(res => res.json() as Promise<ShippingConfigPublic>)
+      .then(data => setShippingConfig(data))
+      .catch(err => {
+        console.error('[Checkout] Failed to fetch shipping config:', err);
+      });
+  }, []);
 
   // GA4: track begin_checkout once
   useEffect(() => {
@@ -150,7 +175,17 @@ export default function CheckoutPage() {
   };
 
   const discount = promoResult?.discount_amount ?? 0;
-  const shippingEstimate = subtotal >= 500 ? 0 : 49;
+
+  // Compute shipping estimate from config (Stripe will show the real options)
+  const shippingEstimate = (() => {
+    if (!shippingConfig) return 0; // Loading state
+    if (!shippingConfig.standard_enabled) return 0;
+    const subtotalCents = Math.round(subtotal * 100);
+    const isFree =
+      shippingConfig.free_shipping_enabled &&
+      subtotalCents >= shippingConfig.free_shipping_threshold_cents;
+    return isFree ? 0 : shippingConfig.standard_price_cents / 100;
+  })();
   const total = subtotal - discount + shippingEstimate;
 
   const inputClass =
@@ -604,11 +639,13 @@ export default function CheckoutPage() {
                   )}
                 </span>
               </div>
-              {shippingEstimate > 0 && (
-                <p className="text-xs text-verone-gray-400">
-                  Livraison offerte dès 500 &euro;
-                </p>
-              )}
+              {shippingEstimate > 0 &&
+                shippingConfig?.free_shipping_enabled &&
+                shippingConfig.shipping_info_message && (
+                  <p className="text-xs text-verone-gray-400">
+                    {shippingConfig.shipping_info_message}
+                  </p>
+                )}
               <div className="border-t border-verone-gray-100 pt-3 flex justify-between text-lg font-bold text-verone-black">
                 <span>Total</span>
                 <span>{formatPrice(total)}</span>

@@ -33,7 +33,7 @@
 ### CATALOGUE products: affiliate earns margin
 
 ```
-margin_rate = TAUX DE MARQUE (on selling price), NOT taux de marge (on cost)
+margin_rate = TAUX DE MARGE ADDITIF: selling = base * (1 + margin_rate/100)
 
 retrocession_amount = selling_price_ht * margin_rate / 100 * quantity
 ```
@@ -41,10 +41,10 @@ retrocession_amount = selling_price_ht * margin_rate / 100 * quantity
 Example (Plateau bois 20x30):
 
 - base_price_ht = 20.19 EUR
-- selling_price_ht = 23.75 EUR
+- selling_price_ht = 23.22 EUR (20.19 \* 1.15)
 - margin_rate = 15%
-- Commission = 23.75 \* 0.15 = **3.56 EUR** (CORRECT)
-- NOT 20.19 \* 0.15 = 3.03 EUR (WRONG - this would be taux de marge)
+- Commission = 23.22 \* 0.15 = **3.48 EUR** (CORRECT)
+- NOT 20.19 \* 0.15 = 3.03 EUR (WRONG - applied on base instead of selling)
 
 ### AFFILIATE products: Verone takes platform fee
 
@@ -68,7 +68,7 @@ CASE
     -- Affiliate product: platform fee 15% on sale price
     ROUND(lsi.selling_price_ht * 0.15 * soi.quantity, 2)
   ELSE
-    -- Catalogue product: margin on selling price (taux de marque)
+    -- Catalogue product: margin on selling price (taux de marge additif)
     ROUND(lsi.selling_price_ht * lsi.margin_rate / 100 * soi.quantity, 2)
 END AS commission
 ```
@@ -139,7 +139,7 @@ if (isAffiliateProduct) {
   const fraisLinkMe = prixVente * (affiliateCommissionRate / 100);
   const payoutAffilie = prixVente - fraisLinkMe;
 } else {
-  // STANDARD model: Affiliate EARNS a margin (taux de marque)
+  // STANDARD model: Affiliate EARNS a margin (taux de marge additif)
   const commission = sellingPriceHt * (marginRate / 100);
 }
 ```
@@ -159,7 +159,7 @@ FROM products WHERE created_by_affiliate IS NOT NULL;
 
 ## 6. Historical Bugs Fixed (reference)
 
-### Bug 1: Wrong formula used taux de marge instead of taux de marque (2026-01-10)
+### Bug 1: Wrong formula used taux de marge on base_price instead of selling_price (2026-01-10)
 
 **Problem**: RPC `create_public_linkme_order` calculated commission on `base_price_ht` instead of `selling_price_ht`.
 

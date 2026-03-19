@@ -35,6 +35,10 @@ import {
   Save,
 } from 'lucide-react';
 
+import type { Json } from '@verone/types';
+
+import { ShippingConfigCard } from './ShippingConfigCard';
+
 // Hooks
 import {
   useSiteInternetConfig,
@@ -691,6 +695,17 @@ export function ConfigurationSection() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Section 5: Livraison & Frais de Port */}
+      <ShippingConfigCard
+        config={config}
+        onSave={async shippingConfig => {
+          await updateConfigJSON.mutateAsync({
+            shipping: shippingConfig as unknown as Json,
+          } as Json);
+        }}
+        isSaving={updateConfigJSON.isPending}
+      />
 
       {/* Info Helper */}
       <Card className="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950">

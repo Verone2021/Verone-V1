@@ -1204,29 +1204,28 @@ export default function LinkMeOrderDetailPage() {
                       <TableRow>
                         <TableHead className="min-w-[200px]">Produit</TableHead>
                         <TableHead className="text-right">
-                          Prix vente HT
+                          Prix Verone HT
+                        </TableHead>
+                        <TableHead className="text-center">
+                          Commission %
+                        </TableHead>
+                        <TableHead className="text-right">
+                          Commission &euro;
+                        </TableHead>
+                        <TableHead className="text-right">
+                          Prix client HT
                         </TableHead>
                         <TableHead className="text-center">Qté</TableHead>
                         <TableHead className="text-right">Total HT</TableHead>
-                        <TableHead className="text-center">
-                          Marge/Comm. %
-                        </TableHead>
-                        <TableHead className="text-right">
-                          Marge/Comm. &euro;
-                        </TableHead>
-                        <TableHead className="text-right">
-                          Payout affilié
-                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {enrichedItems.map(item => {
                         const isRevendeur = !!item.created_by_affiliate;
-                        const marginCommissionEuros =
-                          item.affiliate_margin ?? 0;
-                        const payoutAffilie = isRevendeur
-                          ? item.total_ht - marginCommissionEuros
-                          : marginCommissionEuros;
+                        const commissionPerUnit =
+                          item.quantity > 0
+                            ? (item.affiliate_margin ?? 0) / item.quantity
+                            : 0;
 
                         return (
                           <TableRow key={item.id}>
@@ -1254,44 +1253,35 @@ export default function LinkMeOrderDetailPage() {
                                 </div>
                               </div>
                             </TableCell>
+                            {/* Prix Verone HT */}
                             <TableCell className="text-right">
+                              {formatCurrency(
+                                item.base_price_ht || item.unit_price_ht
+                              )}
+                            </TableCell>
+                            {/* Commission % */}
+                            <TableCell className="text-center">
+                              <span className="text-teal-600">
+                                {`${Math.round(item.retrocession_rate * 100)}%`}
+                              </span>
+                            </TableCell>
+                            {/* Commission EUR (per unit) */}
+                            <TableCell className="text-right">
+                              <span className="text-teal-600">
+                                {formatCurrency(commissionPerUnit)}
+                              </span>
+                            </TableCell>
+                            {/* Prix client HT */}
+                            <TableCell className="text-right font-medium">
                               {formatCurrency(item.unit_price_ht)}
                             </TableCell>
+                            {/* Quantité */}
                             <TableCell className="text-center">
                               {item.quantity}
                             </TableCell>
+                            {/* Total HT */}
                             <TableCell className="text-right font-medium">
                               {formatCurrency(item.total_ht)}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <span
-                                className={
-                                  isRevendeur
-                                    ? 'text-purple-600'
-                                    : 'text-teal-600'
-                                }
-                              >
-                                {isRevendeur
-                                  ? `${item.commission_rate ?? 0}%`
-                                  : `${item.margin_rate ?? 0}%`}
-                              </span>
-                              <p className="text-[10px] text-gray-400">
-                                {isRevendeur ? 'Comm. LinkMe' : 'Marge affilié'}
-                              </p>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <span
-                                className={
-                                  isRevendeur
-                                    ? 'text-purple-600'
-                                    : 'text-teal-600'
-                                }
-                              >
-                                {formatCurrency(marginCommissionEuros)}
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-right font-semibold text-green-600">
-                              {formatCurrency(payoutAffilie)}
                             </TableCell>
                           </TableRow>
                         );

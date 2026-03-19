@@ -42,21 +42,21 @@ products → channel_pricing → linkme_selection_items → sales_order_items �
 ### Produits CATALOGUE (Verone distribue a l'affilie)
 
 ```sql
--- TAUX DE MARQUE: margin_rate s'applique sur le PRIX DE VENTE, pas sur le cout
--- Formule prix de vente: selling_price = base_price / (1 - margin_rate / 100)
--- La marge de l'affilie est INCLUSE dans le prix de vente LinkMe
+-- TAUX DE MARGE ADDITIF: margin_rate s'ajoute AU prix de base
+-- Formule prix de vente: selling_price = base_price * (1 + margin_rate / 100)
+-- La marge de l'affilie est AJOUTEE au prix de base
 
 -- Exemple avec base = 100€, margin_rate = 15%:
-selling_price_ht = base_price_ht / (1 - margin_rate / 100)
--- selling_price = 100 / (1 - 0.15) = 100 / 0.85 = 117.65€
+selling_price_ht = base_price_ht * (1 + margin_rate / 100)
+-- selling_price = 100 * (1 + 0.15) = 100 * 1.15 = 115.00€
 
--- La retrocession (gain affilie) = prix de vente × taux de marque
+-- La retrocession (gain affilie) = prix de vente × taux de marge
 retrocession_affilie = selling_price_ht × (margin_rate / 100) × quantity
--- retrocession = 117.65 × 0.15 = 17.65€
+-- retrocession = 115.00 × 0.15 = 17.25€
 
 -- Commission plateforme LinkMe (ex: 5%) AJOUTEE au prix de vente
 prix_client_final = selling_price_ht × (1 + channel_commission_rate / 100)
--- prix_client = 117.65 × 1.05 = 123.53€
+-- prix_client = 115.00 × 1.05 = 120.75€
 ```
 
 ### Produits AFFILIE/REVENDEUR (LinkMe preleve sur l'affilie)
@@ -73,29 +73,29 @@ payout_affilie = prix_vente_client - commission_linkme
 
 ---
 
-## Formule Correcte (Taux de Marque)
+## Formule Correcte (Taux de Marge Additif)
 
 **ERREUR CORRIGEE (2026-01-10)** : Le RPC `create_public_linkme_order` utilisait la mauvaise formule.
 
 ```sql
--- margin_rate = TAUX DE MARQUE (sur prix de vente), PAS taux de marge (sur cout)
+-- margin_rate = TAUX DE MARGE ADDITIF : selling_price = base * (1 + margin_rate/100)
 retrocession_amount = selling_price_ht × margin_rate / 100 × quantity
 ```
 
 **Exemple Plateau bois 20x30:**
 
 - base_price_ht = 20.19€
-- selling_price_ht = 23.75€
+- selling_price_ht = 23.22€ (20.19 \* 1.15)
 - margin_rate = 15%
-- **CORRECT**: 23.75 × 15% = **3.56€**
-- **INCORRECT**: 20.19 × 15% = 3.03€
+- **CORRECT**: 23.22 × 15% = **3.48€**
+- **INCORRECT**: 20.19 × 15% = 3.03€ (wrong: applied on base instead of selling)
 
 ---
 
 ## Colonnes a Utiliser
 
 - `sales_order_items.retrocession_amount` - Correctement peuple depuis 2026-01-10
-- `sales_order_items.retrocession_rate` - Taux de marque depuis selection
+- `sales_order_items.retrocession_rate` - Taux de marge additif depuis selection
 - `linkme_order_items_enriched.affiliate_margin` pour vues enrichies
 - `products.created_by_affiliate` pour identifier le type de produit
 - `products.affiliate_commission_rate` pour le taux Verone sur produits affilies
@@ -113,10 +113,10 @@ if (isAffiliateProduct) {
   const payoutAffilie = prixVente - commissionLinkMe;
   // Exemple: 100€ × 10% = 10€ commission, payout = 90€
 } else {
-  // CATALOGUE: Taux de MARQUE (sur prix de vente)
-  const prixVenteAvecMarge = prixBase / (1 - marginRate / 100);
+  // CATALOGUE: Taux de marge additif
+  const prixVenteAvecMarge = prixBase * (1 + marginRate / 100);
   const margeAffilie = prixVenteAvecMarge * (marginRate / 100);
-  // Exemple: 100€ / 0.85 = 117.65€, marge = 117.65 × 15% = 17.65€
+  // Exemple: 100€ * 1.15 = 115.00€, marge = 115.00 × 15% = 17.25€
 }
 ```
 
@@ -132,7 +132,7 @@ if (isAffiliateProduct) {
 
 ## Regles Absolues
 
-1. **JAMAIS** confondre taux de marge et taux de marque
+1. **JAMAIS** confondre taux de marge additif et taux de marque (ancien modele)
 2. **TOUJOURS** utiliser selling_price_ht pour calcul commission
 3. **JAMAIS** supposer que margin_rate s'applique sur base_price
 4. **PAS DE SELECTION = PAS DE COMMANDE** : Toute commande LinkMe DOIT etre liee a une `linkme_selection` via `sales_orders.linkme_selection_id`. Sans selection, retrocessions et commissions = 0.
@@ -155,11 +155,11 @@ if (isAffiliateProduct) {
 ### Formule commission HT
 
 ```sql
--- Commission = prix de vente HT × taux de marque
+-- Commission = prix de vente HT × taux de marge
 commission_ht = selling_price_ht × (margin_rate / 100)
 
--- Exemple: selling_price = 117.65€ HT, margin_rate = 15%
--- commission_ht = 117.65 × 0.15 = 17.65€ HT
+-- Exemple: selling_price = 115.00€ HT, margin_rate = 15%
+-- commission_ht = 115.00 × 0.15 = 17.25€ HT
 ```
 
 ### TVA sur commissions
@@ -192,16 +192,16 @@ Produit catalogue Vérone:
 - base_price_ht = 20.19€
 - margin_rate = 15%
 
-Calcul (taux de marque):
-- selling_price_ht = 20.19 / (1 - 0.15) = 20.19 / 0.85 = 23.75€
-- gain_affilie_ht = 23.75 - 20.19 = 3.56€
+Calcul (taux de marge additif):
+- selling_price_ht = 20.19 * (1 + 0.15) = 20.19 * 1.15 = 23.22€
+- gain_affilie_ht = 23.22 - 20.19 = 3.03€
 
 Vérification:
-- 23.75 × 15% = 3.56€ ✓
+- 23.22 × 15% = 3.48€ (approx, arrondi DB)
 
 Commission plateforme (5%):
-- prix_client_ht = 23.75 × 1.05 = 24.94€ HT
-- prix_client_ttc = 24.94 × 1.20 = 29.93€ TTC
+- prix_client_ht = 23.22 × 1.05 = 24.38€ HT
+- prix_client_ttc = 24.38 × 1.20 = 29.26€ TTC
 ```
 
 ### Exemple 2: Black & White - Meuble sur mesure
@@ -224,16 +224,16 @@ Le client paie:
 ```
 Panier:
 1. Plateau bois × 2 (catalogue, marge 15%)
-   - base: 20.19€, selling: 23.75€, gain: 3.56€ × 2 = 7.12€
+   - base: 20.19€, selling: 23.22€, gain: 3.03€ × 2 = 6.06€
 2. Chaise design × 1 (catalogue, marge 20%)
-   - base: 80€, selling: 100€, gain: 20€ × 1 = 20€
+   - base: 80€, selling: 96€, gain: 16€ × 1 = 16€
 3. Meuble custom × 1 (affilié, commission 10%)
    - prix: 500€, commission LinkMe: 50€, payout: 450€
 
 Totaux affilié:
-- Gains produits catalogue: 7.12 + 20 = 27.12€ HT
+- Gains produits catalogue: 6.06 + 16 = 22.06€ HT
 - Payout produit affilié: 450€ HT
-- Total reçu: 477.12€ HT (avant impôts affilié)
+- Total reçu: 472.06€ HT (avant impôts affilié)
 ```
 
 ---

@@ -3,8 +3,8 @@
  *
  * Exécution: npx tsx packages/@verone/utils/src/linkme/__tests__/margin-calculation.test.ts
  *
- * Vérifie que les calculs de marge utilisent le TAUX DE MARQUE correct:
- * - selling_price = base_price / (1 - margin_rate/100)
+ * Vérifie que les calculs de marge utilisent le TAUX DE MARGE ADDITIF correct:
+ * - selling_price = base_price * (1 + margin_rate/100)
  * - gain = selling_price - base_price
  *
  * @module margin-calculation.test
@@ -53,31 +53,31 @@ function describe(name: string, fn: () => void): void {
 // TESTS: calculateMargin
 // ============================================================================
 
-describe('calculateMargin (taux de marque)', () => {
+describe('calculateMargin (taux de marge additif)', () => {
   test('calcule correctement avec marge 15% (cas standard)', () => {
     const result = calculateMargin({ basePriceHt: 100, marginRate: 15 });
 
-    // selling_price = 100 / (1 - 0.15) = 100 / 0.85 = 117.647...
-    assert.strictEqual(result.sellingPriceHt, 117.65);
-    // gain = 117.65 - 100 = 17.65
-    assert.strictEqual(result.gainEuros, 17.65);
+    // selling_price = 100 * (1 + 0.15) = 100 * 1.15 = 115.00
+    assert.strictEqual(result.sellingPriceHt, 115);
+    // gain = 115 - 100 = 15.00
+    assert.strictEqual(result.gainEuros, 15);
     assert.strictEqual(result.marginRate, 15);
   });
 
   test('calcule correctement avec marge 10%', () => {
     const result = calculateMargin({ basePriceHt: 100, marginRate: 10 });
 
-    // selling_price = 100 / 0.90 = 111.11
-    assert.strictEqual(result.sellingPriceHt, 111.11);
-    assert.strictEqual(result.gainEuros, 11.11);
+    // selling_price = 100 * 1.10 = 110.00
+    assert.strictEqual(result.sellingPriceHt, 110);
+    assert.strictEqual(result.gainEuros, 10);
   });
 
   test('calcule correctement avec marge 20%', () => {
     const result = calculateMargin({ basePriceHt: 100, marginRate: 20 });
 
-    // selling_price = 100 / 0.80 = 125
-    assert.strictEqual(result.sellingPriceHt, 125);
-    assert.strictEqual(result.gainEuros, 25);
+    // selling_price = 100 * 1.20 = 120.00
+    assert.strictEqual(result.sellingPriceHt, 120);
+    assert.strictEqual(result.gainEuros, 20);
   });
 
   test('gère margin_rate = 0 (pas de marge)', () => {
@@ -91,10 +91,10 @@ describe('calculateMargin (taux de marque)', () => {
     // Cas réel: Plateau bois 20x30 à 20.19€ avec marge 15%
     const result = calculateMargin({ basePriceHt: 20.19, marginRate: 15 });
 
-    // selling_price = 20.19 / 0.85 = 23.7529...
-    assert.strictEqual(result.sellingPriceHt, 23.75);
-    // gain = 23.75 - 20.19 = 3.56
-    assert.strictEqual(result.gainEuros, 3.56);
+    // selling_price = 20.19 * 1.15 = 23.2185 → 23.22
+    assert.strictEqual(result.sellingPriceHt, 23.22);
+    // gain = 23.22 - 20.19 = 3.03
+    assert.strictEqual(result.gainEuros, 3.03);
   });
 
   test('throw si basePriceHt négatif', () => {
@@ -125,13 +125,13 @@ describe('calculateMargin (taux de marque)', () => {
 
 describe('calculateGainFromSellingPrice (lecture DB)', () => {
   test('calcule gain depuis prix de vente DB', () => {
-    const gain = calculateGainFromSellingPrice(100, 117.65);
-    assert.strictEqual(gain, 17.65);
+    const gain = calculateGainFromSellingPrice(100, 115);
+    assert.strictEqual(gain, 15);
   });
 
   test('gère les décimales correctement', () => {
-    const gain = calculateGainFromSellingPrice(20.19, 23.75);
-    assert.strictEqual(gain, 3.56);
+    const gain = calculateGainFromSellingPrice(20.19, 23.22);
+    assert.strictEqual(gain, 3.03);
   });
 });
 
@@ -141,13 +141,9 @@ describe('calculateGainFromSellingPrice (lecture DB)', () => {
 
 describe('calculateMarginRateFromPrices (reverse engineering)', () => {
   test('retrouve le taux de marge depuis les prix', () => {
-    // base=100, selling=117.65 → marge ~15%
-    const rate = calculateMarginRateFromPrices(100, 117.65);
-    // Légère imprécision due aux arrondis (15.00 ou 15.01 acceptable)
-    assert.ok(
-      rate >= 15 && rate <= 15.02,
-      `Taux ${rate} hors plage [15, 15.02]`
-    );
+    // base=100, selling=115 → marge = (115-100)/100 * 100 = 15%
+    const rate = calculateMarginRateFromPrices(100, 115);
+    assert.strictEqual(rate, 15);
   });
 
   test('retourne 0 si base >= selling', () => {
@@ -159,6 +155,13 @@ describe('calculateMarginRateFromPrices (reverse engineering)', () => {
     assert.throws(
       () => calculateMarginRateFromPrices(100, 0),
       /prix de vente doit être positif/
+    );
+  });
+
+  test('throw si basePriceHt <= 0', () => {
+    assert.throws(
+      () => calculateMarginRateFromPrices(0, 100),
+      /prix de base doit être positif/
     );
   });
 });
@@ -181,13 +184,13 @@ describe('calculateAffiliateCommission (produits affiliés)', () => {
 
   test('calcule commission 5% (commission plateforme LinkMe)', () => {
     const result = calculateAffiliateCommission({
-      sellingPriceHt: 117.65,
+      sellingPriceHt: 115,
       commissionRate: 5,
     });
 
-    // commission = 117.65 × 0.05 = 5.88
-    assert.strictEqual(result.commissionEuros, 5.88);
-    assert.strictEqual(result.affiliateReceives, 111.77);
+    // commission = 115 × 0.05 = 5.75
+    assert.strictEqual(result.commissionEuros, 5.75);
+    assert.strictEqual(result.affiliateReceives, 109.25);
   });
 
   test('gère commission 0%', () => {
@@ -211,10 +214,10 @@ describe('calculateCartTotals (panier)', () => {
       { basePriceHt: 100, marginRate: 15, quantity: 1 },
     ]);
 
-    assert.strictEqual(result.totalHT, 117.65);
-    assert.strictEqual(result.totalTVA, 23.53); // 117.65 × 0.20
-    assert.strictEqual(result.totalTTC, 141.18);
-    assert.strictEqual(result.totalCommission, 17.65);
+    assert.strictEqual(result.totalHT, 115);
+    assert.strictEqual(result.totalTVA, 23); // 115 × 0.20
+    assert.strictEqual(result.totalTTC, 138);
+    assert.strictEqual(result.totalCommission, 15);
     assert.strictEqual(result.itemsCount, 1);
   });
 
@@ -223,26 +226,21 @@ describe('calculateCartTotals (panier)', () => {
       { basePriceHt: 100, marginRate: 15, quantity: 3 },
     ]);
 
-    assert.strictEqual(result.totalHT, 352.95); // 117.65 × 3
-    assert.strictEqual(result.totalCommission, 52.95); // 17.65 × 3
+    assert.strictEqual(result.totalHT, 345); // 115 × 3
+    assert.strictEqual(result.totalCommission, 45); // 15 × 3
     assert.strictEqual(result.itemsCount, 3);
   });
 
   test('calcule totaux pour panier multi-items', () => {
     const result = calculateCartTotals([
-      { basePriceHt: 100, marginRate: 15, quantity: 1 }, // 117.65, gain 17.65
-      { basePriceHt: 50, marginRate: 10, quantity: 2 }, // 55.56 × 2 = 111.12, gain 5.56 × 2
+      { basePriceHt: 100, marginRate: 15, quantity: 1 }, // 115, gain 15
+      { basePriceHt: 50, marginRate: 10, quantity: 2 }, // 55 × 2 = 110, gain 5 × 2
     ]);
 
-    // 117.65 + 111.12 = 228.77 (arrondis peuvent donner 228.76 ou 228.77)
-    assert.ok(
-      result.totalHT >= 228.76 && result.totalHT <= 228.78,
-      `totalHT ${result.totalHT} hors plage`
-    );
-    assert.ok(
-      result.totalCommission >= 28.76 && result.totalCommission <= 28.78,
-      `totalCommission ${result.totalCommission} hors plage`
-    );
+    // 115 + 110 = 225
+    assert.strictEqual(result.totalHT, 225);
+    // 15 + 10 = 25
+    assert.strictEqual(result.totalCommission, 25);
     assert.strictEqual(result.itemsCount, 3);
   });
 
@@ -253,7 +251,7 @@ describe('calculateCartTotals (panier)', () => {
     );
 
     assert.strictEqual(result.totalTVA, 0);
-    assert.strictEqual(result.totalTTC, 117.65);
+    assert.strictEqual(result.totalTTC, 115);
     assert.strictEqual(result.effectiveTaxRate, 0);
   });
 
@@ -274,9 +272,9 @@ describe('calculateCartTotals (panier)', () => {
 
 describe('formatEuros / formatPercent', () => {
   test('formate montant en euros (format FR)', () => {
-    const formatted = formatEuros(117.65);
-    // Format FR: "117,65 €" ou "117.65 €" selon locale
-    assert.ok(formatted.includes('117'));
+    const formatted = formatEuros(115);
+    // Format FR: "115,00 €" ou "115.00 €" selon locale
+    assert.ok(formatted.includes('115'));
     assert.ok(formatted.includes('€'));
   });
 
@@ -291,16 +289,16 @@ describe('formatEuros / formatPercent', () => {
 // ============================================================================
 
 describe('Validation croisée Frontend/DB', () => {
-  test('formule identique à la migration SQL (20251216_001_taux_de_marque_formula.sql)', () => {
-    // La DB utilise: selling_price_ht = base_price_ht / (1 - margin_rate / 100)
+  test('formule identique à la migration SQL (20260318200000_switch_to_additive_margin_model.sql)', () => {
+    // La DB utilise: selling_price_ht = base_price_ht * (1 + margin_rate / 100)
     // Vérifions que notre code produit le même résultat
 
     const testCases = [
-      { base: 100, margin: 15, expected: 117.65 },
-      { base: 100, margin: 10, expected: 111.11 },
-      { base: 100, margin: 20, expected: 125 },
-      { base: 50, margin: 15, expected: 58.82 },
-      { base: 20.19, margin: 15, expected: 23.75 },
+      { base: 100, margin: 15, expected: 115 },
+      { base: 100, margin: 10, expected: 110 },
+      { base: 100, margin: 20, expected: 120 },
+      { base: 50, margin: 15, expected: 57.5 },
+      { base: 20.19, margin: 15, expected: 23.22 },
     ];
 
     for (const tc of testCases) {

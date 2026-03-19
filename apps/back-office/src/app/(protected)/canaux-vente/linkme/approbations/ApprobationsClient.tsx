@@ -83,6 +83,10 @@ import {
   type OrderValidationStatus,
 } from '../hooks/use-linkme-order-actions';
 import {
+  getOrderMissingFields,
+  type MissingFieldsResult,
+} from '../utils/order-missing-fields';
+import {
   usePendingOrganisationsCount,
   useAllOrganisationsWithApproval,
   useApproveOrganisation,
@@ -650,7 +654,7 @@ function CommandesTab() {
                       </td>
                     </tr>
 
-                    {/* Ligne expandue avec produits */}
+                    {/* Ligne expandue avec produits + contacts */}
                     {isExpanded && (
                       <tr
                         key={`${order.id}-expanded`}

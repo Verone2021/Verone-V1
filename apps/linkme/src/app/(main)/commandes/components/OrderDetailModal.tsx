@@ -506,7 +506,7 @@ export function OrderDetailModal({
                       {canViewCommissions && (
                         <TableCell className="text-center">
                           <Badge variant="secondary" className="text-xs">
-                            {item.margin_rate.toFixed(0)}%
+                            {item.margin_rate.toFixed(2)}%
                           </Badge>
                         </TableCell>
                       )}
