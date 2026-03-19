@@ -2259,6 +2259,62 @@ export type Database = {
           },
         ];
       };
+      customer_addresses: {
+        Row: {
+          address: string;
+          city: string;
+          country: string;
+          created_at: string;
+          first_name: string;
+          id: string;
+          is_default: boolean;
+          label: string;
+          last_name: string;
+          phone: string | null;
+          postal_code: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          address: string;
+          city: string;
+          country?: string;
+          created_at?: string;
+          first_name: string;
+          id?: string;
+          is_default?: boolean;
+          label?: string;
+          last_name: string;
+          phone?: string | null;
+          postal_code: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          address?: string;
+          city?: string;
+          country?: string;
+          created_at?: string;
+          first_name?: string;
+          id?: string;
+          is_default?: boolean;
+          label?: string;
+          last_name?: string;
+          phone?: string | null;
+          postal_code?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'customer_addresses_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+        ];
+      };
       customer_group_members: {
         Row: {
           assignment_method: string | null;
@@ -5439,6 +5495,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      newsletter_subscribers: {
+        Row: {
+          email: string;
+          id: string;
+          is_active: boolean | null;
+          source: string;
+          subscribed_at: string | null;
+          unsubscribed_at: string | null;
+        };
+        Insert: {
+          email: string;
+          id?: string;
+          is_active?: boolean | null;
+          source?: string;
+          subscribed_at?: string | null;
+          unsubscribed_at?: string | null;
+        };
+        Update: {
+          email?: string;
+          id?: string;
+          is_active?: boolean | null;
+          source?: string;
+          subscribed_at?: string | null;
+          unsubscribed_at?: string | null;
+        };
+        Relationships: [];
+      };
       notifications: {
         Row: {
           action_label: string | null;
@@ -6921,6 +7004,81 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'purchase_order_items';
             referencedColumns: ['id'];
+          },
+        ];
+      };
+      product_reviews: {
+        Row: {
+          author_name: string;
+          comment: string | null;
+          created_at: string;
+          id: string;
+          product_id: string;
+          rating: number;
+          status: string;
+          title: string | null;
+          updated_at: string;
+          user_id: string | null;
+        };
+        Insert: {
+          author_name: string;
+          comment?: string | null;
+          created_at?: string;
+          id?: string;
+          product_id: string;
+          rating: number;
+          status?: string;
+          title?: string | null;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Update: {
+          author_name?: string;
+          comment?: string | null;
+          created_at?: string;
+          id?: string;
+          product_id?: string;
+          rating?: number;
+          status?: string;
+          title?: string | null;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'product_reviews_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'product_reviews_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'product_reviews_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'product_reviews_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'product_reviews_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
           },
         ];
       };
@@ -8792,6 +8950,224 @@ export type Database = {
           },
         ];
       };
+      shopping_carts: {
+        Row: {
+          abandoned_cart_email_sent_at: string | null;
+          created_at: string | null;
+          customer_email: string | null;
+          id: string;
+          include_assembly: boolean;
+          product_id: string;
+          quantity: number;
+          session_id: string | null;
+          updated_at: string | null;
+          user_id: string | null;
+          variant_group_id: string | null;
+        };
+        Insert: {
+          abandoned_cart_email_sent_at?: string | null;
+          created_at?: string | null;
+          customer_email?: string | null;
+          id?: string;
+          include_assembly?: boolean;
+          product_id: string;
+          quantity?: number;
+          session_id?: string | null;
+          updated_at?: string | null;
+          user_id?: string | null;
+          variant_group_id?: string | null;
+        };
+        Update: {
+          abandoned_cart_email_sent_at?: string | null;
+          created_at?: string | null;
+          customer_email?: string | null;
+          id?: string;
+          include_assembly?: boolean;
+          product_id?: string;
+          quantity?: number;
+          session_id?: string | null;
+          updated_at?: string | null;
+          user_id?: string | null;
+          variant_group_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'shopping_carts_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'shopping_carts_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'shopping_carts_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'shopping_carts_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'shopping_carts_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+          {
+            foreignKeyName: 'shopping_carts_variant_group_id_fkey';
+            columns: ['variant_group_id'];
+            isOneToOne: false;
+            referencedRelation: 'variant_groups';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      site_contact_messages: {
+        Row: {
+          created_at: string;
+          email: string;
+          id: string;
+          message: string;
+          name: string;
+          status: string;
+          subject: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          email: string;
+          id?: string;
+          message: string;
+          name: string;
+          status?: string;
+          subject: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          email?: string;
+          id?: string;
+          message?: string;
+          name?: string;
+          status?: string;
+          subject?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      site_content: {
+        Row: {
+          content_key: string;
+          content_value: Json;
+          id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          content_key: string;
+          content_value?: Json;
+          id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          content_key?: string;
+          content_value?: Json;
+          id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'site_content_updated_by_fkey';
+            columns: ['updated_by'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+        ];
+      };
+      site_orders: {
+        Row: {
+          created_at: string | null;
+          currency: string;
+          customer_email: string;
+          customer_name: string;
+          customer_phone: string | null;
+          id: string;
+          items: Json;
+          notes: string | null;
+          session_id: string | null;
+          shipping_address: string | null;
+          shipping_cost: number;
+          status: string;
+          stripe_session_id: string | null;
+          subtotal: number;
+          total: number;
+          updated_at: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          currency?: string;
+          customer_email: string;
+          customer_name: string;
+          customer_phone?: string | null;
+          id?: string;
+          items?: Json;
+          notes?: string | null;
+          session_id?: string | null;
+          shipping_address?: string | null;
+          shipping_cost?: number;
+          status?: string;
+          stripe_session_id?: string | null;
+          subtotal?: number;
+          total?: number;
+          updated_at?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          currency?: string;
+          customer_email?: string;
+          customer_name?: string;
+          customer_phone?: string | null;
+          id?: string;
+          items?: Json;
+          notes?: string | null;
+          session_id?: string | null;
+          shipping_address?: string | null;
+          shipping_cost?: number;
+          status?: string;
+          stripe_session_id?: string | null;
+          subtotal?: number;
+          total?: number;
+          updated_at?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'site_orders_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+        ];
+      };
       stock_alert_tracking: {
         Row: {
           added_to_draft_at: string | null;
@@ -10166,6 +10542,63 @@ export type Database = {
           },
         ];
       };
+      wishlist_items: {
+        Row: {
+          created_at: string;
+          id: string;
+          product_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          product_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          product_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'wishlist_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'wishlist_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'wishlist_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'wishlist_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'wishlist_items_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+        ];
+      };
     };
     Views: {
       affiliate_pending_orders: {
@@ -10658,9 +11091,11 @@ export type Database = {
       };
       linkme_order_items_enriched: {
         Row: {
+          affiliate_commission_rate: number | null;
           affiliate_margin: number | null;
           base_price_ht: number | null;
           commission_rate: number | null;
+          created_by_affiliate: string | null;
           id: string | null;
           linkme_selection_item_id: string | null;
           margin_rate: number | null;
@@ -10677,6 +11112,13 @@ export type Database = {
           unit_price_ht: number | null;
         };
         Relationships: [
+          {
+            foreignKeyName: 'products_created_by_affiliate_fkey';
+            columns: ['created_by_affiliate'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_affiliates';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'sales_order_items_linkme_selection_item_id_fkey';
             columns: ['linkme_selection_item_id'];
@@ -10842,6 +11284,7 @@ export type Database = {
       };
       linkme_selection_items_with_pricing: {
         Row: {
+          base_price_ht: number | null;
           category_name: string | null;
           display_order: number | null;
           id: string | null;
@@ -11573,7 +12016,7 @@ export type Database = {
       add_product_to_selection: {
         Args: {
           p_base_price_ht: number;
-          p_margin_rate?: number;
+          p_margin_rate: number;
           p_product_id: string;
           p_selection_id: string;
         };
@@ -11939,7 +12382,7 @@ export type Database = {
           p_responsable_contact_id?: string;
           p_selection_id: string;
         };
-        Returns: string;
+        Returns: Json;
       };
       create_color_if_not_exists: {
         Args: { color_hex?: string; color_name: string };
@@ -12087,28 +12530,17 @@ export type Database = {
         };
         Returns: Json;
       };
-      create_public_order:
-        | {
-            Args: {
-              p_customer_code?: string;
-              p_customer_data?: Json;
-              p_customer_type: string;
-              p_items: Json;
-              p_selection_id: string;
-            };
-            Returns: Json;
-          }
-        | {
-            Args: {
-              p_customer_code?: string;
-              p_customer_data?: Json;
-              p_customer_type: string;
-              p_items: Json;
-              p_organisation_data?: Json;
-              p_selection_id: string;
-            };
-            Returns: Json;
-          };
+      create_public_order: {
+        Args: {
+          p_customer_code?: string;
+          p_customer_data?: Json;
+          p_customer_id?: string;
+          p_customer_type: string;
+          p_items?: Json;
+          p_selection_id: string;
+        };
+        Returns: Json;
+      };
       create_purchase_order: {
         Args: {
           p_delivery_address?: Json;
@@ -12779,6 +13211,17 @@ export type Database = {
           total_ttc: number;
         }[];
       };
+      get_kpi_alltime_summary: {
+        Args: { p_channel_id: string };
+        Returns: {
+          commissions_ht: number;
+          commissions_ttc: number;
+          distinct_months: number;
+          orders_count: number;
+          total_ht: number;
+          total_ttc: number;
+        }[];
+      };
       get_last_sync_status: {
         Args: { p_sync_type: Database['public']['Enums']['sync_type'] };
         Returns: {
@@ -12815,7 +13258,7 @@ export type Database = {
         }[];
       };
       get_linkme_orders: {
-        Args: { p_channel_id?: string; p_limit?: number; p_offset?: number };
+        Args: { p_channel_id: string; p_limit?: number; p_offset?: number };
         Returns: {
           affiliate_display_name: string;
           affiliate_id: string;
@@ -12857,7 +13300,7 @@ export type Database = {
           selection_name: string;
           shipping_address: Json;
           shipping_cost_ht: number;
-          status: Database['public']['Enums']['sales_order_status'];
+          status: string;
           total_ht: number;
           total_ttc: number;
           updated_at: string;
@@ -13161,6 +13604,7 @@ export type Database = {
         Returns: {
           assembly_price: number;
           brand: string;
+          color: string;
           delivery_delay_weeks_max: number;
           delivery_delay_weeks_min: number;
           description: string;
@@ -13189,6 +13633,7 @@ export type Database = {
           sku: string;
           slug: string;
           status: string;
+          style: string;
           subcategory_id: string;
           subcategory_name: string;
           suitable_rooms: string[];

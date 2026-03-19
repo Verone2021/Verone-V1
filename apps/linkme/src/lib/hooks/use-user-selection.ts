@@ -209,6 +209,7 @@ export function useUserAffiliate() {
     enabled: !!user && !!linkMeRole,
     // PERF: Increased cache time from 60s to 5min (affiliate data rarely changes)
     staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 }
 

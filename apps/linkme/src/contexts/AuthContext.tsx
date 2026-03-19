@@ -28,18 +28,6 @@ import { createClient } from '@verone/utils/supabase/client';
 const supabase = createClient();
 
 // Types pour les données Supabase
-interface ViewLinkMeUser {
-  user_id: string;
-  user_role_id: string;
-  linkme_role: string;
-  enseigne_id: string | null;
-  organisation_id: string | null;
-  permissions: string[] | null;
-  is_active: boolean | null;
-  enseigne_name: string | null;
-  organisation_name: string | null;
-}
-
 interface UserAppRole {
   id: string;
   user_id: string;
@@ -94,7 +82,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [initializing, setInitializing] = useState(true); // Verification initiale
   const [_loading, _setLoading] = useState(false); // Actions explicites (unused for now)
 
-  // Fonction pour récupérer le rôle LinkMe (ne dépend pas de supabase car c'est un singleton)
+  // Fonction pour récupérer le rôle LinkMe
+  // PERF: Uses user_app_roles directly (single query) instead of v_linkme_users
+  // which frequently fails with PGRST116 causing a double round-trip
   const fetchLinkMeRole = useCallback(
     async (userId: string) => {
       const DEBUG = process.env.NEXT_PUBLIC_DEBUG_AUTH === '1';
@@ -102,126 +92,61 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error('[AuthContext] fetchLinkMeRole START', { userId });
 
       try {
-        // Utiliser la vue v_linkme_users qui join user_app_roles + user_profiles + enseignes + organisations
-        if (DEBUG)
-          console.error('[AuthContext] Fetching from v_linkme_users...');
-        const { data, error } = await (
-          supabase as unknown as SupabaseClient<{
-            v_linkme_users: ViewLinkMeUser;
-          }>
+        const { data: roleData, error: roleError } = await (
+          supabase as SupabaseClient
         )
-          .from('v_linkme_users')
-          .select('*')
+          .from('user_app_roles')
+          .select(
+            `
+            id,
+            user_id,
+            role,
+            enseigne_id,
+            organisation_id,
+            permissions,
+            is_active,
+            enseignes:enseigne_id(name),
+            organisations:organisation_id(legal_name, trade_name)
+          `
+          )
           .eq('user_id', userId)
+          .eq('app', 'linkme')
+          .eq('is_active', true)
           .maybeSingle();
 
-        if (error) {
-          // TOUJOURS logger les erreurs (pas de flag DEBUG pour les erreurs)
-          console.error('[AuthContext] v_linkme_users ERROR', {
-            code: error.code,
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-          });
-
-          // Si la vue n'existe pas, essayer directement la table user_app_roles
-          if (error.code === 'PGRST116' || error.code === '42P01') {
-            if (DEBUG)
-              console.error(
-                '[AuthContext] Fallback to user_app_roles table...'
-              );
-            const { data: roleData, error: roleError } = await (
-              supabase as SupabaseClient
-            )
-              .from('user_app_roles')
-              .select(
-                `
-              id,
-              user_id,
-              role,
-              enseigne_id,
-              organisation_id,
-              permissions,
-              is_active,
-              enseignes:enseigne_id(name),
-              organisations:organisation_id(legal_name, trade_name)
-            `
-              )
-              .eq('user_id', userId)
-              .eq('app', 'linkme')
-              .eq('is_active', true)
-              .maybeSingle();
-
-            if (roleError ?? !roleData) {
-              console.error('[AuthContext] user_app_roles FALLBACK ERROR', {
-                code: roleError?.code,
-                message: roleError?.message,
-                details: roleError?.details,
-              });
-              setLinkMeRole(null);
-              return;
-            }
-
-            const typedRoleData = roleData as unknown as UserAppRole;
-
-            if (DEBUG) {
-              console.error('[AuthContext] user_app_roles SUCCESS', {
-                roleId: typedRoleData.id,
-                role: typedRoleData.role,
-              });
-            }
-
-            setLinkMeRole({
-              id: typedRoleData.id,
-              user_id: typedRoleData.user_id,
-              role: typedRoleData.role as LinkMeRole,
-              enseigne_id: typedRoleData.enseigne_id,
-              organisation_id: typedRoleData.organisation_id,
-              permissions: typedRoleData.permissions ?? [],
-              is_active: typedRoleData.is_active,
-              enseigne_name: typedRoleData.enseignes?.name ?? null,
-              organisation_name:
-                typedRoleData.organisations?.trade_name ??
-                typedRoleData.organisations?.legal_name ??
-                null,
-            });
-            return;
-          }
-          console.error('[AuthContext] UNHANDLED ERROR', {
-            code: error.code,
-            message: error.message,
+        if (roleError ?? !roleData) {
+          console.error('[AuthContext] user_app_roles ERROR', {
+            code: roleError?.code,
+            message: roleError?.message,
+            details: roleError?.details,
           });
           setLinkMeRole(null);
           return;
         }
 
-        if (data) {
-          const typedData = data as unknown as ViewLinkMeUser;
+        const typedRoleData = roleData as unknown as UserAppRole;
 
-          if (DEBUG) {
-            console.error('[AuthContext] v_linkme_users SUCCESS', {
-              userId: typedData.user_id,
-              userRoleId: typedData.user_role_id,
-              role: typedData.linkme_role,
-            });
-          }
-
-          setLinkMeRole({
-            // FIX: Use user_role_id (from user_app_roles.id) instead of undefined data.id
-            id: typedData.user_role_id ?? typedData.user_id,
-            user_id: typedData.user_id,
-            role: typedData.linkme_role as LinkMeRole,
-            enseigne_id: typedData.enseigne_id,
-            organisation_id: typedData.organisation_id,
-            permissions: typedData.permissions ?? [],
-            is_active: typedData.is_active ?? true,
-            enseigne_name: typedData.enseigne_name,
-            organisation_name: typedData.organisation_name,
+        if (DEBUG) {
+          console.error('[AuthContext] user_app_roles SUCCESS', {
+            roleId: typedRoleData.id,
+            role: typedRoleData.role,
           });
-        } else {
-          console.warn('[AuthContext] No data returned from v_linkme_users');
-          setLinkMeRole(null);
         }
+
+        setLinkMeRole({
+          id: typedRoleData.id,
+          user_id: typedRoleData.user_id,
+          role: typedRoleData.role as LinkMeRole,
+          enseigne_id: typedRoleData.enseigne_id,
+          organisation_id: typedRoleData.organisation_id,
+          permissions: typedRoleData.permissions ?? [],
+          is_active: typedRoleData.is_active,
+          enseigne_name: typedRoleData.enseignes?.name ?? null,
+          organisation_name:
+            typedRoleData.organisations?.trade_name ??
+            typedRoleData.organisations?.legal_name ??
+            null,
+        });
       } catch (err) {
         console.error('[AuthContext] fetchLinkMeRole EXCEPTION', err);
         setLinkMeRole(null);
@@ -252,16 +177,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
       if (DEBUG) console.error('[AuthContext] initSession START');
 
-      // TIMEOUT DE SÉCURITÉ (8 secondes)
+      // TIMEOUT DE SÉCURITÉ (3 secondes — reduced from 8s for faster fallback)
       const timeoutId = setTimeout(() => {
         if (!cancelled) {
           const elapsed = Date.now() - startTime;
-          console.error('[initSession] TIMEOUT - getSession() suspendu > 8s', {
+          console.error('[initSession] TIMEOUT - getSession() suspendu > 3s', {
             elapsed,
           });
           setInitializing(false);
         }
-      }, 8000);
+      }, 3000);
 
       try {
         const beforeGetSession = Date.now();

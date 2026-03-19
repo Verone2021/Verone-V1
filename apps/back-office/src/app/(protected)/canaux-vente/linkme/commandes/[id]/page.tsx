@@ -228,7 +228,7 @@ interface EnrichedOrderItem {
   commission_rate: number;
   selling_price_ht: number;
   affiliate_margin: number;
-  // Ajouté via jointure products
+  retrocession_rate: number;
   created_by_affiliate: string | null;
 }
 
@@ -256,11 +256,9 @@ interface LinkmeOrderItemEnrichedRaw {
   commission_rate: number | null;
   selling_price_ht: number | null;
   affiliate_margin: number | null;
-}
-
-interface ProductWithAffiliate {
-  id: string;
+  retrocession_rate?: number | null;
   created_by_affiliate: string | null;
+  affiliate_commission_rate: number | null;
 }
 
 // Fonction pour determiner le canal de la commande
@@ -598,30 +596,16 @@ export default function LinkMeOrderDetailPage() {
         infoRequests,
       });
 
-      // Récupérer les items enrichis avec infos commission
+      // Enriched items with commission info (view now includes created_by_affiliate + affiliate_commission_rate)
       const { data: enrichedData } = await supabase
         .from('linkme_order_items_enriched')
-        .select('*')
+        .select(
+          'id, product_id, product_name, product_sku, product_image_url, quantity, unit_price_ht, total_ht, base_price_ht, margin_rate, commission_rate, selling_price_ht, affiliate_margin, retrocession_rate, created_by_affiliate, affiliate_commission_rate'
+        )
         .eq('sales_order_id', orderId);
 
       if (enrichedData && enrichedData.length > 0) {
-        // Cast enriched data to typed array
         const typedEnrichedData = enrichedData as LinkmeOrderItemEnrichedRaw[];
-
-        // Récupérer les product_ids pour fetch created_by_affiliate
-        const productIds = typedEnrichedData
-          .map((item: LinkmeOrderItemEnrichedRaw) => item.product_id)
-          .filter(Boolean);
-        const { data: productsData } = await supabase
-          .from('products')
-          .select('id, created_by_affiliate')
-          .in('id', productIds);
-
-        const productMap = new Map(
-          ((productsData ?? []) as ProductWithAffiliate[]).map(
-            (p: ProductWithAffiliate) => [p.id, p.created_by_affiliate]
-          )
-        );
 
         setEnrichedItems(
           typedEnrichedData.map((item: LinkmeOrderItemEnrichedRaw) => ({
@@ -638,7 +622,8 @@ export default function LinkMeOrderDetailPage() {
             commission_rate: item.commission_rate ?? 0,
             selling_price_ht: item.selling_price_ht ?? 0,
             affiliate_margin: item.affiliate_margin ?? 0,
-            created_by_affiliate: productMap.get(item.product_id) ?? null,
+            retrocession_rate: item.retrocession_rate ?? 0,
+            created_by_affiliate: item.created_by_affiliate ?? null,
           }))
         );
       }
@@ -1226,6 +1211,14 @@ export default function LinkMeOrderDetailPage() {
                           item.quantity > 0
                             ? (item.affiliate_margin ?? 0) / item.quantity
                             : 0;
+                        // For affiliate products, show affiliate_commission_rate; for catalogue, retrocession_rate
+                        const displayCommissionPct = isRevendeur
+                          ? item.affiliate_margin > 0 && item.total_ht > 0
+                            ? Math.round(
+                                (item.affiliate_margin / item.total_ht) * 100
+                              )
+                            : 0
+                          : Math.round(item.retrocession_rate * 100);
 
                         return (
                           <TableRow key={item.id}>
@@ -1261,13 +1254,25 @@ export default function LinkMeOrderDetailPage() {
                             </TableCell>
                             {/* Commission % */}
                             <TableCell className="text-center">
-                              <span className="text-teal-600">
-                                {`${Math.round(item.retrocession_rate * 100)}%`}
+                              <span
+                                className={
+                                  isRevendeur
+                                    ? 'text-orange-500'
+                                    : 'text-teal-600'
+                                }
+                              >
+                                {`${displayCommissionPct}%`}
                               </span>
                             </TableCell>
                             {/* Commission EUR (per unit) */}
                             <TableCell className="text-right">
-                              <span className="text-teal-600">
+                              <span
+                                className={
+                                  isRevendeur
+                                    ? 'text-orange-500'
+                                    : 'text-teal-600'
+                                }
+                              >
                                 {formatCurrency(commissionPerUnit)}
                               </span>
                             </TableCell>

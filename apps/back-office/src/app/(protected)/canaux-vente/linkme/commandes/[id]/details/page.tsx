@@ -248,11 +248,8 @@ interface LinkmeOrderItemEnrichedRaw {
   selling_price_ht: number | null;
   affiliate_margin: number | null;
   retrocession_rate?: number | null;
-}
-
-interface ProductWithAffiliate {
-  id: string;
   created_by_affiliate: string | null;
+  affiliate_commission_rate: number | null;
 }
 
 function getOrderChannel(
@@ -536,29 +533,16 @@ export default function LinkMeOrderDetailsPage() {
         matched_transaction_attachment_ids: matchInfo?.attachment_ids ?? null,
       });
 
-      // Enriched items with commission info
+      // Enriched items with commission info (view now includes created_by_affiliate + affiliate_commission_rate)
       const { data: enrichedData } = await supabase
         .from('linkme_order_items_enriched')
         .select(
-          'id, product_id, product_name, product_sku, product_image_url, quantity, unit_price_ht, total_ht, base_price_ht, margin_rate, commission_rate, selling_price_ht, affiliate_margin, retrocession_rate'
+          'id, product_id, product_name, product_sku, product_image_url, quantity, unit_price_ht, total_ht, base_price_ht, margin_rate, commission_rate, selling_price_ht, affiliate_margin, retrocession_rate, created_by_affiliate, affiliate_commission_rate'
         )
         .eq('sales_order_id', orderId);
 
       if (enrichedData && enrichedData.length > 0) {
         const typedEnrichedData = enrichedData as LinkmeOrderItemEnrichedRaw[];
-        const productIds = typedEnrichedData
-          .map((item: LinkmeOrderItemEnrichedRaw) => item.product_id)
-          .filter(Boolean);
-        const { data: productsData } = await supabase
-          .from('products')
-          .select('id, created_by_affiliate')
-          .in('id', productIds);
-
-        const productMap = new Map(
-          ((productsData ?? []) as ProductWithAffiliate[]).map(
-            (p: ProductWithAffiliate) => [p.id, p.created_by_affiliate]
-          )
-        );
 
         setEnrichedItems(
           typedEnrichedData.map((item: LinkmeOrderItemEnrichedRaw) => ({
@@ -576,7 +560,7 @@ export default function LinkMeOrderDetailsPage() {
             selling_price_ht: item.selling_price_ht ?? 0,
             affiliate_margin: item.affiliate_margin ?? 0,
             retrocession_rate: item.retrocession_rate ?? 0,
-            created_by_affiliate: productMap.get(item.product_id) ?? null,
+            created_by_affiliate: item.created_by_affiliate ?? null,
           }))
         );
       }
@@ -1169,6 +1153,14 @@ export default function LinkMeOrderDetailsPage() {
                           item.quantity > 0
                             ? (item.affiliate_margin ?? 0) / item.quantity
                             : 0;
+                        // For affiliate products, show affiliate_commission_rate; for catalogue, retrocession_rate
+                        const displayCommissionPct = isRevendeur
+                          ? item.affiliate_margin > 0 && item.total_ht > 0
+                            ? Math.round(
+                                (item.affiliate_margin / item.total_ht) * 100
+                              )
+                            : 0
+                          : Math.round(item.retrocession_rate * 100);
 
                         return (
                           <TableRow key={item.id}>
@@ -1204,13 +1196,25 @@ export default function LinkMeOrderDetailsPage() {
                             </TableCell>
                             {/* Commission % */}
                             <TableCell className="text-center">
-                              <span className="text-teal-600">
-                                {`${Math.round(item.retrocession_rate * 100)}%`}
+                              <span
+                                className={
+                                  isRevendeur
+                                    ? 'text-orange-500'
+                                    : 'text-teal-600'
+                                }
+                              >
+                                {`${displayCommissionPct}%`}
                               </span>
                             </TableCell>
                             {/* Commission EUR (per unit) */}
                             <TableCell className="text-right">
-                              <span className="text-teal-600">
+                              <span
+                                className={
+                                  isRevendeur
+                                    ? 'text-orange-500'
+                                    : 'text-teal-600'
+                                }
+                              >
                                 {formatCurrency(commissionPerUnit)}
                               </span>
                             </TableCell>
@@ -1305,6 +1309,138 @@ export default function LinkMeOrderDetailsPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* COMMISSION & VERSEMENT — breakdown of what Verone owes the affiliate */}
+          {enrichedItems.length > 0 &&
+            (() => {
+              const catalogueItems = enrichedItems.filter(
+                i => !i.created_by_affiliate
+              );
+              const affiliateProductItems = enrichedItems.filter(
+                i => !!i.created_by_affiliate
+              );
+
+              // Catalogue: retrocession (what we pay the affiliate as commission)
+              const catalogueCommissionHT = catalogueItems.reduce(
+                (sum, item) => sum + (item.affiliate_margin ?? 0),
+                0
+              );
+              const catalogueCommissionTTC = catalogueCommissionHT * 1.2;
+
+              // Affiliate products: Verone takes a commission, reverses the rest
+              const affiliateProductsTotalHT = affiliateProductItems.reduce(
+                (sum, item) => sum + item.total_ht,
+                0
+              );
+              const affiliateProductsTotalTTC = affiliateProductsTotalHT * 1.2;
+              const affiliateProductsCommissionHT =
+                affiliateProductItems.reduce(
+                  (sum, item) => sum + (item.affiliate_margin ?? 0),
+                  0
+                );
+              const affiliateProductsCommissionTTC =
+                affiliateProductsCommissionHT * 1.2;
+              const affiliateVersementHT =
+                affiliateProductsTotalHT - affiliateProductsCommissionHT;
+              const affiliateVersementTTC =
+                affiliateProductsTotalTTC - affiliateProductsCommissionTTC;
+
+              // Grand total to pay the affiliate
+              const totalPayoutHT =
+                catalogueCommissionHT + affiliateVersementHT;
+              const totalPayoutTTC =
+                catalogueCommissionTTC + affiliateVersementTTC;
+
+              return (
+                <Card className="border-emerald-200">
+                  <CardHeader className="pb-2 pt-4 px-4">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <span className="h-4 w-4 rounded-full bg-emerald-100 flex items-center justify-center text-[10px] text-emerald-700 font-bold">
+                        $
+                      </span>
+                      Commission & Versement
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-4 pt-0 space-y-3">
+                    {/* Catalogue products commission */}
+                    {catalogueItems.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 mb-1">
+                          Produits catalogue ({catalogueItems.length} ligne
+                          {catalogueItems.length > 1 ? 's' : ''})
+                        </p>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">
+                            Commission affilié
+                          </span>
+                          <span className="font-medium text-teal-600">
+                            {formatCurrency(catalogueCommissionHT)} HT /{' '}
+                            {formatCurrency(catalogueCommissionTTC)} TTC
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Affiliate products: commission LinkMe + versement */}
+                    {affiliateProductItems.length > 0 && (
+                      <div className="pt-2 border-t border-gray-100">
+                        <p className="text-xs font-medium text-orange-500 mb-1">
+                          Produits affilié ({affiliateProductItems.length} ligne
+                          {affiliateProductItems.length > 1 ? 's' : ''})
+                        </p>
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">
+                              CA produits affilié
+                            </span>
+                            <span className="text-gray-900">
+                              {formatCurrency(affiliateProductsTotalHT)} HT /{' '}
+                              {formatCurrency(affiliateProductsTotalTTC)} TTC
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">
+                              Commission LinkMe (Verone garde)
+                            </span>
+                            <span className="font-medium text-orange-500">
+                              {formatCurrency(affiliateProductsCommissionHT)} HT
+                              / {formatCurrency(affiliateProductsCommissionTTC)}{' '}
+                              TTC
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">
+                              Versement affilié (à reverser)
+                            </span>
+                            <span className="font-medium text-emerald-600">
+                              {formatCurrency(affiliateVersementHT)} HT /{' '}
+                              {formatCurrency(affiliateVersementTTC)} TTC
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Grand total */}
+                    <div className="pt-3 border-t-2 border-emerald-200">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-gray-900">
+                          Total à verser à l&apos;affilié
+                        </span>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-emerald-700">
+                            {formatCurrency(totalPayoutTTC)} TTC
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {formatCurrency(totalPayoutHT)} HT
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })()}
 
           {/* LIVRAISON — after totals */}
           <Card>
