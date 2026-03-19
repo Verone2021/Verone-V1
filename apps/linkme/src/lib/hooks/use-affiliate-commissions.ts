@@ -38,7 +38,8 @@ export function useAffiliateCommissions(
       if (!affiliate) return [];
 
       const supabase = createClient();
-      const query = supabase
+      // PERF: Server-side filtering for period and status
+      let query = supabase
         .from('linkme_commissions')
         .select(
           `
@@ -71,7 +72,19 @@ export function useAffiliateCommissions(
         .eq('affiliate_id', affiliate.id)
         .order('created_at', { ascending: false });
 
-      // Récupérer les order_ids pour chercher les noms clients
+      // Server-side period filter (fallback on created_at since order_date is on joined table)
+      if (period !== 'all') {
+        const periodStart = getPeriodStartDate(period);
+        if (periodStart) {
+          query = query.gte('created_at', periodStart.toISOString());
+        }
+      }
+
+      // Server-side status filter
+      if (status !== 'all') {
+        query = query.eq('status', status);
+      }
+
       const { data: commissionsData, error: commissionsError } = await query;
 
       if (commissionsError) {
@@ -79,31 +92,10 @@ export function useAffiliateCommissions(
         throw commissionsError;
       }
 
-      // Filtrer par période si spécifiée (basé sur order_date, pas created_at)
-      let filteredByPeriod = commissionsData || [];
-      if (period !== 'all') {
-        const periodStart = getPeriodStartDate(period);
-        if (periodStart) {
-          const periodStartISO = periodStart.toISOString().slice(0, 10);
-          filteredByPeriod = filteredByPeriod.filter(c => {
-            const salesOrder = c.sales_order as unknown as {
-              order_date: string;
-              created_at: string;
-              linkme_display_number: string | null;
-              total_ttc: number | null;
-            } | null;
-            const dateStr =
-              salesOrder?.order_date ??
-              salesOrder?.created_at?.slice(0, 10) ??
-              c.created_at ??
-              '';
-            return dateStr >= periodStartISO;
-          });
-        }
-      }
+      const filteredData = commissionsData ?? [];
 
       // Récupérer les noms des clients depuis linkme_orders_enriched
-      const orderIds = filteredByPeriod.map(c => c.order_id).filter(Boolean);
+      const orderIds = filteredData.map(c => c.order_id).filter(Boolean);
       let customerNameMap = new Map<string, string>();
 
       if (orderIds.length > 0) {
@@ -118,12 +110,6 @@ export function useAffiliateCommissions(
             o.customer_name ?? 'Client inconnu',
           ])
         );
-      }
-
-      // Filtrer par statut si nécessaire (déjà filtré par période)
-      let filteredData = filteredByPeriod;
-      if (status !== 'all') {
-        filteredData = filteredData.filter(c => c.status === status);
       }
 
       // Transformer les données

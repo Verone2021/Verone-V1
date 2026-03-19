@@ -150,6 +150,7 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
     .eq('channel_id', LINKME_CHANNEL_ID)
     .eq('is_active', true)
     .order('display_order', { ascending: true })
+    .limit(500) // PERF: Safety cap — catalogue has ~200 products currently
     .returns<ChannelPricingWithProduct[]>();
 
   if (error) {
