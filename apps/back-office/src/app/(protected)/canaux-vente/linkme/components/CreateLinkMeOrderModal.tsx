@@ -1822,7 +1822,7 @@ export function CreateLinkMeOrderModal({
                     <span>{cartTotals.totalTtc.toFixed(2)}€</span>
                   </div>
                   <div className="flex justify-between text-sm text-orange-600">
-                    <span>Marge affilié</span>
+                    <span>Marge affilié HT</span>
                     <span>-{cartTotals.totalRetrocession.toFixed(2)}€</span>
                   </div>
                 </div>
@@ -1979,7 +1979,7 @@ export function CreateLinkMeOrderModal({
                       <span>{cartTotals.totalTtc.toFixed(2)}€</span>
                     </div>
                     <div className="flex justify-between text-sm text-orange-600 pt-1">
-                      <span>Marge affilié</span>
+                      <span>Marge affilié HT</span>
                       <span>-{cartTotals.totalRetrocession.toFixed(2)}€</span>
                     </div>
                   </div>
