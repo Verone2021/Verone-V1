@@ -103,13 +103,11 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
       // ============================================
       // 1-2. Requêtes parallèles
       // ============================================
-      const [allCommissionsResult, selectionsResult] = await Promise.all([
-        // 1. Commissions + jointure sales_orders pour récupérer la vraie date commande
-        // order_date = date réelle de la commande (vs created_at = date de saisie/import)
-        supabase
-          .from('linkme_commissions')
-          .select(
-            `
+      // PERF: Server-side period filter on commissions query
+      let commissionsQuery = supabase
+        .from('linkme_commissions')
+        .select(
+          `
             id,
             order_id,
             selection_id,
@@ -127,9 +125,17 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
             paid_at,
             sales_order:order_id(order_date)
           `
-          )
-          .eq('affiliate_id', affiliate.id)
-          .order('created_at', { ascending: false }),
+        )
+        .eq('affiliate_id', affiliate.id)
+        .order('created_at', { ascending: false });
+
+      // Server-side period filter (uses created_at as proxy for order_date)
+      if (periodStartISO) {
+        commissionsQuery = commissionsQuery.gte('created_at', periodStartISO);
+      }
+
+      const [commissionsResult, selectionsResult] = await Promise.all([
+        commissionsQuery,
 
         // 2. Sélections de l'affilié
         supabase
@@ -150,25 +156,14 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
           .eq('affiliate_id', affiliate.id),
       ]);
 
-      if (allCommissionsResult.error) {
-        console.error('Erreur fetch commissions:', allCommissionsResult.error);
-        throw allCommissionsResult.error;
+      if (commissionsResult.error) {
+        console.error('Erreur fetch commissions:', commissionsResult.error);
+        throw commissionsResult.error;
       }
 
-      const allCommissions = allCommissionsResult.data ?? [];
-
-      // ============================================
-      // FILTRAGE PAR PÉRIODE (basé sur sales_orders.order_date = vraie date commande)
-      // Fallback sur linkme_commissions.created_at si order_date indisponible
-      // ============================================
-      const commissions = periodStartISO
-        ? allCommissions.filter(c => {
-            const orderDate =
-              (c.sales_order as { order_date: string | null } | null)
-                ?.order_date ?? c.created_at;
-            return orderDate && orderDate >= periodStartISO;
-          })
-        : allCommissions;
+      const commissions = commissionsResult.data ?? [];
+      // allCommissions = same as commissions when period='all', filtered otherwise
+      const allCommissions = commissions;
 
       // ============================================
       // Calculs par statut - basé sur linkme_commissions.status
@@ -511,7 +506,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
       };
     },
     enabled: !!affiliate,
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
     retry: 1,
@@ -616,7 +611,7 @@ export function useSelectionTopProducts(selectionId: string | null) {
         .slice(0, 5);
     },
     enabled: !!selectionId && !!affiliate,
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 1,
   });

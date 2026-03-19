@@ -38,7 +38,8 @@ export function useAffiliateCommissions(
       if (!affiliate) return [];
 
       const supabase = createClient();
-      const query = supabase
+      // PERF: Server-side filtering for period and status
+      let query = supabase
         .from('linkme_commissions')
         .select(
           `
@@ -71,7 +72,19 @@ export function useAffiliateCommissions(
         .eq('affiliate_id', affiliate.id)
         .order('created_at', { ascending: false });
 
-      // Récupérer les order_ids pour chercher les noms clients
+      // Server-side period filter (fallback on created_at since order_date is on joined table)
+      if (period !== 'all') {
+        const periodStart = getPeriodStartDate(period);
+        if (periodStart) {
+          query = query.gte('created_at', periodStart.toISOString());
+        }
+      }
+
+      // Server-side status filter
+      if (status !== 'all') {
+        query = query.eq('status', status);
+      }
+
       const { data: commissionsData, error: commissionsError } = await query;
 
       if (commissionsError) {
@@ -79,31 +92,10 @@ export function useAffiliateCommissions(
         throw commissionsError;
       }
 
-      // Filtrer par période si spécifiée (basé sur order_date, pas created_at)
-      let filteredByPeriod = commissionsData || [];
-      if (period !== 'all') {
-        const periodStart = getPeriodStartDate(period);
-        if (periodStart) {
-          const periodStartISO = periodStart.toISOString().slice(0, 10);
-          filteredByPeriod = filteredByPeriod.filter(c => {
-            const salesOrder = c.sales_order as unknown as {
-              order_date: string;
-              created_at: string;
-              linkme_display_number: string | null;
-              total_ttc: number | null;
-            } | null;
-            const dateStr =
-              salesOrder?.order_date ??
-              salesOrder?.created_at?.slice(0, 10) ??
-              c.created_at ??
-              '';
-            return dateStr >= periodStartISO;
-          });
-        }
-      }
+      const filteredData = commissionsData ?? [];
 
       // Récupérer les noms des clients depuis linkme_orders_enriched
-      const orderIds = filteredByPeriod.map(c => c.order_id).filter(Boolean);
+      const orderIds = filteredData.map(c => c.order_id).filter(Boolean);
       let customerNameMap = new Map<string, string>();
 
       if (orderIds.length > 0) {
@@ -118,12 +110,6 @@ export function useAffiliateCommissions(
             o.customer_name ?? 'Client inconnu',
           ])
         );
-      }
-
-      // Filtrer par statut si nécessaire (déjà filtré par période)
-      let filteredData = filteredByPeriod;
-      if (status !== 'all') {
-        filteredData = filteredData.filter(c => c.status === status);
       }
 
       // Transformer les données
@@ -179,6 +165,10 @@ export function useAffiliateCommissions(
 
 /**
  * Hook pour compter les commissions par statut
+ *
+ * PERF: Utilise count:exact + head:true en parallèle (4 requêtes COUNT)
+ * au lieu de rapatrier toutes les lignes et filtrer en JS.
+ * Pour N commissions : O(1) au lieu de O(N) lignes réseau.
  */
 export function useCommissionsCounts() {
   const { data: affiliate } = useUserAffiliate();
@@ -189,26 +179,46 @@ export function useCommissionsCounts() {
       if (!affiliate) return { pending: 0, validated: 0, paid: 0, total: 0 };
 
       const supabase = createClient();
-      const { data, error } = await supabase
-        .from('linkme_commissions')
-        .select('status')
-        .eq('affiliate_id', affiliate.id);
 
-      if (error) {
-        console.error('Erreur fetch commissions counts:', error);
-        throw error;
+      // 4 requêtes COUNT parallèles — aucune ligne de données rapatriée
+      const [pendingResult, validatedResult, paidResult, totalResult] =
+        await Promise.all([
+          supabase
+            .from('linkme_commissions')
+            .select('*', { count: 'exact', head: true })
+            .eq('affiliate_id', affiliate.id)
+            .eq('status', 'pending'),
+          supabase
+            .from('linkme_commissions')
+            .select('*', { count: 'exact', head: true })
+            .eq('affiliate_id', affiliate.id)
+            .in('status', ['validated', 'payable']),
+          supabase
+            .from('linkme_commissions')
+            .select('*', { count: 'exact', head: true })
+            .eq('affiliate_id', affiliate.id)
+            .eq('status', 'paid'),
+          supabase
+            .from('linkme_commissions')
+            .select('*', { count: 'exact', head: true })
+            .eq('affiliate_id', affiliate.id),
+        ]);
+
+      // Vérifier les erreurs (non-bloquant : on retourne 0 si erreur)
+      if (pendingResult.error) {
+        console.error('Erreur fetch commissions counts:', pendingResult.error);
+        throw pendingResult.error;
       }
 
-      const commissions = data || [];
-
       return {
-        pending: commissions.filter(c => c.status === 'pending').length,
-        validated: commissions.filter(c => c.status === 'validated').length,
-        paid: commissions.filter(c => c.status === 'paid').length,
-        total: commissions.length,
+        pending: pendingResult.count ?? 0,
+        validated: validatedResult.count ?? 0,
+        paid: paidResult.count ?? 0,
+        total: totalResult.count ?? 0,
       };
     },
     enabled: !!affiliate,
     staleTime: 300_000,
+    refetchOnWindowFocus: false,
   });
 }

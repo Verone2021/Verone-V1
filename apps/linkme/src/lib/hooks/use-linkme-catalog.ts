@@ -150,6 +150,7 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
     .eq('channel_id', LINKME_CHANNEL_ID)
     .eq('is_active', true)
     .order('display_order', { ascending: true })
+    .limit(500) // PERF: Safety cap — catalogue has ~200 products currently
     .returns<ChannelPricingWithProduct[]>();
 
   if (error) {
@@ -338,16 +339,19 @@ export function useLinkMeCatalogProducts() {
 /**
  * Hook: récupère les produits vedettes uniquement
  * Utilisé pour affichage sur page d'accueil (section vedettes)
+ *
+ * PERF: Dérivé de useLinkMeCatalogProducts() via useMemo pour partager le cache.
+ * Plus de double fetch — si le catalogue est déjà en cache, zéro requête supplémentaire.
  */
 export function useFeaturedCatalogProducts() {
-  return useQuery({
-    queryKey: ['linkme-catalog-featured'],
-    queryFn: async () => {
-      const products = await fetchCatalogProducts();
-      return products.filter(p => p.is_featured);
-    },
-    staleTime: 60000,
-  });
+  const { data: products, isLoading, error } = useLinkMeCatalogProducts();
+
+  const featured = React.useMemo(
+    () => (products ?? []).filter(p => p.is_featured),
+    [products]
+  );
+
+  return { data: featured, isLoading, error };
 }
 
 /**
