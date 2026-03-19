@@ -1062,6 +1062,42 @@ export default function LinkMeOrderDetailsPage() {
             )}
           </div>
         </div>
+
+        {/* ACTION BUTTONS — right-aligned */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setShowSendDocsModal(true)}
+          >
+            <Mail className="h-3.5 w-3.5" />
+            Envoyer documents
+            {linkedDocuments.length > 0 && (
+              <Badge
+                variant="secondary"
+                className="ml-1 text-[10px] px-1.5 py-0"
+              >
+                {linkedDocuments.length}
+              </Badge>
+            )}
+          </Button>
+          {order.status === 'validated' && (
+            <Button
+              size="sm"
+              className="gap-1.5"
+              disabled={isUpdatingStatus}
+              onClick={() => {
+                void handleStatusChange('shipped').catch(err =>
+                  console.error(err)
+                );
+              }}
+            >
+              <Truck className="h-3.5 w-3.5" />
+              Marquer expédiée
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* ============================================ */}
