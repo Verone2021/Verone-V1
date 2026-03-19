@@ -207,16 +207,16 @@ function ProductCard({
   isDeleting,
 }: ProductCardProps): React.JSX.Element {
   return (
-    <div className="flex items-center gap-3 rounded-lg border bg-white border-gray-100 hover:border-linkme-turquoise/40 p-2.5 hover:shadow-sm transition-all group">
+    <div className="flex items-center gap-3 rounded-lg border bg-white border-gray-100 hover:border-linkme-turquoise/40 p-3 hover:shadow-sm transition-all group">
       {/* Image */}
-      <div className="relative h-16 w-16 flex-shrink-0 rounded-md bg-gray-50 overflow-hidden">
+      <div className="relative h-20 w-20 flex-shrink-0 rounded-md bg-gray-50 overflow-hidden">
         {item.product_image_url ? (
           <Image
             src={item.product_image_url}
             alt={item.product_name}
             fill
             className="object-cover"
-            sizes="64px"
+            sizes="80px"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
@@ -227,13 +227,13 @@ function ProductCard({
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-baseline gap-2">
-          <span className="text-[10px] text-gray-400 font-mono flex-shrink-0">
-            {item.product_reference}
-          </span>
-          <h3 className="text-sm font-medium text-gray-900 truncate">
+        <div>
+          <h3 className="text-sm font-medium text-gray-900">
             {item.product_name}
           </h3>
+          <span className="text-[10px] text-gray-400 font-mono">
+            {item.product_reference}
+          </span>
         </div>
         <div className="flex items-center gap-2 mt-1 flex-wrap">
           <span className="text-sm font-semibold text-gray-900">
