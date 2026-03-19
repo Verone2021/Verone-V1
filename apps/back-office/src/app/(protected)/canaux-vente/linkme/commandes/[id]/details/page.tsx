@@ -97,6 +97,7 @@ import {
   OrderTimeline,
   useOrderHistory,
   SendOrderDocumentsModal,
+  SalesOrderShipmentModal,
   type LinkedDocument,
   type OrderContact,
 } from '@verone/orders';
@@ -324,6 +325,9 @@ export default function LinkMeOrderDetailsPage() {
   // Send documents modal
   const [showSendDocsModal, setShowSendDocsModal] = useState(false);
   const [linkedDocuments, setLinkedDocuments] = useState<LinkedDocument[]>([]);
+
+  // Shipment modal
+  const [showShipmentModal, setShowShipmentModal] = useState(false);
 
   // Mutations
   const updateDetails = useUpdateLinkMeDetails();
@@ -1086,15 +1090,10 @@ export default function LinkMeOrderDetailsPage() {
             <Button
               size="sm"
               className="gap-1.5"
-              disabled={isUpdatingStatus}
-              onClick={() => {
-                void handleStatusChange('shipped').catch(err =>
-                  console.error(err)
-                );
-              }}
+              onClick={() => setShowShipmentModal(true)}
             >
               <Truck className="h-3.5 w-3.5" />
-              Marquer expédiée
+              Expédier
             </Button>
           )}
         </div>
@@ -1832,15 +1831,10 @@ export default function LinkMeOrderDetailsPage() {
                   <>
                     <Button
                       className="w-full gap-2"
-                      disabled={isUpdatingStatus}
-                      onClick={() => {
-                        void handleStatusChange('shipped').catch(err =>
-                          console.error(err)
-                        );
-                      }}
+                      onClick={() => setShowShipmentModal(true)}
                     >
                       <Truck className="h-4 w-4" />
-                      {isUpdatingStatus ? 'En cours...' : 'Marquer expédiée'}
+                      Expédier
                     </Button>
                     <Button
                       variant="outline"
@@ -2885,6 +2879,21 @@ export default function LinkMeOrderDetailsPage() {
           });
         }}
       />
+
+      {/* MODAL: EXPÉDITION */}
+      {order && (
+        <SalesOrderShipmentModal
+          order={{ id: order.id, order_number: order.order_number }}
+          open={showShipmentModal}
+          onClose={() => setShowShipmentModal(false)}
+          onSuccess={() => {
+            setShowShipmentModal(false);
+            void fetchOrder().catch(err =>
+              console.error('[LinkMeOrderDetails] Refresh after shipment:', err)
+            );
+          }}
+        />
+      )}
     </div>
   );
 }
