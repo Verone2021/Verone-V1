@@ -424,7 +424,17 @@ export async function POST(request: NextRequest): Promise<
         `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim() || 'Client';
     }
 
-    // Note: vatNumber is optional — Qonto does not require it for client creation
+    // Validate: organisations MUST have a tax identification number for invoicing
+    if (typedOrder.customer_type === 'organization' && !vatNumber) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Le SIRET ou numéro de TVA de l'organisation est requis pour créer une facture. Veuillez le renseigner dans la fiche organisation.",
+        },
+        { status: 400 }
+      );
+    }
 
     // Résoudre l'adresse de facturation :
     // Priorité 1: adresse envoyée depuis le modal (body)
@@ -494,7 +504,6 @@ export async function POST(request: NextRequest): Promise<
         type: qontoClientType,
         address: qontoAddress,
         vatNumber,
-        taxIdentificationNumber: vatNumber,
       });
       qontoClientId = existingClient.id;
     } else {
@@ -506,7 +515,6 @@ export async function POST(request: NextRequest): Promise<
         currency: 'EUR',
         address: qontoAddress,
         vatNumber,
-        taxIdentificationNumber: vatNumber,
       });
       qontoClientId = newClient.id;
     }

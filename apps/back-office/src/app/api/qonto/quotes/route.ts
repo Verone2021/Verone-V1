@@ -168,12 +168,6 @@ interface IPostRequestBody {
   salesOrderId?: string; // Optionnel: si absent, création standalone
   customer?: IStandaloneCustomer; // Requis si pas de salesOrderId
   expiryDays?: number; // Nombre de jours avant expiration (défaut: 30)
-  billingAddress?: {
-    address_line1?: string;
-    postal_code?: string;
-    city?: string;
-    country?: string;
-  };
   fees?: IFeesData;
   customLines?: ICustomLine[];
 }
@@ -202,7 +196,6 @@ export async function POST(request: NextRequest): Promise<
       salesOrderId,
       customer: standaloneCustomer,
       expiryDays = 30,
-      billingAddress: bodyBillingAddress,
       fees,
       customLines,
     } = body;
@@ -343,13 +336,7 @@ export async function POST(request: NextRequest): Promise<
     if (customerType === 'organization' && customer) {
       const org = customer as Organisation;
       customerEmail = org.email ?? null;
-      // Legal name first, trade name in parentheses (same format as invoices)
-      const legalName = org.legal_name ?? org.trade_name ?? 'Client';
-      const tradeName = org.trade_name;
-      customerName =
-        tradeName && tradeName !== legalName
-          ? `${legalName} (${tradeName})`
-          : legalName;
+      customerName = org.trade_name ?? org.legal_name ?? 'Client';
       // Priority: vat_number (TVA intra-communautaire), then siret
       vatNumber = org.vat_number ?? org.siret ?? undefined;
     } else if (customerType === 'individual' && customer) {
@@ -359,58 +346,40 @@ export async function POST(request: NextRequest): Promise<
         `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim() || 'Client';
     }
 
-    // Note: vatNumber is optional — Qonto does not require it for client creation
-
-    // Récupérer ou créer le client Qonto
-    let qontoClientId: string;
-
-    // Résoudre l'adresse de facturation (3 priorités, comme route invoices) :
-    // 1. body.billingAddress (envoyée par le modal)
-    // 2. order.billing_address JSONB (depuis DB)
-    // 3. champs directs de l'organisation
-    const dbBillingAddress = orderBillingAddress;
-
-    let resolvedCity = bodyBillingAddress?.city ?? dbBillingAddress?.city ?? '';
-    let resolvedZipCode =
-      bodyBillingAddress?.postal_code ?? dbBillingAddress?.postal_code ?? '';
-    let resolvedStreet =
-      bodyBillingAddress?.address_line1 ??
-      dbBillingAddress?.street ??
-      dbBillingAddress?.address ??
-      dbBillingAddress?.address_line1 ??
-      '';
-    let resolvedCountry =
-      bodyBillingAddress?.country ?? dbBillingAddress?.country ?? 'FR';
-
-    // Fallback vers adresse organisation si DB vide
-    if (
-      (!resolvedCity || !resolvedZipCode) &&
-      customerType === 'organization' &&
-      customer
-    ) {
-      const org = customer as Organisation;
-      resolvedCity = (resolvedCity || org.city) ?? '';
-      resolvedZipCode = (resolvedZipCode || org.postal_code) ?? '';
-      resolvedStreet = (resolvedStreet || org.address_line1) ?? '';
-      resolvedCountry = (resolvedCountry || org.country) ?? 'FR';
-    }
-
-    if (!resolvedCity || !resolvedZipCode) {
+    // Validate: organisations MUST have a tax identification number for quotes
+    if (customerType === 'organization' && !vatNumber) {
       return NextResponse.json(
         {
           success: false,
           error:
-            'Adresse de facturation incomplète. Ville et code postal requis.',
+            "Le SIRET ou numéro de TVA de l'organisation est requis pour créer un devis. Veuillez le renseigner dans la fiche organisation.",
         },
         { status: 400 }
       );
     }
 
+    // Récupérer ou créer le client Qonto
+    let qontoClientId: string;
+
+    // Pour les organisations standalone, utiliser leur adresse
+    let orgAddress: Record<string, string> | null = null;
+    if (!orderBillingAddress && customerType === 'organization' && customer) {
+      const org = customer as Organisation;
+      orgAddress = {
+        street: org.address_line1 ?? '',
+        city: org.city ?? 'Paris',
+        postal_code: org.postal_code ?? '75001',
+        country: org.country ?? 'FR',
+      };
+    }
+
+    const addressSource = orderBillingAddress ?? orgAddress;
+
     const qontoAddress = {
-      streetAddress: resolvedStreet,
-      city: resolvedCity,
-      zipCode: resolvedZipCode,
-      countryCode: resolvedCountry,
+      streetAddress: addressSource?.street ?? addressSource?.address ?? '',
+      city: addressSource?.city ?? 'Paris',
+      zipCode: addressSource?.postal_code ?? '75001',
+      countryCode: addressSource?.country ?? 'FR',
     };
 
     const qontoClientType =
@@ -429,7 +398,6 @@ export async function POST(request: NextRequest): Promise<
         type: qontoClientType,
         address: qontoAddress,
         vatNumber,
-        taxIdentificationNumber: vatNumber,
       });
       qontoClientId = existingClient.id;
     } else {
@@ -440,7 +408,6 @@ export async function POST(request: NextRequest): Promise<
         currency: 'EUR',
         address: qontoAddress,
         vatNumber,
-        taxIdentificationNumber: vatNumber,
       });
       qontoClientId = newClient.id;
     }
