@@ -58,7 +58,9 @@ export async function GET(
     // Récupérer la configuration de la page
     const { data, error } = (await supabase
       .from('linkme_page_configurations')
-      .select('*')
+      .select(
+        'id, page_id, page_name, page_description, page_icon, globe_enabled, globe_rotation_speed, config'
+      )
       .eq('page_id', pageId)
       .single()) as {
       data: PageConfiguration | null;

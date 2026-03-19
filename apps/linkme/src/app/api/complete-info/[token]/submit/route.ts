@@ -68,7 +68,9 @@ export async function POST(request: Request, { params }: RouteParams) {
     // Fetch and validate info request
     const { data: infoRequest, error: irError } = await supabase
       .from('linkme_info_requests')
-      .select('*')
+      .select(
+        'id, sales_order_id, completed_at, cancelled_at, token_expires_at'
+      )
       .eq('token', token)
       .single();
 
