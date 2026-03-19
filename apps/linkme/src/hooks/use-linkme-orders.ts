@@ -40,6 +40,8 @@ export interface OrderItem {
   commission_rate: number;
   selling_price_ht: number;
   affiliate_margin: number;
+  is_affiliate_product: boolean;
+  affiliate_commission_rate: number;
 }
 
 /**
@@ -73,6 +75,7 @@ export interface LinkMeOrder {
   handling_cost_ht: number;
   insurance_cost_ht: number;
   total_affiliate_margin: number;
+  total_payout_ht: number;
   customer_name: string;
   customer_type: 'organization' | 'individual';
   customer_id: string;
@@ -189,7 +192,13 @@ interface QueryItemRow {
   retrocession_rate: number | null;
   base_price_ht_locked: number | null;
   selling_price_ht_locked: number | null;
-  product: { id: string; name: string; sku: string | null } | null;
+  product: {
+    id: string;
+    name: string;
+    sku: string | null;
+    created_by_affiliate: string | null;
+    affiliate_commission_rate: number | null;
+  } | null;
 }
 
 interface QueryLinkmeDetailsRow {
@@ -261,7 +270,7 @@ const ORDER_SELECT = `
     id, product_id, quantity, unit_price_ht, total_ht, tax_rate,
     retrocession_amount, retrocession_rate,
     base_price_ht_locked, selling_price_ht_locked,
-    product:products!left(id, name, sku)
+    product:products!left(id, name, sku, created_by_affiliate, affiliate_commission_rate)
   ),
   linkme_details:sales_order_linkme_details!left(
     billing_name, billing_email, billing_phone,
@@ -316,6 +325,27 @@ function mapRowToOrder(
       0
     );
 
+  // Compute total payout (catalogue commission + affiliate product revenue)
+  const catalogueCommHT = row.items
+    .filter(i => i.product?.created_by_affiliate == null)
+    .reduce((sum, i) => sum + (Number(i.retrocession_amount) || 0), 0);
+  const affiliateItemsArr = row.items.filter(
+    i => i.product?.created_by_affiliate != null
+  );
+  const affiliateRevHT = affiliateItemsArr.reduce(
+    (sum, i) => sum + (Number(i.total_ht) || 0),
+    0
+  );
+  const affiliateLinkMeCommHT = affiliateItemsArr.reduce(
+    (sum, i) =>
+      sum +
+      (Number(i.total_ht) || 0) *
+        ((Number(i.product?.affiliate_commission_rate) || 0) / 100),
+    0
+  );
+  const totalPayoutHT =
+    catalogueCommHT + (affiliateRevHT - affiliateLinkMeCommHT);
+
   return {
     id: row.id,
     order_number: row.order_number,
@@ -328,6 +358,7 @@ function mapRowToOrder(
     handling_cost_ht: Number(row.handling_cost_ht) || 0,
     insurance_cost_ht: Number(row.insurance_cost_ht) || 0,
     total_affiliate_margin: totalAffiliateMargin,
+    total_payout_ht: totalPayoutHT,
     // Customer
     customer_name: customerName,
     customer_type:
@@ -403,10 +434,19 @@ function mapRowToOrder(
         total_ht: Number(item.total_ht) || 0,
         tax_rate: Number(item.tax_rate) || 0,
         base_price_ht: Number(item.base_price_ht_locked) || 0,
-        margin_rate: 0, // Not available in direct query
+        margin_rate:
+          Number(item.base_price_ht_locked) > 0
+            ? ((Number(item.unit_price_ht) -
+                Number(item.base_price_ht_locked)) /
+                Number(item.base_price_ht_locked)) *
+              100
+            : 0,
         commission_rate: Number(item.retrocession_rate) || 0,
         selling_price_ht: Number(item.selling_price_ht_locked) || 0,
         affiliate_margin: Number(item.retrocession_amount) || 0,
+        is_affiliate_product: item.product?.created_by_affiliate != null,
+        affiliate_commission_rate:
+          Number(item.product?.affiliate_commission_rate) || 0,
       })
     ),
   };

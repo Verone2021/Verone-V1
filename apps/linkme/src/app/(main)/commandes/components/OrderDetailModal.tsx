@@ -197,6 +197,31 @@ export function OrderDetailModal({
     order.reception_contact_email ??
     order.reception_contact_phone;
 
+  // Calculate total payout (catalogue commission + affiliate product revenue)
+  const catalogueItems = order.items.filter(i => !i.is_affiliate_product);
+  const affiliateItems = order.items.filter(i => i.is_affiliate_product);
+
+  const catalogueCommissionHT = catalogueItems.reduce(
+    (sum, i) => sum + i.affiliate_margin,
+    0
+  );
+
+  const affiliateRevenueHT = affiliateItems.reduce(
+    (sum, i) => sum + i.total_ht,
+    0
+  );
+  const affiliateCommissionLinkMeHT = affiliateItems.reduce(
+    (sum, i) => sum + i.total_ht * (i.affiliate_commission_rate / 100),
+    0
+  );
+  const affiliateVersementHT = affiliateRevenueHT - affiliateCommissionLinkMeHT;
+
+  const totalPayoutHT = catalogueCommissionHT + affiliateVersementHT;
+  const totalPayoutTTC =
+    totalPayoutHT * (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE);
+
+  const hasAffiliateProducts = affiliateItems.length > 0;
+
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -555,15 +580,29 @@ export function OrderDetailModal({
                 {canViewCommissions && (
                   <div className="bg-emerald-50 rounded-lg p-3 -m-1">
                     <p className="text-xs text-emerald-600 mb-1">
-                      Votre Commission TTC
+                      Total a percevoir TTC
                     </p>
                     <p className="text-lg font-bold text-emerald-600">
-                      +
-                      {formatPrice(
-                        order.total_affiliate_margin *
-                          (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE)
-                      )}
+                      +{formatPrice(totalPayoutTTC)}
                     </p>
+                    {hasAffiliateProducts && (
+                      <div className="mt-1 space-y-0.5">
+                        <p className="text-[10px] text-emerald-500">
+                          Commission catalogue : +
+                          {formatPrice(
+                            catalogueCommissionHT *
+                              (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE)
+                          )}
+                        </p>
+                        <p className="text-[10px] text-emerald-500">
+                          Vos produits : +
+                          {formatPrice(
+                            affiliateVersementHT *
+                              (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE)
+                          )}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
