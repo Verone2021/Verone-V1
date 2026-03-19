@@ -326,9 +326,9 @@ export function AddProductDialog({
                           marginIndicator.bgColor,
                           marginIndicator.color
                         )}
-                        title={`Marge: ${item.margin_rate}% - ${marginIndicator.label}`}
+                        title={`Marge: ${item.margin_rate.toFixed(2)}% - ${marginIndicator.label}`}
                       >
-                        {item.margin_rate}%
+                        {item.margin_rate.toFixed(2)}%
                       </div>
                     )}
 

@@ -773,8 +773,8 @@ export function useUpdateItemMargin() {
       const supabase: SupabaseClient<Database> = createClient();
 
       // Note: selling_price_ht est une colonne GENERATED en DB
-      // Elle est calculée automatiquement avec la formule taux de marque:
-      // selling_price_ht = base_price_ht / (1 - margin_rate / 100)
+      // Elle est calculée automatiquement avec la formule taux de marge additif:
+      // selling_price_ht = base_price_ht * (1 + margin_rate / 100)
       // On ne met à jour que margin_rate, le reste est calculé automatiquement
       const { error } = await supabase
         .from('linkme_selection_items')

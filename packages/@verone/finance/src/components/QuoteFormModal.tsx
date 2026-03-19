@@ -467,11 +467,11 @@ export function QuoteFormModal({
         return;
       }
 
-      // Price formula: selling_price = base_price / (1 - marginRate) * (1 + commissionRate)
+      // Price formula: selling_price = base_price * (1 + marginRate) * (1 + commissionRate)
       const commissionRate = (item.commission_rate ?? 0) / 100;
       const marginRate = item.margin_rate / 100;
       const sellingPrice = roundMoney(
-        (item.base_price_ht / (1 - marginRate)) * (1 + commissionRate)
+        item.base_price_ht * (1 + marginRate) * (1 + commissionRate)
       );
 
       const newItem: QuoteItemLocal = {
@@ -1054,7 +1054,8 @@ export function QuoteFormModal({
                               (selItem.commission_rate ?? 0) / 100;
                             const sellingPrice =
                               Math.round(
-                                (selItem.base_price_ht / (1 - marginRate)) *
+                                selItem.base_price_ht *
+                                  (1 + marginRate) *
                                   (1 + commissionRate) *
                                   100
                               ) / 100;

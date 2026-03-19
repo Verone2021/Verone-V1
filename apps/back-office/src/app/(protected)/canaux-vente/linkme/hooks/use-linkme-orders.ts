@@ -520,23 +520,22 @@ async function createLinkMeOrder(
   }
 
   // 2. Calculer les totaux avec TVA par ligne
+  // FIX: Pour produits catalogue, unit_price_ht (prix client) = selling_price * (1 + commission)
+  // item.unit_price_ht du modal = selling_price_ht (prix Verone, sans commission)
   let productsHt = 0;
   let totalTva = 0;
   let _totalRetrocession = 0;
 
   for (const item of input.items) {
-    const lineTotal = item.quantity * item.unit_price_ht;
+    // unit_price_ht IS the client price (selling_price from GENERATED column)
+    const clientUnitPrice = item.unit_price_ht;
+    const lineTotal = item.quantity * clientUnitPrice;
     const lineTva = lineTotal * (item.tax_rate ?? 0.2);
     productsHt += lineTotal;
     totalTva += lineTva;
-    // Commission = prix_vente × quantité × taux (formule alignée avec trigger DB)
-    if (item.is_affiliate_product) {
-      _totalRetrocession +=
-        item.quantity * item.unit_price_ht * item.retrocession_rate;
-    } else {
-      _totalRetrocession +=
-        item.unit_price_ht * item.quantity * item.retrocession_rate;
-    }
+    // Commission = selling_price (prix Verone) × quantité × taux
+    _totalRetrocession +=
+      item.unit_price_ht * item.quantity * item.retrocession_rate;
   }
 
   // Frais additionnels avec TVA configurable
@@ -629,21 +628,28 @@ async function createLinkMeOrder(
   // Note: product_name, sku et total_ht ne sont PAS des colonnes inserables
   // - product_name/sku : recuperes via jointure products
   // - total_ht : colonne GENERATED (calculee automatiquement)
-  const orderItems = input.items.map(item => ({
-    sales_order_id: order.id,
-    product_id: item.product_id,
-    quantity: item.quantity,
-    unit_price_ht: item.unit_price_ht,
-    // total_ht est GENERATED - ne pas l'inserer
-    tax_rate: item.tax_rate ?? 0.2, // TVA par ligne (defaut 20%)
-    retrocession_rate: item.retrocession_rate,
-    // retrocession_amount: calculé par le trigger DB (BEFORE INSERT)
-    // Verrouiller les prix au moment de la création
-    // → Le trigger utilisera ces valeurs au lieu de fetch la sélection
-    base_price_ht_locked: item.base_price_ht,
-    selling_price_ht_locked: item.unit_price_ht,
-    linkme_selection_item_id: item.linkme_selection_item_id ?? null,
-  }));
+  // unit_price_ht = selling_price_ht = prix client (GENERATED column, additive margin)
+  // selling_price_ht_locked = prix Verone (base_price from selection)
+  const orderItems = input.items.map(item => {
+    // unit_price_ht IS already the client price (no multiplication needed)
+    const clientUnitPrice = item.unit_price_ht;
+
+    return {
+      sales_order_id: order.id,
+      product_id: item.product_id,
+      quantity: item.quantity,
+      unit_price_ht: clientUnitPrice,
+      // total_ht est GENERATED - ne pas l'inserer
+      tax_rate: item.tax_rate ?? 0.2, // TVA par ligne (defaut 20%)
+      retrocession_rate: item.retrocession_rate,
+      // retrocession_amount: calculé par le trigger DB (BEFORE INSERT)
+      // Verrouiller les prix au moment de la création
+      base_price_ht_locked: item.base_price_ht,
+      // selling_price_ht_locked = prix Verone (SANS commission)
+      selling_price_ht_locked: item.unit_price_ht,
+      linkme_selection_item_id: item.linkme_selection_item_id ?? null,
+    };
+  });
 
   const { error: itemsError } = await supabase
     .from('sales_order_items')

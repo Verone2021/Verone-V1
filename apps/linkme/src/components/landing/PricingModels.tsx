@@ -50,8 +50,8 @@ function calculatePricing(
   basePrice: number,
   marginRate: number
 ): IPricingResult {
-  // Prix de vente HT = prix base / (1 - marge)
-  const sellingPriceHT = basePrice / (1 - marginRate / 100);
+  // Prix de vente HT = prix base * (1 + marge)
+  const sellingPriceHT = basePrice * (1 + marginRate / 100);
 
   // Commission LinkMe
   const linkmeCommission = sellingPriceHT * LINKME_COMMISSION_RATE;
@@ -187,7 +187,7 @@ export function LandingPricing(): JSX.Element {
                   Votre marge
                 </span>
                 <span className="text-lg font-bold text-[#183559]">
-                  {margin}%
+                  {margin.toFixed(2)}%
                 </span>
               </div>
 
@@ -222,8 +222,11 @@ export function LandingPricing(): JSX.Element {
                 type="range"
                 min={0}
                 max={zones.maxMargin}
+                step={0.01}
                 value={margin}
-                onChange={e => setMargin(Number(e.target.value))}
+                onChange={e =>
+                  setMargin(Math.round(Number(e.target.value) * 100) / 100)
+                }
                 className="w-full h-2 bg-transparent appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-transparent"
               />
 

@@ -112,17 +112,17 @@ export function SelectionProductDetailModal({
   // Commission DÉDUITE du revenu, PAS ajoutée au prix client
   const isAffiliateProduct = !!item?.product?.created_by_affiliate;
 
-  // Prix de vente avec taux de marque
-  // Note: sellingPriceWithMargin = ce que l'affilié gagne (basePrice / (1 - tauxMarque))
-  // Taux de marque: PVHT = PAHT / (1 - taux%)
-  const sellingPriceWithMargin = basePrice / (1 - localMarginRate);
+  // Prix de vente avec taux de marge additif
+  // Note: sellingPriceWithMargin = ce que l'affilié gagne (basePrice * (1 + tauxMarge))
+  // Taux de marge additif: PVHT = PAHT * (1 + taux%)
+  const sellingPriceWithMargin = basePrice * (1 + localMarginRate);
 
   // FORMULE SELON TYPE DE PRODUIT:
   // Catalogue: PrixFinal = PVHT × (1 + commission) → commission ajoutée au prix
   // Affilié: PrixFinal = basePrice → commission déduite du revenu affilié
   const finalPriceWithCommission = isAffiliateProduct
     ? basePrice
-    : (basePrice / (1 - localMarginRate)) * (1 + commissionRate);
+    : basePrice * (1 + localMarginRate) * (1 + commissionRate);
 
   // Prix client LinkMe (calculé)
   // Catalogue: base × (1 + commission%) → client paie plus
@@ -178,9 +178,9 @@ export function SelectionProductDetailModal({
       const marginRateDecimal = localMarginRate;
       const bufferRate = item.buffer_rate ?? 0.05;
 
-      // Prix final avec taux de marque + commission
+      // Prix final avec taux de marge additif + commission
       const finalPrice =
-        (localCustomPriceHT / (1 - marginRateDecimal)) * (1 + commissionRate);
+        localCustomPriceHT * (1 + marginRateDecimal) * (1 + commissionRate);
       // Prix maximum autorisé = prix public × (1 - buffer)
       const maxAllowedPrice = item.public_price_ht * (1 - bufferRate);
 

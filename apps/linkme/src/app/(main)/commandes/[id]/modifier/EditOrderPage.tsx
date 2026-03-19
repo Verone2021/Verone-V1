@@ -1110,7 +1110,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
                           </div>
                           <p className="text-xs text-blue-600">
                             Commission Verone :{' '}
-                            {(item.affiliate_commission_rate * 100).toFixed(0)}%
+                            {(item.affiliate_commission_rate * 100).toFixed(2)}%
                             ={' '}
                             {formatPrice(
                               item.unit_price_ht *

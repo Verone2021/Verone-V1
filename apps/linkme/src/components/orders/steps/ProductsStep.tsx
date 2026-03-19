@@ -484,9 +484,9 @@ export function ProductsStep({
                           marginIndicator.bgColor,
                           marginIndicator.color
                         )}
-                        title={`Marge: ${item.margin_rate}%`}
+                        title={`Marge: ${item.margin_rate.toFixed(2)}%`}
                       >
-                        {item.margin_rate}%
+                        {item.margin_rate.toFixed(2)}%
                       </div>
                     )}
                   </div>

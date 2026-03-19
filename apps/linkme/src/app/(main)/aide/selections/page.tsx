@@ -43,7 +43,7 @@ function calculateTrafficLightZones(
 }
 
 function calculatePricing(basePrice: number, marginRate: number) {
-  const sellingPriceHT = basePrice / (1 - marginRate / 100);
+  const sellingPriceHT = basePrice * (1 + marginRate / 100);
   const linkmeCommission = sellingPriceHT * LINKME_COMMISSION_RATE;
   const finalPriceTTC = (sellingPriceHT + linkmeCommission) * (1 + TVA_RATE);
   const affiliateGain = sellingPriceHT - basePrice;

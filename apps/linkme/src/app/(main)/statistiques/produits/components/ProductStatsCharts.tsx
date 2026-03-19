@@ -36,7 +36,7 @@ function formatCurrency(value: number): string {
 }
 
 function formatPercent(value: number): string {
-  return `${value.toFixed(1)} %`;
+  return `${value.toFixed(2)} %`;
 }
 
 // Couleurs par source produit
