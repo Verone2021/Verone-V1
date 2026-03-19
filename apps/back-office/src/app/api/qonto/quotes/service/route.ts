@@ -199,12 +199,13 @@ export async function POST(request: NextRequest): Promise<
     const qontoClientType =
       clientType === 'organization' ? 'company' : 'individual';
 
-    // Récupérer le numéro TVA/SIRET pour les entreprises
+    // Tax identification: vatNumber = EU VAT, taxId = SIRET
     let vatNumber: string | undefined;
+    let taxId: string | undefined;
     if (clientType === 'organization') {
       const org = customer as Organisation;
-      // Only use real VAT number (intracommunautaire), NOT siret
       vatNumber = org.vat_number ?? undefined;
+      taxId = org.siret ?? undefined;
     }
 
     // Chercher ou créer le client Qonto
@@ -217,6 +218,7 @@ export async function POST(request: NextRequest): Promise<
         type: qontoClientType,
         address: qontoAddress,
         vatNumber,
+        taxIdentificationNumber: taxId,
       });
       qontoClientId = existingClient.id;
     } else {
@@ -227,6 +229,7 @@ export async function POST(request: NextRequest): Promise<
         currency: 'EUR',
         address: qontoAddress,
         vatNumber,
+        taxIdentificationNumber: taxId,
       });
       qontoClientId = newClient.id;
     }
