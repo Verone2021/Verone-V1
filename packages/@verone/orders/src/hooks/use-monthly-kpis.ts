@@ -4,12 +4,13 @@
  * Hook: useMonthlyKPIs
  * KPIs mensuels avec comparaison mois précédent
  *
- * Utilise query directe sur `sales_orders` (RLS-aware) au lieu du RPC cassé.
+ * PERF: Uses server-side RPC for all-time aggregation (1 row)
+ * and date-filtered queries for current/previous month (bounded).
  * Commissions depuis `linkme_commissions` (source de vérité).
  *
  * @module use-monthly-kpis
  * @since 2025-12-19
- * @updated 2026-02-25 - Migration RPC → query directe + commissions réelles
+ * @updated 2026-03-19 - PERF: bounded queries + server-side RPC for all-time
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -128,6 +129,15 @@ interface CommissionKpiRow {
   affiliate_commission_ttc: number | null;
 }
 
+interface AllTimeSummaryRow {
+  orders_count: number;
+  total_ht: number;
+  total_ttc: number;
+  commissions_ht: number;
+  commissions_ttc: number;
+  distinct_months: number;
+}
+
 // ============================================
 // MAIN HOOK
 // ============================================
@@ -147,36 +157,58 @@ export function useMonthlyKPIs(options: UseMonthlyKPIsOptions = {}) {
       const previousMonthStart = getMonthStart(prevMonth);
       const previousMonthEnd = getMonthEnd(prevMonth);
 
-      // Fetch all LinkMe orders (lightweight: only needed columns for KPIs)
-      // RLS filters automatically by affiliate/enseigne
       const effectiveChannelId = channelId ?? LINKME_CHANNEL_ID;
 
-      const { data: ordersData, error: ordersError } = await supabase
-        .from('sales_orders')
-        .select('created_at, total_ht, total_ttc')
-        .eq('channel_id', effectiveChannelId)
-        .order('created_at', { ascending: false });
+      // Run 3 queries in parallel:
+      // 1. Orders for current + previous month only (bounded)
+      // 2. Commissions for current + previous month only (bounded)
+      // 3. All-time aggregation via server-side RPC (returns 1 row)
+      const [ordersResult, commissionsResult, allTimeResult] =
+        await Promise.all([
+          supabase
+            .from('sales_orders')
+            .select('created_at, total_ht, total_ttc')
+            .eq('channel_id', effectiveChannelId)
+            .gte('created_at', previousMonthStart.toISOString())
+            .order('created_at', { ascending: false }),
 
-      if (ordersError) {
-        console.error('[useMonthlyKPIs] Orders error:', ordersError);
-        throw ordersError;
+          supabase
+            .from('linkme_commissions')
+            .select(
+              'created_at, affiliate_commission, affiliate_commission_ttc'
+            )
+            .gte('created_at', previousMonthStart.toISOString()),
+
+          supabase.rpc('get_kpi_alltime_summary', {
+            p_channel_id: effectiveChannelId,
+          }),
+        ]);
+
+      if (ordersResult.error) {
+        console.error('[useMonthlyKPIs] Orders error:', ordersResult.error);
+        throw ordersResult.error;
+      }
+      if (commissionsResult.error) {
+        console.error(
+          '[useMonthlyKPIs] Commissions error:',
+          commissionsResult.error
+        );
+        throw commissionsResult.error;
+      }
+      if (allTimeResult.error) {
+        console.error(
+          '[useMonthlyKPIs] AllTime RPC error:',
+          allTimeResult.error
+        );
+        throw allTimeResult.error;
       }
 
-      // Fetch commissions from linkme_commissions (source of truth)
-      // RLS filters automatically
-      const { data: commissionsData, error: commissionsError } = await supabase
-        .from('linkme_commissions')
-        .select('created_at, affiliate_commission, affiliate_commission_ttc');
+      const orders = (ordersResult.data ?? []) as OrderKpiRow[];
+      const commissions = (commissionsResult.data ?? []) as CommissionKpiRow[];
+      const allTimeSummary =
+        ((allTimeResult.data as unknown as AllTimeSummaryRow[]) ?? [])[0];
 
-      if (commissionsError) {
-        console.error('[useMonthlyKPIs] Commissions error:', commissionsError);
-        throw commissionsError;
-      }
-
-      const orders = (ordersData ?? []) as OrderKpiRow[];
-      const commissions = (commissionsData ?? []) as CommissionKpiRow[];
-
-      // Filter orders by period
+      // Filter orders by period (client-side on the 2-month window)
       const filterByPeriod = <T extends { created_at: string }>(
         items: T[],
         start: Date,
@@ -208,7 +240,7 @@ export function useMonthlyKPIs(options: UseMonthlyKPIsOptions = {}) {
         previousMonthEnd
       );
 
-      // Calculate KPIs
+      // Calculate KPIs for current and previous months
       const calcOrderKPIs = (ordersList: OrderKpiRow[]) => {
         const count = ordersList.length;
         const caHT = ordersList.reduce(
@@ -236,11 +268,9 @@ export function useMonthlyKPIs(options: UseMonthlyKPIsOptions = {}) {
 
       const currentOrderKPIs = calcOrderKPIs(currentMonthOrders);
       const previousOrderKPIs = calcOrderKPIs(previousMonthOrders);
-      const allTimeOrderKPIs = calcOrderKPIs(orders);
 
       const currentCommKPIs = calcCommissionKPIs(currentMonthCommissions);
       const previousCommKPIs = calcCommissionKPIs(previousMonthCommissions);
-      const allTimeCommKPIs = calcCommissionKPIs(commissions);
 
       const buildKPIs = (
         orderKPIs: { count: number; caHT: number; caTTC: number },
@@ -258,24 +288,27 @@ export function useMonthlyKPIs(options: UseMonthlyKPIsOptions = {}) {
       const currentKPIs = buildKPIs(currentOrderKPIs, currentCommKPIs);
       const previousKPIs = buildKPIs(previousOrderKPIs, previousCommKPIs);
 
-      // Monthly averages
-      const monthsWithOrders = new Set(
-        orders.map(o => {
-          const d = new Date(o.created_at);
-          return `${d.getFullYear()}-${d.getMonth()}`;
-        })
+      // All-time totals from server-side RPC (1 row, no O(N) transfer)
+      const allTimeOrdersCount = Number(allTimeSummary?.orders_count ?? 0);
+      const allTimeCaHT = Number(allTimeSummary?.total_ht ?? 0);
+      const allTimeCaTTC = Number(allTimeSummary?.total_ttc ?? 0);
+      const allTimeCommHT = Number(allTimeSummary?.commissions_ht ?? 0);
+      const allTimeCommTTC = Number(allTimeSummary?.commissions_ttc ?? 0);
+      const numberOfMonths = Math.max(
+        Number(allTimeSummary?.distinct_months ?? 1),
+        1
       );
-      const numberOfMonths = Math.max(monthsWithOrders.size, 1);
 
-      const allTimeKPIs = buildKPIs(allTimeOrderKPIs, allTimeCommKPIs);
+      const allTimePanierMoyen =
+        allTimeOrdersCount > 0 ? allTimeCaTTC / allTimeOrdersCount : 0;
 
       const monthlyAverage = {
-        ordersCount: Math.round(allTimeKPIs.ordersCount / numberOfMonths),
-        caHT: allTimeKPIs.caHT / numberOfMonths,
-        caTTC: allTimeKPIs.caTTC / numberOfMonths,
-        commissionsHT: allTimeKPIs.commissionsHT / numberOfMonths,
-        commissionsTTC: allTimeKPIs.commissionsTTC / numberOfMonths,
-        panierMoyen: allTimeKPIs.panierMoyen,
+        ordersCount: Math.round(allTimeOrdersCount / numberOfMonths),
+        caHT: allTimeCaHT / numberOfMonths,
+        caTTC: allTimeCaTTC / numberOfMonths,
+        commissionsHT: allTimeCommHT / numberOfMonths,
+        commissionsTTC: allTimeCommTTC / numberOfMonths,
+        panierMoyen: allTimePanierMoyen,
       };
 
       // Variations
@@ -334,11 +367,11 @@ export function useMonthlyKPIs(options: UseMonthlyKPIsOptions = {}) {
         averageVariations,
         monthlyAverage,
         allTime: {
-          ordersCount: allTimeKPIs.ordersCount,
-          caHT: allTimeKPIs.caHT,
-          caTTC: allTimeKPIs.caTTC,
-          commissionsHT: allTimeKPIs.commissionsHT,
-          commissionsTTC: allTimeKPIs.commissionsTTC,
+          ordersCount: allTimeOrdersCount,
+          caHT: allTimeCaHT,
+          caTTC: allTimeCaTTC,
+          commissionsHT: allTimeCommHT,
+          commissionsTTC: allTimeCommTTC,
         },
       };
     },
@@ -346,7 +379,7 @@ export function useMonthlyKPIs(options: UseMonthlyKPIsOptions = {}) {
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: 'always',
+    // PERF: removed refetchOnMount: 'always' — now respects staleTime (5min cache)
   });
 }
 

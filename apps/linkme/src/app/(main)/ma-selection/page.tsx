@@ -42,7 +42,6 @@ import { toast } from 'sonner';
 import { PageTourTrigger } from '../../../components/onboarding/PageTourTrigger';
 import { SelectionCatalogDialog } from '../../../components/selection/SelectionProductsSheet';
 import { useAuth, type LinkMeRole } from '../../../contexts/AuthContext';
-import { useAffiliateAnalytics } from '../../../lib/hooks/use-affiliate-analytics';
 import {
   useUserAffiliate,
   useUserSelections,
@@ -58,8 +57,6 @@ export default function MaSelectionPage(): React.JSX.Element {
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
   const { data: selections, isLoading: selectionsLoading } =
     useUserSelections();
-  const { data: analytics, isLoading: analyticsLoading } =
-    useAffiliateAnalytics('all');
 
   // Smart redirect : si une seule sélection, aller directement dessus
   const [redirecting, setRedirecting] = useState(false);
@@ -140,8 +137,12 @@ export default function MaSelectionPage(): React.JSX.Element {
   // Calculs KPIs minimalistes
   const totalSelections = selections?.length ?? 0;
   const publishedCount = selections?.filter(s => !!s.published_at).length ?? 0;
-  // Utiliser les vraies quantités vendues depuis linkme_order_items_enriched
-  const totalQuantitySold = analytics?.totalQuantitySold ?? 0;
+  // Utiliser orders_count depuis les sélections déjà chargées (pas besoin d'analytics)
+  // Note: orders_count = nb de commandes passées via cette sélection
+  const totalQuantitySold = (selections ?? []).reduce(
+    (sum, s) => sum + (s.orders_count ?? 0),
+    0
+  );
 
   // Afficher onboarding si peu de sélections
   const showOnboarding = totalSelections < 2;

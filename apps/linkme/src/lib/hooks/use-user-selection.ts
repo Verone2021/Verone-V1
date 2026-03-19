@@ -209,6 +209,7 @@ export function useUserAffiliate() {
     enabled: !!user && !!linkMeRole,
     // PERF: Increased cache time from 60s to 5min (affiliate data rarely changes)
     staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -282,6 +283,7 @@ export function useUserSelections() {
     enabled: !!affiliate,
     // PERF: Increased cache time from 30s to 2min
     staleTime: 2 * 60 * 1000, // 2 minutes
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -437,6 +439,7 @@ export function useSelectionItems(selectionId: string | null) {
     enabled: !!selectionId,
     // PERF: Increased cache time from 30s to 2min
     staleTime: 2 * 60 * 1000, // 2 minutes
+    refetchOnWindowFocus: false,
   });
 }
 

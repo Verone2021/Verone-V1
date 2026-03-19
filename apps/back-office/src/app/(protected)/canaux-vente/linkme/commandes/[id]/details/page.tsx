@@ -75,7 +75,6 @@ import {
   UserPlus,
   Users,
   XCircle,
-  FileText,
 } from 'lucide-react';
 
 import {
@@ -92,15 +91,7 @@ import {
 
 import { ContactCardBO } from '../../../components/contacts/ContactCardBO';
 import { NewContactForm } from '../../../components/contacts/NewContactForm';
-import {
-  isOrderLocked,
-  OrderTimeline,
-  useOrderHistory,
-  SendOrderDocumentsModal,
-  SalesOrderShipmentModal,
-  type LinkedDocument,
-  type OrderContact,
-} from '@verone/orders';
+import { isOrderLocked, OrderTimeline, useOrderHistory } from '@verone/orders';
 import { PaymentSection } from '@/components/orders/PaymentSection';
 import { FeesSection } from '@/components/orders/FeesSection';
 import { InvoicesSection } from '@/components/orders/InvoicesSection';
@@ -257,11 +248,8 @@ interface LinkmeOrderItemEnrichedRaw {
   selling_price_ht: number | null;
   affiliate_margin: number | null;
   retrocession_rate?: number | null;
-}
-
-interface ProductWithAffiliate {
-  id: string;
   created_by_affiliate: string | null;
+  affiliate_commission_rate: number | null;
 }
 
 function getOrderChannel(
@@ -321,13 +309,6 @@ export default function LinkMeOrderDetailsPage() {
   const [selectedContactId, setSelectedContactId] = useState<string | null>(
     null
   );
-
-  // Send documents modal
-  const [showSendDocsModal, setShowSendDocsModal] = useState(false);
-  const [linkedDocuments, setLinkedDocuments] = useState<LinkedDocument[]>([]);
-
-  // Shipment modal
-  const [showShipmentModal, setShowShipmentModal] = useState(false);
 
   // Mutations
   const updateDetails = useUpdateLinkMeDetails();
@@ -552,29 +533,16 @@ export default function LinkMeOrderDetailsPage() {
         matched_transaction_attachment_ids: matchInfo?.attachment_ids ?? null,
       });
 
-      // Enriched items with commission info
+      // Enriched items with commission info (view now includes created_by_affiliate + affiliate_commission_rate)
       const { data: enrichedData } = await supabase
         .from('linkme_order_items_enriched')
         .select(
-          'id, product_id, product_name, product_sku, product_image_url, quantity, unit_price_ht, total_ht, base_price_ht, margin_rate, commission_rate, selling_price_ht, affiliate_margin, retrocession_rate'
+          'id, product_id, product_name, product_sku, product_image_url, quantity, unit_price_ht, total_ht, base_price_ht, margin_rate, commission_rate, selling_price_ht, affiliate_margin, retrocession_rate, created_by_affiliate, affiliate_commission_rate'
         )
         .eq('sales_order_id', orderId);
 
       if (enrichedData && enrichedData.length > 0) {
         const typedEnrichedData = enrichedData as LinkmeOrderItemEnrichedRaw[];
-        const productIds = typedEnrichedData
-          .map((item: LinkmeOrderItemEnrichedRaw) => item.product_id)
-          .filter(Boolean);
-        const { data: productsData } = await supabase
-          .from('products')
-          .select('id, created_by_affiliate')
-          .in('id', productIds);
-
-        const productMap = new Map(
-          ((productsData ?? []) as ProductWithAffiliate[]).map(
-            (p: ProductWithAffiliate) => [p.id, p.created_by_affiliate]
-          )
-        );
 
         setEnrichedItems(
           typedEnrichedData.map((item: LinkmeOrderItemEnrichedRaw) => ({
@@ -592,7 +560,7 @@ export default function LinkMeOrderDetailsPage() {
             selling_price_ht: item.selling_price_ht ?? 0,
             affiliate_margin: item.affiliate_margin ?? 0,
             retrocession_rate: item.retrocession_rate ?? 0,
-            created_by_affiliate: productMap.get(item.product_id) ?? null,
+            created_by_affiliate: item.created_by_affiliate ?? null,
           }))
         );
       }
@@ -606,47 +574,13 @@ export default function LinkMeOrderDetailsPage() {
     }
   }, [orderId]);
 
-  // Fetch linked financial documents (quotes + invoices)
-  const fetchLinkedDocuments = useCallback(async () => {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('financial_documents')
-      .select(
-        'id, document_number, document_type, qonto_invoice_id, qonto_pdf_url, total_ttc, status, quote_status'
-      )
-      .eq('sales_order_id', orderId)
-      .in('document_type', ['customer_quote', 'customer_invoice'])
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false });
-
-    if (data) {
-      setLinkedDocuments(
-        data.map(d => ({
-          id: d.id,
-          document_number: d.document_number,
-          document_type: d.document_type as
-            | 'customer_quote'
-            | 'customer_invoice',
-          qonto_invoice_id: d.qonto_invoice_id,
-          qonto_pdf_url: d.qonto_pdf_url,
-          total_ttc: d.total_ttc,
-          status: d.status,
-          quote_status: d.quote_status,
-        }))
-      );
-    }
-  }, [orderId]);
-
   useEffect(() => {
     if (orderId) {
       void fetchOrder().catch(error => {
         console.error('[LinkMeOrderDetails] Initial fetch failed:', error);
       });
-      void fetchLinkedDocuments().catch(error => {
-        console.error('[LinkMeOrderDetails] Fetch linked docs failed:', error);
-      });
     }
-  }, [orderId, fetchOrder, fetchLinkedDocuments]);
+  }, [orderId, fetchOrder]);
 
   // ============================================
   // HANDLERS
@@ -1066,37 +1000,6 @@ export default function LinkMeOrderDetailsPage() {
             )}
           </div>
         </div>
-
-        {/* ACTION BUTTONS — right-aligned */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-            onClick={() => setShowSendDocsModal(true)}
-          >
-            <Mail className="h-3.5 w-3.5" />
-            Envoyer documents
-            {linkedDocuments.length > 0 && (
-              <Badge
-                variant="secondary"
-                className="ml-1 text-[10px] px-1.5 py-0"
-              >
-                {linkedDocuments.length}
-              </Badge>
-            )}
-          </Button>
-          {order.status === 'validated' && (
-            <Button
-              size="sm"
-              className="gap-1.5"
-              onClick={() => setShowShipmentModal(true)}
-            >
-              <Truck className="h-3.5 w-3.5" />
-              Expédier
-            </Button>
-          )}
-        </div>
       </div>
 
       {/* ============================================ */}
@@ -1250,6 +1153,14 @@ export default function LinkMeOrderDetailsPage() {
                           item.quantity > 0
                             ? (item.affiliate_margin ?? 0) / item.quantity
                             : 0;
+                        // For affiliate products, show affiliate_commission_rate; for catalogue, retrocession_rate
+                        const displayCommissionPct = isRevendeur
+                          ? item.affiliate_margin > 0 && item.total_ht > 0
+                            ? Math.round(
+                                (item.affiliate_margin / item.total_ht) * 100
+                              )
+                            : 0
+                          : Math.round(item.retrocession_rate * 100);
 
                         return (
                           <TableRow key={item.id}>
@@ -1283,24 +1194,27 @@ export default function LinkMeOrderDetailsPage() {
                                 item.base_price_ht || item.unit_price_ht
                               )}
                             </TableCell>
-                            {/* Marge % (calculée depuis prix verrouillés) */}
+                            {/* Commission % */}
                             <TableCell className="text-center">
-                              <span className="text-teal-600">
-                                {(() => {
-                                  const rate =
-                                    item.base_price_ht > 0
-                                      ? ((item.unit_price_ht -
-                                          item.base_price_ht) /
-                                          item.base_price_ht) *
-                                        100
-                                      : 0;
-                                  return `${rate % 1 === 0 ? rate.toFixed(0) : rate.toFixed(2)}%`;
-                                })()}
+                              <span
+                                className={
+                                  isRevendeur
+                                    ? 'text-orange-500'
+                                    : 'text-teal-600'
+                                }
+                              >
+                                {`${displayCommissionPct}%`}
                               </span>
                             </TableCell>
                             {/* Commission EUR (per unit) */}
                             <TableCell className="text-right">
-                              <span className="text-teal-600">
+                              <span
+                                className={
+                                  isRevendeur
+                                    ? 'text-orange-500'
+                                    : 'text-teal-600'
+                                }
+                              >
                                 {formatCurrency(commissionPerUnit)}
                               </span>
                             </TableCell>
@@ -1395,6 +1309,138 @@ export default function LinkMeOrderDetailsPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* COMMISSION & VERSEMENT — breakdown of what Verone owes the affiliate */}
+          {enrichedItems.length > 0 &&
+            (() => {
+              const catalogueItems = enrichedItems.filter(
+                i => !i.created_by_affiliate
+              );
+              const affiliateProductItems = enrichedItems.filter(
+                i => !!i.created_by_affiliate
+              );
+
+              // Catalogue: retrocession (what we pay the affiliate as commission)
+              const catalogueCommissionHT = catalogueItems.reduce(
+                (sum, item) => sum + (item.affiliate_margin ?? 0),
+                0
+              );
+              const catalogueCommissionTTC = catalogueCommissionHT * 1.2;
+
+              // Affiliate products: Verone takes a commission, reverses the rest
+              const affiliateProductsTotalHT = affiliateProductItems.reduce(
+                (sum, item) => sum + item.total_ht,
+                0
+              );
+              const affiliateProductsTotalTTC = affiliateProductsTotalHT * 1.2;
+              const affiliateProductsCommissionHT =
+                affiliateProductItems.reduce(
+                  (sum, item) => sum + (item.affiliate_margin ?? 0),
+                  0
+                );
+              const affiliateProductsCommissionTTC =
+                affiliateProductsCommissionHT * 1.2;
+              const affiliateVersementHT =
+                affiliateProductsTotalHT - affiliateProductsCommissionHT;
+              const affiliateVersementTTC =
+                affiliateProductsTotalTTC - affiliateProductsCommissionTTC;
+
+              // Grand total to pay the affiliate
+              const totalPayoutHT =
+                catalogueCommissionHT + affiliateVersementHT;
+              const totalPayoutTTC =
+                catalogueCommissionTTC + affiliateVersementTTC;
+
+              return (
+                <Card className="border-emerald-200">
+                  <CardHeader className="pb-2 pt-4 px-4">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <span className="h-4 w-4 rounded-full bg-emerald-100 flex items-center justify-center text-[10px] text-emerald-700 font-bold">
+                        $
+                      </span>
+                      Commission & Versement
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-4 pt-0 space-y-3">
+                    {/* Catalogue products commission */}
+                    {catalogueItems.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 mb-1">
+                          Produits catalogue ({catalogueItems.length} ligne
+                          {catalogueItems.length > 1 ? 's' : ''})
+                        </p>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">
+                            Commission affilié
+                          </span>
+                          <span className="font-medium text-teal-600">
+                            {formatCurrency(catalogueCommissionHT)} HT /{' '}
+                            {formatCurrency(catalogueCommissionTTC)} TTC
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Affiliate products: commission LinkMe + versement */}
+                    {affiliateProductItems.length > 0 && (
+                      <div className="pt-2 border-t border-gray-100">
+                        <p className="text-xs font-medium text-orange-500 mb-1">
+                          Produits affilié ({affiliateProductItems.length} ligne
+                          {affiliateProductItems.length > 1 ? 's' : ''})
+                        </p>
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">
+                              CA produits affilié
+                            </span>
+                            <span className="text-gray-900">
+                              {formatCurrency(affiliateProductsTotalHT)} HT /{' '}
+                              {formatCurrency(affiliateProductsTotalTTC)} TTC
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">
+                              Commission LinkMe (Verone garde)
+                            </span>
+                            <span className="font-medium text-orange-500">
+                              {formatCurrency(affiliateProductsCommissionHT)} HT
+                              / {formatCurrency(affiliateProductsCommissionTTC)}{' '}
+                              TTC
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">
+                              Versement affilié (à reverser)
+                            </span>
+                            <span className="font-medium text-emerald-600">
+                              {formatCurrency(affiliateVersementHT)} HT /{' '}
+                              {formatCurrency(affiliateVersementTTC)} TTC
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Grand total */}
+                    <div className="pt-3 border-t-2 border-emerald-200">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-gray-900">
+                          Total à verser à l&apos;affilié
+                        </span>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-emerald-700">
+                            {formatCurrency(totalPayoutTTC)} TTC
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {formatCurrency(totalPayoutHT)} HT
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })()}
 
           {/* LIVRAISON — after totals */}
           <Card>
@@ -1687,8 +1733,7 @@ export default function LinkMeOrderDetailsPage() {
                             </span>
                           </div>
                         )}
-                        {details.step4_token &&
-                          !details.reception_contact_name &&
+                        {!details.reception_contact_name &&
                           !details.confirmed_delivery_date && (
                             <div className="p-3 bg-amber-50 rounded-lg text-sm text-amber-700">
                               <Clock className="h-4 w-4 inline mr-1" />
@@ -1840,10 +1885,15 @@ export default function LinkMeOrderDetailsPage() {
                   <>
                     <Button
                       className="w-full gap-2"
-                      onClick={() => setShowShipmentModal(true)}
+                      disabled={isUpdatingStatus}
+                      onClick={() => {
+                        void handleStatusChange('shipped').catch(err =>
+                          console.error(err)
+                        );
+                      }}
                     >
                       <Truck className="h-4 w-4" />
-                      Expédier
+                      {isUpdatingStatus ? 'En cours...' : 'Marquer expédiée'}
                     </Button>
                     <Button
                       variant="outline"
@@ -1880,21 +1930,6 @@ export default function LinkMeOrderDetailsPage() {
                       {isUpdatingStatus ? 'En cours...' : 'Annuler'}
                     </Button>
                   )}
-                {/* Send documents button — always available */}
-                <Separator className="my-1" />
-                <Button
-                  variant="outline"
-                  className="w-full gap-2"
-                  onClick={() => setShowSendDocsModal(true)}
-                >
-                  <FileText className="h-4 w-4" />
-                  Envoyer documents
-                  {linkedDocuments.length > 0 && (
-                    <Badge variant="secondary" className="ml-auto text-xs">
-                      {linkedDocuments.length}
-                    </Badge>
-                  )}
-                </Button>
               </div>
             </CardContent>
           </Card>
@@ -2827,82 +2862,6 @@ export default function LinkMeOrderDetailsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* MODAL: ENVOI DOCUMENTS PAR EMAIL */}
-      <SendOrderDocumentsModal
-        open={showSendDocsModal}
-        onClose={() => setShowSendDocsModal(false)}
-        salesOrderId={order?.id ?? ''}
-        orderNumber={order?.linkme_display_number ?? order?.order_number ?? ''}
-        customerName={
-          order?.organisation?.trade_name ??
-          order?.organisation?.legal_name ??
-          'Client'
-        }
-        contacts={(() => {
-          const c: OrderContact[] = [];
-          if (order?.billing_contact?.email) {
-            c.push({
-              label: `Facturation (${order.billing_contact.first_name} ${order.billing_contact.last_name})`,
-              email: order.billing_contact.email,
-            });
-          }
-          if (order?.responsable_contact?.email) {
-            c.push({
-              label: `Responsable (${order.responsable_contact.first_name} ${order.responsable_contact.last_name})`,
-              email: order.responsable_contact.email,
-            });
-          }
-          if (order?.linkmeDetails?.requester_email) {
-            c.push({
-              label: `Demandeur (${order.linkmeDetails.requester_name ?? ''})`,
-              email: order.linkmeDetails.requester_email,
-            });
-          }
-          if (order?.delivery_contact?.email) {
-            c.push({
-              label: `Livraison (${order.delivery_contact.first_name} ${order.delivery_contact.last_name})`,
-              email: order.delivery_contact.email,
-            });
-          }
-          if (order?.organisation?.email) {
-            c.push({
-              label: `Organisation (${order.organisation.trade_name ?? order.organisation.legal_name})`,
-              email: order.organisation.email,
-            });
-          }
-          const seen = new Set<string>();
-          return c.filter(contact => {
-            if (seen.has(contact.email)) return false;
-            seen.add(contact.email);
-            return true;
-          });
-        })()}
-        linkedDocuments={linkedDocuments}
-        onSent={() => {
-          void fetchLinkedDocuments().catch(error => {
-            console.error(
-              '[LinkMeOrderDetails] Refresh docs after send:',
-              error
-            );
-          });
-        }}
-      />
-
-      {/* MODAL: EXPÉDITION */}
-      {order && (
-        <SalesOrderShipmentModal
-          order={{ id: order.id, order_number: order.order_number }}
-          open={showShipmentModal}
-          onClose={() => setShowShipmentModal(false)}
-          onSuccess={() => {
-            setShowShipmentModal(false);
-            void fetchOrder().catch(err =>
-              console.error('[LinkMeOrderDetails] Refresh after shipment:', err)
-            );
-          }}
-        />
-      )}
     </div>
   );
 }
