@@ -46,27 +46,43 @@ Example (Plateau bois 20x30):
 - Commission = 23.22 \* 0.15 = **3.48 EUR** (CORRECT)
 - NOT 20.19 \* 0.15 = 3.03 EUR (WRONG - applied on base instead of selling)
 
-### AFFILIATE products: Verone takes platform fee
+### AFFILIATE products (user products): Verone takes platform fee
 
 ```
-commission_verone = selling_price_ht * 0.15 * quantity
-payout_affiliate = selling_price_ht - commission_verone
+commission_verone = selling_price_ht * (affiliate_commission_rate / 100) * quantity
+payout_affiliate = selling_price_ht * quantity - commission_verone
 ```
+
+**IMPORTANT**: The rate is VARIABLE per product (0% to 15%, with 2 decimal places e.g. 3.35%), set at approval time.
+Stored in `products.affiliate_commission_rate` and `channel_pricing.channel_commission_rate`.
+NEVER hardcode 15%.
 
 Example (Poubelle Pokawa):
 
 - selling_price_ht = 500.00 EUR
-- Platform fee = 15%
+- affiliate_commission_rate = 15% (set at product approval)
 - Commission Verone = 500.00 \* 0.15 = **75.00 EUR**
 - Affiliate receives = 500.00 - 75.00 = **425.00 EUR**
+
+### Distinction catalogue vs user product
+
+**WARNING**: `margin_rate = 0` does NOT mean user product. A catalogue product can also have margin_rate = 0% (e.g., "Séparateur Terrasse" sold at cost to Pokawa).
+
+| Criterion                                 | Catalogue product | User product     |
+| ----------------------------------------- | ----------------- | ---------------- |
+| `products.created_by_affiliate`           | NULL              | NOT NULL         |
+| `channel_pricing.channel_commission_rate` | 0%                | Variable (0-15%) |
+| `linkme_selection_items.margin_rate`      | 0-25% (variable)  | 0% (enforced)    |
+
+In code: use `commission_rate > 0` (from channel_pricing) or `created_by_affiliate IS NOT NULL`.
 
 ### Universal SQL formula
 
 ```sql
 CASE
-  WHEN lsi.margin_rate = 0 THEN
-    -- Affiliate product: platform fee 15% on sale price
-    ROUND(lsi.selling_price_ht * 0.15 * soi.quantity, 2)
+  WHEN p.created_by_affiliate IS NOT NULL THEN
+    -- User product: Verone takes variable platform fee
+    ROUND(lsi.selling_price_ht * (p.affiliate_commission_rate / 100) * soi.quantity, 2)
   ELSE
     -- Catalogue product: margin on selling price (taux de marge additif)
     ROUND(lsi.selling_price_ht * lsi.margin_rate / 100 * soi.quantity, 2)
@@ -85,12 +101,12 @@ products -> channel_pricing -> linkme_selection_items -> sales_order_items -> li
 
 ### `products` (affiliate columns)
 
-| Column                      | Type          | Description                                  |
-| --------------------------- | ------------- | -------------------------------------------- |
-| `created_by_affiliate`      | UUID          | Affiliate creator ID (NULL = Verone product) |
-| `affiliate_commission_rate` | NUMERIC(5,2)  | % Verone takes (0-100)                       |
-| `affiliate_payout_ht`       | NUMERIC(10,2) | HT amount affiliate receives                 |
-| `affiliate_approval_status` | ENUM          | draft, pending_approval, approved, rejected  |
+| Column                      | Type          | Description                                               |
+| --------------------------- | ------------- | --------------------------------------------------------- |
+| `created_by_affiliate`      | UUID          | Affiliate creator ID (NULL = Verone product)              |
+| `affiliate_commission_rate` | NUMERIC(5,2)  | % Verone takes (0-100, typically 0-15%, 2 decimal places) |
+| `affiliate_payout_ht`       | NUMERIC(10,2) | HT amount affiliate receives                              |
+| `affiliate_approval_status` | ENUM          | draft, pending_approval, approved, rejected               |
 
 ### `linkme_selection_items`
 

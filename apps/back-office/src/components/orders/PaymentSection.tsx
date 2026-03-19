@@ -7,7 +7,9 @@ import { useRouter } from 'next/navigation';
 
 import {
   InvoiceCreateFromOrderModal,
+  QuoteCreateFromOrderModal,
   type IOrderForInvoice,
+  type IOrderForDocument,
 } from '@verone/finance/components';
 import { Badge, Button, Card, Skeleton, SuccessDialog } from '@verone/ui';
 import {
@@ -17,6 +19,7 @@ import {
   FileText,
   Link2,
   Loader2,
+  ScrollText,
 } from 'lucide-react';
 
 /** Invoice linked to this order (from financial_documents) */
@@ -133,6 +136,7 @@ export function PaymentSection({
 }: PaymentSectionProps): React.ReactNode {
   const router = useRouter();
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [linkedInvoices, setLinkedInvoices] = useState<ILinkedInvoice[]>([]);
   const [loadingInvoices, setLoadingInvoices] = useState(true);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
@@ -175,6 +179,14 @@ export function PaymentSection({
   // Can create invoice if: not draft, not paid, AND no active invoice exists
   const canCreateInvoice =
     orderStatus !== 'draft' && paymentStatus !== 'paid' && !hasActiveInvoice;
+
+  // Facture définitive = finalisée, envoyée ou payée (pas brouillon)
+  const hasFinalizedInvoice = activeInvoices.some(
+    inv => inv.status !== 'draft' && inv.status !== 'cancelled'
+  );
+
+  // Devis possible si : commande pas draft ET pas de facture définitive
+  const canCreateQuote = orderStatus !== 'draft' && !hasFinalizedInvoice;
 
   // Preparer l'objet commande pour le modal de creation de facture
   const orderForInvoice: IOrderForInvoice = {
@@ -348,6 +360,17 @@ export function PaymentSection({
 
           {/* Action buttons — compact */}
           <div className="flex gap-1">
+            {!loadingInvoices && canCreateQuote && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 h-7 text-xs"
+                onClick={() => setShowQuoteModal(true)}
+              >
+                <ScrollText className="h-3 w-3 mr-1" />
+                Devis
+              </Button>
+            )}
             {!loadingInvoices && canCreateInvoice ? (
               <Button
                 size="sm"
@@ -355,7 +378,7 @@ export function PaymentSection({
                 onClick={() => setShowInvoiceModal(true)}
               >
                 <FileText className="h-3 w-3 mr-1" />
-                Générer facture
+                Facture
               </Button>
             ) : loadingInvoices ? (
               <Button size="sm" className="flex-1 h-7 text-xs" disabled>
@@ -395,6 +418,16 @@ export function PaymentSection({
           </div>
         </div>
       </Card>
+
+      {/* Modal creation devis */}
+      <QuoteCreateFromOrderModal
+        order={orderForInvoice as unknown as IOrderForDocument}
+        open={showQuoteModal}
+        onOpenChange={setShowQuoteModal}
+        onSuccess={() => {
+          void fetchLinkedInvoices();
+        }}
+      />
 
       {/* Modal creation facture */}
       <InvoiceCreateFromOrderModal

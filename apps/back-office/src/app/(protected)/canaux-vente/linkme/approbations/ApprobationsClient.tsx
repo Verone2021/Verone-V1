@@ -83,10 +83,6 @@ import {
   type OrderValidationStatus,
 } from '../hooks/use-linkme-order-actions';
 import {
-  getOrderMissingFields,
-  type MissingFieldsResult,
-} from '../utils/order-missing-fields';
-import {
   usePendingOrganisationsCount,
   useAllOrganisationsWithApproval,
   useApproveOrganisation,

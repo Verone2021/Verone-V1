@@ -15,7 +15,8 @@
     "QONTO_ORGANIZATION_ID",
     "QONTO_API_KEY",
     "QONTO_API_BASE_URL",
-    "SUPABASE_SERVICE_ROLE_KEY"
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "LINKME_PUBLIC_URL"
   ],
   "tasks": {
     "build": {
