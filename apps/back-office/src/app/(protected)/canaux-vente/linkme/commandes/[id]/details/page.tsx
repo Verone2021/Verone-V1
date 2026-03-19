@@ -75,6 +75,7 @@ import {
   UserPlus,
   Users,
   XCircle,
+  FileText,
 } from 'lucide-react';
 
 import {
@@ -91,7 +92,15 @@ import {
 
 import { ContactCardBO } from '../../../components/contacts/ContactCardBO';
 import { NewContactForm } from '../../../components/contacts/NewContactForm';
-import { isOrderLocked, OrderTimeline, useOrderHistory } from '@verone/orders';
+import {
+  isOrderLocked,
+  OrderTimeline,
+  useOrderHistory,
+  SendOrderDocumentsModal,
+  SalesOrderShipmentModal,
+  type LinkedDocument,
+  type OrderContact,
+} from '@verone/orders';
 import { PaymentSection } from '@/components/orders/PaymentSection';
 import { FeesSection } from '@/components/orders/FeesSection';
 import { InvoicesSection } from '@/components/orders/InvoicesSection';
@@ -312,6 +321,13 @@ export default function LinkMeOrderDetailsPage() {
   const [selectedContactId, setSelectedContactId] = useState<string | null>(
     null
   );
+
+  // Send documents modal
+  const [showSendDocsModal, setShowSendDocsModal] = useState(false);
+  const [linkedDocuments, setLinkedDocuments] = useState<LinkedDocument[]>([]);
+
+  // Shipment modal
+  const [showShipmentModal, setShowShipmentModal] = useState(false);
 
   // Mutations
   const updateDetails = useUpdateLinkMeDetails();
@@ -590,13 +606,47 @@ export default function LinkMeOrderDetailsPage() {
     }
   }, [orderId]);
 
+  // Fetch linked financial documents (quotes + invoices)
+  const fetchLinkedDocuments = useCallback(async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('financial_documents')
+      .select(
+        'id, document_number, document_type, qonto_invoice_id, qonto_pdf_url, total_ttc, status, quote_status'
+      )
+      .eq('sales_order_id', orderId)
+      .in('document_type', ['customer_quote', 'customer_invoice'])
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
+
+    if (data) {
+      setLinkedDocuments(
+        data.map(d => ({
+          id: d.id,
+          document_number: d.document_number,
+          document_type: d.document_type as
+            | 'customer_quote'
+            | 'customer_invoice',
+          qonto_invoice_id: d.qonto_invoice_id,
+          qonto_pdf_url: d.qonto_pdf_url,
+          total_ttc: d.total_ttc,
+          status: d.status,
+          quote_status: d.quote_status,
+        }))
+      );
+    }
+  }, [orderId]);
+
   useEffect(() => {
     if (orderId) {
       void fetchOrder().catch(error => {
         console.error('[LinkMeOrderDetails] Initial fetch failed:', error);
       });
+      void fetchLinkedDocuments().catch(error => {
+        console.error('[LinkMeOrderDetails] Fetch linked docs failed:', error);
+      });
     }
-  }, [orderId, fetchOrder]);
+  }, [orderId, fetchOrder, fetchLinkedDocuments]);
 
   // ============================================
   // HANDLERS
@@ -1016,6 +1066,37 @@ export default function LinkMeOrderDetailsPage() {
             )}
           </div>
         </div>
+
+        {/* ACTION BUTTONS — right-aligned */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setShowSendDocsModal(true)}
+          >
+            <Mail className="h-3.5 w-3.5" />
+            Envoyer documents
+            {linkedDocuments.length > 0 && (
+              <Badge
+                variant="secondary"
+                className="ml-1 text-[10px] px-1.5 py-0"
+              >
+                {linkedDocuments.length}
+              </Badge>
+            )}
+          </Button>
+          {order.status === 'validated' && (
+            <Button
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setShowShipmentModal(true)}
+            >
+              <Truck className="h-3.5 w-3.5" />
+              Expédier
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* ============================================ */}
@@ -1202,10 +1283,19 @@ export default function LinkMeOrderDetailsPage() {
                                 item.base_price_ht || item.unit_price_ht
                               )}
                             </TableCell>
-                            {/* Commission % */}
+                            {/* Marge % (calculée depuis prix verrouillés) */}
                             <TableCell className="text-center">
                               <span className="text-teal-600">
-                                {`${Math.round(item.retrocession_rate * 100)}%`}
+                                {(() => {
+                                  const rate =
+                                    item.base_price_ht > 0
+                                      ? ((item.unit_price_ht -
+                                          item.base_price_ht) /
+                                          item.base_price_ht) *
+                                        100
+                                      : 0;
+                                  return `${rate % 1 === 0 ? rate.toFixed(0) : rate.toFixed(2)}%`;
+                                })()}
                               </span>
                             </TableCell>
                             {/* Commission EUR (per unit) */}
@@ -1597,7 +1687,8 @@ export default function LinkMeOrderDetailsPage() {
                             </span>
                           </div>
                         )}
-                        {!details.reception_contact_name &&
+                        {details.step4_token &&
+                          !details.reception_contact_name &&
                           !details.confirmed_delivery_date && (
                             <div className="p-3 bg-amber-50 rounded-lg text-sm text-amber-700">
                               <Clock className="h-4 w-4 inline mr-1" />
@@ -1749,15 +1840,10 @@ export default function LinkMeOrderDetailsPage() {
                   <>
                     <Button
                       className="w-full gap-2"
-                      disabled={isUpdatingStatus}
-                      onClick={() => {
-                        void handleStatusChange('shipped').catch(err =>
-                          console.error(err)
-                        );
-                      }}
+                      onClick={() => setShowShipmentModal(true)}
                     >
                       <Truck className="h-4 w-4" />
-                      {isUpdatingStatus ? 'En cours...' : 'Marquer expédiée'}
+                      Expédier
                     </Button>
                     <Button
                       variant="outline"
@@ -1794,6 +1880,21 @@ export default function LinkMeOrderDetailsPage() {
                       {isUpdatingStatus ? 'En cours...' : 'Annuler'}
                     </Button>
                   )}
+                {/* Send documents button — always available */}
+                <Separator className="my-1" />
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() => setShowSendDocsModal(true)}
+                >
+                  <FileText className="h-4 w-4" />
+                  Envoyer documents
+                  {linkedDocuments.length > 0 && (
+                    <Badge variant="secondary" className="ml-auto text-xs">
+                      {linkedDocuments.length}
+                    </Badge>
+                  )}
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -2726,6 +2827,82 @@ export default function LinkMeOrderDetailsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* MODAL: ENVOI DOCUMENTS PAR EMAIL */}
+      <SendOrderDocumentsModal
+        open={showSendDocsModal}
+        onClose={() => setShowSendDocsModal(false)}
+        salesOrderId={order?.id ?? ''}
+        orderNumber={order?.linkme_display_number ?? order?.order_number ?? ''}
+        customerName={
+          order?.organisation?.trade_name ??
+          order?.organisation?.legal_name ??
+          'Client'
+        }
+        contacts={(() => {
+          const c: OrderContact[] = [];
+          if (order?.billing_contact?.email) {
+            c.push({
+              label: `Facturation (${order.billing_contact.first_name} ${order.billing_contact.last_name})`,
+              email: order.billing_contact.email,
+            });
+          }
+          if (order?.responsable_contact?.email) {
+            c.push({
+              label: `Responsable (${order.responsable_contact.first_name} ${order.responsable_contact.last_name})`,
+              email: order.responsable_contact.email,
+            });
+          }
+          if (order?.linkmeDetails?.requester_email) {
+            c.push({
+              label: `Demandeur (${order.linkmeDetails.requester_name ?? ''})`,
+              email: order.linkmeDetails.requester_email,
+            });
+          }
+          if (order?.delivery_contact?.email) {
+            c.push({
+              label: `Livraison (${order.delivery_contact.first_name} ${order.delivery_contact.last_name})`,
+              email: order.delivery_contact.email,
+            });
+          }
+          if (order?.organisation?.email) {
+            c.push({
+              label: `Organisation (${order.organisation.trade_name ?? order.organisation.legal_name})`,
+              email: order.organisation.email,
+            });
+          }
+          const seen = new Set<string>();
+          return c.filter(contact => {
+            if (seen.has(contact.email)) return false;
+            seen.add(contact.email);
+            return true;
+          });
+        })()}
+        linkedDocuments={linkedDocuments}
+        onSent={() => {
+          void fetchLinkedDocuments().catch(error => {
+            console.error(
+              '[LinkMeOrderDetails] Refresh docs after send:',
+              error
+            );
+          });
+        }}
+      />
+
+      {/* MODAL: EXPÉDITION */}
+      {order && (
+        <SalesOrderShipmentModal
+          order={{ id: order.id, order_number: order.order_number }}
+          open={showShipmentModal}
+          onClose={() => setShowShipmentModal(false)}
+          onSuccess={() => {
+            setShowShipmentModal(false);
+            void fetchOrder().catch(err =>
+              console.error('[LinkMeOrderDetails] Refresh after shipment:', err)
+            );
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -228,6 +228,10 @@ export function useOrderHistory(orderId: string | undefined) {
             title: 'Etape 4 confirmee par email',
             type: 'step4_completed',
           },
+          email_documents_sent: {
+            title: 'Documents envoyes par email',
+            type: 'email_sent',
+          },
           status_changed: { title: 'Statut modifie', type: 'validated' },
         };
 
@@ -239,6 +243,17 @@ export function useOrderHistory(orderId: string | undefined) {
           let description = '';
           if (meta.recipient_email) {
             description = `→ ${meta.recipient_email as string}`;
+          }
+          if (
+            evt.event_type === 'email_documents_sent' &&
+            Array.isArray(meta.attachments)
+          ) {
+            const filenames = (meta.attachments as Array<{ filename?: string }>)
+              .map(a => a.filename)
+              .filter(Boolean);
+            if (filenames.length > 0) {
+              description += ` | ${filenames.join(' + ')}`;
+            }
           }
           if (
             evt.event_type === 'status_changed' &&

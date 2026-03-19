@@ -129,9 +129,10 @@ interface LinkMeCartItem {
   product_name: string;
   sku: string;
   quantity: number;
-  unit_price_ht: number; // Prix de vente affilié (168.75€)
-  base_price_ht: number; // Prix de base pour calcul commission (135€)
-  retrocession_rate: number; // Commission affilié (décimal 0.15 = 15%)
+  unit_price_ht: number; // Prix de vente (selling_price_ht de la DB)
+  base_price_ht: number; // Prix de base pour calcul commission
+  retrocession_rate: number; // Marge affilié (décimal 0.15 = 15%)
+  commission_rate: number; // Taux Verone produits utilisateur (0 = catalogue, >0 = utilisateur)
   linkme_selection_item_id: string;
   product_image_url?: string | null;
 }
@@ -697,13 +698,12 @@ export function SalesOrderFormModal({
 
   // Ajouter un produit au panier LinkMe
   const addLinkMeProduct = (item: SelectionItem) => {
-    // Calculer le prix affilie HT avec TAUX DE MARQUE
-    // Formule: base_price / (1 - marginRate) × (1 + commissionRate)
-    // Exemple: 100 / (1 - 0.15) × (1 + 0.10) = 117.65 × 1.10 = 129.41EUR
-    const commissionRate = (item.commission_rate ?? 0) / 100;
-    const marginRate = (item.margin_rate ?? 0) / 100;
+    // Prix de vente = selling_price_ht (GENERATED column en DB, modele additif)
+    // Fallback: base_price * (1 + margin_rate / 100)
     const sellingPrice =
-      (item.base_price_ht / (1 - marginRate)) * (1 + commissionRate);
+      item.selling_price_ht ??
+      item.base_price_ht * (1 + (item.margin_rate ?? 0) / 100);
+    const marginRate = (item.margin_rate ?? 0) / 100;
 
     const newItem: LinkMeCartItem = {
       id: `${item.product_id}-${Date.now()}`,
@@ -711,9 +711,10 @@ export function SalesOrderFormModal({
       product_name: item.product?.name ?? 'Produit inconnu',
       sku: item.product?.sku ?? '',
       quantity: 1,
-      unit_price_ht: Math.round(sellingPrice * 100) / 100, // 168.75€
-      base_price_ht: item.base_price_ht, // 135€ pour calcul commission
-      retrocession_rate: marginRate, // 0.15 (15%)
+      unit_price_ht: Math.round(sellingPrice * 100) / 100,
+      base_price_ht: item.base_price_ht,
+      retrocession_rate: marginRate,
+      commission_rate: (item.commission_rate ?? 0) / 100,
       linkme_selection_item_id: item.id,
       product_image_url: item.product_image_url,
     };
@@ -749,24 +750,38 @@ export function SalesOrderFormModal({
     setLinkmeCart(prev => prev.filter(item => item.id !== itemId));
   };
 
-  // Calcul des totaux LinkMe
+  // Calcul des totaux LinkMe (catalogue + produits utilisateur)
   const linkmeCartTotals = useMemo(() => {
     let totalHt = 0;
-    let totalRetrocession = 0;
+    let commissionAffilie = 0; // Marge gagnee par l'affilie (produits catalogue)
+    let fraisLinkMe = 0; // Commission Verone sur produits utilisateur
+    let redevanceAffilie = 0; // Ce qu'on doit a l'affilie pour ses produits
 
     for (const item of linkmeCart) {
       const lineTotal = item.quantity * item.unit_price_ht;
       totalHt += lineTotal;
-      // Commission = marge par unité × quantité (SSOT: selling - base)
-      totalRetrocession +=
-        (item.unit_price_ht - item.base_price_ht) * item.quantity;
+
+      if (item.commission_rate > 0) {
+        // Produit UTILISATEUR: Verone preleve commission_rate%
+        const frais = item.unit_price_ht * item.commission_rate * item.quantity;
+        fraisLinkMe += frais;
+        redevanceAffilie += lineTotal - frais;
+      } else {
+        // Produit CATALOGUE: l'affilie gagne la marge
+        commissionAffilie +=
+          (item.unit_price_ht - item.base_price_ht) * item.quantity;
+      }
     }
 
     return {
       totalHt: Math.round(totalHt * 100) / 100,
-      totalTtc: Math.round(totalHt * 1.2 * 100) / 100, // TVA 20%
-      totalRetrocession: Math.round(totalRetrocession * 100) / 100,
-      beneficeNet: totalHt - totalRetrocession,
+      totalTtc: Math.round(totalHt * 1.2 * 100) / 100,
+      totalRetrocession: Math.round(commissionAffilie * 100) / 100,
+      fraisLinkMe: Math.round(fraisLinkMe * 100) / 100,
+      redevanceAffilie: Math.round(redevanceAffilie * 100) / 100,
+      caNetVerone:
+        Math.round((totalHt - commissionAffilie - redevanceAffilie) * 100) /
+        100,
     };
   }, [linkmeCart]);
 
@@ -1527,18 +1542,18 @@ export function SalesOrderFormModal({
                       ) : (
                         <div className="grid gap-3 max-h-80 overflow-y-auto pr-2">
                           {(linkmeSelectionDetail?.items ?? []).map(item => {
-                            // Prix affilie avec TAUX DE MARQUE
-                            // Formule: base_price / (1 - marginRate) × (1 + commissionRate)
-                            // commission_rate et margin_rate sont en POURCENTAGE (10 = 10%)
-                            const commissionRate =
-                              (item.commission_rate ?? 0) / 100;
-                            const marginRate = (item.margin_rate ?? 0) / 100;
+                            // Prix de vente = selling_price_ht (GENERATED column DB, modele additif)
                             const sellingPrice =
-                              (item.base_price_ht / (1 - marginRate)) *
-                              (1 + commissionRate);
-                            const marginPercent = (
-                              item.margin_rate ?? 0
-                            ).toFixed(0);
+                              item.selling_price_ht ??
+                              item.base_price_ht *
+                                (1 + (item.margin_rate ?? 0) / 100);
+                            const isUserProduct =
+                              (item.commission_rate ?? 0) > 0;
+                            const marginPercent = isUserProduct
+                              ? (item.commission_rate ?? 0).toFixed(2)
+                              : (item.margin_rate ?? 0).toFixed(
+                                  (item.margin_rate ?? 0) % 1 === 0 ? 0 : 2
+                                );
                             const isInCart = linkmeCart.some(
                               c => c.product_id === item.product_id
                             );
@@ -1579,7 +1594,11 @@ export function SalesOrderFormModal({
                                         {formatCurrency(sellingPrice)}
                                       </span>
                                       <span className="text-muted-foreground ml-2">
-                                        (marge {marginPercent}%)
+                                        (
+                                        {isUserProduct
+                                          ? `frais LinkMe ${marginPercent}%`
+                                          : `marge ${marginPercent}%`}
+                                        )
                                       </span>
                                     </p>
                                   </div>
@@ -1695,16 +1714,38 @@ export function SalesOrderFormModal({
                             {formatCurrency(linkmeCartTotals.totalTtc)}
                           </span>
                         </div>
-                        <div className="flex justify-between text-sm text-purple-700">
-                          <span>Commission affilié :</span>
-                          <span className="font-semibold">
-                            {formatCurrency(linkmeCartTotals.totalRetrocession)}
-                          </span>
-                        </div>
+                        {linkmeCartTotals.totalRetrocession > 0 && (
+                          <div className="flex justify-between text-sm text-purple-700">
+                            <span>Commission affilié :</span>
+                            <span className="font-semibold">
+                              {formatCurrency(
+                                linkmeCartTotals.totalRetrocession
+                              )}
+                            </span>
+                          </div>
+                        )}
+                        {linkmeCartTotals.redevanceAffilie > 0 && (
+                          <div className="flex justify-between text-sm text-orange-600">
+                            <span>Redevance affilié :</span>
+                            <span className="font-semibold">
+                              {formatCurrency(
+                                linkmeCartTotals.redevanceAffilie
+                              )}
+                            </span>
+                          </div>
+                        )}
+                        {linkmeCartTotals.fraisLinkMe > 0 && (
+                          <div className="flex justify-between text-sm text-teal-700">
+                            <span>Frais LinkMe :</span>
+                            <span className="font-semibold">
+                              {formatCurrency(linkmeCartTotals.fraisLinkMe)}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex justify-between text-sm text-green-700">
-                          <span>Bénéfice net :</span>
+                          <span>CA net Verone :</span>
                           <span className="font-semibold">
-                            {formatCurrency(linkmeCartTotals.beneficeNet)}
+                            {formatCurrency(linkmeCartTotals.caNetVerone)}
                           </span>
                         </div>
                       </div>

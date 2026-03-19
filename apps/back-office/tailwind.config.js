@@ -13,6 +13,10 @@ module.exports = {
   ],
   theme: {
     extend: {
+      transitionTimingFunction: {
+        'bounce-out': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+        'smooth-out': 'cubic-bezier(0.32, 0.72, 0, 1)',
+      },
       colors: {
         'verone-black': '#000000',
         'verone-white': '#ffffff',

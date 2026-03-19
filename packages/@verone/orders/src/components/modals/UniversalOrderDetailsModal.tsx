@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { useInlineEdit } from '@verone/common/hooks';
 import { Badge } from '@verone/ui';
@@ -43,6 +43,26 @@ interface UniversalOrderDetailsModalProps {
   onClose: () => void;
   initialEditMode?: boolean; // Mode édition initial optionnel
   onUpdate?: () => void; // Callback après modification
+  /** Slot for action components (PaymentSection, SendDocuments, etc.) rendered below items */
+  renderActions?: (order: {
+    id: string;
+    order_number: string;
+    status: string;
+    total_ht: number;
+    total_ttc: number;
+    tax_rate: number;
+    currency: string;
+    payment_terms: string;
+    payment_status: string;
+    customer_name: string;
+    customer_email: string | null;
+    customer_type: 'organization' | 'individual';
+    shipping_cost_ht: number;
+    handling_cost_ht: number;
+    insurance_cost_ht: number;
+    fees_vat_rate: number;
+    items: OrderItem[];
+  }) => React.ReactNode;
 }
 
 interface OrderHeader {
@@ -51,17 +71,27 @@ interface OrderHeader {
   status: string;
   created_at: string;
   expected_delivery_date: string | null;
+  total_ht?: number;
   total_ttc: number;
+  customer_id?: string | null;
   customer_name?: string;
   customer_trade_name?: string | null;
+  customer_email?: string | null;
+  customer_type?: 'organization' | 'individual';
   supplier_name?: string;
   billing_address?: Record<string, unknown> | string | null;
   shipping_address?: Record<string, unknown> | string | null;
   delivery_address?: string | null;
   payment_terms?: string | null;
+  payment_status_v2?: string | null;
   tax_rate?: number;
+  currency?: string;
   eco_tax_vat_rate?: number | null;
-  // 🆕 Info créateur
+  shipping_cost_ht?: number | null;
+  handling_cost_ht?: number | null;
+  insurance_cost_ht?: number | null;
+  fees_vat_rate?: number | null;
+  // Info créateur
   creator_name?: string;
   creator_email?: string;
   channel_name?: string;
@@ -94,8 +124,9 @@ export function UniversalOrderDetailsModal({
   orderType,
   open,
   onClose,
-  initialEditMode = false, // Mode édition initial optionnel
+  initialEditMode = false,
   onUpdate,
+  renderActions,
 }: UniversalOrderDetailsModalProps) {
   const [orderHeader, setOrderHeader] = useState<OrderHeader | null>(null);
   const [loading, setLoading] = useState(false);
@@ -233,7 +264,7 @@ export function UniversalOrderDetailsModal({
           const { data: order, error: orderError } = (await supabase
             .from('sales_orders')
             .select(
-              'id, order_number, status, created_at, expected_delivery_date, total_ttc, customer_id, customer_type, billing_address, shipping_address, payment_terms, tax_rate, eco_tax_vat_rate, created_by, channel_id, sales_channels!left(id, name, code)'
+              'id, order_number, status, created_at, expected_delivery_date, total_ht, total_ttc, customer_id, customer_type, billing_address, shipping_address, payment_terms, payment_status_v2, tax_rate, currency, eco_tax_vat_rate, shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate, created_by, channel_id, sales_channels!left(id, name, code)'
             )
             .eq('id', orderId)
             .single()) as any;
@@ -297,14 +328,26 @@ export function UniversalOrderDetailsModal({
             status: order.status,
             created_at: order.created_at,
             expected_delivery_date: order.expected_delivery_date,
+            total_ht: order.total_ht ?? 0,
             total_ttc: order.total_ttc,
+            customer_id: order.customer_id,
             customer_name: customerName,
             customer_trade_name: customerTradeName,
+            customer_type:
+              order.customer_type === 'individual'
+                ? 'individual'
+                : 'organization',
             billing_address: order.billing_address ?? null,
             shipping_address: order.shipping_address ?? null,
             payment_terms: order.payment_terms,
+            payment_status_v2: order.payment_status_v2,
             tax_rate: order.tax_rate,
+            currency: order.currency ?? 'EUR',
             eco_tax_vat_rate: order.eco_tax_vat_rate,
+            shipping_cost_ht: order.shipping_cost_ht,
+            handling_cost_ht: order.handling_cost_ht,
+            insurance_cost_ht: order.insurance_cost_ht,
+            fees_vat_rate: order.fees_vat_rate,
             creator_name: creatorName,
             creator_email: creatorEmail,
             channel_name: channelName,
@@ -648,6 +691,33 @@ export function UniversalOrderDetailsModal({
             </Card>
           </div>
         )}
+
+        {/* Actions (Devis, Facture, Envoi documents) — injected by parent */}
+        {renderActions &&
+          orderHeader &&
+          orderType === 'sales' &&
+          renderActions({
+            id: orderHeader.id,
+            order_number: orderHeader.order_number,
+            status: orderHeader.status,
+            total_ht: orderHeader.total_ht ?? 0,
+            total_ttc: orderHeader.total_ttc,
+            tax_rate: orderHeader.tax_rate ?? 20,
+            currency: orderHeader.currency ?? 'EUR',
+            payment_terms: orderHeader.payment_terms ?? 'immediate',
+            payment_status: orderHeader.payment_status_v2 ?? 'pending',
+            customer_name:
+              orderHeader.customer_trade_name ??
+              orderHeader.customer_name ??
+              'Client',
+            customer_email: orderHeader.customer_email ?? null,
+            customer_type: orderHeader.customer_type ?? 'organization',
+            shipping_cost_ht: orderHeader.shipping_cost_ht ?? 0,
+            handling_cost_ht: orderHeader.handling_cost_ht ?? 0,
+            insurance_cost_ht: orderHeader.insurance_cost_ht ?? 0,
+            fees_vat_rate: orderHeader.fees_vat_rate ?? 0.2,
+            items,
+          })}
 
         {/* Modal Ajout Produit */}
         <AddProductToOrderModal

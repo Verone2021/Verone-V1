@@ -435,10 +435,10 @@ export function CreateLinkMeOrderModal({
       const lineTva = roundMoney(lineHt * (item.tax_rate ?? 0.2));
       productsHt = roundMoney(productsHt + lineHt);
       totalTva = roundMoney(totalTva + lineTva);
-      // Commission calculee sur unit_price_ht (editable par le staff)
+      // Marge affilié = selling - base (modèle additif)
       totalRetrocession = roundMoney(
         totalRetrocession +
-          item.quantity * item.unit_price_ht * item.retrocession_rate
+          (item.unit_price_ht - item.base_price_ht) * item.quantity
       );
     }
 
@@ -477,15 +477,11 @@ export function CreateLinkMeOrderModal({
       return;
     }
 
-    // IMPORTANT: Calculer le prix affilié HT avec TAUX DE MARQUE
-    // Formule taux de marque: Prix = base / (1 - tauxMarque) × (1 + commission)
-    // - commission_rate: ex 10% (channel_pricing.channel_commission_rate)
-    // - margin_rate: ex 15% (taux de marque affilié)
-    // Exemple: (55.50 / 0.85) × 1.10 = 65.29 × 1.10 = 71.82€
-    const commissionRate = (item.commission_rate ?? 0) / 100;
+    // Prix de vente = selling_price_ht (GENERATED column DB, modele additif)
+    // Fallback: base_price * (1 + margin_rate / 100)
     const marginRate = item.margin_rate / 100;
     const sellingPrice = roundMoney(
-      (item.base_price_ht / (1 - marginRate)) * (1 + commissionRate)
+      item.selling_price_ht ?? item.base_price_ht * (1 + item.margin_rate / 100)
     );
     const retrocessionRate = marginRate;
 
@@ -1614,14 +1610,10 @@ export function CreateLinkMeOrderModal({
                         const isInCart = cart.some(
                           c => c.product_id === item.product_id
                         );
-                        // margin_rate et commission_rate sont en POURCENTAGE
-                        // Taux de marque: Prix = base / (1 - tauxMarque) × (1 + commission)
-                        const commissionRate =
-                          (item.commission_rate ?? 0) / 100;
-                        const marginRate = item.margin_rate / 100;
+                        // Prix = selling_price_ht (GENERATED, modele additif)
                         const sellingPrice =
-                          (item.base_price_ht / (1 - marginRate)) *
-                          (1 + commissionRate);
+                          item.selling_price_ht ??
+                          item.base_price_ht * (1 + item.margin_rate / 100);
                         return (
                           <button
                             key={item.id}
@@ -1701,12 +1693,11 @@ export function CreateLinkMeOrderModal({
                               HT
                             </p>
                             <p className="text-xs text-orange-600">
-                              Commission:{' '}
-                              {(item.retrocession_rate * 100).toFixed(0)}% (
+                              Marge: {(item.retrocession_rate * 100).toFixed(0)}
+                              % (
                               {(
-                                item.unit_price_ht *
-                                item.quantity *
-                                item.retrocession_rate
+                                (item.unit_price_ht - item.base_price_ht) *
+                                item.quantity
                               ).toFixed(2)}
                               €)
                             </p>
@@ -1732,7 +1723,7 @@ export function CreateLinkMeOrderModal({
                               </div>
                               <div className="flex items-center gap-2">
                                 <label className="text-xs text-gray-600 whitespace-nowrap">
-                                  Commission
+                                  Marge
                                 </label>
                                 <input
                                   type="number"
@@ -1798,7 +1789,7 @@ export function CreateLinkMeOrderModal({
                         <span>{cartTotals.totalTtc.toFixed(2)}€</span>
                       </div>
                       <div className="flex justify-between text-sm text-orange-600">
-                        <span>Commission LinkMe</span>
+                        <span>Marge affilié</span>
                         <span>-{cartTotals.totalRetrocession.toFixed(2)}€</span>
                       </div>
                     </div>
@@ -1881,7 +1872,7 @@ export function CreateLinkMeOrderModal({
                 cartTotals.totalRetrocession > 0 ? (
                   <div className="space-y-1">
                     <div className="flex justify-between text-sm text-orange-600">
-                      <span>Commission LinkMe</span>
+                      <span>Marge affilié</span>
                       <span>
                         -{formatCurrency(cartTotals.totalRetrocession)}
                       </span>
@@ -1961,12 +1952,10 @@ export function CreateLinkMeOrderModal({
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {previewSelection.items.map(item => {
-                    // Taux de marque: Prix = base / (1 - tauxMarque) × (1 + commission)
-                    const commissionRate = (item.commission_rate ?? 0) / 100;
-                    const marginRate = (item.margin_rate ?? 0) / 100;
+                    // Prix = selling_price_ht (GENERATED, modele additif)
                     const sellingPrice =
-                      (item.base_price_ht / (1 - marginRate)) *
-                      (1 + commissionRate);
+                      item.selling_price_ht ??
+                      item.base_price_ht * (1 + (item.margin_rate ?? 0) / 100);
                     return (
                       <div
                         key={item.id}
