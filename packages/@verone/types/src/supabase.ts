@@ -5569,6 +5569,59 @@ export type Database = {
           },
         ];
       };
+      order_emails: {
+        Row: {
+          attachments: Json | null;
+          created_at: string;
+          error_message: string | null;
+          id: string;
+          message_body: string | null;
+          recipient_email: string;
+          resend_email_id: string | null;
+          sales_order_id: string;
+          sent_at: string | null;
+          sent_by: string | null;
+          status: string;
+          subject: string;
+        };
+        Insert: {
+          attachments?: Json | null;
+          created_at?: string;
+          error_message?: string | null;
+          id?: string;
+          message_body?: string | null;
+          recipient_email: string;
+          resend_email_id?: string | null;
+          sales_order_id: string;
+          sent_at?: string | null;
+          sent_by?: string | null;
+          status?: string;
+          subject: string;
+        };
+        Update: {
+          attachments?: Json | null;
+          created_at?: string;
+          error_message?: string | null;
+          id?: string;
+          message_body?: string | null;
+          recipient_email?: string;
+          resend_email_id?: string | null;
+          sales_order_id?: string;
+          sent_at?: string | null;
+          sent_by?: string | null;
+          status?: string;
+          subject?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'order_emails_sales_order_id_fkey';
+            columns: ['sales_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'sales_orders';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       order_payments: {
         Row: {
           amount: number;
