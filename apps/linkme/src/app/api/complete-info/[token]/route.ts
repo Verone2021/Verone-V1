@@ -34,7 +34,9 @@ export async function GET(_request: Request, { params }: RouteParams) {
     // Fetch info request by token
     const { data: infoRequest, error: irError } = await supabase
       .from('linkme_info_requests')
-      .select('*')
+      .select(
+        'id, sales_order_id, token_expires_at, cancelled_at, cancelled_reason, completed_at, completed_by_email, requested_fields, custom_message, recipient_name, recipient_email, recipient_type'
+      )
       .eq('token', token)
       .single();
 

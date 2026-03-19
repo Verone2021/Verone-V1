@@ -165,6 +165,10 @@ export function useAffiliateCommissions(
 
 /**
  * Hook pour compter les commissions par statut
+ *
+ * PERF: Utilise count:exact + head:true en parallèle (4 requêtes COUNT)
+ * au lieu de rapatrier toutes les lignes et filtrer en JS.
+ * Pour N commissions : O(1) au lieu de O(N) lignes réseau.
  */
 export function useCommissionsCounts() {
   const { data: affiliate } = useUserAffiliate();
@@ -175,26 +179,46 @@ export function useCommissionsCounts() {
       if (!affiliate) return { pending: 0, validated: 0, paid: 0, total: 0 };
 
       const supabase = createClient();
-      const { data, error } = await supabase
-        .from('linkme_commissions')
-        .select('status')
-        .eq('affiliate_id', affiliate.id);
 
-      if (error) {
-        console.error('Erreur fetch commissions counts:', error);
-        throw error;
+      // 4 requêtes COUNT parallèles — aucune ligne de données rapatriée
+      const [pendingResult, validatedResult, paidResult, totalResult] =
+        await Promise.all([
+          supabase
+            .from('linkme_commissions')
+            .select('*', { count: 'exact', head: true })
+            .eq('affiliate_id', affiliate.id)
+            .eq('status', 'pending'),
+          supabase
+            .from('linkme_commissions')
+            .select('*', { count: 'exact', head: true })
+            .eq('affiliate_id', affiliate.id)
+            .in('status', ['validated', 'payable']),
+          supabase
+            .from('linkme_commissions')
+            .select('*', { count: 'exact', head: true })
+            .eq('affiliate_id', affiliate.id)
+            .eq('status', 'paid'),
+          supabase
+            .from('linkme_commissions')
+            .select('*', { count: 'exact', head: true })
+            .eq('affiliate_id', affiliate.id),
+        ]);
+
+      // Vérifier les erreurs (non-bloquant : on retourne 0 si erreur)
+      if (pendingResult.error) {
+        console.error('Erreur fetch commissions counts:', pendingResult.error);
+        throw pendingResult.error;
       }
 
-      const commissions = data || [];
-
       return {
-        pending: commissions.filter(c => c.status === 'pending').length,
-        validated: commissions.filter(c => c.status === 'validated').length,
-        paid: commissions.filter(c => c.status === 'paid').length,
-        total: commissions.length,
+        pending: pendingResult.count ?? 0,
+        validated: validatedResult.count ?? 0,
+        paid: paidResult.count ?? 0,
+        total: totalResult.count ?? 0,
       };
     },
     enabled: !!affiliate,
     staleTime: 300_000,
+    refetchOnWindowFocus: false,
   });
 }
