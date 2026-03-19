@@ -199,13 +199,12 @@ export async function POST(request: NextRequest): Promise<
     const qontoClientType =
       clientType === 'organization' ? 'company' : 'individual';
 
-    // Tax identification: vatNumber = EU VAT, taxId = SIRET
+    // Tax identification number (SIRET/TVA) for Qonto client creation
     let vatNumber: string | undefined;
-    let taxId: string | undefined;
     if (clientType === 'organization') {
       const org = customer as Organisation;
-      vatNumber = org.vat_number ?? undefined;
-      taxId = org.siret ?? undefined;
+      // Priority: vat_number (TVA intra-communautaire), then siret
+      vatNumber = org.vat_number ?? org.siret ?? undefined;
     }
 
     // Chercher ou créer le client Qonto
@@ -218,7 +217,7 @@ export async function POST(request: NextRequest): Promise<
         type: qontoClientType,
         address: qontoAddress,
         vatNumber,
-        taxIdentificationNumber: taxId,
+        taxIdentificationNumber: vatNumber,
       });
       qontoClientId = existingClient.id;
     } else {
@@ -229,7 +228,7 @@ export async function POST(request: NextRequest): Promise<
         currency: 'EUR',
         address: qontoAddress,
         vatNumber,
-        taxIdentificationNumber: taxId,
+        taxIdentificationNumber: vatNumber,
       });
       qontoClientId = newClient.id;
     }

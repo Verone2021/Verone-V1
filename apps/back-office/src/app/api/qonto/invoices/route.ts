@@ -398,18 +398,22 @@ export async function POST(request: NextRequest): Promise<
     let customerEmail: string | null = null;
     let customerName = 'Client';
 
-    // Tax identification: vatNumber = EU VAT, taxId = SIRET
+    // Tax identification number (SIRET/TVA) for Qonto client creation
     let vatNumber: string | undefined;
-    let taxId: string | undefined;
 
     if (typedOrder.customer_type === 'organization' && typedOrder.customer) {
       const org = typedOrder.customer as Organisation;
       customerEmail = org.email ?? null;
-      // Use trade_name (commercial) if available, else legal_name
-      customerName = org.trade_name ?? org.legal_name ?? 'Client';
-      // VAT number = real EU intracommunautaire number only
-      vatNumber = org.vat_number ?? undefined;
-      taxId = org.siret ?? undefined;
+      // Legal name first (raison sociale obligatoire sur factures)
+      const legalName = org.legal_name ?? org.trade_name ?? 'Client';
+      const tradeName = org.trade_name;
+      // Concatenate if trade_name is different from legal_name
+      customerName =
+        tradeName && tradeName !== legalName
+          ? `${legalName} (${tradeName})`
+          : legalName;
+      // Priority: vat_number (TVA intra-communautaire), then siret
+      vatNumber = org.vat_number ?? org.siret ?? undefined;
     } else if (
       typedOrder.customer_type === 'individual' &&
       typedOrder.customer
@@ -490,7 +494,7 @@ export async function POST(request: NextRequest): Promise<
         type: qontoClientType,
         address: qontoAddress,
         vatNumber,
-        taxIdentificationNumber: taxId,
+        taxIdentificationNumber: vatNumber,
       });
       qontoClientId = existingClient.id;
     } else {
@@ -502,7 +506,7 @@ export async function POST(request: NextRequest): Promise<
         currency: 'EUR',
         address: qontoAddress,
         vatNumber,
-        taxIdentificationNumber: taxId,
+        taxIdentificationNumber: vatNumber,
       });
       qontoClientId = newClient.id;
     }
