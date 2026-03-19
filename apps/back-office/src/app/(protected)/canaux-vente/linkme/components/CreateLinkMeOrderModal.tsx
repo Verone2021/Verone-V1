@@ -430,9 +430,10 @@ export function CreateLinkMeOrderModal({
             item.quantity * item.unit_price_ht * item.affiliate_commission_rate
         );
       } else {
+        // Marge affilié = selling - base (modèle additif)
         totalRetrocession = roundMoney(
           totalRetrocession +
-            item.unit_price_ht * item.quantity * item.retrocession_rate
+            (item.unit_price_ht - item.base_price_ht) * item.quantity
         );
       }
     }
@@ -1671,12 +1672,11 @@ export function CreateLinkMeOrderModal({
                                 € HT
                               </p>
                               <p className="text-xs text-orange-600">
-                                Commission:{' '}
+                                Marge:{' '}
                                 {(item.retrocession_rate * 100).toFixed(1)}% (
                                 {(
-                                  item.unit_price_ht *
-                                  item.quantity *
-                                  item.retrocession_rate
+                                  (item.unit_price_ht - item.base_price_ht) *
+                                  item.quantity
                                 ).toFixed(2)}
                                 €)
                               </p>
@@ -1705,7 +1705,7 @@ export function CreateLinkMeOrderModal({
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <label className="text-xs text-gray-600 whitespace-nowrap">
-                                    Commission
+                                    Marge
                                   </label>
                                   <input
                                     type="number"
@@ -1822,7 +1822,7 @@ export function CreateLinkMeOrderModal({
                     <span>{cartTotals.totalTtc.toFixed(2)}€</span>
                   </div>
                   <div className="flex justify-between text-sm text-orange-600">
-                    <span>Commissions affilié</span>
+                    <span>Marge affilié</span>
                     <span>-{cartTotals.totalRetrocession.toFixed(2)}€</span>
                   </div>
                 </div>
@@ -1979,7 +1979,7 @@ export function CreateLinkMeOrderModal({
                       <span>{cartTotals.totalTtc.toFixed(2)}€</span>
                     </div>
                     <div className="flex justify-between text-sm text-orange-600 pt-1">
-                      <span>Commission affilié</span>
+                      <span>Marge affilié</span>
                       <span>-{cartTotals.totalRetrocession.toFixed(2)}€</span>
                     </div>
                   </div>
