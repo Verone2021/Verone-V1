@@ -89,7 +89,7 @@ export function Header() {
                 className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 font-medium"
               >
                 <Star className="h-4 w-4" />
-                Mes sélections
+                Mes boutiques
               </Link>
             )}
             {canCreateProducts && (

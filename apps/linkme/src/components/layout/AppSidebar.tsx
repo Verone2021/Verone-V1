@@ -87,7 +87,7 @@ const sidebarItems: SidebarItem[] = [
     icon: Package,
     subLinks: [
       {
-        label: 'Mes Sélections',
+        label: 'Mes Boutiques',
         href: '/ma-selection',
         icon: Star,
         roles: ROUTE_PERMISSIONS['/ma-selection']?.roles,
