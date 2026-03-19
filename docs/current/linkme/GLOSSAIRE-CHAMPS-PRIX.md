@@ -19,11 +19,11 @@ Affilie gagne            :   45,00 EUR
 
 ## Table `channel_pricing` (Catalogue LinkMe)
 
-| Champ DB                  | Nom Metier                 | Role                                                                           |
-| ------------------------- | -------------------------- | ------------------------------------------------------------------------------ |
-| `custom_price_ht`         | Prix catalogue Verone HT   | Prix de vente Verone dans le catalogue LinkMe. Source de verite pour les prix. |
-| `public_price_ht`         | Prix public HT (indicatif) | Prix indicatif, NE sert PAS au calcul. Affichage uniquement.                   |
-| `channel_commission_rate` | Taux commission canal      | Commission Verone sur produits utilisateurs (15%). 0% pour produits catalogue. |
+| Champ DB                  | Nom Metier                 | Role                                                                                                               |
+| ------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `custom_price_ht`         | Prix catalogue Verone HT   | Prix de vente Verone dans le catalogue LinkMe. Source de verite pour les prix.                                     |
+| `public_price_ht`         | Prix public HT (indicatif) | Prix indicatif, NE sert PAS au calcul. Affichage uniquement.                                                       |
+| `channel_commission_rate` | Taux commission canal      | Commission Verone sur produits utilisateurs (VARIABLE: 0-15%, defini a l'approbation). 0% pour produits catalogue. |
 
 ## Table `linkme_selection_items` (Selection affilie)
 
@@ -60,13 +60,13 @@ Affilie gagne            :   45,00 EUR
 
 ## Table `linkme_commissions` (Commission par commande)
 
-| Champ DB               | Nom Metier                 | Role                                               |
-| ---------------------- | -------------------------- | -------------------------------------------------- |
-| `order_amount_ht`      | Montant commande HT        | Total HT de la commande                            |
-| `affiliate_commission` | Commission affilie HT      | SUM des retrocession_amount produits catalogue     |
-| `linkme_commission`    | Commission Verone HT       | Prelevement Verone sur produits utilisateurs (15%) |
-| `total_payout_ht`      | Total a verser affilie HT  | commission catalogue + encaissement net revendeur  |
-| `total_payout_ttc`     | Total a verser affilie TTC | Source de verite pour KPIs                         |
+| Champ DB               | Nom Metier                 | Role                                                                                                                                  |
+| ---------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `order_amount_ht`      | Montant commande HT        | Total HT de la commande                                                                                                               |
+| `affiliate_commission` | Commission affilie HT      | SUM des retrocession_amount produits catalogue                                                                                        |
+| `linkme_commission`    | Commission Verone HT       | Prelevement Verone sur produits utilisateurs (taux variable: 0-15%, 2 decimales ex: 3.35%, depuis products.affiliate_commission_rate) |
+| `total_payout_ht`      | Total a verser affilie HT  | commission catalogue + encaissement net revendeur                                                                                     |
+| `total_payout_ttc`     | Total a verser affilie TTC | Source de verite pour KPIs                                                                                                            |
 
 ---
 

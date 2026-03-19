@@ -242,7 +242,7 @@ LinkMe gere **2 types de produits** avec des modeles economiques fondamentalemen
    |
    v
 2. Back-office approuve le produit
-   + Fixe le taux de commission plateforme (5%, 10%, ou 15%)
+   + Fixe le taux de commission plateforme (0% a 15%, precision 2 decimales ex: 3.35%)
    |
    v
 3. Produit disponible dans le catalogue de l'affilie
@@ -695,11 +695,11 @@ const isAffiliateProduct = product.created_by_affiliate !== null;
 
 ### Colonnes Cles
 
-| Colonne                     | Table      | Usage                                        |
-| --------------------------- | ---------- | -------------------------------------------- |
-| `created_by_affiliate`      | `products` | ID affilie createur (NULL = catalogue)       |
-| `affiliate_commission_rate` | `products` | Taux commission plateforme (5-15%)           |
-| `affiliate_payout_ht`       | `products` | Montant reverse a l'affilie apres commission |
+| Colonne                     | Table      | Usage                                            |
+| --------------------------- | ---------- | ------------------------------------------------ |
+| `created_by_affiliate`      | `products` | ID affilie createur (NULL = catalogue)           |
+| `affiliate_commission_rate` | `products` | Taux commission plateforme (0-15%, NUMERIC(5,2)) |
+| `affiliate_payout_ht`       | `products` | Montant reverse a l'affilie apres commission     |
 
 ### Contraintes DB (CRITIQUE)
 
