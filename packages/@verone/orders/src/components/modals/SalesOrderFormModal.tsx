@@ -779,7 +779,7 @@ export function SalesOrderFormModal({
       totalRetrocession: Math.round(commissionAffilie * 100) / 100,
       fraisLinkMe: Math.round(fraisLinkMe * 100) / 100,
       redevanceAffilie: Math.round(redevanceAffilie * 100) / 100,
-      beneficeNet:
+      caNetVerone:
         Math.round((totalHt - commissionAffilie - redevanceAffilie) * 100) /
         100,
     };
@@ -1743,9 +1743,9 @@ export function SalesOrderFormModal({
                           </div>
                         )}
                         <div className="flex justify-between text-sm text-green-700">
-                          <span>Bénéfice net :</span>
+                          <span>CA net Verone :</span>
                           <span className="font-semibold">
-                            {formatCurrency(linkmeCartTotals.beneficeNet)}
+                            {formatCurrency(linkmeCartTotals.caNetVerone)}
                           </span>
                         </div>
                       </div>
