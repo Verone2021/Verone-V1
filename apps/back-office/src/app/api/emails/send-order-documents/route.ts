@@ -174,6 +174,25 @@ export async function POST(request: NextRequest) {
       status: 'sent',
     });
 
+    // Log event in sales_order_events for timeline (non-blocking)
+    try {
+      await supabase.from('sales_order_events').insert({
+        sales_order_id: salesOrderId,
+        event_type: 'email_documents_sent',
+        metadata: {
+          recipient_email: to,
+          attachments: attachmentsMeta,
+          resend_id: emailData?.id,
+        },
+        created_by: sentBy ?? null,
+      });
+    } catch (logError) {
+      console.error(
+        '[send-order-documents] Failed to log timeline event:',
+        logError
+      );
+    }
+
     return NextResponse.json({
       success: true,
       emailId: emailData?.id,
