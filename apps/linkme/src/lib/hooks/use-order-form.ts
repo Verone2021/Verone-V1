@@ -660,7 +660,7 @@ export function useOrderForm(): UseOrderFormReturn {
       };
 
       // Étape 4: Créer la commande via RPC (atomique, avec linkme_details)
-      const { data: orderId, error: orderError } = await supabase.rpc(
+      const { data: rpcResult, error: orderError } = await supabase.rpc(
         'create_affiliate_order',
         {
           p_affiliate_id: affiliate.id,
@@ -684,6 +684,14 @@ export function useOrderForm(): UseOrderFormReturn {
         );
       }
 
+      // RPC returns {order_id, order_number} as JSONB
+      const rpcData = rpcResult as unknown as {
+        order_id: string;
+        order_number: string;
+      };
+      const orderId = rpcData?.order_id;
+      const orderNumber = rpcData?.order_number ?? orderId;
+
       // Invalider les caches
       await queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
       await queryClient.invalidateQueries({
@@ -692,15 +700,6 @@ export function useOrderForm(): UseOrderFormReturn {
       await queryClient.invalidateQueries({
         queryKey: ['affiliate-orders', affiliate.id],
       });
-
-      // Fetch order_number for redirect + email
-      const { data: orderData } = await supabase
-        .from('sales_orders')
-        .select('order_number')
-        .eq('id', orderId)
-        .single();
-
-      const orderNumber = orderData?.order_number ?? orderId;
 
       // Send confirmation email (non-blocking)
       try {

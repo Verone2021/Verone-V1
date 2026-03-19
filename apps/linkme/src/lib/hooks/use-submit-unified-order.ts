@@ -171,7 +171,7 @@ export function useSubmitUnifiedOrder() {
             delivery_terms_accepted: data.deliveryTermsAccepted || false,
           };
 
-          const { data: orderId, error: rpcError } = await supabase.rpc(
+          const { data: rpcResult, error: rpcError } = await supabase.rpc(
             'create_affiliate_order',
             {
               p_affiliate_id: affiliateId,
@@ -192,21 +192,19 @@ export function useSubmitUnifiedOrder() {
             throw new Error(`Erreur création commande: ${rpcError.message}`);
           }
 
+          // RPC returns {order_id, order_number} as JSONB
+          const rpcData = rpcResult as unknown as {
+            order_id: string;
+            order_number: string;
+          };
+          const orderId = rpcData?.order_id;
+          const orderNumber = rpcData?.order_number;
+
           console.warn(
             '[useSubmitUnifiedOrder] Order created (existing org):',
-            orderId
+            orderId,
+            orderNumber
           );
-
-          // Fetch order_number (create_affiliate_order only returns UUID)
-          let orderNumber: string | undefined;
-          if (orderId) {
-            const { data: orderData } = await supabase
-              .from('sales_orders')
-              .select('order_number')
-              .eq('id', orderId)
-              .single();
-            orderNumber = orderData?.order_number ?? undefined;
-          }
 
           // Send confirmation email to requester (non-blocking)
           try {
