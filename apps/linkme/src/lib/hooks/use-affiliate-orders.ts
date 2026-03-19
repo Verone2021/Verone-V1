@@ -117,9 +117,14 @@ export function useCreateAffiliateOrder() {
         );
       }
 
-      return data; // order_id (string)
+      // RPC returns {order_id, order_number} as JSONB
+      const rpcData = data as unknown as {
+        order_id: string;
+        order_number: string;
+      };
+      return rpcData;
     },
-    onSuccess: async (orderId, variables) => {
+    onSuccess: async (_rpcData, variables) => {
       // Invalider les caches pertinents
       await queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
       await queryClient.invalidateQueries({
