@@ -1306,10 +1306,19 @@ export default function LinkMeOrderDetailPage() {
                                 item.base_price_ht || item.unit_price_ht
                               )}
                             </TableCell>
-                            {/* Commission % */}
+                            {/* Marge % (calculée depuis prix de la commande) */}
                             <TableCell className="text-center">
                               <span className="text-teal-600">
-                                {`${Math.round(item.margin_rate * 100)}%`}
+                                {(() => {
+                                  const rate =
+                                    item.base_price_ht > 0
+                                      ? ((item.unit_price_ht -
+                                          item.base_price_ht) /
+                                          item.base_price_ht) *
+                                        100
+                                      : 0;
+                                  return `${rate % 1 === 0 ? rate.toFixed(0) : rate.toFixed(2)}%`;
+                                })()}
                               </span>
                             </TableCell>
                             {/* Commission EUR (per unit) */}
