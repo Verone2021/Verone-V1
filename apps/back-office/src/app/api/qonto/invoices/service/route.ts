@@ -200,16 +200,16 @@ export async function POST(request: NextRequest): Promise<
       const org = customer as Organisation;
       qontoAddress = {
         streetAddress: org.billing_address_line1 ?? org.address_line1 ?? '',
-        city: org.billing_city ?? org.city ?? 'Paris',
-        zipCode: org.billing_postal_code ?? org.postal_code ?? '75001',
+        city: org.billing_city ?? org.city ?? '',
+        zipCode: org.billing_postal_code ?? org.postal_code ?? '',
         countryCode: normalizeCountryCode(org.billing_country ?? org.country),
       };
     } else {
       const indiv = customer as IndividualCustomer;
       qontoAddress = {
         streetAddress: indiv.address_line1 ?? '',
-        city: indiv.city ?? 'Paris',
-        zipCode: indiv.postal_code ?? '75001',
+        city: indiv.city ?? '',
+        zipCode: indiv.postal_code ?? '',
         countryCode: normalizeCountryCode(indiv.country),
       };
     }
@@ -222,8 +222,8 @@ export async function POST(request: NextRequest): Promise<
     let vatNumber: string | undefined;
     if (clientType === 'organization') {
       const org = customer as Organisation;
-      // Priorité: vat_number (TVA intra), sinon siret
-      vatNumber = org.vat_number ?? org.siret ?? undefined;
+      // Only use real VAT number (intracommunautaire), NOT siret
+      vatNumber = org.vat_number ?? undefined;
     }
 
     // Chercher ou créer le client Qonto

@@ -404,16 +404,10 @@ export async function POST(request: NextRequest): Promise<
     if (typedOrder.customer_type === 'organization' && typedOrder.customer) {
       const org = typedOrder.customer as Organisation;
       customerEmail = org.email ?? null;
-      // Legal name first (raison sociale obligatoire sur factures)
-      const legalName = org.legal_name ?? org.trade_name ?? 'Client';
-      const tradeName = org.trade_name;
-      // Concatenate if trade_name is different from legal_name
-      customerName =
-        tradeName && tradeName !== legalName
-          ? `${legalName} (${tradeName})`
-          : legalName;
-      // Priority: vat_number (TVA intra-communautaire), then siret
-      vatNumber = org.vat_number ?? org.siret ?? undefined;
+      // Use trade_name (commercial) if available, else legal_name
+      customerName = org.trade_name ?? org.legal_name ?? 'Client';
+      // Only use real VAT number (intracommunautaire), NOT siret
+      vatNumber = org.vat_number ?? undefined;
     } else if (
       typedOrder.customer_type === 'individual' &&
       typedOrder.customer
@@ -424,17 +418,7 @@ export async function POST(request: NextRequest): Promise<
         `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim() || 'Client';
     }
 
-    // Validate: organisations MUST have a tax identification number for invoicing
-    if (typedOrder.customer_type === 'organization' && !vatNumber) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Le SIRET ou numéro de TVA de l'organisation est requis pour créer une facture. Veuillez le renseigner dans la fiche organisation.",
-        },
-        { status: 400 }
-      );
-    }
+    // Note: vatNumber is optional — Qonto does not require it for client creation
 
     // Résoudre l'adresse de facturation :
     // Priorité 1: adresse envoyée depuis le modal (body)

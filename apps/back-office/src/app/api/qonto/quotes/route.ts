@@ -337,8 +337,8 @@ export async function POST(request: NextRequest): Promise<
       const org = customer as Organisation;
       customerEmail = org.email ?? null;
       customerName = org.trade_name ?? org.legal_name ?? 'Client';
-      // Priority: vat_number (TVA intra-communautaire), then siret
-      vatNumber = org.vat_number ?? org.siret ?? undefined;
+      // Only use real VAT number (intracommunautaire), NOT siret
+      vatNumber = org.vat_number ?? undefined;
     } else if (customerType === 'individual' && customer) {
       const indiv = customer as IndividualCustomer;
       customerEmail = indiv.email ?? null;
@@ -346,17 +346,7 @@ export async function POST(request: NextRequest): Promise<
         `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim() || 'Client';
     }
 
-    // Validate: organisations MUST have a tax identification number for quotes
-    if (customerType === 'organization' && !vatNumber) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Le SIRET ou numéro de TVA de l'organisation est requis pour créer un devis. Veuillez le renseigner dans la fiche organisation.",
-        },
-        { status: 400 }
-      );
-    }
+    // Note: vatNumber is optional — Qonto does not require it for client creation
 
     // Récupérer ou créer le client Qonto
     let qontoClientId: string;
@@ -367,18 +357,32 @@ export async function POST(request: NextRequest): Promise<
       const org = customer as Organisation;
       orgAddress = {
         street: org.address_line1 ?? '',
-        city: org.city ?? 'Paris',
-        postal_code: org.postal_code ?? '75001',
+        city: org.city ?? '',
+        postal_code: org.postal_code ?? '',
         country: org.country ?? 'FR',
       };
     }
 
     const addressSource = orderBillingAddress ?? orgAddress;
 
+    const resolvedCity = addressSource?.city ?? '';
+    const resolvedZipCode = addressSource?.postal_code ?? '';
+
+    if (!resolvedCity || !resolvedZipCode) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            'Adresse de facturation incomplète. Ville et code postal requis.',
+        },
+        { status: 400 }
+      );
+    }
+
     const qontoAddress = {
       streetAddress: addressSource?.street ?? addressSource?.address ?? '',
-      city: addressSource?.city ?? 'Paris',
-      zipCode: addressSource?.postal_code ?? '75001',
+      city: resolvedCity,
+      zipCode: resolvedZipCode,
       countryCode: addressSource?.country ?? 'FR',
     };
 
