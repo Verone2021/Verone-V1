@@ -1262,7 +1262,7 @@ export default function LinkMeOrderDetailPage() {
                             {/* Commission % */}
                             <TableCell className="text-center">
                               <span className="text-teal-600">
-                                {`${Math.round(item.retrocession_rate * 100)}%`}
+                                {`${Math.round(item.margin_rate * 100)}%`}
                               </span>
                             </TableCell>
                             {/* Commission EUR (per unit) */}
