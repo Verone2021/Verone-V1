@@ -44,6 +44,10 @@ export async function POST(request: Request) {
 
           const orderId = crypto.randomUUID();
           const totalAmount = (session.amount_total ?? 0) / 100;
+          const shippingCost = session.shipping_cost?.amount_total
+            ? session.shipping_cost.amount_total / 100
+            : 0;
+          const subtotalAmount = totalAmount - shippingCost;
           const { error: orderError } = await supabase
             .from('site_orders')
             .insert({
@@ -55,8 +59,8 @@ export async function POST(request: Request) {
               customer_phone: metadata.customer_phone ?? '',
               shipping_address: metadata.shipping_address ?? '',
               status: 'paid',
-              subtotal: totalAmount,
-              shipping_cost: 0,
+              subtotal: subtotalAmount,
+              shipping_cost: shippingCost,
               total: totalAmount,
               currency: 'EUR',
               items: {},
@@ -81,9 +85,9 @@ export async function POST(request: Request) {
                 customerName: metadata.customer_name ?? 'Client',
                 orderId,
                 items: [],
-                subtotal: (session.amount_total ?? 0) / 100,
-                shipping: 0,
-                total: (session.amount_total ?? 0) / 100,
+                subtotal: subtotalAmount,
+                shipping: shippingCost,
+                total: totalAmount,
                 shippingAddress: metadata.shipping_address ?? '',
               }),
             }).catch(emailError => {
