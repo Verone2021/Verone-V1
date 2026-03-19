@@ -168,6 +168,12 @@ interface IPostRequestBody {
   salesOrderId?: string; // Optionnel: si absent, création standalone
   customer?: IStandaloneCustomer; // Requis si pas de salesOrderId
   expiryDays?: number; // Nombre de jours avant expiration (défaut: 30)
+  billingAddress?: {
+    address_line1?: string;
+    postal_code?: string;
+    city?: string;
+    country?: string;
+  };
   fees?: IFeesData;
   customLines?: ICustomLine[];
 }
@@ -196,6 +202,7 @@ export async function POST(request: NextRequest): Promise<
       salesOrderId,
       customer: standaloneCustomer,
       expiryDays = 30,
+      billingAddress: bodyBillingAddress,
       fees,
       customLines,
     } = body;
@@ -354,22 +361,36 @@ export async function POST(request: NextRequest): Promise<
     // Récupérer ou créer le client Qonto
     let qontoClientId: string;
 
-    // Pour les organisations standalone, utiliser leur adresse
-    let orgAddress: Record<string, string> | null = null;
-    if (!orderBillingAddress && customerType === 'organization' && customer) {
+    // Résoudre l'adresse de facturation (3 priorités, comme route invoices) :
+    // 1. body.billingAddress (envoyée par le modal)
+    // 2. order.billing_address JSONB (depuis DB)
+    // 3. champs directs de l'organisation
+    const dbBillingAddress = orderBillingAddress;
+
+    let resolvedCity = bodyBillingAddress?.city ?? dbBillingAddress?.city ?? '';
+    let resolvedZipCode =
+      bodyBillingAddress?.postal_code ?? dbBillingAddress?.postal_code ?? '';
+    let resolvedStreet =
+      bodyBillingAddress?.address_line1 ??
+      dbBillingAddress?.street ??
+      dbBillingAddress?.address ??
+      dbBillingAddress?.address_line1 ??
+      '';
+    let resolvedCountry =
+      bodyBillingAddress?.country ?? dbBillingAddress?.country ?? 'FR';
+
+    // Fallback vers adresse organisation si DB vide
+    if (
+      (!resolvedCity || !resolvedZipCode) &&
+      customerType === 'organization' &&
+      customer
+    ) {
       const org = customer as Organisation;
-      orgAddress = {
-        street: org.address_line1 ?? '',
-        city: org.city ?? '',
-        postal_code: org.postal_code ?? '',
-        country: org.country ?? 'FR',
-      };
+      resolvedCity = (resolvedCity || org.city) ?? '';
+      resolvedZipCode = (resolvedZipCode || org.postal_code) ?? '';
+      resolvedStreet = (resolvedStreet || org.address_line1) ?? '';
+      resolvedCountry = (resolvedCountry || org.country) ?? 'FR';
     }
-
-    const addressSource = orderBillingAddress ?? orgAddress;
-
-    const resolvedCity = addressSource?.city ?? '';
-    const resolvedZipCode = addressSource?.postal_code ?? '';
 
     if (!resolvedCity || !resolvedZipCode) {
       return NextResponse.json(
@@ -383,10 +404,10 @@ export async function POST(request: NextRequest): Promise<
     }
 
     const qontoAddress = {
-      streetAddress: addressSource?.street ?? addressSource?.address ?? '',
+      streetAddress: resolvedStreet,
       city: resolvedCity,
       zipCode: resolvedZipCode,
-      countryCode: addressSource?.country ?? 'FR',
+      countryCode: resolvedCountry,
     };
 
     const qontoClientType =

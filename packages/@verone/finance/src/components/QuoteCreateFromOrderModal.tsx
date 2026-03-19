@@ -137,6 +137,31 @@ export function QuoteCreateFromOrderModal({
         body: JSON.stringify({
           salesOrderId: order.id,
           expiryDays,
+          // Adresse de facturation (résolution: billing_address commande > org)
+          billingAddress: order.billing_address
+            ? {
+                address_line1: order.billing_address?.address_line1 ?? '',
+                postal_code: order.billing_address?.postal_code ?? '',
+                city: order.billing_address?.city ?? '',
+                country: order.billing_address?.country ?? 'FR',
+              }
+            : order.organisations
+              ? {
+                  address_line1:
+                    order.organisations.billing_address_line1 ??
+                    order.organisations.address_line1 ??
+                    '',
+                  postal_code:
+                    order.organisations.billing_postal_code ??
+                    order.organisations.postal_code ??
+                    '',
+                  city:
+                    order.organisations.billing_city ??
+                    order.organisations.city ??
+                    '',
+                  country: order.organisations.billing_country ?? 'FR',
+                }
+              : undefined,
           // Frais de service
           fees: {
             shipping_cost_ht: shippingCostHt,
