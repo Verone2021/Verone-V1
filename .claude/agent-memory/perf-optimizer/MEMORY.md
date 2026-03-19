@@ -1,10 +1,11 @@
 # Perf Optimizer Agent Memory
 
-# Last updated: 2026-03-11 (audit back-office complet ajouté)
+# Last updated: 2026-03-18 (audit pricing & commissions LinkMe ajouté)
 
 ## Rapports Disponibles
 
-- Back-office : `docs/current/perf/audit-back-office-2026-03-11.md` (nouveau)
+- Pricing/Commissions LinkMe : `docs/current/perf/audit-pricing-commissions-linkme-2026-03-18.md` (nouveau)
+- Back-office : `docs/current/perf/audit-back-office-2026-03-11.md`
 - LinkMe : `docs/current/perf/audit-2026-03-11-linkme.md`
 - Général : `docs/current/perf/audit-2026-03-11.md`
 
@@ -128,3 +129,36 @@ Table `products` : 14 triggers distincts = risque de cascade sur chaque INSERT/U
 ## Fonctions avec search_path mutable (WARN Supabase)
 
 26+ fonctions publiques sans `SET search_path = public` fixe. Risque de schema hijacking.
+
+## Double UPDATE sales_orders par ligne sales_order_items (CRITIQUE — confirmé 2026-03-18)
+
+Sur chaque INSERT/UPDATE de `sales_order_items`, DEUX triggers AFTER font un UPDATE sales_orders :
+
+- `recalculate_sales_order_totals_trigger` → total_ht, total_ttc
+- `trg_update_affiliate_totals` → total_ht, total_ttc ET affiliate_total_ht/ttc (DOUBLON)
+  Sur INSERT : 3 UPDATE sales_orders par ligne (+ backfill). Fusionner en 1 seul trigger = -50%.
+
+## Fonctions commissions sans search_path (confirmé 2026-03-18)
+
+- `create_linkme_commission_on_order_update` : INVOKER, NO search_path
+- `get_linkme_orders` : INVOKER, NO search_path
+- `update_sales_order_affiliate_totals` : INVOKER, NO search_path
+
+## Bug potentiel calculate_retrocession branche affilié (confirmé 2026-03-18)
+
+Branche 2 (produits affiliés sans selection_item) : `retrocession_rate / 100` divise un taux
+déjà en décimal (0.10) par 100 → commission 100× sous-estimée. À vérifier sur données réelles.
+
+## channel_pricing LinkMe — Dead data probable (2026-03-18)
+
+49 entrées, commission_rate moyenne 61% (aberrant). LEFT JOIN dans linkme_order_items_enriched
+mais colonne commission_rate semble non consommée. Commission réelle = linkme_selection_items.margin_rate.
+
+## useLinkMeAnalytics — Pattern legacy (2026-03-18)
+
+useState+useEffect+fetch dans use-linkme-analytics.ts. Pas de cache React Query. À migrer vers useQuery.
+
+## useLinkMeDashboard — Fetch all orders (2026-03-18)
+
+Charge TOUTES les commandes de linkme_orders_with_margins (vue 8 LEFT JOIN) sans filtre date.
+Calcul de moyenne mensuelle en JS. Solution : RPC get_linkme_dashboard_kpis() SQL.
