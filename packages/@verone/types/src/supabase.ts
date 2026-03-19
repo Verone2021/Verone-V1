@@ -6924,6 +6924,53 @@ export type Database = {
           },
         ];
       };
+      product_reviews: {
+        Row: {
+          author_name: string;
+          comment: string | null;
+          created_at: string;
+          id: string;
+          product_id: string;
+          rating: number;
+          status: string;
+          title: string | null;
+          updated_at: string;
+          user_id: string | null;
+        };
+        Insert: {
+          author_name: string;
+          comment?: string | null;
+          created_at?: string;
+          id?: string;
+          product_id: string;
+          rating: number;
+          status?: string;
+          title?: string | null;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Update: {
+          author_name?: string;
+          comment?: string | null;
+          created_at?: string;
+          id?: string;
+          product_id?: string;
+          rating?: number;
+          status?: string;
+          title?: string | null;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'product_reviews_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       product_status_changes: {
         Row: {
           change_reason: string;
@@ -8791,6 +8838,90 @@ export type Database = {
             referencedColumns: ['id'];
           },
         ];
+      };
+      site_content: {
+        Row: {
+          content_key: string;
+          content_value: Json;
+          id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          content_key: string;
+          content_value?: Json;
+          id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          content_key?: string;
+          content_value?: Json;
+          id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
+      site_orders: {
+        Row: {
+          created_at: string | null;
+          currency: string;
+          customer_email: string;
+          customer_name: string;
+          customer_phone: string | null;
+          id: string;
+          items: Json;
+          notes: string | null;
+          session_id: string | null;
+          shipping_address: string | null;
+          shipping_cost: number;
+          status: string;
+          stripe_session_id: string | null;
+          subtotal: number;
+          total: number;
+          updated_at: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          currency?: string;
+          customer_email: string;
+          customer_name: string;
+          customer_phone?: string | null;
+          id?: string;
+          items?: Json;
+          notes?: string | null;
+          session_id?: string | null;
+          shipping_address?: string | null;
+          shipping_cost?: number;
+          status?: string;
+          stripe_session_id?: string | null;
+          subtotal?: number;
+          total?: number;
+          updated_at?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          currency?: string;
+          customer_email?: string;
+          customer_name?: string;
+          customer_phone?: string | null;
+          id?: string;
+          items?: Json;
+          notes?: string | null;
+          session_id?: string | null;
+          shipping_address?: string | null;
+          shipping_cost?: number;
+          status?: string;
+          stripe_session_id?: string | null;
+          subtotal?: number;
+          total?: number;
+          updated_at?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [];
       };
       stock_alert_tracking: {
         Row: {

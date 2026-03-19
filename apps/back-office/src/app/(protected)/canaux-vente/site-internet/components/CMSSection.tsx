@@ -18,6 +18,7 @@ import { ButtonV2 } from '@verone/ui';
 import { FileText, ImageIcon, Megaphone, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
+import type { Json } from '@verone/types';
 import { createClient } from '@verone/utils/supabase/client';
 
 // Types matching site_content table
@@ -88,7 +89,7 @@ function useUpdateSiteContent() {
       const { error } = await supabase
         .from('site_content')
         .update({
-          content_value: contentValue,
+          content_value: contentValue as unknown as Json,
           updated_at: new Date().toISOString(),
         })
         .eq('content_key', contentKey);
