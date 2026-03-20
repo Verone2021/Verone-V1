@@ -69,13 +69,7 @@ export default function MaSelectionPage(): React.JSX.Element {
   }, [selectionsLoading, selections, router]);
 
   // Chargement (incluant le chargement du rôle) ou redirect en cours
-  if (
-    authLoading ||
-    affiliateLoading ||
-    selectionsLoading ||
-    analyticsLoading ||
-    redirecting
-  ) {
+  if (authLoading || affiliateLoading || selectionsLoading || redirecting) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
