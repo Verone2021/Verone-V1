@@ -294,32 +294,26 @@ export async function POST(request: NextRequest): Promise<
       customerType = orderWithItems.customer_type ?? 'organization';
       orderNumber = orderWithItems.order_number ?? undefined;
 
-      // Guard anti-doublon: vérifier si un devis Qonto existe déjà pour cette commande
-      if (orderNumber) {
-        try {
-          const existingQuotes = await qontoClient.getClientQuotes();
-          const duplicate = existingQuotes.client_quotes.find(
-            q =>
-              q.purchase_order_number === orderNumber &&
-              q.status !== 'declined' &&
-              q.status !== 'expired'
-          );
-          if (duplicate) {
-            const qDup = duplicate as typeof duplicate & { number?: string };
-            return NextResponse.json(
-              {
-                success: false,
-                error: `Un devis existe déjà pour la commande ${orderNumber} (${qDup.number ?? qDup.quote_number ?? duplicate.id}). Modifiez-le ou supprimez-le avant d'en créer un nouveau.`,
-                existingQuoteId: duplicate.id,
-              },
-              { status: 409 }
-            );
-          }
-        } catch (checkErr) {
-          // Non-blocking: if check fails, proceed with creation (Qonto is fallback)
-          console.warn(
-            '[API Qonto Quotes] Duplicate check failed (non-blocking):',
-            checkErr
+      // Guard anti-doublon: vérifier dans financial_documents (source de vérité locale)
+      if (salesOrderId) {
+        const { data: existingDocs } = await supabase
+          .from('financial_documents')
+          .select('id, document_number, quote_status')
+          .eq('sales_order_id', salesOrderId)
+          .eq('document_type', 'customer_quote')
+          .is('deleted_at', null)
+          .not('quote_status', 'in', '("declined","expired")')
+          .limit(1);
+
+        if (existingDocs && existingDocs.length > 0) {
+          const dup = existingDocs[0];
+          return NextResponse.json(
+            {
+              success: false,
+              error: `Un devis existe déjà pour cette commande (${dup.document_number ?? dup.id}). Modifiez-le ou supprimez-le avant d'en créer un nouveau.`,
+              existingQuoteId: dup.id,
+            },
+            { status: 409 }
           );
         }
       }
@@ -608,6 +602,84 @@ export async function POST(request: NextRequest): Promise<
       pdf_url: q.pdf_url,
       public_url: q.public_url,
     };
+
+    // Save to financial_documents (local DB — source of truth, same pattern as invoices)
+    try {
+      // Compute totals from items for local storage
+      let localTotalHt = 0;
+      let localTvaAmount = 0;
+      for (const item of items) {
+        const qty = parseFloat(item.quantity);
+        const unitPrice = parseFloat(item.unitPrice.value);
+        const vatRate = parseFloat(item.vatRate);
+        const lineHt = qty * unitPrice;
+        localTotalHt += lineHt;
+        localTvaAmount += lineHt * vatRate;
+      }
+      const localTotalTtc = localTotalHt + localTvaAmount;
+
+      const customerId = salesOrderId
+        ? (customer as Organisation | null)?.id
+        : standaloneCustomer?.customerId;
+
+      if (!customerId) {
+        console.warn(
+          '[API Qonto Quotes] No customer ID — skipping local DB save'
+        );
+      } else {
+        // Get authenticated user for created_by
+        const {
+          data: { user: authUser },
+        } = await supabase.auth.getUser();
+        const createdBy = authUser?.id ?? customerId; // fallback to partner_id if no auth context
+
+        const { error: insertError } = await supabase
+          .from('financial_documents')
+          .insert({
+            document_type: 'customer_quote' as const,
+            document_direction: 'inbound' as const,
+            document_number:
+              q.number ?? q.quote_number ?? `QON-${q.id.slice(0, 8)}`,
+            document_date: issueDate,
+            validity_date: expiryDate,
+            quote_status: 'draft',
+            status: 'draft' as const,
+            customer_type:
+              customerType === 'organization' ? 'organization' : 'individual',
+            partner_id: customerId,
+            partner_type: 'customer',
+            total_ht: localTotalHt,
+            total_ttc: localTotalTtc,
+            tva_amount: localTvaAmount,
+            amount_paid: 0,
+            shipping_cost_ht:
+              fees?.shipping_cost_ht ??
+              (salesOrderId ? orderShippingCostHt : 0),
+            handling_cost_ht:
+              fees?.handling_cost_ht ??
+              (salesOrderId ? orderHandlingCostHt : 0),
+            insurance_cost_ht:
+              fees?.insurance_cost_ht ??
+              (salesOrderId ? orderInsuranceCostHt : 0),
+            fees_vat_rate:
+              fees?.fees_vat_rate ?? (salesOrderId ? orderFeesVatRate : 0.2),
+            sales_order_id: salesOrderId ?? null,
+            qonto_invoice_id: q.id,
+            qonto_pdf_url: q.pdf_url ?? null,
+            qonto_public_url: q.public_url ?? null,
+            created_by: createdBy,
+          });
+
+        if (insertError) {
+          console.error(
+            '[API Qonto Quotes] Failed to save to financial_documents (non-blocking):',
+            insertError
+          );
+        }
+      }
+    } catch (dbErr) {
+      console.error('[API Qonto Quotes] DB save error (non-blocking):', dbErr);
+    }
 
     return NextResponse.json({
       success: true,

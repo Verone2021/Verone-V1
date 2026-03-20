@@ -5,7 +5,20 @@ import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { QuoteStatusBadge } from '@verone/finance/components';
+import {
+  EditableQuoteItemRow,
+  QuoteStatusBadge,
+} from '@verone/finance/components';
+import {
+  useQuotes,
+  type Quote,
+  type QuoteStatus,
+  type UpdateQuoteData,
+  type CreateQuoteItemData,
+} from '@verone/finance/hooks';
+import { AddProductToOrderModal } from '@verone/orders/components/modals/AddProductToOrderModal';
+import type { CreateOrderItemData } from '@verone/orders/hooks';
+import { useLinkMeSelection, type SelectionItem } from '@verone/orders/hooks';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +34,12 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
   Separator,
   Table,
   TableBody,
@@ -29,83 +48,78 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  Textarea,
 } from '@verone/ui';
-// Money removed — using formatAmountCents for Qonto _cents values
-import { toast } from 'sonner';
+import { Money } from '@verone/ui-business';
+import { formatCurrency } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   ArrowLeft,
-  ArrowRightLeft,
+  Building2,
   Calendar,
-  Check,
-  Download,
+  Edit,
   ExternalLink,
   FileText,
   Loader2,
+  MapPin,
+  Plus,
+  RefreshCw,
+  Save,
   Send,
   Trash2,
+  Undo2,
+  User,
+  X,
+  Check,
   XCircle,
+  ArrowRightLeft,
+  Search,
+  ShoppingBag,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 // =====================================================================
-// TYPES (Qonto API response)
+// TYPES
 // =====================================================================
 
-interface QontoQuoteItem {
-  id?: string;
-  title: string;
-  description?: string;
-  quantity: string; // Qonto returns string
-  unit?: string;
-  unit_price: { value: string; currency: string }; // Qonto returns object
-  vat_rate: string; // Qonto returns decimal string e.g. "0.20"
-  total_amount?: { value: string; currency: string };
+interface QuoteDetailPageProps {
+  params: Promise<{ id: string }>;
 }
 
-interface QontoQuoteDetail {
+interface EditableFields {
+  notes: string;
+  billing_address: Record<string, unknown> | null;
+  shipping_address: Record<string, unknown> | null;
+  validity_days: number;
+  items: EditableItem[];
+  reference: string;
+  shipping_cost_ht: number;
+  handling_cost_ht: number;
+  insurance_cost_ht: number;
+  fees_vat_rate: number;
+}
+
+/** Product info for UI display (never persisted to DB) */
+interface EditableItemProduct {
+  name: string;
+  sku: string | null;
+  image_url: string | null;
+}
+
+interface EditableItem {
   id: string;
-  number?: string; // Qonto raw field
-  quote_number?: string; // mapped field
-  status: string;
-  currency: string;
-  client_id: string;
-  client?: {
-    id: string;
-    name: string;
-    type?: string;
-    email?: string;
-    address?: {
-      street_address?: string;
-      city?: string;
-      zip_code?: string;
-      country_code?: string;
-    };
-  };
-  issue_date: string;
-  expiry_date: string;
-  accepted_at?: string;
-  declined_at?: string;
-  // Qonto uses _cents for amounts
-  total_amount_cents?: number;
-  total_vat_amount_cents?: number;
-  subtotal_amount_cents?: number;
-  items: QontoQuoteItem[];
-  purchase_order_number?: string;
-  header?: string;
-  footer?: string;
-  terms_and_conditions?: string;
-  attachment_id?: string;
-  pdf_url?: string;
-  public_url?: string;
-  converted_to_invoice_id?: string;
-  created_at: string;
-  updated_at: string;
-  finalized_at?: string;
-}
-
-interface ApiResponse {
-  success: boolean;
-  quote?: QontoQuoteDetail;
-  error?: string;
+  product_id: string | null;
+  product: EditableItemProduct | null;
+  description: string;
+  quantity: number;
+  unit_price_ht: number;
+  tva_rate: number;
+  discount_percentage: number;
+  eco_tax: number;
+  // LinkMe metadata (preserved for save)
+  linkme_selection_item_id: string | null;
+  base_price_ht: number | null;
+  retrocession_rate: number | null;
 }
 
 // =====================================================================
@@ -121,67 +135,125 @@ function formatDate(dateString: string | null | undefined): string {
   });
 }
 
-/** Format cents to EUR string (same as facture detail page) */
-function formatAmountCents(
-  cents: number | undefined | null,
-  currency = 'EUR'
-): string {
-  if (cents === undefined || cents === null) return '-';
-  const amount = cents / 100;
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency,
-  }).format(amount);
+function generateId(): string {
+  return Math.random().toString(36).substring(2, 9);
 }
 
-function formatVatRate(vatRate: string | number | undefined): string {
-  if (vatRate === undefined || vatRate === null) return '-';
-  const rate = typeof vatRate === 'string' ? parseFloat(vatRate) : vatRate;
-  // If rate < 1, it's a decimal (e.g. 0.20 for 20%)
-  const percentage = rate < 1 ? rate * 100 : rate;
-  return `${percentage.toFixed(percentage % 1 === 0 ? 0 : 1)}%`;
+function addressToString(address: Record<string, unknown> | null): string {
+  if (!address) return '';
+  // Support freeform text format: { address: "multiline text" }
+  if (typeof address.address === 'string' && address.address) {
+    return address.address;
+  }
+  const street = (address.street as string) ?? (address.line1 as string) ?? '';
+  const zip = (address.zip as string) ?? (address.postal_code as string) ?? '';
+  const city = (address.city as string) ?? '';
+  const country = (address.country as string) ?? '';
+  return [street, [zip, city].filter(Boolean).join(' '), country]
+    .filter(Boolean)
+    .join('\n');
+}
+
+function stringToAddress(text: string): Record<string, unknown> {
+  const lines = text.split('\n').map(l => l.trim());
+  return {
+    street: lines[0] ?? '',
+    city: lines[1]?.replace(/^\d+\s*/, '') ?? '',
+    zip: lines[1]?.match(/^\d+/)?.[0] ?? '',
+    country: lines[2] ?? '',
+  };
+}
+
+/** Check if a field is editable given the current quote status */
+function isFieldEditable(
+  field: string,
+  status: QuoteStatus,
+  hasQonto: boolean
+): boolean {
+  if (hasQonto) return false;
+
+  const draftAndSentFields = new Set([
+    'notes',
+    'validity_date',
+    'billing_address',
+    'shipping_address',
+  ]);
+
+  if (status === 'draft') return true;
+  if (status === 'validated' || status === 'sent')
+    return draftAndSentFields.has(field);
+  return false;
 }
 
 // =====================================================================
-// STATUS ACTIONS
+// STATUS TRANSITION CONFIG
 // =====================================================================
 
 interface StatusAction {
   label: string;
-  action: string;
-  variant: 'default' | 'destructive' | 'outline';
+  targetStatus: QuoteStatus;
+  variant: 'default' | 'destructive' | 'outline' | 'secondary';
   icon: React.ReactNode;
   confirmTitle: string;
   confirmDescription: string;
+  requiresNoQonto?: boolean;
 }
 
-function getStatusActions(status: string): StatusAction[] {
+function getStatusActions(
+  currentStatus: QuoteStatus,
+  hasQonto: boolean
+): StatusAction[] {
   const actions: StatusAction[] = [];
 
-  if (status === 'draft') {
+  if (currentStatus === 'draft') {
     actions.push({
-      label: 'Finaliser',
-      action: 'finalize',
+      label: 'Valider',
+      targetStatus: 'validated',
       variant: 'default',
       icon: <Check className="mr-2 h-4 w-4" />,
-      confirmTitle: 'Finaliser le devis ?',
+      confirmTitle: 'Valider le devis ?',
       confirmDescription:
-        'Le devis sera finalisé et envoyé. Il ne pourra plus être modifié.',
+        'Le devis sera validé. Les articles et informations principales ne seront plus modifiables.',
     });
   }
 
-  if (status === 'finalized' || status === 'pending_approval') {
+  if (currentStatus === 'validated') {
+    actions.push({
+      label: 'Envoyer',
+      targetStatus: 'sent',
+      variant: 'default',
+      icon: <Send className="mr-2 h-4 w-4" />,
+      confirmTitle: 'Envoyer le devis ?',
+      confirmDescription:
+        'Le devis passera en statut "Envoyé" et pourra être marqué comme accepté ou refusé.',
+    });
+    if (!hasQonto) {
+      actions.push({
+        label: 'Revenir en brouillon',
+        targetStatus: 'draft',
+        variant: 'outline',
+        icon: <Undo2 className="mr-2 h-4 w-4" />,
+        confirmTitle: 'Revenir en brouillon ?',
+        confirmDescription:
+          'Le devis repassera en brouillon et pourra être entièrement modifié.',
+        requiresNoQonto: true,
+      });
+    }
+  }
+
+  if (currentStatus === 'sent') {
     actions.push({
       label: 'Marquer accepté',
-      action: 'accept',
+      targetStatus: 'accepted',
       variant: 'default',
       icon: <Check className="mr-2 h-4 w-4" />,
       confirmTitle: 'Marquer comme accepté ?',
-      confirmDescription: 'Le devis sera marqué comme accepté par le client.',
+      confirmDescription:
+        'Le devis sera marqué comme accepté par le client. Il ne sera plus modifiable.',
     });
     actions.push({
       label: 'Marquer refusé',
-      action: 'decline',
+      targetStatus: 'declined',
       variant: 'destructive',
       icon: <XCircle className="mr-2 h-4 w-4" />,
       confirmTitle: 'Marquer comme refusé ?',
@@ -190,15 +262,15 @@ function getStatusActions(status: string): StatusAction[] {
     });
   }
 
-  if (status === 'accepted') {
+  if (currentStatus === 'accepted') {
     actions.push({
       label: 'Convertir en facture',
-      action: 'convert',
+      targetStatus: 'converted',
       variant: 'default',
       icon: <ArrowRightLeft className="mr-2 h-4 w-4" />,
       confirmTitle: 'Convertir en facture ?',
       confirmDescription:
-        'Une facture brouillon sera créée depuis ce devis. Cette action est irréversible.',
+        'Le devis sera marqué comme converti. Cette action est irréversible.',
     });
   }
 
@@ -209,134 +281,443 @@ function getStatusActions(status: string): StatusAction[] {
 // MAIN COMPONENT
 // =====================================================================
 
-interface QuoteDetailPageProps {
-  params: Promise<{ id: string }>;
-}
-
 export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
   const { id } = use(params);
   const router = useRouter();
+  const { fetchQuote, updateQuote, changeQuoteStatus, deleteQuote } =
+    useQuotes();
 
-  const [quote, setQuote] = useState<QontoQuoteDetail | null>(null);
+  // State
+  const [quote, setQuote] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [confirmAction, setConfirmAction] = useState<StatusAction | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
+  const [showAddProduct, setShowAddProduct] = useState(false);
+  const [showLinkMeProducts, setShowLinkMeProducts] = useState(false);
+  const [linkMeSearchTerm, setLinkMeSearchTerm] = useState('');
+  const [linkingQonto, setLinkingQonto] = useState(false);
+
+  // Editable state
+  const [editFields, setEditFields] = useState<EditableFields>({
+    notes: '',
+    billing_address: null,
+    shipping_address: null,
+    validity_days: 30,
+    items: [],
+    reference: '',
+    shipping_cost_ht: 0,
+    handling_cost_ht: 0,
+    insurance_cost_ht: 0,
+    fees_vat_rate: 0.2,
+  });
+
+  const [updatingOrgAddress, setUpdatingOrgAddress] = useState(false);
+
+  // LinkMe selection details (for editing LinkMe quotes)
+  const { data: linkmeSelectionDetails } = useLinkMeSelection(
+    quote?.linkme_selection_id ?? null
+  );
+
+  // Handler to propagate address changes back to the organisation
+  const handleUpdateOrgAddress = useCallback(async () => {
+    if (!quote?.partner?.id) return;
+    setUpdatingOrgAddress(true);
+    try {
+      const supabase = createClient();
+      const billingText = addressToString(editFields.billing_address);
+      const shippingText = addressToString(editFields.shipping_address);
+
+      // Parse the freeform text into structured address fields
+      const parseBillingLines = billingText.split('\n').filter(Boolean);
+      const parseShippingLines = shippingText.split('\n').filter(Boolean);
+
+      const updateData: Record<string, string | null> = {
+        billing_address_line1: parseBillingLines[0] ?? null,
+        billing_address_line2:
+          parseBillingLines.length > 3 ? parseBillingLines[1] : null,
+        billing_city:
+          parseBillingLines.length > 2
+            ? (parseBillingLines[parseBillingLines.length - 2]?.replace(
+                /^\d+\s*/,
+                ''
+              ) ?? null)
+            : null,
+        billing_postal_code:
+          parseBillingLines.length > 2
+            ? (parseBillingLines[parseBillingLines.length - 2]?.match(
+                /^\d+/
+              )?.[0] ?? null)
+            : null,
+        billing_country:
+          parseBillingLines[parseBillingLines.length - 1] ?? null,
+      };
+
+      if (shippingText && shippingText !== billingText) {
+        updateData.shipping_address_line1 = parseShippingLines[0] ?? null;
+        updateData.shipping_address_line2 =
+          parseShippingLines.length > 3 ? parseShippingLines[1] : null;
+        updateData.shipping_city =
+          parseShippingLines.length > 2
+            ? (parseShippingLines[parseShippingLines.length - 2]?.replace(
+                /^\d+\s*/,
+                ''
+              ) ?? null)
+            : null;
+        updateData.shipping_postal_code =
+          parseShippingLines.length > 2
+            ? (parseShippingLines[parseShippingLines.length - 2]?.match(
+                /^\d+/
+              )?.[0] ?? null)
+            : null;
+        updateData.shipping_country =
+          parseShippingLines[parseShippingLines.length - 1] ?? null;
+        updateData.has_different_shipping_address = 'true';
+      }
+
+      const { error } = await supabase
+        .from('organisations')
+        .update(updateData)
+        .eq('id', quote.partner.id);
+
+      if (error) throw error;
+      toast.success("Adresse de l'organisation mise à jour");
+    } catch (err) {
+      console.error('[QuoteDetail] Update org address error:', err);
+      toast.error("Erreur lors de la mise à jour de l'adresse");
+    } finally {
+      setUpdatingOrgAddress(false);
+    }
+  }, [
+    quote?.partner?.id,
+    editFields.billing_address,
+    editFields.shipping_address,
+  ]);
 
   // -----------------------------------------------------------------
-  // LOAD QUOTE FROM QONTO API
+  // LOAD QUOTE
   // -----------------------------------------------------------------
   const loadQuote = useCallback(async () => {
     setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`/api/qonto/quotes/${id}`);
-      const data = (await response.json()) as ApiResponse;
-      if (!response.ok || !data.success || !data.quote) {
-        throw new Error(data.error ?? 'Devis introuvable');
-      }
-      setQuote(data.quote);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur inconnue');
-    } finally {
-      setLoading(false);
+    const data = await fetchQuote(id);
+    if (!data) {
+      toast.error('Devis introuvable');
+      router.push('/factures');
+      return;
     }
-  }, [id]);
+    setQuote(data);
+    setLoading(false);
+  }, [id, fetchQuote, router]);
 
   useEffect(() => {
-    void loadQuote();
+    void loadQuote().catch((err: unknown) => {
+      console.error('[QuoteDetail] loadQuote error:', err);
+    });
   }, [loadQuote]);
 
   // -----------------------------------------------------------------
-  // ACTIONS
+  // ENTER EDIT MODE
   // -----------------------------------------------------------------
-  const handleAction = useCallback(
-    async (action: string) => {
-      setActionLoading(true);
-      try {
-        const response = await fetch(`/api/qonto/quotes/${id}/${action}`, {
-          method: 'POST',
-        });
-        const data = (await response.json()) as {
-          success: boolean;
-          error?: string;
+  const enterEditMode = useCallback(() => {
+    if (!quote) return;
+
+    // Compute validity_days from validity_date
+    let validityDays = 30;
+    if (quote.validity_date) {
+      const validityDate = new Date(quote.validity_date);
+      const createdDate = new Date(quote.document_date);
+      const diffMs = validityDate.getTime() - createdDate.getTime();
+      validityDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+      if (validityDays <= 0) validityDays = 30;
+    }
+
+    setEditFields({
+      notes: quote.notes ?? '',
+      billing_address: quote.billing_address,
+      shipping_address: quote.shipping_address,
+      validity_days: validityDays,
+      items: (quote.items ?? []).map(item => {
+        // Extract primary image from joined product data
+        const productImages = item.product?.product_images ?? [];
+        const primaryImage =
+          productImages.find(img => img.is_primary)?.public_url ??
+          productImages[0]?.public_url ??
+          null;
+
+        return {
+          id: item.id,
+          product_id: item.product_id,
+          product: item.product
+            ? {
+                name: item.product.name,
+                sku: item.product.sku,
+                image_url: primaryImage,
+              }
+            : null,
+          description: item.description,
+          quantity: item.quantity,
+          unit_price_ht: item.unit_price_ht,
+          tva_rate: item.tva_rate,
+          discount_percentage: item.discount_percentage,
+          eco_tax: item.eco_tax,
+          linkme_selection_item_id: item.linkme_selection_item_id,
+          base_price_ht: item.base_price_ht,
+          retrocession_rate: item.retrocession_rate,
         };
-        if (!response.ok || !data.success) {
-          throw new Error(data.error ?? `Erreur: ${action}`);
-        }
-        toast.success(
-          action === 'finalize'
-            ? 'Devis finalisé'
-            : action === 'accept'
-              ? 'Devis accepté'
-              : action === 'decline'
-                ? 'Devis refusé'
-                : action === 'convert'
-                  ? 'Facture créée depuis le devis'
-                  : 'Action effectuée'
-        );
+      }),
+      reference: quote.document_number,
+      shipping_cost_ht: quote.shipping_cost_ht,
+      handling_cost_ht: quote.handling_cost_ht,
+      insurance_cost_ht: quote.insurance_cost_ht,
+      fees_vat_rate: quote.fees_vat_rate,
+    });
+    setIsEditing(true);
+  }, [quote]);
+
+  // -----------------------------------------------------------------
+  // SAVE CHANGES
+  // -----------------------------------------------------------------
+  const handleSave = useCallback(async () => {
+    if (!quote) return;
+    setSaving(true);
+
+    const status = quote.quote_status;
+    const updateData: UpdateQuoteData = {};
+
+    // Always include notes, addresses, validity
+    updateData.notes = editFields.notes;
+    updateData.billing_address = editFields.billing_address ?? undefined;
+    updateData.shipping_address = editFields.shipping_address ?? undefined;
+    updateData.validity_days = editFields.validity_days;
+
+    // Draft-only fields
+    if (status === 'draft') {
+      updateData.reference = editFields.reference;
+      updateData.shipping_cost_ht = editFields.shipping_cost_ht;
+      updateData.handling_cost_ht = editFields.handling_cost_ht;
+      updateData.insurance_cost_ht = editFields.insurance_cost_ht;
+      updateData.fees_vat_rate = editFields.fees_vat_rate;
+
+      // Items
+      const items: CreateQuoteItemData[] = editFields.items.map(item => ({
+        product_id: item.product_id,
+        description: item.description,
+        quantity: item.quantity,
+        unit_price_ht: item.unit_price_ht,
+        tva_rate: item.tva_rate,
+        discount_percentage: item.discount_percentage,
+        eco_tax: item.eco_tax,
+        linkme_selection_item_id: item.linkme_selection_item_id,
+        base_price_ht: item.base_price_ht,
+        retrocession_rate: item.retrocession_rate,
+      }));
+      updateData.items = items;
+    }
+
+    const success = await updateQuote(quote.id, updateData);
+    setSaving(false);
+
+    if (success) {
+      setIsEditing(false);
+      await loadQuote();
+    }
+  }, [quote, editFields, updateQuote, loadQuote]);
+
+  // -----------------------------------------------------------------
+  // STATUS TRANSITION
+  // -----------------------------------------------------------------
+  const handleStatusChange = useCallback(
+    async (targetStatus: QuoteStatus) => {
+      if (!quote) return;
+      setSaving(true);
+      const success = await changeQuoteStatus(quote.id, targetStatus);
+      setSaving(false);
+      setConfirmAction(null);
+      if (success) {
         await loadQuote();
-      } catch (err) {
-        console.error(`[QuoteDetail] ${action} error:`, err);
-        toast.error(err instanceof Error ? err.message : 'Erreur');
-      } finally {
-        setActionLoading(false);
-        setConfirmAction(null);
       }
     },
-    [id, loadQuote]
+    [quote, changeQuoteStatus, loadQuote]
   );
 
+  // -----------------------------------------------------------------
+  // DELETE
+  // -----------------------------------------------------------------
   const handleDelete = useCallback(async () => {
-    setActionLoading(true);
-    try {
-      const response = await fetch(`/api/qonto/quotes/${id}`, {
-        method: 'DELETE',
-      });
-      const data = (await response.json()) as {
-        success: boolean;
-        error?: string;
-      };
-      if (!response.ok || !data.success) {
-        throw new Error(data.error ?? 'Erreur de suppression');
-      }
-      toast.success('Devis supprimé');
-      router.push('/factures?tab=devis');
-    } catch (err) {
-      console.error('[QuoteDetail] delete error:', err);
-      toast.error(err instanceof Error ? err.message : 'Erreur');
-    } finally {
-      setActionLoading(false);
-      setShowDeleteConfirm(false);
+    if (!quote) return;
+    const success = await deleteQuote(quote.id);
+    setShowDeleteConfirm(false);
+    if (success) {
+      router.push('/factures');
     }
-  }, [id, router]);
-
-  const handleDownloadPdf = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/qonto/quotes/${id}/pdf`);
-      if (!response.ok) throw new Error('Erreur téléchargement PDF');
-      const blob = await response.blob();
-      if (blob.size === 0) throw new Error('Le PDF est vide');
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `devis-${quote?.number ?? quote?.quote_number ?? id}.pdf`;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }, 1000);
-    } catch (err) {
-      console.error('[QuoteDetail] PDF download error:', err);
-      toast.error(err instanceof Error ? err.message : 'Erreur PDF');
-    }
-  }, [id, quote?.number, quote?.quote_number]);
+  }, [quote, deleteQuote, router]);
 
   // -----------------------------------------------------------------
-  // LOADING / ERROR STATES
+  // ITEM MANAGEMENT (edit mode, draft only)
+  // -----------------------------------------------------------------
+  const updateItem = useCallback(
+    (itemId: string, field: keyof EditableItem, value: string | number) => {
+      setEditFields(prev => ({
+        ...prev,
+        items: prev.items.map(item =>
+          item.id === itemId ? { ...item, [field]: value } : item
+        ),
+      }));
+    },
+    []
+  );
+
+  const removeItem = useCallback((itemId: string) => {
+    setEditFields(prev => ({
+      ...prev,
+      items: prev.items.filter(item => item.id !== itemId),
+    }));
+  }, []);
+
+  const addManualItem = useCallback(() => {
+    setEditFields(prev => ({
+      ...prev,
+      items: [
+        ...prev.items,
+        {
+          id: generateId(),
+          product_id: null,
+          product: null,
+          description: '',
+          quantity: 1,
+          unit_price_ht: 0,
+          tva_rate: 20,
+          discount_percentage: 0,
+          eco_tax: 0,
+          linkme_selection_item_id: null,
+          base_price_ht: null,
+          retrocession_rate: null,
+        },
+      ],
+    }));
+  }, []);
+
+  const handleAddProduct = useCallback((data: CreateOrderItemData) => {
+    setEditFields(prev => ({
+      ...prev,
+      items: [
+        ...prev.items,
+        {
+          id: generateId(),
+          product_id: data.product_id,
+          product: data.product_name
+            ? {
+                name: data.product_name,
+                sku: data.product_sku ?? null,
+                image_url: data.product_image_url ?? null,
+              }
+            : null,
+          description:
+            data.notes ?? data.product_name ?? `Produit ${data.product_id}`,
+          quantity: data.quantity,
+          unit_price_ht: data.unit_price_ht,
+          tva_rate: data.tax_rate ?? 20,
+          discount_percentage: data.discount_percentage ?? 0,
+          eco_tax: data.eco_tax ?? 0,
+          linkme_selection_item_id: null,
+          base_price_ht: null,
+          retrocession_rate: null,
+        },
+      ],
+    }));
+    setShowAddProduct(false);
+  }, []);
+
+  const handleAddLinkMeProduct = useCallback(
+    (selItem: SelectionItem) => {
+      // Check if already in items → increment quantity
+      const existing = editFields.items.find(
+        i => i.product_id === selItem.product_id
+      );
+      if (existing) {
+        updateItem(existing.id, 'quantity', existing.quantity + 1);
+        return;
+      }
+
+      // LinkMe price formula
+      const commissionRate = (selItem.commission_rate ?? 0) / 100;
+      const marginRate = selItem.margin_rate / 100;
+      const sellingPrice =
+        Math.round(
+          (selItem.base_price_ht / (1 - marginRate)) *
+            (1 + commissionRate) *
+            100
+        ) / 100;
+
+      setEditFields(prev => ({
+        ...prev,
+        items: [
+          ...prev.items,
+          {
+            id: generateId(),
+            product_id: selItem.product_id,
+            product: {
+              name: selItem.product?.name ?? '',
+              sku: selItem.product?.sku ?? null,
+              image_url: selItem.product_image_url ?? null,
+            },
+            description:
+              selItem.custom_description ?? selItem.product?.name ?? '',
+            quantity: 1,
+            unit_price_ht: sellingPrice,
+            tva_rate: 20,
+            discount_percentage: 0,
+            eco_tax: 0,
+            linkme_selection_item_id: selItem.id,
+            base_price_ht: selItem.base_price_ht,
+            retrocession_rate: marginRate,
+          },
+        ],
+      }));
+    },
+    [editFields.items, updateItem]
+  );
+
+  // -----------------------------------------------------------------
+  // COMPUTED
+  // -----------------------------------------------------------------
+  const computedTotals = (() => {
+    if (!isEditing || !quote) {
+      return {
+        items_total_ht: quote?.total_ht ?? 0,
+        tva_amount: quote?.tva_amount ?? 0,
+        total_ttc: quote?.total_ttc ?? 0,
+      };
+    }
+
+    let items_total_ht = 0;
+    let items_tva = 0;
+    for (const item of editFields.items) {
+      const discount = 1 - item.discount_percentage / 100;
+      const lineHt =
+        item.quantity * item.unit_price_ht * discount +
+        item.eco_tax * item.quantity;
+      const lineTva = lineHt * (item.tva_rate / 100);
+      items_total_ht += lineHt;
+      items_tva += lineTva;
+    }
+
+    const fees_total_ht =
+      editFields.shipping_cost_ht +
+      editFields.handling_cost_ht +
+      editFields.insurance_cost_ht;
+    const fees_vat = fees_total_ht * editFields.fees_vat_rate;
+
+    const total_ht = items_total_ht + fees_total_ht;
+    const tva_amount = items_tva + fees_vat;
+    const total_ttc = total_ht + tva_amount;
+
+    return { items_total_ht: total_ht, tva_amount, total_ttc };
+  })();
+
+  // -----------------------------------------------------------------
+  // LOADING STATE
   // -----------------------------------------------------------------
   if (loading) {
     return (
@@ -346,402 +727,685 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
     );
   }
 
-  if (error || !quote) {
+  if (!quote) {
     return (
       <div className="flex h-96 flex-col items-center justify-center gap-4">
         <FileText className="h-12 w-12 text-muted-foreground" />
-        <p className="text-muted-foreground">{error ?? 'Devis introuvable'}</p>
+        <p className="text-muted-foreground">Devis introuvable</p>
         <Button variant="outline" asChild>
-          <Link href="/factures?tab=devis">Retour aux devis</Link>
+          <Link href="/factures">Retour aux factures</Link>
         </Button>
       </div>
     );
   }
 
-  const statusActions = getStatusActions(quote.status);
+  const status = quote.quote_status;
+  const hasQonto = !!quote.qonto_invoice_id;
+  const canEdit =
+    (status === 'draft' || status === 'validated' || status === 'sent') &&
+    !hasQonto;
   const canDelete = !quote.converted_to_invoice_id;
-  const isDraft = quote.status === 'draft';
+  const statusActions = getStatusActions(status, hasQonto);
+  const isLinkMe = quote.channel?.code === 'linkme';
 
-  // Compute totals from items if _cents fields are missing (Qonto may not return them)
-  const computedTotals = (() => {
-    // If Qonto provides _cents, use them
-    if (
-      quote.subtotal_amount_cents !== undefined &&
-      quote.subtotal_amount_cents !== null
-    ) {
-      return {
-        subtotalCents: quote.subtotal_amount_cents,
-        vatCents: quote.total_vat_amount_cents ?? 0,
-        totalCents: quote.total_amount_cents ?? 0,
-      };
-    }
-    // Otherwise compute from items
-    let subtotalHt = 0;
-    let totalVat = 0;
-    for (const item of quote.items) {
-      const qty = parseFloat(item.quantity || '0');
-      const unitPrice = parseFloat(item.unit_price?.value || '0');
-      const vatRate =
-        typeof item.vat_rate === 'string'
-          ? parseFloat(item.vat_rate)
-          : (item.vat_rate ?? 0);
-      const lineHt = qty * unitPrice;
-      subtotalHt += lineHt;
-      totalVat += lineHt * vatRate;
-    }
-    return {
-      subtotalCents: Math.round(subtotalHt * 100),
-      vatCents: Math.round(totalVat * 100),
-      totalCents:
-        quote.total_amount_cents ?? Math.round((subtotalHt + totalVat) * 100),
-    };
-  })();
+  const customerName = quote.individual_customer
+    ? `${quote.individual_customer.first_name} ${quote.individual_customer.last_name}`
+    : (quote.partner?.trade_name ?? quote.partner?.legal_name ?? '-');
 
   // -----------------------------------------------------------------
   // RENDER
   // -----------------------------------------------------------------
   return (
     <div className="space-y-6">
+      {/* ============================================================= */}
       {/* HEADER */}
+      {/* ============================================================= */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/factures?tab=devis">
+            <Link href="/factures">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold tracking-tight">
-                {quote.number ?? quote.quote_number ?? '-'}
+                {quote.document_number}
               </h1>
-              <QuoteStatusBadge status={quote.status} />
-              {quote.converted_to_invoice_id && (
+              <QuoteStatusBadge status={status} />
+              {hasQonto && (
                 <Badge variant="outline" className="text-xs">
-                  Converti
+                  Qonto
                 </Badge>
               )}
             </div>
             <p className="text-sm text-muted-foreground">
               Créé le {formatDate(quote.created_at)}
-              {quote.expiry_date &&
-                ` — Valide jusqu'au ${formatDate(quote.expiry_date)}`}
+              {quote.validity_date &&
+                ` — Valide jusqu'au ${formatDate(quote.validity_date)}`}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Status actions */}
-          {statusActions.map(action => (
-            <Button
-              key={action.action}
-              variant={action.variant}
-              onClick={() => setConfirmAction(action)}
-              disabled={actionLoading}
-            >
-              {action.icon}
-              {action.label}
-            </Button>
-          ))}
+          {/* Edit / Save / Cancel buttons */}
+          {isEditing ? (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setIsEditing(false)}
+                disabled={saving}
+              >
+                <X className="mr-2 h-4 w-4" />
+                Annuler
+              </Button>
+              <Button
+                onClick={() => {
+                  void handleSave().catch((err: unknown) => {
+                    console.error('[QuoteDetail] save error:', err);
+                  });
+                }}
+                disabled={saving}
+              >
+                {saving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Sauvegarder
+              </Button>
+            </>
+          ) : (
+            <>
+              {canEdit && (
+                <Button variant="outline" onClick={enterEditMode}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Modifier
+                </Button>
+              )}
 
-          {/* PDF buttons */}
-          <Button
-            variant="outline"
-            onClick={() =>
-              window.open(`/api/qonto/quotes/${quote.id}/pdf`, '_blank')
-            }
-          >
-            <ExternalLink className="mr-2 h-4 w-4" />
-            Voir PDF
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              void handleDownloadPdf().catch(console.error);
-            }}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Télécharger
-          </Button>
+              {/* Status transition actions */}
+              {statusActions.map(action => (
+                <Button
+                  key={action.targetStatus}
+                  variant={action.variant}
+                  onClick={() => setConfirmAction(action)}
+                  disabled={saving}
+                >
+                  {action.icon}
+                  {action.label}
+                </Button>
+              ))}
 
-          {/* Send button */}
-          {(isDraft || quote.status === 'finalized') && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                void handleAction('send').catch(console.error);
-              }}
-              disabled={actionLoading}
-            >
-              <Send className="mr-2 h-4 w-4" />
-              Envoyer
-            </Button>
-          )}
+              {/* Qonto links */}
+              {hasQonto && quote.qonto_invoice_id && (
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    window.open(
+                      `/api/qonto/quotes/${quote.qonto_invoice_id}/pdf`,
+                      '_blank'
+                    )
+                  }
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  PDF Qonto
+                </Button>
+              )}
 
-          {/* Delete */}
-          {canDelete && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-destructive"
-              onClick={() => setShowDeleteConfirm(true)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+              {/* Link to Qonto (when not yet linked) */}
+              {!hasQonto && status !== 'draft' && (
+                <Button
+                  variant="outline"
+                  disabled={linkingQonto}
+                  onClick={() => {
+                    setLinkingQonto(true);
+                    void fetch(`/api/quotes/${quote.id}/link-qonto`, {
+                      method: 'POST',
+                    })
+                      .then(async res => {
+                        const body = (await res.json()) as {
+                          success: boolean;
+                          error?: string;
+                        };
+                        if (!body.success) {
+                          toast.error(
+                            body.error ?? 'Devis non trouvé sur Qonto'
+                          );
+                          return;
+                        }
+                        toast.success('Devis lié à Qonto avec succès');
+                        void loadQuote().catch((err: unknown) => {
+                          console.error(
+                            '[QuoteDetail] reload after link:',
+                            err
+                          );
+                        });
+                      })
+                      .catch((err: unknown) => {
+                        console.error('[QuoteDetail] link-qonto error:', err);
+                        toast.error('Erreur lors de la liaison Qonto');
+                      })
+                      .finally(() => {
+                        setLinkingQonto(false);
+                      });
+                  }}
+                >
+                  {linkingQonto ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                  )}
+                  Lier à Qonto
+                </Button>
+              )}
+
+              {canDelete && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </>
           )}
         </div>
       </div>
 
+      {/* ============================================================= */}
       {/* CONTENT GRID */}
+      {/* ============================================================= */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* LEFT COLUMN (2/3) */}
         <div className="space-y-6 lg:col-span-2">
-          {/* CLIENT INFO */}
+          {/* ----- CLIENT INFO ----- */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Client</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-base">
+                {quote.customer_type === 'individual' ? (
+                  <User className="h-4 w-4" />
+                ) : (
+                  <Building2 className="h-4 w-4" />
+                )}
+                Client
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <p className="text-sm text-muted-foreground">Nom</p>
-                  <p className="font-medium">{quote.client?.name ?? '-'}</p>
+                  <p className="font-medium">{customerName}</p>
                 </div>
-                {quote.client?.email && (
+                {quote.channel && (
                   <div>
-                    <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-medium">{quote.client.email}</p>
+                    <p className="text-sm text-muted-foreground">Canal</p>
+                    <p className="font-medium">{quote.channel.name}</p>
                   </div>
                 )}
-                {quote.client?.address?.city && (
+                {quote.individual_customer?.email && (
                   <div>
-                    <p className="text-sm text-muted-foreground">Adresse</p>
-                    <p className="text-sm">
-                      {[
-                        quote.client.address.street_address,
-                        [
-                          quote.client.address.zip_code,
-                          quote.client.address.city,
-                        ]
-                          .filter(Boolean)
-                          .join(' '),
-                        quote.client.address.country_code,
-                      ]
-                        .filter(Boolean)
-                        .join(', ')}
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="font-medium">
+                      {quote.individual_customer.email}
                     </p>
                   </div>
                 )}
-                {quote.purchase_order_number && (
+                {quote.sales_order_id && (
                   <div>
-                    <p className="text-sm text-muted-foreground">N° commande</p>
-                    <p className="font-medium">{quote.purchase_order_number}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Commande liée
+                    </p>
+                    <Link
+                      href={`/commandes/${quote.sales_order_id}`}
+                      className="font-medium text-primary hover:underline"
+                    >
+                      Voir la commande
+                    </Link>
                   </div>
                 )}
               </div>
             </CardContent>
           </Card>
 
-          {/* ITEMS TABLE */}
+          {/* ----- ITEMS TABLE ----- */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Articles</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Articles</CardTitle>
+                {isEditing && isFieldEditable('items', status, hasQonto) && (
+                  <div className="flex gap-2">
+                    {isLinkMe &&
+                      quote.linkme_selection_id &&
+                      linkmeSelectionDetails && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowLinkMeProducts(true)}
+                        >
+                          <ShoppingBag className="mr-1 h-3 w-3" />
+                          Sélection LinkMe
+                        </Button>
+                      )}
+                    {!isLinkMe && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowAddProduct(true)}
+                        >
+                          <Plus className="mr-1 h-3 w-3" />
+                          Catalogue
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={addManualItem}
+                        >
+                          <Plus className="mr-1 h-3 w-3" />
+                          Ligne libre
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[40%]">
+                    <TableHead className="w-[35%]">
                       Produit / Description
                     </TableHead>
                     <TableHead className="text-right">Qté</TableHead>
                     <TableHead className="text-right">Prix unit. HT</TableHead>
                     <TableHead className="text-right">TVA</TableHead>
+                    <TableHead className="text-right">Remise</TableHead>
+                    {isLinkMe && (
+                      <>
+                        <TableHead className="text-right">
+                          Prix base HT
+                        </TableHead>
+                        <TableHead className="text-right">Marge</TableHead>
+                      </>
+                    )}
                     <TableHead className="text-right">Total HT</TableHead>
+                    {isEditing &&
+                      isFieldEditable('items', status, hasQonto) && (
+                        <TableHead className="w-10" />
+                      )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {quote.items.length === 0 ? (
+                  {isEditing && isFieldEditable('items', status, hasQonto)
+                    ? /* EDIT MODE ITEMS */
+                      editFields.items.map(item => (
+                        <EditableQuoteItemRow
+                          key={item.id}
+                          item={item}
+                          isLinkMe={isLinkMe}
+                          onUpdate={(itemId, field, value) =>
+                            updateItem(
+                              itemId,
+                              field as keyof EditableItem,
+                              value
+                            )
+                          }
+                          onDelete={removeItem}
+                        />
+                      ))
+                    : /* READ MODE ITEMS */
+                      (quote.items ?? [])
+                        .sort((a, b) => a.sort_order - b.sort_order)
+                        .map(item => {
+                          const productImages =
+                            item.product?.product_images ?? [];
+                          const primaryImage =
+                            productImages.find(img => img.is_primary)
+                              ?.public_url ??
+                            productImages[0]?.public_url ??
+                            null;
+
+                          return (
+                            <TableRow key={item.id}>
+                              <TableCell>
+                                {item.product ? (
+                                  <div className="flex gap-3 items-center">
+                                    <div className="flex-shrink-0">
+                                      {primaryImage ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img
+                                          src={primaryImage}
+                                          alt={item.product.name}
+                                          className="w-10 h-10 object-cover rounded border"
+                                        />
+                                      ) : (
+                                        <div className="w-10 h-10 bg-gray-100 rounded border flex items-center justify-center">
+                                          <FileText className="h-5 w-5 text-gray-400" />
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="font-medium text-sm line-clamp-2">
+                                        {item.product.name}
+                                      </p>
+                                      {item.product.sku && (
+                                        <p className="text-xs text-muted-foreground">
+                                          {item.product.sku}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  item.description
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {item.quantity}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(item.unit_price_ht)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {item.tva_rate}%
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {item.discount_percentage > 0
+                                  ? `${item.discount_percentage}%`
+                                  : '-'}
+                              </TableCell>
+                              {isLinkMe && (
+                                <>
+                                  <TableCell className="text-right text-sm text-muted-foreground">
+                                    {item.base_price_ht !== null
+                                      ? formatCurrency(item.base_price_ht)
+                                      : '-'}
+                                  </TableCell>
+                                  <TableCell className="text-right text-sm text-muted-foreground">
+                                    {item.retrocession_rate !== null
+                                      ? `${(item.retrocession_rate * 100).toFixed(0)}%`
+                                      : '-'}
+                                  </TableCell>
+                                </>
+                              )}
+                              <TableCell className="text-right font-medium">
+                                {formatCurrency(item.total_ht)}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                  {(isEditing ? editFields.items : (quote.items ?? []))
+                    .length === 0 && (
                     <TableRow>
                       <TableCell
-                        colSpan={5}
+                        colSpan={isLinkMe ? 8 : 6}
                         className="py-8 text-center text-muted-foreground"
                       >
                         Aucun article
                       </TableCell>
                     </TableRow>
-                  ) : (
-                    quote.items.map((item, index) => (
-                      <TableRow key={item.id ?? index}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium text-sm">{item.title}</p>
-                            {item.description && (
-                              <p className="text-xs text-muted-foreground">
-                                {item.description}
-                              </p>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {item.quantity} {item.unit ?? ''}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {item.unit_price?.value}{' '}
-                          {item.unit_price?.currency ?? quote.currency}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatVatRate(item.vat_rate)}
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {(
-                            parseFloat(item.quantity || '0') *
-                            parseFloat(item.unit_price?.value || '0')
-                          ).toFixed(2)}{' '}
-                          {item.unit_price?.currency ?? quote.currency}
-                        </TableCell>
-                      </TableRow>
-                    ))
                   )}
                 </TableBody>
                 <TableFooter>
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-right font-medium">
-                      Sous-total HT
-                    </TableCell>
-                    <TableCell className="text-right font-bold">
-                      {formatAmountCents(
-                        computedTotals.subtotalCents,
-                        quote.currency
-                      )}
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-right font-medium">
-                      TVA
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatAmountCents(
-                        computedTotals.vatCents,
-                        quote.currency
-                      )}
-                    </TableCell>
-                  </TableRow>
-                  <TableRow className="font-bold">
-                    <TableCell colSpan={4} className="text-right">
-                      Total TTC
-                    </TableCell>
-                    <TableCell className="text-right text-lg">
-                      {formatAmountCents(
-                        computedTotals.totalCents,
-                        quote.currency
-                      )}
-                    </TableCell>
-                  </TableRow>
+                  {(() => {
+                    const baseColSpan = 5;
+                    const linkMeExtra = isLinkMe ? 2 : 0;
+                    const footerColSpan = baseColSpan + linkMeExtra;
+                    return (
+                      <>
+                        <TableRow>
+                          <TableCell
+                            colSpan={footerColSpan}
+                            className="text-right"
+                          >
+                            Total HT
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            <Money amount={computedTotals.items_total_ht} />
+                          </TableCell>
+                          {isEditing &&
+                            isFieldEditable('items', status, hasQonto) && (
+                              <TableCell />
+                            )}
+                        </TableRow>
+                        <TableRow>
+                          <TableCell
+                            colSpan={footerColSpan}
+                            className="text-right"
+                          >
+                            TVA
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Money amount={computedTotals.tva_amount} />
+                          </TableCell>
+                          {isEditing &&
+                            isFieldEditable('items', status, hasQonto) && (
+                              <TableCell />
+                            )}
+                        </TableRow>
+                        <TableRow className="font-bold">
+                          <TableCell
+                            colSpan={footerColSpan}
+                            className="text-right"
+                          >
+                            Total TTC
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Money
+                              amount={computedTotals.total_ttc}
+                              bold
+                              size="lg"
+                            />
+                          </TableCell>
+                          {isEditing &&
+                            isFieldEditable('items', status, hasQonto) && (
+                              <TableCell />
+                            )}
+                        </TableRow>
+                      </>
+                    );
+                  })()}
                 </TableFooter>
               </Table>
             </CardContent>
           </Card>
 
-          {/* NOTES / HEADER / FOOTER */}
-          {(quote.header ?? quote.footer ?? quote.terms_and_conditions) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">
-                  Mentions & conditions
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {quote.header && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">En-tête</p>
-                    <p className="whitespace-pre-wrap text-sm">
-                      {quote.header}
-                    </p>
-                  </div>
-                )}
-                {quote.footer && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Pied de page
-                    </p>
-                    <p className="whitespace-pre-wrap text-sm">
-                      {quote.footer}
-                    </p>
-                  </div>
-                )}
-                {quote.terms_and_conditions && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Conditions générales
-                    </p>
-                    <p className="whitespace-pre-wrap text-sm">
-                      {quote.terms_and_conditions}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+          {/* ----- NOTES ----- */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Notes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isEditing && isFieldEditable('notes', status, hasQonto) ? (
+                <Textarea
+                  value={editFields.notes}
+                  onChange={e =>
+                    setEditFields(prev => ({
+                      ...prev,
+                      notes: e.target.value,
+                    }))
+                  }
+                  rows={4}
+                  placeholder="Notes internes ou message client..."
+                />
+              ) : (
+                <p className="whitespace-pre-wrap text-sm">
+                  {quote.notes ?? (
+                    <span className="text-muted-foreground">Aucune note</span>
+                  )}
+                </p>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* RIGHT COLUMN (1/3) */}
         <div className="space-y-6">
-          {/* METADATA */}
+          {/* ----- METADATA ----- */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Informations</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Reference */}
               <div>
-                <p className="text-sm text-muted-foreground">N° Devis</p>
-                <p className="font-medium">
-                  {quote.number ?? quote.quote_number ?? '-'}
-                </p>
+                <p className="text-sm text-muted-foreground">Référence</p>
+                {isEditing && isFieldEditable('reference', status, hasQonto) ? (
+                  <Input
+                    value={editFields.reference}
+                    onChange={e =>
+                      setEditFields(prev => ({
+                        ...prev,
+                        reference: e.target.value,
+                      }))
+                    }
+                    className="mt-1"
+                  />
+                ) : (
+                  <p className="font-medium">{quote.document_number}</p>
+                )}
               </div>
 
               <Separator />
 
+              {/* Date */}
               <div>
                 <p className="text-sm text-muted-foreground">
                   <Calendar className="mr-1 inline h-3 w-3" />
-                  Date d&apos;émission
+                  Date de création
                 </p>
-                <p className="font-medium">{formatDate(quote.issue_date)}</p>
+                <p className="font-medium">{formatDate(quote.document_date)}</p>
               </div>
 
+              {/* Validity */}
               <div>
                 <p className="text-sm text-muted-foreground">
                   <Calendar className="mr-1 inline h-3 w-3" />
-                  Date d&apos;expiration
+                  Date de validité
                 </p>
-                <p className="font-medium">{formatDate(quote.expiry_date)}</p>
-              </div>
-
-              {quote.finalized_at && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Finalisé le</p>
+                {isEditing &&
+                isFieldEditable('validity_date', status, hasQonto) ? (
+                  <div className="mt-1 flex items-center gap-2">
+                    <Input
+                      type="number"
+                      value={editFields.validity_days}
+                      onChange={e =>
+                        setEditFields(prev => ({
+                          ...prev,
+                          validity_days: parseInt(e.target.value, 10) || 30,
+                        }))
+                      }
+                      className="w-20"
+                      min={1}
+                    />
+                    <span className="text-sm text-muted-foreground">jours</span>
+                  </div>
+                ) : (
                   <p className="font-medium">
-                    {formatDate(quote.finalized_at)}
+                    {formatDate(quote.validity_date)}
                   </p>
-                </div>
-              )}
-
-              {quote.accepted_at && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Accepté le</p>
-                  <p className="font-medium">{formatDate(quote.accepted_at)}</p>
-                </div>
-              )}
-
-              {quote.declined_at && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Refusé le</p>
-                  <p className="font-medium">{formatDate(quote.declined_at)}</p>
-                </div>
-              )}
+                )}
+              </div>
 
               <Separator />
+
+              {/* Fees (draft only) */}
+              {(status === 'draft' ||
+                quote.shipping_cost_ht > 0 ||
+                quote.handling_cost_ht > 0 ||
+                quote.insurance_cost_ht > 0) && (
+                <>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Frais</p>
+                    {isEditing && isFieldEditable('fees', status, hasQonto) ? (
+                      <div className="space-y-2">
+                        <div>
+                          <Label className="text-xs">Port HT</Label>
+                          <Input
+                            type="number"
+                            value={editFields.shipping_cost_ht}
+                            onChange={e =>
+                              setEditFields(prev => ({
+                                ...prev,
+                                shipping_cost_ht:
+                                  parseFloat(e.target.value) || 0,
+                              }))
+                            }
+                            step={0.01}
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Manutention HT</Label>
+                          <Input
+                            type="number"
+                            value={editFields.handling_cost_ht}
+                            onChange={e =>
+                              setEditFields(prev => ({
+                                ...prev,
+                                handling_cost_ht:
+                                  parseFloat(e.target.value) || 0,
+                              }))
+                            }
+                            step={0.01}
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Assurance HT</Label>
+                          <Input
+                            type="number"
+                            value={editFields.insurance_cost_ht}
+                            onChange={e =>
+                              setEditFields(prev => ({
+                                ...prev,
+                                insurance_cost_ht:
+                                  parseFloat(e.target.value) || 0,
+                              }))
+                            }
+                            step={0.01}
+                            className="mt-1"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-1 text-sm">
+                        {quote.shipping_cost_ht > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Port</span>
+                            <Money amount={quote.shipping_cost_ht} size="sm" />
+                          </div>
+                        )}
+                        {quote.handling_cost_ht > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Manutention
+                            </span>
+                            <Money amount={quote.handling_cost_ht} size="sm" />
+                          </div>
+                        )}
+                        {quote.insurance_cost_ht > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Assurance
+                            </span>
+                            <Money amount={quote.insurance_cost_ht} size="sm" />
+                          </div>
+                        )}
+                        {quote.shipping_cost_ht === 0 &&
+                          quote.handling_cost_ht === 0 &&
+                          quote.insurance_cost_ht === 0 && (
+                            <p className="text-muted-foreground">Aucun frais</p>
+                          )}
+                      </div>
+                    )}
+                  </div>
+                  <Separator />
+                </>
+              )}
 
               {/* Conversion info */}
               {quote.converted_to_invoice_id && (
@@ -750,50 +1414,110 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
                     Converti en facture
                   </p>
                   <Link
-                    href={`/factures/${quote.converted_to_invoice_id}?type=invoice`}
+                    href={`/factures/${quote.converted_to_invoice_id}`}
                     className="text-sm font-medium text-primary hover:underline"
                   >
                     Voir la facture
                   </Link>
                 </div>
               )}
+            </CardContent>
+          </Card>
 
-              {/* Amounts summary */}
+          {/* ----- ADDRESSES ----- */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <MapPin className="h-4 w-4" />
+                Adresses
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Billing address */}
+              <div>
+                <p className="mb-1 text-sm font-medium">
+                  Adresse de facturation
+                </p>
+                {isEditing &&
+                isFieldEditable('billing_address', status, hasQonto) ? (
+                  <Textarea
+                    value={addressToString(editFields.billing_address)}
+                    onChange={e =>
+                      setEditFields(prev => ({
+                        ...prev,
+                        billing_address: stringToAddress(e.target.value),
+                      }))
+                    }
+                    rows={3}
+                    placeholder="Adresse de facturation..."
+                  />
+                ) : (
+                  <AddressDisplay address={quote.billing_address} />
+                )}
+              </div>
+
               <Separator />
 
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Sous-total HT</span>
-                  <span>
-                    {formatAmountCents(
-                      computedTotals.subtotalCents,
-                      quote.currency
-                    )}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">TVA</span>
-                  <span>
-                    {formatAmountCents(computedTotals.vatCents, quote.currency)}
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex justify-between font-bold">
-                  <span>Total TTC</span>
-                  <span>
-                    {formatAmountCents(
-                      computedTotals.totalCents,
-                      quote.currency
-                    )}
-                  </span>
-                </div>
+              {/* Shipping address */}
+              <div>
+                <p className="mb-1 text-sm font-medium">Adresse de livraison</p>
+                {isEditing &&
+                isFieldEditable('shipping_address', status, hasQonto) ? (
+                  <Textarea
+                    value={addressToString(editFields.shipping_address)}
+                    onChange={e =>
+                      setEditFields(prev => ({
+                        ...prev,
+                        shipping_address: stringToAddress(e.target.value),
+                      }))
+                    }
+                    rows={3}
+                    placeholder="Adresse de livraison..."
+                  />
+                ) : (
+                  <AddressDisplay address={quote.shipping_address} />
+                )}
               </div>
+
+              {/* Propagate address to organisation */}
+              {isEditing &&
+                quote.partner?.id &&
+                quote.customer_type === 'organization' && (
+                  <div className="pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={updatingOrgAddress}
+                      onClick={() => {
+                        void handleUpdateOrgAddress().catch((err: unknown) => {
+                          console.error(
+                            '[QuoteDetail] updateOrgAddress error:',
+                            err
+                          );
+                        });
+                      }}
+                      className="w-full text-xs"
+                    >
+                      {updatingOrgAddress ? (
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                      )}
+                      Mettre à jour l&apos;adresse de l&apos;organisation
+                    </Button>
+                  </div>
+                )}
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* STATUS TRANSITION CONFIRMATION */}
+      {/* ============================================================= */}
+      {/* DIALOGS */}
+      {/* ============================================================= */}
+
+      {/* Status transition confirmation */}
       <AlertDialog
         open={!!confirmAction}
         onOpenChange={open => {
@@ -808,52 +1532,217 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={actionLoading}>
-              Annuler
-            </AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (confirmAction) {
-                  void handleAction(confirmAction.action).catch(console.error);
+                  void handleStatusChange(confirmAction.targetStatus).catch(
+                    (err: unknown) => {
+                      console.error('[QuoteDetail] status change error:', err);
+                    }
+                  );
                 }
               }}
-              disabled={actionLoading}
+              disabled={saving}
             >
-              {actionLoading && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Confirmer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* DELETE CONFIRMATION */}
+      {/* Delete confirmation */}
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer ce devis ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Le devis {quote.quote_number} sera supprimé de Qonto. Cette action
-              est irréversible.
+              Le devis {quote.document_number} sera supprimé. Cette action est
+              irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={actionLoading}>
-              Annuler
-            </AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
-                void handleDelete().catch(console.error);
+                void handleDelete().catch((err: unknown) => {
+                  console.error('[QuoteDetail] delete error:', err);
+                });
               }}
-              disabled={actionLoading}
             >
-              {actionLoading ? 'Suppression...' : 'Supprimer'}
+              Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Add product modal */}
+      {showAddProduct && (
+        <AddProductToOrderModal
+          open={showAddProduct}
+          onClose={() => setShowAddProduct(false)}
+          onAdd={handleAddProduct}
+          orderType="sales"
+        />
+      )}
+
+      {/* LinkMe selection products dialog */}
+      <Dialog
+        open={showLinkMeProducts}
+        onOpenChange={open => {
+          setShowLinkMeProducts(open);
+          if (!open) setLinkMeSearchTerm('');
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              Produits de la sélection —{' '}
+              {linkmeSelectionDetails?.name ?? 'LinkMe'}
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher par nom ou SKU..."
+              value={linkMeSearchTerm}
+              onChange={e => setLinkMeSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          {/* Products list */}
+          <div className="space-y-2 overflow-y-auto flex-1 min-h-0">
+            {(linkmeSelectionDetails?.items ?? [])
+              .filter((selItem: SelectionItem) => {
+                if (!linkMeSearchTerm.trim()) return true;
+                const term = linkMeSearchTerm.toLowerCase();
+                const name = (selItem.product?.name ?? '').toLowerCase();
+                const sku = (selItem.product?.sku ?? '').toLowerCase();
+                return name.includes(term) || sku.includes(term);
+              })
+              .map((selItem: SelectionItem) => {
+                const commissionRate = (selItem.commission_rate ?? 0) / 100;
+                const marginRate = selItem.margin_rate / 100;
+                const sellingPrice =
+                  Math.round(
+                    (selItem.base_price_ht / (1 - marginRate)) *
+                      (1 + commissionRate) *
+                      100
+                  ) / 100;
+                const alreadyAdded = editFields.items.some(
+                  i => i.product_id === selItem.product_id
+                );
+
+                return (
+                  <div
+                    key={selItem.id}
+                    className="flex items-center justify-between rounded-lg border p-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      {selItem.product_image_url ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={selItem.product_image_url}
+                          alt={selItem.product?.name ?? ''}
+                          className="h-10 w-10 rounded border object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded border bg-gray-100">
+                          <FileText className="h-5 w-5 text-gray-400" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium line-clamp-1">
+                          {selItem.product?.name ?? 'Produit'}
+                        </p>
+                        <div className="flex gap-2 text-xs text-muted-foreground">
+                          <span>
+                            Base: {formatCurrency(selItem.base_price_ht)}
+                          </span>
+                          <span>Marge: {selItem.margin_rate}%</span>
+                          <span>Com: {selItem.commission_rate ?? 0}%</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium">
+                        {formatCurrency(sellingPrice)}
+                      </span>
+                      <Button
+                        variant={alreadyAdded ? 'secondary' : 'outline'}
+                        size="sm"
+                        onClick={() => {
+                          handleAddLinkMeProduct(selItem);
+                          setShowLinkMeProducts(false);
+                          setLinkMeSearchTerm('');
+                        }}
+                      >
+                        <Plus className="mr-1 h-3 w-3" />
+                        {alreadyAdded ? '+1' : 'Ajouter'}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            {(linkmeSelectionDetails?.items ?? []).length === 0 && (
+              <p className="py-4 text-center text-sm text-muted-foreground">
+                Aucun produit dans cette sélection
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// =====================================================================
+// SUB-COMPONENTS
+// =====================================================================
+
+function AddressDisplay({
+  address,
+}: {
+  address: Record<string, unknown> | null;
+}) {
+  if (!address) {
+    return <p className="text-sm text-muted-foreground">Non renseignée</p>;
+  }
+
+  // Support freeform text format: { address: "multiline text" }
+  if (typeof address.address === 'string' && address.address) {
+    return (
+      <div className="text-sm">
+        {address.address.split('\n').map((line, i) => (
+          <p key={i}>{line}</p>
+        ))}
+      </div>
+    );
+  }
+
+  const street = (address.street as string) ?? (address.line1 as string) ?? '';
+  const city = (address.city as string) ?? '';
+  const zip = (address.zip as string) ?? (address.postal_code as string) ?? '';
+  const country = (address.country as string) ?? '';
+
+  if (!street && !city && !zip) {
+    return <p className="text-sm text-muted-foreground">Non renseignée</p>;
+  }
+
+  return (
+    <div className="text-sm">
+      {street && <p>{street}</p>}
+      {(zip || city) && (
+        <p>
+          {zip} {city}
+        </p>
+      )}
+      {country && <p>{country}</p>}
     </div>
   );
 }

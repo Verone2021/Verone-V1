@@ -1,6 +1,6 @@
 # Architecture Devis (Quotes) - Source de Verite
 
-**Version** : 1.0.0
+**Version** : 2.0.0
 **Date** : 2026-03-20
 **Statut** : DOCUMENTATION CANONIQUE
 
@@ -8,95 +8,118 @@
 
 ## Regle Fondamentale
 
-| Entite                                   | Source de verite | Table/API               |
-| ---------------------------------------- | ---------------- | ----------------------- |
-| **Factures de vente** (customer_invoice) | DB locale        | `financial_documents`   |
-| **Factures d'achat** (supplier_invoice)  | DB locale        | `financial_documents`   |
-| **Devis** (quotes)                       | **Qonto API**    | `GET /api/qonto/quotes` |
+| Entite                                   | Source de verite | Table/API             |
+| ---------------------------------------- | ---------------- | --------------------- |
+| **Factures de vente** (customer_invoice) | DB locale        | `financial_documents` |
+| **Factures d'achat** (supplier_invoice)  | DB locale        | `financial_documents` |
+| **Devis** (customer_quote)               | **DB locale**    | `financial_documents` |
 
-> **`financial_documents`** = factures UNIQUEMENT (vente + achat).
-> Les devis ne sont JAMAIS stockes dans `financial_documents`.
+> **`financial_documents`** = factures ET devis (vente + achat).
+> Les devis sont stockes dans `financial_documents` avec `document_type = 'customer_quote'`.
+> Qonto est utilise en background pour la generation PDF et l'envoi client.
 
 ---
 
-## Flux Devis
+## Flux Devis (Pattern Hybride — meme pattern que factures)
 
 ### Creation
 
 ```
-UI (QuoteFormModal) --> POST /api/qonto/quotes --> Qonto API (draft)
+UI (QuoteFormModal / QuoteCreateFromOrderModal)
+  --> POST /api/qonto/quotes
+    --> Qonto API (draft) --> creation devis sur Qonto
+    --> INSERT financial_documents (source de verite locale)
 ```
 
 ### Listing (onglet Devis)
 
 ```
-UI (onglet Devis) --> GET /api/qonto/quotes --> Qonto API --> affichage tableau
+UI (onglet Devis) --> useQuotes() hook --> SELECT financial_documents WHERE document_type = 'customer_quote'
 ```
 
-### PDF
+### Detail
 
 ```
-UI (bouton PDF) --> GET /api/qonto/quotes/:id/pdf --> Qonto API --> PDF binaire
+UI (/factures/devis/:id) --> useQuotes().fetchQuote(id) --> financial_documents (local DB)
 ```
 
-### Finalisation
+### PDF (via Qonto)
 
 ```
-UI (bouton Finaliser) --> POST /api/qonto/quotes/:id/finalize --> Qonto API
+UI (bouton PDF) --> GET /api/qonto/quotes/:qonto_id/pdf --> Qonto API --> PDF binaire
+```
+
+### Liaison commande (by-order)
+
+```
+OrderDetailModal --> GET /api/qonto/quotes/by-order/:orderId --> financial_documents WHERE sales_order_id = :orderId
 ```
 
 ---
 
 ## Endpoints API
 
-| Methode | Endpoint                         | Description                                   |
-| ------- | -------------------------------- | --------------------------------------------- |
-| `GET`   | `/api/qonto/quotes`              | Liste tous les devis depuis Qonto             |
-| `GET`   | `/api/qonto/quotes?status=draft` | Filtre par statut                             |
-| `POST`  | `/api/qonto/quotes`              | Cree un devis (depuis commande ou standalone) |
-| `POST`  | `/api/qonto/quotes/:id/finalize` | Finalise un devis brouillon                   |
-| `GET`   | `/api/qonto/quotes/:id/pdf`      | Telecharge le PDF d'un devis                  |
+| Methode | Endpoint                              | Source     | Description                                |
+| ------- | ------------------------------------- | ---------- | ------------------------------------------ |
+| `GET`   | `/api/qonto/quotes`                   | Qonto API  | Liste depuis Qonto (sync/legacy)           |
+| `POST`  | `/api/qonto/quotes`                   | Qonto + DB | Cree un devis (Qonto draft + INSERT local) |
+| `GET`   | `/api/qonto/quotes/by-order/:orderId` | DB locale  | Devis lies a une commande                  |
+| `POST`  | `/api/qonto/quotes/:id/finalize`      | Qonto API  | Finalise un devis brouillon                |
+| `GET`   | `/api/qonto/quotes/:id/pdf`           | Qonto API  | Telecharge le PDF d'un devis               |
 
 ---
 
-## Mapping Champs Qonto -> UI
+## Hook useQuotes (Source de verite)
 
-| Champ UI   | Champ Qonto API                                          |
-| ---------- | -------------------------------------------------------- |
-| N Devis    | `quote_number`                                           |
-| Client     | `client.name`                                            |
-| Date       | `issue_date`                                             |
-| Expiration | `expiry_date`                                            |
-| Statut     | `status` (draft, finalized, accepted, declined, expired) |
-| Montant    | `total_amount` (en euros, pas en centimes)               |
+Le hook `useQuotes` dans `@verone/finance/hooks` gere le CRUD complet des devis :
 
----
-
-## Flux Factures (pour comparaison)
-
-```
-1. Creation dans Qonto (POST /api/qonto/invoices)
-2. Sync vers financial_documents (POST /api/qonto/sync-invoices)
-3. Lecture depuis financial_documents + enrichissement Qonto (GET /api/qonto/invoices)
-```
-
-Les factures ont un workflow hybride : creees dans Qonto, synchronisees localement pour enrichissement (liaison commande, rapprochement bancaire, archivage).
-
-Les devis n'ont PAS ce workflow hybride : ils vivent exclusivement dans Qonto.
+- **Lecture** : `financial_documents` avec `document_type = 'customer_quote'`
+- **Creation** : INSERT dans `financial_documents` + push vers Qonto (non-bloquant)
+- **Mise a jour** : UPDATE `financial_documents` (items, totaux, notes)
+- **Transitions statut** : `draft -> validated -> sent -> accepted/declined/expired -> converted`
+- **Suppression** : soft delete (`deleted_at`)
+- **Stats** : comptage par statut
 
 ---
 
-## Pourquoi cette Architecture
+## Mapping Champs DB -> UI
 
-1. **Qonto = source de verite pour les devis** : generation PDF, envoi client, suivi statut
-2. **Pas de duplication** : evite la desynchronisation entre DB locale et Qonto
-3. **Simplicite** : un seul endroit ou regarder pour les devis
-4. **`financial_documents` reste propre** : uniquement les documents qui necessitent un enrichissement local (factures)
+| Champ UI   | Champ DB                      |
+| ---------- | ----------------------------- |
+| N Devis    | `document_number`             |
+| Client     | `partner.trade_name`          |
+| Date       | `document_date`               |
+| Expiration | `validity_date`               |
+| Statut     | `quote_status`                |
+| Montant    | `total_ttc` (en euros)        |
+| Lien Qonto | `qonto_invoice_id` (pour PDF) |
 
 ---
 
-## Erreur a Eviter
+## Guard Anti-Doublon
 
-> **JAMAIS** lire les devis depuis `financial_documents` avec `document_type = 'customer_quote'`.
-> Cette approche a ete abandonnee car elle creait une source de verite dupliquee.
-> Utiliser TOUJOURS `GET /api/qonto/quotes`.
+La route `POST /api/qonto/quotes` verifie dans `financial_documents` :
+
+- `sales_order_id` = commande cible
+- `document_type = 'customer_quote'`
+- `deleted_at IS NULL`
+- `quote_status NOT IN ('declined', 'expired')`
+
+Si un devis existe deja → reponse `409 Conflict`.
+
+---
+
+## Pourquoi cette Architecture (v2)
+
+1. **DB locale = source de verite** : memes avantages que les factures (liaison commande, `purchase_order_number` fiable)
+2. **Qonto en background** : generation PDF, envoi client, suivi comptable
+3. **Pas de dependance Qonto** : si l'API Qonto est lente ou indisponible, les devis restent accessibles
+4. **Guard anti-doublon fiable** : basee sur la DB locale, pas sur un listing Qonto qui peut ne pas retourner le `purchase_order_number`
+5. **Coherence** : meme pattern pour factures et devis → moins de code a maintenir
+
+---
+
+## Historique
+
+- **v1.0** (2026-03-20) : Architecture full-Qonto (devis = Qonto API seulement)
+- **v2.0** (2026-03-20) : Retour au pattern hybride (DB locale + Qonto sync), alignement avec les factures
