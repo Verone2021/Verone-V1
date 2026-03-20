@@ -46,6 +46,14 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   Table,
   TableBody,
   TableCell,
@@ -82,6 +90,7 @@ import {
   ShoppingCart,
   FileEdit,
   FileX,
+  Trash2,
   Loader2,
   Archive,
   ArchiveRestore,
@@ -705,7 +714,8 @@ export default function FacturationPage() {
   const [showQuoteServiceModal, setShowQuoteServiceModal] = useState(false);
   const [selectedQuoteOrder, setSelectedQuoteOrder] =
     useState<IOrderForDocument | null>(null);
-  // quoteToDelete/deletingQuote removed — Qonto quotes managed in Qonto
+  const [quoteToDelete, setQuoteToDelete] = useState<QontoQuote | null>(null);
+  const [deletingQuote, setDeletingQuote] = useState(false);
 
   // État consolidation liaisons
   const [isConsolidating, setIsConsolidating] = useState(false);
@@ -995,7 +1005,29 @@ export default function FacturationPage() {
     });
   };
 
-  // handleDeleteQuote removed — quotes are managed in Qonto
+  // Delete quote via Qonto API
+  const handleDeleteQuote = async (): Promise<void> => {
+    if (!quoteToDelete) return;
+
+    setDeletingQuote(true);
+    try {
+      const response = await fetch(`/api/qonto/quotes/${quoteToDelete.id}`, {
+        method: 'DELETE',
+      });
+      const data = (await response.json()) as ApiResponse<unknown>;
+      if (!response.ok || !data.success) {
+        throw new Error(data.error ?? 'Erreur lors de la suppression');
+      }
+      toast.success('Devis supprimé');
+      void fetchQontoQuotes();
+    } catch (err) {
+      console.error('[Factures] deleteQuote error:', err);
+      toast.error(err instanceof Error ? err.message : 'Erreur de suppression');
+    } finally {
+      setDeletingQuote(false);
+      setQuoteToDelete(null);
+    }
+  };
 
   // Credit note handlers
   const handleDownloadCreditNotePdf = async (
@@ -1640,6 +1672,14 @@ export default function FacturationPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
+                            <Button variant="ghost" size="icon" asChild>
+                              <Link
+                                href={`/factures/devis/${quote.id}`}
+                                title="Voir le détail"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Link>
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -1671,6 +1711,17 @@ export default function FacturationPage() {
                             >
                               <Download className="h-4 w-4" />
                             </Button>
+                            {quote.status === 'draft' && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setQuoteToDelete(quote)}
+                                title="Supprimer"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -1958,7 +2009,38 @@ export default function FacturationPage() {
         }}
       />
 
-      {/* Delete quote dialog removed — quotes are managed in Qonto */}
+      {/* Dialog confirmation suppression devis Qonto */}
+      <AlertDialog
+        open={!!quoteToDelete}
+        onOpenChange={open => !open && setQuoteToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce devis ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous allez supprimer le devis{' '}
+              <strong>{quoteToDelete?.quote_number}</strong>. Cette action est
+              irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingQuote}>
+              Annuler
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                void handleDeleteQuote().catch(error => {
+                  console.error('[Factures] handleDeleteQuote failed:', error);
+                });
+              }}
+              disabled={deletingQuote}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletingQuote ? 'Suppression...' : 'Supprimer'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Modal detail commande (ouverture en place depuis lien facture) */}
       <OrderDetailModal
