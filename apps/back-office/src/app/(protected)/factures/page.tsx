@@ -169,6 +169,7 @@ interface QontoQuote {
     name: string;
   };
   converted_to_invoice_id?: string | null;
+  purchase_order_number?: string | null;
 }
 
 interface QontoQuotesResponse extends ApiResponse<{ quotes: QontoQuote[] }> {
