@@ -29,7 +29,7 @@ import {
   type IOrderForDocument,
   type OrderForLink,
 } from '@verone/finance/components';
-import { useQuotes, type Quote as LocalQuote } from '@verone/finance/hooks';
+// useQuotes (local DB) removed — quotes come from Qonto API exclusively
 import {
   Card,
   CardContent,
@@ -156,7 +156,26 @@ interface CreditNote {
   attachment_id?: string;
 }
 
-// QontoQuote/QontoQuotesResponse removed — quotes now come from useQuotes (local DB)
+interface QontoQuote {
+  id: string;
+  quote_number: string;
+  status: string;
+  currency: string;
+  total_amount: number;
+  issue_date: string;
+  expiry_date: string;
+  client?: {
+    id: string;
+    name: string;
+  };
+  converted_to_invoice_id?: string | null;
+  purchase_order_number?: string | null;
+}
+
+interface QontoQuotesResponse extends ApiResponse<{ quotes: QontoQuote[] }> {
+  quotes?: QontoQuote[];
+  count?: number;
+}
 
 interface Invoice {
   id: string;
@@ -684,15 +703,11 @@ export default function FacturationPage() {
   // Etat pour facture de service (sans commande)
   const [showServiceModal, setShowServiceModal] = useState(false);
 
-  // Devis from local DB (useQuotes hook — source of truth)
-  const {
-    quotes: localQuotes,
-    loading: loadingQuotes,
-    error: errorQuotes,
-    deleteQuote: deleteLocalQuote,
-    fetchQuotes,
-  } = useQuotes();
+  // États pour les devis (Qonto API)
   const [showQuoteForm, setShowQuoteForm] = useState(false);
+  const [qontoQuotes, setQontoQuotes] = useState<QontoQuote[]>([]);
+  const [loadingQuotes, setLoadingQuotes] = useState(false);
+  const [errorQuotes, setErrorQuotes] = useState<string | null>(null);
 
   // Legacy states (kept for Qonto finalization/PDF features)
   const [showQuoteOrderSelect, setShowQuoteOrderSelect] = useState(false);
@@ -700,7 +715,7 @@ export default function FacturationPage() {
   const [showQuoteServiceModal, setShowQuoteServiceModal] = useState(false);
   const [selectedQuoteOrder, setSelectedQuoteOrder] =
     useState<IOrderForDocument | null>(null);
-  const [quoteToDelete, setQuoteToDelete] = useState<LocalQuote | null>(null);
+  const [quoteToDelete, setQuoteToDelete] = useState<QontoQuote | null>(null);
   const [deletingQuote, setDeletingQuote] = useState(false);
 
   // État consolidation liaisons
@@ -798,7 +813,26 @@ export default function FacturationPage() {
     }
   };
 
-  // Quotes are loaded automatically by useQuotes hook (fetchQuotes on mount)
+  // Fetch quotes from Qonto API (source of truth for devis)
+  const fetchQontoQuotes = async (): Promise<void> => {
+    setLoadingQuotes(true);
+    setErrorQuotes(null);
+
+    try {
+      const response = await fetch('/api/qonto/quotes');
+      const data = (await response.json()) as QontoQuotesResponse;
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error ?? 'Failed to fetch quotes');
+      }
+
+      setQontoQuotes(data.quotes ?? []);
+    } catch (err) {
+      setErrorQuotes(err instanceof Error ? err.message : 'Erreur inconnue');
+    } finally {
+      setLoadingQuotes(false);
+    }
+  };
 
   // Fetch credit notes
   const fetchCreditNotes = async (): Promise<void> => {
@@ -832,18 +866,12 @@ export default function FacturationPage() {
   useEffect(() => {
     if (activeTab === 'factures' && invoices.length === 0) {
       void fetchInvoices();
-    } else if (activeTab === 'devis' && localQuotes.length === 0) {
-      void fetchQuotes().catch(console.error);
+    } else if (activeTab === 'devis' && qontoQuotes.length === 0) {
+      void fetchQontoQuotes();
     } else if (activeTab === 'avoirs' && creditNotes.length === 0) {
       void fetchCreditNotes();
     }
-  }, [
-    activeTab,
-    invoices.length,
-    localQuotes.length,
-    creditNotes.length,
-    fetchQuotes,
-  ]);
+  }, [activeTab, invoices.length, qontoQuotes.length, creditNotes.length]);
 
   // Convertir TransactionMissingInvoice en TransactionForUpload
   const transactionForUpload: TransactionForUpload | null = useMemo(() => {
@@ -926,17 +954,9 @@ export default function FacturationPage() {
     }
   };
 
-  const handleDownloadQuotePdf = async (quote: LocalQuote): Promise<void> => {
-    if (!quote.qonto_invoice_id) {
-      toast.error(
-        "Ce devis n'a pas encore été synchronisé avec Qonto (pas de PDF disponible)"
-      );
-      return;
-    }
+  const handleDownloadQuotePdf = async (quote: QontoQuote): Promise<void> => {
     try {
-      const response = await fetch(
-        `/api/qonto/quotes/${quote.qonto_invoice_id}/pdf`
-      );
+      const response = await fetch(`/api/qonto/quotes/${quote.id}/pdf`);
       if (!response.ok) {
         const errorData = (await response.json().catch(() => ({}))) as {
           error?: string;
@@ -952,7 +972,7 @@ export default function FacturationPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `devis-${quote.document_number}.pdf`;
+      a.download = `devis-${quote.quote_number}.pdf`;
       a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
@@ -978,24 +998,29 @@ export default function FacturationPage() {
   const handleQuoteCreated = (): void => {
     setShowQuoteCreate(false);
     setSelectedQuoteOrder(null);
-    void fetchQuotes().catch((err: unknown) => {
+    void fetchQontoQuotes().catch((err: unknown) => {
       console.error(
-        '[Factures] fetchQuotes after handleQuoteCreated failed:',
+        '[Factures] fetchQontoQuotes after handleQuoteCreated failed:',
         err
       );
     });
   };
 
-  // Delete quote via local DB (useQuotes hook)
+  // Delete quote via Qonto API
   const handleDeleteQuote = async (): Promise<void> => {
     if (!quoteToDelete) return;
 
     setDeletingQuote(true);
     try {
-      const success = await deleteLocalQuote(quoteToDelete.id);
-      if (!success) {
-        throw new Error('Erreur lors de la suppression');
+      const response = await fetch(`/api/qonto/quotes/${quoteToDelete.id}`, {
+        method: 'DELETE',
+      });
+      const data = (await response.json()) as ApiResponse<unknown>;
+      if (!response.ok || !data.success) {
+        throw new Error(data.error ?? 'Erreur lors de la suppression');
       }
+      toast.success('Devis supprimé');
+      void fetchQontoQuotes();
     } catch (err) {
       console.error('[Factures] deleteQuote error:', err);
       toast.error(err instanceof Error ? err.message : 'Erreur de suppression');
@@ -1131,7 +1156,7 @@ export default function FacturationPage() {
 
       // Rafraîchir les données
       void fetchInvoices();
-      void fetchQuotes().catch(console.error);
+      void fetchQontoQuotes();
       void fetchCreditNotes();
     } catch (error) {
       console.error('[Qonto Sync] Error:', error);
@@ -1326,7 +1351,7 @@ export default function FacturationPage() {
             <FileEdit className="h-4 w-4 mr-1" />
             Devis
             <Badge variant="secondary" className="ml-2">
-              {localQuotes.length}
+              {qontoQuotes.length}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="avoirs">
@@ -1582,7 +1607,7 @@ export default function FacturationPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    void fetchQuotes().catch((err: unknown) => {
+                    void fetchQontoQuotes().catch((err: unknown) => {
                       console.error('[Factures] fetchQontoQuotes failed:', err);
                     });
                   }}
@@ -1606,7 +1631,7 @@ export default function FacturationPage() {
                 <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-destructive">
                   {errorQuotes}
                 </div>
-              ) : localQuotes.length === 0 ? (
+              ) : qontoQuotes.length === 0 ? (
                 <div className="py-8 text-center text-muted-foreground">
                   <FileEdit className="mx-auto mb-4 h-12 w-12 opacity-50" />
                   <p>Aucun devis</p>
@@ -1623,32 +1648,28 @@ export default function FacturationPage() {
                       <TableHead>Date</TableHead>
                       <TableHead>Expiration</TableHead>
                       <TableHead>Statut</TableHead>
-                      <TableHead className="text-right">Montant TTC</TableHead>
+                      <TableHead className="text-right">Montant</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {localQuotes.map(quote => (
+                    {qontoQuotes.map(quote => (
                       <TableRow key={quote.id}>
                         <TableCell className="font-mono">
-                          {quote.document_number}
+                          {quote.quote_number}
                         </TableCell>
+                        <TableCell>{quote.client?.name ?? '-'}</TableCell>
+                        <TableCell>{formatDate(quote.issue_date)}</TableCell>
                         <TableCell>
-                          {quote.partner?.trade_name ??
-                            quote.partner?.legal_name ??
-                            '-'}
-                        </TableCell>
-                        <TableCell>{formatDate(quote.document_date)}</TableCell>
-                        <TableCell>
-                          {quote.validity_date
-                            ? formatDate(quote.validity_date)
+                          {quote.expiry_date
+                            ? formatDate(quote.expiry_date)
                             : '-'}
                         </TableCell>
                         <TableCell>
-                          <QuoteStatusBadge status={quote.quote_status} />
+                          <QuoteStatusBadge status={quote.status} />
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          {formatAmount(quote.total_ttc)}
+                          {formatAmount(quote.total_amount, quote.currency)}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
@@ -1660,41 +1681,37 @@ export default function FacturationPage() {
                                 <Eye className="h-4 w-4" />
                               </Link>
                             </Button>
-                            {quote.qonto_invoice_id && (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() =>
-                                    window.open(
-                                      `/api/qonto/quotes/${quote.qonto_invoice_id}/pdf`,
-                                      '_blank'
-                                    )
-                                  }
-                                  title="Voir PDF"
-                                  className="text-primary hover:text-primary hover:bg-primary/10"
-                                >
-                                  <FileText className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => {
-                                    void handleDownloadQuotePdf(quote).catch(
-                                      (error: unknown) => {
-                                        console.error(
-                                          '[Factures] handleDownloadQuotePdf failed:',
-                                          error
-                                        );
-                                      }
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                window.open(
+                                  `/api/qonto/quotes/${quote.id}/pdf`,
+                                  '_blank'
+                                )
+                              }
+                              title="Voir PDF"
+                              className="text-primary hover:text-primary hover:bg-primary/10"
+                            >
+                              <FileText className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                void handleDownloadQuotePdf(quote).catch(
+                                  (error: unknown) => {
+                                    console.error(
+                                      '[Factures] handleDownloadQuotePdf failed:',
+                                      error
                                     );
-                                  }}
-                                  title="Télécharger PDF"
-                                >
-                                  <Download className="h-4 w-4" />
-                                </Button>
-                              </>
-                            )}
+                                  }
+                                );
+                              }}
+                              title="Télécharger PDF"
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
                             {!quote.converted_to_invoice_id && (
                               <Button
                                 variant="ghost"
@@ -1959,7 +1976,7 @@ export default function FacturationPage() {
         open={showQuoteForm}
         onOpenChange={setShowQuoteForm}
         onSuccess={() => {
-          void fetchQuotes().catch((err: unknown) => {
+          void fetchQontoQuotes().catch((err: unknown) => {
             console.error(
               '[Factures] fetchQontoQuotes after quote create failed:',
               err
@@ -1984,7 +2001,7 @@ export default function FacturationPage() {
         open={showQuoteServiceModal}
         onOpenChange={setShowQuoteServiceModal}
         onSuccess={() => {
-          void fetchQuotes().catch((err: unknown) => {
+          void fetchQontoQuotes().catch((err: unknown) => {
             console.error(
               '[Factures] fetchQontoQuotes after legacy quote create failed:',
               err
@@ -2003,8 +2020,8 @@ export default function FacturationPage() {
             <AlertDialogTitle>Supprimer ce devis ?</AlertDialogTitle>
             <AlertDialogDescription>
               Vous allez supprimer le devis{' '}
-              <strong>{quoteToDelete?.document_number}</strong>. Cette action
-              est irréversible.
+              <strong>{quoteToDelete?.quote_number}</strong>. Cette action est
+              irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

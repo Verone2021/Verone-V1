@@ -1680,23 +1680,12 @@ export function OrderDetailModal({
                                 >
                                   {q.status === 'draft'
                                     ? 'Brouillon'
-                                    : q.status === 'validated'
-                                      ? 'Validé'
-                                      : q.status === 'sent'
-                                        ? 'Envoyé'
-                                        : q.status === 'accepted'
-                                          ? 'Accepté'
-                                          : q.status === 'declined'
-                                            ? 'Refusé'
-                                            : q.status === 'expired'
-                                              ? 'Expiré'
-                                              : q.status === 'converted'
-                                                ? 'Converti'
-                                                : q.status === 'finalized' ||
-                                                    q.status ===
-                                                      'pending_approval'
-                                                  ? 'En attente'
-                                                  : q.status}
+                                    : q.status === 'finalized' ||
+                                        q.status === 'pending_approval'
+                                      ? 'En attente'
+                                      : q.status === 'accepted'
+                                        ? 'Accepté'
+                                        : q.status}
                                 </Badge>
                               </div>
                             ))}
