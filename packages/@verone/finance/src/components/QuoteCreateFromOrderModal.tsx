@@ -320,7 +320,8 @@ export function QuoteCreateFromOrderModal({
   if (!order) return null;
 
   const customerName =
-    order.organisations?.name ??
+    order.organisations?.trade_name ??
+    order.organisations?.legal_name ??
     (`${order.individual_customers?.first_name ?? ''} ${order.individual_customers?.last_name ?? ''}`.trim() ||
       'Client');
 
@@ -397,20 +398,90 @@ export function QuoteCreateFromOrderModal({
                 </Button>
               )}
             </div>
+
+            {/* Navigation links */}
+            <div className="flex flex-col gap-1 border-t pt-3 text-sm">
+              <a
+                href={`/factures/devis/${createdQuote.id}`}
+                className="text-blue-600 hover:underline"
+              >
+                Voir le détail du devis
+              </a>
+              <a
+                href="/factures?tab=devis"
+                className="text-blue-600 hover:underline"
+              >
+                Voir tous les devis
+              </a>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Récap client */}
+            {/* Récap client + adresses */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Client</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="font-medium">{customerName}</p>
-                <p className="text-sm text-muted-foreground">
-                  {order.organisations?.email ??
-                    order.individual_customers?.email}
-                </p>
+              <CardContent className="space-y-2">
+                <div>
+                  <p className="font-medium">{customerName}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {order.organisations?.email ??
+                      order.individual_customers?.email}
+                  </p>
+                </div>
+                {/* Adresse de facturation résolue */}
+                {(() => {
+                  const addr = order.billing_address;
+                  const org = order.organisations;
+                  const line1 =
+                    addr?.address_line1 ??
+                    org?.billing_address_line1 ??
+                    org?.address_line1;
+                  const city = addr?.city ?? org?.billing_city ?? org?.city;
+                  const postalCode =
+                    addr?.postal_code ??
+                    org?.billing_postal_code ??
+                    org?.postal_code;
+                  if (!line1 && !city) return null;
+                  return (
+                    <div className="text-xs text-muted-foreground border-t pt-2 mt-1">
+                      <p className="font-medium text-foreground text-xs mb-0.5">
+                        Adresse de facturation
+                      </p>
+                      {line1 && <p>{line1}</p>}
+                      {(postalCode ?? city) && (
+                        <p>{[postalCode, city].filter(Boolean).join(' ')}</p>
+                      )}
+                    </div>
+                  );
+                })()}
+                {/* Adresse de livraison si différente */}
+                {(() => {
+                  const shipAddr = order.shipping_address;
+                  const org = order.organisations;
+                  const hasShipping = org?.has_different_shipping_address;
+                  const line1 =
+                    shipAddr?.address_line1 ??
+                    (hasShipping ? org?.shipping_address_line1 : null);
+                  const city =
+                    shipAddr?.city ?? (hasShipping ? org?.shipping_city : null);
+                  const postalCode =
+                    shipAddr?.postal_code ??
+                    (hasShipping ? org?.shipping_postal_code : null);
+                  if (!line1 && !city) return null;
+                  return (
+                    <div className="text-xs text-muted-foreground border-t pt-2 mt-1">
+                      <p className="font-medium text-foreground text-xs mb-0.5">
+                        Adresse de livraison
+                      </p>
+                      {line1 && <p>{line1}</p>}
+                      {(postalCode ?? city) && (
+                        <p>{[postalCode, city].filter(Boolean).join(' ')}</p>
+                      )}
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
 
