@@ -30,7 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from '@verone/ui';
-import { Money } from '@verone/ui-business';
+// Money removed — using formatAmountCents for Qonto _cents values
 import { toast } from 'sonner';
 import {
   ArrowLeft,
@@ -54,16 +54,17 @@ interface QontoQuoteItem {
   id?: string;
   title: string;
   description?: string;
-  quantity: number;
-  unit: string;
-  unit_price: number;
-  vat_rate: number;
-  total_amount?: number;
+  quantity: string; // Qonto returns string
+  unit?: string;
+  unit_price: { value: string; currency: string }; // Qonto returns object
+  vat_rate: string; // Qonto returns decimal string e.g. "0.20"
+  total_amount?: { value: string; currency: string };
 }
 
 interface QontoQuoteDetail {
   id: string;
-  quote_number: string;
+  number?: string; // Qonto raw field
+  quote_number?: string; // mapped field
   status: string;
   currency: string;
   client_id: string;
@@ -83,10 +84,10 @@ interface QontoQuoteDetail {
   expiry_date: string;
   accepted_at?: string;
   declined_at?: string;
-  total_amount: number;
-  total_amount_cents: number;
-  total_vat_amount: number;
-  subtotal_amount: number;
+  // Qonto uses _cents for amounts
+  total_amount_cents?: number;
+  total_vat_amount_cents?: number;
+  subtotal_amount_cents?: number;
   items: QontoQuoteItem[];
   purchase_order_number?: string;
   header?: string;
@@ -120,11 +121,25 @@ function formatDate(dateString: string | null | undefined): string {
   });
 }
 
-function formatAmount(amount: number, currency = 'EUR'): string {
+/** Format cents to EUR string (same as facture detail page) */
+function formatAmountCents(
+  cents: number | undefined | null,
+  currency = 'EUR'
+): string {
+  if (cents === undefined || cents === null) return '-';
+  const amount = cents / 100;
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency,
   }).format(amount);
+}
+
+function formatVatRate(vatRate: string | number | undefined): string {
+  if (vatRate === undefined || vatRate === null) return '-';
+  const rate = typeof vatRate === 'string' ? parseFloat(vatRate) : vatRate;
+  // If rate < 1, it's a decimal (e.g. 0.20 for 20%)
+  const percentage = rate < 1 ? rate * 100 : rate;
+  return `${percentage.toFixed(percentage % 1 === 0 ? 0 : 1)}%`;
 }
 
 // =====================================================================
@@ -306,7 +321,7 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `devis-${quote?.quote_number ?? id}.pdf`;
+      a.download = `devis-${quote?.number ?? quote?.quote_number ?? id}.pdf`;
       a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
@@ -318,7 +333,7 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
       console.error('[QuoteDetail] PDF download error:', err);
       toast.error(err instanceof Error ? err.message : 'Erreur PDF');
     }
-  }, [id, quote?.quote_number]);
+  }, [id, quote?.number, quote?.quote_number]);
 
   // -----------------------------------------------------------------
   // LOADING / ERROR STATES
@@ -347,6 +362,41 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
   const canDelete = !quote.converted_to_invoice_id;
   const isDraft = quote.status === 'draft';
 
+  // Compute totals from items if _cents fields are missing (Qonto may not return them)
+  const computedTotals = (() => {
+    // If Qonto provides _cents, use them
+    if (
+      quote.subtotal_amount_cents !== undefined &&
+      quote.subtotal_amount_cents !== null
+    ) {
+      return {
+        subtotalCents: quote.subtotal_amount_cents,
+        vatCents: quote.total_vat_amount_cents ?? 0,
+        totalCents: quote.total_amount_cents ?? 0,
+      };
+    }
+    // Otherwise compute from items
+    let subtotalHt = 0;
+    let totalVat = 0;
+    for (const item of quote.items) {
+      const qty = parseFloat(item.quantity || '0');
+      const unitPrice = parseFloat(item.unit_price?.value || '0');
+      const vatRate =
+        typeof item.vat_rate === 'string'
+          ? parseFloat(item.vat_rate)
+          : (item.vat_rate ?? 0);
+      const lineHt = qty * unitPrice;
+      subtotalHt += lineHt;
+      totalVat += lineHt * vatRate;
+    }
+    return {
+      subtotalCents: Math.round(subtotalHt * 100),
+      vatCents: Math.round(totalVat * 100),
+      totalCents:
+        quote.total_amount_cents ?? Math.round((subtotalHt + totalVat) * 100),
+    };
+  })();
+
   // -----------------------------------------------------------------
   // RENDER
   // -----------------------------------------------------------------
@@ -363,7 +413,7 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold tracking-tight">
-                {quote.quote_number}
+                {quote.number ?? quote.quote_number ?? '-'}
               </h1>
               <QuoteStatusBadge status={quote.status} />
               {quote.converted_to_invoice_id && (
@@ -534,21 +584,21 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          {item.quantity} {item.unit}
+                          {item.quantity} {item.unit ?? ''}
                         </TableCell>
                         <TableCell className="text-right">
-                          {formatAmount(item.unit_price, quote.currency)}
+                          {item.unit_price?.value}{' '}
+                          {item.unit_price?.currency ?? quote.currency}
                         </TableCell>
                         <TableCell className="text-right">
-                          {(item.vat_rate * 100).toFixed(0)}%
+                          {formatVatRate(item.vat_rate)}
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          {item.total_amount
-                            ? formatAmount(item.total_amount, quote.currency)
-                            : formatAmount(
-                                item.quantity * item.unit_price,
-                                quote.currency
-                              )}
+                          {(
+                            parseFloat(item.quantity || '0') *
+                            parseFloat(item.unit_price?.value || '0')
+                          ).toFixed(2)}{' '}
+                          {item.unit_price?.currency ?? quote.currency}
                         </TableCell>
                       </TableRow>
                     ))
@@ -556,27 +606,36 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
                 </TableBody>
                 <TableFooter>
                   <TableRow>
-                    <TableCell colSpan={4} className="text-right">
+                    <TableCell colSpan={4} className="text-right font-medium">
                       Sous-total HT
                     </TableCell>
-                    <TableCell className="text-right font-medium">
-                      <Money amount={quote.subtotal_amount} />
+                    <TableCell className="text-right font-bold">
+                      {formatAmountCents(
+                        computedTotals.subtotalCents,
+                        quote.currency
+                      )}
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell colSpan={4} className="text-right">
+                    <TableCell colSpan={4} className="text-right font-medium">
                       TVA
                     </TableCell>
                     <TableCell className="text-right">
-                      <Money amount={quote.total_vat_amount} />
+                      {formatAmountCents(
+                        computedTotals.vatCents,
+                        quote.currency
+                      )}
                     </TableCell>
                   </TableRow>
                   <TableRow className="font-bold">
                     <TableCell colSpan={4} className="text-right">
                       Total TTC
                     </TableCell>
-                    <TableCell className="text-right">
-                      <Money amount={quote.total_amount} bold size="lg" />
+                    <TableCell className="text-right text-lg">
+                      {formatAmountCents(
+                        computedTotals.totalCents,
+                        quote.currency
+                      )}
                     </TableCell>
                   </TableRow>
                 </TableFooter>
@@ -636,7 +695,9 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
             <CardContent className="space-y-4">
               <div>
                 <p className="text-sm text-muted-foreground">N° Devis</p>
-                <p className="font-medium">{quote.quote_number}</p>
+                <p className="font-medium">
+                  {quote.number ?? quote.quote_number ?? '-'}
+                </p>
               </div>
 
               <Separator />
@@ -703,16 +764,28 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Sous-total HT</span>
-                  <Money amount={quote.subtotal_amount} size="sm" />
+                  <span>
+                    {formatAmountCents(
+                      computedTotals.subtotalCents,
+                      quote.currency
+                    )}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">TVA</span>
-                  <Money amount={quote.total_vat_amount} size="sm" />
+                  <span>
+                    {formatAmountCents(computedTotals.vatCents, quote.currency)}
+                  </span>
                 </div>
                 <Separator />
                 <div className="flex justify-between font-bold">
                   <span>Total TTC</span>
-                  <Money amount={quote.total_amount} bold />
+                  <span>
+                    {formatAmountCents(
+                      computedTotals.totalCents,
+                      quote.currency
+                    )}
+                  </span>
                 </div>
               </div>
             </CardContent>

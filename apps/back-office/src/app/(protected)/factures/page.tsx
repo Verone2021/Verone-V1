@@ -1712,7 +1712,7 @@ export default function FacturationPage() {
                             >
                               <Download className="h-4 w-4" />
                             </Button>
-                            {quote.status === 'draft' && (
+                            {!quote.converted_to_invoice_id && (
                               <Button
                                 variant="ghost"
                                 size="icon"
