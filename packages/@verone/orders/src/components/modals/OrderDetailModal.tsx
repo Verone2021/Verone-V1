@@ -250,6 +250,15 @@ export function OrderDetailModal({
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
   const [linkedInvoices, setLinkedInvoices] = useState<ILinkedInvoice[]>([]);
   const [loadingLinkedInvoices, setLoadingLinkedInvoices] = useState(false);
+  const [linkedQuotes, setLinkedQuotes] = useState<
+    Array<{
+      id: string;
+      quote_number: string;
+      status: string;
+      total_amount: number;
+    }>
+  >([]);
+  const [loadingLinkedQuotes, setLoadingLinkedQuotes] = useState(false);
   const [showOrgModal, setShowOrgModal] = useState(false);
   const [linkedDocuments, setLinkedDocuments] = useState<LinkedDocument[]>([]);
   const [orderContacts, setOrderContacts] = useState<OrderContact[]>([]);
@@ -390,6 +399,28 @@ export function OrderDetailModal({
       })
       .catch(() => setLinkedInvoices([]))
       .finally(() => setLoadingLinkedInvoices(false));
+  }, [order?.id, open]);
+
+  // Charger les devis liés à cette commande (Qonto API via purchase_order_number)
+  useEffect(() => {
+    if (!order?.id || !open) return;
+    setLoadingLinkedQuotes(true);
+    void fetch(`/api/qonto/quotes/by-order/${order.id}`)
+      .then(r => r.json())
+      .then(
+        (data: {
+          quotes?: Array<{
+            id: string;
+            quote_number: string;
+            status: string;
+            total_amount: number;
+          }>;
+        }) => {
+          setLinkedQuotes(data.quotes ?? []);
+        }
+      )
+      .catch(() => setLinkedQuotes([]))
+      .finally(() => setLoadingLinkedQuotes(false));
   }, [order?.id, open]);
 
   // Charger les documents financiers liés (devis + factures) pour SendOrderDocumentsModal
@@ -1614,18 +1645,63 @@ export function OrderDetailModal({
                     </ButtonV2>
                   )}
 
-                  {/* Bouton Devis — visible si pas de facture définitive */}
+                  {/* Devis — lien vers existant ou bouton créer */}
                   {!readOnly &&
                     !linkedInvoices.some(inv => inv.status !== 'draft') && (
-                      <ButtonV2
-                        variant="outline"
-                        size="sm"
-                        className="w-full justify-start"
-                        onClick={() => setShowQuoteModal(true)}
-                      >
-                        <FileText className="h-3 w-3 mr-1" />
-                        Créer un devis
-                      </ButtonV2>
+                      <>
+                        {loadingLinkedQuotes ? (
+                          <ButtonV2
+                            variant="outline"
+                            size="sm"
+                            className="w-full justify-start"
+                            disabled
+                          >
+                            <FileText className="h-3 w-3 mr-1 animate-pulse" />
+                            Chargement devis...
+                          </ButtonV2>
+                        ) : linkedQuotes.length > 0 ? (
+                          <div className="space-y-1">
+                            {linkedQuotes.map(q => (
+                              <div
+                                key={q.id}
+                                className="flex items-center gap-2 text-sm p-2 rounded border bg-muted/30"
+                              >
+                                <FileText className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                                <Link
+                                  href={`/factures/devis/${q.id}`}
+                                  target="_blank"
+                                  className="font-mono text-xs flex-1 text-blue-600 hover:underline"
+                                >
+                                  {q.quote_number}
+                                </Link>
+                                <Badge
+                                  variant="secondary"
+                                  className="text-[10px] px-1.5 py-0"
+                                >
+                                  {q.status === 'draft'
+                                    ? 'Brouillon'
+                                    : q.status === 'finalized' ||
+                                        q.status === 'pending_approval'
+                                      ? 'En attente'
+                                      : q.status === 'accepted'
+                                        ? 'Accepté'
+                                        : q.status}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <ButtonV2
+                            variant="outline"
+                            size="sm"
+                            className="w-full justify-start"
+                            onClick={() => setShowQuoteModal(true)}
+                          >
+                            <FileText className="h-3 w-3 mr-1" />
+                            Créer un devis
+                          </ButtonV2>
+                        )}
+                      </>
                     )}
 
                   {/* Bouton Envoyer documents — toujours visible si documents existent */}
@@ -2047,6 +2123,26 @@ export function OrderDetailModal({
         onOpenChange={setShowQuoteModal}
         onSuccess={() => {
           onUpdate?.();
+          // Refresh linked quotes after creation
+          if (order?.id) {
+            void fetch(`/api/qonto/quotes/by-order/${order.id}`)
+              .then(r => r.json())
+              .then(
+                (data: {
+                  quotes?: Array<{
+                    id: string;
+                    quote_number: string;
+                    status: string;
+                    total_amount: number;
+                  }>;
+                }) => {
+                  setLinkedQuotes(data.quotes ?? []);
+                }
+              )
+              .catch(() => {
+                /* ignore */
+              });
+          }
         }}
       />
 
