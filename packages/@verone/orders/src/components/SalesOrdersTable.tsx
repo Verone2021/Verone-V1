@@ -1629,7 +1629,7 @@ export function SalesOrdersTable({
                                   <Link
                                     href={
                                       order.invoice_qonto_id
-                                        ? `/factures/${order.invoice_qonto_id}`
+                                        ? `/factures/${order.invoice_qonto_id}?type=invoice`
                                         : '#'
                                     }
                                     target="_blank"
@@ -1640,6 +1640,24 @@ export function SalesOrdersTable({
                                     {order.invoice_number}
                                   </Link>
                                 )}
+                                {/* Devis: affiché seulement si pas de facture finalisée (non-draft) */}
+                                {order.quote_number &&
+                                  (!order.invoice_number ||
+                                    order.invoice_status === 'draft') && (
+                                    <Link
+                                      href={
+                                        order.quote_qonto_id
+                                          ? `/factures/devis/${order.quote_qonto_id}`
+                                          : '#'
+                                      }
+                                      target="_blank"
+                                      className="flex items-center gap-1 text-[10px] font-mono text-orange-600 hover:text-orange-800 hover:underline"
+                                      title={`Voir devis ${order.quote_number}`}
+                                    >
+                                      <FileText className="h-3 w-3 shrink-0" />
+                                      {order.quote_number}
+                                    </Link>
+                                  )}
                               </div>
                             </TableCell>
                             <TableCell>

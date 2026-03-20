@@ -1480,6 +1480,69 @@ export function OrderDetailModal({
                   </Card>
                 )}
 
+              {/* Card Devis (même pattern que Facturation) */}
+              {!readOnly &&
+                order.status !== 'draft' &&
+                order.status !== 'cancelled' &&
+                !linkedInvoices.some(inv => inv.status !== 'draft') && (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <FileText className="h-3 w-3" />
+                        Devis
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {loadingLinkedQuotes ? (
+                        <ButtonV2 size="sm" className="w-full" disabled>
+                          <FileText className="h-3 w-3 mr-1 animate-pulse" />
+                          Chargement...
+                        </ButtonV2>
+                      ) : linkedQuotes.length > 0 ? (
+                        <div className="space-y-1">
+                          {linkedQuotes.map(q => (
+                            <div
+                              key={q.id}
+                              className="flex items-center gap-2 text-sm p-2 rounded border bg-muted/30"
+                            >
+                              <FileText className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                              <Link
+                                href={`/factures/devis/${q.id}`}
+                                target="_blank"
+                                className="font-mono text-xs flex-1 text-blue-600 hover:underline"
+                              >
+                                {q.quote_number}
+                              </Link>
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] px-1.5 py-0"
+                              >
+                                {q.status === 'draft'
+                                  ? 'Brouillon'
+                                  : q.status === 'finalized' ||
+                                      q.status === 'pending_approval'
+                                    ? 'En attente'
+                                    : q.status === 'accepted'
+                                      ? 'Accepté'
+                                      : q.status}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <ButtonV2
+                          size="sm"
+                          className="w-full"
+                          onClick={() => setShowQuoteModal(true)}
+                        >
+                          <FileText className="h-3 w-3 mr-1" />
+                          Créer un devis
+                        </ButtonV2>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
               {/* Card Expédition (comme Réception dans PurchaseOrderDetailModal) */}
               <Card>
                 <CardHeader className="pb-3">
@@ -1644,65 +1707,6 @@ export function OrderDetailModal({
                       Gérer dans {order.sales_channel?.name ?? 'CMS'}
                     </ButtonV2>
                   )}
-
-                  {/* Devis — lien vers existant ou bouton créer */}
-                  {!readOnly &&
-                    !linkedInvoices.some(inv => inv.status !== 'draft') && (
-                      <>
-                        {loadingLinkedQuotes ? (
-                          <ButtonV2
-                            variant="outline"
-                            size="sm"
-                            className="w-full justify-start"
-                            disabled
-                          >
-                            <FileText className="h-3 w-3 mr-1 animate-pulse" />
-                            Chargement devis...
-                          </ButtonV2>
-                        ) : linkedQuotes.length > 0 ? (
-                          <div className="space-y-1">
-                            {linkedQuotes.map(q => (
-                              <div
-                                key={q.id}
-                                className="flex items-center gap-2 text-sm p-2 rounded border bg-muted/30"
-                              >
-                                <FileText className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                                <Link
-                                  href={`/factures/devis/${q.id}`}
-                                  target="_blank"
-                                  className="font-mono text-xs flex-1 text-blue-600 hover:underline"
-                                >
-                                  {q.quote_number}
-                                </Link>
-                                <Badge
-                                  variant="secondary"
-                                  className="text-[10px] px-1.5 py-0"
-                                >
-                                  {q.status === 'draft'
-                                    ? 'Brouillon'
-                                    : q.status === 'finalized' ||
-                                        q.status === 'pending_approval'
-                                      ? 'En attente'
-                                      : q.status === 'accepted'
-                                        ? 'Accepté'
-                                        : q.status}
-                                </Badge>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <ButtonV2
-                            variant="outline"
-                            size="sm"
-                            className="w-full justify-start"
-                            onClick={() => setShowQuoteModal(true)}
-                          >
-                            <FileText className="h-3 w-3 mr-1" />
-                            Créer un devis
-                          </ButtonV2>
-                        )}
-                      </>
-                    )}
 
                   {/* Bouton Envoyer documents — toujours visible si documents existent */}
                   {!readOnly && (

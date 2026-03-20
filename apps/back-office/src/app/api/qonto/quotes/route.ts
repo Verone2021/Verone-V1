@@ -609,6 +609,25 @@ export async function POST(request: NextRequest): Promise<
       public_url: q.public_url,
     };
 
+    // Link quote to order (non-blocking): store Qonto quote ID on the sales_order
+    // Qonto API remains the PRIMARY source of truth for quotes
+    if (salesOrderId) {
+      try {
+        await supabase
+          .from('sales_orders')
+          .update({
+            quote_qonto_id: mappedQuote.id,
+            quote_number: mappedQuote.quote_number,
+          })
+          .eq('id', salesOrderId);
+      } catch (linkError) {
+        console.warn(
+          '[API Qonto Quotes] Failed to link quote to order (non-blocking):',
+          linkError
+        );
+      }
+    }
+
     return NextResponse.json({
       success: true,
       quote: mappedQuote,

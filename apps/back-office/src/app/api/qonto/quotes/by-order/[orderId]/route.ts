@@ -1,8 +1,8 @@
 /**
  * API Route: GET /api/qonto/quotes/by-order/[orderId]
  *
- * Find Qonto quotes linked to a sales order via purchase_order_number.
- * Used in OrderDetailModal to show existing quotes instead of "Create" button.
+ * Find Qonto quotes linked to a sales order.
+ * Strategy: read quote_qonto_id from sales_orders, then fetch live status from Qonto.
  */
 
 import type { NextRequest } from 'next/server';
@@ -32,7 +32,7 @@ interface LinkedQuote {
 
 /**
  * GET /api/qonto/quotes/by-order/[orderId]
- * Finds Qonto quotes by matching purchase_order_number = order.order_number
+ * Reads quote_qonto_id from sales_orders, enriches with live Qonto data.
  */
 export async function GET(
   request: NextRequest,
@@ -47,52 +47,119 @@ export async function GET(
 > {
   try {
     const { orderId } = await params;
-
-    // Get order_number from sales_orders
     const supabase = createAdminClient();
-    const { data: order, error: orderError } = await supabase
+
+    // Read linked quote from sales_orders
+    const { data: rawOrder } = await supabase
       .from('sales_orders')
-      .select('order_number')
+      .select('order_number, quote_qonto_id, quote_number')
       .eq('id', orderId)
       .single();
 
-    if (orderError || !order?.order_number) {
-      return NextResponse.json({
-        success: true,
-        quotes: [],
-        count: 0,
-      });
+    // Cast new columns (not yet in generated types)
+    const order = rawOrder as {
+      order_number: string | null;
+      quote_qonto_id: string | null;
+      quote_number: string | null;
+    } | null;
+
+    if (!order) {
+      return NextResponse.json({ success: true, quotes: [], count: 0 });
     }
 
-    // Search Qonto quotes with matching purchase_order_number
-    const client = getQontoClient();
-    const result = await client.getClientQuotes();
+    // Strategy 1: quote_qonto_id stored on the order (preferred)
+    if (order.quote_qonto_id) {
+      try {
+        const client = getQontoClient();
+        const result = await client.getClientQuotes();
+        const match = result.client_quotes.find(
+          q => q.id === order.quote_qonto_id
+        );
 
-    const matchingQuotes = result.client_quotes
-      .filter(
-        q =>
-          q.purchase_order_number === order.order_number &&
-          q.status !== 'declined' &&
-          q.status !== 'expired'
-      )
-      .map(q => {
-        const raw = q as typeof q & { number?: string };
-        return {
-          id: q.id,
-          quote_number: raw.number ?? q.quote_number ?? '-',
-          status: q.status,
-          total_amount: q.total_amount_cents ? q.total_amount_cents / 100 : 0,
-          currency: q.currency ?? 'EUR',
-          issue_date: q.issue_date,
-          expiry_date: q.expiry_date,
-        };
-      });
+        if (
+          match &&
+          match.status !== 'declined' &&
+          match.status !== 'expired'
+        ) {
+          const raw = match as typeof match & { number?: string };
+          return NextResponse.json({
+            success: true,
+            quotes: [
+              {
+                id: match.id,
+                quote_number: raw.number ?? match.quote_number ?? '-',
+                status: match.status,
+                total_amount: match.total_amount_cents
+                  ? match.total_amount_cents / 100
+                  : 0,
+                currency: match.currency ?? 'EUR',
+                issue_date: match.issue_date,
+                expiry_date: match.expiry_date,
+              },
+            ],
+            count: 1,
+          });
+        }
+      } catch {
+        // Qonto failed — return DB-only data as fallback
+        return NextResponse.json({
+          success: true,
+          quotes: [
+            {
+              id: order.quote_qonto_id,
+              quote_number: order.quote_number ?? '-',
+              status: 'draft',
+              total_amount: 0,
+              currency: 'EUR',
+              issue_date: '',
+              expiry_date: '',
+            },
+          ],
+          count: 1,
+        });
+      }
+    }
 
-    return NextResponse.json({
-      success: true,
-      quotes: matchingQuotes,
-      count: matchingQuotes.length,
-    });
+    // Strategy 2: Fallback to Qonto purchase_order_number matching
+    if (order.order_number) {
+      try {
+        const client = getQontoClient();
+        const result = await client.getClientQuotes();
+        const matchingQuotes = result.client_quotes
+          .filter(
+            q =>
+              q.purchase_order_number === order.order_number &&
+              q.status !== 'declined' &&
+              q.status !== 'expired'
+          )
+          .map(q => {
+            const raw = q as typeof q & { number?: string };
+            return {
+              id: q.id,
+              quote_number: raw.number ?? q.quote_number ?? '-',
+              status: q.status,
+              total_amount: q.total_amount_cents
+                ? q.total_amount_cents / 100
+                : 0,
+              currency: q.currency ?? 'EUR',
+              issue_date: q.issue_date,
+              expiry_date: q.expiry_date,
+            };
+          });
+
+        if (matchingQuotes.length > 0) {
+          return NextResponse.json({
+            success: true,
+            quotes: matchingQuotes,
+            count: matchingQuotes.length,
+          });
+        }
+      } catch {
+        // Ignore Qonto errors for fallback strategy
+      }
+    }
+
+    return NextResponse.json({ success: true, quotes: [], count: 0 });
   } catch (error) {
     console.error('[Quotes by order] Error:', error);
     return NextResponse.json(

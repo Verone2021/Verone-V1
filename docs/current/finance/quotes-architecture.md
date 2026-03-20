@@ -14,8 +14,22 @@
 | **Factures d'achat** (supplier_invoice)  | DB locale        | `financial_documents`   |
 | **Devis** (quotes)                       | **Qonto API**    | `GET /api/qonto/quotes` |
 
-> **`financial_documents`** = factures UNIQUEMENT (vente + achat).
-> Les devis ne sont JAMAIS stockes dans `financial_documents`.
+> **`financial_documents`** = factures (vente + achat) + copie secondaire devis.
+> Les devis dans `financial_documents` sont une copie NON-BLOQUANTE apres creation Qonto.
+> La lecture des devis se fait TOUJOURS via Qonto API, JAMAIS depuis la DB locale.
+
+---
+
+## REGLE ABSOLUE : Qonto API = Source PRIMAIRE
+
+```
+Qonto API = source PRIMAIRE (TOUJOURS)
+- Qonto genere les PDF, factures et devis
+- La DB locale est une couche SECONDAIRE de stockage
+- ON NE LIE JAMAIS directement a la DB sans passer par Qonto d'abord
+- Flux : UI -> POST /api/qonto/quotes -> Qonto API -> (optionnel) INSERT financial_documents
+- Lecture : UI -> GET /api/qonto/quotes -> Qonto API -> affichage
+```
 
 ---
 
@@ -24,7 +38,7 @@
 ### Creation
 
 ```
-UI (QuoteFormModal) --> POST /api/qonto/quotes --> Qonto API (draft)
+UI (QuoteFormModal) --> POST /api/qonto/quotes --> Qonto API (draft) --> (secondary) INSERT financial_documents
 ```
 
 ### Listing (onglet Devis)
@@ -82,7 +96,8 @@ UI (bouton Finaliser) --> POST /api/qonto/quotes/:id/finalize --> Qonto API
 
 Les factures ont un workflow hybride : creees dans Qonto, synchronisees localement pour enrichissement (liaison commande, rapprochement bancaire, archivage).
 
-Les devis n'ont PAS ce workflow hybride : ils vivent exclusivement dans Qonto.
+Les devis ont un workflow SIMPLIFIE : crees dans Qonto, avec une copie secondaire non-bloquante en DB.
+La lecture et les actions sur les devis passent TOUJOURS par Qonto API.
 
 ---
 
@@ -98,5 +113,6 @@ Les devis n'ont PAS ce workflow hybride : ils vivent exclusivement dans Qonto.
 ## Erreur a Eviter
 
 > **JAMAIS** lire les devis depuis `financial_documents` avec `document_type = 'customer_quote'`.
-> Cette approche a ete abandonnee car elle creait une source de verite dupliquee.
-> Utiliser TOUJOURS `GET /api/qonto/quotes`.
+> Cette approche a ete tentee (commit 4d81a1e2) et a CASSE l'affichage des devis.
+> Les devis crees via Qonto n'existaient pas dans la DB locale = page vide.
+> Utiliser TOUJOURS `GET /api/qonto/quotes` pour la lecture.
