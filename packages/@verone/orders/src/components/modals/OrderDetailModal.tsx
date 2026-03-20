@@ -7,6 +7,7 @@ import Link from 'next/link';
 
 import {
   InvoiceCreateFromOrderModal,
+  QuoteCreateFromOrderModal,
   RapprochementContent,
 } from '@verone/finance/components';
 import type { ExistingLink } from '@verone/finance/components';
@@ -53,6 +54,7 @@ import {
   Pencil,
   Trash2,
   User,
+  Mail,
 } from 'lucide-react';
 
 // NOTE: SalesOrderShipmentModal supprimé - sera recréé ultérieurement
@@ -67,6 +69,11 @@ import type {
 } from '@verone/orders/hooks';
 import { EditableOrderItemRow } from '../tables/EditableOrderItemRow';
 import { AddProductToOrderModal } from './AddProductToOrderModal';
+import {
+  SendOrderDocumentsModal,
+  type LinkedDocument,
+  type OrderContact,
+} from './SendOrderDocumentsModal';
 
 interface ILinkedInvoice {
   id: string;
@@ -236,12 +243,25 @@ export function OrderDetailModal({
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [showSendDocsModal, setShowSendDocsModal] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
   const [linkedInvoices, setLinkedInvoices] = useState<ILinkedInvoice[]>([]);
   const [loadingLinkedInvoices, setLoadingLinkedInvoices] = useState(false);
+  const [linkedQuotes, setLinkedQuotes] = useState<
+    Array<{
+      id: string;
+      quote_number: string;
+      status: string;
+      total_amount: number;
+    }>
+  >([]);
+  const [loadingLinkedQuotes, setLoadingLinkedQuotes] = useState(false);
   const [showOrgModal, setShowOrgModal] = useState(false);
+  const [linkedDocuments, setLinkedDocuments] = useState<LinkedDocument[]>([]);
+  const [orderContacts, setOrderContacts] = useState<OrderContact[]>([]);
 
   // Form state for manual payment
   const [manualPaymentType, setManualPaymentType] =
@@ -380,6 +400,131 @@ export function OrderDetailModal({
       .catch(() => setLinkedInvoices([]))
       .finally(() => setLoadingLinkedInvoices(false));
   }, [order?.id, open]);
+
+  // Charger les devis liés à cette commande (Qonto API via purchase_order_number)
+  useEffect(() => {
+    if (!order?.id || !open) return;
+    setLoadingLinkedQuotes(true);
+    void fetch(`/api/qonto/quotes/by-order/${order.id}`)
+      .then(r => r.json())
+      .then(
+        (data: {
+          quotes?: Array<{
+            id: string;
+            quote_number: string;
+            status: string;
+            total_amount: number;
+          }>;
+        }) => {
+          setLinkedQuotes(data.quotes ?? []);
+        }
+      )
+      .catch(() => setLinkedQuotes([]))
+      .finally(() => setLoadingLinkedQuotes(false));
+  }, [order?.id, open]);
+
+  // Charger les documents financiers liés (devis + factures) pour SendOrderDocumentsModal
+  useEffect(() => {
+    if (!order?.id || !open) return;
+    const supabase = createClient();
+
+    void supabase
+      .from('financial_documents')
+      .select(
+        'id, document_number, document_type, qonto_invoice_id, qonto_pdf_url, total_ttc, status, quote_status'
+      )
+      .eq('sales_order_id', order.id)
+      .in('document_type', ['customer_quote', 'customer_invoice'])
+      .then(({ data, error: queryError }) => {
+        if (queryError) {
+          console.error(
+            '[OrderDetailModal] Load financial documents failed:',
+            queryError
+          );
+          setLinkedDocuments([]);
+          return;
+        }
+        setLinkedDocuments(
+          (data ?? []).map(d => ({
+            id: d.id,
+            document_number: d.document_number ?? '',
+            document_type: d.document_type as
+              | 'customer_quote'
+              | 'customer_invoice',
+            qonto_invoice_id: d.qonto_invoice_id,
+            qonto_pdf_url: d.qonto_pdf_url,
+            total_ttc: d.total_ttc ?? 0,
+            status: d.status ?? '',
+            quote_status: d.quote_status,
+          }))
+        );
+      });
+
+    // Charger les contacts pour SendOrderDocumentsModal
+    const contacts: OrderContact[] = [];
+    const seenEmails = new Set<string>();
+
+    // Contact facturation de la commande
+    const bcEmail = order.billing_contact?.email;
+    if (bcEmail) {
+      const bc = order.billing_contact;
+      const name = [bc?.first_name, bc?.last_name].filter(Boolean).join(' ');
+      contacts.push({
+        label: `${name} (facturation)`,
+        email: bcEmail,
+      });
+      seenEmails.add(bcEmail);
+    }
+
+    // Contact livraison
+    const dcEmail = order.delivery_contact?.email;
+    if (dcEmail && !seenEmails.has(dcEmail)) {
+      const dc = order.delivery_contact;
+      const name = [dc?.first_name, dc?.last_name].filter(Boolean).join(' ');
+      contacts.push({ label: `${name} (livraison)`, email: dcEmail });
+      seenEmails.add(dcEmail);
+    }
+
+    // Email organisation
+    if (order.customer_type === 'organization' && order.organisations?.email) {
+      const orgEmail = order.organisations.email;
+      if (!seenEmails.has(orgEmail)) {
+        const orgName =
+          order.organisations.trade_name ??
+          order.organisations.legal_name ??
+          'Organisation';
+        contacts.push({ label: `${orgName} (principal)`, email: orgEmail });
+        seenEmails.add(orgEmail);
+      }
+    }
+
+    // Email client individuel
+    if (
+      order.customer_type === 'individual' &&
+      order.individual_customers?.email
+    ) {
+      const indivEmail = order.individual_customers.email;
+      if (!seenEmails.has(indivEmail)) {
+        const name = [
+          order.individual_customers.first_name,
+          order.individual_customers.last_name,
+        ]
+          .filter(Boolean)
+          .join(' ');
+        contacts.push({ label: name || 'Client', email: indivEmail });
+      }
+    }
+
+    setOrderContacts(contacts);
+  }, [
+    order?.id,
+    open,
+    order?.customer_type,
+    order?.organisations,
+    order?.individual_customers,
+    order?.billing_contact,
+    order?.delivery_contact,
+  ]);
 
   // Sync fees state when order changes
   useEffect(() => {
@@ -1335,6 +1480,69 @@ export function OrderDetailModal({
                   </Card>
                 )}
 
+              {/* Card Devis (même pattern que Facturation) */}
+              {!readOnly &&
+                order.status !== 'draft' &&
+                order.status !== 'cancelled' &&
+                !linkedInvoices.some(inv => inv.status !== 'draft') && (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <FileText className="h-3 w-3" />
+                        Devis
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {loadingLinkedQuotes ? (
+                        <ButtonV2 size="sm" className="w-full" disabled>
+                          <FileText className="h-3 w-3 mr-1 animate-pulse" />
+                          Chargement...
+                        </ButtonV2>
+                      ) : linkedQuotes.length > 0 ? (
+                        <div className="space-y-1">
+                          {linkedQuotes.map(q => (
+                            <div
+                              key={q.id}
+                              className="flex items-center gap-2 text-sm p-2 rounded border bg-muted/30"
+                            >
+                              <FileText className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                              <Link
+                                href={`/factures/devis/${q.id}`}
+                                target="_blank"
+                                className="font-mono text-xs flex-1 text-blue-600 hover:underline"
+                              >
+                                {q.quote_number}
+                              </Link>
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] px-1.5 py-0"
+                              >
+                                {q.status === 'draft'
+                                  ? 'Brouillon'
+                                  : q.status === 'finalized' ||
+                                      q.status === 'pending_approval'
+                                    ? 'En attente'
+                                    : q.status === 'accepted'
+                                      ? 'Accepté'
+                                      : q.status}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <ButtonV2
+                          size="sm"
+                          className="w-full"
+                          onClick={() => setShowQuoteModal(true)}
+                        >
+                          <FileText className="h-3 w-3 mr-1" />
+                          Créer un devis
+                        </ButtonV2>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
               {/* Card Expédition (comme Réception dans PurchaseOrderDetailModal) */}
               <Card>
                 <CardHeader className="pb-3">
@@ -1500,7 +1708,26 @@ export function OrderDetailModal({
                     </ButtonV2>
                   )}
 
-                  {/* Actions de gestion redirigent vers la page détail */}
+                  {/* Bouton Envoyer documents — toujours visible si documents existent */}
+                  {!readOnly && (
+                    <ButtonV2
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => setShowSendDocsModal(true)}
+                    >
+                      <Mail className="h-3 w-3 mr-1" />
+                      Envoyer documents
+                      {linkedDocuments.length > 0 && (
+                        <Badge
+                          variant="secondary"
+                          className="ml-auto text-[10px] px-1.5 py-0"
+                        >
+                          {linkedDocuments.length}
+                        </Badge>
+                      )}
+                    </ButtonV2>
+                  )}
 
                   {/* Message mode lecture seule */}
                   {readOnly && !channelRedirectUrl && (
@@ -1864,6 +2091,88 @@ export function OrderDetailModal({
         open={showInvoiceModal}
         onOpenChange={setShowInvoiceModal}
         onSuccess={() => {
+          onUpdate?.();
+        }}
+      />
+
+      {/* Modal Création Devis */}
+      <QuoteCreateFromOrderModal
+        order={
+          order
+            ? {
+                id: order.id,
+                order_number: order.order_number,
+                total_ht: order.total_ht,
+                total_ttc: order.total_ttc,
+                tax_rate: order.tax_rate,
+                currency: order.currency,
+                payment_terms: order.payment_terms ?? 'net_30',
+                customer_id: order.customer_id,
+                customer_type: order.customer_type,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                billing_address: order.billing_address,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                shipping_address: order.shipping_address,
+                shipping_cost_ht: order.shipping_cost_ht,
+                handling_cost_ht: order.handling_cost_ht,
+                insurance_cost_ht: order.insurance_cost_ht,
+                fees_vat_rate: order.fees_vat_rate,
+                organisations: order.organisations,
+                individual_customers: order.individual_customers,
+                sales_order_items: order.sales_order_items,
+              }
+            : null
+        }
+        open={showQuoteModal}
+        onOpenChange={setShowQuoteModal}
+        onSuccess={() => {
+          onUpdate?.();
+          // Refresh linked quotes after creation
+          if (order?.id) {
+            void fetch(`/api/qonto/quotes/by-order/${order.id}`)
+              .then(r => r.json())
+              .then(
+                (data: {
+                  quotes?: Array<{
+                    id: string;
+                    quote_number: string;
+                    status: string;
+                    total_amount: number;
+                  }>;
+                }) => {
+                  setLinkedQuotes(data.quotes ?? []);
+                }
+              )
+              .catch(() => {
+                /* ignore */
+              });
+          }
+        }}
+      />
+
+      {/* Modal Envoi Documents */}
+      <SendOrderDocumentsModal
+        open={showSendDocsModal}
+        onClose={() => setShowSendDocsModal(false)}
+        salesOrderId={order.id}
+        orderNumber={order.order_number}
+        customerName={
+          order.customer_type === 'organization' && order.organisations
+            ? (order.organisations.trade_name ??
+              order.organisations.legal_name ??
+              '')
+            : order.customer_type === 'individual' && order.individual_customers
+              ? [
+                  order.individual_customers.first_name,
+                  order.individual_customers.last_name,
+                ]
+                  .filter(Boolean)
+                  .join(' ')
+              : ''
+        }
+        contacts={orderContacts}
+        linkedDocuments={linkedDocuments}
+        onSent={() => {
           onUpdate?.();
         }}
       />

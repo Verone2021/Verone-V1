@@ -365,12 +365,10 @@ export async function POST(request: NextRequest): Promise<
       if (orderWithItems.customer_type === 'organization') {
         const { data: org } = await supabase
           .from('organisations')
-          .select(
-            'id, legal_name, trade_name, email, vat_number, siret, address_line1, city, postal_code, country'
-          )
+          .select('*')
           .eq('id', orderWithItems.customer_id)
           .single();
-        customer = org as Organisation | null;
+        customer = org;
       } else if (
         orderWithItems.customer_type === 'individual' &&
         orderWithItems.individual_customer_id

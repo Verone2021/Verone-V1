@@ -102,6 +102,11 @@ export interface SalesOrder {
   invoice_id?: string | null;
   invoice_qonto_id?: string | null;
   invoice_number?: string | null;
+  invoice_status?: string | null;
+
+  // Devis associé (stocké sur sales_orders)
+  quote_qonto_id?: string | null;
+  quote_number?: string | null;
 
   // 🆕 Rapprochement bancaire (jointure transaction_document_links)
   is_matched?: boolean;
@@ -398,7 +403,7 @@ export function useSalesOrders() {
           delivery_contact:contacts!sales_orders_delivery_contact_id_fkey(id, first_name, last_name, email, phone),
           responsable_contact:contacts!sales_orders_responsable_contact_id_fkey(id, first_name, last_name, email, phone),
           sales_order_items (
-            id, product_id, quantity, unit_price_ht, total_ht,
+            id, product_id, quantity, unit_price_ht, total_ht, tax_rate,
             products (
               id,
               name,
@@ -497,12 +502,19 @@ export function useSalesOrders() {
         // 🆕 Récupérer les factures associées (batch pour performance)
         const invoiceMap = new Map<
           string,
-          { id: string; qontoId: string | null; number: string }
+          {
+            id: string;
+            qontoId: string | null;
+            number: string;
+            status: string;
+          }
         >();
         if (orderIds.length > 0) {
           const { data: invoicesData } = await supabase
             .from('financial_documents')
-            .select('id, sales_order_id, document_number, qonto_invoice_id')
+            .select(
+              'id, sales_order_id, document_number, qonto_invoice_id, status'
+            )
             .in('sales_order_id', orderIds)
             .eq('document_type', 'customer_invoice')
             .is('deleted_at', null);
@@ -513,6 +525,31 @@ export function useSalesOrders() {
                 id: inv.id,
                 qontoId: inv.qonto_invoice_id,
                 number: inv.document_number,
+                status: inv.status,
+              });
+            }
+          }
+        }
+
+        // 🆕 Récupérer les devis liés (quote_qonto_id, quote_number sur sales_orders)
+        // Colonnes pas encore dans les types générés, fetch séparé avec raw SQL cast
+        const quoteMap = new Map<string, { qontoId: string; number: string }>();
+        if (orderIds.length > 0) {
+          const { data: quoteRows } = await supabase
+            .from('sales_orders')
+            .select('id, quote_qonto_id, quote_number')
+            .in('id', orderIds)
+            .not('quote_qonto_id', 'is', null);
+
+          for (const row of (quoteRows ?? []) as unknown as Array<{
+            id: string;
+            quote_qonto_id: string | null;
+            quote_number: string | null;
+          }>) {
+            if (row.quote_qonto_id) {
+              quoteMap.set(row.id, {
+                qontoId: row.quote_qonto_id,
+                number: row.quote_number ?? '-',
               });
             }
           }
@@ -637,6 +674,9 @@ export function useSalesOrders() {
             invoice_id: invoiceMap.get(order.id)?.id ?? null,
             invoice_qonto_id: invoiceMap.get(order.id)?.qontoId ?? null,
             invoice_number: invoiceMap.get(order.id)?.number ?? null,
+            invoice_status: invoiceMap.get(order.id)?.status ?? null,
+            quote_qonto_id: quoteMap.get(order.id)?.qontoId ?? null,
+            quote_number: quoteMap.get(order.id)?.number ?? null,
             is_matched: !!matchInfo,
             matched_transaction_id: matchInfo?.transaction_id ?? null,
             matched_transaction_label: matchInfo?.label ?? null,

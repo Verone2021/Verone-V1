@@ -114,6 +114,7 @@ export async function GET(request: NextRequest): Promise<
         expiry_date: q.expiry_date,
         client: q.client,
         converted_to_invoice_id: q.converted_to_invoice_id,
+        purchase_order_number: q.purchase_order_number ?? null,
       };
     });
 
@@ -168,6 +169,12 @@ interface IPostRequestBody {
   salesOrderId?: string; // Optionnel: si absent, création standalone
   customer?: IStandaloneCustomer; // Requis si pas de salesOrderId
   expiryDays?: number; // Nombre de jours avant expiration (défaut: 30)
+  billingAddress?: {
+    address_line1?: string;
+    postal_code?: string;
+    city?: string;
+    country?: string;
+  };
   fees?: IFeesData;
   customLines?: ICustomLine[];
 }
@@ -196,6 +203,7 @@ export async function POST(request: NextRequest): Promise<
       salesOrderId,
       customer: standaloneCustomer,
       expiryDays = 30,
+      billingAddress: bodyBillingAddress,
       fees,
       customLines,
     } = body;
@@ -266,12 +274,10 @@ export async function POST(request: NextRequest): Promise<
         if (orderWithItems.customer_type === 'organization') {
           const { data: org } = await supabase
             .from('organisations')
-            .select(
-              'id, legal_name, trade_name, email, vat_number, siret, address_line1, city, postal_code, country'
-            )
+            .select('*')
             .eq('id', orderWithItems.customer_id)
             .single();
-          customer = org as Organisation | null;
+          customer = org;
         } else if (
           orderWithItems.customer_type === 'individual' &&
           orderWithItems.individual_customer_id
@@ -287,6 +293,37 @@ export async function POST(request: NextRequest): Promise<
 
       customerType = orderWithItems.customer_type ?? 'organization';
       orderNumber = orderWithItems.order_number ?? undefined;
+
+      // Guard anti-doublon: vérifier si un devis Qonto existe déjà pour cette commande
+      if (orderNumber) {
+        try {
+          const existingQuotes = await qontoClient.getClientQuotes();
+          const duplicate = existingQuotes.client_quotes.find(
+            q =>
+              q.purchase_order_number === orderNumber &&
+              q.status !== 'declined' &&
+              q.status !== 'expired'
+          );
+          if (duplicate) {
+            const qDup = duplicate as typeof duplicate & { number?: string };
+            return NextResponse.json(
+              {
+                success: false,
+                error: `Un devis existe déjà pour la commande ${orderNumber} (${qDup.number ?? qDup.quote_number ?? duplicate.id}). Modifiez-le ou supprimez-le avant d'en créer un nouveau.`,
+                existingQuoteId: duplicate.id,
+              },
+              { status: 409 }
+            );
+          }
+        } catch (checkErr) {
+          // Non-blocking: if check fails, proceed with creation (Qonto is fallback)
+          console.warn(
+            '[API Qonto Quotes] Duplicate check failed (non-blocking):',
+            checkErr
+          );
+        }
+      }
+
       orderItems = orderWithItems.sales_order_items ?? [];
       orderShippingCostHt = orderWithItems.shipping_cost_ht ?? 0;
       orderHandlingCostHt = orderWithItems.handling_cost_ht ?? 0;
@@ -303,12 +340,10 @@ export async function POST(request: NextRequest): Promise<
       if (standaloneCustomer.customerType === 'organization') {
         const { data: org } = await supabase
           .from('organisations')
-          .select(
-            'id, legal_name, trade_name, email, vat_number, siret, address_line1, city, postal_code, country'
-          )
+          .select('*')
           .eq('id', standaloneCustomer.customerId)
           .single();
-        customer = org as Organisation | null;
+        customer = org;
       } else {
         const { data: indiv } = await supabase
           .from('individual_customers')
@@ -330,15 +365,17 @@ export async function POST(request: NextRequest): Promise<
     let customerEmail: string | null = null;
     let customerName = 'Client';
 
-    // Tax identification number (SIRET/TVA) for Qonto client creation
+    // Tax identification: vatNumber = TVA EU, taxId = SIRET
     let vatNumber: string | undefined;
+    let taxId: string | undefined;
 
     if (customerType === 'organization' && customer) {
       const org = customer as Organisation;
       customerEmail = org.email ?? null;
       customerName = org.trade_name ?? org.legal_name ?? 'Client';
-      // Priority: vat_number (TVA intra-communautaire), then siret
-      vatNumber = org.vat_number ?? org.siret ?? undefined;
+      // Separate VAT number (TVA intra-communautaire) and SIRET
+      vatNumber = org.vat_number ?? undefined;
+      taxId = org.siret ?? undefined;
     } else if (customerType === 'individual' && customer) {
       const indiv = customer as IndividualCustomer;
       customerEmail = indiv.email ?? null;
@@ -346,40 +383,58 @@ export async function POST(request: NextRequest): Promise<
         `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim() || 'Client';
     }
 
-    // Validate: organisations MUST have a tax identification number for quotes
-    if (customerType === 'organization' && !vatNumber) {
+    // Note: vatNumber/taxId NOT mandatory for quotes (unlike invoices)
+
+    // Récupérer ou créer le client Qonto
+    let qontoClientId: string;
+
+    // Résoudre l'adresse de facturation (3 priorités) :
+    // Priorité 1: bodyBillingAddress (envoyé par le modal)
+    // Priorité 2: orderBillingAddress (JSONB de la commande en DB)
+    // Priorité 3: colonnes directes de l'organisation (fallback)
+    let resolvedCity: string | undefined;
+    let resolvedZipCode: string | undefined;
+    let resolvedStreet = '';
+    let resolvedCountry = 'FR';
+
+    if (bodyBillingAddress?.city) {
+      resolvedCity = bodyBillingAddress.city;
+      resolvedZipCode = bodyBillingAddress.postal_code;
+      resolvedStreet = bodyBillingAddress.address_line1 ?? '';
+      resolvedCountry = bodyBillingAddress.country ?? 'FR';
+    } else if (orderBillingAddress?.city) {
+      resolvedCity = orderBillingAddress.city;
+      resolvedZipCode = orderBillingAddress.postal_code;
+      resolvedStreet =
+        orderBillingAddress.street ??
+        orderBillingAddress.address ??
+        orderBillingAddress.address_line1 ??
+        '';
+      resolvedCountry = orderBillingAddress.country ?? 'FR';
+    } else if (customerType === 'organization' && customer) {
+      const org = customer as Organisation;
+      resolvedCity = org.city ?? undefined;
+      resolvedZipCode = org.postal_code ?? undefined;
+      resolvedStreet = org.address_line1 ?? '';
+      resolvedCountry = org.country ?? 'FR';
+    }
+
+    if (!resolvedCity && !resolvedZipCode) {
       return NextResponse.json(
         {
           success: false,
           error:
-            "Le SIRET ou numéro de TVA de l'organisation est requis pour créer un devis. Veuillez le renseigner dans la fiche organisation.",
+            'Adresse de facturation incomplète. Ville et code postal requis.',
         },
         { status: 400 }
       );
     }
 
-    // Récupérer ou créer le client Qonto
-    let qontoClientId: string;
-
-    // Pour les organisations standalone, utiliser leur adresse
-    let orgAddress: Record<string, string> | null = null;
-    if (!orderBillingAddress && customerType === 'organization' && customer) {
-      const org = customer as Organisation;
-      orgAddress = {
-        street: org.address_line1 ?? '',
-        city: org.city ?? 'Paris',
-        postal_code: org.postal_code ?? '75001',
-        country: org.country ?? 'FR',
-      };
-    }
-
-    const addressSource = orderBillingAddress ?? orgAddress;
-
     const qontoAddress = {
-      streetAddress: addressSource?.street ?? addressSource?.address ?? '',
-      city: addressSource?.city ?? 'Paris',
-      zipCode: addressSource?.postal_code ?? '75001',
-      countryCode: addressSource?.country ?? 'FR',
+      streetAddress: resolvedStreet,
+      city: resolvedCity ?? '',
+      zipCode: resolvedZipCode ?? '',
+      countryCode: resolvedCountry,
     };
 
     const qontoClientType =
@@ -397,7 +452,7 @@ export async function POST(request: NextRequest): Promise<
         name: customerName ?? existingClient.name,
         type: qontoClientType,
         address: qontoAddress,
-        vatNumber,
+        vatNumber: vatNumber ?? taxId,
       });
       qontoClientId = existingClient.id;
     } else {
@@ -407,7 +462,7 @@ export async function POST(request: NextRequest): Promise<
         email: customerEmail ?? undefined,
         currency: 'EUR',
         address: qontoAddress,
-        vatNumber,
+        vatNumber: vatNumber ?? taxId,
       });
       qontoClientId = newClient.id;
     }
@@ -510,11 +565,72 @@ export async function POST(request: NextRequest): Promise<
       items,
     };
 
-    const quote = await qontoClient.createClientQuote(quoteParams);
+    const rawQuote = await qontoClient.createClientQuote(quoteParams);
+
+    // Map Qonto response (same logic as GET handler)
+    const q = rawQuote as typeof rawQuote & {
+      number?: string;
+      total_amount?:
+        | number
+        | string
+        | { value: string; currency?: string }
+        | null;
+    };
+
+    let parsedAmount = 0;
+    const totalAmt = q.total_amount as
+      | number
+      | string
+      | { value: string }
+      | null
+      | undefined;
+
+    if (totalAmt !== null && totalAmt !== undefined) {
+      if (typeof totalAmt === 'number') {
+        parsedAmount = totalAmt;
+      } else if (typeof totalAmt === 'string') {
+        parsedAmount = parseFloat(totalAmt) || 0;
+      } else if (typeof totalAmt === 'object' && 'value' in totalAmt) {
+        parsedAmount = parseFloat(totalAmt.value) || 0;
+      }
+    } else if (q.total_amount_cents) {
+      parsedAmount = q.total_amount_cents / 100;
+    }
+
+    const mappedQuote = {
+      id: q.id,
+      quote_number: q.number ?? q.quote_number ?? '(brouillon)',
+      status: q.status,
+      currency: q.currency ?? 'EUR',
+      total_amount: parsedAmount,
+      issue_date: q.issue_date,
+      expiry_date: q.expiry_date,
+      pdf_url: q.pdf_url,
+      public_url: q.public_url,
+    };
+
+    // Link quote to order (non-blocking): store Qonto quote ID on the sales_order
+    // Qonto API remains the PRIMARY source of truth for quotes
+    if (salesOrderId) {
+      try {
+        await supabase
+          .from('sales_orders')
+          .update({
+            quote_qonto_id: mappedQuote.id,
+            quote_number: mappedQuote.quote_number,
+          })
+          .eq('id', salesOrderId);
+      } catch (linkError) {
+        console.warn(
+          '[API Qonto Quotes] Failed to link quote to order (non-blocking):',
+          linkError
+        );
+      }
+    }
 
     return NextResponse.json({
       success: true,
-      quote,
+      quote: mappedQuote,
       message: 'Quote created as draft',
     });
   } catch (error) {

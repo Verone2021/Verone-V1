@@ -137,6 +137,31 @@ export function QuoteCreateFromOrderModal({
         body: JSON.stringify({
           salesOrderId: order.id,
           expiryDays,
+          // Adresse de facturation (résolution: billing_address commande > org)
+          billingAddress: order.billing_address
+            ? {
+                address_line1: order.billing_address?.address_line1 ?? '',
+                postal_code: order.billing_address?.postal_code ?? '',
+                city: order.billing_address?.city ?? '',
+                country: order.billing_address?.country ?? 'FR',
+              }
+            : order.organisations
+              ? {
+                  address_line1:
+                    order.organisations.billing_address_line1 ??
+                    order.organisations.address_line1 ??
+                    '',
+                  postal_code:
+                    order.organisations.billing_postal_code ??
+                    order.organisations.postal_code ??
+                    '',
+                  city:
+                    order.organisations.billing_city ??
+                    order.organisations.city ??
+                    '',
+                  country: order.organisations.billing_country ?? 'FR',
+                }
+              : undefined,
           // Frais de service
           fees: {
             shipping_cost_ht: shippingCostHt,
@@ -295,13 +320,14 @@ export function QuoteCreateFromOrderModal({
   if (!order) return null;
 
   const customerName =
-    order.organisations?.name ??
+    order.organisations?.trade_name ??
+    order.organisations?.legal_name ??
     (`${order.individual_customers?.first_name ?? ''} ${order.individual_customers?.last_name ?? ''}`.trim() ||
       'Client');
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileEdit className="h-5 w-5" />
@@ -372,20 +398,90 @@ export function QuoteCreateFromOrderModal({
                 </Button>
               )}
             </div>
+
+            {/* Navigation links */}
+            <div className="flex flex-col gap-1 border-t pt-3 text-sm">
+              <a
+                href={`/factures/devis/${createdQuote.id}`}
+                className="text-blue-600 hover:underline"
+              >
+                Voir le détail du devis
+              </a>
+              <a
+                href="/factures?tab=devis"
+                className="text-blue-600 hover:underline"
+              >
+                Voir tous les devis
+              </a>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Récap client */}
+            {/* Récap client + adresses */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Client</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="font-medium">{customerName}</p>
-                <p className="text-sm text-muted-foreground">
-                  {order.organisations?.email ??
-                    order.individual_customers?.email}
-                </p>
+              <CardContent className="space-y-2">
+                <div>
+                  <p className="font-medium">{customerName}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {order.organisations?.email ??
+                      order.individual_customers?.email}
+                  </p>
+                </div>
+                {/* Adresse de facturation résolue */}
+                {(() => {
+                  const addr = order.billing_address;
+                  const org = order.organisations;
+                  const line1 =
+                    addr?.address_line1 ??
+                    org?.billing_address_line1 ??
+                    org?.address_line1;
+                  const city = addr?.city ?? org?.billing_city ?? org?.city;
+                  const postalCode =
+                    addr?.postal_code ??
+                    org?.billing_postal_code ??
+                    org?.postal_code;
+                  if (!line1 && !city) return null;
+                  return (
+                    <div className="text-xs text-muted-foreground border-t pt-2 mt-1">
+                      <p className="font-medium text-foreground text-xs mb-0.5">
+                        Adresse de facturation
+                      </p>
+                      {line1 && <p>{line1}</p>}
+                      {(postalCode ?? city) && (
+                        <p>{[postalCode, city].filter(Boolean).join(' ')}</p>
+                      )}
+                    </div>
+                  );
+                })()}
+                {/* Adresse de livraison si différente */}
+                {(() => {
+                  const shipAddr = order.shipping_address;
+                  const org = order.organisations;
+                  const hasShipping = org?.has_different_shipping_address;
+                  const line1 =
+                    shipAddr?.address_line1 ??
+                    (hasShipping ? org?.shipping_address_line1 : null);
+                  const city =
+                    shipAddr?.city ?? (hasShipping ? org?.shipping_city : null);
+                  const postalCode =
+                    shipAddr?.postal_code ??
+                    (hasShipping ? org?.shipping_postal_code : null);
+                  if (!line1 && !city) return null;
+                  return (
+                    <div className="text-xs text-muted-foreground border-t pt-2 mt-1">
+                      <p className="font-medium text-foreground text-xs mb-0.5">
+                        Adresse de livraison
+                      </p>
+                      {line1 && <p>{line1}</p>}
+                      {(postalCode ?? city) && (
+                        <p>{[postalCode, city].filter(Boolean).join(' ')}</p>
+                      )}
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
 
@@ -649,39 +745,116 @@ export function QuoteCreateFromOrderModal({
               </CardContent>
             </Card>
 
-            {/* Totaux avec TVA groupée par taux */}
-            <div className="flex justify-end">
-              <div className="w-64 space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total HT</span>
-                  <span>{formatAmount(order.total_ht)}</span>
+            {/* Totaux avec TVA groupée par taux - incluant frais et lignes personnalisées */}
+            <Card className="bg-muted/50">
+              <CardContent className="pt-4">
+                <div className="space-y-2 text-sm">
+                  {(() => {
+                    // Calculer les totaux incluant frais et lignes personnalisées
+                    const vatByRate: Record<number, number> = {};
+                    let totalHt = 0;
+
+                    // 1. Articles de la commande
+                    order.sales_order_items?.forEach(item => {
+                      const rate = item.tax_rate || 0;
+                      const lineHt = item.quantity * item.unit_price_ht;
+                      const lineVat = lineHt * rate;
+                      totalHt += lineHt;
+                      vatByRate[rate] = (vatByRate[rate] || 0) + lineVat;
+                    });
+
+                    // 2. Frais de service
+                    const totalFees =
+                      shippingCostHt + handlingCostHt + insuranceCostHt;
+                    if (totalFees > 0) {
+                      totalHt += totalFees;
+                      const feesVat = totalFees * feesVatRate;
+                      vatByRate[feesVatRate] =
+                        (vatByRate[feesVatRate] || 0) + feesVat;
+                    }
+
+                    // 3. Lignes personnalisées
+                    customLines.forEach(line => {
+                      const lineHt = line.quantity * line.unit_price_ht;
+                      const lineVat = lineHt * line.vat_rate;
+                      totalHt += lineHt;
+                      vatByRate[line.vat_rate] =
+                        (vatByRate[line.vat_rate] || 0) + lineVat;
+                    });
+
+                    // Calculer total TVA et TTC
+                    const totalVat = Object.values(vatByRate).reduce(
+                      (sum, v) => sum + v,
+                      0
+                    );
+                    const totalTtc = totalHt + totalVat;
+
+                    return (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            Articles commande
+                          </span>
+                          <span>
+                            {formatAmount(
+                              order.sales_order_items?.reduce(
+                                (sum, item) =>
+                                  sum + item.quantity * item.unit_price_ht,
+                                0
+                              ) ?? 0
+                            )}
+                          </span>
+                        </div>
+                        {totalFees > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Frais de service
+                            </span>
+                            <span>{formatAmount(totalFees)}</span>
+                          </div>
+                        )}
+                        {customLines.length > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Lignes personnalisées
+                            </span>
+                            <span>
+                              {formatAmount(
+                                customLines.reduce(
+                                  (sum, l) =>
+                                    sum + l.quantity * l.unit_price_ht,
+                                  0
+                                )
+                              )}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between border-t pt-2 mt-2">
+                          <span className="font-medium">Total HT</span>
+                          <span className="font-medium">
+                            {formatAmount(totalHt)}
+                          </span>
+                        </div>
+                        {Object.entries(vatByRate)
+                          .sort(([a], [b]) => Number(b) - Number(a))
+                          .map(([rate, amount]) => (
+                            <div key={rate} className="flex justify-between">
+                              <span className="text-muted-foreground">
+                                TVA {Math.round(Number(rate) * 100)}%
+                              </span>
+                              <span>{formatAmount(amount)}</span>
+                            </div>
+                          ))}
+                        <div className="flex justify-between border-t pt-2 mt-2 font-bold text-base">
+                          <span>Total TTC</span>
+                          <span>{formatAmount(totalTtc)}</span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
-                {/* Calculer TVA par taux */}
-                {(() => {
-                  const vatByRate: Record<number, number> = {};
-                  order.sales_order_items?.forEach(item => {
-                    const rate = item.tax_rate || 0;
-                    const lineHt = item.quantity * item.unit_price_ht;
-                    const lineVat = lineHt * rate;
-                    vatByRate[rate] = (vatByRate[rate] || 0) + lineVat;
-                  });
-                  return Object.entries(vatByRate)
-                    .sort(([a], [b]) => Number(b) - Number(a))
-                    .map(([rate, amount]) => (
-                      <div key={rate} className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          TVA {Math.round(Number(rate) * 100)}%
-                        </span>
-                        <span>{formatAmount(amount)}</span>
-                      </div>
-                    ));
-                })()}
-                <div className="flex justify-between border-t pt-1 font-bold">
-                  <span>Total TTC</span>
-                  <span>{formatAmount(order.total_ttc)}</span>
-                </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
             {/* Options */}
             <div className="space-y-2">

@@ -11,10 +11,11 @@
  * @since 2026-01
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import {
   Star,
@@ -51,18 +52,29 @@ import {
 const AUTHORIZED_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
 
 export default function MaSelectionPage(): React.JSX.Element {
+  const router = useRouter();
   const { user, linkMeRole, initializing: authLoading } = useAuth();
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
   const { data: selections, isLoading: selectionsLoading } =
     useUserSelections();
 
-  // Chargement (incluant le chargement du rôle)
-  if (authLoading || affiliateLoading || selectionsLoading) {
+  // Smart redirect : si une seule sélection, aller directement dessus
+  const [redirecting, setRedirecting] = useState(false);
+  useEffect(() => {
+    if (!selectionsLoading && selections?.length === 1) {
+      const slug = selections[0].slug || selections[0].id;
+      setRedirecting(true);
+      router.replace(`/ma-selection/${slug}`);
+    }
+  }, [selectionsLoading, selections, router]);
+
+  // Chargement (incluant le chargement du rôle) ou redirect en cours
+  if (authLoading || affiliateLoading || selectionsLoading || redirecting) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
           <Loader2 className="h-12 w-12 text-linkme-turquoise animate-spin mx-auto" />
-          <p className="text-gray-600">Chargement de vos sélections...</p>
+          <p className="text-gray-600">Chargement de vos boutiques...</p>
         </div>
       </div>
     );
@@ -144,10 +156,10 @@ export default function MaSelectionPage(): React.JSX.Element {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-linkme-marine">
-                Mes sélections
+                Mes boutiques
               </h1>
               <p className="text-gray-500 text-sm">
-                Configurez vos vitrines de vente personnalisées
+                Gérez vos vitrines de vente personnalisées
               </p>
             </div>
           </div>
@@ -158,7 +170,7 @@ export default function MaSelectionPage(): React.JSX.Element {
             className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-linkme-turquoise text-white rounded-lg font-medium hover:bg-linkme-turquoise/90 transition-all shadow-lg shadow-linkme-turquoise/25 hover:shadow-xl hover:shadow-linkme-turquoise/30"
           >
             <Plus className="h-5 w-5" />
-            Nouvelle sélection
+            Créer une boutique
           </Link>
         </div>
 
@@ -171,11 +183,11 @@ export default function MaSelectionPage(): React.JSX.Element {
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-linkme-marine mb-1">
-                  Une sélection = un mini-site pour vendre
+                  Une boutique = un mini-site pour vendre
                 </h2>
                 <p className="text-gray-600 text-sm">
                   Créez des vitrines personnalisées pour partager vos produits
-                  avec vos clients. Chaque sélection a son propre lien
+                  avec vos clients. Chaque boutique a son propre lien
                   partageable.
                 </p>
               </div>
@@ -186,7 +198,7 @@ export default function MaSelectionPage(): React.JSX.Element {
                 step={1}
                 icon={<Plus className="h-4 w-4" />}
                 title="Créer"
-                description="Nouvelle sélection"
+                description="Créer une boutique"
               />
               <OnboardingStep
                 step={2}
@@ -197,7 +209,7 @@ export default function MaSelectionPage(): React.JSX.Element {
               <OnboardingStep
                 step={3}
                 icon={<MousePointerClick className="h-4 w-4" />}
-                title="Configurer"
+                title="Personnaliser"
                 description="Vos marges"
               />
               <OnboardingStep
@@ -222,10 +234,10 @@ export default function MaSelectionPage(): React.JSX.Element {
                   {totalSelections}
                 </div>
                 <div className="text-sm text-gray-500">
-                  Sélection{totalSelections > 1 ? 's' : ''}
+                  Boutique{totalSelections > 1 ? 's' : ''}
                   {publishedCount > 0 && (
                     <span className="ml-2 text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
-                      {publishedCount} publiée{publishedCount > 1 ? 's' : ''}
+                      {publishedCount} en ligne
                     </span>
                   )}
                 </div>
@@ -261,7 +273,7 @@ export default function MaSelectionPage(): React.JSX.Element {
               <SelectionCard key={selection.id} selection={selection} />
             ))}
 
-            {/* Carte "+ Nouvelle sélection" */}
+            {/* Carte "+ Créer une boutique" */}
             <Link
               href="/ma-selection/nouvelle"
               className="group flex flex-col items-center justify-center p-8 border-2 border-dashed border-linkme-turquoise/30 rounded-2xl hover:border-linkme-turquoise hover:bg-linkme-turquoise/5 transition-all min-h-[280px]"
@@ -270,10 +282,10 @@ export default function MaSelectionPage(): React.JSX.Element {
                 <Plus className="h-7 w-7 text-linkme-turquoise" />
               </div>
               <span className="text-linkme-marine font-semibold group-hover:text-linkme-turquoise transition-colors">
-                Nouvelle sélection
+                Créer une boutique
               </span>
               <span className="text-gray-500 text-sm mt-1">
-                Créez une nouvelle vitrine
+                Créez une nouvelle boutique
               </span>
             </Link>
           </div>
@@ -284,10 +296,10 @@ export default function MaSelectionPage(): React.JSX.Element {
               <Sparkles className="h-8 w-8 text-linkme-turquoise" />
             </div>
             <h3 className="text-xl font-semibold text-linkme-marine mb-2">
-              Créez votre première sélection
+              Créez votre première boutique
             </h3>
             <p className="text-gray-500 mb-6 max-w-md mx-auto">
-              Une sélection est une vitrine personnalisée que vous pouvez
+              Une boutique est une vitrine personnalisée que vous pouvez
               partager avec vos clients. Ajoutez vos produits et configurez vos
               marges.
             </p>
@@ -296,7 +308,7 @@ export default function MaSelectionPage(): React.JSX.Element {
               className="inline-flex items-center gap-2 px-6 py-3 bg-linkme-turquoise text-white rounded-lg font-medium hover:bg-linkme-turquoise/90 transition-all shadow-lg shadow-linkme-turquoise/25"
             >
               <Plus className="h-5 w-5" />
-              Créer ma première sélection
+              Créer ma première boutique
               <ArrowRight className="h-4 w-4 ml-1" />
             </Link>
           </div>
@@ -392,12 +404,12 @@ function SelectionCard({ selection }: ISelectionCardProps): React.JSX.Element {
             {selection.published_at ? (
               <>
                 <Globe className="h-3 w-3" />
-                Publiée
+                En ligne
               </>
             ) : (
               <>
                 <Lock className="h-3 w-3" />
-                Brouillon
+                Non publiée
               </>
             )}
           </span>
@@ -437,7 +449,7 @@ function SelectionCard({ selection }: ISelectionCardProps): React.JSX.Element {
             className="relative z-10 flex items-center gap-1 text-xs text-gray-500 hover:text-linkme-turquoise transition-colors"
           >
             <Settings className="h-3.5 w-3.5" />
-            Configurer
+            Gérer
           </Link>
         </div>
 
@@ -463,7 +475,7 @@ function SelectionCard({ selection }: ISelectionCardProps): React.JSX.Element {
               className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-linkme-turquoise/10 text-linkme-turquoise rounded-lg text-xs font-medium hover:bg-linkme-turquoise/20 transition-colors"
             >
               <Store className="h-3.5 w-3.5" />
-              Boutique
+              Voir ma boutique
             </Link>
             <button
               onClick={e => {
