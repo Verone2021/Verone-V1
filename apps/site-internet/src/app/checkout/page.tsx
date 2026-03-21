@@ -19,6 +19,7 @@ import {
 
 import { trackBeginCheckout } from '@/components/analytics/GoogleAnalytics';
 import { useCart } from '@/contexts/CartContext';
+import { useAuthUser } from '@/hooks/use-auth-user';
 
 interface PromoResult {
   valid: boolean;
@@ -51,6 +52,7 @@ const CHECKOUT_STEPS = [
 
 export default function CheckoutPage() {
   const { items, itemCount, subtotal } = useCart();
+  const { user } = useAuthUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [useSameBillingAddress, setUseSameBillingAddress] = useState(true);
   const [promoCode, setPromoCode] = useState('');
@@ -131,6 +133,17 @@ export default function CheckoutPage() {
 
     try {
       const formData = new FormData(e.currentTarget);
+
+      // Build billing address if different from shipping
+      const billingData = useSameBillingAddress
+        ? undefined
+        : {
+            address: (formData.get('billingAddress') as string) || '',
+            postalCode: (formData.get('billingPostalCode') as string) || '',
+            city: (formData.get('billingCity') as string) || '',
+            country: (formData.get('billingCountry') as string) || 'FR',
+          };
+
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -154,6 +167,16 @@ export default function CheckoutPage() {
             city: formData.get('city'),
             country: formData.get('country'),
           },
+          ...(user ? { userId: user.id } : {}),
+          ...(billingData ? { billing: billingData } : {}),
+          ...(promoResult
+            ? {
+                discount: {
+                  code: promoResult.code,
+                  amount: promoResult.discount_amount,
+                },
+              }
+            : {}),
         }),
       });
 
