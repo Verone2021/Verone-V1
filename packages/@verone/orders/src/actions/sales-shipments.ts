@@ -20,6 +20,9 @@ const validateShipmentSchema = z.object({
   tracking_number: z.string().optional(),
   notes: z.string().optional(),
   shipped_by: z.string().uuid(),
+  delivery_method: z.string().default('parcel'),
+  carrier_name: z.string().optional(),
+  shipping_cost: z.number().min(0).optional(),
 });
 
 /**
@@ -45,6 +48,9 @@ export async function validateSalesShipment(
     'carrier_info' | 'shipping_address'
   > & {
     tracking_number?: string;
+    delivery_method?: string;
+    carrier_name?: string;
+    shipping_cost?: number;
   }
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -133,6 +139,9 @@ export async function validateSalesShipment(
           shipped_by: validatedData.shipped_by,
           tracking_number: validatedData.tracking_number,
           notes: validatedData.notes,
+          delivery_method: validatedData.delivery_method,
+          carrier_name: validatedData.carrier_name ?? null,
+          shipping_cost: validatedData.shipping_cost ?? null,
         });
 
       if (insertError) {

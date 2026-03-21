@@ -103,26 +103,31 @@ interface ShippingRateData {
 
 function buildShippingOptions(
   shipping: ShippingConfig,
-  subtotalCents: number
+  subtotalCents: number,
+  maxProductShippingCents: number
 ): ShippingRateData[] {
   const options: ShippingRateData[] = [];
 
   if (shipping.standard_enabled) {
-    const isFree =
+    const isFreeBase =
       shipping.free_shipping_enabled &&
       subtotalCents >= shipping.free_shipping_threshold_cents &&
       ['standard', 'all'].includes(shipping.free_shipping_applies_to);
 
+    // Use the higher of: base rate OR max product shipping supplement
+    const baseAmount = isFreeBase ? 0 : shipping.standard_price_cents;
+    const finalAmount = Math.max(baseAmount, maxProductShippingCents);
+
+    const label =
+      finalAmount === 0
+        ? `${shipping.standard_label} (offerte)`
+        : shipping.standard_label;
+
     options.push({
       shipping_rate_data: {
         type: 'fixed_amount',
-        fixed_amount: {
-          amount: isFree ? 0 : shipping.standard_price_cents,
-          currency: 'eur',
-        },
-        display_name: isFree
-          ? `${shipping.standard_label} (offerte)`
-          : shipping.standard_label,
+        fixed_amount: { amount: finalAmount, currency: 'eur' },
+        display_name: label,
         delivery_estimate: {
           minimum: { unit: 'business_day', value: shipping.standard_min_days },
           maximum: { unit: 'business_day', value: shipping.standard_max_days },
@@ -137,13 +142,13 @@ function buildShippingOptions(
       shipping.free_shipping_applies_to === 'all' &&
       subtotalCents >= shipping.free_shipping_threshold_cents;
 
+    const baseAmount = isFree ? 0 : shipping.express_price_cents;
+    const finalAmount = Math.max(baseAmount, maxProductShippingCents);
+
     options.push({
       shipping_rate_data: {
         type: 'fixed_amount',
-        fixed_amount: {
-          amount: isFree ? 0 : shipping.express_price_cents,
-          currency: 'eur',
-        },
+        fixed_amount: { amount: finalAmount, currency: 'eur' },
         display_name: isFree
           ? `${shipping.express_label} (offerte)`
           : shipping.express_label,
@@ -348,7 +353,36 @@ export async function POST(request: Request) {
       0
     );
 
-    const shippingOptions = buildShippingOptions(shipping, subtotalCents);
+    // Fetch product shipping estimates for per-product shipping calculation
+    let maxProductShippingCents = 0;
+    if (supabaseUrl && supabaseServiceKey) {
+      const supabaseForShipping = createClient(supabaseUrl, supabaseServiceKey);
+      const productIds = items.map(item => item.product_id);
+      const { data: productsData } = await supabaseForShipping
+        .from('products')
+        .select('id, shipping_cost_estimate')
+        .in('id', productIds);
+
+      if (productsData) {
+        const estimates = (
+          productsData as Array<{
+            id: string;
+            shipping_cost_estimate: number | null;
+          }>
+        )
+          .filter(p => p.shipping_cost_estimate != null)
+          .map(p => Math.round((p.shipping_cost_estimate ?? 0) * 100));
+        if (estimates.length > 0) {
+          maxProductShippingCents = Math.max(...estimates);
+        }
+      }
+    }
+
+    const shippingOptions = buildShippingOptions(
+      shipping,
+      subtotalCents,
+      maxProductShippingCents
+    );
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3001';
 

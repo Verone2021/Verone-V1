@@ -26,7 +26,21 @@ import {
 import { Textarea } from '@verone/ui';
 import { formatDate, formatCurrency } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
-import { Package, CheckCircle2, Truck, AlertTriangle } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
+import {
+  Package,
+  CheckCircle2,
+  Truck,
+  AlertTriangle,
+  HandMetal,
+  MapPin,
+} from 'lucide-react';
 
 import {
   useSalesShipments,
@@ -66,10 +80,13 @@ export function SalesOrderShipmentForm({
   } = useSalesShipments();
 
   const [items, setItems] = useState<ShipmentItem[]>([]);
+  const [deliveryMethod, setDeliveryMethod] = useState<string>('parcel');
+  const [carrierName, setCarrierName] = useState<string>('');
   const [shippedAt, setShippedAt] = useState(
     new Date().toISOString().split('T')[0]
   );
   const [trackingNumber, setTrackingNumber] = useState('');
+  const [shippingCost, setShippingCost] = useState('');
   const [notes, setNotes] = useState('');
   const [history, setHistory] = useState<
     Array<{
@@ -198,6 +215,9 @@ export function SalesOrderShipmentForm({
       tracking_number: trackingNumber || undefined,
       notes: notes || undefined,
       shipped_by: user.id,
+      delivery_method: deliveryMethod,
+      carrier_name: carrierName || undefined,
+      shipping_cost: shippingCost ? parseFloat(shippingCost) : undefined,
     });
 
     if (result.success) {
@@ -416,10 +436,81 @@ export function SalesOrderShipmentForm({
         </Table>
       </Card>
 
+      {/* Mode d'expedition */}
+      <Card className="p-4 space-y-4">
+        <div>
+          <Label className="text-base font-semibold flex items-center gap-2">
+            <Truck className="h-4 w-4" />
+            Mode d&apos;expedition
+          </Label>
+          <Select value={deliveryMethod} onValueChange={setDeliveryMethod}>
+            <SelectTrigger className="mt-2 w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pickup">
+                <span className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  Retrait client (a l&apos;entrepot)
+                </span>
+              </SelectItem>
+              <SelectItem value="hand_delivery">
+                <span className="flex items-center gap-2">
+                  <HandMetal className="h-4 w-4" />
+                  Remise en main propre
+                </span>
+              </SelectItem>
+              <SelectItem value="parcel">
+                <span className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Envoi colis
+                </span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {deliveryMethod === 'parcel' && (
+          <div className="grid grid-cols-2 gap-4 border-t pt-4">
+            <div>
+              <Label>Transporteur</Label>
+              <Select value={carrierName} onValueChange={setCarrierName}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Choisir un transporteur" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="packlink">
+                    Packlink PRO (multi-transporteurs)
+                  </SelectItem>
+                  <SelectItem value="colissimo">Colissimo</SelectItem>
+                  <SelectItem value="mondial_relay">Mondial Relay</SelectItem>
+                  <SelectItem value="chronopost">Chronopost</SelectItem>
+                  <SelectItem value="dhl">DHL</SelectItem>
+                  <SelectItem value="ups">UPS</SelectItem>
+                  <SelectItem value="other">Autre transporteur</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Cout expedition (EUR)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={shippingCost}
+                onChange={e => setShippingCost(e.target.value)}
+                placeholder="0.00"
+                className="mt-1"
+              />
+            </div>
+          </div>
+        )}
+      </Card>
+
       {/* Metadata */}
       <div className="grid grid-cols-3 gap-4">
         <div>
-          <Label>Date expédition</Label>
+          <Label>Date expedition</Label>
           <Input
             type="date"
             value={shippedAt}
@@ -428,16 +519,24 @@ export function SalesOrderShipmentForm({
           />
         </div>
         <div>
-          <Label>N° Tracking (optionnel)</Label>
+          <Label>
+            {deliveryMethod === 'parcel'
+              ? 'N° Tracking'
+              : 'Reference (optionnel)'}
+          </Label>
           <Input
             value={trackingNumber}
             onChange={e => setTrackingNumber(e.target.value)}
-            placeholder="Ex: 1Z999AA10123456784"
+            placeholder={
+              deliveryMethod === 'parcel'
+                ? 'Ex: 1Z999AA10123456784'
+                : 'Reference interne'
+            }
             className="mt-1"
           />
         </div>
         <div>
-          <Label>Notes expédition (optionnel)</Label>
+          <Label>Notes (optionnel)</Label>
           <Textarea
             value={notes}
             onChange={e => setNotes(e.target.value)}
