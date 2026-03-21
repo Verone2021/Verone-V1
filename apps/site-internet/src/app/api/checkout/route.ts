@@ -23,6 +23,7 @@ const CheckoutSchema = z.object({
     address: z.string().min(1),
     postalCode: z.string().min(1),
     city: z.string().min(1),
+    country: z.string().default('FR'),
   }),
 });
 
@@ -185,6 +186,129 @@ export async function POST(request: Request) {
     // Fetch shipping config from DB
     const shipping = await getShippingConfig();
 
+    // Pre-create order in sales_orders as draft
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    let orderId: string | null = null;
+
+    if (supabaseUrl && supabaseServiceKey) {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+      const subtotalAmount = items.reduce(
+        (sum, item) =>
+          sum +
+          (item.price_ttc +
+            item.eco_participation +
+            (item.include_assembly ? item.assembly_price : 0)) *
+            item.quantity,
+        0
+      );
+
+      // Find or create individual_customer
+      const { data: existingCustomer } = await supabase
+        .from('individual_customers')
+        .select('id')
+        .eq('email', customer.email)
+        .limit(1)
+        .single();
+
+      let customerId: string | null = existingCustomer
+        ? String(existingCustomer.id)
+        : null;
+
+      if (!customerId) {
+        const { data: newCustomer } = await supabase
+          .from('individual_customers')
+          .insert({
+            first_name: customer.firstName,
+            last_name: customer.lastName,
+            email: customer.email,
+            phone: customer.phone || null,
+            address_line1: customer.address,
+            postal_code: customer.postalCode,
+            city: customer.city,
+            country: (customer.country as string | undefined) ?? 'FR',
+            source_type: 'site-internet',
+            is_active: true,
+          })
+          .select('id')
+          .single();
+
+        customerId = newCustomer ? String(newCustomer.id) : null;
+      }
+
+      // Generate order number
+      const year = new Date().getFullYear();
+      const prefix = `SO-${year}-`;
+      const { data: lastOrderRaw } = await supabase
+        .from('sales_orders')
+        .select('order_number')
+        .like('order_number', `${prefix}%`)
+        .order('order_number', { ascending: false })
+        .limit(1)
+        .single();
+
+      const lastOrder = lastOrderRaw as { order_number?: string } | null;
+      const lastNum = lastOrder?.order_number
+        ? parseInt(lastOrder.order_number.replace(prefix, ''), 10)
+        : 0;
+      const orderNumber = `${prefix}${String(lastNum + 1).padStart(5, '0')}`;
+
+      // Shipping address as JSONB
+      const shippingCountry = String(customer.country ?? 'FR');
+      const shippingAddressJson = {
+        line1: customer.address,
+        postal_code: customer.postalCode,
+        city: customer.city,
+        country: shippingCountry,
+      };
+
+      const { data: orderDataRaw, error: orderError } = await supabase
+        .from('sales_orders')
+        .insert({
+          order_number: orderNumber,
+          channel_id: '0c2639e9-df80-41fa-84d0-9da96a128f7f',
+          customer_type: 'individual',
+          individual_customer_id: customerId,
+          status: 'draft',
+          payment_status_v2: 'pending',
+          shipping_address: shippingAddressJson,
+          total_ttc: subtotalAmount,
+          total_ht: Math.round((subtotalAmount / 1.2) * 100) / 100,
+        })
+        .select('id')
+        .single();
+
+      if (orderError) {
+        console.error('[Checkout] Pre-create order failed:', orderError);
+      } else {
+        const orderData = orderDataRaw as { id: string } | null;
+        orderId = orderData ? String(orderData.id) : null;
+
+        // Create sales_order_items
+        const orderItems = items.map(item => ({
+          sales_order_id: orderId,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          unit_price_ht: Math.round((item.price_ttc / 1.2) * 100) / 100,
+          tax_rate: 20,
+          total_ht: Math.round(
+            ((item.price_ttc / 1.2) * item.quantity * 100) / 100
+          ),
+        }));
+
+        const { error: itemsError } = await supabase
+          .from('sales_order_items')
+          .insert(orderItems);
+
+        if (itemsError) {
+          console.error('[Checkout] Order items creation failed:', itemsError);
+        }
+
+        console.warn('[Checkout] Pre-created draft order:', orderNumber);
+      }
+    }
+
     const Stripe = (await import('stripe')).default;
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: '2026-02-25.clover',
@@ -235,6 +359,7 @@ export async function POST(request: Request) {
       payment_method_types: ['card', 'link'],
       line_items: lineItems,
       mode: 'payment',
+      invoice_creation: { enabled: true },
       shipping_options: shippingOptions,
       shipping_address_collection: {
         allowed_countries:
@@ -249,6 +374,7 @@ export async function POST(request: Request) {
         customer_name: `${customer.firstName} ${customer.lastName}`,
         customer_phone: customer.phone,
         shipping_address: `${customer.address}, ${customer.postalCode} ${customer.city}`,
+        ...(orderId ? { order_id: orderId } : {}),
       },
     });
 
