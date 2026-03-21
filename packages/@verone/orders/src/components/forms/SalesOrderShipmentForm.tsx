@@ -47,6 +47,8 @@ import {
   type SalesOrderForShipment,
 } from '@verone/orders/hooks';
 
+import { PacklinkServiceSelector } from './PacklinkServiceSelector';
+
 interface ShipmentResultSummary {
   isComplete: boolean;
   orderNumber: string;
@@ -471,39 +473,59 @@ export function SalesOrderShipmentForm({
         </div>
 
         {deliveryMethod === 'parcel' && (
-          <div className="grid grid-cols-2 gap-4 border-t pt-4">
-            <div>
-              <Label>Transporteur</Label>
-              <Select value={carrierName} onValueChange={setCarrierName}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Choisir un transporteur" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="packlink">
-                    Packlink PRO (multi-transporteurs)
-                  </SelectItem>
-                  <SelectItem value="colissimo">Colissimo</SelectItem>
-                  <SelectItem value="mondial_relay">Mondial Relay</SelectItem>
-                  <SelectItem value="chronopost">Chronopost</SelectItem>
-                  <SelectItem value="dhl">DHL</SelectItem>
-                  <SelectItem value="ups">UPS</SelectItem>
-                  <SelectItem value="other">Autre transporteur</SelectItem>
-                </SelectContent>
-              </Select>
+          <>
+            <div className="grid grid-cols-2 gap-4 border-t pt-4">
+              <div>
+                <Label>Transporteur</Label>
+                <Select value={carrierName} onValueChange={setCarrierName}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Choisir un transporteur" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="packlink">
+                      Packlink PRO (multi-transporteurs)
+                    </SelectItem>
+                    <SelectItem value="colissimo">Colissimo</SelectItem>
+                    <SelectItem value="mondial_relay">Mondial Relay</SelectItem>
+                    <SelectItem value="chronopost">Chronopost</SelectItem>
+                    <SelectItem value="dhl">DHL</SelectItem>
+                    <SelectItem value="ups">UPS</SelectItem>
+                    <SelectItem value="other">Autre transporteur</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Cout expedition (EUR)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={shippingCost}
+                  onChange={e => setShippingCost(e.target.value)}
+                  placeholder="0.00"
+                  className="mt-1"
+                />
+              </div>
             </div>
-            <div>
-              <Label>Cout expedition (EUR)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                value={shippingCost}
-                onChange={e => setShippingCost(e.target.value)}
-                placeholder="0.00"
-                className="mt-1"
+
+            {carrierName === 'packlink' && (
+              <PacklinkServiceSelector
+                destinationZip={
+                  (
+                    salesOrder.shipping_address as {
+                      postal_code?: string;
+                    } | null
+                  )?.postal_code ?? ''
+                }
+                destinationCountry="FR"
+                onServiceSelect={service => {
+                  setCarrierName(service.carrierName);
+                  setShippingCost(String(service.price));
+                  setTrackingNumber('');
+                }}
               />
-            </div>
-          </div>
+            )}
+          </>
         )}
       </Card>
 

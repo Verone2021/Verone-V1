@@ -29,19 +29,24 @@ export const metadata: Metadata = {
 
 interface SiteOrder {
   id: string;
+  order_number: string | null;
   created_at: string;
   status: string;
-  total: number;
-  customer_name: string;
+  total_ttc: number;
+  shipping_address: Record<string, string> | null;
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending: { label: 'En attente', color: 'bg-yellow-100 text-yellow-800' },
-  paid: { label: 'Payée', color: 'bg-blue-100 text-blue-800' },
-  shipped: { label: 'Expédiée', color: 'bg-orange-100 text-orange-800' },
-  delivered: { label: 'Livrée', color: 'bg-green-100 text-green-800' },
-  cancelled: { label: 'Annulée', color: 'bg-red-100 text-red-800' },
-  refunded: { label: 'Remboursée', color: 'bg-gray-100 text-gray-800' },
+  draft: { label: 'En cours', color: 'bg-yellow-100 text-yellow-800' },
+  validated: { label: 'Confirmee', color: 'bg-blue-100 text-blue-800' },
+  partially_shipped: {
+    label: 'En preparation',
+    color: 'bg-orange-100 text-orange-800',
+  },
+  shipped: { label: 'Expediee', color: 'bg-orange-100 text-orange-800' },
+  delivered: { label: 'Livree', color: 'bg-green-100 text-green-800' },
+  cancelled: { label: 'Annulee', color: 'bg-red-100 text-red-800' },
+  closed: { label: 'Terminee', color: 'bg-gray-100 text-gray-800' },
 };
 
 export default async function ComptePage() {
@@ -59,19 +64,34 @@ export default async function ComptePage() {
   const lastName = userMeta.last_name ?? '';
   const phone = userMeta.phone ?? '';
 
-  // Fetch user orders (untyped client for new table)
+  // Fetch user orders from sales_orders (via individual_customer email match)
   const ordersClient = createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
-  const { data: ordersData } = await ordersClient
-    .from('site_orders')
-    .select('id, created_at, status, total, customer_name')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(10);
 
-  const orders = (ordersData as SiteOrder[] | null) ?? [];
+  // Find customer by email
+  const { data: customerData } = await ordersClient
+    .from('individual_customers')
+    .select('id')
+    .eq('email', user.email ?? '')
+    .limit(1)
+    .single();
+
+  let orders: SiteOrder[] = [];
+  if (customerData) {
+    const { data: ordersData } = await ordersClient
+      .from('sales_orders')
+      .select(
+        'id, order_number, created_at, status, total_ttc, shipping_address'
+      )
+      .eq('individual_customer_id', String(customerData.id))
+      .eq('channel_id', '0c2639e9-df80-41fa-84d0-9da96a128f7f')
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    orders = (ordersData as SiteOrder[] | null) ?? [];
+  }
 
   const inputClass =
     'w-full px-4 py-3 border border-verone-gray-300 rounded-lg focus:ring-2 focus:ring-verone-black focus:border-transparent outline-none transition-all text-sm';
@@ -242,7 +262,7 @@ export default async function ComptePage() {
                     >
                       <div>
                         <p className="text-sm font-medium text-verone-black">
-                          Commande du{' '}
+                          {order.order_number ?? 'Commande'} —{' '}
                           {new Date(order.created_at).toLocaleDateString(
                             'fr-FR',
                             {
@@ -253,7 +273,7 @@ export default async function ComptePage() {
                           )}
                         </p>
                         <p className="text-xs text-verone-gray-500 mt-0.5">
-                          {Number(order.total).toFixed(2)} &euro;
+                          {Number(order.total_ttc).toFixed(2)} &euro;
                         </p>
                       </div>
                       <span

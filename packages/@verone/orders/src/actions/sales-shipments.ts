@@ -153,7 +153,49 @@ export async function validateSalesShipment(
       }
     }
 
-    // 5. Revalidate cache Next.js
+    // 5. Send shipping notification email (non-blocking)
+    if (
+      validatedData.delivery_method === 'parcel' &&
+      validatedData.tracking_number
+    ) {
+      // Fetch customer email from sales_order
+      const { data: orderForEmail } = await supabase
+        .from('sales_orders')
+        .select('order_number, individual_customer_id')
+        .eq('id', validatedData.sales_order_id)
+        .single();
+
+      if (orderForEmail?.individual_customer_id) {
+        const { data: customer } = await supabase
+          .from('individual_customers')
+          .select('email, first_name, last_name')
+          .eq('id', orderForEmail.individual_customer_id)
+          .single();
+
+        if (customer?.email) {
+          const siteUrl =
+            process.env.NEXT_PUBLIC_SITE_INTERNET_URL ??
+            'https://www.veronecollections.fr';
+          void fetch(`${siteUrl}/api/emails/shipping-notification`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: customer.email,
+              customerName:
+                `${customer.first_name ?? ''} ${customer.last_name ?? ''}`.trim(),
+              orderId:
+                orderForEmail.order_number ?? validatedData.sales_order_id,
+              trackingNumber: validatedData.tracking_number,
+              carrierName: validatedData.carrier_name,
+            }),
+          }).catch(err => {
+            console.error('[Shipment] Email notification failed:', err);
+          });
+        }
+      }
+    }
+
+    // 6. Revalidate cache Next.js
     revalidatePath('/stocks/expeditions');
     revalidatePath('/commandes/clients');
     revalidatePath(`/commandes/clients/${validatedData.sales_order_id}`);
