@@ -45,6 +45,7 @@ export interface SalesOrderForShipment {
   customer_id: string;
   customer_type: string; // 'organization' | 'individual'
   customer_name?: string; // Chargé dynamiquement selon customer_type
+  customer_email?: string; // Email client (pour Packlink)
 
   // Shipping address (pré-remplir formulaire)
   shipping_address?: Record<string, unknown>;
