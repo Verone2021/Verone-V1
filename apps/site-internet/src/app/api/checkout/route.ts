@@ -291,10 +291,7 @@ export async function POST(request: Request) {
           product_id: item.product_id,
           quantity: item.quantity,
           unit_price_ht: Math.round((item.price_ttc / 1.2) * 100) / 100,
-          tax_rate: 20,
-          total_ht: Math.round(
-            ((item.price_ttc / 1.2) * item.quantity * 100) / 100
-          ),
+          tax_rate: 0.2,
         }));
 
         const { error: itemsError } = await supabase
