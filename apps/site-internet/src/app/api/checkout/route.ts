@@ -37,6 +37,7 @@ const CheckoutSchema = z.object({
     city: z.string().min(1),
     country: z.string().default('FR'),
   }),
+  userId: z.string().uuid().optional(),
   billing: BillingSchema.optional(),
   discount: DiscountSchema.optional(),
 });
@@ -184,7 +185,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { items, customer, billing, discount } = validated.data;
+    const { items, customer, billing, discount, userId } = validated.data;
 
     // Check if Stripe is configured
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -226,6 +227,7 @@ export async function POST(request: Request) {
         .from('site_orders')
         .insert({
           status: 'pending',
+          user_id: userId ?? null,
           customer_name: `${customer.firstName} ${customer.lastName}`,
           customer_email: customer.email,
           customer_phone: customer.phone,

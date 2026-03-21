@@ -19,6 +19,7 @@ import {
 
 import { trackBeginCheckout } from '@/components/analytics/GoogleAnalytics';
 import { useCart } from '@/contexts/CartContext';
+import { useAuthUser } from '@/hooks/use-auth-user';
 
 interface PromoResult {
   valid: boolean;
@@ -51,6 +52,7 @@ const CHECKOUT_STEPS = [
 
 export default function CheckoutPage() {
   const { items, itemCount, subtotal } = useCart();
+  const { user } = useAuthUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [useSameBillingAddress, setUseSameBillingAddress] = useState(true);
   const [promoCode, setPromoCode] = useState('');
@@ -165,6 +167,7 @@ export default function CheckoutPage() {
             city: formData.get('city'),
             country: formData.get('country'),
           },
+          ...(user ? { userId: user.id } : {}),
           ...(billingData ? { billing: billingData } : {}),
           ...(promoResult
             ? {
