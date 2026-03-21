@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
@@ -28,13 +28,6 @@ import {
   TableRow,
 } from '@verone/ui';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@verone/ui';
-import {
   Package,
   Clock,
   CreditCard,
@@ -45,23 +38,38 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { OrderDetailModal } from './OrderDetailModal';
+import { OrderStatusActions, isValidTransition } from './OrderStatusActions';
+
 // ── Types ──────────────────────────────────────────────────────
 
 interface SiteOrder {
   id: string;
+  order_number: string | null;
   customer_email: string;
   customer_name: string;
+  customer_phone: string | null;
+  shipping_address: string | null;
+  billing_address: string | null;
   status: string;
   total: number;
   subtotal: number;
   shipping_cost: number;
+  total_ht: number | null;
+  tax_amount: number | null;
+  tax_rate: number | null;
   currency: string;
   items: unknown;
+  stripe_session_id: string | null;
+  discount_code: string | null;
+  discount_amount: number;
+  invoice_number: string | null;
+  invoice_date: string | null;
+  shipping_method: string | null;
+  payment_method: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
-
-type OrderStatus = 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled';
 
 // ── Supabase Client ────────────────────────────────────────────
 
@@ -73,7 +81,7 @@ async function fetchSiteOrders(): Promise<SiteOrder[]> {
   const { data, error } = await supabase
     .from('site_orders')
     .select(
-      'id, customer_email, customer_name, status, total, subtotal, shipping_cost, currency, items, created_at, updated_at'
+      'id, order_number, customer_email, customer_name, customer_phone, shipping_address, billing_address, status, total, subtotal, shipping_cost, total_ht, tax_amount, tax_rate, currency, items, stripe_session_id, discount_code, discount_amount, invoice_number, invoice_date, shipping_method, payment_method, created_at, updated_at'
     )
     .order('created_at', { ascending: false })
     .limit(200);
@@ -87,57 +95,6 @@ async function fetchSiteOrders(): Promise<SiteOrder[]> {
 }
 
 // ── Helpers ────────────────────────────────────────────────────
-
-function getStatusBadgeVariant(
-  status: string
-): 'default' | 'secondary' | 'destructive' | 'outline' {
-  switch (status as OrderStatus) {
-    case 'paid':
-      return 'default';
-    case 'cancelled':
-      return 'destructive';
-    case 'pending':
-    case 'shipped':
-    case 'delivered':
-      return 'secondary';
-    default:
-      return 'outline';
-  }
-}
-
-function getStatusColor(status: string): string {
-  switch (status as OrderStatus) {
-    case 'pending':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-    case 'paid':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-    case 'shipped':
-      return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
-    case 'delivered':
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-    case 'cancelled':
-      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-    default:
-      return '';
-  }
-}
-
-function getStatusLabel(status: string): string {
-  switch (status as OrderStatus) {
-    case 'pending':
-      return 'En attente';
-    case 'paid':
-      return 'Payee';
-    case 'shipped':
-      return 'Expediee';
-    case 'delivered':
-      return 'Livree';
-    case 'cancelled':
-      return 'Annulee';
-    default:
-      return status;
-  }
-}
 
 function countItems(items: unknown): number {
   if (Array.isArray(items)) {
@@ -170,6 +127,7 @@ function formatCurrency(amount: number, currency: string): string {
  * Section Commandes Principale
  */
 export function OrdersSection() {
+  const [selectedOrder, setSelectedOrder] = useState<SiteOrder | null>(null);
   const queryClient = useQueryClient();
   const {
     data: orders = [],
@@ -184,19 +142,28 @@ export function OrdersSection() {
     refetchOnWindowFocus: true,
   });
 
-  // Update order status + trigger email
+  // Update order status + trigger email (with transition validation)
   const updateStatusMutation = useMutation({
     mutationFn: async ({
       orderId,
       newStatus,
+      currentStatus,
       customerEmail,
       customerName,
     }: {
       orderId: string;
       newStatus: string;
+      currentStatus: string;
       customerEmail: string;
       customerName: string;
     }) => {
+      // Validate transition before sending to DB
+      if (!isValidTransition(currentStatus, newStatus)) {
+        throw new Error(
+          `Transition invalide : ${currentStatus} → ${newStatus}`
+        );
+      }
+
       const { error: updateError } = await supabase
         .from('site_orders')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
@@ -259,6 +226,7 @@ export function OrdersSection() {
       updateStatusMutation.mutate({
         orderId: order.id,
         newStatus,
+        currentStatus: order.status,
         customerEmail: order.customer_email,
         customerName: order.customer_name,
       });
@@ -359,9 +327,9 @@ export function OrdersSection() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Commande</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Client</TableHead>
-                <TableHead>Email</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead>Articles</TableHead>
@@ -370,7 +338,7 @@ export function OrdersSection() {
             <TableBody>
               {orders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
+                  <TableCell colSpan={7} className="h-24 text-center">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Package className="h-8 w-8 opacity-50" />
                       <p>Aucune commande trouvee</p>
@@ -379,7 +347,16 @@ export function OrdersSection() {
                 </TableRow>
               ) : (
                 orders.map(order => (
-                  <TableRow key={order.id}>
+                  <TableRow
+                    key={order.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => setSelectedOrder(order)}
+                  >
+                    {/* Order Number */}
+                    <TableCell className="font-mono text-sm font-medium">
+                      {order.order_number ?? order.id.slice(0, 8)}
+                    </TableCell>
+
                     {/* Date */}
                     <TableCell className="text-sm text-muted-foreground">
                       {formatDate(order.created_at)}
@@ -390,47 +367,21 @@ export function OrdersSection() {
                       {order.customer_name}
                     </TableCell>
 
-                    {/* Email */}
-                    <TableCell className="text-sm text-muted-foreground">
-                      {order.customer_email}
-                    </TableCell>
-
                     {/* Total */}
                     <TableCell className="font-medium">
                       {formatCurrency(order.total, order.currency)}
                     </TableCell>
 
-                    {/* Statut - Dropdown changement */}
-                    <TableCell>
-                      <Select
-                        value={order.status}
-                        onValueChange={newStatus =>
+                    {/* Statut - Transitions valides uniquement */}
+                    <TableCell onClick={e => e.stopPropagation()}>
+                      <OrderStatusActions
+                        status={order.status}
+                        onStatusChange={newStatus =>
                           handleStatusChange(order, newStatus)
                         }
-                        disabled={updateStatusMutation.isPending}
-                      >
-                        <SelectTrigger className="w-[140px] h-8">
-                          <SelectValue>
-                            <Badge
-                              variant={getStatusBadgeVariant(order.status)}
-                              className={getStatusColor(order.status)}
-                            >
-                              {getStatusLabel(order.status)}
-                            </Badge>
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">En attente</SelectItem>
-                          <SelectItem value="paid">Pay\u00e9e</SelectItem>
-                          <SelectItem value="shipped">
-                            Exp\u00e9di\u00e9e
-                          </SelectItem>
-                          <SelectItem value="delivered">Livr\u00e9e</SelectItem>
-                          <SelectItem value="cancelled">
-                            Annul\u00e9e
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                        isUpdating={updateStatusMutation.isPending}
+                        size="sm"
+                      />
                     </TableCell>
 
                     {/* Articles */}
@@ -447,6 +398,18 @@ export function OrdersSection() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Order Detail Modal */}
+      <OrderDetailModal
+        order={selectedOrder}
+        open={selectedOrder !== null}
+        onClose={() => setSelectedOrder(null)}
+        onStatusChange={(order, newStatus) => {
+          handleStatusChange(order, newStatus);
+          setSelectedOrder({ ...order, status: newStatus });
+        }}
+        isUpdating={updateStatusMutation.isPending}
+      />
     </div>
   );
 }

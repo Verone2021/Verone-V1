@@ -73,7 +73,7 @@ export default function LivraisonPage() {
                   Articles en stock
                 </p>
                 <p className="text-sm text-verone-gray-600">
-                  Expédition sous 3 à 5 jours ouvrés
+                  Expedition sous 10 à 14 jours ouvrés
                 </p>
               </div>
             </div>

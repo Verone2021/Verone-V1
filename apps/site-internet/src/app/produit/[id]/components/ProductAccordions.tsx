@@ -155,7 +155,7 @@ export function ProductAccordions({ product }: ProductAccordionsProps) {
                 <span>Livraison</span>
               </div>
               <p className="text-muted-foreground pl-6">
-                Livraison sous 3-5 jours ouvrés pour les produits en stock.
+                Livraison sous 10 à 14 jours ouvrés.
               </p>
             </div>
 

@@ -95,7 +95,7 @@ export function ProductSidebar({
   const deliveryDelay =
     product.delivery_delay_weeks_min && product.delivery_delay_weeks_max
       ? `Livré en ${product.delivery_delay_weeks_min}-${product.delivery_delay_weeks_max} semaines`
-      : 'Livraison sous 3-5 jours';
+      : 'Livraison sous 10-14 jours ouvres';
 
   return (
     <div className="lg:sticky lg:top-20 lg:h-fit">

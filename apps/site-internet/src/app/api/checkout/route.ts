@@ -13,6 +13,18 @@ const CheckoutItemSchema = z.object({
   eco_participation: z.number().min(0),
 });
 
+const BillingSchema = z.object({
+  address: z.string().min(1),
+  postalCode: z.string().min(1),
+  city: z.string().min(1),
+  country: z.string().default('FR'),
+});
+
+const DiscountSchema = z.object({
+  code: z.string().min(1),
+  amount: z.number().min(0),
+});
+
 const CheckoutSchema = z.object({
   items: z.array(CheckoutItemSchema).min(1),
   customer: z.object({
@@ -23,7 +35,11 @@ const CheckoutSchema = z.object({
     address: z.string().min(1),
     postalCode: z.string().min(1),
     city: z.string().min(1),
+    country: z.string().default('FR'),
   }),
+  userId: z.string().uuid().optional(),
+  billing: BillingSchema.optional(),
+  discount: DiscountSchema.optional(),
 });
 
 interface ShippingConfig {
@@ -48,8 +64,8 @@ const DEFAULT_SHIPPING: ShippingConfig = {
   standard_enabled: true,
   standard_label: 'Livraison standard',
   standard_price_cents: 1290,
-  standard_min_days: 5,
-  standard_max_days: 7,
+  standard_min_days: 10,
+  standard_max_days: 14,
   express_enabled: false,
   express_label: 'Livraison express',
   express_price_cents: 1990,
@@ -169,7 +185,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { items, customer } = validated.data;
+    const { items, customer, billing, discount, userId } = validated.data;
 
     // Check if Stripe is configured
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -184,6 +200,64 @@ export async function POST(request: Request) {
 
     // Fetch shipping config from DB
     const shipping = await getShippingConfig();
+
+    // Pre-create pending order with full items data
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    let orderId: string | null = null;
+
+    if (supabaseUrl && supabaseServiceKey) {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      const subtotalAmount = items.reduce(
+        (sum, item) =>
+          sum +
+          (item.price_ttc +
+            item.eco_participation +
+            (item.include_assembly ? item.assembly_price : 0)) *
+            item.quantity,
+        0
+      );
+
+      const shippingAddr = `${customer.address}, ${customer.postalCode} ${customer.city}`;
+      const billingAddr = billing
+        ? `${billing.address}, ${billing.postalCode} ${billing.city}`
+        : shippingAddr;
+
+      const { data: orderData, error: orderError } = await supabase
+        .from('site_orders')
+        .insert({
+          status: 'pending',
+          user_id: userId ?? null,
+          customer_name: `${customer.firstName} ${customer.lastName}`,
+          customer_email: customer.email,
+          customer_phone: customer.phone,
+          shipping_address: shippingAddr,
+          billing_address: billingAddr,
+          items: items.map(item => ({
+            product_id: item.product_id,
+            name: item.name,
+            price_ttc: item.price_ttc,
+            quantity: item.quantity,
+            include_assembly: item.include_assembly,
+            assembly_price: item.assembly_price,
+            eco_participation: item.eco_participation,
+          })),
+          subtotal: subtotalAmount,
+          total: subtotalAmount, // Shipping added after Stripe session
+          currency: 'EUR',
+          discount_code: discount?.code ?? null,
+          discount_amount: discount?.amount ?? 0,
+        })
+        .select('id')
+        .single();
+
+      if (orderError) {
+        console.error('[Checkout] Failed to pre-create order:', orderError);
+      } else {
+        orderId = orderData.id as string;
+        console.warn('[Checkout] Pre-created pending order:', orderId);
+      }
+    }
 
     const Stripe = (await import('stripe')).default;
     const stripe = new Stripe(stripeSecretKey, {
@@ -249,6 +323,7 @@ export async function POST(request: Request) {
         customer_name: `${customer.firstName} ${customer.lastName}`,
         customer_phone: customer.phone,
         shipping_address: `${customer.address}, ${customer.postalCode} ${customer.city}`,
+        ...(orderId ? { order_id: orderId } : {}),
       },
     });
 

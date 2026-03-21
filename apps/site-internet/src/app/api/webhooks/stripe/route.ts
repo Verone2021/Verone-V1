@@ -35,22 +35,59 @@ export async function POST(request: Request) {
         const session = event.data.object;
         const metadata = session.metadata ?? {};
 
-        // Create order in database
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
         if (supabaseUrl && supabaseServiceKey) {
           const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-          const orderId = crypto.randomUUID();
           const totalAmount = (session.amount_total ?? 0) / 100;
           const shippingCost = session.shipping_cost?.amount_total
             ? session.shipping_cost.amount_total / 100
             : 0;
           const subtotalAmount = totalAmount - shippingCost;
-          const { error: orderError } = await supabase
-            .from('site_orders')
-            .insert({
+          const existingOrderId = metadata.order_id;
+
+          // Extract payment method from Stripe session
+          const paymentMethod = session.payment_method_types?.[0] ?? 'card';
+
+          // Extract shipping method chosen by customer
+          const shippingMethod = (
+            session.shipping_cost as Record<string, unknown> | null | undefined
+          )?.shipping_rate
+            ? 'standard'
+            : null;
+
+          const orderId = existingOrderId ?? crypto.randomUUID();
+          let orderError: { message: string } | null = null;
+
+          if (existingOrderId) {
+            // Update pre-created pending order to paid
+            const { error } = await supabase
+              .from('site_orders')
+              .update({
+                stripe_session_id: session.id,
+                status: 'paid',
+                subtotal: subtotalAmount,
+                shipping_cost: shippingCost,
+                total: totalAmount,
+                payment_method: paymentMethod,
+                shipping_method: shippingMethod,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', existingOrderId)
+              .eq('status', 'pending');
+
+            orderError = error;
+            if (!error) {
+              console.warn(
+                '[Stripe Webhook] Order updated to paid:',
+                existingOrderId
+              );
+            }
+          } else {
+            // Fallback: insert new order (legacy checkout without pre-creation)
+            const { error } = await supabase.from('site_orders').insert({
               id: orderId,
               user_id: null,
               stripe_session_id: session.id,
@@ -58,22 +95,29 @@ export async function POST(request: Request) {
               customer_email: session.customer_email ?? '',
               customer_phone: metadata.customer_phone ?? '',
               shipping_address: metadata.shipping_address ?? '',
+              billing_address: metadata.shipping_address ?? '',
               status: 'paid',
               subtotal: subtotalAmount,
               shipping_cost: shippingCost,
               total: totalAmount,
               currency: 'EUR',
               items: {},
+              payment_method: paymentMethod,
+              shipping_method: shippingMethod,
             });
 
-          if (orderError) {
-            console.error(
-              '[Stripe Webhook] Order creation failed:',
-              orderError
-            );
-          } else {
-            console.warn('[Stripe Webhook] Order created:', orderId);
+            orderError = error;
+            if (!error) {
+              console.warn(
+                '[Stripe Webhook] Order created (fallback):',
+                orderId
+              );
+            }
+          }
 
+          if (orderError) {
+            console.error('[Stripe Webhook] Order save failed:', orderError);
+          } else {
             // Send confirmation email to customer (non-blocking)
             const siteUrl =
               process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3001';
@@ -121,7 +165,34 @@ export async function POST(request: Request) {
         break;
       }
       case 'checkout.session.expired': {
-        console.warn('[Stripe Webhook] Session expired:', event.data.object.id);
+        const expiredSession = event.data.object;
+        const expiredMetadata = expiredSession.metadata ?? {};
+        const expiredOrderId = expiredMetadata.order_id;
+
+        // Cancel the pending order if it exists
+        if (expiredOrderId) {
+          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+          const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+          if (supabaseUrl && supabaseServiceKey) {
+            const supabase = createClient(supabaseUrl, supabaseServiceKey);
+            await supabase
+              .from('site_orders')
+              .update({
+                status: 'cancelled',
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', expiredOrderId)
+              .eq('status', 'pending');
+
+            console.warn(
+              '[Stripe Webhook] Pending order cancelled:',
+              expiredOrderId
+            );
+          }
+        } else {
+          console.warn('[Stripe Webhook] Session expired:', expiredSession.id);
+        }
         break;
       }
       default:
