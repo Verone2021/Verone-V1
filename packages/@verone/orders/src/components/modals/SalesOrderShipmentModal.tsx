@@ -10,7 +10,7 @@ import {
   DialogDescription,
 } from '@verone/ui';
 
-import { SalesOrderShipmentForm } from '@verone/orders/components/forms/SalesOrderShipmentForm';
+import { ShipmentWizard } from '@verone/orders/components/forms/ShipmentWizard';
 import type { SalesOrderForShipment } from '@verone/orders/hooks';
 import { useSalesShipments } from '@verone/orders/hooks';
 
@@ -73,7 +73,7 @@ export function SalesOrderShipmentModal({
             </div>
           </div>
         ) : enrichedOrder ? (
-          <SalesOrderShipmentForm
+          <ShipmentWizard
             salesOrder={enrichedOrder}
             onSuccess={handleSuccess}
             onCancel={onClose}
