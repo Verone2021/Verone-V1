@@ -37,6 +37,7 @@ import {
 
 import type { Json } from '@verone/types';
 
+import { ProductShippingCard } from './ProductShippingCard';
 import { ShippingConfigCard } from './ShippingConfigCard';
 
 // Hooks
@@ -706,6 +707,9 @@ export function ConfigurationSection() {
         }}
         isSaving={updateConfigJSON.isPending}
       />
+
+      {/* Section 6: Cout expedition par produit */}
+      <ProductShippingCard />
 
       {/* Info Helper */}
       <Card className="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950">
