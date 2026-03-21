@@ -5,8 +5,8 @@
  *
  * Etape 1 : Selection stock (produits + quantites)
  * Etape 2 : Mode de livraison (retrait / main propre / manuel / Packlink)
- * Etape 3 : Infos colis (Packlink — dimensions, poids, adresses)
- * Etape 4 : Choix transporteur (Packlink — services + prix)
+ * Etape 3 : Infos colis (Packlink — dimensions, poids, contenu, assurance)
+ * Etape 4 : Choix transporteur (Packlink — services + prix, style Packlink PRO)
  * Etape 5 : Points relais (Packlink — si service relais)
  * Etape 6 : Resume + confirmation (Packlink)
  */
@@ -42,6 +42,12 @@ import {
   Loader2,
   Clock,
   Download,
+  Plus,
+  Trash2,
+  Shield,
+  Store,
+  Home,
+  ChevronDown,
 } from 'lucide-react';
 
 import {
@@ -52,6 +58,7 @@ import {
 // ── Types ──────────────────────────────────────────────────────
 
 type DeliveryMethod = 'pickup' | 'hand_delivery' | 'manual' | 'packlink';
+type SortOption = 'default' | 'price_asc' | 'transit_asc';
 
 interface PacklinkService {
   id: number;
@@ -75,6 +82,133 @@ interface ShipmentWizardProps {
   salesOrder: SalesOrderForShipment;
   onSuccess: () => void;
   onCancel: () => void;
+}
+
+// ── WizardSummaryPanel ──────────────────────────────────────────
+
+interface WizardSummaryPanelProps {
+  salesOrder: SalesOrderForShipment;
+  packages: PackageInfo[];
+  items: ShipmentItem[];
+  contentDescription: string;
+  declaredValue: number;
+  selectedService: PacklinkService | null;
+  wantsInsurance: boolean;
+}
+
+function WizardSummaryPanel({
+  salesOrder,
+  packages,
+  items,
+  contentDescription,
+  declaredValue,
+  selectedService,
+  wantsInsurance,
+}: WizardSummaryPanelProps) {
+  const addr = (salesOrder.shipping_address ?? null) as Record<
+    string,
+    string
+  > | null;
+  const customerName = salesOrder.customer_name ?? 'Client';
+
+  const insurancePrice = Math.max(2, declaredValue * 0.03);
+
+  return (
+    <div className="w-64 flex-shrink-0">
+      <Card className="p-4 space-y-4 text-sm sticky top-4">
+        <p className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">
+          Résumé
+        </p>
+
+        {/* From */}
+        <div>
+          <p className="text-xs text-muted-foreground font-medium">DE</p>
+          <p className="font-medium">Verone Collections</p>
+          <p className="text-xs text-muted-foreground">
+            4 rue du Perou, 91300 Massy
+          </p>
+        </div>
+
+        {/* To */}
+        <div>
+          <p className="text-xs text-muted-foreground font-medium">À</p>
+          <p className="font-medium">{customerName}</p>
+          {addr && (
+            <p className="text-xs text-muted-foreground">
+              {addr.line1 ?? ''}, {addr.postal_code ?? ''} {addr.city ?? ''}
+            </p>
+          )}
+        </div>
+
+        {/* Packages */}
+        <div>
+          <p className="text-xs text-muted-foreground font-medium">COLIS</p>
+          {packages.map((pkg, idx) => (
+            <p key={idx} className="text-xs text-muted-foreground">
+              Colis {idx + 1} : {pkg.length}×{pkg.width}×{pkg.height} cm —{' '}
+              {pkg.weight} kg
+            </p>
+          ))}
+        </div>
+
+        {/* Content */}
+        {contentDescription && (
+          <div>
+            <p className="text-xs text-muted-foreground font-medium">CONTENU</p>
+            <p className="text-xs">{contentDescription}</p>
+            <p className="text-xs text-muted-foreground">
+              Valeur : {declaredValue.toFixed(2)} €
+            </p>
+          </div>
+        )}
+
+        {/* Service */}
+        {selectedService && (
+          <div>
+            <p className="text-xs text-muted-foreground font-medium">SERVICE</p>
+            <p className="font-medium">{selectedService.carrier_name}</p>
+            <p className="text-xs text-muted-foreground">
+              {selectedService.name}
+            </p>
+          </div>
+        )}
+
+        {/* Price */}
+        {selectedService && (
+          <div className="border-t pt-3">
+            <p className="text-xs text-muted-foreground font-medium">PRIX</p>
+            <p className="font-bold text-base">
+              {(
+                selectedService.price.total_price +
+                (wantsInsurance ? insurancePrice : 0)
+              ).toFixed(2)}{' '}
+              €
+            </p>
+            {wantsInsurance && (
+              <p className="text-xs text-muted-foreground">
+                dont {insurancePrice.toFixed(2)} € protection
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Items */}
+        <div>
+          <p className="text-xs text-muted-foreground font-medium">ARTICLES</p>
+          {items
+            .filter(i => (i.quantity_to_ship ?? 0) > 0)
+            .map(i => (
+              <p
+                key={i.sales_order_item_id}
+                className="text-xs text-muted-foreground"
+              >
+                {i.product_name} ×{i.quantity_to_ship}
+              </p>
+            ))}
+        </div>
+      </Card>
+    </div>
+  );
 }
 
 // ── Component ──────────────────────────────────────────────────
@@ -109,6 +243,13 @@ export function ShipmentWizard({
     useState<PacklinkService | null>(null);
   const [loadingServices, setLoadingServices] = useState(false);
   const [servicesError, setServicesError] = useState<string | null>(null);
+  const [sortOption, setSortOption] = useState<SortOption>('default');
+
+  // Content & insurance (Step 3)
+  const [contentDescription, setContentDescription] = useState('');
+  const [isSecondHand, setIsSecondHand] = useState(false);
+  const [declaredValue, setDeclaredValue] = useState(0);
+  const [wantsInsurance, setWantsInsurance] = useState(false);
 
   // Packlink result
   const [shipmentResult, setShipmentResult] = useState<{
@@ -137,11 +278,37 @@ export function ShipmentWizard({
     return { totalQty, totalValue, hasStockIssue };
   }, [items]);
 
+  // Initialize content description and declared value when items change
+  useEffect(() => {
+    const names = items
+      .filter(i => (i.quantity_to_ship ?? 0) > 0)
+      .map(i => i.product_name)
+      .join(', ');
+    setContentDescription(names);
+    setDeclaredValue(totals.totalValue);
+  }, [items, totals.totalValue]);
+
+  // Insurance price: 3% of declared value, min 2€
+  const insurancePrice = Math.max(2, declaredValue * 0.03);
+
   // Destination zip from shipping_address
   const destinationZip = useMemo(() => {
     const addr = salesOrder.shipping_address as Record<string, string> | null;
     return addr?.postal_code ?? addr?.zip ?? '';
   }, [salesOrder.shipping_address]);
+
+  // Sorted services
+  const sortedServices = useMemo(() => {
+    const copy = [...services];
+    if (sortOption === 'price_asc') {
+      copy.sort((a, b) => a.price.total_price - b.price.total_price);
+    } else if (sortOption === 'transit_asc') {
+      copy.sort(
+        (a, b) => parseInt(a.transit_hours, 10) - parseInt(b.transit_hours, 10)
+      );
+    }
+    return copy;
+  }, [services, sortOption]);
 
   // Handlers
   const handleQuantityChange = (itemId: string, value: string) => {
@@ -167,6 +334,30 @@ export function ShipmentWizard({
         ...i,
         quantity_to_ship: Math.min(i.quantity_remaining, i.stock_available),
       }))
+    );
+  };
+
+  // Package handlers
+  const handleAddPackage = () => {
+    setPackages(prev => [
+      ...prev,
+      { weight: 5, width: 30, height: 30, length: 30 },
+    ]);
+  };
+
+  const handleRemovePackage = (idx: number) => {
+    setPackages(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handlePackageChange = (
+    idx: number,
+    field: keyof PackageInfo,
+    value: string
+  ) => {
+    setPackages(prev =>
+      prev.map((p, i) =>
+        i === idx ? { ...p, [field]: parseFloat(value) || 0 } : p
+      )
     );
   };
 
@@ -228,10 +419,13 @@ export function ShipmentWizard({
     if (!selectedService) return;
     setCreating(true);
 
-    const addr = salesOrder.shipping_address as Record<string, string> | null;
-    const customerName =
-      ((salesOrder as Record<string, unknown>).customer_name as string) ?? '';
+    const addr = (salesOrder.shipping_address ?? null) as Record<
+      string,
+      string
+    > | null;
+    const customerName = salesOrder.customer_name ?? '';
     const nameParts = customerName.split(' ');
+    const customerEmail = salesOrder.organisations?.email ?? 'client@verone.fr';
 
     try {
       const res = await fetch('/api/packlink/shipment', {
@@ -242,9 +436,7 @@ export function ShipmentWizard({
           destination: {
             name: nameParts[0] ?? 'Client',
             surname: nameParts.slice(1).join(' ') ?? '',
-            email:
-              (salesOrder as Record<string, unknown>).customer_email ??
-              'client@verone.fr',
+            email: customerEmail,
             phone: '+33600000000',
             street1: addr?.line1 ?? '',
             city: addr?.city ?? '',
@@ -252,11 +444,10 @@ export function ShipmentWizard({
             country: addr?.country ?? 'FR',
           },
           packages,
-          content: items
-            .filter(i => (i.quantity_to_ship ?? 0) > 0)
-            .map(i => i.product_name)
-            .join(', '),
-          contentValue: totals.totalValue,
+          content: contentDescription,
+          contentValue: declaredValue,
+          isSecondHand,
+          insurance: wantsInsurance,
           orderReference: salesOrder.order_number ?? salesOrder.id.slice(0, 8),
         }),
       });
@@ -305,9 +496,28 @@ export function ShipmentWizard({
 
   const formatTransit = (hours: string) => {
     const h = parseInt(hours, 10);
-    if (h <= 24) return '1 jour';
-    if (h <= 48) return '2 jours';
-    return `${Math.ceil(h / 24)} jours`;
+    if (h <= 24) return '24H';
+    if (h <= 48) return '48H';
+    return `${Math.ceil(h / 24)} JOURS`;
+  };
+
+  const formatTransitLabel = (hours: string) => {
+    const h = parseInt(hours, 10);
+    if (h <= 24) return '24H PRÉVU';
+    if (h <= 48) return '48H PRÉVU';
+    return `${Math.ceil(h / 24)} JOURS PRÉVU`;
+  };
+
+  const formatEstimatedDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    try {
+      return new Date(dateStr).toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'short',
+      });
+    } catch {
+      return dateStr;
+    }
   };
 
   // ── STEPS ──────────────────────────────────────────────────
@@ -321,6 +531,13 @@ export function ShipmentWizard({
     'Resume',
   ];
   const maxStep = deliveryMethod === 'packlink' ? 6 : 2;
+
+  // Address helper
+  const addr = (salesOrder.shipping_address ?? null) as Record<
+    string,
+    string
+  > | null;
+  const customerName = salesOrder.customer_name ?? 'Client';
 
   return (
     <div className="space-y-4">
@@ -383,7 +600,8 @@ export function ShipmentWizard({
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <ProductThumbnail
-                          productId={item.product_id}
+                          src={item.primary_image_url ?? null}
+                          alt={item.product_name}
                           size="sm"
                         />
                         <div>
@@ -588,303 +806,565 @@ export function ShipmentWizard({
         </div>
       )}
 
-      {/* STEP 3: Package info (Packlink) */}
+      {/* STEP 3: Package info (Packlink) — multi-colis + contenu + assurance */}
       {step === 3 && (
-        <div className="space-y-4">
-          <h3 className="font-semibold flex items-center gap-2">
-            <Package className="h-4 w-4" />
-            Informations colis
-          </h3>
+        <div className="flex gap-4">
+          <div className="flex-1 space-y-5">
+            <h3 className="font-semibold flex items-center gap-2">
+              <Package className="h-4 w-4" />
+              Informations colis
+            </h3>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="border rounded-lg p-3">
-              <Label className="text-xs text-muted-foreground">
-                Expediteur
-              </Label>
-              <p className="text-sm font-medium mt-1">Verone Collections</p>
-              <p className="text-xs text-muted-foreground">
-                4 rue du Perou, 91300 Massy
-              </p>
+            {/* Addresses */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="border rounded-lg p-3">
+                <Label className="text-xs text-muted-foreground">
+                  Expéditeur
+                </Label>
+                <p className="text-sm font-medium mt-1">Verone Collections</p>
+                <p className="text-xs text-muted-foreground">
+                  4 rue du Perou, 91300 Massy
+                </p>
+              </div>
+              <div className="border rounded-lg p-3">
+                <Label className="text-xs text-muted-foreground">
+                  Destinataire
+                </Label>
+                <p className="text-sm font-medium mt-1">{customerName}</p>
+                <p className="text-xs text-muted-foreground">
+                  {addr
+                    ? `${addr.line1 ?? ''}, ${addr.postal_code ?? ''} ${addr.city ?? ''}`
+                    : ''}
+                </p>
+              </div>
             </div>
-            <div className="border rounded-lg p-3">
-              <Label className="text-xs text-muted-foreground">
-                Destinataire
-              </Label>
-              <p className="text-sm font-medium mt-1">
-                {((salesOrder as Record<string, unknown>)
-                  .customer_name as string) ?? 'Client'}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {(() => {
-                  const a = salesOrder.shipping_address as Record<
-                    string,
-                    string
-                  > | null;
-                  return a
-                    ? `${a.line1 ?? ''}, ${a.postal_code ?? ''} ${a.city ?? ''}`
-                    : '';
-                })()}
-              </p>
-            </div>
-          </div>
 
-          <div>
-            <Label>Dimensions et poids du colis</Label>
-            {packages.map((pkg, idx) => (
-              <div key={idx} className="grid grid-cols-4 gap-2 mt-2">
+            {/* Multi-colis */}
+            <div className="space-y-3">
+              {packages.map((pkg, idx) => (
+                <Card key={idx} className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="font-medium text-sm">Colis {idx + 1}</p>
+                    {idx > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePackage(idx)}
+                        className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Supprimer
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-4 gap-3">
+                    <div>
+                      <Label className="text-xs">Poids (kg)</Label>
+                      <Input
+                        type="number"
+                        min={0.1}
+                        step={0.1}
+                        value={pkg.weight}
+                        onChange={e =>
+                          handlePackageChange(idx, 'weight', e.target.value)
+                        }
+                        className="h-8 mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Longueur (cm)</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={pkg.length}
+                        onChange={e =>
+                          handlePackageChange(idx, 'length', e.target.value)
+                        }
+                        className="h-8 mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Largeur (cm)</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={pkg.width}
+                        onChange={e =>
+                          handlePackageChange(idx, 'width', e.target.value)
+                        }
+                        className="h-8 mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Hauteur (cm)</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={pkg.height}
+                        onChange={e =>
+                          handlePackageChange(idx, 'height', e.target.value)
+                        }
+                        className="h-8 mt-1"
+                      />
+                    </div>
+                  </div>
+                </Card>
+              ))}
+
+              <button
+                type="button"
+                onClick={handleAddPackage}
+                className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+              >
+                <Plus className="h-4 w-4" />
+                Ajouter un colis
+              </button>
+            </div>
+
+            {/* Contenu envoyé */}
+            <Card className="p-4 space-y-3">
+              <p className="font-medium text-sm">Contenu envoyé</p>
+              <div>
+                <Label className="text-xs">Contenu</Label>
+                <Input
+                  value={contentDescription}
+                  onChange={e => setContentDescription(e.target.value)}
+                  placeholder="Ex: Mobilier, tableau..."
+                  className="mt-1"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="is-second-hand"
+                  checked={isSecondHand}
+                  onChange={e => setIsSecondHand(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label
+                  htmlFor="is-second-hand"
+                  className="text-sm cursor-pointer"
+                >
+                  Occasion
+                </Label>
+              </div>
+              <div>
+                <Label className="text-xs">Valeur déclarée (EUR)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={declaredValue}
+                  onChange={e =>
+                    setDeclaredValue(parseFloat(e.target.value) || 0)
+                  }
+                  className="mt-1"
+                />
+              </div>
+            </Card>
+
+            {/* Protection d'expédition */}
+            <Card className="p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-blue-600" />
                 <div>
-                  <Label className="text-xs">Longueur (cm)</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={pkg.length}
-                    onChange={e =>
-                      setPackages(prev =>
-                        prev.map((p, i) =>
-                          i === idx
-                            ? { ...p, length: parseFloat(e.target.value) ?? 0 }
-                            : p
-                        )
-                      )
-                    }
-                    className="h-8"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Largeur (cm)</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={pkg.width}
-                    onChange={e =>
-                      setPackages(prev =>
-                        prev.map((p, i) =>
-                          i === idx
-                            ? { ...p, width: parseFloat(e.target.value) ?? 0 }
-                            : p
-                        )
-                      )
-                    }
-                    className="h-8"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Hauteur (cm)</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={pkg.height}
-                    onChange={e =>
-                      setPackages(prev =>
-                        prev.map((p, i) =>
-                          i === idx
-                            ? { ...p, height: parseFloat(e.target.value) ?? 0 }
-                            : p
-                        )
-                      )
-                    }
-                    className="h-8"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Poids (kg)</Label>
-                  <Input
-                    type="number"
-                    min={0.1}
-                    step={0.1}
-                    value={pkg.weight}
-                    onChange={e =>
-                      setPackages(prev =>
-                        prev.map((p, i) =>
-                          i === idx
-                            ? { ...p, weight: parseFloat(e.target.value) ?? 0 }
-                            : p
-                        )
-                      )
-                    }
-                    className="h-8"
-                  />
+                  <p className="font-medium text-sm">Protégez votre colis</p>
+                  <p className="text-xs text-muted-foreground">
+                    Obtenez un remboursement intégral en cas de perte ou de
+                    dommage.
+                  </p>
                 </div>
               </div>
-            ))}
+              <div className="space-y-2">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="insurance"
+                    checked={wantsInsurance}
+                    onChange={() => setWantsInsurance(true)}
+                    className="mt-0.5 h-4 w-4"
+                  />
+                  <span className="text-sm">
+                    Ajouter une protection d&apos;expédition —{' '}
+                    <span className="font-semibold">
+                      {insurancePrice.toFixed(2)} €
+                    </span>
+                  </span>
+                </label>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="insurance"
+                    checked={!wantsInsurance}
+                    onChange={() => setWantsInsurance(false)}
+                    className="mt-0.5 h-4 w-4"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    Je suis prêt(e) à prendre le risque.
+                  </span>
+                </label>
+              </div>
+            </Card>
+
+            <div className="flex justify-between">
+              <ButtonV2 variant="outline" onClick={() => setStep(2)}>
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Retour
+              </ButtonV2>
+              <ButtonV2
+                onClick={() => {
+                  void fetchServices()
+                    .then(() => setStep(4))
+                    .catch(console.error);
+                }}
+              >
+                Rechercher les transporteurs
+                <ArrowRight className="h-4 w-4 ml-1" />
+              </ButtonV2>
+            </div>
           </div>
 
-          <div className="flex justify-between">
-            <ButtonV2 variant="outline" onClick={() => setStep(2)}>
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Retour
-            </ButtonV2>
-            <ButtonV2
-              onClick={() => {
-                void fetchServices()
-                  .then(() => setStep(4))
-                  .catch(console.error);
-              }}
-            >
-              Rechercher les transporteurs
-              <ArrowRight className="h-4 w-4 ml-1" />
-            </ButtonV2>
-          </div>
+          {/* Summary panel */}
+          <WizardSummaryPanel
+            salesOrder={salesOrder}
+            packages={packages}
+            items={items}
+            contentDescription={contentDescription}
+            declaredValue={declaredValue}
+            selectedService={selectedService}
+            wantsInsurance={wantsInsurance}
+          />
         </div>
       )}
 
-      {/* STEP 4: Carrier selection (Packlink) */}
+      {/* STEP 4: Carrier selection (Packlink PRO style) */}
       {step === 4 && (
-        <div className="space-y-4">
-          <h3 className="font-semibold flex items-center gap-2">
-            <Truck className="h-4 w-4" />
-            Choix du transporteur
-          </h3>
+        <div className="flex gap-4">
+          <div className="flex-1 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Truck className="h-4 w-4" />
+                Choix du transporteur
+              </h3>
 
-          {loadingServices && (
-            <div className="flex items-center gap-2 py-8 justify-center text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              Recherche des meilleurs tarifs...
-            </div>
-          )}
-
-          {servicesError && (
-            <div className="flex items-center gap-2 text-destructive text-sm">
-              <AlertTriangle className="h-4 w-4" />
-              {servicesError}
-            </div>
-          )}
-
-          {!loadingServices && services.length > 0 && (
-            <div className="max-h-[350px] overflow-y-auto space-y-2">
-              {services.map(service => {
-                const isSelected = selectedService?.id === service.id;
-                return (
-                  <button
-                    key={service.id}
-                    type="button"
-                    onClick={() => setSelectedService(service)}
-                    className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                      isSelected
-                        ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
-                        : 'border-border hover:bg-muted/50'
-                    }`}
+              {/* Sort dropdown */}
+              {services.length > 0 && (
+                <div className="relative">
+                  <select
+                    value={sortOption}
+                    onChange={e => setSortOption(e.target.value as SortOption)}
+                    className="appearance-none text-xs border border-border rounded px-3 py-1.5 pr-7 bg-background cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm">
-                          {service.carrier_name}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {service.name}
-                        </span>
-                      </div>
-                      <span className="font-bold text-sm">
-                        {service.price.total_price.toFixed(2)} EUR
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {formatTransit(service.transit_hours)}
-                      </span>
-                      {service.delivery_to_parcelshop ? (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          Point relais
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1">
-                          <Truck className="h-3 w-3" />
-                          Domicile
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
+                    <option value="default">Par défaut</option>
+                    <option value="price_asc">Prix croissant</option>
+                    <option value="transit_asc">Délai croissant</option>
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
+                </div>
+              )}
             </div>
-          )}
 
-          <div className="flex justify-between">
-            <ButtonV2 variant="outline" onClick={() => setStep(3)}>
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Retour
-            </ButtonV2>
-            <ButtonV2 onClick={() => setStep(6)} disabled={!selectedService}>
-              Suivant
-              <ArrowRight className="h-4 w-4 ml-1" />
-            </ButtonV2>
+            {loadingServices && (
+              <div className="flex items-center gap-2 py-12 justify-center text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Recherche des meilleurs tarifs...
+              </div>
+            )}
+
+            {servicesError && (
+              <div className="flex items-center gap-2 text-destructive text-sm">
+                <AlertTriangle className="h-4 w-4" />
+                {servicesError}
+              </div>
+            )}
+
+            {!loadingServices && sortedServices.length > 0 && (
+              <div className="max-h-[420px] overflow-y-auto space-y-2 pr-1">
+                {sortedServices.map(service => {
+                  const isSelected = selectedService?.id === service.id;
+                  const transitLabel = formatTransitLabel(
+                    service.transit_hours
+                  );
+                  const estimatedDate = formatEstimatedDate(
+                    service.first_estimated_delivery_date
+                  );
+
+                  return (
+                    <button
+                      key={service.id}
+                      type="button"
+                      onClick={() => setSelectedService(service)}
+                      className={`w-full text-left rounded-lg border transition-colors ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
+                          : 'border-border hover:bg-muted/30'
+                      }`}
+                    >
+                      <div className="flex items-center gap-0 p-3">
+                        {/* Transit badge */}
+                        <div className="flex-shrink-0 mr-3">
+                          <span className="inline-flex items-center justify-center bg-slate-800 text-white text-xs font-bold px-2 py-1 rounded min-w-[70px] text-center leading-tight">
+                            {transitLabel}
+                          </span>
+                        </div>
+
+                        {/* Carrier + service name */}
+                        <div className="flex-shrink-0 mr-4 min-w-[120px]">
+                          <p className="font-bold text-sm">
+                            {service.carrier_name}
+                          </p>
+                          <p className="text-xs text-muted-foreground leading-tight">
+                            {service.name}
+                          </p>
+                        </div>
+
+                        {/* Delivery mode info */}
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            {service.dropoff ? (
+                              <>
+                                <Store className="h-3 w-3" />
+                                <span>Dépôt en Relais</span>
+                              </>
+                            ) : (
+                              <>
+                                <Home className="h-3 w-3" />
+                                <span>Collecte à domicile</span>
+                              </>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            {service.delivery_to_parcelshop ? (
+                              <>
+                                <MapPin className="h-3 w-3" />
+                                <span>Retrait en Relais</span>
+                              </>
+                            ) : (
+                              <>
+                                <Home className="h-3 w-3" />
+                                <span>Livraison à Domicile</span>
+                              </>
+                            )}
+                            {estimatedDate && (
+                              <span className="ml-1 text-muted-foreground/70">
+                                · {estimatedDate}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Price + CTA */}
+                        <div className="flex-shrink-0 flex flex-col items-end gap-2 ml-3">
+                          <span className="font-bold text-base">
+                            {service.price.total_price.toFixed(2)} €
+                          </span>
+                          <span
+                            className={`text-xs px-2 py-1 rounded font-medium ${
+                              isSelected
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-slate-100 text-slate-700'
+                            }`}
+                          >
+                            {isSelected ? 'Sélectionné' : 'Réserver'}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {!loadingServices && services.length === 0 && !servicesError && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground py-6 justify-center">
+                <Clock className="h-4 w-4" />
+                Aucun service disponible pour cette destination.
+              </div>
+            )}
+
+            <div className="flex justify-between">
+              <ButtonV2 variant="outline" onClick={() => setStep(3)}>
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Retour
+              </ButtonV2>
+              <ButtonV2 onClick={() => setStep(6)} disabled={!selectedService}>
+                Suivant
+                <ArrowRight className="h-4 w-4 ml-1" />
+              </ButtonV2>
+            </div>
           </div>
+
+          {/* Summary panel */}
+          <WizardSummaryPanel
+            salesOrder={salesOrder}
+            packages={packages}
+            items={items}
+            contentDescription={contentDescription}
+            declaredValue={declaredValue}
+            selectedService={selectedService}
+            wantsInsurance={wantsInsurance}
+          />
         </div>
       )}
 
       {/* STEP 6: Summary + Confirmation (Packlink) */}
       {step === 6 && selectedService && (
-        <div className="space-y-4">
-          <h3 className="font-semibold flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4" />
-            Resume expedition
-          </h3>
+        <div className="flex gap-4">
+          <div className="flex-1 space-y-4">
+            <h3 className="font-semibold flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4" />
+              Résumé expédition
+            </h3>
 
-          <div className="space-y-3">
-            <div className="border rounded-lg p-3">
-              <Label className="text-xs text-muted-foreground">
-                Transporteur
-              </Label>
-              <p className="font-medium">
-                {selectedService.carrier_name} — {selectedService.name}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {formatTransit(selectedService.transit_hours)} •{' '}
-                {selectedService.delivery_to_parcelshop
-                  ? 'Point relais'
-                  : 'Domicile'}
-              </p>
-            </div>
+            <div className="space-y-3">
+              {/* Expediteur */}
+              <div className="border rounded-lg p-3">
+                <Label className="text-xs text-muted-foreground">
+                  Expéditeur
+                </Label>
+                <p className="font-medium text-sm mt-1">Verone Collections</p>
+                <p className="text-xs text-muted-foreground">
+                  4 rue du Perou, 91300 Massy
+                </p>
+              </div>
 
-            <div className="border rounded-lg p-3">
-              <Label className="text-xs text-muted-foreground">Articles</Label>
-              {items
-                .filter(i => (i.quantity_to_ship ?? 0) > 0)
-                .map(i => (
-                  <p key={i.sales_order_item_id} className="text-sm">
-                    {i.product_name} x{i.quantity_to_ship}
+              {/* Destinataire */}
+              <div className="border rounded-lg p-3">
+                <Label className="text-xs text-muted-foreground">
+                  Destinataire
+                </Label>
+                <p className="font-medium text-sm mt-1">{customerName}</p>
+                {addr && (
+                  <p className="text-xs text-muted-foreground">
+                    {addr.line1 ?? ''}, {addr.postal_code ?? ''}{' '}
+                    {addr.city ?? ''}
+                  </p>
+                )}
+              </div>
+
+              {/* Colis */}
+              <div className="border rounded-lg p-3">
+                <Label className="text-xs text-muted-foreground">Colis</Label>
+                {packages.map((pkg, idx) => (
+                  <p key={idx} className="text-sm mt-1">
+                    Colis {idx + 1} : {pkg.length} × {pkg.width} × {pkg.height}{' '}
+                    cm — {pkg.weight} kg
                   </p>
                 ))}
-            </div>
+              </div>
 
-            <div className="border rounded-lg p-3 bg-blue-50">
-              <div className="flex justify-between items-center">
-                <span className="font-medium">Cout expedition</span>
-                <span className="font-bold text-lg">
-                  {selectedService.price.total_price.toFixed(2)} EUR
-                </span>
+              {/* Contenu */}
+              <div className="border rounded-lg p-3">
+                <Label className="text-xs text-muted-foreground">Contenu</Label>
+                <p className="text-sm mt-1">{contentDescription}</p>
+                <p className="text-xs text-muted-foreground">
+                  Valeur déclarée : {declaredValue.toFixed(2)} €
+                  {isSecondHand && ' · Occasion'}
+                </p>
+              </div>
+
+              {/* Protection */}
+              <div className="border rounded-lg p-3">
+                <Label className="text-xs text-muted-foreground">
+                  Protection
+                </Label>
+                <p className="text-sm mt-1 flex items-center gap-1">
+                  <Shield className="h-3.5 w-3.5 text-blue-500" />
+                  {wantsInsurance
+                    ? `Oui — ${insurancePrice.toFixed(2)} €`
+                    : 'Non'}
+                </p>
+              </div>
+
+              {/* Transporteur */}
+              <div className="border rounded-lg p-3">
+                <Label className="text-xs text-muted-foreground">
+                  Transporteur
+                </Label>
+                <p className="font-medium text-sm mt-1">
+                  {selectedService.carrier_name} — {selectedService.name}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatTransit(selectedService.transit_hours)} ·{' '}
+                  {selectedService.delivery_to_parcelshop
+                    ? 'Point relais'
+                    : 'Domicile'}
+                  {selectedService.first_estimated_delivery_date &&
+                    ` · Livraison prévue le ${formatEstimatedDate(selectedService.first_estimated_delivery_date)}`}
+                </p>
+              </div>
+
+              {/* Articles */}
+              <div className="border rounded-lg p-3">
+                <Label className="text-xs text-muted-foreground">
+                  Articles
+                </Label>
+                {items
+                  .filter(i => (i.quantity_to_ship ?? 0) > 0)
+                  .map(i => (
+                    <p key={i.sales_order_item_id} className="text-sm mt-0.5">
+                      {i.product_name} ×{i.quantity_to_ship}
+                    </p>
+                  ))}
+              </div>
+
+              {/* Total cost */}
+              <div className="border rounded-lg p-3 bg-blue-50">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Coût expédition</span>
+                  <span className="font-bold text-lg">
+                    {(
+                      selectedService.price.total_price +
+                      (wantsInsurance ? insurancePrice : 0)
+                    ).toFixed(2)}{' '}
+                    EUR
+                  </span>
+                </div>
+                {wantsInsurance && (
+                  <p className="text-xs text-muted-foreground text-right mt-1">
+                    dont {insurancePrice.toFixed(2)} € de protection
+                  </p>
+                )}
               </div>
             </div>
-          </div>
 
-          {servicesError && (
-            <div className="flex items-center gap-2 text-destructive text-sm">
-              <AlertTriangle className="h-4 w-4" />
-              {servicesError}
+            {servicesError && (
+              <div className="flex items-center gap-2 text-destructive text-sm">
+                <AlertTriangle className="h-4 w-4" />
+                {servicesError}
+              </div>
+            )}
+
+            <div className="flex justify-between">
+              <ButtonV2 variant="outline" onClick={() => setStep(4)}>
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Retour
+              </ButtonV2>
+              <ButtonV2
+                onClick={() => {
+                  void handlePacklinkCreate().catch(console.error);
+                }}
+                disabled={creating}
+              >
+                {creating ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4 mr-1" />
+                )}
+                Confirmer expédition
+              </ButtonV2>
             </div>
-          )}
-
-          <div className="flex justify-between">
-            <ButtonV2 variant="outline" onClick={() => setStep(4)}>
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Retour
-            </ButtonV2>
-            <ButtonV2
-              onClick={() => {
-                void handlePacklinkCreate().catch(console.error);
-              }}
-              disabled={creating}
-            >
-              {creating ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-              ) : (
-                <CheckCircle2 className="h-4 w-4 mr-1" />
-              )}
-              Confirmer expedition
-            </ButtonV2>
           </div>
+
+          {/* Summary panel */}
+          <WizardSummaryPanel
+            salesOrder={salesOrder}
+            packages={packages}
+            items={items}
+            contentDescription={contentDescription}
+            declaredValue={declaredValue}
+            selectedService={selectedService}
+            wantsInsurance={wantsInsurance}
+          />
         </div>
       )}
 
