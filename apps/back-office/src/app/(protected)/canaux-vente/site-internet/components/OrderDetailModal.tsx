@@ -11,13 +11,6 @@ import {
   TableRow,
 } from '@verone/ui';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@verone/ui';
-import {
   Package,
   User,
   Mail,
@@ -29,6 +22,8 @@ import {
   Tag,
   Receipt,
 } from 'lucide-react';
+
+import { OrderStatusActions } from './OrderStatusActions';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -70,8 +65,6 @@ interface SiteOrder {
   updated_at: string | null;
 }
 
-type OrderStatus = 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled';
-
 interface OrderDetailModalProps {
   order: SiteOrder | null;
   open: boolean;
@@ -87,40 +80,6 @@ function parseItems(items: unknown): OrderItem[] {
     return items as OrderItem[];
   }
   return [];
-}
-
-function getStatusColor(status: string): string {
-  switch (status as OrderStatus) {
-    case 'pending':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'paid':
-      return 'bg-blue-100 text-blue-800';
-    case 'shipped':
-      return 'bg-orange-100 text-orange-800';
-    case 'delivered':
-      return 'bg-green-100 text-green-800';
-    case 'cancelled':
-      return 'bg-red-100 text-red-800';
-    default:
-      return '';
-  }
-}
-
-function getStatusLabel(status: string): string {
-  switch (status as OrderStatus) {
-    case 'pending':
-      return 'En attente';
-    case 'paid':
-      return 'Payee';
-    case 'shipped':
-      return 'Expediee';
-    case 'delivered':
-      return 'Livree';
-    case 'cancelled':
-      return 'Annulee';
-    default:
-      return status;
-  }
 }
 
 function formatDate(dateStr: string | null): string {
@@ -182,26 +141,11 @@ export function OrderDetailModal({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-sm text-muted-foreground">Statut :</span>
-              <Select
-                value={order.status}
-                onValueChange={newStatus => onStatusChange(order, newStatus)}
-                disabled={isUpdating}
-              >
-                <SelectTrigger className="w-[160px] h-8">
-                  <SelectValue>
-                    <Badge className={getStatusColor(order.status)}>
-                      {getStatusLabel(order.status)}
-                    </Badge>
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">En attente</SelectItem>
-                  <SelectItem value="paid">Payee</SelectItem>
-                  <SelectItem value="shipped">Expediee</SelectItem>
-                  <SelectItem value="delivered">Livree</SelectItem>
-                  <SelectItem value="cancelled">Annulee</SelectItem>
-                </SelectContent>
-              </Select>
+              <OrderStatusActions
+                status={order.status}
+                onStatusChange={newStatus => onStatusChange(order, newStatus)}
+                isUpdating={isUpdating}
+              />
             </div>
             <div className="text-right">
               {order.invoice_number && (

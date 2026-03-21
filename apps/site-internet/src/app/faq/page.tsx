@@ -41,7 +41,7 @@ const faqData: FaqSection[] = [
       {
         question: 'Quels sont les délais de livraison ?',
         answer:
-          'Les articles en stock sont expédiés sous 3 à 5 jours ouvrés. Les articles sur commande nécessitent 2 à 8 semaines selon le fabricant. Le délai est précisé sur chaque fiche produit.',
+          'Les commandes sont expediees sous 10 à 14 jours ouvrés. Les articles sur commande ou sur mesure peuvent necessiter un delai supplementaire, precise sur chaque fiche produit.',
       },
       {
         question: 'La livraison est-elle gratuite ?',

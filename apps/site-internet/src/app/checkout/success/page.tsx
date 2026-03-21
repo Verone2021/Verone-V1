@@ -58,7 +58,7 @@ export default function CheckoutSuccessPage() {
           <div className="flex items-center gap-3 text-verone-gray-600">
             <Package className="h-5 w-5" />
             <p className="text-sm">
-              Délai de livraison estimé : 2 à 4 semaines selon les articles
+              Délai de livraison estimé : 10 à 14 jours ouvrés
             </p>
           </div>
         </div>

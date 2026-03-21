@@ -28,13 +28,6 @@ import {
   TableRow,
 } from '@verone/ui';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@verone/ui';
-import {
   Package,
   Clock,
   CreditCard,
@@ -46,6 +39,7 @@ import {
 import { toast } from 'sonner';
 
 import { OrderDetailModal } from './OrderDetailModal';
+import { OrderStatusActions, isValidTransition } from './OrderStatusActions';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -77,8 +71,6 @@ interface SiteOrder {
   updated_at: string | null;
 }
 
-type OrderStatus = 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled';
-
 // ── Supabase Client ────────────────────────────────────────────
 
 const supabase = createClient();
@@ -103,57 +95,6 @@ async function fetchSiteOrders(): Promise<SiteOrder[]> {
 }
 
 // ── Helpers ────────────────────────────────────────────────────
-
-function getStatusBadgeVariant(
-  status: string
-): 'default' | 'secondary' | 'destructive' | 'outline' {
-  switch (status as OrderStatus) {
-    case 'paid':
-      return 'default';
-    case 'cancelled':
-      return 'destructive';
-    case 'pending':
-    case 'shipped':
-    case 'delivered':
-      return 'secondary';
-    default:
-      return 'outline';
-  }
-}
-
-function getStatusColor(status: string): string {
-  switch (status as OrderStatus) {
-    case 'pending':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-    case 'paid':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-    case 'shipped':
-      return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
-    case 'delivered':
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-    case 'cancelled':
-      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-    default:
-      return '';
-  }
-}
-
-function getStatusLabel(status: string): string {
-  switch (status as OrderStatus) {
-    case 'pending':
-      return 'En attente';
-    case 'paid':
-      return 'Payee';
-    case 'shipped':
-      return 'Expediee';
-    case 'delivered':
-      return 'Livree';
-    case 'cancelled':
-      return 'Annulee';
-    default:
-      return status;
-  }
-}
 
 function countItems(items: unknown): number {
   if (Array.isArray(items)) {
@@ -201,19 +142,28 @@ export function OrdersSection() {
     refetchOnWindowFocus: true,
   });
 
-  // Update order status + trigger email
+  // Update order status + trigger email (with transition validation)
   const updateStatusMutation = useMutation({
     mutationFn: async ({
       orderId,
       newStatus,
+      currentStatus,
       customerEmail,
       customerName,
     }: {
       orderId: string;
       newStatus: string;
+      currentStatus: string;
       customerEmail: string;
       customerName: string;
     }) => {
+      // Validate transition before sending to DB
+      if (!isValidTransition(currentStatus, newStatus)) {
+        throw new Error(
+          `Transition invalide : ${currentStatus} → ${newStatus}`
+        );
+      }
+
       const { error: updateError } = await supabase
         .from('site_orders')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
@@ -276,6 +226,7 @@ export function OrdersSection() {
       updateStatusMutation.mutate({
         orderId: order.id,
         newStatus,
+        currentStatus: order.status,
         customerEmail: order.customer_email,
         customerName: order.customer_name,
       });
@@ -421,37 +372,16 @@ export function OrdersSection() {
                       {formatCurrency(order.total, order.currency)}
                     </TableCell>
 
-                    {/* Statut - Dropdown changement */}
+                    {/* Statut - Transitions valides uniquement */}
                     <TableCell onClick={e => e.stopPropagation()}>
-                      <Select
-                        value={order.status}
-                        onValueChange={newStatus =>
+                      <OrderStatusActions
+                        status={order.status}
+                        onStatusChange={newStatus =>
                           handleStatusChange(order, newStatus)
                         }
-                        disabled={updateStatusMutation.isPending}
-                      >
-                        <SelectTrigger className="w-[140px] h-8">
-                          <SelectValue>
-                            <Badge
-                              variant={getStatusBadgeVariant(order.status)}
-                              className={getStatusColor(order.status)}
-                            >
-                              {getStatusLabel(order.status)}
-                            </Badge>
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">En attente</SelectItem>
-                          <SelectItem value="paid">Pay\u00e9e</SelectItem>
-                          <SelectItem value="shipped">
-                            Exp\u00e9di\u00e9e
-                          </SelectItem>
-                          <SelectItem value="delivered">Livr\u00e9e</SelectItem>
-                          <SelectItem value="cancelled">
-                            Annul\u00e9e
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                        isUpdating={updateStatusMutation.isPending}
+                        size="sm"
+                      />
                     </TableCell>
 
                     {/* Articles */}
