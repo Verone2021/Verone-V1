@@ -411,6 +411,38 @@ export function ShippingConfigCard({
 
         <div className="border-t border-border" />
 
+        {/* Supplement par produit */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-base font-medium">
+                Supplement par produit
+              </Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Si active, le checkout utilisera le cout d&apos;expedition le
+                plus eleve parmi les produits du panier
+              </p>
+            </div>
+            <Switch
+              checked={
+                (form as Record<string, unknown>).use_product_shipping === true
+              }
+              onCheckedChange={checked =>
+                setForm(prev => ({
+                  ...prev,
+                  use_product_shipping: checked,
+                }))
+              }
+            />
+          </div>
+          <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+            Configurez les couts par produit dans la section &quot;Cout
+            d&apos;expedition par produit&quot; ci-dessous
+          </p>
+        </div>
+
+        <div className="border-t border-border" />
+
         {/* Message */}
         <div className="space-y-2">
           <Label htmlFor="shipping-message">Message affiché sur le site</Label>
