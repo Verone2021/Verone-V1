@@ -53,10 +53,8 @@ export async function POST(request: Request) {
       params.set(`packages[${i}][length]`, String(pkg.length));
     });
 
-    const baseUrl =
-      process.env.NODE_ENV === 'production'
-        ? 'https://api.packlink.com/v1'
-        : 'https://apisandbox.packlink.com/v1';
+    // Always use production API (API key is production, sandbox returns 401)
+    const baseUrl = 'https://api.packlink.com/v1';
 
     const response = await fetch(`${baseUrl}/services?${params.toString()}`, {
       headers: {

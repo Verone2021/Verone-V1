@@ -4,10 +4,8 @@
  * Base URL: https://apisandbox.packlink.com/v1 (test) or https://api.packlink.com/v1 (prod)
  */
 
-const PACKLINK_BASE_URL =
-  process.env.NODE_ENV === 'production'
-    ? 'https://api.packlink.com/v1'
-    : 'https://apisandbox.packlink.com/v1';
+// Always use production API (API key is production, sandbox returns 401)
+const PACKLINK_BASE_URL = 'https://api.packlink.com/v1';
 
 interface PacklinkServiceResult {
   id: number;
