@@ -45,8 +45,12 @@ import {
   type SelectionItem,
 } from '../../../../lib/hooks/use-user-selection';
 
-// Roles autorises
-const AUTHORIZED_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
+// Roles autorises (collab peut voir sélections mais PAS éditer les marges)
+const AUTHORIZED_ROLES: LinkMeRole[] = [
+  'enseigne_admin',
+  'organisation_admin',
+  'enseigne_collaborateur',
+];
 
 export default function SelectionDetailPage(): React.JSX.Element | null {
   const params = useParams();
