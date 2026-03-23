@@ -58,7 +58,7 @@ export const ROUTE_PERMISSIONS: Record<string, RoutePermission> = {
   },
 
   '/ma-selection': {
-    roles: ['enseigne_admin', 'organisation_admin'],
+    roles: ['enseigne_admin', 'organisation_admin', 'enseigne_collaborateur'],
     redirect: '/dashboard',
     description: 'Gestion des sélections de produits',
   },
