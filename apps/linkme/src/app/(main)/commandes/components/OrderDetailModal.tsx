@@ -8,7 +8,7 @@
  * @since 2026-01-06
  */
 
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -33,8 +33,11 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
   CalendarIcon,
+  DownloadIcon,
+  EyeIcon,
   FileTextIcon,
   ImageIcon,
+  Loader2Icon,
   MapPinIcon,
   PackageIcon,
   PhoneIcon,
@@ -171,6 +174,62 @@ export function OrderDetailModal({
   onClose,
 }: OrderDetailModalProps) {
   const { canViewCommissions } = usePermissions();
+
+  // État facture (partagé entre visualiser et télécharger)
+  const [invoiceLoading, setInvoiceLoading] = useState<
+    'view' | 'download' | null
+  >(null);
+  const [invoiceError, setInvoiceError] = useState<string | null>(null);
+
+  const handleInvoiceAction = useCallback(
+    async (action: 'view' | 'download') => {
+      if (!order?.id) return;
+      setInvoiceLoading(action);
+      setInvoiceError(null);
+
+      try {
+        const response = await fetch(`/api/invoices/${order.id}/pdf`);
+
+        if (response.status === 404) {
+          setInvoiceError('Aucune facture disponible pour cette commande');
+          return;
+        }
+        if (response.status === 202) {
+          setInvoiceError('Le PDF est en cours de génération');
+          return;
+        }
+        if (!response.ok) {
+          setInvoiceError('Erreur lors du chargement');
+          return;
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+
+        if (action === 'view') {
+          // Visualiser : ouvrir dans un nouvel onglet
+          window.open(url, '_blank');
+        } else {
+          // Télécharger : déclencher le download du fichier
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `facture-${order.linkme_display_number ?? order.order_number}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
+      } catch (err) {
+        console.error('[OrderDetailModal] Invoice action failed:', err);
+        setInvoiceError('Erreur réseau');
+      } finally {
+        setInvoiceLoading(null);
+      }
+    },
+    [order?.id, order?.linkme_display_number, order?.order_number]
+  );
+
   const [shipmentTracking, setShipmentTracking] = React.useState<
     Array<{
       tracking_number: string | null;
@@ -724,20 +783,50 @@ export function OrderDetailModal({
             </div>
           </section>
 
-          {/* Section: Actions futures (placeholder pour Qonto) */}
-          <section className="flex justify-end gap-3 pt-4">
-            <Button variant="outline" onClick={onClose}>
-              Fermer
-            </Button>
-            {/* TODO: Telecharger facture via Qonto API */}
-            <Button
-              variant="default"
-              className="bg-[#5DBEBB] hover:bg-[#4DAEAB] text-white"
-              disabled
-            >
-              <FileTextIcon className="h-4 w-4 mr-2" />
-              Telecharger facture
-            </Button>
+          {/* Section: Actions facture */}
+          <section className="flex flex-col items-end gap-2 pt-4">
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={onClose}>
+                Fermer
+              </Button>
+              <Button
+                variant="outline"
+                className="border-[#5DBEBB] text-[#5DBEBB] hover:bg-[#5DBEBB]/10"
+                disabled={invoiceLoading !== null}
+                onClick={() => {
+                  void handleInvoiceAction('view');
+                }}
+              >
+                {invoiceLoading === 'view' ? (
+                  <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <EyeIcon className="h-4 w-4 mr-2" />
+                )}
+                {invoiceLoading === 'view'
+                  ? 'Chargement...'
+                  : 'Visualiser facture'}
+              </Button>
+              <Button
+                variant="default"
+                className="bg-[#5DBEBB] hover:bg-[#4DAEAB] text-white"
+                disabled={invoiceLoading !== null}
+                onClick={() => {
+                  void handleInvoiceAction('download');
+                }}
+              >
+                {invoiceLoading === 'download' ? (
+                  <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <DownloadIcon className="h-4 w-4 mr-2" />
+                )}
+                {invoiceLoading === 'download'
+                  ? 'Chargement...'
+                  : 'Telecharger facture'}
+              </Button>
+            </div>
+            {invoiceError && (
+              <p className="text-xs text-red-500">{invoiceError}</p>
+            )}
           </section>
         </div>
       </DialogContent>
