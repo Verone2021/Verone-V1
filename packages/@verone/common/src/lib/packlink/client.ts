@@ -4,7 +4,7 @@
  * Base URL: https://apisandbox.packlink.com/v1 (test) or https://api.packlink.com/v1 (prod)
  */
 
-// Always use production API (API key is production, sandbox returns 401)
+// Always use production API (API key is production)
 const PACKLINK_BASE_URL = 'https://api.packlink.com/v1';
 
 interface PacklinkServiceResult {

@@ -157,6 +157,26 @@ export class SessionManager {
    */
   private async refreshSession() {
     try {
+      // Defer refresh if a data fetch is in progress (prevents token refresh mid-batch)
+      if (
+        typeof window !== 'undefined' &&
+        (window as unknown as { __VERONE_FETCH_ACTIVE__?: boolean })
+          .__VERONE_FETCH_ACTIVE__
+      ) {
+        logger.warn('Fetch in progress, deferring session refresh by 10s', {
+          operation: 'session_refresh_deferred',
+        });
+        setTimeout(() => {
+          void this.refreshSession().catch(error => {
+            console.error(
+              '[SessionManager] deferred refreshSession failed:',
+              error
+            );
+          });
+        }, 10000);
+        return;
+      }
+
       const supabase = createClient();
 
       // Vérifier d'abord si une session existe

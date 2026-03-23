@@ -373,16 +373,38 @@ export function SalesOrdersTable({
   const fetchStatsRef = useRef(fetchStats);
   fetchStatsRef.current = fetchStats;
 
-  // Fetch initial avec filtre canal (StrictMode safe)
+  // Fetch initial avec filtre canal (StrictMode safe + retry on total failure)
   useEffect(() => {
     // ✅ OPTIMISÉ: Ne pas fetch si preloadedOrders fourni (évite double fetch)
     if (preloadedOrders) return;
 
     let stale = false;
     const filters = channelId ? { channel_id: channelId } : undefined;
+
+    // Retry logic: if fetchOrders fails completely (main query), retry up to 2 times with 3s delay
+    const fetchWithRetry = async (retries = 2) => {
+      try {
+        await fetchOrdersRef.current(filters);
+      } catch (err: unknown) {
+        console.error(
+          `[SalesOrdersTable] fetchOrders failed (retries left: ${retries}):`,
+          err
+        );
+        if (retries > 0 && !stale) {
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          if (!stale) {
+            await fetchWithRetry(retries - 1);
+          }
+        }
+      }
+    };
+
     if (!stale) {
-      void fetchOrdersRef.current(filters).catch((err: unknown) => {
-        console.error('[SalesOrdersTable] fetchOrders failed:', err);
+      void fetchWithRetry().catch((err: unknown) => {
+        console.error(
+          '[SalesOrdersTable] fetchOrders failed after retries:',
+          err
+        );
       });
       void fetchStatsRef.current(filters).catch((err: unknown) => {
         console.error('[SalesOrdersTable] fetchStats failed:', err);
