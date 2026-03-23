@@ -16,6 +16,7 @@
 import { useMemo } from 'react';
 
 import { useLinkMeOrders } from '@/hooks/use-linkme-orders';
+import { usePermissions } from '@/hooks/use-permissions';
 
 import { useAffiliateCommissionStats } from './use-affiliate-commission-stats';
 import { useEnseigneOrganisations } from './use-enseigne-organisations';
@@ -40,6 +41,7 @@ export interface IncompleteItem {
 // ============================================
 
 export function useIncompleteItems() {
+  const { canViewCommissions } = usePermissions();
   // Fetch data from various sources
   const { data: affiliate } = useUserAffiliate();
   const { data: organisations } = useEnseigneOrganisations(
@@ -100,22 +102,24 @@ export function useIncompleteItems() {
       });
     });
 
-    // 4. Commissions en attente (LOW priority - informational)
-    const pendingCommissions = commissionStats?.pending?.count ?? 0;
-    if (pendingCommissions > 0) {
-      items.push({
-        id: 'commissions-pending',
-        type: 'commission',
-        title: `${pendingCommissions} commission${pendingCommissions > 1 ? 's' : ''} en attente`,
-        description: 'Demander un versement',
-        route: '/commissions',
-        priority: 'low',
-        icon: 'wallet',
-      });
+    // 4. Commissions en attente (LOW priority - masqué pour collaborateur)
+    if (canViewCommissions) {
+      const pendingCommissions = commissionStats?.pending?.count ?? 0;
+      if (pendingCommissions > 0) {
+        items.push({
+          id: 'commissions-pending',
+          type: 'commission',
+          title: `${pendingCommissions} commission${pendingCommissions > 1 ? 's' : ''} en attente`,
+          description: 'Demander un versement',
+          route: '/commissions',
+          priority: 'low',
+          icon: 'wallet',
+        });
+      }
     }
 
     return items;
-  }, [organisations, selections, orders, commissionStats]);
+  }, [organisations, selections, orders, commissionStats, canViewCommissions]);
 
   // Computed values
   const totalCount = incompleteItems.length;
