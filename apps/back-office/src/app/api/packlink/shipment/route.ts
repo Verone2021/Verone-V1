@@ -2,28 +2,19 @@
  * API Route: Create Packlink Shipment
  * POST /api/packlink/shipment
  *
- * Creates a shipment on Packlink, retrieves label and tracking info.
- * Called after admin selects a Packlink service in the shipment form.
+ * Creates a shipment on Packlink PRO.
+ * The admin then pays on Packlink PRO website.
+ * After payment, webhook updates our DB with tracking + label.
  */
 
 import { NextResponse } from 'next/server';
 
 import { z } from 'zod';
 
-// Always use production API (API key is production)
-const PACKLINK_BASE_URL = 'https://api.packlink.com/v1';
-
-const SOURCE_ADDRESS = {
-  name: 'Verone',
-  surname: 'Collections',
-  email: 'contact@veronecollections.fr',
-  phone: '+33600000000',
-  street1: '4 rue du Perou',
-  city: 'Massy',
-  zip_code: '91300',
-  country: 'FR',
-  company: 'Verone',
-};
+import {
+  getPacklinkClient,
+  VERONE_SOURCE_ADDRESS,
+} from '@verone/common/lib/packlink/client';
 
 const CreateShipmentSchema = z.object({
   serviceId: z.number(),
@@ -49,7 +40,11 @@ const CreateShipmentSchema = z.object({
     .min(1),
   content: z.string().default('Produits decoration et mobilier'),
   contentValue: z.number().min(0).default(0),
+  contentSecondHand: z.boolean().optional(),
   orderReference: z.string().min(1),
+  dropoffPointId: z.string().optional(),
+  collectionDate: z.string().optional(),
+  collectionTime: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -64,121 +59,49 @@ export async function POST(request: Request) {
       );
     }
 
-    const apiKey = process.env.PACKLINK_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'PACKLINK_API_KEY non configuree' },
-        { status: 500 }
-      );
-    }
-
     const {
       serviceId,
       destination,
       packages: pkgs,
       content,
       contentValue,
+      contentSecondHand,
       orderReference,
+      dropoffPointId,
+      collectionDate,
+      collectionTime,
     } = validated.data;
 
-    // Step 1: Create shipment on Packlink
-    const shipmentPayload = {
-      from: SOURCE_ADDRESS,
-      to: destination,
+    const client = getPacklinkClient();
+
+    const shipment = await client.createShipment({
+      from: VERONE_SOURCE_ADDRESS,
+      to: {
+        ...destination,
+        company: undefined,
+      },
       packages: pkgs,
       service_id: serviceId,
       content,
       contentvalue: contentValue,
-      shipment_custom_reference: orderReference,
+      content_second_hand: contentSecondHand ?? false,
+      shipment_custom_reference: orderReference.slice(0, 50),
       source: 'verone-backoffice',
-    };
-
-    const createResponse = await fetch(`${PACKLINK_BASE_URL}/shipments`, {
-      method: 'POST',
-      headers: {
-        Authorization: apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(shipmentPayload),
+      dropoff_point_id: dropoffPointId,
+      collection_date: collectionDate,
+      collection_time: collectionTime,
     });
-
-    if (!createResponse.ok) {
-      const errorText = await createResponse.text();
-      console.error(
-        '[Packlink] Shipment creation failed:',
-        createResponse.status,
-        errorText
-      );
-      return NextResponse.json(
-        {
-          error: `Packlink erreur ${createResponse.status}`,
-          details: errorText,
-        },
-        { status: 502 }
-      );
-    }
-
-    const shipmentResult = (await createResponse.json()) as {
-      reference: string;
-      tracking_url?: string;
-    };
-    const shipmentReference = shipmentResult.reference;
-
-    // Step 2: Try to get label URL
-    let labelUrl: string | null = null;
-    try {
-      const labelResponse = await fetch(
-        `${PACKLINK_BASE_URL}/shipments/${shipmentReference}/labels`,
-        { headers: { Authorization: apiKey } }
-      );
-      if (labelResponse.ok) {
-        const labels = (await labelResponse.json()) as string[];
-        if (labels.length > 0) {
-          labelUrl = labels[0] ?? null;
-        }
-      }
-    } catch {
-      console.warn('[Packlink] Labels not yet available');
-    }
-
-    // Step 3: Get shipment details (tracking, carrier)
-    let trackingNumber: string | null = null;
-    let carrierName: string | null = null;
-    let serviceName: string | null = null;
-
-    try {
-      const detailResponse = await fetch(
-        `${PACKLINK_BASE_URL}/shipments/${shipmentReference}`,
-        { headers: { Authorization: apiKey } }
-      );
-      if (detailResponse.ok) {
-        const details = (await detailResponse.json()) as {
-          tracking_code?: string;
-          carrier?: string;
-          service_name?: string;
-        };
-        trackingNumber = details.tracking_code ?? null;
-        carrierName = details.carrier ?? null;
-        serviceName = details.service_name ?? null;
-      }
-    } catch {
-      console.warn('[Packlink] Shipment details not yet available');
-    }
 
     return NextResponse.json({
       success: true,
-      shipmentReference,
-      trackingNumber,
-      trackingUrl: shipmentResult.tracking_url ?? null,
-      labelUrl,
-      carrierName,
-      serviceName,
+      shipmentReference: shipment.reference,
     });
   } catch (error) {
     console.error('[Packlink Shipment] Error:', error);
-    return NextResponse.json(
-      { error: 'Erreur creation expedition Packlink' },
-      { status: 500 }
-    );
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Erreur creation expedition Packlink';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

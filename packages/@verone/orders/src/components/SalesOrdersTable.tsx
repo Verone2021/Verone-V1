@@ -1543,6 +1543,9 @@ export function SalesOrdersTable({
                       <TableHead className="whitespace-nowrap">
                         Paiement
                       </TableHead>
+                      <TableHead className="whitespace-nowrap">
+                        Expédition
+                      </TableHead>
                       <TableHead className="whitespace-nowrap text-center">
                         Art.
                       </TableHead>
@@ -1741,6 +1744,29 @@ export function SalesOrdersTable({
                                   </Badge>
                                 )}
                               </div>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {order.status === 'shipped' ? (
+                                <Badge className="text-[10px] bg-green-100 text-green-800">
+                                  Expédiée
+                                </Badge>
+                              ) : order.status === 'partially_shipped' ? (
+                                <Badge className="text-[10px] bg-amber-100 text-amber-800">
+                                  Partielle
+                                </Badge>
+                              ) : (order.status as string) === 'delivered' ? (
+                                <Badge className="text-[10px] bg-blue-100 text-blue-800">
+                                  Livrée
+                                </Badge>
+                              ) : order.status === 'validated' ? (
+                                <Badge className="text-[10px] bg-gray-100 text-gray-600">
+                                  À expédier
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-[10px]">
+                                  —
+                                </span>
+                              )}
                             </TableCell>
                             <TableCell className="text-center whitespace-nowrap">
                               <span className="text-xs font-medium">

@@ -1,5 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
+import { createClient } from '@verone/utils/supabase/client';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import {
@@ -118,6 +122,38 @@ export function OrderDetailModal({
   onStatusChange,
   isUpdating,
 }: OrderDetailModalProps) {
+  const [shipments, setShipments] = useState<
+    Array<{
+      carrier_name: string | null;
+      tracking_number: string | null;
+      tracking_url: string | null;
+      packlink_status: string | null;
+      shipping_cost: number | null;
+      label_url: string | null;
+      shipped_at: string | null;
+      delivery_method: string | null;
+    }>
+  >([]);
+
+  useEffect(() => {
+    if (!open || !order?.id) {
+      setShipments([]);
+      return;
+    }
+    const supabase = createClient();
+    void supabase
+      .from('sales_order_shipments')
+      .select(
+        'carrier_name, tracking_number, tracking_url, packlink_status, shipping_cost, label_url, shipped_at, delivery_method'
+      )
+      .eq('sales_order_id', order.id)
+      .order('shipped_at', { ascending: false })
+      .then(({ data }) => {
+        const rows = (data ?? []) as unknown as typeof shipments;
+        setShipments(rows);
+      });
+  }, [open, order?.id]);
+
   if (!order) return null;
 
   const items = parseItems(order.items);
@@ -342,6 +378,102 @@ export function OrderDetailModal({
               </div>
             )}
           </div>
+          {/* Section Expédition & Suivi */}
+          {shipments.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium flex items-center gap-2">
+                <Truck className="h-4 w-4" />
+                Expédition ({shipments.length})
+              </h3>
+              {shipments.map((s, idx) => (
+                <div
+                  key={idx}
+                  className="border rounded-lg p-3 bg-gray-50 text-sm space-y-1"
+                >
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium">
+                      {s.carrier_name ?? 'Transporteur non défini'}
+                    </span>
+                    {s.packlink_status && (
+                      <Badge
+                        className={`text-[10px] ${
+                          s.packlink_status === 'a_payer'
+                            ? 'bg-red-100 text-red-800'
+                            : s.packlink_status === 'paye'
+                              ? 'bg-green-100 text-green-800'
+                              : s.packlink_status === 'in_transit'
+                                ? 'bg-blue-100 text-blue-800'
+                                : s.packlink_status === 'delivered'
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {s.packlink_status === 'a_payer'
+                          ? 'Transport à payer'
+                          : s.packlink_status === 'paye'
+                            ? 'Transport payé'
+                            : s.packlink_status === 'in_transit'
+                              ? 'En transit'
+                              : s.packlink_status === 'delivered'
+                                ? 'Livré'
+                                : 'Incident'}
+                      </Badge>
+                    )}
+                    {s.delivery_method && !s.packlink_status && (
+                      <Badge variant="outline" className="text-[10px]">
+                        {s.delivery_method === 'manual'
+                          ? 'Manuel'
+                          : s.delivery_method === 'pickup'
+                            ? 'Retrait'
+                            : s.delivery_method === 'hand_delivery'
+                              ? 'Main propre'
+                              : s.delivery_method}
+                      </Badge>
+                    )}
+                    {s.shipped_at && (
+                      <span className="text-xs text-muted-foreground">
+                        {formatDate(s.shipped_at)}
+                      </span>
+                    )}
+                  </div>
+                  {s.tracking_number && (
+                    <p className="text-xs text-muted-foreground">
+                      Suivi :{' '}
+                      {s.tracking_url ? (
+                        <a
+                          href={s.tracking_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          {s.tracking_number}
+                        </a>
+                      ) : (
+                        s.tracking_number
+                      )}
+                    </p>
+                  )}
+                  {s.shipping_cost != null && s.shipping_cost > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Coût : {formatCurrency(s.shipping_cost)}
+                    </p>
+                  )}
+                  {s.label_url && (
+                    <p className="text-xs">
+                      <a
+                        href={s.label_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        Télécharger étiquette
+                      </a>
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
