@@ -858,7 +858,7 @@ export default function ExpeditionsPage() {
                               {shipment.packlink_status === 'a_payer' && (
                                 <>
                                   <a
-                                    href="https://pro.packlink.com/private/shipments/ready-to-purchase"
+                                    href={`https://pro.packlink.fr/private/shipments/${shipment.packlink_shipment_id}/create/address`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                   >
@@ -867,7 +867,7 @@ export default function ExpeditionsPage() {
                                       size="sm"
                                       className="text-xs"
                                     >
-                                      Payer sur Packlink
+                                      Finaliser sur Packlink
                                     </ButtonV2>
                                   </a>
                                   <ButtonV2

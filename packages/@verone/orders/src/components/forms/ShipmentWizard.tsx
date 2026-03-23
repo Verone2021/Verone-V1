@@ -1869,13 +1869,13 @@ export function ShipmentWizard({
               className="mt-3 bg-blue-600 hover:bg-blue-700 w-full"
               onClick={() =>
                 window.open(
-                  'https://pro.packlink.fr/private/shipments/ready-to-purchase',
+                  `https://pro.packlink.fr/private/shipments/${shipmentResult?.orderReference}/create/address`,
                   '_blank'
                 )
               }
             >
               <Truck className="h-4 w-4 mr-1" />
-              Ouvrir Packlink PRO pour payer
+              Finaliser et payer sur Packlink PRO
             </ButtonV2>
           </div>
 
