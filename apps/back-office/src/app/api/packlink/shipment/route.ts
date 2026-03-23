@@ -10,10 +10,8 @@ import { NextResponse } from 'next/server';
 
 import { z } from 'zod';
 
-const PACKLINK_BASE_URL =
-  process.env.NODE_ENV === 'production'
-    ? 'https://api.packlink.com/v1'
-    : 'https://apisandbox.packlink.com/v1';
+// Always use production API (API key is production)
+const PACKLINK_BASE_URL = 'https://api.packlink.com/v1';
 
 const SOURCE_ADDRESS = {
   name: 'Verone',
