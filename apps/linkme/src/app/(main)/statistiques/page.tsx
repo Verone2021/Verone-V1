@@ -86,7 +86,7 @@ const ALL_TABS: {
 function StatistiquesContent(): JSX.Element {
   const [filter, setFilter] = useState<PeriodFilter>({ preset: 'all' });
   const [activeTab, setActiveTab] = useState<StatsTab>('orders');
-  const { can } = usePermissions();
+  const { can, canViewCommissions } = usePermissions();
 
   const tabs = ALL_TABS.filter(tab => !tab.permission || can(tab.permission));
 
@@ -118,7 +118,9 @@ function StatistiquesContent(): JSX.Element {
           <div>
             <h1 className="text-xl font-bold text-[#183559]">Statistiques</h1>
             <p className="text-gray-500 text-sm">
-              Performances commandes, commissions et produits
+              {canViewCommissions
+                ? 'Performances commandes, commissions et produits'
+                : 'Performances commandes et produits'}
             </p>
           </div>
         </div>
