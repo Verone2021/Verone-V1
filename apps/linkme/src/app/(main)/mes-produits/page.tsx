@@ -47,6 +47,7 @@ import {
   DropdownMenuSeparator,
 } from '@verone/ui';
 import { useAuth, type LinkMeRole } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/use-permissions';
 import {
   useAffiliateProducts,
   type AffiliateProduct,
@@ -254,12 +255,7 @@ function MesProduitsContent(): JSX.Element | null {
                     <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
                       Prix vente HT
                     </th>
-                    <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                      Commission LinkMe
-                    </th>
-                    <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                      <span className="text-green-600">Encaissement net</span>
-                    </th>
+                    <CommissionHeaders />
                     <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
                       <span className="flex items-center gap-1">
                         Statut
@@ -285,8 +281,24 @@ function MesProduitsContent(): JSX.Element | null {
   );
 }
 
+function CommissionHeaders(): JSX.Element | null {
+  const { canViewCommissions } = usePermissions();
+  if (!canViewCommissions) return null;
+  return (
+    <>
+      <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+        Commission LinkMe
+      </th>
+      <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+        <span className="text-green-600">Encaissement net</span>
+      </th>
+    </>
+  );
+}
+
 function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
   const router = useRouter();
+  const { canViewCommissions } = usePermissions();
   const [showDetailSheet, setShowDetailSheet] = useState(false);
   const [showStorageDialog, setShowStorageDialog] = useState(false);
   const config = STATUS_CONFIG[product.affiliate_approval_status];
@@ -330,19 +342,23 @@ function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
       <td className="px-6 py-4">
         <span className="text-gray-700">{prixVenteHt.toFixed(2)} €</span>
       </td>
-      <td className="px-6 py-4">
-        <div>
-          <span className="text-gray-600">{commissionRate}%</span>
-          <p className="text-xs text-gray-400">
-            ({commissionMontant.toFixed(2)} €)
-          </p>
-        </div>
-      </td>
-      <td className="px-6 py-4">
-        <span className="font-semibold text-green-600">
-          {encaissementNet.toFixed(2)} €
-        </span>
-      </td>
+      {canViewCommissions && (
+        <>
+          <td className="px-6 py-4">
+            <div>
+              <span className="text-gray-600">{commissionRate}%</span>
+              <p className="text-xs text-gray-400">
+                ({commissionMontant.toFixed(2)} €)
+              </p>
+            </div>
+          </td>
+          <td className="px-6 py-4">
+            <span className="font-semibold text-green-600">
+              {encaissementNet.toFixed(2)} €
+            </span>
+          </td>
+        </>
+      )}
       <td className="px-6 py-4">
         <div className="flex items-center gap-2">
           <span
