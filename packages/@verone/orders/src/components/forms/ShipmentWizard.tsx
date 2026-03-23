@@ -232,6 +232,9 @@ export function ShipmentWizard({
   // Manual shipment fields
   const [manualCarrier, setManualCarrier] = useState('');
   const [manualTracking, setManualTracking] = useState('');
+  const [manualShippingCost, setManualShippingCost] = useState<number | null>(
+    null
+  );
   const [notes, setNotes] = useState('');
 
   // Packlink fields
@@ -446,6 +449,8 @@ export function ShipmentWizard({
       notes: notes || undefined,
       shipped_by: user.id,
       delivery_method: deliveryMethod ?? undefined,
+      carrier_name: manualCarrier || undefined,
+      shipping_cost: manualShippingCost ?? undefined,
     });
 
     if (result.success) onSuccess();
@@ -960,6 +965,26 @@ export function ShipmentWizard({
                   placeholder="Ex: 1Z999AA10123456784"
                   className="mt-1"
                 />
+              </div>
+              <div>
+                <Label>Cout transport HT (achat Verone)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={manualShippingCost ?? ''}
+                  onChange={e =>
+                    setManualShippingCost(
+                      e.target.value ? Number(e.target.value) : null
+                    )
+                  }
+                  placeholder="Ex: 12.50"
+                  className="mt-1"
+                />
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Cout paye par Verone au transporteur (jamais visible par le
+                  client)
+                </p>
               </div>
               <div>
                 <Label>Notes</Label>
