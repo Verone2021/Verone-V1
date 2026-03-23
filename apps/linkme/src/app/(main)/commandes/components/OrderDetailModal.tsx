@@ -8,7 +8,7 @@
  * @since 2026-01-06
  */
 
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -32,8 +32,10 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
   CalendarIcon,
+  DownloadIcon,
   FileTextIcon,
   ImageIcon,
+  Loader2Icon,
   MapPinIcon,
   PackageIcon,
   PhoneIcon,
@@ -170,6 +172,47 @@ export function OrderDetailModal({
   onClose,
 }: OrderDetailModalProps) {
   const { canViewCommissions } = usePermissions();
+
+  // État téléchargement facture
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [invoiceError, setInvoiceError] = useState<string | null>(null);
+
+  const handleDownloadInvoice = useCallback(async () => {
+    if (!order?.id) return;
+    setInvoiceLoading(true);
+    setInvoiceError(null);
+
+    try {
+      const response = await fetch(`/api/invoices/${order.id}/pdf`);
+
+      if (response.status === 404) {
+        setInvoiceError('Aucune facture disponible pour cette commande');
+        return;
+      }
+      if (response.status === 202) {
+        setInvoiceError('Le PDF est en cours de génération');
+        return;
+      }
+      if (!response.ok) {
+        setInvoiceError('Erreur lors du téléchargement');
+        return;
+      }
+
+      // Ouvrir le PDF dans un nouvel onglet
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+
+      // Libérer l'URL après un délai
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+    } catch (err) {
+      console.error('[OrderDetailModal] Invoice download failed:', err);
+      setInvoiceError('Erreur réseau');
+    } finally {
+      setInvoiceLoading(false);
+    }
+  }, [order?.id]);
+
   const [shipmentTracking, setShipmentTracking] = React.useState<
     Array<{
       tracking_number: string | null;
@@ -724,15 +767,24 @@ export function OrderDetailModal({
             <Button variant="outline" onClick={onClose}>
               Fermer
             </Button>
-            {/* TODO: Telecharger facture via Qonto API */}
             <Button
               variant="default"
               className="bg-[#5DBEBB] hover:bg-[#4DAEAB] text-white"
-              disabled
+              disabled={invoiceLoading}
+              onClick={() => {
+                void handleDownloadInvoice();
+              }}
             >
-              <FileTextIcon className="h-4 w-4 mr-2" />
-              Telecharger facture
+              {invoiceLoading ? (
+                <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <DownloadIcon className="h-4 w-4 mr-2" />
+              )}
+              {invoiceLoading ? 'Chargement...' : 'Telecharger facture'}
             </Button>
+            {invoiceError && (
+              <p className="text-xs text-red-500 mt-1">{invoiceError}</p>
+            )}
           </section>
         </div>
       </DialogContent>
