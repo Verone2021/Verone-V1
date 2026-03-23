@@ -48,8 +48,12 @@ import {
   type UserSelection,
 } from '../../../lib/hooks/use-user-selection';
 
-// Rôles autorisés
-const AUTHORIZED_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
+// Rôles autorisés (collab peut voir les sélections mais PAS éditer les marges)
+const AUTHORIZED_ROLES: LinkMeRole[] = [
+  'enseigne_admin',
+  'organisation_admin',
+  'enseigne_collaborateur',
+];
 
 export default function MaSelectionPage(): React.JSX.Element {
   const router = useRouter();

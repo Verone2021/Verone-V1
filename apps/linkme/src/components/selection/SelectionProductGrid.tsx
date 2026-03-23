@@ -31,6 +31,8 @@ interface SelectionProductGridProps {
   searchQuery?: string;
   hasActiveFilters?: boolean;
   onResetFilters?: () => void;
+  /** Si false, masque les infos de marge/commission (collaborateur) */
+  canViewCommissions?: boolean;
 }
 
 export function SelectionProductGrid({
@@ -42,6 +44,7 @@ export function SelectionProductGrid({
   searchQuery = '',
   hasActiveFilters = false,
   onResetFilters,
+  canViewCommissions = true,
 }: SelectionProductGridProps): React.JSX.Element {
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -111,6 +114,7 @@ export function SelectionProductGrid({
             onEdit={onEdit ? () => onEdit(item) : undefined}
             onRemove={onRemove ? () => onRemove(item) : undefined}
             isDeleting={deletingItemId === item.id}
+            canViewCommissions={canViewCommissions}
           />
         ))}
       </div>
@@ -198,6 +202,7 @@ interface ProductCardProps {
   onEdit?: () => void;
   onRemove?: () => void;
   isDeleting: boolean;
+  canViewCommissions: boolean;
 }
 
 function ProductCard({
@@ -205,6 +210,7 @@ function ProductCard({
   onEdit,
   onRemove,
   isDeleting,
+  canViewCommissions,
 }: ProductCardProps): React.JSX.Element {
   return (
     <div className="flex items-center gap-3 rounded-lg border bg-white border-gray-100 hover:border-linkme-turquoise/40 p-3 hover:shadow-sm transition-all group">
@@ -242,13 +248,16 @@ function ProductCard({
               HT
             </span>
           </span>
-          {!item.is_affiliate_product ? (
-            <span className="text-xs text-linkme-turquoise font-medium">
-              Marge : {item.margin_rate.toFixed(2)}%
-            </span>
-          ) : (
-            <span className="text-xs text-indigo-500 font-medium">Affilié</span>
-          )}
+          {canViewCommissions &&
+            (!item.is_affiliate_product ? (
+              <span className="text-xs text-linkme-turquoise font-medium">
+                Marge : {item.margin_rate.toFixed(2)}%
+              </span>
+            ) : (
+              <span className="text-xs text-indigo-500 font-medium">
+                Affilié
+              </span>
+            ))}
           <StockBadge stock={item.product_stock_real} />
         </div>
       </div>
@@ -256,7 +265,7 @@ function ProductCard({
       {/* Actions */}
       {(onEdit != null || onRemove != null) && (
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-          {onEdit && (
+          {onEdit && canViewCommissions && (
             <button
               onClick={onEdit}
               className="p-1.5 text-linkme-turquoise hover:bg-linkme-turquoise/10 rounded-lg transition-colors"
