@@ -18,6 +18,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogDescription,
   DialogTitle,
   Separator,
   Table,
@@ -263,6 +264,10 @@ export function OrderDetailModal({
             <DialogTitle className="text-xl font-semibold text-[#183559]">
               Commande {order.linkme_display_number ?? order.order_number}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Détails de la commande{' '}
+              {order.linkme_display_number ?? order.order_number}
+            </DialogDescription>
             <Badge variant="outline" className={`${statusColor} font-medium`}>
               {statusLabel}
             </Badge>
