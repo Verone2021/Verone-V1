@@ -288,14 +288,9 @@ export function ShipmentWizard({
   const [loadingReceiverDropoffs, setLoadingReceiverDropoffs] = useState(false);
 
   // Collection date/time (for home pickup services)
-  const [collectionDate, setCollectionDate] = useState(
-    // Default to tomorrow
-    (() => {
-      const d = new Date();
-      d.setDate(d.getDate() + 1);
-      return d.toISOString().split('T')[0];
-    })()
-  );
+  // Date d'enlevement : VIDE par defaut — l'utilisateur DOIT la selectionner
+  // (Packlink PRO exige une confirmation explicite de la date pour passer en "Pret pour le paiement")
+  const [collectionDate, setCollectionDate] = useState('');
   const [collectionTime, setCollectionTime] = useState('09:00');
 
   // Init items
@@ -1489,16 +1484,22 @@ export function ShipmentWizard({
                 </div>
               </div>
               <div className="border rounded-lg p-3 bg-blue-50 text-sm text-blue-700">
-                Collecte prevue le{' '}
-                {new Date(collectionDate + 'T00:00').toLocaleDateString(
-                  'fr-FR',
-                  {
-                    weekday: 'long',
-                    day: 'numeric',
-                    month: 'long',
-                  }
-                )}{' '}
-                a {collectionTime}
+                {collectionDate ? (
+                  <>
+                    Collecte prevue le{' '}
+                    {new Date(collectionDate + 'T00:00').toLocaleDateString(
+                      'fr-FR',
+                      {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                      }
+                    )}{' '}
+                    a {collectionTime}
+                  </>
+                ) : (
+                  'Veuillez selectionner une date de collecte'
+                )}
               </div>
             </div>
 
