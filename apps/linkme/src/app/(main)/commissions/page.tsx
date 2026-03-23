@@ -13,9 +13,11 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
-import { Wallet, CheckCircle2, Clock, Calendar } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+
+import { Loader2, Wallet, CheckCircle2, Clock, Calendar } from 'lucide-react';
 
 import {
   CommissionKPICard,
@@ -28,10 +30,22 @@ import { PageTourTrigger } from '../../../components/onboarding/PageTourTrigger'
 import { useAffiliateAnalytics } from '../../../lib/hooks/use-affiliate-analytics';
 import { useAffiliateCommissions } from '../../../lib/hooks/use-affiliate-commissions';
 import { useAffiliatePaymentRequests } from '../../../lib/hooks/use-payment-requests';
+import { usePermissions } from '../../../hooks/use-permissions';
 import type { AnalyticsPeriod } from '../../../types/analytics';
 import { PERIOD_LABELS } from '../../../types/analytics';
 
 export default function CommissionsPage(): JSX.Element {
+  const router = useRouter();
+  const { canViewCommissions, isLoading: permissionsLoading } =
+    usePermissions();
+
+  // Guard: redirect si pas de permission (évite flash de contenu)
+  useEffect(() => {
+    if (!permissionsLoading && !canViewCommissions) {
+      router.replace('/dashboard');
+    }
+  }, [permissionsLoading, canViewCommissions, router]);
+
   // Défaut 'all' pour afficher toutes les commissions par défaut
   const [period, setPeriod] = useState<AnalyticsPeriod>('all');
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -64,6 +78,15 @@ export default function CommissionsPage(): JSX.Element {
     if (!commissions) return [];
     return commissions.filter(c => selectedCommissionIds.includes(c.id));
   }, [commissions, selectedCommissionIds]);
+
+  // Early return : masquer TOUT le contenu si pas de permission (APRÈS tous les hooks)
+  if (permissionsLoading || !canViewCommissions) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
 
   // Handler demande de versement depuis la table
   const handleRequestPayment = (ids: string[]): void => {
