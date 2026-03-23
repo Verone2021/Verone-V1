@@ -4,10 +4,8 @@
  * Base URL: https://apisandbox.packlink.com/v1 (test) or https://api.packlink.com/v1 (prod)
  */
 
-const PACKLINK_BASE_URL =
-  process.env.NODE_ENV === 'production'
-    ? 'https://api.packlink.com/v1'
-    : 'https://apisandbox.packlink.com/v1';
+// Always use production API (API key is production)
+const PACKLINK_BASE_URL = 'https://api.packlink.com/v1';
 
 interface PacklinkServiceResult {
   id: number;
@@ -23,28 +21,21 @@ interface PacklinkServiceResult {
   first_estimated_delivery_date: string;
 }
 
+export interface PacklinkAddress {
+  country: string;
+  zip_code: string;
+  city: string;
+  street1: string;
+  phone: string;
+  email: string;
+  name: string;
+  surname: string;
+  company?: string;
+}
+
 interface PacklinkShipmentInput {
-  from: {
-    country: string;
-    zip: string;
-    city: string;
-    street1: string;
-    phone: string;
-    email: string;
-    name: string;
-    surname: string;
-    company?: string;
-  };
-  to: {
-    country: string;
-    zip: string;
-    city: string;
-    street1: string;
-    phone: string;
-    email: string;
-    name: string;
-    surname: string;
-  };
+  from: PacklinkAddress;
+  to: PacklinkAddress;
   packages: Array<{
     width: number;
     height: number;
@@ -53,8 +44,13 @@ interface PacklinkShipmentInput {
   }>;
   service_id: number;
   content: string;
-  content_value: number;
+  contentvalue: number;
+  content_second_hand?: boolean;
+  shipment_custom_reference?: string;
   source: string;
+  dropoff_point_id?: string;
+  collection_date?: string;
+  collection_time?: string;
 }
 
 interface PacklinkShipmentResult {
@@ -70,6 +66,20 @@ interface PacklinkTrackingEvent {
   city: string;
   timestamp: string;
   description: string;
+}
+
+export interface PacklinkDropoff {
+  id: string;
+  commerce_name: string;
+  address: string;
+  city: string;
+  zip: string;
+  country: string;
+  phone?: string;
+  lat: number;
+  long: number;
+  distance?: number;
+  opening_times: Record<string, string>;
 }
 
 export class PacklinkClient {
@@ -190,6 +200,56 @@ export class PacklinkClient {
   async registerCallback(url: string): Promise<void> {
     await this.request<unknown>('POST', '/shipments/callback', { url });
   }
+
+  /**
+   * Delete a draft shipment
+   * Endpoint: DELETE /shipments/{reference}
+   */
+  async deleteShipment(reference: string): Promise<void> {
+    await this.request<unknown>('DELETE', `/shipments/${reference}`);
+  }
+
+  /**
+   * List all shipments (with optional status filter)
+   * Endpoint: GET /shipments
+   */
+  async listShipments(params?: {
+    status?: string;
+    offset?: number;
+    limit?: number;
+  }): Promise<unknown[]> {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.set('status', params.status);
+    if (params?.offset !== undefined)
+      queryParams.set('offset', String(params.offset));
+    if (params?.limit !== undefined)
+      queryParams.set('limit', String(params.limit));
+    const qs = queryParams.toString();
+    const result = await this.request<{ shipments: unknown[] } | unknown[]>(
+      'GET',
+      `/shipments${qs ? `?${qs}` : ''}`
+    );
+    // API returns { shipments: [...] }, unwrap it
+    if (result && !Array.isArray(result) && 'shipments' in result) {
+      return result.shipments;
+    }
+    return Array.isArray(result) ? result : [];
+  }
+
+  /**
+   * Get dropoff/pickup points for a service
+   * Endpoint: GET /dropoffs/{service_id}/{country}/{zip}
+   */
+  async getDropoffs(params: {
+    serviceId: number;
+    country: string;
+    zip: string;
+  }): Promise<PacklinkDropoff[]> {
+    return this.request<PacklinkDropoff[]>(
+      'GET',
+      `/dropoffs/${params.serviceId}/${params.country}/${params.zip}`
+    );
+  }
 }
 
 // Singleton for server-side usage
@@ -201,9 +261,9 @@ export function getPacklinkClient(): PacklinkClient {
 }
 
 // Source address for Verone
-export const VERONE_SOURCE_ADDRESS = {
+export const VERONE_SOURCE_ADDRESS: PacklinkAddress = {
   country: 'FR',
-  zip: '91300',
+  zip_code: '91300',
   city: 'Massy',
   street1: '4 rue du Perou',
   phone: '+33600000000',
@@ -211,4 +271,4 @@ export const VERONE_SOURCE_ADDRESS = {
   name: 'Verone',
   surname: 'Collections',
   company: 'Verone',
-} as const;
+};

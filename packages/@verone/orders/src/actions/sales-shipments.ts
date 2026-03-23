@@ -20,6 +20,19 @@ const validateShipmentSchema = z.object({
   tracking_number: z.string().optional(),
   notes: z.string().optional(),
   shipped_by: z.string().uuid(),
+  // Champs expédition enrichis (optionnels, utilisés par tous les modes)
+  delivery_method: z
+    .enum(['pickup', 'hand_delivery', 'manual', 'packlink'])
+    .optional(),
+  carrier_name: z.string().optional(),
+  carrier_service: z.string().optional(),
+  shipping_cost: z.number().optional(),
+  estimated_delivery_at: z.string().optional(),
+  // Champs Packlink (transport payé par Verone à Packlink, PAS le paiement client)
+  packlink_shipment_id: z.string().optional(),
+  packlink_status: z
+    .enum(['a_payer', 'paye', 'in_transit', 'delivered', 'incident'])
+    .optional(),
 });
 
 /**
@@ -72,7 +85,22 @@ export async function validateSalesShipment(
       };
     }
 
-    // 4. Pour chaque item: INSERT dans sales_order_shipments
+    // 4. Charger les expéditions Packlink en cours (a_payer) pour cette commande
+    // Ces quantités ne sont PAS dans quantity_shipped (trigger skip pour a_payer)
+    // Il faut les compter manuellement pour empêcher les doublons
+    const { data: pendingPacklinkShipments } = await supabase
+      .from('sales_order_shipments')
+      .select('product_id, quantity_shipped')
+      .eq('sales_order_id', validatedData.sales_order_id)
+      .eq('packlink_status', 'a_payer');
+
+    const pendingByProduct = new Map<string, number>();
+    for (const ps of pendingPacklinkShipments ?? []) {
+      const current = pendingByProduct.get(ps.product_id) ?? 0;
+      pendingByProduct.set(ps.product_id, current + ps.quantity_shipped);
+    }
+
+    // 5. Pour chaque item: INSERT dans sales_order_shipments
     for (const item of validatedData.items) {
       if (item.quantity_to_ship <= 0) {
         continue; // Skip items avec quantité 0
@@ -93,12 +121,14 @@ export async function validateSalesShipment(
       }
 
       const currentShipped = currentItem.quantity_shipped || 0;
-      const newShipped = currentShipped + item.quantity_to_ship;
+      const pendingPacklink = pendingByProduct.get(item.product_id) ?? 0;
+      const totalEngaged =
+        currentShipped + pendingPacklink + item.quantity_to_ship;
 
-      if (newShipped > currentItem.quantity) {
+      if (totalEngaged > currentItem.quantity) {
         return {
           success: false,
-          error: `Quantité incohérente pour item ${item.sales_order_item_id}: ${newShipped} > ${currentItem.quantity}`,
+          error: `Quantité impossible pour "${currentItem.product_id}": ${currentShipped} expédiés + ${pendingPacklink} en cours Packlink + ${item.quantity_to_ship} demandés = ${totalEngaged} > ${currentItem.quantity} commandés`,
         };
       }
 
@@ -122,7 +152,9 @@ export async function validateSalesShipment(
         );
       }
 
-      // ✅ INSERT INTO sales_order_shipments (triggers existants gèrent stock)
+      // ✅ INSERT INTO sales_order_shipments (triggers gèrent stock)
+      // Si packlink_status = 'a_payer' → le trigger INSERT ne décrémente PAS le stock
+      // Le stock sera décrémenté quand packlink_status passe à 'paye' (trigger UPDATE)
       const { error: insertError } = await supabase
         .from('sales_order_shipments')
         .insert({
@@ -133,6 +165,13 @@ export async function validateSalesShipment(
           shipped_by: validatedData.shipped_by,
           tracking_number: validatedData.tracking_number,
           notes: validatedData.notes,
+          delivery_method: validatedData.delivery_method,
+          carrier_name: validatedData.carrier_name,
+          carrier_service: validatedData.carrier_service,
+          shipping_cost: validatedData.shipping_cost,
+          estimated_delivery_at: validatedData.estimated_delivery_at,
+          packlink_shipment_id: validatedData.packlink_shipment_id,
+          packlink_status: validatedData.packlink_status,
         });
 
       if (insertError) {

@@ -131,12 +131,28 @@ export function SalesOrderActionMenu({
   }
 
   if (allowShip && (status === 'validated' || status === 'partially_shipped')) {
-    workflowItems.push(
-      <DropdownMenuItem key="ship" onClick={onShip}>
-        <Truck className="h-4 w-4 mr-2" />
-        Expédier
-      </DropdownMenuItem>
-    );
+    if (order.has_pending_packlink && status === 'validated') {
+      // Packlink shipment in progress — show finalize link instead
+      workflowItems.push(
+        <DropdownMenuItem key="finalize-packlink" asChild>
+          <a
+            href="https://pro.packlink.fr/private/shipments"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <ExternalLink className="h-4 w-4 mr-2 text-blue-600" />
+            Finaliser sur Packlink
+          </a>
+        </DropdownMenuItem>
+      );
+    } else {
+      workflowItems.push(
+        <DropdownMenuItem key="ship" onClick={onShip}>
+          <Truck className="h-4 w-4 mr-2" />
+          {status === 'partially_shipped' ? 'Nouvelle expédition' : 'Expédier'}
+        </DropdownMenuItem>
+      );
+    }
   }
 
   if (workflowItems.length > 0) {

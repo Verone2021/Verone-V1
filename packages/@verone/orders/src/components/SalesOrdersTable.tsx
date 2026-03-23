@@ -74,6 +74,7 @@ import {
   FileText,
   FileSpreadsheet,
   ChevronDown,
+  Truck,
 } from 'lucide-react';
 
 import type { SalesAdvancedFilters } from '../types/advanced-filters';
@@ -373,16 +374,38 @@ export function SalesOrdersTable({
   const fetchStatsRef = useRef(fetchStats);
   fetchStatsRef.current = fetchStats;
 
-  // Fetch initial avec filtre canal (StrictMode safe)
+  // Fetch initial avec filtre canal (StrictMode safe + retry on total failure)
   useEffect(() => {
     // ✅ OPTIMISÉ: Ne pas fetch si preloadedOrders fourni (évite double fetch)
     if (preloadedOrders) return;
 
     let stale = false;
     const filters = channelId ? { channel_id: channelId } : undefined;
+
+    // Retry logic: if fetchOrders fails completely (main query), retry up to 2 times with 3s delay
+    const fetchWithRetry = async (retries = 2) => {
+      try {
+        await fetchOrdersRef.current(filters);
+      } catch (err: unknown) {
+        console.error(
+          `[SalesOrdersTable] fetchOrders failed (retries left: ${retries}):`,
+          err
+        );
+        if (retries > 0 && !stale) {
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          if (!stale) {
+            await fetchWithRetry(retries - 1);
+          }
+        }
+      }
+    };
+
     if (!stale) {
-      void fetchOrdersRef.current(filters).catch((err: unknown) => {
-        console.error('[SalesOrdersTable] fetchOrders failed:', err);
+      void fetchWithRetry().catch((err: unknown) => {
+        console.error(
+          '[SalesOrdersTable] fetchOrders failed after retries:',
+          err
+        );
       });
       void fetchStatsRef.current(filters).catch((err: unknown) => {
         console.error('[SalesOrdersTable] fetchStats failed:', err);
@@ -1521,6 +1544,9 @@ export function SalesOrdersTable({
                       <TableHead className="whitespace-nowrap">
                         Paiement
                       </TableHead>
+                      <TableHead className="whitespace-nowrap">
+                        Expédition
+                      </TableHead>
                       <TableHead className="whitespace-nowrap text-center">
                         Art.
                       </TableHead>
@@ -1658,6 +1684,18 @@ export function SalesOrdersTable({
                                       {order.quote_number}
                                     </Link>
                                   )}
+                                {order.has_pending_packlink && (
+                                  <a
+                                    href="https://pro.packlink.fr/private/shipments"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 text-[10px] font-mono text-red-600 hover:text-red-800 hover:underline"
+                                    title="Finaliser expedition sur Packlink PRO"
+                                  >
+                                    <Truck className="h-3 w-3 shrink-0" />
+                                    Packlink a payer
+                                  </a>
+                                )}
                               </div>
                             </TableCell>
                             <TableCell>
@@ -1719,6 +1757,34 @@ export function SalesOrdersTable({
                                   </Badge>
                                 )}
                               </div>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {order.status === 'shipped' ? (
+                                <Badge className="text-[10px] bg-green-100 text-green-800">
+                                  Expédiée
+                                </Badge>
+                              ) : order.status === 'partially_shipped' ? (
+                                <Badge className="text-[10px] bg-amber-100 text-amber-800">
+                                  Partielle
+                                </Badge>
+                              ) : (order.status as string) === 'delivered' ? (
+                                <Badge className="text-[10px] bg-blue-100 text-blue-800">
+                                  Livrée
+                                </Badge>
+                              ) : order.status === 'validated' &&
+                                order.has_pending_packlink ? (
+                                <Badge className="text-[10px] bg-red-100 text-red-800">
+                                  Transport à payer
+                                </Badge>
+                              ) : order.status === 'validated' ? (
+                                <Badge className="text-[10px] bg-gray-100 text-gray-600">
+                                  À expédier
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-[10px]">
+                                  —
+                                </span>
+                              )}
                             </TableCell>
                             <TableCell className="text-center whitespace-nowrap">
                               <span className="text-xs font-medium">

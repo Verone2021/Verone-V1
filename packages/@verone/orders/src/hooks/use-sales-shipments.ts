@@ -45,6 +45,7 @@ export interface SalesOrderForShipment {
   customer_id: string;
   customer_type: string; // 'organization' | 'individual'
   customer_name?: string; // Chargé dynamiquement selon customer_type
+  customer_email?: string; // Email client (pour Packlink)
 
   // Shipping address (pré-remplir formulaire)
   shipping_address?: Record<string, unknown>;
@@ -191,11 +192,28 @@ export function useSalesShipments() {
           }
         }
 
+        // Charger les expéditions Packlink en cours (a_payer) pour cette commande
+        // Ces quantités ne sont PAS dans quantity_shipped (trigger skip pour a_payer)
+        const { data: pendingShipments } = await supabase
+          .from('sales_order_shipments')
+          .select('product_id, quantity_shipped')
+          .eq('sales_order_id', soId)
+          .eq('packlink_status', 'a_payer');
+
+        const pendingByProduct = new Map<string, number>();
+        for (const ps of pendingShipments ?? []) {
+          const current = pendingByProduct.get(ps.product_id) ?? 0;
+          pendingByProduct.set(ps.product_id, current + ps.quantity_shipped);
+        }
+
         return {
           ...data,
           customer_name: customerName,
           organisations: organisationData,
-        } as SalesOrderForShipment;
+          _pendingPacklinkByProduct: Object.fromEntries(pendingByProduct),
+        } as SalesOrderForShipment & {
+          _pendingPacklinkByProduct: Record<string, number>;
+        };
       } catch (err) {
         console.error('Exception chargement SO:', err);
         setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -212,10 +230,20 @@ export function useSalesShipments() {
    */
   const prepareShipmentItems = useCallback(
     (salesOrder: SalesOrderForShipment): ShipmentItem[] => {
+      // Récupérer les quantités Packlink en cours (a_payer, pas encore dans quantity_shipped)
+      const pendingMap =
+        (
+          salesOrder as SalesOrderForShipment & {
+            _pendingPacklinkByProduct?: Record<string, number>;
+          }
+        )._pendingPacklinkByProduct ?? {};
+
       return salesOrder.sales_order_items.map(item => {
         const quantityOrdered = item.quantity;
         const quantityAlreadyShipped = item.quantity_shipped ?? 0;
-        const quantityRemaining = quantityOrdered - quantityAlreadyShipped;
+        const pendingPacklink = pendingMap[item.product_id] ?? 0;
+        const quantityRemaining =
+          quantityOrdered - quantityAlreadyShipped - pendingPacklink;
         const stockAvailable = item.products.stock_real ?? 0;
 
         // Extraire l'image principale du produit
@@ -256,6 +284,20 @@ export function useSalesShipments() {
         'carrier_info' | 'shipping_address'
       > & {
         tracking_number?: string;
+        delivery_method?: 'pickup' | 'hand_delivery' | 'manual' | 'packlink';
+        carrier_name?: string;
+        carrier_service?: string;
+        shipping_cost?: number;
+        estimated_delivery_at?: string;
+        /** Référence expédition Packlink (ex: FR2026PRO0000890560) */
+        packlink_shipment_id?: string;
+        /** Statut transport Packlink (Verone paie Packlink, PAS le paiement client) */
+        packlink_status?:
+          | 'a_payer'
+          | 'paye'
+          | 'in_transit'
+          | 'delivered'
+          | 'incident';
       }
     ): Promise<{ success: boolean; error?: string }> => {
       try {
