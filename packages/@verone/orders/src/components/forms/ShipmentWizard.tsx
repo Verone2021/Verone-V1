@@ -541,7 +541,7 @@ export function ShipmentWizard({
           ...(selectedSenderDropoff
             ? { dropoffPointId: selectedSenderDropoff }
             : {}),
-          ...(collectionDate && !selectedService.delivery_to_parcelshop
+          ...(collectionDate
             ? {
                 collectionDate: collectionDate.split('-').join('/'),
                 collectionTime: `${collectionTime}-18:00`,
@@ -1448,60 +1448,59 @@ export function ShipmentWizard({
             <h3 className="font-semibold flex items-center gap-2">
               <MapPin className="h-4 w-4" />
               {selectedService.delivery_to_parcelshop
-                ? 'Points relais'
+                ? 'Points relais & date de depot'
                 : 'Date de collecte'}
             </h3>
 
-            {/* HOME PICKUP: collection date/time */}
-            {!selectedService.delivery_to_parcelshop && (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Le coursier viendra recuperer le colis a votre adresse.
-                  Choisissez la date et l heure de collecte.
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-sm font-medium">
-                      Date de collecte
-                    </Label>
-                    <Input
-                      type="date"
-                      value={collectionDate}
-                      min={
-                        new Date(Date.now() + 86400000)
-                          .toISOString()
-                          .split('T')[0]
-                      }
-                      onChange={e => setCollectionDate(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">
-                      Heure de collecte
-                    </Label>
-                    <Input
-                      type="time"
-                      value={collectionTime}
-                      onChange={e => setCollectionTime(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-                <div className="border rounded-lg p-3 bg-blue-50 text-sm text-blue-700">
-                  Collecte prevue le{' '}
-                  {new Date(collectionDate + 'T00:00').toLocaleDateString(
-                    'fr-FR',
-                    {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'long',
+            {/* Collection/depot date — ALWAYS required by Packlink */}
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                {selectedService.delivery_to_parcelshop
+                  ? 'Choisissez la date a laquelle vous deposerez le colis au relais.'
+                  : 'Le coursier viendra recuperer le colis a votre adresse. Choisissez la date et l heure de collecte.'}
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-sm font-medium">
+                    Date de collecte
+                  </Label>
+                  <Input
+                    type="date"
+                    value={collectionDate}
+                    min={
+                      new Date(Date.now() + 86400000)
+                        .toISOString()
+                        .split('T')[0]
                     }
-                  )}{' '}
-                  a {collectionTime}
+                    onChange={e => setCollectionDate(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">
+                    Heure de collecte
+                  </Label>
+                  <Input
+                    type="time"
+                    value={collectionTime}
+                    onChange={e => setCollectionTime(e.target.value)}
+                    className="mt-1"
+                  />
                 </div>
               </div>
-            )}
+              <div className="border rounded-lg p-3 bg-blue-50 text-sm text-blue-700">
+                Collecte prevue le{' '}
+                {new Date(collectionDate + 'T00:00').toLocaleDateString(
+                  'fr-FR',
+                  {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                  }
+                )}{' '}
+                a {collectionTime}
+              </div>
+            </div>
 
             {/* SENDER dropoff (depot) — only for relay services */}
             {selectedService.delivery_to_parcelshop && (
@@ -1623,9 +1622,10 @@ export function ShipmentWizard({
               <ButtonV2
                 onClick={() => setStep(6)}
                 disabled={
-                  selectedService.delivery_to_parcelshop
-                    ? !selectedSenderDropoff || !selectedReceiverDropoff
-                    : !collectionDate || !collectionTime
+                  !collectionDate ||
+                  !collectionTime ||
+                  (selectedService.delivery_to_parcelshop &&
+                    (!selectedSenderDropoff || !selectedReceiverDropoff))
                 }
               >
                 Suivant
