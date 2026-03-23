@@ -148,7 +148,12 @@ const ONBOARDING_STEPS_META = [
   },
 ] as const;
 
-const TOTAL_STEPS = ONBOARDING_STEPS_META.length;
+// Steps à masquer pour le collaborateur (pas de marges, pas de paramètres, pas de publication)
+const COLLAB_HIDDEN_STEPS = new Set([
+  'customize_site', // /parametres = route restreinte
+  'configure_margins', // collab ne voit pas les marges
+  'share_selection', // publication = tâche admin
+]);
 
 // ─── Query Keys ─────────────────────────────────────────────────────────────
 
@@ -244,8 +249,9 @@ export function useOnboardingProgress(): OnboardingProgress & {
   completeStep: (stepId: string) => void;
   dismissChecklist: () => void;
 } {
-  const { user } = useAuth();
+  const { user, linkMeRole } = useAuth();
   const { data: affiliate } = useUserAffiliate();
+  const isCollaborateur = linkMeRole?.role === 'enseigne_collaborateur';
   const queryClient = useQueryClient();
   const syncedRef = useRef(false);
 
@@ -356,14 +362,25 @@ export function useOnboardingProgress(): OnboardingProgress & {
 
   const isDismissed = completedStepIds.has('dismissed');
 
-  const steps: OnboardingStep[] = ONBOARDING_STEPS_META.map(meta => ({
-    ...meta,
+  // Filtrer les étapes selon le rôle (collab ne voit pas marges/paramètres/publication)
+  const visibleStepsMeta = isCollaborateur
+    ? [...ONBOARDING_STEPS_META].filter(
+        meta => !COLLAB_HIDDEN_STEPS.has(meta.id)
+      )
+    : [...ONBOARDING_STEPS_META];
+
+  const steps: OnboardingStep[] = visibleStepsMeta.map(meta => ({
+    id: meta.id,
+    label: meta.label,
+    description: meta.description,
+    href: meta.href,
     completed: completedStepIds.has(meta.id),
   }));
 
+  const totalSteps = visibleStepsMeta.length;
   const completedCount = steps.filter(s => s.completed).length;
-  const percentage = Math.round((completedCount / TOTAL_STEPS) * 100);
-  const isFullyCompleted = completedCount === TOTAL_STEPS;
+  const percentage = Math.round((completedCount / totalSteps) * 100);
+  const isFullyCompleted = completedCount === totalSteps;
   const isLoading = persistedLoading || autoDetectLoading;
 
   const completeStep = useCallback(
@@ -380,7 +397,7 @@ export function useOnboardingProgress(): OnboardingProgress & {
   return {
     steps,
     completedCount,
-    totalCount: TOTAL_STEPS,
+    totalCount: totalSteps,
     percentage,
     isDismissed,
     isFullyCompleted,

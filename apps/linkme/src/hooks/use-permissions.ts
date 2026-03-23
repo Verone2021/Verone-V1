@@ -31,8 +31,12 @@ const PERMISSION_MATRIX = {
     'enseigne_collaborateur',
   ] as LinkMeRole[],
 
-  // Gestion des sélections
-  manageSelections: ['enseigne_admin', 'organisation_admin'] as LinkMeRole[],
+  // Gestion des sélections (collab peut voir/ajouter mais PAS éditer les marges)
+  manageSelections: [
+    'enseigne_admin',
+    'organisation_admin',
+    'enseigne_collaborateur',
+  ] as LinkMeRole[],
 
   // Voir les commandes
   viewOrders: [

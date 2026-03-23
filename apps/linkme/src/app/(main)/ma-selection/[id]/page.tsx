@@ -36,6 +36,7 @@ import { SelectionConfigSheet } from '../../../../components/selection/Selection
 import { SelectionProductGrid } from '../../../../components/selection/SelectionProductGrid';
 import { ShareSelectionButton } from '../../../../components/selection/ShareSelectionButton';
 import { useAuth, type LinkMeRole } from '../../../../contexts/AuthContext';
+import { usePermissions } from '../../../../hooks/use-permissions';
 import {
   useUserAffiliate,
   useUserSelections,
@@ -52,6 +53,7 @@ export default function SelectionDetailPage(): React.JSX.Element | null {
   const selectionId = params.id as string;
 
   const { user, linkMeRole, initializing: authLoading } = useAuth();
+  const { canViewCommissions } = usePermissions();
   const { data: _affiliate, isLoading: affiliateLoading } = useUserAffiliate();
   const { data: selections, isLoading: selectionsLoading } =
     useUserSelections();
@@ -326,7 +328,12 @@ export default function SelectionDetailPage(): React.JSX.Element | null {
         <SelectionProductGrid
           items={filteredItems}
           isLoading={itemsLoading}
-          onEdit={(item: SelectionItem) => setEditingItem(item)}
+          canViewCommissions={canViewCommissions}
+          onEdit={
+            canViewCommissions
+              ? (item: SelectionItem) => setEditingItem(item)
+              : undefined
+          }
           onRemove={(item: SelectionItem) => {
             void handleRemoveItem(item).catch((error: unknown) => {
               console.error('[SelectionDetail] Remove failed:', error);
@@ -346,8 +353,8 @@ export default function SelectionDetailPage(): React.JSX.Element | null {
         onClose={() => setIsConfigOpen(false)}
       />
 
-      {/* Modal edition marge */}
-      {editingItem && selection && (
+      {/* Modal edition marge (masquée pour collaborateur) */}
+      {canViewCommissions && editingItem && selection && (
         <EditMarginModal
           item={editingItem}
           selectionId={selection.id}
