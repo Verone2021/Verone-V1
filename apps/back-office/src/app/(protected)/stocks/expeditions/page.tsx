@@ -146,6 +146,26 @@ export default function ExpeditionsPage() {
   const [historySearchTerm, setHistorySearchTerm] = useState('');
   const [historyStatusFilter, setHistoryStatusFilter] = useState<string>('all');
 
+  // Expéditions Packlink en cours (groupées par expédition)
+  const [packlinkShipments, setPacklinkShipments] = useState<
+    Array<{
+      packlink_shipment_id: string;
+      sales_order_id: string;
+      order_number: string;
+      customer_name: string;
+      items: Array<{ product_name: string; quantity: number }>;
+      carrier_name: string | null;
+      carrier_service: string | null;
+      shipping_cost: number | null;
+      packlink_status: string | null;
+      tracking_number: string | null;
+      tracking_url: string | null;
+      label_url: string | null;
+      estimated_delivery_at: string | null;
+      created_at: string | null;
+    }>
+  >([]);
+
   // Toggle expansion d'une ligne
   const toggleRowExpansion = (orderId: string) => {
     setExpandedRows(prev => {
@@ -249,6 +269,30 @@ export default function ExpeditionsPage() {
     historySearchTerm,
     activeTab,
   ]);
+
+  // Charger expéditions Packlink en cours
+  useEffect(() => {
+    if (activeTab === 'packlink') {
+      const loadPacklinkShipments = async () => {
+        // Requête SQL directe via API route pour contourner les types
+        // Supabase générés qui ne connaissent pas encore packlink_status
+        const res = await fetch('/api/packlink/shipments/pending');
+        if (!res.ok) {
+          console.error(
+            '[ExpeditionsPage] Load Packlink shipments:',
+            res.status
+          );
+          return;
+        }
+        const { shipments: rows } = (await res.json()) as {
+          shipments: typeof packlinkShipments;
+        };
+        setPacklinkShipments(rows ?? []);
+      };
+
+      void loadPacklinkShipments().catch(console.error);
+    }
+  }, [activeTab]);
 
   // Handler pour ouvrir le modal d'expédition
   const handleOpenShipmentModal = (order: SalesOrder) => {
@@ -389,10 +433,18 @@ export default function ExpeditionsPage() {
         </div>
       )}
 
-      {/* Tabs: À expédier / Historique */}
+      {/* Tabs: À expédier / En cours Packlink / Historique */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-xl grid-cols-3">
           <TabsTrigger value="to-ship">À expédier</TabsTrigger>
+          <TabsTrigger value="packlink">
+            En cours Packlink
+            {packlinkShipments.length > 0 && (
+              <Badge variant="secondary" className="ml-2 text-xs">
+                {packlinkShipments.length}
+              </Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="history">Historique</TabsTrigger>
         </TabsList>
 
@@ -684,7 +736,217 @@ export default function ExpeditionsPage() {
           </Card>
         </TabsContent>
 
-        {/* TAB 2: HISTORIQUE */}
+        {/* TAB 2: EN COURS PACKLINK (transport à payer / payé / en transit) */}
+        <TabsContent value="packlink" className="space-y-4 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Truck className="h-5 w-5" />
+                Expéditions Packlink en cours
+              </CardTitle>
+              <CardDescription>
+                Transport à payer par Verone ou en cours d&apos;acheminement
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {packlinkShipments.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">
+                  Aucune expédition Packlink en cours
+                </p>
+              ) : (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Commande</TableHead>
+                        <TableHead>Client</TableHead>
+                        <TableHead>Articles</TableHead>
+                        <TableHead>Transporteur</TableHead>
+                        <TableHead>Coût transport</TableHead>
+                        <TableHead>Statut transport</TableHead>
+                        <TableHead>Suivi</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {packlinkShipments.map(shipment => (
+                        <TableRow key={shipment.packlink_shipment_id}>
+                          <TableCell className="font-mono text-sm">
+                            {shipment.order_number}
+                          </TableCell>
+                          <TableCell>{shipment.customer_name}</TableCell>
+                          <TableCell>
+                            <div className="space-y-0.5">
+                              {shipment.items.map((item, idx) => (
+                                <div key={idx} className="text-sm">
+                                  {item.product_name}
+                                  <span className="text-muted-foreground ml-1">
+                                    x{item.quantity}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium text-sm">
+                                {shipment.carrier_name ?? '-'}
+                              </p>
+                              {shipment.carrier_service && (
+                                <p className="text-xs text-muted-foreground">
+                                  {shipment.carrier_service}
+                                </p>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {shipment.shipping_cost != null
+                              ? formatCurrency(shipment.shipping_cost)
+                              : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                shipment.packlink_status === 'a_payer'
+                                  ? 'destructive'
+                                  : shipment.packlink_status === 'paye'
+                                    ? 'default'
+                                    : shipment.packlink_status === 'in_transit'
+                                      ? 'secondary'
+                                      : shipment.packlink_status === 'incident'
+                                        ? 'destructive'
+                                        : 'outline'
+                              }
+                            >
+                              {shipment.packlink_status === 'a_payer'
+                                ? 'Transport à payer'
+                                : shipment.packlink_status === 'paye'
+                                  ? 'Transport payé'
+                                  : shipment.packlink_status === 'in_transit'
+                                    ? 'En transit'
+                                    : shipment.packlink_status === 'incident'
+                                      ? 'Incident'
+                                      : (shipment.packlink_status ?? '-')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {shipment.tracking_number ? (
+                              <div>
+                                {shipment.tracking_url ? (
+                                  <a
+                                    href={shipment.tracking_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:underline text-sm"
+                                  >
+                                    {shipment.tracking_number}
+                                  </a>
+                                ) : (
+                                  <span className="text-sm font-mono">
+                                    {shipment.tracking_number}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">
+                                En attente
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              {shipment.packlink_status === 'a_payer' && (
+                                <>
+                                  <a
+                                    href="https://pro.packlink.com/private/shipments/ready-to-purchase"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <ButtonV2
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-xs"
+                                    >
+                                      Payer sur Packlink
+                                    </ButtonV2>
+                                  </a>
+                                  <ButtonV2
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-xs text-red-600 hover:text-red-700"
+                                    onClick={() => {
+                                      if (
+                                        !confirm(
+                                          'Annuler cette expédition Packlink ?'
+                                        )
+                                      )
+                                        return;
+                                      void (async () => {
+                                        try {
+                                          await fetch(
+                                            `/api/packlink/shipment/${shipment.packlink_shipment_id}`,
+                                            { method: 'DELETE' }
+                                          );
+                                          const { createClient: cc } =
+                                            await import(
+                                              '@verone/utils/supabase/client'
+                                            );
+                                          const sb = cc();
+                                          await sb
+                                            .from('sales_order_shipments')
+                                            .delete()
+                                            .eq(
+                                              'packlink_shipment_id',
+                                              shipment.packlink_shipment_id
+                                            );
+                                          setPacklinkShipments(prev =>
+                                            prev.filter(
+                                              s =>
+                                                s.packlink_shipment_id !==
+                                                shipment.packlink_shipment_id
+                                            )
+                                          );
+                                        } catch (e) {
+                                          console.error(
+                                            '[Packlink] Cancel failed:',
+                                            e
+                                          );
+                                        }
+                                      })().catch(console.error);
+                                    }}
+                                  >
+                                    Annuler
+                                  </ButtonV2>
+                                </>
+                              )}
+                              {shipment.label_url && (
+                                <a
+                                  href={shipment.label_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <ButtonV2
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-xs"
+                                  >
+                                    Étiquette
+                                  </ButtonV2>
+                                </a>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* TAB 3: HISTORIQUE */}
         <TabsContent value="history" className="space-y-4 mt-6">
           {/* Filtres Historique */}
           <Card>

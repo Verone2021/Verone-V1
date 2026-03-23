@@ -42,7 +42,6 @@ import {
   ArrowLeft,
   Loader2,
   Clock,
-  Download,
   Plus,
   Trash2,
   Shield,
@@ -257,8 +256,44 @@ export function ShipmentWizard({
     trackingNumber: string | null;
     labelUrl: string | null;
     carrierName: string | null;
+    orderReference: string | null;
+    totalPaid: number | null;
   } | null>(null);
-  const [creating, setCreating] = useState(false);
+  const [paying, setPaying] = useState(false);
+
+  // Dropoffs (relay points) — sender + receiver
+  interface DropoffPoint {
+    id: string;
+    commerce_name: string;
+    address: string;
+    city: string;
+    zip: string;
+    phone?: string;
+    opening_times: Record<string, unknown>;
+  }
+  // Sender dropoffs (around 91300 Massy)
+  const [senderDropoffs, setSenderDropoffs] = useState<DropoffPoint[]>([]);
+  const [selectedSenderDropoff, setSelectedSenderDropoff] = useState<
+    string | null
+  >(null);
+  const [loadingSenderDropoffs, setLoadingSenderDropoffs] = useState(false);
+  // Receiver dropoffs (around destination zip)
+  const [receiverDropoffs, setReceiverDropoffs] = useState<DropoffPoint[]>([]);
+  const [selectedReceiverDropoff, setSelectedReceiverDropoff] = useState<
+    string | null
+  >(null);
+  const [loadingReceiverDropoffs, setLoadingReceiverDropoffs] = useState(false);
+
+  // Collection date/time (for home pickup services)
+  const [collectionDate, setCollectionDate] = useState(
+    // Default to tomorrow
+    (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 1);
+      return d.toISOString().split('T')[0];
+    })()
+  );
+  const [collectionTime, setCollectionTime] = useState('09:00');
 
   // Init items
   useEffect(() => {
@@ -410,23 +445,81 @@ export function ShipmentWizard({
       tracking_number: manualTracking || undefined,
       notes: notes || undefined,
       shipped_by: user.id,
+      delivery_method: deliveryMethod ?? undefined,
     });
 
     if (result.success) onSuccess();
   };
 
-  // Create Packlink shipment
-  const handlePacklinkCreate = async () => {
-    if (!selectedService) return;
-    setCreating(true);
-
+  // Build destination object from order data
+  const buildDestination = useCallback(() => {
     const addr = (salesOrder.shipping_address ?? null) as Record<
       string,
       string
     > | null;
-    const customerName = salesOrder.customer_name ?? '';
-    const nameParts = customerName.split(' ');
-    const customerEmail = salesOrder.organisations?.email ?? 'client@verone.fr';
+    const name = salesOrder.customer_name ?? '';
+    const nameParts = name.split(' ');
+    const email = salesOrder.organisations?.email ?? 'client@verone.fr';
+
+    return {
+      name: nameParts[0] ?? 'Client',
+      surname: nameParts.slice(1).join(' ') || 'Client',
+      email,
+      phone: addr?.phone ?? '+33600000000',
+      street1: addr?.line1 ?? '',
+      city: addr?.city ?? '',
+      zip_code: addr?.postal_code ?? '',
+      country: addr?.country ?? 'FR',
+    };
+  }, [salesOrder]);
+
+  // Fetch dropoff points for relay services — sender (91300) + receiver (destination)
+  const fetchDropoffs = useCallback(async () => {
+    if (!selectedService || !destinationZip) return;
+
+    // Fetch sender dropoffs (around Massy 91300)
+    setLoadingSenderDropoffs(true);
+    try {
+      const res = await fetch(
+        `/api/packlink/dropoffs?service_id=${selectedService.id}&country=FR&zip=91300`
+      );
+      if (res.ok) {
+        const data = (await res.json()) as { dropoffs: DropoffPoint[] };
+        setSenderDropoffs(data.dropoffs ?? []);
+      }
+    } catch (err) {
+      console.error('[Dropoffs sender]', err);
+      setSenderDropoffs([]);
+    }
+    setLoadingSenderDropoffs(false);
+
+    // Fetch receiver dropoffs (around destination)
+    if (selectedService.delivery_to_parcelshop) {
+      setLoadingReceiverDropoffs(true);
+      try {
+        const res = await fetch(
+          `/api/packlink/dropoffs?service_id=${selectedService.id}&country=FR&zip=${destinationZip}`
+        );
+        if (res.ok) {
+          const data = (await res.json()) as { dropoffs: DropoffPoint[] };
+          setReceiverDropoffs(data.dropoffs ?? []);
+        }
+      } catch (err) {
+        console.error('[Dropoffs receiver]', err);
+        setReceiverDropoffs([]);
+      }
+      setLoadingReceiverDropoffs(false);
+    }
+  }, [selectedService, destinationZip]);
+
+  // Create Packlink draft shipment (POST /shipments)
+  // Payment is done manually on Packlink PRO website after draft creation
+  const handleCreateDraft = async () => {
+    if (!selectedService) return;
+    setPaying(true);
+    setServicesError(null);
+
+    const destination = buildDestination();
 
     try {
       const res = await fetch('/api/packlink/shipment', {
@@ -434,40 +527,47 @@ export function ShipmentWizard({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           serviceId: selectedService.id,
-          destination: {
-            name: nameParts[0] ?? 'Client',
-            surname: nameParts.slice(1).join(' ') ?? '',
-            email: customerEmail,
-            phone: '+33600000000',
-            street1: addr?.line1 ?? '',
-            city: addr?.city ?? '',
-            zip_code: addr?.postal_code ?? '',
-            country: addr?.country ?? 'FR',
-          },
+          destination,
           packages,
           content: contentDescription,
           contentValue: declaredValue,
-          isSecondHand,
-          insurance: wantsInsurance,
+          contentSecondHand: isSecondHand,
           orderReference: salesOrder.order_number ?? salesOrder.id.slice(0, 8),
+          ...(selectedSenderDropoff
+            ? { dropoffPointId: selectedSenderDropoff }
+            : {}),
+          ...(collectionDate && !selectedService.delivery_to_parcelshop
+            ? {
+                collectionDate: collectionDate.split('-').join('/'),
+                collectionTime: `${collectionTime}-18:00`,
+              }
+            : {}),
         }),
       });
 
-      if (!res.ok) throw new Error(`Erreur ${res.status}`);
+      if (!res.ok) {
+        const errData = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          details?: string;
+        };
+        throw new Error(
+          errData.details ?? errData.error ?? `Erreur ${res.status}`
+        );
+      }
+
       const data = (await res.json()) as {
         success: boolean;
-        trackingNumber: string | null;
-        labelUrl: string | null;
-        carrierName: string | null;
+        shipmentReference: string;
       };
 
       if (data.success) {
-        setShipmentResult(data);
-
-        // Now validate the shipment in our system
+        // Enregistrer l'expédition dans notre DB (packlink_status = 'a_payer')
+        // Le trigger INSERT ne décrémente PAS le stock pour les expéditions Packlink
+        // Le stock sera décrémenté quand Verone paie le transport (webhook → 'paye')
         const {
           data: { user },
         } = await supabase.auth.getUser();
+
         if (user?.id) {
           const itemsToShip = items
             .filter(i => (i.quantity_to_ship ?? 0) > 0)
@@ -477,22 +577,44 @@ export function ShipmentWizard({
               quantity_to_ship: i.quantity_to_ship ?? 0,
             }));
 
-          await validateShipment({
-            sales_order_id: salesOrder.id,
-            items: itemsToShip,
-            shipped_at: new Date().toISOString(),
-            tracking_number: data.trackingNumber ?? undefined,
-            notes: `Packlink: ${selectedService.carrier_name} - ${selectedService.name}`,
-            shipped_by: user.id,
-          });
+          if (itemsToShip.length > 0) {
+            const dbResult = await validateShipment({
+              sales_order_id: salesOrder.id,
+              items: itemsToShip,
+              shipped_at: new Date().toISOString(),
+              shipped_by: user.id,
+              delivery_method: 'packlink',
+              carrier_name: selectedService.carrier_name,
+              carrier_service: selectedService.name,
+              shipping_cost: selectedService.price.total_price,
+              estimated_delivery_at:
+                selectedService.first_estimated_delivery_date ?? undefined,
+              packlink_shipment_id: data.shipmentReference,
+              packlink_status: 'a_payer',
+              notes: `Transport Packlink à payer par Verone — ${selectedService.carrier_name}`,
+            });
+
+            if (!dbResult.success) {
+              console.error('[ShipmentWizard] DB save failed:', dbResult.error);
+            }
+          }
         }
 
-        setStep(7); // Success step
+        setShipmentResult({
+          trackingNumber: null,
+          labelUrl: null,
+          carrierName: selectedService.carrier_name,
+          orderReference: data.shipmentReference,
+          totalPaid: selectedService.price.total_price,
+        });
+        setStep(7); // Success — show link to Packlink PRO for payment
       }
     } catch (err) {
-      setServicesError(err instanceof Error ? err.message : 'Erreur creation');
+      setServicesError(
+        err instanceof Error ? err.message : 'Erreur creation expedition'
+      );
     }
-    setCreating(false);
+    setPaying(false);
   };
 
   const formatTransit = (hours: string) => {
@@ -1266,7 +1388,15 @@ export function ShipmentWizard({
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Retour
               </ButtonV2>
-              <ButtonV2 onClick={() => setStep(6)} disabled={!selectedService}>
+              <ButtonV2
+                onClick={() => {
+                  if (selectedService?.delivery_to_parcelshop) {
+                    void fetchDropoffs().catch(console.error);
+                  }
+                  setStep(5);
+                }}
+                disabled={!selectedService}
+              >
                 Suivant
                 <ArrowRight className="h-4 w-4 ml-1" />
               </ButtonV2>
@@ -1286,20 +1416,226 @@ export function ShipmentWizard({
         </div>
       )}
 
-      {/* STEP 6: Summary + Confirmation (Packlink) */}
+      {/* STEP 5: Dropoff points — SENDER + RECEIVER */}
+      {step === 5 && selectedService && (
+        <div className="flex gap-4">
+          <div className="flex-1 space-y-4">
+            <h3 className="font-semibold flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              {selectedService.delivery_to_parcelshop
+                ? 'Points relais'
+                : 'Date de collecte'}
+            </h3>
+
+            {/* HOME PICKUP: collection date/time */}
+            {!selectedService.delivery_to_parcelshop && (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Le coursier viendra recuperer le colis a votre adresse.
+                  Choisissez la date et l heure de collecte.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-sm font-medium">
+                      Date de collecte
+                    </Label>
+                    <Input
+                      type="date"
+                      value={collectionDate}
+                      min={
+                        new Date(Date.now() + 86400000)
+                          .toISOString()
+                          .split('T')[0]
+                      }
+                      onChange={e => setCollectionDate(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">
+                      Heure de collecte
+                    </Label>
+                    <Input
+                      type="time"
+                      value={collectionTime}
+                      onChange={e => setCollectionTime(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+                <div className="border rounded-lg p-3 bg-blue-50 text-sm text-blue-700">
+                  Collecte prevue le{' '}
+                  {new Date(collectionDate + 'T00:00').toLocaleDateString(
+                    'fr-FR',
+                    {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long',
+                    }
+                  )}{' '}
+                  a {collectionTime}
+                </div>
+              </div>
+            )}
+
+            {/* SENDER dropoff (depot) — only for relay services */}
+            {selectedService.delivery_to_parcelshop && (
+              <div>
+                <h4 className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-1">
+                  <Store className="h-3.5 w-3.5" />
+                  Relais de depot (expediteur — Massy 91300)
+                </h4>
+                {loadingSenderDropoffs && (
+                  <div className="flex items-center gap-2 py-4 justify-center text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Chargement...
+                  </div>
+                )}
+                {!loadingSenderDropoffs && senderDropoffs.length > 0 && (
+                  <div className="max-h-[180px] overflow-y-auto space-y-1">
+                    {senderDropoffs.map(dp => {
+                      const isSelected = selectedSenderDropoff === dp.id;
+                      return (
+                        <button
+                          key={dp.id}
+                          type="button"
+                          onClick={() => setSelectedSenderDropoff(dp.id)}
+                          className={`w-full text-left p-2.5 rounded-lg border transition-colors text-sm ${
+                            isSelected
+                              ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
+                              : 'border-border hover:bg-muted/50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
+                            <div className="flex-1">
+                              <span className="font-medium">
+                                {dp.commerce_name}
+                              </span>
+                              <span className="text-muted-foreground ml-1">
+                                — {dp.address}, {dp.zip} {dp.city}
+                              </span>
+                            </div>
+                            {isSelected && (
+                              <CheckCircle2 className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                {!loadingSenderDropoffs && senderDropoffs.length === 0 && (
+                  <p className="text-xs text-muted-foreground py-2">
+                    Aucun point relais de depot disponible.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* RECEIVER dropoff (retrait) — only for parcelshop delivery */}
+            {selectedService.delivery_to_parcelshop &&
+              !loadingSenderDropoffs && (
+                <div>
+                  <h4 className="text-sm font-semibold text-green-700 mb-2 flex items-center gap-1">
+                    <Home className="h-3.5 w-3.5" />
+                    Relais de retrait (destinataire — {destinationZip})
+                  </h4>
+                  {loadingReceiverDropoffs && (
+                    <div className="flex items-center gap-2 py-4 justify-center text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Chargement...
+                    </div>
+                  )}
+                  {!loadingReceiverDropoffs && receiverDropoffs.length > 0 && (
+                    <div className="max-h-[180px] overflow-y-auto space-y-1">
+                      {receiverDropoffs.map(dp => {
+                        const isSelected = selectedReceiverDropoff === dp.id;
+                        return (
+                          <button
+                            key={dp.id}
+                            type="button"
+                            onClick={() => setSelectedReceiverDropoff(dp.id)}
+                            className={`w-full text-left p-2.5 rounded-lg border transition-colors text-sm ${
+                              isSelected
+                                ? 'border-green-500 bg-green-50 ring-1 ring-green-500'
+                                : 'border-border hover:bg-muted/50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                              <div className="flex-1">
+                                <span className="font-medium">
+                                  {dp.commerce_name}
+                                </span>
+                                <span className="text-muted-foreground ml-1">
+                                  — {dp.address}, {dp.zip} {dp.city}
+                                </span>
+                              </div>
+                              {isSelected && (
+                                <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {!loadingReceiverDropoffs &&
+                    receiverDropoffs.length === 0 && (
+                      <p className="text-xs text-muted-foreground py-2">
+                        Aucun point relais de retrait disponible.
+                      </p>
+                    )}
+                </div>
+              )}
+
+            <div className="flex justify-between">
+              <ButtonV2 variant="outline" onClick={() => setStep(4)}>
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Retour
+              </ButtonV2>
+              <ButtonV2
+                onClick={() => setStep(6)}
+                disabled={
+                  selectedService.delivery_to_parcelshop
+                    ? !selectedSenderDropoff || !selectedReceiverDropoff
+                    : !collectionDate || !collectionTime
+                }
+              >
+                Suivant
+                <ArrowRight className="h-4 w-4 ml-1" />
+              </ButtonV2>
+            </div>
+          </div>
+
+          {/* Summary panel */}
+          <WizardSummaryPanel
+            salesOrder={salesOrder}
+            packages={packages}
+            items={items}
+            contentDescription={contentDescription}
+            declaredValue={declaredValue}
+            selectedService={selectedService}
+            wantsInsurance={wantsInsurance}
+          />
+        </div>
+      )}
+
+      {/* STEP 6: Payment page (Packlink) */}
       {step === 6 && selectedService && (
         <div className="flex gap-4">
           <div className="flex-1 space-y-4">
             <h3 className="font-semibold flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4" />
-              Résumé expédition
+              Paiement expedition
             </h3>
 
             <div className="space-y-3">
               {/* Expediteur */}
               <div className="border rounded-lg p-3">
                 <Label className="text-xs text-muted-foreground">
-                  Expéditeur
+                  Expediteur
                 </Label>
                 <p className="font-medium text-sm mt-1">Verone Collections</p>
                 <p className="text-xs text-muted-foreground">
@@ -1321,38 +1657,63 @@ export function ShipmentWizard({
                 )}
               </div>
 
+              {/* Relais depot (expediteur) */}
+              {selectedSenderDropoff && (
+                <div className="border rounded-lg p-3 border-l-4 border-l-blue-500">
+                  <Label className="text-xs text-blue-700 font-semibold">
+                    Relais de depot (expediteur)
+                  </Label>
+                  <p className="font-medium text-sm mt-1">
+                    {senderDropoffs.find(d => d.id === selectedSenderDropoff)
+                      ?.commerce_name ?? 'Relais selectionne'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {senderDropoffs.find(d => d.id === selectedSenderDropoff)
+                      ?.address ?? ''}
+                    ,{' '}
+                    {senderDropoffs.find(d => d.id === selectedSenderDropoff)
+                      ?.zip ?? ''}{' '}
+                    {senderDropoffs.find(d => d.id === selectedSenderDropoff)
+                      ?.city ?? ''}
+                  </p>
+                </div>
+              )}
+
+              {/* Relais retrait (destinataire) */}
+              {selectedReceiverDropoff && (
+                <div className="border rounded-lg p-3 border-l-4 border-l-green-500">
+                  <Label className="text-xs text-green-700 font-semibold">
+                    Relais de retrait (destinataire)
+                  </Label>
+                  <p className="font-medium text-sm mt-1">
+                    {receiverDropoffs.find(
+                      d => d.id === selectedReceiverDropoff
+                    )?.commerce_name ?? 'Relais selectionne'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {receiverDropoffs.find(
+                      d => d.id === selectedReceiverDropoff
+                    )?.address ?? ''}
+                    ,{' '}
+                    {receiverDropoffs.find(
+                      d => d.id === selectedReceiverDropoff
+                    )?.zip ?? ''}{' '}
+                    {receiverDropoffs.find(
+                      d => d.id === selectedReceiverDropoff
+                    )?.city ?? ''}
+                  </p>
+                </div>
+              )}
+
               {/* Colis */}
               <div className="border rounded-lg p-3">
                 <Label className="text-xs text-muted-foreground">Colis</Label>
                 {packages.map((pkg, idx) => (
                   <p key={idx} className="text-sm mt-1">
-                    Colis {idx + 1} : {pkg.length} × {pkg.width} × {pkg.height}{' '}
+                    Colis {idx + 1} : {pkg.length} x {pkg.width} x {pkg.height}{' '}
                     cm — {pkg.weight} kg
                   </p>
                 ))}
-              </div>
-
-              {/* Contenu */}
-              <div className="border rounded-lg p-3">
-                <Label className="text-xs text-muted-foreground">Contenu</Label>
-                <p className="text-sm mt-1">{contentDescription}</p>
-                <p className="text-xs text-muted-foreground">
-                  Valeur déclarée : {declaredValue.toFixed(2)} €
-                  {isSecondHand && ' · Occasion'}
-                </p>
-              </div>
-
-              {/* Protection */}
-              <div className="border rounded-lg p-3">
-                <Label className="text-xs text-muted-foreground">
-                  Protection
-                </Label>
-                <p className="text-sm mt-1 flex items-center gap-1">
-                  <Shield className="h-3.5 w-3.5 text-blue-500" />
-                  {wantsInsurance
-                    ? `Oui — ${insurancePrice.toFixed(2)} €`
-                    : 'Non'}
-                </p>
               </div>
 
               {/* Transporteur */}
@@ -1369,7 +1730,7 @@ export function ShipmentWizard({
                     ? 'Point relais'
                     : 'Domicile'}
                   {selectedService.first_estimated_delivery_date &&
-                    ` · Livraison prévue le ${formatEstimatedDate(selectedService.first_estimated_delivery_date)}`}
+                    ` · Livraison prevue le ${formatEstimatedDate(selectedService.first_estimated_delivery_date)}`}
                 </p>
               </div>
 
@@ -1382,16 +1743,18 @@ export function ShipmentWizard({
                   .filter(i => (i.quantity_to_ship ?? 0) > 0)
                   .map(i => (
                     <p key={i.sales_order_item_id} className="text-sm mt-0.5">
-                      {i.product_name} ×{i.quantity_to_ship}
+                      {i.product_name} x{i.quantity_to_ship}
                     </p>
                   ))}
               </div>
 
-              {/* Total cost */}
-              <div className="border rounded-lg p-3 bg-blue-50">
+              {/* Total cost — payment highlight */}
+              <div className="border-2 border-blue-500 rounded-lg p-4 bg-blue-50">
                 <div className="flex justify-between items-center">
-                  <span className="font-medium">Coût expédition</span>
-                  <span className="font-bold text-lg">
+                  <span className="font-semibold text-blue-800">
+                    Montant a payer
+                  </span>
+                  <span className="font-bold text-2xl text-blue-700">
                     {(
                       selectedService.price.total_price +
                       (wantsInsurance ? insurancePrice : 0)
@@ -1399,17 +1762,17 @@ export function ShipmentWizard({
                     EUR
                   </span>
                 </div>
-                {wantsInsurance && (
-                  <p className="text-xs text-muted-foreground text-right mt-1">
-                    dont {insurancePrice.toFixed(2)} € de protection
-                  </p>
-                )}
+                <p className="text-xs text-blue-600 mt-1">
+                  Debite sur le compte Packlink PRO
+                  {wantsInsurance &&
+                    ` · dont ${insurancePrice.toFixed(2)} EUR de protection`}
+                </p>
               </div>
             </div>
 
             {servicesError && (
-              <div className="flex items-center gap-2 text-destructive text-sm">
-                <AlertTriangle className="h-4 w-4" />
+              <div className="flex items-center gap-2 text-destructive text-sm bg-red-50 p-3 rounded-lg">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0" />
                 {servicesError}
               </div>
             )}
@@ -1421,16 +1784,22 @@ export function ShipmentWizard({
               </ButtonV2>
               <ButtonV2
                 onClick={() => {
-                  void handlePacklinkCreate().catch(console.error);
+                  void handleCreateDraft().catch(console.error);
                 }}
-                disabled={creating}
+                disabled={paying}
+                className="bg-blue-600 hover:bg-blue-700"
               >
-                {creating ? (
+                {paying ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-1" />
                 ) : (
-                  <CheckCircle2 className="h-4 w-4 mr-1" />
+                  <Truck className="h-4 w-4 mr-1" />
                 )}
-                Confirmer expédition
+                Creer l expedition —{' '}
+                {(
+                  selectedService.price.total_price +
+                  (wantsInsurance ? insurancePrice : 0)
+                ).toFixed(2)}{' '}
+                EUR
               </ButtonV2>
             </div>
           </div>
@@ -1448,38 +1817,52 @@ export function ShipmentWizard({
         </div>
       )}
 
-      {/* STEP 7: Success */}
+      {/* STEP 7: Draft created — pay on Packlink PRO */}
       {step === 7 && shipmentResult && (
         <div className="text-center space-y-4 py-6">
           <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto" />
-          <h3 className="font-bold text-lg">Expedition creee</h3>
+          <h3 className="font-bold text-lg">Expedition creee sur Packlink</h3>
 
-          {shipmentResult.trackingNumber && (
-            <div className="border rounded-lg p-3 inline-block">
-              <Label className="text-xs text-muted-foreground">
-                Numero de suivi
-              </Label>
-              <p className="font-mono font-medium">
-                {shipmentResult.trackingNumber}
-              </p>
-            </div>
-          )}
+          <div className="border rounded-lg p-3 inline-block">
+            <Label className="text-xs text-muted-foreground">
+              Reference Packlink
+            </Label>
+            <p className="font-mono font-medium text-sm">
+              {shipmentResult.orderReference}
+            </p>
+          </div>
 
-          {shipmentResult.labelUrl && (
-            <div>
-              <ButtonV2
-                variant="outline"
-                onClick={() =>
-                  window.open(shipmentResult.labelUrl ?? '', '_blank')
-                }
-              >
-                <Download className="h-4 w-4 mr-1" />
-                Telecharger etiquette
-              </ButtonV2>
-            </div>
-          )}
+          <div className="border-2 border-blue-500 rounded-lg p-4 bg-blue-50 max-w-md mx-auto">
+            <p className="text-sm text-blue-800 font-medium">
+              Finalisez le paiement sur Packlink PRO
+            </p>
+            <p className="text-xs text-blue-600 mt-1">
+              Montant : {shipmentResult.totalPaid?.toFixed(2)} EUR —{' '}
+              {shipmentResult.carrierName}
+            </p>
+            <ButtonV2
+              className="mt-3 bg-blue-600 hover:bg-blue-700 w-full"
+              onClick={() =>
+                window.open(
+                  'https://pro.packlink.fr/private/shipments/ready-to-purchase',
+                  '_blank'
+                )
+              }
+            >
+              <Truck className="h-4 w-4 mr-1" />
+              Ouvrir Packlink PRO pour payer
+            </ButtonV2>
+          </div>
 
-          <ButtonV2 onClick={onSuccess}>Fermer</ButtonV2>
+          <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+            Apres le paiement sur Packlink PRO, le numero de suivi et l
+            etiquette seront automatiquement synchronises dans votre back-office
+            via webhook.
+          </p>
+
+          <ButtonV2 variant="outline" onClick={onSuccess}>
+            Fermer
+          </ButtonV2>
         </div>
       )}
     </div>

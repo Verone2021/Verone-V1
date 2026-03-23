@@ -34,6 +34,10 @@ interface SiteOrder {
   status: string;
   total_ttc: number;
   shipping_address: Record<string, string> | null;
+  // Tracking info (from sales_order_shipments, NEVER includes shipping_cost)
+  tracking_number?: string | null;
+  tracking_url?: string | null;
+  carrier_name?: string | null;
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -83,14 +87,35 @@ export default async function ComptePage() {
     const { data: ordersData } = await ordersClient
       .from('sales_orders')
       .select(
-        'id, order_number, created_at, status, total_ttc, shipping_address'
+        `id, order_number, created_at, status, total_ttc, shipping_address,
+         sales_order_shipments(tracking_number, tracking_url, carrier_name)`
       )
       .eq('individual_customer_id', String(customerData.id))
       .eq('channel_id', '0c2639e9-df80-41fa-84d0-9da96a128f7f')
       .order('created_at', { ascending: false })
       .limit(10);
 
-    orders = (ordersData as SiteOrder[] | null) ?? [];
+    // Flatten tracking info from first shipment with tracking
+    // IMPORTANT: NEVER expose shipping_cost (Verone internal cost)
+    orders = ((ordersData ?? []) as Array<Record<string, unknown>>).map(o => {
+      const shipments = (o.sales_order_shipments ?? []) as Array<{
+        tracking_number: string | null;
+        tracking_url: string | null;
+        carrier_name: string | null;
+      }>;
+      const withTracking = shipments.find(s => s.tracking_number);
+      return {
+        id: o.id as string,
+        order_number: o.order_number as string | null,
+        created_at: o.created_at as string,
+        status: o.status as string,
+        total_ttc: o.total_ttc as number,
+        shipping_address: o.shipping_address as Record<string, string> | null,
+        tracking_number: withTracking?.tracking_number ?? null,
+        tracking_url: withTracking?.tracking_url ?? null,
+        carrier_name: withTracking?.carrier_name ?? null,
+      };
+    });
   }
 
   const inputClass =
@@ -274,7 +299,27 @@ export default async function ComptePage() {
                         </p>
                         <p className="text-xs text-verone-gray-500 mt-0.5">
                           {Number(order.total_ttc).toFixed(2)} &euro;
+                          {order.carrier_name && (
+                            <span className="ml-2">— {order.carrier_name}</span>
+                          )}
                         </p>
+                        {order.tracking_number && (
+                          <p className="text-xs text-verone-gray-500 mt-0.5">
+                            Suivi :{' '}
+                            {order.tracking_url ? (
+                              <a
+                                href={order.tracking_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-verone-black underline hover:no-underline"
+                              >
+                                {order.tracking_number}
+                              </a>
+                            ) : (
+                              order.tracking_number
+                            )}
+                          </p>
+                        )}
                       </div>
                       <span
                         className={`text-xs font-medium px-2.5 py-1 rounded-full ${status.color}`}

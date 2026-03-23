@@ -296,7 +296,14 @@ export function OrderDetailModal({
     Array<{
       shipped_at: string;
       tracking_number: string | null;
+      tracking_url: string | null;
       notes: string | null;
+      delivery_method: string | null;
+      carrier_name: string | null;
+      carrier_service: string | null;
+      shipping_cost: number | null;
+      packlink_status: string | null;
+      label_url: string | null;
       items: Array<{
         product_name: string;
         product_sku: string;
@@ -324,9 +331,16 @@ export function OrderDetailModal({
         `
         shipped_at,
         tracking_number,
+        tracking_url,
         notes,
         quantity_shipped,
         product_id,
+        delivery_method,
+        carrier_name,
+        carrier_service,
+        shipping_cost,
+        packlink_status,
+        label_url,
         products:product_id (name, sku)
       `
       )
@@ -347,12 +361,31 @@ export function OrderDetailModal({
         }
 
         // Grouper par shipped_at (même timestamp = même expédition)
+        // Cast nécessaire car les types générés ne connaissent pas encore
+        // les colonnes ajoutées (carrier_name, packlink_status, etc.)
+        const rows = data as unknown as Array<
+          Record<string, unknown> & {
+            shipped_at: string;
+            tracking_number: string | null;
+            notes: string | null;
+            quantity_shipped: number;
+            products: { name: string; sku: string } | null;
+          }
+        >;
+
         const grouped = new Map<
           string,
           {
             shipped_at: string;
             tracking_number: string | null;
+            tracking_url: string | null;
             notes: string | null;
+            delivery_method: string | null;
+            carrier_name: string | null;
+            carrier_service: string | null;
+            shipping_cost: number | null;
+            packlink_status: string | null;
+            label_url: string | null;
             items: Array<{
               product_name: string;
               product_sku: string;
@@ -361,18 +394,22 @@ export function OrderDetailModal({
           }
         >();
 
-        for (const row of data) {
+        for (const row of rows) {
           const key = row.shipped_at;
-          const product = row.products as unknown as {
-            name: string;
-            sku: string;
-          } | null;
+          const product = row.products;
 
           if (!grouped.has(key)) {
             grouped.set(key, {
               shipped_at: row.shipped_at,
               tracking_number: row.tracking_number,
+              tracking_url: (row.tracking_url as string) ?? null,
               notes: row.notes,
+              delivery_method: (row.delivery_method as string) ?? null,
+              carrier_name: (row.carrier_name as string) ?? null,
+              carrier_service: (row.carrier_service as string) ?? null,
+              shipping_cost: (row.shipping_cost as number) ?? null,
+              packlink_status: (row.packlink_status as string) ?? null,
+              label_url: (row.label_url as string) ?? null,
               items: [],
             });
           }
@@ -1631,10 +1668,86 @@ export function OrderDetailModal({
                           <span className="text-gray-600">
                             {formatDate(h.shipped_at)}
                           </span>
+                          {h.carrier_name && (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] px-1 py-0 ml-1"
+                            >
+                              {h.carrier_name}
+                            </Badge>
+                          )}
+                          {h.packlink_status && (
+                            <Badge
+                              className={`text-[10px] px-1 py-0 ml-1 ${
+                                h.packlink_status === 'a_payer'
+                                  ? 'bg-red-100 text-red-800'
+                                  : h.packlink_status === 'paye'
+                                    ? 'bg-green-100 text-green-800'
+                                    : h.packlink_status === 'in_transit'
+                                      ? 'bg-blue-100 text-blue-800'
+                                      : h.packlink_status === 'delivered'
+                                        ? 'bg-emerald-100 text-emerald-800'
+                                        : 'bg-red-100 text-red-800'
+                              }`}
+                            >
+                              {h.packlink_status === 'a_payer'
+                                ? 'Transport à payer'
+                                : h.packlink_status === 'paye'
+                                  ? 'Transport payé'
+                                  : h.packlink_status === 'in_transit'
+                                    ? 'En transit'
+                                    : h.packlink_status === 'delivered'
+                                      ? 'Livré'
+                                      : 'Incident'}
+                            </Badge>
+                          )}
+                          {h.delivery_method && !h.packlink_status && (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] px-1 py-0 ml-1"
+                            >
+                              {h.delivery_method === 'manual'
+                                ? 'Manuel'
+                                : h.delivery_method === 'pickup'
+                                  ? 'Retrait'
+                                  : h.delivery_method === 'hand_delivery'
+                                    ? 'Main propre'
+                                    : h.delivery_method}
+                            </Badge>
+                          )}
                         </div>
                         {h.tracking_number && (
                           <p className="text-[10px] text-gray-500 ml-4 mb-1">
-                            Tracking : {h.tracking_number}
+                            Suivi :{' '}
+                            {h.tracking_url ? (
+                              <a
+                                href={h.tracking_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                              >
+                                {h.tracking_number}
+                              </a>
+                            ) : (
+                              h.tracking_number
+                            )}
+                          </p>
+                        )}
+                        {h.shipping_cost != null && h.shipping_cost > 0 && (
+                          <p className="text-[10px] text-gray-500 ml-4 mb-1">
+                            Coût transport : {formatCurrency(h.shipping_cost)}
+                          </p>
+                        )}
+                        {h.label_url && (
+                          <p className="text-[10px] ml-4 mb-1">
+                            <a
+                              href={h.label_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              Télécharger étiquette
+                            </a>
                           </p>
                         )}
                         <div className="ml-4 space-y-0.5">
