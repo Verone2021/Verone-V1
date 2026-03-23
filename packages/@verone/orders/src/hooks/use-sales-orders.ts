@@ -191,6 +191,9 @@ export interface SalesOrder {
   handling_cost_ht?: number;
   // TVA appliquée aux frais (différente de la TVA produits)
   fees_vat_rate?: number; // Ex: 0.20 = 20%
+
+  // Packlink pending shipment flag (enriched in fetchOrders)
+  has_pending_packlink?: boolean;
 }
 
 export interface SalesOrderItem {
@@ -555,6 +558,22 @@ export function useSalesOrders() {
           }
         }
 
+        // Fetch orders with pending Packlink shipments (status = 'a_payer')
+        const pendingPacklinkSet = new Set<string>();
+        if (orderIds.length > 0) {
+          const { data: pendingPacklink } = await supabase
+            .from('sales_order_shipments')
+            .select('sales_order_id')
+            .in('sales_order_id', orderIds)
+            .eq('packlink_status', 'a_payer');
+
+          for (const p of pendingPacklink ?? []) {
+            if (p.sales_order_id) {
+              pendingPacklinkSet.add(p.sales_order_id);
+            }
+          }
+        }
+
         // 🆕 Récupérer les infos des créateurs (batch pour performance)
         const uniqueCreatorIds = [
           ...new Set(
@@ -677,6 +696,7 @@ export function useSalesOrders() {
             invoice_status: invoiceMap.get(order.id)?.status ?? null,
             quote_qonto_id: quoteMap.get(order.id)?.qontoId ?? null,
             quote_number: quoteMap.get(order.id)?.number ?? null,
+            has_pending_packlink: pendingPacklinkSet.has(order.id),
             is_matched: !!matchInfo,
             matched_transaction_id: matchInfo?.transaction_id ?? null,
             matched_transaction_label: matchInfo?.label ?? null,

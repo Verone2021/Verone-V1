@@ -1716,6 +1716,19 @@ export function OrderDetailModal({
                             </Badge>
                           )}
                         </div>
+                        {h.packlink_status === 'a_payer' && (
+                          <p className="text-[10px] ml-4 mb-1">
+                            <a
+                              href="https://pro.packlink.fr/private/shipments"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-blue-600 hover:underline font-medium"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              Finaliser sur Packlink PRO
+                            </a>
+                          </p>
+                        )}
                         {h.tracking_number && (
                           <p className="text-[10px] text-gray-500 ml-4 mb-1">
                             Suivi :{' '}
