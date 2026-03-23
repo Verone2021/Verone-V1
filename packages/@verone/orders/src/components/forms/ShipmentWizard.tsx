@@ -299,6 +299,82 @@ export function ShipmentWizard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [salesOrder]);
 
+  // Previous shipments (for partially_shipped orders)
+  interface PreviousShipmentGroup {
+    shipped_at: string;
+    delivery_method: string | null;
+    carrier_name: string | null;
+    tracking_number: string | null;
+    tracking_url: string | null;
+    packlink_status: string | null;
+    shipping_cost: number | null;
+    items: Array<{ product_name: string; quantity: number }>;
+  }
+  const [previousShipments, setPreviousShipments] = useState<
+    PreviousShipmentGroup[]
+  >([]);
+  const [showPreviousShipments, setShowPreviousShipments] = useState(false);
+
+  useEffect(() => {
+    if (salesOrder.status !== 'partially_shipped') return;
+
+    const loadPreviousShipments = async () => {
+      // Select columns including ones not yet in generated types
+      // Cast pattern: same as OrderDetailModal.tsx
+      const { data: rawData } = await supabase
+        .from('sales_order_shipments')
+        .select(
+          `shipped_at, quantity_shipped, product_id,
+          delivery_method, carrier_name, tracking_number, tracking_url,
+          packlink_status, shipping_cost,
+          products:product_id (name)`
+        )
+        .eq('sales_order_id', salesOrder.id)
+        .order('shipped_at', { ascending: true });
+
+      if (!rawData || rawData.length === 0) return;
+
+      // Cast to access columns not yet in generated Supabase types
+      interface ShipmentRow {
+        shipped_at: string;
+        quantity_shipped: number;
+        delivery_method: string | null;
+        carrier_name: string | null;
+        tracking_number: string | null;
+        tracking_url: string | null;
+        packlink_status: string | null;
+        shipping_cost: number | null;
+        products: { name: string } | null;
+      }
+      const rows = rawData as unknown as ShipmentRow[];
+
+      // Group by shipped_at timestamp
+      const groups = new Map<string, PreviousShipmentGroup>();
+      for (const row of rows) {
+        const key = row.shipped_at;
+        if (!groups.has(key)) {
+          groups.set(key, {
+            shipped_at: row.shipped_at,
+            delivery_method: row.delivery_method,
+            carrier_name: row.carrier_name,
+            tracking_number: row.tracking_number,
+            tracking_url: row.tracking_url,
+            packlink_status: row.packlink_status,
+            shipping_cost: row.shipping_cost,
+            items: [],
+          });
+        }
+        groups.get(key)!.items.push({
+          product_name: row.products?.name ?? 'Produit',
+          quantity: row.quantity_shipped,
+        });
+      }
+      setPreviousShipments(Array.from(groups.values()));
+    };
+
+    void loadPreviousShipments();
+  }, [salesOrder.id, salesOrder.status, supabase]);
+
   // Totals
   const totals = useMemo(() => {
     const totalQty = items.reduce((s, i) => s + (i.quantity_to_ship ?? 0), 0);
@@ -711,6 +787,114 @@ export function ShipmentWizard({
               Tout expedier
             </ButtonV2>
           </div>
+
+          {/* Previous Shipments (for partially_shipped orders) */}
+          {previousShipments.length > 0 && (
+            <Card className="border-amber-200 bg-amber-50/50">
+              <button
+                type="button"
+                className="w-full p-3 flex items-center justify-between text-left"
+                onClick={() => setShowPreviousShipments(!showPreviousShipments)}
+              >
+                <div className="flex items-center gap-2">
+                  <Package className="w-4 h-4 text-amber-600" />
+                  <span className="text-sm font-medium text-amber-800">
+                    {previousShipments.length} expedition
+                    {previousShipments.length > 1 ? 's' : ''} precedente
+                    {previousShipments.length > 1 ? 's' : ''}
+                  </span>
+                </div>
+                <ChevronDown
+                  className={`w-4 h-4 text-amber-600 transition-transform ${showPreviousShipments ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {showPreviousShipments && (
+                <div className="px-3 pb-3 space-y-3">
+                  {previousShipments.map((shipment, idx) => (
+                    <div
+                      key={shipment.shipped_at}
+                      className="rounded-md border border-amber-200 bg-white p-3"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold text-gray-700">
+                          Expedition #{idx + 1} —{' '}
+                          {new Date(shipment.shipped_at).toLocaleDateString(
+                            'fr-FR'
+                          )}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {shipment.carrier_name && (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] px-1.5 py-0"
+                            >
+                              {shipment.carrier_name}
+                            </Badge>
+                          )}
+                          {shipment.packlink_status === 'a_payer' && (
+                            <Badge className="text-[10px] bg-red-100 text-red-800 px-1.5 py-0">
+                              Transport a payer
+                            </Badge>
+                          )}
+                          {shipment.packlink_status === 'paye' && (
+                            <Badge className="text-[10px] bg-green-100 text-green-800 px-1.5 py-0">
+                              Transport paye
+                            </Badge>
+                          )}
+                          {shipment.packlink_status === 'in_transit' && (
+                            <Badge className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0">
+                              En transit
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        {shipment.items.map((item, iIdx) => (
+                          <div
+                            key={iIdx}
+                            className="text-xs text-gray-600 flex justify-between"
+                          >
+                            <span>{item.product_name}</span>
+                            <span className="font-medium">
+                              x{item.quantity}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      {(shipment.tracking_number ?? shipment.shipping_cost) && (
+                        <div className="flex items-center gap-3 mt-2 pt-2 border-t border-amber-100 text-[10px] text-gray-500">
+                          {shipment.tracking_number && (
+                            <span>
+                              Suivi :{' '}
+                              {shipment.tracking_url ? (
+                                <a
+                                  href={shipment.tracking_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:underline"
+                                >
+                                  {shipment.tracking_number}
+                                </a>
+                              ) : (
+                                shipment.tracking_number
+                              )}
+                            </span>
+                          )}
+                          {shipment.shipping_cost != null &&
+                            shipment.shipping_cost > 0 && (
+                              <span>
+                                Transport :{' '}
+                                {formatCurrency(shipment.shipping_cost)}
+                              </span>
+                            )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          )}
 
           {/* Stats Cards */}
           <div className="grid grid-cols-3 gap-3">

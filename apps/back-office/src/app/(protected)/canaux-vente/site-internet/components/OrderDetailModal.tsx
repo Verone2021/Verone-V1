@@ -25,6 +25,7 @@ import {
   FileText,
   Tag,
   Receipt,
+  ExternalLink,
 } from 'lucide-react';
 
 import { OrderStatusActions } from './OrderStatusActions';
@@ -436,6 +437,19 @@ export function OrderDetailModal({
                       </span>
                     )}
                   </div>
+                  {s.packlink_status === 'a_payer' && (
+                    <p className="text-xs">
+                      <a
+                        href="https://pro.packlink.fr/private/shipments"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-blue-600 hover:underline font-medium"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        Finaliser sur Packlink PRO
+                      </a>
+                    </p>
+                  )}
                   {s.tracking_number && (
                     <p className="text-xs text-muted-foreground">
                       Suivi :{' '}

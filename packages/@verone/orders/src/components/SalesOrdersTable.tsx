@@ -74,6 +74,7 @@ import {
   FileText,
   FileSpreadsheet,
   ChevronDown,
+  Truck,
 } from 'lucide-react';
 
 import type { SalesAdvancedFilters } from '../types/advanced-filters';
@@ -1683,6 +1684,18 @@ export function SalesOrdersTable({
                                       {order.quote_number}
                                     </Link>
                                   )}
+                                {order.has_pending_packlink && (
+                                  <a
+                                    href="https://pro.packlink.fr/private/shipments"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 text-[10px] font-mono text-red-600 hover:text-red-800 hover:underline"
+                                    title="Finaliser expedition sur Packlink PRO"
+                                  >
+                                    <Truck className="h-3 w-3 shrink-0" />
+                                    Packlink a payer
+                                  </a>
+                                )}
                               </div>
                             </TableCell>
                             <TableCell>
@@ -1757,6 +1770,11 @@ export function SalesOrdersTable({
                               ) : (order.status as string) === 'delivered' ? (
                                 <Badge className="text-[10px] bg-blue-100 text-blue-800">
                                   Livrée
+                                </Badge>
+                              ) : order.status === 'validated' &&
+                                order.has_pending_packlink ? (
+                                <Badge className="text-[10px] bg-red-100 text-red-800">
+                                  Transport à payer
                                 </Badge>
                               ) : order.status === 'validated' ? (
                                 <Badge className="text-[10px] bg-gray-100 text-gray-600">
