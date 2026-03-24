@@ -25,8 +25,12 @@ export interface StockReservation {
   updated_at: string;
 
   // Relations jointes
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  products?: any; // Type flexible pour éviter erreur TypeScript avant régénération types Supabase
+  products?: {
+    id: string;
+    name: string;
+    sku: string;
+    stock_quantity: number | null;
+  } | null;
   user_profiles?: {
     first_name?: string;
     last_name?: string;

@@ -311,23 +311,12 @@ export function MovementsFilters({
                   }
                   onSelect={range => {
                     if (range?.from) {
-                      setLocalFilters(
-                        prev =>
-                          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                          ({
-                            ...prev,
-                            dateRange: range.to
-                              ? {
-                                  from: range.from,
-                                  to: range.to,
-                                }
-                              : {
-                                  from: range.from,
-                                  to: range.from,
-                                },
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          }) as any
-                      );
+                      const from = range.from;
+                      const to = range.to ?? range.from;
+                      setLocalFilters(prev => ({
+                        ...prev,
+                        dateRange: { from, to },
+                      }));
                     }
                   }}
                   numberOfMonths={2}

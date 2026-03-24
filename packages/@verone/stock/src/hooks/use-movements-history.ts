@@ -142,11 +142,7 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
           appliedFilters.movementTypes &&
           appliedFilters.movementTypes.length > 0
         ) {
-          query = query.in(
-            'movement_type',
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-            appliedFilters.movementTypes as any
-          );
+          query = query.in('movement_type', appliedFilters.movementTypes);
         }
 
         // Filtres par motifs
@@ -326,42 +322,32 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
         );
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase query builder types are complex
-        const applyCommonFilters = (query: any) => {
+        const applyCommonFilters = <T>(query: T): T => {
+          let q = query as Record<string, (...args: unknown[]) => unknown>;
           if (
             appliedFilters.movementTypes &&
             appliedFilters.movementTypes.length > 0
           ) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            query = query.in(
-              'movement_type',
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              appliedFilters.movementTypes as any
-            );
+            q = q.in('movement_type', appliedFilters.movementTypes) as typeof q;
           }
           // Mouvements RÉELS uniquement (NULL ou false)
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-          query = query.or(
+          q = q.or(
             'affects_forecast.is.null,affects_forecast.eq.false'
-          );
+          ) as typeof q;
           // Apply date range filter
           if (hasDateRange && rangeFrom) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            query = query.gte('performed_at', rangeFrom.toISOString());
+            q = q.gte('performed_at', rangeFrom.toISOString()) as typeof q;
           }
           if (hasDateRange && rangeTo) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            query = query.lte('performed_at', rangeTo.toISOString());
+            q = q.lte('performed_at', rangeTo.toISOString()) as typeof q;
           }
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-          return query;
+          return q as T;
         };
 
         // Compter tous les mouvements (dans la période)
         let totalQuery = supabase
           .from('stock_movements')
           .select('*', { count: 'exact', head: true });
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         totalQuery = applyCommonFilters(totalQuery);
         const { count: totalCount } = await totalQuery;
 
@@ -375,7 +361,6 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
             .from('stock_movements')
             .select('*', { count: 'exact', head: true })
             .gte('performed_at', today.toISOString());
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           todayQuery = applyCommonFilters(todayQuery);
           const todayResult = await todayQuery;
           todayCount = todayResult.count ?? 0;
@@ -384,7 +369,6 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
             .from('stock_movements')
             .select('*', { count: 'exact', head: true })
             .gte('performed_at', weekStart.toISOString());
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           weekQuery = applyCommonFilters(weekQuery);
           const weekResult = await weekQuery;
           weekCount = weekResult.count ?? 0;
@@ -393,7 +377,6 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
             .from('stock_movements')
             .select('*', { count: 'exact', head: true })
             .gte('performed_at', monthStart.toISOString());
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           monthQuery = applyCommonFilters(monthQuery);
           const monthResult = await monthQuery;
           monthCount = monthResult.count ?? 0;
@@ -403,7 +386,6 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
         let typeQuery = supabase
           .from('stock_movements')
           .select('movement_type');
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         typeQuery = applyCommonFilters(typeQuery);
         if (!hasDateRange) {
           typeQuery = typeQuery.gte('performed_at', monthStart.toISOString());
@@ -433,7 +415,6 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
           .from('stock_movements')
           .select('reason_code')
           .not('reason_code', 'is', null);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         reasonQuery = applyCommonFilters(reasonQuery);
         if (!hasDateRange) {
           reasonQuery = reasonQuery.gte(
@@ -467,7 +448,6 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
 
         // Top utilisateurs (dans la période)
         let userQuery = supabase.from('stock_movements').select('performed_by');
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         userQuery = applyCommonFilters(userQuery);
         if (!hasDateRange) {
           userQuery = userQuery.gte('performed_at', monthStart.toISOString());

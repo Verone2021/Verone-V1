@@ -51,8 +51,15 @@ export function StockMovementModal({
 }: StockMovementModalProps) {
   const [selectedProduct, setSelectedProduct] =
     useState<typeof initialProduct>(initialProduct);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<
+    Array<{
+      id: string;
+      name: string;
+      sku: string;
+      stock_quantity?: number;
+      min_stock?: number;
+    }>
+  >([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [movementType, setMovementType] = useState<'add' | 'remove' | 'adjust'>(
     initialMovementType ?? 'add'
@@ -92,7 +99,13 @@ export function StockMovementModal({
         .order('name');
 
       if (error) throw error;
-      setProducts(data ?? []);
+      setProducts(
+        (data ?? []).map(p => ({
+          ...p,
+          stock_quantity: p.stock_quantity ?? undefined,
+          min_stock: p.min_stock ?? undefined,
+        }))
+      );
     } catch (error) {
       console.error('Erreur chargement produits:', error);
       toast({
@@ -187,8 +200,7 @@ export function StockMovementModal({
     try {
       await createManualMovement({
         product_id: selectedProduct.id,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-        movement_type: dbMovementType as any,
+        movement_type: dbMovementType as 'add' | 'remove' | 'adjust',
         quantity: parseInt(quantity),
         reason_code: reasonCode,
         notes: notes.trim() ?? undefined,
@@ -275,9 +287,7 @@ export function StockMovementModal({
               <Select
                 value={selectedProduct?.id ?? ''}
                 onValueChange={value => {
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                   const product = products.find(p => p.id === value);
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                   setSelectedProduct(product ?? null);
                 }}
               >

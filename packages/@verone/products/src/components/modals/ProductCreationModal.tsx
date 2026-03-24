@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-misused-promises */
 'use client';
 
 import React, { useState, useTransition } from 'react';
@@ -119,7 +119,7 @@ export function ProductCreationModal({
 
       console.warn('Création produit:', productData);
 
-      await createProduct(productData as any);
+      await createProduct(productData as Record<string, unknown>);
 
       // Réinitialiser le formulaire
       resetForm();
@@ -130,16 +130,17 @@ export function ProductCreationModal({
         title: '✅ Produit créé',
         description: `${name} a été ajouté au catalogue avec succès`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Erreur création produit:', error);
 
       // Gestion des erreurs spécifiques
       let errorMessage = 'Impossible de créer le produit';
+      const err = error as { code?: string; message?: string };
 
-      if (error.code === '23505') {
+      if (err.code === '23505') {
         errorMessage = 'Ce SKU existe déjà. Veuillez en choisir un autre.';
         setErrors({ sku: 'SKU déjà existant' });
-      } else if (error.message?.includes('sku_check')) {
+      } else if (err.message?.includes('sku_check')) {
         errorMessage = 'Le SKU doit contenir au moins 3 caractères';
         setErrors({ sku: 'SKU trop court' });
       }

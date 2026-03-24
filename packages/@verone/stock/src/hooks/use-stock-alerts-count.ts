@@ -16,17 +16,14 @@ export function useStockAlertsCount() {
     const fetchCount = async () => {
       try {
         // Utiliser RPC au lieu de vue (bypass RLS avec SECURITY DEFINER)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const { data: alertCount, error } = (await supabase.rpc(
           'get_stock_alerts_count'
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        )) as any;
+        )) as { data: number | null; error: { message: string } | null };
 
         if (error) {
           console.error('Erreur comptage alertes:', error);
           setCount(0);
         } else {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           setCount(alertCount ?? 0);
         }
       } catch (err) {

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/prefer-nullish-coalescing */
 'use client';
 
 // FIXME: ProductFixedCharacteristics component can't be imported from apps/back-office in package
@@ -22,8 +22,12 @@ import {
 
 import { ProductImageGallery } from '../images/ProductImageGallery';
 
+// Product from Supabase has dynamic JSONB shape with 50+ fields accessed via dotted notation.
+
+type ProductRecord = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+
 interface ProductViewProps {
-  product: any;
+  product: ProductRecord;
   onSwitchToEdit: () => void;
   className?: string;
 }

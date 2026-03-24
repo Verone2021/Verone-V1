@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises, @typescript-eslint/no-unsafe-argument, react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-floating-promises, react-hooks/exhaustive-deps */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -24,7 +24,7 @@ interface VariantSibling {
     | 'discontinued';
   display_order?: number;
   primary_image_url?: string;
-  variant_attributes?: Record<string, any>;
+  variant_attributes?: Record<string, unknown>;
   price_ht: number;
   stock_quantity?: number;
 }
@@ -77,10 +77,15 @@ export function VariantSiblings({
 
       // Appliquer les règles de tri R020
       const sortedSiblings = sortVariantSiblings(
-        (data as any) ?? [],
+        (data ?? []) as unknown as Array<{
+          id: string;
+          name: string;
+          status: VariantSibling['status'];
+          display_order?: number;
+        }>,
         currentProductId
       );
-      setSiblings(sortedSiblings as any);
+      setSiblings(sortedSiblings as unknown as VariantSibling[]);
     } catch (err) {
       console.error('❌ Erreur chargement variantes sœurs:', err);
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -137,7 +142,7 @@ export function VariantSiblings({
     }).format(priceInCents / 100);
   };
 
-  const renderAttributeDifferences = (attributes?: Record<string, any>) => {
+  const renderAttributeDifferences = (attributes?: Record<string, unknown>) => {
     if (!attributes || Object.keys(attributes).length === 0) {
       return <span className="text-xs text-gray-400">Aucun attribut</span>;
     }
@@ -151,7 +156,7 @@ export function VariantSiblings({
               key={key}
               className="inline-block px-1.5 py-0.5 text-xs bg-gray-100 text-gray-700 rounded"
             >
-              {value}
+              {String(value)}
             </span>
           ))}
         {Object.keys(attributes).length > 3 && (

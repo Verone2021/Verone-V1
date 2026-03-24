@@ -22,8 +22,7 @@ interface _AddressData {
 }
 
 interface AddressSelectorProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  form: UseFormReturn<any>;
+  form: UseFormReturn<Record<string, unknown>>;
   className?: string;
 }
 
