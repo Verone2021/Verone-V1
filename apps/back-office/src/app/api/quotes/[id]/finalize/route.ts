@@ -156,6 +156,18 @@ export async function POST(
       );
     }
 
+    // If email is missing, try to get it from the linked consultation
+    if (!customerEmail && quote.consultation_id) {
+      const { data: consultation } = await supabase
+        .from('client_consultations')
+        .select('client_email')
+        .eq('id', quote.consultation_id)
+        .single();
+      if (consultation?.client_email) {
+        customerEmail = consultation.client_email;
+      }
+    }
+
     // 3. Find or create Qonto client
     const emailForQonto =
       customerEmail ?? `noreply+${quoteId.slice(0, 8)}@verone.app`;

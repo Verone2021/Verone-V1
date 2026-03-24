@@ -387,7 +387,9 @@ export default function SourcingProductDetailPage() {
                       <Link className="h-4 w-4 text-blue-600" />
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          {item.consultation?.organisation_name ??
+                          {item.consultation?.enseigne?.name ??
+                            item.consultation?.organisation?.trade_name ??
+                            item.consultation?.organisation?.legal_name ??
                             'Consultation'}
                         </p>
                         <p className="text-xs text-gray-500 line-clamp-1">

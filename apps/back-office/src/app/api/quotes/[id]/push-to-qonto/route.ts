@@ -54,7 +54,7 @@ export async function POST(
         `
         id, document_number, document_type, quote_status,
         qonto_invoice_id, partner_id, partner_type,
-        customer_type, individual_customer_id,
+        customer_type, individual_customer_id, consultation_id,
         total_ht, total_ttc, tva_amount,
         shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate,
         billing_address, shipping_address, validity_date, notes,
@@ -189,6 +189,18 @@ export async function POST(
       customerEmail = indiv.email ?? null;
       customerName =
         `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim() || 'Client';
+    }
+
+    // If email is missing, try to get it from the linked consultation
+    if (!customerEmail && localQuote.consultation_id) {
+      const { data: consultation } = await supabase
+        .from('client_consultations')
+        .select('client_email')
+        .eq('id', localQuote.consultation_id)
+        .single();
+      if (consultation?.client_email) {
+        customerEmail = consultation.client_email;
+      }
     }
 
     // Validate VAT number for organisations

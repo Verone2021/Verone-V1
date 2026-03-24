@@ -48,16 +48,17 @@ export function ConsultationSuggestions({
 
         // Filtrer les consultations du client spécifique
         const clientConsultations = consultations.filter(consultation => {
-          // Si on a un client ID, filtrer par client
-          if (clientId) {
-            // TODO: Ajouter une relation client_id dans consultations ou filtrer par organisation_name
-            // Pour l'instant, on montre toutes les consultations actives
-            return (
-              consultation.status === 'en_attente' ||
-              consultation.status === 'en_cours'
-            );
-          }
-          return false;
+          if (!clientId) return false;
+          // Statut actif requis
+          const isActive =
+            consultation.status === 'en_attente' ||
+            consultation.status === 'en_cours';
+          if (!isActive) return false;
+          // Filtrer par enseigne_id ou organisation_id correspondant au client assigné
+          return (
+            consultation.enseigne_id === clientId ||
+            consultation.organisation_id === clientId
+          );
         });
 
         // Trier par priorité et date

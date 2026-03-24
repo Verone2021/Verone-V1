@@ -82,6 +82,24 @@ function getClientName(consultation: ClientConsultation): string {
   return 'Client inconnu';
 }
 
+// Helper pour afficher le label de priorité (plus haut = plus urgent)
+function getPriorityLabel(level: number): string {
+  switch (level) {
+    case 5:
+      return 'Très urgent';
+    case 4:
+      return 'Urgent';
+    case 3:
+      return 'Normal+';
+    case 2:
+      return 'Normal';
+    case 1:
+      return 'Faible';
+    default:
+      return 'Normal';
+  }
+}
+
 // Composant pour afficher une ligne de consultation avec miniature photo
 interface ConsultationRowProps {
   consultation: ClientConsultation;
@@ -173,14 +191,14 @@ function ConsultationRow({
             <Badge
               variant="outline"
               className={
-                consultation.priority_level <= 2
+                consultation.priority_level >= 4
                   ? 'border-red-200 text-red-700'
                   : consultation.priority_level === 3
                     ? 'border-blue-200 text-blue-700'
                     : 'border-gray-200 text-gray-700'
               }
             >
-              Priorité {consultation.priority_level}
+              {getPriorityLabel(consultation.priority_level)}
             </Badge>
           </div>
 
@@ -557,11 +575,11 @@ export default function ConsultationsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Toutes les priorités</SelectItem>
-                    <SelectItem value="1">Très urgent</SelectItem>
-                    <SelectItem value="2">Urgent</SelectItem>
-                    <SelectItem value="3">Normal</SelectItem>
-                    <SelectItem value="4">Faible</SelectItem>
-                    <SelectItem value="5">Très faible</SelectItem>
+                    <SelectItem value="5">Très urgent (5)</SelectItem>
+                    <SelectItem value="4">Urgent (4)</SelectItem>
+                    <SelectItem value="3">Normal+ (3)</SelectItem>
+                    <SelectItem value="2">Normal (2)</SelectItem>
+                    <SelectItem value="1">Faible (1)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
