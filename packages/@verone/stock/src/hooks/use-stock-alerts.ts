@@ -86,7 +86,9 @@ export function useStockAlerts() {
         // ====================================================================
         let query = supabase
           .from('stock_alerts_unified_view')
-          .select('*')
+          .select(
+            'id, product_id, product_name, sku, product_image_url, alert_type, severity, stock_real, stock_forecasted_in, stock_forecasted_out, min_stock, shortage_quantity, quantity_in_draft, draft_order_id, draft_order_number, is_in_draft, validated, validated_at, alert_color'
+          )
           .neq('alert_type', 'none');
 
         // Filtrer par type si spécifié

@@ -46,7 +46,7 @@ export default function PreviewEmailTemplatePage() {
         setLoading(true);
         const { data, error } = await supabase
           .from('email_templates')
-          .select('*')
+          .select('id, name, slug, subject, html_body, variables, category')
           .eq('slug', slug)
           .single();
 

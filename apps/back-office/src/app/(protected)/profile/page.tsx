@@ -96,7 +96,9 @@ export default function ProfilePage() {
       // Get user profile with extended fields
       const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
-        .select('*')
+        .select(
+          'user_id, partner_id, first_name, last_name, phone, job_title, created_at, updated_at, app_source, avatar_url, client_type, email, user_type'
+        )
         .eq('user_id', user.id)
         .single();
 
@@ -241,7 +243,9 @@ export default function ProfilePage() {
       // Refresh profile data
       const { data: updatedProfile } = await supabase
         .from('user_profiles')
-        .select('*')
+        .select(
+          'user_id, partner_id, first_name, last_name, phone, job_title, created_at, updated_at, app_source, avatar_url, client_type, email, user_type'
+        )
         .eq('user_id', user.id)
         .single();
 

@@ -138,7 +138,9 @@ export const verifyLinkMeAccess = cache(
     // Vérifier le rôle LinkMe dans user_app_roles
     const { data: roleData, error: roleError } = await supabase
       .from('user_app_roles')
-      .select('*')
+      .select(
+        'id, user_id, app, role, enseigne_id, organisation_id, is_active, created_at'
+      )
       .eq('user_id', user.id)
       .eq('app', 'linkme')
       .eq('is_active', true)

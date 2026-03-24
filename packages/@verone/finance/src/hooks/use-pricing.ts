@@ -281,7 +281,9 @@ export function useSalesChannels() {
       try {
         const { data, error } = await (supabase as { from: CallableFunction })
           .from('sales_channels')
-          .select('*')
+          .select(
+            'id, code, name, description, default_discount_rate, is_active, requires_approval, min_order_value, display_order, icon_name'
+          )
           .eq('is_active', true)
           .order('display_order', { ascending: true });
 
@@ -415,7 +417,9 @@ export function useCustomerPricing(
       try {
         const { data, error } = await supabase
           .from('customer_pricing')
-          .select('*')
+          .select(
+            'id, customer_id, customer_type, product_id, custom_price_ht, discount_rate, retrocession_rate, contract_reference, min_quantity, valid_from, valid_until, is_active, approval_status, notes'
+          )
           .eq('customer_id', customerId)
           .eq('customer_type', customerType)
           .eq('is_active', true)
