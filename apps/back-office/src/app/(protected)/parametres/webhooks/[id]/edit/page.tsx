@@ -65,7 +65,7 @@ export default function EditWebhookPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from('webhook_configs')
-        .select('*')
+        .select('*') // TODO: specify columns
         .eq('id', webhookId)
         .single();
 

@@ -54,7 +54,7 @@ export default function WebhooksPage() {
       try {
         const { data, error } = await supabase
           .from('webhook_logs')
-          .select('*')
+          .select('id, webhook_id, status_code, created_at')
           .eq('webhook_id', webhookId)
           .order('created_at', { ascending: false })
           .limit(5);
@@ -73,7 +73,7 @@ export default function WebhooksPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from('webhook_configs')
-        .select('*')
+        .select('*') // TODO: specify columns
         .order('created_at', { ascending: false });
 
       if (error) throw error;

@@ -114,7 +114,9 @@ export default function SubmissionDetailPage({
         // Fetch submission
         const { data: sub, error: subError } = await supabase
           .from('form_submissions')
-          .select('*')
+          .select(
+            'id, form_type, first_name, last_name, email, phone, company_name, role, subject, message, source, status, priority, created_at, updated_at, sla_deadline, metadata, internal_notes'
+          )
           .eq('id', id)
           .single()
           .returns<FormSubmission>();
@@ -133,7 +135,7 @@ export default function SubmissionDetailPage({
         // Fetch form type
         const { data: type, error: typeError } = await supabase
           .from('form_types')
-          .select('*')
+          .select('code, label, description, icon, sla_hours')
           .eq('code', sub.form_type)
           .single()
           .returns<FormType>();

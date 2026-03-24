@@ -95,7 +95,9 @@ export default function PrixClientsPage() {
         // Requête customer_pricing seul (sans jointures pour MVP)
         const { data: pricingData, error } = await supabase
           .from('customer_pricing')
-          .select('*')
+          .select(
+            'id, customer_id, customer_type, product_id, custom_price_ht, discount_rate, retrocession_rate, contract_reference, min_quantity, valid_from, valid_until, is_active, approval_status, notes, created_at'
+          )
           .order('created_at', { ascending: false });
 
         if (error) throw error;

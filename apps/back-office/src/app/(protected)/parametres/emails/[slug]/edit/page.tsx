@@ -59,7 +59,7 @@ export default function EditEmailTemplatePage() {
       setLoading(true);
       const { data, error } = await supabase
         .from('email_templates')
-        .select('*')
+        .select('*') // TODO: specify columns
         .eq('slug', slug)
         .single();
 
