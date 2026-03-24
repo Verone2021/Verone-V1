@@ -45,7 +45,9 @@ export function useUniqueLabels(): UseUniqueLabelsReturn {
         supabase as { from: CallableFunction }
       )
         .from('v_unique_unclassified_labels')
-        .select('*')
+        .select(
+          'label, transaction_count, total_amount, first_seen, last_seen, expense_ids'
+        )
         .order('transaction_count', { ascending: false });
       /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 

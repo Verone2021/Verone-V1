@@ -365,7 +365,9 @@ export async function POST(request: NextRequest): Promise<
       if (orderWithItems.customer_type === 'organization') {
         const { data: org } = await supabase
           .from('organisations')
-          .select('*')
+          .select(
+            'id, email, trade_name, legal_name, vat_number, siret, billing_address_line1, address_line1, billing_city, city, billing_postal_code, postal_code, billing_country, country'
+          )
           .eq('id', orderWithItems.customer_id)
           .single();
         customer = org;

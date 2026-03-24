@@ -205,7 +205,9 @@ export function StockAlertsDropdown({
 
       const { data, error: queryError } = await supabase
         .from('stock_alerts_unified_view')
-        .select('*')
+        .select(
+          'id, product_id, product_name, sku, alert_type, stock_real, min_stock'
+        )
         .neq('alert_type', 'none')
         .order('alert_type', { ascending: true }) // out_of_stock first
         .limit(maxItems);

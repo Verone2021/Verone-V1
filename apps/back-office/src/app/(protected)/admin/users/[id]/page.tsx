@@ -99,7 +99,7 @@ async function getUserDetailData(
   // Récupérer le profil depuis la DB
   const { data: profile, error: profileError } = await supabase
     .from('user_profiles')
-    .select('*')
+    .select('user_id, user_type, created_at, updated_at')
     .eq('user_id', userId)
     .single();
 
