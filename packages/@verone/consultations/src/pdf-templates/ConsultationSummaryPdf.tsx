@@ -228,16 +228,16 @@ function getStatusLabel(status: string): string {
 
 function getPriorityLabel(level: number): string {
   switch (level) {
-    case 1:
+    case 5:
       return 'Tres urgent';
-    case 2:
+    case 4:
       return 'Urgent';
     case 3:
+      return 'Normal+';
+    case 2:
       return 'Normal';
-    case 4:
+    case 1:
       return 'Faible';
-    case 5:
-      return 'Tres faible';
     default:
       return 'Normal';
   }

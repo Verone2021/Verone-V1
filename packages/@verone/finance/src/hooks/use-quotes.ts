@@ -27,7 +27,8 @@ export type QuoteStatus =
   | 'accepted'
   | 'declined'
   | 'expired'
-  | 'converted';
+  | 'converted'
+  | 'superseded';
 
 export interface QuoteItemProduct {
   id: string;
@@ -213,6 +214,7 @@ const VALID_TRANSITIONS: Record<QuoteStatus, QuoteStatus[]> = {
   declined: [],
   expired: [],
   converted: [],
+  superseded: [],
 };
 
 /** Fields editable when quote is in 'validated' or 'sent' status */
@@ -484,25 +486,58 @@ export function useQuotes(initialFilters?: QuoteFilters) {
 
         toast.success('Devis créé avec succès');
 
-        // Push to Qonto in background (non-blocking: if it fails, quote stays local)
+        // Push to Qonto — if it fails, rollback local record (no ghost devis)
         try {
           const pushRes = await fetch(`/api/quotes/${doc.id}/push-to-qonto`, {
             method: 'POST',
           });
           if (pushRes.ok) {
             toast.success('Devis synchronisé avec Qonto');
+            // Return qonto_invoice_id for redirect to devis detail page
+            const { data: synced } = await supabase
+              .from('financial_documents')
+              .select('qonto_invoice_id')
+              .eq('id', doc.id)
+              .single();
+            if (synced?.qonto_invoice_id) {
+              await fetchQuotes();
+              return synced.qonto_invoice_id;
+            }
           } else {
             const pushData = (await pushRes.json()) as { error?: string };
             console.warn(
               '[useQuotes] Push to Qonto failed (non-blocking):',
               pushData.error
             );
+            // Rollback: delete local record to avoid ghost devis
+            await supabase
+              .from('financial_document_items')
+              .delete()
+              .eq('document_id', doc.id);
+            await supabase
+              .from('financial_documents')
+              .delete()
+              .eq('id', doc.id);
+            toast.error(
+              pushData.error ?? 'Impossible de créer le devis sur Qonto.'
+            );
+            await fetchQuotes();
+            return null;
           }
         } catch (pushErr) {
           console.warn(
             '[useQuotes] Push to Qonto error (non-blocking):',
             pushErr
           );
+          // Rollback: delete local record to avoid ghost devis
+          await supabase
+            .from('financial_document_items')
+            .delete()
+            .eq('document_id', doc.id);
+          await supabase.from('financial_documents').delete().eq('id', doc.id);
+          toast.error("Erreur de connexion Qonto. Le devis n'a pas été créé.");
+          await fetchQuotes();
+          return null;
         }
 
         await fetchQuotes();
@@ -761,6 +796,7 @@ export function useQuotes(initialFilters?: QuoteFilters) {
           declined: 'refusé',
           expired: 'expiré',
           converted: 'converti',
+          superseded: 'remplacé',
         };
 
         toast.success(`Devis marqué comme "${statusLabels[newStatus]}"`);

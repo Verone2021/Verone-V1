@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 
 import { useToast } from '@verone/common/hooks';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,6 +59,12 @@ interface IQuoteCreateFromOrderModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (quoteId: string) => void;
+  /** When true, creates a standalone quote (no salesOrderId) using customer + customLines */
+  isConsultation?: boolean;
+  /** Consultation ID to link the devis in local DB */
+  consultationId?: string;
+  /** IDs of existing quotes to mark as superseded when creating the new one */
+  supersededQuoteIds?: string[];
 }
 
 type CreateStatus = 'idle' | 'creating' | 'success' | 'error';
@@ -84,6 +91,9 @@ export function QuoteCreateFromOrderModal({
   open,
   onOpenChange,
   onSuccess,
+  isConsultation = false,
+  consultationId,
+  supersededQuoteIds,
 }: IQuoteCreateFromOrderModalProps): React.ReactNode {
   const { toast } = useToast();
   const [status, setStatus] = useState<CreateStatus>('idle');
@@ -131,53 +141,99 @@ export function QuoteCreateFromOrderModal({
     setStatus('creating');
 
     try {
+      // Get current user ID for DB tracking
+      const supabaseClient = createClient();
+      const { data: userData } = await supabaseClient.auth.getUser();
+      const currentUserId = userData.user?.id ?? null;
+
+      // Build billing address
+      const resolvedBillingAddress = order.billing_address
+        ? {
+            address_line1: order.billing_address?.address_line1 ?? '',
+            postal_code: order.billing_address?.postal_code ?? '',
+            city: order.billing_address?.city ?? '',
+            country: order.billing_address?.country ?? 'FR',
+          }
+        : order.organisations
+          ? {
+              address_line1:
+                order.organisations.billing_address_line1 ??
+                order.organisations.address_line1 ??
+                '',
+              postal_code:
+                order.organisations.billing_postal_code ??
+                order.organisations.postal_code ??
+                '',
+              city:
+                order.organisations.billing_city ??
+                order.organisations.city ??
+                '',
+              country: order.organisations.billing_country ?? 'FR',
+            }
+          : undefined;
+
+      // Build request body — standalone for consultations, salesOrderId for orders
+      const allCustomLines = customLines.map(line => ({
+        title: line.title,
+        description: line.description,
+        quantity: line.quantity,
+        unit_price_ht: line.unit_price_ht,
+        vat_rate: line.vat_rate,
+      }));
+
+      // For consultations: add order items as custom lines (no salesOrderId)
+      const consultationLines = isConsultation
+        ? [
+            ...(order.sales_order_items ?? []).map(item => ({
+              title: item.products?.name ?? 'Produit',
+              quantity: item.quantity,
+              unit_price_ht: item.unit_price_ht,
+              vat_rate: item.tax_rate,
+            })),
+            ...allCustomLines,
+          ]
+        : allCustomLines;
+
+      const requestBody = isConsultation
+        ? {
+            consultationId,
+            userId: currentUserId,
+            supersededQuoteIds: supersededQuoteIds?.length
+              ? supersededQuoteIds
+              : undefined,
+            customer: {
+              customerId: order.customer_id,
+              customerType: order.customer_type ?? 'organization',
+            },
+            customerEmail: order.organisations?.email ?? undefined,
+            expiryDays,
+            billingAddress: resolvedBillingAddress,
+            fees: {
+              shipping_cost_ht: shippingCostHt,
+              handling_cost_ht: handlingCostHt,
+              insurance_cost_ht: insuranceCostHt,
+              fees_vat_rate: feesVatRate,
+            },
+            customLines: consultationLines,
+          }
+        : {
+            salesOrderId: order.id,
+            userId: currentUserId,
+            expiryDays,
+            billingAddress: resolvedBillingAddress,
+            fees: {
+              shipping_cost_ht: shippingCostHt,
+              handling_cost_ht: handlingCostHt,
+              insurance_cost_ht: insuranceCostHt,
+              fees_vat_rate: feesVatRate,
+            },
+            customLines: allCustomLines,
+          };
+
       const response = await fetch('/api/qonto/quotes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          salesOrderId: order.id,
-          expiryDays,
-          // Adresse de facturation (résolution: billing_address commande > org)
-          billingAddress: order.billing_address
-            ? {
-                address_line1: order.billing_address?.address_line1 ?? '',
-                postal_code: order.billing_address?.postal_code ?? '',
-                city: order.billing_address?.city ?? '',
-                country: order.billing_address?.country ?? 'FR',
-              }
-            : order.organisations
-              ? {
-                  address_line1:
-                    order.organisations.billing_address_line1 ??
-                    order.organisations.address_line1 ??
-                    '',
-                  postal_code:
-                    order.organisations.billing_postal_code ??
-                    order.organisations.postal_code ??
-                    '',
-                  city:
-                    order.organisations.billing_city ??
-                    order.organisations.city ??
-                    '',
-                  country: order.organisations.billing_country ?? 'FR',
-                }
-              : undefined,
-          // Frais de service
-          fees: {
-            shipping_cost_ht: shippingCostHt,
-            handling_cost_ht: handlingCostHt,
-            insurance_cost_ht: insuranceCostHt,
-            fees_vat_rate: feesVatRate,
-          },
-          // Lignes personnalisées
-          customLines: customLines.map(line => ({
-            title: line.title,
-            description: line.description,
-            quantity: line.quantity,
-            unit_price_ht: line.unit_price_ht,
-            vat_rate: line.vat_rate,
-          })),
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = (await response.json()) as {

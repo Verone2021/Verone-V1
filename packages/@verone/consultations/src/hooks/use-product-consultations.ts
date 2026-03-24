@@ -18,7 +18,8 @@ interface LinkedConsultation {
     status: string;
     priority_level: number;
     created_at: string;
-    organisation_name: string | null;
+    enseigne: { name: string } | null;
+    organisation: { legal_name: string; trade_name: string | null } | null;
   };
 }
 
@@ -49,7 +50,8 @@ export function useProductConsultations(productId?: string) {
               status,
               priority_level,
               created_at,
-              organisation_name
+              enseigne:enseignes(name),
+              organisation:organisations(legal_name, trade_name)
             )
           `
         )

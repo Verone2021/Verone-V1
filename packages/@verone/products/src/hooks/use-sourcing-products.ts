@@ -281,16 +281,15 @@ export function useSourcingProducts(filters?: SourcingFilters) {
         return false;
       }
 
-      // ✅ FIX: Produit validé = ACTIF (visible immédiatement au catalogue)
+      // Produit validé = ACTIF (visible immédiatement au catalogue)
+      // completion_status est recalculé automatiquement par le trigger DB
       const { error } = await supabase
         .from('products')
         .update({
-          product_status: 'active', // ✅ Visible immédiatement au catalogue
-          stock_status: 'out_of_stock', // Pas de stock avant première réception
-          completion_status: 'complete', // Produit complet
+          product_status: 'active',
+          stock_status: 'out_of_stock',
           creation_mode: 'complete',
-          // stock_real géré par triggers lors des réceptions
-          stock_forecasted_in: 0, // Pas de stock prévisionnel
+          stock_forecasted_in: 0,
         })
         .eq('id', productId);
 
