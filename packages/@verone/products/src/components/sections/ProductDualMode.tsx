@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -12,16 +12,23 @@ import { cn } from '@verone/utils';
 // TODO: Réactiver lors Phase 2+ (composants désactivés temporairement)
 // import { ProductViewMode } from './product-view-mode'
 // import { ProductEditMode } from './product-edit-mode'
-const ProductViewMode = ({ product }: any) => (
+const ProductViewMode = (_props: Record<string, unknown>) => (
   <div>View Mode (désactivé Phase 2+)</div>
 );
-const ProductEditMode = ({ product, onUpdate }: any) => (
+const ProductEditMode = (_props: Record<string, unknown>) => (
   <div>Edit Mode (désactivé Phase 2+)</div>
 );
 
+interface DualModeProduct {
+  name?: string;
+  sku?: string;
+  updated_at?: string;
+  [key: string]: unknown;
+}
+
 interface ProductDualModeProps {
-  product: any;
-  onUpdate: (updatedProduct: any) => void;
+  product: DualModeProduct;
+  onUpdate: (updatedProduct: Record<string, unknown>) => void;
   initialMode?: 'view' | 'edit';
   className?: string;
 }

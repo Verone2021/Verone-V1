@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-misused-promises, @typescript-eslint/no-unused-vars */
 'use client';
 
 import { useState } from 'react';
@@ -21,8 +21,8 @@ import { getRoomLabel } from '@verone/types';
 interface Product {
   id: string;
   name: string;
-  variant_attributes?: Record<string, any>;
-  dimensions?: Record<string, any>;
+  variant_attributes?: Record<string, string | number | boolean | null>;
+  dimensions?: Record<string, string | number | boolean | null>;
   suitable_rooms?: string[];
 }
 

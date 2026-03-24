@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-misused-promises */
 'use client';
 
 /**
@@ -143,7 +143,7 @@ export function ProductDescriptionsModal({
       } else if (typeof err === 'string') {
         errorMessage = err;
       } else if (err && typeof err === 'object' && 'message' in err) {
-        errorMessage = (err as any).message ?? errorMessage;
+        errorMessage = String((err as { message: unknown }).message);
       }
 
       console.error('❌ Erreur sauvegarde descriptions:', {

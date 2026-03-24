@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars, @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable @typescript-eslint/no-floating-promises, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unused-vars, @typescript-eslint/prefer-nullish-coalescing */
 'use client';
 
 /**
@@ -229,7 +229,11 @@ export function ProductImageManagement({
             input.type = 'file';
             input.multiple = true;
             input.accept = 'image/*';
-            input.onchange = handleInputChange as any;
+            input.onchange = evt => {
+              const changeEvent =
+                evt as unknown as React.ChangeEvent<HTMLInputElement>;
+              handleInputChange(changeEvent);
+            };
             input.click();
           }}
         >
@@ -378,7 +382,7 @@ export function ProductImageManagement({
                 {/* Informations image */}
                 <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white p-2">
                   <p className="text-xs truncate">
-                    {(image as any).file_name ||
+                    {('file_name' in image ? String(image.file_name) : '') ||
                       `Image ${(image.display_order ?? 0) + 1}`}
                   </p>
                   {image.file_size && (

@@ -565,14 +565,13 @@ export function useOrganisations(filters?: OrganisationFilters) {
     try {
       // Use RPC to safely delete/archive organisation
       // This handles unlinking transactions and disabling rules
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any -- Supabase RPC not well typed
-      const { data, error } = await (supabase as any).rpc(
+
+      const { data, error } = (await (supabase.rpc as never)(
         'delete_organisation_safe',
         { p_org_id: id }
-      );
+      )) as { data: unknown; error: { message: string } | null };
 
       if (error) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access -- Supabase error type not well typed
         setError(error.message ?? String(error));
         return false;
       }

@@ -90,10 +90,9 @@ export function useStockOptimized(filters: StockFilters = {}) {
   );
 
   // Query pour les produits en stock faible
-  const lowStockQuery = useSupabaseQuery(
+  const lowStockQuery = useSupabaseQuery<LowStockProduct[]>(
     'low-stock-products',
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    (async (supabase: ReturnType<typeof createClient>) => {
+    async (supabase: ReturnType<typeof createClient>) => {
       // Requête corrigée : utiliser RPC pour comparaison inter-colonnes
       const { data, error } = await supabase.rpc('get_low_stock_products', {
         limit_count: 50,
@@ -128,27 +127,40 @@ export function useStockOptimized(filters: StockFilters = {}) {
 
         if (fallbackError) throw fallbackError;
 
+        type FallbackProduct = (typeof fallbackData)[number];
         return {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
-          data: (fallbackData ?? []).map((product: any) => ({
+          data: (fallbackData ?? []).map((product: FallbackProduct) => ({
             ...product,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             supplier_name:
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-              product.organisations?.trade_name ??
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-              product.organisations?.legal_name,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-            product_image_url: product.product_images?.[0]?.public_url ?? null, // ✅ NOUVEAU - Image produit
+              (
+                product.organisations as unknown as {
+                  trade_name?: string;
+                  legal_name?: string;
+                } | null
+              )?.trade_name ??
+              (
+                product.organisations as unknown as {
+                  trade_name?: string;
+                  legal_name?: string;
+                } | null
+              )?.legal_name,
+            product_image_url:
+              (
+                product.product_images as unknown as Array<{
+                  public_url: string | null;
+                }> | null
+              )?.[0]?.public_url ?? null,
             product_images: undefined, // Supprimer la propriété temporaire
-          })),
+          })) as unknown as LowStockProduct[],
           error: null,
         };
       }
 
-      return { data: data ?? [], error: null };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    }) as any,
+      return {
+        data: (data ?? []) as unknown as LowStockProduct[],
+        error: null,
+      };
+    },
     {
       staleTime: 2 * 60 * 1000, // 2 minutes
       cacheTime: 5 * 60 * 1000, // 5 minutes
@@ -310,7 +322,15 @@ export function useStockOptimized(filters: StockFilters = {}) {
     return { data, error: null };
   }) as Parameters<typeof useSupabaseMutation<StockMovement>>[0]);
 
-  const adjustStockMutation = useSupabaseMutation<boolean>(
+  const adjustStockMutation = useSupabaseMutation<
+    boolean,
+    {
+      productId: string;
+      newQuantity: number;
+      reason: string;
+      notes?: string;
+    }
+  >(
     async (
       supabase,
       {

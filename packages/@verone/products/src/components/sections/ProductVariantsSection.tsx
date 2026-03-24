@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element, @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars, @typescript-eslint/prefer-nullish-coalescing, react-hooks/exhaustive-deps */
+/* eslint-disable @next/next/no-img-element, @typescript-eslint/no-floating-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars, @typescript-eslint/prefer-nullish-coalescing, react-hooks/exhaustive-deps */
 /**
  * 🔗 Product Variants Section Component
  *
@@ -42,7 +42,7 @@ interface ProductVariant {
   variant_details?: {
     status: string;
     description?: string;
-    variant_attributes?: Record<string, any>;
+    variant_attributes?: Record<string, unknown>;
     images?: Array<{
       id: string;
       public_url: string;
@@ -149,7 +149,7 @@ export function ProductVariantsSection({
   };
 
   const getVariantAttributeDisplay = (
-    attributes: Record<string, any> | undefined
+    attributes: Record<string, unknown> | undefined
   ) => {
     if (!attributes || Object.keys(attributes).length === 0) return null;
 
@@ -161,7 +161,7 @@ export function ProductVariantsSection({
           key={key}
           className="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-100 text-gray-700"
         >
-          {key}: {value}
+          {key}: {String(value)}
         </span>
       ));
   };
