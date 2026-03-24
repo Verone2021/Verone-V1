@@ -16,7 +16,9 @@ const supabase = createClient();
 async function fetchCollections() {
   const { data, error } = await supabase
     .from('collections')
-    .select('*')
+    .select(
+      'id, name, slug, description, image_url, is_active, is_featured, display_order, visible_channels, created_at, updated_at'
+    )
     .order('display_order', { ascending: true });
 
   if (error) {
@@ -257,7 +259,7 @@ export function useSiteInternetCollectionsStats() {
       // Récupérer collections
       const { data: collections } = await supabase
         .from('collections')
-        .select('*');
+        .select('id, name, is_active, is_featured, visible_channels');
 
       if (!collections) return null;
 

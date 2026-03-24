@@ -126,7 +126,9 @@ export function useExpenses(
       /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
       let query = (supabase as { from: CallableFunction })
         .from('v_expenses_with_details')
-        .select('*')
+        .select(
+          'id, transaction_id, counterparty_id, organisation_id, category, status, role_type, notes, classified_at, classified_by, created_at, updated_at, amount, currency, label, transaction_counterparty_name, transaction_iban, side, emitted_at, settled_at, category_pcg, raw_data, counterparty_display_name, counterparty_name_normalized, organisation_name, organisation_type, has_attachment, justification_optional, applied_rule_id, rule_match_value, rule_display_label, rule_allow_multiple_categories, vat_rate, amount_ht, amount_vat, vat_source, vat_breakdown'
+        )
         .order('emitted_at', { ascending: false });
 
       // Appliquer les filtres

@@ -40,7 +40,9 @@ export async function GET() {
 
     const { data: rawData, error: rawErr } = await supabase
       .from('sales_order_shipments')
-      .select('*')
+      .select(
+        'id, sales_order_id, product_id, packlink_shipment_id, quantity_shipped, carrier_name, carrier_service, shipping_cost, packlink_status, tracking_number, tracking_url, label_url, estimated_delivery_at, created_at'
+      )
       .in('packlink_status', ['a_payer', 'paye', 'in_transit', 'incident'])
       .order('created_at', { ascending: false });
 

@@ -87,7 +87,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
     // Récupérer sessions actives
     const { data: activeSessions, error: sessionsError } = await supabase
       .from('user_sessions')
-      .select('*')
+      .select(
+        'id, user_id, session_start, last_activity, session_end, ip_address, user_agent, device_type, browser, os'
+      )
       .eq('user_id', targetUserId)
       .is('session_end', null)
       .order('last_activity', { ascending: false })
