@@ -104,49 +104,37 @@ export function useStockAlerts() {
         if (error) throw error;
 
         // Transformer en StockAlert[] - La vue retourne déjà les données formatées
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const alertsList: StockAlert[] = (data ?? []).map((alert: any) => ({
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          id: alert.id,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          product_id: alert.product_id,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          product_name: alert.product_name ?? 'Produit inconnu',
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          sku: alert.sku ?? 'N/A',
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          product_image_url: alert.product_image_url ?? null,
-          // ✅ alert_type calculé dynamiquement par la vue
-          // out_of_stock si stock_previsionnel < 0, low_stock si stock_real < min_stock
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          alert_type: (alert.alert_type as StockAlertType) ?? 'low_stock',
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          severity: alert.severity ?? 'warning',
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          stock_real: alert.stock_real ?? 0,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          stock_forecasted_in: alert.stock_forecasted_in ?? 0,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          stock_forecasted_out: alert.stock_forecasted_out ?? 0,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          min_stock: alert.min_stock ?? 0,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          shortage_quantity: alert.shortage_quantity ?? 0,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          quantity_in_draft: alert.quantity_in_draft ?? null,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          draft_order_id: alert.draft_order_id ?? null,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          draft_order_number: alert.draft_order_number ?? null,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          is_in_draft: alert.is_in_draft ?? false,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          validated: alert.validated ?? false,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          validated_at: alert.validated_at ?? null,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          alert_color: alert.alert_color ?? null,
-        }));
+        type AlertRow = Record<string, unknown>;
+        const alertsList: StockAlert[] = ((data ?? []) as AlertRow[]).map(
+          alert => ({
+            id: alert.id as string,
+            product_id: alert.product_id as string,
+            product_name: (alert.product_name as string) ?? 'Produit inconnu',
+            sku: (alert.sku as string) ?? 'N/A',
+            product_image_url:
+              (alert.product_image_url as string | null) ?? null,
+            // ✅ alert_type calculé dynamiquement par la vue
+            // out_of_stock si stock_previsionnel < 0, low_stock si stock_real < min_stock
+            alert_type: ((alert.alert_type as string) ??
+              'low_stock') as StockAlertType,
+            severity: ((alert.severity as string) ??
+              'warning') as StockAlert['severity'],
+            stock_real: (alert.stock_real as number) ?? 0,
+            stock_forecasted_in: (alert.stock_forecasted_in as number) ?? 0,
+            stock_forecasted_out: (alert.stock_forecasted_out as number) ?? 0,
+            min_stock: (alert.min_stock as number) ?? 0,
+            shortage_quantity: (alert.shortage_quantity as number) ?? 0,
+            quantity_in_draft:
+              (alert.quantity_in_draft as number | null) ?? null,
+            draft_order_id: (alert.draft_order_id as string | null) ?? null,
+            draft_order_number:
+              (alert.draft_order_number as string | null) ?? null,
+            is_in_draft: (alert.is_in_draft as boolean) ?? false,
+            validated: (alert.validated as boolean) ?? false,
+            validated_at: (alert.validated_at as string | null) ?? null,
+            alert_color: (alert.alert_color as string | undefined) ?? undefined,
+          })
+        );
 
         setAlerts(alertsList);
       } catch (err: unknown) {

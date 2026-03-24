@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises, react-hooks/exhaustive-deps, @typescript-eslint/no-misused-promises, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/ban-ts-comment */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-floating-promises, react-hooks/exhaustive-deps, @typescript-eslint/no-misused-promises, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/ban-ts-comment */
 // @ts-nocheck - Hooks consultations non migrés
 
 'use client';
@@ -469,7 +469,7 @@ function ProductConsultationView({
   onCreateLink: _onCreateLink,
 }: {
   productId: string;
-  consultations: any[];
+  consultations: Record<string, unknown>[];
   onCreateLink: () => void;
 }) {
   return (
@@ -499,8 +499,8 @@ function ConsultationProductsView({
   onRemoveLink,
 }: {
   consultationId: string;
-  consultationProducts: any[];
-  eligibleProducts: any[];
+  consultationProducts: Record<string, unknown>[];
+  eligibleProducts: Record<string, unknown>[];
   onCreateLink: () => void;
   onRemoveLink: (id: string) => void;
 }) {

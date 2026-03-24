@@ -167,8 +167,7 @@ async function fetchSelectionById(
   if (!selection) return null;
 
   // Récupérer les items de la sélection avec les produits
-  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
-  const { data: items, error: itemsError } = await (supabase as any)
+  const { data: items, error: itemsError } = await supabase
     .from('linkme_selection_items')
     .select(
       `
@@ -183,7 +182,6 @@ async function fetchSelectionById(
     )
     .eq('selection_id', selectionId)
     .order('display_order', { ascending: true });
-  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
   if (itemsError) {
     console.error('Error fetching selection items:', itemsError);
@@ -229,15 +227,13 @@ async function fetchSelectionById(
     }
 
     // Récupérer les données channel_pricing
-    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
-    const { data: channelPrices } = await (supabase as any)
+    const { data: channelPrices } = await supabase
       .from('channel_pricing')
       .select(
         'id, product_id, channel_commission_rate, custom_price_ht, public_price_ht, min_margin_rate, max_margin_rate, suggested_margin_rate, buffer_rate'
       )
       .eq('channel_id', LINKME_CHANNEL_ID)
       .in('product_id', productIds);
-    /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
     if (channelPrices) {
       const typedChannelPrices = channelPrices as ChannelPricingRow[];
@@ -307,12 +303,10 @@ async function fetchSelectionsByEnseigne(
   enseigneId: string
 ): Promise<SelectionSummary[]> {
   // Récupérer les affiliés de cette enseigne (lien direct via enseigne_id)
-  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
-  const { data: affiliates, error: affError } = await (supabase as any)
+  const { data: affiliates, error: affError } = await supabase
     .from('linkme_affiliates')
     .select('id, display_name')
     .eq('enseigne_id', enseigneId);
-  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
   if (affError) {
     console.error('Error fetching affiliates:', affError);

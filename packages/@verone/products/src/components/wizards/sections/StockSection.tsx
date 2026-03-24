@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 'use client';
 
 import { Save, Info } from 'lucide-react';
@@ -28,7 +27,10 @@ export function StockSection({
   setFormData,
   onSave,
 }: StockSectionProps) {
-  const handleChange = (field: keyof WizardFormData, value: any) => {
+  const handleChange = (
+    field: keyof WizardFormData,
+    value: WizardFormData[keyof WizardFormData]
+  ) => {
     setFormData({ ...formData, [field]: value });
   };
 

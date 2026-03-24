@@ -5,7 +5,7 @@
 //              Utilise la vue v_transactions_unified
 // =====================================================================
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return -- v_transactions_unified is a DB view not in generated types */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
@@ -264,8 +264,11 @@ export function useUnifiedTransactions(
 
         // Utiliser la vue enrichie v_transactions_unified
         // Elle inclut: organisation_name, rule_display_label, unified_status, etc.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let query = (supabase as any)
+        let query = (
+          supabase as unknown as {
+            from: (table: string) => { select: CallableFunction };
+          }
+        )
           .from('v_transactions_unified')
           .select('*', { count: 'exact' })
           .order('settled_at', { ascending: false, nullsFirst: false })
@@ -411,8 +414,11 @@ export function useUnifiedTransactions(
       // Helper pour créer une requête avec les filtres appliqués
 
       const createFilteredQuery = () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let query = (supabase as any)
+        let query = (
+          supabase as unknown as {
+            from: (table: string) => { select: CallableFunction };
+          }
+        )
           .from('v_transactions_unified')
           .select('*', { count: 'exact', head: true });
 

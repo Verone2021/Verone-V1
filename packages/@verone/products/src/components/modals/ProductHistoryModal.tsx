@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises, react-hooks/exhaustive-deps, @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable @typescript-eslint/no-floating-promises, react-hooks/exhaustive-deps, @typescript-eslint/prefer-nullish-coalescing */
 /**
  * Phase 3.5.1: Extraction ProductHistoryModal
  * Phase 3.6: Ajout filtres date + type + statistiques
@@ -43,10 +43,18 @@ import {
   DialogDescription,
 } from '@verone/ui';
 import { Label } from '@verone/ui';
+import type { StockMovement } from '@verone/stock/hooks';
 import { useStockMovements } from '@verone/stock/hooks';
 
+interface HistoryProduct {
+  id: string;
+  name?: string;
+  sku?: string;
+  stock_quantity?: number;
+}
+
 interface ProductHistoryModalProps {
-  product: any;
+  product: HistoryProduct;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -61,7 +69,7 @@ export function ProductHistoryModal({
   isOpen,
   onClose,
 }: ProductHistoryModalProps) {
-  const [movements, setMovements] = useState([]);
+  const [movements, setMovements] = useState<StockMovement[]>([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<HistoryFilters>({
     dateRange: 'all',
@@ -79,7 +87,7 @@ export function ProductHistoryModal({
     setLoading(true);
     try {
       const history = await getProductHistory(product.id);
-      setMovements(history as any);
+      setMovements(history as StockMovement[]);
     } catch (_error) {
       // Erreur gérée dans le hook
     } finally {
@@ -115,13 +123,13 @@ export function ProductHistoryModal({
       }
 
       filtered = filtered.filter(
-        (m: any) => new Date(m.performed_at) >= startDate
+        (m: StockMovement) => new Date(m.performed_at) >= startDate
       );
     }
 
     // Filtre par type de mouvement
     if (filters.movementTypes.length > 0) {
-      filtered = filtered.filter((m: any) =>
+      filtered = filtered.filter((m: StockMovement) =>
         filters.movementTypes.includes(m.movement_type)
       );
     }
@@ -132,16 +140,16 @@ export function ProductHistoryModal({
   // ✅ Phase 3.6: Statistiques filtrées
   const stats = useMemo(() => {
     const totalIn = filteredMovements
-      .filter((m: any) => m.movement_type === 'IN')
-      .reduce((sum, m: any) => sum + m.quantity_change, 0);
+      .filter((m: StockMovement) => m.movement_type === 'IN')
+      .reduce((sum, m: StockMovement) => sum + m.quantity_change, 0);
 
     const totalOut = filteredMovements
-      .filter((m: any) => m.movement_type === 'OUT')
-      .reduce((sum, m: any) => sum + Math.abs(m.quantity_change), 0);
+      .filter((m: StockMovement) => m.movement_type === 'OUT')
+      .reduce((sum, m: StockMovement) => sum + Math.abs(m.quantity_change), 0);
 
     const totalAdjust = filteredMovements
-      .filter((m: any) => m.movement_type === 'ADJUST')
-      .reduce((sum, m: any) => sum + m.quantity_change, 0);
+      .filter((m: StockMovement) => m.movement_type === 'ADJUST')
+      .reduce((sum, m: StockMovement) => sum + m.quantity_change, 0);
 
     return {
       total: filteredMovements.length,
@@ -194,7 +202,7 @@ export function ProductHistoryModal({
     return colors[type] || 'bg-gray-300 text-black';
   };
 
-  const getSourceInfo = (movement: any) => {
+  const getSourceInfo = (movement: StockMovement) => {
     // Si c'est lié à une commande
     if (movement.reference_type === 'order' && movement.reference_id) {
       return {
@@ -224,7 +232,7 @@ export function ProductHistoryModal({
     };
   };
 
-  const getPerformerName = (movement: any) => {
+  const getPerformerName = (movement: StockMovement) => {
     if (movement.user_profiles) {
       const { first_name, last_name } = movement.user_profiles;
       if (first_name || last_name) {
@@ -457,130 +465,132 @@ export function ProductHistoryModal({
                 {/* Ligne verticale timeline */}
                 <div className="absolute left-[16.666%] top-0 bottom-0 w-px bg-gray-200" />
 
-                {filteredMovements.map((movement: any, _index: number) => {
-                  const sourceInfo = getSourceInfo(movement);
-                  const performerName = getPerformerName(movement);
-                  const reasonLabel = movement.reason_code
-                    ? getReasonDescription(movement.reason_code)
-                    : '-';
+                {filteredMovements.map(
+                  (movement: StockMovement, _index: number) => {
+                    const sourceInfo = getSourceInfo(movement);
+                    const performerName = getPerformerName(movement);
+                    const reasonLabel = movement.reason_code
+                      ? getReasonDescription(movement.reason_code)
+                      : '-';
 
-                  return (
-                    <div
-                      key={movement.id}
-                      className="grid grid-cols-12 gap-2 px-3 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors text-sm relative"
-                    >
-                      {/* Date & Heure */}
-                      <div className="col-span-2 flex flex-col gap-0.5">
-                        <div className="flex items-center gap-1.5 text-black font-medium">
-                          <Calendar className="h-3 w-3 text-gray-500" />
-                          {new Date(movement.performed_at).toLocaleDateString(
-                            'fr-FR',
-                            {
-                              day: '2-digit',
-                              month: '2-digit',
-                              year: 'numeric',
-                            }
-                          )}
+                    return (
+                      <div
+                        key={movement.id}
+                        className="grid grid-cols-12 gap-2 px-3 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors text-sm relative"
+                      >
+                        {/* Date & Heure */}
+                        <div className="col-span-2 flex flex-col gap-0.5">
+                          <div className="flex items-center gap-1.5 text-black font-medium">
+                            <Calendar className="h-3 w-3 text-gray-500" />
+                            {new Date(movement.performed_at).toLocaleDateString(
+                              'fr-FR',
+                              {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                              }
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-gray-600 text-xs ml-4">
+                            <Clock className="h-3 w-3" />
+                            {new Date(movement.performed_at).toLocaleTimeString(
+                              'fr-FR',
+                              {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              }
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1.5 text-gray-600 text-xs ml-4">
-                          <Clock className="h-3 w-3" />
-                          {new Date(movement.performed_at).toLocaleTimeString(
-                            'fr-FR',
-                            {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            }
-                          )}
-                        </div>
-                      </div>
 
-                      {/* Type */}
-                      <div className="col-span-1 flex items-center relative z-10">
-                        {/* Dot sur la timeline */}
-                        <div className="absolute left-[-8.333%] w-2 h-2 rounded-full bg-black border-2 border-white" />
-                        <Badge
-                          className={`text-xs font-medium ${getMovementTypeColor(movement.movement_type)}`}
-                        >
-                          {getMovementTypeLabel(movement.movement_type)}
-                        </Badge>
-                      </div>
-
-                      {/* Quantité */}
-                      <div className="col-span-1 flex items-center justify-end">
-                        <span
-                          className={`font-bold text-base ${
-                            movement.quantity_change > 0
-                              ? 'text-black'
-                              : 'text-gray-700'
-                          }`}
-                        >
-                          {movement.quantity_change > 0 ? '+' : ''}
-                          {movement.quantity_change}
-                        </span>
-                      </div>
-
-                      {/* Stock (avant → après) */}
-                      <div className="col-span-2 flex items-center justify-center gap-2 font-mono text-sm">
-                        <span className="text-gray-500">
-                          {movement.quantity_before}
-                        </span>
-                        <span className="text-gray-400">→</span>
-                        <span className="text-black font-bold">
-                          {movement.quantity_after}
-                        </span>
-                      </div>
-
-                      {/* Motif / Notes */}
-                      <div className="col-span-2 flex flex-col gap-1">
-                        {movement.reason_code && (
-                          <span className="text-gray-900 text-xs font-medium">
-                            {reasonLabel}
-                          </span>
-                        )}
-                        {movement.notes && (
-                          <span className="text-gray-600 text-xs line-clamp-2">
-                            {movement.notes}
-                          </span>
-                        )}
-                        {!movement.reason_code && !movement.notes && (
-                          <span className="text-gray-400 text-xs">-</span>
-                        )}
-                      </div>
-
-                      {/* Par (Performer) */}
-                      <div className="col-span-2 flex items-center gap-2">
-                        <User className="h-3 w-3 text-gray-500 flex-shrink-0" />
-                        <span className="text-gray-900 text-xs font-medium truncate">
-                          {performerName}
-                        </span>
-                      </div>
-
-                      {/* Source */}
-                      <div className="col-span-2 flex items-center gap-2">
-                        {sourceInfo.type === 'manual' ? (
+                        {/* Type */}
+                        <div className="col-span-1 flex items-center relative z-10">
+                          {/* Dot sur la timeline */}
+                          <div className="absolute left-[-8.333%] w-2 h-2 rounded-full bg-black border-2 border-white" />
                           <Badge
-                            variant="outline"
-                            className="text-xs border-gray-300 text-gray-600"
+                            className={`text-xs font-medium ${getMovementTypeColor(movement.movement_type)}`}
                           >
-                            <FileText className="h-3 w-3 mr-1" />
-                            {sourceInfo.label}
+                            {getMovementTypeLabel(movement.movement_type)}
                           </Badge>
-                        ) : (
-                          <Link
-                            href={sourceInfo.link ?? '#'}
-                            className="flex items-center gap-1.5 text-black hover:text-gray-700 transition-colors group"
-                            onClick={e => e.stopPropagation()}
+                        </div>
+
+                        {/* Quantité */}
+                        <div className="col-span-1 flex items-center justify-end">
+                          <span
+                            className={`font-bold text-base ${
+                              movement.quantity_change > 0
+                                ? 'text-black'
+                                : 'text-gray-700'
+                            }`}
                           >
-                            <Badge className="bg-black text-white text-xs group-hover:bg-gray-700 transition-colors">
+                            {movement.quantity_change > 0 ? '+' : ''}
+                            {movement.quantity_change}
+                          </span>
+                        </div>
+
+                        {/* Stock (avant → après) */}
+                        <div className="col-span-2 flex items-center justify-center gap-2 font-mono text-sm">
+                          <span className="text-gray-500">
+                            {movement.quantity_before}
+                          </span>
+                          <span className="text-gray-400">→</span>
+                          <span className="text-black font-bold">
+                            {movement.quantity_after}
+                          </span>
+                        </div>
+
+                        {/* Motif / Notes */}
+                        <div className="col-span-2 flex flex-col gap-1">
+                          {movement.reason_code && (
+                            <span className="text-gray-900 text-xs font-medium">
+                              {reasonLabel}
+                            </span>
+                          )}
+                          {movement.notes && (
+                            <span className="text-gray-600 text-xs line-clamp-2">
+                              {movement.notes}
+                            </span>
+                          )}
+                          {!movement.reason_code && !movement.notes && (
+                            <span className="text-gray-400 text-xs">-</span>
+                          )}
+                        </div>
+
+                        {/* Par (Performer) */}
+                        <div className="col-span-2 flex items-center gap-2">
+                          <User className="h-3 w-3 text-gray-500 flex-shrink-0" />
+                          <span className="text-gray-900 text-xs font-medium truncate">
+                            {performerName}
+                          </span>
+                        </div>
+
+                        {/* Source */}
+                        <div className="col-span-2 flex items-center gap-2">
+                          {sourceInfo.type === 'manual' ? (
+                            <Badge
+                              variant="outline"
+                              className="text-xs border-gray-300 text-gray-600"
+                            >
+                              <FileText className="h-3 w-3 mr-1" />
                               {sourceInfo.label}
                             </Badge>
-                            <ExternalLink className="h-3 w-3 text-gray-500 group-hover:text-black" />
-                          </Link>
-                        )}
+                          ) : (
+                            <Link
+                              href={sourceInfo.link ?? '#'}
+                              className="flex items-center gap-1.5 text-black hover:text-gray-700 transition-colors group"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <Badge className="bg-black text-white text-xs group-hover:bg-gray-700 transition-colors">
+                                {sourceInfo.label}
+                              </Badge>
+                              <ExternalLink className="h-3 w-3 text-gray-500 group-hover:text-black" />
+                            </Link>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  }
+                )}
               </div>
             </div>
           )}
@@ -612,9 +622,9 @@ export function ProductHistoryModal({
               <span className="text-gray-500">
                 Dernier mouvement:{' '}
                 {movements[0]
-                  ? new Date(
-                      (movements[0] as any).performed_at
-                    ).toLocaleDateString('fr-FR')
+                  ? new Date(movements[0].performed_at).toLocaleDateString(
+                      'fr-FR'
+                    )
                   : 'Aucun'}
               </span>
             </div>

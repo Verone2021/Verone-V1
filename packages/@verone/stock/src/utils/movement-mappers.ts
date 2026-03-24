@@ -50,8 +50,22 @@ export interface RecentMovement {
  * <StockMovementCard {...props} />
  * ```
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function mapRecentMovementToCard(movement: RecentMovement): any {
+export interface StockMovementCardData {
+  movement: {
+    id: string;
+    movement_type: string;
+    quantity_change: number;
+    reason_code: string;
+    performed_at: string;
+    products: { name: string; sku: string };
+    channel_id: string | null;
+    sales_channels: null;
+  };
+}
+
+export function mapRecentMovementToCard(
+  movement: RecentMovement
+): StockMovementCardData {
   return {
     movement: {
       id: movement.id,
@@ -87,7 +101,8 @@ export function mapRecentMovementToCard(movement: RecentMovement): any {
  * cardProps.map(props => <StockMovementCard key={props.movement.id} {...props} />)
  * ```
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function mapRecentMovementsToCards(movements: RecentMovement[]): any[] {
+export function mapRecentMovementsToCards(
+  movements: RecentMovement[]
+): StockMovementCardData[] {
   return movements.map(mapRecentMovementToCard);
 }

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 'use client';
 
 import { useMemo } from 'react';
@@ -30,7 +29,10 @@ export function PricingSection({
   setFormData,
   onSave,
 }: PricingSectionProps) {
-  const handleChange = (field: keyof WizardFormData, value: any) => {
+  const handleChange = (
+    field: keyof WizardFormData,
+    value: WizardFormData[keyof WizardFormData]
+  ) => {
     setFormData({ ...formData, [field]: value });
   };
 
