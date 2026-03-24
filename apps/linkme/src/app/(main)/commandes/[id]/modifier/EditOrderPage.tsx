@@ -16,63 +16,30 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  Badge,
-  Button,
-  Card,
-  Input,
-  Label,
-  Separator,
-  Textarea,
-  Switch,
-  cn,
-} from '@verone/ui';
+import { Accordion, Badge } from '@verone/ui';
 import { LINKME_CONSTANTS } from '@verone/utils';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import {
-  ArrowLeft,
-  Loader2,
-  Minus,
-  Plus,
-  Save,
-  ShoppingBag,
-  Trash2,
-  User,
-  FileText,
-  Truck,
-  ImageIcon,
-  CalendarIcon,
-  AlertCircle,
-  CheckCircle,
-  MapPin,
-} from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { ContactCard } from '../../../../../components/orders/steps/contacts/ContactCard';
-import { AddressCard } from '../../../../../components/orders/steps/contacts/AddressCard';
 import { useOrganisationContacts } from '../../../../../lib/hooks/use-organisation-contacts';
 import type { OrganisationContact } from '../../../../../lib/hooks/use-organisation-contacts';
 import { useEntityAddresses } from '../../../../../lib/hooks/use-entity-addresses';
 import type { Address } from '../../../../../lib/hooks/use-entity-addresses';
 import { useEnseigneId } from '../../../../../lib/hooks/use-enseigne-id';
 import { AddProductDialog } from './AddProductDialog';
+import {
+  ProductsSection,
+  ResponsableSection,
+  BillingSection,
+  ShippingSection,
+  StickyBottomBar,
+} from './components';
 import type { FullOrderData, OrderItemData } from './page';
+import type { EditableItem, ContactFormData } from './types';
 import {
   useUpdateDraftOrder,
   type UpdateDraftOrderItemInput,
@@ -84,35 +51,6 @@ import {
 
 interface EditOrderPageProps {
   data: FullOrderData;
-}
-
-interface EditableItem {
-  id: string;
-  product_id: string;
-  product_name: string;
-  product_sku: string | null;
-  product_image_url: string | null;
-  quantity: number;
-  originalQuantity: number;
-  unit_price_ht: number;
-  original_unit_price_ht: number;
-  base_price_ht: number;
-  margin_rate: number;
-  tax_rate: number;
-  _delete: boolean;
-  _isNew: boolean;
-  /** Produit créé par l'affilié (modèle inversé) */
-  is_affiliate_product: boolean;
-  /** Taux de commission Verone (lecture seule pour l'affilié, ex: 0.15 = 15%) */
-  affiliate_commission_rate: number;
-}
-
-interface ContactFormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  title: string;
 }
 
 // ============================================================================
@@ -648,7 +586,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
     [items]
   );
 
-  // ---- Computed: Has changes (simplified - always true since we switched to cards) ----
+  // ---- Computed: Has changes ----
   const hasChanges = useMemo(() => {
     const itemsChanged = items.some(
       item =>
@@ -997,1099 +935,98 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
           defaultValue={['products']}
           className="space-y-4"
         >
-          {/* ============================================================ */}
-          {/* SECTION 1: PRODUITS */}
-          {/* ============================================================ */}
-          <AccordionItem
-            value="products"
-            className="bg-white rounded-xl border shadow-sm"
-          >
-            <AccordionTrigger className="px-6 py-4 hover:no-underline">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#5DBEBB]/10 rounded-lg">
-                  <ShoppingBag className="h-5 w-5 text-[#5DBEBB]" />
-                </div>
-                <div className="text-left">
-                  <h2 className="text-base font-semibold text-[#183559]">
-                    Produits
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    {activeItemsCount} article{activeItemsCount > 1 ? 's' : ''}{' '}
-                    | {formatPrice(totals.productsHt)} HT
-                  </p>
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-6 pb-6">
-              <div className="space-y-3">
-                {items.map(item => (
-                  <div
-                    key={item.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                      item._delete
-                        ? 'bg-red-50 border-red-200 opacity-60'
-                        : item._isNew
-                          ? 'bg-green-50 border-green-200'
-                          : 'bg-gray-50 border-gray-200'
-                    }`}
-                  >
-                    {/* Image */}
-                    <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
-                      {item.product_image_url ? (
-                        <Image
-                          src={item.product_image_url}
-                          alt={item.product_name}
-                          width={48}
-                          height={48}
-                          className="object-cover w-full h-full"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <ImageIcon className="h-5 w-5 text-gray-400" />
-                        </div>
-                      )}
-                    </div>
+          <ProductsSection
+            items={items}
+            activeItemsCount={activeItemsCount}
+            productsHt={totals.productsHt}
+            selectionId={selectionId}
+            formatPrice={formatPrice}
+            updateQuantity={updateQuantity}
+            setQuantity={setQuantity}
+            toggleDeleteItem={toggleDeleteItem}
+            removeNewItem={removeNewItem}
+            updateItemPrice={updateItemPrice}
+            onAddProductOpen={() => setIsAddProductOpen(true)}
+          />
 
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p
-                          className={`font-medium text-sm truncate ${
-                            item._delete
-                              ? 'line-through text-gray-400'
-                              : 'text-[#183559]'
-                          }`}
-                        >
-                          {item.product_name}
-                        </p>
-                        {item._isNew && (
-                          <Badge
-                            variant="outline"
-                            className="bg-green-100 text-green-700 border-green-300 text-xs"
-                          >
-                            Nouveau
-                          </Badge>
-                        )}
-                        {item.is_affiliate_product && (
-                          <Badge
-                            variant="outline"
-                            className="bg-blue-100 text-blue-700 border-blue-300 text-xs"
-                          >
-                            Produit affilié
-                          </Badge>
-                        )}
-                      </div>
-                      {item.is_affiliate_product && !item._delete ? (
-                        <div className="space-y-1 mt-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">
-                              Prix vente HT :
-                            </span>
-                            <input
-                              type="number"
-                              value={item.unit_price_ht}
-                              onChange={e =>
-                                updateItemPrice(
-                                  item._isNew ? item.product_id : item.id,
-                                  parseFloat(e.target.value) || 0
-                                )
-                              }
-                              min={0}
-                              step={0.01}
-                              className="w-24 px-2 py-0.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#5DBEBB]"
-                            />
-                            <span className="text-xs text-gray-500">
-                              × {item.quantity} ={' '}
-                              <span className="font-medium">
-                                {formatPrice(
-                                  item.unit_price_ht * item.quantity
-                                )}{' '}
-                                HT
-                              </span>
-                            </span>
-                          </div>
-                          <p className="text-xs text-blue-600">
-                            Commission Verone :{' '}
-                            {(item.affiliate_commission_rate * 100).toFixed(2)}%
-                            ={' '}
-                            {formatPrice(
-                              item.unit_price_ht *
-                                item.affiliate_commission_rate
-                            )}
-                          </p>
-                          <p className="text-xs text-green-600">
-                            Votre revenu net :{' '}
-                            {formatPrice(
-                              item.unit_price_ht *
-                                (1 - item.affiliate_commission_rate)
-                            )}{' '}
-                            / unité
-                          </p>
-                          {item.unit_price_ht !==
-                            item.original_unit_price_ht && (
-                            <p className="text-xs text-[#5DBEBB] font-medium">
-                              (prix initial :{' '}
-                              {formatPrice(item.original_unit_price_ht)})
-                            </p>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-gray-500">
-                          {item.product_sku && `${item.product_sku} | `}
-                          {formatPrice(item.unit_price_ht)} HT x {item.quantity}{' '}
-                          ={' '}
-                          <span className="font-medium">
-                            {formatPrice(item.unit_price_ht * item.quantity)} HT
-                          </span>
-                        </p>
-                      )}
-                    </div>
+          <ResponsableSection
+            resolvedResponsable={resolvedResponsable}
+            allContacts={allContacts}
+            selectedResponsableId={selectedResponsableId}
+            showResponsableForm={showResponsableForm}
+            responsableForm={responsableForm}
+            onSelectResponsable={handleSelectResponsable}
+            onNewResponsable={handleNewResponsable}
+            onResponsableFormChange={setResponsableForm}
+          />
 
-                    {/* Quantity controls */}
-                    {!item._delete && (
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateQuantity(
-                              item._isNew ? item.product_id : item.id,
-                              -1
-                            )
-                          }
-                          disabled={item.quantity <= 1}
-                          className="p-1.5 hover:bg-gray-200 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <input
-                          type="number"
-                          min={1}
-                          value={item.quantity}
-                          onChange={e =>
-                            setQuantity(
-                              item._isNew ? item.product_id : item.id,
-                              parseInt(e.target.value) || 1
-                            )
-                          }
-                          className="w-12 text-center text-sm font-semibold text-[#183559] border rounded py-1 focus:outline-none focus:ring-2 focus:ring-[#5DBEBB]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateQuantity(
-                              item._isNew ? item.product_id : item.id,
-                              1
-                            )
-                          }
-                          className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </button>
-                      </div>
-                    )}
+          <BillingSection
+            resolvedBillingContact={resolvedBillingContact}
+            allContacts={allContacts}
+            billingContactMode={billingContactMode}
+            selectedBillingContactId={selectedBillingContactId}
+            billingContactForm={billingContactForm}
+            billingAddresses={billingAddresses}
+            billingAddressMode={billingAddressMode}
+            selectedBillingAddressId={selectedBillingAddressId}
+            onBillingSameAsResponsable={handleBillingSameAsResponsable}
+            onSelectBillingContact={handleSelectBillingContact}
+            onNewBillingContact={handleNewBillingContact}
+            onBillingContactFormChange={setBillingContactForm}
+            onBillingAddressModeChange={setBillingAddressMode}
+            onSelectBillingAddress={addressId => {
+              setBillingAddressMode('existing');
+              setSelectedBillingAddressId(addressId);
+            }}
+          />
 
-                    {/* Modified indicator */}
-                    {item.quantity !== item.originalQuantity &&
-                      !item._delete &&
-                      !item._isNew && (
-                        <span className="text-xs text-[#5DBEBB] font-medium whitespace-nowrap">
-                          (etait {item.originalQuantity})
-                        </span>
-                      )}
-
-                    {/* Delete/restore button */}
-                    {item._isNew ? (
-                      <button
-                        type="button"
-                        onClick={() => removeNewItem(item.product_id)}
-                        className="p-1.5 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
-                        title="Retirer"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => toggleDeleteItem(item.id)}
-                        className={`p-1.5 rounded-lg transition-colors ${
-                          item._delete
-                            ? 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                            : 'text-red-500 hover:bg-red-100'
-                        }`}
-                        title={
-                          item._delete ? 'Annuler la suppression' : 'Supprimer'
-                        }
-                      >
-                        {item._delete ? (
-                          <Plus className="h-4 w-4" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Add product button */}
-              {selectionId && (
-                <button
-                  type="button"
-                  onClick={() => setIsAddProductOpen(true)}
-                  className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-[#5DBEBB]/40 rounded-lg text-[#5DBEBB] hover:bg-[#5DBEBB]/5 transition-colors font-medium text-sm"
-                >
-                  <Plus className="h-4 w-4" />
-                  Ajouter un produit depuis la selection
-                </button>
-              )}
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* ============================================================ */}
-          {/* SECTION 2: CONTACT RESPONSABLE */}
-          {/* ============================================================ */}
-          <AccordionItem
-            value="responsable"
-            className="bg-white rounded-xl border shadow-sm"
-          >
-            <AccordionTrigger className="px-6 py-4 hover:no-underline">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <User className="h-5 w-5 text-blue-600" />
-                </div>
-                <div className="text-left">
-                  <h2 className="text-base font-semibold text-[#183559]">
-                    Contact responsable
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    {resolvedResponsable.name || 'Non renseigne'}
-                    {resolvedResponsable.email
-                      ? ` | ${resolvedResponsable.email}`
-                      : ''}
-                  </p>
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-6 pb-6">
-              <div className="space-y-4">
-                {/* Contact cards grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {allContacts.map(contact => (
-                    <ContactCard
-                      key={contact.id}
-                      contact={contact}
-                      isSelected={selectedResponsableId === contact.id}
-                      onClick={() => handleSelectResponsable(contact.id)}
-                    />
-                  ))}
-
-                  {/* Create new card */}
-                  <Card
-                    className={cn(
-                      'p-3 cursor-pointer transition-all hover:shadow-md border-dashed',
-                      showResponsableForm
-                        ? 'border-2 border-blue-500 bg-blue-50/50'
-                        : 'hover:border-gray-400'
-                    )}
-                    onClick={handleNewResponsable}
-                  >
-                    <div className="flex items-center justify-center gap-2 h-full min-h-[60px]">
-                      <Plus
-                        className={cn(
-                          'h-5 w-5',
-                          showResponsableForm
-                            ? 'text-blue-500'
-                            : 'text-gray-400'
-                        )}
-                      />
-                      <span
-                        className={cn(
-                          'font-medium text-sm',
-                          showResponsableForm
-                            ? 'text-blue-600'
-                            : 'text-gray-600'
-                        )}
-                      >
-                        Nouveau contact
-                      </span>
-                    </div>
-                  </Card>
-                </div>
-
-                {/* Inline form for new contact */}
-                {showResponsableForm && (
-                  <Card className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Prenom *</Label>
-                        <Input
-                          value={responsableForm.firstName}
-                          onChange={e =>
-                            setResponsableForm(prev => ({
-                              ...prev,
-                              firstName: e.target.value,
-                            }))
-                          }
-                          placeholder="Jean"
-                          className="h-9"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Nom *</Label>
-                        <Input
-                          value={responsableForm.lastName}
-                          onChange={e =>
-                            setResponsableForm(prev => ({
-                              ...prev,
-                              lastName: e.target.value,
-                            }))
-                          }
-                          placeholder="Dupont"
-                          className="h-9"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Email *</Label>
-                        <Input
-                          type="email"
-                          value={responsableForm.email}
-                          onChange={e =>
-                            setResponsableForm(prev => ({
-                              ...prev,
-                              email: e.target.value,
-                            }))
-                          }
-                          placeholder="jean@restaurant.fr"
-                          className="h-9"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Telephone</Label>
-                        <Input
-                          type="tel"
-                          value={responsableForm.phone}
-                          onChange={e =>
-                            setResponsableForm(prev => ({
-                              ...prev,
-                              phone: e.target.value,
-                            }))
-                          }
-                          placeholder="06 12 34 56 78"
-                          className="h-9"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Poste</Label>
-                        <Input
-                          value={responsableForm.title}
-                          onChange={e =>
-                            setResponsableForm(prev => ({
-                              ...prev,
-                              title: e.target.value,
-                            }))
-                          }
-                          placeholder="Gerant"
-                          className="h-9"
-                        />
-                      </div>
-                    </div>
-                  </Card>
-                )}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* ============================================================ */}
-          {/* SECTION 3: FACTURATION */}
-          {/* ============================================================ */}
-          <AccordionItem
-            value="billing"
-            className="bg-white rounded-xl border shadow-sm"
-          >
-            <AccordionTrigger className="px-6 py-4 hover:no-underline">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-100 rounded-lg">
-                  <FileText className="h-5 w-5 text-indigo-600" />
-                </div>
-                <div className="text-left">
-                  <h2 className="text-base font-semibold text-[#183559]">
-                    Facturation
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    {resolvedBillingContact.name || 'Non renseigne'}
-                    {resolvedBillingContact.email
-                      ? ` | ${resolvedBillingContact.email}`
-                      : ''}
-                  </p>
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-6 pb-6">
-              <div className="space-y-6">
-                {/* Contact facturation */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-gray-700">
-                    Contact facturation
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {/* Same as responsable card */}
-                    <Card
-                      className={cn(
-                        'p-3 cursor-pointer transition-all hover:shadow-md',
-                        billingContactMode === 'same'
-                          ? 'border-2 border-green-500 bg-green-50/50'
-                          : 'hover:border-gray-300'
-                      )}
-                      onClick={handleBillingSameAsResponsable}
-                    >
-                      <div className="flex items-start gap-2.5">
-                        <div
-                          className={cn(
-                            'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-                            billingContactMode === 'same'
-                              ? 'bg-green-100'
-                              : 'bg-gray-100'
-                          )}
-                        >
-                          <User
-                            className={cn(
-                              'h-4 w-4',
-                              billingContactMode === 'same'
-                                ? 'text-green-600'
-                                : 'text-gray-500'
-                            )}
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <h3 className="font-semibold text-gray-900 text-sm leading-tight">
-                              Meme que responsable
-                            </h3>
-                            {billingContactMode === 'same' && (
-                              <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 ml-auto" />
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            Utiliser le contact responsable
-                          </p>
-                        </div>
-                      </div>
-                    </Card>
-
-                    {/* Existing contacts */}
-                    {allContacts.map(contact => (
-                      <ContactCard
-                        key={contact.id}
-                        contact={contact}
-                        isSelected={
-                          billingContactMode === 'existing' &&
-                          selectedBillingContactId === contact.id
-                        }
-                        onClick={() => handleSelectBillingContact(contact.id)}
-                      />
-                    ))}
-
-                    {/* Create new */}
-                    <Card
-                      className={cn(
-                        'p-3 cursor-pointer transition-all hover:shadow-md border-dashed',
-                        billingContactMode === 'new'
-                          ? 'border-2 border-blue-500 bg-blue-50/50'
-                          : 'hover:border-gray-400'
-                      )}
-                      onClick={handleNewBillingContact}
-                    >
-                      <div className="flex items-center justify-center gap-2 h-full min-h-[60px]">
-                        <Plus
-                          className={cn(
-                            'h-5 w-5',
-                            billingContactMode === 'new'
-                              ? 'text-blue-500'
-                              : 'text-gray-400'
-                          )}
-                        />
-                        <span
-                          className={cn(
-                            'font-medium text-sm',
-                            billingContactMode === 'new'
-                              ? 'text-blue-600'
-                              : 'text-gray-600'
-                          )}
-                        >
-                          Nouveau contact
-                        </span>
-                      </div>
-                    </Card>
-                  </div>
-
-                  {/* New billing contact form */}
-                  {billingContactMode === 'new' && (
-                    <Card className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">Prenom</Label>
-                          <Input
-                            value={billingContactForm.firstName}
-                            onChange={e =>
-                              setBillingContactForm(prev => ({
-                                ...prev,
-                                firstName: e.target.value,
-                              }))
-                            }
-                            placeholder="Service"
-                            className="h-9"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">Nom</Label>
-                          <Input
-                            value={billingContactForm.lastName}
-                            onChange={e =>
-                              setBillingContactForm(prev => ({
-                                ...prev,
-                                lastName: e.target.value,
-                              }))
-                            }
-                            placeholder="Comptabilite"
-                            className="h-9"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">Email</Label>
-                          <Input
-                            type="email"
-                            value={billingContactForm.email}
-                            onChange={e =>
-                              setBillingContactForm(prev => ({
-                                ...prev,
-                                email: e.target.value,
-                              }))
-                            }
-                            placeholder="compta@restaurant.fr"
-                            className="h-9"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">Telephone</Label>
-                          <Input
-                            type="tel"
-                            value={billingContactForm.phone}
-                            onChange={e =>
-                              setBillingContactForm(prev => ({
-                                ...prev,
-                                phone: e.target.value,
-                              }))
-                            }
-                            placeholder="01 23 45 67 89"
-                            className="h-9"
-                          />
-                        </div>
-                      </div>
-                    </Card>
-                  )}
-                </div>
-
-                <Separator />
-
-                {/* Adresse facturation */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-gray-700">
-                    Adresse de facturation
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {/* Existing billing addresses */}
-                    {billingAddresses.map(address => (
-                      <AddressCard
-                        key={address.id}
-                        address={address}
-                        isSelected={
-                          billingAddressMode === 'existing' &&
-                          selectedBillingAddressId === address.id
-                        }
-                        onClick={() => {
-                          setBillingAddressMode('existing');
-                          setSelectedBillingAddressId(address.id);
-                        }}
-                        badge={address.isDefault ? 'Defaut' : undefined}
-                      />
-                    ))}
-
-                    {billingAddresses.length === 0 && (
-                      <p className="text-sm text-gray-400 col-span-full py-4 text-center">
-                        Aucune adresse de facturation enregistree
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* ============================================================ */}
-          {/* SECTION 4: LIVRAISON */}
-          {/* ============================================================ */}
-          <AccordionItem
-            value="shipping"
-            className="bg-white rounded-xl border shadow-sm"
-          >
-            <AccordionTrigger className="px-6 py-4 hover:no-underline">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Truck className="h-5 w-5 text-purple-600" />
-                </div>
-                <div className="text-left">
-                  <h2 className="text-base font-semibold text-[#183559]">
-                    Livraison
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    {resolvedDeliveryAddress.address
-                      ? `${resolvedDeliveryAddress.address}, ${resolvedDeliveryAddress.postalCode} ${resolvedDeliveryAddress.city}`
-                      : 'Non renseignee'}
-                    {desiredDeliveryDate
-                      ? ` | ${format(new Date(desiredDeliveryDate), 'dd/MM/yyyy')}`
-                      : ''}
-                  </p>
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-6 pb-6">
-              <div className="space-y-6">
-                {/* Contact livraison (local contacts only) */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-gray-700">
-                    Contact livraison
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {localContacts.map(contact => (
-                      <ContactCard
-                        key={contact.id}
-                        contact={contact}
-                        isSelected={selectedDeliveryContactId === contact.id}
-                        onClick={() => handleSelectDeliveryContact(contact.id)}
-                      />
-                    ))}
-
-                    {/* Create new */}
-                    <Card
-                      className={cn(
-                        'p-3 cursor-pointer transition-all hover:shadow-md border-dashed',
-                        showDeliveryContactForm
-                          ? 'border-2 border-blue-500 bg-blue-50/50'
-                          : 'hover:border-gray-400'
-                      )}
-                      onClick={handleNewDeliveryContact}
-                    >
-                      <div className="flex items-center justify-center gap-2 h-full min-h-[60px]">
-                        <Plus
-                          className={cn(
-                            'h-5 w-5',
-                            showDeliveryContactForm
-                              ? 'text-blue-500'
-                              : 'text-gray-400'
-                          )}
-                        />
-                        <span
-                          className={cn(
-                            'font-medium text-sm',
-                            showDeliveryContactForm
-                              ? 'text-blue-600'
-                              : 'text-gray-600'
-                          )}
-                        >
-                          Nouveau contact
-                        </span>
-                      </div>
-                    </Card>
-                  </div>
-
-                  {/* New delivery contact form */}
-                  {showDeliveryContactForm && (
-                    <Card className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">Prenom</Label>
-                          <Input
-                            value={deliveryContactForm.firstName}
-                            onChange={e =>
-                              setDeliveryContactForm(prev => ({
-                                ...prev,
-                                firstName: e.target.value,
-                              }))
-                            }
-                            placeholder="Prenom"
-                            className="h-9"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">Nom</Label>
-                          <Input
-                            value={deliveryContactForm.lastName}
-                            onChange={e =>
-                              setDeliveryContactForm(prev => ({
-                                ...prev,
-                                lastName: e.target.value,
-                              }))
-                            }
-                            placeholder="Nom"
-                            className="h-9"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">Email</Label>
-                          <Input
-                            type="email"
-                            value={deliveryContactForm.email}
-                            onChange={e =>
-                              setDeliveryContactForm(prev => ({
-                                ...prev,
-                                email: e.target.value,
-                              }))
-                            }
-                            placeholder="livraison@restaurant.fr"
-                            className="h-9"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">Telephone</Label>
-                          <Input
-                            type="tel"
-                            value={deliveryContactForm.phone}
-                            onChange={e =>
-                              setDeliveryContactForm(prev => ({
-                                ...prev,
-                                phone: e.target.value,
-                              }))
-                            }
-                            placeholder="06 12 34 56 78"
-                            className="h-9"
-                          />
-                        </div>
-                      </div>
-                    </Card>
-                  )}
-                </div>
-
-                <Separator />
-
-                {/* Adresse livraison */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-gray-700">
-                    Adresse de livraison
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {/* Existing shipping addresses */}
-                    {shippingAddresses.map(address => (
-                      <AddressCard
-                        key={address.id}
-                        address={address}
-                        isSelected={
-                          deliveryAddressMode === 'existing' &&
-                          selectedDeliveryAddressId === address.id
-                        }
-                        onClick={() => {
-                          setDeliveryAddressMode('existing');
-                          setSelectedDeliveryAddressId(address.id);
-                        }}
-                        badge={address.isDefault ? 'Defaut' : undefined}
-                      />
-                    ))}
-
-                    {/* New address card */}
-                    <Card
-                      className={cn(
-                        'p-3 cursor-pointer transition-all hover:shadow-md border-dashed',
-                        deliveryAddressMode === 'new'
-                          ? 'border-2 border-blue-500 bg-blue-50/50'
-                          : 'hover:border-gray-400'
-                      )}
-                      onClick={() => setDeliveryAddressMode('new')}
-                    >
-                      <div className="flex items-center justify-center gap-2 h-full min-h-[60px]">
-                        <MapPin
-                          className={cn(
-                            'h-5 w-5',
-                            deliveryAddressMode === 'new'
-                              ? 'text-blue-500'
-                              : 'text-gray-400'
-                          )}
-                        />
-                        <span
-                          className={cn(
-                            'font-medium text-sm',
-                            deliveryAddressMode === 'new'
-                              ? 'text-blue-600'
-                              : 'text-gray-600'
-                          )}
-                        >
-                          Nouvelle adresse
-                        </span>
-                      </div>
-                    </Card>
-                  </div>
-
-                  {/* New delivery address form */}
-                  {deliveryAddressMode === 'new' && (
-                    <Card className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
-                      <div className="space-y-3">
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">Adresse</Label>
-                          <Input
-                            value={newDeliveryAddress.address}
-                            onChange={e =>
-                              setNewDeliveryAddress(prev => ({
-                                ...prev,
-                                address: e.target.value,
-                              }))
-                            }
-                            placeholder="12 rue de la Paix"
-                            className="h-9"
-                          />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Code postal</Label>
-                            <Input
-                              value={newDeliveryAddress.postalCode}
-                              onChange={e =>
-                                setNewDeliveryAddress(prev => ({
-                                  ...prev,
-                                  postalCode: e.target.value,
-                                }))
-                              }
-                              placeholder="75001"
-                              className="h-9"
-                            />
-                          </div>
-                          <div className="space-y-1.5 md:col-span-2">
-                            <Label className="text-xs">Ville</Label>
-                            <Input
-                              value={newDeliveryAddress.city}
-                              onChange={e =>
-                                setNewDeliveryAddress(prev => ({
-                                  ...prev,
-                                  city: e.target.value,
-                                }))
-                              }
-                              placeholder="Paris"
-                              className="h-9"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </Card>
-                  )}
-                </div>
-
-                <Separator />
-
-                {/* Date souhaitee */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="desired-date"
-                    className="flex items-center gap-2"
-                  >
-                    <CalendarIcon className="h-4 w-4 text-gray-500" />
-                    Date de livraison souhaitee
-                  </Label>
-                  <Input
-                    id="desired-date"
-                    type="date"
-                    value={
-                      desiredDeliveryDate
-                        ? desiredDeliveryDate.split('T')[0]
-                        : ''
-                    }
-                    onChange={e => setDesiredDeliveryDate(e.target.value)}
-                    min={format(new Date(), 'yyyy-MM-dd')}
-                    className="max-w-xs"
-                  />
-                </div>
-
-                <Separator />
-
-                {/* Options livraison */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-gray-700">
-                    Options
-                  </h3>
-
-                  {/* Centre commercial */}
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Centre commercial
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Livraison en centre commercial (formulaire d&apos;acces
-                        requis)
-                      </p>
-                    </div>
-                    <Switch
-                      checked={isMallDelivery}
-                      onCheckedChange={setIsMallDelivery}
-                    />
-                  </div>
-
-                  {isMallDelivery && (
-                    <div className="space-y-2 pl-4">
-                      <Label htmlFor="mall-email">
-                        Email du centre commercial{' '}
-                        <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="mall-email"
-                        type="email"
-                        value={mallEmail}
-                        onChange={e => setMallEmail(e.target.value)}
-                        placeholder="technique@centrecommercial.fr"
-                      />
-                    </div>
-                  )}
-
-                  {/* Semi-remorque */}
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Acces semi-remorque
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Le lieu de livraison est-il accessible en semi-remorque
-                        ?
-                      </p>
-                    </div>
-                    <Switch
-                      checked={semiTrailerAccessible}
-                      onCheckedChange={setSemiTrailerAccessible}
-                    />
-                  </div>
-
-                  {!semiTrailerAccessible && (
-                    <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                      <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm text-amber-700">
-                        Des frais supplementaires peuvent s&apos;appliquer pour
-                        une livraison sans acces semi-remorque.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                <Separator />
-
-                {/* Notes */}
-                <div className="space-y-2">
-                  <Label htmlFor="delivery-notes">Notes de livraison</Label>
-                  <Textarea
-                    id="delivery-notes"
-                    value={deliveryNotes}
-                    onChange={e => setDeliveryNotes(e.target.value)}
-                    placeholder="Instructions speciales, code d'acces, horaires..."
-                    rows={3}
-                  />
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+          <ShippingSection
+            resolvedDeliveryAddress={resolvedDeliveryAddress}
+            desiredDeliveryDate={desiredDeliveryDate}
+            localContacts={localContacts}
+            selectedDeliveryContactId={selectedDeliveryContactId}
+            showDeliveryContactForm={showDeliveryContactForm}
+            deliveryContactForm={deliveryContactForm}
+            shippingAddresses={shippingAddresses}
+            deliveryAddressMode={deliveryAddressMode}
+            selectedDeliveryAddressId={selectedDeliveryAddressId}
+            newDeliveryAddress={newDeliveryAddress}
+            isMallDelivery={isMallDelivery}
+            mallEmail={mallEmail}
+            semiTrailerAccessible={semiTrailerAccessible}
+            deliveryNotes={deliveryNotes}
+            onSelectDeliveryContact={handleSelectDeliveryContact}
+            onNewDeliveryContact={handleNewDeliveryContact}
+            onDeliveryContactFormChange={setDeliveryContactForm}
+            onDeliveryAddressModeChange={setDeliveryAddressMode}
+            onSelectDeliveryAddress={addressId => {
+              setSelectedDeliveryAddressId(addressId);
+            }}
+            onNewDeliveryAddressChange={setNewDeliveryAddress}
+            onDesiredDeliveryDateChange={setDesiredDeliveryDate}
+            onIsMallDeliveryChange={setIsMallDelivery}
+            onMallEmailChange={setMallEmail}
+            onSemiTrailerAccessibleChange={setSemiTrailerAccessible}
+            onDeliveryNotesChange={setDeliveryNotes}
+          />
         </Accordion>
       </div>
 
-      {/* Sticky bottom bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-20">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Totaux */}
-            <div className="flex items-center gap-6">
-              <div>
-                <p className="text-xs text-gray-500">Total HT</p>
-                <p className="text-lg font-semibold text-[#183559]">
-                  {formatPrice(totals.totalHt)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">Total TTC</p>
-                <p className="text-lg font-bold text-[#183559]">
-                  {formatPrice(totals.totalTtc)}
-                </p>
-              </div>
-              {totals.totalCommission > 0 && (
-                <div>
-                  <p className="text-xs text-gray-500">Commission</p>
-                  <p className="text-lg font-bold text-emerald-600">
-                    +
-                    {formatPrice(
-                      totals.totalCommission *
-                        (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE)
-                    )}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Warning + Buttons */}
-            <div className="flex items-center gap-3">
-              {hasChanges && (
-                <span className="text-sm text-amber-600 font-medium">
-                  Modifications non enregistrees
-                </span>
-              )}
-              <Button
-                variant="outline"
-                onClick={() => router.push('/commandes')}
-              >
-                Annuler
-              </Button>
-              <Button
-                onClick={() => setShowSaveConfirmation(true)}
-                disabled={!hasChanges || updateOrder.isPending}
-                className="bg-[#5DBEBB] hover:bg-[#4DAEAB] text-white"
-              >
-                {updateOrder.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Enregistrement...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Enregistrer
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Save confirmation dialog */}
-      <AlertDialog
-        open={showSaveConfirmation}
-        onOpenChange={setShowSaveConfirmation}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la sauvegarde</AlertDialogTitle>
-            <AlertDialogDescription>
-              Vous etes sur le point de sauvegarder les modifications de cette
-              commande brouillon.
-              <br />
-              <br />
-              Voulez-vous continuer ?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                void handleSave().catch(err => {
-                  console.error('[EditOrderPage] Save failed:', err);
-                });
-              }}
-            >
-              Enregistrer les modifications
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <StickyBottomBar
+        totals={totals}
+        hasChanges={hasChanges}
+        isPending={updateOrder.isPending}
+        showSaveConfirmation={showSaveConfirmation}
+        formatPrice={formatPrice}
+        onCancel={() => router.push('/commandes')}
+        onSaveClick={() => setShowSaveConfirmation(true)}
+        onSaveConfirmationChange={setShowSaveConfirmation}
+        onConfirmSave={() => {
+          void handleSave().catch(err => {
+            console.error('[EditOrderPage] Save failed:', err);
+          });
+        }}
+      />
 
       {/* Add product dialog */}
       {selectionId && (
