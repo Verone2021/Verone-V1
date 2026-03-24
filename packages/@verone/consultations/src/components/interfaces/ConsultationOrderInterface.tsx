@@ -28,6 +28,7 @@ import {
   Check,
   X,
   Sparkles,
+  ExternalLink,
 } from 'lucide-react';
 
 import type { ConsultationItem } from '@verone/consultations/hooks';
@@ -233,7 +234,15 @@ export function ConsultationOrderInterface({
                             </div>
                           )}
                           <div>
-                            <p className="font-medium">{item.product?.name}</p>
+                            <a
+                              href={`/produits/catalogue/${item.product_id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-medium hover:text-blue-600 hover:underline inline-flex items-center gap-1"
+                            >
+                              {item.product?.name}
+                              <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </a>
                             <p className="text-sm text-gray-500">
                               {item.product?.sku}
                               {item.product?.supplier_name &&

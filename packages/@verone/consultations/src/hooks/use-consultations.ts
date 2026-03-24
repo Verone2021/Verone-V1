@@ -137,7 +137,7 @@ export interface ConsultationFilters {
   status?: string;
   assigned_to?: string;
   priority_level?: number | 'all';
-  organisation_name?: string;
+  search_client?: string;
   source_channel?: string;
   date_range?: {
     start: string;
@@ -176,12 +176,8 @@ export function useConsultations() {
         if (filters?.priority_level && filters.priority_level !== 'all') {
           query = query.eq('priority_level', filters.priority_level);
         }
-        if (filters?.organisation_name) {
-          query = query.ilike(
-            'organisation_name',
-            `%${filters.organisation_name}%`
-          );
-        }
+        // Note: search_client is handled client-side after fetch
+        // because organisation_name is not a column — it comes from joined tables
         if (filters?.source_channel && filters.source_channel !== 'all') {
           query = query.eq('source_channel', filters.source_channel);
         }
@@ -471,7 +467,7 @@ export function useConsultations() {
     }
   };
 
-  // Supprimer une consultation (soft delete)
+  // Supprimer une consultation + cascade: hard delete devis liés (Qonto + DB locale)
   // La confirmation doit être gérée par le composant appelant
   const deleteConsultation = async (
     consultationId: string
@@ -479,6 +475,50 @@ export function useConsultations() {
     try {
       setError(null);
 
+      // 1. Fetch linked devis from local DB
+      const { data: linkedDevis } = await supabase
+        .from('financial_documents')
+        .select('id, qonto_invoice_id, document_number')
+        .eq('consultation_id', consultationId)
+        .eq('document_type', 'customer_quote');
+
+      // 2. Hard delete each devis from Qonto + local DB
+      if (linkedDevis && linkedDevis.length > 0) {
+        for (const devis of linkedDevis) {
+          // Delete from Qonto API first
+          if (devis.qonto_invoice_id) {
+            try {
+              await fetch(`/api/qonto/quotes/${devis.qonto_invoice_id}`, {
+                method: 'DELETE',
+              });
+            } catch (qontoErr) {
+              console.warn(
+                `[deleteConsultation] Qonto delete failed for ${devis.document_number}:`,
+                qontoErr
+              );
+              // Continue even if Qonto delete fails
+            }
+          }
+
+          // Hard delete items from local DB
+          await supabase
+            .from('financial_document_items')
+            .delete()
+            .eq('document_id', devis.id);
+
+          // Hard delete devis from local DB
+          await supabase
+            .from('financial_documents')
+            .delete()
+            .eq('id', devis.id);
+        }
+
+        console.warn(
+          `[deleteConsultation] Deleted ${linkedDevis.length} devis for consultation ${consultationId}`
+        );
+      }
+
+      // 3. Soft delete the consultation itself
       const { error } = await supabase
         .from('client_consultations')
         .update({
@@ -493,9 +533,13 @@ export function useConsultations() {
         prev.filter(consultation => consultation.id !== consultationId)
       );
 
+      const devisCount = linkedDevis?.length ?? 0;
       toast({
         title: 'Consultation supprimée',
-        description: 'La consultation a été supprimée',
+        description:
+          devisCount > 0
+            ? `La consultation et ${devisCount} devis lié(s) ont été supprimés`
+            : 'La consultation a été supprimée',
       });
 
       return true;

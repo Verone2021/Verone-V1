@@ -167,7 +167,11 @@ interface IStandaloneCustomer {
 
 interface IPostRequestBody {
   salesOrderId?: string; // Optionnel: si absent, création standalone
+  consultationId?: string; // ID consultation (pour lier le devis en DB locale)
+  userId?: string; // Current user ID for created_by FK
+  supersededQuoteIds?: string[]; // IDs of old quotes to mark as superseded
   customer?: IStandaloneCustomer; // Requis si pas de salesOrderId
+  customerEmail?: string; // Override email (ex: from consultation.client_email)
   expiryDays?: number; // Nombre de jours avant expiration (défaut: 30)
   billingAddress?: {
     address_line1?: string;
@@ -201,7 +205,11 @@ export async function POST(request: NextRequest): Promise<
     const body = (await request.json()) as IPostRequestBody;
     const {
       salesOrderId,
+      consultationId,
+      userId: bodyUserId,
+      supersededQuoteIds,
       customer: standaloneCustomer,
+      customerEmail: emailOverride,
       expiryDays = 30,
       billingAddress: bodyBillingAddress,
       fees,
@@ -381,6 +389,11 @@ export async function POST(request: NextRequest): Promise<
       customerEmail = indiv.email ?? null;
       customerName =
         `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim() || 'Client';
+    }
+
+    // Override email if provided (e.g. from consultation.client_email)
+    if (emailOverride) {
+      customerEmail = emailOverride;
     }
 
     // Note: vatNumber/taxId NOT mandatory for quotes (unlike invoices)
@@ -618,7 +631,7 @@ export async function POST(request: NextRequest): Promise<
           .update({
             quote_qonto_id: mappedQuote.id,
             quote_number: mappedQuote.quote_number,
-          })
+          } as Record<string, unknown>)
           .eq('id', salesOrderId);
       } catch (linkError) {
         console.warn(
@@ -628,9 +641,121 @@ export async function POST(request: NextRequest): Promise<
       }
     }
 
+    // Save devis to local DB (financial_documents) for consultation tracking
+    // This ensures "Devis liés" section works on consultation detail page
+    let localDocId: string | null = null;
+    if (consultationId || salesOrderId) {
+      try {
+        // Get user ID for created_by FK (passed from frontend)
+        const userId = bodyUserId;
+
+        if (!userId) {
+          console.error('[API Qonto Quotes] No userId provided for DB save');
+        } else {
+          // Calculate totals from items
+          const itemsTotalHt = items.reduce((sum, item) => {
+            const qty = parseFloat(item.quantity) || 0;
+            const price = parseFloat(item.unitPrice.value) || 0;
+            return sum + qty * price;
+          }, 0);
+          const avgVatRate =
+            items.length > 0
+              ? items.reduce(
+                  (sum, item) => sum + (parseFloat(item.vatRate) || 0.2),
+                  0
+                ) / items.length
+              : 0.2;
+          const tvaAmount = itemsTotalHt * avgVatRate;
+          const totalTtc = itemsTotalHt + tvaAmount;
+
+          // Generate local document number
+          const now = new Date();
+          const yearMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
+          const randomSuffix = String(
+            Math.floor(Math.random() * 10000)
+          ).padStart(4, '0');
+          const localDocNumber = `DEV-${yearMonth}-${randomSuffix}`;
+
+          const customerId =
+            standaloneCustomer?.customerId ??
+            (customer as Organisation | null)?.id ??
+            userId;
+
+          const insertPayload = {
+            document_type: 'customer_quote',
+            document_direction: 'inbound',
+            partner_id: customerId,
+            partner_type: 'customer',
+            document_number: localDocNumber,
+            document_date: issueDate,
+            due_date: expiryDate,
+            validity_date: expiryDate,
+            total_ht: itemsTotalHt,
+            total_ttc: totalTtc,
+            tva_amount: tvaAmount,
+            status: 'draft',
+            quote_status: 'draft',
+            qonto_invoice_id: mappedQuote.id,
+            qonto_pdf_url: q.pdf_url ?? null,
+            qonto_public_url: q.public_url ?? null,
+            consultation_id: consultationId ?? null,
+            sales_order_id: salesOrderId ?? null,
+            created_by: userId,
+            shipping_cost_ht: fees?.shipping_cost_ht ?? 0,
+            handling_cost_ht: fees?.handling_cost_ht ?? 0,
+            insurance_cost_ht: fees?.insurance_cost_ht ?? 0,
+            fees_vat_rate: fees?.fees_vat_rate ?? 0.2,
+          };
+
+          // Generated Supabase types may not include enum columns properly — safe cast
+          const { data: localDoc, error: insertError } = await supabase
+            .from('financial_documents')
+            .insert([insertPayload] as never)
+            .select('id')
+            .single();
+
+          if (insertError) {
+            console.error(
+              '[API Qonto Quotes] Failed to save to local DB:',
+              insertError
+            );
+          } else {
+            localDocId = localDoc?.id ?? null;
+            console.warn(
+              `[API Qonto Quotes] Saved to local DB: ${localDocId} (${localDocNumber})`
+            );
+          }
+        }
+      } catch (dbError) {
+        console.error(
+          '[API Qonto Quotes] DB save error (non-blocking):',
+          dbError
+        );
+      }
+    }
+
+    // Mark old quotes as superseded (server-side to bypass RLS)
+    if (supersededQuoteIds && supersededQuoteIds.length > 0) {
+      try {
+        await supabase
+          .from('financial_documents')
+          .update({ quote_status: 'superseded' } as Record<string, unknown>)
+          .in('id', supersededQuoteIds);
+        console.warn(
+          `[API Qonto Quotes] Marked ${supersededQuoteIds.length} quotes as superseded`
+        );
+      } catch (supersededErr) {
+        console.error(
+          '[API Qonto Quotes] Failed to mark quotes as superseded:',
+          supersededErr
+        );
+      }
+    }
+
     return NextResponse.json({
       success: true,
       quote: mappedQuote,
+      localDocId,
       message: 'Quote created as draft',
     });
   } catch (error) {

@@ -73,23 +73,18 @@ When "Valider au catalogue" is clicked:
 
 ```sql
 UPDATE products SET
-  status = 'in_stock',
-  stock_real = 1,
-  completion_percentage = 100,
-  creation_mode = 'complete'
+  product_status = 'active',
+  stock_status = 'out_of_stock',
+  creation_mode = 'complete',
+  stock_forecasted_in = 0
 WHERE id = $1;
-
-INSERT INTO stock_movements (
-  product_id, movement_type, quantity_change,
-  quantity_before, quantity_after,
-  reason_code
-) VALUES (
-  $1, 'sourcing_validation', 1, 0, 1,
-  'sourcing_completed'
-);
+-- completion_percentage is recalculated automatically by trigger
+-- NO stock_movement is created (sourcing != stock)
 ```
 
 After validation, product appears in `/produits/catalogue/[id]` and disappears from `/produits/sourcing`.
+
+> **Note**: Stock movements are only created on receptions (IN), expeditions (OUT), and manual adjustments. Sourcing validation does NOT affect stock.
 
 ---
 
@@ -108,19 +103,18 @@ sourcing_validated
 sample_rejected --> back to sourcing OR archive
 ```
 
-### Sample DB Columns (product_drafts)
+### Sample Tracking
 
-| Column                  | Type          | Description                                                           |
-| ----------------------- | ------------- | --------------------------------------------------------------------- |
-| `sourcing_status`       | TEXT enum     | draft, sourcing_validated, ready_for_catalog, archived                |
-| `sample_status`         | TEXT enum     | not_required, request_pending, ordered, delivered, approved, rejected |
-| `sample_request_status` | TEXT enum     | pending_approval, approved, rejected                                  |
-| `sourcing_validated_at` | TIMESTAMPTZ   | When sourcing was validated                                           |
-| `sample_requested_at`   | TIMESTAMPTZ   | When sample was requested                                             |
-| `sample_ordered_at`     | TIMESTAMPTZ   | When sample PO was created                                            |
-| `sample_delivered_at`   | TIMESTAMPTZ   | When sample was received                                              |
-| `sample_validated_at`   | TIMESTAMPTZ   | When sample passed QA                                                 |
-| `sample_estimated_cost` | DECIMAL(10,2) | Estimated sample cost                                                 |
+Samples are tracked via the `products` table itself (NOT `product_drafts` which no longer exists):
+
+| Column               | Type    | Description                                        |
+| -------------------- | ------- | -------------------------------------------------- |
+| `requires_sample`    | BOOLEAN | Whether product needs sample before ordering       |
+| `assigned_client_id` | UUID    | FK to organisations (if sample is for a client)    |
+| `creation_mode`      | TEXT    | 'sourcing' during sourcing, 'complete' after       |
+| `product_status`     | TEXT    | 'draft' -> 'preorder' (sample ordered) -> 'active' |
+
+When `orderSample()` is called, a `purchase_order` (draft) is auto-created with qty=1.
 
 ---
 
@@ -171,15 +165,16 @@ See "Conversion" section above.
 
 ## Key Tables
 
-| Table                  | Purpose                              |
-| ---------------------- | ------------------------------------ |
-| `products`             | Main product table                   |
-| `product_drafts`       | Sourcing drafts with sample tracking |
-| `product_images`       | Image gallery per product            |
-| `product_packages`     | Packaging/conditioning options       |
-| `stock_movements`      | Stock change audit trail             |
-| `purchase_orders`      | Supplier orders                      |
-| `purchase_order_items` | PO line items                        |
+| Table                  | Purpose                        |
+| ---------------------- | ------------------------------ |
+| `products`             | Main product table             |
+| `sample_orders`        | Sample order headers           |
+| `sample_order_items`   | Sample order line items        |
+| `product_images`       | Image gallery per product      |
+| `product_packages`     | Packaging/conditioning options |
+| `stock_movements`      | Stock change audit trail       |
+| `purchase_orders`      | Supplier orders                |
+| `purchase_order_items` | PO line items                  |
 
 ---
 

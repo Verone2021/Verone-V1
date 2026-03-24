@@ -614,10 +614,11 @@ export default function CreateConsultationPage() {
                           <SelectValue placeholder="Sélectionner" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="1">Basse</SelectItem>
-                          <SelectItem value="2">Normale</SelectItem>
-                          <SelectItem value="3">Élevée</SelectItem>
-                          <SelectItem value="4">Urgente</SelectItem>
+                          <SelectItem value="5">Très urgent (5)</SelectItem>
+                          <SelectItem value="4">Urgent (4)</SelectItem>
+                          <SelectItem value="3">Normal+ (3)</SelectItem>
+                          <SelectItem value="2">Normal (2)</SelectItem>
+                          <SelectItem value="1">Faible (1)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
