@@ -12,8 +12,8 @@ export * from './components/linkme-contacts';
 export type * from './components/shipments';
 
 // SalesOrdersTable - Composant réutilisable pour toutes les pages commandes
-export { SalesOrdersTable } from './components/SalesOrdersTable';
-export type { SalesOrdersTableProps } from './components/SalesOrdersTable';
+export { SalesOrdersTable } from './components/sales-orders-table';
+export type { SalesOrdersTableProps } from './components/sales-orders-table';
 
 // OrderTimeline - Timeline historique commandes
 export { OrderTimeline } from './components/OrderTimeline';
