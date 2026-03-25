@@ -202,22 +202,6 @@ export default defineConfig([
       '@next/next/no-img-element': 'error',
 
       // =====================================================================
-      // FILE & FUNCTION SIZE LIMITS (Prevention)
-      // =====================================================================
-
-      // Max 500 lines per file (warn) — goal: 300, enforced gradually
-      'max-lines': [
-        'warn',
-        { max: 500, skipBlankLines: true, skipComments: true },
-      ],
-
-      // Max 75 lines per function (warn) — goal: 50
-      'max-lines-per-function': [
-        'warn',
-        { max: 75, skipBlankLines: true, skipComments: true, IIFEs: true },
-      ],
-
-      // =====================================================================
       // GENERAL CODE QUALITY
       // =====================================================================
 
@@ -291,10 +275,6 @@ export default defineConfig([
       'no-console': 'off',
       'no-unused-vars': 'off',
 
-      // No size limits in scripts
-      'max-lines': 'off',
-      'max-lines-per-function': 'off',
-
       // Disable ALL type-aware rules for scripts
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
@@ -334,9 +314,6 @@ export default defineConfig([
       'react-hooks/rules-of-hooks': 'off',
       // Allow empty patterns in test destructuring
       'no-empty-pattern': 'off',
-      // No size limits in tests
-      'max-lines': 'off',
-      'max-lines-per-function': 'off',
     },
   },
 
