@@ -54,6 +54,113 @@ const SendOrderDocumentsSchema = z.object({
     .default([]),
 });
 
+// ── Helpers ──────────────────────────────────────────────────────────
+
+async function fetchOrderInfo(
+  supabase: ReturnType<typeof getAdminClient>,
+  salesOrderId: string
+) {
+  const { data: order, error: orderErr } = await supabase
+    .from('sales_orders')
+    .select(
+      `
+      id, order_number, linkme_display_number, total_ht, total_ttc, status,
+      organisations!sales_orders_customer_id_fkey(trade_name, legal_name)
+    `
+    )
+    .eq('id', salesOrderId)
+    .single();
+
+  if (orderErr || !order) return null;
+
+  const org = (order as Record<string, unknown>).organisations as {
+    trade_name: string | null;
+    legal_name: string;
+  } | null;
+
+  const displayNumber = (order as Record<string, unknown>)
+    .linkme_display_number as string | null;
+
+  return {
+    customerName: org?.trade_name ?? org?.legal_name ?? 'Client',
+    orderRef: displayNumber ?? order.order_number,
+  };
+}
+
+async function logTimelineEvent(
+  supabase: ReturnType<typeof getAdminClient>,
+  salesOrderId: string,
+  to: string,
+  attachmentsMeta: Array<{
+    type: string;
+    document_id?: string;
+    filename: string;
+  }>,
+  emailId: string | undefined,
+  sentBy: string | undefined
+) {
+  try {
+    await supabase.from('sales_order_events').insert({
+      sales_order_id: salesOrderId,
+      event_type: 'email_documents_sent',
+      metadata: {
+        recipient_email: to,
+        attachments: attachmentsMeta,
+        resend_id: emailId,
+      },
+      created_by: sentBy ?? null,
+    });
+  } catch (logError) {
+    console.error(
+      '[send-order-documents] Failed to log timeline event:',
+      logError
+    );
+  }
+}
+
+async function sendEmail(
+  subject: string,
+  message: string,
+  orderInfo: { customerName: string; orderRef: string },
+  to: string,
+  attachments: Array<{
+    filename: string;
+    contentBase64: string;
+    type: string;
+    documentId?: string;
+  }>
+) {
+  const emailHtml = buildEmailHtml({
+    title: subject,
+    recipientName: orderInfo.customerName,
+    accentColor: 'teal',
+    bodyHtml: `
+      <div style="margin-bottom: 20px; white-space: pre-line;">${escapeHtml(message)}</div>
+      ${attachments.length > 0 ? '<p style="color: #6b7280; font-size: 13px;">Les documents sont joints a cet email.</p>' : ''}
+    `,
+    footerNote: `Commande ${orderInfo.orderRef}`,
+  });
+
+  const resendClient = getResendClient();
+  const { data: emailData, error: emailError } = await resendClient.emails.send(
+    {
+      from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
+      to: [to],
+      subject,
+      html: emailHtml,
+      attachments: [
+        ...getLogoAttachments(),
+        ...attachments.map(a => ({
+          filename: a.filename,
+          content: a.contentBase64,
+        })),
+      ],
+    }
+  );
+
+  return { emailData, emailError };
+}
+
 // ── Route ────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
@@ -76,85 +183,23 @@ export async function POST(request: NextRequest) {
       parsed.data;
     const supabase = getAdminClient();
 
-    // Fetch order with org info
-    const { data: order, error: orderErr } = await supabase
-      .from('sales_orders')
-      .select(
-        `
-        id, order_number, linkme_display_number, total_ht, total_ttc, status,
-        organisations!sales_orders_customer_id_fkey(trade_name, legal_name)
-      `
-      )
-      .eq('id', salesOrderId)
-      .single();
-
-    if (orderErr || !order) {
+    const orderInfo = await fetchOrderInfo(supabase, salesOrderId);
+    if (!orderInfo) {
       return NextResponse.json(
         { success: false, error: 'Order not found' },
         { status: 404 }
       );
     }
 
-    // Build customer name
-    const org = (order as Record<string, unknown>).organisations as {
-      trade_name: string | null;
-      legal_name: string;
-    } | null;
-    const customerName = org?.trade_name ?? org?.legal_name ?? 'Client';
-
-    const displayNumber = (order as Record<string, unknown>)
-      .linkme_display_number as string | null;
-    const orderRef = displayNumber ?? order.order_number;
-
-    // Build attachments metadata for logging
-    const attachmentsMeta = attachments.map(a => ({
-      type: a.type,
-      document_id: a.documentId,
-      filename: a.filename,
-    }));
-
-    // Build email HTML
-    const emailHtml = buildEmailHtml({
-      title: subject,
-      recipientName: customerName,
-      accentColor: 'teal',
-      bodyHtml: `
-        <div style="margin-bottom: 20px; white-space: pre-line;">${escapeHtml(message)}</div>
-        ${attachments.length > 0 ? '<p style="color: #6b7280; font-size: 13px;">Les documents sont joints a cet email.</p>' : ''}
-      `,
-      footerNote: `Commande ${orderRef}`,
-    });
-
-    // Send via Resend
-    const resendClient = getResendClient();
-    const { data: emailData, error: emailError } =
-      await resendClient.emails.send({
-        from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
-        to: [to],
-        subject,
-        html: emailHtml,
-        attachments: [
-          ...getLogoAttachments(),
-          ...attachments.map(a => ({
-            filename: a.filename,
-            content: a.contentBase64,
-          })),
-        ],
-      });
+    const { emailData, emailError } = await sendEmail(
+      subject,
+      message,
+      orderInfo,
+      to,
+      attachments
+    );
 
     if (emailError) {
-      // Log failed attempt
-      await supabase.from('order_emails').insert({
-        sales_order_id: salesOrderId,
-        recipient_email: to,
-        subject,
-        message_body: message,
-        attachments: JSON.stringify(attachmentsMeta),
-        sent_by: sentBy ?? null,
-        status: 'failed',
-        error_message: emailError.message,
-      });
-
       console.error('[send-order-documents] Resend error:', emailError);
       return NextResponse.json(
         { success: false, error: emailError.message },
@@ -162,36 +207,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Log successful send
-    await supabase.from('order_emails').insert({
-      sales_order_id: salesOrderId,
-      recipient_email: to,
-      subject,
-      message_body: message,
-      attachments: JSON.stringify(attachmentsMeta),
-      sent_by: sentBy ?? null,
-      resend_email_id: emailData?.id ?? null,
-      status: 'sent',
-    });
-
-    // Log event in sales_order_events for timeline (non-blocking)
-    try {
-      await supabase.from('sales_order_events').insert({
-        sales_order_id: salesOrderId,
-        event_type: 'email_documents_sent',
-        metadata: {
-          recipient_email: to,
-          attachments: attachmentsMeta,
-          resend_id: emailData?.id,
-        },
-        created_by: sentBy ?? null,
-      });
-    } catch (logError) {
-      console.error(
-        '[send-order-documents] Failed to log timeline event:',
-        logError
-      );
-    }
+    const attachmentsMeta = attachments.map(a => ({
+      type: a.type,
+      document_id: a.documentId,
+      filename: a.filename,
+    }));
+    await logTimelineEvent(
+      supabase,
+      salesOrderId,
+      to,
+      attachmentsMeta,
+      emailData?.id,
+      sentBy
+    );
 
     return NextResponse.json({
       success: true,
