@@ -107,9 +107,7 @@ export function PromoCodesSection() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('order_discounts')
-        .select(
-          'id, code, name, description, discount_type, discount_value, min_order_amount, max_discount_amount, valid_from, valid_until, max_uses_total, max_uses_per_customer, current_uses, is_active, created_at'
-        )
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(200);
 

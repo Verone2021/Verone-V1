@@ -181,9 +181,7 @@ export function CompleteProductWizard({
     const supabase = createClient();
     const { data, error } = await supabase
       .from('products')
-      .select(
-        'id, name, slug, description, selling_points, condition, availability_type, video_url, subcategory_id, supplier_id, supplier_page_url, supplier_reference, cost_price, target_margin_percentage, margin_percentage, brand, variant_attributes, dimensions, weight, gtin, product_type, assigned_client_id, creation_mode, requires_sample, stock_quantity, stock_real, stock_forecasted_in, stock_forecasted_out, min_stock, reorder_point, sku, status, archived_at'
-      )
+      .select('*')
       .eq('id', id)
       .single();
 
@@ -204,7 +202,6 @@ export function CompleteProductWizard({
       const draft = await getDraftForEdit(id);
 
       if (draft) {
-        /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call -- draft fields are typed by select columns */
         setFormData({
           name: draft.name ?? '',
           slug: draft.slug ?? '',
@@ -248,7 +245,6 @@ export function CompleteProductWizard({
           min_stock: draft.min_stock?.toString() ?? '',
           reorder_point: draft.reorder_point?.toString() ?? '',
         });
-        /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
       }
     } catch (error) {
       console.error('Erreur chargement brouillon:', error);

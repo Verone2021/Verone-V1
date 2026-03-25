@@ -128,10 +128,7 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
       try {
         let query = supabase
           .from('stock_movements')
-          .select(
-            'id, product_id, movement_type, quantity_change, quantity_before, quantity_after, unit_cost, reference_type, reference_id, notes, reason_code, affects_forecast, forecast_type, performed_by, performed_at, created_at',
-            { count: 'exact' }
-          );
+          .select('*', { count: 'exact' });
 
         // Filtres de date
         if (appliedFilters.dateRange) {
@@ -561,11 +558,7 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
           offset: undefined,
         };
 
-        let query = supabase
-          .from('stock_movements')
-          .select(
-            'id, product_id, movement_type, quantity_change, quantity_before, quantity_after, unit_cost, reference_type, reference_id, notes, reason_code, affects_forecast, forecast_type, performed_by, performed_at, created_at'
-          );
+        let query = supabase.from('stock_movements').select('*');
 
         // Appliquer les mêmes filtres
         if (exportFilters.dateRange) {

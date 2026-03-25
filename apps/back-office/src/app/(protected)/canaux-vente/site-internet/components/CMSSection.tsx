@@ -61,7 +61,7 @@ function useSiteContentBO<T>(contentKey: string) {
     queryFn: async (): Promise<T | null> => {
       const { data, error } = await supabase
         .from('site_content')
-        .select('id, content_key, content_value')
+        .select('*')
         .eq('content_key', contentKey)
         .single();
 

@@ -47,12 +47,7 @@ export async function GET(request: Request) {
           .select('id, status, total, items, created_at, shipping_address')
           .eq('user_id', userId)
           .order('created_at', { ascending: false }),
-        supabase
-          .from('customer_addresses')
-          .select(
-            'id, user_id, label, first_name, last_name, address, postal_code, city, country, phone, is_default, created_at'
-          )
-          .eq('user_id', userId),
+        supabase.from('customer_addresses').select('*').eq('user_id', userId),
         supabase
           .from('product_reviews')
           .select('id, rating, title, comment, status, created_at')

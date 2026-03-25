@@ -76,7 +76,7 @@ export function useSampleOrder() {
       // 3. Chercher une commande draft existante pour ce fournisseur
       const { data: draftOrders, error: draftError } = await supabase
         .from('purchase_orders')
-        .select('id, po_number, total_ht, total_ttc, tax_rate')
+        .select('*')
         .eq('supplier_id', product.supplier_id)
         .eq('status', 'draft')
         .order('created_at', { ascending: false })

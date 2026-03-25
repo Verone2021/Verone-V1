@@ -118,9 +118,7 @@ export default function ExpenseDetailPage(props: PageProps) {
       // Note: utilise financial_document_lines (table existante)
       const { data: items, error: itemsError } = await supabase
         .from('financial_document_lines')
-        .select(
-          'id, description, quantity, unit_price_ht, total_ht, tva_rate, tva_amount, total_ttc, sort_order'
-        )
+        .select('*')
         .eq('document_id', params.id)
         .order('sort_order', { ascending: true });
 

@@ -83,9 +83,7 @@ export function useMissingInvoices(): UseMissingInvoicesResult {
 
       const { data, error: queryError } = await supabase
         .from('v_transactions_missing_invoice')
-        .select(
-          'id, transaction_id, amount, currency, side, label, counterparty_name, emitted_at, settled_at, matching_status, matched_document_id, has_attachment, financial_document_id, document_number, invoice_source, upload_status, qonto_attachment_id, sales_order_id, order_number, customer_id'
-        )
+        .select('*')
         .order('emitted_at', { ascending: false });
 
       if (queryError) {

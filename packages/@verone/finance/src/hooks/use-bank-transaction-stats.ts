@@ -221,9 +221,7 @@ export function useBankTransactionStats(
       // 2. Récupérer les règles de matching avec organisations
       const { data: rules, error: rulesError } = await supabase
         .from('v_matching_rules_with_org')
-        .select(
-          'match_value, organisation_id, organisation_name, display_label, default_category'
-        )
+        .select('*')
         .eq('enabled', true);
 
       if (rulesError) throw rulesError;

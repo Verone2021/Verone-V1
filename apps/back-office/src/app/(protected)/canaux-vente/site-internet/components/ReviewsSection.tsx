@@ -61,9 +61,7 @@ export function ReviewsSection() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('product_reviews')
-        .select(
-          'id, product_id, user_id, author_name, rating, title, comment, status, created_at, updated_at'
-        )
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(500);
 

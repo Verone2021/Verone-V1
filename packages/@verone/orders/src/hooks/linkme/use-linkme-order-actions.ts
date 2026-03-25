@@ -116,9 +116,7 @@ export async function fetchLinkMeOrderDetails(
 
   const { data, error } = await supabase
     .from('sales_order_linkme_details')
-    .select(
-      'id, sales_order_id, requester_type, requester_name, requester_email, requester_phone, requester_position, is_new_restaurant, owner_type, owner_contact_same_as_requester, owner_name, owner_email, owner_phone, owner_company_legal_name, owner_company_trade_name, owner_kbis_url, billing_contact_source, billing_name, billing_email, billing_phone, delivery_terms_accepted, delivery_date, desired_delivery_date, mall_form_required, mall_form_email, step4_token, step4_token_expires_at, step4_completed_at, reception_contact_name, reception_contact_email, reception_contact_phone, confirmed_delivery_date, delivery_contact_name, delivery_contact_email, delivery_contact_phone, delivery_address, delivery_postal_code, delivery_city, delivery_notes, is_mall_delivery, mall_email, semi_trailer_accessible, access_form_required, access_form_url, created_at, updated_at, ignored_missing_fields'
-    )
+    .select('*')
     .eq('sales_order_id', orderId)
     .maybeSingle();
 
