@@ -402,7 +402,7 @@ export function OrderDetailModal({
   if (!order) return null;
 
   const formatDate = (date: string | null) => {
-    if (!date) return 'Non d\u00e9finie';
+    if (!date) return 'Non définie';
     return new Date(date).toLocaleDateString('fr-FR', {
       day: 'numeric',
       month: 'long',
@@ -643,9 +643,7 @@ export function OrderDetailModal({
                 <CardContent className="space-y-2 text-xs">
                   <div className="flex items-center gap-2 text-gray-600">
                     <Calendar className="h-3 w-3" />
-                    <span>
-                      Cr\u00e9\u00e9e : {formatDate(order.created_at)}
-                    </span>
+                    <span>Créée : {formatDate(order.created_at)}</span>
                   </div>
                   {order.creator && (
                     <div className="flex items-center gap-2 text-gray-600">
@@ -667,19 +665,30 @@ export function OrderDetailModal({
                   {order.shipped_at && (
                     <div className="flex items-center gap-2 text-blue-600">
                       <Package className="h-3 w-3" />
-                      <span>
-                        Exp\u00e9di\u00e9e : {formatDate(order.shipped_at)}
-                      </span>
+                      <span>Expédiée : {formatDate(order.shipped_at)}</span>
                     </div>
                   )}
                   {order.delivered_at && (
                     <div className="flex items-center gap-2 text-green-600">
                       <Package className="h-3 w-3" />
-                      <span>
-                        Livr\u00e9e : {formatDate(order.delivered_at)}
-                      </span>
+                      <span>Livrée : {formatDate(order.delivered_at)}</span>
                     </div>
                   )}
+                  {/* Email + téléphone client individuel */}
+                  {order.customer_type === 'individual' &&
+                    order.individual_customers?.email && (
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <FileText className="h-3 w-3" />
+                        <span>{order.individual_customers.email}</span>
+                      </div>
+                    )}
+                  {order.customer_type === 'individual' &&
+                    order.individual_customers?.phone && (
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <User className="h-3 w-3" />
+                        <span>{order.individual_customers.phone}</span>
+                      </div>
+                    )}
                   {/* Adresses condensees */}
                   {(() => {
                     const org = order.organisations;
@@ -697,34 +706,56 @@ export function OrderDetailModal({
                       orgShipping
                     );
 
-                    if (!billing && !shipping) return null;
+                    // Pour les clients individuels, construire l'adresse depuis individual_customers
+                    const indiv = order.individual_customers;
+                    const indivAddress =
+                      order.customer_type === 'individual' &&
+                      indiv?.address_line1
+                        ? {
+                            source: 'manual' as const,
+                            formatted: {
+                              lines: [
+                                indiv.address_line1,
+                                indiv.address_line2,
+                              ].filter(Boolean) as string[],
+                              cityLine: [indiv.postal_code, indiv.city]
+                                .filter(Boolean)
+                                .join(' '),
+                            },
+                          }
+                        : null;
+
+                    const effectiveBilling = billing ?? indivAddress;
+                    const effectiveShipping = shipping ?? indivAddress;
+
+                    if (!effectiveBilling && !effectiveShipping) return null;
 
                     const areSame =
-                      !!billing &&
-                      !!shipping &&
-                      billing.source === shipping.source &&
+                      !!effectiveBilling &&
+                      !!effectiveShipping &&
+                      effectiveBilling.source === effectiveShipping.source &&
                       isSameFormattedAddress(
-                        billing.formatted,
-                        shipping.formatted
+                        effectiveBilling.formatted,
+                        effectiveShipping.formatted
                       );
 
                     const sourceLabel = (s: 'manual' | 'organisation') =>
                       s === 'organisation' ? '(organisation)' : '(manuelle)';
 
-                    if (areSame && billing) {
+                    if (areSame && effectiveBilling) {
                       return (
                         <div className="flex items-start gap-2 text-gray-600 pt-1 border-t mt-2">
                           <FileText className="h-3 w-3 mt-0.5 flex-shrink-0" />
                           <div className="text-xs">
                             <p className="font-medium text-gray-700 mb-0.5">
                               Facturation et livraison{' '}
-                              {sourceLabel(billing.source)}
+                              {sourceLabel(effectiveBilling.source)}
                             </p>
-                            {billing.formatted.lines.map((line, i) => (
+                            {effectiveBilling.formatted.lines.map((line, i) => (
                               <p key={i}>{line}</p>
                             ))}
-                            {billing.formatted.cityLine && (
-                              <p>{billing.formatted.cityLine}</p>
+                            {effectiveBilling.formatted.cityLine && (
+                              <p>{effectiveBilling.formatted.cityLine}</p>
                             )}
                           </div>
                         </div>
@@ -733,34 +764,40 @@ export function OrderDetailModal({
 
                     return (
                       <>
-                        {billing && (
+                        {effectiveBilling && (
                           <div className="flex items-start gap-2 text-gray-600 pt-1 border-t mt-2">
                             <FileText className="h-3 w-3 mt-0.5 flex-shrink-0" />
                             <div className="text-xs">
                               <p className="font-medium text-gray-700 mb-0.5">
-                                Facturation {sourceLabel(billing.source)}
+                                Facturation{' '}
+                                {sourceLabel(effectiveBilling.source)}
                               </p>
-                              {billing.formatted.lines.map((line, i) => (
-                                <p key={i}>{line}</p>
-                              ))}
-                              {billing.formatted.cityLine && (
-                                <p>{billing.formatted.cityLine}</p>
+                              {effectiveBilling.formatted.lines.map(
+                                (line, i) => (
+                                  <p key={i}>{line}</p>
+                                )
+                              )}
+                              {effectiveBilling.formatted.cityLine && (
+                                <p>{effectiveBilling.formatted.cityLine}</p>
                               )}
                             </div>
                           </div>
                         )}
-                        {shipping && (
+                        {effectiveShipping && (
                           <div className="flex items-start gap-2 text-gray-600 pt-1 border-t mt-2">
                             <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
                             <div className="text-xs">
                               <p className="font-medium text-gray-700 mb-0.5">
-                                Livraison {sourceLabel(shipping.source)}
+                                Livraison{' '}
+                                {sourceLabel(effectiveShipping.source)}
                               </p>
-                              {shipping.formatted.lines.map((line, i) => (
-                                <p key={i}>{line}</p>
-                              ))}
-                              {shipping.formatted.cityLine && (
-                                <p>{shipping.formatted.cityLine}</p>
+                              {effectiveShipping.formatted.lines.map(
+                                (line, i) => (
+                                  <p key={i}>{line}</p>
+                                )
+                              )}
+                              {effectiveShipping.formatted.cityLine && (
+                                <p>{effectiveShipping.formatted.cityLine}</p>
                               )}
                             </div>
                           </div>
@@ -801,7 +838,7 @@ export function OrderDetailModal({
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <Truck className="h-3 w-3" />
-                    Exp\u00e9dition
+                    Expédition
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -810,51 +847,79 @@ export function OrderDetailModal({
                       variant="secondary"
                       className="w-full justify-center bg-green-100 text-green-800 border-green-200"
                     >
-                      Livr\u00e9e le {formatDate(order.delivered_at)}
+                      Livrée le {formatDate(order.delivered_at)}
                     </Badge>
                   ) : (order.status as string) === 'delivered' ? (
                     <Badge
                       variant="secondary"
                       className="w-full justify-center bg-green-100 text-green-800 border-green-200"
                     >
-                      Livr\u00e9e
+                      Livrée
                     </Badge>
                   ) : order.shipped_at ? (
                     <Badge
                       variant="secondary"
                       className="w-full justify-center bg-blue-100 text-blue-800 border-blue-200"
                     >
-                      Exp\u00e9di\u00e9e le {formatDate(order.shipped_at)}
+                      Expédiée le {formatDate(order.shipped_at)}
                     </Badge>
                   ) : order.status === 'shipped' ? (
                     <Badge
                       variant="secondary"
                       className="w-full justify-center bg-blue-100 text-blue-800 border-blue-200"
                     >
-                      Exp\u00e9di\u00e9e
+                      Expédiée
                     </Badge>
                   ) : order.status === 'partially_shipped' ? (
                     <Badge
                       variant="secondary"
                       className="w-full justify-center bg-yellow-100 text-yellow-800 border-yellow-200"
                     >
-                      Partiellement exp\u00e9di\u00e9e
+                      Partiellement expédiée
+                    </Badge>
+                  ) : shipmentHistory.length > 0 &&
+                    shipmentHistory.some(
+                      h => h.packlink_status === 'a_payer'
+                    ) ? (
+                    <div className="space-y-2">
+                      <Badge
+                        variant="secondary"
+                        className="w-full justify-center bg-orange-100 text-orange-800 border-orange-200"
+                      >
+                        Transport à payer (Packlink)
+                      </Badge>
+                      <a
+                        href="https://pro.packlink.fr/private/shipments"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-1 text-xs text-orange-700 hover:text-orange-900 underline"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        Payer sur Packlink PRO
+                      </a>
+                    </div>
+                  ) : shipmentHistory.length > 0 ? (
+                    <Badge
+                      variant="secondary"
+                      className="w-full justify-center bg-blue-100 text-blue-800 border-blue-200"
+                    >
+                      Expédition en cours
                     </Badge>
                   ) : (
                     <p className="text-center text-xs text-gray-500">
-                      Pas encore exp\u00e9di\u00e9e
+                      Pas encore expédiée
                     </p>
                   )}
 
-                  {!readOnly && canShip && (
+                  {!readOnly && canShip && shipmentHistory.length === 0 && (
                     <ButtonV2
                       size="sm"
                       className="w-full"
                       disabled
-                      title="Fonctionnalit\u00e9 en cours de d\u00e9veloppement"
+                      title="Fonctionnalité en cours de développement"
                     >
                       <Truck className="h-3 w-3 mr-1" />
-                      G\u00e9rer exp\u00e9dition
+                      Gérer expédition
                     </ButtonV2>
                   )}
                 </CardContent>
@@ -897,7 +962,7 @@ export function OrderDetailModal({
                       onClick={() => router.push(channelRedirectUrl)}
                     >
                       <ExternalLink className="h-3 w-3 mr-1" />
-                      G\u00e9rer dans {order.sales_channel?.name ?? 'CMS'}
+                      Gérer dans {order.sales_channel?.name ?? 'CMS'}
                     </ButtonV2>
                   )}
 

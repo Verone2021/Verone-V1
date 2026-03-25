@@ -32,7 +32,7 @@ export interface OrderShipmentHistoryCardProps {
 
 /** Format a date string to French locale */
 function formatDate(date: string | null): string {
-  if (!date) return 'Non d\u00e9finie';
+  if (!date) return 'Non définie';
   return new Date(date).toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',
@@ -63,9 +63,9 @@ export function OrderShipmentHistoryCard({
             <div className="flex items-center gap-1 mb-1">
               <CheckCircle2 className="h-3 w-3 text-blue-600" />
               <span className="font-semibold text-gray-800">
-                Exp\u00e9dition #{idx + 1}
+                Expédition #{idx + 1}
               </span>
-              <span className="text-gray-400">\u2014</span>
+              <span className="text-gray-400">—</span>
               <span className="text-gray-600">{formatDate(h.shipped_at)}</span>
               {h.carrier_name && (
                 <Badge variant="outline" className="text-[10px] px-1 py-0 ml-1">
@@ -87,13 +87,13 @@ export function OrderShipmentHistoryCard({
                   }`}
                 >
                   {h.packlink_status === 'a_payer'
-                    ? 'Transport \u00e0 payer'
+                    ? 'Transport à payer'
                     : h.packlink_status === 'paye'
-                      ? 'Transport pay\u00e9'
+                      ? 'Transport payé'
                       : h.packlink_status === 'in_transit'
                         ? 'En transit'
                         : h.packlink_status === 'delivered'
-                          ? 'Livr\u00e9'
+                          ? 'Livré'
                           : 'Incident'}
                 </Badge>
               )}
@@ -141,7 +141,7 @@ export function OrderShipmentHistoryCard({
             )}
             {h.shipping_cost != null && h.shipping_cost > 0 && (
               <p className="text-[10px] text-gray-500 ml-4 mb-1">
-                Co\u00fbt transport : {formatCurrency(h.shipping_cost)}
+                Coût transport : {formatCurrency(h.shipping_cost)}
               </p>
             )}
             {h.label_url && (
@@ -152,7 +152,7 @@ export function OrderShipmentHistoryCard({
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:underline"
                 >
-                  T\u00e9l\u00e9charger \u00e9tiquette
+                  Télécharger étiquette
                 </a>
               </p>
             )}

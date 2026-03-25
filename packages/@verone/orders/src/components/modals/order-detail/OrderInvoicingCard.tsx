@@ -103,7 +103,7 @@ export function OrderInvoicingCard({
                 onClick={onShowInvoiceModal}
               >
                 <FileText className="h-3 w-3 mr-1" />
-                G\u00e9n\u00e9rer facture
+                Générer facture
               </ButtonV2>
             )}
           </CardContent>
@@ -150,7 +150,7 @@ export function OrderInvoicingCard({
                             q.status === 'pending_approval'
                           ? 'En attente'
                           : q.status === 'accepted'
-                            ? 'Accept\u00e9'
+                            ? 'Accepté'
                             : q.status}
                     </Badge>
                   </div>
@@ -159,7 +159,7 @@ export function OrderInvoicingCard({
             ) : (
               <ButtonV2 size="sm" className="w-full" onClick={onShowQuoteModal}>
                 <FileText className="h-3 w-3 mr-1" />
-                Cr\u00e9er un devis
+                Créer un devis
               </ButtonV2>
             )}
           </CardContent>
