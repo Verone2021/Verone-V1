@@ -125,7 +125,7 @@ export const StockEditSection = React.memo(
                 type="number"
                 value={(editData?.min_stock as number | undefined) ?? 0}
                 onChange={e =>
-                  handleFieldChange('min_stock', parseInt(e.target.value) ?? 0)
+                  handleFieldChange('min_stock', parseInt(e.target.value) || 0)
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                 min="0"

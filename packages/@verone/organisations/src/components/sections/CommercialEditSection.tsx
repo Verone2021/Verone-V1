@@ -127,11 +127,11 @@ export function CommercialEditSection({
     let processedValue: string | number | boolean | null = value;
 
     if (field === 'delivery_time_days') {
-      processedValue = parseInt(value.toString()) ?? 0;
+      processedValue = parseInt(value.toString()) || 0;
     }
 
     if (field === 'minimum_order_amount') {
-      processedValue = parseFloat(value.toString()) ?? 0;
+      processedValue = parseFloat(value.toString()) || 0;
     }
 
     updateEditedData(section, { [field]: processedValue });

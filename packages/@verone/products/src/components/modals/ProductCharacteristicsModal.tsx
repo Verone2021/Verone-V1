@@ -416,7 +416,7 @@ export function ProductCharacteristicsModal({
                     min="0"
                     value={weight ?? ''}
                     onChange={e =>
-                      setWeight(parseFloat(e.target.value) ?? undefined)
+                      setWeight(parseFloat(e.target.value) || undefined)
                     }
                     placeholder="0"
                     className="text-sm pr-8"

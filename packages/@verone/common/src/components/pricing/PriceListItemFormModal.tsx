@@ -485,7 +485,7 @@ export function PriceListItemFormModal({
                               handleTierChange(
                                 index,
                                 'min_quantity',
-                                parseInt(e.target.value) ?? 1
+                                parseInt(e.target.value) || 1
                               )
                             }
                             required
@@ -532,7 +532,7 @@ export function PriceListItemFormModal({
                               handleTierChange(
                                 index,
                                 'price_ht',
-                                parseFloat(e.target.value) ?? 0
+                                parseFloat(e.target.value) || 0
                               )
                             }
                             required
@@ -554,7 +554,7 @@ export function PriceListItemFormModal({
                               handleTierChange(
                                 index,
                                 'discount_rate',
-                                parseFloat(e.target.value) ?? 0
+                                parseFloat(e.target.value) || 0
                               )
                             }
                             placeholder="0"
@@ -574,7 +574,7 @@ export function PriceListItemFormModal({
                               handleTierChange(
                                 index,
                                 'margin_rate',
-                                parseFloat(e.target.value) ?? 0
+                                parseFloat(e.target.value) || 0
                               )
                             }
                             placeholder="0"

@@ -238,7 +238,7 @@ export function PriceListFormModal({
                   min="1"
                   max="1000"
                   value={priority}
-                  onChange={e => setPriority(parseInt(e.target.value) ?? 100)}
+                  onChange={e => setPriority(parseInt(e.target.value) || 100)}
                   required
                   disabled={isLoading}
                 />
