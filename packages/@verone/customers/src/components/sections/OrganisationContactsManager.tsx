@@ -58,9 +58,7 @@ export function OrganisationContactsManager({
       const supabase = createClient();
       const { data, error } = await supabase
         .from('contacts')
-        .select(
-          'id, organisation_id, first_name, last_name, title, department, email, phone, mobile, is_primary_contact, is_billing_contact, is_technical_contact, is_commercial_contact, is_active'
-        )
+        .select('*')
         .eq('organisation_id', organisationId)
         .eq('is_active', true)
         .order('is_primary_contact', { ascending: false })

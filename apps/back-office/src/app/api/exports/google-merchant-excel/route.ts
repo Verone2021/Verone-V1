@@ -395,18 +395,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Export de produits spécifiques
       const { data, error } = await supabase
         .from('products')
-        .select(
-          `
-          *,
-          variant_group:product_group_members(
-            group:product_groups(
-              id,
-              name,
-              item_group_id
-            )
-          )
-        `
-        )
+        .select('*')
         .in('id', productIds);
 
       if (error) {

@@ -100,9 +100,7 @@ export async function POST(request: NextRequest): Promise<
     if (clientType === 'organization') {
       const { data: org, error: orgError } = await supabase
         .from('organisations')
-        .select(
-          'id, email, trade_name, legal_name, billing_address_line1, address_line1, billing_city, city, billing_postal_code, postal_code, billing_country, country, vat_number, siret'
-        )
+        .select('*')
         .eq('id', clientId)
         .single();
 
@@ -118,9 +116,7 @@ export async function POST(request: NextRequest): Promise<
     } else {
       const { data: indiv, error: indivError } = await supabase
         .from('individual_customers')
-        .select(
-          'id, first_name, last_name, email, address_line1, city, postal_code, country'
-        )
+        .select('*')
         .eq('id', clientId)
         .single();
 

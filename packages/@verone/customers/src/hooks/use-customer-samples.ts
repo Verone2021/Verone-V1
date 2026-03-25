@@ -117,9 +117,7 @@ export function useCustomerSamples(filters?: SampleFilters) {
 
       let query = supabase
         .from('customer_samples_view')
-        .select(
-          'sample_id, purchase_order_id, product_id, sample_type, quantity, unit_price_ht, sample_notes, archived_at, sample_created_at, sample_updated_at, sample_status, product_sku, product_name, product_description, product_image, po_number, po_status, supplier_id, expected_delivery_date, po_created_at, supplier_name, supplier_trade_name, customer_org_id, customer_org_legal_name, customer_org_trade_name, customer_ind_id, customer_ind_first_name, customer_ind_last_name, customer_ind_email, customer_display_name, customer_type'
-        )
+        .select('*')
         .order('sample_created_at', { ascending: false });
 
       // Appliquer filtres

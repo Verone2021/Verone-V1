@@ -151,9 +151,7 @@ export async function POST(
     if (customerType === 'organization' && localQuote.partner_id) {
       const { data: org } = await supabase
         .from('organisations')
-        .select(
-          'id, email, trade_name, legal_name, vat_number, siret, address_line1, city, postal_code, country'
-        )
+        .select('*')
         .eq('id', localQuote.partner_id)
         .single();
       customer = org;
@@ -163,9 +161,7 @@ export async function POST(
     ) {
       const { data: indiv } = await supabase
         .from('individual_customers')
-        .select(
-          'id, first_name, last_name, email, address_line1, city, postal_code, country'
-        )
+        .select('*')
         .eq('id', localQuote.individual_customer_id)
         .single();
       customer = indiv;

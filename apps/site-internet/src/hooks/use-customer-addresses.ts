@@ -32,9 +32,7 @@ export function useCustomerAddresses(userId: string | undefined) {
       if (!userId) return [];
       const { data, error } = await supabase
         .from('customer_addresses')
-        .select(
-          'id, user_id, label, first_name, last_name, address, postal_code, city, country, phone, is_default, created_at'
-        )
+        .select('*')
         .eq('user_id', userId)
         .order('is_default', { ascending: false });
 
