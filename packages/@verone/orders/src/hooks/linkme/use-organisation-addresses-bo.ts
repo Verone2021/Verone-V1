@@ -92,9 +92,7 @@ export function useOrganisationAddressesBO(
       // Build query with proper typing
       const baseQuery = supabase
         .from('addresses')
-        .select(
-          'id, owner_type, owner_id, address_type, label, legal_name, trade_name, siret, vat_number, address_line1, address_line2, postal_code, city, region, country, is_default, is_active, created_at'
-        )
+        .select('*')
         .eq('owner_type', 'organisation')
         .eq('owner_id', organisationId)
         .eq('is_active', true)

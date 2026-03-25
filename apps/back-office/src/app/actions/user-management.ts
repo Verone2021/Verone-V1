@@ -478,7 +478,7 @@ export async function updateUserProfile(
     // Vérifier que l'utilisateur existe
     const { data: existingProfile } = await supabase
       .from('user_profiles')
-      .select('user_id, first_name, last_name, job_title, updated_at')
+      .select('*')
       .eq('user_id', userId)
       .single();
 

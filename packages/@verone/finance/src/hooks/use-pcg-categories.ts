@@ -71,9 +71,7 @@ export function usePcgCategories(): UsePcgCategoriesReturn {
         supabase as { from: CallableFunction }
       )
         .from('pcg_categories')
-        .select(
-          'id, code, label, parent_code, level, description, is_active, display_order'
-        )
+        .select('*')
         .eq('is_active', true)
         .order('display_order', { ascending: true })) as {
         data: PcgCategory[] | null;

@@ -282,9 +282,7 @@ export async function POST(request: NextRequest): Promise<
         if (orderWithItems.customer_type === 'organization') {
           const { data: org } = await supabase
             .from('organisations')
-            .select(
-              'id, email, trade_name, legal_name, vat_number, siret, address_line1, city, postal_code, country'
-            )
+            .select('*')
             .eq('id', orderWithItems.customer_id)
             .single();
           customer = org;
@@ -350,9 +348,7 @@ export async function POST(request: NextRequest): Promise<
       if (standaloneCustomer.customerType === 'organization') {
         const { data: org } = await supabase
           .from('organisations')
-          .select(
-            'id, email, trade_name, legal_name, vat_number, siret, address_line1, city, postal_code, country'
-          )
+          .select('*')
           .eq('id', standaloneCustomer.customerId)
           .single();
         customer = org;
