@@ -133,7 +133,8 @@ export function CustomerFormModal({
   const { enseignes } = useActiveEnseignes();
 
   const form = useForm<CustomerFormData>({
-    resolver: zodResolver(customerSchema) as never,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any -- Type mismatch react-hook-form optionals vs Zod schema
+    resolver: zodResolver(customerSchema) as any,
     defaultValues: {
       name: '',
       email: '',

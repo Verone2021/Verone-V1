@@ -181,7 +181,8 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
             has_common_supplier: data.has_common_supplier ?? false, // Flag fournisseur commun
             product_count: 0,
           },
-        ] as never)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase strict enum types pour suitable_rooms nécessitent cast
+        ] as any)
         .select(
           'id, name, base_sku, subcategory_id, variant_type, product_count, has_common_supplier, supplier_id, dimensions_length, dimensions_width, dimensions_height, dimensions_unit, style, suitable_rooms, common_weight, has_common_weight, archived_at, created_at, updated_at'
         )
@@ -592,7 +593,8 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           .update({
             ...finalUpdates,
             updated_at: new Date().toISOString(),
-          } as never)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dimensions type mismatch avec Supabase Json
+          } as any)
           .eq('id', productId);
 
         if (updateError) {

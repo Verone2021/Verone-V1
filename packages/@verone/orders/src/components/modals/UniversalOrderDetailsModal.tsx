@@ -257,7 +257,7 @@ export function UniversalOrderDetailsModal({
       try {
         const supabase = createClient();
 
-        /* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/prefer-nullish-coalescing */
+        /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/no-explicit-any */
         if (orderType === 'sales') {
           // Récupérer Sales Order SANS items
           // Type cast needed: Supabase types might be stale, eco_tax_vat_rate exists in DB
@@ -267,39 +267,9 @@ export function UniversalOrderDetailsModal({
               'id, order_number, status, created_at, expected_delivery_date, total_ht, total_ttc, customer_id, customer_type, billing_address, shipping_address, payment_terms, payment_status_v2, tax_rate, currency, eco_tax_vat_rate, shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate, created_by, channel_id, sales_channels!left(id, name, code)'
             )
             .eq('id', orderId)
-            .single()) as unknown as {
-            data: {
-              [key: string]: unknown;
-              id: string;
-              order_number: string;
-              status: string;
-              created_at: string;
-              expected_delivery_date: string | null;
-              total_ht: number;
-              total_ttc: number;
-              customer_id: string | null;
-              customer_type: string;
-              individual_customer_id?: string | null;
-              billing_address: Record<string, unknown> | string | null;
-              shipping_address: Record<string, unknown> | string | null;
-              payment_terms: string | null;
-              payment_status_v2: string | null;
-              tax_rate: number;
-              currency: string;
-              eco_tax_vat_rate: number | null;
-              shipping_cost_ht: number | null;
-              handling_cost_ht: number | null;
-              insurance_cost_ht: number | null;
-              fees_vat_rate: number | null;
-              created_by: string | null;
-              channel_id: string | null;
-              sales_channels: { id: string; name: string; code: string } | null;
-            } | null;
-            error: { message: string } | null;
-          };
+            .single()) as any;
 
           if (orderError) throw orderError;
-          if (!order) throw new Error('Commande non trouvée');
 
           // Récupérer nom client selon type (jointure manuelle polymorphe)
           let customerName = 'Client inconnu';
@@ -336,15 +306,10 @@ export function UniversalOrderDetailsModal({
           let creatorEmail = '';
 
           if (order.created_by) {
-            const { data: creatorInfo } = (await (
-              supabase.rpc as CallableFunction
-            )('get_user_info', { p_user_id: order.created_by })) as {
-              data: Array<{
-                first_name?: string;
-                last_name?: string;
-                email?: string;
-              }> | null;
-            };
+            const { data: creatorInfo } = await (supabase.rpc as any)(
+              'get_user_info',
+              { p_user_id: order.created_by }
+            );
 
             if (creatorInfo && creatorInfo.length > 0) {
               const firstName = creatorInfo[0].first_name || 'Utilisateur';
@@ -396,26 +361,9 @@ export function UniversalOrderDetailsModal({
               'id, po_number, status, created_at, expected_delivery_date, total_ttc, supplier_id, delivery_address, payment_terms, tax_rate, eco_tax_vat_rate'
             )
             .eq('id', orderId)
-            .single()) as unknown as {
-            data: {
-              [key: string]: unknown;
-              id: string;
-              po_number: string;
-              status: string;
-              created_at: string;
-              expected_delivery_date: string | null;
-              total_ttc: number;
-              supplier_id: string | null;
-              delivery_address: Record<string, unknown> | string | null;
-              payment_terms: string | null;
-              tax_rate: number;
-              eco_tax_vat_rate: number | null;
-            } | null;
-            error: { message: string } | null;
-          };
+            .single()) as any;
 
           if (orderError) throw orderError;
-          if (!order) throw new Error('Commande non trouvée');
 
           // Récupérer nom fournisseur (supplier_id → organisations)
           let supplierName = 'Fournisseur inconnu';
@@ -473,7 +421,7 @@ export function UniversalOrderDetailsModal({
           `Impossible de charger la commande ${orderType === 'sales' ? 'client' : 'fournisseur'}`;
 
         setError(errorMessage);
-        /* eslint-enable @typescript-eslint/no-unsafe-call, @typescript-eslint/prefer-nullish-coalescing */
+        /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/no-explicit-any */
       } finally {
         setLoading(false);
       }

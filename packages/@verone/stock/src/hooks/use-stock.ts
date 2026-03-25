@@ -574,7 +574,8 @@ export function useStock() {
         id => !productsWithStock?.some(p => p.id === id)
       );
 
-      let productsWithMovements: typeof productsWithStock = [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let productsWithMovements: any[] = [];
       if (productIdsToFetch.length > 0) {
         const { data, error } = await supabase
           .from('products')
@@ -604,28 +605,27 @@ export function useStock() {
       // Combiner les deux listes et dédupliquer
       const allInventoryProducts = [
         ...(productsWithStock ?? []),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         ...productsWithMovements,
       ];
 
       // Trier par date de mise à jour (plus récent en premier)
       allInventoryProducts.sort(
         (a, b) =>
-          new Date(b.updated_at ?? 0).getTime() -
-          new Date(a.updated_at ?? 0).getTime()
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
       );
 
       // Normaliser les données: extraire product_image_url de product_images
-      const normalizedProducts = allInventoryProducts.map(p => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+      const normalizedProducts = allInventoryProducts.map((p: any) => ({
         ...p,
-        product_image_url:
-          (
-            p.product_images as unknown as Array<{
-              public_url: string | null;
-            }> | null
-          )?.[0]?.public_url ?? null,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        product_image_url: p.product_images?.[0]?.public_url ?? null,
         product_images: undefined, // Supprimer la propriété temporaire
       }));
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return normalizedProducts;
     } catch (error) {
       console.error('❌ Erreur chargement inventaire:', error);

@@ -77,10 +77,9 @@ export const StockEditSection = React.memo(
       cancelEdit(section);
     };
 
-    const handleFieldChange = (
-      field: string,
-      value: string | number | boolean | null
-    ) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleFieldChange = (field: string, value: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       updateEditedData(section, { [field]: value });
     };
 
