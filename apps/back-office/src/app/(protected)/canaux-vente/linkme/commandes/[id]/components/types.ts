@@ -1,0 +1,152 @@
+import type { LinkMeOrderDetails } from '../../../hooks/use-linkme-order-actions';
+
+export interface CreatedByProfile {
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+}
+
+/** Contact resolved via FK JOIN on sales_orders -> contacts */
+export interface ContactRef {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string | null;
+  title: string | null;
+}
+
+export interface OrderWithDetails {
+  id: string;
+  order_number: string;
+  linkme_display_number: string | null;
+  created_at: string;
+  status: string;
+  total_ht: number;
+  total_ttc: number;
+  notes: string | null;
+  customer_id: string | null;
+  expected_delivery_date: string | null;
+  created_by_affiliate_id: string | null;
+  linkme_selection_id: string | null;
+  created_by: string | null;
+  payment_status: string | null;
+  payment_status_v2: string | null;
+  payment_terms: string | null;
+  currency: string | null;
+  tax_rate: number | null;
+  shipping_cost_ht: number | null;
+  handling_cost_ht: number | null;
+  insurance_cost_ht: number | null;
+  fees_vat_rate: number | null;
+  createdByProfile: CreatedByProfile | null;
+  organisation: {
+    id: string;
+    trade_name: string | null;
+    legal_name: string;
+    approval_status: string | null;
+    enseigne_id: string | null;
+    address_line1: string | null;
+    address_line2: string | null;
+    postal_code: string | null;
+    city: string | null;
+    billing_address_line1: string | null;
+    billing_address_line2: string | null;
+    billing_city: string | null;
+    billing_postal_code: string | null;
+    shipping_address_line1: string | null;
+    shipping_address_line2: string | null;
+    shipping_city: string | null;
+    shipping_postal_code: string | null;
+    has_different_shipping_address: boolean | null;
+    phone: string | null;
+    email: string | null;
+    siret: string | null;
+    country: string | null;
+    vat_number: string | null;
+  } | null;
+  items: Array<{
+    id: string;
+    product_id: string;
+    quantity: number;
+    unit_price_ht: number;
+    total_ht: number;
+    product: {
+      name: string;
+      sku: string;
+    } | null;
+  }>;
+  linkmeDetails: LinkMeOrderDetails | null;
+  infoRequests: InfoRequest[];
+  // Contacts via FK (source of truth)
+  responsable_contact_id: string | null;
+  billing_contact_id: string | null;
+  delivery_contact_id: string | null;
+  responsable_contact: ContactRef | null;
+  billing_contact: ContactRef | null;
+  delivery_contact: ContactRef | null;
+}
+
+export interface InfoRequest {
+  id: string;
+  token: string;
+  recipient_email: string;
+  recipient_type: string;
+  sent_at: string;
+  completed_at: string | null;
+  cancelled_at: string | null;
+  cancelled_reason: string | null;
+}
+
+// Type for enriched items with commission info
+export interface EnrichedOrderItem {
+  id: string;
+  product_id: string;
+  product_name: string;
+  product_sku: string;
+  product_image_url: string | null;
+  quantity: number;
+  unit_price_ht: number;
+  total_ht: number;
+  base_price_ht: number;
+  margin_rate: number;
+  commission_rate: number;
+  selling_price_ht: number;
+  affiliate_margin: number;
+  retrocession_rate: number;
+  created_by_affiliate: string | null;
+}
+
+export type ContactRole = 'responsable' | 'billing' | 'delivery';
+
+export interface FusedContactGroup {
+  contact: ContactRef;
+  roles: ContactRole[];
+}
+
+// Function to determine the order channel
+export function getOrderChannel(
+  created_by_affiliate_id: string | null,
+  linkme_selection_id: string | null
+): { label: string; color: string; bg: string } {
+  // B1 fix: check affiliate FIRST (an affiliate order also has a selection)
+  if (created_by_affiliate_id !== null) {
+    return {
+      label: 'Affilie',
+      color: 'text-teal-700',
+      bg: 'bg-teal-100',
+    };
+  }
+  if (linkme_selection_id !== null) {
+    return {
+      label: 'Selection publique',
+      color: 'text-amber-700',
+      bg: 'bg-amber-100',
+    };
+  }
+  return {
+    label: 'Back-office',
+    color: 'text-blue-700',
+    bg: 'bg-blue-100',
+  };
+}

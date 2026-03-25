@@ -16,51 +16,11 @@ import { createClient } from '@verone/utils/supabase/client';
 
 import { generateProductSKU } from '@verone/products/utils';
 
-// ============================================================================
-// TYPES LOCAUX (pour typage interne des requêtes Supabase)
-// ============================================================================
-
-/** Produit tel que retourné par la requête Supabase dans fetchVariantGroups */
-interface FetchedProduct {
-  id: string;
-  name: string;
-  sku: string;
-  stock_status: string | null;
-  product_status: string | null;
-  variant_group_id: string | null;
-  variant_position: number | null;
-  cost_price: number | null;
-  weight: number | null;
-  variant_attributes: Record<string, unknown> | null;
-}
-
-/** Image de produit */
-interface ProductImageRef {
-  product_id: string;
-  public_url: string;
-}
-
-/** Données de mise à jour pour un variant group */
-interface VariantGroupUpdateData {
-  name?: string;
-  variant_type?: string;
-  subcategory_id?: string;
-  style?: string | null;
-  suitable_rooms?: string[] | null;
-  has_common_supplier?: boolean;
-  supplier_id?: string | null;
-  common_dimensions?: {
-    length?: number | null;
-    width?: number | null;
-    height?: number | null;
-    unit?: 'cm' | 'm' | 'mm' | 'in' | string;
-  } | null;
-  common_weight?: number | null;
-  has_common_weight?: boolean;
-  common_cost_price?: number | null;
-  has_common_cost_price?: boolean;
-  common_eco_tax?: number | null;
-}
+import type {
+  FetchedProduct,
+  ProductImageRef,
+  VariantGroupUpdateData,
+} from './types/variant-group.types';
 
 export function useVariantGroups(filters?: VariantGroupFilters) {
   const [variantGroups, setVariantGroups] = useState<VariantGroup[]>([]);
@@ -1693,3 +1653,10 @@ export function useVariantGroup(groupId: string) {
 
   return { variantGroup, loading, error };
 }
+
+// Re-export types for consumers
+export type {
+  FetchedProduct,
+  ProductImageRef,
+  VariantGroupUpdateData,
+} from './types/variant-group.types';

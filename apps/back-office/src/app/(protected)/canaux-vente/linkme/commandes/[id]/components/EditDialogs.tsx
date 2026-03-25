@@ -1,0 +1,529 @@
+'use client';
+
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Separator,
+  Switch,
+  Textarea,
+} from '@verone/ui';
+import { MapPin } from 'lucide-react';
+
+import type { LinkMeOrderDetails } from '../../../hooks/use-linkme-order-actions';
+import type { OrderWithDetails } from './types';
+
+interface EditDialogsProps {
+  editingStep:
+    | 'responsable'
+    | 'billing'
+    | 'delivery_address'
+    | 'delivery_options'
+    | null;
+  editForm: Partial<LinkMeOrderDetails>;
+  setEditForm: React.Dispatch<
+    React.SetStateAction<Partial<LinkMeOrderDetails>>
+  >;
+  organisation: OrderWithDetails['organisation'];
+  orderStatus: string;
+  updateDetailsIsPending: boolean;
+  onClose: () => void;
+  onSave: () => void;
+}
+
+export function EditDialogs({
+  editingStep,
+  editForm,
+  setEditForm,
+  organisation: org,
+  orderStatus,
+  updateDetailsIsPending,
+  onClose,
+  onSave,
+}: EditDialogsProps) {
+  const handleSave = () => {
+    void Promise.resolve(onSave()).catch(error => {
+      console.error('[EditDialogs] Save edit failed:', error);
+    });
+  };
+
+  return (
+    <>
+      {/* Dialog: Edit Responsable */}
+      <Dialog
+        open={editingStep === 'responsable'}
+        onOpenChange={() => onClose()}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Modifier le Responsable</DialogTitle>
+            <DialogDescription>
+              Modifiez les informations du contact responsable.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+            <div className="space-y-2">
+              <Label>Type de demandeur *</Label>
+              <Select
+                value={editForm.requester_type ?? ''}
+                onValueChange={v =>
+                  setEditForm(prev => ({ ...prev, requester_type: v }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selectionner" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="responsable_enseigne">
+                    Responsable Enseigne
+                  </SelectItem>
+                  <SelectItem value="architecte">Architecte</SelectItem>
+                  <SelectItem value="franchisee">Franchise</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Nom complet *</Label>
+              <Input
+                value={editForm.requester_name ?? ''}
+                onChange={e =>
+                  setEditForm(prev => ({
+                    ...prev,
+                    requester_name: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Email *</Label>
+              <Input
+                type="email"
+                value={editForm.requester_email ?? ''}
+                onChange={e =>
+                  setEditForm(prev => ({
+                    ...prev,
+                    requester_email: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Telephone</Label>
+              <Input
+                value={editForm.requester_phone ?? ''}
+                onChange={e =>
+                  setEditForm(prev => ({
+                    ...prev,
+                    requester_phone: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Poste / Fonction</Label>
+              <Input
+                value={editForm.requester_position ?? ''}
+                onChange={e =>
+                  setEditForm(prev => ({
+                    ...prev,
+                    requester_position: e.target.value,
+                  }))
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>
+              Annuler
+            </Button>
+            <Button onClick={handleSave} disabled={updateDetailsIsPending}>
+              {updateDetailsIsPending ? 'Enregistrement...' : 'Enregistrer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Edit Billing */}
+      <Dialog open={editingStep === 'billing'} onOpenChange={() => onClose()}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Modifier la Facturation</DialogTitle>
+            <DialogDescription>
+              Modifiez les informations de facturation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+            <div className="space-y-2">
+              <Label>Source du contact facturation</Label>
+              <Select
+                value={editForm.billing_contact_source ?? ''}
+                onValueChange={v =>
+                  setEditForm(prev => ({
+                    ...prev,
+                    billing_contact_source: v,
+                  }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selectionner" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="step1">
+                    Identique au responsable
+                  </SelectItem>
+                  <SelectItem value="step2">
+                    Identique au proprietaire
+                  </SelectItem>
+                  <SelectItem value="custom">Contact personnalise</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Nom contact facturation</Label>
+              <Input
+                value={editForm.billing_name ?? ''}
+                onChange={e =>
+                  setEditForm(prev => ({
+                    ...prev,
+                    billing_name: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Email facturation</Label>
+              <Input
+                type="email"
+                value={editForm.billing_email ?? ''}
+                onChange={e =>
+                  setEditForm(prev => ({
+                    ...prev,
+                    billing_email: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Telephone facturation</Label>
+              <Input
+                value={editForm.billing_phone ?? ''}
+                onChange={e =>
+                  setEditForm(prev => ({
+                    ...prev,
+                    billing_phone: e.target.value,
+                  }))
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>
+              Annuler
+            </Button>
+            <Button onClick={handleSave} disabled={updateDetailsIsPending}>
+              {updateDetailsIsPending ? 'Enregistrement...' : 'Enregistrer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Edit Delivery Address */}
+      <Dialog
+        open={editingStep === 'delivery_address'}
+        onOpenChange={() => onClose()}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Modifier l&apos;adresse de livraison</DialogTitle>
+            <DialogDescription>
+              Modifiez l&apos;adresse ou selectionnez celle du restaurant.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {/* Restaurant address for prefill */}
+            {org && (org.address_line1 ?? org.shipping_address_line1) && (
+              <button
+                type="button"
+                className="w-full text-left p-3 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 hover:border-blue-300 transition-colors"
+                onClick={() => {
+                  const useShipping = org.has_different_shipping_address;
+                  setEditForm(prev => ({
+                    ...prev,
+                    delivery_address: useShipping
+                      ? [org.shipping_address_line1, org.shipping_address_line2]
+                          .filter(Boolean)
+                          .join(', ')
+                      : [org.address_line1, org.address_line2]
+                          .filter(Boolean)
+                          .join(', '),
+                    delivery_postal_code:
+                      (useShipping
+                        ? org.shipping_postal_code
+                        : org.postal_code) ?? '',
+                    delivery_city:
+                      (useShipping ? org.shipping_city : org.city) ?? '',
+                  }));
+                }}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-3.5 w-3.5 text-blue-600" />
+                    <p className="text-xs font-medium text-blue-700">
+                      Adresse restaurant
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
+                    Utiliser cette adresse
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600">
+                  {org.has_different_shipping_address
+                    ? [org.shipping_address_line1, org.shipping_address_line2]
+                        .filter(Boolean)
+                        .join(', ')
+                    : [org.address_line1, org.address_line2]
+                        .filter(Boolean)
+                        .join(', ')}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {org.has_different_shipping_address
+                    ? [org.shipping_postal_code, org.shipping_city]
+                        .filter(Boolean)
+                        .join(' ')
+                    : [org.postal_code, org.city].filter(Boolean).join(' ')}
+                </p>
+              </button>
+            )}
+            <div className="space-y-2">
+              <Label>Adresse</Label>
+              <Input
+                value={editForm.delivery_address ?? ''}
+                onChange={e =>
+                  setEditForm(prev => ({
+                    ...prev,
+                    delivery_address: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Code postal</Label>
+                <Input
+                  value={editForm.delivery_postal_code ?? ''}
+                  onChange={e =>
+                    setEditForm(prev => ({
+                      ...prev,
+                      delivery_postal_code: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Ville</Label>
+                <Input
+                  value={editForm.delivery_city ?? ''}
+                  onChange={e =>
+                    setEditForm(prev => ({
+                      ...prev,
+                      delivery_city: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>
+              Annuler
+            </Button>
+            <Button onClick={handleSave} disabled={updateDetailsIsPending}>
+              {updateDetailsIsPending ? 'Enregistrement...' : 'Enregistrer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Edit Delivery Options */}
+      <Dialog
+        open={editingStep === 'delivery_options'}
+        onOpenChange={() => onClose()}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Options de livraison</DialogTitle>
+            <DialogDescription>
+              Modifiez les options et dates de livraison.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div>
+                <Label>Modalites de livraison acceptees</Label>
+                <p className="text-xs text-gray-500">
+                  Le client a accepte les conditions
+                </p>
+              </div>
+              <Switch
+                checked={editForm.delivery_terms_accepted ?? false}
+                onCheckedChange={checked =>
+                  setEditForm(prev => ({
+                    ...prev,
+                    delivery_terms_accepted: checked,
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Date de livraison souhaitee</Label>
+              <Input
+                type="date"
+                value={editForm.desired_delivery_date ?? ''}
+                onChange={e =>
+                  setEditForm(prev => ({
+                    ...prev,
+                    desired_delivery_date: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div>
+                <Label>Livraison en centre commercial</Label>
+              </div>
+              <Switch
+                checked={editForm.is_mall_delivery ?? false}
+                onCheckedChange={checked =>
+                  setEditForm(prev => ({
+                    ...prev,
+                    is_mall_delivery: checked,
+                  }))
+                }
+              />
+            </div>
+            {editForm.is_mall_delivery && (
+              <div className="space-y-2">
+                <Label>Email direction centre commercial</Label>
+                <Input
+                  type="email"
+                  value={editForm.mall_email ?? ''}
+                  onChange={e =>
+                    setEditForm(prev => ({
+                      ...prev,
+                      mall_email: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            )}
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div>
+                <Label>Acces semi-remorque</Label>
+              </div>
+              <Switch
+                checked={editForm.semi_trailer_accessible ?? false}
+                onCheckedChange={checked =>
+                  setEditForm(prev => ({
+                    ...prev,
+                    semi_trailer_accessible: checked,
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Notes de livraison</Label>
+              <Textarea
+                value={editForm.delivery_notes ?? ''}
+                onChange={e =>
+                  setEditForm(prev => ({
+                    ...prev,
+                    delivery_notes: e.target.value,
+                  }))
+                }
+                rows={3}
+              />
+            </div>
+            {/* Post-approval fields */}
+            {orderStatus === 'validated' && (
+              <>
+                <Separator />
+                <p className="text-sm font-medium text-gray-700">
+                  Reception (post-approbation)
+                </p>
+                <div className="space-y-2">
+                  <Label>Nom du contact reception</Label>
+                  <Input
+                    value={editForm.reception_contact_name ?? ''}
+                    onChange={e =>
+                      setEditForm(prev => ({
+                        ...prev,
+                        reception_contact_name: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email contact reception</Label>
+                  <Input
+                    type="email"
+                    value={editForm.reception_contact_email ?? ''}
+                    onChange={e =>
+                      setEditForm(prev => ({
+                        ...prev,
+                        reception_contact_email: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Telephone contact reception</Label>
+                  <Input
+                    value={editForm.reception_contact_phone ?? ''}
+                    onChange={e =>
+                      setEditForm(prev => ({
+                        ...prev,
+                        reception_contact_phone: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date de livraison confirmee</Label>
+                  <Input
+                    type="date"
+                    value={editForm.confirmed_delivery_date ?? ''}
+                    onChange={e =>
+                      setEditForm(prev => ({
+                        ...prev,
+                        confirmed_delivery_date: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>
+              Annuler
+            </Button>
+            <Button onClick={handleSave} disabled={updateDetailsIsPending}>
+              {updateDetailsIsPending ? 'Enregistrement...' : 'Enregistrer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

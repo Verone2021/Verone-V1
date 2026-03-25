@@ -447,7 +447,9 @@ export function useStoragePricingTiers() {
 
       const { data, error } = await supabase
         .from('storage_pricing_tiers')
-        .select('*')
+        .select(
+          'id, min_volume_m3, max_volume_m3, price_per_m3, label, is_active, created_at, updated_at'
+        )
         .eq('is_active', true)
         .order('min_volume_m3', { ascending: true });
 

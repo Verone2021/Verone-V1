@@ -44,7 +44,7 @@ export default function EmailTemplatesPage() {
         setLoading(true);
         const { data, error } = await supabase
           .from('email_templates')
-          .select('*')
+          .select('*') // TODO: specify columns
           .order('category', { ascending: true })
           .order('name', { ascending: true });
 

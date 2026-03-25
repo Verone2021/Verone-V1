@@ -236,6 +236,23 @@ export default defineConfig([
   },
 
   // ==========================================================================
+  // BACK-OFFICE ONLY — File & function size limits (prevention)
+  // ==========================================================================
+  {
+    files: ['apps/back-office/src/**/*.{ts,tsx}'],
+    rules: {
+      'max-lines': [
+        'warn',
+        { max: 500, skipBlankLines: true, skipComments: true },
+      ],
+      'max-lines-per-function': [
+        'warn',
+        { max: 75, skipBlankLines: true, skipComments: true, IIFEs: true },
+      ],
+    },
+  },
+
+  // ==========================================================================
   // SCRIPTS - Relaxed rules (no type-aware linting)
   // ==========================================================================
   {

@@ -811,7 +811,9 @@ export default function ConsultationDetailPage() {
                   if (consultation.enseigne_id) {
                     const { data: parentOrg } = await supabase
                       .from('organisations')
-                      .select('*')
+                      .select(
+                        'id, trade_name, legal_name, email, address_line1, postal_code, city, country, siret, vat_number'
+                      )
                       .eq('enseigne_id', consultation.enseigne_id)
                       .eq('is_enseigne_parent', true)
                       .single();
@@ -821,7 +823,9 @@ export default function ConsultationDetailPage() {
                     } else {
                       const { data: firstOrg } = await supabase
                         .from('organisations')
-                        .select('*')
+                        .select(
+                          'id, trade_name, legal_name, email, address_line1, postal_code, city, country, siret, vat_number'
+                        )
                         .eq('enseigne_id', consultation.enseigne_id)
                         .order('created_at', { ascending: true })
                         .limit(1)
@@ -834,7 +838,9 @@ export default function ConsultationDetailPage() {
                   } else if (consultation.organisation_id) {
                     const { data: directOrg } = await supabase
                       .from('organisations')
-                      .select('*')
+                      .select(
+                        'id, trade_name, legal_name, email, address_line1, postal_code, city, country, siret, vat_number'
+                      )
                       .eq('id', consultation.organisation_id)
                       .single();
                     if (directOrg) {

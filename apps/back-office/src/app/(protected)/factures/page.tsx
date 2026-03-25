@@ -22,14 +22,12 @@ import {
   QuoteCreateFromOrderModal,
   QuoteCreateServiceModal,
   QuoteFormModal,
-  QuoteStatusBadge,
   RapprochementFromOrderModal,
   type TransactionForUpload,
   type IOrderForInvoice,
   type IOrderForDocument,
   type OrderForLink,
 } from '@verone/finance/components';
-// useQuotes (local DB) removed — quotes come from Qonto API exclusively
 import {
   Card,
   CardContent,
@@ -54,17 +52,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  Skeleton,
-  OrganisationNameDisplay,
 } from '@verone/ui';
 import {
-  Money,
   KpiCard,
   KpiGrid,
   DataTableToolbar,
@@ -75,596 +64,38 @@ import { toast } from 'sonner';
 import {
   FileText,
   Plus,
-  Download,
   Eye,
   AlertCircle,
   Lock,
   Clock,
   CheckCircle,
   RefreshCw,
-  Upload,
   AlertTriangle,
-  Paperclip,
   Briefcase,
   ChevronDown,
   ShoppingCart,
   FileEdit,
   FileX,
-  Trash2,
   Loader2,
-  Archive,
-  ArchiveRestore,
-  Pencil,
-  CheckCircle2,
   Link2,
-  Banknote,
-  ExternalLink,
 } from 'lucide-react';
 
-// =====================================================================
-// TYPES
-// =====================================================================
-
-type TabType = 'factures' | 'devis' | 'avoirs' | 'manquantes';
-const VALID_TABS: TabType[] = ['factures', 'devis', 'avoirs', 'manquantes'];
-
-interface ConsolidateReport {
-  success: boolean;
-  synced: number;
-  skipped_existing: number;
-  skipped_no_order_ref: number;
-  skipped_no_match: number;
-  skipped_no_partner: number;
-  skipped_individual_customer: number;
-  errors: string[];
-}
-
-// Types pour réponses API
-interface ApiResponse<T> {
-  success: boolean;
-  error?: string;
-  message?: string;
-  data?: T;
-}
-
-interface InvoicesResponse extends ApiResponse<{ invoices: Invoice[] }> {
-  invoices?: Invoice[];
-}
-
-interface CreditNotesResponse
-  extends ApiResponse<{ credit_notes: CreditNote[] }> {
-  credit_notes?: CreditNote[];
-}
-
-interface CreditNote {
-  id: string;
-  credit_note_number: string;
-  status: 'draft' | 'finalized' | 'canceled';
-  currency: string;
-  total_amount_cents: number; // Qonto API uses cents
-  issue_date: string;
-  client?: {
-    id: string;
-    name: string;
-  };
-  invoice_id?: string;
-  invoice?: {
-    id: string;
-    invoice_number: string;
-  };
-  pdf_url?: string;
-  attachment_id?: string;
-}
-
-interface QontoQuote {
-  id: string;
-  quote_number: string;
-  status: string;
-  currency: string;
-  total_amount: number;
-  issue_date: string;
-  expiry_date: string;
-  client?: {
-    id: string;
-    name: string;
-  };
-  converted_to_invoice_id?: string | null;
-  purchase_order_number?: string | null;
-}
-
-interface QontoQuotesResponse extends ApiResponse<{ quotes: QontoQuote[] }> {
-  quotes?: QontoQuote[];
-  count?: number;
-}
-
-interface Invoice {
-  id: string;
-  number: string; // Qonto uses 'number' not 'invoice_number'
-  status:
-    | 'draft'
-    | 'pending'
-    | 'paid'
-    | 'unpaid'
-    | 'overdue'
-    | 'canceled'
-    | 'partially_paid';
-  currency: string;
-  total_amount: {
-    value: string;
-    currency: string;
-  };
-  total_amount_cents: number;
-  issue_date: string;
-  due_date: string;
-  client?: {
-    name: string;
-  };
-  purchase_order?: string;
-  // Données locales enrichies depuis financial_documents
-  local_pdf_path?: string | null;
-  local_document_id?: string | null;
-  has_local_pdf?: boolean;
-  deleted_at?: string | null;
-  sales_order_id?: string | null;
-  order_number?: string | null;
-  local_amount_paid?: number | null;
-  partner_id?: string | null;
-  partner_legal_name?: string | null;
-  partner_trade_name?: string | null;
-}
-
-// =====================================================================
-// HELPERS
-// =====================================================================
-
-function formatAmount(amount: number, currency = 'EUR'): string {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency,
-  }).format(amount);
-}
-
-function formatDate(dateString: string): string {
-  return new Intl.DateTimeFormat('fr-FR').format(new Date(dateString));
-}
-
-function CreditNoteStatusBadge({
-  status,
-}: {
-  status: string;
-}): React.ReactNode {
-  const variants: Record<
-    string,
-    'default' | 'secondary' | 'destructive' | 'outline'
-  > = {
-    draft: 'secondary',
-    finalized: 'default',
-  };
-
-  const labels: Record<string, string> = {
-    draft: 'Brouillon',
-    finalized: 'Finalisé',
-  };
-
-  return (
-    <Badge variant={variants[status] ?? 'outline'}>
-      {labels[status] ?? status}
-    </Badge>
-  );
-}
-
-function InvoiceStatusBadge({ status }: { status: string }): React.ReactNode {
-  const variants: Record<
-    string,
-    'default' | 'secondary' | 'destructive' | 'outline'
-  > = {
-    draft: 'secondary',
-    pending: 'outline',
-    unpaid: 'outline',
-    paid: 'default',
-    partially_paid: 'secondary',
-    overdue: 'destructive',
-    cancelled: 'destructive',
-    canceled: 'destructive', // Qonto uses 'canceled' (US spelling)
-  };
-
-  const labels: Record<string, string> = {
-    draft: 'Brouillon',
-    pending: 'En attente',
-    unpaid: 'Non payée',
-    paid: 'Payée',
-    partially_paid: 'Partiellement payée',
-    overdue: 'En retard',
-    cancelled: 'Annulée',
-    canceled: 'Annulée', // Qonto uses 'canceled' (US spelling)
-  };
-
-  const isOverdue = status === 'overdue';
-
-  return (
-    <Badge
-      variant={variants[status] ?? 'outline'}
-      className={isOverdue ? 'animate-pulse' : undefined}
-    >
-      {labels[status] ?? status}
-    </Badge>
-  );
-}
-
-// =====================================================================
-// COMPOSANT: TABLEAU DE FACTURES (Qonto)
-// =====================================================================
-
-function InvoicesTable({
-  invoices,
-  loading,
-  onView: _onView,
-  onDownloadPdf,
-  isArchived,
-  isDraft,
-  onArchive,
-  onUnarchive,
-  onFinalize,
-  onOpenOrder,
-  onRapprochement,
-  onOpenOrg,
-}: {
-  invoices: Invoice[];
-  loading: boolean;
-  onView: (id: string) => void;
-  onDownloadPdf: (invoice: Invoice) => void;
-  isArchived?: boolean;
-  isDraft?: boolean;
-  onArchive?: (invoice: Invoice) => Promise<void>;
-  onUnarchive?: (invoice: Invoice) => Promise<void>;
-  onFinalize?: (invoice: Invoice) => Promise<void>;
-  onOpenOrder?: (orderId: string) => void;
-  onRapprochement?: (invoice: Invoice) => void;
-  onOpenOrg?: (orgId: string) => void;
-}) {
-  if (loading) {
-    return (
-      <div className="space-y-2">
-        {[1, 2, 3].map(i => (
-          <Skeleton key={i} className="h-12 w-full" />
-        ))}
-      </div>
-    );
-  }
-
-  if (invoices.length === 0) {
-    return (
-      <div className="text-center py-12 text-muted-foreground">
-        <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-        <p>Aucune facture trouvée</p>
-        <p className="text-sm">
-          Cliquez sur &quot;Nouvelle facture&quot; pour en créer une
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>N° Facture</TableHead>
-          <TableHead>Client</TableHead>
-          <TableHead>Commande</TableHead>
-          <TableHead>Date</TableHead>
-          <TableHead>Échéance</TableHead>
-          <TableHead>Statut</TableHead>
-          <TableHead>Paiement</TableHead>
-          <TableHead className="text-right">Montant</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {invoices.map(invoice => (
-          <TableRow key={invoice.id}>
-            <TableCell className="font-mono">{invoice.number}</TableCell>
-            <TableCell>
-              {invoice.partner_id && invoice.partner_legal_name ? (
-                <button
-                  onClick={() => onOpenOrg?.(invoice.partner_id!)}
-                  className="inline-flex items-center gap-1 text-left text-primary hover:underline cursor-pointer"
-                >
-                  <OrganisationNameDisplay
-                    legalName={invoice.partner_legal_name}
-                    tradeName={invoice.partner_trade_name}
-                    variant="compact"
-                  />
-                  <ExternalLink className="h-3 w-3 opacity-60" />
-                </button>
-              ) : (
-                <span>{invoice.client?.name ?? '-'}</span>
-              )}
-            </TableCell>
-            <TableCell>
-              {invoice.sales_order_id && invoice.order_number ? (
-                <button
-                  onClick={() => onOpenOrder?.(invoice.sales_order_id!)}
-                  className="inline-flex items-center gap-1"
-                >
-                  <Badge
-                    variant="outline"
-                    className="cursor-pointer hover:bg-accent"
-                  >
-                    {invoice.order_number}
-                  </Badge>
-                  <ExternalLink className="h-3 w-3 text-muted-foreground opacity-60" />
-                </button>
-              ) : (
-                <span className="text-muted-foreground text-sm">-</span>
-              )}
-            </TableCell>
-            <TableCell>{formatDate(invoice.issue_date)}</TableCell>
-            <TableCell>
-              <span
-                className={
-                  new Date(invoice.due_date) < new Date() &&
-                  invoice.status !== 'paid' &&
-                  invoice.status !== 'canceled'
-                    ? 'text-red-600 font-medium'
-                    : ''
-                }
-              >
-                {formatDate(invoice.due_date)}
-              </span>
-            </TableCell>
-            <TableCell>
-              <InvoiceStatusBadge status={invoice.status} />
-            </TableCell>
-            <TableCell>
-              {invoice.status !== 'draft' && invoice.status !== 'canceled' ? (
-                <div className="flex items-center gap-1">
-                  {invoice.status === 'paid' ? (
-                    <Badge
-                      variant="default"
-                      className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100"
-                    >
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Payée
-                    </Badge>
-                  ) : (
-                    <>
-                      <Badge
-                        variant="outline"
-                        className="text-amber-600 border-amber-200"
-                      >
-                        <Clock className="h-3 w-3 mr-1" />
-                        Non payée
-                      </Badge>
-                      {onRapprochement && invoice.sales_order_id && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                          onClick={() => onRapprochement(invoice)}
-                          title="Rapprocher avec une transaction"
-                        >
-                          <Banknote className="h-3 w-3 mr-1" />
-                          Rapprocher
-                        </Button>
-                      )}
-                    </>
-                  )}
-                </div>
-              ) : (
-                <span className="text-muted-foreground text-sm">-</span>
-              )}
-            </TableCell>
-            <TableCell className="text-right font-medium">
-              {formatAmount(
-                parseFloat(invoice.total_amount.value),
-                invoice.total_amount.currency
-              )}
-            </TableCell>
-            <TableCell className="text-right">
-              <div className="flex justify-end gap-1">
-                {/* Draft actions: Edit + Finalize */}
-                {isDraft && (
-                  <>
-                    <Button variant="ghost" size="icon" asChild>
-                      <Link
-                        href={`/factures/${invoice.id}/edit?type=invoice`}
-                        title="Modifier le brouillon"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                    {onFinalize && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => void onFinalize(invoice)}
-                        title="Finaliser"
-                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                      >
-                        <CheckCircle2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </>
-                )}
-                {/* Common: View detail */}
-                <Button variant="ghost" size="icon" asChild>
-                  <Link
-                    href={`/factures/${invoice.id}?type=invoice`}
-                    title="Voir"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Link>
-                </Button>
-                {/* Finalized: PDF actions */}
-                {!isDraft && (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() =>
-                        window.open(
-                          `/api/qonto/invoices/${invoice.id}/pdf`,
-                          '_blank'
-                        )
-                      }
-                      title="Voir PDF"
-                      className="text-primary hover:text-primary hover:bg-primary/10"
-                    >
-                      <FileText className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onDownloadPdf(invoice)}
-                      title="Télécharger PDF"
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </>
-                )}
-                {/* Archive action */}
-                {!isArchived && !isDraft && onArchive && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => void onArchive(invoice)}
-                    title="Archiver"
-                  >
-                    <Archive className="h-4 w-4" />
-                  </Button>
-                )}
-                {isArchived && onUnarchive && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => void onUnarchive(invoice)}
-                    title="Désarchiver"
-                  >
-                    <ArchiveRestore className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
-}
-
-// =====================================================================
-// COMPOSANT: TABLEAU FACTURES MANQUANTES
-// =====================================================================
-
-function MissingInvoicesTable({
-  transactions,
-  loading,
-  onUpload,
-}: {
-  transactions: TransactionMissingInvoice[];
-  loading: boolean;
-  onUpload: (transaction: TransactionMissingInvoice) => void;
-}) {
-  if (loading) {
-    return (
-      <div className="space-y-2">
-        {[1, 2, 3, 4, 5].map(i => (
-          <div key={i} className="h-12 bg-muted animate-pulse rounded" />
-        ))}
-      </div>
-    );
-  }
-
-  if (transactions.length === 0) {
-    return (
-      <div className="text-center py-12 text-muted-foreground">
-        <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-500 opacity-70" />
-        <p className="font-medium text-foreground">
-          Toutes les transactions ont une facture!
-        </p>
-        <p className="text-sm mt-1">Aucune facture manquante à uploader</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="border rounded-lg overflow-hidden">
-      <table className="w-full">
-        <thead className="bg-muted/50">
-          <tr>
-            <th className="text-left p-3 text-sm font-medium">Transaction</th>
-            <th className="text-left p-3 text-sm font-medium">Contrepartie</th>
-            <th className="text-left p-3 text-sm font-medium">Date</th>
-            <th className="text-left p-3 text-sm font-medium">Commande</th>
-            <th className="text-right p-3 text-sm font-medium">Montant</th>
-            <th className="text-center p-3 text-sm font-medium">Statut</th>
-            <th className="text-right p-3 text-sm font-medium">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {transactions.map(tx => (
-            <tr key={tx.id} className="border-t hover:bg-muted/30">
-              <td className="p-3">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-500" />
-                  <span className="text-sm font-medium truncate max-w-[200px]">
-                    {tx.label ?? 'Sans libellé'}
-                  </span>
-                </div>
-              </td>
-              <td className="p-3">
-                <span className="text-sm">{tx.counterparty_name ?? '-'}</span>
-              </td>
-              <td className="p-3 text-sm">
-                {tx.emitted_at
-                  ? new Date(tx.emitted_at).toLocaleDateString('fr-FR')
-                  : '-'}
-              </td>
-              <td className="p-3">
-                {tx.order_number ? (
-                  <Badge variant="outline">{tx.order_number}</Badge>
-                ) : (
-                  <span className="text-muted-foreground text-sm">-</span>
-                )}
-              </td>
-              <td className="p-3 text-right">
-                <Money
-                  amount={Math.abs(tx.amount)}
-                  size="sm"
-                  className="text-green-600 font-medium"
-                />
-              </td>
-              <td className="p-3 text-center">
-                {tx.upload_status === 'pending' ? (
-                  <Badge variant="secondary">En attente</Badge>
-                ) : tx.upload_status === 'uploading' ? (
-                  <Badge variant="secondary" className="animate-pulse">
-                    Upload...
-                  </Badge>
-                ) : (
-                  <Badge variant="destructive" className="gap-1">
-                    <Paperclip className="h-3 w-3" />
-                    Manquante
-                  </Badge>
-                )}
-              </td>
-              <td className="p-3 text-right">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onUpload(tx)}
-                >
-                  <Upload className="h-4 w-4 mr-1" />
-                  Uploader
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
+import type {
+  TabType,
+  Invoice,
+  QontoQuote,
+  CreditNote,
+  ApiResponse,
+  InvoicesResponse,
+  QontoQuotesResponse,
+  CreditNotesResponse,
+  ConsolidateReport,
+} from './components/types';
+import { VALID_TABS } from './components/types';
+import { FacturesTab } from './components/FacturesTab';
+import { DevisTab } from './components/DevisTab';
+import { AvoirsTab } from './components/AvoirsTab';
+import { MissingInvoicesTable } from './components/MissingInvoicesTable';
 
 // =====================================================================
 // PAGE COMPONENT
@@ -684,9 +115,6 @@ export default function FacturationPage() {
     }
   }, [searchParams]);
 
-  const [invoiceView, setInvoiceView] = useState<
-    'drafts' | 'finalized' | 'archived'
-  >('finalized');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -703,7 +131,7 @@ export default function FacturationPage() {
   // Etat pour facture de service (sans commande)
   const [showServiceModal, setShowServiceModal] = useState(false);
 
-  // États pour les devis (Qonto API)
+  // Etats pour les devis (Qonto API)
   const [showQuoteForm, setShowQuoteForm] = useState(false);
   const [qontoQuotes, setQontoQuotes] = useState<QontoQuote[]>([]);
   const [loadingQuotes, setLoadingQuotes] = useState(false);
@@ -718,20 +146,20 @@ export default function FacturationPage() {
   const [quoteToDelete, setQuoteToDelete] = useState<QontoQuote | null>(null);
   const [deletingQuote, setDeletingQuote] = useState(false);
 
-  // État consolidation liaisons
+  // Etat consolidation liaisons
   const [isConsolidating, setIsConsolidating] = useState(false);
 
-  // États pour les avoirs
+  // Etats pour les avoirs
   const [creditNotes, setCreditNotes] = useState<CreditNote[]>([]);
   const [loadingCreditNotes, setLoadingCreditNotes] = useState(false);
   const [errorCreditNotes, setErrorCreditNotes] = useState<string | null>(null);
 
-  // État pour ouverture modale commande en place (depuis lien facture)
+  // Etat pour ouverture modale commande en place (depuis lien facture)
   const [selectedOrderForModal, setSelectedOrderForModal] =
     useState<SalesOrder | null>(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
 
-  // État pour ouverture modale organisation (depuis nom client cliquable)
+  // Etat pour ouverture modale organisation (depuis nom client cliquable)
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
   const [showOrgModal, setShowOrgModal] = useState(false);
   const { fetchOrder } = useSalesOrders();
@@ -773,17 +201,17 @@ export default function FacturationPage() {
     [fetchOrder]
   );
 
-  // État pour rapprochement depuis facture
+  // Etat pour rapprochement depuis facture
   const [showRapprochementModal, setShowRapprochementModal] = useState(false);
   const [rapprochementOrder, setRapprochementOrder] =
     useState<OrderForLink | null>(null);
 
-  // États pour les factures (Qonto)
+  // Etats pour les factures (Qonto)
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loadingInvoices, setLoadingInvoices] = useState(true);
   const [errorInvoices, setErrorInvoices] = useState<string | null>(null);
 
-  // Récupérer les transactions sans facture
+  // Recuperer les transactions sans facture
   const {
     transactions: missingInvoices,
     loading: loadingMissing,
@@ -914,7 +342,7 @@ export default function FacturationPage() {
     void fetchInvoices();
   };
 
-  // Handler pour télécharger le PDF d'une facture
+  // Handler pour telecharger le PDF d'une facture
   const handleDownloadInvoicePdf = async (invoice: Invoice): Promise<void> => {
     try {
       const response = await fetch(`/api/qonto/invoices/${invoice.id}/pdf`);
@@ -949,7 +377,7 @@ export default function FacturationPage() {
     } catch (err) {
       console.error('Download error:', err);
       setErrorInvoices(
-        err instanceof Error ? err.message : 'Erreur de téléchargement'
+        err instanceof Error ? err.message : 'Erreur de telechargement'
       );
     }
   };
@@ -983,7 +411,7 @@ export default function FacturationPage() {
     } catch (err) {
       console.error('[Quote] Download PDF error:', err);
       toast.error(
-        err instanceof Error ? err.message : 'Erreur de téléchargement'
+        err instanceof Error ? err.message : 'Erreur de telechargement'
       );
     }
   };
@@ -1019,7 +447,7 @@ export default function FacturationPage() {
       if (!response.ok || !data.success) {
         throw new Error(data.error ?? 'Erreur lors de la suppression');
       }
-      toast.success('Devis supprimé');
+      toast.success('Devis supprime');
       void fetchQontoQuotes();
     } catch (err) {
       console.error('[Factures] deleteQuote error:', err);
@@ -1059,16 +487,12 @@ export default function FacturationPage() {
 
   // Calculer les KPIs pour les factures (Qonto)
   const kpis = useMemo(() => {
-    // Helper pour vérifier si une facture est annulée
-    // Qonto utilise 'cancelled' (UK) mais on vérifie les deux par sécurité
     const isAnnulee = (status: string) =>
       status === 'cancelled' || status === 'canceled';
 
-    // Exclure les factures annulées et brouillons du total facturé
     const facturesActives = invoices.filter(
       inv => !isAnnulee(inv.status) && inv.status !== 'draft'
     );
-    // Utiliser total_amount_cents (en centimes) et convertir en euros
     const totalFacture =
       facturesActives.reduce(
         (sum, inv) => sum + (inv.total_amount_cents ?? 0),
@@ -1125,7 +549,6 @@ export default function FacturationPage() {
   // Handler sync Qonto - Sync transactions ET factures
   const handleSync = async () => {
     try {
-      // 1. Sync transactions bancaires
       const transactionsResponse = await fetch('/api/qonto/sync', {
         method: 'POST',
       });
@@ -1141,7 +564,6 @@ export default function FacturationPage() {
         console.warn('[Qonto Sync Transactions] Success:', transactionsResult);
       }
 
-      // 2. Sync factures clients vers financial_documents
       const invoicesResponse = await fetch('/api/qonto/sync-invoices', {
         method: 'POST',
       });
@@ -1154,7 +576,6 @@ export default function FacturationPage() {
         console.warn('[Qonto Sync Invoices] Success:', invoicesResult);
       }
 
-      // Rafraîchir les données
       void fetchInvoices();
       void fetchQontoQuotes();
       void fetchCreditNotes();
@@ -1164,14 +585,14 @@ export default function FacturationPage() {
     }
   };
 
-  // Handler consolidation historique liaisons commandes ↔ factures Qonto
+  // Handler consolidation historique liaisons commandes <-> factures Qonto
   const handleConsolidate = () => {
     setIsConsolidating(true);
     void fetch('/api/qonto/invoices/consolidate', { method: 'POST' })
       .then(r => r.json())
       .then((report: ConsolidateReport) => {
         toast.success(
-          `${report.synced.toString()} liaisons créées · ${report.skipped_existing.toString()} déjà existantes`
+          `${report.synced.toString()} liaisons creees · ${report.skipped_existing.toString()} deja existantes`
         );
         if (report.errors.length > 0) {
           toast.error(
@@ -1203,7 +624,7 @@ export default function FacturationPage() {
                   Module Finance - Phase 2
                 </CardTitle>
                 <CardDescription className="text-orange-700">
-                  Ce module sera disponible après le déploiement Phase 1
+                  Ce module sera disponible apres le deploiement Phase 1
                 </CardDescription>
               </div>
             </div>
@@ -1228,8 +649,8 @@ export default function FacturationPage() {
                     Phase 2 (Prochainement)
                   </p>
                   <p className="text-sm text-orange-700">
-                    Facturation - Trésorerie - Rapprochement bancaire -
-                    Intégrations (Qonto)
+                    Facturation - Tresorerie - Rapprochement bancaire -
+                    Integrations (Qonto)
                   </p>
                 </div>
               </div>
@@ -1305,14 +726,14 @@ export default function FacturationPage() {
       {activeTab === 'factures' && (
         <KpiGrid columns={4}>
           <KpiCard
-            title="Total facturé"
+            title="Total facture"
             value={kpis.totalFacture}
             valueType="money"
             icon={<FileText className="h-4 w-4" />}
-            description={`${kpis.nombreFacturesActives} facture(s) finalisée(s)`}
+            description={`${kpis.nombreFacturesActives} facture(s) finalisee(s)`}
           />
           <KpiCard
-            title="Total payé"
+            title="Total paye"
             value={kpis.totalPaye}
             valueType="money"
             icon={<CheckCircle className="h-4 w-4" />}
@@ -1378,7 +799,7 @@ export default function FacturationPage() {
             <DataTableToolbar
               searchValue={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Rechercher par numéro, partenaire..."
+              searchPlaceholder="Rechercher par numero, partenaire..."
               filters={[
                 {
                   id: 'status',
@@ -1410,468 +831,65 @@ export default function FacturationPage() {
 
         {/* Contenu des tabs */}
         <TabsContent value="factures" className="mt-4 space-y-4">
-          {/* Sub-tabs: Brouillons / Finalisées / Archives */}
-          <Tabs
-            value={invoiceView}
-            onValueChange={v =>
-              setInvoiceView(v as 'drafts' | 'finalized' | 'archived')
-            }
-          >
-            <TabsList>
-              <TabsTrigger value="drafts">
-                Brouillons
-                <Badge variant="secondary" className="ml-2">
-                  {
-                    invoices.filter(
-                      inv => inv.status === 'draft' && !inv.deleted_at
-                    ).length
-                  }
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger value="finalized">
-                Finalisées
-                <Badge variant="secondary" className="ml-2">
-                  {
-                    invoices.filter(
-                      inv => inv.status !== 'draft' && !inv.deleted_at
-                    ).length
-                  }
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger value="archived">
-                Archives
-                <Badge variant="secondary" className="ml-2">
-                  {invoices.filter(inv => inv.deleted_at).length}
-                </Badge>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="drafts" className="mt-4">
-              <InvoicesTable
-                invoices={invoices.filter(
-                  inv =>
-                    inv.status === 'draft' &&
-                    !inv.deleted_at &&
-                    (statusFilter === 'all' || inv.status === statusFilter)
-                )}
-                loading={loadingInvoices}
-                onView={handleView}
-                onOpenOrder={orderId => {
-                  void handleOpenOrderModal(orderId).catch(console.error);
-                }}
-                onOpenOrg={orgId => {
-                  setSelectedOrgId(orgId);
-                  setShowOrgModal(true);
-                }}
-                onDownloadPdf={invoice => {
-                  void handleDownloadInvoicePdf(invoice).catch(error => {
-                    console.error(
-                      '[Factures] handleDownloadInvoicePdf failed:',
-                      error
-                    );
-                  });
-                }}
-                isDraft
-                onFinalize={async invoice => {
-                  try {
-                    const response = await fetch(
-                      `/api/qonto/invoices/${invoice.id}/finalize`,
-                      { method: 'POST' }
-                    );
-                    const data =
-                      (await response.json()) as ApiResponse<unknown>;
-                    if (!data.success) throw new Error(data.error);
-                    void fetchInvoices();
-                  } catch (error) {
-                    console.error('Finalize error:', error);
-                  }
-                }}
-                onArchive={async invoice => {
-                  try {
-                    const response = await fetch(
-                      `/api/financial-documents/${invoice.id}/archive`,
-                      { method: 'POST' }
-                    );
-                    const data =
-                      (await response.json()) as ApiResponse<unknown>;
-                    if (!data.success) throw new Error(data.error);
-                    void fetchInvoices();
-                  } catch (error) {
-                    console.error('Archive error:', error);
-                  }
-                }}
-              />
-            </TabsContent>
-
-            <TabsContent value="finalized" className="mt-4">
-              <InvoicesTable
-                invoices={invoices.filter(
-                  inv =>
-                    inv.status !== 'draft' &&
-                    !inv.deleted_at &&
-                    (statusFilter === 'all' || inv.status === statusFilter)
-                )}
-                loading={loadingInvoices}
-                onView={handleView}
-                onOpenOrder={orderId => {
-                  void handleOpenOrderModal(orderId).catch(console.error);
-                }}
-                onOpenOrg={orgId => {
-                  setSelectedOrgId(orgId);
-                  setShowOrgModal(true);
-                }}
-                onDownloadPdf={invoice => {
-                  void handleDownloadInvoicePdf(invoice).catch(error => {
-                    console.error(
-                      '[Factures] handleDownloadInvoicePdf failed:',
-                      error
-                    );
-                  });
-                }}
-                onRapprochement={invoice => {
-                  void handleRapprochement(invoice).catch(console.error);
-                }}
-                isArchived={false}
-                onArchive={async invoice => {
-                  try {
-                    const response = await fetch(
-                      `/api/financial-documents/${invoice.id}/archive`,
-                      { method: 'POST' }
-                    );
-                    const data =
-                      (await response.json()) as ApiResponse<unknown>;
-                    if (!data.success) throw new Error(data.error);
-                    void fetchInvoices();
-                  } catch (error) {
-                    console.error('Archive error:', error);
-                  }
-                }}
-              />
-            </TabsContent>
-
-            <TabsContent value="archived" className="mt-4">
-              <InvoicesTable
-                invoices={invoices.filter(inv => inv.deleted_at)}
-                loading={loadingInvoices}
-                onView={handleView}
-                onOpenOrder={orderId => {
-                  void handleOpenOrderModal(orderId).catch(console.error);
-                }}
-                onOpenOrg={orgId => {
-                  setSelectedOrgId(orgId);
-                  setShowOrgModal(true);
-                }}
-                onDownloadPdf={invoice => {
-                  void handleDownloadInvoicePdf(invoice).catch(error => {
-                    console.error(
-                      '[Factures] handleDownloadInvoicePdf failed:',
-                      error
-                    );
-                  });
-                }}
-                isArchived
-                onUnarchive={async invoice => {
-                  try {
-                    const response = await fetch(
-                      `/api/financial-documents/${invoice.id}/unarchive`,
-                      { method: 'POST' }
-                    );
-                    const data =
-                      (await response.json()) as ApiResponse<unknown>;
-                    if (!data.success) throw new Error(data.error);
-                    void fetchInvoices();
-                  } catch (error) {
-                    console.error('Unarchive error:', error);
-                  }
-                }}
-              />
-            </TabsContent>
-          </Tabs>
+          <FacturesTab
+            invoices={invoices}
+            loading={loadingInvoices}
+            statusFilter={statusFilter}
+            onView={handleView}
+            onDownloadPdf={invoice => {
+              void handleDownloadInvoicePdf(invoice).catch(error => {
+                console.error(
+                  '[Factures] handleDownloadInvoicePdf failed:',
+                  error
+                );
+              });
+            }}
+            onOpenOrder={orderId => {
+              void handleOpenOrderModal(orderId).catch(console.error);
+            }}
+            onOpenOrg={orgId => {
+              setSelectedOrgId(orgId);
+              setShowOrgModal(true);
+            }}
+            onRapprochement={invoice => {
+              void handleRapprochement(invoice).catch(console.error);
+            }}
+            fetchInvoices={() => void fetchInvoices()}
+          />
         </TabsContent>
 
         <TabsContent value="devis" className="mt-4">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileEdit className="h-5 w-5" />
-                    Liste des devis
-                  </CardTitle>
-                  <CardDescription>
-                    Créez des devis depuis vos commandes et convertissez-les en
-                    factures
-                  </CardDescription>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    void fetchQontoQuotes().catch((err: unknown) => {
-                      console.error('[Factures] fetchQontoQuotes failed:', err);
-                    });
-                  }}
-                  disabled={loadingQuotes}
-                >
-                  <RefreshCw
-                    className={`h-4 w-4 mr-2 ${loadingQuotes ? 'animate-spin' : ''}`}
-                  />
-                  Actualiser
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {loadingQuotes ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map(i => (
-                    <Skeleton key={i} className="h-12 w-full" />
-                  ))}
-                </div>
-              ) : errorQuotes ? (
-                <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-destructive">
-                  {errorQuotes}
-                </div>
-              ) : qontoQuotes.length === 0 ? (
-                <div className="py-8 text-center text-muted-foreground">
-                  <FileEdit className="mx-auto mb-4 h-12 w-12 opacity-50" />
-                  <p>Aucun devis</p>
-                  <p className="text-sm">
-                    Cliquez sur &quot;Nouveau devis&quot; pour en créer un
-                  </p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>N° Devis</TableHead>
-                      <TableHead>Client</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Expiration</TableHead>
-                      <TableHead>Statut</TableHead>
-                      <TableHead className="text-right">Montant</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {qontoQuotes.map(quote => (
-                      <TableRow key={quote.id}>
-                        <TableCell className="font-mono">
-                          {quote.quote_number}
-                        </TableCell>
-                        <TableCell>{quote.client?.name ?? '-'}</TableCell>
-                        <TableCell>{formatDate(quote.issue_date)}</TableCell>
-                        <TableCell>
-                          {quote.expiry_date
-                            ? formatDate(quote.expiry_date)
-                            : '-'}
-                        </TableCell>
-                        <TableCell>
-                          <QuoteStatusBadge status={quote.status} />
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatAmount(quote.total_amount, quote.currency)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="icon" asChild>
-                              <Link
-                                href={`/factures/devis/${quote.id}`}
-                                title="Voir le détail"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Link>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                window.open(
-                                  `/api/qonto/quotes/${quote.id}/pdf`,
-                                  '_blank'
-                                )
-                              }
-                              title="Voir PDF"
-                              className="text-primary hover:text-primary hover:bg-primary/10"
-                            >
-                              <FileText className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                void handleDownloadQuotePdf(quote).catch(
-                                  (error: unknown) => {
-                                    console.error(
-                                      '[Factures] handleDownloadQuotePdf failed:',
-                                      error
-                                    );
-                                  }
-                                );
-                              }}
-                              title="Télécharger PDF"
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
-                            {!quote.converted_to_invoice_id && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setQuoteToDelete(quote)}
-                                title="Supprimer"
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+          <DevisTab
+            quotes={qontoQuotes}
+            loading={loadingQuotes}
+            error={errorQuotes}
+            onRefresh={() => {
+              void fetchQontoQuotes().catch((err: unknown) => {
+                console.error('[Factures] fetchQontoQuotes failed:', err);
+              });
+            }}
+            onDownloadPdf={quote => {
+              void handleDownloadQuotePdf(quote).catch((error: unknown) => {
+                console.error(
+                  '[Factures] handleDownloadQuotePdf failed:',
+                  error
+                );
+              });
+            }}
+            onDelete={quote => setQuoteToDelete(quote)}
+          />
         </TabsContent>
 
         <TabsContent value="avoirs" className="mt-4">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileX className="h-5 w-5" />
-                    Liste des avoirs
-                  </CardTitle>
-                  <CardDescription>
-                    Les avoirs sont créés depuis la page de détail d&apos;une
-                    facture finalisée
-                  </CardDescription>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void fetchCreditNotes()}
-                  disabled={loadingCreditNotes}
-                >
-                  <RefreshCw
-                    className={`h-4 w-4 mr-2 ${loadingCreditNotes ? 'animate-spin' : ''}`}
-                  />
-                  Actualiser
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {loadingCreditNotes ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map(i => (
-                    <Skeleton key={i} className="h-12 w-full" />
-                  ))}
-                </div>
-              ) : errorCreditNotes ? (
-                <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-destructive">
-                  {errorCreditNotes}
-                </div>
-              ) : creditNotes.length === 0 ? (
-                <div className="py-8 text-center text-muted-foreground">
-                  <FileX className="mx-auto mb-4 h-12 w-12 opacity-50" />
-                  <p>Aucun avoir</p>
-                  <p className="text-sm">
-                    Les avoirs sont créés depuis la page de détail d&apos;une
-                    facture
-                  </p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>N° Avoir</TableHead>
-                      <TableHead>Client</TableHead>
-                      <TableHead>Facture liée</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Statut</TableHead>
-                      <TableHead className="text-right">Montant</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {creditNotes.map(creditNote => (
-                      <TableRow key={creditNote.id}>
-                        <TableCell className="font-mono">
-                          {creditNote.credit_note_number}
-                        </TableCell>
-                        <TableCell>{creditNote.client?.name ?? '-'}</TableCell>
-                        <TableCell>
-                          {creditNote.invoice_id ? (
-                            <Link
-                              href={`/factures/${creditNote.invoice_id}?type=invoice`}
-                              className="inline-flex items-center gap-1 text-primary hover:underline font-mono text-sm"
-                            >
-                              {creditNote.invoice?.invoice_number ??
-                                'Voir facture'}
-                              <ExternalLink className="h-3 w-3 opacity-60" />
-                            </Link>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {formatDate(creditNote.issue_date)}
-                        </TableCell>
-                        <TableCell>
-                          <CreditNoteStatusBadge status={creditNote.status} />
-                        </TableCell>
-                        <TableCell className="text-right font-medium text-destructive">
-                          -
-                          {formatAmount(
-                            Math.abs(
-                              (creditNote.total_amount_cents ?? 0) / 100
-                            ),
-                            creditNote.currency
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="icon" asChild>
-                              <Link
-                                href={`/factures/${creditNote.id}?type=credit_note`}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Link>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                window.open(
-                                  `/api/qonto/credit-notes/${creditNote.id}/pdf`,
-                                  '_blank'
-                                )
-                              }
-                              title="Voir PDF"
-                              className="text-primary hover:text-primary hover:bg-primary/10"
-                            >
-                              <FileText className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                void handleDownloadCreditNotePdf(creditNote)
-                              }
-                              title="Télécharger PDF"
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+          <AvoirsTab
+            creditNotes={creditNotes}
+            loading={loadingCreditNotes}
+            error={errorCreditNotes}
+            onRefresh={() => void fetchCreditNotes()}
+            onDownloadPdf={creditNote => {
+              void handleDownloadCreditNotePdf(creditNote);
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="manquantes" className="mt-4">
@@ -1884,8 +902,8 @@ export default function FacturationPage() {
                     Transactions sans facture
                   </CardTitle>
                   <CardDescription>
-                    Ces transactions ont été rapprochées mais n'ont pas de pièce
-                    jointe dans Qonto. Uploadez les factures manquantes.
+                    Ces transactions ont ete rapprochees mais n&apos;ont pas de
+                    piece jointe dans Qonto. Uploadez les factures manquantes.
                   </CardDescription>
                 </div>
                 <Button
@@ -1894,7 +912,7 @@ export default function FacturationPage() {
                   onClick={() => void refreshMissing()}
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Rafraîchir
+                  Rafraichir
                 </Button>
               </div>
             </CardHeader>
@@ -1971,7 +989,7 @@ export default function FacturationPage() {
         }}
       />
 
-      {/* Nouveau formulaire unifié de création de devis */}
+      {/* Nouveau formulaire unifie de creation de devis */}
       <QuoteFormModal
         open={showQuoteForm}
         onOpenChange={setShowQuoteForm}
@@ -2021,7 +1039,7 @@ export default function FacturationPage() {
             <AlertDialogDescription>
               Vous allez supprimer le devis{' '}
               <strong>{quoteToDelete?.quote_number}</strong>. Cette action est
-              irréversible.
+              irreversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

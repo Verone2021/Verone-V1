@@ -75,7 +75,7 @@ export function CustomersTab() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from('organisations')
-        .select('*')
+        .select('*') // TODO: specify columns
         .eq('type', 'customer')
         .not('archived_at', 'is', null)
         .order('archived_at', { ascending: false });
