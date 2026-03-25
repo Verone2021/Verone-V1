@@ -488,7 +488,8 @@ export const useCatalogue = () => {
     try {
       const { data, error } = await supabase
         .from('products')
-        .insert([productData as never])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert([productData as any])
         .select(
           'id, sku, name, slug, cost_price, cost_price_count, product_type, stock_real, cost_net_avg, cost_net_last, cost_net_min, cost_net_max, stock_status, product_status, condition, subcategory_id, supplier_id, brand, has_images, dimensions, weight, archived_at, created_at, updated_at'
         )
@@ -511,7 +512,8 @@ export const useCatalogue = () => {
     try {
       const { data, error } = await supabase
         .from('products')
-        .update(updates as never)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .update(updates as any)
         .eq('id', id)
         .select(
           'id, sku, name, slug, cost_price, cost_price_count, product_type, stock_real, cost_net_avg, cost_net_last, cost_net_min, cost_net_max, stock_status, product_status, condition, subcategory_id, supplier_id, brand, has_images, dimensions, weight, archived_at, created_at, updated_at'

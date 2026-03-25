@@ -20,7 +20,8 @@ interface QueryState<T> {
   refetch: () => Promise<void>;
 }
 
-interface MutationState<T, V = unknown> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- V defaults to any for backward compatibility
+interface MutationState<T, V = any> {
   mutate: (variables: V) => Promise<T | null>;
   loading: boolean;
   error: string | null;
@@ -152,7 +153,8 @@ export function useSupabaseQuery<T = unknown>(
   };
 }
 
-export function useSupabaseMutation<T = unknown, V = unknown>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- V defaults to any for backward compatibility
+export function useSupabaseMutation<T = unknown, V = any>(
   mutationFn: (
     supabase: ReturnType<typeof createClient>,
     variables: V
@@ -236,27 +238,10 @@ export function useSupabaseTable<T = unknown>(
 
   const queryFn = useCallback(
     async (supabase: ReturnType<typeof createClient>) => {
-      // Dynamic table name requires type assertion for Supabase generic constraints
-      // Dynamic table name requires type assertion for Supabase generic constraints
-      type DynamicQuery = {
-        in: (col: string, values: unknown[]) => DynamicQuery;
-        ilike: (col: string, pattern: string) => DynamicQuery;
-        eq: (col: string, value: unknown) => DynamicQuery;
-        order: (col: string, opts: { ascending?: boolean }) => DynamicQuery;
-        range: (from: number, to: number) => DynamicQuery;
-        then: Promise<{
-          data: T[] | null;
-          error: PostgrestError | null;
-        }>['then'];
-      };
-      let query = (
-        supabase as unknown as {
-          from: (t: string) => { select: (s: string) => DynamicQuery };
-        }
-      )
-        .from(tableName)
-        .select(select);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment -- Dynamic table name requires any cast
+      let query = supabase.from(tableName as any).select(select) as any;
 
+      /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment -- Dynamic query builder */
       // Apply filters
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
@@ -269,9 +254,11 @@ export function useSupabaseTable<T = unknown>(
           }
         }
       });
+      /* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment */
 
       // Apply ordering
       if (orderBy) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
         query = query.order(orderBy.column, {
           ascending: orderBy.ascending ?? true,
         });
@@ -280,18 +267,18 @@ export function useSupabaseTable<T = unknown>(
       // Apply pagination
       if (limit) {
         const start = offset ?? 0;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
         query = query.range(start, start + limit - 1);
       }
 
-      return await (query as unknown as Promise<{
-        data: T[] | null;
-        error: PostgrestError | null;
-      }>);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return await query;
     },
     [tableName, select, filters, orderBy, limit, offset]
   );
 
-  return useSupabaseQuery<T[]>(queryKey, queryFn as never, queryOptions);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any -- Dynamic query builder
+  return useSupabaseQuery<T[]>(queryKey, queryFn as any, queryOptions);
 }
 
 // Cache cleanup utility

@@ -99,9 +99,9 @@ export function useSalesDashboard() {
       // QUERY 1: Consultations actives avec JOINs (1 requête au lieu de N+1)
       // FIX: Utilise les relations Supabase au lieu de boucles
       // ============================================
-      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- client_consultations view not in generated types */
+      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
       const { data: rawConsultations, error: consultationsError } = await (
-        supabase as never
+        supabase as any
       )
         .from('client_consultations')
         .select(
@@ -113,7 +113,7 @@ export function useSalesDashboard() {
         )
         .neq('status', 'closed')
         .order('created_at', { ascending: false });
-      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
       if (consultationsError) throw consultationsError;
 

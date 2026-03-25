@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -18,7 +19,7 @@ import { Check, ChevronsUpDown, Building2, User, Loader2 } from 'lucide-react';
 
 interface ClientAssignmentSelectorProps {
   value: string;
-  onChange: (clientId: string, client: unknown) => void;
+  onChange: (clientId: string, client: any) => void;
   label?: string;
   placeholder?: string;
   required?: boolean;

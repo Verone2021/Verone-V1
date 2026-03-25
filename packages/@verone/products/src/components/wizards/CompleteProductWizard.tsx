@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-floating-promises, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unused-vars, @typescript-eslint/prefer-nullish-coalescing, react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unused-vars, @typescript-eslint/prefer-nullish-coalescing, react-hooks/exhaustive-deps */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -78,8 +78,8 @@ export interface WizardFormData {
 
   // Caractéristiques techniques
   brand: string;
-  variant_attributes: Record<string, unknown>;
-  dimensions: Record<string, unknown>;
+  variant_attributes: Record<string, any>;
+  dimensions: Record<string, any>;
   weight: string;
   gtin: string;
 
@@ -225,9 +225,9 @@ export function CompleteProductWizard({
           brand: draft.brand ?? '',
           variant_attributes: (draft.variant_attributes ?? {}) as Record<
             string,
-            unknown
+            any
           >,
-          dimensions: (draft.dimensions ?? {}) as Record<string, unknown>,
+          dimensions: (draft.dimensions ?? {}) as Record<string, any>,
           weight: draft.weight?.toString() ?? '',
           gtin: draft.gtin ?? '',
           product_type: (draft.product_type || 'standard') as

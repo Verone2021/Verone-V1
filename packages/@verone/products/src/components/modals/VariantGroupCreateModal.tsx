@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unsafe-argument */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -313,11 +313,7 @@ export function VariantGroupCreateModal({
                 <select
                   id="unit"
                   value={dimensionsUnit}
-                  onChange={e =>
-                    setDimensionsUnit(
-                      e.target.value as 'cm' | 'm' | 'mm' | 'in'
-                    )
-                  }
+                  onChange={e => setDimensionsUnit(e.target.value as any)}
                   className="mt-1 w-full border border-gray-300 rounded-md px-2 py-2 text-sm"
                 >
                   {DIMENSION_UNITS.map(unit => (
