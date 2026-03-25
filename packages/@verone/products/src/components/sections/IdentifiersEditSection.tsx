@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-misused-promises, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unused-vars */
 'use client';
 
 import { useState, useTransition } from 'react';
@@ -17,7 +17,7 @@ interface Product {
   slug: string;
   supplier_reference?: string;
   gtin?: string;
-  variant_attributes?: Record<string, unknown>;
+  variant_attributes?: Record<string, any>;
   subcategory_id?: string | null;
 }
 

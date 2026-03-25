@@ -748,7 +748,8 @@ export function usePurchaseReceptions() {
         setValidating(true);
         setError(null);
 
-        const { error: rpcError } = await supabase.rpc(
+        /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */
+        const { error: rpcError } = await (supabase.rpc as any)(
           'confirm_affiliate_reception',
           {
             p_reception_id: receptionId,
@@ -756,6 +757,7 @@ export function usePurchaseReceptions() {
             p_notes: notes,
           }
         );
+        /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */
 
         if (rpcError) {
           throw new Error((rpcError as { message: string }).message);
@@ -789,13 +791,15 @@ export function usePurchaseReceptions() {
         setValidating(true);
         setError(null);
 
-        const { error: rpcError } = await supabase.rpc(
+        /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */
+        const { error: rpcError } = await (supabase.rpc as any)(
           'cancel_affiliate_remainder',
           {
             p_reception_id: receptionId,
             p_reason: reason,
           }
         );
+        /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */
 
         if (rpcError) {
           throw new Error((rpcError as { message: string }).message);

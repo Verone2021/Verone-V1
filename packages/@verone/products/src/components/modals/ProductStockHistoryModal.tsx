@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises */
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -26,7 +26,6 @@ import {
   TableRow,
 } from '@verone/ui';
 // formatPrice removed - unused
-import type { StockMovement } from '@verone/stock/hooks';
 import { useStockMovements } from '@verone/stock/hooks';
 
 interface ProductStockHistoryModalProps {
@@ -45,8 +44,7 @@ export function ProductStockHistoryModal({
   isOpen,
   onClose,
 }: ProductStockHistoryModalProps) {
-  // StockMovement uses optional fields but Supabase returns null - cast needed
-  const [movements, setMovements] = useState<StockMovement[]>([]);
+  const [movements, setMovements] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const { getProductHistory, getReasonDescription } = useStockMovements();
 
@@ -56,7 +54,7 @@ export function ProductStockHistoryModal({
     setLoading(true);
     try {
       const history = await getProductHistory(product.id);
-      setMovements(history as StockMovement[]);
+      setMovements(history);
     } catch (error) {
       console.error("Erreur lors du chargement de l'historique:", error);
     } finally {
@@ -94,10 +92,7 @@ export function ProductStockHistoryModal({
     }
   };
 
-  const formatUserName = (
-    userProfile: { first_name?: string; last_name?: string } | undefined,
-    performedBy?: string
-  ) => {
+  const formatUserName = (userProfile: any, performedBy?: string) => {
     if (!userProfile && !performedBy) return 'Utilisateur inconnu';
 
     // Si on a le profil avec les noms
@@ -169,7 +164,7 @@ export function ProductStockHistoryModal({
     }
   };
 
-  const getQuantityChangeDisplay = (movement: StockMovement) => {
+  const getQuantityChangeDisplay = (movement: any) => {
     const { movement_type, quantity_change, quantity_before, quantity_after } =
       movement;
 

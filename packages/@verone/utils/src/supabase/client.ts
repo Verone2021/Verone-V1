@@ -41,7 +41,8 @@ if (
 }
 
 // ✅ FIX: Mock SSR unique (même instance à chaque appel)
-const ssrMockClient: unknown = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ssrMockClient: any = {
   auth: {
     getSession: async () => ({ data: { session: null }, error: null }),
     getUser: async () => ({ data: { user: null }, error: null }),

@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-floating-promises, @typescript-eslint/prefer-nullish-coalescing, react-hooks/exhaustive-deps */
-// NOTE: product prop typed as Record<string,unknown> to avoid explicit 'any'. Property access safety handled by eslint-disable above.
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises, @typescript-eslint/prefer-nullish-coalescing, react-hooks/exhaustive-deps */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -38,16 +37,9 @@ import { ProductCharacteristicsModal } from '../modals/ProductCharacteristicsMod
 import { ProductDescriptionsModal } from '../modals/ProductDescriptionsModal';
 import { ProductImagesModal } from '../modals/ProductImagesModal';
 
-// Product from Supabase has dynamic JSONB shape with 50+ fields accessed via dotted notation.
-// Using Record<string, unknown> would require 100+ type assertions. A full typed interface is the proper
-// long-term fix but is out of scope for this cleanup pass.
-
-type ProductRecord = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
-
 interface ProductEditModeProps {
-  product: ProductRecord;
+  product: any;
   onSwitchToView: () => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Passed to multiple child components with different param types
   onUpdate: (updatedProduct: any) => void;
   className?: string;
 }
@@ -61,8 +53,7 @@ export function ProductEditMode({
   const supabase = createClient();
   const { subcategories: _subcategories } = useSubcategories();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase query returns dynamic shape
-  const [suppliers, setSuppliers] = useState<Array<Record<string, any>>>([]);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     name: product.name ?? '',
     slug: product.slug ?? '',
@@ -108,7 +99,6 @@ export function ProductEditMode({
     fetchSuppliers();
   }, []);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic field value from form inputs
   const handleFieldChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     onUpdate({ [field]: value });

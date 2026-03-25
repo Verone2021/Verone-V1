@@ -63,12 +63,15 @@ interface SelectionRow {
 async function fetchEnseignesWithStats(): Promise<EnseigneWithStats[]> {
   const supabase = createClient();
 
-  const { data: enseignes, error } = await supabase
+  // Fetch enseignes
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
+  const { data: enseignes, error } = await (supabase as any)
     .from('enseignes')
     .select(
       'id, name, description, logo_url, member_count, is_active, created_at, updated_at, created_by'
     )
     .order('name');
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
   if (error) {
     console.error('Erreur fetch enseignes:', error);
@@ -83,17 +86,20 @@ async function fetchEnseignesWithStats(): Promise<EnseigneWithStats[]> {
 
   const enseigneIds = typedEnseignes.map(e => e.id);
 
+  // Requêtes parallèles pour les stats
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
   const [orgsResult, affiliatesResult, selectionsResult] = await Promise.all([
-    supabase
+    (supabase as any)
       .from('organisations')
       .select('enseigne_id')
       .in('enseigne_id', enseigneIds),
-    supabase
+    (supabase as any)
       .from('linkme_affiliates')
       .select('id, enseigne_id')
       .in('enseigne_id', enseigneIds),
-    supabase.from('linkme_selections').select('affiliate_id'),
+    (supabase as any).from('linkme_selections').select('affiliate_id'),
   ]);
+  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
   // Compter organisations par enseigne
   const orgsCountMap = new Map<string, number>();

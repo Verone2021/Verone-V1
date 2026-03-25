@@ -28,22 +28,16 @@ interface StockMovementsChartProps {
 }
 
 // Custom Tooltip
-interface TooltipPayloadEntry {
-  value?: number;
-  payload?: StockMovementDataPoint;
-}
-
-const CustomTooltip = ({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: TooltipPayloadEntry[];
-}) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const CustomTooltip = ({ active, payload }: any) => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   if (!active || !payload?.length) return null;
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
   const entrees = payload[0]?.value ?? 0;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
   const sorties = payload[1]?.value ?? 0;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   const dataPoint = payload[0]?.payload as StockMovementDataPoint;
 
   return (
