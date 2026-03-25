@@ -53,7 +53,7 @@ const securityHeaders = {
       ],
       mediaSrc: ["'self'", 'https://aorroydfjsrygmosnzrl.supabase.co'],
       objectSrc: ["'none'"],
-      frameSrc: ["'none'"],
+      frameSrc: ["'self'", 'blob:'],
       baseUri: ["'self'"],
       formAction: ["'self'"],
       frameAncestors: ["'none'"],
