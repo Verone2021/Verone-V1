@@ -75,7 +75,13 @@ export function useOrganisationContacts(
   includeEnseigneContacts?: boolean
 ) {
   return useQuery({
-    queryKey: ['organisation-contacts', organisationId, enseigneId],
+    queryKey: [
+      'organisation-contacts',
+      organisationId,
+      enseigneId,
+      ownershipType,
+      includeEnseigneContacts,
+    ],
     queryFn: async () => {
       if (!organisationId && !enseigneId) return null;
 

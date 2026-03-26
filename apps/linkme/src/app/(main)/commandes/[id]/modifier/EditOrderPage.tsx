@@ -187,6 +187,11 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
     () => contactsLocalOnly?.contacts ?? [],
     [contactsLocalOnly]
   );
+  // Billing contacts: franchise → org contacts only, succursale/propre → enseigne contacts
+  const billingContacts = useMemo(
+    () => (ownershipType === 'franchise' ? localContacts : allContacts),
+    [ownershipType, localContacts, allContacts]
+  );
   const billingAddresses = useMemo(
     () => billingAddressesData?.all ?? [],
     [billingAddressesData]
@@ -516,7 +521,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
   const resolvedBillingContact = useMemo(() => {
     if (billingContactMode === 'same') return resolvedResponsable;
     if (billingContactMode === 'existing' && selectedBillingContactId) {
-      const c = allContacts.find(c => c.id === selectedBillingContactId);
+      const c = billingContacts.find(c => c.id === selectedBillingContactId);
       if (c)
         return {
           name: `${c.firstName} ${c.lastName}`,
@@ -535,7 +540,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
   }, [
     billingContactMode,
     selectedBillingContactId,
-    allContacts,
+    billingContacts,
     billingContactForm,
     resolvedResponsable,
   ]);
@@ -1008,7 +1013,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
 
           <BillingSection
             resolvedBillingContact={resolvedBillingContact}
-            allContacts={allContacts}
+            allContacts={billingContacts}
             billingContactMode={billingContactMode}
             selectedBillingContactId={selectedBillingContactId}
             billingContactForm={billingContactForm}
