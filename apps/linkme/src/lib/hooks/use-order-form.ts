@@ -24,6 +24,12 @@ import {
 } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 
+/** Convert empty string to null for DB constraints */
+function toNullIfEmpty(v: string | null | undefined): string | null {
+  if (!v) return null;
+  return v;
+}
+
 import type {
   OrderFormData,
   RestaurantStepData,
@@ -494,9 +500,10 @@ export function useOrderForm(): UseOrderFormReturn {
             first_name: formData.contacts.responsable.firstName,
             last_name: formData.contacts.responsable.lastName,
             email: formData.contacts.responsable.email,
-            phone: formData.contacts.responsable.phone ?? null,
-            title: formData.contacts.responsable.position ?? null,
-            is_primary_contact: true,
+            phone: toNullIfEmpty(formData.contacts.responsable.phone),
+            title: toNullIfEmpty(formData.contacts.responsable.position),
+            is_primary_contact: false,
+            is_commercial_contact: false,
             is_active: true,
           })
           .select('id')
@@ -528,9 +535,10 @@ export function useOrderForm(): UseOrderFormReturn {
             first_name: bc.firstName,
             last_name: bc.lastName,
             email: bc.email,
-            phone: bc.phone ?? null,
-            title: bc.position ?? null,
+            phone: toNullIfEmpty(bc.phone),
+            title: toNullIfEmpty(bc.position),
             is_billing_contact: true,
+            is_commercial_contact: false,
             is_active: true,
           })
           .select('id')
@@ -558,8 +566,10 @@ export function useOrderForm(): UseOrderFormReturn {
             first_name: dc.firstName,
             last_name: dc.lastName,
             email: dc.email,
-            phone: dc.phone ?? null,
-            title: dc.position ?? null,
+            phone: toNullIfEmpty(dc.phone),
+            title: toNullIfEmpty(dc.position),
+            is_delivery_only: true,
+            is_commercial_contact: false,
             is_active: true,
           })
           .select('id')

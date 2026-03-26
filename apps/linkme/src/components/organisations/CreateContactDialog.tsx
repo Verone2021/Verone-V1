@@ -66,6 +66,7 @@ const contactSchema = z.object({
   direct_line: z.string().optional(),
   is_primary_contact: z.boolean(),
   is_billing_contact: z.boolean(),
+  is_delivery_only: z.boolean(),
   notes: z.string().optional(),
 });
 
@@ -101,6 +102,7 @@ const defaultFormData: ContactFormData = {
   direct_line: '',
   is_primary_contact: false,
   is_billing_contact: false,
+  is_delivery_only: false,
   notes: '',
 };
 
@@ -137,6 +139,7 @@ export function CreateContactDialog({
         direct_line: '',
         is_primary_contact: contact.isPrimaryContact,
         is_billing_contact: contact.isBillingContact,
+        is_delivery_only: false,
         notes: '',
       });
     } else if (!contact && open) {
@@ -378,6 +381,19 @@ export function CreateContactDialog({
                   id="cc-billing"
                   checked={formData.is_billing_contact}
                   onCheckedChange={v => updateField('is_billing_contact', v)}
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <Label
+                  htmlFor="cc-delivery"
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  Livraison
+                </Label>
+                <Switch
+                  id="cc-delivery"
+                  checked={formData.is_delivery_only}
+                  onCheckedChange={v => updateField('is_delivery_only', v)}
                 />
               </div>
             </div>
