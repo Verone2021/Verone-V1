@@ -11,13 +11,14 @@ CRM/ERP modulaire — decoration et mobilier haut de gamme.
 
 > Pas fait ? → `/research <domaine>` avant toute modification.
 
-## 5 regles non negociables
+## 6 regles non negociables
 
 1. **Explorer avant coder** — jamais supposer, toujours verifier
 2. **Zero `any` TypeScript** — `unknown` + validation Zod ou types DB
 3. **Build filtre** — `pnpm --filter @verone/[app] build` (jamais global)
 4. **Feature branch** — depuis `staging`, format `[APP-DOMAIN-NNN] type: desc`
 5. **Demander a Romeo** — avant commit/push/PR/migration
+6. **JAMAIS de donnees test en SQL** — pas d'INSERT/UPDATE/DELETE sur donnees metier via SQL. Donnees test = UI Playwright uniquement. `mcp__supabase__execute_sql` = SELECT + DDL schema only
 
 ## Commandes
 

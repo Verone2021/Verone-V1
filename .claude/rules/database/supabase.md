@@ -97,6 +97,14 @@ if (error) {
 - Jamais éditer types générés manuellement
 - Regénérer après chaque migration
 
+## INTERDIT : Donnees test en SQL
+
+**REGLE ABSOLUE** : Ne JAMAIS utiliser `mcp__supabase__execute_sql` pour INSERT/UPDATE/DELETE des donnees metier (organisations, commandes, contacts, produits, factures, etc.).
+
+- **Donnees test** : creer via l'UI avec Playwright MCP (formulaires, parcours utilisateur)
+- **SQL autorise** : SELECT (lecture), DDL schema (CREATE TABLE, ALTER, migrations), triggers, RLS policies, indexes
+- **Pourquoi** : Les INSERT/UPDATE SQL bypassent la logique metier (hooks, validations, triggers, workflows) et creent des incoherences graves
+
 ## Retrocession Rate (LinkMe)
 
 **INTERDIT** : Recalculer un `retrocession_rate` a partir d'un ratio de prix.

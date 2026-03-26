@@ -3,25 +3,22 @@
 /**
  * Page Approbations LinkMe - Back-Office
  *
- * 3 onglets de validation:
- * - Commandes: status = 'pending_approval'
+ * 2 onglets de validation:
+ * - Commandes: status = 'pending_approval' (org geree depuis page detail commande)
  * - Produits: affiliate_approval_status = 'pending_approval'
- * - Organisations: approval_status = 'pending_validation'
  *
  * @module ApprobationsPage
  * @since 2026-01-05
  */
 
 import { Badge, Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
-import { Package, Clock, ShoppingCart, Building2 } from 'lucide-react';
+import { Package, Clock, ShoppingCart } from 'lucide-react';
 
 import { usePendingOrdersCount } from '../hooks/use-linkme-order-actions';
 import { usePendingApprovalsCount } from '../hooks/use-product-approvals';
-import { usePendingOrganisationsCount } from '../hooks/use-organisation-approvals';
 
 import { CommandesTab } from './components/CommandesTab';
 import { ProduitsTab } from './components/ProduitsTab';
-import { OrganisationsTab } from './components/OrganisationsTab';
 
 // ============================================================================
 // MAIN PAGE COMPONENT
@@ -30,10 +27,8 @@ import { OrganisationsTab } from './components/OrganisationsTab';
 export default function ApprobationsClient() {
   const { data: pendingOrdersCount = 0 } = usePendingOrdersCount();
   const { data: pendingProductsCount = 0 } = usePendingApprovalsCount();
-  const { data: pendingOrgsCount = 0 } = usePendingOrganisationsCount();
 
-  const totalPending =
-    pendingOrdersCount + pendingProductsCount + pendingOrgsCount;
+  const totalPending = pendingOrdersCount + pendingProductsCount;
 
   return (
     <div className="p-6">
@@ -42,7 +37,7 @@ export default function ApprobationsClient() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Approbations</h1>
           <p className="text-gray-500 mt-1">
-            Validez les commandes, produits et organisations
+            Validez les commandes et produits
           </p>
         </div>
         {totalPending > 0 && (
@@ -57,7 +52,7 @@ export default function ApprobationsClient() {
 
       {/* Tabs */}
       <Tabs defaultValue="commandes" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
           <TabsTrigger value="commandes" className="flex items-center gap-2">
             <ShoppingCart className="h-4 w-4" />
             Commandes
@@ -76,18 +71,6 @@ export default function ApprobationsClient() {
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger
-            value="organisations"
-            className="flex items-center gap-2"
-          >
-            <Building2 className="h-4 w-4" />
-            Organisations
-            {pendingOrgsCount > 0 && (
-              <Badge variant="destructive" className="ml-1">
-                {pendingOrgsCount}
-              </Badge>
-            )}
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="commandes">
@@ -96,10 +79,6 @@ export default function ApprobationsClient() {
 
         <TabsContent value="produits">
           <ProduitsTab />
-        </TabsContent>
-
-        <TabsContent value="organisations">
-          <OrganisationsTab />
         </TabsContent>
       </Tabs>
     </div>

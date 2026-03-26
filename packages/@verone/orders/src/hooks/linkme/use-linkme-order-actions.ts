@@ -37,6 +37,8 @@ export interface RequestInfoInput {
   missingFields: RequestInfoMissingField[];
   /** Destinataire : demandeur ou propriétaire */
   recipientType?: 'requester' | 'owner';
+  /** Emails destinataires explicites (prioritaire sur recipientType) */
+  recipientEmails?: string[];
 }
 
 export interface RejectOrderInput {
@@ -456,22 +458,33 @@ async function requestInfo(
     organisationName = org?.trade_name ?? org?.legal_name ?? null;
   }
 
-  // Déterminer le destinataire (requester par défaut, owner si spécifié)
-  const recipientType = input.recipientType ?? 'requester';
-  const recipientEmail =
-    recipientType === 'owner' && details.owner_email
-      ? details.owner_email
-      : details.requester_email;
+  // Déterminer les destinataires
+  const emails: string[] = input.recipientEmails?.length
+    ? input.recipientEmails
+    : (() => {
+        const recipientType = input.recipientType ?? 'requester';
+        const email =
+          recipientType === 'owner' && details.owner_email
+            ? details.owner_email
+            : details.requester_email;
+        return email ? [email] : [];
+      })();
+
+  if (emails.length === 0) {
+    throw new Error(
+      'Aucun email destinataire. Veuillez sélectionner au moins un destinataire.'
+    );
+  }
+
   const recipientName =
-    recipientType === 'owner' && details.owner_name
-      ? details.owner_name
-      : details.requester_name;
+    details.requester_name ?? details.owner_name ?? 'Destinataire';
 
   // Logger la demande dans les notes de la commande
   const timestamp = new Date().toLocaleString('fr-FR');
   const noteMessage = input.customMessage ?? 'Formulaire interactif envoyé';
   const fieldsSummary = input.missingFields.map(f => f.label).join(', ');
-  const newNote = `[${timestamp}] DEMANDE COMPLEMENTS (formulaire): ${noteMessage} [Champs: ${fieldsSummary}]`;
+  const emailsList = emails.join(', ');
+  const newNote = `[${timestamp}] DEMANDE COMPLEMENTS → ${emailsList}\n${noteMessage}\n[Champs: ${fieldsSummary}]`;
   const updatedNotes = order.notes ? `${order.notes}\n\n${newNote}` : newNote;
 
   const { error: updateError } = await supabase
@@ -486,7 +499,8 @@ async function requestInfo(
     throw new Error(`Erreur mise à jour notes: ${updateError.message}`);
   }
 
-  // Appeler le nouvel endpoint formulaire interactif
+  // Envoyer à chaque destinataire
+  const recipientEmail = emails.join(',');
   const emailResponse = await fetch('/api/emails/linkme-info-request', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -495,7 +509,7 @@ async function requestInfo(
       orderNumber: order.order_number,
       recipientEmail,
       recipientName,
-      recipientType,
+      recipientType: 'manual',
       organisationName,
       totalTtc: order.total_ttc ?? 0,
       requestedFields: input.missingFields,
@@ -515,7 +529,7 @@ async function requestInfo(
 
   return {
     success: true,
-    message: `Formulaire de compléments envoyé à ${recipientEmail}`,
+    message: `Formulaire de compléments envoyé à ${emailsList}`,
   };
 }
 
