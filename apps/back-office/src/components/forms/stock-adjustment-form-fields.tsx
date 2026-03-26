@@ -1,5 +1,13 @@
 'use client';
 
+import { useState } from 'react';
+
+import {
+  UniversalProductSelectorV2,
+  type SelectedProduct,
+} from '@verone/products';
+import { ProductThumbnail } from '@verone/products';
+import { ButtonV2 } from '@verone/ui';
 import { ImageUploadZone } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
@@ -11,7 +19,7 @@ import {
   SelectValue,
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import { Loader2 } from 'lucide-react';
+import { Package, X } from 'lucide-react';
 
 import type {
   Product,
@@ -84,46 +92,85 @@ interface FileUploadFieldProps {
 // =====================================================================
 
 export function ProductField({
-  formData,
+  formData: _formData,
   loading,
-  products,
-  loadingProducts,
   selectedProduct,
   onProductChange,
-}: ProductFieldProps) {
+}: Omit<ProductFieldProps, 'products' | 'loadingProducts'>) {
+  const [selectorOpen, setSelectorOpen] = useState(false);
+
   return (
     <div className="space-y-2">
-      <Label htmlFor="product">
+      <Label>
         Produit <span className="text-red-500">*</span>
       </Label>
-      {loadingProducts ? (
-        <div className="flex items-center gap-2 p-3 border rounded-md">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span className="text-sm text-gray-500">Chargement produits...</span>
-        </div>
+
+      {selectedProduct ? (
+        <SelectedProductCard
+          product={selectedProduct}
+          onClear={() => onProductChange('')}
+          disabled={loading}
+        />
       ) : (
-        <Select
-          value={formData.product_id}
-          onValueChange={onProductChange}
+        <ButtonV2
+          type="button"
+          variant="outline"
+          className="w-full justify-start h-auto py-3"
+          onClick={() => setSelectorOpen(true)}
           disabled={loading}
         >
-          <SelectTrigger id="product">
-            <SelectValue placeholder="Sélectionner un produit" />
-          </SelectTrigger>
-          <SelectContent>
-            {products.map(product => (
-              <SelectItem key={product.id} value={product.id}>
-                {product.sku} - {product.name} (Stock: {product.stock_real})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <Package className="h-4 w-4 mr-2 text-gray-400" />
+          <span className="text-gray-500">
+            Sélectionner un produit (avec images)...
+          </span>
+        </ButtonV2>
       )}
-      {selectedProduct && (
-        <p className="text-sm text-gray-500">
-          Stock réel: <strong>{selectedProduct.stock_real}</strong> unités
+
+      <UniversalProductSelectorV2
+        open={selectorOpen}
+        onClose={() => setSelectorOpen(false)}
+        mode="single"
+        showImages
+        showPricing={false}
+        onSelect={(products: SelectedProduct[]) => {
+          if (products.length > 0 && products[0]) {
+            onProductChange(products[0].id);
+          }
+          setSelectorOpen(false);
+        }}
+      />
+    </div>
+  );
+}
+
+function SelectedProductCard({
+  product,
+  onClear,
+  disabled,
+}: {
+  product: Product;
+  onClear: () => void;
+  disabled: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-3 p-3 border rounded-md bg-gray-50">
+      <ProductThumbnail src={null} alt={product.name} size="sm" />
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-sm truncate">{product.name}</p>
+        <p className="text-xs text-gray-500">
+          {product.sku} — Stock réel: <strong>{product.stock_real}</strong>{' '}
+          unités
         </p>
-      )}
+      </div>
+      <ButtonV2
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={onClear}
+        disabled={disabled}
+      >
+        <X className="h-4 w-4" />
+      </ButtonV2>
     </div>
   );
 }
@@ -301,10 +348,10 @@ interface AdjustmentFormFieldsProps {
 export function AdjustmentFormFields({
   formData,
   setFormData,
-  products,
+  products: _products,
   selectedProduct,
   loading,
-  loadingProducts,
+  loadingProducts: _loadingProducts,
   onProductChange,
   calculateQuantityChange,
   onFileUpload,
@@ -314,8 +361,6 @@ export function AdjustmentFormFields({
       <ProductField
         formData={formData}
         loading={loading}
-        products={products}
-        loadingProducts={loadingProducts}
         selectedProduct={selectedProduct}
         onProductChange={onProductChange}
       />
