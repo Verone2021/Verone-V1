@@ -180,7 +180,7 @@ function ProductRow({
           ) : (
             <span className="text-xs text-indigo-500 font-medium">Affilie</span>
           )}
-          <StockBadgeCompact stock={item.product_stock_real} />
+          <StockBadgeCompact stock={item.product_stock_forecasted} />
           <ProductStatusBadge status={item.product_status} />
         </div>
       </div>
@@ -212,7 +212,7 @@ export function SelectionCatalogDialog({
   // Counts
   const totalItems = items?.length ?? 0;
   const inStockCount = useMemo(
-    () => (items ?? []).filter(i => i.product_stock_real > 0).length,
+    () => (items ?? []).filter(i => i.product_stock_forecasted > 0).length,
     [items]
   );
   const outOfStockCount = totalItems - inStockCount;
@@ -256,9 +256,9 @@ export function SelectionCatalogDialog({
     if (!items) return [];
     return items.filter(item => {
       // Stock filter
-      if (stockFilter === 'in_stock' && item.product_stock_real <= 0)
+      if (stockFilter === 'in_stock' && item.product_stock_forecasted <= 0)
         return false;
-      if (stockFilter === 'out_of_stock' && item.product_stock_real > 0)
+      if (stockFilter === 'out_of_stock' && item.product_stock_forecasted > 0)
         return false;
 
       // Category filter
