@@ -422,7 +422,7 @@ export function ShipmentWizard({
 
   // Handlers
   const handleQuantityChange = (itemId: string, value: string) => {
-    const num = parseInt(value) ?? 0;
+    const num = parseInt(value) || 0;
     setItems(prev =>
       prev.map(i =>
         i.sales_order_item_id === itemId

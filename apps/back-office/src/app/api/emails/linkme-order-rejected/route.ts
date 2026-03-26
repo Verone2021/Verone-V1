@@ -38,10 +38,53 @@ interface RejectionEmailRequest {
   organisationName: string | null;
 }
 
+function buildRejectionBodyHtml(params: {
+  orderNumber: string;
+  organisationName: string | null;
+  reason: string;
+}): string {
+  const { orderNumber, organisationName, reason } = params;
+  return `
+      <p style="margin: 0 0 20px 0;">
+        Nous avons le regret de vous informer que votre commande <strong>${orderNumber}</strong>${organisationName ? ` pour <strong>${organisationName}</strong>` : ''} n&rsquo;a pas pu &ecirc;tre valid&eacute;e.
+      </p>
+
+      <div style="background-color: #ffffff; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 3px solid #ef4444;">
+        <p style="margin: 0; color: #991b1b; font-weight: bold;">Motif :</p>
+        <p style="margin: 10px 0 0 0; color: #1f2937; white-space: pre-wrap;">${reason}</p>
+      </div>
+
+      <p style="margin: 0; color: #666;">
+        Si vous avez des questions ou souhaitez discuter de cette d&eacute;cision, n&rsquo;h&eacute;sitez pas &agrave; nous contacter.
+      </p>`;
+}
+
+async function logRejectionEvent(params: {
+  salesOrderId: string;
+  requesterEmail: string;
+  reason: string;
+  resendId: string | undefined;
+}): Promise<void> {
+  const { salesOrderId, requesterEmail, reason, resendId } = params;
+  try {
+    const supabase = getAdminClient();
+    await supabase.from('sales_order_events').insert({
+      sales_order_id: salesOrderId,
+      event_type: 'email_rejection_sent',
+      metadata: {
+        recipient_email: requesterEmail,
+        reason,
+        resend_id: resendId,
+      },
+    });
+  } catch (logError) {
+    console.error('[API Rejection Email] Failed to log event:', logError);
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as RejectionEmailRequest;
-
     const {
       orderNumber,
       requesterEmail,
@@ -57,32 +100,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const bodyHtml = `
-      <p style="margin: 0 0 20px 0;">
-        Nous avons le regret de vous informer que votre commande <strong>${orderNumber}</strong>${organisationName ? ` pour <strong>${organisationName}</strong>` : ''} n&rsquo;a pas pu &ecirc;tre valid&eacute;e.
-      </p>
-
-      <div style="background-color: #ffffff; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 3px solid #ef4444;">
-        <p style="margin: 0; color: #991b1b; font-weight: bold;">Motif :</p>
-        <p style="margin: 10px 0 0 0; color: #1f2937; white-space: pre-wrap;">${reason}</p>
-      </div>
-
-      <p style="margin: 0; color: #666;">
-        Si vous avez des questions ou souhaitez discuter de cette d&eacute;cision, n&rsquo;h&eacute;sitez pas &agrave; nous contacter.
-      </p>`;
-
     const emailHtml = buildEmailHtml({
-      title: 'Commande non valid\u00e9e',
+      title: 'Commande non validée',
       recipientName: requesterName,
       accentColor: 'red',
-      bodyHtml,
+      bodyHtml: buildRejectionBodyHtml({
+        orderNumber,
+        organisationName,
+        reason,
+      }),
     });
 
     const resendClient = getResendClient();
     const { data, error } = await resendClient.emails.send({
       from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
       to: requesterEmail,
-      subject: `Commande ${orderNumber} - Non valid\u00e9e`,
+      subject: `Commande ${orderNumber} - Non validée`,
       html: emailHtml,
       replyTo: process.env.RESEND_REPLY_TO ?? 'romeo@veronecollections.fr',
       attachments: getLogoAttachments(),
@@ -100,28 +133,16 @@ export async function POST(request: NextRequest) {
       `[API Rejection Email] Sent for order ${orderNumber} to ${requesterEmail}`
     );
 
-    // Log event in sales_order_events (non-blocking)
     if (body.salesOrderId) {
-      try {
-        const supabase = getAdminClient();
-        await supabase.from('sales_order_events').insert({
-          sales_order_id: body.salesOrderId,
-          event_type: 'email_rejection_sent',
-          metadata: {
-            recipient_email: requesterEmail,
-            reason,
-            resend_id: data?.id,
-          },
-        });
-      } catch (logError) {
-        console.error('[API Rejection Email] Failed to log event:', logError);
-      }
+      await logRejectionEvent({
+        salesOrderId: body.salesOrderId,
+        requesterEmail,
+        reason,
+        resendId: data?.id,
+      });
     }
 
-    return NextResponse.json({
-      success: true,
-      emailId: data?.id,
-    });
+    return NextResponse.json({ success: true, emailId: data?.id });
   } catch (error) {
     console.error('[API Rejection Email] error:', error);
     return NextResponse.json(

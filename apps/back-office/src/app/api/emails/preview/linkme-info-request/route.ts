@@ -20,51 +20,51 @@ interface SampleField {
   inputType: string;
 }
 
-export async function GET() {
-  const sampleFields: SampleField[] = [
-    {
-      key: 'billing_company',
-      label: 'Raison sociale',
-      category: 'billing',
-      inputType: 'text',
-    },
-    {
-      key: 'billing_address',
-      label: 'Adresse de facturation',
-      category: 'billing',
-      inputType: 'text',
-    },
-    {
-      key: 'delivery_contact_name',
-      label: 'Contact livraison',
-      category: 'delivery',
-      inputType: 'text',
-    },
-    {
-      key: 'delivery_contact_phone',
-      label: 'Téléphone livraison',
-      category: 'delivery',
-      inputType: 'tel',
-    },
-    {
-      key: 'siret',
-      label: 'SIRET',
-      category: 'organisation',
-      inputType: 'text',
-    },
-  ];
+const SAMPLE_FIELDS: SampleField[] = [
+  {
+    key: 'billing_company',
+    label: 'Raison sociale',
+    category: 'billing',
+    inputType: 'text',
+  },
+  {
+    key: 'billing_address',
+    label: 'Adresse de facturation',
+    category: 'billing',
+    inputType: 'text',
+  },
+  {
+    key: 'delivery_contact_name',
+    label: 'Contact livraison',
+    category: 'delivery',
+    inputType: 'text',
+  },
+  {
+    key: 'delivery_contact_phone',
+    label: 'Téléphone livraison',
+    category: 'delivery',
+    inputType: 'tel',
+  },
+  {
+    key: 'siret',
+    label: 'SIRET',
+    category: 'organisation',
+    inputType: 'text',
+  },
+];
 
+function buildPreviewFieldsHtml(fields: SampleField[]): string {
   const fieldsByCategory: Record<string, SampleField[]> = {};
-  for (const field of sampleFields) {
+  for (const field of fields) {
     if (!fieldsByCategory[field.category])
       fieldsByCategory[field.category] = [];
     fieldsByCategory[field.category].push(field);
   }
 
-  const fieldsHtml = Object.entries(fieldsByCategory)
-    .map(([category, fields]) => {
+  return Object.entries(fieldsByCategory)
+    .map(([category, catFields]) => {
       const catLabel = CATEGORY_LABELS[category] ?? category;
-      const fieldsList = fields
+      const fieldsList = catFields
         .map(f => `<li style="margin: 4px 0; font-size: 14px;">${f.label}</li>`)
         .join('');
       return `
@@ -74,14 +74,16 @@ export async function GET() {
         </div>`;
     })
     .join('');
+}
 
+function buildPreviewBodyHtml(fieldsHtml: string): string {
   const customMessageHtml = `
     <div style="background-color: #ffffff; padding: 16px; border-radius: 6px; margin: 16px 0; border-left: 3px solid #f59e0b;">
       <p style="margin: 0 0 4px 0; color: #78350f; font-weight: bold; font-size: 14px;">Message de notre &eacute;quipe :</p>
       <p style="margin: 0; color: #1f2937;">Merci de compl&eacute;ter ces informations le plus rapidement possible afin que nous puissions traiter votre commande.</p>
     </div>`;
 
-  const bodyHtml = `
+  return `
     <p style="margin: 0 0 16px 0;">
       Concernant votre commande <strong>BO-2026-0042</strong> pour <strong>Restaurant Le Central</strong>
       d&rsquo;un montant de <strong>1&nbsp;240,00&nbsp;&euro;</strong>,
@@ -92,18 +94,23 @@ export async function GET() {
       ${fieldsHtml}
     </div>
     ${customMessageHtml}`;
+}
+
+export async function GET() {
+  const fieldsHtml = buildPreviewFieldsHtml(SAMPLE_FIELDS);
+  const bodyHtml = buildPreviewBodyHtml(fieldsHtml);
 
   const previewToken = '00000000-0000-0000-0000-000000000000';
   const linkmeUrl =
     process.env.LINKME_PUBLIC_URL ?? 'https://linkme-blue.vercel.app';
 
   const emailHtml = buildEmailHtml({
-    title: 'Informations compl\u00e9mentaires requises',
+    title: 'Informations complémentaires requises',
     recipientName: 'Marie Dupont',
     accentColor: 'orange',
     bodyHtml,
     ctaUrl: `${linkmeUrl}/complete-info/${previewToken}`,
-    ctaLabel: 'Compl\u00e9ter les informations',
+    ctaLabel: 'Compléter les informations',
     footerNote: 'Ce lien est valable 30 jours. &mdash; <em>PREVIEW ONLY</em>',
   });
 

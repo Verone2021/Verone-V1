@@ -32,39 +32,14 @@ interface StorageRejectionRequest {
   recipientEmails: string[];
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = (await request.json()) as StorageRejectionRequest;
-
-    const {
-      productName,
-      productSku,
-      quantity,
-      affiliateName,
-      reason,
-      recipientEmails,
-    } = body;
-
-    if (!productName || !recipientEmails?.length) {
-      return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
-
-    const resendClient = getResendClient();
-    if (!resendClient) {
-      return NextResponse.json({
-        success: true,
-        emailsSent: 0,
-        message: 'Resend not configured',
-      });
-    }
-
-    const linkmeUrl =
-      process.env.LINKME_PUBLIC_URL ?? 'https://linkme.verone.fr';
-
-    const bodyHtml = `
+function buildStorageRejectionBodyHtml(params: {
+  productName: string;
+  productSku: string;
+  quantity: number;
+  reason: string;
+}): string {
+  const { productName, productSku, quantity, reason } = params;
+  return `
       <p style="margin: 0 0 20px 0;">
         Nous avons le regret de vous informer que votre demande de stockage n&rsquo;a pas pu &ecirc;tre valid&eacute;e.
       </p>
@@ -94,46 +69,97 @@ export async function POST(request: NextRequest) {
       <p style="margin: 0; color: #666;">
         Vous pouvez modifier et soumettre une nouvelle demande depuis votre espace LinkMe.
       </p>`;
+}
 
+async function sendRejectionEmails(
+  resendClient: Resend,
+  recipientEmails: string[],
+  productName: string,
+  productSku: string,
+  emailHtml: string
+) {
+  const results = await Promise.allSettled(
+    recipientEmails.map(email =>
+      resendClient.emails.send({
+        from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
+        to: email,
+        subject: `Demande de stockage non validée - ${productName}`,
+        html: emailHtml,
+        replyTo: process.env.RESEND_REPLY_TO ?? 'romeo@veronecollections.fr',
+        attachments: getLogoAttachments(),
+      })
+    )
+  );
+
+  const sent = results.filter(r => r.status === 'fulfilled').length;
+  const failed = results.filter(r => r.status === 'rejected').length;
+
+  if (failed > 0) {
+    console.error(
+      `[Storage Rejection Email] ${failed}/${recipientEmails.length} emails failed`
+    );
+  }
+
+  console.warn(
+    `[Storage Rejection Email] Sent ${sent} emails for ${productName} (${productSku})`
+  );
+
+  return { sent };
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = (await request.json()) as StorageRejectionRequest;
+    const {
+      productName,
+      productSku,
+      quantity,
+      affiliateName,
+      reason,
+      recipientEmails,
+    } = body;
+
+    if (!productName || !recipientEmails?.length) {
+      return NextResponse.json(
+        { success: false, error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    const resendClient = getResendClient();
+    if (!resendClient) {
+      return NextResponse.json({
+        success: true,
+        emailsSent: 0,
+        message: 'Resend not configured',
+      });
+    }
+
+    const linkmeUrl =
+      process.env.LINKME_PUBLIC_URL ?? 'https://linkme.verone.fr';
     const emailHtml = buildEmailHtml({
-      title: 'Demande de stockage non valid\u00e9e',
+      title: 'Demande de stockage non validée',
       recipientName: affiliateName,
       accentColor: 'red',
-      bodyHtml,
+      bodyHtml: buildStorageRejectionBodyHtml({
+        productName,
+        productSku,
+        quantity,
+        reason,
+      }),
       ctaUrl: `${linkmeUrl}/stockage?tab=demandes`,
       ctaLabel: 'Voir mes demandes',
     });
 
-    const results = await Promise.allSettled(
-      recipientEmails.map(email =>
-        resendClient.emails.send({
-          from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
-          to: email,
-          subject: `Demande de stockage non valid\u00e9e - ${productName}`,
-          html: emailHtml,
-          replyTo: process.env.RESEND_REPLY_TO ?? 'romeo@veronecollections.fr',
-          attachments: getLogoAttachments(),
-        })
-      )
+    const { sent } = await sendRejectionEmails(
+      resendClient,
+      recipientEmails,
+      productName,
+      productSku,
+      emailHtml
     );
 
-    const sent = results.filter(r => r.status === 'fulfilled').length;
-    const failed = results.filter(r => r.status === 'rejected').length;
-
-    if (failed > 0) {
-      console.error(
-        `[Storage Rejection Email] ${failed}/${recipientEmails.length} emails failed`
-      );
-    }
-
-    console.warn(
-      `[Storage Rejection Email] Sent ${sent} emails for ${productName} (${productSku})`
-    );
-
-    return NextResponse.json({
-      success: true,
-      emailsSent: sent,
-    });
+    return NextResponse.json({ success: true, emailsSent: sent });
   } catch (error) {
     console.error('[Storage Rejection Email] error:', error);
     return NextResponse.json(

@@ -126,7 +126,16 @@
       "hooks": [
         {
           "type": "command",
-          "command": "bash -c 'echo \"⏳ Type-check post-Edit...\"; FILE_PATH=$(echo \"$TOOL_INPUT\" | jq -r \".file_path // empty\"); if echo \"$FILE_PATH\" | grep -qE \"apps/back-office/\"; then timeout 15 pnpm --filter @verone/back-office type-check 2>&1 | head -30 || echo \"⚠️ Type errors détectées (voir ci-dessus)\"; elif echo \"$FILE_PATH\" | grep -qE \"packages/@verone/organisations/\"; then timeout 15 pnpm --filter @verone/organisations type-check 2>&1 | head -30 || echo \"⚠️ Type errors\"; fi; exit 0'"
+          "command": "bash -c 'echo \"⏳ Type-check post-Edit...\"; FILE_PATH=$(echo \"$TOOL_INPUT\" | jq -r \".file_path // empty\"); if echo \"$FILE_PATH\" | grep -qE \"apps/back-office/\"; then timeout 15 pnpm --filter @verone/back-office type-check 2>&1 | head -30 || echo \"⚠️ Type errors détectées (voir ci-dessus)\"; elif echo \"$FILE_PATH\" | grep -qE \"packages/@verone/organisations/\"; then timeout 15 pnpm --filter @verone/organisations type-check 2>&1 | head -30 || echo \"⚠️ Type errors\"; elif echo \"$FILE_PATH\" | grep -qE \"packages/@verone/orders/\"; then timeout 15 pnpm --filter @verone/orders type-check 2>&1 | head -30 || echo \"⚠️ Type errors\"; elif echo \"$FILE_PATH\" | grep -qE \"packages/@verone/\"; then echo \"ℹ️ Package modifié — penser à vérifier type-check du package\"; fi; exit 0'"
+        }
+      ]
+    },
+    {
+      "matcher": "Bash(git commit*)",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash -c 'CHANGED=$(git diff --cached --name-only 2>/dev/null | grep -cE \"\\.(tsx)$\" || echo 0); if [ \"$CHANGED\" -gt 3 ]; then echo \"📋 Rappel: $CHANGED composants modifiés — vérifier visuellement avec Playwright MCP après commit.\"; fi; exit 0'"
         }
       ]
     }

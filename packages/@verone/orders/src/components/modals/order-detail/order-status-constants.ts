@@ -1,9 +1,9 @@
 export const orderStatusLabels: Record<string, string> = {
   draft: 'Brouillon',
-  validated: 'Valid\u00e9e',
-  partially_shipped: 'Partiellement exp\u00e9di\u00e9e',
-  shipped: 'Exp\u00e9di\u00e9e',
-  cancelled: 'Annul\u00e9e',
+  validated: 'Validée',
+  partially_shipped: 'Partiellement expédiée',
+  shipped: 'Expédiée',
+  cancelled: 'Annulée',
 };
 
 export const orderStatusColors: Record<string, string> = {

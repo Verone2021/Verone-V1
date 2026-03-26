@@ -37,46 +37,43 @@ interface InfoCompletedRequest {
   completedFields: Record<string, string>;
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = (await request.json()) as InfoCompletedRequest;
+interface InfoCompletedEmailParams {
+  orderNumber: string;
+  organisationName: string | null;
+  completedByEmail: string;
+  completedFields: Record<string, string>;
+}
 
-    const {
-      orderNumber,
-      orderId,
-      completedByEmail,
-      organisationName,
-      completedFields,
-    } = body;
+function buildInfoCompletedBodyHtml(params: InfoCompletedEmailParams): string {
+  const { orderNumber, organisationName, completedByEmail, completedFields } =
+    params;
+  const fieldEntries = Object.entries(completedFields);
+  const fieldsHtml =
+    fieldEntries.length > 0
+      ? fieldEntries
+          .map(
+            ([key, value]) =>
+              `<tr>
+            <td style="padding: 6px 0; color: #666; border-bottom: 1px solid #eee; font-size: 13px;">${escapeHtml(formatFieldKey(key))}</td>
+            <td style="padding: 6px 0; text-align: right; border-bottom: 1px solid #eee; font-size: 13px;">${escapeHtml(value)}</td>
+          </tr>`
+          )
+          .join('')
+      : '<tr><td style="padding: 8px 0; color: #888;" colspan="2">Aucun champ renseign&eacute;</td></tr>';
 
-    if (!orderNumber || !orderId || !completedByEmail) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'orderNumber, orderId and completedByEmail are required',
-        },
-        { status: 400 }
-      );
-    }
+  const completedFieldsSection =
+    fieldEntries.length > 0
+      ? `<div style="margin: 20px 0;">
+        <p style="font-weight: bold; color: #065f46; margin: 0 0 8px 0;">Champs compl&eacute;t&eacute;s (${fieldEntries.length}) :</p>
+        <div style="background-color: #ffffff; padding: 12px 16px; border-radius: 6px;">
+          <table style="width: 100%; border-collapse: collapse;">
+            ${fieldsHtml}
+          </table>
+        </div>
+      </div>`
+      : '';
 
-    const recipients = getNotificationRecipients();
-
-    // Build fields list HTML
-    const fieldEntries = Object.entries(completedFields);
-    const fieldsHtml =
-      fieldEntries.length > 0
-        ? fieldEntries
-            .map(
-              ([key, value]) =>
-                `<tr>
-              <td style="padding: 6px 0; color: #666; border-bottom: 1px solid #eee; font-size: 13px;">${escapeHtml(formatFieldKey(key))}</td>
-              <td style="padding: 6px 0; text-align: right; border-bottom: 1px solid #eee; font-size: 13px;">${escapeHtml(value)}</td>
-            </tr>`
-            )
-            .join('')
-        : '<tr><td style="padding: 8px 0; color: #888;" colspan="2">Aucun champ renseign&eacute;</td></tr>';
-
-    const bodyHtml = `
+  return `
       <p style="margin: 0 0 20px 0; color: #065f46;">
         Un formulaire de compl&eacute;ment d&rsquo;informations a &eacute;t&eacute; rempli avec succ&egrave;s.
       </p>
@@ -100,28 +97,48 @@ export async function POST(request: NextRequest) {
         </table>
       </div>
 
-      ${
-        fieldEntries.length > 0
-          ? `<div style="margin: 20px 0;">
-        <p style="font-weight: bold; color: #065f46; margin: 0 0 8px 0;">Champs compl&eacute;t&eacute;s (${fieldEntries.length}) :</p>
-        <div style="background-color: #ffffff; padding: 12px 16px; border-radius: 6px;">
-          <table style="width: 100%; border-collapse: collapse;">
-            ${fieldsHtml}
-          </table>
-        </div>
-      </div>`
-          : ''
-      }
+      ${completedFieldsSection}
 
       <p style="margin: 0; font-size: 13px; color: #666; text-align: center;">
         La commande peut maintenant &ecirc;tre valid&eacute;e dans le back-office.
       </p>`;
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = (await request.json()) as InfoCompletedRequest;
+
+    const {
+      orderNumber,
+      orderId,
+      completedByEmail,
+      organisationName,
+      completedFields,
+    } = body;
+
+    if (!orderNumber || !orderId || !completedByEmail) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'orderNumber, orderId and completedByEmail are required',
+        },
+        { status: 400 }
+      );
+    }
+
+    const recipients = getNotificationRecipients();
+    const bodyHtml = buildInfoCompletedBodyHtml({
+      orderNumber,
+      organisationName,
+      completedByEmail,
+      completedFields,
+    });
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.verone.fr';
 
     const emailHtml = buildEmailHtml({
-      title: 'Informations compl\u00e9t\u00e9es',
-      recipientName: '\u00c9quipe Verone',
+      title: 'Informations complétées',
+      recipientName: 'Équipe Verone',
       accentColor: 'green',
       bodyHtml,
       ctaUrl: `${appUrl}/canaux-vente/linkme/commandes/${orderId}`,
@@ -132,7 +149,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await resendClient.emails.send({
       from: process.env.RESEND_FROM_EMAIL ?? 'notifications@verone.fr',
       to: recipients,
-      subject: `[LinkMe] Informations compl\u00e9t\u00e9es - ${orderNumber}`,
+      subject: `[LinkMe] Informations complétées - ${orderNumber}`,
       html: emailHtml,
       attachments: getLogoAttachments(),
     });
@@ -180,21 +197,21 @@ function formatFieldKey(key: string): string {
   const labels: Record<string, string> = {
     requester_name: 'Nom du demandeur',
     requester_email: 'Email du demandeur',
-    requester_phone: 'T\u00e9l\u00e9phone du demandeur',
-    owner_name: 'Nom du propri\u00e9taire',
-    owner_email: 'Email du propri\u00e9taire',
-    owner_phone: 'T\u00e9l\u00e9phone du propri\u00e9taire',
-    owner_company_legal_name: 'Raison sociale propri\u00e9taire',
+    requester_phone: 'Téléphone du demandeur',
+    owner_name: 'Nom du propriétaire',
+    owner_email: 'Email du propriétaire',
+    owner_phone: 'Téléphone du propriétaire',
+    owner_company_legal_name: 'Raison sociale propriétaire',
     billing_name: 'Contact facturation',
     billing_email: 'Email facturation',
-    billing_phone: 'T\u00e9l\u00e9phone facturation',
+    billing_phone: 'Téléphone facturation',
     delivery_contact_name: 'Contact livraison',
     delivery_contact_email: 'Email livraison',
-    delivery_contact_phone: 'T\u00e9l\u00e9phone livraison',
+    delivery_contact_phone: 'Téléphone livraison',
     delivery_address: 'Adresse livraison',
     delivery_postal_code: 'Code postal livraison',
     delivery_city: 'Ville livraison',
-    desired_delivery_date: 'Date souhait\u00e9e',
+    desired_delivery_date: 'Date souhaitée',
     mall_email: 'Email centre commercial',
     organisation_siret: 'SIRET',
   };

@@ -17,7 +17,7 @@ export interface OrderPaymentSummaryCardProps {
 
 /** Format a date string to French locale */
 function formatDate(date: string | null): string {
-  if (!date) return 'Non d\u00e9finie';
+  if (!date) return 'Non définie';
   return new Date(date).toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',
@@ -55,11 +55,11 @@ export function OrderPaymentSummaryCard({
               }`}
             >
               {order.payment_status_v2 === 'overpaid'
-                ? 'Surpay\u00e9'
+                ? 'Surpayé'
                 : order.payment_status_v2 === 'paid'
-                  ? 'Pay\u00e9'
+                  ? 'Payé'
                   : order.payment_status_v2 === 'partially_paid'
-                    ? 'Partiellement pay\u00e9'
+                    ? 'Partiellement payé'
                     : 'En attente'}
             </Badge>
           </div>
@@ -75,7 +75,7 @@ export function OrderPaymentSummaryCard({
 
         {order.paid_amount !== undefined && order.paid_amount > 0 && (
           <div className="bg-green-50 p-2 rounded border border-green-200">
-            <p className="text-xs text-gray-600">Montant pay\u00e9</p>
+            <p className="text-xs text-gray-600">Montant payé</p>
             <p className="text-sm font-bold text-green-700">
               {formatCurrency(order.paid_amount)} /{' '}
               {formatCurrency(order.total_ttc || 0)}
@@ -111,7 +111,7 @@ export function OrderReconciliationCard({
   order,
 }: OrderReconciliationCardProps) {
   const formatDateShort = (date: string | null): string => {
-    if (!date) return 'Non d\u00e9finie';
+    if (!date) return 'Non définie';
     return new Date(date).toLocaleDateString('fr-FR', {
       day: 'numeric',
       month: 'long',
@@ -133,7 +133,7 @@ export function OrderReconciliationCard({
             <div className="flex items-center gap-2">
               <Link2 className="h-3 w-3 text-green-600" />
               <p className="text-sm font-medium text-green-800">
-                Transaction li\u00e9e
+                Transaction liée
               </p>
             </div>
             <p className="text-xs text-gray-700">
@@ -144,8 +144,7 @@ export function OrderReconciliationCard({
             </p>
             {order.matched_transaction_emitted_at && (
               <p className="text-xs text-gray-600">
-                Pay\u00e9 le{' '}
-                {formatDateShort(order.matched_transaction_emitted_at)}
+                Payé le {formatDateShort(order.matched_transaction_emitted_at)}
               </p>
             )}
             {order.matched_transaction_attachment_ids?.[0] && (
@@ -162,7 +161,7 @@ export function OrderReconciliationCard({
           </div>
         ) : (
           <p className="text-center text-xs text-gray-500 py-2">
-            Non rapproch\u00e9e
+            Non rapprochée
           </p>
         )}
       </CardContent>

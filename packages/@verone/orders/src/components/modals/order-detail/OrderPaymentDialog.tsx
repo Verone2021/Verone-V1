@@ -25,8 +25,8 @@ import type {
 } from '@verone/orders/hooks';
 
 const paymentTypeLabels: Record<string, string> = {
-  cash: 'Esp\u00e8ces',
-  check: 'Ch\u00e8que',
+  cash: 'Espèces',
+  check: 'Chèque',
   transfer_other: 'Virement bancaire',
   card: 'Carte bancaire',
   compensation: 'Compensation',
@@ -224,7 +224,7 @@ export function OrderPaymentDialog({
                   </div>
                   <span
                     className="ml-2 p-1 text-slate-300"
-                    title="D\u00e9lier depuis l'onglet Rapprochement"
+                    title="Délier depuis l'onglet Rapprochement"
                   >
                     <Link2Off className="h-3.5 w-3.5" />
                   </span>
@@ -266,14 +266,14 @@ export function OrderPaymentDialog({
                 }
               >
                 <SelectTrigger id="payment-type">
-                  <SelectValue placeholder="S\u00e9lectionner..." />
+                  <SelectValue placeholder="Sélectionner..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="transfer_other">
                     Virement bancaire
                   </SelectItem>
-                  <SelectItem value="cash">Esp\u00e8ces</SelectItem>
-                  <SelectItem value="check">Ch\u00e8que</SelectItem>
+                  <SelectItem value="cash">Espèces</SelectItem>
+                  <SelectItem value="check">Chèque</SelectItem>
                   <SelectItem value="card">Carte bancaire</SelectItem>
                   <SelectItem value="compensation">Compensation</SelectItem>
                 </SelectContent>
@@ -285,7 +285,7 @@ export function OrderPaymentDialog({
                 Montant (EUR)
                 {unifiedRemaining > 0 && (
                   <span className="text-muted-foreground font-normal ml-1">
-                    \u2014 Reste a payer : {unifiedRemaining.toFixed(2)} EUR
+                    — Reste a payer : {unifiedRemaining.toFixed(2)} EUR
                   </span>
                 )}
               </Label>
@@ -300,7 +300,7 @@ export function OrderPaymentDialog({
               />
               {parseFloat(manualPaymentAmount) > unifiedRemaining + 0.01 && (
                 <p className="text-sm text-destructive">
-                  Le montant d\u00e9passe le reste \u00e0 payer (
+                  Le montant dépasse le reste à payer (
                   {unifiedRemaining.toFixed(2)} EUR)
                 </p>
               )}
@@ -323,7 +323,7 @@ export function OrderPaymentDialog({
               </Label>
               <Input
                 id="payment-ref"
-                placeholder="N\u00b0 ch\u00e8que, r\u00e9f. virement..."
+                placeholder="N° chèque, réf. virement..."
                 value={manualPaymentRef}
                 onChange={e => onSetManualPaymentRef(e.target.value)}
               />

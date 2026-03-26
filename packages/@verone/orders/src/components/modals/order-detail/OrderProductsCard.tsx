@@ -73,9 +73,9 @@ export function OrderProductsCard({
           {isLocked ? (
             <Badge variant="secondary" className="text-xs">
               {order.status === 'shipped'
-                ? '\uD83D\uDD12 Exp\u00e9di\u00e9e \u2014 lecture seule'
+                ? '\uD83D\uDD12 Expédiée — lecture seule'
                 : hasActiveInvoice
-                  ? '\uD83D\uDD12 Facture \u00e9mise \u2014 lecture seule'
+                  ? '\uD83D\uDD12 Facture émise — lecture seule'
                   : '\uD83D\uDD12 Lecture seule'}
             </Badge>
           ) : isEditing ? (
@@ -86,7 +86,7 @@ export function OrderProductsCard({
               className="h-7 text-xs"
             >
               <X className="h-3 w-3 mr-1" />
-              Terminer l&apos;\u00e9dition
+              Terminer l&apos;édition
             </ButtonV2>
           ) : (
             <ButtonV2
@@ -163,7 +163,7 @@ export function OrderProductsCard({
                               {item.products?.name ?? 'Produit'}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {item.products?.sku ?? '\u2014'}
+                              {item.products?.sku ?? '—'}
                             </p>
                             {(item.discount_percentage || 0) > 0 && (
                               <Badge
@@ -193,9 +193,7 @@ export function OrderProductsCard({
                               {shippedQty}/{item.quantity}
                             </Badge>
                           ) : (
-                            <span className="text-xs text-gray-400">
-                              \u2014
-                            </span>
+                            <span className="text-xs text-gray-400">—</span>
                           )}
                         </TableCell>
                       </TableRow>
