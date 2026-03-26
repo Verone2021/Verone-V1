@@ -31,38 +31,13 @@ interface StorageApprovalRequest {
   recipientEmails: string[];
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = (await request.json()) as StorageApprovalRequest;
-
-    const {
-      productName,
-      productSku,
-      quantity,
-      affiliateName,
-      recipientEmails,
-    } = body;
-
-    if (!productName || !recipientEmails?.length) {
-      return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
-
-    const resendClient = getResendClient();
-    if (!resendClient) {
-      return NextResponse.json({
-        success: true,
-        emailsSent: 0,
-        message: 'Resend not configured',
-      });
-    }
-
-    const linkmeUrl =
-      process.env.LINKME_PUBLIC_URL ?? 'https://linkme.verone.fr';
-
-    const bodyHtml = `
+function buildStorageApprovalBodyHtml(params: {
+  productName: string;
+  productSku: string;
+  quantity: number;
+}): string {
+  const { productName, productSku, quantity } = params;
+  return `
       <p style="margin: 0 0 20px 0;">
         Votre demande de stockage a &eacute;t&eacute; <strong>approuv&eacute;e</strong> par l&rsquo;&eacute;quipe V&eacute;rone.
       </p>
@@ -96,12 +71,46 @@ export async function POST(request: NextRequest) {
       <p style="margin: 0; color: #666; font-size: 13px;">
         Retrouvez le d&eacute;tail de vos demandes dans votre espace LinkMe.
       </p>`;
+}
 
+export async function POST(request: NextRequest) {
+  try {
+    const body = (await request.json()) as StorageApprovalRequest;
+    const {
+      productName,
+      productSku,
+      quantity,
+      affiliateName,
+      recipientEmails,
+    } = body;
+
+    if (!productName || !recipientEmails?.length) {
+      return NextResponse.json(
+        { success: false, error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    const resendClient = getResendClient();
+    if (!resendClient) {
+      return NextResponse.json({
+        success: true,
+        emailsSent: 0,
+        message: 'Resend not configured',
+      });
+    }
+
+    const linkmeUrl =
+      process.env.LINKME_PUBLIC_URL ?? 'https://linkme.verone.fr';
     const emailHtml = buildEmailHtml({
-      title: 'Demande de stockage approuv\u00e9e',
+      title: 'Demande de stockage approuvée',
       recipientName: affiliateName,
       accentColor: 'green',
-      bodyHtml,
+      bodyHtml: buildStorageApprovalBodyHtml({
+        productName,
+        productSku,
+        quantity,
+      }),
       ctaUrl: `${linkmeUrl}/stockage?tab=demandes`,
       ctaLabel: 'Voir mes demandes',
     });
@@ -111,7 +120,7 @@ export async function POST(request: NextRequest) {
         resendClient.emails.send({
           from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
           to: email,
-          subject: `Demande de stockage approuv\u00e9e - ${productName}`,
+          subject: `Demande de stockage approuvée - ${productName}`,
           html: emailHtml,
           replyTo: process.env.RESEND_REPLY_TO ?? 'romeo@veronecollections.fr',
           attachments: getLogoAttachments(),

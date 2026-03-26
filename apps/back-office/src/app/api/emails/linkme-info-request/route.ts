@@ -56,18 +56,245 @@ const CATEGORY_LABELS: Record<string, string> = {
   organisation: 'Entreprise',
 };
 
+function buildFieldsHtml(requestedFields: RequestedFieldInfo[]): string {
+  const fieldsByCategory: Record<string, RequestedFieldInfo[]> = {};
+  for (const field of requestedFields) {
+    const cat = field.category;
+    if (!fieldsByCategory[cat]) fieldsByCategory[cat] = [];
+    fieldsByCategory[cat].push(field);
+  }
+
+  return Object.entries(fieldsByCategory)
+    .map(([category, fields]) => {
+      const catLabel = CATEGORY_LABELS[category] ?? category;
+      const fieldsList = fields
+        .map(f => `<li style="margin: 4px 0; font-size: 14px;">${f.label}</li>`)
+        .join('');
+      return `
+          <div style="margin-bottom: 12px;">
+            <p style="margin: 0 0 4px 0; color: #0f766e; font-weight: bold; font-size: 13px;">${catLabel}</p>
+            <ul style="margin: 0; padding-left: 20px; color: #1f2937;">${fieldsList}</ul>
+          </div>`;
+    })
+    .join('');
+}
+
+function buildInfoRequestBodyHtml(params: {
+  orderNumber: string;
+  organisationName: string | null;
+  formattedTotal: string;
+  fieldsHtml: string;
+}): string {
+  const { orderNumber, organisationName, formattedTotal, fieldsHtml } = params;
+  return `
+        <p style="margin: 0 0 16px 0;">
+          Concernant votre commande <strong>${orderNumber}</strong>${organisationName ? ` pour <strong>${organisationName}</strong>` : ''}
+          d&rsquo;un montant de <strong>${formattedTotal}</strong>,
+          nous avons besoin d&rsquo;informations compl&eacute;mentaires pour pouvoir la traiter.
+        </p>
+
+        <div style="background-color: #f0fdfa; padding: 16px; border-radius: 6px; margin: 16px 0; border: 1px solid #99d5d1;">
+          <p style="margin: 0 0 8px 0; color: #0f766e; font-weight: bold; font-size: 14px;">Informations requises :</p>
+          ${fieldsHtml}
+        </div>`;
+}
+
+type SupabaseAdminClient = ReturnType<typeof getAdminClient>;
+
+async function ensureLinkmDetailsExist(
+  supabase: SupabaseAdminClient,
+  salesOrderId: string
+): Promise<void> {
+  const { data: existing } = await supabase
+    .from('sales_order_linkme_details')
+    .select('id')
+    .eq('sales_order_id', salesOrderId)
+    .maybeSingle();
+
+  if (!existing) {
+    const { error } = await supabase.from('sales_order_linkme_details').insert({
+      sales_order_id: salesOrderId,
+      requester_type: 'manual_entry',
+      requester_name: '',
+      requester_email: '',
+      is_new_restaurant: false,
+      delivery_terms_accepted: false,
+    });
+    if (error) {
+      // Non-fatal: log and continue
+      console.error(
+        '[API Info Request Email] Could not create sales_order_linkme_details:',
+        error
+      );
+    }
+  }
+}
+
+interface SendInfoRequestEmailParams {
+  supabase: SupabaseAdminClient;
+  resendClient: ReturnType<typeof getResendClient>;
+  email: string;
+  salesOrderId: string;
+  orderNumber: string;
+  recipientName: string;
+  recipientType: InfoRequestEmailBody['recipientType'];
+  requestedFields: RequestedFieldInfo[];
+  customMessage: string | undefined;
+  sentBy: string;
+  linkmeUrl: string;
+  bodyHtml: string;
+}
+
+async function logInfoRequestEvent(
+  supabase: SupabaseAdminClient,
+  salesOrderId: string,
+  email: string,
+  infoRequestId: string,
+  sentBy: string
+): Promise<void> {
+  try {
+    await supabase.from('sales_order_events').insert({
+      sales_order_id: salesOrderId,
+      event_type: 'email_info_request_sent',
+      metadata: { recipient_email: email, info_request_id: infoRequestId },
+      created_by: sentBy,
+    });
+  } catch (logError) {
+    console.error('[API Info Request Email] Failed to log event:', logError);
+  }
+}
+
+async function sendSingleInfoRequestEmail(
+  params: SendInfoRequestEmailParams
+): Promise<{ email: string; token: string; infoRequestId: string } | null> {
+  const {
+    supabase,
+    resendClient,
+    email,
+    salesOrderId,
+    orderNumber,
+    recipientName,
+    recipientType,
+    requestedFields,
+    customMessage,
+    sentBy,
+    linkmeUrl,
+    bodyHtml,
+  } = params;
+
+  const { data: infoRequest, error: insertError } = await supabase
+    .from('linkme_info_requests')
+    .insert({
+      sales_order_id: salesOrderId,
+      requested_fields: requestedFields as unknown as Json,
+      custom_message: customMessage ?? null,
+      recipient_email: email,
+      recipient_name: recipientName,
+      recipient_type: recipientType,
+      sent_by: sentBy,
+    })
+    .select('id, token')
+    .single();
+
+  if (insertError || !infoRequest) {
+    console.error(
+      `[API Info Request Email] Insert error for ${email}:`,
+      insertError
+    );
+    return null;
+  }
+
+  const emailHtml = buildEmailHtml({
+    title: 'Informations complémentaires requises',
+    recipientName: recipientName || 'Madame, Monsieur',
+    accentColor: 'teal',
+    bodyHtml,
+    ctaUrl: `${linkmeUrl}/complete-info/${infoRequest.token}`,
+    ctaLabel: 'Compléter les informations',
+    footerNote: 'Ce lien est valable 30 jours.',
+  });
+
+  const { error: emailError } = await resendClient.emails.send({
+    from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
+    to: email,
+    subject: `Commande ${orderNumber} - Informations complémentaires requises`,
+    html: emailHtml,
+    replyTo: process.env.RESEND_REPLY_TO ?? 'romeo@veronecollections.fr',
+    attachments: getLogoAttachments(),
+  });
+
+  if (emailError) {
+    console.error(
+      `[API Info Request Email] Resend error for ${email}:`,
+      emailError
+    );
+    return null;
+  }
+
+  console.warn(
+    `[API Info Request Email] Sent for order ${orderNumber} to ${email} (token: ${infoRequest.token})`
+  );
+  await logInfoRequestEvent(
+    supabase,
+    salesOrderId,
+    email,
+    infoRequest.id,
+    sentBy
+  );
+  return { email, token: infoRequest.token, infoRequestId: infoRequest.id };
+}
+
+function parseEmailList(
+  recipientEmail: string,
+  recipientType: string
+): string[] {
+  if (recipientType === 'manual') {
+    return recipientEmail
+      .split(',')
+      .map(e => e.trim())
+      .filter(e => e.length > 0);
+  }
+  return [recipientEmail];
+}
+
+async function sendAllInfoRequestEmails(
+  emailList: string[],
+  params: Omit<SendInfoRequestEmailParams, 'email'>
+): Promise<Array<{ email: string; token: string; infoRequestId: string }>> {
+  const results: Array<{
+    email: string;
+    token: string;
+    infoRequestId: string;
+  }> = [];
+  for (const email of emailList) {
+    const result = await sendSingleInfoRequestEmail({ ...params, email });
+    if (result) results.push(result);
+  }
+  return results;
+}
+
+function buildBodyHtmlFromRequest(body: InfoRequestEmailBody): string {
+  const formattedTotal = new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+  }).format(body.totalTtc);
+  return buildInfoRequestBodyHtml({
+    orderNumber: body.orderNumber,
+    organisationName: body.organisationName,
+    formattedTotal,
+    fieldsHtml: buildFieldsHtml(body.requestedFields),
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as InfoRequestEmailBody;
-
     const {
       salesOrderId,
       orderNumber,
       recipientEmail,
       recipientName,
       recipientType,
-      organisationName,
-      totalTtc,
       requestedFields,
       customMessage,
       sentBy,
@@ -87,176 +314,25 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = getAdminClient();
+    await ensureLinkmDetailsExist(supabase, salesOrderId);
 
-    // Defensive: ensure sales_order_linkme_details exists before creating info request.
-    // Orders created from back-office should already have a record (via use-linkme-orders),
-    // but we guard against edge cases (e.g., migration lag or direct DB inserts).
-    const { data: existingDetails } = await supabase
-      .from('sales_order_linkme_details')
-      .select('id')
-      .eq('sales_order_id', salesOrderId)
-      .maybeSingle();
-
-    if (!existingDetails) {
-      const { error: detailsInsertError } = await supabase
-        .from('sales_order_linkme_details')
-        .insert({
-          sales_order_id: salesOrderId,
-          requester_type: 'manual_entry',
-          requester_name: '',
-          requester_email: '',
-          is_new_restaurant: false,
-          delivery_terms_accepted: false,
-        });
-      if (detailsInsertError) {
-        console.error(
-          '[API Info Request Email] Could not create sales_order_linkme_details:',
-          detailsInsertError
-        );
-        // Non-fatal: continue to create the info request
-      }
-    }
-
-    // Split emails for manual mode (comma-separated)
-    const emailList =
-      recipientType === 'manual'
-        ? recipientEmail
-            .split(',')
-            .map(e => e.trim())
-            .filter(e => e.length > 0)
-        : [recipientEmail];
-
-    // Build shared email HTML parts
+    const emailList = parseEmailList(recipientEmail, recipientType);
     const linkmeUrl =
       process.env.LINKME_PUBLIC_URL ?? 'https://linkme-blue.vercel.app';
 
-    const fieldsByCategory: Record<string, RequestedFieldInfo[]> = {};
-    for (const field of requestedFields) {
-      const cat = field.category;
-      if (!fieldsByCategory[cat]) fieldsByCategory[cat] = [];
-      fieldsByCategory[cat].push(field);
-    }
-
-    const fieldsHtml = Object.entries(fieldsByCategory)
-      .map(([category, fields]) => {
-        const catLabel = CATEGORY_LABELS[category] ?? category;
-        const fieldsList = fields
-          .map(
-            f => `<li style="margin: 4px 0; font-size: 14px;">${f.label}</li>`
-          )
-          .join('');
-        return `
-          <div style="margin-bottom: 12px;">
-            <p style="margin: 0 0 4px 0; color: #0f766e; font-weight: bold; font-size: 13px;">${catLabel}</p>
-            <ul style="margin: 0; padding-left: 20px; color: #1f2937;">${fieldsList}</ul>
-          </div>`;
-      })
-      .join('');
-
-    // Custom message removed — redundant with the structured fields list above
-
-    const formattedTotal = new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(totalTtc);
-
-    const resendClient = getResendClient();
-    const results: Array<{
-      email: string;
-      token: string;
-      infoRequestId: string;
-    }> = [];
-
-    // Create one info request + send one email per recipient
-    for (const email of emailList) {
-      const { data: infoRequest, error: insertError } = await supabase
-        .from('linkme_info_requests')
-        .insert({
-          sales_order_id: salesOrderId,
-          requested_fields: requestedFields as unknown as Json,
-          custom_message: customMessage ?? null,
-          recipient_email: email,
-          recipient_name: recipientName,
-          recipient_type: recipientType,
-          sent_by: sentBy,
-        })
-        .select('id, token')
-        .single();
-
-      if (insertError || !infoRequest) {
-        console.error(
-          `[API Info Request Email] Insert error for ${email}:`,
-          insertError
-        );
-        continue;
-      }
-
-      const formUrl = `${linkmeUrl}/complete-info/${infoRequest.token}`;
-
-      const bodyHtml = `
-        <p style="margin: 0 0 16px 0;">
-          Concernant votre commande <strong>${orderNumber}</strong>${organisationName ? ` pour <strong>${organisationName}</strong>` : ''}
-          d&rsquo;un montant de <strong>${formattedTotal}</strong>,
-          nous avons besoin d&rsquo;informations compl&eacute;mentaires pour pouvoir la traiter.
-        </p>
-
-        <div style="background-color: #f0fdfa; padding: 16px; border-radius: 6px; margin: 16px 0; border: 1px solid #99d5d1;">
-          <p style="margin: 0 0 8px 0; color: #0f766e; font-weight: bold; font-size: 14px;">Informations requises :</p>
-          ${fieldsHtml}
-        </div>`;
-
-      const emailHtml = buildEmailHtml({
-        title: 'Informations compl\u00e9mentaires requises',
-        recipientName: recipientName || 'Madame, Monsieur',
-        accentColor: 'teal',
-        bodyHtml,
-        ctaUrl: formUrl,
-        ctaLabel: 'Compl\u00e9ter les informations',
-        footerNote: 'Ce lien est valable 30 jours.',
-      });
-
-      const { error: emailError } = await resendClient.emails.send({
-        from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
-        to: email,
-        subject: `Commande ${orderNumber} - Informations compl\u00e9mentaires requises`,
-        html: emailHtml,
-        replyTo: process.env.RESEND_REPLY_TO ?? 'romeo@veronecollections.fr',
-        attachments: getLogoAttachments(),
-      });
-
-      if (emailError) {
-        console.error(
-          `[API Info Request Email] Resend error for ${email}:`,
-          emailError
-        );
-        continue;
-      }
-
-      console.warn(
-        `[API Info Request Email] Sent for order ${orderNumber} to ${email} (token: ${infoRequest.token})`
-      );
-
-      // Log event in sales_order_events (non-blocking)
-      try {
-        await supabase.from('sales_order_events').insert({
-          sales_order_id: salesOrderId,
-          event_type: 'email_info_request_sent',
-          metadata: { recipient_email: email, info_request_id: infoRequest.id },
-          created_by: sentBy,
-        });
-      } catch (logError) {
-        console.error(
-          '[API Info Request Email] Failed to log event:',
-          logError
-        );
-      }
-
-      results.push({
-        email,
-        token: infoRequest.token,
-        infoRequestId: infoRequest.id,
-      });
-    }
+    const results = await sendAllInfoRequestEmails(emailList, {
+      supabase,
+      resendClient: getResendClient(),
+      salesOrderId,
+      orderNumber,
+      recipientName,
+      recipientType,
+      requestedFields,
+      customMessage,
+      sentBy,
+      linkmeUrl,
+      bodyHtml: buildBodyHtmlFromRequest(body),
+    });
 
     if (results.length === 0) {
       return NextResponse.json(
