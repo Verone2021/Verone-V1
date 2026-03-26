@@ -28,6 +28,8 @@ import {
   Check,
   User,
 } from 'lucide-react';
+
+import { usePermissions } from '@/hooks/use-permissions';
 import { toast } from 'sonner';
 
 import type { SelectionItem } from '../../../lib/hooks/use-user-selection';
@@ -99,6 +101,7 @@ export function ProductsStep({
   onAddToCart,
   onUpdateQuantity,
 }: ProductsStepProps) {
+  const { canViewCommissions } = usePermissions();
   const [searchQuery, setSearchQuery] = useState('');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [selectedCategory, setSelectedCategory] = useState<
@@ -471,13 +474,13 @@ export function ProductsStep({
                           : 'Prix HT'}
                       </p>
                     </div>
-                    {/* Badge: "Votre produit" pour affilié, marge pour catalogue */}
+                    {/* Badge: "Votre produit" pour affilié, marge pour catalogue (admin only) */}
                     {item.is_affiliate_product ? (
                       <div className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-600 flex items-center gap-1">
                         <User className="h-3 w-3" />
                         Votre produit
                       </div>
-                    ) : (
+                    ) : canViewCommissions ? (
                       <div
                         className={cn(
                           'px-2 py-1 rounded text-xs font-medium',
@@ -488,7 +491,7 @@ export function ProductsStep({
                       >
                         {item.margin_rate.toFixed(2)}%
                       </div>
-                    )}
+                    ) : null}
                   </div>
 
                   {/* Quantité + Ajouter */}

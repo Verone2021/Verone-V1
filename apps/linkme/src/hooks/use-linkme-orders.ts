@@ -573,6 +573,9 @@ export function useLinkMeOrders(options: UseLinkMeOrdersOptions) {
             'partially_shipped',
             'delivered',
           ]);
+        } else if (statusFilter === 'pending_approval') {
+          // "En approbation" tab includes draft + pending_approval
+          query = query.in('status', ['draft', 'pending_approval']);
         } else {
           query = query.eq('status', statusFilter);
         }
@@ -716,6 +719,10 @@ export function useLinkMeOrders(options: UseLinkMeOrdersOptions) {
         (counts['shipped'] ?? 0) +
         (counts['partially_shipped'] ?? 0) +
         (counts['delivered'] ?? 0);
+
+      // Group draft + pending_approval for the "En approbation" tab
+      counts['pending_approval_tab'] =
+        (counts['draft'] ?? 0) + (counts['pending_approval'] ?? 0);
 
       return counts;
     },
