@@ -5494,8 +5494,9 @@ export type Database = {
           is_active: boolean | null;
           is_enseigne_parent: boolean;
           is_service_provider: boolean | null;
-          legal_form: string | null;
+          kbis_url: string | null;
           latitude: number | null;
+          legal_form: string | null;
           legal_name: string;
           linkme_code: string | null;
           longitude: number | null;
@@ -5572,6 +5573,7 @@ export type Database = {
           is_active?: boolean | null;
           is_enseigne_parent?: boolean;
           is_service_provider?: boolean | null;
+          kbis_url?: string | null;
           latitude?: number | null;
           legal_form?: string | null;
           legal_name: string;
@@ -5650,6 +5652,7 @@ export type Database = {
           is_active?: boolean | null;
           is_enseigne_parent?: boolean;
           is_service_provider?: boolean | null;
+          kbis_url?: string | null;
           latitude?: number | null;
           legal_form?: string | null;
           legal_name?: string;
