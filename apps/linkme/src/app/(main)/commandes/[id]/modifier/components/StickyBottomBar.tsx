@@ -24,6 +24,7 @@ interface StickyBottomBarProps {
     totalTtc: number;
     totalCommission: number;
   };
+  canViewCommissions: boolean;
   hasChanges: boolean;
   isPending: boolean;
   showSaveConfirmation: boolean;
@@ -40,6 +41,7 @@ interface StickyBottomBarProps {
 
 export function StickyBottomBar({
   totals,
+  canViewCommissions,
   hasChanges,
   isPending,
   showSaveConfirmation,
@@ -68,7 +70,7 @@ export function StickyBottomBar({
                   {formatPrice(totals.totalTtc)}
                 </p>
               </div>
-              {totals.totalCommission > 0 && (
+              {canViewCommissions && totals.totalCommission > 0 && (
                 <div>
                   <p className="text-xs text-gray-500">Commission</p>
                   <p className="text-lg font-bold text-emerald-600">
