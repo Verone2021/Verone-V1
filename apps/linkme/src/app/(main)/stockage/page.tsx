@@ -13,8 +13,9 @@
  * @since 2026-02-25
  */
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 
+import { useRouter } from 'next/navigation';
 import {
   Warehouse,
   LayoutDashboard,
@@ -26,12 +27,15 @@ import {
   Send,
 } from 'lucide-react';
 
+import { useAuth, type LinkMeRole } from '@/contexts/AuthContext';
 import {
   useAffiliateStorageSummary,
   useAffiliateStorageDetails,
   useStoragePricingTiers,
   useStorageMonthlyHistory,
 } from '@/lib/hooks/use-affiliate-storage';
+
+const ALLOWED_ROLES: LinkMeRole[] = ['enseigne_admin', 'organisation_admin'];
 
 import { StorageOverviewTab } from './components/StorageOverviewTab';
 import { StorageMonthlyTab } from './components/StorageMonthlyTab';
@@ -54,7 +58,9 @@ const TABS: { id: StorageTab; label: string; icon: typeof LayoutDashboard }[] =
 
 // ─── Contenu ──────────────────────────────────────────────────────────────────
 
-function StockageContent(): JSX.Element {
+function StockageContent(): JSX.Element | null {
+  const router = useRouter();
+  const { user, linkMeRole, initializing } = useAuth();
   const [activeTab, setActiveTab] = useState<StorageTab>('overview');
 
   const { data: summary, isLoading: summaryLoading } =
@@ -70,6 +76,26 @@ function StockageContent(): JSX.Element {
   } = useStorageMonthlyHistory(24);
 
   const isLoading = summaryLoading || productsLoading || tiersLoading;
+
+  useEffect(() => {
+    if (!initializing && !user) {
+      router.push('/login');
+    }
+  }, [user, initializing, router]);
+
+  useEffect(() => {
+    if (
+      !initializing &&
+      linkMeRole &&
+      !ALLOWED_ROLES.includes(linkMeRole.role)
+    ) {
+      router.push('/dashboard');
+    }
+  }, [linkMeRole, initializing, router]);
+
+  if (!user || (linkMeRole && !ALLOWED_ROLES.includes(linkMeRole.role))) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50/50">

@@ -22,20 +22,23 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
+  const isChecking = loading || initializing;
+  const allowed = linkMeRole ? isRouteAllowed(pathname, linkMeRole.role) : true;
+
   useEffect(() => {
-    // Wait for auth to finish loading
-    if (loading || initializing) return;
-
-    // No role = layout already handles redirect to login
+    if (isChecking) return;
     if (!linkMeRole) return;
-
-    const allowed = isRouteAllowed(pathname, linkMeRole.role);
 
     if (!allowed) {
       const redirectUrl = getRedirectUrl(pathname);
       router.replace(redirectUrl);
     }
-  }, [pathname, linkMeRole, loading, initializing, router]);
+  }, [pathname, linkMeRole, isChecking, allowed, router]);
+
+  // Block rendering while redirecting unauthorized users
+  if (!isChecking && linkMeRole && !allowed) {
+    return null;
+  }
 
   return <>{children}</>;
 }
