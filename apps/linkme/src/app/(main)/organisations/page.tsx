@@ -34,6 +34,7 @@ import {
   OrganisationFilterTabs,
   QuickEditShippingAddressModal,
   QuickEditOwnershipTypeModal,
+  CreateOrganisationModal,
 } from '../../../components/organisations';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useArchiveOrganisation } from '../../../lib/hooks/use-archive-organisation';
@@ -101,6 +102,7 @@ function OrganisationsPageContent(): JSX.Element | null {
     null
   );
   const [highlightedOrgId, setHighlightedOrgId] = useState<string | null>(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   // State pour detail sheet depuis la carte (mode view)
   const [mapDetailSheetOrgId, setMapDetailSheetOrgId] = useState<string | null>(
@@ -285,9 +287,7 @@ function OrganisationsPageContent(): JSX.Element | null {
 
             {/* Barre d'actions */}
             <OrganisationActionsBar
-              onNewOrganisation={() => {
-                // TODO: Modal d'ajout
-              }}
+              onNewOrganisation={() => setCreateModalOpen(true)}
               disabled={isLoading}
             />
           </div>
@@ -611,6 +611,14 @@ function OrganisationsPageContent(): JSX.Element | null {
         }
         isOpen={!!ownershipTypeModalOrg}
         onClose={() => setOwnershipTypeModalOrg(null)}
+      />
+
+      {/* Create Organisation Modal */}
+      <CreateOrganisationModal
+        enseigneId={enseigneId ?? ''}
+        enseigneName={linkMeRole?.enseigne_name ?? ''}
+        isOpen={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
       />
     </div>
   );

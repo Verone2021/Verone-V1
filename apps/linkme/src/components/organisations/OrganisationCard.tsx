@@ -130,7 +130,7 @@ export function OrganisationCard({
   onEditOwnershipType,
 }: OrganisationCardProps) {
   const queryClient = useQueryClient();
-  const { canViewCommissions } = usePermissions();
+  const { canViewCommissions, canManageContacts } = usePermissions();
   const displayName = organisation.trade_name ?? organisation.legal_name;
   const address = getAddressLines(organisation);
   const hasAddress = Boolean(address.line1) || Boolean(address.line2);
@@ -220,14 +220,16 @@ export function OrganisationCard({
 
         {/* Actions secondaires */}
         <div className="flex items-center justify-end gap-1 mt-3 pt-3 border-t border-orange-100">
-          <button
-            onClick={() => onAddContact(organisation)}
-            disabled={isLoading}
-            className="p-1.5 text-gray-500 hover:text-linkme-turquoise hover:bg-linkme-turquoise/10 rounded transition-colors"
-            title="Ajouter un contact"
-          >
-            <UserPlus className="h-4 w-4" />
-          </button>
+          {canManageContacts && (
+            <button
+              onClick={() => onAddContact(organisation)}
+              disabled={isLoading}
+              className="p-1.5 text-gray-500 hover:text-linkme-turquoise hover:bg-linkme-turquoise/10 rounded transition-colors"
+              title="Ajouter un contact"
+            >
+              <UserPlus className="h-4 w-4" />
+            </button>
+          )}
           <button
             onClick={() => onEdit(organisation)}
             disabled={isLoading}
@@ -341,14 +343,16 @@ export function OrganisationCard({
             {organisation.contact_count}
           </span>
         )}
-        <button
-          onClick={() => onAddContact(organisation)}
-          disabled={isLoading}
-          className="p-1.5 text-gray-500 hover:text-linkme-turquoise hover:bg-linkme-turquoise/10 rounded transition-colors disabled:opacity-50"
-          title="Ajouter un contact"
-        >
-          <UserPlus className="h-4 w-4" />
-        </button>
+        {canManageContacts && (
+          <button
+            onClick={() => onAddContact(organisation)}
+            disabled={isLoading}
+            className="p-1.5 text-gray-500 hover:text-linkme-turquoise hover:bg-linkme-turquoise/10 rounded transition-colors disabled:opacity-50"
+            title="Ajouter un contact"
+          >
+            <UserPlus className="h-4 w-4" />
+          </button>
+        )}
         <button
           onClick={() => onEdit(organisation)}
           disabled={isLoading}
