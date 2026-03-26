@@ -192,6 +192,30 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
     () => (ownershipType === 'franchise' ? localContacts : allContacts),
     [ownershipType, localContacts, allContacts]
   );
+
+  // Filtered contacts by badge for each section
+  // Responsable: is_primary_contact=true OR contacts without any specific role (general contacts)
+  const responsableContacts = useMemo(
+    () =>
+      allContacts.filter(
+        c => c.isPrimaryContact || (!c.isBillingContact && !c.isPrimaryContact)
+      ),
+    [allContacts]
+  );
+  // Billing: only contacts with is_billing_contact=true from the right entity
+  const billingFilteredContacts = useMemo(
+    () => billingContacts.filter(c => c.isBillingContact),
+    [billingContacts]
+  );
+  // Delivery: only contacts with is_delivery_only=true from org (franchise only)
+  const deliveryFilteredContacts = useMemo(
+    () =>
+      localContacts.filter(
+        c => c.isPrimaryContact || (!c.isBillingContact && !c.isPrimaryContact)
+      ),
+    [localContacts]
+  );
+
   const billingAddresses = useMemo(
     () => billingAddressesData?.all ?? [],
     [billingAddressesData]
@@ -521,7 +545,8 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
   const resolvedBillingContact = useMemo(() => {
     if (billingContactMode === 'same') return resolvedResponsable;
     if (billingContactMode === 'existing' && selectedBillingContactId) {
-      const c = billingContacts.find(c => c.id === selectedBillingContactId);
+      // Search in allContacts (not billingContacts) to resolve any pre-selected contact by ID
+      const c = allContacts.find(c => c.id === selectedBillingContactId);
       if (c)
         return {
           name: `${c.firstName} ${c.lastName}`,
@@ -540,7 +565,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
   }, [
     billingContactMode,
     selectedBillingContactId,
-    billingContacts,
+    allContacts,
     billingContactForm,
     resolvedResponsable,
   ]);
@@ -1002,7 +1027,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
 
           <ResponsableSection
             resolvedResponsable={resolvedResponsable}
-            allContacts={allContacts}
+            allContacts={responsableContacts}
             selectedResponsableId={selectedResponsableId}
             showResponsableForm={showResponsableForm}
             responsableForm={responsableForm}
@@ -1013,7 +1038,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
 
           <BillingSection
             resolvedBillingContact={resolvedBillingContact}
-            allContacts={billingContacts}
+            allContacts={billingFilteredContacts}
             billingContactMode={billingContactMode}
             selectedBillingContactId={selectedBillingContactId}
             billingContactForm={billingContactForm}
@@ -1034,7 +1059,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
           <ShippingSection
             resolvedDeliveryAddress={resolvedDeliveryAddress}
             desiredDeliveryDate={desiredDeliveryDate}
-            localContacts={localContacts}
+            localContacts={deliveryFilteredContacts}
             selectedDeliveryContactId={selectedDeliveryContactId}
             showDeliveryContactForm={showDeliveryContactForm}
             deliveryContactForm={deliveryContactForm}

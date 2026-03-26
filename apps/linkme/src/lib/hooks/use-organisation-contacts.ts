@@ -35,6 +35,7 @@ export interface OrganisationContact {
   isBillingContact: boolean;
   isCommercialContact: boolean;
   isTechnicalContact: boolean;
+  isDeliveryOnly: boolean;
   isUser: boolean; // Contact lié à un utilisateur (auto-sync/backfill)
   // IDs pour filtrage UI (Phase 8.1 - franchises)
   organisationId: string | null;
@@ -103,6 +104,7 @@ export function useOrganisationContacts(
           is_billing_contact,
           is_commercial_contact,
           is_technical_contact,
+          is_delivery_only,
           notes,
           organisation_id,
           enseigne_id
@@ -173,6 +175,7 @@ export function useOrganisationContacts(
         isBillingContact: c.is_billing_contact ?? false,
         isCommercialContact: c.is_commercial_contact ?? false,
         isTechnicalContact: c.is_technical_contact ?? false,
+        isDeliveryOnly: c.is_delivery_only ?? false,
         // Détecter si c'est un utilisateur (créé par auto-sync ou backfill)
         isUser:
           (c.notes?.includes('auto-sync') ?? false) ||
