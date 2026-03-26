@@ -313,6 +313,30 @@ export function useSubmitUnifiedOrder() {
             );
           }
 
+          // Upload Kbis file if present
+          let kbisUrl: string | null = data.responsable.kbisUrl ?? null;
+          if (data.responsable.kbisFile) {
+            const file = data.responsable.kbisFile;
+            const fileExt = file.name.split('.').pop() ?? 'pdf';
+            const fileName = `kbis/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+            const { error: uploadError } = await supabase.storage
+              .from('linkme-delivery-forms')
+              .upload(fileName, file, { cacheControl: '3600', upsert: false });
+            if (!uploadError) {
+              const {
+                data: { publicUrl },
+              } = supabase.storage
+                .from('linkme-delivery-forms')
+                .getPublicUrl(fileName);
+              kbisUrl = publicUrl;
+            } else {
+              console.error(
+                '[useSubmitUnifiedOrder] Kbis upload error:',
+                uploadError
+              );
+            }
+          }
+
           // Panier format RPC
           const p_cart = cart.map(item => ({
             product_id: item.product_id,
@@ -345,6 +369,7 @@ export function useSubmitUnifiedOrder() {
             latitude: data.newRestaurant.latitude ?? null,
             longitude: data.newRestaurant.longitude ?? null,
             ownership_type: data.newRestaurant.ownershipType, // 'succursale' | 'franchise'
+            kbis_url: kbisUrl,
           };
 
           // Responsable (Step 3)

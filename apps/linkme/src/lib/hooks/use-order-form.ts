@@ -663,11 +663,40 @@ export function useOrderForm(): UseOrderFormReturn {
         delivery_notes: formData.delivery.notes ?? null,
         // Terms
         delivery_terms_accepted: formData.delivery.deliveryTermsAccepted,
-        // Franchise info
+        // Organisation legal info (from restaurant step, fallback to contacts for backward compat)
         franchise_legal_name:
-          formData.contacts.franchiseInfo?.companyLegalName ?? null,
-        franchise_siret: formData.contacts.franchiseInfo?.siret ?? null,
+          formData.restaurant.newRestaurant?.legalName ??
+          formData.contacts.franchiseInfo?.companyLegalName ??
+          null,
+        franchise_siret:
+          formData.restaurant.newRestaurant?.siret ??
+          formData.contacts.franchiseInfo?.siret ??
+          null,
+        franchise_trade_name:
+          formData.restaurant.newRestaurant?.tradeName ?? null,
+        kbis_url: null, // Set after upload below
       };
+
+      // Upload Kbis file if present
+      const kbisFile = formData.restaurant.newRestaurant
+        ?.kbisFile as File | null;
+      if (kbisFile) {
+        const fileExt = kbisFile.name.split('.').pop() ?? 'pdf';
+        const fileName = `kbis/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('linkme-delivery-forms')
+          .upload(fileName, kbisFile, { cacheControl: '3600', upsert: false });
+        if (!uploadError) {
+          const {
+            data: { publicUrl },
+          } = supabase.storage
+            .from('linkme-delivery-forms')
+            .getPublicUrl(fileName);
+          linkmeDetails.kbis_url = publicUrl;
+        } else {
+          console.error('[useOrderForm] Kbis upload error:', uploadError);
+        }
+      }
 
       // Étape 4: Créer la commande via RPC (atomique, avec linkme_details)
       const { data: rpcResult, error: orderError } = await supabase.rpc(

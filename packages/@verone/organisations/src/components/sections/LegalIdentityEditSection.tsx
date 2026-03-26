@@ -12,6 +12,7 @@ interface Organisation {
   trade_name?: string | null;
   has_different_trade_name?: boolean;
   siret?: string | null;
+  kbis_url?: string | null;
 }
 
 interface LegalIdentityEditSectionProps {
