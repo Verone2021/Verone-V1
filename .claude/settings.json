@@ -156,7 +156,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'CHANGED=$(git diff --cached --name-only 2>/dev/null | grep -cE \"\\.(tsx)$\" || echo 0); if [ \"$CHANGED\" -gt 3 ]; then echo \"Rappel: $CHANGED composants modifies - verifier visuellement avec Playwright MCP apres commit.\"; fi; echo \"Rappel: Mettre a jour .claude/work/ACTIVE.md si une tache est terminee (cocher [x] ou supprimer).\"; exit 0'"
+            "command": "bash -c 'CHANGED=$(git diff --cached --name-only 2>/dev/null | grep -cE \"\\.(tsx)$\" || echo 0); if [ \"$CHANGED\" -gt 3 ]; then echo \"Rappel: $CHANGED composants modifies - verifier visuellement avec Playwright MCP apres commit.\"; fi; $CLAUDE_PROJECT_DIR/.claude/scripts/cleanup-active-tasks.sh; exit 0'"
           }
         ]
       }

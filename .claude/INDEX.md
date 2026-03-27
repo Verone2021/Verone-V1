@@ -26,6 +26,7 @@ Tout agent ou commande doit commencer par consulter cet index.
 | `/review`       | Audit code complet avec rapport                                             | `.claude/commands/review.md`       |
 | `/fix-warnings` | ESLint auto-fix                                                             | `.claude/commands/fix-warnings.md` |
 | `/teach`        | Mode pedagogique (expliquer avant implementer)                              | `.claude/commands/teach.md`        |
+| `/status`       | Resume rapide (branche, taches, fichiers non commites)                      | `.claude/commands/status.md`       |
 
 ---
 
