@@ -16,9 +16,7 @@ writes-to: [code, ACTIVE.md]
 3. **Si TypeScript** : `.claude/guides/typescript-errors-debugging.md`
 4. **Si Debug** : mémoire Serena `workflow-strict-rules`
 
-**Pour confirmer lecture** : Exécuter `.claude/scripts/confirm-docs-read.sh`
-
-**Si tu n'as pas lu ces fichiers, tu es BLOQUÉ par les hooks settings.json.**
+**Avant de coder** : Lire `.claude/work/ACTIVE.md`, CLAUDE.md de l'app, et consulter Serena memories pertinentes.
 
 ---
 

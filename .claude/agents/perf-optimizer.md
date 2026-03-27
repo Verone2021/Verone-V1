@@ -244,6 +244,8 @@ Le rapport DOIT suivre ce format exact :
 - ✅ TOUJOURS vérifier avec `Grep` qu'un export est vraiment inutilisé avant suppression
 - ✅ TOUJOURS demander confirmation avant suppression de fichiers
 - ✅ TOUJOURS type-check filtré avant commit
+- ✅ TOUJOURS vérifier visuellement avec Playwright MCP après chaque FIX de composant UI
+- ✅ TOUJOURS lire `.claude/work/ACTIVE.md` avant de commencer
 
 ---
 

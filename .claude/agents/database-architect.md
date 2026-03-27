@@ -16,9 +16,7 @@ writes-to: [migrations, ACTIVE.md]
 3. **RLS patterns** : `.claude/rules/database/rls-patterns.md`
 4. **Mémoires obligatoires** : `database-migrations-convention`, `supabase-workflow-correct`
 
-**Pour confirmer lecture** : Exécuter `.claude/scripts/confirm-docs-read.sh`
-
-**Si tu n'as pas lu ces fichiers, tu es BLOQUÉ par les hooks settings.json.**
+**Avant de coder** : Lire `.claude/work/ACTIVE.md`, CLAUDE.md de l'app, et consulter Serena memories pertinentes.
 
 ---
 
