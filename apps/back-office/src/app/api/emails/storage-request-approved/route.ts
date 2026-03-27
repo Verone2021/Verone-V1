@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     }
 
     const linkmeUrl =
-      process.env.LINKME_PUBLIC_URL ?? 'https://linkme.verone.fr';
+      process.env.LINKME_PUBLIC_URL ?? 'https://linkme-blue.vercel.app';
     const emailHtml = buildEmailHtml({
       title: 'Demande de stockage approuvée',
       recipientName: affiliateName,

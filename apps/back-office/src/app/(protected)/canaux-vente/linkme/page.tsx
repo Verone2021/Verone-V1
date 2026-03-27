@@ -46,7 +46,9 @@ export default function LinkMePage() {
             <ButtonV2
               variant="outline"
               size="sm"
-              onClick={() => window.open('https://linkme.verone.fr', '_blank')}
+              onClick={() =>
+                window.open('https://linkme-blue.vercel.app', '_blank')
+              }
             >
               <ExternalLink className="h-4 w-4 mr-2" />
               Voir LinkMe

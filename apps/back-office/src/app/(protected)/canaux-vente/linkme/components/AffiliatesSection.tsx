@@ -1046,7 +1046,8 @@ export function AffiliatesSection() {
                     }
                   />
                   <p className="text-xs text-muted-foreground">
-                    URL: linkme.verone.fr/s/{formData.slug ?? 'votre-slug'}
+                    URL: linkme-blue.vercel.app/s/
+                    {formData.slug ?? 'votre-slug'}
                   </p>
                 </div>
                 <div className="grid gap-2">
