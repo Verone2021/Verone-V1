@@ -11,9 +11,9 @@ import { WeightEditSection } from '@verone/products';
 import { IdentifiersCompleteEditSection } from '@verone/products';
 import { ClientOrEnseigneSelector } from '@verone/products';
 import { ProductVariantsGrid } from '@verone/products';
-import { Badge, ButtonUnified } from '@verone/ui';
+import { Badge, ButtonUnified, Switch } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { Sparkles, Package, UserCircle2 } from 'lucide-react';
+import { Sparkles, Package, UserCircle2, Globe } from 'lucide-react';
 
 import type { Product, ProductRow, MissingFields, SourcingInfo } from './types';
 
@@ -25,6 +25,7 @@ interface ProductGeneralTabProps {
   breadcrumbParts: string[];
   onProductUpdate: (updates: Partial<ProductRow>) => Promise<void>;
   onOpenCategorizeModal: () => void;
+  hasPrimaryImage?: boolean;
 }
 
 export function ProductGeneralTab({
@@ -35,6 +36,7 @@ export function ProductGeneralTab({
   breadcrumbParts,
   onProductUpdate,
   onOpenCategorizeModal,
+  hasPrimaryImage = false,
 }: ProductGeneralTabProps) {
   return (
     <div className="space-y-6">
@@ -299,6 +301,48 @@ export function ProductGeneralTab({
             });
           }}
         />
+      </section>
+
+      {/* Section: Globe LinkMe */}
+      <section className="bg-white rounded-lg border border-neutral-200 p-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Globe className="h-5 w-5 text-indigo-500" />
+            <div>
+              <h3 className="text-sm font-semibold text-neutral-900">
+                Globe LinkMe
+              </h3>
+              <p className="text-xs text-neutral-500 mt-0.5">
+                Afficher ce produit sur le globe 3D de la page de connexion
+                LinkMe
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {product.show_on_linkme_globe && (
+              <Badge className="bg-indigo-100 text-indigo-700 text-xs">
+                Visible
+              </Badge>
+            )}
+            <Switch
+              checked={product.show_on_linkme_globe ?? false}
+              disabled={!hasPrimaryImage}
+              onCheckedChange={checked => {
+                void onProductUpdate({
+                  show_on_linkme_globe: checked,
+                }).catch(error => {
+                  console.error('[ProductDetail] Globe toggle failed:', error);
+                });
+              }}
+            />
+          </div>
+        </div>
+        {!hasPrimaryImage && (
+          <p className="text-xs text-amber-600 mt-2 ml-8">
+            Une image primaire est requise pour afficher ce produit sur le
+            globe.
+          </p>
+        )}
       </section>
 
       {/* Section: Metadonnees */}

@@ -489,6 +489,7 @@ export default function ProductDetailPage() {
             breadcrumbParts={breadcrumbParts}
             onProductUpdate={handleProductUpdate}
             onOpenCategorizeModal={() => setIsCategorizeModalOpen(true)}
+            hasPrimaryImage={!!_primaryImage}
           />
         </TabContent>
 
