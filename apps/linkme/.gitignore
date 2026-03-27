@@ -1,0 +1,11 @@
+# Build
+.next/
+.turbo/
+.vercel/
+
+# Playwright artifacts
+playwright-report/
+test-results/
+
+# Environment
+.env.local
