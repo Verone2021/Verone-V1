@@ -18,15 +18,7 @@ import { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 
-import {
-  LogIn,
-  Loader2,
-  AlertCircle,
-  Eye,
-  EyeOff,
-  Info,
-  X,
-} from 'lucide-react';
+import { LogIn, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 import { LandingHeader } from '@/components/landing';
 import {
@@ -69,7 +61,6 @@ function LoginContent(): JSX.Element {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showTestAccounts, setShowTestAccounts] = useState(false);
   const [sphereImages, setSphereImages] =
     useState<SphereImageData[]>(DEMO_SPHERE_IMAGES);
 
@@ -78,30 +69,6 @@ function LoginContent(): JSX.Element {
     globe_enabled: boolean;
     globe_rotation_speed: number;
   }>({ globe_enabled: true, globe_rotation_speed: 0.3 });
-
-  // Comptes de test (DEV ONLY)
-  const TEST_ACCOUNTS = [
-    {
-      email: 'admin@pokawa-test.fr',
-      password: 'TestLinkMe2025',
-      role: 'Enseigne Admin (Pokawa)',
-    },
-    {
-      email: 'admin@bwburger-test.fr',
-      password: 'TestLinkMe2025',
-      role: 'Enseigne Admin (Black & White Burger)',
-    },
-    {
-      email: 'collaborateur@pokawa-test.fr',
-      password: 'TestLinkMe2025',
-      role: 'Collaborateur (Pokawa)',
-    },
-    {
-      email: 'test-org@verone.fr',
-      password: 'TestLinkMe2025',
-      role: 'Org Independante',
-    },
-  ];
 
   const redirectUrl = searchParams.get('redirect') ?? '/dashboard';
   const errorParam = searchParams.get('error');
@@ -250,55 +217,6 @@ function LoginContent(): JSX.Element {
               <h1 className="text-3xl font-bold text-[#183559]">Connexion</h1>
               <p className="text-[#183559] text-sm mt-2">Espace Utilisateurs</p>
             </div>
-
-            {/* Bouton comptes test */}
-            <button
-              type="button"
-              onClick={() => setShowTestAccounts(!showTestAccounts)}
-              className="w-full mb-5 flex items-center justify-center gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-sm hover:bg-amber-100 transition-all duration-200 font-medium"
-            >
-              <Info className="h-4 w-4" />
-              Comptes de test (DEV)
-            </button>
-
-            {/* Panel comptes test */}
-            {showTestAccounts && (
-              <div className="mb-5 p-4 bg-gray-50 border border-gray-100 rounded-xl">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-semibold text-[#183559]">
-                    Comptes de test
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setShowTestAccounts(false)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  {TEST_ACCOUNTS.map((account, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setEmail(account.email);
-                        setPassword(account.password);
-                        setShowTestAccounts(false);
-                      }}
-                      className="w-full text-left p-3 bg-white border border-gray-100 rounded-lg hover:border-[#5DBEBB] hover:bg-[#5DBEBB]/5 transition-all duration-200"
-                    >
-                      <div className="text-sm font-medium text-[#183559]">
-                        {account.role}
-                      </div>
-                      <div className="text-xs text-gray-500 font-mono mt-1">
-                        {account.email}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Message d'erreur d'accès (redirigé par middleware) */}
             {(errorParam === 'no_access' ||
