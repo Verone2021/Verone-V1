@@ -802,8 +802,37 @@ export default function EnseigneDetailPage() {
                           title: e.target.value,
                         }))
                       }
-                      placeholder="Directeur commercial"
+                      placeholder="Responsable achats"
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Role du contact</Label>
+                    <div className="flex gap-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <Switch
+                          checked={newContact.isPrimaryContact}
+                          onCheckedChange={checked =>
+                            setNewContact(prev => ({
+                              ...prev,
+                              isPrimaryContact: checked,
+                            }))
+                          }
+                        />
+                        <span className="text-sm">Responsable</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <Switch
+                          checked={newContact.isBillingContact}
+                          onCheckedChange={checked =>
+                            setNewContact(prev => ({
+                              ...prev,
+                              isBillingContact: checked,
+                            }))
+                          }
+                        />
+                        <span className="text-sm">Facturation</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
                 <DialogFooter>

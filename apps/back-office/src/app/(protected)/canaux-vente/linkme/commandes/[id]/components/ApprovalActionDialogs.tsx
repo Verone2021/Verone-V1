@@ -94,8 +94,8 @@ function buildRecipients(
   ) {
     recipients.push({
       email: details.requester_email,
-      label: details.requester_name ?? 'Demandeur',
-      type: 'Demandeur',
+      label: details.requester_name ?? 'Responsable',
+      type: 'Responsable',
     });
   }
   if (
@@ -104,8 +104,8 @@ function buildRecipients(
   ) {
     recipients.push({
       email: details.owner_email,
-      label: details.owner_name ?? 'Proprietaire',
-      type: 'Proprietaire',
+      label: details.owner_name ?? 'Responsable (franchise)',
+      type: 'Responsable (franchise)',
     });
   }
   return recipients;
@@ -120,6 +120,10 @@ function buildMissingFields(
     organisationSiret: order.organisation?.siret,
     organisationCountry: order.organisation?.country,
     organisationVatNumber: order.organisation?.vat_number,
+    organisationLegalName: order.organisation?.legal_name,
+    organisationBillingAddress: order.organisation?.billing_address_line1,
+    organisationBillingPostalCode: order.organisation?.billing_postal_code,
+    organisationBillingCity: order.organisation?.billing_city,
     ownerType: details?.owner_type,
   });
 }

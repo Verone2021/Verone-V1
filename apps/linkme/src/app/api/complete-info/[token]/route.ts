@@ -95,7 +95,8 @@ export async function GET(_request: Request, { params }: RouteParams) {
         status,
         customer_id,
         organisations!sales_orders_customer_id_fkey (
-          id, trade_name, legal_name, siret
+          id, trade_name, legal_name, siret, country, vat_number,
+          billing_address_line1, billing_postal_code, billing_city
         )
       `
       )
@@ -117,6 +118,11 @@ export async function GET(_request: Request, { params }: RouteParams) {
       trade_name: string | null;
       legal_name: string;
       siret: string | null;
+      country: string | null;
+      vat_number: string | null;
+      billing_address_line1: string | null;
+      billing_postal_code: string | null;
+      billing_city: string | null;
     }> | null;
     const organisation = orgArray?.[0] ?? null;
 
@@ -136,6 +142,12 @@ export async function GET(_request: Request, { params }: RouteParams) {
       delivery_postal_code: linkmeDetails?.delivery_postal_code ?? null,
       delivery_city: linkmeDetails?.delivery_city ?? null,
       organisation_siret: organisation?.siret ?? null,
+      organisation_vat_number: organisation?.vat_number ?? null,
+      organisation_legal_name: organisation?.legal_name ?? null,
+      organisation_billing_address: organisation?.billing_address_line1 ?? null,
+      organisation_billing_postal_code:
+        organisation?.billing_postal_code ?? null,
+      organisation_billing_city: organisation?.billing_city ?? null,
     };
 
     return NextResponse.json({

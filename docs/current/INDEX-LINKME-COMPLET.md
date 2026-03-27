@@ -90,10 +90,15 @@ Fichier : `components/OrderFormUnified.tsx`
 | 5. Livraison   | Adresse, date, centre commercial?, semi-remorque?                 |
 | 6. Validation  | Recap panier + confirmation                                       |
 
-### NewOrderForm (AUTHENTIFIE — 8 etapes)
+### NewOrderForm (AUTHENTIFIE — 8 etapes) — FORMULAIRE ACTIF
 
 Utilise par les affilies connectes depuis leur dashboard.
-Fichier : `components/orders/NewOrderForm.tsx`
+Fichier principal : `components/orders/NewOrderForm.tsx`
+Steps : `components/orders/steps/RestaurantStep.tsx`, `ResponsableStep.tsx`, etc.
+Validation : `components/orders/schemas/order-form.schema.ts` (fonction `validateStep`)
+Hook : `lib/hooks/use-order-form.ts`
+
+**ATTENTION** : `components/order-form/` est l'ANCIEN formulaire (split de OrderFormUnified). NE PAS MODIFIER — utiliser `components/orders/steps/` a la place.
 
 | Etape          | Contenu                                                |
 | -------------- | ------------------------------------------------------ |

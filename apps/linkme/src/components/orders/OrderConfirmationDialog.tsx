@@ -168,16 +168,17 @@ export function OrderConfirmationDialog({
                 </p>
                 <p className="leading-relaxed">
                   Le montant ci-dessus correspond uniquement aux produits. Les
-                  frais de transport seront calcules en fonction de vos
-                  informations de livraison et vous seront communiques dans le
-                  devis detaille.
+                  frais de transport seront calcul&#233;s ult&#233;rieurement en
+                  fonction de l&apos;accessibilit&#233; du lieu de
+                  r&#233;ception de la marchandise.
                 </p>
                 {!hasDeliveryDate && (
                   <div className="flex items-center gap-2 mt-2 text-amber-900 font-medium">
                     <Calendar className="h-4 w-4" />
                     <span>
-                      Pensez a indiquer votre date de livraison souhaitee pour
-                      permettre l&apos;estimation du transport.
+                      Veuillez imp&#233;rativement indiquer la date de livraison
+                      souhait&#233;e. Sans cette information, il sera impossible
+                      d&apos;&#233;tablir un devis pour le transport.
                     </span>
                   </div>
                 )}
