@@ -23,8 +23,7 @@ type ProductRow = Database['public']['Tables']['products']['Row'];
 
 // Domaines autorisés pour CORS
 const ALLOWED_ORIGINS = [
-  'https://linkme.verone.app',
-  'https://verone-linkme.vercel.app',
+  'https://linkme-blue.vercel.app',
   process.env.NODE_ENV === 'development' ? 'http://localhost:3002' : null,
 ].filter(Boolean) as string[];
 

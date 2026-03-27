@@ -44,7 +44,7 @@ export function ConfigurationSection() {
     weeklyReportEnabled: false,
     platformEnabled: true,
     registrationOpen: true,
-    publicDomain: 'linkme.verone.fr',
+    publicDomain: 'linkme-blue.vercel.app',
   };
 
   return (
@@ -164,7 +164,7 @@ export function ConfigurationSection() {
             <Input
               id="publicDomain"
               value={config.publicDomain}
-              placeholder="linkme.verone.fr"
+              placeholder="linkme-blue.vercel.app"
               disabled
               readOnly
             />
