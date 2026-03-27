@@ -63,21 +63,21 @@ Tout agent ou commande doit commencer par consulter cet index.
 
 ## Regles (auto-discovered par Claude Code)
 
-| Fichier                                | Contenu                                                        |
-| -------------------------------------- | -------------------------------------------------------------- |
-| `rules/dev/git-workflow.md`            | Branches, commits, PR — **STOP avant commit/push/PR**          |
-| `rules/dev/context-loading.md`         | **OBLIGATOIRE** — consulter contexte avant de coder            |
-| `rules/dev/build-commands.md`          | Toujours filtrer `pnpm --filter @verone/[app]`                 |
-| `rules/dev/hooks-bloquants.md`         | Documentation des hooks actifs                                 |
-| `rules/dev/servers.md`                 | Ports 3000/3001/3002 — JAMAIS lancer dev                       |
-| `rules/dev/multi-agent.md`             | Coordination multi-agents                                      |
-| `rules/dev/deployment-verification.md` | Checklist post-deploiement                                     |
-| `rules/dev/playwright-screenshots.md`  | Screenshots dans `.playwright-mcp/screenshots/`                |
-| `rules/frontend/async-patterns.md`     | Promesses, handlers async, invalidateQueries                   |
-| `rules/backend/api.md`                 | Route handlers, validation Zod, JAMAIS modifier API existantes |
-| `rules/database/supabase.md`           | Migrations, RLS, queries, types                                |
-| `rules/database/rls-patterns.md`       | Patterns RLS complets (staff, affilies, public)                |
-| `rules/dev/clean-code.md`              | Fichier > 400 lignes = refactoring obligatoire                 |
+| Fichier                                        | Contenu                                                        |
+| ---------------------------------------------- | -------------------------------------------------------------- |
+| `.claude/rules/dev/git-workflow.md`            | Branches, commits, PR — **STOP avant commit/push/PR**          |
+| `.claude/rules/dev/context-loading.md`         | **OBLIGATOIRE** — consulter contexte avant de coder            |
+| `.claude/rules/dev/build-commands.md`          | Toujours filtrer `pnpm --filter @verone/[app]`                 |
+| `.claude/rules/dev/hooks-bloquants.md`         | Documentation des hooks actifs                                 |
+| `.claude/rules/dev/servers.md`                 | Ports 3000/3001/3002 — JAMAIS lancer dev                       |
+| `.claude/rules/dev/multi-agent.md`             | Coordination multi-agents                                      |
+| `.claude/rules/dev/deployment-verification.md` | Checklist post-deploiement                                     |
+| `.claude/rules/dev/playwright-screenshots.md`  | Screenshots dans `.playwright-mcp/screenshots/`                |
+| `.claude/rules/frontend/async-patterns.md`     | Promesses, handlers async, invalidateQueries                   |
+| `.claude/rules/backend/api.md`                 | Route handlers, validation Zod, JAMAIS modifier API existantes |
+| `.claude/rules/database/supabase.md`           | Migrations, RLS, queries, types                                |
+| `.claude/rules/database/rls-patterns.md`       | Patterns RLS complets (staff, affilies, public)                |
+| `.claude/rules/dev/clean-code.md`              | Fichier > 400 lignes = refactoring obligatoire                 |
 
 ---
 
