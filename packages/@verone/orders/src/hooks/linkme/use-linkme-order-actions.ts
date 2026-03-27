@@ -983,6 +983,10 @@ export interface PendingOrder {
   organisation_siret: string | null;
   organisation_country: string | null;
   organisation_vat_number: string | null;
+  organisation_legal_name: string | null;
+  organisation_billing_address: string | null;
+  organisation_billing_postal_code: string | null;
+  organisation_billing_city: string | null;
   // Enriched data for detail view
   linkme_details: PendingOrderLinkMeDetails | null;
   items: PendingOrderItem[];
@@ -1358,6 +1362,9 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
           siret: string | null;
           country: string | null;
           vat_number: string | null;
+          billing_address_line1: string | null;
+          billing_postal_code: string | null;
+          billing_city: string | null;
         }
       >();
 
@@ -1372,6 +1379,9 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
             siret,
             country,
             vat_number,
+            billing_address_line1,
+            billing_postal_code,
+            billing_city,
             enseignes!left(name)
           `
           )
@@ -1395,6 +1405,11 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
               siret: (org.siret as string | null) ?? null,
               country: (org.country as string | null) ?? null,
               vat_number: (org.vat_number as string | null) ?? null,
+              billing_address_line1:
+                (org.billing_address_line1 as string | null) ?? null,
+              billing_postal_code:
+                (org.billing_postal_code as string | null) ?? null,
+              billing_city: (org.billing_city as string | null) ?? null,
             });
           });
         }
@@ -1518,6 +1533,11 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
           organisation_siret: orgData?.siret ?? null,
           organisation_country: orgData?.country ?? null,
           organisation_vat_number: orgData?.vat_number ?? null,
+          organisation_legal_name: orgData?.legal_name ?? null,
+          organisation_billing_address: orgData?.billing_address_line1 ?? null,
+          organisation_billing_postal_code:
+            orgData?.billing_postal_code ?? null,
+          organisation_billing_city: orgData?.billing_city ?? null,
           items,
         });
       }

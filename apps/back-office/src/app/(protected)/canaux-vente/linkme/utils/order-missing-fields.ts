@@ -247,30 +247,72 @@ export interface GetOrderMissingFieldsOptions {
   organisationCountry?: string | null;
   /** VAT number (n° TVA intracommunautaire) from the linked organisation */
   organisationVatNumber?: string | null;
-  /** Type de restaurant (propre/succursale/franchise) - owner fields requis uniquement pour franchises */
+  /** Type de restaurant (propre/succursale/franchise) */
   ownerType?: string | null;
-  /** Main address of the organisation */
-  organisationAddress?: string | null;
-  /** Billing address of the organisation */
+  /** Legal name (raison sociale) of the organisation */
+  organisationLegalName?: string | null;
+  /** Billing address line 1 of the organisation */
   organisationBillingAddress?: string | null;
+  /** Billing postal code of the organisation */
+  organisationBillingPostalCode?: string | null;
+  /** Billing city of the organisation */
+  organisationBillingCity?: string | null;
   /** Field keys explicitly ignored by back-office staff for this order */
   ignoredFields?: string[];
 }
 
-// ============================================
-// SUB-FUNCTIONS BY CATEGORY
-// ============================================
-
-function getResponsableMissingFields(
-  details: LinkMeOrderDetails,
-  ownerType: string | null | undefined
-): MissingField[] {
+/**
+ * Analyse les détails LinkMe d'une commande et retourne les champs manquants.
+ *
+ * @param options - Détails LinkMe + contexte organisation
+ * @returns Résultat structuré avec champs manquants par catégorie
+ */
+export function getOrderMissingFields(
+  options: GetOrderMissingFieldsOptions
+): MissingFieldsResult {
+  const {
+    details,
+    organisationSiret,
+    organisationCountry,
+    organisationVatNumber,
+    organisationLegalName,
+    organisationBillingAddress,
+    organisationBillingPostalCode,
+    organisationBillingCity,
+    ignoredFields,
+  } = options;
+  const ignored = new Set(ignoredFields ?? []);
   const fields: MissingField[] = [];
 
+  if (!details) {
+    const allFields: MissingField[] = [
+      {
+        key: 'requester_name',
+        label: 'Nom du responsable',
+        category: 'responsable',
+        inputType: 'text',
+      },
+      {
+        key: 'requester_email',
+        label: 'Email du responsable',
+        category: 'responsable',
+        inputType: 'email',
+      },
+      {
+        key: 'billing_email',
+        label: 'Email facturation',
+        category: 'billing',
+        inputType: 'email',
+      },
+    ];
+    return buildResult(allFields.filter(f => !ignored.has(f.key)));
+  }
+
+  // --- Contact responsable (bloc unique, sans distinction demandeur/proprietaire) ---
   if (!details.requester_name) {
     fields.push({
       key: 'requester_name',
-      label: 'Nom du demandeur',
+      label: 'Nom du responsable',
       category: 'responsable',
       inputType: 'text',
     });
@@ -278,7 +320,7 @@ function getResponsableMissingFields(
   if (!details.requester_email) {
     fields.push({
       key: 'requester_email',
-      label: 'Email du demandeur',
+      label: 'Email du responsable',
       category: 'responsable',
       inputType: 'email',
     });
@@ -286,59 +328,13 @@ function getResponsableMissingFields(
   if (!details.requester_phone) {
     fields.push({
       key: 'requester_phone',
-      label: 'Téléphone du demandeur',
+      label: 'Téléphone du responsable',
       category: 'responsable',
       inputType: 'tel',
     });
   }
 
-  // --- Propriétaire (seulement pour franchises avec contact différent du demandeur) ---
-  // Succursales/propres : l'enseigne EST le propriétaire → pas de contact owner séparé
-  // null = non renseigné → on ne génère PAS de faux manquants
-  if (
-    details.owner_contact_same_as_requester === false &&
-    ownerType === 'franchise'
-  ) {
-    if (!details.owner_name) {
-      fields.push({
-        key: 'owner_name',
-        label: 'Nom du propriétaire',
-        category: 'responsable',
-        inputType: 'text',
-      });
-    }
-    if (!details.owner_email) {
-      fields.push({
-        key: 'owner_email',
-        label: 'Email du propriétaire',
-        category: 'responsable',
-        inputType: 'email',
-      });
-    }
-    if (!details.owner_phone) {
-      fields.push({
-        key: 'owner_phone',
-        label: 'Téléphone du propriétaire',
-        category: 'responsable',
-        inputType: 'tel',
-      });
-    }
-    if (!details.owner_company_legal_name) {
-      fields.push({
-        key: 'owner_company_legal_name',
-        label: 'Raison sociale du propriétaire',
-        category: 'responsable',
-        inputType: 'text',
-      });
-    }
-  }
-
-  return fields;
-}
-
-function getBillingMissingFields(details: LinkMeOrderDetails): MissingField[] {
-  const fields: MissingField[] = [];
-
+  // --- Facturation ---
   if (!details.billing_name) {
     fields.push({
       key: 'billing_name',
@@ -364,12 +360,7 @@ function getBillingMissingFields(details: LinkMeOrderDetails): MissingField[] {
     });
   }
 
-  return fields;
-}
-
-function getDeliveryMissingFields(details: LinkMeOrderDetails): MissingField[] {
-  const fields: MissingField[] = [];
-
+  // --- Livraison ---
   if (!details.delivery_contact_name) {
     fields.push({
       key: 'delivery_contact_name',
@@ -418,7 +409,6 @@ function getDeliveryMissingFields(details: LinkMeOrderDetails): MissingField[] {
       inputType: 'text',
     });
   }
-  // desired_delivery_date : champ optionnel (date "souhaitée"), pas obligatoire
 
   // Mall email (only if is_mall_delivery)
   if (details.is_mall_delivery && !details.mall_email) {
@@ -430,20 +420,17 @@ function getDeliveryMissingFields(details: LinkMeOrderDetails): MissingField[] {
     });
   }
 
-  return fields;
-}
-
-function getOrganisationMissingFields(
-  organisationSiret: string | null | undefined,
-  organisationCountry: string | null | undefined,
-  organisationVatNumber: string | null | undefined,
-  organisationAddress: string | null | undefined,
-  organisationBillingAddress: string | null | undefined
-): MissingField[] {
-  const fields: MissingField[] = [];
+  // --- Organisation ---
+  if (!organisationLegalName) {
+    fields.push({
+      key: 'organisation_legal_name',
+      label: 'Raison sociale',
+      category: 'organisation',
+      inputType: 'text',
+    });
+  }
   const isFrench =
     !organisationCountry || organisationCountry.toUpperCase() === 'FR';
-
   if (isFrench && !organisationSiret) {
     fields.push({
       key: 'organisation_siret',
@@ -460,14 +447,6 @@ function getOrganisationMissingFields(
       inputType: 'text',
     });
   }
-  if (!organisationAddress) {
-    fields.push({
-      key: 'organisation_address',
-      label: 'Adresse siege',
-      category: 'organisation',
-      inputType: 'text',
-    });
-  }
   if (!organisationBillingAddress) {
     fields.push({
       key: 'organisation_billing_address',
@@ -476,67 +455,22 @@ function getOrganisationMissingFields(
       inputType: 'text',
     });
   }
-
-  return fields;
-}
-
-/**
- * Analyse les détails LinkMe d'une commande et retourne les champs manquants.
- *
- * @param options - Détails LinkMe + contexte organisation
- * @returns Résultat structuré avec champs manquants par catégorie
- */
-export function getOrderMissingFields(
-  options: GetOrderMissingFieldsOptions
-): MissingFieldsResult {
-  const {
-    details,
-    organisationSiret,
-    organisationCountry,
-    organisationVatNumber,
-    ownerType,
-    organisationAddress,
-    organisationBillingAddress,
-    ignoredFields,
-  } = options;
-  const ignored = new Set(ignoredFields ?? []);
-
-  if (!details) {
-    const allFields: MissingField[] = [
-      {
-        key: 'requester_name',
-        label: 'Nom du demandeur',
-        category: 'responsable',
-        inputType: 'text',
-      },
-      {
-        key: 'requester_email',
-        label: 'Email du demandeur',
-        category: 'responsable',
-        inputType: 'email',
-      },
-      {
-        key: 'billing_email',
-        label: 'Email facturation',
-        category: 'billing',
-        inputType: 'email',
-      },
-    ];
-    return buildResult(allFields.filter(f => !ignored.has(f.key)));
+  if (!organisationBillingPostalCode) {
+    fields.push({
+      key: 'organisation_billing_postal_code',
+      label: 'Code postal facturation',
+      category: 'organisation',
+      inputType: 'text',
+    });
   }
-
-  const fields: MissingField[] = [
-    ...getResponsableMissingFields(details, ownerType),
-    ...getBillingMissingFields(details),
-    ...getDeliveryMissingFields(details),
-    ...getOrganisationMissingFields(
-      organisationSiret,
-      organisationCountry,
-      organisationVatNumber,
-      organisationAddress,
-      organisationBillingAddress
-    ),
-  ];
+  if (!organisationBillingCity) {
+    fields.push({
+      key: 'organisation_billing_city',
+      label: 'Ville facturation',
+      category: 'organisation',
+      inputType: 'text',
+    });
+  }
 
   return buildResult(fields.filter(f => !ignored.has(f.key)));
 }

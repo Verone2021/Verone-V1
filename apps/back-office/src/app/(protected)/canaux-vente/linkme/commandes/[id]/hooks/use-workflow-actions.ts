@@ -30,9 +30,11 @@ function buildMissingFieldsPayload(
     organisationSiret: order?.organisation?.siret,
     organisationCountry: order?.organisation?.country,
     organisationVatNumber: order?.organisation?.vat_number,
-    ownerType: details?.owner_type,
-    organisationAddress: order?.organisation?.address_line1,
+    organisationLegalName: order?.organisation?.legal_name,
     organisationBillingAddress: order?.organisation?.billing_address_line1,
+    organisationBillingPostalCode: order?.organisation?.billing_postal_code,
+    organisationBillingCity: order?.organisation?.billing_city,
+    ownerType: details?.owner_type,
   }).fields;
 }
 
