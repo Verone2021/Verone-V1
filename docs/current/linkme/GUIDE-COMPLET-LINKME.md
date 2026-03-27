@@ -70,7 +70,24 @@ Une chaine avec **plusieurs points de vente** (ex: Pokawa).
 | Partage               | Selections et commissions partagees entre users de la meme enseigne         |
 | Organisations         | Chaque point de vente = 1 organisation (ownership: `propre` ou `franchise`) |
 
-### 2.2 Organisation independante (`org_independante`)
+### 2.2 Sous-organisation d'enseigne (PAS de compte LinkMe propre)
+
+Une organisation rattachee a une enseigne (ex: Pokawa Aeroport de Nice).
+
+| Aspect         | Detail                                                                                 |
+| -------------- | -------------------------------------------------------------------------------------- |
+| Rattachement   | `enseigne_id` rempli dans la table `organisations`                                     |
+| Compte LinkMe  | **NON** — pas d'entree dans `linkme_affiliates`, pas de compte propre                  |
+| Selections     | **NON** — les selections sont gerees au niveau de l'enseigne                           |
+| Produits       | **NON** — les produits sont geres au niveau de l'enseigne                              |
+| Utilisateurs   | **NON** — les utilisateurs LinkMe sont lies a l'enseigne, pas a la sous-org            |
+| Siege          | Seule l'org avec `is_enseigne_parent=true` est le siege (maison mere) de l'enseigne    |
+| Logo           | Herite automatiquement du logo de l'enseigne (trigger `trg_org_inherit_enseigne_logo`) |
+| Page detail BO | Redirige vers `/contacts-organisations/{id}` (page generale, pas de page doublon)      |
+
+**IMPORTANT** : Une sous-organisation d'enseigne n'a AUCUNE capacite LinkMe propre. Tout est gere via le `linkme_affiliates` de l'enseigne parente.
+
+### 2.3 Organisation independante (`org_independante`)
 
 Un professionnel independant, sans enseigne parente.
 
@@ -80,12 +97,14 @@ Un professionnel independant, sans enseigne parente.
 | Lien                  | `organisation_id` dans `user_app_roles` + `linkme_affiliates` |
 | Multi-utilisateurs    | **NON** - Un seul user par organisation independante          |
 | Organisation          | 1 organisation = 1 user = 1 profil affilie                    |
+| Selections            | **OUI** — peut creer ses propres selections                   |
+| Produits              | **OUI** — peut creer ses propres produits affilies            |
 
-### 2.3 Particulier (FUTUR - Roadmap)
+### 2.4 Particulier (FUTUR - Roadmap)
 
 Voir [section 15](#15-roadmap-particuliers) pour les implications techniques.
 
-### 2.4 Visibilite par Role
+### 2.5 Visibilite par Role
 
 **Verifie dans le code** : RLS policy `sales_orders` + hook `useUserAffiliate()` + RPC `get_customers_for_affiliate()`
 
@@ -97,7 +116,7 @@ Voir [section 15](#15-roadmap-particuliers) pour les implications techniques.
 
 **Mecanisme** : RLS sur `sales_orders` joint `linkme_affiliates` via `created_by_affiliate_id` puis filtre par `enseigne_id` ou `organisation_id` selon le role de l'utilisateur.
 
-### Contrainte XOR
+### Contrainte XOR (`linkme_affiliates`)
 
 ```
 linkme_affiliates:
@@ -107,6 +126,19 @@ linkme_affiliates:
 ```
 
 **Exactement un des deux** doit etre renseigne. Contrainte DB + validation applicative.
+
+**IMPORTANT** : Seules les enseignes et les organisations independantes ont une entree dans `linkme_affiliates`. Les sous-organisations d'enseigne (`organisations.enseigne_id IS NOT NULL`) n'ont JAMAIS d'entree dans `linkme_affiliates` — elles sont gerees via l'affilie de leur enseigne parente.
+
+### Architecture Siege (`is_enseigne_parent`)
+
+Le champ `organisations.is_enseigne_parent` identifie l'organisation qui est la **maison mere** (siege) d'une enseigne.
+
+| Concept               | Detail                                                                      |
+| --------------------- | --------------------------------------------------------------------------- |
+| Siege / Maison mere   | L'org avec `is_enseigne_parent=true` dans une enseigne (ex: POKAWA SAS)     |
+| Sous-organisation     | Les autres orgs de l'enseigne (`is_enseigne_parent=false`)                  |
+| Org independante      | N'a pas d'`enseigne_id` → `is_enseigne_parent` n'est pas pertinent          |
+| Facturation franchise | Chaque org a ses propres adresses facturation/livraison (pas liee au siege) |
 
 ---
 

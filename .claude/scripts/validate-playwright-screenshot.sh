@@ -1,25 +1,21 @@
 #!/bin/bash
 # Valide que les screenshots Playwright utilisent le bon output directory
+# Hook input: JSON via stdin (Claude Code hooks standard)
 
-TOOL_NAME="$1"
-PARAMS="$2"
+INPUT=$(cat)
+FILENAME=$(echo "$INPUT" | jq -r '.tool_input.filename // empty' 2>/dev/null)
 
-# Vérifier si c'est un outil screenshot Playwright
-if [[ "$TOOL_NAME" == "mcp__playwright-lane-"*"__browser_take_screenshot" ]]; then
-  # Extraire filename des paramètres JSON
-  FILENAME=$(echo "$PARAMS" | grep -o '"filename":"[^"]*"' | cut -d'"' -f4)
+# Si pas de filename, laisser passer
+if [ -z "$FILENAME" ]; then
+  exit 0
+fi
 
-  # Vérifier si filename commence par .playwright-mcp/screenshots/
-  if [[ ! "$FILENAME" =~ ^\.playwright-mcp/screenshots/ ]]; then
-    echo "❌ ERREUR: Screenshot doit être dans .playwright-mcp/screenshots/"
-    echo "   Fichier demandé: $FILENAME"
-    echo "   Pattern correct: .playwright-mcp/screenshots/[nom].png"
-    echo ""
-    echo "Voir CLAUDE.md section 'Règles MCP Playwright' pour pattern standard"
-    exit 1
-  fi
-
-  echo "✅ Screenshot path valide: $FILENAME"
+# Verifier si filename commence par .playwright-mcp/screenshots/
+if [[ ! "$FILENAME" =~ ^\.playwright-mcp/screenshots/ ]]; then
+  echo "Screenshot doit etre dans .playwright-mcp/screenshots/" >&2
+  echo "Fichier demande: $FILENAME" >&2
+  echo "Pattern correct: .playwright-mcp/screenshots/[nom].png" >&2
+  exit 2
 fi
 
 exit 0

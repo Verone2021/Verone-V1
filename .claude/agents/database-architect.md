@@ -85,28 +85,23 @@ Senior Database Architect pour Vérone. Expert Supabase, PostgreSQL, stock manag
 
 # WORKFLOW 6 ÉTAPES (OBLIGATOIRE)
 
-## STEP 0/6: LIRE MEMORIES OBLIGATOIRES (AVANT TOUT)
+## STEP 0/6: EXPLORER CONTEXTE (AVANT TOUT)
 
-**OBLIGATOIRE** - Ne jamais sauter cette étape.
+**OBLIGATOIRE** - Ne jamais sauter cette etape.
 
-```bash
-# TOUJOURS lire ces 3 memories
-mcp__serena__read_memory("database-migrations-convention")
-mcp__serena__read_memory("supabase-workflow-correct")
-mcp__serena__read_memory("workflow-strict-rules")
-
-# SI migration RLS
-mcp__serena__read_memory("rls-consolidation-plan-2026-01-11")
-mcp__serena__read_memory("rls-performance-audit-2026-01-11")
-
-# SI triggers concernés
-mcp__serena__read_memory("triggers-audit-cleanup-2025-11-28")
-
-# SI relations polymorphiques
-mcp__serena__read_memory("supabase-polymorphic-relations-pattern")
-```
-
-**Index complet**: `mcp__serena__read_memory("memories-index-2026-01")`
+1. `mcp__serena__list_memories()` — decouvrir les memories disponibles
+2. Lire `project-architecture` et `database-tables-by-domain` pour le contexte
+3. Lire les memories pertinentes a la tache (RLS, triggers, etc.)
+4. Verifier le schema DB des tables concernees :
+   ```sql
+   SELECT column_name, data_type, is_nullable
+   FROM information_schema.columns
+   WHERE table_name = '<TABLE>' ORDER BY ordinal_position;
+   ```
+5. Verifier les RLS policies existantes :
+   ```sql
+   SELECT policyname, cmd, qual FROM pg_policies WHERE tablename = '<TABLE>';
+   ```
 
 ---
 

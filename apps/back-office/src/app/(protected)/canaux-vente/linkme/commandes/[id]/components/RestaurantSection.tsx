@@ -8,11 +8,11 @@ import {
   AlertTriangle,
   Mail,
   Phone,
-  MapPin,
-  Receipt,
-  Truck,
   User,
   Pencil,
+  Receipt,
+  Truck,
+  MapPin,
 } from 'lucide-react';
 
 import type { OrderWithDetails } from './types';
@@ -21,46 +21,6 @@ import type { LinkMeOrderDetails } from '../../../hooks/use-linkme-order-actions
 interface RestaurantSectionProps {
   organisation: OrderWithDetails['organisation'];
   details: LinkMeOrderDetails | null;
-}
-
-// ---- AddressLine sub-component ----
-
-function AddressLine({
-  label,
-  icon: Icon,
-  line1,
-  line2,
-  postalCode,
-  city,
-}: {
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  line1: string | null;
-  line2?: string | null;
-  postalCode: string | null;
-  city: string | null;
-}) {
-  const hasData = line1 ?? postalCode ?? city;
-  return (
-    <div className="text-xs">
-      <div className="flex items-center gap-1 text-gray-500 font-medium mb-0.5">
-        <Icon className="h-3 w-3" />
-        {label}
-      </div>
-      {hasData ? (
-        <>
-          <p className="text-gray-700">
-            {[line1, line2].filter(Boolean).join(', ')}
-          </p>
-          <p className="text-gray-700">
-            {[postalCode, city].filter(Boolean).join(' ')}
-          </p>
-        </>
-      ) : (
-        <span className="text-amber-500 italic">Non renseignee</span>
-      )}
-    </div>
-  );
 }
 
 // ---- OrgIdentifiers sub-component ----
@@ -90,6 +50,72 @@ function OrgIdentifiers({ organisation }: OrgIdentifiersProps) {
           <Phone className="h-3 w-3" />
           {organisation.phone}
         </span>
+      )}
+    </div>
+  );
+}
+
+// ---- OrgAddresses sub-component ----
+
+function formatAddress(
+  line1: string | null,
+  line2: string | null,
+  postalCode: string | null,
+  city: string | null
+): string | null {
+  const parts = [line1, line2, postalCode, city].filter(Boolean);
+  return parts.length > 0 ? parts.join(', ') : null;
+}
+
+interface OrgAddressesProps {
+  organisation: Organisation;
+}
+
+function OrgAddresses({ organisation }: OrgAddressesProps) {
+  const mainAddress = formatAddress(
+    organisation.address_line1,
+    organisation.address_line2,
+    organisation.postal_code,
+    organisation.city
+  );
+  const billingAddress = formatAddress(
+    organisation.billing_address_line1,
+    organisation.billing_address_line2,
+    organisation.billing_postal_code,
+    organisation.billing_city
+  );
+  const shippingAddress = organisation.has_different_shipping_address
+    ? formatAddress(
+        organisation.shipping_address_line1,
+        organisation.shipping_address_line2,
+        organisation.shipping_postal_code,
+        organisation.shipping_city
+      )
+    : null;
+
+  return (
+    <div className="space-y-1.5 text-xs">
+      {mainAddress && (
+        <div className="flex items-start gap-1.5 text-gray-600">
+          <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+          <span>{mainAddress}</span>
+        </div>
+      )}
+      {billingAddress && (
+        <div className="flex items-start gap-1.5 text-gray-600">
+          <Receipt className="h-3 w-3 mt-0.5 flex-shrink-0 text-amber-500" />
+          <span>
+            <span className="font-medium">Facturation :</span> {billingAddress}
+          </span>
+        </div>
+      )}
+      {shippingAddress && (
+        <div className="flex items-start gap-1.5 text-gray-600">
+          <Truck className="h-3 w-3 mt-0.5 flex-shrink-0 text-blue-500" />
+          <span>
+            <span className="font-medium">Livraison :</span> {shippingAddress}
+          </span>
+        </div>
       )}
     </div>
   );
@@ -201,49 +227,8 @@ export function RestaurantSection({
           <div className="space-y-3">
             <OrgHeader organisation={organisation} details={details} />
             <OrgIdentifiers organisation={organisation} />
+            <OrgAddresses organisation={organisation} />
             {details && <OwnerCompanyBlock details={details} />}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-gray-100">
-              <AddressLine
-                label="Adresse siege"
-                icon={MapPin}
-                line1={organisation.address_line1}
-                line2={organisation.address_line2}
-                postalCode={organisation.postal_code}
-                city={organisation.city}
-              />
-              <AddressLine
-                label="Facturation"
-                icon={Receipt}
-                line1={organisation.billing_address_line1}
-                line2={organisation.billing_address_line2}
-                postalCode={organisation.billing_postal_code}
-                city={organisation.billing_city}
-              />
-              <AddressLine
-                label="Livraison"
-                icon={Truck}
-                line1={
-                  organisation.has_different_shipping_address
-                    ? organisation.shipping_address_line1
-                    : organisation.address_line1
-                }
-                line2={
-                  organisation.has_different_shipping_address
-                    ? organisation.shipping_address_line2
-                    : organisation.address_line2
-                }
-                postalCode={
-                  organisation.has_different_shipping_address
-                    ? organisation.shipping_postal_code
-                    : organisation.postal_code
-                }
-                city={
-                  organisation.has_different_shipping_address
-                    ? organisation.shipping_city
-                    : organisation.city
-                }
-              />
-            </div>
           </div>
         ) : (
           <p className="text-gray-500 text-sm">Organisation non renseignee</p>
