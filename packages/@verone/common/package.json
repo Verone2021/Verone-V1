@@ -14,9 +14,13 @@
   "dependencies": {
     "@supabase/postgrest-js": "^1.17.3",
     "@verone/collections": "workspace:*",
+    "@verone/finance": "workspace:*",
+    "@verone/orders": "workspace:*",
+    "@verone/organisations": "workspace:*",
+    "@verone/products": "workspace:*",
+    "@verone/types": "workspace:*",
     "@verone/ui": "workspace:*",
-    "@verone/utils": "workspace:*",
-    "@verone/types": "workspace:*"
+    "@verone/utils": "workspace:*"
   },
   "peerDependencies": {
     "react": "^18.2.0",

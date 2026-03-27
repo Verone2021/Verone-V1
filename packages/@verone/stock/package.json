@@ -19,9 +19,13 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
+    "@verone/common": "workspace:*",
+    "@verone/dashboard": "workspace:*",
+    "@verone/finance": "workspace:*",
+    "@verone/products": "workspace:*",
+    "@verone/types": "workspace:*",
     "@verone/ui": "workspace:*",
     "@verone/utils": "workspace:*",
-    "@verone/types": "workspace:*",
     "@react-pdf/renderer": "^4.3.1"
   },
   "peerDependencies": {

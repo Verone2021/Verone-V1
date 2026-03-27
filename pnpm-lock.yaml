@@ -309,6 +309,15 @@ importers:
       maplibre-gl:
         specifier: ^4.7.1
         version: 4.7.1
+      next:
+        specifier: ^15.5.7
+        version: 15.5.9(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.56.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react:
+        specifier: 18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: 18.3.1
+        version: 18.3.1(react@18.3.1)
       react-map-gl:
         specifier: ^7.1.9
         version: 7.1.9(maplibre-gl@4.7.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -394,6 +403,9 @@ importers:
       resend:
         specifier: ^6.6.0
         version: 6.6.0
+      sharp:
+        specifier: ^0.34.5
+        version: 0.34.5
       supercluster:
         specifier: ^8.0.1
         version: 8.0.1
@@ -419,9 +431,6 @@ importers:
       rimraf:
         specifier: 2.7.1
         version: 2.7.1
-      sharp:
-        specifier: ^0.34.5
-        version: 0.34.5
       tailwindcss:
         specifier: ^3.4.1
         version: 3.4.18(tsx@4.20.6)(yaml@2.8.1)
@@ -446,9 +455,6 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.90.7
         version: 5.90.7(react@18.3.1)
-      '@tanstack/react-query-devtools':
-        specifier: ^5.90.2
-        version: 5.90.2(@tanstack/react-query@5.90.7(react@18.3.1))(react@18.3.1)
       '@verone/hooks':
         specifier: workspace:*
         version: link:../../packages/@verone/hooks
@@ -492,6 +498,9 @@ importers:
         specifier: ^1.1.2
         version: 1.1.2(@types/react-dom@18.3.7(@types/react@18.3.26))(@types/react@18.3.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     devDependencies:
+      '@tanstack/react-query-devtools':
+        specifier: ^5.90.2
+        version: 5.90.2(@tanstack/react-query@5.90.7(react@18.3.1))(react@18.3.1)
       '@types/node':
         specifier: ^20.11.17
         version: 20.19.24
@@ -531,6 +540,9 @@ importers:
 
   packages/@verone/channels:
     dependencies:
+      '@verone/products':
+        specifier: workspace:*
+        version: link:../products
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -549,6 +561,9 @@ importers:
 
   packages/@verone/collections:
     dependencies:
+      '@verone/common':
+        specifier: workspace:*
+        version: link:../common
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -573,6 +588,18 @@ importers:
       '@verone/collections':
         specifier: workspace:*
         version: link:../collections
+      '@verone/finance':
+        specifier: workspace:*
+        version: link:../finance
+      '@verone/orders':
+        specifier: workspace:*
+        version: link:../orders
+      '@verone/organisations':
+        specifier: workspace:*
+        version: link:../organisations
+      '@verone/products':
+        specifier: workspace:*
+        version: link:../products
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -594,6 +621,9 @@ importers:
       '@react-pdf/renderer':
         specifier: ^4.3.1
         version: 4.3.1(react@18.3.1)
+      '@verone/common':
+        specifier: workspace:*
+        version: link:../common
       '@verone/finance':
         specifier: workspace:*
         version: link:../finance
@@ -628,6 +658,12 @@ importers:
 
   packages/@verone/customers:
     dependencies:
+      '@verone/common':
+        specifier: workspace:*
+        version: link:../common
+      '@verone/organisations':
+        specifier: workspace:*
+        version: link:../organisations
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -646,6 +682,15 @@ importers:
 
   packages/@verone/dashboard:
     dependencies:
+      '@verone/finance':
+        specifier: workspace:*
+        version: link:../finance
+      '@verone/organisations':
+        specifier: workspace:*
+        version: link:../organisations
+      '@verone/stock':
+        specifier: workspace:*
+        version: link:../stock
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -662,12 +707,6 @@ importers:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
 
-  packages/@verone/eslint-config:
-    dependencies:
-      eslint:
-        specifier: '>=8.0.0'
-        version: 9.39.2(jiti@2.6.1)
-
   packages/@verone/finance:
     dependencies:
       '@react-pdf/renderer':
@@ -679,6 +718,9 @@ importers:
       '@verone/integrations':
         specifier: workspace:*
         version: link:../integrations
+      '@verone/orders':
+        specifier: workspace:*
+        version: link:../orders
       '@verone/products':
         specifier: workspace:*
         version: link:../products
@@ -739,6 +781,9 @@ importers:
 
   packages/@verone/logistics:
     dependencies:
+      '@verone/orders':
+        specifier: workspace:*
+        version: link:../orders
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -784,12 +829,24 @@ importers:
       '@verone/categories':
         specifier: workspace:*
         version: link:../categories
+      '@verone/common':
+        specifier: workspace:*
+        version: link:../common
+      '@verone/dashboard':
+        specifier: workspace:*
+        version: link:../dashboard
       '@verone/finance':
         specifier: workspace:*
         version: link:../finance
       '@verone/organisations':
         specifier: workspace:*
         version: link:../organisations
+      '@verone/products':
+        specifier: workspace:*
+        version: link:../products
+      '@verone/stock':
+        specifier: workspace:*
+        version: link:../stock
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -817,6 +874,21 @@ importers:
 
   packages/@verone/organisations:
     dependencies:
+      '@verone/categories':
+        specifier: workspace:*
+        version: link:../categories
+      '@verone/common':
+        specifier: workspace:*
+        version: link:../common
+      '@verone/customers':
+        specifier: workspace:*
+        version: link:../customers
+      '@verone/orders':
+        specifier: workspace:*
+        version: link:../orders
+      '@verone/products':
+        specifier: workspace:*
+        version: link:../products
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -857,12 +929,39 @@ importers:
 
   packages/@verone/products:
     dependencies:
+      '@verone/categories':
+        specifier: workspace:*
+        version: link:../categories
+      '@verone/common':
+        specifier: workspace:*
+        version: link:../common
+      '@verone/consultations':
+        specifier: workspace:*
+        version: link:../consultations
+      '@verone/customers':
+        specifier: workspace:*
+        version: link:../customers
+      '@verone/dashboard':
+        specifier: workspace:*
+        version: link:../dashboard
+      '@verone/finance':
+        specifier: workspace:*
+        version: link:../finance
+      '@verone/organisations':
+        specifier: workspace:*
+        version: link:../organisations
+      '@verone/stock':
+        specifier: workspace:*
+        version: link:../stock
       '@verone/types':
         specifier: workspace:*
         version: link:../types
       '@verone/ui':
         specifier: workspace:*
         version: link:../ui
+      '@verone/ui-business':
+        specifier: workspace:*
+        version: link:../ui-business
       '@verone/utils':
         specifier: workspace:*
         version: link:../utils
@@ -902,6 +1001,18 @@ importers:
       '@react-pdf/renderer':
         specifier: ^4.3.1
         version: 4.3.1(react@18.3.1)
+      '@verone/common':
+        specifier: workspace:*
+        version: link:../common
+      '@verone/dashboard':
+        specifier: workspace:*
+        version: link:../dashboard
+      '@verone/finance':
+        specifier: workspace:*
+        version: link:../finance
+      '@verone/products':
+        specifier: workspace:*
+        version: link:../products
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -1009,6 +1120,21 @@ importers:
 
   packages/@verone/ui-business:
     dependencies:
+      '@verone/common':
+        specifier: workspace:*
+        version: link:../common
+      '@verone/finance':
+        specifier: workspace:*
+        version: link:../finance
+      '@verone/orders':
+        specifier: workspace:*
+        version: link:../orders
+      '@verone/organisations':
+        specifier: workspace:*
+        version: link:../organisations
+      '@verone/products':
+        specifier: workspace:*
+        version: link:../products
       '@verone/types':
         specifier: workspace:*
         version: link:../types
