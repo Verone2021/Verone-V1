@@ -332,6 +332,22 @@ export function useSidebarCounts(options?: {
         return;
       }
 
+      // Flag pour ne logger l'erreur Realtime qu'une seule fois
+      let realtimeWarned = false;
+      const onChannelError = (channelName: string) => {
+        if (!realtimeWarned) {
+          realtimeWarned = true;
+          console.warn(
+            `[useSidebarCounts] Realtime unavailable (${channelName}) — fallback polling`
+          );
+          if (!intervalRef.current && pollingInterval > 0) {
+            intervalRef.current = setInterval(() => {
+              void fetchAllCounts().catch(() => {});
+            }, pollingInterval);
+          }
+        }
+      };
+
       // ─── Canal 1 : sales_orders ────────────────────────────────────────────
       // Couvre : ordersPending, expeditionsPending, linkmePending, linkmeApprovals
       channelSalesOrdersRef.current = supabase
@@ -340,24 +356,12 @@ export function useSidebarCounts(options?: {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'sales_orders' },
           () => {
-            void fetchAllCounts().catch((err: unknown) => {
-              console.error(
-                '[useSidebarCounts] sales_orders refetch error:',
-                err
-              );
-            });
+            void fetchAllCounts().catch(() => {});
           }
         )
         .subscribe(status => {
           if (status === 'CHANNEL_ERROR') {
-            console.warn(
-              '[useSidebarCounts] sales_orders channel error — fallback polling'
-            );
-            if (!intervalRef.current && pollingInterval > 0) {
-              intervalRef.current = setInterval(() => {
-                void fetchAllCounts().catch(console.error);
-              }, pollingInterval);
-            }
+            onChannelError('sales_orders');
           }
         });
 
@@ -368,18 +372,11 @@ export function useSidebarCounts(options?: {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'client_consultations' },
           () => {
-            void fetchAllCounts().catch((err: unknown) => {
-              console.error(
-                '[useSidebarCounts] consultations refetch error:',
-                err
-              );
-            });
+            void fetchAllCounts().catch(() => {});
           }
         )
         .subscribe(status => {
-          if (status === 'CHANNEL_ERROR') {
-            console.warn('[useSidebarCounts] consultations channel error');
-          }
+          if (status === 'CHANNEL_ERROR') onChannelError('consultations');
         });
 
       // ─── Canal 3 : bank_transactions ──────────────────────────────────────
@@ -389,18 +386,11 @@ export function useSidebarCounts(options?: {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'bank_transactions' },
           () => {
-            void fetchAllCounts().catch((err: unknown) => {
-              console.error(
-                '[useSidebarCounts] bank_transactions refetch error:',
-                err
-              );
-            });
+            void fetchAllCounts().catch(() => {});
           }
         )
         .subscribe(status => {
-          if (status === 'CHANNEL_ERROR') {
-            console.warn('[useSidebarCounts] bank_transactions channel error');
-          }
+          if (status === 'CHANNEL_ERROR') onChannelError('bank_transactions');
         });
 
       // ─── Canal 4 : products ───────────────────────────────────────────────
@@ -415,15 +405,11 @@ export function useSidebarCounts(options?: {
             filter: 'product_status=eq.active',
           },
           () => {
-            void fetchAllCounts().catch((err: unknown) => {
-              console.error('[useSidebarCounts] products refetch error:', err);
-            });
+            void fetchAllCounts().catch(() => {});
           }
         )
         .subscribe(status => {
-          if (status === 'CHANNEL_ERROR') {
-            console.warn('[useSidebarCounts] products channel error');
-          }
+          if (status === 'CHANNEL_ERROR') onChannelError('products');
         });
 
       // ─── Canal 5 : form_submissions ───────────────────────────────────────
@@ -433,18 +419,11 @@ export function useSidebarCounts(options?: {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'form_submissions' },
           () => {
-            void fetchAllCounts().catch((err: unknown) => {
-              console.error(
-                '[useSidebarCounts] form_submissions refetch error:',
-                err
-              );
-            });
+            void fetchAllCounts().catch(() => {});
           }
         )
         .subscribe(status => {
-          if (status === 'CHANNEL_ERROR') {
-            console.warn('[useSidebarCounts] form_submissions channel error');
-          }
+          if (status === 'CHANNEL_ERROR') onChannelError('form_submissions');
         });
 
       // ─── Canal 6 : linkme_info_requests ───────────────────────────────────
@@ -454,20 +433,12 @@ export function useSidebarCounts(options?: {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'linkme_info_requests' },
           () => {
-            void fetchAllCounts().catch((err: unknown) => {
-              console.error(
-                '[useSidebarCounts] linkme_info_requests refetch error:',
-                err
-              );
-            });
+            void fetchAllCounts().catch(() => {});
           }
         )
         .subscribe(status => {
-          if (status === 'CHANNEL_ERROR') {
-            console.warn(
-              '[useSidebarCounts] linkme_info_requests channel error'
-            );
-          }
+          if (status === 'CHANNEL_ERROR')
+            onChannelError('linkme_info_requests');
         });
 
       // ─── Canal 7 : stock_alerts_unified_view ──────────────────────────────
@@ -477,18 +448,11 @@ export function useSidebarCounts(options?: {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'stock_alerts_unified_view' },
           () => {
-            void fetchAllCounts().catch((err: unknown) => {
-              console.error(
-                '[useSidebarCounts] stock_alerts refetch error:',
-                err
-              );
-            });
+            void fetchAllCounts().catch(() => {});
           }
         )
         .subscribe(status => {
-          if (status === 'CHANNEL_ERROR') {
-            console.warn('[useSidebarCounts] stock_alerts channel error');
-          }
+          if (status === 'CHANNEL_ERROR') onChannelError('stock_alerts');
         });
     };
 
