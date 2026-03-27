@@ -235,18 +235,126 @@ export function useGlobeStats() {
         .select('*', { count: 'exact', head: true })
         .eq('show_on_linkme_globe', true);
 
-      // Compter les organisations avec show_on_linkme_globe = true
+      // Compter les organisations independantes avec show_on_linkme_globe = true
       const { count: orgsCount } = await supabase
         .from('organisations')
         .select('*', { count: 'exact', head: true })
+        .eq('show_on_linkme_globe', true)
+        .is('enseigne_id', null);
+
+      // Compter les enseignes avec show_on_linkme_globe = true
+      const { count: enseignesCount } = await supabase
+        .from('enseignes')
+        .select('*', { count: 'exact', head: true })
         .eq('show_on_linkme_globe', true);
 
+      const orgTotal = (orgsCount ?? 0) + (enseignesCount ?? 0);
       return {
         products: productsCount ?? 0,
-        organisations: orgsCount ?? 0,
-        total: (productsCount ?? 0) + (orgsCount ?? 0),
+        organisations: orgTotal,
+        total: (productsCount ?? 0) + orgTotal,
       };
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+}
+
+// ============================================
+// GLOBE ITEMS HOOKS
+// ============================================
+
+export interface GlobeItem {
+  item_type: string;
+  id: string;
+  name: string;
+  image_url: string;
+}
+
+/**
+ * Hook pour recuperer les items actuellement affiches sur le globe
+ */
+export function useGlobeItems() {
+  return useQuery({
+    queryKey: ['linkme-globe-items'],
+    queryFn: async (): Promise<GlobeItem[]> => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('linkme_globe_items')
+        .select('item_type, id, name, image_url');
+
+      if (error) {
+        console.error('Erreur fetch globe items:', error);
+        throw error;
+      }
+      return (data ?? []) as GlobeItem[];
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook pour ajouter/retirer un item du globe
+ */
+export function useToggleGlobeItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      itemType,
+      itemId,
+      enabled,
+    }: {
+      itemType: 'product' | 'organisation' | 'enseigne';
+      itemId: string;
+      enabled: boolean;
+    }) => {
+      const supabase = createClient();
+      const table =
+        itemType === 'product'
+          ? 'products'
+          : itemType === 'enseigne'
+            ? 'enseignes'
+            : 'organisations';
+      const { error } = await supabase
+        .from(table)
+        .update({ show_on_linkme_globe: enabled })
+        .eq('id', itemId);
+
+      if (error) {
+        console.error(`Erreur toggle globe ${itemType}:`, error);
+        throw error;
+      }
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-globe-items'] });
+      await queryClient.invalidateQueries({ queryKey: ['linkme-globe-stats'] });
+    },
+  });
+}
+
+/**
+ * Hook pour ajouter plusieurs produits au globe en batch (une seule requete)
+ */
+export function useBatchAddGlobeProducts() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (productIds: string[]) => {
+      if (productIds.length === 0) return;
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('products')
+        .update({ show_on_linkme_globe: true })
+        .in('id', productIds);
+
+      if (error) {
+        console.error('Erreur batch add globe products:', error);
+        throw error;
+      }
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['linkme-globe-items'] });
+      await queryClient.invalidateQueries({ queryKey: ['linkme-globe-stats'] });
+    },
   });
 }
