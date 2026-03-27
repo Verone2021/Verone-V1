@@ -43,10 +43,10 @@ interface RoleBadge {
 function getRoleBadges(contact: ContactBO): RoleBadge[] {
   const badges: RoleBadge[] = [];
 
-  if (contact.isBillingContact) {
+  if (contact.linkmeUserId) {
     badges.push({
-      label: 'Facturation',
-      className: 'bg-blue-100 text-blue-700',
+      label: 'LinkMe',
+      className: 'bg-indigo-100 text-indigo-700',
     });
   }
 
@@ -54,6 +54,13 @@ function getRoleBadges(contact: ContactBO): RoleBadge[] {
     badges.push({
       label: 'Responsable',
       className: 'bg-green-100 text-green-700',
+    });
+  }
+
+  if (contact.isBillingContact) {
+    badges.push({
+      label: 'Facturation',
+      className: 'bg-blue-100 text-blue-700',
     });
   }
 

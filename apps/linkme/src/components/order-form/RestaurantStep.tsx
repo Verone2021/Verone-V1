@@ -189,20 +189,12 @@ export function OpeningStep2Restaurant({
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-gray-500" />
               <h4 className="font-medium text-sm">
-                Informations légales
-                {data.newRestaurant.ownershipType === 'franchise' && (
-                  <span className="text-red-500 ml-1">*</span>
-                )}
+                Informations légales (facultatif)
               </h4>
             </div>
 
             <div>
-              <Label htmlFor="companyLegalName">
-                Raison sociale
-                {data.newRestaurant.ownershipType === 'franchise' && (
-                  <span className="text-red-500 ml-1">*</span>
-                )}
-              </Label>
+              <Label htmlFor="companyLegalName">Raison sociale</Label>
               <Input
                 id="companyLegalName"
                 value={data.responsable.companyLegalName}
@@ -224,12 +216,7 @@ export function OpeningStep2Restaurant({
             </div>
 
             <div>
-              <Label htmlFor="siret">
-                SIRET
-                {data.newRestaurant.ownershipType === 'franchise' && (
-                  <span className="text-red-500 ml-1">*</span>
-                )}
-              </Label>
+              <Label htmlFor="siret">SIRET</Label>
               <Input
                 id="siret"
                 value={data.responsable.siret}

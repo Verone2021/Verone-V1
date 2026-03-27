@@ -709,22 +709,12 @@ export function RestaurantStep({
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-gray-500" />
                   <h4 className="font-medium text-gray-700">
-                    Informations légales
-                    {formData.restaurant.newRestaurant.ownershipType ===
-                      'franchise' && (
-                      <span className="text-red-500 ml-1">*</span>
-                    )}
+                    Informations légales (facultatif)
                   </h4>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="legalName">
-                    Raison sociale
-                    {formData.restaurant.newRestaurant.ownershipType ===
-                      'franchise' && (
-                      <span className="text-red-500 ml-1">*</span>
-                    )}
-                  </Label>
+                  <Label htmlFor="legalName">Raison sociale</Label>
                   <Input
                     id="legalName"
                     type="text"
@@ -737,13 +727,7 @@ export function RestaurantStep({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="siret">
-                    SIRET
-                    {formData.restaurant.newRestaurant.ownershipType ===
-                      'franchise' && (
-                      <span className="text-red-500 ml-1">*</span>
-                    )}
-                  </Label>
+                  <Label htmlFor="siret">SIRET</Label>
                   <Input
                     id="siret"
                     type="text"

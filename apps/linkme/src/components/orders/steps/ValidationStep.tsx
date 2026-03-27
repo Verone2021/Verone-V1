@@ -636,11 +636,15 @@ export function ValidationStep({
           <div className="text-sm text-blue-800">
             <p className="font-medium">Frais de transport</p>
             <p className="mt-1">
-              Le montant affiche correspond uniquement aux produits. Les frais
-              de transport seront calcules en fonction des informations
-              renseignees et ajoutes au devis. Pensez a indiquer votre date de
-              livraison souhaitee : sans cette information, aucune estimation de
-              transport ne pourra etre etablie.
+              Le montant affich&#233; correspond uniquement aux produits. Les
+              frais de transport seront calcul&#233;s ult&#233;rieurement en
+              fonction de l&apos;accessibilit&#233; du lieu de r&#233;ception de
+              la marchandise.
+            </p>
+            <p className="mt-1 font-medium">
+              Veuillez imp&#233;rativement indiquer la date de livraison
+              souhait&#233;e. Sans cette information, il sera impossible
+              d&apos;&#233;tablir un devis pour le transport.
             </p>
           </div>
         </div>
@@ -651,11 +655,12 @@ export function ValidationStep({
         <div className="flex items-start gap-3">
           <CheckCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-amber-800">
-            <p className="font-medium">Prochaine étape</p>
+            <p className="font-medium">Prochaine &#233;tape</p>
             <p className="mt-1">
-              Apres validation, votre commande sera soumise a notre equipe pour
-              approbation. Vous recevrez un email de confirmation, puis un devis
-              detaille incluant les frais de transport vous sera adresse.
+              Apr&#232;s validation, votre commande sera soumise &#224; notre
+              &#233;quipe pour approbation. Vous recevrez un email de
+              confirmation, puis un devis d&#233;taill&#233; incluant les frais
+              de transport vous sera adress&#233;.
             </p>
           </div>
         </div>

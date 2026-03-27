@@ -98,16 +98,23 @@ export async function POST(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'Ce lien a expiré' }, { status: 410 });
     }
 
+    // Mapping: form field key → organisations table column
+    const ORG_FIELD_MAP: Record<string, string> = {
+      organisation_siret: 'siret',
+      organisation_vat_number: 'vat_number',
+      organisation_legal_name: 'legal_name',
+      organisation_billing_address: 'billing_address_line1',
+      organisation_billing_postal_code: 'billing_postal_code',
+      organisation_billing_city: 'billing_city',
+    };
+
     // Separate fields: linkme_details vs organisation
     const linkmeDetailsUpdate: Record<string, string> = {};
-    let organisationSiret: string | null = null;
-    let organisationVatNumber: string | null = null;
+    const organisationUpdate: Record<string, string> = {};
 
     for (const [key, value] of Object.entries(fields)) {
-      if (key === 'organisation_siret') {
-        organisationSiret = value;
-      } else if (key === 'organisation_vat_number') {
-        organisationVatNumber = value;
+      if (key in ORG_FIELD_MAP) {
+        organisationUpdate[ORG_FIELD_MAP[key]] = value;
       } else if (LINKME_DETAILS_FIELDS.has(key)) {
         linkmeDetailsUpdate[key] = value;
       }
@@ -132,8 +139,8 @@ export async function POST(request: Request, { params }: RouteParams) {
       }
     }
 
-    // Update organisation SIRET or VAT number if provided
-    if (organisationSiret || organisationVatNumber) {
+    // Update organisation fields if any provided
+    if (Object.keys(organisationUpdate).length > 0) {
       // Get customer_id from sales_order
       const { data: order } = await supabase
         .from('sales_orders')
@@ -142,13 +149,9 @@ export async function POST(request: Request, { params }: RouteParams) {
         .single();
 
       if (order?.customer_id) {
-        const orgUpdate: Record<string, string> = {};
-        if (organisationSiret) orgUpdate.siret = organisationSiret;
-        if (organisationVatNumber) orgUpdate.vat_number = organisationVatNumber;
-
         const { error: orgError } = await supabase
           .from('organisations')
-          .update(orgUpdate)
+          .update(organisationUpdate)
           .eq('id', order.customer_id);
 
         if (orgError) {

@@ -39,6 +39,11 @@ export function useOrdersWithMissingFields() {
         legal_name: string;
         siret: string | null;
         enseigne_id: string | null;
+        country: string | null;
+        vat_number: string | null;
+        billing_address_line1: string | null;
+        billing_postal_code: string | null;
+        billing_city: string | null;
       };
 
       const { data: orders, error } = await supabase
@@ -51,7 +56,7 @@ export function useOrdersWithMissingFields() {
           status,
           customer_id,
           organisations!sales_orders_customer_id_fkey (
-            id, trade_name, legal_name, siret, enseigne_id
+            id, trade_name, legal_name, siret, enseigne_id, country, vat_number, billing_address_line1, billing_postal_code, billing_city
           ),
           sales_order_linkme_details (
             id, sales_order_id,
@@ -132,6 +137,12 @@ export function useOrdersWithMissingFields() {
         const missingFields = getOrderMissingFields({
           details,
           organisationSiret: org?.siret,
+          organisationCountry: org?.country,
+          organisationVatNumber: org?.vat_number,
+          organisationLegalName: org?.legal_name,
+          organisationBillingAddress: org?.billing_address_line1,
+          organisationBillingPostalCode: org?.billing_postal_code,
+          organisationBillingCity: org?.billing_city,
           ownerType,
           ignoredFields,
         });

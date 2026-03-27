@@ -62,6 +62,11 @@ function computeMissingFields(order: PendingOrder): MissingFieldsResult | null {
     organisationSiret: order.organisation_siret ?? undefined,
     organisationCountry: order.organisation_country ?? undefined,
     organisationVatNumber: order.organisation_vat_number ?? undefined,
+    organisationLegalName: order.organisation_legal_name ?? undefined,
+    organisationBillingAddress: order.organisation_billing_address ?? undefined,
+    organisationBillingPostalCode:
+      order.organisation_billing_postal_code ?? undefined,
+    organisationBillingCity: order.organisation_billing_city ?? undefined,
     ownerType: details.owner_type,
     ignoredFields: (details.ignored_missing_fields as string[]) ?? [],
   });

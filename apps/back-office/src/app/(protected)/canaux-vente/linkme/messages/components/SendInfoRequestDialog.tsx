@@ -175,7 +175,7 @@ export function SendInfoRequestDialog({
                   className="accent-blue-600"
                 />
                 <div>
-                  <div className="font-medium">Demandeur</div>
+                  <div className="font-medium">Responsable</div>
                   <div className="text-sm text-gray-500">
                     {requesterName ? `${requesterName} - ` : ''}
                     {requesterEmail || 'Email non renseigne'}
@@ -202,7 +202,7 @@ export function SendInfoRequestDialog({
                   className="accent-blue-600"
                 />
                 <div>
-                  <div className="font-medium">Proprietaire</div>
+                  <div className="font-medium">Responsable (franchise)</div>
                   <div className="text-sm text-gray-500">
                     {ownerName ? `${ownerName} - ` : ''}
                     {ownerEmail || 'Email non renseigne'}

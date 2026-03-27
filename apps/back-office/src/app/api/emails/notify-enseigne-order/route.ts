@@ -107,14 +107,14 @@ function buildNotifyEnseigneBodyHtml(params: {
             <td style="padding: 10px 0; text-align: right; font-weight: bold; border-bottom: 1px solid #eee;">${orderNumber}</td>
           </tr>
           <tr>
-            <td style="padding: 10px 0; color: #666; border-bottom: 1px solid #eee;">Demandeur</td>
+            <td style="padding: 10px 0; color: #666; border-bottom: 1px solid #eee;">Responsable</td>
             <td style="padding: 10px 0; text-align: right; border-bottom: 1px solid #eee;">
               ${requesterName}<br>
               <span style="color: #888; font-size: 13px;">${REQUESTER_TYPE_LABELS[requesterType] ?? requesterType}</span>
             </td>
           </tr>
           <tr>
-            <td style="padding: 10px 0; color: #666; border-bottom: 1px solid #eee;">Email demandeur</td>
+            <td style="padding: 10px 0; color: #666; border-bottom: 1px solid #eee;">Email responsable</td>
             <td style="padding: 10px 0; text-align: right; border-bottom: 1px solid #eee;">
               <a href="mailto:${requesterEmail}" style="color: #2563eb;">${requesterEmail}</a>
             </td>
