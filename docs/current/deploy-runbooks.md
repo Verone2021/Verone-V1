@@ -1,6 +1,6 @@
 # Deploiement Verone
 
-**Derniere mise a jour:** 2026-01-09
+**Derniere mise a jour:** 2026-03-27
 
 GitHub + Vercel (auto-deploy).
 
@@ -39,12 +39,12 @@ GitHub (main)
 
 ## GitHub Actions
 
-| Workflow                 | Declencheur | Action                   |
-| ------------------------ | ----------- | ------------------------ |
-| `pr-validation.yml`      | PR          | Type-check, lint, build  |
-| `deploy-production.yml`  | Push main   | Deploy Vercel            |
-| `deploy-safety.yml`      | Push main   | Verifications pre-deploy |
-| `typescript-quality.yml` | PR          | Quality checks           |
+| Workflow                | Declencheur                   | Action                             |
+| ----------------------- | ----------------------------- | ---------------------------------- |
+| `quality.yml`           | PR + push main/staging        | ESLint, type-check, build monorepo |
+| `linkme-validation.yml` | PR + push (paths apps/linkme) | ESLint, type-check, build LinkMe   |
+
+**Note** : Les deploiements sont geres par Vercel Git Integration (pas de workflow GitHub dedie).
 
 ---
 

@@ -5,7 +5,7 @@
     "playwright-lane-1",
     "playwright-lane-2",
     "context7",
-    "magic",
+    "shadcn",
     "supabase"
   ],
   "outputStyle": "explanatory",
@@ -25,143 +25,143 @@
           }
         ]
       }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/clarify-before-code.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit(*) || Write(*) || mcp__supabase__apply_migration(*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'BRANCH=$(git branch --show-current 2>/dev/null || echo \"unknown\"); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"BLOQUE: Operation d ecriture INTERDITE sur main.\n\nSolution : Creer une feature branch MAINTENANT :\n  git checkout -b feat/[APP]-[DOMAIN]-[NNN]-description\"; exit 1; fi'"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(git checkout*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/validate-git-checkout.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(git*--no-verify*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'BLOQUE: --no-verify est INTERDIT.\n\nRaison: Contourne les validations TypeScript/ESLint.\nSolution: Corriger les erreurs au lieu de les ignorer.'; exit 1"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(git commit*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'BRANCH=$(git branch --show-current); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"INTERDIT de commit sur main. Creer une feature branch: git checkout -b feat/XXX\"; exit 1; fi; if ! echo \"$TOOL_INPUT\" | grep -qE \"\\[(BO|LM|WEB|SI|NO|INFRA)-[A-Z0-9]+-[0-9]{3}\\]|\\[NO-TASK\\]|\\[INFRA\\]\"; then echo \"Task ID manquant. Format: [APP-XXX-001] ou [NO-TASK]\"; exit 1; fi'"
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/auto-sync-with-main.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(git push*main*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"origin (main|master)\"; then echo \"INTERDIT: Push direct sur main. Creer une PR via: gh pr create\"; exit 1; fi'"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(gh pr create*--base main*) || Bash(gh pr merge*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"--base main|gh pr merge\"; then echo \"BLOQUE: PRs doivent cibler staging (--base staging), JAMAIS main.\nWorkflow : feature -> staging -> validation Romeo -> main\nCorrige avec : gh pr create --base staging\"; exit 2; fi'"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"(pnpm|npm|yarn|turbo)\\s+(dev|start)\"; then echo \"INTERDIT: Seul l utilisateur peut lancer les serveurs. Demandez a l utilisateur d executer: pnpm dev:safe\"; exit 1; fi'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit(*middleware*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'MIDDLEWARE CRITIQUE - Verifier patterns existants avant modification' && exit 0"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit(*_rls_*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'RLS CRITIQUE - Approbation requise pour migrations auth' && exit 0"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit(*) || Write(*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'CONTENT=$(echo \"$TOOL_INPUT\" | jq -r \".new_string // .content // empty\"); if echo \"$CONTENT\" | grep -qE \"(: any([^A-Za-z]|$)|as any([^A-Za-z]|$)|as unknown as|<any>|any\\[\\]|eslint-disable.*no-explicit-any)\"; then echo \"BLOQUE: TypeScript any detecte\n\nPatterns interdits :\n- : any\n- as any\n- as unknown as\n- any[]\n- eslint-disable no-explicit-any\n\nSolutions :\n1. Types DB : Database[public][Tables][table][Row]\n2. unknown + validation Zod\n\nREFUS.\"; exit 1; fi'"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__playwright-lane-1__browser_take_screenshot(*) || mcp__playwright-lane-2__browser_take_screenshot(*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/validate-playwright-screenshot.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit(*.(ts|tsx)) || Write(*.(ts|tsx))",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'FILE_PATH=$(echo \"$TOOL_INPUT\" | jq -r \".file_path // empty\"); if echo \"$FILE_PATH\" | grep -qE \"apps/back-office/\"; then timeout 15 pnpm --filter @verone/back-office type-check 2>&1 | head -30 || true; elif echo \"$FILE_PATH\" | grep -qE \"apps/linkme/\"; then timeout 15 pnpm --filter @verone/linkme type-check 2>&1 | head -30 || true; elif echo \"$FILE_PATH\" | grep -qE \"apps/site-internet/\"; then timeout 15 pnpm --filter @verone/site-internet type-check 2>&1 | head -30 || true; fi; exit 0'"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(git commit*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'CHANGED=$(git diff --cached --name-only 2>/dev/null | grep -cE \"\\.(tsx)$\" || echo 0); if [ \"$CHANGED\" -gt 3 ]; then echo \"Rappel: $CHANGED composants modifies - verifier visuellement avec Playwright MCP apres commit.\"; fi; exit 0'"
+          }
+        ]
+      }
     ]
   },
-  "UserPromptSubmit": [
-    {
-      "hooks": [
-        {
-          "type": "command",
-          "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/clarify-before-code.sh"
-        }
-      ]
-    }
-  ],
-  "PreToolUse": [
-    {
-      "matcher": "Edit(*) || Write(*) || mcp__supabase__apply_migration(*)",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash -c 'BRANCH=$(git branch --show-current 2>/dev/null || echo \"unknown\"); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"❌ BLOQUÉ: Opération d\\'écriture INTERDITE sur main.\n\n**Solution** : Créer une feature branch MAINTENANT :\n  git checkout -b feat/[APP]-[DOMAIN]-[NNN]-description\n\nExemple : git checkout -b feat/BO-DB-001-fix-owner-role\"; exit 1; fi'"
-        }
-      ]
-    },
-    {
-      "matcher": "Bash(git checkout*)",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/validate-git-checkout.sh"
-        }
-      ]
-    },
-    {
-      "matcher": "Bash(git*--no-verify*)",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "echo '❌ BLOQUÉ: --no-verify est INTERDIT.\n\nRaison: Contourne les validations TypeScript/ESLint.\nSolution: Corriger les erreurs au lieu de les ignorer.\n\nSi vraiment nécessaire, demander approbation EXPLICITE à l'utilisateur.'; exit 1"
-        }
-      ]
-    },
-    {
-      "matcher": "Bash(git commit*)",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash -c 'BRANCH=$(git branch --show-current); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"❌ INTERDIT de commit sur main. Créer une feature branch: git checkout -b feat/XXX\"; exit 1; fi; if ! echo \"$TOOL_INPUT\" | grep -qE \"\\[(BO|LM|WEB)-[A-Z0-9]+-[0-9]{3}\\]|\\[NO-TASK\\]\"; then echo \"❌ Task ID manquant. Format: [APP-XXX-001] ou [NO-TASK]\"; exit 1; fi'"
-        },
-        {
-          "type": "command",
-          "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/auto-sync-with-main.sh"
-        }
-      ]
-    },
-    {
-      "matcher": "Bash(git push*main*)",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"origin (main|master)\"; then echo \"❌ INTERDIT: Push direct sur main. Créer une PR via: gh pr create\"; exit 1; fi'"
-        }
-      ]
-    },
-    {
-      "matcher": "Bash(gh pr create*--base main*) || Bash(gh pr merge*)",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"--base main|gh pr merge\"; then echo \"❌ BLOQUÉ: PRs doivent cibler staging (--base staging), JAMAIS main.\nWorkflow : feature → staging → validation Romeo → main\nCorrige avec : gh pr create --base staging\"; exit 2; fi'"
-        }
-      ]
-    },
-    {
-      "matcher": "Bash(*)",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"(pnpm|npm|yarn|turbo)\\s+(dev|start)\"; then echo \"❌ INTERDIT: Seul l'utilisateur peut lancer les serveurs. Demandez à l'utilisateur d'exécuter: pnpm dev:safe\"; exit 1; fi'"
-        }
-      ]
-    },
-    {
-      "matcher": "Edit(*middleware*)",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "echo '⚠️ MIDDLEWARE CRITIQUE - Vérifier patterns existants avant modification' && exit 0"
-        }
-      ]
-    },
-    {
-      "matcher": "Edit(*_rls_*)",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "echo '⚠️ RLS CRITIQUE - Approbation requise pour migrations auth' && exit 0"
-        }
-      ]
-    },
-    {
-      "matcher": "Edit(*) || Write(*)",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash -c 'CONTENT=$(echo \"$TOOL_INPUT\" | jq -r \".new_string // .content // empty\"); if echo \"$CONTENT\" | grep -qE \"(: any([^A-Za-z]|$)|as any([^A-Za-z]|$)|as unknown as|<any>|any\\[\\]|eslint-disable.*no-explicit-any)\"; then echo \"❌ BLOQUÉ: TypeScript any détecté\n\n**Patterns interdits** :\n- : any (désactive type checking)\n- as any (contourne type safety)\n- as unknown as (double assertion dangereuse)\n- <any> (legacy type assertion)\n- any[] (tableau sans type)\n- eslint-disable no-explicit-any (contournement interdit)\n\n**Solutions** :\n1. Types DB : Database[\\\"public\\\"][\\\"Tables\\\"][\\\"table\\\"][\\\"Row\\\"]\n2. Type helper : type MyType = Row & { computed: string }\n3. unknown + validation : if (isValid(data)) { ... }\n\nREFUS D\\'EXÉCUTION.\"; exit 1; fi'"
-        }
-      ]
-    },
-    {
-      "matcher": "mcp__playwright-lane-1__browser_take_screenshot(*) || mcp__playwright-lane-2__browser_take_screenshot(*)",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/validate-playwright-screenshot.sh"
-        }
-      ]
-    }
-  ],
-  "PostToolUse": [
-    {
-      "matcher": "Edit(*.(ts|tsx)) || Write(*.(ts|tsx))",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash -c 'echo \"⏳ Type-check post-Edit...\"; FILE_PATH=$(echo \"$TOOL_INPUT\" | jq -r \".file_path // empty\"); if echo \"$FILE_PATH\" | grep -qE \"apps/back-office/\"; then timeout 15 pnpm --filter @verone/back-office type-check 2>&1 | head -30 || echo \"⚠️ Type errors détectées (voir ci-dessus)\"; elif echo \"$FILE_PATH\" | grep -qE \"packages/@verone/organisations/\"; then timeout 15 pnpm --filter @verone/organisations type-check 2>&1 | head -30 || echo \"⚠️ Type errors\"; elif echo \"$FILE_PATH\" | grep -qE \"packages/@verone/orders/\"; then timeout 15 pnpm --filter @verone/orders type-check 2>&1 | head -30 || echo \"⚠️ Type errors\"; elif echo \"$FILE_PATH\" | grep -qE \"packages/@verone/\"; then echo \"ℹ️ Package modifié — penser à vérifier type-check du package\"; fi; exit 0'"
-        }
-      ]
-    },
-    {
-      "matcher": "Bash(git commit*)",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash -c 'CHANGED=$(git diff --cached --name-only 2>/dev/null | grep -cE \"\\.(tsx)$\" || echo 0); if [ \"$CHANGED\" -gt 3 ]; then echo \"📋 Rappel: $CHANGED composants modifiés — vérifier visuellement avec Playwright MCP après commit.\"; fi; exit 0'"
-        }
-      ]
-    }
-  ],
   "permissions": {
     "allow": [
       "Bash(git *)",
@@ -206,7 +206,7 @@
       "mcp__context7__*",
       "mcp__playwright-lane-1__*",
       "mcp__playwright-lane-2__*",
-      "mcp__magic__*",
+      "mcp__shadcn__*",
       "mcp__supabase__execute_sql",
       "mcp__supabase__list_*",
       "mcp__supabase__get_*",

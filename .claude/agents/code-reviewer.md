@@ -5,6 +5,8 @@ model: haiku
 color: green
 role: READ
 writes-to: []
+tools: [Read, Grep, Glob, Bash]
+skills: [rls-patterns]
 ---
 
 ## ⛔ LECTURE OBLIGATOIRE (AVANT TOUTE ACTION)

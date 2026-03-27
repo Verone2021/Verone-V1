@@ -5,7 +5,22 @@ model: sonnet
 color: orange
 role: WRITE
 writes-to: [code, ACTIVE.md]
-tools: [Read, Edit, Write, Glob, Grep, Bash, "mcp__supabase__execute_sql", "mcp__supabase__list_tables", "mcp__serena__find_symbol", "mcp__serena__list_memories", "mcp__playwright-lane-2__*"]
+tools:
+  [
+    Read,
+    Edit,
+    Write,
+    Glob,
+    Grep,
+    Bash,
+    'mcp__supabase__execute_sql',
+    'mcp__supabase__list_tables',
+    'mcp__supabase__get_advisors',
+    'mcp__serena__find_symbol',
+    'mcp__serena__list_memories',
+    'mcp__playwright-lane-2__*',
+  ]
+skills: [rls-patterns]
 memory: .claude/agent-memory/site-internet-expert/
 ---
 
@@ -22,10 +37,10 @@ memory: .claude/agent-memory/site-internet-expert/
 
 ## SERENA MEMORIES A CONSULTER
 
-| Domaine | Memory |
-|---|---|
-| Architecture site | `site-internet-architecture` |
-| Architecture globale | `project-architecture` |
+| Domaine              | Memory                                  |
+| -------------------- | --------------------------------------- |
+| Architecture site    | `site-internet-architecture`            |
+| Architecture globale | `project-architecture`                  |
 | Selections publiques | `linkme-public-selections-architecture` |
 
 ---
@@ -33,18 +48,21 @@ memory: .claude/agent-memory/site-internet-expert/
 ## CONNAISSANCES CLES
 
 ### Architecture
+
 - Next.js 15 App Router avec SSR
 - Catalogue produits public (lecture seule depuis Supabase)
 - Checkout Stripe (mode test/prod)
 - Commandes dans `sales_orders` avec channel = 'site-internet'
 
 ### Pages principales
+
 - Catalogue : `/catalogue`, `/catalogue/[slug]`
 - Panier : `/panier`
 - Checkout : `/checkout`
 - Compte : `/mon-compte`
 
 ### RLS
+
 - Acces anonyme en lecture pour produits publies
 - Pas d'ecriture directe — tout passe par API routes
 

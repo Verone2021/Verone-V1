@@ -5,6 +5,21 @@ model: sonnet
 color: blue
 role: WRITE
 writes-to: [migrations, ACTIVE.md]
+tools:
+  [
+    Read,
+    Edit,
+    Write,
+    Grep,
+    Glob,
+    Bash,
+    'mcp__supabase__execute_sql',
+    'mcp__supabase__list_tables',
+    'mcp__supabase__get_advisors',
+    'mcp__serena__find_symbol',
+    'mcp__serena__list_memories',
+  ]
+skills: [rls-patterns, schema-sync]
 ---
 
 ## ⛔ LECTURE OBLIGATOIRE (AVANT TOUTE ACTION)
@@ -14,7 +29,7 @@ writes-to: [migrations, ACTIVE.md]
 1. **Toujours** : CLAUDE.md (section comportement mentor)
 2. **Migrations** : `.claude/rules/database/supabase.md`
 3. **RLS patterns** : `.claude/rules/database/rls-patterns.md`
-4. **Mémoires obligatoires** : `database-migrations-convention`, `supabase-workflow-correct`
+4. **Serena memories** : `database-tables-by-domain`, `business-rules-organisations`
 
 **Avant de coder** : Lire `.claude/work/ACTIVE.md`, CLAUDE.md de l'app, et consulter Serena memories pertinentes.
 

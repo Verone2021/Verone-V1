@@ -1,6 +1,6 @@
 # Integrations Verone
 
-**Derniere mise a jour:** 2026-01-09
+**Derniere mise a jour:** 2026-03-27
 
 APIs et services externes.
 

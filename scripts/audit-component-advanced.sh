@@ -98,7 +98,7 @@ validate_args() {
 
 get_component_name() {
   local file="$1"
-  basename "${file}" | sed 's/\.(tsx|ts|jsx|js)$//'
+  basename "${file}" | sed -E 's/\.(tsx|ts|jsx|js)$//'
 }
 
 check_deprecated_markers() {

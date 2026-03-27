@@ -5,6 +5,19 @@ model: sonnet
 color: cyan
 role: WRITE
 writes-to: [code, ACTIVE.md]
+tools:
+  [
+    Read,
+    Edit,
+    Write,
+    Grep,
+    Glob,
+    Bash,
+    'mcp__serena__find_symbol',
+    'mcp__serena__list_memories',
+    'mcp__playwright-lane-1__*',
+  ]
+skills: [new-component]
 ---
 
 ## ⛔ LECTURE OBLIGATOIRE (AVANT TOUTE ACTION)

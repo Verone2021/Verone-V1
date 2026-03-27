@@ -1,43 +1,39 @@
-# CODEOWNERS - Vérone Back Office
+# CODEOWNERS - Verone Back Office (Monorepo)
 # Documentation: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# Mis a jour: 2026-03-27
 
 # ==============================================================================
-# PHASE 1 - CODE VALIDÉ (PROTECTION MAXIMALE)
+# PHASE 1 - CODE VALIDE (PROTECTION MAXIMALE)
 # ==============================================================================
 
 # Dashboard (Production Ready)
-/src/app/dashboard/** @owner @tech-lead
-/docs/modules/dashboard/** @owner
+/apps/back-office/src/app/(protected)/dashboard/** @owner
+/docs/current/modules/** @owner
 
 # Organisations & Contacts (Production Ready)
-/src/app/contacts-organisations/** @owner @tech-lead
-/src/hooks/use-organisations.ts @owner @tech-lead
-/src/hooks/use-contacts.ts @owner @tech-lead
-/src/hooks/use-customers.ts @owner @tech-lead
-/src/hooks/use-toggle-favorite.ts @owner @tech-lead
-/src/components/business/organisation-*.tsx @owner @tech-lead
-/src/components/business/customer-*.tsx @owner @tech-lead
-/src/components/business/contact-*.tsx @owner @tech-lead
+/apps/back-office/src/app/(protected)/contacts-organisations/** @owner
+/apps/back-office/src/hooks/use-organisations.ts @owner
+/apps/back-office/src/hooks/use-contacts.ts @owner
+/apps/back-office/src/hooks/use-customers.ts @owner
+/apps/back-office/src/hooks/use-toggle-favorite.ts @owner
+/apps/back-office/src/components/business/organisation-*.tsx @owner
+/apps/back-office/src/components/business/customer-*.tsx @owner
+/apps/back-office/src/components/business/contact-*.tsx @owner
 
 # Profile & Admin (Production Ready)
-/src/app/profile/** @owner @tech-lead
-/src/app/admin/** @owner @tech-lead
+/apps/back-office/src/app/(protected)/profile/** @owner
+/apps/back-office/src/app/(protected)/admin/** @owner
 
 # ==============================================================================
 # DOCUMENTATION CRITIQUE
 # ==============================================================================
 
-# Database (Source de vérité)
-/docs/database/** @owner
+# Database (Source de verite)
+/docs/current/database/** @owner
 /supabase/migrations/** @owner
 
-# Auth & Security
-/docs/auth/** @owner
-/docs/security/** @owner
-
-# Metrics & KPI
-/docs/metrics/** @owner
-/packages/@verone/kpi/** @owner
+# Finance
+/docs/current/finance/** @owner
 
 # Configuration Projet
 /CLAUDE.md @owner
@@ -45,46 +41,28 @@
 /.github/CODEOWNERS @owner
 
 # ==============================================================================
-# SYSTEME ALERTES STOCK - PROTECTION CRITIQUE (2025-12-07)
-# ==============================================================================
-# Ces fichiers gerent le workflow complet des alertes stock.
-# Toute modification peut casser le systeme de suivi des ruptures.
-#
-# WORKFLOW METIER :
-# - ROUGE : Commande brouillon OU stock previsionnel < min_stock
-# - VERT  : Commande validee ET stock previsionnel >= min_stock
-# - DISPARAIT : Reception complete ET stock_real >= min_stock
-#
-# TESTS OBLIGATOIRES avant merge :
-# 1. Valider PO -> Alerte passe ROUGE -> VERT
-# 2. Devalider PO -> Alerte passe VERT -> ROUGE
-# 3. Expedition partielle SO -> Alerte RECALCULE (ne disparait pas)
-# 4. Annulation reliquat -> Alerte RECALCULE
-# 5. Reception complete -> Alerte DISPARAIT
+# SYSTEME ALERTES STOCK - PROTECTION CRITIQUE
 # ==============================================================================
 
 /packages/@verone/stock/src/hooks/use-stock-alerts.ts @owner
 /packages/@verone/stock/src/components/cards/StockAlertCard.tsx @owner
-/apps/back-office/src/app/stocks/alertes/page.tsx @owner
+/apps/back-office/src/app/(protected)/stocks/alertes/** @owner
 /supabase/migrations/*stock_alert* @owner
-/supabase/migrations/*unified_view* @owner
 
 # ==============================================================================
 # HOOKS & COMPOSANTS CRITIQUES
 # ==============================================================================
 
-# Tous les hooks nécessitent review tech-lead
-/src/hooks/use-*.ts @tech-lead
+# Tous les hooks back-office necessitent review
+/apps/back-office/src/hooks/use-*.ts @owner
 
 # API Routes
-/src/app/api/** @tech-lead
+/apps/back-office/src/app/api/** @owner
 
-# Components UI Core
-/src/components/ui/** @tech-lead
-/src/components/ui-v2/** @tech-lead
-
-# Design System
-/src/lib/design-system/** @tech-lead
+# Packages fondamentaux
+/packages/@verone/types/** @owner
+/packages/@verone/ui/src/** @owner
+/packages/@verone/kpi/** @owner
 
 # ==============================================================================
 # CI/CD & WORKFLOWS
@@ -97,15 +75,6 @@
 # ==============================================================================
 
 /package.json @owner
-/next.config.js @owner
-/tailwind.config.ts @owner
-/.env.local @owner
-/.env.production @owner
-
-# ==============================================================================
-# SCRIPTS VALIDATION
-# ==============================================================================
-
-/scripts/validation/** @tech-lead
-/.husky/** @tech-lead
-/.eslintrc.strict.json @tech-lead
+/turbo.json @owner
+/tailwind.config.js @owner
+/.husky/** @owner
