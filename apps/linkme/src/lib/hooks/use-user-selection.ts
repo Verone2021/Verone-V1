@@ -84,6 +84,7 @@ export interface SelectionItem {
   product_reference: string;
   product_image_url: string | null;
   product_stock_real: number;
+  product_stock_forecasted: number;
   // Hiérarchie catégorie
   category_name: string | null;
   subcategory_name: string | null;
@@ -305,6 +306,8 @@ interface SelectionItemWithProduct {
     name: string;
     sku: string;
     stock_real: number | null;
+    stock_forecasted_in: number | null;
+    stock_forecasted_out: number | null;
     product_status: string | null;
     subcategory: {
       name: string;
@@ -370,6 +373,8 @@ export function useSelectionItems(selectionId: string | null) {
             name,
             sku,
             stock_real,
+            stock_forecasted_in,
+            stock_forecasted_out,
             product_status,
             subcategory:subcategories(
               name,
@@ -421,6 +426,10 @@ export function useSelectionItems(selectionId: string | null) {
         product_reference: item.product?.sku ?? '',
         product_image_url: imageMap.get(item.product_id) ?? null,
         product_stock_real: item.product?.stock_real ?? 0,
+        product_stock_forecasted:
+          (item.product?.stock_real ?? 0) +
+          (item.product?.stock_forecasted_in ?? 0) -
+          (item.product?.stock_forecasted_out ?? 0),
         // Hiérarchie catégorie
         category_name: item.product?.subcategory?.category?.name ?? null,
         subcategory_name: item.product?.subcategory?.name ?? null,

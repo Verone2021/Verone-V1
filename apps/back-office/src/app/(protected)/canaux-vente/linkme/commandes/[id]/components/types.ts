@@ -64,6 +64,7 @@ export interface OrderWithDetails {
     siret: string | null;
     country: string | null;
     vat_number: string | null;
+    kbis_url: string | null;
   } | null;
   items: Array<{
     id: string;

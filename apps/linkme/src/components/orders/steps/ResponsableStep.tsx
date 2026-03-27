@@ -42,16 +42,6 @@ export function ResponsableStep({
   errors: _errors,
   onUpdate,
 }: ResponsableStepProps) {
-  // Determine ownership type
-  const ownershipType = useMemo(() => {
-    if (formData.restaurant.mode === 'new') {
-      return formData.restaurant.newRestaurant?.ownershipType ?? null;
-    }
-    return formData.restaurant.existingOwnershipType ?? null;
-  }, [formData.restaurant]);
-
-  const isFranchise = ownershipType === 'franchise';
-
   // Check if responsable is complete
   const isComplete = useMemo(() => {
     const r = formData.contacts.responsable;
@@ -77,18 +67,6 @@ export function ResponsableStep({
       });
     },
     [formData.contacts.responsable, onUpdate]
-  );
-
-  const handleFranchiseChange = useCallback(
-    (field: 'companyLegalName' | 'siret', value: string) => {
-      onUpdate({
-        franchiseInfo: {
-          ...formData.contacts.franchiseInfo,
-          [field]: value,
-        },
-      });
-    },
-    [formData.contacts.franchiseInfo, onUpdate]
   );
 
   const contact = formData.contacts.responsable;
@@ -198,50 +176,7 @@ export function ResponsableStep({
           </div>
         </div>
 
-        {/* Champs franchise conditionnels */}
-        {isFranchise && (
-          <div className="mt-6 pt-4 border-t">
-            <div className="flex items-center gap-2 mb-4">
-              <AlertCircle className="h-4 w-4 text-amber-600" />
-              <h4 className="font-medium text-gray-700">
-                Informations franchise
-              </h4>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="franchise-legalName">
-                  Raison sociale <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="franchise-legalName"
-                  type="text"
-                  value={
-                    formData.contacts.franchiseInfo?.companyLegalName ?? ''
-                  }
-                  onChange={e =>
-                    handleFranchiseChange('companyLegalName', e.target.value)
-                  }
-                  placeholder="SARL Restaurant Dupont"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="franchise-siret">
-                  SIRET <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="franchise-siret"
-                  type="text"
-                  value={formData.contacts.franchiseInfo?.siret ?? ''}
-                  onChange={e => handleFranchiseChange('siret', e.target.value)}
-                  placeholder="123 456 789 00012"
-                  maxLength={17}
-                />
-                <p className="text-xs text-gray-500">14 chiffres</p>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Informations légales (raison sociale, SIRET, Kbis) déplacées à l'étape Restaurant */}
       </Card>
 
       {/* Info section */}

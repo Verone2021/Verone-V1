@@ -227,15 +227,21 @@ Une organisation = une entite juridique (restaurant, entreprise, fournisseur).
 
 - Un **client** (commandes de vente)
 - Un **fournisseur** (`products.supplier_id`, `purchase_orders.supplier_id`)
-- Un **membre d'enseigne** (`enseigne_id` → enseignes)
-- Un **affilie LinkMe** (via `linkme_affiliates`)
+- Une **sous-organisation d'enseigne** (`enseigne_id` → enseignes) — PAS de compte LinkMe propre
+- Un **affilie LinkMe independant** (via `linkme_affiliates` avec `organisation_id`) — UNIQUEMENT si `enseigne_id IS NULL`
 
 **Relations** :
 
 - `enseigne_id` → enseignes (appartenance a une chaine)
-- `is_enseigne_parent` : flag societe mere
+- `is_enseigne_parent` : flag siege / maison mere de l'enseigne (1 seule org par enseigne)
 - `default_channel_id` → sales_channels
 - `source_affiliate_id` → linkme_affiliates
+
+**Regles sous-organisations** :
+
+- Si `enseigne_id IS NOT NULL` : l'org est une sous-organisation d'enseigne. Elle n'a PAS de selections, produits, ou utilisateurs LinkMe propres. Tout est gere au niveau de l'enseigne.
+- Si `is_enseigne_parent = true` : c'est le siege (maison mere) de l'enseigne.
+- Logo : herite automatiquement de l'enseigne a la creation (trigger `trg_org_inherit_enseigne_logo`).
 
 ### Contacts : `contacts` (8 records)
 
@@ -261,8 +267,10 @@ Un client particulier = un acheteur qui n'est pas une organisation.
 
 Un affilie = un partenaire qui vend nos produits via sa propre selection.
 
-- `enseigne_id` → enseignes (affilie lie a une enseigne)
-- `organisation_id` → organisations (affilie lie a une org)
+- `enseigne_id` → enseignes (affilie lie a une enseigne) — XOR avec organisation_id
+- `organisation_id` → organisations (affilie lie a une org independante) — XOR avec enseigne_id
+
+**IMPORTANT** : Seules les enseignes et les orgs independantes (sans `enseigne_id`) ont une entree ici. Les sous-organisations d'enseigne n'ont JAMAIS d'entree dans `linkme_affiliates`.
 
 ### Selections : `linkme_selections` (2 records)
 

@@ -71,11 +71,10 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   partially_shipped: { bg: 'bg-indigo-100', text: 'text-indigo-700' },
 };
 
-// Onglets alignes avec Back-Office
+// Onglets LinkMe (pas de "Brouillon" — draft est affiche comme "En approbation")
 type TabType =
   | 'all'
   | 'pending_approval'
-  | 'draft'
   | 'validated'
   | 'shipped'
   | 'cancelled';
@@ -233,6 +232,8 @@ export default function CommandesPage(): JSX.Element {
   const getTabCount = (tabId: TabType): number => {
     if (tabId === 'all') return statusCounts['all'] ?? 0;
     if (tabId === 'shipped') return statusCounts['shipped_tab'] ?? 0;
+    if (tabId === 'pending_approval')
+      return statusCounts['pending_approval_tab'] ?? 0;
     return statusCounts[tabId] ?? 0;
   };
 
@@ -262,7 +263,7 @@ export default function CommandesPage(): JSX.Element {
             className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#5DBEBB] to-[#4AA8A5] text-white rounded-xl hover:from-[#4DA9A6] hover:to-[#3D9895] shadow-md hover:shadow-lg transition-all duration-200 font-medium"
           >
             <Plus className="h-5 w-5" />
-            Nouvelle vente
+            Nouvelle commande
           </Link>
         </div>
       </div>
@@ -395,11 +396,6 @@ export default function CommandesPage(): JSX.Element {
                   color: 'teal',
                 },
                 {
-                  id: 'draft' as const,
-                  label: 'Brouillon',
-                  color: 'orange',
-                },
-                {
                   id: 'validated' as const,
                   label: 'Validée',
                   color: 'blue',
@@ -483,7 +479,7 @@ export default function CommandesPage(): JSX.Element {
                     className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#5DBEBB] to-[#4AA8A5] text-white rounded-xl hover:from-[#4DA9A6] hover:to-[#3D9895] text-sm shadow-md transition-all duration-200"
                   >
                     <Plus className="h-4 w-4" />
-                    Nouvelle vente
+                    Nouvelle commande
                   </Link>
                 )}
               </div>
@@ -564,7 +560,8 @@ export default function CommandesPage(): JSX.Element {
                               </div>
                             )}
 
-                            {order.status === 'pending_approval' && (
+                            {(order.status === 'pending_approval' ||
+                              order.status === 'draft') && (
                               <span className="px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-100 rounded-full">
                                 En attente validation Vérone
                               </span>

@@ -28,20 +28,27 @@ export function DemandeurCard({
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
               Demandeur
             </p>
-            <p className="text-sm font-semibold text-gray-900">
-              {(() => {
-                if (createdByProfile) {
-                  const name = [
-                    createdByProfile.first_name,
-                    createdByProfile.last_name,
-                  ]
-                    .filter(Boolean)
-                    .join(' ');
-                  return name.length > 0 ? name : 'Utilisateur inconnu';
-                }
-                return linkmeDetails?.requester_name ?? 'Visiteur anonyme';
-              })()}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-sm font-semibold text-gray-900">
+                {(() => {
+                  if (createdByProfile) {
+                    const name = [
+                      createdByProfile.first_name,
+                      createdByProfile.last_name,
+                    ]
+                      .filter(Boolean)
+                      .join(' ');
+                    return name.length > 0 ? name : 'Utilisateur inconnu';
+                  }
+                  return linkmeDetails?.requester_name ?? 'Visiteur anonyme';
+                })()}
+              </p>
+              {createdByProfile && (
+                <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-indigo-100 text-indigo-700">
+                  LinkMe
+                </span>
+              )}
+            </div>
             {(createdByProfile?.email ?? linkmeDetails?.requester_email) && (
               <p className="text-xs text-gray-500">
                 {createdByProfile?.email ?? linkmeDetails?.requester_email}

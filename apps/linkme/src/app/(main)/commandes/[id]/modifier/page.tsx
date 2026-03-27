@@ -42,6 +42,9 @@ interface OrderData {
   billing_address: Record<string, string> | null;
   shipping_address: Record<string, string> | null;
   linkme_selection_id: string | null;
+  responsable_contact_id: string | null;
+  billing_contact_id: string | null;
+  delivery_contact_id: string | null;
   created_at: string;
   updated_at: string;
   // Relations
@@ -139,6 +142,9 @@ export default function ModifierCommandePage() {
           billing_address,
           shipping_address,
           linkme_selection_id,
+          responsable_contact_id,
+          billing_contact_id,
+          delivery_contact_id,
           created_at,
           updated_at,
           customer:organisations!sales_orders_customer_id_fkey (

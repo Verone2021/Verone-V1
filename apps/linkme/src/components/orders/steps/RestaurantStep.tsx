@@ -32,6 +32,8 @@ import {
   CheckCircle,
   Loader2,
   AlertTriangle,
+  FileText,
+  Upload,
 } from 'lucide-react';
 
 import type { EnseigneOrganisation } from '../../../lib/hooks/use-enseigne-organisations';
@@ -700,6 +702,104 @@ export function RestaurantStep({
                 manuellement
               </p>
             </div>
+
+            {/* Informations légales de l'organisation */}
+            {formData.restaurant.newRestaurant?.ownershipType && (
+              <div className="pt-4 border-t space-y-4">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-gray-500" />
+                  <h4 className="font-medium text-gray-700">
+                    Informations légales
+                    {formData.restaurant.newRestaurant.ownershipType ===
+                      'franchise' && (
+                      <span className="text-red-500 ml-1">*</span>
+                    )}
+                  </h4>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="legalName">
+                    Raison sociale
+                    {formData.restaurant.newRestaurant.ownershipType ===
+                      'franchise' && (
+                      <span className="text-red-500 ml-1">*</span>
+                    )}
+                  </Label>
+                  <Input
+                    id="legalName"
+                    type="text"
+                    placeholder="SARL Restaurant Dupont"
+                    value={formData.restaurant.newRestaurant?.legalName ?? ''}
+                    onChange={e =>
+                      handleNewRestaurantChange('legalName', e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="siret">
+                    SIRET
+                    {formData.restaurant.newRestaurant.ownershipType ===
+                      'franchise' && (
+                      <span className="text-red-500 ml-1">*</span>
+                    )}
+                  </Label>
+                  <Input
+                    id="siret"
+                    type="text"
+                    placeholder="123 456 789 00012"
+                    value={formData.restaurant.newRestaurant?.siret ?? ''}
+                    onChange={e =>
+                      handleNewRestaurantChange('siret', e.target.value)
+                    }
+                    maxLength={17}
+                  />
+                  <p className="text-xs text-gray-500">14 chiffres</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="kbisFile">Extrait K-BIS (optionnel)</Label>
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 cursor-pointer transition-colors">
+                      <Upload className="h-4 w-4" />
+                      Choisir un fichier
+                      <input
+                        id="kbisFile"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0] ?? null;
+                          onUpdate({
+                            newRestaurant: {
+                              ...(formData.restaurant.newRestaurant ?? {
+                                tradeName: '',
+                                city: '',
+                                ownershipType: 'succursale' as const,
+                                country: 'FR',
+                              }),
+                              kbisFile: file,
+                            },
+                          });
+                        }}
+                      />
+                    </label>
+                    {(() => {
+                      const kbis = formData.restaurant.newRestaurant
+                        ?.kbisFile as File | null;
+                      return kbis ? (
+                        <span className="text-sm text-green-600">
+                          {kbis.name}
+                        </span>
+                      ) : null;
+                    })()}
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    PDF, JPG ou PNG — Max 10 MB
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </Card>
       )}

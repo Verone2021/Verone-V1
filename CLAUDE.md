@@ -1,49 +1,41 @@
 # Verone Back Office
 
 CRM/ERP modulaire — decoration et mobilier haut de gamme.
-
-## Avant de coder : EXPLORER L'EXISTANT
-
-1. Schema DB : `mcp__supabase__execute_sql` (colonnes, types, contraintes)
-2. RLS policies : `.claude/rules/database/rls-patterns.md`
-3. Code existant : Serena `find_symbol` / `Grep` dans le meme domaine
-4. Patterns : identifier comment les features similaires sont implementees
-
-> Pas fait ? → `/research <domaine>` avant toute modification.
-
-## 5 regles non negociables
-
-1. **Explorer avant coder** — jamais supposer, toujours verifier
-2. **Zero `any` TypeScript** — `unknown` + validation Zod ou types DB
-3. **Build filtre** — `pnpm --filter @verone/[app] build` (jamais global)
-4. **Feature branch** — depuis `staging`, format `[APP-DOMAIN-NNN] type: desc`
-5. **Demander a Romeo** — avant commit/push/PR/migration
+Monorepo : back-office (3000), linkme (3002), site-internet (3001).
 
 ## Commandes
 
 ```bash
-pnpm --filter @verone/[app] build       # Build filtre
+pnpm --filter @verone/[app] build       # Build (TOUJOURS filtrer, jamais global)
 pnpm --filter @verone/[app] type-check  # Type-check filtre
 pnpm lint:fix                           # ESLint auto-fix
 ```
 
-## Workflow : Research → Plan → Execute → Verify
+## Regles
 
-- `/research` : DB + code + RLS avant implementation
+- Explorer avant coder : schema DB + code existant + patterns AVANT toute modification
+- Zero `any` TypeScript : `unknown` + validation Zod
+- Feature branch depuis `staging` : format `[APP-DOMAIN-NNN] type: desc`
+- Demander a Romeo avant commit/push/PR/migration
+- JAMAIS de donnees test en SQL : SELECT + DDL only. Donnees test = UI Playwright
+- UNE entite = UNE page detail. Jamais de pages doublons entre canaux de vente
+- JAMAIS modifier les routes API (Qonto, adresses, Packlink, emails, webhooks)
+
+## Workflow
+
+- `/research <domaine>` : DB + code + RLS avant implementation
+- `/implement <feature>` : explore → code → verify
 - `/plan` : features complexes
-- `/implement` : explore → code → verify
-- `/pr` : push + PR (jamais manuellement)
+- `/pr` : push + PR
 
-## Pointeurs
+## Stack
 
-| Sujet            | Fichier                              |
-| ---------------- | ------------------------------------ |
-| Doc par tache    | `.claude/rules/doc-index.md`         |
-| Git workflow     | `.claude/rules/dev/git-workflow.md`  |
-| Base de donnees  | `.claude/rules/database/supabase.md` |
-| Regles generales | `.claude/rules/general.md`           |
-| App CLAUDE.md    | `apps/[app]/CLAUDE.md`               |
+- Next.js 15 App Router, TypeScript strict, shadcn/ui + Tailwind
+- Supabase (RLS obligatoire), React Query, Zod
+- Playwright MCP pour tests E2E visuels
+- Context7 MCP pour documentation librairies a jour (`mcp__context7__resolve-library-id` + `mcp__context7__query-docs`)
+- Serena MCP pour navigation code semantique (`mcp__serena__find_symbol`, `mcp__serena__list_memories`)
 
-Langue : francais (code/commits en anglais). Comportement TEACH-FIRST : dire NON si != best practice.
+## Langue
 
-**Version** : 16.0.0 (2026-03-26)
+Francais (code/commits en anglais). Comportement TEACH-FIRST : dire NON si != best practice.

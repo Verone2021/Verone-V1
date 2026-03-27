@@ -1,3 +1,3 @@
 module.exports = {
-  '*.{ts,tsx}': ['eslint --max-warnings=0'],
+  '*.{ts,tsx}': ['eslint --max-warnings=0 --no-warn-ignored'],
 };

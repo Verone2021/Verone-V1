@@ -89,7 +89,7 @@ export default function SelectionDetailPage(): React.JSX.Element | null {
   // Counts
   const totalItems = items?.length ?? 0;
   const inStockCount = useMemo(
-    () => (items ?? []).filter(i => i.product_stock_real > 0).length,
+    () => (items ?? []).filter(i => i.product_stock_forecasted > 0).length,
     [items]
   );
   const outOfStockCount = totalItems - inStockCount;
@@ -112,9 +112,9 @@ export default function SelectionDetailPage(): React.JSX.Element | null {
   const filteredItems = useMemo(() => {
     if (!items) return [];
     return items.filter(item => {
-      if (stockFilter === 'in_stock' && item.product_stock_real <= 0)
+      if (stockFilter === 'in_stock' && item.product_stock_forecasted <= 0)
         return false;
-      if (stockFilter === 'out_of_stock' && item.product_stock_real > 0)
+      if (stockFilter === 'out_of_stock' && item.product_stock_forecasted > 0)
         return false;
       if (
         activeCategory !== ALL_CATEGORIES &&

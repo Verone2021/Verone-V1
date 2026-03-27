@@ -94,6 +94,11 @@ export function ContactCard({
                 Facturation
               </Badge>
             )}
+            {contact.isDeliveryOnly && (
+              <Badge variant="outline" size="sm">
+                Livraison
+              </Badge>
+            )}
           </div>
         </div>
       </div>

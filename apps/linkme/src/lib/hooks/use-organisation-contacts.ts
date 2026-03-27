@@ -13,6 +13,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 import { toast } from 'sonner';
 
+/** Convert empty string to null (for DB constraints that reject "") */
+function emptyToNull(value: string | undefined | null): string | null {
+  if (!value) return null;
+  return value;
+}
+
 // ============================================
 // TYPES
 // ============================================
@@ -29,6 +35,7 @@ export interface OrganisationContact {
   isBillingContact: boolean;
   isCommercialContact: boolean;
   isTechnicalContact: boolean;
+  isDeliveryOnly: boolean;
   isUser: boolean; // Contact lié à un utilisateur (auto-sync/backfill)
   // IDs pour filtrage UI (Phase 8.1 - franchises)
   organisationId: string | null;
@@ -69,7 +76,13 @@ export function useOrganisationContacts(
   includeEnseigneContacts?: boolean
 ) {
   return useQuery({
-    queryKey: ['organisation-contacts', organisationId, enseigneId],
+    queryKey: [
+      'organisation-contacts',
+      organisationId,
+      enseigneId,
+      ownershipType,
+      includeEnseigneContacts,
+    ],
     queryFn: async () => {
       if (!organisationId && !enseigneId) return null;
 
@@ -91,6 +104,7 @@ export function useOrganisationContacts(
           is_billing_contact,
           is_commercial_contact,
           is_technical_contact,
+          is_delivery_only,
           notes,
           organisation_id,
           enseigne_id
@@ -161,6 +175,7 @@ export function useOrganisationContacts(
         isBillingContact: c.is_billing_contact ?? false,
         isCommercialContact: c.is_commercial_contact ?? false,
         isTechnicalContact: c.is_technical_contact ?? false,
+        isDeliveryOnly: c.is_delivery_only ?? false,
         // Détecter si c'est un utilisateur (créé par auto-sync ou backfill)
         isUser:
           (c.notes?.includes('auto-sync') ?? false) ||
@@ -448,6 +463,7 @@ export interface UpdateContactInput {
   direct_line?: string;
   is_primary_contact: boolean;
   is_billing_contact: boolean;
+  is_delivery_only?: boolean;
   notes?: string;
 }
 
@@ -467,15 +483,17 @@ export function useUpdateContact() {
           first_name: input.first_name,
           last_name: input.last_name,
           email: input.email,
-          title: input.title ?? null,
-          department: input.department ?? null,
-          phone: input.phone ?? null,
-          mobile: input.mobile ?? null,
-          secondary_email: input.secondary_email ?? null,
-          direct_line: input.direct_line ?? null,
+          title: emptyToNull(input.title),
+          department: emptyToNull(input.department),
+          phone: emptyToNull(input.phone),
+          mobile: emptyToNull(input.mobile),
+          secondary_email: emptyToNull(input.secondary_email),
+          direct_line: emptyToNull(input.direct_line),
           is_primary_contact: input.is_primary_contact,
           is_billing_contact: input.is_billing_contact,
-          notes: input.notes ?? null,
+          is_delivery_only: input.is_delivery_only ?? false,
+          is_commercial_contact: !(input.is_delivery_only ?? false),
+          notes: emptyToNull(input.notes),
           updated_at: new Date().toISOString(),
         })
         .eq('id', input.contactId);
@@ -552,6 +570,7 @@ export interface CreateContactInput {
   direct_line?: string;
   is_primary_contact: boolean;
   is_billing_contact: boolean;
+  is_delivery_only?: boolean;
   notes?: string;
 }
 
@@ -568,19 +587,21 @@ export function useCreateContact() {
 
       const { error } = await supabase.from('contacts').insert({
         organisation_id: input.organisationId,
-        enseigne_id: input.enseigneId ?? null,
+        enseigne_id: emptyToNull(input.enseigneId),
         first_name: input.first_name,
         last_name: input.last_name,
         email: input.email,
-        title: input.title ?? null,
-        department: input.department ?? null,
-        phone: input.phone ?? null,
-        mobile: input.mobile ?? null,
-        secondary_email: input.secondary_email ?? null,
-        direct_line: input.direct_line ?? null,
+        title: emptyToNull(input.title),
+        department: emptyToNull(input.department),
+        phone: emptyToNull(input.phone),
+        mobile: emptyToNull(input.mobile),
+        secondary_email: emptyToNull(input.secondary_email),
+        direct_line: emptyToNull(input.direct_line),
         is_primary_contact: input.is_primary_contact,
         is_billing_contact: input.is_billing_contact,
-        notes: input.notes ?? null,
+        is_delivery_only: input.is_delivery_only ?? false,
+        is_commercial_contact: !(input.is_delivery_only ?? false),
+        notes: emptyToNull(input.notes),
         is_active: true,
       });
 

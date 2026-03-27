@@ -141,15 +141,15 @@ Accessibles a `enseigne_admin`, `organisation_admin` et `enseigne_collaborateur`
 
 ### enseigne_admin + organisation_admin uniquement
 
-| Route                         | Permissions                        | Description              |
-| ----------------------------- | ---------------------------------- | ------------------------ |
-| `/ma-selection`               | enseigne_admin, organisation_admin | Gestion selections       |
-| `/ma-selection/nouvelle`      | Tous authentifies                  | Nouvelle selection       |
-| `/ma-selection/[id]`          | Tous authentifies                  | Detail selection         |
-| `/ma-selection/[id]/produits` | Tous authentifies                  | Produits de la selection |
-| `/commissions`                | enseigne_admin, organisation_admin | Vue commissions          |
-| `/commissions/demandes`       | Tous authentifies                  | Demandes de commission   |
-| `/stockage`                   | enseigne_admin, organisation_admin | Gestion stockage M3      |
+| Route                         | Permissions                        | Description              | Restriction sous-org                    |
+| ----------------------------- | ---------------------------------- | ------------------------ | --------------------------------------- |
+| `/ma-selection`               | enseigne_admin, organisation_admin | Gestion selections       | Enseigne ou org independante uniquement |
+| `/ma-selection/nouvelle`      | Tous authentifies                  | Nouvelle selection       | Enseigne ou org independante uniquement |
+| `/ma-selection/[id]`          | Tous authentifies                  | Detail selection         | Enseigne ou org independante uniquement |
+| `/ma-selection/[id]/produits` | Tous authentifies                  | Produits de la selection | Enseigne ou org independante uniquement |
+| `/commissions`                | enseigne_admin, organisation_admin | Vue commissions          | Enseigne ou org independante uniquement |
+| `/commissions/demandes`       | Tous authentifies                  | Demandes de commission   | Enseigne ou org independante uniquement |
+| `/stockage`                   | enseigne_admin, organisation_admin | Gestion stockage M3      | Enseigne ou org independante uniquement |
 
 ### enseigne_admin + enseigne_collaborateur uniquement
 
