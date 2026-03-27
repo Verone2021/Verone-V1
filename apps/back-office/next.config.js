@@ -13,12 +13,11 @@ const nextConfig = {
   // Bug Next.js 15.5.4 avec prerendering pages d'erreur /_error, /404, /500
   output: 'standalone',
 
-  // ESLint: Activé avec config stricte @verone/eslint-config (2025-11-07)
-  // Validation complète au build avec TypeScript recommended + Prettier
-  // TEMPORARY (2025-11-08): ignoreDuringBuilds pour migration monorepo @verone/*
+  // ESLint: desactive au build (531 warnings = crash memoire SIGTRAP)
+  // Reactiver APRES avoir reduit les warnings (sprint INFRA-007)
   eslint: {
-    dirs: ['src', 'app'], // Valider uniquement code source
-    ignoreDuringBuilds: true, // TEMPORARY - Re-enable after fixing warnings
+    dirs: ['src', 'app'],
+    ignoreDuringBuilds: true,
   },
 
   // TypeScript: Validation stricte RÉACTIVÉE (2025-11-19)
