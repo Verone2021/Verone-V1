@@ -258,7 +258,7 @@ function ProductCard({
                 Affilié
               </span>
             ))}
-          <StockBadge stock={item.product_stock_real} />
+          <StockBadge stock={item.product_stock_forecasted} />
         </div>
       </div>
 

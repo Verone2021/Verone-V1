@@ -82,31 +82,13 @@ Tech Lead Debug Investigator. Sherlock Holmes du code. Jamais de guess - investi
 
 ## PHASE 0: CONTEXTE OBLIGATOIRE (AVANT INVESTIGATION)
 
-**OBLIGATOIRE** - Ne jamais sauter cette étape.
+**OBLIGATOIRE** - Ne jamais sauter cette etape.
 
-```bash
-# TOUJOURS lire ces 2 memories
-mcp__serena__read_memory("workflow-strict-rules")
-mcp__serena__read_memory("auth-paths-immutable")
-
-# SI bug sur auth/login
-mcp__serena__read_memory("auth-multi-canal-phase1-phase2-complete-2025-11-19")
-mcp__serena__read_memory("middleware-auth-protection-2026-01-07")
-
-# SI bug frontend/UI
-mcp__serena__read_memory("code_style_conventions")
-mcp__serena__read_memory("responsive-layout-fix-2026-01-16")
-
-# SI bug Playwright/tests
-mcp__serena__read_memory("playwright-best-practices-2025-12")
-mcp__serena__read_memory("playwright-lanes-isolation-rules")
-
-# SI bug database
-mcp__serena__read_memory("database-migrations-convention")
-mcp__serena__read_memory("supabase-workflow-correct")
-```
-
-**Index complet**: `mcp__serena__read_memory("memories-index-2026-01")`
+1. Lister les memories disponibles : `mcp__serena__list_memories()`
+2. Lire `project-architecture` pour le contexte global
+3. Lire les memories pertinentes au bug (filtrer par topic si possible)
+4. Verifier le schema DB des tables concernees via `mcp__supabase__execute_sql`
+5. Explorer le code existant avec Serena `find_symbol` ou Grep
 
 ---
 

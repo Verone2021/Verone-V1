@@ -247,8 +247,16 @@ export interface GetOrderMissingFieldsOptions {
   organisationCountry?: string | null;
   /** VAT number (n° TVA intracommunautaire) from the linked organisation */
   organisationVatNumber?: string | null;
-  /** Type de restaurant (propre/succursale/franchise) - owner fields requis uniquement pour franchises */
+  /** Type de restaurant (propre/succursale/franchise) */
   ownerType?: string | null;
+  /** Legal name (raison sociale) of the organisation */
+  organisationLegalName?: string | null;
+  /** Billing address line 1 of the organisation */
+  organisationBillingAddress?: string | null;
+  /** Billing postal code of the organisation */
+  organisationBillingPostalCode?: string | null;
+  /** Billing city of the organisation */
+  organisationBillingCity?: string | null;
   /** Field keys explicitly ignored by back-office staff for this order */
   ignoredFields?: string[];
 }
@@ -267,7 +275,10 @@ export function getOrderMissingFields(
     organisationSiret,
     organisationCountry,
     organisationVatNumber,
-    ownerType,
+    organisationLegalName,
+    organisationBillingAddress,
+    organisationBillingPostalCode,
+    organisationBillingCity,
     ignoredFields,
   } = options;
   const ignored = new Set(ignoredFields ?? []);
@@ -277,13 +288,13 @@ export function getOrderMissingFields(
     const allFields: MissingField[] = [
       {
         key: 'requester_name',
-        label: 'Nom du demandeur',
+        label: 'Nom du responsable',
         category: 'responsable',
         inputType: 'text',
       },
       {
         key: 'requester_email',
-        label: 'Email du demandeur',
+        label: 'Email du responsable',
         category: 'responsable',
         inputType: 'email',
       },
@@ -297,11 +308,11 @@ export function getOrderMissingFields(
     return buildResult(allFields.filter(f => !ignored.has(f.key)));
   }
 
-  // --- Responsable / Demandeur ---
+  // --- Contact responsable (bloc unique, sans distinction demandeur/proprietaire) ---
   if (!details.requester_name) {
     fields.push({
       key: 'requester_name',
-      label: 'Nom du demandeur',
+      label: 'Nom du responsable',
       category: 'responsable',
       inputType: 'text',
     });
@@ -309,7 +320,7 @@ export function getOrderMissingFields(
   if (!details.requester_email) {
     fields.push({
       key: 'requester_email',
-      label: 'Email du demandeur',
+      label: 'Email du responsable',
       category: 'responsable',
       inputType: 'email',
     });
@@ -317,51 +328,10 @@ export function getOrderMissingFields(
   if (!details.requester_phone) {
     fields.push({
       key: 'requester_phone',
-      label: 'Téléphone du demandeur',
+      label: 'Téléphone du responsable',
       category: 'responsable',
       inputType: 'tel',
     });
-  }
-
-  // --- Propriétaire (seulement pour franchises avec contact différent du demandeur) ---
-  // Succursales/propres : l'enseigne EST le propriétaire → pas de contact owner séparé
-  // null = non renseigné → on ne génère PAS de faux manquants
-  if (
-    details.owner_contact_same_as_requester === false &&
-    ownerType === 'franchise'
-  ) {
-    if (!details.owner_name) {
-      fields.push({
-        key: 'owner_name',
-        label: 'Nom du propriétaire',
-        category: 'responsable',
-        inputType: 'text',
-      });
-    }
-    if (!details.owner_email) {
-      fields.push({
-        key: 'owner_email',
-        label: 'Email du propriétaire',
-        category: 'responsable',
-        inputType: 'email',
-      });
-    }
-    if (!details.owner_phone) {
-      fields.push({
-        key: 'owner_phone',
-        label: 'Téléphone du propriétaire',
-        category: 'responsable',
-        inputType: 'tel',
-      });
-    }
-    if (!details.owner_company_legal_name) {
-      fields.push({
-        key: 'owner_company_legal_name',
-        label: 'Raison sociale du propriétaire',
-        category: 'responsable',
-        inputType: 'text',
-      });
-    }
   }
 
   // --- Facturation ---
@@ -439,7 +409,6 @@ export function getOrderMissingFields(
       inputType: 'text',
     });
   }
-  // desired_delivery_date : champ optionnel (date "souhaitée"), pas obligatoire
 
   // Mall email (only if is_mall_delivery)
   if (details.is_mall_delivery && !details.mall_email) {
@@ -452,6 +421,14 @@ export function getOrderMissingFields(
   }
 
   // --- Organisation ---
+  if (!organisationLegalName) {
+    fields.push({
+      key: 'organisation_legal_name',
+      label: 'Raison sociale',
+      category: 'organisation',
+      inputType: 'text',
+    });
+  }
   const isFrench =
     !organisationCountry || organisationCountry.toUpperCase() === 'FR';
   if (isFrench && !organisationSiret) {
@@ -466,6 +443,30 @@ export function getOrderMissingFields(
     fields.push({
       key: 'organisation_vat_number',
       label: 'N° TVA intracommunautaire',
+      category: 'organisation',
+      inputType: 'text',
+    });
+  }
+  if (!organisationBillingAddress) {
+    fields.push({
+      key: 'organisation_billing_address',
+      label: 'Adresse de facturation',
+      category: 'organisation',
+      inputType: 'text',
+    });
+  }
+  if (!organisationBillingPostalCode) {
+    fields.push({
+      key: 'organisation_billing_postal_code',
+      label: 'Code postal facturation',
+      category: 'organisation',
+      inputType: 'text',
+    });
+  }
+  if (!organisationBillingCity) {
+    fields.push({
+      key: 'organisation_billing_city',
+      label: 'Ville facturation',
       category: 'organisation',
       inputType: 'text',
     });

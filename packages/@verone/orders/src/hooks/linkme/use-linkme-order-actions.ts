@@ -37,6 +37,8 @@ export interface RequestInfoInput {
   missingFields: RequestInfoMissingField[];
   /** Destinataire : demandeur ou propriétaire */
   recipientType?: 'requester' | 'owner';
+  /** Emails destinataires explicites (prioritaire sur recipientType) */
+  recipientEmails?: string[];
 }
 
 export interface RejectOrderInput {
@@ -456,22 +458,33 @@ async function requestInfo(
     organisationName = org?.trade_name ?? org?.legal_name ?? null;
   }
 
-  // Déterminer le destinataire (requester par défaut, owner si spécifié)
-  const recipientType = input.recipientType ?? 'requester';
-  const recipientEmail =
-    recipientType === 'owner' && details.owner_email
-      ? details.owner_email
-      : details.requester_email;
+  // Déterminer les destinataires
+  const emails: string[] = input.recipientEmails?.length
+    ? input.recipientEmails
+    : (() => {
+        const recipientType = input.recipientType ?? 'requester';
+        const email =
+          recipientType === 'owner' && details.owner_email
+            ? details.owner_email
+            : details.requester_email;
+        return email ? [email] : [];
+      })();
+
+  if (emails.length === 0) {
+    throw new Error(
+      'Aucun email destinataire. Veuillez sélectionner au moins un destinataire.'
+    );
+  }
+
   const recipientName =
-    recipientType === 'owner' && details.owner_name
-      ? details.owner_name
-      : details.requester_name;
+    details.requester_name ?? details.owner_name ?? 'Destinataire';
 
   // Logger la demande dans les notes de la commande
   const timestamp = new Date().toLocaleString('fr-FR');
   const noteMessage = input.customMessage ?? 'Formulaire interactif envoyé';
   const fieldsSummary = input.missingFields.map(f => f.label).join(', ');
-  const newNote = `[${timestamp}] DEMANDE COMPLEMENTS (formulaire): ${noteMessage} [Champs: ${fieldsSummary}]`;
+  const emailsList = emails.join(', ');
+  const newNote = `[${timestamp}] DEMANDE COMPLEMENTS → ${emailsList}\n${noteMessage}\n[Champs: ${fieldsSummary}]`;
   const updatedNotes = order.notes ? `${order.notes}\n\n${newNote}` : newNote;
 
   const { error: updateError } = await supabase
@@ -486,7 +499,8 @@ async function requestInfo(
     throw new Error(`Erreur mise à jour notes: ${updateError.message}`);
   }
 
-  // Appeler le nouvel endpoint formulaire interactif
+  // Envoyer à chaque destinataire
+  const recipientEmail = emails.join(',');
   const emailResponse = await fetch('/api/emails/linkme-info-request', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -495,7 +509,7 @@ async function requestInfo(
       orderNumber: order.order_number,
       recipientEmail,
       recipientName,
-      recipientType,
+      recipientType: 'manual',
       organisationName,
       totalTtc: order.total_ttc ?? 0,
       requestedFields: input.missingFields,
@@ -515,7 +529,7 @@ async function requestInfo(
 
   return {
     success: true,
-    message: `Formulaire de compléments envoyé à ${recipientEmail}`,
+    message: `Formulaire de compléments envoyé à ${emailsList}`,
   };
 }
 
@@ -969,6 +983,10 @@ export interface PendingOrder {
   organisation_siret: string | null;
   organisation_country: string | null;
   organisation_vat_number: string | null;
+  organisation_legal_name: string | null;
+  organisation_billing_address: string | null;
+  organisation_billing_postal_code: string | null;
+  organisation_billing_city: string | null;
   // Enriched data for detail view
   linkme_details: PendingOrderLinkMeDetails | null;
   items: PendingOrderItem[];
@@ -1344,6 +1362,9 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
           siret: string | null;
           country: string | null;
           vat_number: string | null;
+          billing_address_line1: string | null;
+          billing_postal_code: string | null;
+          billing_city: string | null;
         }
       >();
 
@@ -1358,6 +1379,9 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
             siret,
             country,
             vat_number,
+            billing_address_line1,
+            billing_postal_code,
+            billing_city,
             enseignes!left(name)
           `
           )
@@ -1381,6 +1405,11 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
               siret: (org.siret as string | null) ?? null,
               country: (org.country as string | null) ?? null,
               vat_number: (org.vat_number as string | null) ?? null,
+              billing_address_line1:
+                (org.billing_address_line1 as string | null) ?? null,
+              billing_postal_code:
+                (org.billing_postal_code as string | null) ?? null,
+              billing_city: (org.billing_city as string | null) ?? null,
             });
           });
         }
@@ -1504,6 +1533,11 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
           organisation_siret: orgData?.siret ?? null,
           organisation_country: orgData?.country ?? null,
           organisation_vat_number: orgData?.vat_number ?? null,
+          organisation_legal_name: orgData?.legal_name ?? null,
+          organisation_billing_address: orgData?.billing_address_line1 ?? null,
+          organisation_billing_postal_code:
+            orgData?.billing_postal_code ?? null,
+          organisation_billing_city: orgData?.billing_city ?? null,
           items,
         });
       }

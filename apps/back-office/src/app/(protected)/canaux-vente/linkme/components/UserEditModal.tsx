@@ -1,3 +1,4 @@
+/* eslint-disable max-lines, max-lines-per-function -- TODO: extract sub-components (role selector, password section, enseigne/org selector) */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,6 +8,7 @@ import { cn } from '@verone/utils';
 import {
   X,
   User,
+  Users,
   Phone,
   Mail,
   Building2,
@@ -117,6 +119,10 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
       newErrors.enseigneId = 'Enseigne requise pour un Admin Enseigne';
     }
 
+    if (role === 'enseigne_collaborateur' && !enseigneId) {
+      newErrors.enseigneId = 'Enseigne requise pour un Collaborateur';
+    }
+
     if (role === 'organisation_admin' && !organisationId) {
       newErrors.organisationId =
         'Organisation requise pour un Admin Organisation';
@@ -193,10 +199,10 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
       const input: UpdateLinkMeUserInput = {
         first_name: firstName,
         last_name: lastName,
-        phone: phone ?? undefined,
+        phone: phone || undefined,
         role,
-        enseigne_id: enseigneId ?? null,
-        organisation_id: organisationId ?? null,
+        enseigne_id: enseigneId || null,
+        organisation_id: organisationId || null,
         is_active: isActive,
       };
 
@@ -486,42 +492,51 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Role *
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                {(['enseigne_admin', 'organisation_admin'] as LinkMeRole[]).map(
-                  r => {
-                    const Icon = r === 'enseigne_admin' ? Building2 : Store;
-                    const isSelected = role === r;
+              <div className="grid grid-cols-3 gap-2">
+                {(
+                  [
+                    'enseigne_admin',
+                    'enseigne_collaborateur',
+                    'organisation_admin',
+                  ] as LinkMeRole[]
+                ).map(r => {
+                  const Icon =
+                    r === 'enseigne_admin'
+                      ? Building2
+                      : r === 'enseigne_collaborateur'
+                        ? Users
+                        : Store;
+                  const isSelected = role === r;
 
-                    return (
-                      <button
-                        key={r}
-                        type="button"
-                        onClick={() => setRole(r)}
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setRole(r)}
+                      className={cn(
+                        'flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all',
+                        isSelected
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      )}
+                    >
+                      <Icon
                         className={cn(
-                          'flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all',
-                          isSelected
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
+                          'h-5 w-5',
+                          isSelected ? 'text-blue-600' : 'text-gray-400'
+                        )}
+                      />
+                      <span
+                        className={cn(
+                          'text-xs font-medium text-center',
+                          isSelected ? 'text-blue-700' : 'text-gray-600'
                         )}
                       >
-                        <Icon
-                          className={cn(
-                            'h-5 w-5',
-                            isSelected ? 'text-blue-600' : 'text-gray-400'
-                          )}
-                        />
-                        <span
-                          className={cn(
-                            'text-xs font-medium text-center',
-                            isSelected ? 'text-blue-700' : 'text-gray-600'
-                          )}
-                        >
-                          {LINKME_ROLE_LABELS[r]}
-                        </span>
-                      </button>
-                    );
-                  }
-                )}
+                        {LINKME_ROLE_LABELS[r]}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Permissions du role */}
@@ -543,13 +558,19 @@ export function UserEditModal({ isOpen, user, onClose }: UserEditModalProps) {
               </div>
             </div>
 
-            {/* Enseigne (si enseigne_admin ou organisation_admin) */}
-            {(role === 'enseigne_admin' || role === 'organisation_admin') && (
+            {/* Enseigne (si enseigne_admin, enseigne_collaborateur ou organisation_admin) */}
+            {(role === 'enseigne_admin' ||
+              role === 'enseigne_collaborateur' ||
+              role === 'organisation_admin') && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center gap-2">
                     <Building2 className="h-4 w-4 text-gray-400" />
-                    Enseigne {role === 'enseigne_admin' ? '*' : ''}
+                    Enseigne{' '}
+                    {role === 'enseigne_admin' ||
+                    role === 'enseigne_collaborateur'
+                      ? '*'
+                      : ''}
                   </div>
                 </label>
                 <Combobox

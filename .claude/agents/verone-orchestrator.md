@@ -123,42 +123,10 @@ Conclusion: Optimal strategy
 
 ## 3. CONSULT SERENA (OBLIGATOIRE)
 
-**TOUJOURS lire** :
-
-```bash
-mcp__serena__read_memory("workflow-strict-rules")
-mcp__serena__read_memory("verone-business-application-context")
-```
-
-**SI domaine DATABASE** :
-
-```bash
-mcp__serena__read_memory("database-migrations-convention")
-mcp__serena__read_memory("supabase-workflow-correct")
-```
-
-**SI domaine AUTH** :
-
-```bash
-mcp__serena__read_memory("auth-paths-immutable")
-mcp__serena__read_memory("auth-multi-canal-phase1-phase2-complete-2025-11-19")
-```
-
-**SI domaine FRONTEND** :
-
-```bash
-mcp__serena__read_memory("code_style_conventions")
-mcp__serena__read_memory("tech_stack")
-```
-
-**SI domaine TESTING** :
-
-```bash
-mcp__serena__read_memory("playwright-best-practices-2025-12")
-mcp__serena__read_memory("playwright-login-first-mandatory")
-```
-
-**Index complet**: `mcp__serena__read_memory("memories-index-2026-01")`
+1. `mcp__serena__list_memories()` — decouvrir les memories disponibles
+2. Lire `project-architecture` pour le contexte global
+3. Lire les memories pertinentes au domaine de la tache (filtrer par nom)
+4. Verifier le schema DB si necessaire via `mcp__supabase__execute_sql`
 
 ## 4. CREATE PLAN
 

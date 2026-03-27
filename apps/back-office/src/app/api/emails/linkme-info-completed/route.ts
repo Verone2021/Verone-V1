@@ -195,13 +195,13 @@ function escapeHtml(str: string): string {
 /** Convert field keys like 'billing_email' to 'Billing email' */
 function formatFieldKey(key: string): string {
   const labels: Record<string, string> = {
-    requester_name: 'Nom du demandeur',
-    requester_email: 'Email du demandeur',
-    requester_phone: 'Téléphone du demandeur',
-    owner_name: 'Nom du propriétaire',
-    owner_email: 'Email du propriétaire',
-    owner_phone: 'Téléphone du propriétaire',
-    owner_company_legal_name: 'Raison sociale propriétaire',
+    requester_name: 'Nom du responsable',
+    requester_email: 'Email du responsable',
+    requester_phone: 'Téléphone du responsable',
+    owner_name: 'Nom du responsable (franchise)',
+    owner_email: 'Email du responsable (franchise)',
+    owner_phone: 'Téléphone du responsable (franchise)',
+    owner_company_legal_name: 'Raison sociale',
     billing_name: 'Contact facturation',
     billing_email: 'Email facturation',
     billing_phone: 'Téléphone facturation',
@@ -214,6 +214,11 @@ function formatFieldKey(key: string): string {
     desired_delivery_date: 'Date souhaitée',
     mall_email: 'Email centre commercial',
     organisation_siret: 'SIRET',
+    organisation_vat_number: 'N° TVA intracommunautaire',
+    organisation_legal_name: 'Raison sociale',
+    organisation_billing_address: 'Adresse facturation',
+    organisation_billing_postal_code: 'Code postal facturation',
+    organisation_billing_city: 'Ville facturation',
   };
   return labels[key] ?? key.replace(/_/g, ' ');
 }

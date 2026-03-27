@@ -28,6 +28,8 @@ import {
   Check,
   User,
 } from 'lucide-react';
+
+import { usePermissions } from '@/hooks/use-permissions';
 import { toast } from 'sonner';
 
 import type { SelectionItem } from '../../../lib/hooks/use-user-selection';
@@ -99,6 +101,7 @@ export function ProductsStep({
   onAddToCart,
   onUpdateQuantity,
 }: ProductsStepProps) {
+  const { canViewCommissions } = usePermissions();
   const [searchQuery, setSearchQuery] = useState('');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [selectedCategory, setSelectedCategory] = useState<
@@ -471,13 +474,13 @@ export function ProductsStep({
                           : 'Prix HT'}
                       </p>
                     </div>
-                    {/* Badge: "Votre produit" pour affilié, marge pour catalogue */}
+                    {/* Badge: "Votre produit" pour affilié, marge pour catalogue (admin only) */}
                     {item.is_affiliate_product ? (
                       <div className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-600 flex items-center gap-1">
                         <User className="h-3 w-3" />
                         Votre produit
                       </div>
-                    ) : (
+                    ) : canViewCommissions ? (
                       <div
                         className={cn(
                           'px-2 py-1 rounded text-xs font-medium',
@@ -488,6 +491,21 @@ export function ProductsStep({
                       >
                         {item.margin_rate.toFixed(2)}%
                       </div>
+                    ) : null}
+                  </div>
+
+                  {/* Stock prévisionnel */}
+                  <div className="flex items-center justify-between text-xs">
+                    {item.product_stock_forecasted > 0 ? (
+                      <span className="inline-flex items-center gap-1 text-green-600">
+                        <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                        Stock : {item.product_stock_forecasted}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-red-500 font-medium">
+                        <AlertCircle className="h-3 w-3" />
+                        Rupture
+                      </span>
                     )}
                   </div>
 
@@ -498,13 +516,11 @@ export function ProductsStep({
                         type="button"
                         onClick={() => {
                           if (inCart && cartItem) {
-                            // Produit dans le panier -> modifier directement la quantité du panier
                             onUpdateQuantity(
                               item.id,
                               Math.max(1, cartItem.quantity - 1)
                             );
                           } else {
-                            // Produit pas dans le panier -> modifier la quantité locale
                             setQuantities(prev => ({
                               ...prev,
                               [item.id]: Math.max(1, (prev[item.id] || 1) - 1),
@@ -518,11 +534,20 @@ export function ProductsStep({
                       <input
                         type="number"
                         min={1}
+                        max={
+                          item.product_stock_forecasted > 0
+                            ? item.product_stock_forecasted
+                            : undefined
+                        }
                         value={displayQuantity}
                         onChange={e => {
+                          const maxStock =
+                            item.product_stock_forecasted > 0
+                              ? item.product_stock_forecasted
+                              : Infinity;
                           const newValue = Math.max(
                             1,
-                            parseInt(e.target.value) || 1
+                            Math.min(maxStock, parseInt(e.target.value) || 1)
                           );
                           if (inCart && cartItem) {
                             onUpdateQuantity(item.id, newValue);
@@ -538,18 +563,29 @@ export function ProductsStep({
                       <button
                         type="button"
                         onClick={() => {
+                          const maxStock =
+                            item.product_stock_forecasted > 0
+                              ? item.product_stock_forecasted
+                              : Infinity;
                           if (inCart && cartItem) {
-                            // Produit dans le panier -> modifier directement la quantité du panier
-                            onUpdateQuantity(item.id, cartItem.quantity + 1);
+                            if (cartItem.quantity < maxStock) {
+                              onUpdateQuantity(item.id, cartItem.quantity + 1);
+                            }
                           } else {
-                            // Produit pas dans le panier -> modifier la quantité locale
                             setQuantities(prev => ({
                               ...prev,
-                              [item.id]: (prev[item.id] || 1) + 1,
+                              [item.id]: Math.min(
+                                maxStock,
+                                (prev[item.id] || 1) + 1
+                              ),
                             }));
                           }
                         }}
-                        className="px-2 py-1.5 text-gray-500 hover:bg-gray-100 transition-colors"
+                        disabled={
+                          item.product_stock_forecasted > 0 &&
+                          displayQuantity >= item.product_stock_forecasted
+                        }
+                        className="px-2 py-1.5 text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-30"
                       >
                         +
                       </button>
@@ -557,11 +593,14 @@ export function ProductsStep({
                     <button
                       type="button"
                       onClick={() => handleAddToCart(item)}
+                      disabled={item.product_stock_forecasted <= 0}
                       className={cn(
                         'flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg font-medium text-sm transition-colors',
-                        inCart
-                          ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                          : 'bg-linkme-turquoise text-white hover:bg-linkme-turquoise/90'
+                        item.product_stock_forecasted <= 0
+                          ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                          : inCart
+                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                            : 'bg-linkme-turquoise text-white hover:bg-linkme-turquoise/90'
                       )}
                     >
                       <Plus className="h-4 w-4" />

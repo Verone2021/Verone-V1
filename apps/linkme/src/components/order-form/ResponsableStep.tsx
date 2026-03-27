@@ -5,7 +5,6 @@ import {
   RadioGroup,
   RadioGroupItem,
   Label,
-  Separator,
   Input,
 } from '@verone/ui';
 import { Plus, AlertCircle, Check } from 'lucide-react';
@@ -205,7 +204,6 @@ export function OpeningStep3Responsable({
   );
 
   const isExisting = data.isNewRestaurant === false;
-  const isFranchise = data.newRestaurant.ownershipType === 'franchise';
 
   // ========================================
   // RESTAURANT EXISTANT : Sélection contact OU nouveau
@@ -365,20 +363,7 @@ export function OpeningStep3Responsable({
         updateData={updateData}
       />
 
-      {/* Si franchise : champs société */}
-      {isFranchise && (
-        <>
-          <Separator />
-          <div>
-            <h4 className="font-medium mb-4">Informations de la société</h4>
-            <CompanyFields
-              data={data}
-              errors={errors}
-              updateData={updateData}
-            />
-          </div>
-        </>
-      )}
+      {/* Informations légales déplacées à l'étape Restaurant */}
     </div>
   );
 }

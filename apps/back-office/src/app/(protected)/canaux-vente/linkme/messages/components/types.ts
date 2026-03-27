@@ -169,12 +169,12 @@ export function hasPendingRequest(order: OrderWithMissing): boolean {
 
 export function formatFieldLabel(key: string): string {
   const labels: Record<string, string> = {
-    requester_name: 'Nom demandeur',
-    requester_email: 'Email demandeur',
-    requester_phone: 'Tel. demandeur',
-    owner_name: 'Nom proprietaire',
-    owner_email: 'Email proprietaire',
-    owner_phone: 'Tel. proprietaire',
+    requester_name: 'Nom responsable',
+    requester_email: 'Email responsable',
+    requester_phone: 'Tel. responsable',
+    owner_name: 'Nom responsable (franchise)',
+    owner_email: 'Email responsable (franchise)',
+    owner_phone: 'Tel. responsable (franchise)',
     owner_company_legal_name: 'Raison sociale',
     billing_name: 'Contact facturation',
     billing_email: 'Email facturation',
@@ -188,6 +188,11 @@ export function formatFieldLabel(key: string): string {
     desired_delivery_date: 'Date souhaitee',
     mall_email: 'Email centre commercial',
     organisation_siret: 'SIRET',
+    organisation_vat_number: 'N° TVA intracommunautaire',
+    organisation_legal_name: 'Raison sociale',
+    organisation_billing_address: 'Adresse facturation',
+    organisation_billing_postal_code: 'Code postal facturation',
+    organisation_billing_city: 'Ville facturation',
   };
   return labels[key] ?? key.replace(/_/g, ' ');
 }

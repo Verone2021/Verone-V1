@@ -19,6 +19,7 @@ import {
   User,
   XCircle,
   Mail,
+  StickyNote,
 } from 'lucide-react';
 
 import { OrderTimeline } from '@verone/orders';
@@ -453,16 +454,21 @@ export function RightColumn({
       <InvoicesSection orderId={order.id} />
 
       {/* NOTES */}
-      {order.notes && (
-        <Card>
-          <CardContent className="p-3">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+      <Card>
+        <CardContent className="p-3">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider flex items-center gap-1">
+              <StickyNote className="h-3 w-3" />
               Notes
             </p>
+          </div>
+          {order.notes ? (
             <p className="text-xs text-gray-600">{order.notes}</p>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <p className="text-xs text-gray-400 italic">Aucune note</p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* HISTORIQUE */}
       <OrderTimeline events={historyEvents} loading={historyLoading} />

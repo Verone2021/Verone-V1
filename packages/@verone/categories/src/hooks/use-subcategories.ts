@@ -71,47 +71,45 @@ export function useSubcategories(categoryId?: string) {
 
       if (fetchError) throw fetchError;
 
-      // Obtenir les comptages pour chaque sous-catégorie
-      const subcategoriesWithDetails: SubcategoryWithDetails[] =
-        await Promise.all(
-          ((subcategoriesData ?? []) as unknown as SubcategoryRow[]).map(
-            async sub => {
-              // FIX CORS: Utiliser select sans head:true pour éviter requêtes HEAD directes
-              let productCount = 0;
-              try {
-                const { count, error: countError } = await supabase
-                  .from('products')
-                  .select('id', { count: 'exact', head: false })
-                  .eq('subcategory_id', sub.id);
+      // Obtenir les comptages en UNE seule requete groupee (au lieu de N requetes)
+      const subcatIds = (
+        (subcategoriesData ?? []) as unknown as SubcategoryRow[]
+      ).map(s => s.id);
+      let countMap: Record<string, number> = {};
+      if (subcatIds.length > 0) {
+        try {
+          const { data: countData } = await supabase
+            .from('products')
+            .select('subcategory_id')
+            .in('subcategory_id', subcatIds)
+            .is('archived_at', null);
+          if (countData) {
+            countMap = (countData as { subcategory_id: string }[]).reduce(
+              (acc, row) => {
+                acc[row.subcategory_id] = (acc[row.subcategory_id] ?? 0) + 1;
+                return acc;
+              },
+              {} as Record<string, number>
+            );
+          }
+        } catch (_err) {
+          // Comptage non critique — on continue avec 0
+        }
+      }
 
-                if (countError) {
-                  console.warn(
-                    'Comptage produits échoué pour',
-                    sub.name,
-                    '- Compteur à 0'
-                  );
-                } else {
-                  productCount = count ?? 0;
-                }
-              } catch (_err) {
-                // Silencieux - le comptage n'est pas critique
-                console.warn('Comptage produits impossible pour', sub.name);
-              }
-
-              return {
-                ...sub,
-                products_count: productCount,
-                category: sub.categories
-                  ? {
-                      id: sub.categories.id,
-                      name: sub.categories.name,
-                      family_id: sub.categories.family_id,
-                    }
-                  : undefined,
-              } as unknown as SubcategoryWithDetails;
+      const subcategoriesWithDetails: SubcategoryWithDetails[] = (
+        (subcategoriesData ?? []) as unknown as SubcategoryRow[]
+      ).map(sub => ({
+        ...sub,
+        products_count: countMap[sub.id] ?? 0,
+        category: sub.categories
+          ? {
+              id: sub.categories.id,
+              name: sub.categories.name,
+              family_id: sub.categories.family_id,
             }
-          )
-        );
+          : undefined,
+      })) as unknown as SubcategoryWithDetails[];
 
       setSubcategories(subcategoriesWithDetails);
     } catch (err) {

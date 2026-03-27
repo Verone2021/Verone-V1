@@ -30,6 +30,7 @@ import type { OrganisationContact } from '../../../../../lib/hooks/use-organisat
 import { useEntityAddresses } from '../../../../../lib/hooks/use-entity-addresses';
 import type { Address } from '../../../../../lib/hooks/use-entity-addresses';
 import { useEnseigneId } from '../../../../../lib/hooks/use-enseigne-id';
+import { usePermissions } from '../../../../../hooks/use-permissions';
 import { AddProductDialog } from './AddProductDialog';
 import {
   ProductsSection,
@@ -143,6 +144,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
   // ---- Hooks: contacts & addresses ----
   const organisationId = order.customer_id;
   const enseigneId = useEnseigneId();
+  const { canViewCommissions } = usePermissions();
   const ownershipType =
     (order.customer?.ownership_type as
       | 'propre'
@@ -185,6 +187,35 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
     () => contactsLocalOnly?.contacts ?? [],
     [contactsLocalOnly]
   );
+  // Billing contacts: franchise → org contacts only, succursale/propre → enseigne contacts
+  const billingContacts = useMemo(
+    () => (ownershipType === 'franchise' ? localContacts : allContacts),
+    [ownershipType, localContacts, allContacts]
+  );
+
+  // Filtered contacts by badge for each section
+  // Responsable: is_primary_contact=true OR contacts without any specific role (general contacts)
+  const responsableContacts = useMemo(
+    () =>
+      allContacts.filter(
+        c => c.isPrimaryContact || (!c.isBillingContact && !c.isPrimaryContact)
+      ),
+    [allContacts]
+  );
+  // Billing: only contacts with is_billing_contact=true from the right entity
+  const billingFilteredContacts = useMemo(
+    () => billingContacts.filter(c => c.isBillingContact),
+    [billingContacts]
+  );
+  // Delivery: only contacts with is_delivery_only=true from org (franchise only)
+  const deliveryFilteredContacts = useMemo(
+    () =>
+      localContacts.filter(
+        c => c.isPrimaryContact || (!c.isBillingContact && !c.isPrimaryContact)
+      ),
+    [localContacts]
+  );
+
   const billingAddresses = useMemo(
     () => billingAddressesData?.all ?? [],
     [billingAddressesData]
@@ -200,9 +231,10 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
   );
 
   // ---- State: Responsable ----
+  // Initialize with contact IDs from sales_orders (avoids race condition with async contacts)
   const [selectedResponsableId, setSelectedResponsableId] = useState<
     string | null
-  >(null);
+  >(order.responsable_contact_id ?? null);
   const [showResponsableForm, setShowResponsableForm] = useState(false);
   const [responsableForm, setResponsableForm] =
     useState<ContactFormData>(emptyContactForm);
@@ -210,10 +242,26 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
   // ---- State: Billing contact ----
   const [billingContactMode, setBillingContactMode] = useState<
     'same' | 'existing' | 'new'
-  >('same');
+  >(() => {
+    if (
+      order.billing_contact_id &&
+      order.billing_contact_id !== order.responsable_contact_id
+    ) {
+      return 'existing';
+    }
+    return 'same';
+  });
   const [selectedBillingContactId, setSelectedBillingContactId] = useState<
     string | null
-  >(null);
+  >(() => {
+    if (
+      order.billing_contact_id &&
+      order.billing_contact_id !== order.responsable_contact_id
+    ) {
+      return order.billing_contact_id;
+    }
+    return null;
+  });
   const [billingContactForm, setBillingContactForm] =
     useState<ContactFormData>(emptyContactForm);
 
@@ -228,7 +276,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
   // ---- State: Delivery contact ----
   const [selectedDeliveryContactId, setSelectedDeliveryContactId] = useState<
     string | null
-  >(null);
+  >(order.delivery_contact_id ?? null);
   const [showDeliveryContactForm, setShowDeliveryContactForm] = useState(false);
   const [deliveryContactForm, setDeliveryContactForm] =
     useState<ContactFormData>(emptyContactForm);
@@ -268,33 +316,48 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
   // ---- Pre-selection: match existing data with contacts/addresses ----
   const [hasInitialized, setHasInitialized] = useState(false);
 
-  // Initialize form from details - does NOT require contacts to be loaded
+  // Initialize form from details — use contact IDs first, fallback to name/email matching
   useEffect(() => {
     if (hasInitialized) return;
     if (!details) return;
 
-    // Match responsable (if contacts already loaded, try matching)
-    const respMatch = findContactMatch(
-      allContacts,
-      details.requester_name,
-      details.requester_email
-    );
-    if (respMatch) {
-      setSelectedResponsableId(respMatch);
-    } else if (details.requester_name) {
-      const nameParts = (details.requester_name ?? '').split(' ');
-      setShowResponsableForm(true);
-      setResponsableForm({
-        firstName: nameParts[0] ?? '',
-        lastName: nameParts.slice(1).join(' '),
-        email: details.requester_email ?? '',
-        phone: details.requester_phone ?? '',
-        title: details.requester_position ?? '',
-      });
+    // --- Responsable ---
+    // Priority 1: Use contact ID directly from sales_orders
+    if (order.responsable_contact_id) {
+      setSelectedResponsableId(order.responsable_contact_id);
+    } else {
+      // Priority 2: Match by name/email (legacy orders without contact IDs)
+      const respMatch = findContactMatch(
+        allContacts,
+        details.requester_name,
+        details.requester_email
+      );
+      if (respMatch) {
+        setSelectedResponsableId(respMatch);
+      } else if (details.requester_name) {
+        const nameParts = (details.requester_name ?? '').split(' ');
+        setShowResponsableForm(true);
+        setResponsableForm({
+          firstName: nameParts[0] ?? '',
+          lastName: nameParts.slice(1).join(' '),
+          email: details.requester_email ?? '',
+          phone: details.requester_phone ?? '',
+          title: details.requester_position ?? '',
+        });
+      }
     }
 
-    // Match billing contact
-    if (details.billing_name) {
+    // --- Billing contact ---
+    if (order.billing_contact_id) {
+      // Use ID directly — check if same as responsable
+      if (order.billing_contact_id === order.responsable_contact_id) {
+        setBillingContactMode('same');
+      } else {
+        setBillingContactMode('existing');
+        setSelectedBillingContactId(order.billing_contact_id);
+      }
+    } else if (details.billing_name) {
+      // Fallback: match by name/email
       const billingMatch = findContactMatch(
         allContacts,
         details.billing_name,
@@ -321,8 +384,12 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
       }
     }
 
-    // Match delivery contact
-    if (details.delivery_contact_name) {
+    // --- Delivery contact ---
+    // Delivery contacts are local to the restaurant (not stored in contacts table for succursales)
+    // Use ID if available, otherwise fallback to name/email matching
+    if (order.delivery_contact_id) {
+      setSelectedDeliveryContactId(order.delivery_contact_id);
+    } else if (details.delivery_contact_name) {
       const delMatch = findContactMatch(
         localContacts,
         details.delivery_contact_name,
@@ -344,7 +411,15 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
     }
 
     setHasInitialized(true);
-  }, [allContacts, localContacts, details, hasInitialized]);
+  }, [
+    allContacts,
+    localContacts,
+    details,
+    hasInitialized,
+    order.responsable_contact_id,
+    order.billing_contact_id,
+    order.delivery_contact_id,
+  ]);
 
   // Re-match contacts when they load AFTER initialization
   // (e.g. org has no contacts initially, but they load async later)
@@ -470,6 +545,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
   const resolvedBillingContact = useMemo(() => {
     if (billingContactMode === 'same') return resolvedResponsable;
     if (billingContactMode === 'existing' && selectedBillingContactId) {
+      // Search in allContacts (not billingContacts) to resolve any pre-selected contact by ID
       const c = allContacts.find(c => c.id === selectedBillingContactId);
       if (c)
         return {
@@ -951,7 +1027,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
 
           <ResponsableSection
             resolvedResponsable={resolvedResponsable}
-            allContacts={allContacts}
+            allContacts={responsableContacts}
             selectedResponsableId={selectedResponsableId}
             showResponsableForm={showResponsableForm}
             responsableForm={responsableForm}
@@ -962,7 +1038,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
 
           <BillingSection
             resolvedBillingContact={resolvedBillingContact}
-            allContacts={allContacts}
+            allContacts={billingFilteredContacts}
             billingContactMode={billingContactMode}
             selectedBillingContactId={selectedBillingContactId}
             billingContactForm={billingContactForm}
@@ -983,7 +1059,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
           <ShippingSection
             resolvedDeliveryAddress={resolvedDeliveryAddress}
             desiredDeliveryDate={desiredDeliveryDate}
-            localContacts={localContacts}
+            localContacts={deliveryFilteredContacts}
             selectedDeliveryContactId={selectedDeliveryContactId}
             showDeliveryContactForm={showDeliveryContactForm}
             deliveryContactForm={deliveryContactForm}
@@ -1014,6 +1090,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
 
       <StickyBottomBar
         totals={totals}
+        canViewCommissions={canViewCommissions}
         hasChanges={hasChanges}
         isPending={updateOrder.isPending}
         showSaveConfirmation={showSaveConfirmation}
@@ -1035,6 +1112,7 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
           onOpenChange={setIsAddProductOpen}
           selectionId={selectionId}
           existingProductIds={existingProductIds}
+          canViewCommissions={canViewCommissions}
           onAdd={handleAddProducts}
         />
       )}

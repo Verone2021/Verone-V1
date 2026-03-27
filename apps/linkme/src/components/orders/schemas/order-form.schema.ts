@@ -104,6 +104,10 @@ export const newRestaurantSchema = z.object({
   country: z.string().default('FR'), // Code ISO (FR, LU, BE...)
   latitude: z.number().nullable().optional(),
   longitude: z.number().nullable().optional(),
+  // Informations légales de l'organisation
+  legalName: z.string().optional().nullable(),
+  siret: z.string().optional().nullable(),
+  kbisFile: z.unknown().nullable().optional(),
 });
 
 export const restaurantStepSchema = z

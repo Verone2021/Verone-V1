@@ -1,9 +1,27 @@
-# Hooks Bloquants (settings.json)
+# Hooks Actifs (settings.json)
 
-Les hooks BLOQUENT automatiquement :
+## Bloquants (exit 1 = action annulee)
 
-- `--no-verify` sur commit/push
-- `any`/`as any`/`any[]`/`eslint-disable no-explicit-any` dans Edit/Write
-- Commit direct sur main (feature branch obligatoire)
-- Push direct sur main (PR obligatoire)
-- Lancement serveurs dev (reserve a l'utilisateur)
+| Hook               | Declencheur                         | Ce qu'il bloque                                            |
+| ------------------ | ----------------------------------- | ---------------------------------------------------------- |
+| Write ops sur main | `Edit(*)`, `Write(*)`               | Toute modification de fichier sur main                     |
+| `--no-verify`      | `Bash(git commit/push --no-verify)` | Bypass des hooks git                                       |
+| Push sur main      | `Bash(git push*main)`               | Push direct sur main                                       |
+| PR base main       | `Bash(gh pr create/merge)`          | PR sans `--base staging`                                   |
+| Dev server         | `Bash(pnpm/npm/yarn dev/start)`     | Lancement serveurs par agents                              |
+| TypeScript any     | `Edit(*)`, `Write(*)`               | `any`, `as any`, `any[]`, `eslint-disable no-explicit-any` |
+| Format commit      | `Bash(git commit*)`                 | Commits sans `[APP-DOMAIN-NNN]` ou `[NO-TASK]`             |
+
+## Avertissements (non-bloquants)
+
+| Hook         | Declencheur          | Message                                        |
+| ------------ | -------------------- | ---------------------------------------------- |
+| Middleware   | `Edit(*middleware*)` | Verifier patterns existants avant modification |
+| RLS policies | `Edit(*_rls_*)`      | Approbation requise pour migrations RLS        |
+
+## Validation
+
+| Hook         | Declencheur                  | Action                                       |
+| ------------ | ---------------------------- | -------------------------------------------- |
+| Git checkout | `Bash(git checkout*)`        | Empeche changements de branche inattendus    |
+| Screenshots  | `mcp__playwright*screenshot` | Valide chemin `.playwright-mcp/screenshots/` |

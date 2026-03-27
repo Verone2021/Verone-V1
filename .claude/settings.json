@@ -14,6 +14,19 @@
     "command": "bash $CLAUDE_PROJECT_DIR/.claude/scripts/statusline-debug.sh",
     "padding": 0
   },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'CONTEXTE VERONE (post-compaction):\n- Monorepo: back-office (3000), linkme (3002), site-internet (3001)\n- LinkMe = plateforme affiliation B2B2C. Les SELECTIONS sont le coeur du revenu (affilies creent des mini-boutiques, clients achetent via pages publiques)\n- 2 formulaires commande: OrderFormUnified (public/selection) et NewOrderForm (affilie connecte)\n- Sous-organisations denseigne: PAS de produits/selections/users propres\n- Explorer AVANT coder: schema DB + code existant + composants partages (@verone/*)\n- UNE entite = UNE page detail (jamais de doublons entre canaux)\n- Demander a Romeo AVANT commit/push/PR/migration\n- Packlink est ACTIF (expeditions)\n- Context7 MCP pour docs librairies, Serena MCP pour navigation code'"
+          }
+        ]
+      }
+    ]
+  },
   "UserPromptSubmit": [
     {
       "hooks": [
@@ -71,6 +84,15 @@
         {
           "type": "command",
           "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"origin (main|master)\"; then echo \"❌ INTERDIT: Push direct sur main. Créer une PR via: gh pr create\"; exit 1; fi'"
+        }
+      ]
+    },
+    {
+      "matcher": "Bash(gh pr create*--base main*) || Bash(gh pr merge*)",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"--base main|gh pr merge\"; then echo \"❌ BLOQUÉ: PRs doivent cibler staging (--base staging), JAMAIS main.\nWorkflow : feature → staging → validation Romeo → main\nCorrige avec : gh pr create --base staging\"; exit 2; fi'"
         }
       ]
     },

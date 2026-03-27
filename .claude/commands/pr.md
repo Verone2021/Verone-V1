@@ -43,7 +43,7 @@ git status -sb
 
 ```bash
 # 4. Voir les commits qui vont partir
-git log --oneline origin/main..HEAD
+git log --oneline origin/staging..HEAD
 ```
 
 ### PHASE 3 : Gate Checks (OBLIGATOIRE)
@@ -89,12 +89,12 @@ git push -u origin HEAD
 
 ```bash
 # 10. Voir ce qui part en PR
-git diff --stat origin/main...HEAD
+git diff --stat origin/staging...HEAD
 ```
 
 ```bash
 # 11. Créer la PR
-gh pr create --base main --title "<type>: <description>" --body "$(cat <<'EOF'
+gh pr create --base staging --title "<type>: <description>" --body "$(cat <<'EOF'
 ## Summary
 - [changement principal]
 - [changements secondaires]
@@ -136,7 +136,7 @@ EOF
 | ------------------------------- | ------------------------------ |
 | Fichiers non commités           | STOP → "utilise /commit"       |
 | Fichiers parasites (.swp, etc.) | STOP → corriger .gitignore     |
-| Branche behind origin/main      | STOP → "git pull --rebase"     |
+| Branche behind origin/staging   | STOP → "git pull --rebase"     |
 | Type-check échoue               | STOP → afficher erreurs TS     |
 | Lint échoue                     | STOP → afficher erreurs ESLint |
 | Build échoue                    | STOP → afficher erreur build   |

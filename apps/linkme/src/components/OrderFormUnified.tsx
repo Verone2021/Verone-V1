@@ -256,29 +256,13 @@ export function OrderFormUnified({
         newErrors['responsable.phone'] = 'Le téléphone est requis';
       }
 
-      // Si franchise : valider société
-      if (
-        data.newRestaurant.ownershipType === 'franchise' &&
-        !data.responsable.companyLegalName.trim()
-      ) {
-        newErrors['responsable.companyLegalName'] =
-          'La raison sociale est requise';
-      }
-      if (
-        data.newRestaurant.ownershipType === 'franchise' &&
-        !data.responsable.siret.trim()
-      ) {
-        newErrors['responsable.siret'] = 'Le SIRET est requis';
-      }
+      // Raison sociale et SIRET sont facultatifs pour tous les types (propre et franchise)
+      // Ils seront demandes plus tard via le formulaire complete-info si necessaire
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [
-    data.isNewRestaurant,
-    data.responsable,
-    data.newRestaurant.ownershipType,
-  ]);
+  }, [data.isNewRestaurant, data.responsable]);
 
   // Validation Step 4 : Facturation
   const validateStep4 = useCallback((): boolean => {

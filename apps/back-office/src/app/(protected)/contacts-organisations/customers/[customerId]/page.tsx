@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -52,6 +53,8 @@ import {
   Store,
   Sparkles,
   Wallet,
+  Upload,
+  Loader2,
 } from 'lucide-react';
 
 // Interface pour les images de produit (Supabase join)
@@ -102,6 +105,7 @@ function getOwnershipBadge(
   }
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function CustomerDetailPage() {
   const { customerId } = useParams();
   const searchParams = useSearchParams();
@@ -122,6 +126,62 @@ export default function CustomerDetailPage() {
     error,
     refetch: refetchCustomer,
   } = useOrganisation(customerId as string);
+
+  // Fetch kbis_url separately (not in shared hook ORGANISATION_COLUMNS)
+  const [kbisUrl, setKbisUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!customerId || typeof customerId !== 'string') return;
+    const supabase = createClient();
+    void supabase
+      .from('organisations')
+      .select('id, kbis_url')
+      .eq('id', customerId)
+      .single()
+      .then(({ data }) => {
+        const row = data as { kbis_url?: string | null } | null;
+        if (row?.kbis_url) setKbisUrl(row.kbis_url);
+      });
+  }, [customerId]);
+
+  // Merge kbis_url into customer for LegalIdentityEditSection
+  const customerWithKbis = customer ? { ...customer, kbis_url: kbisUrl } : null;
+
+  // K-BIS upload handler
+  const [kbisUploading, setKbisUploading] = useState(false);
+  const handleKbisUpload = async (file: File) => {
+    if (!customerId || typeof customerId !== 'string') return;
+    setKbisUploading(true);
+    try {
+      const supabase = createClient();
+      const ext = file.name.split('.').pop() ?? 'pdf';
+      const path = `${customerId}/kbis-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('organisation-logos')
+        .upload(path, file, { upsert: true });
+      if (uploadError) {
+        console.error('K-BIS upload error:', uploadError);
+        return;
+      }
+      const { data: urlData } = supabase.storage
+        .from('organisation-logos')
+        .getPublicUrl(path);
+      const publicUrl = urlData.publicUrl;
+      // kbis_url exists in DB but not in generated types — use raw update
+      const { error: updateError } = await supabase
+        .from('organisations')
+        .update({ kbis_url: publicUrl } as Record<string, unknown>)
+        .eq('id', customerId);
+      if (updateError) {
+        console.error('K-BIS DB update error:', updateError);
+        return;
+      }
+      setKbisUrl(publicUrl);
+    } catch (err) {
+      console.error('K-BIS upload failed:', err);
+    } finally {
+      setKbisUploading(false);
+    }
+  };
 
   // Charger les produits sourcés pour ce client
   useEffect(() => {
@@ -485,7 +545,7 @@ export default function CustomerDetailPage() {
         <div className="xl:col-span-2 space-y-4">
           {/* Identité Légale */}
           <LegalIdentityEditSection
-            organisation={customer}
+            organisation={customerWithKbis ?? customer}
             onUpdate={handleCustomerUpdate}
           />
 
@@ -528,6 +588,85 @@ export default function CustomerDetailPage() {
               });
             }}
           />
+
+          {/* Extrait K-BIS */}
+          <div className="card-verone p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-black flex items-center">
+                <FileText className="h-3.5 w-3.5 mr-1.5" />
+                Extrait K-BIS
+              </h3>
+              <label className="cursor-pointer">
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp"
+                  className="hidden"
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      void handleKbisUpload(file).catch(err => {
+                        console.error('[KbisUpload] failed:', err);
+                      });
+                    }
+                    e.target.value = '';
+                  }}
+                  disabled={kbisUploading}
+                />
+                <ButtonV2
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  disabled={kbisUploading}
+                >
+                  <span>
+                    {kbisUploading ? (
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    ) : (
+                      <Upload className="h-3 w-3 mr-1" />
+                    )}
+                    {kbisUrl ? 'Remplacer' : 'Deposer'}
+                  </span>
+                </ButtonV2>
+              </label>
+            </div>
+            {kbisUrl ? (
+              <div className="space-y-2">
+                <div className="border rounded-lg overflow-hidden bg-gray-50">
+                  {kbisUrl.match(/\.(jpg|jpeg|png|webp)(\?|$)/i) ? (
+                    <Image
+                      src={kbisUrl}
+                      alt="K-BIS"
+                      width={400}
+                      height={300}
+                      className="w-full h-auto object-contain"
+                      unoptimized
+                    />
+                  ) : (
+                    <iframe
+                      src={kbisUrl}
+                      title="K-BIS"
+                      className="w-full h-[200px]"
+                    />
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={kbisUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    <ArrowLeft className="h-3 w-3 rotate-[135deg]" />
+                    Telecharger
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 italic text-center py-2">
+                Aucun K-BIS depose
+              </p>
+            )}
+          </div>
 
           {/* Performance & Qualité - Uniquement pour les clients professionnels */}
           {customer.customer_type === 'professional' && (

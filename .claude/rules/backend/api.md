@@ -2,115 +2,26 @@
 globs: apps/**/api/**/*.ts, apps/**/actions/**/*.ts
 ---
 
-# Règles Backend API (Next.js 15 Route Handlers)
+# Backend API (Next.js 15 Route Handlers)
 
-## Route Handlers
+## Conventions
 
-### Structure
-
-```typescript
-// app/api/[resource]/route.ts
-export async function GET(request: Request) {}
-export async function POST(request: Request) {}
-export async function PUT(request: Request) {}
-export async function DELETE(request: Request) {}
-```
-
-### Conventions
-
-- Un fichier route.ts par ressource
-- Zod pour validation des inputs
-- Retourner NextResponse avec status approprié
-- Utiliser `createServerClient` pour Supabase
-
-## Server Actions
-
-### Structure
-
-```typescript
-// app/actions/[domain].ts
-"use server"
-
-import { z } from "zod"
-import { revalidatePath } from "next/cache"
-
-const schema = z.object({ ... })
-
-export async function createResource(formData: FormData) {
-  const validated = schema.safeParse(Object.fromEntries(formData))
-  if (!validated.success) {
-    return { error: validated.error.flatten() }
-  }
-  // ...
-  revalidatePath("/path")
-  return { success: true }
-}
-```
-
-### Conventions
-
-- "use server" en haut de fichier
-- Validation Zod OBLIGATOIRE
-- Retourner objets typés (pas throw)
-- revalidatePath après mutation
+- Un `route.ts` par ressource dans `app/api/`
+- Server Actions dans `app/actions/` avec `"use server"`
+- Validation Zod OBLIGATOIRE sur tous les inputs
+- Retourner objets types (pas throw)
+- `revalidatePath` apres mutation
 
 ## Authentification
 
-### Pattern standard
+- `createServerClient` de `@supabase/ssr` pour Supabase
+- Middleware `/middleware.ts` pour protection routes
+- RLS Supabase comme 2eme couche de securite
 
-```typescript
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+## INTERDIT
 
-export async function getUser() {
-  const supabase = createServerClient(/* ... */);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user;
-}
-```
-
-### Middleware
-
-- `/middleware.ts` pour protection routes
-- Refresh session automatique
-- Redirect vers /login si non authentifié
-
-## Error Handling
-
-### Codes HTTP
-
-- 200: Success (GET, PUT)
-- 201: Created (POST)
-- 204: No Content (DELETE)
-- 400: Validation Error
-- 401: Unauthorized
-- 403: Forbidden (RLS)
-- 404: Not Found
-- 500: Internal Error
-
-### Format erreur standard
-
-```typescript
-return NextResponse.json(
-  { error: { code: 'VALIDATION_ERROR', message: '...', details: {} } },
-  { status: 400 }
-);
-```
-
-## Interdictions
-
-- ❌ Exposer credentials dans response
-- ❌ SQL brut (utiliser Supabase client)
-- ❌ try/catch sans logging
-- ❌ Inputs non validés (Zod obligatoire)
-- ❌ Secrets dans code (utiliser env vars)
-
-## Sécurité
-
-- TOUJOURS vérifier authentification
-- TOUJOURS valider inputs avec Zod
-- RLS Supabase comme 2ème couche
-- Rate limiting si API publique
-- CORS configuré dans next.config.js
+- Modifier les routes API existantes (Qonto, adresses, Packlink, emails, webhooks)
+- Exposer credentials dans response
+- SQL brut (utiliser Supabase client)
+- try/catch sans logging
+- Inputs non valides

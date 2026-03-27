@@ -36,6 +36,7 @@ interface AddProductDialogProps {
   onOpenChange: (open: boolean) => void;
   selectionId: string;
   existingProductIds: Set<string>;
+  canViewCommissions: boolean;
   onAdd: (
     products: Array<{
       product_id: string;
@@ -87,6 +88,7 @@ export function AddProductDialog({
   onOpenChange,
   selectionId,
   existingProductIds,
+  canViewCommissions,
   onAdd,
 }: AddProductDialogProps) {
   const { data: selectionItems, isLoading } = useSelectionItems(selectionId);
@@ -318,8 +320,8 @@ export function AddProductDialog({
                       </p>
                     </div>
 
-                    {/* Margin badge */}
-                    {item.margin_rate > 0 && (
+                    {/* Margin badge — hidden for collaborateurs */}
+                    {canViewCommissions && item.margin_rate > 0 && (
                       <div
                         className={cn(
                           'px-2 py-1 rounded text-xs font-medium whitespace-nowrap',
