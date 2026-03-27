@@ -8,9 +8,8 @@ import { useRouter } from 'next/navigation';
 import { useToggle } from '@verone/hooks';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader } from '@verone/ui';
-import { Popover, PopoverTrigger, PopoverContent } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
-import { Eye, EyeOff, LogIn, Mail, Lock, Info } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Mail, Lock } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -141,7 +140,7 @@ export default function LoginPage() {
                              placeholder:text-slate-400
                              focus:outline-none focus:ring-2 focus:ring-[#3b86d1] focus:border-transparent
                              transition-all duration-300"
-                    placeholder="veronebyromeo@gmail.com"
+                    placeholder="vous@exemple.com"
                     required
                   />
                 </div>
@@ -213,51 +212,6 @@ export default function LoginPage() {
                 )}
               </ButtonV2>
             </form>
-
-            {/* Credentials test - Popover discret */}
-            <div className="flex justify-center">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    className="flex items-center gap-2 text-xs text-slate-400 hover:text-[#3b86d1]
-                                   transition-colors duration-200 group"
-                  >
-                    <Info className="h-3.5 w-3.5 group-hover:scale-110 transition-transform duration-200" />
-                    <span>Accès test MVP</span>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-4">
-                  <div className="space-y-3">
-                    <div>
-                      <h4 className="font-heading text-sm font-medium text-slate-900 mb-1">
-                        Compte de test
-                      </h4>
-                      <p className="text-xs text-slate-500">
-                        Utilisez ces identifiants pour accéder au Back Office
-                      </p>
-                    </div>
-                    <div className="space-y-2 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                      <div className="text-xs text-slate-700">
-                        <span className="text-slate-500 font-medium">
-                          Email :
-                        </span>
-                        <code className="block mt-1 bg-white px-2 py-1 rounded text-[#3b86d1] font-mono text-xs border border-slate-200">
-                          veronebyromeo@gmail.com
-                        </code>
-                      </div>
-                      <div className="text-xs text-slate-700">
-                        <span className="text-slate-500 font-medium">
-                          Mot de passe :
-                        </span>
-                        <code className="block mt-1 bg-white px-2 py-1 rounded text-[#3b86d1] font-mono text-xs border border-slate-200">
-                          Abc123456
-                        </code>
-                      </div>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
 
             {/* Footer */}
             <p className="text-center text-xs text-slate-400 pt-2">
