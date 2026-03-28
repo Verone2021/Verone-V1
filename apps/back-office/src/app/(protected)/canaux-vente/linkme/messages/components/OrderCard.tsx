@@ -48,33 +48,22 @@ export function OrderStatusBadge({ status }: { status: string }) {
 // CategoryBadges
 // =============================================================================
 
-interface CategoryBadgesProps {
-  missingFields: MissingFieldsResult;
-  onCategoryClick?: (category: ClickableCategory) => void;
+interface BadgeEntry {
+  key: string;
+  label: string;
+  color: string;
+  count: number;
+  fields: MissingFieldsResult['fields'];
+  clickCategory: ClickableCategory | null;
 }
 
-export function CategoryBadges({
-  missingFields,
-  onCategoryClick,
-}: CategoryBadgesProps) {
-  const isClickable = !!onCategoryClick;
-
-  // Build badge entries, splitting 'delivery' into contact + address
-  const badges: Array<{
-    key: string;
-    label: string;
-    color: string;
-    count: number;
-    fields: typeof missingFields.fields;
-    clickCategory: ClickableCategory | null;
-  }> = [];
-
+function buildBadgeEntries(missingFields: MissingFieldsResult): BadgeEntry[] {
+  const badges: BadgeEntry[] = [];
   for (const [cat, fields] of Object.entries(missingFields.byCategory) as [
     MissingFieldCategory,
     typeof missingFields.fields,
   ][]) {
     if (fields.length === 0) continue;
-
     if (cat === 'delivery') {
       const contactFields = fields.filter(f =>
         DELIVERY_CONTACT_KEYS.includes(f.key)
@@ -82,7 +71,6 @@ export function CategoryBadges({
       const addressFields = fields.filter(f =>
         DELIVERY_ADDRESS_KEYS.includes(f.key)
       );
-
       if (contactFields.length > 0) {
         badges.push({
           key: 'delivery_contact',
@@ -114,6 +102,20 @@ export function CategoryBadges({
       });
     }
   }
+  return badges;
+}
+
+interface CategoryBadgesProps {
+  missingFields: MissingFieldsResult;
+  onCategoryClick?: (category: ClickableCategory) => void;
+}
+
+export function CategoryBadges({
+  missingFields,
+  onCategoryClick,
+}: CategoryBadgesProps) {
+  const isClickable = !!onCategoryClick;
+  const badges = buildBadgeEntries(missingFields);
 
   return (
     <TooltipProvider>
@@ -156,6 +158,47 @@ export function CategoryBadges({
 // =============================================================================
 // OrderCard
 // =============================================================================
+
+function RequestStatus({
+  variant,
+  latestPending,
+}: {
+  variant: 'missing' | 'waiting';
+  latestPending?: {
+    recipient_email: string;
+    recipient_type: string;
+    sent_at: string;
+  } | null;
+}) {
+  if (variant === 'waiting' && latestPending) {
+    return (
+      <div className="flex items-center gap-2 text-sm bg-amber-50 rounded-lg p-2">
+        <Mail className="h-3.5 w-3.5 text-amber-600 flex-shrink-0" />
+        <span className="text-amber-700">
+          Envoye a <strong>{latestPending.recipient_email}</strong> (
+          {latestPending.recipient_type === 'requester'
+            ? 'demandeur'
+            : 'proprietaire'}
+          )
+        </span>
+        <Separator orientation="vertical" className="h-3" />
+        <span className="text-amber-600 flex items-center gap-1">
+          <Clock className="h-3 w-3" />
+          {formatTimeAgo(latestPending.sent_at)}
+        </span>
+      </div>
+    );
+  }
+  if (variant === 'missing') {
+    return (
+      <div className="flex items-center gap-1 text-sm text-gray-400">
+        <Mail className="h-3.5 w-3.5" />
+        Aucune demande envoyee
+      </div>
+    );
+  }
+  return null;
+}
 
 interface OrderCardProps {
   order: OrderWithMissing;
@@ -200,32 +243,7 @@ export function OrderCard({
               onCategoryClick={onCategoryClick}
             />
 
-            {/* Request status for waiting variant */}
-            {variant === 'waiting' && latestPending && (
-              <div className="flex items-center gap-2 text-sm bg-amber-50 rounded-lg p-2">
-                <Mail className="h-3.5 w-3.5 text-amber-600 flex-shrink-0" />
-                <span className="text-amber-700">
-                  Envoye a <strong>{latestPending.recipient_email}</strong> (
-                  {latestPending.recipient_type === 'requester'
-                    ? 'demandeur'
-                    : 'proprietaire'}
-                  )
-                </span>
-                <Separator orientation="vertical" className="h-3" />
-                <span className="text-amber-600 flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {formatTimeAgo(latestPending.sent_at)}
-                </span>
-              </div>
-            )}
-
-            {/* No request for missing variant */}
-            {variant === 'missing' && (
-              <div className="flex items-center gap-1 text-sm text-gray-400">
-                <Mail className="h-3.5 w-3.5" />
-                Aucune demande envoyee
-              </div>
-            )}
+            <RequestStatus variant={variant} latestPending={latestPending} />
           </div>
 
           {/* Actions */}
