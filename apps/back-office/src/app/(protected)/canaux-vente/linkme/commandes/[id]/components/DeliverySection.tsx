@@ -299,7 +299,7 @@ function DeliveryOptionsLeft({ details }: { details: LinkMeOrderDetails }) {
           {details.delivery_terms_accepted ? 'Oui' : 'Non'}
         </Badge>
       </div>
-      {details.desired_delivery_date && (
+      {details.desired_delivery_date ? (
         <div className="flex items-center gap-2 text-sm">
           <Calendar className="h-4 w-4 text-gray-400" />
           <span>
@@ -308,6 +308,11 @@ function DeliveryOptionsLeft({ details }: { details: LinkMeOrderDetails }) {
               'fr-FR'
             )}
           </span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 text-sm text-amber-600 font-medium">
+          <Calendar className="h-4 w-4" />
+          <span>Date de livraison non renseignee</span>
         </div>
       )}
       {details.delivery_date &&
