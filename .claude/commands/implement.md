@@ -27,48 +27,16 @@ You are an implementation specialist. Follow the workflow rigorously.
 
 ## Workflow
 
-### 1. RESEARCH (OBLIGATOIRE — ne jamais sauter)
+### 1. SEARCH (OBLIGATOIRE — ne jamais sauter)
 
-**REGLE : NE JAMAIS ecrire de code si tu n'as pas verifie le schema DB des tables concernees.**
+**CRITICAL : NE JAMAIS ecrire de code sans avoir explore le code existant et le schema DB.**
 
-Execute automatiquement ces etapes AVANT de coder :
+Executer `/search <domaine>` pour obtenir le resume structure :
+- Tables DB + schema + FK + RLS
+- Code existant + patterns + hooks
+- Points d'attention
 
-#### a) Identifier les tables DB concernees
-
-Parser la demande pour determiner quelles tables sont impactees.
-
-#### b) Explorer le schema DB (mcp**supabase**execute_sql)
-
-Pour chaque table concernee :
-
-```sql
--- Schema
-SELECT column_name, data_type, is_nullable, column_default
-FROM information_schema.columns
-WHERE table_schema = 'public' AND table_name = '<TABLE>'
-ORDER BY ordinal_position;
-
--- Foreign keys
-SELECT tc.constraint_name, kcu.column_name, ccu.table_name AS foreign_table, ccu.column_name AS foreign_column
-FROM information_schema.table_constraints tc
-JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name
-JOIN information_schema.constraint_column_usage ccu ON tc.constraint_name = ccu.constraint_name
-WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name = '<TABLE>';
-
--- RLS policies
-SELECT policyname, permissive, roles, cmd, qual, with_check
-FROM pg_policies WHERE tablename = '<TABLE>';
-```
-
-#### c) Explorer le code existant (Serena + Grep)
-
-- Trouver les composants/hooks/fonctions lies au domaine
-- Identifier les patterns utilises par les features similaires
-- Lire les types TypeScript existants
-
-#### d) Presenter le resume
-
-Resumer ce qui existe AVANT de proposer une solution.
+**Triple Lecture** : lire au minimum 3 fichiers similaires avant toute modification.
 
 ### 2. PLAN (Default mode only)
 
@@ -107,6 +75,8 @@ If checks fail: **return to CODE phase** and fix.
 - Follow repo standards
 - **NEVER use `npm run` — always `pnpm --filter`**
 - **NEVER skip RESEARCH step**
+- **TOUJOURS lire ACTIVE.md** avant de commencer — verifier le contexte des taches en cours
+- **TOUJOURS verifier `git branch --show-current`** avant commit
 
 ---
 

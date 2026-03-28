@@ -5,6 +5,8 @@ model: haiku
 color: green
 role: READ
 writes-to: []
+tools: [Read, Grep, Glob, Bash]
+skills: [rls-patterns]
 ---
 
 ## ⛔ LECTURE OBLIGATOIRE (AVANT TOUTE ACTION)
@@ -15,7 +17,7 @@ writes-to: []
 2. **Patterns async** : `.claude/commands/fix-warnings.md` (section async)
 3. **RLS patterns** : `.claude/rules/database/rls-patterns.md`
 
-**Pour confirmer lecture** : Exécuter `.claude/scripts/confirm-docs-read.sh`
+**Avant de coder** : Lire `.claude/work/ACTIVE.md`, CLAUDE.md de l'app, et consulter Serena memories pertinentes.
 
 ---
 

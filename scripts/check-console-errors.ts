@@ -29,7 +29,25 @@ import {
   type BrowserContext,
 } from '@playwright/test';
 import path from 'path';
-import { authenticateSupabase, getSupabaseProjectRef } from './auth-setup';
+// TODO: Recreer le module auth-setup avec les credentials Supabase
+// L'ancien module a ete perdu. En attendant, ce script ne peut pas s'executer.
+// Pour utiliser : creer scripts/auth-setup.ts avec exports authenticateSupabase() et getSupabaseProjectRef()
+//
+// import { authenticateSupabase, getSupabaseProjectRef } from './auth-setup';
+const authenticateSupabase = async (
+  _browser: Browser
+): Promise<BrowserContext> => {
+  throw new Error(
+    'auth-setup module manquant. Creer scripts/auth-setup.ts avec les credentials Supabase.'
+  );
+};
+const getSupabaseProjectRef = (): string => {
+  return (
+    process.env.NEXT_PUBLIC_SUPABASE_URL?.replace('https://', '').split(
+      '.'
+    )[0] || ''
+  );
+};
 
 // ============================================================================
 // CONFIGURATION

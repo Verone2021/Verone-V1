@@ -12,9 +12,12 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
+    "@verone/finance": "workspace:*",
+    "@verone/organisations": "workspace:*",
+    "@verone/stock": "workspace:*",
+    "@verone/types": "workspace:*",
     "@verone/ui": "workspace:*",
-    "@verone/utils": "workspace:*",
-    "@verone/types": "workspace:*"
+    "@verone/utils": "workspace:*"
   },
   "peerDependencies": {
     "react": "^18.2.0",
