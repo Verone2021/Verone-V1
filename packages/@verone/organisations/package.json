@@ -12,11 +12,6 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
-    "@verone/categories": "workspace:*",
-    "@verone/common": "workspace:*",
-    "@verone/customers": "workspace:*",
-    "@verone/orders": "workspace:*",
-    "@verone/products": "workspace:*",
     "@verone/types": "workspace:*",
     "@verone/ui": "workspace:*",
     "@verone/utils": "workspace:*",
