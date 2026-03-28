@@ -12,17 +12,8 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
-    "@verone/categories": "workspace:*",
-    "@verone/common": "workspace:*",
-    "@verone/consultations": "workspace:*",
-    "@verone/customers": "workspace:*",
-    "@verone/dashboard": "workspace:*",
-    "@verone/finance": "workspace:*",
-    "@verone/organisations": "workspace:*",
-    "@verone/stock": "workspace:*",
     "@verone/types": "workspace:*",
     "@verone/ui": "workspace:*",
-    "@verone/ui-business": "workspace:*",
     "@verone/utils": "workspace:*"
   },
   "peerDependencies": {

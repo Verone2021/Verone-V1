@@ -13,12 +13,8 @@
   "private": true,
   "dependencies": {
     "@verone/categories": "workspace:*",
-    "@verone/common": "workspace:*",
-    "@verone/dashboard": "workspace:*",
     "@verone/finance": "workspace:*",
     "@verone/organisations": "workspace:*",
-    "@verone/products": "workspace:*",
-    "@verone/stock": "workspace:*",
     "@verone/types": "workspace:*",
     "@verone/ui": "workspace:*",
     "@verone/utils": "workspace:*",

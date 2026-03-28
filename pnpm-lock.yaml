@@ -540,9 +540,6 @@ importers:
 
   packages/@verone/channels:
     dependencies:
-      '@verone/products':
-        specifier: workspace:*
-        version: link:../products
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -561,9 +558,6 @@ importers:
 
   packages/@verone/collections:
     dependencies:
-      '@verone/common':
-        specifier: workspace:*
-        version: link:../common
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -588,18 +582,6 @@ importers:
       '@verone/collections':
         specifier: workspace:*
         version: link:../collections
-      '@verone/finance':
-        specifier: workspace:*
-        version: link:../finance
-      '@verone/orders':
-        specifier: workspace:*
-        version: link:../orders
-      '@verone/organisations':
-        specifier: workspace:*
-        version: link:../organisations
-      '@verone/products':
-        specifier: workspace:*
-        version: link:../products
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -621,9 +603,6 @@ importers:
       '@react-pdf/renderer':
         specifier: ^4.3.1
         version: 4.3.1(react@18.3.1)
-      '@verone/common':
-        specifier: workspace:*
-        version: link:../common
       '@verone/finance':
         specifier: workspace:*
         version: link:../finance
@@ -658,12 +637,6 @@ importers:
 
   packages/@verone/customers:
     dependencies:
-      '@verone/common':
-        specifier: workspace:*
-        version: link:../common
-      '@verone/organisations':
-        specifier: workspace:*
-        version: link:../organisations
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -682,15 +655,6 @@ importers:
 
   packages/@verone/dashboard:
     dependencies:
-      '@verone/finance':
-        specifier: workspace:*
-        version: link:../finance
-      '@verone/organisations':
-        specifier: workspace:*
-        version: link:../organisations
-      '@verone/stock':
-        specifier: workspace:*
-        version: link:../stock
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -718,9 +682,6 @@ importers:
       '@verone/integrations':
         specifier: workspace:*
         version: link:../integrations
-      '@verone/orders':
-        specifier: workspace:*
-        version: link:../orders
       '@verone/products':
         specifier: workspace:*
         version: link:../products
@@ -781,9 +742,6 @@ importers:
 
   packages/@verone/logistics:
     dependencies:
-      '@verone/orders':
-        specifier: workspace:*
-        version: link:../orders
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -829,24 +787,12 @@ importers:
       '@verone/categories':
         specifier: workspace:*
         version: link:../categories
-      '@verone/common':
-        specifier: workspace:*
-        version: link:../common
-      '@verone/dashboard':
-        specifier: workspace:*
-        version: link:../dashboard
       '@verone/finance':
         specifier: workspace:*
         version: link:../finance
       '@verone/organisations':
         specifier: workspace:*
         version: link:../organisations
-      '@verone/products':
-        specifier: workspace:*
-        version: link:../products
-      '@verone/stock':
-        specifier: workspace:*
-        version: link:../stock
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -874,21 +820,6 @@ importers:
 
   packages/@verone/organisations:
     dependencies:
-      '@verone/categories':
-        specifier: workspace:*
-        version: link:../categories
-      '@verone/common':
-        specifier: workspace:*
-        version: link:../common
-      '@verone/customers':
-        specifier: workspace:*
-        version: link:../customers
-      '@verone/orders':
-        specifier: workspace:*
-        version: link:../orders
-      '@verone/products':
-        specifier: workspace:*
-        version: link:../products
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -929,39 +860,12 @@ importers:
 
   packages/@verone/products:
     dependencies:
-      '@verone/categories':
-        specifier: workspace:*
-        version: link:../categories
-      '@verone/common':
-        specifier: workspace:*
-        version: link:../common
-      '@verone/consultations':
-        specifier: workspace:*
-        version: link:../consultations
-      '@verone/customers':
-        specifier: workspace:*
-        version: link:../customers
-      '@verone/dashboard':
-        specifier: workspace:*
-        version: link:../dashboard
-      '@verone/finance':
-        specifier: workspace:*
-        version: link:../finance
-      '@verone/organisations':
-        specifier: workspace:*
-        version: link:../organisations
-      '@verone/stock':
-        specifier: workspace:*
-        version: link:../stock
       '@verone/types':
         specifier: workspace:*
         version: link:../types
       '@verone/ui':
         specifier: workspace:*
         version: link:../ui
-      '@verone/ui-business':
-        specifier: workspace:*
-        version: link:../ui-business
       '@verone/utils':
         specifier: workspace:*
         version: link:../utils
@@ -1001,18 +905,6 @@ importers:
       '@react-pdf/renderer':
         specifier: ^4.3.1
         version: 4.3.1(react@18.3.1)
-      '@verone/common':
-        specifier: workspace:*
-        version: link:../common
-      '@verone/dashboard':
-        specifier: workspace:*
-        version: link:../dashboard
-      '@verone/finance':
-        specifier: workspace:*
-        version: link:../finance
-      '@verone/products':
-        specifier: workspace:*
-        version: link:../products
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -1120,21 +1012,6 @@ importers:
 
   packages/@verone/ui-business:
     dependencies:
-      '@verone/common':
-        specifier: workspace:*
-        version: link:../common
-      '@verone/finance':
-        specifier: workspace:*
-        version: link:../finance
-      '@verone/orders':
-        specifier: workspace:*
-        version: link:../orders
-      '@verone/organisations':
-        specifier: workspace:*
-        version: link:../organisations
-      '@verone/products':
-        specifier: workspace:*
-        version: link:../products
       '@verone/types':
         specifier: workspace:*
         version: link:../types

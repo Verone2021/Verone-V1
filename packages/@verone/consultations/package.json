@@ -13,7 +13,6 @@
   "private": true,
   "dependencies": {
     "@react-pdf/renderer": "^4.3.1",
-    "@verone/common": "workspace:*",
     "@verone/finance": "workspace:*",
     "@verone/orders": "workspace:*",
     "@verone/products": "workspace:*",
