@@ -43,6 +43,10 @@ export interface IBackofficeAdminContext {
  * @param options - Options de verification
  * @returns BackofficeAdminContext si OK, NextResponse (401/403) sinon
  */
+function errorResponse(error: string, code: string, status: number) {
+  return NextResponse.json({ error, code }, { status });
+}
+
 export async function requireBackofficeAdmin(
   request: NextRequest,
   options?: {
@@ -61,13 +65,7 @@ export async function requireBackofficeAdmin(
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        {
-          error: 'Non authentifie',
-          code: 'UNAUTHORIZED',
-        },
-        { status: 401 }
-      );
+      return errorResponse('Non authentifie', 'UNAUTHORIZED', 401);
     }
 
     // 3. Verifier le role dans user_app_roles
@@ -81,38 +79,31 @@ export async function requireBackofficeAdmin(
 
     if (roleError) {
       console.error('[requireBackofficeAdmin] DB error:', roleError);
-      return NextResponse.json(
-        {
-          error: 'Erreur verification permissions',
-          code: 'INTERNAL_ERROR',
-        },
-        { status: 500 }
+      return errorResponse(
+        'Erreur verification permissions',
+        'INTERNAL_ERROR',
+        500
       );
     }
 
-    // Verifier que le role est owner ou admin
     const adminRoles: UserRoleType[] = ['owner', 'admin'];
     if (!userRole || !adminRoles.includes(userRole.role as UserRoleType)) {
-      return NextResponse.json(
-        {
-          error: 'Permissions insuffisantes - Admin back-office requis',
-          code: 'FORBIDDEN',
-        },
-        { status: 403 }
+      return errorResponse(
+        'Permissions insuffisantes - Admin back-office requis',
+        'FORBIDDEN',
+        403
       );
     }
 
-    // 4. Si une organisation specifique est requise, verifier l'acces
-    if (options?.requiredOrganisationId) {
-      if (userRole.organisation_id !== options.requiredOrganisationId) {
-        return NextResponse.json(
-          {
-            error: 'Acces refuse a cette organisation',
-            code: 'FORBIDDEN_ORGANISATION',
-          },
-          { status: 403 }
-        );
-      }
+    if (
+      options?.requiredOrganisationId &&
+      userRole.organisation_id !== options.requiredOrganisationId
+    ) {
+      return errorResponse(
+        'Acces refuse a cette organisation',
+        'FORBIDDEN_ORGANISATION',
+        403
+      );
     }
 
     // 5. Succes - retourner le contexte
@@ -125,12 +116,10 @@ export async function requireBackofficeAdmin(
     console.error(
       '[requireBackofficeAdmin] Unexpected error during auth verification'
     );
-    return NextResponse.json(
-      {
-        error: 'Erreur interne authentification',
-        code: 'INTERNAL_ERROR',
-      },
-      { status: 500 }
+    return errorResponse(
+      'Erreur interne authentification',
+      'INTERNAL_ERROR',
+      500
     );
   }
 }
