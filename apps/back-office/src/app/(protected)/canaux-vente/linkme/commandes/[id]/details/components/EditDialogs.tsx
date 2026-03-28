@@ -18,7 +18,9 @@ import {
   Separator,
   Switch,
   Textarea,
+  AddressAutocomplete,
 } from '@verone/ui';
+import type { AddressResult } from '@verone/ui';
 import { MapPin, User, UserPlus, Users } from 'lucide-react';
 
 import type { LinkMeOrderDetails } from '../../../../hooks/use-linkme-order-actions';
@@ -439,14 +441,24 @@ export function EditDialogs({
             )}
             <div className="space-y-2">
               <Label>Adresse</Label>
-              <Input
+              <AddressAutocomplete
                 value={editForm.delivery_address ?? ''}
-                onChange={e =>
+                onChange={(v: string) =>
                   setEditForm(prev => ({
                     ...prev,
-                    delivery_address: e.target.value,
+                    delivery_address: v,
                   }))
                 }
+                onSelect={(address: AddressResult) => {
+                  setEditForm(prev => ({
+                    ...prev,
+                    delivery_address: address.streetAddress,
+                    delivery_postal_code: address.postalCode,
+                    delivery_city: address.city,
+                  }));
+                }}
+                placeholder="Rechercher une adresse..."
+                id="edit-delivery-address"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
