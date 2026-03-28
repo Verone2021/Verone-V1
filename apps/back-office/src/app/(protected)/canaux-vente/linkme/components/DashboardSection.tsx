@@ -28,6 +28,7 @@ import {
 import {
   useLinkMeDashboard,
   useRecentActivity,
+  type DashboardKPIs,
   type RecentActivity,
 } from '../hooks/use-linkme-dashboard';
 
@@ -212,78 +213,124 @@ function QuickAction({ href, icon, label, count }: QuickActionProps) {
 // Main Dashboard Section
 // ============================================================================
 
+function DashboardLoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i}>
+            <CardContent className="p-6">
+              <div className="space-y-3">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-8 w-32" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function KPIsGrid({ kpis }: { kpis: DashboardKPIs | undefined }) {
+  return (
+    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+      <KPICard
+        title="CA Généré"
+        value={formatCurrency(kpis?.revenue.current ?? 0)}
+        subtext="vs moyenne"
+        growth={kpis?.revenue.growth}
+        icon={<TrendingUp className="h-4 w-4 text-emerald-600" />}
+        iconBgColor="bg-emerald-100"
+      />
+      <KPICard
+        title="Commissions à payer"
+        value={formatCurrency(kpis?.pendingCommissions.amount ?? 0)}
+        subtext={`${kpis?.pendingCommissions.count ?? 0} demande${(kpis?.pendingCommissions.count ?? 0) > 1 ? 's' : ''}`}
+        icon={<Banknote className="h-4 w-4 text-amber-600" />}
+        iconBgColor="bg-amber-100"
+      />
+      <KPICard
+        title="Affiliés actifs"
+        value={String(kpis?.affiliates.active ?? 0)}
+        subtext={`+${kpis?.affiliates.newThisMonth ?? 0} ce mois`}
+        icon={<Users className="h-4 w-4 text-blue-600" />}
+        iconBgColor="bg-blue-100"
+      />
+      <KPICard
+        title="Commandes ce mois"
+        value={String(kpis?.orders.current ?? 0)}
+        subtext="vs moyenne"
+        growth={kpis?.orders.growth}
+        icon={<ShoppingCart className="h-4 w-4 text-purple-600" />}
+        iconBgColor="bg-purple-100"
+      />
+    </div>
+  );
+}
+
+function RecentActivityCard({
+  activities,
+  isLoading,
+}: {
+  activities: RecentActivity[] | undefined;
+  isLoading: boolean;
+}) {
+  return (
+    <Card>
+      <CardHeader className="pb-2 pt-3 px-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-sm">Activité récente</CardTitle>
+            <CardDescription className="text-xs">
+              Dernières actions
+            </CardDescription>
+          </div>
+          <Link
+            href="/canaux-vente/linkme/analytics"
+            className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+          >
+            Voir tout
+            <ArrowRight className="h-2.5 w-2.5" />
+          </Link>
+        </div>
+      </CardHeader>
+      <CardContent className="px-4 pb-3">
+        {isLoading ? (
+          <div className="space-y-2">
+            {[1, 2, 3].map(i => (
+              <Skeleton key={i} className="h-10" />
+            ))}
+          </div>
+        ) : !activities || activities.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-4 text-center">
+            <FileText className="h-6 w-6 text-gray-300 mb-1" />
+            <p className="text-xs text-gray-500">Aucune activité</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {activities.map(activity => (
+              <ActivityItem key={activity.id} activity={activity} />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function DashboardSection() {
   const { data: kpis, isLoading: kpisLoading } = useLinkMeDashboard();
   const { data: activities, isLoading: activitiesLoading } =
     useRecentActivity(5);
 
-  // Loading state
-  if (kpisLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <div className="space-y-3">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-8 w-32" />
-                  <Skeleton className="h-4 w-20" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  if (kpisLoading) return <DashboardLoadingSkeleton />;
 
   return (
     <div className="space-y-4">
-      {/* 4 KPIs Grid */}
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-        {/* KPI 1: CA Généré */}
-        <KPICard
-          title="CA Généré"
-          value={formatCurrency(kpis?.revenue.current ?? 0)}
-          subtext="vs moyenne"
-          growth={kpis?.revenue.growth}
-          icon={<TrendingUp className="h-4 w-4 text-emerald-600" />}
-          iconBgColor="bg-emerald-100"
-        />
-
-        {/* KPI 2: Commissions à payer */}
-        <KPICard
-          title="Commissions à payer"
-          value={formatCurrency(kpis?.pendingCommissions.amount ?? 0)}
-          subtext={`${kpis?.pendingCommissions.count ?? 0} demande${(kpis?.pendingCommissions.count ?? 0) > 1 ? 's' : ''}`}
-          icon={<Banknote className="h-4 w-4 text-amber-600" />}
-          iconBgColor="bg-amber-100"
-        />
-
-        {/* KPI 3: Affiliés actifs */}
-        <KPICard
-          title="Affiliés actifs"
-          value={String(kpis?.affiliates.active ?? 0)}
-          subtext={`+${kpis?.affiliates.newThisMonth ?? 0} ce mois`}
-          icon={<Users className="h-4 w-4 text-blue-600" />}
-          iconBgColor="bg-blue-100"
-        />
-
-        {/* KPI 4: Commandes ce mois */}
-        <KPICard
-          title="Commandes ce mois"
-          value={String(kpis?.orders.current ?? 0)}
-          subtext="vs moyenne"
-          growth={kpis?.orders.growth}
-          icon={<ShoppingCart className="h-4 w-4 text-purple-600" />}
-          iconBgColor="bg-purple-100"
-        />
-      </div>
-
-      {/* Actions rapides + Activité récente */}
+      <KPIsGrid kpis={kpis} />
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* Actions rapides */}
         <Card>
           <CardHeader className="pb-2 pt-3 px-4">
             <CardTitle className="text-sm">Actions rapides</CardTitle>
@@ -310,47 +357,10 @@ export function DashboardSection() {
             />
           </CardContent>
         </Card>
-
-        {/* Activité récente */}
-        <Card>
-          <CardHeader className="pb-2 pt-3 px-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-sm">Activité récente</CardTitle>
-                <CardDescription className="text-xs">
-                  Dernières actions
-                </CardDescription>
-              </div>
-              <Link
-                href="/canaux-vente/linkme/analytics"
-                className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
-              >
-                Voir tout
-                <ArrowRight className="h-2.5 w-2.5" />
-              </Link>
-            </div>
-          </CardHeader>
-          <CardContent className="px-4 pb-3">
-            {activitiesLoading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map(i => (
-                  <Skeleton key={i} className="h-10" />
-                ))}
-              </div>
-            ) : !activities || activities.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-4 text-center">
-                <FileText className="h-6 w-6 text-gray-300 mb-1" />
-                <p className="text-xs text-gray-500">Aucune activité</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-100">
-                {activities.map(activity => (
-                  <ActivityItem key={activity.id} activity={activity} />
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <RecentActivityCard
+          activities={activities}
+          isLoading={activitiesLoading}
+        />
       </div>
     </div>
   );
