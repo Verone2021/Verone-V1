@@ -18,12 +18,67 @@ import { getUserSafe } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import { User, LogOut, Settings, Users, Activity } from 'lucide-react';
 
+function UserMenu({
+  userRole,
+  onLogout,
+}: {
+  userRole: string | null;
+  onLogout: () => void;
+}) {
+  const router = useRouter();
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm">
+          <User className="h-5 w-5" />
+          <span className="sr-only">Menu profil</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onClick={() => router.push('/profile')}
+        >
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Mon Profil</span>
+        </DropdownMenuItem>
+        {userRole === 'owner' && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => router.push('/admin/users')}
+            >
+              <Users className="mr-2 h-4 w-4" />
+              <span>Administration</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => router.push('/admin/activite-utilisateurs')}
+            >
+              <Activity className="mr-2 h-4 w-4" />
+              <span>Rapport d'Activité Équipe</span>
+            </DropdownMenuItem>
+          </>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="cursor-pointer text-verone-black font-medium hover:bg-gray-100 focus:bg-gray-100"
+          onClick={onLogout}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Se déconnecter</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 interface AppHeaderProps {
   className?: string;
 }
 
 export function AppHeader({ className }: AppHeaderProps) {
-  const router = useRouter();
   const [userRole, setUserRole] = useState<string | null>(null);
 
   // Récupérer le rôle de l'utilisateur au chargement
@@ -92,55 +147,7 @@ export function AppHeader({ className }: AppHeaderProps) {
         {/* Notifications - Dropdown intelligent avec liste complète */}
         <NotificationsDropdown />
 
-        {/* Menu Profil utilisateur */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <User className="h-5 w-5" />
-              <span className="sr-only">Menu profil</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem
-              className="cursor-pointer"
-              onClick={() => router.push('/profile')}
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Mon Profil</span>
-            </DropdownMenuItem>
-
-            {/* Liens Owner uniquement */}
-            {userRole === 'owner' && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => router.push('/admin/users')}
-                >
-                  <Users className="mr-2 h-4 w-4" />
-                  <span>Administration</span>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => router.push('/admin/activite-utilisateurs')}
-                >
-                  <Activity className="mr-2 h-4 w-4" />
-                  <span>Rapport d'Activité Équipe</span>
-                </DropdownMenuItem>
-              </>
-            )}
-
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="cursor-pointer text-verone-black font-medium hover:bg-gray-100 focus:bg-gray-100"
-              onClick={handleLogout}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Se déconnecter</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <UserMenu userRole={userRole} onLogout={handleLogout} />
       </div>
     </header>
   );
