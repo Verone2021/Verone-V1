@@ -34,7 +34,9 @@ interface OrgIdentifiersProps {
 function OrgIdentifiers({ organisation }: OrgIdentifiersProps) {
   return (
     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
-      {organisation.siret && <span>SIRET : {organisation.siret}</span>}
+      <span className={organisation.siret ? '' : 'text-amber-600 font-medium'}>
+        SIRET : {organisation.siret ?? 'Non renseigne'}
+      </span>
       {organisation.vat_number && <span>TVA : {organisation.vat_number}</span>}
       {organisation.email && (
         <a
@@ -95,20 +97,21 @@ function OrgAddresses({ organisation }: OrgAddressesProps) {
 
   return (
     <div className="space-y-1.5 text-xs">
-      {mainAddress && (
-        <div className="flex items-start gap-1.5 text-gray-600">
-          <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
-          <span>{mainAddress}</span>
-        </div>
-      )}
-      {billingAddress && (
-        <div className="flex items-start gap-1.5 text-gray-600">
-          <Receipt className="h-3 w-3 mt-0.5 flex-shrink-0 text-amber-500" />
-          <span>
-            <span className="font-medium">Facturation :</span> {billingAddress}
-          </span>
-        </div>
-      )}
+      <div
+        className={`flex items-start gap-1.5 ${mainAddress ? 'text-gray-600' : 'text-amber-600 font-medium'}`}
+      >
+        <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+        <span>{mainAddress ?? 'Adresse non renseignee'}</span>
+      </div>
+      <div
+        className={`flex items-start gap-1.5 ${billingAddress ? 'text-gray-600' : 'text-amber-600 font-medium'}`}
+      >
+        <Receipt className="h-3 w-3 mt-0.5 flex-shrink-0 text-amber-500" />
+        <span>
+          <span className="font-medium">Facturation :</span>{' '}
+          {billingAddress ?? 'Non renseignee'}
+        </span>
+      </div>
       {shippingAddress && (
         <div className="flex items-start gap-1.5 text-gray-600">
           <Truck className="h-3 w-3 mt-0.5 flex-shrink-0 text-blue-500" />
