@@ -84,6 +84,54 @@ export function isValidTransition(
   return valid.includes(newStatus);
 }
 
+function StatusConfirmDialog({
+  pendingStatus,
+  onConfirm,
+  onCancel,
+}: {
+  pendingStatus: string | null;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const confirmInfo = pendingStatus
+    ? CONFIRMATION_MESSAGES[pendingStatus]
+    : null;
+  const isCancelling = pendingStatus === 'cancelled';
+  return (
+    <AlertDialog
+      open={pendingStatus !== null}
+      onOpenChange={open => {
+        if (!open) onCancel();
+      }}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {confirmInfo?.title ?? 'Confirmer le changement'}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {confirmInfo?.description ??
+              'Etes-vous sur de vouloir changer le statut de cette commande ?'}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Annuler</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            className={
+              isCancelling
+                ? 'bg-red-600 hover:bg-red-700 text-white'
+                : undefined
+            }
+          >
+            {isCancelling ? 'Oui, annuler la commande' : 'Confirmer'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 interface OrderStatusActionsProps {
   status: string;
   onStatusChange: (newStatus: string) => void;
@@ -101,7 +149,6 @@ export function OrderStatusActions({
 
   const validTransitions = VALID_TRANSITIONS[status] ?? [];
   const isFinalState = validTransitions.length === 0;
-  const isCancelling = pendingStatus === 'cancelled';
 
   const handleSelectChange = (newStatus: string) => {
     if (!isValidTransition(status, newStatus)) return;
@@ -126,10 +173,6 @@ export function OrderStatusActions({
     );
   }
 
-  const confirmInfo = pendingStatus
-    ? CONFIRMATION_MESSAGES[pendingStatus]
-    : null;
-
   return (
     <>
       <Select
@@ -152,38 +195,11 @@ export function OrderStatusActions({
           ))}
         </SelectContent>
       </Select>
-
-      <AlertDialog
-        open={pendingStatus !== null}
-        onOpenChange={open => {
-          if (!open) setPendingStatus(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirmInfo?.title ?? 'Confirmer le changement'}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmInfo?.description ??
-                'Etes-vous sur de vouloir changer le statut de cette commande ?'}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirm}
-              className={
-                isCancelling
-                  ? 'bg-red-600 hover:bg-red-700 text-white'
-                  : undefined
-              }
-            >
-              {isCancelling ? 'Oui, annuler la commande' : 'Confirmer'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <StatusConfirmDialog
+        pendingStatus={pendingStatus}
+        onConfirm={handleConfirm}
+        onCancel={() => setPendingStatus(null)}
+      />
     </>
   );
 }

@@ -13,6 +13,62 @@ import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { useTogglePublish } from '../../../hooks/use-toggle-publish';
 import type { SiteInternetProduct } from '../../../types';
 
+function HeaderActions({
+  product,
+  onTogglePublish,
+  isPending,
+}: {
+  product: SiteInternetProduct;
+  onTogglePublish: (checked: boolean) => void;
+  isPending: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2">
+        <span className="text-sm font-medium text-gray-700">
+          Publier en ligne
+        </span>
+        <Switch
+          checked={product.is_published}
+          onCheckedChange={onTogglePublish}
+          disabled={isPending}
+        />
+      </div>
+      <Link href="/canaux-vente/site-internet">
+        <ButtonV2 variant="outline" size="sm">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Retour
+        </ButtonV2>
+      </Link>
+      <ButtonV2
+        variant="outline"
+        size="sm"
+        disabled
+        title="Aperçu bientôt disponible"
+      >
+        <ExternalLink className="h-4 w-4 mr-2" />
+        Aperçu
+      </ButtonV2>
+    </div>
+  );
+}
+
+function IneligibilityAlert({ reasons }: { reasons: string[] }) {
+  if (reasons.length === 0) return null;
+  return (
+    <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-4">
+      <h3 className="text-sm font-semibold text-amber-900 mb-2">
+        ⚠️ Produit non éligible à la publication
+      </h3>
+      <ul className="list-disc list-inside text-sm text-amber-700 space-y-1">
+        {reasons.map((reason, index) => (
+          <li key={index}>{reason}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 interface ProductHeaderSectionProps {
   product: SiteInternetProduct;
 }
@@ -60,53 +116,15 @@ export default function ProductHeaderSection({
           </div>
         </div>
 
-        {/* Droite: Actions */}
-        <div className="flex items-center gap-3">
-          {/* Toggle Publier */}
-          <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2">
-            <span className="text-sm font-medium text-gray-700">
-              Publier en ligne
-            </span>
-            <Switch
-              checked={product.is_published}
-              onCheckedChange={handleTogglePublish}
-              disabled={togglePublish.isPending}
-            />
-          </div>
-
-          {/* Retour liste */}
-          <Link href="/canaux-vente/site-internet">
-            <ButtonV2 variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Retour
-            </ButtonV2>
-          </Link>
-
-          {/* Aperçu (futur) */}
-          <ButtonV2
-            variant="outline"
-            size="sm"
-            disabled
-            title="Aperçu bientôt disponible"
-          >
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Aperçu
-          </ButtonV2>
-        </div>
+        <HeaderActions
+          product={product}
+          onTogglePublish={handleTogglePublish}
+          isPending={togglePublish.isPending}
+        />
       </div>
 
-      {/* Alertes éligibilité */}
-      {!product.is_eligible && product.ineligibility_reasons.length > 0 && (
-        <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-amber-900 mb-2">
-            ⚠️ Produit non éligible à la publication
-          </h3>
-          <ul className="list-disc list-inside text-sm text-amber-700 space-y-1">
-            {product.ineligibility_reasons.map((reason, index) => (
-              <li key={index}>{reason}</li>
-            ))}
-          </ul>
-        </div>
+      {!product.is_eligible && (
+        <IneligibilityAlert reasons={product.ineligibility_reasons} />
       )}
     </div>
   );
