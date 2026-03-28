@@ -17,6 +17,65 @@ import type { NewContactFormData } from '../../../components/contacts/NewContact
 import type { ContactBO } from '../../../hooks/use-organisation-contacts-bo';
 import type { ContactRole } from './types';
 
+function getDialogTitle(role: ContactRole | null): string {
+  switch (role) {
+    case 'responsable':
+      return 'Responsable etablissement';
+    case 'billing':
+      return 'Responsable facturation';
+    default:
+      return 'Contact livraison';
+  }
+}
+
+function getFormLabel(role: ContactRole | null): string {
+  switch (role) {
+    case 'responsable':
+      return 'Creer un responsable';
+    case 'billing':
+      return 'Creer un contact facturation';
+    default:
+      return 'Creer un contact livraison';
+  }
+}
+
+function AvailableContactsList({
+  contacts,
+  selectedContactId,
+  onSelectContact,
+}: {
+  contacts: ContactBO[];
+  selectedContactId: string | null;
+  onSelectContact: (contactId: string) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <h4 className="text-sm font-semibold flex items-center gap-2">
+        <Users className="h-4 w-4" />
+        Contacts disponibles ({contacts.length})
+      </h4>
+      <div className="space-y-2 max-h-[350px] overflow-y-auto">
+        {contacts.length > 0 ? (
+          contacts.map(contact => (
+            <ContactCardBO
+              key={contact.id}
+              contact={contact}
+              isSelected={selectedContactId === contact.id}
+              onClick={() => onSelectContact(contact.id)}
+            />
+          ))
+        ) : (
+          <div className="text-center py-6 text-gray-500">
+            <User className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+            <p className="text-sm">Aucun contact disponible</p>
+            <p className="text-xs mt-1">Creez-en un via le formulaire</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface ContactSelectionDialogProps {
   contactDialogFor: ContactRole | null;
   selectedContactId: string | null;
@@ -49,13 +108,7 @@ export function ContactSelectionDialog({
     >
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>
-            {contactDialogFor === 'responsable'
-              ? 'Responsable etablissement'
-              : contactDialogFor === 'billing'
-                ? 'Responsable facturation'
-                : 'Contact livraison'}
-          </DialogTitle>
+          <DialogTitle>{getDialogTitle(contactDialogFor)}</DialogTitle>
           <DialogDescription>
             Selectionnez un contact existant ou creez-en un nouveau.
           </DialogDescription>
@@ -69,44 +122,18 @@ export function ContactSelectionDialog({
               Nouveau contact
             </h4>
             <NewContactForm
-              sectionLabel={
-                contactDialogFor === 'responsable'
-                  ? 'Creer un responsable'
-                  : contactDialogFor === 'billing'
-                    ? 'Creer un contact facturation'
-                    : 'Creer un contact livraison'
-              }
+              sectionLabel={getFormLabel(contactDialogFor)}
               onSubmit={onCreateAndSelect}
               onCancel={onClose}
               isSubmitting={isSubmitting}
             />
           </div>
 
-          {/* RIGHT: Available contacts */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Contacts disponibles ({availableContacts.length})
-            </h4>
-            <div className="space-y-2 max-h-[350px] overflow-y-auto">
-              {availableContacts.length > 0 ? (
-                availableContacts.map(contact => (
-                  <ContactCardBO
-                    key={contact.id}
-                    contact={contact}
-                    isSelected={selectedContactId === contact.id}
-                    onClick={() => onSelectContact(contact.id)}
-                  />
-                ))
-              ) : (
-                <div className="text-center py-6 text-gray-500">
-                  <User className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm">Aucun contact disponible</p>
-                  <p className="text-xs mt-1">Creez-en un via le formulaire</p>
-                </div>
-              )}
-            </div>
-          </div>
+          <AvailableContactsList
+            contacts={availableContacts}
+            selectedContactId={selectedContactId}
+            onSelectContact={onSelectContact}
+          />
         </div>
 
         <DialogFooter>
