@@ -71,6 +71,53 @@ interface DashboardSectionProps {
   storageKey?: string;
 }
 
+const BADGE_VARIANTS = {
+  default: 'bg-neutral-100 text-neutral-700',
+  warning: 'bg-orange-100 text-orange-700',
+  danger: 'bg-red-100 text-red-700',
+  success: 'bg-green-100 text-green-700',
+};
+
+function SectionHeader({
+  icon: Icon,
+  title,
+  badge,
+  isOpen,
+}: {
+  icon: LucideIcon;
+  title: string;
+  badge?: DashboardSectionProps['badge'];
+  isOpen: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between p-4 hover:bg-neutral-50 transition-colors duration-200">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center w-8 h-8 rounded-md bg-neutral-100">
+          <Icon size={18} className="text-neutral-600" strokeWidth={2} />
+        </div>
+        <h3 className="text-base font-semibold text-neutral-900">{title}</h3>
+        {badge && (
+          <span
+            className={cn(
+              'px-2 py-0.5 text-xs font-medium rounded-md',
+              BADGE_VARIANTS[badge.variant]
+            )}
+          >
+            {badge.label}
+          </span>
+        )}
+      </div>
+      <ChevronDown
+        size={20}
+        className={cn(
+          'text-neutral-500 transition-transform duration-300',
+          isOpen && 'rotate-180'
+        )}
+      />
+    </div>
+  );
+}
+
 export function DashboardSection({
   title,
   icon: Icon,
@@ -101,14 +148,6 @@ export function DashboardSection({
     localStorage.setItem(key, String(isOpen));
   }, [isOpen, key]);
 
-  // Badge color variants
-  const badgeVariants = {
-    default: 'bg-neutral-100 text-neutral-700',
-    warning: 'bg-orange-100 text-orange-700',
-    danger: 'bg-red-100 text-red-700',
-    success: 'bg-green-100 text-green-700',
-  };
-
   return (
     <Collapsible
       open={isOpen}
@@ -118,45 +157,14 @@ export function DashboardSection({
         className
       )}
     >
-      {/* Header */}
       <CollapsibleTrigger className="w-full">
-        <div className="flex items-center justify-between p-4 hover:bg-neutral-50 transition-colors duration-200">
-          <div className="flex items-center gap-3">
-            {/* Icon */}
-            <div className="flex items-center justify-center w-8 h-8 rounded-md bg-neutral-100">
-              <Icon size={18} className="text-neutral-600" strokeWidth={2} />
-            </div>
-
-            {/* Title */}
-            <h3 className="text-base font-semibold text-neutral-900">
-              {title}
-            </h3>
-
-            {/* Badge */}
-            {badge && (
-              <span
-                className={cn(
-                  'px-2 py-0.5 text-xs font-medium rounded-md',
-                  badgeVariants[badge.variant]
-                )}
-              >
-                {badge.label}
-              </span>
-            )}
-          </div>
-
-          {/* Chevron */}
-          <ChevronDown
-            size={20}
-            className={cn(
-              'text-neutral-500 transition-transform duration-300',
-              isOpen && 'rotate-180'
-            )}
-          />
-        </div>
+        <SectionHeader
+          icon={Icon}
+          title={title}
+          badge={badge}
+          isOpen={isOpen}
+        />
       </CollapsibleTrigger>
-
-      {/* Content */}
       <CollapsibleContent className="transition-all duration-300 ease-in-out">
         <div className="p-4 pt-0 space-y-4">{children}</div>
       </CollapsibleContent>
