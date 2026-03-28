@@ -168,13 +168,62 @@ const getNavItems = (
       },
     ],
   },
+  // ============ VENTES (cycle de vente complet) ============
+  {
+    title: 'Ventes',
+    href: '/ventes',
+    icon: Target,
+    badge: ordersPendingCount + consultationsCount,
+    badgeVariant:
+      ordersPendingCount + consultationsCount > 0 ? 'urgent' : undefined,
+    children: [
+      {
+        title: 'Consultations',
+        href: '/consultations',
+        icon: MessageCircle,
+        badge: consultationsCount,
+        badgeVariant: consultationsCount > 0 ? 'urgent' : undefined,
+      },
+      {
+        title: 'Commandes clients',
+        href: '/commandes/clients',
+        icon: ShoppingBag,
+        badge: ordersPendingCount,
+        badgeVariant: ordersPendingCount > 0 ? 'urgent' : undefined,
+      },
+      {
+        title: 'Expéditions',
+        href: '/stocks/expeditions',
+        icon: Truck,
+        badge: expeditionsPendingCount,
+        badgeVariant: expeditionsPendingCount > 0 ? 'urgent' : undefined,
+      },
+    ],
+  },
+  // ============ ACHATS (cycle d'achat) ============
+  {
+    title: 'Achats',
+    href: '/commandes/fournisseurs',
+    icon: Building2,
+    children: [
+      {
+        title: 'Commandes fournisseurs',
+        href: '/commandes/fournisseurs',
+        icon: Building2,
+      },
+      {
+        title: 'Réceptions',
+        href: '/stocks/receptions',
+        icon: Truck,
+      },
+    ],
+  },
   {
     title: 'Stocks',
     href: '/stocks',
     icon: Layers,
-    badge: stockAlertsCount + expeditionsPendingCount,
-    badgeVariant:
-      stockAlertsCount + expeditionsPendingCount > 0 ? 'urgent' : undefined,
+    badge: stockAlertsCount,
+    badgeVariant: stockAlertsCount > 0 ? 'urgent' : undefined,
     children: [
       {
         title: 'Alertes',
@@ -188,53 +237,7 @@ const getNavItems = (
         href: '/stocks/inventaire',
         icon: Package,
       },
-      {
-        title: 'Réceptions',
-        href: '/stocks/receptions',
-        icon: Truck,
-      },
-      {
-        title: 'Expéditions',
-        href: '/stocks/expeditions',
-        icon: Truck,
-        badge: expeditionsPendingCount,
-        badgeVariant: expeditionsPendingCount > 0 ? 'urgent' : undefined,
-      },
-      // Stockage et Mouvements supprimés - accès via Inventaire
     ],
-  },
-  {
-    title: 'Commandes',
-    href: '/commandes',
-    icon: ShoppingBag,
-    badge: ordersPendingCount,
-    badgeVariant: ordersPendingCount > 0 ? 'urgent' : undefined,
-    children: [
-      {
-        title: 'Clients',
-        href: '/commandes/clients',
-        icon: Users,
-        badge: ordersPendingCount,
-        badgeVariant: ordersPendingCount > 0 ? 'urgent' : undefined,
-      },
-      {
-        title: 'Fournisseurs',
-        href: '/commandes/fournisseurs',
-        icon: Building2,
-      },
-    ],
-  },
-  {
-    title: 'Ventes',
-    href: '/ventes',
-    icon: Target,
-  },
-  {
-    title: 'Consultations',
-    href: '/consultations',
-    icon: MessageCircle,
-    badge: consultationsCount,
-    badgeVariant: consultationsCount > 0 ? 'urgent' : undefined,
   },
   // ============ CANAUX DE VENTE ============
   {
@@ -312,11 +315,6 @@ const getNavItems = (
         icon: Banknote,
       },
     ],
-  },
-  {
-    title: 'Livraisons',
-    href: '/livraisons',
-    icon: Truck,
   },
   {
     title: 'Paramètres',

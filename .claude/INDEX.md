@@ -82,6 +82,18 @@ Tout agent ou commande doit commencer par consulter cet index.
 
 ---
 
+## Credentials Tests (Playwright E2E)
+
+| App           | Email                     | Source                                         |
+| ------------- | ------------------------- | ---------------------------------------------- |
+| Back-Office   | `veronebyromeo@gmail.com` | `packages/e2e-linkme/fixtures/auth.fixture.ts` |
+| LinkMe        | `admin@pokawa-test.fr`    | `packages/e2e-linkme/fixtures/auth.fixture.ts` |
+| Site Internet | Pas de compte test        | —                                              |
+
+**OBLIGATOIRE** : Consulter `auth.fixture.ts` AVANT tout login Playwright. Ne JAMAIS inventer de credentials.
+
+---
+
 ## Documentation par domaine
 
 ### Back-Office

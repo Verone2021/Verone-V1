@@ -338,7 +338,7 @@ export default function CommandesOverviewPage() {
                     Nouvel Achat
                   </ButtonUnified>
                 </Link>
-                <Link href="/produits/catalogue/stocks">
+                <Link href="/stocks/inventaire">
                   <ButtonUnified
                     variant="outline"
                     icon={BarChart3}

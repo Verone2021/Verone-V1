@@ -207,12 +207,12 @@ export const getDashboardMetrics = cache(
           .order('created_at', { ascending: false })
           .limit(10),
 
-        // 12. Revenue Last 30 Days (delivered orders, using created_at window)
-        // Note: delivered_at often not populated → use status='delivered' + created_at for robustness
+        // 12. Revenue Last 30 Days (shipped orders = CA realise)
+        // Note: workflow Verone s'arrete a 'shipped', pas de statut 'delivered'
         supabase
           .from('sales_orders')
           .select('total_ttc')
-          .eq('status', 'delivered')
+          .eq('status', 'shipped')
           .gte('created_at', thirtyDaysAgoISO)
           .is('cancelled_at', null),
       ]);
@@ -228,7 +228,7 @@ export const getDashboardMetrics = cache(
           o => o.created_at && new Date(o.created_at) > thirtyDaysAgo
         ).length ?? 0;
 
-      // Calculate revenue 30 days (sum of delivered orders)
+      // Calculate revenue 30 days (sum of shipped orders)
       const revenueSum =
         revenue30Days.data?.reduce(
           (sum, order) => sum + (order.total_ttc ?? 0),

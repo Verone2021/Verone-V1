@@ -42,7 +42,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'BRANCH=$(git branch --show-current 2>/dev/null || echo \"unknown\"); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"BLOQUE: Operation d ecriture INTERDITE sur main.\n\nSolution : Creer une feature branch MAINTENANT :\n  git checkout -b feat/[APP]-[DOMAIN]-[NNN]-description\"; exit 1; fi'"
+            "command": "bash -c 'BRANCH=$(git branch --show-current 2>/dev/null || echo \"unknown\"); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"BLOQUE: Operation d ecriture INTERDITE sur main.\" >&2; echo \"Solution : Creer une feature branch.\" >&2; exit 2; fi'"
           }
         ]
       },
@@ -60,7 +60,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'BLOQUE: --no-verify est INTERDIT.\n\nRaison: Contourne les validations TypeScript/ESLint.\nSolution: Corriger les erreurs au lieu de les ignorer.'; exit 1"
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-push-main.sh"
           }
         ]
       },
@@ -69,7 +69,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'BRANCH=$(git branch --show-current); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"INTERDIT de commit sur main. Creer une feature branch: git checkout -b feat/XXX\"; exit 1; fi; if ! echo \"$TOOL_INPUT\" | grep -qE \"\\[(BO|LM|WEB|SI|NO|INFRA)-[A-Z0-9]+-[0-9]{3}\\]|\\[NO-TASK\\]|\\[INFRA\\]\"; then echo \"Task ID manquant. Format: [APP-XXX-001] ou [NO-TASK]\"; exit 1; fi'"
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-push-main.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash -c 'INPUT=$(cat 2>/dev/null || echo \"\"); CMD=$(echo \"$INPUT\" | jq -r \".tool_input.command // empty\" 2>/dev/null); if [ -z \"$CMD\" ]; then CMD=\"${TOOL_INPUT:-}\"; fi; if [ -n \"$CMD\" ] && ! echo \"$CMD\" | grep -qE \"\\[(BO|LM|WEB|SI|NO|INFRA)-[A-Z0-9]+-[0-9]{3}\\]|\\[NO-TASK\\]|\\[INFRA\\]\"; then echo \"BLOQUE: Task ID manquant. Format: [APP-XXX-001] ou [NO-TASK]\" >&2; exit 2; fi'"
           },
           {
             "type": "command",
@@ -78,20 +82,20 @@
         ]
       },
       {
-        "matcher": "Bash(git push*main*)",
+        "matcher": "Bash(git push*)",
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"origin (main|master)\"; then echo \"INTERDIT: Push direct sur main. Creer une PR via: gh pr create\"; exit 1; fi'"
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-push-main.sh"
           }
         ]
       },
       {
-        "matcher": "Bash(gh pr create*--base main*) || Bash(gh pr merge*)",
+        "matcher": "Bash(gh pr create*) || Bash(gh pr merge*)",
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"--base main|gh pr merge\"; then echo \"BLOQUE: PRs doivent cibler staging (--base staging), JAMAIS main.\nWorkflow : feature -> staging -> validation Romeo -> main\nCorrige avec : gh pr create --base staging\"; exit 2; fi'"
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-push-main.sh"
           }
         ]
       },
@@ -100,7 +104,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"(pnpm|npm|yarn|turbo)\\s+(dev|start)\"; then echo \"INTERDIT: Seul l utilisateur peut lancer les serveurs. Demandez a l utilisateur d executer: pnpm dev:safe\"; exit 1; fi'"
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-dev-servers.sh"
           }
         ]
       },
@@ -127,7 +131,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'CONTENT=$(echo \"$TOOL_INPUT\" | jq -r \".new_string // .content // empty\"); if echo \"$CONTENT\" | grep -qE \"(: any([^A-Za-z]|$)|as any([^A-Za-z]|$)|as unknown as|<any>|any\\[\\]|eslint-disable.*no-explicit-any)\"; then echo \"BLOQUE: TypeScript any detecte\n\nPatterns interdits :\n- : any\n- as any\n- as unknown as\n- any[]\n- eslint-disable no-explicit-any\n\nSolutions :\n1. Types DB : Database[public][Tables][table][Row]\n2. unknown + validation Zod\n\nREFUS.\"; exit 1; fi'"
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-typescript-any.sh"
           }
         ]
       },
