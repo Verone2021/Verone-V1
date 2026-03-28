@@ -715,13 +715,18 @@ export function LeftColumn({
                       {details.semi_trailer_accessible ? 'Oui' : 'Non'}
                     </strong>
                   </span>
-                  {details.desired_delivery_date && (
+                  {details.desired_delivery_date ? (
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      Souhaitée :{' '}
+                      Souhaitee :{' '}
                       {new Date(
                         details.desired_delivery_date
                       ).toLocaleDateString('fr-FR')}
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-amber-600 font-medium">
+                      <Calendar className="h-3 w-3" />
+                      Date non renseignee
                     </span>
                   )}
                 </div>

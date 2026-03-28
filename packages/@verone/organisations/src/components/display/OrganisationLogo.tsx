@@ -74,18 +74,22 @@ export function OrganisationLogo({
   const supabase = createClient();
 
   // Générer URL publique si logoUrl existe
+  // Si logoUrl est déjà une URL complète (http), l'utiliser directement
+  // Sinon, passer par getPublicUrl pour construire l'URL depuis le path Storage
   const publicUrl = logoUrl
-    ? supabase.storage.from('organisation-logos').getPublicUrl(logoUrl, {
-        transform: {
-          width: parseInt(
-            sizeConfig.transform.match(/width=(\d+)/)?.[1] ?? '96'
-          ),
-          height: parseInt(
-            sizeConfig.transform.match(/height=(\d+)/)?.[1] ?? '96'
-          ),
-          quality: 80,
-        },
-      }).data.publicUrl
+    ? logoUrl.startsWith('http')
+      ? logoUrl
+      : supabase.storage.from('organisation-logos').getPublicUrl(logoUrl, {
+          transform: {
+            width: parseInt(
+              sizeConfig.transform.match(/width=(\d+)/)?.[1] ?? '96'
+            ),
+            height: parseInt(
+              sizeConfig.transform.match(/height=(\d+)/)?.[1] ?? '96'
+            ),
+            quality: 80,
+          },
+        }).data.publicUrl
     : null;
 
   // Extraire initiales du nom (ex: "DSA Menuiserie" → "DM")

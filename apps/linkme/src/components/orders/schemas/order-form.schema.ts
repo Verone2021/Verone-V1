@@ -507,7 +507,7 @@ export const defaultContactsStep: ContactsStepData = {
   franchiseInfo: null,
   // Contact facturation (PERSONNE)
   billingContact: {
-    mode: 'same_as_responsable',
+    mode: 'new',
     existingContactId: null,
     contact: null,
   },
@@ -528,7 +528,7 @@ export const defaultContactsStep: ContactsStepData = {
   },
   // Legacy billing (pour compatibilité)
   billing: {
-    sameAsResponsable: true,
+    sameAsResponsable: false,
     useParentOrg: false,
     contact: null,
     existingContactId: null,
@@ -536,7 +536,7 @@ export const defaultContactsStep: ContactsStepData = {
     saveAddressAsDefault: false,
   },
   delivery: {
-    sameAsResponsable: true,
+    sameAsResponsable: false,
     contact: null,
     existingContactId: null,
     address: null,

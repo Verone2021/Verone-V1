@@ -52,13 +52,18 @@ export function useSuppliers() {
       setError(null);
 
       try {
-        const { data, error: fetchError } = await supabase
-          .from('suppliers' as unknown as 'organisations')
-          .select(
-            'id, name, contact_info, payment_terms, delivery_time_days, is_active'
-          )
+        const { data: rawData, error: fetchError } = await supabase
+          .from('organisations')
+          .select('id, legal_name, trade_name, is_active')
+          .eq('type', 'supplier')
           .eq('is_active', true)
-          .order('name', { ascending: true });
+          .order('legal_name', { ascending: true });
+
+        const data = (rawData ?? []).map(o => ({
+          id: o.id,
+          name: o.trade_name ?? o.legal_name,
+          is_active: o.is_active,
+        }));
 
         if (fetchError) {
           setError(fetchError.message);
@@ -66,7 +71,7 @@ export function useSuppliers() {
           return;
         }
 
-        setSuppliers((data ?? []) as Supplier[]);
+        setSuppliers(data as Supplier[]);
       } catch (err) {
         console.error('Erreur fetch suppliers:', err);
         setError('Impossible de charger les fournisseurs');
