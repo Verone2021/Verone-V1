@@ -201,7 +201,7 @@ function YearSelectorRow({
   year: number;
   availableYears: number[];
   dateLabel: string;
-  isLoading: boolean;
+  isLoading?: boolean;
   onYearChange: (yearStr: string) => void;
   onRefresh: () => void;
 }) {
