@@ -23,6 +23,61 @@ import { Eye, ExternalLink, Package } from 'lucide-react';
 
 import type { SelectionPerformance } from '../hooks/use-linkme-analytics';
 
+function SelectionRow({ selection }: { selection: SelectionPerformance }) {
+  return (
+    <TableRow className="hover:bg-gray-50/50">
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-gray-900 truncate max-w-[180px]">
+            {selection.name}
+          </span>
+        </div>
+      </TableCell>
+      <TableCell>
+        <Badge variant="outline" className="font-normal">
+          {selection.affiliateName}
+        </Badge>
+      </TableCell>
+      <TableCell className="text-center">
+        <span className="text-gray-600">{selection.productsCount}</span>
+      </TableCell>
+      <TableCell className="text-center">
+        <div className="flex items-center justify-center gap-1 text-gray-600">
+          <Eye className="h-3.5 w-3.5" />
+          <span>{selection.views}</span>
+        </div>
+      </TableCell>
+      <TableCell className="text-center">
+        <span className="font-medium">{selection.orders}</span>
+      </TableCell>
+      <TableCell className="text-right">
+        <span className="font-semibold">
+          {new Intl.NumberFormat('fr-FR', {
+            style: 'currency',
+            currency: 'EUR',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }).format(selection.revenue)}
+        </span>
+      </TableCell>
+      <TableCell className="text-right">
+        <Badge
+          variant="outline"
+          className={
+            selection.conversionRate >= 5
+              ? 'bg-green-50 text-green-700 border-green-200'
+              : selection.conversionRate >= 2
+                ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                : 'bg-gray-50 text-gray-600 border-gray-200'
+          }
+        >
+          {selection.conversionRate.toFixed(1)}%
+        </Badge>
+      </TableCell>
+    </TableRow>
+  );
+}
+
 interface SelectionsPerformanceTableProps {
   data: SelectionPerformance[];
   isLoading?: boolean;
@@ -71,56 +126,7 @@ export function SelectionsPerformanceTable({
         </TableHeader>
         <TableBody>
           {displayData.map(selection => (
-            <TableRow key={selection.id} className="hover:bg-gray-50/50">
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-900 truncate max-w-[180px]">
-                    {selection.name}
-                  </span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline" className="font-normal">
-                  {selection.affiliateName}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-center">
-                <span className="text-gray-600">{selection.productsCount}</span>
-              </TableCell>
-              <TableCell className="text-center">
-                <div className="flex items-center justify-center gap-1 text-gray-600">
-                  <Eye className="h-3.5 w-3.5" />
-                  <span>{selection.views}</span>
-                </div>
-              </TableCell>
-              <TableCell className="text-center">
-                <span className="font-medium">{selection.orders}</span>
-              </TableCell>
-              <TableCell className="text-right">
-                <span className="font-semibold">
-                  {new Intl.NumberFormat('fr-FR', {
-                    style: 'currency',
-                    currency: 'EUR',
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }).format(selection.revenue)}
-                </span>
-              </TableCell>
-              <TableCell className="text-right">
-                <Badge
-                  variant="outline"
-                  className={
-                    selection.conversionRate >= 5
-                      ? 'bg-green-50 text-green-700 border-green-200'
-                      : selection.conversionRate >= 2
-                        ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                        : 'bg-gray-50 text-gray-600 border-gray-200'
-                  }
-                >
-                  {selection.conversionRate.toFixed(1)}%
-                </Badge>
-              </TableCell>
-            </TableRow>
+            <SelectionRow key={selection.id} selection={selection} />
           ))}
         </TableBody>
       </Table>
