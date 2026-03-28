@@ -49,61 +49,66 @@ export interface UseFormMessagesReturn {
 /**
  * Hook pour gérer les messages d'un formulaire
  */
+async function fetchFormMessages(submissionId: string): Promise<FormMessage[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('form_submission_messages')
+    .select(
+      'id, form_submission_id, message_body, message_type, author_type, author_name, author_user_id, sent_via, email_id, email_sent_at, created_at'
+    )
+    .eq('form_submission_id', submissionId)
+    .order('created_at', { ascending: true });
+  if (error) {
+    console.error('[useFormMessages] Error loading messages:', error);
+    throw new Error('Erreur lors du chargement des messages');
+  }
+  return (data ?? []) as FormMessage[];
+}
+
+async function postFormMessage(
+  submissionId: string,
+  message: string,
+  isInternal: boolean,
+  sendEmail: boolean
+): Promise<void> {
+  const response = await fetch(
+    `/api/form-submissions/${submissionId}/messages`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: message.trim(),
+        isInternal,
+        sendEmail: !isInternal && sendEmail,
+      }),
+    }
+  );
+  if (!response.ok) {
+    const errorData = (await response.json()) as ApiErrorResponse;
+    throw new Error(errorData.error ?? "Erreur lors de l'ajout du message");
+  }
+}
+
 export function useFormMessages(submissionId: string): UseFormMessagesReturn {
   const [messages, setMessages] = useState<FormMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Charger les messages depuis Supabase
-   */
   const loadMessages = useCallback(async () => {
     if (!submissionId) return;
-
     try {
       setLoading(true);
       setError(null);
-
-      const supabase = createClient();
-
-      const { data, error: fetchError } = await supabase
-        .from('form_submission_messages')
-        .select(
-          `
-          id,
-          form_submission_id,
-          message_body,
-          message_type,
-          author_type,
-          author_name,
-          author_user_id,
-          sent_via,
-          email_id,
-          email_sent_at,
-          created_at
-        `
-        )
-        .eq('form_submission_id', submissionId)
-        .order('created_at', { ascending: true });
-
-      if (fetchError) {
-        console.error('[useFormMessages] Error loading messages:', fetchError);
-        setError('Erreur lors du chargement des messages');
-        return;
-      }
-
-      setMessages((data ?? []) as FormMessage[]);
+      const data = await fetchFormMessages(submissionId);
+      setMessages(data);
     } catch (err) {
       console.error('[useFormMessages] Unexpected error:', err);
-      setError('Erreur inattendue');
+      setError(err instanceof Error ? err.message : 'Erreur inattendue');
     } finally {
       setLoading(false);
     }
   }, [submissionId]);
 
-  /**
-   * Ajouter un message (note interne ou email)
-   */
   const addMessage = useCallback(
     async (
       message: string,
@@ -114,34 +119,9 @@ export function useFormMessages(submissionId: string): UseFormMessagesReturn {
         setError('Le message ne peut pas être vide');
         return false;
       }
-
       try {
         setError(null);
-
-        // Appeler l'API route pour ajouter le message
-        const response = await fetch(
-          `/api/form-submissions/${submissionId}/messages`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              message: message.trim(),
-              isInternal,
-              sendEmail: !isInternal && sendEmail, // Envoyer email uniquement si pas une note interne
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          const errorData = (await response.json()) as ApiErrorResponse;
-          throw new Error(
-            errorData.error ?? "Erreur lors de l'ajout du message"
-          );
-        }
-
-        // Recharger les messages pour afficher le nouveau
+        await postFormMessage(submissionId, message, isInternal, sendEmail);
         await loadMessages();
         return true;
       } catch (err) {
