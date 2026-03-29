@@ -23,8 +23,8 @@ export default function AideProduitsPage(): JSX.Element {
               <ul className="space-y-1.5 text-sm text-gray-500">
                 <li>Produits du catalogue Verone</li>
                 <li>Vous gagnez une marge sur chaque vente</li>
-                <li>Stock et logistique geres par Verone</li>
-                <li>Ajoutez-les a vos selections</li>
+                <li>Stock et logistique gérés par Vérone</li>
+                <li>Ajoutez-les à vos sélections</li>
               </ul>
             </div>
             <div className="p-4">
@@ -34,9 +34,9 @@ export default function AideProduitsPage(): JSX.Element {
               <ul className="space-y-1.5 text-sm text-gray-500">
                 <li>Vos propres produits (revendeur)</li>
                 <li>Vous fixez le prix de vente</li>
-                <li>LinkMe preleve une commission variable (a partir de 5%)</li>
-                <li>Doivent etre approuves par Verone</li>
-                <li>Possibilite de stockage chez Verone</li>
+                <li>LinkMe prélève une commission variable (à partir de 5%)</li>
+                <li>Doivent être approuvés par Vérone</li>
+                <li>Possibilité de stockage chez Vérone</li>
               </ul>
             </div>
           </div>
@@ -47,18 +47,18 @@ export default function AideProduitsPage(): JSX.Element {
         <div className="space-y-5">
           <AideStep
             number={1}
-            title="Creer le produit"
+            title="Créer le produit"
             description="Depuis Mes Produits, cliquez sur 'Nouveau produit'. Renseignez le nom, la description, les photos et le prix."
           />
           <AideStep
             number={2}
             title="Soumettre pour approbation"
-            description="Le produit est soumis a l'equipe Verone pour validation. Delai habituel : 24-72h."
+            description="Le produit est soumis à l'équipe Vérone pour validation. Délai habituel : 24-72h."
           />
           <AideStep
             number={3}
-            title="Produit approuve"
-            description="Une fois approuve, votre produit peut etre ajoute a vos selections et commande par vos clients."
+            title="Produit approuvé"
+            description="Une fois approuvé, votre produit peut être ajouté à vos sélections et commandé par vos clients."
           />
         </div>
       </AideSection>
@@ -77,19 +77,19 @@ export default function AideProduitsPage(): JSX.Element {
           <div className="flex items-start gap-3 p-3 rounded-lg bg-green-50">
             <div className="w-3 h-3 rounded-full bg-green-400 mt-1 flex-shrink-0" />
             <div>
-              <p className="font-medium text-linkme-marine">Approuve</p>
+              <p className="font-medium text-linkme-marine">Approuvé</p>
               <p className="text-sm text-gray-500">
-                Le produit est valide et peut etre propose dans vos selections.
+                Le produit est validé et peut être proposé dans vos sélections.
               </p>
             </div>
           </div>
           <div className="flex items-start gap-3 p-3 rounded-lg bg-red-50">
             <div className="w-3 h-3 rounded-full bg-red-400 mt-1 flex-shrink-0" />
             <div>
-              <p className="font-medium text-linkme-marine">Rejete</p>
+              <p className="font-medium text-linkme-marine">Rejeté</p>
               <p className="text-sm text-gray-500">
-                Le produit ne repond pas aux criteres. Verifiez les commentaires
-                de l&apos;equipe et soumettez a nouveau.
+                Le produit ne répond pas aux critères. Vérifiez les commentaires
+                de l&apos;equipe et soumettez à nouveau.
               </p>
             </div>
           </div>
@@ -98,20 +98,20 @@ export default function AideProduitsPage(): JSX.Element {
 
       <AideSection title="Vendez vos produits, on gere la logistique">
         <p>
-          Avec LinkMe, vous pouvez integrer vos propres produits a votre
-          catalogue et les proposer dans vos selections, exactement comme les
-          produits Verone. Vos clients les commandent de la meme maniere, sans
-          difference visible.
+          Avec LinkMe, vous pouvez intégrer vos propres produits à votre
+          catalogue et les proposer dans vos sélections, exactement comme les
+          produits Vérone. Vos clients les commandent de la même manière, sans
+          différence visible.
         </p>
         <p>
-          L&apos;avantage : vous vous concentrez sur la vente. Verone coordonne
+          L&apos;avantage : vous vous concentrez sur la vente. Vérone coordonne
           la logistique avec vos fournisseurs pour chaque commande. Vous
-          n&apos;avez pas a gerer l&apos;expedition vous-meme.
+          n&apos;avez pas à gérer l&apos;expédition vous-même.
         </p>
 
         <div className="p-4 rounded-lg bg-green-50 border border-green-100">
           <p className="font-semibold text-linkme-marine mb-2">
-            Comment ca fonctionne
+            Comment ça fonctionne
           </p>
           <ul className="space-y-2 text-sm text-gray-600">
             <li className="flex gap-2">
@@ -124,21 +124,21 @@ export default function AideProduitsPage(): JSX.Element {
             <li className="flex gap-2">
               <span className="text-green-500 font-bold">2.</span>
               <span>
-                Integrez-les dans vos selections et vendez-les a vos clients.
+                Intégrez-les dans vos sélections et vendez-les à vos clients.
               </span>
             </li>
             <li className="flex gap-2">
               <span className="text-green-500 font-bold">3.</span>
               <span>
-                A chaque commande, Verone coordonne la logistique avec votre
+                À chaque commande, Vérone coordonne la logistique avec votre
                 fournisseur pour l&apos;expedition.
               </span>
             </li>
             <li className="flex gap-2">
               <span className="text-green-500 font-bold">4.</span>
               <span>
-                Vous gerez vos conditions commerciales directement avec vos
-                fournisseurs (paiements, delais, etc.).
+                Vous gérez vos conditions commerciales directement avec vos
+                fournisseurs (paiements, délais, etc.).
               </span>
             </li>
           </ul>
@@ -147,15 +147,15 @@ export default function AideProduitsPage(): JSX.Element {
         <div className="p-4 rounded-lg bg-amber-50 border border-amber-100">
           <p className="font-medium text-linkme-marine mb-1">A noter</p>
           <p className="text-sm text-gray-600">
-            LinkMe transmet les demandes de commande a votre fournisseur mais ne
-            gere pas les paiements entre vous et vos fournisseurs. Veillez a
-            definir vos conditions commerciales avec eux au prealable.
+            LinkMe transmet les demandes de commande à votre fournisseur mais ne
+            gère pas les paiements entre vous et vos fournisseurs. Veillez à
+            définir vos conditions commerciales avec eux au préalable.
           </p>
         </div>
 
         <p className="text-sm text-gray-500">
-          Verone propose egalement un service de stockage pour vos produits
-          (tarifs au m³). Consultez la page Stockage pour les details.
+          Vérone propose également un service de stockage pour vos produits
+          (tarifs au m³). Consultez la page Stockage pour les détails.
         </p>
       </AideSection>
 

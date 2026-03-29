@@ -5,7 +5,7 @@ interface AideStepProps {
 }
 
 /**
- * Etape numérotée pour les guides pas-a-pas.
+ * Étape numérotée pour les guides pas-à-pas.
  */
 export function AideStep({
   number,

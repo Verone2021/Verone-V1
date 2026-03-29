@@ -20,51 +20,51 @@ function FaqItem({ question, answer }: FaqItemProps): JSX.Element {
 
 const faqItems: FaqItemProps[] = [
   {
-    question: "Comment modifier le prix d'un produit dans ma selection ?",
+    question: "Comment modifier le prix d'un produit dans ma sélection ?",
     answer:
-      'Rendez-vous dans votre selection, puis cliquez sur l\'onglet "Produits". Pour chaque produit, vous pouvez ajuster votre marge en pourcentage. Le prix client est recalcule automatiquement.',
+      'Rendez-vous dans votre sélection, puis cliquez sur l\'onglet "Produits". Pour chaque produit, vous pouvez ajuster votre marge en pourcentage. Le prix client est recalculé automatiquement.',
   },
   {
-    question: 'Puis-je avoir plusieurs selections ?',
+    question: 'Puis-je avoir plusieurs sélections ?',
     answer:
-      "Oui ! Vous pouvez creer autant de selections que vous le souhaitez. C'est meme recommande : creez des selections thematiques (par style, par piece, par budget) pour cibler differents profils de clients.",
+      "Oui ! Vous pouvez créer autant de sélections que vous le souhaitez. C'est même recommandé : créez des sélections thématiques (par style, par pièce, par budget) pour cibler différents profils de clients.",
   },
   {
-    question: "Combien de temps pour qu'une commande soit validee ?",
+    question: "Combien de temps pour qu'une commande soit validée ?",
     answer:
-      "L'equipe Verone valide les commandes sous 24 a 48h en jours ouvrables. Vous recevez une notification des que le statut change.",
+      "L'équipe Vérone valide les commandes sous 24 à 48h en jours ouvrables. Vous recevez une notification dès que le statut change.",
   },
   {
     question: 'Quand puis-je demander le versement de mes commissions ?',
     answer:
-      'Une fois que le client a paye sa commande, votre commission passe en statut "Payable". Vous pouvez alors faire une demande de versement depuis la page Commissions.',
+      'Une fois que le client a payé sa commande, votre commission passe en statut "Payable". Vous pouvez alors faire une demande de versement depuis la page Commissions.',
   },
   {
     question: 'Comment fonctionne le stockage ?',
     answer:
-      'Si vous vendez vos propres produits (produits revendeur), Verone propose un service de stockage. Les tarifs sont au m³ occupe avec un tarif degressif. Consultez la page Stockage pour les details.',
+      'Si vous vendez vos propres produits (produits revendeur), Vérone propose un service de stockage. Les tarifs sont au m³ occupé avec un tarif dégressif. Consultez la page Stockage pour les détails.',
   },
   {
-    question: 'Mes clients voient-ils le detail de ma marge ?',
+    question: 'Mes clients voient-ils le détail de ma marge ?',
     answer:
-      'Non, jamais. Vos clients voient uniquement le prix TTC final que vous avez configure. Votre marge reste confidentielle.',
+      'Non, jamais. Vos clients voient uniquement le prix TTC final que vous avez configuré. Votre marge reste confidentielle.',
   },
   {
     question: 'Que faire si un produit est en rupture de stock ?',
     answer:
-      'Les produits en rupture sont automatiquement marques dans le catalogue. Vous ne pouvez pas les ajouter a une commande. Ils restent dans votre selection pour quand ils seront de nouveau disponibles.',
+      'Les produits en rupture sont automatiquement marqués dans le catalogue. Vous ne pouvez pas les ajouter à une commande. Ils restent dans votre sélection pour quand ils seront de nouveau disponibles.',
   },
   {
-    question: "Comment contacter l'equipe Verone ?",
+    question: "Comment contacter l'équipe Vérone ?",
     answer:
-      "Pour toute question, envoyez un email a contact@verone.fr. L'equipe repond sous 24h en jours ouvrables.",
+      "Pour toute question, envoyez un email à contact@verone.fr. L'équipe répond sous 24h en jours ouvrables.",
   },
 ];
 
 export default function AideFaqPage(): JSX.Element {
   return (
     <AidePageLayout
-      title="Questions frequentes"
+      title="Questions fréquentes"
       icon={HelpCircle}
       iconColor="bg-gray-100 text-gray-600"
     >
@@ -80,7 +80,7 @@ export default function AideFaqPage(): JSX.Element {
 
       <div className="bg-linkme-turquoise/5 border border-linkme-turquoise/20 rounded-xl p-6 text-center">
         <p className="text-sm text-gray-600 mb-3">
-          Vous ne trouvez pas la reponse a votre question ?
+          Vous ne trouvez pas la réponse à votre question ?
         </p>
         <Link
           href="mailto:contact@verone.fr"

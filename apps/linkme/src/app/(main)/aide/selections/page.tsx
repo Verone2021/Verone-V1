@@ -67,18 +67,18 @@ function getMarginZone(
 
 const ZONE_INFO = {
   green: {
-    label: 'Competitif',
+    label: 'Compétitif',
     description: 'Prix attractif, ventes optimales',
     dotClass: 'bg-green-400',
   },
   orange: {
-    label: 'Equilibre',
+    label: 'Équilibré',
     description: 'Bon compromis marge/volume',
     dotClass: 'bg-orange-400',
   },
   red: {
-    label: 'Eleve',
-    description: 'Marge elevee, volume reduit',
+    label: 'Élevé',
+    description: 'Marge élevée, volume réduit',
     dotClass: 'bg-red-400',
   },
 } as const;
@@ -105,49 +105,49 @@ export default function AideSelectionsPage(): JSX.Element {
 
   return (
     <AidePageLayout
-      title="Selections"
+      title="Sélections"
       icon={Star}
       iconColor="bg-amber-100 text-amber-600"
     >
-      <AideSection title="Qu'est-ce qu'une selection ?">
+      <AideSection title="Qu'est-ce qu'une sélection ?">
         <p>
-          Une selection est votre vitrine personnalisee. C&apos;est une page web
+          Une sélection est votre vitrine personnalisée. C&apos;est une page web
           que vous partagez avec vos clients, contenant les produits que vous
           avez choisis dans le catalogue Verone.
         </p>
         <p>
-          Chaque selection a son propre lien de partage, ses propres marges, et
-          peut etre en mode brouillon (visible par vous seul) ou publiee
+          Chaque sélection a son propre lien de partage, ses propres marges, et
+          peut être en mode brouillon (visible par vous seul) ou publiée
           (accessible via le lien).
         </p>
       </AideSection>
 
-      <AideSection title="Creer une selection">
+      <AideSection title="Créer une sélection">
         <div className="space-y-5">
           <AideStep
             number={1}
-            title="Nouvelle selection"
-            description="Depuis Mes Selections, cliquez sur 'Nouvelle selection'. Choisissez un nom parlant pour vous y retrouver (ex: 'Collection Printemps 2026')."
+            title="Nouvelle sélection"
+            description="Depuis Mes Sélections, cliquez sur 'Nouvelle sélection'. Choisissez un nom parlant pour vous y retrouver (ex: 'Collection Printemps 2026')."
           />
           <AideStep
             number={2}
             title="Ajouter des produits"
-            description="Rendez-vous dans le Catalogue et ajoutez des produits a votre selection. Vous pouvez filtrer par categorie, prix ou nouveaute."
+            description="Rendez-vous dans le Catalogue et ajoutez des produits à votre sélection. Vous pouvez filtrer par catégorie, prix ou nouveauté."
           />
           <AideStep
             number={3}
             title="Configurer les marges"
-            description="Definissez votre taux de marque en pourcentage. Le prix client est calcule automatiquement. Plus votre taux est eleve, plus votre commission par vente est importante."
+            description="Définissez votre taux de marque en pourcentage. Le prix client est calculé automatiquement. Plus votre taux est élevé, plus votre commission par vente est importante."
           />
           <AideStep
             number={4}
             title="Publier et partager"
-            description="Passez la selection en mode 'Publiee' puis copiez le lien de partage. Envoyez-le par email, SMS ou reseaux sociaux a vos clients."
+            description="Passez la sélection en mode 'Publiée' puis copiez le lien de partage. Envoyez-le par email, SMS ou réseaux sociaux à vos clients."
           />
         </div>
       </AideSection>
 
-      <AideSection title="Visibilite : Brouillon vs Publiee">
+      <AideSection title="Visibilité : Brouillon vs Publiée">
         <div className="rounded-lg border border-gray-100 overflow-hidden">
           <div className="grid grid-cols-2 divide-x divide-gray-100">
             <div className="p-4">
@@ -155,7 +155,7 @@ export default function AideSelectionsPage(): JSX.Element {
               <ul className="space-y-1.5 text-sm text-gray-500">
                 <li>Visible uniquement par vous</li>
                 <li>Le lien de partage ne fonctionne pas</li>
-                <li>Ideal pour preparer votre selection</li>
+                <li>Idéal pour préparer votre sélection</li>
               </ul>
             </div>
             <div className="p-4">
@@ -163,7 +163,7 @@ export default function AideSelectionsPage(): JSX.Element {
               <ul className="space-y-1.5 text-sm text-gray-500">
                 <li>Accessible via le lien de partage</li>
                 <li>Vos clients peuvent consulter les produits</li>
-                <li>Vous pouvez la repasser en brouillon a tout moment</li>
+                <li>Vous pouvez la repasser en brouillon à tout moment</li>
               </ul>
             </div>
           </div>
@@ -333,9 +333,9 @@ export default function AideSelectionsPage(): JSX.Element {
       </div>
 
       {/* Explication feux tricolore */}
-      <AideSection title="Le systeme feux tricolore">
+      <AideSection title="Le système feux tricolore">
         <p>
-          Quand vous definissez votre taux de marque sur un produit, un
+          Quand vous définissez votre taux de marque sur un produit, un
           indicateur colore vous guide :
         </p>
         <div className="space-y-3">
@@ -343,7 +343,7 @@ export default function AideSelectionsPage(): JSX.Element {
             <div className="w-3 h-3 rounded-full bg-green-400 mt-1 flex-shrink-0" />
             <div>
               <p className="font-medium text-linkme-marine">
-                Vert — Competitif
+                Vert — Compétitif
               </p>
               <p className="text-sm text-gray-500">
                 Prix attractif qui favorise les ventes rapides.
@@ -354,7 +354,7 @@ export default function AideSelectionsPage(): JSX.Element {
             <div className="w-3 h-3 rounded-full bg-amber-400 mt-1 flex-shrink-0" />
             <div>
               <p className="font-medium text-linkme-marine">
-                Orange — Equilibre
+                Orange — Équilibré
               </p>
               <p className="text-sm text-gray-500">
                 Bon compromis entre marge et volume de ventes.
@@ -364,7 +364,7 @@ export default function AideSelectionsPage(): JSX.Element {
           <div className="flex items-start gap-3 p-3 rounded-lg bg-red-50">
             <div className="w-3 h-3 rounded-full bg-red-400 mt-1 flex-shrink-0" />
             <div>
-              <p className="font-medium text-linkme-marine">Rouge — Eleve</p>
+              <p className="font-medium text-linkme-marine">Rouge — Élevé</p>
               <p className="text-sm text-gray-500">
                 Votre prix se rapproche du prix public. Risque de moins vendre.
               </p>
@@ -372,7 +372,7 @@ export default function AideSelectionsPage(): JSX.Element {
           </div>
         </div>
         <p className="text-sm text-gray-500 mt-2">
-          Les zones sont calculees automatiquement pour chaque produit en
+          Les zones sont calculées automatiquement pour chaque produit en
           fonction de son prix public. Ce n&apos;est pas bloquant : vous restez
           libre de fixer le taux de marque que vous souhaitez.
         </p>
@@ -384,9 +384,9 @@ export default function AideSelectionsPage(): JSX.Element {
           Pourquoi vos clients sont toujours gagnants
         </h3>
         <p className="text-sm text-gray-600 leading-relaxed">
-          Tous les produits sur LinkMe ont un prix de vente encadre par le prix
-          public du produit. Meme avec votre taux de marque, le prix propose a
-          vos clients reste toujours plus interessant que le prix public.
+          Tous les produits sur LinkMe ont un prix de vente encadré par le prix
+          public du produit. Même avec votre taux de marque, le prix proposé à
+          vos clients reste toujours plus intéressant que le prix public.
           C&apos;est ce qui rend LinkMe concurrentiel : vos clients beneficient
           de tarifs avantageux, et vous gagnez une commission sur chaque vente.
         </p>
@@ -397,22 +397,22 @@ export default function AideSelectionsPage(): JSX.Element {
           <li className="flex gap-2">
             <span className="text-linkme-turquoise font-bold">•</span>
             <span>
-              Commencez avec 10-20 produits cibles plutot qu&apos;un catalogue
-              entier. Une selection ciblee convertit mieux.
+              Commencez avec 10-20 produits ciblés plutôt qu&apos;un catalogue
+              entier. Une sélection ciblée convertit mieux.
             </span>
           </li>
           <li className="flex gap-2">
             <span className="text-linkme-turquoise font-bold">•</span>
             <span>
-              Utilisez des marges coherentes par gamme de prix. Ex: 15% sur le
+              Utilisez des marges cohérentes par gamme de prix. Ex: 15% sur le
               mobilier, 20% sur les accessoires.
             </span>
           </li>
           <li className="flex gap-2">
             <span className="text-linkme-turquoise font-bold">•</span>
             <span>
-              Creez plusieurs selections thematiques (par style, par piece, par
-              budget) pour cibler differents profils clients.
+              Créez plusieurs sélections thématiques (par style, par pièce, par
+              budget) pour cibler différents profils clients.
             </span>
           </li>
         </ul>
@@ -423,7 +423,7 @@ export default function AideSelectionsPage(): JSX.Element {
           href="/ma-selection"
           className="inline-flex items-center gap-2 px-6 py-3 bg-linkme-turquoise text-white rounded-lg hover:bg-linkme-turquoise/90 transition-colors text-sm font-medium"
         >
-          Gerer mes selections
+          Gérer mes sélections
           <ArrowRight className="h-4 w-4" />
         </Link>
       </div>

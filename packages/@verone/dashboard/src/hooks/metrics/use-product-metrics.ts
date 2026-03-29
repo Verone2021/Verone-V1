@@ -30,24 +30,32 @@ export function useProductMetrics() {
         );
 
         // Fallback vers requêtes SQL optimisées si la RPC n'existe pas encore
-        const [totalResult, activeResult, inactiveResult, draftResult] =
-          await Promise.all([
-            supabase
-              .from('products')
-              .select('id', { count: 'exact', head: true }),
-            supabase
-              .from('products')
-              .select('id', { count: 'exact', head: true })
-              .in('status', ['in_stock']),
-            supabase
-              .from('products')
-              .select('id', { count: 'exact', head: true })
-              .in('status', ['out_of_stock', 'discontinued']),
-            supabase
-              .from('products')
-              .select('id', { count: 'exact', head: true })
-              .in('status', ['coming_soon', 'preorder']),
-          ]);
+        const [
+          totalResult,
+          activeResult,
+          inactiveResult,
+          draftResult,
+          stockAlertsResult,
+        ] = await Promise.all([
+          supabase
+            .from('products')
+            .select('id', { count: 'exact', head: true }),
+          supabase
+            .from('products')
+            .select('id', { count: 'exact', head: true })
+            .eq('product_status', 'active'),
+          supabase
+            .from('products')
+            .select('id', { count: 'exact', head: true })
+            .in('product_status', ['discontinued']),
+          supabase
+            .from('products')
+            .select('id', { count: 'exact', head: true })
+            .in('product_status', ['draft', 'preorder']),
+          supabase
+            .from('stock_alerts_unified_view')
+            .select('id', { count: 'exact', head: true }),
+        ]);
 
         // 2. Tendance: comparaison robuste (7 derniers jours vs 7 précédents)
         const today = new Date();
@@ -92,6 +100,7 @@ export function useProductMetrics() {
           active: activeResult.count ?? 0,
           inactive: inactiveResult.count ?? 0,
           draft: draftResult.count ?? 0,
+          stockAlerts: stockAlertsResult.count ?? 0,
           trend,
         };
 
@@ -105,6 +114,7 @@ export function useProductMetrics() {
           active: 0,
           inactive: 0,
           draft: 0,
+          stockAlerts: 0,
           trend: 0,
         }
       );
@@ -119,6 +129,7 @@ export function useProductMetrics() {
         active: 0,
         inactive: 0,
         draft: 0,
+        stockAlerts: 0,
         trend: 0,
       };
     }

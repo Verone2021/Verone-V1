@@ -4,8 +4,9 @@ import React, { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { useProductMetrics } from '@verone/dashboard';
 import { KPICardUnified } from '@verone/ui';
+
+import { getProductMetrics } from './actions/get-product-metrics';
 import { colors } from '@verone/ui/design-system';
 import {
   Package,
@@ -21,15 +22,16 @@ import {
   BarChart3,
 } from 'lucide-react';
 
+// eslint-disable-next-line max-lines-per-function
 export default function ProduitsPage() {
   const router = useRouter();
-  const { fetch: fetchProductMetrics } = useProductMetrics();
 
   const [metrics, setMetrics] = useState({
     total: 0,
     active: 0,
     inactive: 0,
     draft: 0,
+    stockAlerts: 0,
     trend: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -38,9 +40,9 @@ export default function ProduitsPage() {
   useEffect(() => {
     const loadMetrics = async () => {
       try {
-        const data = await fetchProductMetrics();
-        setMetrics(data as typeof metrics);
-        setError(null); // Reset error on success
+        const data = await getProductMetrics();
+        setMetrics(data);
+        setError(null);
       } catch (err) {
         console.error('Erreur chargement métriques:', err);
         setError(
@@ -53,12 +55,12 @@ export default function ProduitsPage() {
     void loadMetrics().catch(error => {
       console.error('[Products] Load metrics failed:', error);
     });
-  }, [fetchProductMetrics]);
+  }, []);
 
-  // Calcul métriques dérivées
-  const stockAlertsCount = Math.floor(metrics.total * 0.15); // Estimation 15% produits en alerte stock
+  // Métriques dérivées depuis les vraies données
+  const stockAlertsCount = metrics.stockAlerts;
   const sourcingActiveCount = metrics.draft;
-  const validationsPendingCount = Math.floor(metrics.draft * 0.4); // Estimation 40% drafts à valider
+  const validationsPendingCount = metrics.inactive;
 
   const workflowCards = [
     {

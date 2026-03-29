@@ -102,6 +102,7 @@ export interface DashboardMetrics {
  * Deduplicates requests within the same render cycle
  */
 export const getDashboardMetrics = cache(
+  // eslint-disable-next-line max-lines-per-function
   async (): Promise<DashboardMetrics> => {
     const supabase = await createServerClient();
 
@@ -159,11 +160,13 @@ export const getDashboardMetrics = cache(
           .select('id, created_at', { count: 'exact' })
           .is('deleted_at', null),
 
-        // 5. Active Consultations
+        // 5. Active Consultations (en_attente + en_cours = not finalized)
         supabase
           .from('client_consultations')
           .select('id', { count: 'exact' })
-          .in('status', ['pending', 'in_progress']),
+          .in('status', ['en_attente', 'en_cours'])
+          .is('archived_at', null)
+          .is('deleted_at', null),
 
         // 6. Active Customers
         supabase

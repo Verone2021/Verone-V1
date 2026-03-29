@@ -13,9 +13,9 @@ export default function AideCommissionsPage(): JSX.Element {
       icon={Coins}
       iconColor="bg-purple-100 text-purple-600"
     >
-      <AideSection title="Comment sont calculees vos commissions ?">
+      <AideSection title="Comment sont calculées vos commissions ?">
         <p>
-          Votre commission depend du type de produit que vous vendez : produits
+          Votre commission dépend du type de produit que vous vendez : produits
           du catalogue Verone ou vos propres produits (revendeur).
         </p>
 
@@ -25,8 +25,8 @@ export default function AideCommissionsPage(): JSX.Element {
               Produits catalogue
             </p>
             <p className="text-sm text-gray-600 mb-2">
-              Vous definissez un taux de marque (%) sur chaque produit de votre
-              selection. Votre commission est calculee automatiquement a partir
+              Vous définissez un taux de marque (%) sur chaque produit de votre
+              sélection. Votre commission est calculée automatiquement à partir
               de ce taux.
             </p>
             <p className="font-medium text-linkme-marine text-center bg-white rounded p-2">
@@ -43,12 +43,12 @@ export default function AideCommissionsPage(): JSX.Element {
               Produits revendeur (Mes Produits)
             </p>
             <p className="text-sm text-gray-600">
-              Vous fixez librement le prix de vente. LinkMe preleve une
-              commission de plateforme variable selon les produits (a partir de
+              Vous fixez librement le prix de vente. LinkMe prélève une
+              commission de plateforme variable selon les produits (à partir de
               5%). Vous recevez le reste.
             </p>
             <p className="text-sm text-gray-500 mt-2 text-center">
-              Le taux de commission est indique sur chaque produit dans votre
+              Le taux de commission est indiqué sur chaque produit dans votre
               espace.
             </p>
           </div>
@@ -62,7 +62,7 @@ export default function AideCommissionsPage(): JSX.Element {
             <div>
               <p className="font-medium text-linkme-marine">En attente</p>
               <p className="text-sm text-gray-500">
-                La commande a ete expediee. En attente du paiement par le
+                La commande a été expédiée. En attente du paiement par le
                 client. La commission n&apos;est pas encore payable.
               </p>
             </div>
@@ -72,7 +72,7 @@ export default function AideCommissionsPage(): JSX.Element {
             <div>
               <p className="font-medium text-linkme-marine">Payable</p>
               <p className="text-sm text-gray-500">
-                Le client a paye. Vous pouvez demander le versement de cette
+                Le client a payé. Vous pouvez demander le versement de cette
                 commission.
               </p>
             </div>
@@ -82,7 +82,7 @@ export default function AideCommissionsPage(): JSX.Element {
             <div>
               <p className="font-medium text-linkme-marine">Demande en cours</p>
               <p className="text-sm text-gray-500">
-                Vous avez demande le versement. Le paiement est en cours de
+                Vous avez demandé le versement. Le paiement est en cours de
                 traitement par Verone.
               </p>
             </div>
@@ -90,9 +90,9 @@ export default function AideCommissionsPage(): JSX.Element {
           <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50">
             <div className="w-3 h-3 rounded-full bg-emerald-400 mt-1 flex-shrink-0" />
             <div>
-              <p className="font-medium text-linkme-marine">Payee</p>
+              <p className="font-medium text-linkme-marine">Payée</p>
               <p className="text-sm text-gray-500">
-                Le versement a ete effectue sur votre compte bancaire.
+                Le versement a été effectué sur votre compte bancaire.
               </p>
             </div>
           </div>
@@ -103,18 +103,18 @@ export default function AideCommissionsPage(): JSX.Element {
         <div className="space-y-5">
           <AideStep
             number={1}
-            title="Verifier les commissions payables"
-            description="Depuis la page Commissions, consultez le montant total de vos commissions payables (commandes dont le client a paye)."
+            title="Vérifier les commissions payables"
+            description="Depuis la page Commissions, consultez le montant total de vos commissions payables (commandes dont le client a payé)."
           />
           <AideStep
             number={2}
-            title="Creer une demande de versement"
-            description="Cliquez sur 'Demander un versement'. Selectionnez les commissions a inclure dans la demande."
+            title="Créer une demande de versement"
+            description="Cliquez sur 'Demander un versement'. Sélectionnez les commissions à inclure dans la demande."
           />
           <AideStep
             number={3}
             title="Suivi du paiement"
-            description="Verone traite votre demande sous 5-10 jours ouvrables. Vous recevrez une notification quand le virement sera effectue."
+            description="Vérone traite votre demande sous 5-10 jours ouvrables. Vous recevrez une notification quand le virement sera effectué."
           />
         </div>
       </AideSection>

@@ -1,366 +1,68 @@
-'use client';
-
-import { useEffect, useRef } from 'react';
-
 import Link from 'next/link';
 
-import { useSalesOrders } from '@verone/orders';
-import { usePurchaseOrders } from '@verone/orders';
-import { ButtonUnified } from '@verone/ui';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@verone/ui';
-import { formatCurrency } from '@verone/utils';
-import {
-  ShoppingCart,
-  Package,
-  TrendingUp,
-  Users,
-  ArrowRight,
-  BarChart3,
-  ShoppingBag,
-} from 'lucide-react';
+import { BarChart3, ArrowRight, ShoppingBag, Package } from 'lucide-react';
 
-export default function CommandesOverviewPage() {
-  const {
-    loading: salesLoading,
-    orders: _salesOrders,
-    stats: salesStats,
-    fetchOrders: fetchSalesOrders,
-    fetchStats: fetchSalesStats,
-  } = useSalesOrders();
-
-  const {
-    loading: purchaseLoading,
-    orders: _purchaseOrders,
-    stats: purchaseStats,
-    fetchOrders: fetchPurchaseOrders,
-    fetchStats: fetchPurchaseStats,
-  } = usePurchaseOrders();
-
-  // Refs pour stabiliser les fonctions fetch (pattern anti-loop)
-  const fetchSalesOrdersRef = useRef(fetchSalesOrders);
-  fetchSalesOrdersRef.current = fetchSalesOrders;
-  const fetchSalesStatsRef = useRef(fetchSalesStats);
-  fetchSalesStatsRef.current = fetchSalesStats;
-  const fetchPurchaseOrdersRef = useRef(fetchPurchaseOrders);
-  fetchPurchaseOrdersRef.current = fetchPurchaseOrders;
-  const fetchPurchaseStatsRef = useRef(fetchPurchaseStats);
-  fetchPurchaseStatsRef.current = fetchPurchaseStats;
-
-  useEffect(() => {
-    void fetchSalesOrdersRef
-      .current()
-      .catch(error =>
-        console.error('[CommandesPage] fetchSalesOrders failed:', error)
-      );
-    void fetchSalesStatsRef
-      .current()
-      .catch(error =>
-        console.error('[CommandesPage] fetchSalesStats failed:', error)
-      );
-    void fetchPurchaseOrdersRef
-      .current()
-      .catch(error =>
-        console.error('[CommandesPage] fetchPurchaseOrders failed:', error)
-      );
-    void fetchPurchaseStatsRef
-      .current()
-      .catch(error =>
-        console.error('[CommandesPage] fetchPurchaseStats failed:', error)
-      );
-  }, []);
-
-  const isLoading = salesLoading || purchaseLoading;
-
-  // Statistiques combinées
-  const totalOrders =
-    (salesStats?.total_orders ?? 0) + (purchaseStats?.total_orders ?? 0);
-  const totalValue =
-    (salesStats?.total_value ?? 0) + (purchaseStats?.total_value ?? 0);
-
+export default function CommandesAnalytiquePage() {
   return (
-    <div className="space-y-6 p-6">
-      {/* En-tête */}
-      <div className="border-b border-gray-200 pb-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <ShoppingCart className="h-8 w-8 text-black" />
-            <div>
-              <h1 className="text-3xl font-bold text-black">Commandes</h1>
-              <p className="text-gray-600">
-                Vue d&apos;ensemble des commandes clients et fournisseurs
-              </p>
+    <div className="min-h-screen bg-gray-50/50">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gray-100 mb-4">
+            <BarChart3 className="h-7 w-7 text-gray-500" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Analytique Commandes
+          </h1>
+          <p className="text-gray-500 mt-2 max-w-md mx-auto">
+            Graphiques et analyses croisees ventes / achats — en construction
+          </p>
+        </div>
+
+        <div className="bg-white border border-dashed border-gray-300 rounded-xl p-8 text-center mb-8">
+          <BarChart3 className="h-12 w-12 text-gray-200 mx-auto mb-4" />
+          <h2 className="text-lg font-semibold text-gray-700 mb-2">
+            Module analytique a venir
+          </h2>
+          <p className="text-sm text-gray-500 max-w-lg mx-auto leading-relaxed">
+            Cette page accueillera les graphiques d&apos;evolution du CA (ventes
+            vs achats), les marges par canal, les tendances mensuelles, et les
+            comparatifs periode par periode.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Link
+            href="/ventes"
+            className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 hover:border-gray-400 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <ShoppingBag className="h-5 w-5 text-gray-500" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  Dashboard Ventes
+                </p>
+                <p className="text-xs text-gray-500">
+                  Consultations, commandes, expeditions
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="flex space-x-3">
-            <Link href="/commandes/clients">
-              <ButtonUnified variant="outline" icon={ShoppingBag}>
-                Commandes Clients
-              </ButtonUnified>
-            </Link>
-            <Link href="/commandes/fournisseurs">
-              <ButtonUnified variant="outline" icon={Package}>
-                Commandes Fournisseurs
-              </ButtonUnified>
-            </Link>
-          </div>
+            <ArrowRight className="h-4 w-4 text-gray-400" />
+          </Link>
+          <Link
+            href="/commandes/fournisseurs"
+            className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 hover:border-gray-400 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Package className="h-5 w-5 text-gray-500" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Achats</p>
+                <p className="text-xs text-gray-500">Commandes fournisseurs</p>
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-gray-400" />
+          </Link>
         </div>
       </div>
-
-      {isLoading ? (
-        <div className="flex justify-center py-12">
-          <div className="text-gray-500">Chargement des statistiques...</div>
-        </div>
-      ) : (
-        <>
-          {/* Statistiques globales */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 flex items-center space-x-2">
-                  <BarChart3 className="h-4 w-4" />
-                  <span>Total Commandes</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-black">
-                  {totalOrders}
-                </div>
-                <p className="text-xs text-gray-500">
-                  Toutes catégories confondues
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 flex items-center space-x-2">
-                  <TrendingUp className="h-4 w-4" />
-                  <span>Valeur Totale</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-black">
-                  {formatCurrency(totalValue)}
-                </div>
-                <p className="text-xs text-gray-500">
-                  Chiffre d&apos;affaires + achats
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 flex items-center space-x-2">
-                  <ShoppingBag className="h-4 w-4" />
-                  <span>Ventes</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  {formatCurrency(salesStats?.total_value ?? 0)}
-                </div>
-                <p className="text-xs text-gray-500">
-                  {salesStats?.total_orders ?? 0} commandes clients
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 flex items-center space-x-2">
-                  <Package className="h-4 w-4" />
-                  <span>Achats</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">
-                  {formatCurrency(purchaseStats?.total_value ?? 0)}
-                </div>
-                <p className="text-xs text-gray-500">
-                  {purchaseStats?.total_orders ?? 0} commandes fournisseurs
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sections détaillées */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Commandes Clients */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <ShoppingBag className="h-5 w-5 text-green-600" />
-                    <CardTitle className="text-lg">Commandes Clients</CardTitle>
-                  </div>
-                  <Link href="/commandes/clients">
-                    <ButtonUnified
-                      variant="ghost"
-                      size="sm"
-                      icon={ArrowRight}
-                      iconPosition="right"
-                    >
-                      Voir tout
-                    </ButtonUnified>
-                  </Link>
-                </div>
-                <CardDescription>Ventes et expéditions clients</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {salesStats ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-3 bg-green-50 rounded-lg">
-                        <div className="text-lg font-bold text-green-700">
-                          {salesStats.shipped_orders}
-                        </div>
-                        <div className="text-xs text-green-600">Expédiées</div>
-                      </div>
-                      <div className="text-center p-3 bg-blue-50 rounded-lg">
-                        <div className="text-lg font-bold text-blue-700">
-                          {salesStats.pending_orders}
-                        </div>
-                        <div className="text-xs text-blue-600">En cours</div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-3 bg-gray-50 rounded-lg">
-                        <div className="text-lg font-bold text-gray-800">
-                          {salesStats.shipped_orders}
-                        </div>
-                        <div className="text-xs text-black">Expédiées</div>
-                      </div>
-                      <div className="text-center p-3 bg-red-50 rounded-lg">
-                        <div className="text-lg font-bold text-red-700">
-                          {salesStats.cancelled_orders}
-                        </div>
-                        <div className="text-xs text-red-600">Annulées</div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-4 text-gray-500">
-                    Aucune donnée disponible
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Commandes Fournisseurs */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Package className="h-5 w-5 text-blue-600" />
-                    <CardTitle className="text-lg">
-                      Commandes Fournisseurs
-                    </CardTitle>
-                  </div>
-                  <Link href="/commandes/fournisseurs">
-                    <ButtonUnified
-                      variant="ghost"
-                      size="sm"
-                      icon={ArrowRight}
-                      iconPosition="right"
-                    >
-                      Voir tout
-                    </ButtonUnified>
-                  </Link>
-                </div>
-                <CardDescription>Achats et approvisionnements</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {purchaseStats ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-3 bg-green-50 rounded-lg">
-                        <div className="text-lg font-bold text-green-700">
-                          {purchaseStats.received_orders}
-                        </div>
-                        <div className="text-xs text-green-600">Reçues</div>
-                      </div>
-                      <div className="text-center p-3 bg-gray-50 rounded-lg">
-                        <div className="text-lg font-bold text-gray-800">
-                          {purchaseStats.pending_orders}
-                        </div>
-                        <div className="text-xs text-gray-700">En cours</div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="text-center p-3 bg-red-50 rounded-lg">
-                        <div className="text-lg font-bold text-red-700">
-                          {purchaseStats.cancelled_orders}
-                        </div>
-                        <div className="text-xs text-red-600">Annulées</div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-4 text-gray-500">
-                    Aucune donnée disponible
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Actions rapides */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Actions Rapides</CardTitle>
-              <CardDescription>
-                Accès direct aux fonctionnalités principales
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Link href="/commandes/clients">
-                  <ButtonUnified
-                    variant="outline"
-                    icon={ShoppingBag}
-                    className="w-full justify-start"
-                  >
-                    Nouvelle Vente
-                  </ButtonUnified>
-                </Link>
-                <Link href="/commandes/fournisseurs">
-                  <ButtonUnified
-                    variant="outline"
-                    icon={Package}
-                    className="w-full justify-start"
-                  >
-                    Nouvel Achat
-                  </ButtonUnified>
-                </Link>
-                <Link href="/stocks/inventaire">
-                  <ButtonUnified
-                    variant="outline"
-                    icon={BarChart3}
-                    className="w-full justify-start"
-                  >
-                    État Stocks
-                  </ButtonUnified>
-                </Link>
-                <Link href="/contacts-organisations">
-                  <ButtonUnified
-                    variant="outline"
-                    icon={Users}
-                    className="w-full justify-start"
-                  >
-                    Organisations
-                  </ButtonUnified>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </>
-      )}
     </div>
   );
 }

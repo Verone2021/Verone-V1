@@ -13,23 +13,23 @@ import {
 
 const helpSections = [
   {
-    title: 'Guide de demarrage',
+    title: 'Guide de démarrage',
     description:
-      'Premiers pas sur LinkMe : profil, selection, premiere commande.',
+      'Premiers pas sur LinkMe : profil, sélection, première commande.',
     href: '/aide/demarrer',
     icon: Rocket,
     color: 'bg-linkme-turquoise/10 text-linkme-turquoise',
   },
   {
-    title: 'Selections',
-    description: 'Creer, configurer et partager vos selections de produits.',
+    title: 'Sélections',
+    description: 'Créer, configurer et partager vos sélections de produits.',
     href: '/aide/selections',
     icon: Star,
     color: 'bg-amber-100 text-amber-600',
   },
   {
     title: 'Commandes',
-    description: 'Passer, suivre et gerer les commandes de vos clients.',
+    description: 'Passer, suivre et gérer les commandes de vos clients.',
     href: '/aide/commandes',
     icon: ShoppingCart,
     color: 'bg-blue-100 text-blue-600',
@@ -37,7 +37,7 @@ const helpSections = [
   {
     title: 'Mes Produits & Stockage',
     description:
-      'Ajouter vos propres produits, gerer le stockage et les tarifs.',
+      'Ajouter vos propres produits, gérer le stockage et les tarifs.',
     href: '/aide/produits',
     icon: Package,
     color: 'bg-green-100 text-green-600',
@@ -50,8 +50,8 @@ const helpSections = [
     color: 'bg-purple-100 text-purple-600',
   },
   {
-    title: 'Questions frequentes',
-    description: 'Reponses aux questions les plus courantes.',
+    title: 'Questions fréquentes',
+    description: 'Réponses aux questions les plus courantes.',
     href: '/aide/faq',
     icon: HelpCircle,
     color: 'bg-gray-100 text-gray-600',
@@ -72,7 +72,7 @@ export default function AideIndexPage(): JSX.Element {
           </h1>
           <p className="text-gray-500 mt-2 max-w-md mx-auto">
             Tout ce que vous devez savoir pour tirer le meilleur parti de
-            LinkMe. Guides pas-a-pas, conseils et FAQ.
+            LinkMe. Guides pas-à-pas, conseils et FAQ.
           </p>
         </div>
 
