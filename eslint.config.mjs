@@ -245,10 +245,9 @@ export default defineConfig([
         'warn',
         { max: 500, skipBlankLines: true, skipComments: true },
       ],
-      'max-lines-per-function': [
-        'warn',
-        { max: 75, skipBlankLines: true, skipComments: true, IIFEs: true },
-      ],
+      // max-lines-per-function: disabled (aligned with Vercel/Airbnb/Google — none enable this rule)
+      // max-lines: 500 per file is sufficient for React/JSX codebases
+      // See: https://github.com/eslint/eslint/issues/12236 (JSX incompatibility)
     },
   },
 
