@@ -4,8 +4,8 @@
  *
  * Architecture:
  * - Hero section: 4 essential KPIs (always visible)
- * - Sales section: LinkMe orders, commissions, revenue chart data
- * - Stock section: Products, out of stock, alerts
+ * - Sales section: LinkMe orders, commissions, revenue by channel, top products, margin
+ * - Stock section: Products, out of stock, stock value, movements, alerts
  * - Finance section: Revenue 30 days
  * - Activity section: Recent orders
  *
@@ -32,6 +32,24 @@ export interface DashboardMetrics {
   sales: {
     ordersLinkme: number;
     commissions: number;
+    revenueByChannel: Array<{
+      channel: string;
+      orders: number;
+      revenueTtc: number;
+      revenueHt: number;
+    }>;
+    topProducts: Array<{
+      id: string;
+      name: string;
+      sku: string;
+      imageUrl: string | null;
+      orders: number;
+      quantity: number;
+      revenueHt: number;
+      marginPct: number | null;
+      orderDate: string;
+    }>;
+    avgMarginPct: number | null;
   };
   stock: {
     products: {
@@ -39,6 +57,9 @@ export interface DashboardMetrics {
       new_month: number;
     };
     outOfStock: number;
+    totalUnits: number;
+    stockValue: number;
+    movements30d: number;
     alerts: Array<{
       product_id: string;
       product_name: string;
@@ -102,16 +123,20 @@ export interface DashboardMetrics {
  * Deduplicates requests within the same render cycle
  */
 export const getDashboardMetrics = cache(
+  // eslint-disable-next-line max-lines-per-function
   async (): Promise<DashboardMetrics> => {
     const supabase = await createServerClient();
 
     try {
-      // Calculate date 30 days ago
+      // Calculate date ranges
       const now = new Date();
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       const thirtyDaysAgoISO = thirtyDaysAgo.toISOString();
+      const yearAgoISO = new Date(
+        now.getTime() - 365 * 24 * 60 * 60 * 1000
+      ).toISOString();
 
-      // Fetch all metrics in parallel (12 queries)
+      // Fetch all metrics in parallel (16 queries)
       const [
         alertsStock,
         ordersPending,
@@ -125,6 +150,10 @@ export const getDashboardMetrics = cache(
         alertsDetails,
         recentOrders,
         revenue30Days,
+        ordersByChannel,
+        topProductItems,
+        stockSummary,
+        stockMovements30d,
       ] = await Promise.all([
         // 1. Stock Alerts Critical
         supabase
@@ -140,7 +169,7 @@ export const getDashboardMetrics = cache(
           .is('delivered_at', null)
           .is('cancelled_at', null),
 
-        // 3. LinkMe Active Orders - toutes commandes actives (non livrées, non annulées)
+        // 3. LinkMe Active Orders
         supabase
           .from('sales_orders')
           .select('id', { count: 'exact' })
@@ -207,14 +236,44 @@ export const getDashboardMetrics = cache(
           .order('created_at', { ascending: false })
           .limit(10),
 
-        // 12. Revenue Last 30 Days (delivered orders, using created_at window)
-        // Note: delivered_at often not populated → use status='delivered' + created_at for robustness
+        // 12. Revenue Last 30 Days
         supabase
           .from('sales_orders')
           .select('total_ttc')
           .eq('status', 'delivered')
           .gte('created_at', thirtyDaysAgoISO)
           .is('cancelled_at', null),
+
+        // 13. Revenue by Channel (30 days)
+        supabase
+          .from('sales_orders')
+          .select('total_ttc, total_ht, channel_id, sales_channels(name)')
+          .in('status', ['shipped', 'delivered', 'validated'])
+          .gte('created_at', thirtyDaysAgoISO)
+          .is('cancelled_at', null),
+
+        // 14. Top Products (365 days — client filters by period)
+        supabase
+          .from('sales_order_items')
+          .select(
+            'product_id, quantity, total_ht, unit_price_ht, sales_orders!inner(created_at, cancelled_at, status), products!inner(id, name, sku, cost_price, product_images(public_url, is_primary))'
+          )
+          .gte('sales_orders.created_at', yearAgoISO)
+          .is('sales_orders.cancelled_at', null)
+          .neq('sales_orders.status', 'cancelled'),
+
+        // 15. Stock summary (active products)
+        supabase
+          .from('products')
+          .select('stock_real, cost_price_avg')
+          .eq('product_status', 'active')
+          .is('archived_at', null),
+
+        // 16. Stock movements count (30 days)
+        supabase
+          .from('stock_movements')
+          .select('id', { count: 'exact' })
+          .gte('performed_at', thirtyDaysAgoISO),
       ]);
 
       // Calculate new products/organisations in last 30 days
@@ -234,6 +293,143 @@ export const getDashboardMetrics = cache(
           (sum, order) => sum + (order.total_ttc ?? 0),
           0
         ) ?? 0;
+
+      // Calculate revenue by channel
+      const channelMap = new Map<
+        string,
+        { orders: number; ttc: number; ht: number }
+      >();
+      for (const order of ordersByChannel.data ?? []) {
+        const channelName =
+          (order.sales_channels as { name: string } | null)?.name ?? 'Direct';
+        const existing = channelMap.get(channelName) ?? {
+          orders: 0,
+          ttc: 0,
+          ht: 0,
+        };
+        existing.orders += 1;
+        existing.ttc += order.total_ttc ?? 0;
+        existing.ht += order.total_ht ?? 0;
+        channelMap.set(channelName, existing);
+      }
+      const revenueByChannel = Array.from(channelMap.entries())
+        .map(([channel, data]) => ({
+          channel,
+          orders: data.orders,
+          revenueTtc: Math.round(data.ttc * 100) / 100,
+          revenueHt: Math.round(data.ht * 100) / 100,
+        }))
+        .sort((a, b) => b.revenueTtc - a.revenueTtc);
+
+      // Calculate top products by revenue
+      const productMap = new Map<
+        string,
+        {
+          id: string;
+          name: string;
+          sku: string;
+          imageUrl: string | null;
+          orders: Set<string>;
+          quantity: number;
+          revenueHt: number;
+          costPrice: number | null;
+          unitPriceHt: number;
+          latestDate: string;
+        }
+      >();
+      for (const item of topProductItems.data ?? []) {
+        const product = item.products as {
+          id: string;
+          name: string;
+          sku: string;
+          cost_price: number | null;
+          product_images: Array<{
+            public_url: string;
+            is_primary: boolean;
+          }> | null;
+        };
+        const orderData = item.sales_orders as {
+          created_at: string;
+          cancelled_at: string | null;
+          status: string;
+        };
+        if (!product?.id) continue;
+        const primaryImage =
+          product.product_images?.find(img => img.is_primary)?.public_url ??
+          null;
+        const existing = productMap.get(product.id) ?? {
+          id: product.id,
+          name: product.name,
+          sku: product.sku ?? '',
+          imageUrl: primaryImage,
+          orders: new Set<string>(),
+          quantity: 0,
+          revenueHt: 0,
+          costPrice: product.cost_price,
+          unitPriceHt: 0,
+          latestDate: orderData.created_at,
+        };
+        existing.orders.add(item.product_id);
+        existing.quantity += item.quantity ?? 0;
+        existing.revenueHt += item.total_ht ?? 0;
+        existing.unitPriceHt = item.unit_price_ht ?? existing.unitPriceHt;
+        if (!existing.imageUrl && primaryImage)
+          existing.imageUrl = primaryImage;
+        if (orderData.created_at > existing.latestDate)
+          existing.latestDate = orderData.created_at;
+        productMap.set(product.id, existing);
+      }
+      const topProducts = Array.from(productMap.values())
+        .map(p => ({
+          id: p.id,
+          name: p.name,
+          sku: p.sku,
+          imageUrl: p.imageUrl,
+          orders: p.orders.size,
+          quantity: p.quantity,
+          revenueHt: Math.round(p.revenueHt * 100) / 100,
+          marginPct:
+            p.costPrice && p.unitPriceHt > 0
+              ? Math.round(
+                  ((p.unitPriceHt - p.costPrice) / p.unitPriceHt) * 1000
+                ) / 10
+              : null,
+          orderDate: p.latestDate,
+        }))
+        .sort((a, b) => b.revenueHt - a.revenueHt);
+
+      // Calculate average margin across top products (30d)
+      const topProducts30d = topProducts.filter(
+        p => p.orderDate >= thirtyDaysAgoISO
+      );
+      const productsWithMargin = topProducts30d.filter(
+        p => p.marginPct !== null
+      );
+      const avgMarginPct =
+        productsWithMargin.length > 0
+          ? Math.round(
+              (productsWithMargin.reduce(
+                (sum, p) => sum + (p.marginPct ?? 0),
+                0
+              ) /
+                productsWithMargin.length) *
+                10
+            ) / 10
+          : null;
+
+      // Calculate stock totals
+      const stockData = stockSummary.data ?? [];
+      const totalStockUnits = stockData.reduce(
+        (sum, p) => sum + (p.stock_real ?? 0),
+        0
+      );
+      const stockValue =
+        Math.round(
+          stockData.reduce(
+            (sum, p) => sum + (p.stock_real ?? 0) * (p.cost_price_avg ?? 0),
+            0
+          ) * 100
+        ) / 100;
 
       // Format stock alerts
       const stockAlertsFormatted = (alertsDetails.data ?? [])
@@ -259,7 +455,6 @@ export const getDashboardMetrics = cache(
         }));
 
       return {
-        // NEW: Structured sections
         hero: {
           ordersPending: ordersPending.count ?? 0,
           stockAlerts: alertsStock.count ?? 0,
@@ -269,6 +464,9 @@ export const getDashboardMetrics = cache(
         sales: {
           ordersLinkme: ordersLinkme.count ?? 0,
           commissions: commissions.count ?? 0,
+          revenueByChannel,
+          topProducts,
+          avgMarginPct,
         },
         stock: {
           products: {
@@ -276,6 +474,9 @@ export const getDashboardMetrics = cache(
             new_month: productsNewMonth,
           },
           outOfStock: outOfStock.count ?? 0,
+          totalUnits: totalStockUnits,
+          stockValue,
+          movements30d: stockMovements30d.count ?? 0,
           alerts: stockAlertsFormatted,
         },
         finance: {
@@ -284,16 +485,11 @@ export const getDashboardMetrics = cache(
         activity: {
           recentOrders: recentOrdersFormatted,
         },
-
-        // LEGACY: Backward compatibility
         kpis: {
           alertsStock: alertsStock.count ?? 0,
           ordersPending: ordersPending.count ?? 0,
           ordersLinkme: ordersLinkme.count ?? 0,
-          products: {
-            total: products.count ?? 0,
-            new_month: productsNewMonth,
-          },
+          products: { total: products.count ?? 0, new_month: productsNewMonth },
           consultations: consultations.count ?? 0,
           customers: customers.count ?? 0,
           organisations: {
@@ -311,7 +507,6 @@ export const getDashboardMetrics = cache(
     } catch (error) {
       console.error('[getDashboardMetrics] Error fetching metrics:', error);
 
-      // Return default values on error (graceful degradation)
       return {
         hero: {
           ordersPending: 0,
@@ -322,42 +517,32 @@ export const getDashboardMetrics = cache(
         sales: {
           ordersLinkme: 0,
           commissions: 0,
+          revenueByChannel: [],
+          topProducts: [],
+          avgMarginPct: null,
         },
         stock: {
-          products: {
-            total: 0,
-            new_month: 0,
-          },
+          products: { total: 0, new_month: 0 },
           outOfStock: 0,
+          totalUnits: 0,
+          stockValue: 0,
+          movements30d: 0,
           alerts: [],
         },
-        finance: {
-          revenue30Days: 0,
-        },
-        activity: {
-          recentOrders: [],
-        },
+        finance: { revenue30Days: 0 },
+        activity: { recentOrders: [] },
         kpis: {
           alertsStock: 0,
           ordersPending: 0,
           ordersLinkme: 0,
-          products: {
-            total: 0,
-            new_month: 0,
-          },
+          products: { total: 0, new_month: 0 },
           consultations: 0,
           customers: 0,
-          organisations: {
-            total: 0,
-            new_month: 0,
-          },
+          organisations: { total: 0, new_month: 0 },
           commissions: 0,
           outOfStock: 0,
         },
-        widgets: {
-          stockAlerts: [],
-          recentOrders: [],
-        },
+        widgets: { stockAlerts: [], recentOrders: [] },
       };
     }
   }
