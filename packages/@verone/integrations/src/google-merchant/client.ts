@@ -9,9 +9,9 @@ import type { GoogleMerchantAuth } from './auth';
 import { getGoogleMerchantAuth } from './auth';
 import { GOOGLE_MERCHANT_CONFIG, getResourcePaths } from './config';
 import {
-  transformProductForGoogle,
-  validateGoogleMerchantProduct,
-} from './transformer';
+  mapSupabaseToGoogleMerchant,
+  type ProductWithRelations,
+} from './product-mapper';
 
 // Types de réponse Google Merchant API
 interface GoogleMerchantApiResponse<T = unknown> {
@@ -185,33 +185,19 @@ export class GoogleMerchantClient {
     productData: ProductData
   ): Promise<GoogleMerchantApiResponse<ProductInputResponse>> {
     try {
-      // 1. Transformer le produit
-      const transformedProduct = transformProductForGoogle(
-        productData as unknown as Parameters<
-          typeof transformProductForGoogle
-        >[0]
+      // 1. Mapper le produit vers le format Google Merchant v1 (format plat)
+      const mappedProduct = mapSupabaseToGoogleMerchant(
+        productData as unknown as ProductWithRelations
       );
 
-      // 2. Valider le produit transformé
-      const validation = validateGoogleMerchantProduct(transformedProduct);
-      if (!validation.valid) {
-        return {
-          success: false,
-          error: 'Validation failed',
-          details: { errors: validation.errors, product: transformedProduct },
-        };
-      }
+      // 2. Construire l'endpoint (Merchant API v1)
+      const endpoint = `products/${GOOGLE_MERCHANT_CONFIG.apiVersion}/accounts/${this.accountId}/productInputs:insert?dataSource=${encodeURIComponent(this.dataSourcePath)}`;
 
-      // 3. Construire l'endpoint avec dataSource en query parameter (format REST API officiel)
-      // Documentation: https://developers.google.com/merchant/api/reference/rest/products_v1beta/accounts.productInputs/insert
-      // Format: POST https://merchantapi.googleapis.com/products/v1beta/{parent=accounts/*}/productInputs:insert
-      const endpoint = `products/v1beta/accounts/${this.accountId}/productInputs:insert?dataSource=${encodeURIComponent(this.dataSourcePath)}`;
-
-      // 4. Envoyer le ProductInput directement dans le body (pas de wrapper)
+      // 3. Envoyer le ProductInput directement (format plat, pas de wrapper)
       const result = await this.makeRequest<ProductInputResponse>(
         endpoint,
         'POST',
-        transformedProduct
+        mappedProduct
       );
 
       if (result.success) {

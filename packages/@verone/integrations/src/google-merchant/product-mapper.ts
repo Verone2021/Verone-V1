@@ -18,7 +18,8 @@ type Subcategory = Database['public']['Tables']['subcategories']['Row'] & {
 // Constantes Configuration
 const DEFAULT_MARGIN_PERCENTAGE = 30; // 30% margin par défaut si non spécifié
 const MAX_ADDITIONAL_IMAGES = 10; // Google limite à 10 images supplémentaires
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
+const BASE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://veronecollections.fr';
 
 /**
  * Données produit complètes avec relations chargées
@@ -126,7 +127,7 @@ function calculateSellingPrice(
  */
 function generateProductUrl(product: Product): string {
   const slug = product.slug ?? product.sku.toLowerCase();
-  return `${BASE_URL}/produits/${slug}`;
+  return `${BASE_URL}/produit/${slug}`;
 }
 
 /**
