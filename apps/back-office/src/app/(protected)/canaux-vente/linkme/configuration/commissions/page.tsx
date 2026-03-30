@@ -120,6 +120,75 @@ function CategoryRow({ category }: CategoryRowProps) {
 // Main Page
 // ============================================================================
 
+function CommissionCalculationCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <DollarSign className="h-5 w-5 text-muted-foreground" />
+          <div>
+            <CardTitle>Calcul des commissions</CardTitle>
+            <CardDescription>
+              Comprendre le calcul des commissions affiliés
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <h4 className="text-sm font-semibold text-gray-900 mb-2">
+              Commission LinkMe
+            </h4>
+            <p className="text-xs text-gray-600">
+              Pourcentage prélevé par LinkMe sur chaque vente. Calculé sur le
+              prix de vente catalogue général du produit.
+            </p>
+            <div className="mt-3 p-2 bg-white rounded border border-gray-200">
+              <code className="text-xs text-gray-700">
+                Commission = Prix catalogue × Taux LinkMe
+              </code>
+            </div>
+          </div>
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <h4 className="text-sm font-semibold text-gray-900 mb-2">
+              Marge affilié
+            </h4>
+            <p className="text-xs text-gray-600">
+              L&apos;affilié peut appliquer une marge sur le prix de vente,
+              limitée par le plafond défini (si existant).
+            </p>
+            <div className="mt-3 p-2 bg-white rounded border border-gray-200">
+              <code className="text-xs text-gray-700">
+                Gain affilié = Prix vente - Prix catalogue - Commission
+              </code>
+            </div>
+          </div>
+        </div>
+        <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+          <h4 className="text-sm font-semibold text-emerald-900 mb-2">
+            Exemple concret
+          </h4>
+          <div className="text-xs text-emerald-800 space-y-1">
+            <p>
+              Prix catalogue : <strong>1 000 €</strong>
+            </p>
+            <p>
+              Commission LinkMe (5%) : <strong>50 €</strong>
+            </p>
+            <p>
+              Prix de vente affilié : <strong>1 150 €</strong> (+15%)
+            </p>
+            <p>
+              Gain affilié : 1 150 € - 1 000 € - 50 € = <strong>100 €</strong>
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function CommissionsConfigPage() {
   const [categories] = useState<CategoryCommission[]>(CATEGORY_COMMISSIONS);
 
@@ -180,73 +249,7 @@ export default function CommissionsConfigPage() {
         </CardContent>
       </Card>
 
-      {/* How it works */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-muted-foreground" />
-            <div>
-              <CardTitle>Calcul des commissions</CardTitle>
-              <CardDescription>
-                Comprendre le calcul des commissions affiliés
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <h4 className="text-sm font-semibold text-gray-900 mb-2">
-                Commission LinkMe
-              </h4>
-              <p className="text-xs text-gray-600">
-                Pourcentage prélevé par LinkMe sur chaque vente. Calculé sur le
-                prix de vente catalogue général du produit.
-              </p>
-              <div className="mt-3 p-2 bg-white rounded border border-gray-200">
-                <code className="text-xs text-gray-700">
-                  Commission = Prix catalogue × Taux LinkMe
-                </code>
-              </div>
-            </div>
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <h4 className="text-sm font-semibold text-gray-900 mb-2">
-                Marge affilié
-              </h4>
-              <p className="text-xs text-gray-600">
-                L&apos;affilié peut appliquer une marge sur le prix de vente,
-                limitée par le plafond défini (si existant). Cette marge
-                constitue sa rémunération.
-              </p>
-              <div className="mt-3 p-2 bg-white rounded border border-gray-200">
-                <code className="text-xs text-gray-700">
-                  Gain affilié = Prix vente - Prix catalogue - Commission
-                </code>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-            <h4 className="text-sm font-semibold text-emerald-900 mb-2">
-              Exemple concret
-            </h4>
-            <div className="text-xs text-emerald-800 space-y-1">
-              <p>
-                Prix catalogue : <strong>1 000 €</strong>
-              </p>
-              <p>
-                Commission LinkMe (5%) : <strong>50 €</strong>
-              </p>
-              <p>
-                Prix de vente affilié : <strong>1 150 €</strong> (+15%)
-              </p>
-              <p>
-                Gain affilié : 1 150 € - 1 000 € - 50 € = <strong>100 €</strong>
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <CommissionCalculationCard />
 
       {/* Development notice */}
       <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">

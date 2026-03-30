@@ -21,10 +21,28 @@ import {
   AddressAutocomplete,
   type AddressResult,
 } from '@verone/ui';
-import { MapPin } from 'lucide-react';
-
 import type { LinkMeOrderDetails } from '../../../hooks/use-linkme-order-actions';
+import { RestaurantAddressButton } from './RestaurantAddressButton';
 import type { OrderWithDetails } from './types';
+
+interface FooterActionsProps {
+  isPending: boolean;
+  onClose: () => void;
+  onSave: () => void;
+}
+
+function FooterActions({ isPending, onClose, onSave }: FooterActionsProps) {
+  return (
+    <DialogFooter>
+      <Button variant="outline" onClick={onClose}>
+        Annuler
+      </Button>
+      <Button onClick={onSave} disabled={isPending}>
+        {isPending ? 'Enregistrement...' : 'Enregistrer'}
+      </Button>
+    </DialogFooter>
+  );
+}
 
 interface EditDialogsProps {
   editingStep:
@@ -145,14 +163,11 @@ export function EditDialogs({
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={onClose}>
-              Annuler
-            </Button>
-            <Button onClick={handleSave} disabled={updateDetailsIsPending}>
-              {updateDetailsIsPending ? 'Enregistrement...' : 'Enregistrer'}
-            </Button>
-          </DialogFooter>
+          <FooterActions
+            isPending={updateDetailsIsPending}
+            onClose={onClose}
+            onSave={handleSave}
+          />
         </DialogContent>
       </Dialog>
 
@@ -229,14 +244,11 @@ export function EditDialogs({
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={onClose}>
-              Annuler
-            </Button>
-            <Button onClick={handleSave} disabled={updateDetailsIsPending}>
-              {updateDetailsIsPending ? 'Enregistrement...' : 'Enregistrer'}
-            </Button>
-          </DialogFooter>
+          <FooterActions
+            isPending={updateDetailsIsPending}
+            onClose={onClose}
+            onSave={handleSave}
+          />
         </DialogContent>
       </Dialog>
 
@@ -253,60 +265,7 @@ export function EditDialogs({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {/* Restaurant address for prefill */}
-            {org && (org.address_line1 ?? org.shipping_address_line1) && (
-              <button
-                type="button"
-                className="w-full text-left p-3 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 hover:border-blue-300 transition-colors"
-                onClick={() => {
-                  const useShipping = org.has_different_shipping_address;
-                  setEditForm(prev => ({
-                    ...prev,
-                    delivery_address: useShipping
-                      ? [org.shipping_address_line1, org.shipping_address_line2]
-                          .filter(Boolean)
-                          .join(', ')
-                      : [org.address_line1, org.address_line2]
-                          .filter(Boolean)
-                          .join(', '),
-                    delivery_postal_code:
-                      (useShipping
-                        ? org.shipping_postal_code
-                        : org.postal_code) ?? '',
-                    delivery_city:
-                      (useShipping ? org.shipping_city : org.city) ?? '',
-                  }));
-                }}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-3.5 w-3.5 text-blue-600" />
-                    <p className="text-xs font-medium text-blue-700">
-                      Adresse restaurant
-                    </p>
-                  </div>
-                  <span className="text-[10px] font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
-                    Utiliser cette adresse
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600">
-                  {org.has_different_shipping_address
-                    ? [org.shipping_address_line1, org.shipping_address_line2]
-                        .filter(Boolean)
-                        .join(', ')
-                    : [org.address_line1, org.address_line2]
-                        .filter(Boolean)
-                        .join(', ')}
-                </p>
-                <p className="text-sm text-gray-600">
-                  {org.has_different_shipping_address
-                    ? [org.shipping_postal_code, org.shipping_city]
-                        .filter(Boolean)
-                        .join(' ')
-                    : [org.postal_code, org.city].filter(Boolean).join(' ')}
-                </p>
-              </button>
-            )}
+            <RestaurantAddressButton org={org} setEditForm={setEditForm} />
             <div className="space-y-2">
               <Label>Adresse</Label>
               <AddressAutocomplete
@@ -356,14 +315,11 @@ export function EditDialogs({
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={onClose}>
-              Annuler
-            </Button>
-            <Button onClick={handleSave} disabled={updateDetailsIsPending}>
-              {updateDetailsIsPending ? 'Enregistrement...' : 'Enregistrer'}
-            </Button>
-          </DialogFooter>
+          <FooterActions
+            isPending={updateDetailsIsPending}
+            onClose={onClose}
+            onSave={handleSave}
+          />
         </DialogContent>
       </Dialog>
 
@@ -526,14 +482,11 @@ export function EditDialogs({
               </>
             )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={onClose}>
-              Annuler
-            </Button>
-            <Button onClick={handleSave} disabled={updateDetailsIsPending}>
-              {updateDetailsIsPending ? 'Enregistrement...' : 'Enregistrer'}
-            </Button>
-          </DialogFooter>
+          <FooterActions
+            isPending={updateDetailsIsPending}
+            onClose={onClose}
+            onSave={handleSave}
+          />
         </DialogContent>
       </Dialog>
     </>

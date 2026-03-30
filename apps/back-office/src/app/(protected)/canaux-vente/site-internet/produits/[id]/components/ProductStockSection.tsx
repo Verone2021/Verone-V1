@@ -9,6 +9,23 @@ import { Badge } from '@verone/ui';
 
 import type { SiteInternetProduct } from '../../../types';
 
+function StockField({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <span className="text-sm font-medium text-gray-700 block mb-2">
+        {label}
+      </span>
+      {children}
+    </div>
+  );
+}
+
 interface ProductStockSectionProps {
   product: SiteInternetProduct;
 }
@@ -28,68 +45,39 @@ export default function ProductStockSection({
 
       {/* Contenu */}
       <div className="space-y-4">
-        {/* Informations produit */}
-        <div>
-          <span className="text-sm font-medium text-gray-700 block mb-2">
-            Type de produit
-          </span>
+        <StockField label="Type de produit">
           <p className="text-sm text-gray-700">
             {product.product_type ?? (
               <span className="text-gray-400 italic">Non défini</span>
             )}
           </p>
-        </div>
-
-        {/* Sous-catégorie */}
+        </StockField>
         {product.subcategory_name && (
-          <div>
-            <span className="text-sm font-medium text-gray-700 block mb-2">
-              Sous-catégorie
-            </span>
+          <StockField label="Sous-catégorie">
             <p className="text-sm text-gray-700">{product.subcategory_name}</p>
-          </div>
+          </StockField>
         )}
-
-        {/* Dimensions */}
         {product.dimensions && (
-          <div>
-            <span className="text-sm font-medium text-gray-700 block mb-2">
-              Dimensions
-            </span>
+          <StockField label="Dimensions">
             <p className="text-sm text-gray-700">
               {JSON.stringify(product.dimensions)}
             </p>
-          </div>
+          </StockField>
         )}
-
-        {/* Poids */}
         {product.weight && (
-          <div>
-            <span className="text-sm font-medium text-gray-700 block mb-2">
-              Poids
-            </span>
+          <StockField label="Poids">
             <p className="text-sm text-gray-700">{product.weight} kg</p>
-          </div>
+          </StockField>
         )}
-
-        {/* MOQ Fournisseur */}
         {product.supplier_moq && (
-          <div>
-            <span className="text-sm font-medium text-gray-700 block mb-2">
-              Quantité min. fournisseur
-            </span>
+          <StockField label="Quantité min. fournisseur">
             <p className="text-sm text-gray-700">
               {product.supplier_moq} unités
             </p>
-          </div>
+          </StockField>
         )}
-
-        {/* Pièces compatibles */}
         {product.suitable_rooms.length > 0 && (
-          <div>
-            <span className="text-sm font-medium text-gray-700 block mb-2">
-              Pièces compatibles
-            </span>
+          <StockField label="Pièces compatibles">
             <div className="flex flex-wrap gap-2">
               {product.suitable_rooms.map((room, index) => (
                 <Badge key={index} variant="outline">
@@ -97,7 +85,7 @@ export default function ProductStockSection({
                 </Badge>
               ))}
             </div>
-          </div>
+          </StockField>
         )}
       </div>
     </div>

@@ -2,15 +2,20 @@
 
 import { useState, useEffect } from 'react';
 
-import { useContacts } from '@verone/organisations';
 import {
+  useContacts,
   getOrganisationDisplayName,
   type Organisation,
 } from '@verone/organisations';
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
-import { Input } from '@verone/ui';
+import {
+  Badge,
+  ButtonV2,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+} from '@verone/ui';
 import {
   Search,
   Plus,
@@ -24,6 +29,8 @@ import {
   ArchiveRestore,
   Eye,
 } from 'lucide-react';
+
+import { ContactsInfoCard } from './ContactsInfoCard';
 
 interface Contact {
   id: string;
@@ -42,13 +49,6 @@ interface Contact {
     type?: string | null;
     [key: string]: unknown;
   } | null;
-}
-
-interface ContactStats {
-  totalContacts: number;
-  supplierContacts: number;
-  customerContacts: number;
-  partnerContacts: number;
 }
 
 export function ContactsTab() {
@@ -102,7 +102,7 @@ export function ContactsTab() {
     return matchesSearch && matchesType && matchesRole;
   });
 
-  const stats: ContactStats = {
+  const stats = {
     totalContacts: contacts.length,
     supplierContacts: contacts.filter(c => c.organisation?.type === 'supplier')
       .length,
@@ -501,34 +501,7 @@ export function ContactsTab() {
         </CardContent>
       </Card>
 
-      {/* Information sur les contacts */}
-      <Card className="border-2 border-blue-200 bg-blue-50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-blue-700">
-            <Users className="h-5 w-5" />À Propos des Contacts
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <h4 className="font-medium text-blue-700 mb-2">Fournisseurs</h4>
-              <p className="text-blue-600">
-                Contacts multiples par fournisseur avec rôles spécialisés :
-                commercial, technique, facturation, contact principal.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-medium text-blue-700 mb-2">
-                Clients Professionnels
-              </h4>
-              <p className="text-blue-600">
-                Contacts d'entreprises clientes. Les clients particuliers ont
-                leurs données directement dans l'organisation.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <ContactsInfoCard />
     </div>
   );
 }

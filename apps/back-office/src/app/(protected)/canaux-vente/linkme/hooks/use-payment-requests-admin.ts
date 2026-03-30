@@ -269,119 +269,123 @@ interface CommissionForPayment {
   status: string;
 }
 
+function validateCommissions(
+  commissions: CommissionForPayment[] | null,
+  expectedCount: number
+) {
+  if (!commissions || commissions.length === 0) {
+    throw new Error(
+      'Aucune commission validée sélectionnée. Seules les commissions avec le statut "Validée" peuvent être demandées.'
+    );
+  }
+  if (commissions.length !== expectedCount) {
+    throw new Error(
+      `Seules ${commissions.length} commission(s) sur ${expectedCount} sont éligibles (statut "Validée")`
+    );
+  }
+}
+
+function computePaymentTotals(commissions: CommissionForPayment[]) {
+  const totalTTC = commissions.reduce(
+    (sum, c) => sum + (c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0),
+    0
+  );
+  const totalHT = commissions.reduce(
+    (sum, c) => sum + (c.total_payout_ht ?? c.affiliate_commission ?? 0),
+    0
+  );
+  return { totalHT, totalTTC };
+}
+
+async function createPaymentRequestFn(
+  input: CreatePaymentRequestAdminInput
+): Promise<PaymentRequestAdmin> {
+  const supabase = createClient();
+  const { affiliateId, commissionIds } = input;
+
+  // 1. Récupérer les commissions sélectionnées pour calculer le total
+  const { data: commissions, error: commError } = await supabase
+    .from('linkme_commissions')
+    .select(
+      'id, affiliate_commission_ttc, affiliate_commission, total_payout_ht, total_payout_ttc, status'
+    )
+    .in('id', commissionIds)
+    .eq('affiliate_id', affiliateId)
+    .eq('status', 'validated')
+    .returns<CommissionForPayment[]>();
+
+  if (commError) {
+    console.error('Erreur récupération commissions:', commError);
+    throw new Error(
+      'Erreur lors de la récupération des commissions sélectionnées'
+    );
+  }
+
+  validateCommissions(commissions, commissionIds.length);
+  const { totalHT, totalTTC } = computePaymentTotals(commissions);
+
+  // 2. Créer la demande
+  // Générer un numéro de demande unique
+  const requestNumber = `DMV-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`;
+
+  const { data: request, error: createError } = await supabase
+    .from('linkme_payment_requests')
+    .insert({
+      affiliate_id: affiliateId,
+      request_number: requestNumber,
+      total_amount_ht: totalHT,
+      total_amount_ttc: totalTTC,
+      status: 'pending',
+    })
+    .select(
+      'id, affiliate_id, request_number, total_amount_ht, total_amount_ttc, tax_rate, status, invoice_file_url, invoice_file_name, invoice_received_at, paid_at, paid_by, payment_reference, notes, created_at, updated_at'
+    )
+    .single()
+    .returns<PaymentRequestRaw>();
+
+  if (createError) {
+    console.error('Erreur création demande:', createError);
+    throw new Error('Erreur lors de la création de la demande de versement');
+  }
+
+  // 3. Créer les items (liaison avec commissions)
+  const items = commissions.map(c => ({
+    payment_request_id: request.id,
+    commission_id: c.id,
+    commission_amount_ttc:
+      c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0,
+  }));
+
+  const { error: itemsError } = await supabase
+    .from('linkme_payment_request_items')
+    .insert(items);
+
+  if (itemsError) {
+    console.error('Erreur création items:', itemsError);
+    // Rollback: supprimer la demande
+    await supabase
+      .from('linkme_payment_requests')
+      .delete()
+      .eq('id', request.id);
+    throw new Error('Erreur lors de la liaison des commissions à la demande');
+  }
+
+  // 4. Mettre à jour les commissions avec le statut 'requested'
+  await supabase
+    .from('linkme_commissions')
+    .update({ status: 'requested' })
+    .in('id', commissionIds);
+
+  return {
+    ...request,
+    status: request.status as PaymentRequestAdmin['status'],
+  };
+}
+
 export function useCreatePaymentRequestAdmin() {
   const queryClient = useQueryClient();
-  const supabase = createClient();
-
   return useMutation({
-    mutationFn: async (
-      input: CreatePaymentRequestAdminInput
-    ): Promise<PaymentRequestAdmin> => {
-      const { affiliateId, commissionIds } = input;
-
-      // 1. Récupérer les commissions sélectionnées pour calculer le total
-      const { data: commissions, error: commError } = await supabase
-        .from('linkme_commissions')
-        .select(
-          'id, affiliate_commission_ttc, affiliate_commission, total_payout_ht, total_payout_ttc, status'
-        )
-        .in('id', commissionIds)
-        .eq('affiliate_id', affiliateId)
-        .eq('status', 'validated')
-        .returns<CommissionForPayment[]>();
-
-      if (commError) {
-        console.error('Erreur récupération commissions:', commError);
-        throw new Error(
-          'Erreur lors de la récupération des commissions sélectionnées'
-        );
-      }
-
-      if (!commissions || commissions.length === 0) {
-        throw new Error(
-          'Aucune commission validée sélectionnée. Seules les commissions avec le statut "Validée" peuvent être demandées.'
-        );
-      }
-
-      // Vérifier que tous les IDs sont bien présents
-      if (commissions.length !== commissionIds.length) {
-        throw new Error(
-          `Seules ${commissions.length} commission(s) sur ${commissionIds.length} sont éligibles (statut "Validée")`
-        );
-      }
-
-      // Calculer les totaux (total_payout inclut catalogue + produits affiliés)
-      const totalTTC = commissions.reduce(
-        (sum, c) =>
-          sum + (c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0),
-        0
-      );
-      const totalHT = commissions.reduce(
-        (sum, c) => sum + (c.total_payout_ht ?? c.affiliate_commission ?? 0),
-        0
-      );
-
-      // 2. Créer la demande
-      // Générer un numéro de demande unique
-      const requestNumber = `DMV-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`;
-
-      const { data: request, error: createError } = await supabase
-        .from('linkme_payment_requests')
-        .insert({
-          affiliate_id: affiliateId,
-          request_number: requestNumber,
-          total_amount_ht: totalHT,
-          total_amount_ttc: totalTTC,
-          status: 'pending',
-        })
-        .select(
-          'id, affiliate_id, request_number, total_amount_ht, total_amount_ttc, tax_rate, status, invoice_file_url, invoice_file_name, invoice_received_at, paid_at, paid_by, payment_reference, notes, created_at, updated_at'
-        )
-        .single()
-        .returns<PaymentRequestRaw>();
-
-      if (createError) {
-        console.error('Erreur création demande:', createError);
-        throw new Error(
-          'Erreur lors de la création de la demande de versement'
-        );
-      }
-
-      // 3. Créer les items (liaison avec commissions)
-      const items = commissions.map(c => ({
-        payment_request_id: request.id,
-        commission_id: c.id,
-        commission_amount_ttc:
-          c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0,
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('linkme_payment_request_items')
-        .insert(items);
-
-      if (itemsError) {
-        console.error('Erreur création items:', itemsError);
-        // Rollback: supprimer la demande
-        await supabase
-          .from('linkme_payment_requests')
-          .delete()
-          .eq('id', request.id);
-        throw new Error(
-          'Erreur lors de la liaison des commissions à la demande'
-        );
-      }
-
-      // 4. Mettre à jour les commissions avec le statut 'requested'
-      await supabase
-        .from('linkme_commissions')
-        .update({ status: 'requested' })
-        .in('id', commissionIds);
-
-      return {
-        ...request,
-        status: request.status as PaymentRequestAdmin['status'],
-      };
-    },
+    mutationFn: createPaymentRequestFn,
     onSuccess: async () => {
       // Invalider les caches
       await queryClient.invalidateQueries({

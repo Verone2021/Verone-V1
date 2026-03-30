@@ -39,6 +39,55 @@ export interface LinkMeAffiliate {
   is_active: boolean;
 }
 
+function mapAffiliates(
+  affiliates: Array<{
+    id: string;
+    display_name: string;
+    slug: string;
+    logo_url: string | null;
+    enseigne_id: string | null;
+    organisation_id: string | null;
+    default_margin_rate: number | null;
+    linkme_commission_rate: number | null;
+    status: string | null;
+    enseigne: { id: string; name: string } | null;
+    organisation: {
+      id: string;
+      trade_name: string | null;
+      legal_name: string;
+    } | null;
+  }>,
+  selectionsCountMap: Map<string, number>,
+  type?: AffiliateType
+): LinkMeAffiliate[] {
+  return affiliates
+    .map(affiliate => {
+      const affiliateType: AffiliateType = affiliate.enseigne_id
+        ? 'enseigne'
+        : 'org_independante';
+
+      return {
+        id: affiliate.id,
+        display_name: affiliate.display_name,
+        slug: affiliate.slug,
+        type: affiliateType,
+        enseigne_id: affiliate.enseigne_id,
+        organisation_id: affiliate.organisation_id,
+        enseigne_name: affiliate.enseigne?.name ?? null,
+        organisation_name:
+          affiliate.organisation?.trade_name ??
+          affiliate.organisation?.legal_name ??
+          null,
+        logo_url: affiliate.logo_url,
+        default_margin_rate: affiliate.default_margin_rate,
+        linkme_commission_rate: affiliate.linkme_commission_rate,
+        selections_count: selectionsCountMap.get(affiliate.id) ?? 0,
+        is_active: affiliate.status === 'active',
+      };
+    })
+    .filter(a => (type ? a.type === type : true));
+}
+
 /**
  * Fetch tous les affiliés LinkMe avec leur type
  * @param type - Optionnel: filtrer par type d'affilié
@@ -95,46 +144,7 @@ async function fetchLinkMeAffiliates(
     );
   });
 
-  // Mapper les résultats
-  const result: LinkMeAffiliate[] = affiliates
-    .map(affiliate => {
-      // Déterminer le type basé sur enseigne_id ou organisation_id
-      const affiliateType: AffiliateType = affiliate.enseigne_id
-        ? 'enseigne'
-        : 'org_independante';
-
-      // Nom de l'enseigne ou organisation
-      const enseigneName = affiliate.enseigne?.name ?? null;
-      const organisationName =
-        affiliate.organisation?.trade_name ??
-        affiliate.organisation?.legal_name ??
-        null;
-
-      return {
-        id: affiliate.id,
-        display_name: affiliate.display_name,
-        slug: affiliate.slug,
-        type: affiliateType,
-        enseigne_id: affiliate.enseigne_id,
-        organisation_id: affiliate.organisation_id,
-        enseigne_name: enseigneName,
-        organisation_name: organisationName,
-        logo_url: affiliate.logo_url,
-        default_margin_rate: affiliate.default_margin_rate,
-        linkme_commission_rate: affiliate.linkme_commission_rate,
-        selections_count: selectionsCountMap.get(affiliate.id) ?? 0,
-        is_active: affiliate.status === 'active',
-      };
-    })
-    .filter((a: LinkMeAffiliate) => {
-      // Filtrer par type si spécifié
-      if (type) {
-        return a.type === type;
-      }
-      return true;
-    });
-
-  return result;
+  return mapAffiliates(affiliates, selectionsCountMap, type);
 }
 
 /**

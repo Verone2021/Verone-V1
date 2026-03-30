@@ -98,19 +98,37 @@ export interface OrganisationWithEnseigne {
  * @param organisationId - ID de l'organisation
  * @returns Organisation avec enseigne parente
  */
-export function useOrganisationWithEnseigne(organisationId: string | null) {
-  return useQuery({
-    queryKey: ['organisation-with-enseigne', organisationId],
-    queryFn: async (): Promise<OrganisationWithEnseigne | null> => {
-      if (!organisationId) return null;
+function mapEnseigneData(
+  enseigneData: { id: string; name: string; logo_url: string | null },
+  parentOrgData: EnseigneParentOrgRow | null
+) {
+  return {
+    id: enseigneData.id,
+    name: enseigneData.name,
+    legalName: parentOrgData?.legal_name ?? null,
+    logoUrl: enseigneData.logo_url,
+    address: {
+      line1: parentOrgData?.billing_address_line1 ?? null,
+      line2: parentOrgData?.billing_address_line2 ?? null,
+      postalCode: parentOrgData?.billing_postal_code ?? null,
+      city: parentOrgData?.billing_city ?? null,
+      country: parentOrgData?.billing_country ?? null,
+    },
+    siret: parentOrgData?.siret ?? null,
+    vatNumber: parentOrgData?.vat_number ?? null,
+  };
+}
 
-      const supabase = createClient();
+async function fetchOrganisationWithEnseigne(
+  organisationId: string
+): Promise<OrganisationWithEnseigne | null> {
+  const supabase = createClient();
 
-      // Query 1: Organisation avec join enseigne (colonnes existantes uniquement)
-      const { data: rawData, error } = await supabase
-        .from('organisations')
-        .select(
-          `
+  // Query 1: Organisation avec join enseigne (colonnes existantes uniquement)
+  const { data: rawData, error } = await supabase
+    .from('organisations')
+    .select(
+      `
           id,
           trade_name,
           legal_name,
@@ -131,70 +149,61 @@ export function useOrganisationWithEnseigne(organisationId: string | null) {
             logo_url
           )
         `
-        )
-        .eq('id', organisationId)
-        .single();
+    )
+    .eq('id', organisationId)
+    .single();
 
-      if (error) {
-        console.error('[useOrganisationWithEnseigne] Error:', error);
-        throw error;
-      }
+  if (error) {
+    console.error('[useOrganisationWithEnseigne] Error:', error);
+    throw error;
+  }
 
-      if (!rawData) return null;
+  if (!rawData) return null;
 
-      // Type assertion pour le retour Supabase avec join
-      const data = rawData as OrganisationRow;
-      const enseigneData = data.enseigne;
+  // Type assertion pour le retour Supabase avec join
+  const data = rawData as OrganisationRow;
+  const enseigneData = data.enseigne;
 
-      // Query 2: Récupérer l'org parente de l'enseigne (billing/siret/vat)
-      let parentOrgData: EnseigneParentOrgRow | null = null;
-      if (enseigneData) {
-        const { data: parentOrg } = await supabase
-          .from('organisations')
-          .select(
-            'legal_name, billing_address_line1, billing_address_line2, billing_postal_code, billing_city, billing_country, siret, vat_number'
-          )
-          .eq('enseigne_id', enseigneData.id)
-          .eq('is_enseigne_parent', true)
-          .maybeSingle();
+  // Query 2: Récupérer l'org parente de l'enseigne (billing/siret/vat)
+  let parentOrgData: EnseigneParentOrgRow | null = null;
+  if (enseigneData) {
+    const { data: parentOrg } = await supabase
+      .from('organisations')
+      .select(
+        'legal_name, billing_address_line1, billing_address_line2, billing_postal_code, billing_city, billing_country, siret, vat_number'
+      )
+      .eq('enseigne_id', enseigneData.id)
+      .eq('is_enseigne_parent', true)
+      .maybeSingle();
 
-        parentOrgData = parentOrg as EnseigneParentOrgRow | null;
-      }
+    parentOrgData = parentOrg as EnseigneParentOrgRow | null;
+  }
 
-      return {
-        id: data.id,
-        tradeName: data.trade_name,
-        legalName: data.legal_name,
-        logoUrl: data.logo_url,
-        ownershipType: data.ownership_type,
-        address: {
-          line1: data.shipping_address_line1 ?? data.billing_address_line1,
-          line2: data.billing_address_line2,
-          postalCode: data.shipping_postal_code ?? data.billing_postal_code,
-          city: data.shipping_city ?? data.billing_city,
-          country: data.shipping_country ?? data.billing_country,
-        },
-        enseigne: enseigneData
-          ? {
-              id: enseigneData.id,
-              name: enseigneData.name,
-              legalName: parentOrgData?.legal_name ?? null,
-              logoUrl: enseigneData.logo_url,
-              address: {
-                line1: parentOrgData?.billing_address_line1 ?? null,
-                line2: parentOrgData?.billing_address_line2 ?? null,
-                postalCode: parentOrgData?.billing_postal_code ?? null,
-                city: parentOrgData?.billing_city ?? null,
-                country: parentOrgData?.billing_country ?? null,
-              },
-              siret: parentOrgData?.siret ?? null,
-              vatNumber: parentOrgData?.vat_number ?? null,
-            }
-          : null,
-      };
+  return {
+    id: data.id,
+    tradeName: data.trade_name,
+    legalName: data.legal_name,
+    logoUrl: data.logo_url,
+    ownershipType: data.ownership_type,
+    address: {
+      line1: data.shipping_address_line1 ?? data.billing_address_line1,
+      line2: data.billing_address_line2,
+      postalCode: data.shipping_postal_code ?? data.billing_postal_code,
+      city: data.shipping_city ?? data.billing_city,
+      country: data.shipping_country ?? data.billing_country,
     },
+    enseigne: enseigneData
+      ? mapEnseigneData(enseigneData, parentOrgData)
+      : null,
+  };
+}
+
+export function useOrganisationWithEnseigne(organisationId: string | null) {
+  return useQuery({
+    queryKey: ['organisation-with-enseigne', organisationId],
+    queryFn: () => fetchOrganisationWithEnseigne(organisationId!),
     enabled: !!organisationId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 

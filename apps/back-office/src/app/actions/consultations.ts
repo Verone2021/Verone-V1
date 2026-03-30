@@ -42,6 +42,52 @@ interface CreateConsultationResult {
  * @param userId - L'ID de l'utilisateur qui effectue l'action
  * @returns Résultat de l'opération avec success/error/data
  */
+function buildConsultationInsertData(
+  data: CreateConsultationData,
+  userId: string
+) {
+  return {
+    enseigne_id: data.enseigne_id ?? null,
+    organisation_id: data.organisation_id ?? null,
+    client_email: data.client_email,
+    client_phone: data.client_phone,
+    descriptif: data.descriptif,
+    image_url: data.image_url,
+    tarif_maximum: data.tarif_maximum,
+    priority_level: data.priority_level ?? 2,
+    source_channel: data.source_channel ?? 'website',
+    estimated_response_date: data.estimated_response_date,
+    status: 'en_attente' as const,
+    created_by: userId,
+  };
+}
+
+async function insertConsultationImages(
+  supabase: ReturnType<typeof createAdminClient>,
+  consultationId: string,
+  images: NonNullable<CreateConsultationData['images']>,
+  userId: string
+) {
+  const imageRows = images.map((img, index) => ({
+    consultation_id: consultationId,
+    storage_path: img.storagePath,
+    public_url: img.publicUrl,
+    display_order: index,
+    is_primary: index === 0,
+    file_size: img.fileSize,
+    format: img.fileName.split('.').pop()?.toLowerCase() ?? null,
+    created_by: userId,
+  }));
+  const { error } = await supabase
+    .from('consultation_images')
+    .insert(imageRows);
+  if (error) {
+    console.error('⚠️ [Server Action] Erreur INSERT images:', error);
+  } else {
+    console.warn(`✅ [Server Action] ${imageRows.length} image(s) associée(s)`);
+  }
+}
+
 export async function createConsultation(
   consultationData: CreateConsultationData,
   userId: string
@@ -69,22 +115,7 @@ export async function createConsultation(
     // Stocker l'utilisateur courant en session PostgreSQL pour les triggers
     await supabase.rpc('set_current_user_id', { user_id: userId });
 
-    // Préparer les données avec valeurs par défaut
-    const dataToInsert = {
-      enseigne_id: consultationData.enseigne_id ?? null,
-      organisation_id: consultationData.organisation_id ?? null,
-      client_email: consultationData.client_email,
-      client_phone: consultationData.client_phone,
-      descriptif: consultationData.descriptif,
-      image_url: consultationData.image_url,
-      tarif_maximum: consultationData.tarif_maximum,
-      priority_level: consultationData.priority_level ?? 2,
-      source_channel: consultationData.source_channel ?? 'website',
-      estimated_response_date: consultationData.estimated_response_date,
-      status: 'en_attente' as const,
-      created_by: userId,
-    };
-
+    const dataToInsert = buildConsultationInsertData(consultationData, userId);
     console.warn(`🔧 [Server Action] Données à insérer:`, dataToInsert);
 
     // Insérer la consultation
@@ -115,31 +146,13 @@ export async function createConsultation(
       `✅ [Server Action] Consultation créée avec succès: ${newConsultation.id}`
     );
 
-    // Insérer les images dans consultation_images si présentes
     if (consultationData.images && consultationData.images.length > 0) {
-      const imageRows = consultationData.images.map((img, index) => ({
-        consultation_id: newConsultation.id,
-        storage_path: img.storagePath,
-        public_url: img.publicUrl,
-        display_order: index,
-        is_primary: index === 0,
-        file_size: img.fileSize,
-        format: img.fileName.split('.').pop()?.toLowerCase() ?? null,
-        created_by: userId,
-      }));
-
-      const { error: imagesError } = await supabase
-        .from('consultation_images')
-        .insert(imageRows);
-
-      if (imagesError) {
-        console.error('⚠️ [Server Action] Erreur INSERT images:', imagesError);
-        // Non bloquant : la consultation est créée, les images sont en erreur
-      } else {
-        console.warn(
-          `✅ [Server Action] ${imageRows.length} image(s) associée(s)`
-        );
-      }
+      await insertConsultationImages(
+        supabase,
+        newConsultation.id,
+        consultationData.images,
+        userId
+      );
     }
 
     // Revalider le cache Next.js pour la page des consultations

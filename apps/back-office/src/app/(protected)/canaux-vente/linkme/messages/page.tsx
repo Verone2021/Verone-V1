@@ -31,6 +31,24 @@ import { WaitingTab } from './components/WaitingTab';
 import { HistoryTab } from './components/HistoryTab';
 import { NotificationsTab } from './components/NotificationsTab';
 
+function PageHeader() {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+        <MessageSquare className="h-5 w-5 text-blue-600" />
+      </div>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Centre de messagerie LinkMe
+        </h1>
+        <p className="text-sm text-gray-500">
+          Demandes d&apos;informations, suivi et notifications affilies
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function MessagesPage() {
   const { data: orders, isLoading } = useOrdersWithMissingFields();
 
@@ -46,20 +64,7 @@ export default function MessagesPage() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-          <MessageSquare className="h-5 w-5 text-blue-600" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Centre de messagerie LinkMe
-          </h1>
-          <p className="text-sm text-gray-500">
-            Demandes d&apos;informations, suivi et notifications affilies
-          </p>
-        </div>
-      </div>
+      <PageHeader />
 
       {/* Tabs */}
       <Tabs defaultValue="missing-fields">

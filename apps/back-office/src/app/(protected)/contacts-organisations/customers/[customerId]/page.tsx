@@ -105,7 +105,6 @@ function getOwnershipBadge(
   }
 }
 
-// eslint-disable-next-line max-lines-per-function
 export default function CustomerDetailPage() {
   const { customerId } = useParams();
   const searchParams = useSearchParams();

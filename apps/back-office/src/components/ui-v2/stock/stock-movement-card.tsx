@@ -76,6 +76,46 @@ export interface StockMovementCardProps {
  * - Hover subtil
  * - Pas de Card wrapper (double bordure évitée)
  */
+function formatMovementDate(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    const diffDays = Math.floor(
+      (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    if (diffDays === 0) return format(date, 'HH:mm', { locale: fr });
+    if (diffDays === 1) return `Hier ${format(date, 'HH:mm', { locale: fr })}`;
+    if (diffDays < 7) return format(date, 'EEE HH:mm', { locale: fr });
+    return format(date, 'dd/MM HH:mm', { locale: fr });
+  } catch {
+    return dateStr;
+  }
+}
+
+function MovementThumbnail({
+  imageUrl,
+  name,
+}: {
+  imageUrl?: string | null;
+  name: string;
+}) {
+  if (imageUrl) {
+    return (
+      <Image
+        src={imageUrl}
+        alt={name}
+        width={32}
+        height={32}
+        className="rounded object-cover flex-shrink-0"
+      />
+    );
+  }
+  return (
+    <div className="h-8 w-8 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
+      <Package className="h-4 w-4 text-gray-400" />
+    </div>
+  );
+}
+
 export function StockMovementCard({
   movement,
   onClick,
@@ -83,30 +123,6 @@ export function StockMovementCard({
 }: StockMovementCardProps) {
   const config = MOVEMENT_CONFIG[movement.movement_type];
   const isClickable = !!onClick;
-
-  /**
-   * Formater la date de façon concise
-   */
-  const formatDate = (dateStr: string): string => {
-    try {
-      const date = new Date(dateStr);
-      const now = new Date();
-      const diffTime = now.getTime() - date.getTime();
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-      if (diffDays === 0) {
-        return format(date, 'HH:mm', { locale: fr });
-      } else if (diffDays === 1) {
-        return `Hier ${format(date, 'HH:mm', { locale: fr })}`;
-      } else if (diffDays < 7) {
-        return format(date, 'EEE HH:mm', { locale: fr });
-      } else {
-        return format(date, 'dd/MM HH:mm', { locale: fr });
-      }
-    } catch {
-      return dateStr;
-    }
-  };
 
   return (
     <div
@@ -138,20 +154,10 @@ export function StockMovementCard({
       )}
     >
       <div className="flex items-center gap-3">
-        {/* Image produit - petit (32x32) */}
-        {movement.products?.image_url ? (
-          <Image
-            src={movement.products.image_url}
-            alt={movement.products?.name ?? 'Produit'}
-            width={32}
-            height={32}
-            className="rounded object-cover flex-shrink-0"
-          />
-        ) : (
-          <div className="h-8 w-8 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
-            <Package className="h-4 w-4 text-gray-400" />
-          </div>
-        )}
+        <MovementThumbnail
+          imageUrl={movement.products?.image_url}
+          name={movement.products?.name ?? 'Produit'}
+        />
 
         {/* Contenu principal */}
         <div className="flex-1 min-w-0">
@@ -177,7 +183,7 @@ export function StockMovementCard({
           <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
             <span>{config.label}</span>
             <span>•</span>
-            <span>{formatDate(movement.performed_at)}</span>
+            <span>{formatMovementDate(movement.performed_at)}</span>
           </div>
         </div>
       </div>
