@@ -1,4 +1,4 @@
-/* eslint-disable max-lines, max-lines-per-function -- TODO: extract sub-components (role selector, password section, enseigne/org selector) */
+/* eslint-disable max-lines -- TODO: extract sub-components (role selector, password section, enseigne/org selector) */
 'use client';
 
 import { useState, useEffect } from 'react';

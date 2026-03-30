@@ -156,9 +156,10 @@ npm run dev --filter=site-internet
 
 ### For AI Agents
 
-**Consulter `AGENTS.md`** pour instructions detaillees.
+**Consulter `.claude/INDEX.md`** pour instructions detaillees.
 
 **Critical Paths:**
+
 - Credentials: `.serena/memories/*-credentials-*.md`
 - Context: `docs/current/serena/INDEX.md`
 - Database: `.mcp.env`
@@ -305,11 +306,11 @@ Tasks trackées dans `.tasks/` (Git-tracked, 1 fichier par task).
 
 `[APP]-[DOMAIN]-[NNN]` où APP = BO | LM | WEB
 
-| Prefixe | Application     |
-|---------|-----------------|
-| `BO-*`  | back-office     |
-| `LM-*`  | linkme          |
-| `WEB-*` | site-internet   |
+| Prefixe | Application   |
+| ------- | ------------- |
+| `BO-*`  | back-office   |
+| `LM-*`  | linkme        |
+| `WEB-*` | site-internet |
 
 ### Créer une Task
 

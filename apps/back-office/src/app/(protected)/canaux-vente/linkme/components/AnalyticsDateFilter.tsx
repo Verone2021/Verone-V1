@@ -190,6 +190,105 @@ export function AnalyticsDateFilter(props: AnalyticsDateFilterProps) {
 // Nouvelle implémentation (avec sélection de mois)
 // ============================================================================
 
+function YearSelectorRow({
+  year,
+  availableYears,
+  dateLabel,
+  isLoading,
+  onYearChange,
+  onRefresh,
+}: {
+  year: number;
+  availableYears: number[];
+  dateLabel: string;
+  isLoading?: boolean;
+  onYearChange: (yearStr: string) => void;
+  onRefresh: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <Tabs value={String(year)} onValueChange={onYearChange}>
+        <TabsList className="bg-gray-100">
+          <TabsTrigger
+            value={String(ALL_YEARS_VALUE)}
+            className="text-xs data-[state=active]:bg-purple-600 data-[state=active]:text-white px-4"
+          >
+            Tout
+          </TabsTrigger>
+          {availableYears.map(y => (
+            <TabsTrigger
+              key={y}
+              value={String(y)}
+              className="text-xs data-[state=active]:bg-white px-3"
+            >
+              {y}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+      <Badge
+        variant="outline"
+        className="bg-gray-50 text-gray-600 border-gray-200"
+      >
+        <CalendarDays className="h-3 w-3 mr-1" />
+        {dateLabel}
+      </Badge>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onRefresh}
+        disabled={isLoading}
+        className="gap-2"
+      >
+        <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
+        Actualiser
+      </Button>
+    </div>
+  );
+}
+
+function MonthSelector({
+  months,
+  onToggle,
+  onClear,
+}: {
+  months: number[];
+  onToggle: (month: number) => void;
+  onClear: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <span className="text-xs text-gray-500 mr-1">Mois:</span>
+      {MONTHS.map(month => {
+        const isSelected = months.includes(month.value);
+        return (
+          <button
+            key={month.value}
+            onClick={() => onToggle(month.value)}
+            className={cn(
+              'text-xs px-2 py-1 rounded border transition-colors',
+              isSelected
+                ? 'bg-purple-600 text-white border-purple-600'
+                : 'bg-white text-gray-700 border-gray-300 hover:border-purple-400'
+            )}
+          >
+            {isSelected && <Check className="h-3 w-3 inline mr-1" />}
+            {month.label}
+          </button>
+        );
+      })}
+      {months.length > 0 && (
+        <button
+          onClick={onClear}
+          className="text-xs text-purple-600 hover:underline ml-2"
+        >
+          Tout effacer
+        </button>
+      )}
+    </div>
+  );
+}
+
 function AnalyticsDateFilterNew({
   filters,
   availableYears,
@@ -230,84 +329,21 @@ function AnalyticsDateFilterNew({
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Row 1: Year selector + Refresh button */}
-      <div className="flex items-center gap-3">
-        {/* Year Selector avec "Tout" en premier */}
-        <Tabs value={String(filters.year)} onValueChange={handleYearChange}>
-          <TabsList className="bg-gray-100">
-            {/* Bouton "Tout" en premier */}
-            <TabsTrigger
-              value={String(ALL_YEARS_VALUE)}
-              className="text-xs data-[state=active]:bg-purple-600 data-[state=active]:text-white px-4"
-            >
-              Tout
-            </TabsTrigger>
-            {/* Années disponibles */}
-            {availableYears.map(year => (
-              <TabsTrigger
-                key={year}
-                value={String(year)}
-                className="text-xs data-[state=active]:bg-white px-3"
-              >
-                {year}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+      <YearSelectorRow
+        year={filters.year}
+        availableYears={availableYears}
+        dateLabel={dateLabel}
+        isLoading={isLoading}
+        onYearChange={handleYearChange}
+        onRefresh={onRefresh}
+      />
 
-        {/* Date Range Badge */}
-        <Badge
-          variant="outline"
-          className="bg-gray-50 text-gray-600 border-gray-200"
-        >
-          <CalendarDays className="h-3 w-3 mr-1" />
-          {dateLabel}
-        </Badge>
-
-        {/* Refresh Button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onRefresh}
-          disabled={isLoading}
-          className="gap-2"
-        >
-          <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
-          Actualiser
-        </Button>
-      </div>
-
-      {/* Row 2: Month selector (hidden when "Tout" is selected) */}
       {!isAllTime && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-gray-500 mr-1">Mois:</span>
-          {MONTHS.map(month => {
-            const isSelected = filters.months.includes(month.value);
-            return (
-              <button
-                key={month.value}
-                onClick={() => handleMonthToggle(month.value)}
-                className={cn(
-                  'text-xs px-2 py-1 rounded border transition-colors',
-                  isSelected
-                    ? 'bg-purple-600 text-white border-purple-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-purple-400'
-                )}
-              >
-                {isSelected && <Check className="h-3 w-3 inline mr-1" />}
-                {month.label}
-              </button>
-            );
-          })}
-          {filters.months.length > 0 && (
-            <button
-              onClick={handleClearMonths}
-              className="text-xs text-purple-600 hover:underline ml-2"
-            >
-              Tout effacer
-            </button>
-          )}
-        </div>
+        <MonthSelector
+          months={filters.months}
+          onToggle={handleMonthToggle}
+          onClear={handleClearMonths}
+        />
       )}
     </div>
   );

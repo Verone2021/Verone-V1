@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 'use client';
 
 import { useState, useMemo, useRef } from 'react';
@@ -39,7 +40,6 @@ import {
   Layers,
   MessageCircle,
   FileText,
-  Banknote,
   Globe,
   Link2,
   Calculator,
@@ -47,7 +47,6 @@ import {
   ArrowLeftRight,
   Grid3x3,
   BookOpenCheck,
-  FolderArchive,
 } from 'lucide-react';
 
 import { PhaseIndicator } from '@/components/ui/phase-indicator';
@@ -172,9 +171,8 @@ const getNavItems = (
     title: 'Stocks',
     href: '/stocks',
     icon: Layers,
-    badge: stockAlertsCount + expeditionsPendingCount,
-    badgeVariant:
-      stockAlertsCount + expeditionsPendingCount > 0 ? 'urgent' : undefined,
+    badge: stockAlertsCount,
+    badgeVariant: stockAlertsCount > 0 ? 'urgent' : undefined,
     children: [
       {
         title: 'Alertes',
@@ -188,10 +186,34 @@ const getNavItems = (
         href: '/stocks/inventaire',
         icon: Package,
       },
+    ],
+  },
+  {
+    title: 'Ventes',
+    href: '/ventes',
+    icon: Target,
+    badge: ordersPendingCount + consultationsCount,
+    badgeVariant:
+      ordersPendingCount + consultationsCount > 0 ? 'urgent' : undefined,
+    children: [
       {
-        title: 'Réceptions',
-        href: '/stocks/receptions',
-        icon: Truck,
+        title: 'Consultations',
+        href: '/consultations',
+        icon: MessageCircle,
+        badge: consultationsCount,
+        badgeVariant: consultationsCount > 0 ? 'urgent' : undefined,
+      },
+      {
+        title: 'Commandes clients',
+        href: '/commandes/clients',
+        icon: Users,
+        badge: ordersPendingCount,
+        badgeVariant: ordersPendingCount > 0 ? 'urgent' : undefined,
+      },
+      {
+        title: 'Devis',
+        href: '/factures?tab=devis',
+        icon: FileText,
       },
       {
         title: 'Expéditions',
@@ -200,41 +222,29 @@ const getNavItems = (
         badge: expeditionsPendingCount,
         badgeVariant: expeditionsPendingCount > 0 ? 'urgent' : undefined,
       },
-      // Stockage et Mouvements supprimés - accès via Inventaire
+      {
+        title: 'Factures',
+        href: '/factures',
+        icon: FileText,
+      },
     ],
   },
   {
-    title: 'Commandes',
-    href: '/commandes',
-    icon: ShoppingBag,
-    badge: ordersPendingCount,
-    badgeVariant: ordersPendingCount > 0 ? 'urgent' : undefined,
+    title: 'Achats',
+    href: '/achats',
+    icon: Building2,
     children: [
       {
-        title: 'Clients',
-        href: '/commandes/clients',
-        icon: Users,
-        badge: ordersPendingCount,
-        badgeVariant: ordersPendingCount > 0 ? 'urgent' : undefined,
-      },
-      {
-        title: 'Fournisseurs',
+        title: 'Commandes fournisseurs',
         href: '/commandes/fournisseurs',
         icon: Building2,
       },
+      {
+        title: 'Réceptions',
+        href: '/stocks/receptions',
+        icon: Truck,
+      },
     ],
-  },
-  {
-    title: 'Ventes',
-    href: '/ventes',
-    icon: Target,
-  },
-  {
-    title: 'Consultations',
-    href: '/consultations',
-    icon: MessageCircle,
-    badge: consultationsCount,
-    badgeVariant: consultationsCount > 0 ? 'urgent' : undefined,
   },
   // ============ CANAUX DE VENTE ============
   {
@@ -301,22 +311,7 @@ const getNavItems = (
         href: '/finance/documents',
         icon: BookOpenCheck,
       },
-      {
-        title: 'Bibliothèque',
-        href: '/finance/bibliotheque',
-        icon: FolderArchive,
-      },
-      {
-        title: 'Clôture exercice',
-        href: '/finance/admin/cloture',
-        icon: Banknote,
-      },
     ],
-  },
-  {
-    title: 'Livraisons',
-    href: '/livraisons',
-    icon: Truck,
   },
   {
     title: 'Paramètres',
@@ -700,6 +695,8 @@ function SidebarContent() {
     }
 
     // Items avec enfants → Collapsible (Accordion inline)
+    // Clic sur le texte/icone = navigue vers href + ouvre les enfants
+    // Clic sur le chevron = toggle les enfants uniquement
     if (item.children && item.children.length > 0) {
       return (
         <li key={item.title}>
@@ -707,10 +704,16 @@ function SidebarContent() {
             open={isItemExpanded}
             onOpenChange={() => toggleExpanded(item.title)}
           >
-            <CollapsibleTrigger asChild>
-              <button
+            <div className="flex w-full items-center">
+              <Link
+                href={item.href ?? '#'}
+                onClick={() => {
+                  if (!isItemExpanded) {
+                    toggleExpanded(item.title);
+                  }
+                }}
                 className={cn(
-                  'nav-item w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md relative',
+                  'nav-item flex-1 flex items-center gap-2 px-3 py-2 text-sm rounded-l-md relative',
                   'transition-all duration-200 ease-out',
                   'text-black/70 hover:text-black hover:bg-black/5 hover:translate-x-0.5',
                   isActiveItem && 'bg-black text-white shadow-sm'
@@ -723,14 +726,25 @@ function SidebarContent() {
                 {item.badge &&
                   item.badge > 0 &&
                   renderBadgeWithDropdown(item.title, item.badge)}
-                <ChevronRight
+              </Link>
+              <CollapsibleTrigger asChild>
+                <button
                   className={cn(
-                    'h-4 w-4 transition-transform duration-200',
-                    isItemExpanded ? 'rotate-90' : 'rotate-0'
+                    'px-1 py-2 rounded-r-md',
+                    'transition-all duration-200 ease-out',
+                    'text-black/70 hover:text-black hover:bg-black/5',
+                    isActiveItem && 'bg-black text-white shadow-sm'
                   )}
-                />
-              </button>
-            </CollapsibleTrigger>
+                >
+                  <ChevronRight
+                    className={cn(
+                      'h-4 w-4 transition-transform duration-200',
+                      isItemExpanded ? 'rotate-90' : 'rotate-0'
+                    )}
+                  />
+                </button>
+              </CollapsibleTrigger>
+            </div>
             <CollapsibleContent className="overflow-hidden transition-all duration-200">
               <ul className="mt-1 space-y-1 ml-8">
                 {item.children.map(child => {

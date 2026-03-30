@@ -1,123 +1,67 @@
-# Commandes Slash - Guide d'Utilisation
+# Guide de Travail — Romeo + Claude Code
 
-Les commandes slash permettent d'invoquer des workflows specialises.
+## Demarrer une session
 
----
+Dis simplement ce que tu veux faire. Claude lit automatiquement ACTIVE.md et choisit le bon workflow.
 
-## Commandes Disponibles
+**Exemples :**
 
-| Commande     | Quand Utiliser                      | Sortie                             |
-| ------------ | ----------------------------------- | ---------------------------------- |
-| `/explore`   | "Ou est X?" "Comment fonctionne Y?" | Fichiers + patterns + architecture |
-| `/plan`      | "Comment faire Y?" (tache complexe) | Plan detaille avec etapes          |
-| `/implement` | "Executer le plan"                  | Code + commits                     |
-| `/db`        | "Migration DB"                      | SQL appliquee via psql             |
-| `/pr`        | "Creer PR"                          | PR creee avec description          |
-| `/teach`     | "Explique-moi X" (mode pedagogique) | Explication + alternatives         |
+- "On continue" → Claude lit ACTIVE.md, resume l'etat, propose la suite
+- "Le logo ne s'affiche pas sur la page organisations" → Bug fix (oneshot)
+- "Je veux ajouter un champ date de livraison" → Feature (implement)
+- "Fais un audit du module stock" → Audit (perf-optimizer ou review)
+- "Explique-moi comment marchent les commissions" → Pedagogie (teach)
 
----
+## Comment Claude choisit le workflow
 
-## Workflow Recommande
+| Ce que tu dis                    | Workflow                                      | Commande            |
+| -------------------------------- | --------------------------------------------- | ------------------- |
+| Bug simple, typo, ajustement CSS | **Oneshot** — fix rapide sans exploration     | Skill `oneshot`     |
+| Feature complete                 | **Implement** — search → plan → code → verify | `/implement`        |
+| "Explique-moi..."                | **Teach** — explication avant code            | `/teach`            |
+| "Fais un plan pour..."           | **Plan** — checklist dans ACTIVE.md           | `/plan`             |
+| "Review le code avant PR"        | **Review** — audit qualite                    | `/review`           |
+| "PR" ou "push"                   | **PR** — commit + push + PR staging           | `/pr`               |
+| "Verifie la DB pour..."          | **Schema Sync** — reference schema rapide     | Skill `schema-sync` |
 
-### Tache Simple (< 30 min)
+## Les agents
 
-```
-1. /explore   - Comprendre l'existant (optionnel si contexte connu)
-2. Code       - Implementer directement
-3. Commit     - Sauvegarder
-```
+Tu n'as pas besoin de les appeler. Claude choisit le bon automatiquement :
 
-### Tache Complexe (> 30 min)
+| Si tu parles de...                                  | Agent utilise          |
+| --------------------------------------------------- | ---------------------- |
+| Commandes LinkMe, commissions, selections, affilies | `linkme-expert`        |
+| Produits, stock, factures, finance, dashboard       | `back-office-expert`   |
+| Site e-commerce, catalogue, panier, checkout        | `site-internet-expert` |
+| Migration DB, RLS, triggers                         | `database-architect`   |
+| Performance, dead code, optimisation                | `perf-optimizer`       |
+| Composant UI, design system                         | `frontend-architect`   |
+| Qualite code avant PR                               | `code-reviewer`        |
 
-```
-1. /explore   - Comprendre l'existant
-2. /plan      - Planifier si complexe
-3. /implement - Executer le plan
-4. /pr        - Finaliser (si demande)
-```
+## ACTIVE.md — qui le met a jour ?
 
-### Migration Database
+**Claude le met a jour.** Apres chaque tache terminee :
 
-```
-1. /db        - Workflow complet migration
-```
+1. Claude marque la tache `[x]` dans ACTIVE.md
+2. Claude ajoute les nouvelles taches si necessaire
+3. Claude supprime les taches mergees
 
----
+**Toi** tu decides quelles taches ajouter et dans quel ordre les faire.
 
-## Description Detaillee
+## Playwright MCP
 
-### /explore
+Pour tester visuellement, il faut que le serveur dev tourne.
+**Toi** tu lances : `pnpm dev` (ou `pnpm dev:bo` pour back-office seul)
+**Claude** utilise Playwright pour naviguer, verifier les pages, prendre des screenshots.
 
-**Usage**: Exploration exhaustive du codebase
+## Regles automatiques (tu n'as rien a faire)
 
-- Recherche de fichiers par pattern
-- Analyse de symboles et relations
-- Comprehension architecture existante
-
-**Exemple**: "Ou sont geres les produits?"
-
-### /plan
-
-**Usage**: Planification mode PLAN (read-only)
-
-- Analyse de la tache
-- Decomposition en etapes
-- Identification risques
-- Demande approbation
-
-**Exemple**: "Comment ajouter le module facturation?"
-
-### /implement
-
-**Usage**: Implementation feature complete
-
-- Explore -> Code -> Verify
-- Workflow structuré
-- Commits frequents
-
-**Exemple**: "Implementer le plan approuve"
-
-### /db
-
-**Usage**: Operations Supabase rapides
-
-- Migrations SQL
-- RLS policies
-- Triggers
-- Application via psql
-
-**Exemple**: "Ajouter colonne status a orders"
-
-### /pr
-
-**Usage**: Creation Pull Request
-
-- Auto-generation titre
-- Auto-generation description
-- Push + creation PR
-
-**Exemple**: "Creer PR pour cette feature"
-
-### /teach
-
-**Usage**: Mode pedagogique expert
-
-- Explication concept (pourquoi, comment)
-- Pieges a eviter
-- Alternatives avec trade-offs
-- Questions clarification
-
-**Exemple**: "/teach React Query mutations"
-
----
-
-## Regles
-
-1. **Toujours /explore avant /implement** sur code inconnu
-2. **Toujours /plan** pour taches > 5 fichiers
-3. **/pr uniquement sur demande** (mode manuel)
-4. **/db applique via psql** automatiquement
-
----
-
-**Derniere mise a jour**: 2026-02-01
+| Regle            | Quand                      | Effet                                      |
+| ---------------- | -------------------------- | ------------------------------------------ |
+| Triple Lecture   | Avant toute modification   | Claude lit 3 fichiers similaires           |
+| Type-check auto  | Apres chaque edit .ts/.tsx | Verification TypeScript immediate          |
+| Protection main  | Commit/push                | Bloque si on est sur main                  |
+| Format commit    | Chaque commit              | Impose [APP-DOMAIN-NNN] type: desc         |
+| Zero any         | Chaque edit                | Bloque si TypeScript `any` detecte         |
+| Verif historique | Avant implementation       | Claude verifie git log si ca a deja echoue |
+| TEACH-FIRST      | Toujours                   | Claude dit NON si best practice violee     |

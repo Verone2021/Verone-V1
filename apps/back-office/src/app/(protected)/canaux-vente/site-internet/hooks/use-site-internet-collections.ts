@@ -65,70 +65,64 @@ export function isCollectionVisibleOnChannel(
 /**
  * Toggle visibilité collection sur canal site internet (avec optimistic update)
  */
+function computeVisibleChannels(
+  currentChannels: string[] | null,
+  channelId: string,
+  isVisible: boolean
+): string[] | null {
+  if (currentChannels === null) return isVisible ? null : [];
+  if (isVisible) {
+    return currentChannels.includes(channelId)
+      ? currentChannels
+      : [...currentChannels, channelId];
+  }
+  return currentChannels.filter(id => id !== channelId);
+}
+
+async function toggleCollectionVisibilityFn({
+  collectionId,
+  isVisible,
+}: {
+  collectionId: string;
+  isVisible: boolean;
+}) {
+  const { data: channel } = await supabase
+    .from('sales_channels')
+    .select('id')
+    .eq('code', 'site_internet')
+    .single();
+  if (!channel) throw new Error('Canal site_internet non trouvé');
+
+  const { data: collection } = await supabase
+    .from('collections')
+    .select('visible_channels')
+    .eq('id', collectionId)
+    .single();
+  if (!collection) throw new Error('Collection non trouvée');
+
+  const newVisibleChannels = computeVisibleChannels(
+    (collection as Collection).visible_channels,
+    channel.id,
+    isVisible
+  );
+
+  const { error: updateError } = await supabase
+    .from('collections')
+    .update({
+      visible_channels: newVisibleChannels,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', collectionId);
+  if (updateError) throw updateError;
+
+  return { channelId: channel.id };
+}
+
 export function useToggleCollectionVisibility() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      collectionId,
-      isVisible,
-    }: {
-      collectionId: string;
-      isVisible: boolean;
-    }) => {
-      // 1. Récupérer canal site_internet id
-      const { data: channel } = await supabase
-        .from('sales_channels')
-        .select('id')
-        .eq('code', 'site_internet')
-        .single();
-
-      if (!channel) throw new Error('Canal site_internet non trouvé');
-
-      // 2. Récupérer collection actuelle
-      const { data: collection } = await supabase
-        .from('collections')
-        .select('visible_channels')
-        .eq('id', collectionId)
-        .single();
-
-      if (!collection) throw new Error('Collection non trouvée');
-
-      const collectionData = collection as Collection;
-
-      // 3. Calculer nouveau array visible_channels
-      let newVisibleChannels: string[] | null;
-
-      if (collectionData.visible_channels === null) {
-        // Si NULL (visible partout) → créer array avec seulement ce canal si on désactive
-        newVisibleChannels = isVisible ? null : [];
-      } else if (isVisible) {
-        // Ajouter canal si pas déjà présent
-        newVisibleChannels = collectionData.visible_channels.includes(
-          channel.id
-        )
-          ? collectionData.visible_channels
-          : [...collectionData.visible_channels, channel.id];
-      } else {
-        // Retirer canal
-        newVisibleChannels = collectionData.visible_channels.filter(
-          id => id !== channel.id
-        );
-      }
-
-      // 4. Update collection
-      const { error: updateError } = await supabase
-        .from('collections')
-        .update({
-          visible_channels: newVisibleChannels,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', collectionId);
-
-      if (updateError) throw updateError;
-
-      return { channelId: channel.id };
-    },
+    mutationFn: toggleCollectionVisibilityFn,
     onMutate: async ({ collectionId, isVisible }) => {
       // 1. Cancel ongoing queries
       await queryClient.cancelQueries({
@@ -158,28 +152,19 @@ export function useToggleCollectionVisibility() {
             old?.map(collection => {
               if (collection.id !== collectionId) return collection;
 
-              const collectionWithChannels = collection as Collection & {
-                visible_channels?: string[] | null;
-              };
-              const currentChannels = collectionWithChannels.visible_channels;
-
-              let newVisibleChannels: string[] | null;
-
-              if (currentChannels === null || currentChannels === undefined) {
-                newVisibleChannels = isVisible ? null : [];
-              } else if (isVisible) {
-                newVisibleChannels = currentChannels.includes(channelId)
-                  ? currentChannels
-                  : [...currentChannels, channelId];
-              } else {
-                newVisibleChannels = currentChannels.filter(
-                  id => id !== channelId
-                );
-              }
-
+              const currentChannels =
+                (
+                  collection as Collection & {
+                    visible_channels?: string[] | null;
+                  }
+                ).visible_channels ?? null;
               return {
                 ...collection,
-                visible_channels: newVisibleChannels,
+                visible_channels: computeVisibleChannels(
+                  currentChannels,
+                  channelId,
+                  isVisible
+                ),
               } as Collection;
             }) ?? []
         );

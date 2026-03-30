@@ -587,24 +587,18 @@ export function useLinkMeUsersStats() {
     queryFn: async () => {
       const users = await fetchLinkMeUsers();
 
-      const byRole = {
-        enseigne_admin: users.filter(u => u.linkme_role === 'enseigne_admin')
-          .length,
-        enseigne_collaborateur: users.filter(
-          u => u.linkme_role === 'enseigne_collaborateur'
-        ).length,
-        organisation_admin: users.filter(
-          u => u.linkme_role === 'organisation_admin'
-        ).length,
-      };
-
+      const countByRole = (role: LinkMeRole) =>
+        users.filter(u => u.linkme_role === role).length;
       const active = users.filter(u => u.is_active).length;
-
       return {
         total: users.length,
         active,
         inactive: users.length - active,
-        byRole,
+        byRole: {
+          enseigne_admin: countByRole('enseigne_admin'),
+          enseigne_collaborateur: countByRole('enseigne_collaborateur'),
+          organisation_admin: countByRole('organisation_admin'),
+        },
       };
     },
     staleTime: 60000,

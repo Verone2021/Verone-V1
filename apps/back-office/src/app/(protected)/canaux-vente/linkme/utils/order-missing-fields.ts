@@ -410,11 +410,21 @@ export function getOrderMissingFields(
     });
   }
 
+  // Date de livraison souhaitee (critique pour devis transport)
+  if (!details.desired_delivery_date) {
+    fields.push({
+      key: 'desired_delivery_date',
+      label: 'Date de livraison souhaitée',
+      category: 'delivery',
+      inputType: 'date',
+    });
+  }
+
   // Mall email (only if is_mall_delivery)
   if (details.is_mall_delivery && !details.mall_email) {
     fields.push({
       key: 'mall_email',
-      label: 'Email centre commercial',
+      label: 'Email direction centre commercial',
       category: 'delivery',
       inputType: 'email',
     });

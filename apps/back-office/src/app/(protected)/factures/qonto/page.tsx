@@ -1,244 +1,41 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 
 import Link from 'next/link';
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Badge,
-  Button,
-  Skeleton,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@verone/ui';
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import {
   ArrowLeft,
-  Download,
   RefreshCw,
   FileText,
   FileCheck,
   FileMinus,
 } from 'lucide-react';
 
-// ============================================================
-// TYPES
-// ============================================================
-
-interface QontoInvoice {
-  id: string;
-  number: string;
-  status: string;
-  total_amount: { value: string; currency: string };
-  total_amount_cents: number;
-  issue_date: string;
-  due_date: string;
-  pdf_url?: string;
-  client?: {
-    name: string;
-    email?: string;
-  };
-}
-
-interface QontoQuote {
-  id: string;
-  quote_number: string;
-  status: string;
-  total_amount: number;
-  currency: string;
-  issue_date: string;
-  expiry_date: string;
-  pdf_url?: string;
-  client?: {
-    name: string;
-    email?: string;
-  };
-}
-
-interface QontoCreditNote {
-  id: string;
-  number: string;
-  credit_note_number?: string;
-  status: string;
-  total_amount?: { value: string; currency: string };
-  total_amount_cents?: number;
-  issue_date: string;
-  pdf_url?: string;
-  client?: {
-    name: string;
-    email?: string;
-  };
-  invoice_id?: string;
-}
-
-type DocumentType = 'invoice' | 'quote' | 'credit_note';
-
-// API Response Interfaces
-interface QontoInvoicesResponse {
-  success: boolean;
-  invoices?: QontoInvoice[];
-  error?: string;
-}
-
-interface QontoQuotesResponse {
-  success: boolean;
-  quotes?: QontoQuote[];
-  error?: string;
-}
-
-interface QontoCreditNotesResponse {
-  success: boolean;
-  credit_notes?: QontoCreditNote[];
-  error?: string;
-}
-
-// ============================================================
-// STATUS BADGE COMPONENT
-// ============================================================
-
-function StatusBadge({
-  status,
-  type: _type,
-}: {
-  status: string;
-  type: DocumentType;
-}): React.ReactNode {
-  const variants: Record<
-    string,
-    'default' | 'secondary' | 'destructive' | 'outline'
-  > = {
-    draft: 'secondary',
-    finalized: 'default',
-    unpaid: 'default',
-    paid: 'default',
-    overdue: 'destructive',
-    canceled: 'outline',
-    cancelled: 'outline',
-    accepted: 'default',
-    declined: 'destructive',
-    expired: 'outline',
-    pending_approval: 'secondary',
-    to_review: 'secondary',
-    to_pay: 'default',
-  };
-
-  const labels: Record<string, string> = {
-    draft: 'Brouillon',
-    finalized: 'Finalise',
-    unpaid: 'Non payee',
-    paid: 'Payee',
-    overdue: 'En retard',
-    canceled: 'Annulee',
-    cancelled: 'Annulee',
-    accepted: 'Accepte',
-    declined: 'Refuse',
-    expired: 'Expire',
-    pending_approval: 'En attente',
-    to_review: 'A examiner',
-    to_pay: 'A payer',
-  };
-
-  return (
-    <Badge variant={variants[status] ?? 'outline'}>
-      {labels[status] ?? status}
-    </Badge>
-  );
-}
-
-// ============================================================
-// MAIN PAGE COMPONENT
-// ============================================================
+import { CreditNoteCard } from './_components/CreditNoteCard';
+import { DocumentListSkeleton } from './_components/DocumentListSkeleton';
+import { InvoiceCard } from './_components/InvoiceCard';
+import { QuoteCard } from './_components/QuoteCard';
+import { useQontoDocuments } from './_components/useQontoDocuments';
 
 export default function QontoDocumentsPage(): React.ReactNode {
-  // State for each document type
-  const [invoices, setInvoices] = useState<QontoInvoice[]>([]);
-  const [quotes, setQuotes] = useState<QontoQuote[]>([]);
-  const [creditNotes, setCreditNotes] = useState<QontoCreditNote[]>([]);
-
-  const [loadingInvoices, setLoadingInvoices] = useState(true);
-  const [loadingQuotes, setLoadingQuotes] = useState(true);
-  const [loadingCreditNotes, setLoadingCreditNotes] = useState(true);
-
-  const [errorInvoices, setErrorInvoices] = useState<string | null>(null);
-  const [errorQuotes, setErrorQuotes] = useState<string | null>(null);
-  const [errorCreditNotes, setErrorCreditNotes] = useState<string | null>(null);
-
   const [activeTab, setActiveTab] = useState<string>('invoices');
 
-  // ============================================================
-  // FETCH FUNCTIONS
-  // ============================================================
-
-  const fetchInvoices = useCallback(async (): Promise<void> => {
-    setLoadingInvoices(true);
-    setErrorInvoices(null);
-
-    try {
-      const response = await fetch('/api/qonto/invoices');
-      const data = (await response.json()) as QontoInvoicesResponse;
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error ?? 'Erreur chargement factures');
-      }
-
-      setInvoices(data.invoices ?? []);
-    } catch (err: unknown) {
-      setErrorInvoices(err instanceof Error ? err.message : 'Erreur inconnue');
-    } finally {
-      setLoadingInvoices(false);
-    }
-  }, []);
-
-  const fetchQuotes = useCallback(async (): Promise<void> => {
-    setLoadingQuotes(true);
-    setErrorQuotes(null);
-
-    try {
-      const response = await fetch('/api/qonto/quotes');
-      const data = (await response.json()) as QontoQuotesResponse;
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error ?? 'Erreur chargement devis');
-      }
-
-      setQuotes(data.quotes ?? []);
-    } catch (err: unknown) {
-      setErrorQuotes(err instanceof Error ? err.message : 'Erreur inconnue');
-    } finally {
-      setLoadingQuotes(false);
-    }
-  }, []);
-
-  const fetchCreditNotes = useCallback(async (): Promise<void> => {
-    setLoadingCreditNotes(true);
-    setErrorCreditNotes(null);
-
-    try {
-      const response = await fetch('/api/qonto/credit-notes');
-      const data = (await response.json()) as QontoCreditNotesResponse;
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error ?? 'Erreur chargement avoirs');
-      }
-
-      setCreditNotes(data.credit_notes ?? []);
-    } catch (err: unknown) {
-      setErrorCreditNotes(
-        err instanceof Error ? err.message : 'Erreur inconnue'
-      );
-    } finally {
-      setLoadingCreditNotes(false);
-    }
-  }, []);
-
-  // ============================================================
-  // INITIAL LOAD
-  // ============================================================
+  const {
+    invoices,
+    quotes,
+    creditNotes,
+    loadingInvoices,
+    loadingQuotes,
+    loadingCreditNotes,
+    errorInvoices,
+    errorQuotes,
+    errorCreditNotes,
+    fetchInvoices,
+    fetchQuotes,
+    fetchCreditNotes,
+  } = useQontoDocuments();
 
   useEffect(() => {
     void fetchInvoices();
@@ -246,60 +43,25 @@ export default function QontoDocumentsPage(): React.ReactNode {
     void fetchCreditNotes();
   }, [fetchInvoices, fetchQuotes, fetchCreditNotes]);
 
-  // ============================================================
-  // REFRESH HANDLER
-  // ============================================================
-
-  const handleRefresh = (): void => {
-    if (activeTab === 'invoices') {
-      void fetchInvoices();
-    } else if (activeTab === 'quotes') {
-      void fetchQuotes();
-    } else if (activeTab === 'credit_notes') {
-      void fetchCreditNotes();
-    }
-  };
-
   const isLoading =
     (activeTab === 'invoices' && loadingInvoices) ||
     (activeTab === 'quotes' && loadingQuotes) ||
     (activeTab === 'credit_notes' && loadingCreditNotes);
 
-  // ============================================================
-  // PDF DOWNLOAD HANDLERS
-  // ============================================================
-
-  const handleDownloadInvoicePdf = (invoiceId: string): void => {
-    window.open(`/api/qonto/invoices/${invoiceId}/pdf`, '_blank');
+  const handleRefresh = (): void => {
+    if (activeTab === 'invoices') void fetchInvoices();
+    else if (activeTab === 'quotes') void fetchQuotes();
+    else if (activeTab === 'credit_notes') void fetchCreditNotes();
   };
 
-  const handleDownloadQuotePdf = (quoteId: string): void => {
-    window.open(`/api/qonto/quotes/${quoteId}/pdf`, '_blank');
-  };
-
-  const handleDownloadCreditNotePdf = (creditNoteId: string): void => {
-    window.open(`/api/qonto/credit-notes/${creditNoteId}/pdf`, '_blank');
-  };
-
-  // ============================================================
-  // FORMAT HELPERS
-  // ============================================================
-
-  const formatAmount = (amount: number | string, currency = 'EUR'): string => {
-    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-    return numAmount.toLocaleString('fr-FR', {
-      style: 'currency',
-      currency,
-    });
-  };
-
-  // ============================================================
-  // RENDER
-  // ============================================================
+  const handleDownloadPdf =
+    (type: 'invoices' | 'quotes' | 'credit-notes') =>
+    (id: string): void => {
+      window.open(`/api/qonto/${type}/${id}/pdf`, '_blank');
+    };
 
   return (
     <div className="container mx-auto space-y-6 py-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/factures">
@@ -322,7 +84,6 @@ export default function QontoDocumentsPage(): React.ReactNode {
         </Button>
       </div>
 
-      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="invoices" className="flex items-center gap-2">
@@ -339,273 +100,55 @@ export default function QontoDocumentsPage(): React.ReactNode {
           </TabsTrigger>
         </TabsList>
 
-        {/* INVOICES TAB */}
         <TabsContent value="invoices" className="mt-6">
-          {errorInvoices && (
-            <Card className="mb-4 border-destructive/50 bg-destructive/10">
-              <CardContent className="pt-6">
-                <p className="text-destructive">{errorInvoices}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {loadingInvoices && (
-            <div className="space-y-4">
-              {[1, 2, 3].map(i => (
-                <Skeleton key={i} className="h-24 w-full" />
-              ))}
-            </div>
-          )}
-
-          {!loadingInvoices && invoices.length === 0 && (
-            <Card>
-              <CardContent className="pt-6 text-center text-muted-foreground">
-                Aucune facture trouvee dans Qonto
-              </CardContent>
-            </Card>
-          )}
-
-          {!loadingInvoices && invoices.length > 0 && (
-            <div className="space-y-4">
-              {invoices.map(invoice => (
-                <Link
-                  key={invoice.id}
-                  href={`/factures/${invoice.id}?type=invoice`}
-                  className="block"
-                >
-                  <Card
-                    className={`cursor-pointer transition-shadow hover:shadow-md${
-                      invoice.status === 'canceled' ||
-                      invoice.status === 'cancelled'
-                        ? ' border-red-200 bg-red-50'
-                        : ''
-                    }`}
-                  >
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">
-                          {invoice.number}
-                        </CardTitle>
-                        <StatusBadge status={invoice.status} type="invoice" />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <p className="text-sm text-muted-foreground">
-                            Client: {invoice.client?.name ?? 'N/A'}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Date: {invoice.issue_date} | Echeance:{' '}
-                            {invoice.due_date}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <p className="text-lg font-bold">
-                            {formatAmount(invoice.total_amount.value)}
-                          </p>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={e => {
-                                e.preventDefault();
-                                handleDownloadInvoicePdf(invoice.id);
-                              }}
-                            >
-                              <Download className="mr-2 h-4 w-4" />
-                              PDF
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          )}
+          <DocumentListSkeleton
+            loading={loadingInvoices}
+            error={errorInvoices}
+            isEmpty={invoices.length === 0}
+            emptyMessage="Aucune facture trouvee dans Qonto"
+          >
+            {invoices.map(invoice => (
+              <InvoiceCard
+                key={invoice.id}
+                invoice={invoice}
+                onDownloadPdf={handleDownloadPdf('invoices')}
+              />
+            ))}
+          </DocumentListSkeleton>
         </TabsContent>
 
-        {/* QUOTES TAB */}
         <TabsContent value="quotes" className="mt-6">
-          {errorQuotes && (
-            <Card className="mb-4 border-destructive/50 bg-destructive/10">
-              <CardContent className="pt-6">
-                <p className="text-destructive">{errorQuotes}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {loadingQuotes && (
-            <div className="space-y-4">
-              {[1, 2, 3].map(i => (
-                <Skeleton key={i} className="h-24 w-full" />
-              ))}
-            </div>
-          )}
-
-          {!loadingQuotes && quotes.length === 0 && (
-            <Card>
-              <CardContent className="pt-6 text-center text-muted-foreground">
-                Aucun devis trouve dans Qonto
-              </CardContent>
-            </Card>
-          )}
-
-          {!loadingQuotes && quotes.length > 0 && (
-            <div className="space-y-4">
-              {quotes.map(quote => (
-                <Link
-                  key={quote.id}
-                  href={`/factures/${quote.id}?type=quote`}
-                  className="block"
-                >
-                  <Card
-                    className={`cursor-pointer transition-shadow hover:shadow-md${
-                      quote.status === 'declined' || quote.status === 'expired'
-                        ? ' border-red-200 bg-red-50'
-                        : ''
-                    }`}
-                  >
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">
-                          {quote.quote_number}
-                        </CardTitle>
-                        <StatusBadge status={quote.status} type="quote" />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <p className="text-sm text-muted-foreground">
-                            Client: {quote.client?.name ?? 'N/A'}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Date: {quote.issue_date} | Expire:{' '}
-                            {quote.expiry_date}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <p className="text-lg font-bold">
-                            {formatAmount(quote.total_amount, quote.currency)}
-                          </p>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={e => {
-                                e.preventDefault();
-                                handleDownloadQuotePdf(quote.id);
-                              }}
-                            >
-                              <Download className="mr-2 h-4 w-4" />
-                              PDF
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          )}
+          <DocumentListSkeleton
+            loading={loadingQuotes}
+            error={errorQuotes}
+            isEmpty={quotes.length === 0}
+            emptyMessage="Aucun devis trouve dans Qonto"
+          >
+            {quotes.map(quote => (
+              <QuoteCard
+                key={quote.id}
+                quote={quote}
+                onDownloadPdf={handleDownloadPdf('quotes')}
+              />
+            ))}
+          </DocumentListSkeleton>
         </TabsContent>
 
-        {/* CREDIT NOTES TAB */}
         <TabsContent value="credit_notes" className="mt-6">
-          {errorCreditNotes && (
-            <Card className="mb-4 border-destructive/50 bg-destructive/10">
-              <CardContent className="pt-6">
-                <p className="text-destructive">{errorCreditNotes}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {loadingCreditNotes && (
-            <div className="space-y-4">
-              {[1, 2, 3].map(i => (
-                <Skeleton key={i} className="h-24 w-full" />
-              ))}
-            </div>
-          )}
-
-          {!loadingCreditNotes && creditNotes.length === 0 && (
-            <Card>
-              <CardContent className="pt-6 text-center text-muted-foreground">
-                Aucun avoir trouve dans Qonto
-              </CardContent>
-            </Card>
-          )}
-
-          {!loadingCreditNotes && creditNotes.length > 0 && (
-            <div className="space-y-4">
-              {creditNotes.map(creditNote => (
-                <Link
-                  key={creditNote.id}
-                  href={`/factures/${creditNote.id}?type=credit_note`}
-                  className="block"
-                >
-                  <Card className="cursor-pointer transition-shadow hover:shadow-md">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">
-                          {creditNote.credit_note_number ??
-                            creditNote.number ??
-                            'N/A'}
-                        </CardTitle>
-                        <StatusBadge
-                          status={creditNote.status}
-                          type="credit_note"
-                        />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <p className="text-sm text-muted-foreground">
-                            Client: {creditNote.client?.name ?? 'N/A'}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Date: {creditNote.issue_date}
-                            {creditNote.invoice_id && (
-                              <> | Ref facture: {creditNote.invoice_id}</>
-                            )}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <p className="text-lg font-bold">
-                            {creditNote.total_amount
-                              ? formatAmount(creditNote.total_amount.value)
-                              : creditNote.total_amount_cents
-                                ? formatAmount(
-                                    creditNote.total_amount_cents / 100
-                                  )
-                                : '-'}
-                          </p>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={e => {
-                                e.preventDefault();
-                                handleDownloadCreditNotePdf(creditNote.id);
-                              }}
-                            >
-                              <Download className="mr-2 h-4 w-4" />
-                              PDF
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          )}
+          <DocumentListSkeleton
+            loading={loadingCreditNotes}
+            error={errorCreditNotes}
+            isEmpty={creditNotes.length === 0}
+            emptyMessage="Aucun avoir trouve dans Qonto"
+          >
+            {creditNotes.map(creditNote => (
+              <CreditNoteCard
+                key={creditNote.id}
+                creditNote={creditNote}
+                onDownloadPdf={handleDownloadPdf('credit-notes')}
+              />
+            ))}
+          </DocumentListSkeleton>
         </TabsContent>
       </Tabs>
     </div>

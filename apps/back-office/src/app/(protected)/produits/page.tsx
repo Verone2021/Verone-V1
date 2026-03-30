@@ -1,326 +1,411 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { useProductMetrics } from '@verone/dashboard';
-import { KPICardUnified } from '@verone/ui';
-import { colors } from '@verone/ui/design-system';
 import {
-  Package,
-  Grid3x3,
-  Tags,
+  AlertTriangle,
+  ArrowRight,
   Boxes,
   FolderKanban,
-  Layers,
-  CheckCircle2,
-  AlertTriangle,
-  Clock,
-  TrendingUp,
-  BarChart3,
+  Grid3x3,
+  Loader2,
+  Package,
+  PackageX,
+  Plus,
+  Tags,
 } from 'lucide-react';
 
+import {
+  getProductCompleteness,
+  type ProductCompleteness,
+} from './actions/get-product-completeness';
+
+// eslint-disable-next-line max-lines-per-function
 export default function ProduitsPage() {
   const router = useRouter();
-  const { fetch: fetchProductMetrics } = useProductMetrics();
-
-  const [metrics, setMetrics] = useState({
-    total: 0,
-    active: 0,
-    inactive: 0,
-    draft: 0,
-    trend: 0,
-  });
+  const [data, setData] = useState<ProductCompleteness | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadMetrics = async () => {
-      try {
-        const data = await fetchProductMetrics();
-        setMetrics(data as typeof metrics);
-        setError(null); // Reset error on success
-      } catch (err) {
-        console.error('Erreur chargement métriques:', err);
-        setError(
-          'Impossible de charger les métriques produits. Veuillez réessayer.'
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-    void loadMetrics().catch(error => {
-      console.error('[Products] Load metrics failed:', error);
-    });
-  }, [fetchProductMetrics]);
+    void getProductCompleteness()
+      .then(setData)
+      .catch((err: unknown) => console.error('[Produits] Load failed:', err))
+      .finally(() => setLoading(false));
+  }, []);
 
-  // Calcul métriques dérivées
-  const stockAlertsCount = Math.floor(metrics.total * 0.15); // Estimation 15% produits en alerte stock
-  const sourcingActiveCount = metrics.draft;
-  const validationsPendingCount = Math.floor(metrics.draft * 0.4); // Estimation 40% drafts à valider
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+        <span className="ml-2 text-sm text-gray-500">Chargement...</span>
+      </div>
+    );
+  }
 
-  const workflowCards = [
-    {
-      id: 'sourcing',
-      title: 'Sourcing',
-      description: 'Nouveaux produits à sourcer',
-      icon: Package,
-      path: '/produits/sourcing',
-      gradient: 'from-blue-500 to-blue-600',
-      iconBg: 'bg-blue-100',
-      iconColor: 'text-blue-600',
-    },
-    {
-      id: 'validation',
-      title: 'Validation',
-      description: 'Valider produits sourcés',
-      icon: CheckCircle2,
-      path: '/produits/sourcing',
-      gradient: 'from-green-500 to-green-600',
-      iconBg: 'bg-green-100',
-      iconColor: 'text-green-600',
-    },
-    {
-      id: 'catalogue',
-      title: 'Catalogue',
-      description: 'Gérer catalogue complet',
-      icon: Grid3x3,
-      path: '/produits/catalogue',
-      gradient: 'from-purple-500 to-purple-600',
-      iconBg: 'bg-purple-100',
-      iconColor: 'text-purple-600',
-    },
-    {
-      id: 'variantes',
-      title: 'Variantes',
-      description: 'Variantes produits',
-      icon: Boxes,
-      path: '/produits/catalogue/variantes',
-      gradient: 'from-orange-500 to-orange-600',
-      iconBg: 'bg-orange-100',
-      iconColor: 'text-orange-600',
-    },
-    {
-      id: 'collections',
-      title: 'Collections',
-      description: 'Collections thématiques',
-      icon: FolderKanban,
-      path: '/produits/catalogue/collections',
-      gradient: 'from-pink-500 to-pink-600',
-      iconBg: 'bg-pink-100',
-      iconColor: 'text-pink-600',
-    },
-    {
-      id: 'categories',
-      title: 'Catégories',
-      description: 'Catégories & taxonomie',
-      icon: Tags,
-      path: '/produits/catalogue/categories',
-      gradient: 'from-teal-500 to-teal-600',
-      iconBg: 'bg-teal-100',
-      iconColor: 'text-teal-600',
-    },
-    {
-      id: 'rapports',
-      title: 'Rapports',
-      description: 'Analytics produits',
-      icon: BarChart3,
-      path: '/produits/catalogue/dashboard',
-      gradient: 'from-indigo-500 to-indigo-600',
-      iconBg: 'bg-indigo-100',
-      iconColor: 'text-indigo-600',
-    },
-  ];
+  if (!data) return null;
+
+  const totalAlerts =
+    data.missingPhotos +
+    data.missingDescription +
+    data.activeNoStock +
+    data.draft +
+    data.stockAlerts;
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      {/* Header */}
-      <div className="bg-white border-b border-neutral-200 px-6 py-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-neutral-900 mb-1">
-                Dashboard Produits
-              </h1>
-              <p className="text-sm text-neutral-600">
-                Gestion complète des produits Vérone - Vue d'ensemble
-              </p>
+    <div className="min-h-screen bg-gray-50/50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+        {/* Header + Navigation rapide */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Produits</h1>
+            <div className="flex items-center gap-3 mt-1 text-xs">
+              <Link
+                href="/produits/catalogue"
+                className="text-gray-500 hover:text-gray-900"
+              >
+                Catalogue
+              </Link>
+              <span className="text-gray-300">|</span>
+              <Link
+                href="/produits/sourcing"
+                className="text-gray-500 hover:text-gray-900"
+              >
+                Sourcing
+              </Link>
+              <span className="text-gray-300">|</span>
+              <Link
+                href="/produits/catalogue/variantes"
+                className="text-gray-500 hover:text-gray-900"
+              >
+                Variantes
+              </Link>
+              <span className="text-gray-300">|</span>
+              <Link
+                href="/produits/catalogue/collections"
+                className="text-gray-500 hover:text-gray-900"
+              >
+                Collections
+              </Link>
+              <span className="text-gray-300">|</span>
+              <Link
+                href="/produits/catalogue/categories"
+                className="text-gray-500 hover:text-gray-900"
+              >
+                Categories
+              </Link>
             </div>
-            <button
-              onClick={() => router.push('/produits/catalogue/create')}
-              className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium text-sm transition-colors shadow-sm"
-              style={{ backgroundColor: colors.primary[500] }}
-            >
-              Nouveau Produit
-            </button>
           </div>
+          <button
+            onClick={() => router.push('/produits/catalogue/create')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-800"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Nouveau Produit
+          </button>
         </div>
-      </div>
 
-      {/* Contenu principal */}
-      <div className="max-w-7xl mx-auto p-6 space-y-8">
-        {/* Error Alert */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-red-900 mb-1">
-                Erreur de chargement
-              </p>
-              <p className="text-sm text-red-700">{error}</p>
+        {/* Alertes - A traiter */}
+        {totalAlerts > 0 && (
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-100 flex items-center gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+              <span className="text-xs font-semibold text-amber-900">
+                A traiter ({totalAlerts})
+              </span>
             </div>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-sm font-medium rounded-md transition-colors"
-            >
-              Réessayer
-            </button>
+            <div className="divide-y divide-gray-100">
+              {data.missingPhotos > 0 && (
+                <Link
+                  href="/produits/catalogue?tab=incomplete&missing=photo"
+                  className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                    <span className="text-sm text-gray-900">
+                      <strong>{data.missingPhotos}</strong> produit(s) sans
+                      photo
+                    </span>
+                  </div>
+                  <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                </Link>
+              )}
+              {data.missingDescription > 0 && (
+                <Link
+                  href="/produits/catalogue?tab=incomplete"
+                  className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                    <span className="text-sm text-gray-900">
+                      <strong>{data.missingDescription}</strong> produit(s) sans
+                      description
+                    </span>
+                  </div>
+                  <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                </Link>
+              )}
+              {data.activeNoStock > 0 && (
+                <Link
+                  href="/produits/catalogue?statuses=active&tab=all"
+                  className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                    <span className="text-sm text-gray-900">
+                      <strong>{data.activeNoStock}</strong> produit(s) actif(s)
+                      sans stock
+                    </span>
+                  </div>
+                  <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                </Link>
+              )}
+              {data.draft > 0 && (
+                <Link
+                  href="/produits/catalogue?statuses=draft&tab=all"
+                  className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                    <span className="text-sm text-gray-900">
+                      <strong>{data.draft}</strong> produit(s) en brouillon
+                    </span>
+                  </div>
+                  <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                </Link>
+              )}
+              {data.stockAlerts > 0 && (
+                <Link
+                  href="/stocks"
+                  className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                    <span className="text-sm text-gray-900">
+                      <strong>{data.stockAlerts}</strong> alerte(s) stock
+                      critique(s)
+                    </span>
+                  </div>
+                  <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                </Link>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Section KPIs */}
-        <div>
-          <h2 className="text-lg font-semibold text-neutral-900 mb-4">
-            Métriques Clés
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <KPICardUnified
-              variant="elegant"
-              title="Total Produits"
-              value={loading ? '...' : metrics.total}
-              icon={TrendingUp}
-              trend={
-                !loading && metrics.trend
-                  ? {
-                      value: Math.abs(metrics.trend),
-                      isPositive: metrics.trend > 0,
-                    }
-                  : undefined
-              }
-              description="Produits actifs catalogue"
-              onClick={() => router.push('/produits/catalogue')}
-            />
-
-            <KPICardUnified
-              variant="elegant"
-              title="Alertes Stock"
-              value={loading ? '...' : stockAlertsCount}
-              icon={AlertTriangle}
-              description="Produits stock bas"
-              onClick={() =>
-                router.push('/produits/catalogue?filter=low_stock')
-              }
-            />
-
-            <KPICardUnified
-              variant="elegant"
-              title="Sourcing Actif"
-              value={loading ? '...' : sourcingActiveCount}
-              icon={Package}
-              description="Produits en sourcing"
-              onClick={() => router.push('/produits/sourcing')}
-            />
-
-            <KPICardUnified
-              variant="elegant"
-              title="Validations"
-              value={loading ? '...' : validationsPendingCount}
-              icon={Clock}
-              description="En attente validation"
-              onClick={() => router.push('/produits/sourcing')}
-            />
+        {/* KPIs compacts */}
+        <div className="grid grid-cols-4 gap-3">
+          <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
+            <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+              Total produits
+            </p>
+            <p className="text-lg font-bold text-gray-900 mt-0.5">
+              {data.total}
+            </p>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
+            <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+              Sans photo
+            </p>
+            <p className="text-lg font-bold text-gray-900 mt-0.5">
+              {data.missingPhotos}
+            </p>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
+            <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+              Actifs
+            </p>
+            <p className="text-lg font-bold text-gray-900 mt-0.5">
+              {data.active}
+            </p>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
+            <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+              Completude
+            </p>
+            <p className="text-lg font-bold text-gray-900 mt-0.5">
+              {data.total > 0
+                ? Math.round(
+                    ((data.total - data.missingPhotos) / data.total) * 100
+                  )
+                : 100}
+              %
+            </p>
           </div>
         </div>
 
-        {/* Section Workflows */}
-        <div>
-          <h2 className="text-lg font-semibold text-neutral-900 mb-4">
-            Workflows Produits
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {workflowCards.map(card => {
-              const Icon = card.icon;
-              return (
-                <button
-                  key={card.id}
-                  onClick={() => router.push(card.path)}
-                  className="group relative overflow-hidden rounded-xl bg-white border border-neutral-200 p-6 text-left transition-all duration-200 hover:shadow-lg hover:border-neutral-300 hover:-translate-y-1"
-                >
-                  {/* Gradient Background (hover) */}
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-200`}
-                  />
-
-                  {/* Content */}
-                  <div className="relative z-10 flex items-start gap-4">
-                    {/* Icon */}
-                    <div
-                      className={`flex-shrink-0 w-12 h-12 rounded-lg ${card.iconBg} flex items-center justify-center transition-transform duration-200 group-hover:scale-110`}
-                    >
-                      <Icon
-                        className={`w-6 h-6 ${card.iconColor}`}
-                        strokeWidth={2}
-                      />
-                    </div>
-
-                    {/* Text */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-semibold text-neutral-900 mb-1 group-hover:text-primary-600 transition-colors">
-                        {card.title}
-                      </h3>
-                      <p className="text-sm text-neutral-600 leading-snug">
-                        {card.description}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Arrow indicator */}
-                  <div className="absolute top-6 right-6 text-neutral-400 group-hover:text-primary-500 transition-all duration-200 group-hover:translate-x-1">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M6 3L11 8L6 13"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Section Informative */}
-        <div className="bg-white rounded-xl border border-neutral-200 p-6">
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
-              <Layers
-                className="w-5 h-5 text-primary-600"
-                style={{ color: colors.primary[600] }}
-                strokeWidth={2}
-              />
+        {/* Sections grille 2x2 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Catalogue */}
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Grid3x3 className="h-4 w-4 text-gray-500" />
+                <h2 className="text-sm font-semibold text-gray-900">
+                  Catalogue
+                </h2>
+              </div>
+              <Link
+                href="/produits/catalogue"
+                className="text-xs text-gray-500 hover:text-gray-900"
+              >
+                Voir tout →
+              </Link>
             </div>
-            <div>
-              <h3 className="text-base font-semibold text-neutral-900 mb-2">
-                Module Produits Vérone
-              </h3>
-              <p className="text-sm text-neutral-600 leading-relaxed">
-                Ce module centralise toutes les fonctionnalités liées à la
-                gestion des produits : du sourcing fournisseur jusqu'à la
-                gestion des stocks, en passant par la création du catalogue,
-                l'organisation par catégories, la gestion des variantes et des
-                collections. Suivez le workflow complet de vos produits depuis
-                leur identification jusqu'à leur mise en ligne.
-              </p>
+            <div className="p-4 space-y-2">
+              <Link
+                href="/produits/catalogue"
+                className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50"
+              >
+                <span className="text-sm text-gray-700">
+                  {data.active} produits actifs
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
+              <Link
+                href="/produits/catalogue?statuses=draft&tab=all"
+                className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50"
+              >
+                <span className="text-sm text-gray-700">
+                  {data.draft} en brouillon
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
+              <Link
+                href="/produits/catalogue?tab=incomplete&missing=photo"
+                className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50"
+              >
+                <span className="text-sm text-gray-700">
+                  {data.missingPhotos} sans photo
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Sourcing */}
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Package className="h-4 w-4 text-gray-500" />
+                <h2 className="text-sm font-semibold text-gray-900">
+                  Sourcing
+                </h2>
+              </div>
+              <Link
+                href="/produits/sourcing"
+                className="text-xs text-gray-500 hover:text-gray-900"
+              >
+                Voir tout →
+              </Link>
+            </div>
+            <div className="p-4 space-y-2">
+              <Link
+                href="/produits/sourcing"
+                className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50"
+              >
+                <span className="text-sm text-gray-700">
+                  {data.draft} produit(s) a sourcer
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
+              <Link
+                href="/produits/catalogue?tab=incomplete&missing=price"
+                className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50"
+              >
+                <span className="text-sm text-gray-700">
+                  {data.missingCostPrice} sans prix d&apos;achat
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Collections & Variantes */}
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FolderKanban className="h-4 w-4 text-gray-500" />
+                <h2 className="text-sm font-semibold text-gray-900">
+                  Collections & Variantes
+                </h2>
+              </div>
+            </div>
+            <div className="p-4 space-y-2">
+              <Link
+                href="/produits/catalogue/collections"
+                className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50"
+              >
+                <div className="flex items-center gap-2">
+                  <FolderKanban className="h-3.5 w-3.5 text-gray-400" />
+                  <span className="text-sm text-gray-700">
+                    Collections thematiques
+                  </span>
+                </div>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
+              <Link
+                href="/produits/catalogue/variantes"
+                className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50"
+              >
+                <div className="flex items-center gap-2">
+                  <Boxes className="h-3.5 w-3.5 text-gray-400" />
+                  <span className="text-sm text-gray-700">
+                    Groupes de variantes
+                  </span>
+                </div>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
+              <Link
+                href="/produits/catalogue/categories"
+                className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50"
+              >
+                <div className="flex items-center gap-2">
+                  <Tags className="h-3.5 w-3.5 text-gray-400" />
+                  <span className="text-sm text-gray-700">
+                    Categories & taxonomie
+                  </span>
+                </div>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Stock */}
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <PackageX className="h-4 w-4 text-gray-500" />
+                <h2 className="text-sm font-semibold text-gray-900">Stock</h2>
+              </div>
+              <Link
+                href="/stocks"
+                className="text-xs text-gray-500 hover:text-gray-900"
+              >
+                Voir tout →
+              </Link>
+            </div>
+            <div className="p-4 space-y-2">
+              <Link
+                href="/stocks"
+                className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50"
+              >
+                <span className="text-sm text-gray-700">
+                  {data.activeNoStock} actif(s) sans stock
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
+              <Link
+                href="/stocks"
+                className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50"
+              >
+                <span className="text-sm text-gray-700">
+                  {data.stockAlerts} alerte(s) stock
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
             </div>
           </div>
         </div>

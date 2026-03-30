@@ -265,6 +265,123 @@ function ApiKeyRow({ apiKey }: ApiKeyRowProps) {
 // Main Page
 // ============================================================================
 
+const AVAILABLE_EVENTS = [
+  { event: 'order.created', desc: 'Nouvelle commande créée' },
+  { event: 'order.paid', desc: 'Commande payée' },
+  { event: 'commission.calculated', desc: 'Commission calculée' },
+  { event: 'commission.paid', desc: 'Commission versée' },
+  { event: 'affiliate.registered', desc: 'Nouvel affilié inscrit' },
+  { event: 'affiliate.approved', desc: 'Affilié validé' },
+];
+
+function WebhooksCard({ webhooks }: { webhooks: WebhookConfig[] }) {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Webhook className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <CardTitle>Webhooks</CardTitle>
+              <CardDescription>
+                Recevez des notifications en temps réel
+              </CardDescription>
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {webhooks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Webhook className="h-12 w-12 text-gray-300 mb-4" />
+            <p className="text-gray-500">Aucun webhook configuré</p>
+            <p className="text-sm text-gray-400">
+              Ajoutez un webhook pour recevoir des notifications
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {webhooks.map(webhook => (
+              <WebhookRow key={webhook.id} webhook={webhook} />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ApiKeysCard({ apiKeys }: { apiKeys: ApiKey[] }) {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Key className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <CardTitle>Clés API</CardTitle>
+              <CardDescription>
+                Authentifiez vos requêtes à l&apos;API LinkMe
+              </CardDescription>
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {apiKeys.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Key className="h-12 w-12 text-gray-300 mb-4" />
+            <p className="text-gray-500">Aucune clé API</p>
+            <p className="text-sm text-gray-400">
+              Générez une clé pour utiliser l&apos;API
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {apiKeys.map(key => (
+              <ApiKeyRow key={key.id} apiKey={key} />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function EventsCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Clock className="h-5 w-5 text-muted-foreground" />
+          <div>
+            <CardTitle>Événements disponibles</CardTitle>
+            <CardDescription>
+              Liste des événements que vous pouvez écouter
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-3 md:grid-cols-2">
+          {AVAILABLE_EVENTS.map(({ event, desc }) => (
+            <div
+              key={event}
+              className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+            >
+              <RefreshCw className="h-4 w-4 text-gray-400" />
+              <div>
+                <code className="text-xs font-mono text-gray-700">{event}</code>
+                <p className="text-xs text-gray-500">{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function IntegrationsPage() {
   const [webhooks] = useState<WebhookConfig[]>(MOCK_WEBHOOKS);
   const [apiKeys] = useState<ApiKey[]>(MOCK_API_KEYS);
@@ -279,113 +396,10 @@ export default function IntegrationsPage() {
         </p>
       </div>
 
-      {/* Webhooks */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Webhook className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <CardTitle>Webhooks</CardTitle>
-                <CardDescription>
-                  Recevez des notifications en temps réel
-                </CardDescription>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {webhooks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Webhook className="h-12 w-12 text-gray-300 mb-4" />
-              <p className="text-gray-500">Aucun webhook configuré</p>
-              <p className="text-sm text-gray-400">
-                Ajoutez un webhook pour recevoir des notifications
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-100">
-              {webhooks.map(webhook => (
-                <WebhookRow key={webhook.id} webhook={webhook} />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <WebhooksCard webhooks={webhooks} />
+      <ApiKeysCard apiKeys={apiKeys} />
 
-      {/* API Keys */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Key className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <CardTitle>Clés API</CardTitle>
-                <CardDescription>
-                  Authentifiez vos requêtes à l&apos;API LinkMe
-                </CardDescription>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {apiKeys.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Key className="h-12 w-12 text-gray-300 mb-4" />
-              <p className="text-gray-500">Aucune clé API</p>
-              <p className="text-sm text-gray-400">
-                Générez une clé pour utiliser l&apos;API
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-100">
-              {apiKeys.map(key => (
-                <ApiKeyRow key={key.id} apiKey={key} />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Events documentation */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-muted-foreground" />
-            <div>
-              <CardTitle>Événements disponibles</CardTitle>
-              <CardDescription>
-                Liste des événements que vous pouvez écouter
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 md:grid-cols-2">
-            {[
-              { event: 'order.created', desc: 'Nouvelle commande créée' },
-              { event: 'order.paid', desc: 'Commande payée' },
-              { event: 'commission.calculated', desc: 'Commission calculée' },
-              { event: 'commission.paid', desc: 'Commission versée' },
-              { event: 'affiliate.registered', desc: 'Nouvel affilié inscrit' },
-              { event: 'affiliate.approved', desc: 'Affilié validé' },
-            ].map(({ event, desc }) => (
-              <div
-                key={event}
-                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
-              >
-                <RefreshCw className="h-4 w-4 text-gray-400" />
-                <div>
-                  <code className="text-xs font-mono text-gray-700">
-                    {event}
-                  </code>
-                  <p className="text-xs text-gray-500">{desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <EventsCard />
 
       {/* Development notice */}
       <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">

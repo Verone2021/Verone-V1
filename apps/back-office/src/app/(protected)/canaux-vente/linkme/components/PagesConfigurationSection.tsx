@@ -76,57 +76,11 @@ function PageConfigCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Section Globe 3D */}
-        <div className="p-4 bg-gray-50 rounded-lg space-y-4">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-            <Globe className="h-4 w-4" />
-            Globe 3D
-          </div>
-
-          {/* Toggle Globe */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Afficher le globe</Label>
-              <p className="text-sm text-muted-foreground">
-                Active le globe 3D interactif sur cette page
-              </p>
-            </div>
-            <Switch
-              checked={config.globe_enabled}
-              onCheckedChange={(checked: boolean) =>
-                onUpdate({ globe_enabled: checked })
-              }
-              disabled={isUpdating}
-            />
-          </div>
-
-          <Separator />
-
-          {/* Slider Vitesse */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label>Vitesse de rotation</Label>
-              <span className="text-sm text-muted-foreground font-mono">
-                {config.globe_rotation_speed.toFixed(3)}
-              </span>
-            </div>
-            <Slider
-              value={[config.globe_rotation_speed * 1000]}
-              onValueChange={(value: number[]) =>
-                onUpdate({ globe_rotation_speed: value[0] / 1000 })
-              }
-              min={1}
-              max={10}
-              step={1}
-              disabled={isUpdating || !config.globe_enabled}
-              className={!config.globe_enabled ? 'opacity-50' : ''}
-            />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Lent</span>
-              <span>Rapide</span>
-            </div>
-          </div>
-        </div>
+        <GlobeSection
+          config={config}
+          onUpdate={onUpdate}
+          isUpdating={isUpdating}
+        />
       </CardContent>
     </Card>
   );
@@ -135,6 +89,102 @@ function PageConfigCard({
 /**
  * Section principale de configuration des pages
  */
+function GlobeStatsGrid({
+  stats,
+}: {
+  stats: { products: number; organisations: number; total: number };
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-4">
+      <Card>
+        <CardContent className="pt-4">
+          <div className="text-2xl font-bold text-[#0A1628]">
+            {stats.products}
+          </div>
+          <p className="text-sm text-muted-foreground">Produits sur le globe</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="pt-4">
+          <div className="text-2xl font-bold text-[#0A1628]">
+            {stats.organisations}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Organisations sur le globe
+          </p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="pt-4">
+          <div className="text-2xl font-bold text-[#2ECCC1]">{stats.total}</div>
+          <p className="text-sm text-muted-foreground">Total items</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function GlobeSection({
+  config,
+  onUpdate,
+  isUpdating,
+}: {
+  config: LinkMePageConfiguration;
+  onUpdate: (updates: {
+    globe_enabled?: boolean;
+    globe_rotation_speed?: number;
+  }) => void;
+  isUpdating: boolean;
+}) {
+  return (
+    <div className="p-4 bg-gray-50 rounded-lg space-y-4">
+      <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+        <Globe className="h-4 w-4" />
+        Globe 3D
+      </div>
+      <div className="flex items-center justify-between">
+        <div className="space-y-0.5">
+          <Label>Afficher le globe</Label>
+          <p className="text-sm text-muted-foreground">
+            Active le globe 3D interactif sur cette page
+          </p>
+        </div>
+        <Switch
+          checked={config.globe_enabled}
+          onCheckedChange={(checked: boolean) =>
+            onUpdate({ globe_enabled: checked })
+          }
+          disabled={isUpdating}
+        />
+      </div>
+      <Separator />
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Label>Vitesse de rotation</Label>
+          <span className="text-sm text-muted-foreground font-mono">
+            {config.globe_rotation_speed.toFixed(3)}
+          </span>
+        </div>
+        <Slider
+          value={[config.globe_rotation_speed * 1000]}
+          onValueChange={(value: number[]) =>
+            onUpdate({ globe_rotation_speed: value[0] / 1000 })
+          }
+          min={1}
+          max={10}
+          step={1}
+          disabled={isUpdating || !config.globe_enabled}
+          className={!config.globe_enabled ? 'opacity-50' : ''}
+        />
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>Lent</span>
+          <span>Rapide</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PagesConfigurationSection(): JSX.Element {
   const {
     data: configurations,
@@ -169,39 +219,7 @@ export function PagesConfigurationSection(): JSX.Element {
 
   return (
     <div className="space-y-6">
-      {/* Stats Globe */}
-      {globeStats && (
-        <div className="grid grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-[#0A1628]">
-                {globeStats.products}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Produits sur le globe
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-[#0A1628]">
-                {globeStats.organisations}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Organisations sur le globe
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-[#2ECCC1]">
-                {globeStats.total}
-              </div>
-              <p className="text-sm text-muted-foreground">Total items</p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {globeStats && <GlobeStatsGrid stats={globeStats} />}
 
       {/* Info */}
       <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">

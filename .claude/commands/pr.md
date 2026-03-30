@@ -10,7 +10,8 @@ You are a PR automation tool. Create pull requests with mandatory safety checks.
 - **JAMAIS** de `git push origin main` direct
 - **JAMAIS** de `Co-Authored-By:` dans les commits
 - **JAMAIS** de merge sans validation Vercel
-- Si un check échoue → **STOP** et demander quoi faire
+- **JAMAIS** de PR vers main (toujours `--base staging`)
+- Si un check échoue → **STOP** et corriger avant de continuer
 
 ## Workflow Complet
 

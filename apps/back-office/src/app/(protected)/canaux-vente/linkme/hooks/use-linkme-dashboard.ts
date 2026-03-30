@@ -156,111 +156,108 @@ function calculateMonthlyAverage(
 // Hook principal
 // ============================================================================
 
-export function useLinkMeDashboard() {
+async function fetchDashboardKPIs(): Promise<DashboardKPIs> {
   const supabase = createClient();
+  const currentMonth = getMonthBounds(0);
+  const currentMonthStart = new Date(currentMonth.start);
 
+  // ========================================
+  // KPI 1 & 4: CA + Orders count
+  // Récupère TOUTES les commandes pour calculer la moyenne mensuelle
+  // ========================================
+  const { data: allOrders } = await supabase
+    .from('linkme_orders_with_margins')
+    .select('id, total_ht, total_affiliate_margin, created_at')
+    .order('created_at', { ascending: true })
+    .returns<LinkMeOrderWithMargins[]>();
+
+  // Filtrer les commandes du mois courant
+  const ordersCurrentMonth = (allOrders ?? []).filter(o => {
+    const orderDate = new Date(o.created_at);
+    return (
+      orderDate >= new Date(currentMonth.start) &&
+      orderDate <= new Date(currentMonth.end)
+    );
+  });
+
+  // Calculer le CA et le nombre de commandes du mois courant
+  const currentRevenue = ordersCurrentMonth.reduce(
+    (sum, o) => sum + Number(o.total_ht ?? 0),
+    0
+  );
+  const currentOrdersCount = ordersCurrentMonth.length;
+
+  // Calculer la moyenne mensuelle (tous les mois précédents)
+  const { avgRevenue, avgCount } = calculateMonthlyAverage(
+    allOrders ?? [],
+    currentMonthStart
+  );
+
+  // ========================================
+  // KPI 2: Commissions en attente (pending + invoice_received)
+  // ========================================
+  const { data: pendingRequests } = await supabase
+    .from('linkme_payment_requests')
+    .select('id, total_amount_ttc, status')
+    .in('status', ['pending', 'invoice_received'])
+    .returns<
+      Array<Pick<LinkMePaymentRequest, 'id' | 'total_amount_ttc' | 'status'>>
+    >();
+
+  const pendingAmount = (pendingRequests ?? []).reduce(
+    (sum, r) => sum + Number(r.total_amount_ttc ?? 0),
+    0
+  );
+  const pendingCount = (pendingRequests ?? []).length;
+
+  // ========================================
+  // KPI 3: Affiliés actifs + nouveaux ce mois
+  // ========================================
+  const { data: affiliates } = await supabase
+    .from('linkme_affiliates')
+    .select('id, status, created_at')
+    .returns<Array<Pick<LinkMeAffiliate, 'id' | 'status' | 'created_at'>>>();
+
+  const activeAffiliates = (affiliates ?? []).filter(
+    a => a.status === 'active'
+  ).length;
+
+  const newAffiliatesThisMonth = (affiliates ?? []).filter(a => {
+    const createdAt = new Date(a.created_at);
+    return (
+      createdAt >= new Date(currentMonth.start) &&
+      createdAt <= new Date(currentMonth.end)
+    );
+  }).length;
+
+  return {
+    revenue: {
+      current: currentRevenue,
+      average: avgRevenue,
+      growth: calculateGrowthVsAverage(currentRevenue, avgRevenue),
+    },
+    pendingCommissions: {
+      amount: pendingAmount,
+      count: pendingCount,
+    },
+    affiliates: {
+      active: activeAffiliates,
+      newThisMonth: newAffiliatesThisMonth,
+    },
+    orders: {
+      current: currentOrdersCount,
+      average: avgCount,
+      growth: calculateGrowthVsAverage(currentOrdersCount, avgCount),
+    },
+  };
+}
+
+export function useLinkMeDashboard() {
   return useQuery({
     queryKey: ['linkme-dashboard-kpis'],
-    queryFn: async (): Promise<DashboardKPIs> => {
-      const currentMonth = getMonthBounds(0);
-      const currentMonthStart = new Date(currentMonth.start);
-
-      // ========================================
-      // KPI 1 & 4: CA + Orders count
-      // Récupère TOUTES les commandes pour calculer la moyenne mensuelle
-      // ========================================
-      const { data: allOrders } = await supabase
-        .from('linkme_orders_with_margins')
-        .select('id, total_ht, total_affiliate_margin, created_at')
-        .order('created_at', { ascending: true })
-        .returns<LinkMeOrderWithMargins[]>();
-
-      // Filtrer les commandes du mois courant
-      const ordersCurrentMonth = (allOrders ?? []).filter(o => {
-        const orderDate = new Date(o.created_at);
-        return (
-          orderDate >= new Date(currentMonth.start) &&
-          orderDate <= new Date(currentMonth.end)
-        );
-      });
-
-      // Calculer le CA et le nombre de commandes du mois courant
-      const currentRevenue = ordersCurrentMonth.reduce(
-        (sum, o) => sum + Number(o.total_ht ?? 0),
-        0
-      );
-      const currentOrdersCount = ordersCurrentMonth.length;
-
-      // Calculer la moyenne mensuelle (tous les mois précédents)
-      const { avgRevenue, avgCount } = calculateMonthlyAverage(
-        allOrders ?? [],
-        currentMonthStart
-      );
-
-      // ========================================
-      // KPI 2: Commissions en attente (pending + invoice_received)
-      // ========================================
-      const { data: pendingRequests } = await supabase
-        .from('linkme_payment_requests')
-        .select('id, total_amount_ttc, status')
-        .in('status', ['pending', 'invoice_received'])
-        .returns<
-          Array<
-            Pick<LinkMePaymentRequest, 'id' | 'total_amount_ttc' | 'status'>
-          >
-        >();
-
-      const pendingAmount = (pendingRequests ?? []).reduce(
-        (sum, r) => sum + Number(r.total_amount_ttc ?? 0),
-        0
-      );
-      const pendingCount = (pendingRequests ?? []).length;
-
-      // ========================================
-      // KPI 3: Affiliés actifs + nouveaux ce mois
-      // ========================================
-      const { data: affiliates } = await supabase
-        .from('linkme_affiliates')
-        .select('id, status, created_at')
-        .returns<
-          Array<Pick<LinkMeAffiliate, 'id' | 'status' | 'created_at'>>
-        >();
-
-      const activeAffiliates = (affiliates ?? []).filter(
-        a => a.status === 'active'
-      ).length;
-
-      const newAffiliatesThisMonth = (affiliates ?? []).filter(a => {
-        const createdAt = new Date(a.created_at);
-        return (
-          createdAt >= new Date(currentMonth.start) &&
-          createdAt <= new Date(currentMonth.end)
-        );
-      }).length;
-
-      return {
-        revenue: {
-          current: currentRevenue,
-          average: avgRevenue,
-          growth: calculateGrowthVsAverage(currentRevenue, avgRevenue),
-        },
-        pendingCommissions: {
-          amount: pendingAmount,
-          count: pendingCount,
-        },
-        affiliates: {
-          active: activeAffiliates,
-          newThisMonth: newAffiliatesThisMonth,
-        },
-        orders: {
-          current: currentOrdersCount,
-          average: avgCount,
-          growth: calculateGrowthVsAverage(currentOrdersCount, avgCount),
-        },
-      };
-    },
-    staleTime: 120000, // 2 minutes
-    refetchInterval: 120000, // Rafraîchir toutes les 2 minutes
+    queryFn: fetchDashboardKPIs,
+    staleTime: 120000,
+    refetchInterval: 120000,
     refetchIntervalInBackground: false,
   });
 }
@@ -269,67 +266,70 @@ export function useLinkMeDashboard() {
 // Hook activité récente
 // ============================================================================
 
-export function useRecentActivity(limit: number = 5) {
+function getPaymentStatusLabel(status: string): string {
+  switch (status) {
+    case 'paid':
+      return 'Paiement effectué';
+    case 'pending':
+      return 'En attente';
+    case 'invoice_received':
+      return 'Facture reçue';
+    default:
+      return status;
+  }
+}
+
+async function fetchRecentActivity(limit: number): Promise<RecentActivity[]> {
   const supabase = createClient();
+  const activities: RecentActivity[] = [];
 
-  return useQuery({
-    queryKey: ['linkme-recent-activity', limit],
-    queryFn: async (): Promise<RecentActivity[]> => {
-      const activities: RecentActivity[] = [];
+  // Récupérer les dernières commissions
+  const { data: recentCommissions } = await supabase
+    .from('linkme_commissions')
+    .select(
+      'id, order_number, order_amount_ht, created_at, linkme_affiliates (display_name)'
+    )
+    .order('created_at', { ascending: false })
+    .limit(limit)
+    .returns<LinkMeCommission[]>();
 
-      // Récupérer les dernières commissions
-      const { data: recentCommissions } = await supabase
-        .from('linkme_commissions')
-        .select(
-          `
-          id,
-          order_number,
-          order_amount_ht,
-          created_at,
-          linkme_affiliates (display_name)
-        `
-        )
-        .order('created_at', { ascending: false })
-        .limit(limit)
-        .returns<LinkMeCommission[]>();
+  (recentCommissions ?? []).forEach(c => {
+    activities.push({
+      id: `order-${c.id}`,
+      type: 'order',
+      title: `Commande #${c.order_number}`,
+      description: c.linkme_affiliates?.display_name ?? 'Affilié',
+      timestamp: c.created_at,
+      amount: c.order_amount_ht,
+    });
+  });
 
-      (recentCommissions ?? []).forEach(c => {
-        activities.push({
-          id: `order-${c.id}`,
-          type: 'order',
-          title: `Commande #${c.order_number}`,
-          description: c.linkme_affiliates?.display_name ?? 'Affilié',
-          timestamp: c.created_at,
-          amount: c.order_amount_ht,
-        });
-      });
+  // Récupérer les derniers affiliés
+  const { data: recentAffiliates } = await supabase
+    .from('linkme_affiliates')
+    .select('id, display_name, status, created_at')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+    .returns<LinkMeAffiliate[]>();
 
-      // Récupérer les derniers affiliés
-      const { data: recentAffiliates } = await supabase
-        .from('linkme_affiliates')
-        .select('id, display_name, status, created_at')
-        .order('created_at', { ascending: false })
-        .limit(limit)
-        .returns<LinkMeAffiliate[]>();
+  (recentAffiliates ?? []).forEach(a => {
+    activities.push({
+      id: `affiliate-${a.id}`,
+      type: 'affiliate',
+      title: a.display_name,
+      description:
+        a.status === 'active'
+          ? 'Nouvel affilié actif'
+          : 'Inscription en attente',
+      timestamp: a.created_at,
+    });
+  });
 
-      (recentAffiliates ?? []).forEach(a => {
-        activities.push({
-          id: `affiliate-${a.id}`,
-          type: 'affiliate',
-          title: a.display_name,
-          description:
-            a.status === 'active'
-              ? 'Nouvel affilié actif'
-              : 'Inscription en attente',
-          timestamp: a.created_at,
-        });
-      });
-
-      // Récupérer les dernières demandes de paiement
-      const { data: recentPayments } = await supabase
-        .from('linkme_payment_requests')
-        .select(
-          `
+  // Récupérer les dernières demandes de paiement
+  const { data: recentPayments } = await supabase
+    .from('linkme_payment_requests')
+    .select(
+      `
           id,
           request_number,
           total_amount_ttc,
@@ -337,39 +337,35 @@ export function useRecentActivity(limit: number = 5) {
           created_at,
           linkme_affiliates (display_name)
         `
-        )
-        .order('created_at', { ascending: false })
-        .limit(limit)
-        .returns<LinkMePaymentRequest[]>();
+    )
+    .order('created_at', { ascending: false })
+    .limit(limit)
+    .returns<LinkMePaymentRequest[]>();
 
-      (recentPayments ?? []).forEach(p => {
-        const statusLabel =
-          p.status === 'paid'
-            ? 'Paiement effectué'
-            : p.status === 'pending'
-              ? 'En attente'
-              : p.status === 'invoice_received'
-                ? 'Facture reçue'
-                : p.status;
+  (recentPayments ?? []).forEach(p => {
+    activities.push({
+      id: `payment-${p.id}`,
+      type: 'payment',
+      title: `${p.linkme_affiliates?.display_name ?? 'Affilié'}`,
+      description: getPaymentStatusLabel(p.status),
+      timestamp: p.created_at,
+      amount: p.total_amount_ttc,
+    });
+  });
 
-        activities.push({
-          id: `payment-${p.id}`,
-          type: 'payment',
-          title: `${p.linkme_affiliates?.display_name ?? 'Affilié'}`,
-          description: statusLabel,
-          timestamp: p.created_at,
-          amount: p.total_amount_ttc,
-        });
-      });
+  // Trier par date et limiter
+  return activities
+    .sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    )
+    .slice(0, limit);
+}
 
-      // Trier par date et limiter
-      return activities
-        .sort(
-          (a, b) =>
-            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        )
-        .slice(0, limit);
-    },
-    staleTime: 300_000, // 5 minutes
+export function useRecentActivity(limit: number = 5) {
+  return useQuery({
+    queryKey: ['linkme-recent-activity', limit],
+    queryFn: () => fetchRecentActivity(limit),
+    staleTime: 300_000,
   });
 }

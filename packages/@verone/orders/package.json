@@ -13,11 +13,11 @@
   "private": true,
   "dependencies": {
     "@verone/categories": "workspace:*",
+    "@verone/finance": "workspace:*",
     "@verone/organisations": "workspace:*",
+    "@verone/types": "workspace:*",
     "@verone/ui": "workspace:*",
     "@verone/utils": "workspace:*",
-    "@verone/types": "workspace:*",
-    "@verone/finance": "workspace:*",
     "@tanstack/react-query": "^5.20.1",
     "lucide-react": "^0.300.0",
     "next": "^15.0.0",

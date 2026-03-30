@@ -25,6 +25,7 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Separator } from '@verone/ui/components/ui/separator';
 import { Skeleton } from '@verone/ui/components/ui/skeleton';
 import {
@@ -42,12 +43,15 @@ import {
   Bell,
   Building2,
   Truck,
+  BarChart3,
+  Warehouse,
 } from 'lucide-react';
 
 // New Components
 import { CompactKPIGrid } from './components/compact-kpi-grid';
 import { DashboardSection } from './components/dashboard-section';
 import { QuickActionsBar } from './components/quick-actions-bar';
+import { TopProductsWidget } from './components/top-products-widget';
 
 // Legacy Components (reused)
 import { DashboardHeader } from './components/dashboard-header';
@@ -61,7 +65,9 @@ import {
   type DashboardMetrics,
 } from './actions/get-dashboard-metrics';
 
+// eslint-disable-next-line max-lines-per-function
 export default function DashboardPage() {
+  const router = useRouter();
   const [data, setData] = useState<DashboardMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -92,7 +98,7 @@ export default function DashboardPage() {
     }).format(value);
   };
 
-  // Hero KPIs (4 essential metrics)
+  // Hero KPIs (4 essential metrics — all clickable)
   const heroKPIs = [
     {
       title: 'Commandes en attente',
@@ -103,6 +109,7 @@ export default function DashboardPage() {
         data.hero.ordersPending > 0
           ? `${data.hero.ordersPending} commande${data.hero.ordersPending > 1 ? 's' : ''} à traiter`
           : 'Toutes traitées',
+      onClick: () => router.push('/commandes/clients'),
     },
     {
       title: 'Alertes Stock Critiques',
@@ -113,6 +120,7 @@ export default function DashboardPage() {
         data.hero.stockAlerts > 0
           ? `${data.hero.stockAlerts} alerte${data.hero.stockAlerts > 1 ? 's' : ''} urgente${data.hero.stockAlerts > 1 ? 's' : ''}`
           : 'Stock OK',
+      onClick: () => router.push('/stocks'),
     },
     {
       title: 'CA 30 derniers jours',
@@ -120,6 +128,7 @@ export default function DashboardPage() {
       icon: DollarSign,
       color: 'success' as const,
       description: 'Commandes livrées',
+      onClick: () => router.push('/ventes'),
     },
     {
       title: 'Consultations actives',
@@ -130,6 +139,7 @@ export default function DashboardPage() {
         data.hero.consultations > 0
           ? `${data.hero.consultations} RFQ en cours`
           : 'Aucune consultation',
+      onClick: () => router.push('/consultations'),
     },
   ];
 
@@ -191,6 +201,7 @@ export default function DashboardPage() {
         data.sales.ordersLinkme > 0
           ? `${data.sales.ordersLinkme} commande${data.sales.ordersLinkme > 1 ? 's' : ''} en cours`
           : 'Aucune commande active',
+      onClick: () => router.push('/canaux-vente/linkme/commandes'),
     },
     {
       title: 'Commissions Pending',
@@ -201,27 +212,45 @@ export default function DashboardPage() {
         data.sales.commissions > 0
           ? `${data.sales.commissions} commission${data.sales.commissions > 1 ? 's' : ''} à valider`
           : 'Toutes validées',
+      onClick: () => router.push('/canaux-vente/linkme/commissions'),
     },
     {
-      title: 'Total CA 30j',
-      value: formatRevenue(data.finance.revenue30Days),
-      icon: TrendingUp,
-      color: 'success' as const,
-      description: 'Revenus livrés',
+      title: 'Marge brute moy.',
+      value:
+        data.sales.avgMarginPct !== null ? `${data.sales.avgMarginPct}%` : '-',
+      icon: BarChart3,
+      color:
+        data.sales.avgMarginPct !== null && data.sales.avgMarginPct >= 35
+          ? ('success' as const)
+          : ('warning' as const),
+      description: 'Sur les ventes du mois',
     },
   ];
+
+  // Revenue by channel KPIs
+  const channelKPIs = data.sales.revenueByChannel.map(ch => ({
+    title: ch.channel,
+    value: formatRevenue(ch.revenueTtc),
+    icon:
+      ch.channel === 'LinkMe'
+        ? Link2
+        : ch.channel === 'Site Internet'
+          ? ShoppingCart
+          : TrendingUp,
+    color: 'primary' as const,
+    description: `${ch.orders} commande${ch.orders > 1 ? 's' : ''} · ${formatRevenue(ch.revenueHt)} HT`,
+    onClick: () => router.push('/ventes'),
+  }));
 
   // Stock section KPIs
   const stockKPIs = [
     {
-      title: 'Produits Catalogue',
-      value: data.stock.products.total,
-      icon: Package,
+      title: 'Valeur Stock',
+      value: formatRevenue(data.stock.stockValue),
+      icon: Warehouse,
       color: 'primary' as const,
-      description:
-        data.stock.products.new_month > 0
-          ? `+${data.stock.products.new_month} ce mois`
-          : 'Catalogue stable',
+      description: `${data.stock.totalUnits.toLocaleString('fr-FR')} unités en stock`,
+      onClick: () => router.push('/stocks'),
     },
     {
       title: 'Rupture de Stock',
@@ -232,13 +261,15 @@ export default function DashboardPage() {
         data.stock.outOfStock > 0
           ? `${data.stock.outOfStock} produit${data.stock.outOfStock > 1 ? 's' : ''} à réapprovisionner`
           : 'Stock OK',
+      onClick: () => router.push('/stocks'),
     },
     {
-      title: 'Alertes Critiques',
-      value: data.hero.stockAlerts,
-      icon: AlertTriangle,
-      color: 'danger' as const,
+      title: 'Mouvements 30j',
+      value: data.stock.movements30d,
+      icon: TrendingUp,
+      color: 'accent' as const,
       description: `${data.stock.alerts.length} alerte${data.stock.alerts.length > 1 ? 's' : ''} active${data.stock.alerts.length > 1 ? 's' : ''}`,
+      onClick: () => router.push('/stocks'),
     },
   ];
 
@@ -272,7 +303,17 @@ export default function DashboardPage() {
           }
         >
           <CompactKPIGrid kpis={salesKPIs} />
-          {/* TODO: Add RevenueChart here when available */}
+          {channelKPIs.length > 0 && (
+            <>
+              <h4 className="text-sm font-medium text-neutral-500 mt-4 mb-2">
+                CA par canal (30j)
+              </h4>
+              <CompactKPIGrid kpis={channelKPIs} />
+            </>
+          )}
+          <Suspense fallback={<WidgetSkeleton />}>
+            <TopProductsWidget products={data.sales.topProducts} />
+          </Suspense>
         </DashboardSection>
 
         {/* Stock & Inventory Section */}

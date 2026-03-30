@@ -36,6 +36,35 @@ interface SalesOrderUpdateFields {
  * @param userId - L'ID de l'utilisateur qui effectue l'action (pour les triggers stock_movements)
  * @returns Résultat de l'opération avec success/error
  */
+function buildUpdateFields(
+  newStatus: SalesOrderStatus,
+  userId: string,
+  existingOrder: { confirmed_at: string | null }
+): SalesOrderUpdateFields {
+  const fields: SalesOrderUpdateFields = { status: newStatus };
+  const now = new Date().toISOString();
+
+  if (newStatus === 'validated') {
+    fields.confirmed_at = now;
+    fields.confirmed_by = userId;
+  } else if (newStatus === 'shipped' || newStatus === 'partially_shipped') {
+    if (!existingOrder.confirmed_at) {
+      fields.confirmed_at = now;
+      fields.confirmed_by = userId;
+    }
+    fields.shipped_at = now;
+  } else if (newStatus === 'cancelled') {
+    fields.cancelled_at = now;
+    fields.cancelled_by = userId;
+    fields.pending_admin_validation = false;
+  } else if (newStatus === 'draft') {
+    fields.confirmed_at = null;
+    fields.confirmed_by = null;
+    fields.pending_admin_validation = false;
+  }
+  return fields;
+}
+
 export async function updateSalesOrderStatus(
   orderId: string,
   newStatus: SalesOrderStatus,
@@ -82,29 +111,7 @@ export async function updateSalesOrderStatus(
       `📊 [Server Action] Commande trouvée: ${existingOrder.order_number}, statut actuel: ${existingOrder.status}`
     );
 
-    // Préparer les champs à mettre à jour selon le workflow
-    const updateFields: SalesOrderUpdateFields = { status: newStatus };
-
-    // Gérer les timestamps selon les contraintes PostgreSQL
-    if (newStatus === 'validated') {
-      updateFields.confirmed_at = new Date().toISOString();
-      updateFields.confirmed_by = userId;
-    } else if (newStatus === 'shipped' || newStatus === 'partially_shipped') {
-      if (!existingOrder.confirmed_at) {
-        updateFields.confirmed_at = new Date().toISOString();
-        updateFields.confirmed_by = userId;
-      }
-      updateFields.shipped_at = new Date().toISOString();
-    } else if (newStatus === 'cancelled') {
-      updateFields.cancelled_at = new Date().toISOString();
-      updateFields.cancelled_by = userId;
-      updateFields.pending_admin_validation = false;
-    } else if (newStatus === 'draft') {
-      // Dévalidation : remettre confirmed_at à null (supprime le point vert)
-      updateFields.confirmed_at = null;
-      updateFields.confirmed_by = null;
-      updateFields.pending_admin_validation = false;
-    }
+    const updateFields = buildUpdateFields(newStatus, userId, existingOrder);
 
     console.warn(`🔧 [Server Action] Champs à mettre à jour:`, updateFields);
 

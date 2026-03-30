@@ -1,6 +1,6 @@
 # Architecture Verone
 
-**Derniere mise a jour:** 2026-01-09
+**Derniere mise a jour:** 2026-03-27
 
 CRM/ERP modulaire pour decoration et mobilier d'interieur haut de gamme.
 
@@ -45,7 +45,7 @@ verone-back-office-V1/
 | App             | Port | Description          | Status     |
 | --------------- | ---- | -------------------- | ---------- |
 | `back-office`   | 3000 | CRM/ERP complet      | Production |
-| `site-internet` | 3001 | E-commerce public    | Planifie   |
+| `site-internet` | 3001 | E-commerce public    | Production |
 | `linkme`        | 3002 | Commissions affilies | Production |
 
 ---

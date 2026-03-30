@@ -165,12 +165,37 @@ export function LeftColumn({
                   </span>
                 )}
               </div>
+              {/* Identifiants : SIRET / TVA */}
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
-                {order.organisation.siret && (
-                  <span>SIRET : {order.organisation.siret}</span>
-                )}
+                {(() => {
+                  const isFrench =
+                    !order.organisation.country ||
+                    order.organisation.country === 'FR';
+                  if (isFrench) {
+                    return order.organisation.siret ? (
+                      <span>SIRET : {order.organisation.siret}</span>
+                    ) : (
+                      <span className="text-amber-600 flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        SIRET : Non renseigné
+                      </span>
+                    );
+                  } else {
+                    return order.organisation.vat_number ? (
+                      <span>TVA Intra. : {order.organisation.vat_number}</span>
+                    ) : (
+                      <span className="text-amber-600 flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        N° TVA Intracommunautaire : Non renseigné
+                      </span>
+                    );
+                  }
+                })()}
+              </div>
+              {/* Adresse principale */}
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
                 {(order.organisation.address_line1 ??
-                  order.organisation.postal_code) && (
+                order.organisation.postal_code) ? (
                   <span className="flex items-center gap-1">
                     <MapPin className="h-3 w-3" />
                     {[
@@ -181,7 +206,61 @@ export function LeftColumn({
                       .filter(Boolean)
                       .join(', ')}
                   </span>
+                ) : (
+                  <span className="text-amber-600 flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    Adresse principale : Non renseignée
+                  </span>
                 )}
+              </div>
+              {/* Adresse de facturation */}
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                {(order.organisation.billing_address_line1 ??
+                order.organisation.billing_postal_code) ? (
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3 text-orange-500" />
+                    Facturation :{' '}
+                    {[
+                      order.organisation.billing_address_line1,
+                      order.organisation.billing_postal_code,
+                      order.organisation.billing_city,
+                    ]
+                      .filter(Boolean)
+                      .join(', ')}
+                  </span>
+                ) : (
+                  <span className="text-amber-600 flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    Adresse facturation : Non renseignée
+                  </span>
+                )}
+              </div>
+              {/* Adresse de livraison (si différente) */}
+              {order.organisation.has_different_shipping_address && (
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                  {(order.organisation.shipping_address_line1 ??
+                  order.organisation.shipping_postal_code) ? (
+                    <span className="flex items-center gap-1">
+                      <Truck className="h-3 w-3 text-blue-500" />
+                      Livraison :{' '}
+                      {[
+                        order.organisation.shipping_address_line1,
+                        order.organisation.shipping_postal_code,
+                        order.organisation.shipping_city,
+                      ]
+                        .filter(Boolean)
+                        .join(', ')}
+                    </span>
+                  ) : (
+                    <span className="text-amber-600 flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      Adresse livraison : Non renseignée
+                    </span>
+                  )}
+                </div>
+              )}
+              {/* Contact */}
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
                 {order.organisation.email && (
                   <a
                     href={`mailto:${order.organisation.email}`}
@@ -715,13 +794,18 @@ export function LeftColumn({
                       {details.semi_trailer_accessible ? 'Oui' : 'Non'}
                     </strong>
                   </span>
-                  {details.desired_delivery_date && (
+                  {details.desired_delivery_date ? (
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      Souhaitée :{' '}
+                      Souhaitee :{' '}
                       {new Date(
                         details.desired_delivery_date
                       ).toLocaleDateString('fr-FR')}
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-amber-600 font-medium">
+                      <Calendar className="h-3 w-3" />
+                      Date non renseignee
                     </span>
                   )}
                 </div>

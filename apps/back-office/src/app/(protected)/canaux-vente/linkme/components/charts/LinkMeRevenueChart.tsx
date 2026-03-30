@@ -59,7 +59,7 @@ function CustomTooltip({
 
 export function LinkMeRevenueChart({
   data,
-  period,
+  period: _period,
   isLoading = false,
 }: LinkMeRevenueChartProps) {
   if (isLoading) {
@@ -80,20 +80,6 @@ export function LinkMeRevenueChart({
       </div>
     );
   }
-
-  // Déterminer le label de l'axe X selon la période
-  const _getXAxisLabel = () => {
-    switch (period) {
-      case 'week':
-        return 'Jour';
-      case 'month':
-        return 'Jour';
-      case 'quarter':
-        return 'Semaine';
-      case 'year':
-        return 'Mois';
-    }
-  };
 
   return (
     <div className="w-full h-[280px]">

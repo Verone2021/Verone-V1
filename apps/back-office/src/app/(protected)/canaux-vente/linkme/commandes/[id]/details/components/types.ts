@@ -67,6 +67,8 @@ export interface OrderWithDetails {
     phone: string | null;
     email: string | null;
     siret: string | null;
+    country: string | null;
+    vat_number: string | null;
   } | null;
   items: Array<{
     id: string;

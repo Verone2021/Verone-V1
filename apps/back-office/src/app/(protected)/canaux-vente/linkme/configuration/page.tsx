@@ -14,9 +14,10 @@
 import { useState } from 'react';
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@verone/ui';
-import { FileText, Settings, Globe } from 'lucide-react';
+import { FileText, Settings, Globe, Package } from 'lucide-react';
 
 import { ConfigurationSection } from '../components/ConfigurationSection';
+import { GlobeItemsSection } from '../components/GlobeItemsSection';
 import { PagesConfigurationSection } from '../components/PagesConfigurationSection';
 
 export default function LinkMeConfigurationPage(): JSX.Element {
@@ -41,6 +42,10 @@ export default function LinkMeConfigurationPage(): JSX.Element {
             <Globe className="h-4 w-4 mr-2" />
             Pages LinkMe
           </TabsTrigger>
+          <TabsTrigger value="globe-items" variant="underline">
+            <Package className="h-4 w-4 mr-2" />
+            Items Globe
+          </TabsTrigger>
           <TabsTrigger value="settings" variant="underline">
             <Settings className="h-4 w-4 mr-2" />
             Paramètres
@@ -57,6 +62,11 @@ export default function LinkMeConfigurationPage(): JSX.Element {
         {/* Onglet Pages LinkMe */}
         <TabsContent value="pages" className="mt-6">
           <PagesConfigurationSection />
+        </TabsContent>
+
+        {/* Onglet Items Globe */}
+        <TabsContent value="globe-items" className="mt-6">
+          <GlobeItemsSection />
         </TabsContent>
 
         {/* Onglet Paramètres */}

@@ -1,7 +1,23 @@
 # Verone Back Office
 
 CRM/ERP modulaire — decoration et mobilier haut de gamme.
-Monorepo : back-office (3000), linkme (3002), site-internet (3001).
+Monorepo Turborepo : back-office (3000), linkme (3002), site-internet (3001).
+
+## CRITICAL : Avant de coder
+
+1. Lire `.claude/work/ACTIVE.md` (taches en cours)
+2. Lire le `CLAUDE.md` de l'app concernee (`apps/[app]/CLAUDE.md`)
+3. Lire 3 fichiers similaires avant toute modification (Triple Lecture)
+4. Consulter `.claude/INDEX.md` pour trouver toute information
+
+## Chemins critiques
+
+- `supabase/migrations/` — source de verite schema DB
+- `packages/@verone/types/src/supabase.ts` — types generes
+- `packages/@verone/` — 26 packages partages (hooks, composants, utils)
+- `.claude/work/ACTIVE.md` — sprints et taches en cours
+- `.claude/INDEX.md` — sommaire centralise complet
+- `.claude/rules/` — regles auto-discovered
 
 ## Commandes
 
@@ -11,31 +27,35 @@ pnpm --filter @verone/[app] type-check  # Type-check filtre
 pnpm lint:fix                           # ESLint auto-fix
 ```
 
-## Regles
-
-- Explorer avant coder : schema DB + code existant + patterns AVANT toute modification
-- Zero `any` TypeScript : `unknown` + validation Zod
-- Feature branch depuis `staging` : format `[APP-DOMAIN-NNN] type: desc`
-- Demander a Romeo avant commit/push/PR/migration
-- JAMAIS de donnees test en SQL : SELECT + DDL only. Donnees test = UI Playwright
-- UNE entite = UNE page detail. Jamais de pages doublons entre canaux de vente
-- JAMAIS modifier les routes API (Qonto, adresses, Packlink, emails, webhooks)
-
 ## Workflow
 
-- `/research <domaine>` : DB + code + RLS avant implementation
-- `/implement <feature>` : explore → code → verify
-- `/plan` : features complexes
-- `/pr` : push + PR
+- `/search <domaine>` : DB + code + RLS avant implementation
+- `/implement <feature>` : search → plan → code → verify
+- `/plan` : features complexes → checklist dans ACTIVE.md
+- `/review <app>` : audit qualite code
+- `/pr` : push + PR vers staging
 
 ## Stack
 
 - Next.js 15 App Router, TypeScript strict, shadcn/ui + Tailwind
 - Supabase (RLS obligatoire), React Query, Zod
 - Playwright MCP pour tests E2E visuels
-- Context7 MCP pour documentation librairies a jour (`mcp__context7__resolve-library-id` + `mcp__context7__query-docs`)
-- Serena MCP pour navigation code semantique (`mcp__serena__find_symbol`, `mcp__serena__list_memories`)
+- Context7 MCP pour documentation librairies
 
-## Langue
+## CRITICAL : Regles absolues
 
-Francais (code/commits en anglais). Comportement TEACH-FIRST : dire NON si != best practice.
+- Zero `any` TypeScript — `unknown` + validation Zod
+- JAMAIS modifier les routes API existantes (Qonto, adresses, emails, webhooks)
+- JAMAIS de donnees test en SQL — SELECT + DDL only
+- UNE entite = UNE page detail — jamais de doublons entre canaux
+- Fichier > 400 lignes = refactoring obligatoire
+- Feature branch depuis `staging` — format `[APP-DOMAIN-NNN] type: desc`
+
+## CRITICAL : Comportement Dev Senior
+
+- Francais (code/commits en anglais)
+- TEACH-FIRST : expliquer AVANT de coder, dire NON si != best practice
+- CONTREDIRE Romeo si sa demande est risquee, obsolete, ou deja echouee dans le passe
+- TOUJOURS verifier git log et memoire AVANT d'implementer — si ca a echoue avant, REFUSER et expliquer pourquoi
+- Ne JAMAIS executer une demande juste pour faire plaisir — Romeo est novice et compte sur toi pour le proteger
+- Si un probleme a deja ete resolu autrement, dire "non, on a deja essaye, voici ce qui fonctionne"

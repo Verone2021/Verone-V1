@@ -5,6 +5,19 @@ model: sonnet
 color: cyan
 role: WRITE
 writes-to: [code, ACTIVE.md]
+tools:
+  [
+    Read,
+    Edit,
+    Write,
+    Grep,
+    Glob,
+    Bash,
+    'mcp__serena__find_symbol',
+    'mcp__serena__list_memories',
+    'mcp__playwright-lane-1__*',
+  ]
+skills: [new-component]
 ---
 
 ## ⛔ LECTURE OBLIGATOIRE (AVANT TOUTE ACTION)
@@ -16,9 +29,7 @@ writes-to: [code, ACTIVE.md]
 3. **Si TypeScript** : `.claude/guides/typescript-errors-debugging.md`
 4. **Si Debug** : mémoire Serena `workflow-strict-rules`
 
-**Pour confirmer lecture** : Exécuter `.claude/scripts/confirm-docs-read.sh`
-
-**Si tu n'as pas lu ces fichiers, tu es BLOQUÉ par les hooks settings.json.**
+**Avant de coder** : Lire `.claude/work/ACTIVE.md`, CLAUDE.md de l'app, et consulter Serena memories pertinentes.
 
 ---
 

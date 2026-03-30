@@ -46,6 +46,60 @@ const LOAD_MORE_INCREMENT = 20;
 // COMPONENT
 // ============================================
 
+function TimelineContent({
+  isLoading,
+  filteredEvents,
+  visibleCount,
+  filter,
+  onLoadMore,
+}: {
+  isLoading: boolean;
+  filteredEvents: ReturnType<typeof buildTimelineEvents>;
+  visibleCount: number;
+  filter: ActivityFilter;
+  onLoadMore: () => void;
+}) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+  if (filteredEvents.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <Clock className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+        <p className="text-sm text-gray-500">
+          {filter === 'all'
+            ? 'Aucun historique disponible'
+            : 'Aucun evenement dans cette categorie'}
+        </p>
+      </div>
+    );
+  }
+  const hasMore = filteredEvents.length > visibleCount;
+  const remaining = filteredEvents.length - visibleCount;
+  return (
+    <>
+      <ActivityTimeline items={filteredEvents} maxItems={visibleCount} />
+      {hasMore && (
+        <div className="mt-4 text-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onLoadMore}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <ChevronDown className="h-4 w-4 mr-1" />
+            Voir plus ({remaining} restant{remaining > 1 ? 's' : ''})
+          </Button>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function UserActivityTimeline({
   userId,
   enseigneId,
@@ -70,9 +124,6 @@ export function UserActivityTimeline({
     [allEvents, filter]
   );
 
-  const hasMore = filteredEvents.length > visibleCount;
-  const remaining = filteredEvents.length - visibleCount;
-
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -88,7 +139,6 @@ export function UserActivityTimeline({
             )}
           </CardTitle>
         </div>
-        {/* Filter chips */}
         <div className="flex flex-wrap gap-1.5 mt-2">
           {FILTER_OPTIONS.map(option => (
             <button
@@ -111,39 +161,13 @@ export function UserActivityTimeline({
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-          </div>
-        ) : filteredEvents.length === 0 ? (
-          <div className="text-center py-8">
-            <Clock className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-            <p className="text-sm text-gray-500">
-              {filter === 'all'
-                ? 'Aucun historique disponible'
-                : 'Aucun evenement dans cette categorie'}
-            </p>
-          </div>
-        ) : (
-          <>
-            <ActivityTimeline items={filteredEvents} maxItems={visibleCount} />
-            {hasMore && (
-              <div className="mt-4 text-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    setVisibleCount(prev => prev + LOAD_MORE_INCREMENT)
-                  }
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <ChevronDown className="h-4 w-4 mr-1" />
-                  Voir plus ({remaining} restant{remaining > 1 ? 's' : ''})
-                </Button>
-              </div>
-            )}
-          </>
-        )}
+        <TimelineContent
+          isLoading={isLoading}
+          filteredEvents={filteredEvents}
+          visibleCount={visibleCount}
+          filter={filter}
+          onLoadMore={() => setVisibleCount(prev => prev + LOAD_MORE_INCREMENT)}
+        />
       </CardContent>
     </Card>
   );

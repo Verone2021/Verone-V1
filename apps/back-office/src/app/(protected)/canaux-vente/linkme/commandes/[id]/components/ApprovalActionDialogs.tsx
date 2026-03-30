@@ -175,7 +175,7 @@ function makeHandleOpenChange({
   availableRecipients,
   missingFields,
   relevantCategories,
-  selectedEmails,
+  selectedEmails: _selectedEmails,
   setSelectedEmails,
   setSelectedCategories,
   setRequestMessage,
@@ -193,12 +193,13 @@ function makeHandleOpenChange({
       );
       setSelectedCategories(cats);
       setRequestMessage(generateCombinedMessage(missingFields, cats));
-      if (availableRecipients.length > 0 && selectedEmails.length === 0) {
+      if (availableRecipients.length > 0) {
         setSelectedEmails([availableRecipients[0].email]);
       }
     } else {
       setSelectedCategories(new Set());
       setRequestMessage('');
+      setSelectedEmails([]);
       setManualEmail('');
     }
   };

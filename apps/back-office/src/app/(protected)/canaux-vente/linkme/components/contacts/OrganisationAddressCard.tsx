@@ -90,6 +90,61 @@ function formatAddress(
 // COMPONENT
 // ============================================================================
 
+function CardContent({
+  name,
+  label,
+  badge,
+  isSelected,
+  formattedAddress,
+  country,
+}: {
+  name: string;
+  label?: string;
+  badge: { label: string; className: string } | null;
+  isSelected: boolean;
+  formattedAddress: string | null;
+  country?: string | null;
+}) {
+  return (
+    <div className="min-w-0 flex-1">
+      {label && (
+        <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-0.5">
+          {label}
+        </p>
+      )}
+      <div className="flex items-center gap-1.5">
+        <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate">
+          {name}
+        </h3>
+        {badge && (
+          <span
+            className={cn(
+              'flex-shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded',
+              badge.className
+            )}
+          >
+            {badge.label}
+          </span>
+        )}
+        {isSelected && (
+          <Check className="h-4 w-4 text-green-500 flex-shrink-0 ml-auto" />
+        )}
+      </div>
+      {formattedAddress && (
+        <div className="flex items-start gap-1 mt-1">
+          <MapPin className="h-3 w-3 flex-shrink-0 text-gray-400 mt-0.5" />
+          <p className="text-xs text-gray-500 leading-tight">
+            {formattedAddress}
+          </p>
+        </div>
+      )}
+      {country && country !== 'FR' && (
+        <p className="text-[10px] text-gray-400 mt-0.5 ml-4">{country}</p>
+      )}
+    </div>
+  );
+}
+
 export function OrganisationAddressCard({
   id: _id,
   name,
@@ -128,52 +183,14 @@ export function OrganisationAddressCard({
           className="flex-shrink-0"
         />
 
-        {/* Content */}
-        <div className="min-w-0 flex-1">
-          {/* Label si fourni */}
-          {label && (
-            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-0.5">
-              {label}
-            </p>
-          )}
-
-          {/* Name + Badge + Check */}
-          <div className="flex items-center gap-1.5">
-            <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate">
-              {name}
-            </h3>
-            {badge && (
-              <span
-                className={cn(
-                  'flex-shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded',
-                  badge.className
-                )}
-              >
-                {badge.label}
-              </span>
-            )}
-            {isSelected && (
-              <Check className="h-4 w-4 text-green-500 flex-shrink-0 ml-auto" />
-            )}
-          </div>
-
-          {/* Address */}
-          {formattedAddress && (
-            <div className="flex items-start gap-1 mt-1">
-              <MapPin className="h-3 w-3 flex-shrink-0 text-gray-400 mt-0.5" />
-              <p className="text-xs text-gray-500 leading-tight">
-                {formattedAddress}
-              </p>
-            </div>
-          )}
-
-          {/* Country if not FR */}
-          {address?.country && address.country !== 'FR' && (
-            <p className="text-[10px] text-gray-400 mt-0.5 ml-4">
-              {address.country}
-            </p>
-          )}
-        </div>
+        <CardContent
+          name={name}
+          label={label}
+          badge={badge}
+          isSelected={isSelected}
+          formattedAddress={formattedAddress}
+          country={address?.country}
+        />
       </div>
     </Card>
   );

@@ -39,7 +39,7 @@ while true; do
   fi
 
   # 4. File Descriptors Check
-  OPEN_FILES=$(lsof -u romeodossantos 2>/dev/null | wc -l | tr -d ' ')
+  OPEN_FILES=$(lsof -u "$(whoami)" 2>/dev/null | wc -l | tr -d ' ')
   if [ "$OPEN_FILES" -gt "$FILES_THRESHOLD" ]; then
     echo "⚠️  [$TIMESTAMP] HIGH FDs: ${OPEN_FILES}"
   fi

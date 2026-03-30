@@ -44,119 +44,132 @@ export interface StorageRequestAdmin {
 /**
  * Hook: recupere les demandes d'envoi de stock (toutes ou par status)
  */
+function buildLookupMaps(
+  productsRes: {
+    data: Array<{ id: string; name: string; sku: string | null }> | null;
+  },
+  imagesRes: {
+    data: Array<{ product_id: string; public_url: string | null }> | null;
+  },
+  affiliatesRes: { data: Array<{ id: string; display_name: string }> | null },
+  enseignesRes: { data: Array<{ id: string; name: string }> | null },
+  orgsRes: { data: Array<Record<string, unknown>> | null }
+) {
+  const productMap = new Map<string, { name: string; sku: string }>();
+  for (const p of productsRes.data ?? [])
+    productMap.set(p.id, { name: p.name, sku: p.sku ?? '' });
+
+  const imageMap = new Map<string, string>();
+  for (const img of imagesRes.data ?? []) {
+    if (!imageMap.has(img.product_id))
+      imageMap.set(img.product_id, img.public_url ?? '');
+  }
+
+  const affiliateMap = new Map<string, string>();
+  for (const a of affiliatesRes.data ?? [])
+    affiliateMap.set(a.id, a.display_name);
+
+  const enseigneMap = new Map<string, string>();
+  for (const e of enseignesRes.data ?? []) enseigneMap.set(e.id, e.name);
+
+  const orgMap = new Map<string, string>();
+  for (const o of orgsRes.data ?? []) {
+    orgMap.set(
+      o.id as string,
+      (o.trade_name as string) ?? (o.legal_name as string) ?? ''
+    );
+  }
+
+  return { productMap, imageMap, affiliateMap, enseigneMap, orgMap };
+}
+
+async function fetchStorageRequests(
+  status?: string
+): Promise<StorageRequestAdmin[]> {
+  const supabase: SupabaseClient<Database> = createClient();
+
+  let query = supabase
+    .from('affiliate_storage_requests')
+    .select(
+      'id, product_id, affiliate_id, owner_enseigne_id, owner_organisation_id, quantity, notes, status, rejection_reason, reception_id, reviewed_by, reviewed_at, created_at, updated_at'
+    )
+    .order('created_at', { ascending: false });
+
+  if (status) {
+    query = query.eq('status', status);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('[usePendingStorageRequests] Error:', error);
+    throw error;
+  }
+
+  const requests = (data ?? []) as unknown as StorageRequestAdmin[];
+  if (requests.length === 0) return [];
+
+  // Enrich with product info
+  const productIds = [...new Set(requests.map(r => r.product_id))];
+  const affiliateIds = [...new Set(requests.map(r => r.affiliate_id))];
+  const enseigneIds = requests
+    .filter(r => r.owner_enseigne_id)
+    .map(r => r.owner_enseigne_id as string);
+  const orgIds = requests
+    .filter(r => r.owner_organisation_id)
+    .map(r => r.owner_organisation_id as string);
+
+  // Parallel fetches
+  const [productsRes, imagesRes, affiliatesRes, enseignesRes, orgsRes] =
+    await Promise.all([
+      supabase.from('products').select('id, name, sku').in('id', productIds),
+      supabase
+        .from('product_images')
+        .select('product_id, public_url, display_order')
+        .in('product_id', productIds)
+        .order('display_order', { ascending: true }),
+      supabase
+        .from('linkme_affiliates')
+        .select('id, display_name')
+        .in('id', affiliateIds),
+      enseigneIds.length > 0
+        ? supabase.from('enseignes').select('id, name').in('id', enseigneIds)
+        : Promise.resolve({ data: [] }),
+      orgIds.length > 0
+        ? supabase
+            .from('organisations')
+            .select('id, legal_name, trade_name')
+            .in('id', orgIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+  const { productMap, imageMap, affiliateMap, enseigneMap, orgMap } =
+    buildLookupMaps(
+      productsRes,
+      imagesRes,
+      affiliatesRes,
+      enseignesRes,
+      orgsRes
+    );
+
+  return requests.map(r => ({
+    ...r,
+    product_name: productMap.get(r.product_id)?.name ?? 'Produit inconnu',
+    product_sku: productMap.get(r.product_id)?.sku ?? '',
+    product_image_url: imageMap.get(r.product_id) ?? null,
+    affiliate_name: affiliateMap.get(r.affiliate_id) ?? 'Affilie inconnu',
+    owner_name: r.owner_enseigne_id
+      ? (enseigneMap.get(r.owner_enseigne_id) ?? '')
+      : r.owner_organisation_id
+        ? (orgMap.get(r.owner_organisation_id) ?? '')
+        : '',
+  }));
+}
+
 export function usePendingStorageRequests(status?: string) {
   return useQuery({
     queryKey: ['storage-requests-admin', status],
-    queryFn: async (): Promise<StorageRequestAdmin[]> => {
-      const supabase: SupabaseClient<Database> = createClient();
-
-      let query = supabase
-        .from('affiliate_storage_requests')
-        .select(
-          'id, product_id, affiliate_id, owner_enseigne_id, owner_organisation_id, quantity, notes, status, rejection_reason, reception_id, reviewed_by, reviewed_at, created_at, updated_at'
-        )
-        .order('created_at', { ascending: false });
-
-      if (status) {
-        query = query.eq('status', status);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('[usePendingStorageRequests] Error:', error);
-        throw error;
-      }
-
-      const requests = (data ?? []) as unknown as StorageRequestAdmin[];
-      if (requests.length === 0) return [];
-
-      // Enrich with product info
-      const productIds = [...new Set(requests.map(r => r.product_id))];
-      const affiliateIds = [...new Set(requests.map(r => r.affiliate_id))];
-      const enseigneIds = requests
-        .filter(r => r.owner_enseigne_id)
-        .map(r => r.owner_enseigne_id as string);
-      const orgIds = requests
-        .filter(r => r.owner_organisation_id)
-        .map(r => r.owner_organisation_id as string);
-
-      // Parallel fetches
-      const [productsRes, imagesRes, affiliatesRes, enseignesRes, orgsRes] =
-        await Promise.all([
-          supabase
-            .from('products')
-            .select('id, name, sku')
-            .in('id', productIds),
-          supabase
-            .from('product_images')
-            .select('product_id, public_url, display_order')
-            .in('product_id', productIds)
-            .order('display_order', { ascending: true }),
-          supabase
-            .from('linkme_affiliates')
-            .select('id, display_name')
-            .in('id', affiliateIds),
-          enseigneIds.length > 0
-            ? supabase
-                .from('enseignes')
-                .select('id, name')
-                .in('id', enseigneIds)
-            : Promise.resolve({ data: [] }),
-          orgIds.length > 0
-            ? supabase
-                .from('organisations')
-                .select('id, legal_name, trade_name')
-                .in('id', orgIds)
-            : Promise.resolve({ data: [] }),
-        ]);
-
-      // Build maps
-      const productMap = new Map<string, { name: string; sku: string }>();
-      for (const p of productsRes.data ?? []) {
-        productMap.set(p.id, { name: p.name, sku: p.sku ?? '' });
-      }
-
-      const imageMap = new Map<string, string>();
-      for (const img of imagesRes.data ?? []) {
-        if (!imageMap.has(img.product_id)) {
-          imageMap.set(img.product_id, img.public_url ?? '');
-        }
-      }
-
-      const affiliateMap = new Map<string, string>();
-      for (const a of affiliatesRes.data ?? []) {
-        affiliateMap.set(a.id, a.display_name);
-      }
-
-      const enseigneMap = new Map<string, string>();
-      for (const e of enseignesRes.data ?? []) {
-        enseigneMap.set(e.id, e.name);
-      }
-
-      const orgMap = new Map<string, string>();
-      for (const o of orgsRes.data ?? []) {
-        orgMap.set(
-          o.id,
-          ((o as Record<string, unknown>).trade_name as string) ??
-            ((o as Record<string, unknown>).legal_name as string) ??
-            ''
-        );
-      }
-
-      return requests.map(r => ({
-        ...r,
-        product_name: productMap.get(r.product_id)?.name ?? 'Produit inconnu',
-        product_sku: productMap.get(r.product_id)?.sku ?? '',
-        product_image_url: imageMap.get(r.product_id) ?? null,
-        affiliate_name: affiliateMap.get(r.affiliate_id) ?? 'Affilie inconnu',
-        owner_name: r.owner_enseigne_id
-          ? (enseigneMap.get(r.owner_enseigne_id) ?? '')
-          : r.owner_organisation_id
-            ? (orgMap.get(r.owner_organisation_id) ?? '')
-            : '',
-      }));
-    },
+    queryFn: () => fetchStorageRequests(status),
     staleTime: 300_000,
   });
 }

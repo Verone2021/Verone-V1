@@ -12,6 +12,50 @@ import { SendInfoRequestDialog } from './SendInfoRequestDialog';
 import { ContactEditDialog } from './ContactEditDialog';
 import { AddressEditDialog } from './AddressEditDialog';
 
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-4">
+      <Skeleton className="h-12 w-full" />
+      <Skeleton className="h-32 w-full" />
+      <Skeleton className="h-32 w-full" />
+    </div>
+  );
+}
+
+function EditDialogs({
+  editOrder,
+  editCategory,
+  orders,
+  onClose,
+}: {
+  editOrder: OrderWithMissing | null;
+  editCategory: ClickableCategory | null;
+  orders: OrderWithMissing[] | undefined;
+  onClose: () => void;
+}) {
+  if (!editOrder || !editCategory) return null;
+  const freshOrder = orders?.find(o => o.id === editOrder.id) ?? editOrder;
+  const handleChange = (open: boolean) => {
+    if (!open) onClose();
+  };
+
+  if (editCategory === 'delivery_address') {
+    return (
+      <AddressEditDialog order={freshOrder} open onOpenChange={handleChange} />
+    );
+  }
+  return (
+    <ContactEditDialog
+      order={freshOrder}
+      contactFor={
+        editCategory as 'responsable' | 'billing' | 'delivery_contact'
+      }
+      open
+      onOpenChange={handleChange}
+    />
+  );
+}
+
 interface MissingFieldsTabProps {
   orders: OrderWithMissing[] | undefined;
   isLoading: boolean;
@@ -42,13 +86,7 @@ export function MissingFieldsTab({ orders, isLoading }: MissingFieldsTabProps) {
   };
 
   if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-32 w-full" />
-      </div>
-    );
+    return <LoadingSkeleton />;
   }
 
   return (
@@ -91,34 +129,15 @@ export function MissingFieldsTab({ orders, isLoading }: MissingFieldsTabProps) {
         />
       )}
 
-      {editOrder &&
-        editCategory &&
-        (editCategory === 'delivery_address' ? (
-          <AddressEditDialog
-            order={orders?.find(o => o.id === editOrder.id) ?? editOrder}
-            open
-            onOpenChange={open => {
-              if (!open) {
-                setEditOrder(null);
-                setEditCategory(null);
-              }
-            }}
-          />
-        ) : (
-          <ContactEditDialog
-            order={orders?.find(o => o.id === editOrder.id) ?? editOrder}
-            contactFor={
-              editCategory as 'responsable' | 'billing' | 'delivery_contact'
-            }
-            open
-            onOpenChange={open => {
-              if (!open) {
-                setEditOrder(null);
-                setEditCategory(null);
-              }
-            }}
-          />
-        ))}
+      <EditDialogs
+        editOrder={editOrder}
+        editCategory={editCategory}
+        orders={orders}
+        onClose={() => {
+          setEditOrder(null);
+          setEditCategory(null);
+        }}
+      />
     </div>
   );
 }

@@ -113,7 +113,7 @@ export function useGoogleMerchantSync() {
       const _startTime = Date.now();
 
       // Call API
-      const response = await fetch('/api/google-merchant/sync', {
+      const response = await fetch('/api/google-merchant/batch-sync', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

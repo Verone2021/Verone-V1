@@ -151,7 +151,7 @@ export default function LinkMeOrderDetailsPage() {
             address_line1, address_line2, postal_code, city,
             billing_address_line1, billing_address_line2, billing_city, billing_postal_code,
             shipping_address_line1, shipping_address_line2, shipping_city, shipping_postal_code,
-            has_different_shipping_address, phone, email, siret
+            has_different_shipping_address, phone, email, siret, country, vat_number
           ),
           sales_order_linkme_details (
             id, sales_order_id, requester_type, requester_name, requester_email,
