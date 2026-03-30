@@ -1,10 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import Image from 'next/image';
+import { useState, useEffect, useMemo } from 'react';
 
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -12,80 +9,27 @@ import {
   CardHeader,
   CardTitle,
 } from '@verone/ui';
-import { Input } from '@verone/ui';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@verone/ui';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@verone/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
-import { formatPrice } from '@verone/utils';
-import {
-  Package,
-  Plus,
-  AlertTriangle,
-  TrendingDown,
-  TrendingUp,
-  History,
-  RefreshCw,
-  ArrowUpDown,
-  Clock,
-  Boxes,
-} from 'lucide-react';
-
 import { useCatalogue } from '@verone/categories';
 import { useToast } from '@verone/common';
 import { ProductStockHistoryModal } from '@verone/products';
-import { GeneralStockMovementModal } from '@verone/stock';
-import { StockMovementModal } from '@verone/stock';
-import { StockDisplay, StockSummaryCard } from '@verone/stock';
-import { useStock } from '@verone/stock';
+import {
+  GeneralStockMovementModal,
+  StockMovementModal,
+  StockSummaryCard,
+  useStock,
+} from '@verone/stock';
+import { AlertTriangle, Boxes, Clock, Package } from 'lucide-react';
 
-interface StockFilters {
-  search: string;
-  status:
-    | 'all'
-    | 'in_stock'
-    | 'low_stock'
-    | 'out_of_stock'
-    | 'forecasted_shortage';
-  category: string;
-  sortBy: 'name' | 'sku' | 'stock_real' | 'stock_available' | 'updated_at';
-  sortOrder: 'asc' | 'desc';
-}
-
-interface ProductWithStock {
-  id: string;
-  name: string;
-  sku: string;
-  stock_real: number;
-  stock_forecasted_in: number;
-  stock_forecasted_out: number;
-  stock_available: number;
-  stock_total_forecasted: number;
-  last_movement_at?: string | null;
-  primary_image_url?: string;
-  [key: string]: unknown; // Pour les autres propriétés du produit comme minimumSellingPrice, price_ttc
-}
+import { StocksAlertsBanner } from './_components/StocksAlertsBanner';
+import { StocksFiltersBar } from './_components/StocksFiltersBar';
+import { StocksPageHeader } from './_components/StocksPageHeader';
+import { StocksProductTable } from './_components/StocksProductTable';
+import { DEFAULT_FILTERS, MIN_STOCK_LEVEL } from './_components/types';
+import type { ProductWithStock, StockFilters } from './_components/types';
 
 export default function CatalogueStocksPage() {
-  const [filters, setFilters] = useState<StockFilters>({
-    search: '',
-    status: 'all',
-    category: 'all',
-    sortBy: 'name',
-    sortOrder: 'asc',
-  });
+  const [filters, setFilters] = useState<StockFilters>(DEFAULT_FILTERS);
   const [selectedProduct, setSelectedProduct] =
     useState<ProductWithStock | null>(null);
   const [showMovementModal, setShowMovementModal] = useState(false);
@@ -110,31 +54,24 @@ export default function CatalogueStocksPage() {
     getStockAlerts,
   } = useStock();
 
-  // Charger les données au montage avec stale guard (StrictMode safe)
   useEffect(() => {
     let stale = false;
-
     void loadCatalogueData().catch(error => {
-      if (!stale) {
+      if (!stale)
         console.error('[CatalogueStocks] loadCatalogueData failed:', error);
-      }
     });
     void fetchAllStock().catch(error => {
-      if (!stale) {
+      if (!stale)
         console.error('[CatalogueStocks] fetchAllStock failed:', error);
-      }
     });
-
     return () => {
       stale = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Données enrichies produits + stock
-  const enrichedProducts = useMemo(() => {
+  const enrichedProducts = useMemo<ProductWithStock[]>(() => {
     if (!products || !stockData) return [];
-
     return products.map(product => {
       const stock = stockData.find(s => s.product_id === product.id);
       return {
@@ -149,151 +86,93 @@ export default function CatalogueStocksPage() {
     });
   }, [products, stockData]);
 
-  // Filtrage et tri des produits
   const filteredProducts = useMemo(() => {
     let filtered = enrichedProducts;
-
-    // Recherche textuelle
     if (filters.search) {
       const search = filters.search.toLowerCase();
       filtered = filtered.filter(
-        product =>
-          product.name.toLowerCase().includes(search) ||
-          product.sku.toLowerCase().includes(search)
+        p =>
+          p.name.toLowerCase().includes(search) ||
+          p.sku.toLowerCase().includes(search)
       );
     }
-
-    // Filtrage par statut
     if (filters.status !== 'all') {
-      filtered = filtered.filter(product => {
-        const minLevel = 5; // Valeur par défaut pour le niveau minimal de stock
+      filtered = filtered.filter(p => {
         switch (filters.status) {
           case 'out_of_stock':
-            return product.stock_real <= 0;
+            return p.stock_real <= 0;
           case 'low_stock':
-            return product.stock_real > 0 && product.stock_real <= minLevel;
+            return p.stock_real > 0 && p.stock_real <= MIN_STOCK_LEVEL;
           case 'in_stock':
-            return product.stock_real > minLevel;
+            return p.stock_real > MIN_STOCK_LEVEL;
           case 'forecasted_shortage':
-            return product.stock_available <= minLevel;
+            return p.stock_available <= MIN_STOCK_LEVEL;
           default:
             return true;
         }
       });
     }
-
-    // Tri
     filtered.sort((a, b) => {
-      const aValue = a[filters.sortBy as keyof typeof a];
-      const bValue = b[filters.sortBy as keyof typeof b];
-
-      // Conversion en valeurs comparables
-      const aCompare: string | number =
-        typeof aValue === 'string'
-          ? aValue.toLowerCase()
-          : typeof aValue === 'number'
-            ? aValue
+      const aVal = a[filters.sortBy as keyof typeof a];
+      const bVal = b[filters.sortBy as keyof typeof b];
+      const aComp: string | number =
+        typeof aVal === 'string'
+          ? aVal.toLowerCase()
+          : typeof aVal === 'number'
+            ? aVal
             : 0;
-      const bCompare: string | number =
-        typeof bValue === 'string'
-          ? bValue.toLowerCase()
-          : typeof bValue === 'number'
-            ? bValue
+      const bComp: string | number =
+        typeof bVal === 'string'
+          ? bVal.toLowerCase()
+          : typeof bVal === 'number'
+            ? bVal
             : 0;
-
-      if (aCompare < bCompare) return filters.sortOrder === 'asc' ? -1 : 1;
-      if (aCompare > bCompare) return filters.sortOrder === 'asc' ? 1 : -1;
+      if (aComp < bComp) return filters.sortOrder === 'asc' ? -1 : 1;
+      if (aComp > bComp) return filters.sortOrder === 'asc' ? 1 : -1;
       return 0;
     });
-
     return filtered;
   }, [enrichedProducts, filters]);
 
-  // Alertes stock
   const stockAlerts = useMemo(() => getStockAlerts(), [getStockAlerts]);
+  const loading = productsLoading || stockLoading;
 
-  // Handlers
-  const handleRefresh = async () => {
-    await Promise.all([loadCatalogueData(), fetchAllStock()]);
-    toast({
-      title: 'Données actualisées',
-      description: 'Le stock a été rechargé avec succès',
-    });
+  const handleRefresh = () => {
+    void Promise.all([loadCatalogueData(), fetchAllStock()])
+      .then(() => {
+        toast({
+          title: 'Données actualisées',
+          description: 'Le stock a été rechargé avec succès',
+        });
+      })
+      .catch(error => {
+        console.error('[CatalogueStocks] handleRefresh failed:', error);
+      });
   };
 
   const handleMovementSuccess = () => {
-    void fetchAllStock().catch(error => {
-      console.error(
-        '[CatalogueStocks] fetchAllStock (movement) failed:',
-        error
-      );
-    });
+    void fetchAllStock().catch(error =>
+      console.error('[CatalogueStocks] fetchAllStock (movement) failed:', error)
+    );
     setSelectedProduct(null);
     setShowMovementModal(false);
   };
 
   const handleGeneralMovementSuccess = () => {
-    void fetchAllStock().catch(error => {
-      console.error('[CatalogueStocks] fetchAllStock (general) failed:', error);
-    });
+    void fetchAllStock().catch(error =>
+      console.error('[CatalogueStocks] fetchAllStock (general) failed:', error)
+    );
     setShowGeneralMovementModal(false);
   };
 
-  const handleShowHistory = (product: ProductWithStock) => {
-    setSelectedProductForHistory(product);
-    setShowHistoryModal(true);
-  };
-
-  const handleCloseHistory = () => {
-    setShowHistoryModal(false);
-    setSelectedProductForHistory(null);
-  };
-
-  const loading = productsLoading || stockLoading;
-
   return (
     <div className="space-y-6">
-      {/* En-tête */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Gestion des Stocks</h1>
-          <p className="text-gray-600 mt-1">
-            Suivi en temps réel du stock physique et prévisionnel
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <ButtonV2
-            variant="outline"
-            onClick={() => (window.location.href = '/historique-mouvements')}
-          >
-            <History className="h-4 w-4 mr-2" />
-            Historique complet
-          </ButtonV2>
-          <ButtonV2
-            variant="outline"
-            onClick={() => setShowGeneralMovementModal(true)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Nouveau mouvement
-          </ButtonV2>
-          <ButtonV2
-            variant="outline"
-            onClick={() => {
-              void handleRefresh().catch(error => {
-                console.error('[CatalogueStocks] handleRefresh failed:', error);
-              });
-            }}
-            disabled={loading}
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`}
-            />
-            Actualiser
-          </ButtonV2>
-        </div>
-      </div>
+      <StocksPageHeader
+        loading={loading}
+        onRefresh={handleRefresh}
+        onNewMovement={() => setShowGeneralMovementModal(true)}
+      />
 
-      {/* Cartes de résumé */}
       {summary && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StockSummaryCard
@@ -323,257 +202,30 @@ export default function CatalogueStocksPage() {
         </div>
       )}
 
-      {/* Alertes importantes */}
-      {stockAlerts.length > 0 && (
-        <Card className="border-gray-300 bg-gray-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-gray-900">
-              <AlertTriangle className="h-5 w-5" />
-              Alertes Stock ({stockAlerts.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {stockAlerts.slice(0, 3).map(alert => (
-                <div
-                  key={alert.product_id}
-                  className="flex items-center justify-between p-2 bg-white rounded"
-                >
-                  <div>
-                    <span className="font-medium">{alert.product_name}</span>
-                    <span className="text-sm text-gray-600 ml-2">
-                      ({alert.product_sku})
-                    </span>
-                  </div>
-                  <Badge
-                    variant={
-                      alert.alert_type === 'critical'
-                        ? 'destructive'
-                        : 'secondary'
-                    }
-                  >
-                    {alert.alert_message}
-                  </Badge>
-                </div>
-              ))}
-              {stockAlerts.length > 3 && (
-                <p className="text-sm text-gray-900">
-                  Et {stockAlerts.length - 3} autre(s) alerte(s)...
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <StocksAlertsBanner alerts={stockAlerts} />
 
-      {/* Onglets principaux */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
+          <TabsTrigger value="overview">Vue d&apos;ensemble</TabsTrigger>
           <TabsTrigger value="real">Stock Physique</TabsTrigger>
           <TabsTrigger value="forecasted">Stock Prévisionnel</TabsTrigger>
           <TabsTrigger value="movements">Mouvements</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          {/* Filtres */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-wrap gap-4">
-                <div className="flex-1 min-w-[200px]">
-                  <Input
-                    placeholder="Rechercher un produit..."
-                    value={filters.search}
-                    onChange={e =>
-                      setFilters({ ...filters, search: e.target.value })
-                    }
-                    className="w-full"
-                  />
-                </div>
-                <Select
-                  value={filters.status}
-                  onValueChange={(value: StockFilters['status']) =>
-                    setFilters({ ...filters, status: value })
-                  }
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Statut stock" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tous les statuts</SelectItem>
-                    <SelectItem value="in_stock">En stock</SelectItem>
-                    <SelectItem value="low_stock">Stock faible</SelectItem>
-                    <SelectItem value="out_of_stock">Épuisé</SelectItem>
-                    <SelectItem value="forecasted_shortage">
-                      Rupture prévue
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={filters.sortBy}
-                  onValueChange={(value: StockFilters['sortBy']) =>
-                    setFilters({ ...filters, sortBy: value })
-                  }
-                >
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="Trier par" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="name">Nom</SelectItem>
-                    <SelectItem value="sku">SKU</SelectItem>
-                    <SelectItem value="stock_real">Stock physique</SelectItem>
-                    <SelectItem value="stock_available">
-                      Stock disponible
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <ButtonV2
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setFilters({
-                      ...filters,
-                      sortOrder: filters.sortOrder === 'asc' ? 'desc' : 'asc',
-                    })
-                  }
-                >
-                  <ArrowUpDown className="h-4 w-4" />
-                </ButtonV2>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Table produits */}
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Produit</TableHead>
-                    <TableHead>SKU</TableHead>
-                    <TableHead>Stock</TableHead>
-                    <TableHead>Prévisions</TableHead>
-                    <TableHead>Disponible</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
-                        <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2" />
-                        Chargement des données...
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredProducts.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={6}
-                        className="text-center py-8 text-gray-500"
-                      >
-                        Aucun produit trouvé
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredProducts.map(product => (
-                      <TableRow key={product.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            {product.primary_image_url && (
-                              <Image
-                                src={product.primary_image_url}
-                                alt={product.name}
-                                width={40}
-                                height={40}
-                                className="rounded object-cover"
-                              />
-                            )}
-                            <div>
-                              <div className="font-medium">{product.name}</div>
-                              <div className="text-sm text-gray-600">
-                                {formatPrice(
-                                  (product['minimumSellingPrice'] as
-                                    | number
-                                    | undefined) ??
-                                    (product['price_ttc'] as
-                                      | number
-                                      | undefined) ??
-                                    0
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {product.sku}
-                        </TableCell>
-                        <TableCell>
-                          <StockDisplay
-                            stock_real={product.stock_real}
-                            min_stock={5}
-                            size="sm"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2 text-sm">
-                            {product.stock_forecasted_in > 0 && (
-                              <span className="flex items-center gap-1 text-green-600">
-                                <TrendingUp className="h-3 w-3" />+
-                                {product.stock_forecasted_in}
-                              </span>
-                            )}
-                            {product.stock_forecasted_out > 0 && (
-                              <span className="flex items-center gap-1 text-red-600">
-                                <TrendingDown className="h-3 w-3" />-
-                                {product.stock_forecasted_out}
-                              </span>
-                            )}
-                            {product.stock_forecasted_in === 0 &&
-                              product.stock_forecasted_out === 0 && (
-                                <span className="text-gray-400">-</span>
-                              )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              product.stock_available <= 5
-                                ? 'destructive'
-                                : 'default'
-                            }
-                          >
-                            {product.stock_available}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <ButtonV2
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedProduct(product);
-                                setShowMovementModal(true);
-                              }}
-                            >
-                              <Plus className="h-4 w-4 mr-1" />
-                              Mouvement
-                            </ButtonV2>
-                            <ButtonV2
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleShowHistory(product)}
-                            >
-                              <History className="h-4 w-4" />
-                            </ButtonV2>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <StocksFiltersBar filters={filters} onFiltersChange={setFilters} />
+          <StocksProductTable
+            products={filteredProducts}
+            loading={loading}
+            onAddMovement={product => {
+              setSelectedProduct(product);
+              setShowMovementModal(true);
+            }}
+            onShowHistory={product => {
+              setSelectedProductForHistory(product);
+              setShowHistoryModal(true);
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="real">
@@ -597,7 +249,7 @@ export default function CatalogueStocksPage() {
             <CardHeader>
               <CardTitle>Stock Prévisionnel</CardTitle>
               <CardDescription>
-                Prévisions d'entrées et sorties basées sur les commandes
+                Prévisions d&apos;entrées et sorties basées sur les commandes
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -625,7 +277,6 @@ export default function CatalogueStocksPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Modals */}
       {selectedProduct && (
         <StockMovementModal
           product={selectedProduct}
@@ -647,7 +298,10 @@ export default function CatalogueStocksPage() {
       <ProductStockHistoryModal
         product={selectedProductForHistory}
         isOpen={showHistoryModal}
-        onClose={handleCloseHistory}
+        onClose={() => {
+          setShowHistoryModal(false);
+          setSelectedProductForHistory(null);
+        }}
       />
     </div>
   );
