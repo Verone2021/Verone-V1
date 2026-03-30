@@ -14,6 +14,7 @@ import {
   Globe,
   ArrowLeft,
   BarChart,
+  LayoutDashboard,
   ShoppingBag,
   Palette,
   FolderTree,
@@ -22,7 +23,9 @@ import {
   Users,
   Star,
   FileText,
-  Tag,
+  AlertTriangle,
+  ArrowRight,
+  TrendingUp,
 } from 'lucide-react';
 
 // Local Components
@@ -33,7 +36,6 @@ import { CollectionsSection } from './components/CollectionsSection';
 import { ConfigurationSection } from './components/ConfigurationSection';
 import { OrdersSection } from './components/OrdersSection';
 import { ProductsSection } from './components/ProductsSection';
-import { PromoCodesSection } from './components/PromoCodesSection';
 import { ReviewsSection } from './components/ReviewsSection';
 import { VercelAnalyticsDashboard } from './components/VercelAnalyticsDashboard';
 
@@ -119,7 +121,7 @@ export default function SiteInternetPage() {
           {/* Navigation Tabs */}
           <TabsList className="grid grid-cols-10 w-full">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
-              <BarChart className="h-4 w-4" />
+              <LayoutDashboard className="h-4 w-4" />
               Dashboard
             </TabsTrigger>
             <TabsTrigger value="produits" className="flex items-center gap-2">
@@ -157,14 +159,243 @@ export default function SiteInternetPage() {
               <FileText className="h-4 w-4" />
               Contenu
             </TabsTrigger>
-            <TabsTrigger value="promotions" className="flex items-center gap-2">
-              <Tag className="h-4 w-4" />
-              Promos
+            <TabsTrigger value="analytique" className="flex items-center gap-2">
+              <BarChart className="h-4 w-4" />
+              Analytique
             </TabsTrigger>
           </TabsList>
 
-          {/* Tab: Dashboard */}
-          <TabsContent value="dashboard" className="space-y-6">
+          {/* Tab: Dashboard operationnel */}
+          <TabsContent value="dashboard" className="space-y-5">
+            {/* KPIs */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="bg-white rounded-lg border border-gray-200 px-4 py-3">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">
+                  Produits publies
+                </p>
+                <p className="text-2xl font-bold text-gray-900">18</p>
+                <p className="text-xs text-gray-400">sur 231 au catalogue</p>
+              </div>
+              <div className="bg-white rounded-lg border border-gray-200 px-4 py-3">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">
+                  Collections
+                </p>
+                <p className="text-2xl font-bold text-blue-600">2</p>
+                <p className="text-xs text-gray-400">actives sur le site</p>
+              </div>
+              <div className="bg-white rounded-lg border border-gray-200 px-4 py-3">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">
+                  Commandes site
+                </p>
+                <p className="text-2xl font-bold text-green-600">0</p>
+                <p className="text-xs text-gray-400">ce mois</p>
+              </div>
+              <div className="bg-white rounded-lg border border-gray-200 px-4 py-3">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">
+                  CA site
+                </p>
+                <p className="text-2xl font-bold text-purple-600">0 EUR</p>
+                <p className="text-xs text-gray-400">ce mois</p>
+              </div>
+            </div>
+
+            {/* A traiter */}
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-100 flex items-center gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                <span className="text-xs font-semibold text-amber-900">
+                  A traiter
+                </span>
+              </div>
+              <div className="divide-y divide-gray-100">
+                <button
+                  onClick={() => setActiveTab('produits')}
+                  className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 w-full text-left"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                    <span className="text-sm text-gray-900">
+                      <strong>213</strong> produits non publies sur le site
+                    </span>
+                  </div>
+                  <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                </button>
+                <button
+                  onClick={() => setActiveTab('avis')}
+                  className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 w-full text-left"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                    <span className="text-sm text-gray-900">
+                      <strong>0</strong> avis en attente de moderation
+                    </span>
+                  </div>
+                  <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                </button>
+                <button
+                  onClick={() => setActiveTab('config')}
+                  className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 w-full text-left"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                    <span className="text-sm text-gray-900">
+                      Configurer le domaine et le SEO
+                    </span>
+                  </div>
+                  <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                </button>
+              </div>
+            </div>
+
+            {/* Grille 2x2 */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Catalogue */}
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <ShoppingBag className="h-5 w-5 text-blue-600" />
+                    <h2 className="text-base font-semibold text-gray-900">
+                      Catalogue
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab('produits')}
+                    className="text-xs text-gray-500 hover:text-gray-900"
+                  >
+                    Gerer →
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setActiveTab('produits')}
+                    className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900 w-full text-left"
+                  >
+                    <span>18 produits publies</span>
+                    <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('collections')}
+                    className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900 w-full text-left"
+                  >
+                    <span>2 collections actives</span>
+                    <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('categories')}
+                    className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900 w-full text-left"
+                  >
+                    <span>Categories et taxonomie</span>
+                    <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Commerce */}
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Package className="h-5 w-5 text-green-600" />
+                    <h2 className="text-base font-semibold text-gray-900">
+                      Commerce
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab('commandes')}
+                    className="text-xs text-gray-500 hover:text-gray-900"
+                  >
+                    Voir →
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setActiveTab('commandes')}
+                    className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900 w-full text-left"
+                  >
+                    <span>Commandes du site</span>
+                    <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('clients')}
+                    className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900 w-full text-left"
+                  >
+                    <span>Clients du site</span>
+                    <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Contenu */}
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-orange-600" />
+                    <h2 className="text-base font-semibold text-gray-900">
+                      Contenu & SEO
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab('contenu')}
+                    className="text-xs text-gray-500 hover:text-gray-900"
+                  >
+                    Gerer →
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setActiveTab('contenu')}
+                    className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900 w-full text-left"
+                  >
+                    <span>Pages CMS</span>
+                    <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('avis')}
+                    className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900 w-full text-left"
+                  >
+                    <span>Avis clients</span>
+                    <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Analytique */}
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-purple-600" />
+                    <h2 className="text-base font-semibold text-gray-900">
+                      Performance
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab('analytique')}
+                    className="text-xs text-gray-500 hover:text-gray-900"
+                  >
+                    Voir →
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setActiveTab('analytique')}
+                    className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900 w-full text-left"
+                  >
+                    <span>Web Vitals et analytique</span>
+                    <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('config')}
+                    className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900 w-full text-left"
+                  >
+                    <span>Configuration site</span>
+                    <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Tab: Analytique (ancien Dashboard) */}
+          <TabsContent value="analytique" className="space-y-6">
             <VercelAnalyticsDashboard />
           </TabsContent>
 
@@ -208,10 +439,7 @@ export default function SiteInternetPage() {
             <CMSSection />
           </TabsContent>
 
-          {/* Tab: Promotions */}
-          <TabsContent value="promotions" className="space-y-6">
-            <PromoCodesSection />
-          </TabsContent>
+          {/* Tab: Promotions — accessible via Analytique > Promos */}
         </Tabs>
       </div>
     </div>

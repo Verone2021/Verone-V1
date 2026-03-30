@@ -1,292 +1,203 @@
 'use client';
 
-import React from 'react';
+import Link from 'next/link';
 
-import { ButtonUnified } from '@verone/ui';
-import { Input } from '@verone/ui';
 import {
+  ArrowRight,
+  FileText,
+  Key,
+  Mail,
   Settings,
-  User,
   Shield,
-  Bell,
-  Palette,
-  Database,
-  Save,
+  Users,
+  Webhook,
 } from 'lucide-react';
 
-interface SettingSection {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  settings: SettingItem[];
-}
-
-interface SettingItem {
-  id: string;
-  label: string;
-  description: string;
-  type: 'input' | 'toggle' | 'select';
-  value: string | boolean;
-  options?: string[];
-}
-
-const settingSections: SettingSection[] = [
+const adminLinks = [
   {
-    id: 'profile',
-    title: 'Profil utilisateur',
-    description: 'Informations personnelles et préférences',
-    icon: <User className="h-5 w-5" />,
-    settings: [
-      {
-        id: 'name',
-        label: 'Nom complet',
-        description: "Votre nom tel qu'il apparaît dans l'interface",
-        type: 'input',
-        value: 'Utilisateur Admin',
-      },
-      {
-        id: 'email',
-        label: 'Email',
-        description: 'Adresse email pour les notifications',
-        type: 'input',
-        value: 'admin@verone.com',
-      },
-    ],
+    title: 'Utilisateurs',
+    description: 'Gestion des comptes et roles staff',
+    href: '/admin/users',
+    icon: Users,
   },
   {
-    id: 'notifications',
+    title: 'Templates email',
+    description: 'Personnaliser les emails envoyes aux clients',
+    href: '/parametres/emails',
+    icon: Mail,
+  },
+  {
+    title: 'Webhooks',
+    description: 'Integrations et notifications externes',
+    href: '/parametres/webhooks',
+    icon: Webhook,
+  },
+  {
     title: 'Notifications',
-    description: 'Gestion des alertes et notifications',
-    icon: <Bell className="h-5 w-5" />,
-    settings: [
-      {
-        id: 'email_notifications',
-        label: 'Notifications par email',
-        description: 'Recevoir les alertes importantes par email',
-        type: 'toggle',
-        value: true,
-      },
-      {
-        id: 'stock_alerts',
-        label: 'Alertes de stock',
-        description: 'Notifications en cas de stock faible',
-        type: 'toggle',
-        value: true,
-      },
-      {
-        id: 'order_notifications',
-        label: 'Notifications de commandes',
-        description: 'Alertes pour les nouvelles commandes',
-        type: 'toggle',
-        value: true,
-      },
-    ],
-  },
-  {
-    id: 'appearance',
-    title: 'Apparence',
-    description: "Personnalisation de l'interface",
-    icon: <Palette className="h-5 w-5" />,
-    settings: [
-      {
-        id: 'language',
-        label: 'Langue',
-        description: "Langue de l'interface",
-        type: 'select',
-        value: 'Français',
-        options: ['Français', 'English', 'Español'],
-      },
-      {
-        id: 'timezone',
-        label: 'Fuseau horaire',
-        description: "Fuseau horaire pour l'affichage des dates",
-        type: 'select',
-        value: 'Europe/Paris',
-        options: ['Europe/Paris', 'UTC', 'America/New_York'],
-      },
-    ],
-  },
-  {
-    id: 'security',
-    title: 'Sécurité',
-    description: 'Paramètres de sécurité et confidentialité',
-    icon: <Shield className="h-5 w-5" />,
-    settings: [
-      {
-        id: 'two_factor',
-        label: 'Authentification à deux facteurs',
-        description: 'Renforcer la sécurité de votre compte',
-        type: 'toggle',
-        value: false,
-      },
-      {
-        id: 'session_timeout',
-        label: "Délai d'inactivité",
-        description: 'Temps avant déconnexion automatique',
-        type: 'select',
-        value: '30 minutes',
-        options: ['15 minutes', '30 minutes', '1 heure', '4 heures'],
-      },
-    ],
+    description: 'Configuration des alertes systeme',
+    href: '/parametres/notifications',
+    icon: Shield,
   },
 ];
 
-function ToggleSwitch({
-  enabled,
-  onChange,
-}: {
-  enabled: boolean;
-  onChange: (enabled: boolean) => void;
-}) {
-  return (
-    <button
-      onClick={() => onChange(!enabled)}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 ${
-        enabled ? 'bg-black' : 'bg-gray-200'
-      }`}
-    >
-      <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-          enabled ? 'translate-x-6' : 'translate-x-1'
-        }`}
-      />
-    </button>
-  );
-}
+const financeLinks = [
+  {
+    title: 'Cloture exercice',
+    description: 'Preparation cloture annuelle et export FEC',
+    href: '/finance/admin/cloture',
+    icon: FileText,
+  },
+  {
+    title: 'Bibliotheque comptable',
+    description: 'Classement et archivage documents comptables',
+    href: '/finance/bibliotheque',
+    icon: Key,
+  },
+];
 
 export default function ParametresPage() {
   return (
-    <div className="space-y-6">
-      {/* Page header */}
-      <div className="border-b border-gray-200 pb-4">
-        <div className="flex items-center space-x-3">
-          <Settings className="h-8 w-8 text-black" />
+    <div className="min-h-screen bg-gray-50/50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-black">Paramètres</h1>
-            <p className="text-gray-600">Configuration de l'application</p>
+            <h1 className="text-xl font-bold text-gray-900">Parametres</h1>
+            <div className="flex items-center gap-3 mt-1 text-xs">
+              <Link
+                href="/admin/users"
+                className="text-gray-500 hover:text-gray-900"
+              >
+                Utilisateurs
+              </Link>
+              <span className="text-gray-300">|</span>
+              <Link
+                href="/parametres/emails"
+                className="text-gray-500 hover:text-gray-900"
+              >
+                Emails
+              </Link>
+              <span className="text-gray-300">|</span>
+              <Link
+                href="/parametres/webhooks"
+                className="text-gray-500 hover:text-gray-900"
+              >
+                Webhooks
+              </Link>
+              <span className="text-gray-300">|</span>
+              <Link
+                href="/parametres/notifications"
+                className="text-gray-500 hover:text-gray-900"
+              >
+                Notifications
+              </Link>
+              <span className="text-gray-300">|</span>
+              <Link
+                href="/profile"
+                className="text-gray-500 hover:text-gray-900"
+              >
+                Mon profil
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Settings sections */}
-      <div className="space-y-6">
-        {settingSections.map(section => (
-          <div
-            key={section.id}
-            className="bg-white rounded-lg border border-gray-200 p-6"
-          >
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                {section.icon}
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-black">
-                  {section.title}
-                </h3>
-                <p className="text-sm text-gray-600">{section.description}</p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {section.settings.map(setting => (
-                <div
-                  key={setting.id}
-                  className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0"
-                >
-                  <div className="flex-1">
-                    <label className="text-sm font-medium text-black">
-                      {setting.label}
-                    </label>
-                    <p className="text-sm text-gray-500">
-                      {setting.description}
-                    </p>
+        {/* Configuration */}
+        <div>
+          <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Configuration
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {adminLinks.map(link => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 hover:shadow-sm transition-all group"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-gray-100 group-hover:bg-gray-200 transition-colors">
+                      <link.icon className="h-5 w-5 text-gray-700" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900">
+                        {link.title}
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        {link.description}
+                      </p>
+                    </div>
                   </div>
-                  <div className="ml-4">
-                    {setting.type === 'input' && (
-                      <Input
-                        type="text"
-                        value={setting.value as string}
-                        className="w-64"
-                        onChange={() => {}}
-                      />
-                    )}
-                    {setting.type === 'toggle' && (
-                      <ToggleSwitch
-                        enabled={setting.value as boolean}
-                        onChange={() => {}}
-                      />
-                    )}
-                    {setting.type === 'select' && (
-                      <select
-                        value={setting.value as string}
-                        onChange={() => {}}
-                        className="w-48 h-10 px-3 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                      >
-                        {setting.options?.map(option => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
+                  <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
                 </div>
-              ))}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Administration & Finance */}
+        <div>
+          <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Administration
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {financeLinks.map(link => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 hover:shadow-sm transition-all group"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-gray-100 group-hover:bg-gray-200 transition-colors">
+                      <link.icon className="h-5 w-5 text-gray-700" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900">
+                        {link.title}
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        {link.description}
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Profil — lien vers page profil existante */}
+        <div>
+          <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Mon compte
+          </h2>
+          <Link
+            href="/profile"
+            className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 hover:shadow-sm transition-all group block"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-gray-100 group-hover:bg-gray-200 transition-colors">
+                  <Users className="h-5 w-5 text-gray-700" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Mon profil
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Informations personnelles, mot de passe, preferences
+                  </p>
+                </div>
+              </div>
+              <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* System information */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex items-center space-x-3 mb-4">
-          <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
-            <Database className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-black">
-              Informations système
-            </h3>
-            <p className="text-sm text-gray-600">
-              Détails techniques de l'application
-            </p>
-          </div>
+          </Link>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-600">
-              Version de l'application
-            </p>
-            <p className="text-sm text-black">v1.0.0</p>
-          </div>
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-600">
-              Dernière mise à jour
-            </p>
-            <p className="text-sm text-black">15 janvier 2024</p>
-          </div>
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-600">Environnement</p>
-            <p className="text-sm text-black">Production</p>
-          </div>
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-600">Base de données</p>
-            <p className="text-sm text-black">PostgreSQL 15.0</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Save button */}
-      <div className="flex justify-end">
-        <ButtonUnified
-          variant="success"
-          className="flex items-center space-x-2"
-        >
-          <Save className="h-4 w-4" />
-          <span>Enregistrer les modifications</span>
-        </ButtonUnified>
       </div>
     </div>
   );
