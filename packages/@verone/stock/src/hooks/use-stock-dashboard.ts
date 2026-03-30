@@ -182,57 +182,48 @@ export function useStockDashboard() {
 
       // Calculs agrégés en JS (plus rapide que COUNT() multiples)
 
-      // ✅ FIX Phase 3.6: Filtrer produits fantômes (stock > 0 mais 0 mouvements)
-      // Créer Set des produits ayant eu des mouvements RÉELS (non forecast)
-      const productsWithRealMovements = new Set(
-        (movements7d ?? [])
-          .filter(m => !m.affects_forecast) // Uniquement mouvements réels
-          .map(m => m.product_id)
+      // REGRESSION FIX: Le filtre "mouvements 7j" ne doit PAS conditionner les KPIs principaux.
+      // Si aucun mouvement dans les 7 derniers jours → tous les KPIs tombaient à 0.
+      // Les mouvements 7j servent UNIQUEMENT aux stats de rotation (entries/exits 7j).
+      // Les KPIs stock (quantité, valeur, alertes) utilisent TOUS les produits actifs.
+      const allActiveProducts = productsWithLegacyFields.filter(
+        p => (p.stock_real ?? 0) > 0 || (p.stock_forecasted_in ?? 0) > 0
       );
-
-      // Filtrer pour garder UNIQUEMENT les produits avec mouvements réels
-      // Cela exclut les "fantômes" (produits avec stock > 0 mais jamais de mouvements)
-      const realProducts = productsWithLegacyFields.filter(p =>
-        productsWithRealMovements.has(p.id)
-      );
-
-      // ✅ FIX Phase 3.7: total_forecasted_in/out DOIT utiliser TOUS les produits
-      // Pas seulement ceux avec mouvements récents !
-      // Sinon un produit avec stock_forecasted_in = 6 mais sans mouvement est EXCLU
-      const allProductsForForecasts = productsWithLegacyFields;
 
       const overview: StockOverview = {
-        total_products: realProducts.length, // ✅ FIX: Uniquement produits avec mouvements
-        total_quantity: realProducts.reduce(
+        total_products: allActiveProducts.length,
+        total_quantity: allActiveProducts.reduce(
           (sum, p) => sum + ((p.stock_real || p.stock_quantity) ?? 0),
           0
         ),
-        total_value: realProducts.reduce(
+        total_value: allActiveProducts.reduce(
           (sum, p) =>
             sum +
             ((p.stock_real || p.stock_quantity) ?? 0) * (p.cost_price ?? 0),
           0
         ),
-        products_in_stock: realProducts.filter(p => p.stock_real > 0).length, // ✅ FIX: Produits réels avec stock > 0
-        products_out_of_stock: realProducts.filter(p => p.stock_real <= 0)
-          .length, // ✅ FIX: Produits réels avec stock <= 0
-        products_below_min: realProducts.filter(
+        products_in_stock: productsWithLegacyFields.filter(
+          p => p.stock_real > 0
+        ).length,
+        products_out_of_stock: productsWithLegacyFields.filter(
+          p => p.stock_real <= 0
+        ).length,
+        products_below_min: productsWithLegacyFields.filter(
           p =>
             p.stock_real > 0 &&
             p.min_stock != null &&
             p.min_stock > 0 &&
             p.stock_real <= p.min_stock
-        ).length, // ✅ FIX: Alertes sur produits réels
-        // ✅ FIX Phase 3.7: Calculs prévisionnels sur TOUS les produits (pas realProducts!)
-        total_forecasted_in: allProductsForForecasts.reduce(
+        ).length,
+        total_forecasted_in: productsWithLegacyFields.reduce(
           (sum, p) => sum + (p.stock_forecasted_in ?? 0),
           0
         ),
-        total_forecasted_out: allProductsForForecasts.reduce(
+        total_forecasted_out: productsWithLegacyFields.reduce(
           (sum, p) => sum + (p.stock_forecasted_out ?? 0),
           0
         ),
-        total_available: allProductsForForecasts.reduce(
+        total_available: productsWithLegacyFields.reduce(
           (sum, p) =>
             sum +
             Math.max((p.stock_real ?? 0) - (p.stock_forecasted_out ?? 0), 0),

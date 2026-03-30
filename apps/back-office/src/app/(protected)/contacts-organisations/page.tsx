@@ -1,286 +1,346 @@
 'use client';
 
-import React from 'react';
-
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { useOrganisations } from '@verone/organisations';
-import { ButtonV2 } from '@verone/ui';
-import { KPICardUnified } from '@verone/ui';
-import { Building2, Truck, Settings, Phone, TrendingUp } from 'lucide-react';
-
-interface OrganisationStats {
-  totalOrganisations: number;
-  suppliers: number;
-  customersProfessional: number;
-  partners: number;
-}
+import {
+  AlertTriangle,
+  ArrowRight,
+  Building2,
+  Phone,
+  Plus,
+  Settings,
+  Store,
+  Truck,
+  Users,
+} from 'lucide-react';
 
 export default function ContactsOrganisationsPage() {
   const router = useRouter();
   const { organisations, loading } = useOrganisations();
 
-  // Calculer les statistiques des organisations uniquement (excluant les particuliers)
-  const organisationsOnly = organisations.filter(
-    o =>
-      o.type !== 'customer' ||
-      (o.type === 'customer' && o.customer_type !== 'individual')
-  );
-
-  const stats: OrganisationStats = {
-    totalOrganisations: organisationsOnly.length,
-    // Fournisseurs = type supplier ET pas prestataire
-    suppliers: organisations.filter(
-      o => o.type === 'supplier' && !o.is_service_provider
-    ).length,
-    // Si customer_type n'existe pas, on considère tous les customers comme professionnels par défaut
-    customersProfessional: organisations.filter(
-      o =>
-        o.type === 'customer' &&
-        (!o.customer_type || o.customer_type === 'professional')
-    ).length,
-    // Prestataires = type supplier ET is_service_provider = true
-    partners: organisations.filter(
-      o => o.type === 'supplier' && o.is_service_provider === true
-    ).length,
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-          <p className="text-slate-600">Chargement des organisations...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400" />
+        <span className="ml-2 text-sm text-gray-500">Chargement...</span>
       </div>
     );
   }
 
+  // Stats
+  const suppliers = organisations.filter(
+    o => o.type === 'supplier' && !o.is_service_provider
+  );
+  const customersPro = organisations.filter(
+    o =>
+      o.type === 'customer' &&
+      (!o.customer_type || o.customer_type === 'professional')
+  );
+  const prestataires = organisations.filter(
+    o => o.type === 'supplier' && o.is_service_provider === true
+  );
+  const orgsWithoutSiret = organisations.filter(
+    o => !o.siret && o.type !== 'internal'
+  );
+  const orgsWithoutEmail = organisations.filter(
+    o => !o.email && o.type !== 'internal'
+  );
+
+  // Alertes "A traiter"
+  const totalAlerts =
+    (orgsWithoutSiret.length > 0 ? 1 : 0) +
+    (orgsWithoutEmail.length > 0 ? 1 : 0) +
+    (prestataires.length === 0 ? 0 : 0);
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header Compact */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4">
+    <div className="min-h-screen bg-gray-50/50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+        {/* Header + Navigation rapide */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">
+            <h1 className="text-xl font-bold text-gray-900">
               Contacts & Organisations
             </h1>
-            <p className="text-sm text-slate-600">
-              Hub central pour la gestion de l'écosystème relationnel Vérone
+            <div className="flex items-center gap-3 mt-1 text-xs">
+              <Link
+                href="/contacts-organisations/suppliers"
+                className="text-gray-500 hover:text-gray-900"
+              >
+                Fournisseurs
+              </Link>
+              <span className="text-gray-300">|</span>
+              <Link
+                href="/contacts-organisations/customers?type=professional"
+                className="text-gray-500 hover:text-gray-900"
+              >
+                Clients Pro
+              </Link>
+              <span className="text-gray-300">|</span>
+              <Link
+                href="/contacts-organisations/clients-particuliers"
+                className="text-gray-500 hover:text-gray-900"
+              >
+                Clients Particuliers
+              </Link>
+              <span className="text-gray-300">|</span>
+              <Link
+                href="/contacts-organisations/contacts"
+                className="text-gray-500 hover:text-gray-900"
+              >
+                Contacts
+              </Link>
+              <span className="text-gray-300">|</span>
+              <Link
+                href="/contacts-organisations/enseignes"
+                className="text-gray-500 hover:text-gray-900"
+              >
+                Enseignes
+              </Link>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() =>
+                router.push('/contacts-organisations/nouveau?type=organisation')
+              }
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-800"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Organisation
+            </button>
+            <button
+              onClick={() => router.push('/contacts-organisations/nouveau')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-700 text-xs font-medium rounded-lg border border-gray-300 hover:bg-gray-50"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Contact
+            </button>
+          </div>
+        </div>
+
+        {/* Alertes - A traiter */}
+        {totalAlerts > 0 && (
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-100 flex items-center gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+              <span className="text-xs font-semibold text-amber-900">
+                A traiter ({orgsWithoutSiret.length + orgsWithoutEmail.length})
+              </span>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {orgsWithoutSiret.length > 0 && (
+                <Link
+                  href="/contacts-organisations/suppliers"
+                  className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                    <span className="text-sm text-gray-900">
+                      <strong>{orgsWithoutSiret.length}</strong> organisation(s)
+                      sans SIRET
+                    </span>
+                  </div>
+                  <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                </Link>
+              )}
+              {orgsWithoutEmail.length > 0 && (
+                <Link
+                  href="/contacts-organisations/customers?type=professional"
+                  className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                    <span className="text-sm text-gray-900">
+                      <strong>{orgsWithoutEmail.length}</strong> organisation(s)
+                      sans email
+                    </span>
+                  </div>
+                  <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* KPIs compacts */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="bg-white rounded-lg border border-gray-200 px-4 py-3">
+            <p className="text-xs text-gray-500 uppercase tracking-wide">
+              Total
+            </p>
+            <p className="text-2xl font-bold text-gray-900">
+              {organisations.length}
             </p>
           </div>
-        </div>
-      </div>
-
-      <div className="p-6 space-y-6">
-        {/* Zone 1: KPIs Design V2 */}
-        <div>
-          <h2 className="text-sm font-semibold text-slate-700 mb-3">
-            Vue d'ensemble
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <KPICardUnified
-              variant="elegant"
-              title="Total Organisations"
-              value={stats.totalOrganisations}
-              icon={Building2}
-            />
-
-            <KPICardUnified
-              variant="elegant"
-              title="Fournisseurs"
-              value={stats.suppliers}
-              icon={Truck}
-              onClick={() => router.push('/contacts-organisations/suppliers')}
-            />
-
-            <KPICardUnified
-              variant="elegant"
-              title="Clients Pro"
-              value={stats.customersProfessional}
-              icon={Building2}
-              onClick={() =>
-                router.push(
-                  '/contacts-organisations/customers?type=professional'
-                )
-              }
-            />
-
-            <KPICardUnified
-              variant="elegant"
-              title="Prestataires"
-              value={stats.partners}
-              icon={Settings}
-              onClick={() => router.push('/contacts-organisations/partners')}
-            />
+          <div className="bg-white rounded-lg border border-gray-200 px-4 py-3">
+            <p className="text-xs text-gray-500 uppercase tracking-wide">
+              Fournisseurs
+            </p>
+            <p className="text-2xl font-bold text-blue-600">
+              {suppliers.length}
+            </p>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 px-4 py-3">
+            <p className="text-xs text-gray-500 uppercase tracking-wide">
+              Clients Pro
+            </p>
+            <p className="text-2xl font-bold text-green-600">
+              {customersPro.length}
+            </p>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 px-4 py-3">
+            <p className="text-xs text-gray-500 uppercase tracking-wide">
+              Prestataires
+            </p>
+            <p className="text-2xl font-bold text-purple-600">
+              {prestataires.length}
+            </p>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 px-4 py-3">
+            <p className="text-xs text-gray-500 uppercase tracking-wide">
+              Enseignes
+            </p>
+            <p className="text-2xl font-bold text-orange-600">2</p>
           </div>
         </div>
 
-        {/* Zone 2: Modules Navigation */}
-        <div>
-          <h2 className="text-sm font-semibold text-slate-700 mb-3">Modules</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Fournisseurs */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-blue-50">
-                    <Truck className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-slate-900">
-                      Fournisseurs
-                    </h3>
-                    <p className="text-xs text-slate-600">
-                      Gestion partenaires
-                    </p>
-                  </div>
-                </div>
-                <span className="text-2xl font-bold text-slate-900">
-                  {stats.suppliers}
-                </span>
+        {/* Grille 2x2 modules */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Fournisseurs */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Truck className="h-5 w-5 text-blue-600" />
+                <h2 className="text-base font-semibold text-gray-900">
+                  Fournisseurs
+                </h2>
               </div>
-              <ButtonV2
-                variant="primary"
-                size="sm"
-                className="w-full"
-                onClick={() => router.push('/contacts-organisations/suppliers')}
+              <Link
+                href="/contacts-organisations/suppliers"
+                className="text-xs text-gray-500 hover:text-gray-900"
               >
-                Gérer →
-              </ButtonV2>
+                Voir tout →
+              </Link>
             </div>
-
-            {/* Clients Professionnels */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-green-50">
-                    <Building2 className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-slate-900">
-                      Clients Pro
-                    </h3>
-                    <p className="text-xs text-slate-600">Clients B2B</p>
-                  </div>
-                </div>
-                <span className="text-2xl font-bold text-slate-900">
-                  {stats.customersProfessional}
-                </span>
-              </div>
-              <ButtonV2
-                variant="success"
-                size="sm"
-                className="w-full"
-                onClick={() =>
-                  router.push(
-                    '/contacts-organisations/customers?type=professional'
-                  )
-                }
+            <div className="space-y-2">
+              <Link
+                href="/contacts-organisations/suppliers"
+                className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900"
               >
-                Gérer →
-              </ButtonV2>
-            </div>
-
-            {/* Prestataires */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-purple-50">
-                    <Settings className="h-5 w-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-slate-900">
-                      Prestataires
-                    </h3>
-                    <p className="text-xs text-slate-600">Services</p>
-                  </div>
-                </div>
-                <span className="text-2xl font-bold text-slate-900">
-                  {stats.partners}
-                </span>
-              </div>
-              <ButtonV2
-                variant="secondary"
-                size="sm"
-                className="w-full"
-                onClick={() => router.push('/contacts-organisations/partners')}
+                <span>{suppliers.length} fournisseurs actifs</span>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
+              <Link
+                href="/commandes/fournisseurs"
+                className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900"
               >
-                Gérer →
-              </ButtonV2>
+                <span>Commandes fournisseurs</span>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
             </div>
           </div>
-        </div>
 
-        {/* Zone 3: Contacts + Activité (grid 2 colonnes) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Widget Contacts */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5">
-            <div className="flex items-center justify-between mb-4">
+          {/* Clients Pro */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-green-600" />
+                <h2 className="text-base font-semibold text-gray-900">
+                  Clients Professionnels
+                </h2>
+              </div>
+              <Link
+                href="/contacts-organisations/customers?type=professional"
+                className="text-xs text-gray-500 hover:text-gray-900"
+              >
+                Voir tout →
+              </Link>
+            </div>
+            <div className="space-y-2">
+              <Link
+                href="/contacts-organisations/customers?type=professional"
+                className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900"
+              >
+                <span>{customersPro.length} clients B2B</span>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
+              <Link
+                href="/commandes/clients"
+                className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900"
+              >
+                <span>Commandes clients</span>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Contacts */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Phone className="h-5 w-5 text-orange-600" />
-                <div>
-                  <h3 className="text-base font-semibold text-slate-900">
-                    Contacts Professionnels
-                  </h3>
-                  <p className="text-xs text-slate-600">Annuaire centralisé</p>
-                </div>
+                <h2 className="text-base font-semibold text-gray-900">
+                  Contacts
+                </h2>
               </div>
+              <Link
+                href="/contacts-organisations/contacts"
+                className="text-xs text-gray-500 hover:text-gray-900"
+              >
+                Voir tout →
+              </Link>
             </div>
-            <p className="text-sm text-slate-600 mb-4">
-              Gestion centralisée des contacts avec rôles spécialisés
-              (Commercial, Technique, Facturation)
-            </p>
-            <ButtonV2
-              variant="secondary"
-              size="sm"
-              className="w-full"
-              onClick={() => router.push('/contacts-organisations/contacts')}
-            >
-              Accéder aux contacts →
-            </ButtonV2>
+            <div className="space-y-2">
+              <Link
+                href="/contacts-organisations/contacts"
+                className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900"
+              >
+                <span>Annuaire contacts organisations</span>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
+              <Link
+                href="/contacts-organisations/clients-particuliers"
+                className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900"
+              >
+                <span>
+                  <Users className="h-3.5 w-3.5 inline mr-1" />
+                  Clients particuliers (B2C)
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
+            </div>
           </div>
 
-          {/* Widget Activité Récente */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="h-5 w-5 text-slate-700" />
-              <h3 className="text-base font-semibold text-slate-900">
-                Activité Récente
-              </h3>
+          {/* Enseignes + Prestataires */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Store className="h-5 w-5 text-purple-600" />
+                <h2 className="text-base font-semibold text-gray-900">
+                  Enseignes & Prestataires
+                </h2>
+              </div>
             </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <Truck className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm text-slate-700">
-                    Fournisseurs actifs
-                  </span>
-                </div>
-                <span className="text-sm font-semibold text-slate-900">
-                  {stats.suppliers}
+            <div className="space-y-2">
+              <Link
+                href="/contacts-organisations/enseignes"
+                className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900"
+              >
+                <span>2 enseignes (chaines LinkMe)</span>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
+              <Link
+                href="/contacts-organisations/partners"
+                className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900"
+              >
+                <span>
+                  <Settings className="h-3.5 w-3.5 inline mr-1" />
+                  {prestataires.length} prestataires
                 </span>
-              </div>
-
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-green-600" />
-                  <span className="text-sm text-slate-700">Clients B2B</span>
-                </div>
-                <span className="text-sm font-semibold text-slate-900">
-                  {stats.customersProfessional}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between py-2">
-                <div className="flex items-center gap-2">
-                  <Settings className="h-4 w-4 text-purple-600" />
-                  <span className="text-sm text-slate-700">Prestataires</span>
-                </div>
-                <span className="text-sm font-semibold text-slate-900">
-                  {stats.partners}
-                </span>
-              </div>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
             </div>
           </div>
         </div>
