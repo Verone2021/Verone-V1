@@ -4,9 +4,7 @@
  * Fetch VRAIES données Google Merchant depuis Supabase
  * RÈGLE ABSOLUE: Aucune donnée mock - Seulement données réelles ou vides
  *
- * Utilise:
- * - RPC get_google_merchant_products() pour table produits
- * - RPC get_google_merchant_stats() pour statistiques dashboard
+ * Utilise des requêtes directes sur google_merchant_syncs + products
  */
 
 'use client';
@@ -27,7 +25,7 @@ export interface GoogleMerchantProduct {
   google_product_id: string;
   sync_status: 'success' | 'pending' | 'error' | 'skipped';
   google_status: 'approved' | 'pending' | 'rejected' | 'not_synced' | null;
-  google_status_detail: unknown; // JSONB détails erreurs
+  google_status_detail: unknown;
   impressions: number;
   clicks: number;
   conversions: number;
@@ -50,15 +48,13 @@ export interface GoogleMerchantStats {
   total_clicks: number;
   total_conversions: number;
   total_revenue_ht: number;
-  conversion_rate: number; // Calculé RÉELLEMENT (conversions / clicks * 100)
+  conversion_rate: number;
   last_sync_at: string | null;
   refreshed_at: string;
 }
 
 /**
  * Hook: Fetch produits synchronisés Google Merchant
- *
- * @returns Query result avec array produits RÉELS
  */
 export function useGoogleMerchantProducts() {
   const supabase = createClient();
@@ -70,30 +66,61 @@ export function useGoogleMerchantProducts() {
         '[useGoogleMerchantProducts] Fetching products from Supabase...'
       );
 
-      // Type assertion temporaire en attendant régénération types Supabase
-      const { data, error } = await supabase.rpc(
-        'get_google_merchant_products' as 'get_google_merchant_products' &
-          string
-      );
+      const { data, error } = await supabase
+        .from('google_merchant_syncs')
+        .select(
+          `
+          id, product_id, google_product_id, sync_status, google_status,
+          google_status_detail, impressions, clicks, conversions, revenue_ht,
+          synced_at, google_status_checked_at, error_message,
+          products!inner(sku, name)
+        `
+        )
+        .neq('sync_status', 'deleted')
+        .order('synced_at', { ascending: false });
 
       if (error) {
         logger.error(
-          `[useGoogleMerchantProducts] Failed to fetch products: ${error.message}`
+          `[useGoogleMerchantProducts] Failed to fetch: ${error.message}`
         );
         throw new Error(
           `Failed to fetch Google Merchant products: ${error.message}`
         );
       }
 
-      const typedData = data as unknown as GoogleMerchantProduct[] | null;
-      logger.info('[useGoogleMerchantProducts] Products fetched successfully', {
-        count: typedData?.length ?? 0,
+      const mapped: GoogleMerchantProduct[] = (data ?? []).map(row => {
+        const product = row.products as unknown as {
+          sku: string;
+          name: string;
+        };
+        return {
+          id: row.id,
+          product_id: row.product_id,
+          sku: product.sku,
+          product_name: product.name,
+          google_product_id: row.google_product_id ?? '',
+          sync_status: row.sync_status as GoogleMerchantProduct['sync_status'],
+          google_status:
+            row.google_status as GoogleMerchantProduct['google_status'],
+          google_status_detail: row.google_status_detail,
+          impressions: row.impressions ?? 0,
+          clicks: row.clicks ?? 0,
+          conversions: row.conversions ?? 0,
+          revenue_ht: Number(row.revenue_ht ?? 0),
+          synced_at: row.synced_at ?? '',
+          google_status_checked_at: row.google_status_checked_at,
+          error_message: row.error_message,
+        };
       });
 
-      return typedData ?? [];
+      logger.info('[useGoogleMerchantProducts] Products fetched', {
+        count: mapped.length,
+      });
+
+      return mapped;
     },
-    staleTime: 60000, // 1 minute (données changent peu)
-    gcTime: 300000, // 5 minutes
+    staleTime: 60000,
+    gcTime: 300000,
     refetchOnWindowFocus: false,
     retry: 2,
   });
@@ -101,8 +128,6 @@ export function useGoogleMerchantProducts() {
 
 /**
  * Hook: Fetch statistiques Google Merchant pour dashboard
- *
- * @returns Query result avec stats RÉELLES (jamais de mock)
  */
 export function useGoogleMerchantStats() {
   const supabase = createClient();
@@ -112,68 +137,88 @@ export function useGoogleMerchantStats() {
     queryFn: async () => {
       logger.info('[useGoogleMerchantStats] Fetching stats from Supabase...');
 
-      // Type assertion temporaire en attendant régénération types Supabase
-      const { data, error } = await supabase.rpc(
-        'get_google_merchant_stats' as 'get_google_merchant_stats' & string
-      );
+      const { data, error } = await supabase
+        .from('google_merchant_syncs')
+        .select(
+          'sync_status, google_status, impressions, clicks, conversions, revenue_ht, synced_at'
+        )
+        .neq('sync_status', 'deleted');
 
       if (error) {
-        logger.error(
-          `[useGoogleMerchantStats] Failed to fetch stats: ${error.message}`
-        );
+        logger.error(`[useGoogleMerchantStats] Failed: ${error.message}`);
         throw new Error(
           `Failed to fetch Google Merchant stats: ${error.message}`
         );
       }
 
-      // Si aucune donnée (table vide), retourner null pour afficher UI vide
-      const statsData = data as unknown as GoogleMerchantStats[] | null;
-      if (!statsData || statsData.length === 0) {
+      const rows = data ?? [];
+      if (rows.length === 0) {
         logger.info(
           '[useGoogleMerchantStats] No stats available (empty table)'
         );
         return null;
       }
 
-      logger.info('[useGoogleMerchantStats] Stats fetched successfully', {
-        total_products: statsData[0].total_products,
-        approved: statsData[0].approved_products,
-        conversion_rate: statsData[0].conversion_rate,
+      const totalImpressions = rows.reduce(
+        (s, r) => s + (r.impressions ?? 0),
+        0
+      );
+      const totalClicks = rows.reduce((s, r) => s + (r.clicks ?? 0), 0);
+      const totalConversions = rows.reduce(
+        (s, r) => s + (r.conversions ?? 0),
+        0
+      );
+      const totalRevenue = rows.reduce(
+        (s, r) => s + Number(r.revenue_ht ?? 0),
+        0
+      );
+
+      const stats: GoogleMerchantStats = {
+        total_products: rows.length,
+        approved_products: rows.filter(r => r.google_status === 'approved')
+          .length,
+        pending_products: rows.filter(r => r.google_status === 'pending')
+          .length,
+        rejected_products: rows.filter(r => r.google_status === 'rejected')
+          .length,
+        error_products: rows.filter(r => r.sync_status === 'error').length,
+        total_impressions: totalImpressions,
+        total_clicks: totalClicks,
+        total_conversions: totalConversions,
+        total_revenue_ht: totalRevenue,
+        conversion_rate:
+          totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0,
+        last_sync_at: rows.reduce(
+          (latest, r) => {
+            if (!r.synced_at) return latest;
+            return !latest || r.synced_at > latest ? r.synced_at : latest;
+          },
+          null as string | null
+        ),
+        refreshed_at: new Date().toISOString(),
+      };
+
+      logger.info('[useGoogleMerchantStats] Stats computed', {
+        total_products: stats.total_products,
+        approved: stats.approved_products,
       });
 
-      return statsData[0]; // Vue materialized retourne array avec 1 row
+      return stats;
     },
-    staleTime: 60000, // 1 minute
-    gcTime: 300000, // 5 minutes
+    staleTime: 60000,
+    gcTime: 300000,
     refetchOnWindowFocus: false,
     retry: 2,
   });
 }
 
 /**
- * Hook: Refresh materialized view google_merchant_stats
- *
- * À appeler après chaque synchronisation de produits
+ * Hook: Refresh stats (no-op since we compute client-side now)
  */
 export function useRefreshGoogleMerchantStats() {
-  const supabase = createClient();
-
   return async () => {
-    logger.info('[useRefreshGoogleMerchantStats] Refreshing stats...');
-
-    // Type assertion temporaire en attendant régénération types Supabase
-    const { error } = await supabase.rpc(
-      'refresh_google_merchant_stats' as 'refresh_google_merchant_stats' &
-        string
+    logger.info(
+      '[useRefreshGoogleMerchantStats] Stats auto-refresh on next query'
     );
-
-    if (error) {
-      logger.error(
-        `[useRefreshGoogleMerchantStats] Failed to refresh stats: ${error.message}`
-      );
-      throw new Error(`Failed to refresh stats: ${error.message}`);
-    }
-
-    logger.info('[useRefreshGoogleMerchantStats] Stats refreshed successfully');
   };
 }

@@ -138,7 +138,7 @@ function mapCondition(
  */
 function generateProductUrl(product: VéroneProduct): string {
   const slug = product.slug ?? product.sku.toLowerCase();
-  return `${GOOGLE_MERCHANT_CONFIG.productBaseUrl}/products/${slug}`;
+  return `${GOOGLE_MERCHANT_CONFIG.productBaseUrl}/produit/${slug}`;
 }
 
 /**

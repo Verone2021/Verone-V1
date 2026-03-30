@@ -67,14 +67,30 @@ export async function POST(
     // 1. Initialisation Supabase
     const supabase = await createServerClient();
 
-    // 2. Récupération des produits éligibles (product_status = 'active', avec prix et images)
-    const { data: products, error: productsError } = await supabase
+    // 2. Lire le body pour filtrer par productIds si fourni
+    let productIds: string[] | undefined;
+    try {
+      const body = (await request.json()) as {
+        productIds?: string[];
+        action?: string;
+      };
+      productIds =
+        body.productIds && body.productIds.length > 0
+          ? body.productIds
+          : undefined;
+    } catch {
+      // Body vide = sync tous les produits eligibles
+    }
+
+    // 3. Récupération des produits éligibles
+    let query = supabase
       .from('products')
       .select(
         `
         id,
         sku,
         name,
+        slug,
         description,
         technical_description,
         product_status,
@@ -82,6 +98,9 @@ export async function POST(
         condition,
         brand,
         gtin,
+        cost_price,
+        margin_percentage,
+        item_group_id,
         supplier_reference,
         variant_attributes,
         selling_points,
@@ -96,6 +115,12 @@ export async function POST(
       .eq('product_status', 'active')
       .not('stock_status', 'is', null)
       .order('created_at', { ascending: false });
+
+    if (productIds) {
+      query = query.in('id', productIds);
+    }
+
+    const { data: products, error: productsError } = await query;
 
     if (productsError) {
       console.error('[API] Error fetching products:', productsError);

@@ -9,10 +9,10 @@
 export const GOOGLE_MERCHANT_CONFIG = {
   // Vérone Google Merchant Center Account
   accountId: '5495521926',
-  dataSourceId: '10571293810',
+  dataSourceId: '10628192287',
 
   // API Configuration
-  apiVersion: 'v1beta',
+  apiVersion: 'v1',
   baseUrl: 'https://merchantapi.googleapis.com',
 
   // Product Configuration
@@ -31,7 +31,8 @@ export const GOOGLE_MERCHANT_CONFIG = {
   },
 
   // URLs
-  productBaseUrl: process.env.NEXT_PUBLIC_APP_URL ?? 'https://verone.com',
+  productBaseUrl:
+    process.env.NEXT_PUBLIC_SITE_URL ?? 'https://veronecollections.fr',
 
   // Validation
   validation: {
