@@ -114,6 +114,7 @@ export async function GET(_request: NextRequest) {
       <g:image_link>${String(product.primary_image_url)}</g:image_link>
       <g:availability>${availability}</g:availability>
       <g:quantity>${Math.max(qtyMap.get(product.product_id) ?? 0, availability === 'in stock' ? 1 : 0)}</g:quantity>
+      <quantity_to_sell_on_facebook>${Math.max(qtyMap.get(product.product_id) ?? 0, availability === 'in stock' ? 1 : 0)}</quantity_to_sell_on_facebook>
       <g:condition>new</g:condition>
       <g:price>${priceTtc} EUR</g:price>
       <g:shipping>
