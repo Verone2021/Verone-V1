@@ -4,3 +4,7 @@
 export * from './use-google-merchant-config';
 export * from './use-google-merchant-sync';
 export * from './use-google-merchant-products';
+
+// Meta Commerce
+export * from './use-meta-commerce-products';
+export * from './meta';

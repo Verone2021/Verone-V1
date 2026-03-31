@@ -115,6 +115,7 @@ export default function FavorisPage() {
               imageUrl={p.primary_image_url}
               href={`/produit/${p.slug}`}
               priority={index < 3}
+              stockStatus={p.stock_status}
             />
           ))}
         </div>

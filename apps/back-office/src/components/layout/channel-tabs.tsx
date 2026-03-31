@@ -125,6 +125,7 @@ const CHANNEL_TABS: Record<string, TabItem[]> = {
       href: '/canaux-vente/google-merchant/sync',
     },
   ],
+  meta: [{ label: 'Dashboard', href: '/canaux-vente/meta' }],
 };
 
 /**
@@ -134,6 +135,7 @@ const CHANNEL_NAMES: Record<string, string> = {
   linkme: 'LinkMe',
   'site-internet': 'Site Internet',
   'google-merchant': 'Google Merchant',
+  meta: 'Meta Commerce',
 };
 
 /**
@@ -235,6 +237,9 @@ export function ChannelTabs() {
   } else if (pathname.startsWith('/canaux-vente/google-merchant')) {
     activeChannel = 'google-merchant';
     tabItems = CHANNEL_TABS['google-merchant'];
+  } else if (pathname.startsWith('/canaux-vente/meta')) {
+    activeChannel = 'meta';
+    tabItems = CHANNEL_TABS.meta;
   }
 
   // Only render tabs if user is in a sales channel

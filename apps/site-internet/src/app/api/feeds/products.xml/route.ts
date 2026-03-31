@@ -1,11 +1,11 @@
 /**
  * GET /api/feeds/products.xml
  *
- * Google Shopping XML feed — SAME data source as site internet.
+ * Product XML feed for Google Shopping + Meta Commerce.
  * Uses RPC get_site_internet_products() for prices + stock_status.
  *
  * CRITICAL: Prices MUST match landing page. Stock must be accurate.
- * Products disabled for google_merchant channel are excluded.
+ * Products disabled for google_merchant or meta_commerce channels are excluded.
  */
 
 import type { NextRequest } from 'next/server';
@@ -15,6 +15,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const SITE_URL = 'https://veronecollections.fr';
 const GOOGLE_MERCHANT_CHANNEL_ID = 'd3d2b018-dfee-41c1-a955-f0690320afec';
+const META_COMMERCE_CHANNEL_ID = '09d93a0c-a71b-42e2-81df-303752bde932';
 
 interface SiteProduct {
   product_id: string;
@@ -56,16 +57,27 @@ export async function GET(_request: NextRequest) {
 
   const products = (rpcData ?? []) as unknown as SiteProduct[];
 
-  // 2. Get channel exclusions (products disabled for google_merchant)
-  const { data: exclusions } = await supabase
+  // 2. Get channel exclusions (products disabled for google_merchant or meta_commerce)
+  const { data: gmExclusions } = await supabase
     .from('channel_pricing')
     .select('product_id')
     .eq('channel_id', GOOGLE_MERCHANT_CHANNEL_ID)
     .eq('is_active', false);
 
-  const excludedIds = new Set(
-    (exclusions ?? []).map(e => e.product_id as string)
+  const { data: metaExclusions } = await supabase
+    .from('channel_pricing')
+    .select('product_id')
+    .eq('channel_id', META_COMMERCE_CHANNEL_ID)
+    .eq('is_active', false);
+
+  const gmExcludedIds = new Set(
+    (gmExclusions ?? []).map(e => e.product_id as string)
   );
+  const metaExcludedIds = new Set(
+    (metaExclusions ?? []).map(e => e.product_id as string)
+  );
+  // Combined: exclude if disabled on EITHER channel
+  const excludedIds = new Set([...gmExcludedIds, ...metaExcludedIds]);
 
   // 3b. Get stock quantities for Meta (requires g:quantity)
   const productIds = products.map(p => p.product_id);
@@ -145,7 +157,7 @@ export async function GET(_request: NextRequest) {
   <channel>
     <title>Verone Collections - Catalogue Produits</title>
     <link>${SITE_URL}</link>
-    <description>Mobilier et decoration haut de gamme - Verone Collections</description>
+    <description>Decoration et mobilier d'interieur - Verone Collections</description>
 ${items.join('\n')}
   </channel>
 </rss>`;

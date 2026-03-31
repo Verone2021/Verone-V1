@@ -21,6 +21,7 @@ export interface CatalogueProduct {
   name: string;
   slug: string;
   status: string;
+  stock_status: string | null;
 
   // SEO
   seo_title: string | null;

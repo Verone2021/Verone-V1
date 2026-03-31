@@ -268,6 +268,7 @@ export default function CataloguePage() {
                       subcategoryName={product.subcategory_name ?? undefined}
                       discountRate={product.discount_rate ?? undefined}
                       publicationDate={product.publication_date ?? undefined}
+                      stockStatus={product.stock_status}
                       variantsCount={
                         product.eligible_variants_count > 1
                           ? product.eligible_variants_count
