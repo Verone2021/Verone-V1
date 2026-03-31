@@ -11,16 +11,17 @@ interface RpcResult<T> {
 
 /**
  * Typed helper for calling Supabase RPCs not yet in generated types.
- * Avoids eslint-disable by casting once here.
  */
 export async function callRpc<T>(
   fnName: string,
   params?: Record<string, unknown>
 ): Promise<RpcResult<T>> {
   const supabase = createClient();
-  const rpcFn = supabase.rpc as (
-    fn: string,
-    params?: Record<string, unknown>
-  ) => Promise<{ data: T | null; error: RpcError | null }>;
-  return rpcFn(fnName, params);
+  // Build the RPC call and resolve the PostgrestFilterBuilder
+  const builder = supabase.rpc(fnName as never, params as never);
+  const { data, error } = await builder;
+  return {
+    data: data as T | null,
+    error: error ? { message: error.message } : null,
+  };
 }
