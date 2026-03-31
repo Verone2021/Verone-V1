@@ -18,7 +18,7 @@ export async function callRpc<T>(
   params?: Record<string, unknown>
 ): Promise<RpcResult<T>> {
   const supabase = createClient();
-  const rpcFn = supabase.rpc as (
+  const rpcFn = supabase.rpc as unknown as (
     fn: string,
     params?: Record<string, unknown>
   ) => Promise<{ data: T | null; error: RpcError | null }>;
