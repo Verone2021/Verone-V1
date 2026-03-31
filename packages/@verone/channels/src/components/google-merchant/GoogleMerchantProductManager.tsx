@@ -33,7 +33,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import { Textarea } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { ProductThumbnail } from '@verone/products/components/images/ProductThumbnail';
 
@@ -53,12 +52,10 @@ export interface EligibleProduct {
 }
 
 /**
- * Métadonnées custom produit
+ * Métadonnées produit (structure conservée pour compatibilité)
  */
 interface CustomMetadata {
   custom_price_ht?: number;
-  custom_title?: string;
-  custom_description?: string;
 }
 
 /**
@@ -251,29 +248,7 @@ export function GoogleMerchantProductManager({
     setSelectedIds(new Set());
   };
 
-  // Handlers: Custom data
-  const updateCustomPrice = (productId: string, priceHT: number) => {
-    setCustomData(prev => ({
-      ...prev,
-      [productId]: { ...prev[productId], custom_price_ht: priceHT },
-    }));
-  };
-
-  const updateCustomTitle = (productId: string, title: string) => {
-    setCustomData(prev => ({
-      ...prev,
-      [productId]: { ...prev[productId], custom_title: title },
-    }));
-  };
-
-  const updateCustomDescription = (productId: string, description: string) => {
-    setCustomData(prev => ({
-      ...prev,
-      [productId]: { ...prev[productId], custom_description: description },
-    }));
-  };
-
-  const toggleDescriptionExpanded = (productId: string) => {
+  const _toggleDescriptionExpanded = (productId: string) => {
     const newExpanded = new Set(expandedDescriptions);
     if (newExpanded.has(productId)) {
       newExpanded.delete(productId);
@@ -451,10 +426,6 @@ export function GoogleMerchantProductManager({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredProducts.map(product => {
             const isSelected = selectedIds.has(product.id);
-            const customPrice = customData[product.id]?.custom_price_ht;
-            const priceHT = customPrice ?? product.cost_price ?? 0;
-            const priceTTC = priceHT * TVA_RATE;
-            const isDescriptionExpanded = expandedDescriptions.has(product.id);
 
             return (
               <Card
@@ -494,93 +465,35 @@ export function GoogleMerchantProductManager({
                     </div>
                   </div>
 
-                  {/* Prix base */}
+                  {/* Prix (lecture seule — identique au site internet) */}
                   <div className="bg-gray-50 rounded p-2">
                     <p className="text-xs text-gray-500 mb-1">Prix base HT</p>
                     <p className="text-sm font-semibold text-gray-700">
                       {(product.cost_price ?? 0).toFixed(2)} €
                     </p>
+                    <p className="text-[10px] text-gray-400 mt-1">
+                      Prix identique au site internet (non modifiable)
+                    </p>
                   </div>
 
-                  {/* Input prix custom (optionnel) */}
-                  {isSelected && (
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-gray-700">
-                        Prix custom HT (optionnel)
-                      </label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder={(product.cost_price ?? 0).toFixed(2)}
-                        value={customPrice ?? ''}
-                        onChange={e => {
-                          const value = parseFloat(e.target.value);
-                          if (!isNaN(value) && value >= 0) {
-                            updateCustomPrice(product.id, value);
-                          }
-                        }}
-                        className="text-sm border-[#3b86d1]"
-                      />
-
-                      {/* Preview TTC */}
-                      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded p-2 border border-[#3b86d1]">
-                        <p className="text-xs text-gray-600">
-                          Preview TTC (TVA 20%)
-                        </p>
-                        <p className="text-lg font-bold text-[#3b86d1]">
-                          {priceTTC.toFixed(2)} €
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Input titre custom (optionnel, collapsed par défaut) */}
-                  {isSelected && (
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-gray-700">
-                        Titre custom (optionnel, max 150 chars)
-                      </label>
-                      <Input
-                        type="text"
-                        maxLength={150}
-                        placeholder={product.name}
-                        value={customData[product.id]?.custom_title ?? ''}
-                        onChange={e =>
-                          updateCustomTitle(product.id, e.target.value)
-                        }
-                        className="text-sm border-gray-300"
-                      />
-                    </div>
-                  )}
-
-                  {/* Textarea description custom (collapse) */}
-                  {isSelected && (
-                    <div className="space-y-2">
-                      <button
-                        type="button"
-                        onClick={() => toggleDescriptionExpanded(product.id)}
-                        className="text-xs font-medium text-[#3b86d1] hover:underline"
-                      >
-                        {isDescriptionExpanded ? '− Masquer' : '+ Ajouter'}{' '}
-                        description custom
-                      </button>
-
-                      {isDescriptionExpanded && (
-                        <Textarea
-                          maxLength={5000}
-                          placeholder="Description détaillée pour Google Shopping..."
-                          value={
-                            customData[product.id]?.custom_description ?? ''
-                          }
-                          onChange={e =>
-                            updateCustomDescription(product.id, e.target.value)
-                          }
-                          className="text-sm border-gray-300 min-h-[100px]"
-                        />
-                      )}
-                    </div>
-                  )}
+                  {/* Stock */}
+                  <div
+                    className={cn(
+                      'rounded p-2 text-xs font-medium',
+                      product.stock_status === 'in_stock'
+                        ? 'bg-green-50 text-green-700'
+                        : product.stock_status === 'out_of_stock'
+                          ? 'bg-red-50 text-red-700'
+                          : 'bg-yellow-50 text-yellow-700'
+                    )}
+                  >
+                    {product.stock_status === 'in_stock' && '✅ En stock'}
+                    {product.stock_status === 'out_of_stock' &&
+                      '❌ Rupture de stock'}
+                    {product.stock_status === 'coming_soon' &&
+                      '⏳ Bientôt disponible'}
+                    {!product.stock_status && '❓ Stock inconnu'}
+                  </div>
                 </CardContent>
               </Card>
             );
@@ -647,18 +560,6 @@ export function GoogleMerchantProductManager({
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-700">
-                  Avec prix custom:
-                </span>
-                <span className="text-lg font-bold text-[#3b86d1]">
-                  {
-                    Object.keys(customData).filter(
-                      id => customData[id].custom_price_ht
-                    ).length
-                  }
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">
                   Total TTC estimé:
                 </span>
                 <span className="text-lg font-bold text-[#38ce3c]">
@@ -687,14 +588,6 @@ export function GoogleMerchantProductManager({
                       {product.sku}
                     </p>
                   </div>
-                  {customData[product.id]?.custom_price_ht && (
-                    <Badge
-                      variant="outline"
-                      className="border-[#3b86d1] text-[#3b86d1]"
-                    >
-                      Custom
-                    </Badge>
-                  )}
                 </div>
               ))}
             </div>
