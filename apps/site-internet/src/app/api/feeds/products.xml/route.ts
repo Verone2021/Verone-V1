@@ -28,6 +28,16 @@ interface SiteProduct {
   brand: string | null;
   primary_image_url: string | null;
   image_urls: string[] | null;
+  color: string | null;
+  variant_group_id: string | null;
+}
+
+interface ProductVariantData {
+  id: string;
+  item_group_id: string | null;
+  variant_group_id: string | null;
+  variant_attributes: Record<string, string | null> | null;
+  stock_quantity: number | null;
 }
 
 function escapeXml(str: string): string {
@@ -79,19 +89,23 @@ export async function GET(_request: NextRequest) {
   // Combined: exclude if disabled on EITHER channel
   const excludedIds = new Set([...gmExcludedIds, ...metaExcludedIds]);
 
-  // 3b. Get stock quantities for Meta (requires g:quantity)
+  // 3b. Get stock quantities + variant data for Google/Meta
   const productIds = products.map(p => p.product_id);
-  const { data: qtyData } = await supabase
+  const { data: variantData } = await supabase
     .from('products')
-    .select('id, stock_quantity')
+    .select(
+      'id, stock_quantity, item_group_id, variant_group_id, variant_attributes'
+    )
     .in('id', productIds);
 
-  const qtyMap = new Map(
-    (qtyData ?? []).map(q => [
-      q.id as string,
-      (q.stock_quantity as number) ?? 0,
+  const variantMap = new Map(
+    (variantData ?? []).map(v => [
+      v.id as string,
+      v as unknown as ProductVariantData,
     ])
   );
+
+  const getQty = (pid: string) => variantMap.get(pid)?.stock_quantity ?? 0;
 
   // 4. Generate XML feed
   const items = products
@@ -125,8 +139,8 @@ export async function GET(_request: NextRequest) {
       <g:link>${link}</g:link>
       <g:image_link>${String(product.primary_image_url)}</g:image_link>
       <g:availability>${availability}</g:availability>
-      <g:quantity>${Math.max(qtyMap.get(product.product_id) ?? 0, availability === 'in stock' ? 1 : 0)}</g:quantity>
-      <quantity_to_sell_on_facebook>${Math.max(qtyMap.get(product.product_id) ?? 0, availability === 'in stock' ? 1 : 0)}</quantity_to_sell_on_facebook>
+      <g:quantity>${Math.max(getQty(product.product_id), availability === 'in stock' ? 1 : 0)}</g:quantity>
+      <quantity_to_sell_on_facebook>${Math.max(getQty(product.product_id), availability === 'in stock' ? 1 : 0)}</quantity_to_sell_on_facebook>
       <g:condition>new</g:condition>
       <g:price>${priceTtc} EUR</g:price>
       <g:shipping>
@@ -141,6 +155,24 @@ export async function GET(_request: NextRequest) {
 
       if (!product.brand) {
         itemXml += `\n      <g:identifier_exists>false</g:identifier_exists>`;
+      }
+
+      // Variant attributes (color, material, item_group_id)
+      const vData = variantMap.get(product.product_id);
+      const attrs = vData?.variant_attributes;
+      const color = product.color ?? attrs?.color ?? attrs?.couleur ?? null;
+      const material = attrs?.material ?? attrs?.matieres ?? null;
+      const itemGroupId =
+        vData?.item_group_id ?? vData?.variant_group_id ?? null;
+
+      if (itemGroupId) {
+        itemXml += `\n      <g:item_group_id>${escapeXml(String(itemGroupId))}</g:item_group_id>`;
+      }
+      if (color) {
+        itemXml += `\n      <g:color>${escapeXml(String(color))}</g:color>`;
+      }
+      if (material) {
+        itemXml += `\n      <g:material>${escapeXml(String(material))}</g:material>`;
       }
 
       for (const img of additionalImages) {
