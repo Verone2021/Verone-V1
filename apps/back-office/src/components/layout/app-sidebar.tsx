@@ -280,6 +280,11 @@ const getNavItems = (
         href: '/canaux-vente/google-merchant',
         icon: ShoppingBag,
       },
+      {
+        title: 'Meta Commerce',
+        href: '/canaux-vente/meta',
+        icon: MessageCircle,
+      },
     ],
   },
   // ============ FINANCE (5 entrées — Style Indy 2026) ============

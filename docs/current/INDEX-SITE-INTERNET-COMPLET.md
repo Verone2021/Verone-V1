@@ -1,6 +1,6 @@
 # Index Site-Internet Verone — Reference Metier
 
-E-commerce luxe decoration et mobilier. 25 pages, 20 API routes. Port 3001.
+E-commerce decoration et mobilier — concept store en ligne. 25 pages, 20 API routes. Port 3001.
 
 ## Parcours Client
 

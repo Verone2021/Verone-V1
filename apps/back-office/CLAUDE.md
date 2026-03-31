@@ -1,6 +1,6 @@
 # Back-Office Verone
 
-Staff CRM/ERP pour decoration et mobilier d'interieur haut de gamme.
+Staff CRM/ERP pour concept store decoration et mobilier d'interieur.
 Gestion complete : produits, stock, commandes, finance, clients, fournisseurs.
 
 ## Documentation par Tache

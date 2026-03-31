@@ -67,7 +67,7 @@ export function generateSalesOrderPDF(
   yPosition += 10;
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.text("Décoration & Mobilier d'Intérieur Haut de Gamme", 20, yPosition);
+  doc.text("Décoration & Mobilier d'Intérieur", 20, yPosition);
   yPosition += 5;
   doc.text("123 Rue de l'Élégance, 75001 Paris, France", 20, yPosition);
   yPosition += 5;

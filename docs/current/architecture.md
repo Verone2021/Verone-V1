@@ -2,7 +2,7 @@
 
 **Derniere mise a jour:** 2026-03-27
 
-CRM/ERP modulaire pour decoration et mobilier d'interieur haut de gamme.
+CRM/ERP modulaire pour concept store decoration et mobilier d'interieur — sourcing creatif, selections curatees.
 
 ---
 

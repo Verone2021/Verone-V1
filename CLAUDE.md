@@ -1,6 +1,6 @@
 # Verone Back Office
 
-CRM/ERP modulaire — decoration et mobilier haut de gamme.
+CRM/ERP modulaire — concept store decoration et mobilier d'interieur (sourcing creatif, selections curatees).
 Monorepo Turborepo : back-office (3000), linkme (3002), site-internet (3001).
 
 ## CRITICAL : Avant de coder

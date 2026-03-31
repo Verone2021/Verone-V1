@@ -60,7 +60,7 @@ interface ProductDescriptionsModalProps {
 
 // Suggestions de points de vente par type de produit
 const SELLING_POINTS_SUGGESTIONS = [
-  'Qualité premium garantie',
+  'Qualité garantie',
   'Livraison rapide et soignée',
   'Garantie constructeur étendue',
   'Finition artisanale',

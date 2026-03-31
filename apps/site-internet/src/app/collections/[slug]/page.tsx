@@ -153,6 +153,7 @@ export default function CollectionDetailPage({
                   imageUrl={p.primary_image_url}
                   href={`/produit/${p.slug}`}
                   priority={index < 4}
+                  stockStatus={p.stock_status}
                 />
               ))}
             </div>
