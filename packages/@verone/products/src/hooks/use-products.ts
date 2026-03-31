@@ -91,6 +91,7 @@ export interface ProductFilters {
   min_price?: number;
   max_price?: number;
   in_stock_only?: boolean;
+  is_published_online?: boolean;
 }
 
 export interface CreateProductData {
@@ -233,6 +234,10 @@ const productsFetcher = async (
 
   if (filters?.in_stock_only) {
     query = query.gt('stock_quantity', 0);
+  }
+
+  if (filters?.is_published_online !== undefined) {
+    query = query.eq('is_published_online', filters.is_published_online);
   }
 
   const { data, error, count } = await query;
