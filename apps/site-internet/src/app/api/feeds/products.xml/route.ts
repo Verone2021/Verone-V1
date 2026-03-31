@@ -139,9 +139,11 @@ export async function GET(request: NextRequest) {
       <g:availability>${availability}</g:availability>
       <g:condition>${condition}</g:condition>
       <g:price>${price} EUR</g:price>
-      <g:content_language>fr</g:content_language>
-      <g:target_country>FR</g:target_country>
-      <g:channel>online</g:channel>`;
+      <g:shipping>
+        <g:country>FR</g:country>
+        <g:service>Standard</g:service>
+        <g:price>0.00 EUR</g:price>
+      </g:shipping>`;
 
       if (product.brand) {
         itemXml += `\n      <g:brand>${escapeXml(String(product.brand))}</g:brand>`;
