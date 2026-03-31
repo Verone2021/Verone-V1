@@ -1,6 +1,8 @@
+/* eslint-disable max-lines */
 /**
  * Composant: ConfigurationSection
  * Gestion configuration globale canal site internet (domaine, SEO, contact, analytics)
+ * TODO: Refactorer ce fichier (680 lignes) — decoupe en sous-composants
  */
 
 'use client';
@@ -446,7 +448,7 @@ export function ConfigurationSection() {
             <Label htmlFor="meta-title">Meta Title par Défaut</Label>
             <Input
               id="meta-title"
-              placeholder="Ex: Vérone Déco - Mobilier haut de gamme"
+              placeholder="Ex: Vérone Collections - Décoration et mobilier"
               value={seoForm.default_meta_title}
               onChange={e =>
                 setSeoForm({ ...seoForm, default_meta_title: e.target.value })
@@ -465,7 +467,7 @@ export function ConfigurationSection() {
             </Label>
             <Textarea
               id="meta-description"
-              placeholder="Ex: Découvrez notre collection de mobilier d'intérieur haut de gamme..."
+              placeholder="Ex: Concept store en ligne — trouvailles déco et mobilier sourcés avec soin..."
               value={seoForm.default_meta_description}
               onChange={e =>
                 setSeoForm({
@@ -487,7 +489,7 @@ export function ConfigurationSection() {
             <Label htmlFor="meta-keywords">Meta Keywords</Label>
             <Input
               id="meta-keywords"
-              placeholder="Ex: mobilier, décoration, haut de gamme"
+              placeholder="Ex: mobilier, décoration, concept store, trouvailles"
               value={seoForm.meta_keywords}
               onChange={e =>
                 setSeoForm({ ...seoForm, meta_keywords: e.target.value })

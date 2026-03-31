@@ -1,6 +1,6 @@
 # Index Back-Office Verone — Reference Metier
 
-CRM/ERP pour decoration et mobilier haut de gamme. 134 pages, 20 sections.
+CRM/ERP pour concept store decoration et mobilier. 134 pages, 20 sections.
 
 ## 3 Domaines Fonctionnels
 

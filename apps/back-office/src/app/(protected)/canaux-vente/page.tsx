@@ -9,7 +9,10 @@ import {
   MessageCircle,
   ShoppingBag,
 } from 'lucide-react';
-import { useGoogleMerchantStats } from '@verone/channels/hooks';
+import {
+  useGoogleMerchantStats,
+  useMetaCommerceStats,
+} from '@verone/channels/hooks';
 
 import { useLinkMeDashboard } from './linkme/hooks/use-linkme-dashboard';
 
@@ -27,6 +30,7 @@ export default function CanauxVentePage() {
   const { data: linkmeData, isLoading: linkmeLoading } = useLinkMeDashboard();
   const { data: googleData, isLoading: googleLoading } =
     useGoogleMerchantStats();
+  const { data: metaData, isLoading: metaLoading } = useMetaCommerceStats();
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('fr-FR', {
@@ -111,16 +115,30 @@ export default function CanauxVentePage() {
       name: 'Meta (Facebook / Instagram)',
       description:
         'Catalogue Facebook Shop, Instagram Shopping, WhatsApp Business',
-      href: '#',
+      href: '/canaux-vente/meta',
       icon: MessageCircle,
-      status: 'coming_soon',
+      status: 'active',
       color: 'purple',
-      stats: [
-        { label: 'Produits', value: '-' },
-        { label: 'Commandes', value: '-' },
-        { label: 'CA', value: '-' },
-        { label: 'Statut', value: 'A configurer' },
-      ],
+      stats: metaLoading
+        ? undefined
+        : [
+            {
+              label: 'Produits',
+              value: String(metaData?.total_products ?? 0),
+            },
+            {
+              label: 'Actifs',
+              value: String(metaData?.active_products ?? 0),
+            },
+            {
+              label: 'En attente',
+              value: String(metaData?.pending_products ?? 0),
+            },
+            {
+              label: 'Conversion',
+              value: (metaData?.conversion_rate ?? 0).toFixed(1) + '%',
+            },
+          ],
     },
   ];
 

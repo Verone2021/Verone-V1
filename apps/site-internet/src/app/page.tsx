@@ -106,6 +106,7 @@ export default function HomePage() {
                   subcategoryName={p.subcategory_name ?? undefined}
                   discountRate={p.discount_rate ?? undefined}
                   publicationDate={p.publication_date ?? undefined}
+                  stockStatus={p.stock_status}
                   variantsCount={
                     p.eligible_variants_count > 1
                       ? p.eligible_variants_count

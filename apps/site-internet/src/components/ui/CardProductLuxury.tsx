@@ -22,6 +22,7 @@ export interface CardProductLuxuryProps {
   discountRate?: number;
   publicationDate?: string;
   variantsCount?: number;
+  stockStatus?: string | null;
   onAddToCart?: () => void;
   onToggleWishlist?: () => void;
   isInWishlist?: boolean;
@@ -49,6 +50,7 @@ export function CardProductLuxury({
   discountRate,
   publicationDate,
   variantsCount,
+  stockStatus,
   onAddToCart,
   onToggleWishlist,
   isInWishlist = false,
@@ -59,6 +61,7 @@ export function CardProductLuxury({
       ? price / (1 - discountRate / 100)
       : null;
   const showNewBadge = isNew(publicationDate);
+  const isOutOfStock = stockStatus === 'out_of_stock';
 
   return (
     <div
@@ -101,7 +104,10 @@ export function CardProductLuxury({
               alt={name}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-              className="object-contain p-4 group-hover:scale-105 transition-transform duration-700"
+              className={cn(
+                'object-contain p-4 group-hover:scale-105 transition-transform duration-700',
+                isOutOfStock && 'opacity-60'
+              )}
               priority={priority}
             />
           ) : (
@@ -115,7 +121,12 @@ export function CardProductLuxury({
           {/* Badges top-left */}
           <div className="absolute top-3 left-3 flex items-start gap-1.5 z-10">
             <div className="flex flex-col gap-1.5">
-              {showNewBadge && (
+              {isOutOfStock && (
+                <span className="px-2 py-0.5 bg-verone-gray-700 text-white text-[10px] font-semibold uppercase tracking-wider">
+                  Rupture de stock
+                </span>
+              )}
+              {showNewBadge && !isOutOfStock && (
                 <span className="px-2 py-0.5 bg-green-600 text-white text-[10px] font-semibold uppercase tracking-wider">
                   Nouveau
                 </span>
@@ -134,7 +145,7 @@ export function CardProductLuxury({
           </div>
 
           {/* Add to cart overlay */}
-          {onAddToCart && (
+          {onAddToCart && !isOutOfStock && (
             <button
               type="button"
               onClick={e => {
