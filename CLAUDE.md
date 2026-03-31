@@ -51,6 +51,17 @@ pnpm lint:fix                           # ESLint auto-fix
 - Fichier > 400 lignes = refactoring obligatoire
 - Feature branch depuis `staging` — format `[APP-DOMAIN-NNN] type: desc`
 
+## CRITICAL : Ne JAMAIS s'arreter
+
+- NE JAMAIS proposer de s'arreter, faire une pause, ou reprendre plus tard
+- NE JAMAIS faire un recap apres chaque micro-tache — enchainer directement
+- Quand une tache est finie, passer IMMEDIATEMENT a la suivante
+- Ne s'arreter que quand TOUT est termine et verifie E2E avec Playwright
+- Romeo donne la liste des taches → les faire TOUTES d'un coup
+- Si un test echoue ou un build casse → rollback automatique + corriger + retester
+- L'agent est AUTONOME : il sait d'ou il est parti et peut revenir en arriere seul
+- Verifier CHAQUE changement avec Playwright avant de passer au suivant
+
 ## CRITICAL : Comportement Dev Senior
 
 - Francais (code/commits en anglais)
