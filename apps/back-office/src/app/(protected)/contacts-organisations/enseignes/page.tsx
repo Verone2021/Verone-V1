@@ -1,6 +1,7 @@
+/* eslint-disable max-lines */
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Image from 'next/image';
 
 import Link from 'next/link';
@@ -9,6 +10,7 @@ import {
   useEnseignes,
   useEnseigne,
   EnseigneLogoUploadButton,
+  type EnseigneLogoUploadRef,
   AssignOrganisationsModal,
   type Enseigne,
   type CreateEnseigneData,
@@ -62,6 +64,13 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 
+/** Convertir un logo_url (path Storage ou URL complète) en URL affichable */
+function getEnseigneLogoUrl(logoUrl: string | null | undefined): string | null {
+  if (!logoUrl) return null;
+  if (logoUrl.startsWith('http')) return logoUrl;
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/organisation-logos/${logoUrl}`;
+}
+
 export default function EnseignesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'active' | 'archived' | 'all'>(
@@ -80,6 +89,7 @@ export default function EnseignesPage() {
     null
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const logoUploadRef = useRef<EnseigneLogoUploadRef>(null);
 
   // Archived enseignes state
   const [archivedEnseignes, setArchivedEnseignes] = useState<Enseigne[]>([]);
@@ -282,7 +292,13 @@ export default function EnseignesPage() {
     setIsSubmitting(true);
     try {
       if (editingEnseigne) {
-        // En mode édition, ne pas inclure logo_url car géré par EnseigneLogoUploadButton
+        // 1. Upload/suppression logo si en attente
+        if (logoUploadRef.current?.hasPendingFile()) {
+          const success = await logoUploadRef.current.uploadPendingFile();
+          if (!success) return;
+        }
+
+        // 2. Sauver les autres champs
         const { logo_url: _logo_url, ...updateData } = formData;
         await updateEnseigne({
           id: editingEnseigne.id,
@@ -541,7 +557,7 @@ export default function EnseignesPage() {
                         {enseigne.logo_url ? (
                           <div className="relative w-full h-full">
                             <Image
-                              src={enseigne.logo_url}
+                              src={getEnseigneLogoUrl(enseigne.logo_url) ?? ''}
                               alt={enseigne.name}
                               fill
                               className="object-contain"
@@ -727,7 +743,7 @@ export default function EnseignesPage() {
                         >
                           {enseigne.logo_url ? (
                             <Image
-                              src={enseigne.logo_url}
+                              src={getEnseigneLogoUrl(enseigne.logo_url) ?? ''}
                               alt={enseigne.name}
                               fill
                               className="object-cover"
@@ -899,6 +915,7 @@ export default function EnseignesPage() {
               <div className="space-y-2">
                 <Label>Logo</Label>
                 <EnseigneLogoUploadButton
+                  ref={logoUploadRef}
                   enseigneId={editingEnseigne.id}
                   enseigneName={editingEnseigne.name}
                   currentLogoUrl={editingEnseigne.logo_url}

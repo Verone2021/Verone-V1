@@ -1,14 +1,39 @@
 'use client';
 
-import { useState } from 'react';
+/**
+ * Composant pour sélectionner/prévisualiser un logo d'enseigne
+ *
+ * Flux correct :
+ * 1. Drop/clic → preview affichée, fichier stocké localement, PAS d'upload
+ * 2. Le parent appelle uploadPendingFile() au clic "Enregistrer"
+ * 3. Après upload, le callback onUploadSuccess rafraîchit les données
+ *
+ * Utilise un <input type="file" ref> dans le DOM (compatible modals/dialogs)
+ */
+
+import {
+  useState,
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+  useCallback,
+} from 'react';
 
 import Image from 'next/image';
 
 import { useLogoUpload } from '@verone/common/hooks';
 import { ButtonV2 } from '@verone/ui';
-import { colors } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { Upload, Trash2, Loader2, AlertCircle, ImagePlus } from 'lucide-react';
+
+export interface EnseigneLogoUploadRef {
+  /** Effectue l'upload du fichier en attente. Retourne true si succès. */
+  uploadPendingFile: () => Promise<boolean>;
+  /** Supprime le logo actuel. Retourne true si succès. */
+  deleteCurrentLogo: () => Promise<boolean>;
+  /** Retourne true si un fichier est en attente d'upload */
+  hasPendingFile: () => boolean;
+}
 
 interface EnseigneLogoUploadButtonProps {
   enseigneId: string;
@@ -19,41 +44,34 @@ interface EnseigneLogoUploadButtonProps {
   className?: string;
 }
 
-/**
- * Composant pour upload/supprimer un logo d'enseigne avec drag & drop
- *
- * @param enseigneId - ID de l'enseigne
- * @param enseigneName - Nom de l'enseigne (pour affichage)
- * @param currentLogoUrl - URL actuelle du logo (path Storage)
- * @param onUploadSuccess - Callback appelé après upload/delete réussi
- * @param size - Taille du logo affiché
- * @param className - Classes CSS additionnelles
- *
- * @example
- * <EnseigneLogoUploadButton
- *   enseigneId={enseigne.id}
- *   enseigneName={enseigne.name}
- *   currentLogoUrl={enseigne.logo_url}
- *   onUploadSuccess={() => refetch()}
- *   size="lg"
- * />
- */
-export function EnseigneLogoUploadButton({
-  enseigneId,
-  enseigneName,
-  currentLogoUrl,
-  onUploadSuccess,
-  size = 'lg',
-  className,
-}: EnseigneLogoUploadButtonProps) {
+export const EnseigneLogoUploadButton = forwardRef<
+  EnseigneLogoUploadRef,
+  EnseigneLogoUploadButtonProps
+>(function EnseigneLogoUploadButton(
+  {
+    enseigneId,
+    enseigneName,
+    currentLogoUrl,
+    onUploadSuccess,
+    size = 'lg',
+    className,
+  },
+  ref
+) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingDelete, setPendingDelete] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { uploadLogo, deleteLogo, uploading, deleting, error } = useLogoUpload({
     entityId: enseigneId,
+    entityTable: 'enseignes',
     currentLogoUrl,
     onSuccess: () => {
       setPreviewUrl(null);
+      setPendingFile(null);
+      setPendingDelete(false);
       if (onUploadSuccess) {
         onUploadSuccess();
       }
@@ -63,26 +81,43 @@ export function EnseigneLogoUploadButton({
     },
   });
 
-  /**
-   * Gestion upload d'un fichier
-   */
-  const handleFileUpload = async (file: File) => {
-    if (!file) return;
+  // Exposer les méthodes au parent via ref
+  useImperativeHandle(
+    ref,
+    () => ({
+      uploadPendingFile: async () => {
+        // Si suppression demandée
+        if (pendingDelete) {
+          return await deleteLogo();
+        }
+        // Si nouveau fichier sélectionné
+        if (pendingFile) {
+          const result = await uploadLogo(pendingFile);
+          return result !== null;
+        }
+        // Rien à faire
+        return true;
+      },
+      deleteCurrentLogo: async () => {
+        return await deleteLogo();
+      },
+      hasPendingFile: () => pendingFile !== null || pendingDelete,
+    }),
+    [pendingFile, pendingDelete, uploadLogo, deleteLogo]
+  );
 
-    // Preview local avant upload
+  /** Sélectionner un fichier : stocker + preview, PAS d'upload */
+  const handleFileSelected = useCallback((file: File) => {
+    if (!file) return;
+    setPendingFile(file);
+    setPendingDelete(false);
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreviewUrl(reader.result as string);
     };
     reader.readAsDataURL(file);
+  }, []);
 
-    // Upload
-    await uploadLogo(file);
-  };
-
-  /**
-   * Gestionnaires drag & drop
-   */
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -104,190 +139,234 @@ export function EnseigneLogoUploadButton({
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-
     const files = e.dataTransfer.files;
     if (files?.[0]) {
-      void handleFileUpload(files[0]);
+      handleFileSelected(files[0]);
     }
   };
 
-  /**
-   * Gestion click pour ouvrir sélecteur de fichiers
-   */
   const handleClick = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/png,image/jpeg,image/svg+xml,image/webp';
-    input.onchange = (e: Event) => {
-      const target = e.target as HTMLInputElement;
-      const file = target.files?.[0];
-      if (file) {
-        void handleFileUpload(file);
-      }
-    };
-    input.click();
+    fileInputRef.current?.click();
   };
 
-  /**
-   * Gestion suppression
-   */
-  const handleDelete = async () => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileSelected(file);
+    }
+    e.target.value = '';
+  };
+
+  /** Marquer pour suppression (pas de suppression immédiate) */
+  const handleMarkForDelete = () => {
     const confirmed = confirm(
       `Êtes-vous sûr de vouloir supprimer le logo de "${enseigneName}" ?`
     );
-
     if (confirmed) {
-      await deleteLogo();
+      setPendingDelete(true);
+      setPendingFile(null);
+      setPreviewUrl(null);
     }
+  };
+
+  const handleCancelPending = () => {
+    setPendingFile(null);
+    setPendingDelete(false);
+    setPreviewUrl(null);
   };
 
   const isLoading = uploading || deleting;
 
-  // Obtenir l'URL complète du logo depuis Supabase Storage
   const getLogoUrl = () => {
     if (!currentLogoUrl) return null;
     if (currentLogoUrl.startsWith('http')) return currentLogoUrl;
-    // Construire l'URL publique Supabase
     return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/organisation-logos/${currentLogoUrl}`;
   };
 
   const logoUrl = getLogoUrl();
 
+  const sizeClasses = {
+    sm: 'h-16 w-16',
+    md: 'h-24 w-24',
+    lg: 'h-32 w-32',
+    xl: 'h-40 w-40',
+  };
+
+  // Déterminer ce qui est affiché
+  const showPendingDelete = pendingDelete && !pendingFile;
+  const showPreview = !!previewUrl && !!pendingFile;
+  const showCurrentLogo = !showPendingDelete && !showPreview && !!logoUrl;
+  const showEmpty = !showPendingDelete && !showPreview && !showCurrentLogo;
+
   return (
-    <div className={cn('bo-space-y-4', className)}>
-      {/* Zone de drag & drop / affichage logo */}
+    <div className={cn('space-y-3', className)}>
+      {/* Input file caché (ref) — fonctionne dans les modals */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/svg+xml,image/webp"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+
+      {/* Zone de drag & drop */}
       <div
         className={cn(
-          'bo-border-2 bo-border-dashed bo-rounded-lg bo-p-6 bo-transition-all bo-cursor-pointer',
-          dragActive && 'bo-border-black bo-bg-gray-50',
-          error && 'bo-border-red-500 bo-bg-red-50',
+          'border-2 border-dashed rounded-lg p-6 transition-all cursor-pointer',
+          dragActive && 'border-black bg-gray-50',
+          error && 'border-red-500 bg-red-50',
+          showPendingDelete && 'border-red-300 bg-red-50',
+          showPreview && 'border-green-400 bg-green-50',
           !dragActive &&
             !error &&
-            'bo-border-gray-300 hover:bo-border-gray-400',
-          isLoading && 'bo-opacity-50 bo-pointer-events-none'
+            !showPendingDelete &&
+            !showPreview &&
+            'border-gray-300 hover:border-gray-400',
+          isLoading && 'opacity-50 pointer-events-none'
         )}
         onDragEnter={handleDragIn}
         onDragLeave={handleDragOut}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        onClick={!currentLogoUrl ? handleClick : undefined}
+        onClick={handleClick}
       >
-        <div className="bo-flex bo-flex-col bo-items-center bo-justify-center bo-space-y-3">
-          {/* Logo actuel ou preview ou placeholder */}
-          {logoUrl || previewUrl ? (
-            <div className="bo-relative">
-              {logoUrl && !previewUrl ? (
-                <div
-                  className={cn(
-                    'bo-relative bo-rounded-md bo-overflow-hidden bo-border bo-border-gray-200',
-                    size === 'sm' && 'bo-h-16 bo-w-16',
-                    size === 'md' && 'bo-h-24 bo-w-24',
-                    size === 'lg' && 'bo-h-32 bo-w-32',
-                    size === 'xl' && 'bo-h-40 bo-w-40'
-                  )}
-                >
-                  <Image
-                    src={logoUrl}
-                    alt={`Logo ${enseigneName}`}
-                    fill
-                    className="bo-object-contain"
-                    sizes="(max-width: 768px) 100vw, 200px"
-                  />
-                </div>
-              ) : previewUrl ? (
-                <div className="bo-relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={previewUrl}
-                    alt="Preview"
-                    className={cn(
-                      'bo-rounded-md bo-border bo-object-contain',
-                      size === 'sm' && 'bo-h-16 bo-w-16',
-                      size === 'md' && 'bo-h-24 bo-w-24',
-                      size === 'lg' && 'bo-h-32 bo-w-32',
-                      size === 'xl' && 'bo-h-40 bo-w-40'
-                    )}
-                    style={{ borderColor: colors.border.DEFAULT }}
-                  />
-                  <div className="bo-absolute bo-inset-0 bo-flex bo-items-center bo-justify-center bo-bg-black bo-bg-opacity-50 bo-rounded-md">
-                    <Loader2 className="bo-h-8 bo-w-8 bo-text-white bo-animate-spin" />
-                  </div>
-                </div>
-              ) : null}
+        <div className="flex flex-col items-center justify-center space-y-3">
+          {/* Preview du nouveau fichier */}
+          {showPreview && previewUrl && (
+            <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewUrl}
+                alt="Preview"
+                className={cn(
+                  'rounded-md border border-green-300 object-contain',
+                  sizeClasses[size]
+                )}
+              />
             </div>
-          ) : (
-            <div className="bo-w-20 bo-h-20 bo-rounded-full bo-bg-gray-100 bo-flex bo-items-center bo-justify-center">
-              {uploading ? (
-                <Loader2 className="bo-w-8 bo-h-8 bo-text-gray-400 bo-animate-spin" />
+          )}
+
+          {/* Logo actuel */}
+          {showCurrentLogo && logoUrl && (
+            <div
+              className={cn(
+                'relative rounded-md overflow-hidden border border-gray-200',
+                sizeClasses[size]
+              )}
+            >
+              <Image
+                src={logoUrl}
+                alt={`Logo ${enseigneName}`}
+                fill
+                className="object-contain"
+                sizes="(max-width: 768px) 100vw, 200px"
+              />
+            </div>
+          )}
+
+          {/* Suppression en attente */}
+          {showPendingDelete && (
+            <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center">
+              <Trash2 className="w-8 h-8 text-red-400" />
+            </div>
+          )}
+
+          {/* Pas de logo */}
+          {showEmpty && (
+            <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
+              {isLoading ? (
+                <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
               ) : (
-                <ImagePlus className="bo-w-8 bo-h-8 bo-text-gray-400" />
+                <ImagePlus className="w-8 h-8 text-gray-400" />
               )}
             </div>
           )}
 
           {/* Texte indicatif */}
-          <div className="bo-text-center">
-            <p className="bo-text-sm bo-font-medium bo-text-black">
-              {uploading
-                ? 'Upload en cours...'
-                : currentLogoUrl
-                  ? 'Logo actuel'
-                  : 'Ajouter un logo'}
+          <div className="text-center">
+            <p className="text-sm font-medium text-black">
+              {isLoading
+                ? uploading
+                  ? 'Upload en cours...'
+                  : 'Suppression en cours...'
+                : showPendingDelete
+                  ? "Logo sera supprimé à l'enregistrement"
+                  : showPreview && pendingFile
+                    ? `${pendingFile.name}`
+                    : currentLogoUrl
+                      ? 'Cliquez pour remplacer le logo'
+                      : 'Cliquez ou glissez-déposez une image'}
             </p>
-            <p className="bo-text-xs bo-text-gray-500 bo-mt-1">
-              {!currentLogoUrl && 'Cliquez ou glissez-déposez une image'}
-            </p>
-            <p className="bo-text-xs bo-text-gray-400 bo-mt-1">
-              PNG, JPEG, SVG, WebP • Max 5 MB
-            </p>
+            {(showPreview || showPendingDelete) && !isLoading && (
+              <p
+                className={cn(
+                  'text-xs mt-1',
+                  showPendingDelete ? 'text-red-600' : 'text-green-600'
+                )}
+              >
+                {showPendingDelete
+                  ? 'Cliquez "Enregistrer" pour confirmer la suppression'
+                  : 'Cliquez "Enregistrer" pour sauvegarder'}
+              </p>
+            )}
+            {!showPreview && !showPendingDelete && (
+              <p className="text-xs text-gray-400 mt-1">
+                PNG, JPEG, SVG, WebP - Max 5 MB
+              </p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Actions */}
-      {currentLogoUrl && (
-        <div className="bo-flex bo-gap-2">
+      {/* Bouton annuler la modification en attente */}
+      {(showPreview || showPendingDelete) && !isLoading && (
+        <ButtonV2
+          variant="ghost"
+          size="sm"
+          onClick={handleCancelPending}
+          className="w-full text-gray-500"
+        >
+          Annuler la modification
+        </ButtonV2>
+      )}
+
+      {/* Boutons Remplacer / Supprimer (si logo existant et pas de modification en attente) */}
+      {currentLogoUrl && !showPreview && !showPendingDelete && (
+        <div className="flex gap-2">
           <ButtonV2
             variant="secondary"
             size="sm"
             onClick={handleClick}
             disabled={isLoading}
-            icon={uploading ? Loader2 : Upload}
-            loading={uploading}
+            icon={Upload}
+            className="flex-1"
           >
-            {uploading ? 'Upload...' : 'Remplacer'}
+            Remplacer
           </ButtonV2>
 
           <ButtonV2
             variant="destructive"
             size="sm"
-            onClick={() => void handleDelete()}
+            onClick={handleMarkForDelete}
             disabled={isLoading}
-            icon={deleting ? Loader2 : Trash2}
-            loading={deleting}
+            icon={Trash2}
+            className="flex-1"
           >
-            {deleting ? 'Suppression...' : 'Supprimer'}
+            Supprimer
           </ButtonV2>
         </div>
       )}
 
-      {/* Message d'erreur */}
+      {/* Erreur */}
       {error && (
-        <div
-          className="bo-flex bo-items-start bo-gap-2 bo-text-sm bo-p-3 bo-rounded-md bo-border"
-          style={{
-            backgroundColor: colors.danger[50],
-            borderColor: colors.danger[200],
-            color: colors.danger[700],
-          }}
-        >
-          <AlertCircle className="bo-h-4 bo-w-4 bo-flex-shrink-0 bo-mt-0.5" />
+        <div className="flex items-start gap-2 text-sm p-3 rounded-md border bg-red-50 border-red-200 text-red-700">
+          <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="bo-font-medium">Erreur</p>
-            <p className="bo-text-xs bo-mt-0.5">{error.message}</p>
+            <p className="font-medium">Erreur</p>
+            <p className="text-xs mt-0.5">{error.message}</p>
           </div>
         </div>
       )}
     </div>
   );
-}
+});

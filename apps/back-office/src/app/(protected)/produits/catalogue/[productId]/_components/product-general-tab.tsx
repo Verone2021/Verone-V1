@@ -11,9 +11,9 @@ import { WeightEditSection } from '@verone/products';
 import { IdentifiersCompleteEditSection } from '@verone/products';
 import { ClientOrEnseigneSelector } from '@verone/products';
 import { ProductVariantsGrid } from '@verone/products';
-import { Badge, ButtonUnified, Switch } from '@verone/ui';
+import { Badge, ButtonUnified } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { Sparkles, Package, UserCircle2, Globe } from 'lucide-react';
+import { Sparkles, Package, UserCircle2 } from 'lucide-react';
 
 import type { Product, ProductRow, MissingFields, SourcingInfo } from './types';
 
@@ -25,7 +25,6 @@ interface ProductGeneralTabProps {
   breadcrumbParts: string[];
   onProductUpdate: (updates: Partial<ProductRow>) => Promise<void>;
   onOpenCategorizeModal: () => void;
-  hasPrimaryImage?: boolean;
 }
 
 export function ProductGeneralTab({
@@ -36,7 +35,6 @@ export function ProductGeneralTab({
   breadcrumbParts,
   onProductUpdate,
   onOpenCategorizeModal,
-  hasPrimaryImage = false,
 }: ProductGeneralTabProps) {
   return (
     <div className="space-y-6">
@@ -254,29 +252,10 @@ export function ProductGeneralTab({
         </section>
       )}
 
-      {/* Section: Identifiants */}
+      {/* Section: Gestion des produits (echantillons / commande) */}
       <section className="bg-white rounded-lg border border-neutral-200 p-5">
         <h3 className="text-sm font-semibold text-neutral-900 mb-3">
-          Identifiants
-        </h3>
-        <IdentifiersCompleteEditSection
-          product={{
-            id: product.id,
-            sku: product.sku ?? '',
-            brand: product.brand ?? undefined,
-            gtin: product.gtin ?? undefined,
-            condition: product.condition ?? undefined,
-          }}
-          onUpdate={updates => {
-            void onProductUpdate(updates).catch(console.error);
-          }}
-        />
-      </section>
-
-      {/* Section: Echantillons */}
-      <section className="bg-white rounded-lg border border-neutral-200 p-5">
-        <h3 className="text-sm font-semibold text-neutral-900 mb-3">
-          Gestion Échantillons
+          Gestion des produits
         </h3>
         <SampleRequirementSection
           productId={product.id}
@@ -303,46 +282,23 @@ export function ProductGeneralTab({
         />
       </section>
 
-      {/* Section: Globe LinkMe */}
+      {/* Section: Identifiants */}
       <section className="bg-white rounded-lg border border-neutral-200 p-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Globe className="h-5 w-5 text-indigo-500" />
-            <div>
-              <h3 className="text-sm font-semibold text-neutral-900">
-                Globe LinkMe
-              </h3>
-              <p className="text-xs text-neutral-500 mt-0.5">
-                Afficher ce produit sur le globe 3D de la page de connexion
-                LinkMe
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {product.show_on_linkme_globe && (
-              <Badge className="bg-indigo-100 text-indigo-700 text-xs">
-                Visible
-              </Badge>
-            )}
-            <Switch
-              checked={product.show_on_linkme_globe ?? false}
-              disabled={!hasPrimaryImage}
-              onCheckedChange={checked => {
-                void onProductUpdate({
-                  show_on_linkme_globe: checked,
-                }).catch(error => {
-                  console.error('[ProductDetail] Globe toggle failed:', error);
-                });
-              }}
-            />
-          </div>
-        </div>
-        {!hasPrimaryImage && (
-          <p className="text-xs text-amber-600 mt-2 ml-8">
-            Une image primaire est requise pour afficher ce produit sur le
-            globe.
-          </p>
-        )}
+        <h3 className="text-sm font-semibold text-neutral-900 mb-3">
+          Identifiants
+        </h3>
+        <IdentifiersCompleteEditSection
+          product={{
+            id: product.id,
+            sku: product.sku ?? '',
+            brand: product.brand ?? undefined,
+            gtin: product.gtin ?? undefined,
+            condition: product.condition ?? undefined,
+          }}
+          onUpdate={updates => {
+            void onProductUpdate(updates).catch(console.error);
+          }}
+        />
       </section>
 
       {/* Section: Metadonnees */}

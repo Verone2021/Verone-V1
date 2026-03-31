@@ -23,8 +23,7 @@ interface Product {
     id: string;
     legal_name?: string; // Nom légal de l'organisation (ex: "Opjet")
     trade_name?: string | null; // Nom commercial (optionnel)
-    email?: string;
-    phone?: string;
+    website?: string | null; // Site internet du fournisseur
   };
 }
 
@@ -181,10 +180,10 @@ export function SupplierEditSection({
             </div>
           </div>
 
-          {/* URL PAGE FOURNISSEUR */}
+          {/* URL PAGE PRODUIT FOURNISSEUR */}
           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
             <h4 className="text-sm font-medium text-gray-800 mb-3">
-              🔗 PAGE CATALOGUE FOURNISSEUR
+              PAGE PRODUIT FOURNISSEUR
             </h4>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -270,22 +269,23 @@ export function SupplierEditSection({
         {product.supplier_id ? (
           <div className="bg-blue-50 p-3 rounded-lg">
             <div className="text-xs text-blue-600 font-medium mb-1">
-              🏢 FOURNISSEUR
+              FOURNISSEUR
             </div>
             <div className="flex justify-between items-center">
               <span className="text-blue-900 font-medium">
                 {currentSupplierName}
               </span>
             </div>
-            {product.supplier?.email && (
-              <div className="text-xs text-blue-700 mt-1">
-                📧 {product.supplier.email}
-              </div>
-            )}
-            {product.supplier?.phone && (
-              <div className="text-xs text-blue-700">
-                📞 {product.supplier.phone}
-              </div>
+            {product.supplier?.website && (
+              <a
+                href={product.supplier.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-blue-600 hover:text-blue-800 text-xs mt-1 underline"
+              >
+                <ExternalLink className="h-3 w-3 mr-1" />
+                Site internet fournisseur
+              </a>
             )}
           </div>
         ) : (
@@ -310,22 +310,28 @@ export function SupplierEditSection({
           </div>
         )}
 
-        {/* URL page fournisseur */}
-        {currentSupplierPageUrl && (
+        {/* URL page produit chez le fournisseur */}
+        {product.supplier_id && (
           <div className="bg-gray-50 p-3 rounded-lg">
             <div className="text-xs text-gray-600 font-medium mb-1">
-              🔗 PAGE FOURNISSEUR
+              PAGE PRODUIT FOURNISSEUR
             </div>
             <div className="flex justify-between items-center">
-              <a
-                href={currentSupplierPageUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 text-sm flex items-center underline"
-              >
-                Voir sur le site fournisseur
-                <ExternalLink className="h-3 w-3 ml-1" />
-              </a>
+              {currentSupplierPageUrl ? (
+                <a
+                  href={currentSupplierPageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 text-sm flex items-center underline"
+                >
+                  Voir la page produit chez le fournisseur
+                  <ExternalLink className="h-3 w-3 ml-1" />
+                </a>
+              ) : (
+                <span className="text-xs text-gray-400 italic">
+                  Non renseigné — cliquez Modifier pour ajouter
+                </span>
+              )}
             </div>
           </div>
         )}

@@ -6,6 +6,8 @@ import { createClient } from '@verone/utils/supabase/client';
 
 interface UseLogoUploadOptions {
   entityId: string;
+  /** Table cible: 'organisations' (default) ou 'enseignes' */
+  entityTable?: 'organisations' | 'enseignes';
   currentLogoUrl?: string | null;
   onSuccess?: (logoUrl: string) => void;
   onError?: (error: Error) => void;
@@ -38,6 +40,7 @@ interface UseLogoUploadReturn {
  */
 export function useLogoUpload({
   entityId,
+  entityTable = 'organisations',
   currentLogoUrl,
   onSuccess,
   onError,
@@ -46,7 +49,7 @@ export function useLogoUpload({
   // Backward compatibility: use organisationId if entityId not provided
   const id = entityId ?? organisationId ?? '';
 
-  // Table and storage path for organisations
+  // Table and storage path
   const storagePath = id;
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -105,19 +108,30 @@ export function useLogoUpload({
 
       // Supprimer ancien logo si existant
       if (currentLogoUrl) {
+        // Extraire le path Storage depuis URL complète ou path relatif
+        const oldPath = currentLogoUrl.includes('/organisation-logos/')
+          ? currentLogoUrl.split('/organisation-logos/')[1]
+          : currentLogoUrl;
         await supabase.storage
           .from('organisation-logos')
-          .remove([currentLogoUrl])
+          .remove([oldPath])
           .catch(err => {
             console.warn('Erreur suppression ancien logo:', err);
             // Non-bloquant, on continue
           });
       }
 
-      // Update DB avec nouveau path
+      // Générer URL publique AVANT de sauver en DB
+      const { data: urlData } = supabase.storage
+        .from('organisation-logos')
+        .getPublicUrl(filePath);
+
+      const publicUrl = urlData.publicUrl;
+
+      // Update DB avec URL complète (pas le path relatif)
       const { error: updateError } = await supabase
-        .from('organisations')
-        .update({ logo_url: filePath })
+        .from(entityTable)
+        .update({ logo_url: publicUrl })
         .eq('id', id);
 
       if (updateError) {
@@ -127,16 +141,9 @@ export function useLogoUpload({
         throw new Error(`Erreur mise à jour DB: ${updateError.message}`);
       }
 
-      // Générer URL publique
-      const { data: urlData } = supabase.storage
-        .from('organisation-logos')
-        .getPublicUrl(filePath);
-
-      const publicUrl = urlData.publicUrl;
-
-      // Callback success
+      // Callback success avec URL complète
       if (onSuccess) {
-        onSuccess(filePath);
+        onSuccess(publicUrl);
       }
 
       return publicUrl;
@@ -169,10 +176,14 @@ export function useLogoUpload({
     setError(null);
 
     try {
+      // Extraire le path Storage depuis URL complète ou path relatif
+      const storagePth = currentLogoUrl.includes('/organisation-logos/')
+        ? currentLogoUrl.split('/organisation-logos/')[1]
+        : currentLogoUrl;
       // Supprimer de Storage
       const { error: deleteError } = await supabase.storage
         .from('organisation-logos')
-        .remove([currentLogoUrl]);
+        .remove([storagePth]);
 
       if (deleteError) {
         throw new Error(`Erreur suppression Storage: ${deleteError.message}`);
@@ -180,7 +191,7 @@ export function useLogoUpload({
 
       // Update DB (logo_url = null)
       const { error: updateError } = await supabase
-        .from('organisations')
+        .from(entityTable)
         .update({ logo_url: null })
         .eq('id', id);
 

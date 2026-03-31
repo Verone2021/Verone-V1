@@ -29,8 +29,7 @@ export interface ProductRelations {
     id: string;
     legal_name: string;
     trade_name: string | null;
-    email: string | null;
-    phone: string | null;
+    website: string | null;
     is_active: boolean;
     type: string | null;
   } | null;
