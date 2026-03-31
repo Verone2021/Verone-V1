@@ -123,7 +123,6 @@ export interface DashboardMetrics {
  * Deduplicates requests within the same render cycle
  */
 export const getDashboardMetrics = cache(
-  // eslint-disable-next-line max-lines-per-function
   async (): Promise<DashboardMetrics> => {
     const supabase = await createServerClient();
 

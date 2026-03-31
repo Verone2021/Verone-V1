@@ -75,7 +75,6 @@ function formatDate(dateStr: string): string {
   });
 }
 
-// eslint-disable-next-line max-lines-per-function
 export async function getSalesDashboard(): Promise<SalesDashboardData> {
   const supabase = await createServerClient();
 
