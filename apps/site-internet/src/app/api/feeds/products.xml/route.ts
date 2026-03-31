@@ -1,11 +1,11 @@
 /**
  * GET /api/feeds/products.xml
  *
- * Generates a Google Shopping XML feed using the SAME data source as the site internet.
- * Uses RPC get_site_internet_products() for prices/titles + products table for stock_status.
+ * Google Shopping XML feed — SAME data source as site internet.
+ * Uses RPC get_site_internet_products() for prices + stock_status.
  *
- * CRITICAL: Prices MUST match the landing page or Google will disapprove products.
- * Products with stock_status = 'out_of_stock' are sent as availability = 'out of stock'.
+ * CRITICAL: Prices MUST match landing page. Stock must be accurate.
+ * Products disabled for google_merchant channel are excluded.
  */
 
 import type { NextRequest } from 'next/server';
@@ -14,6 +14,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 const SITE_URL = 'https://veronecollections.fr';
+const GOOGLE_MERCHANT_CHANNEL_ID = 'd3d2b018-dfee-41c1-a955-f0690320afec';
 
 interface SiteProduct {
   product_id: string;
@@ -22,6 +23,7 @@ interface SiteProduct {
   slug: string;
   description: string | null;
   price_ttc: string;
+  stock_status: string | null;
   brand: string | null;
   primary_image_url: string | null;
   image_urls: string[] | null;
@@ -42,7 +44,7 @@ export async function GET(_request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // 1. Get products from SAME RPC as site internet (guarantees identical prices)
+  // 1. Get products from SAME RPC as site internet
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const { data: rpcData, error: rpcError } = await supabase.rpc(
     'get_site_internet_products'
@@ -53,27 +55,25 @@ export async function GET(_request: NextRequest) {
   }
 
   const products = (rpcData ?? []) as unknown as SiteProduct[];
-  const productIds = products.map(p => p.product_id);
 
-  // 2. Get stock_status from products table (not in RPC)
-  const { data: stockData } = await supabase
-    .from('products')
-    .select('id, stock_status')
-    .in('id', productIds);
+  // 2. Get channel exclusions (products disabled for google_merchant)
+  const { data: exclusions } = await supabase
+    .from('channel_pricing')
+    .select('product_id')
+    .eq('channel_id', GOOGLE_MERCHANT_CHANNEL_ID)
+    .eq('is_active', false);
 
-  const stockMap = new Map(
-    (stockData ?? []).map(s => [
-      s.id as string,
-      (s.stock_status as string) ?? 'out_of_stock',
-    ])
+  const excludedIds = new Set(
+    (exclusions ?? []).map(e => e.product_id as string)
   );
 
   // 3. Generate XML feed
   const items = products
     .map(product => {
       if (!product.primary_image_url) return null;
+      if (excludedIds.has(product.product_id)) return null;
 
-      const stockStatus = stockMap.get(product.product_id) ?? 'out_of_stock';
+      const stockStatus = product.stock_status ?? 'out_of_stock';
       const availability =
         stockStatus === 'in_stock'
           ? 'in stock'

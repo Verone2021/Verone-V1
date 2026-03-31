@@ -163,16 +163,35 @@ export default function GoogleMerchantPage() {
     await insertProducts([productId]);
   };
 
-  // 🚀 Handler: Masquer produit
+  // 🚀 Handler: Masquer/Retirer produit de Google Merchant
   const handleHideProduct = async (productId: string) => {
-    logger.info('[Google Merchant Page] Hiding product', { productId });
-    // TODO: Implémenter API hide product
+    logger.info('[Google Merchant Page] Hiding product from Google Merchant', {
+      productId,
+    });
+    // Desactive le produit pour le canal Google Merchant via channel_pricing
+    const supabase = (
+      await import('@verone/utils/supabase/client')
+    ).createClient();
+    const channelId = 'd3d2b018-dfee-41c1-a955-f0690320afec'; // google_merchant
+    const { error } = await supabase.from('channel_pricing').upsert(
+      {
+        product_id: productId,
+        channel_id: channelId,
+        is_active: false,
+        min_quantity: 1,
+      },
+      { onConflict: 'product_id,channel_id,min_quantity' }
+    );
+    if (error) {
+      logger.error(
+        `[Google Merchant] Failed to hide product: ${error.message}`
+      );
+    }
   };
 
-  // 🚀 Handler: Retirer produit
+  // Retirer = meme action que masquer
   const handleRemoveProduct = async (productId: string) => {
-    logger.info('[Google Merchant Page] Removing product', { productId });
-    // TODO: Implémenter API remove product (soft delete)
+    await handleHideProduct(productId);
   };
 
   // Reserved for future status badge customization
