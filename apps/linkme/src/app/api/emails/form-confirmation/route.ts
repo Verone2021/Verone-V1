@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
 
     <p style="color: #065f46; font-size: 14px; margin-bottom: 10px;">
       <strong>Vérone</strong><br>
-      Décoration et mobilier d'intérieur haut de gamme
+      Décoration et mobilier d'intérieur
     </p>
 
     <p style="color: #6b7280; font-size: 12px;">

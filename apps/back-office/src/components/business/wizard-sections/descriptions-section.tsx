@@ -82,7 +82,7 @@ export function DescriptionsSection({
               placeholder="Décrivez le produit de manière détaillée...
 
 Exemple pour un fauteuil :
-• Fauteuil design scandinave en tissu premium
+• Fauteuil design scandinave en tissu bouclette
 • Pieds en chêne massif naturel certifié FSC
 • Assise haute densité 35kg/m³ pour un confort optimal
 • Dimensions : H85 × L75 × P80 cm
@@ -198,7 +198,7 @@ Exemple pour un fauteuil :
               </p>
               <div className="flex flex-wrap gap-2">
                 {[
-                  'Qualité premium garantie',
+                  'Qualité garantie',
                   'Livraison rapide et soignée',
                   'Garantie constructeur étendue',
                   'Matériaux durables et écologiques',

@@ -91,8 +91,8 @@ export function LandingMarketplace(): JSX.Element {
             a vendre
           </h2>
           <p className="mt-4 text-lg text-[#183559]/60 max-w-2xl mx-auto">
-            Mobilier et decoration haut de gamme selectionnes par nos experts.
-            Commission de 5% sur chaque vente.
+            Decoration et mobilier sources avec soin par nos experts. Commission
+            de 5% sur chaque vente.
           </p>
         </div>
 

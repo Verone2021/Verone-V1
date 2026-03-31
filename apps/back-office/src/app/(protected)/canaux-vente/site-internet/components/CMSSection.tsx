@@ -140,7 +140,7 @@ function HeroFormFields({ form, setForm }: HeroFormFieldsProps) {
             onChange={e =>
               setForm(prev => ({ ...prev, subtitle: e.target.value }))
             }
-            placeholder="Mobilier haut de gamme..."
+            placeholder="Decoration et mobilier d'interieur..."
           />
         </div>
       </div>

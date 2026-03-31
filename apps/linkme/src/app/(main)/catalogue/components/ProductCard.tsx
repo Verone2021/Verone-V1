@@ -1,8 +1,8 @@
 'use client';
 
 /**
- * ProductCard E-commerce - Design Luxe 2026
- * Design spacieux et élégant style showroom haut de gamme
+ * ProductCard E-commerce - Design 2026
+ * Design spacieux et elegant style showroom
  * SANS bordure - Cartes blanches avec hover effects
  */
 

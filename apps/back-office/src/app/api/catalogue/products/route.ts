@@ -34,7 +34,7 @@ const MOCK_PRODUCTS = [
     id: '1',
     sku: 'VER-CANAPE-001',
     name: 'Canapé Vérone Classic Cuir Noir',
-    description: 'Canapé 3 places en cuir italien premium',
+    description: 'Canapé 3 places en cuir italien',
     price_ht: 249900, // 2499€ HT
     price_ttc: 299880, // 2999€ TTC (20% VAT)
     category: 'canapes',

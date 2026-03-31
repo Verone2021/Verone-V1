@@ -1,6 +1,6 @@
 # Verone
 
-Monorepo CRM/ERP pour decoration et mobilier d'interieur haut de gamme.
+Monorepo CRM/ERP pour concept store decoration et mobilier d'interieur — sourcing creatif, selections curatees.
 
 ---
 
@@ -67,7 +67,7 @@ verone-back-office/
 | ----------------- | ---- | --------------------- | ---------------------------------------- | ------------------------------------------------------------------------ |
 | **back-office**   | 3000 | Admin, Gestionnaires  | CRM/ERP central - pilotage de l'activite | `/dashboard`, `/produits/catalogue`, `/commandes`, `/stocks`, `/finance` |
 | **linkme**        | 3002 | Affilies, Partenaires | Plateforme commissions & selections      | `/dashboard`, `/ma-selection`, `/commissions`, `/statistiques`           |
-| **site-internet** | 3001 | Clients B2C           | E-commerce luxury mobilier               | `/catalogue`, `/produit/[id]`, `/panier`, `/checkout`                    |
+| **site-internet** | 3001 | Clients B2C           | E-commerce decoration et mobilier        | `/catalogue`, `/produit/[id]`, `/panier`, `/checkout`                    |
 
 ### Details par Application
 
@@ -86,7 +86,7 @@ verone-back-office/
 
 **Site Internet** (E-commerce)
 
-- Design luxury (Playfair Display + Inter)
+- Design epure (Playfair Display + Inter)
 - Catalogue produits avec variantes
 - Panier et checkout
 - Animations Framer Motion

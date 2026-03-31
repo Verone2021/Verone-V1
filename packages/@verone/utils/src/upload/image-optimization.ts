@@ -116,7 +116,7 @@ export const DEFAULT_IMAGE_OPTIMIZATION_CONFIG: ImageOptimizationConfig = {
 
   compression: {
     enabled: true,
-    aggressive: false, // Privilégier qualité pour déco haut de gamme
+    aggressive: false, // Privilégier qualité pour les visuels produits
     preserveMetadata: true,
   },
 
