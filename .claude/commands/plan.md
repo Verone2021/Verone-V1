@@ -1,7 +1,17 @@
 ---
 description: PLAN mode - Transform observations into actionable checklist
 argument-hint: TASK=<TASK-ID>
-allowed-tools: [Read, Edit, mcp__serena__*, Grep, Glob]
+allowed-tools:
+  [
+    Read,
+    Edit,
+    mcp__serena__*,
+    mcp__context7__*,
+    mcp__supabase__execute_sql,
+    mcp__supabase__list_tables,
+    Grep,
+    Glob,
+  ]
 ---
 
 # /plan — PLAN (transformation observations → checklist)
@@ -53,21 +63,25 @@ Tu es en **mode PLAN**.
 **Approche**: [Description de l'approche retenue en 2-3 phrases]
 
 **Fichiers à modifier**:
+
 - `apps/back-office/src/app/page.tsx` - [Action précise : Ajouter X, Modifier Y, Supprimer Z]
 - `packages/@verone/ui/src/components/Button.tsx` - [Action précise]
 - `apps/back-office/src/lib/utils.ts` - [Action précise]
 
 **Étapes**:
+
 - [ ] Étape 1: [Description précise et actionnable]
 - [ ] Étape 2: [Description précise et actionnable]
 - [ ] Étape 3: [Description précise et actionnable]
 - [ ] Étape 4: Vérifications (type-check + build)
 
 **Risques identifiés**:
+
 - Risque 1: [Description + impact + mitigation]
 - Risque 2: [Description + impact + mitigation]
 
 **Critères de validation**:
+
 - [ ] Fonctionnalité X fonctionne comme attendu
 - [ ] Tests passent (si applicables)
 - [ ] Build réussit sans warnings

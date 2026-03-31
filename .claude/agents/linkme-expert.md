@@ -5,7 +5,21 @@ model: sonnet
 color: green
 role: WRITE
 writes-to: [code, ACTIVE.md]
-tools: [Read, Edit, Write, Glob, Grep, Bash, "mcp__supabase__execute_sql", "mcp__supabase__list_tables", "mcp__supabase__get_advisors", "mcp__serena__find_symbol", "mcp__serena__list_memories", "mcp__playwright-lane-2__*"]
+tools:
+  [
+    Read,
+    Edit,
+    Write,
+    Glob,
+    Grep,
+    Bash,
+    'mcp__supabase__execute_sql',
+    'mcp__supabase__list_tables',
+    'mcp__supabase__get_advisors',
+    'mcp__serena__*',
+    'mcp__context7__*',
+    'mcp__playwright-lane-2__*',
+  ]
 skills: [rls-patterns]
 memory: .claude/agent-memory/linkme-expert/
 ---
@@ -21,7 +35,7 @@ memory: .claude/agent-memory/linkme-expert/
 5. **RLS patterns** : `.claude/rules/database/rls-patterns.md` (section LinkMe)
 6. **Regles context** : `.claude/rules/dev/context-loading.md`
 
-**Avant de coder** : Lire `.claude/work/ACTIVE.md`, consulter Serena memories linkme-*.
+**Avant de coder** : Lire `.claude/work/ACTIVE.md`, consulter Serena memories linkme-\*.
 
 ---
 
@@ -29,23 +43,24 @@ memory: .claude/agent-memory/linkme-expert/
 
 Par ordre de priorite selon la tache :
 
-| Domaine | Memory |
-|---|---|
-| Commandes + commissions | `linkme-order-commission-workflow` |
-| Authentification / roles | `linkme-auth-patterns` |
-| Selections publiques | `linkme-public-selections-architecture` |
-| Verrouillage prix | `linkme-price-locking-system` |
-| Regles commissions | `linkme-commission-rules` |
-| Champs commission vs marge | `linkme-commission-vs-margin-fields` |
-| Contacts commande | `linkme-order-contact-workflow` |
-| Demandes d'info | `linkme-info-request-workflow` |
-| Schema commandes | `sales-orders-linkme-details-schema` |
+| Domaine                    | Memory                                  |
+| -------------------------- | --------------------------------------- |
+| Commandes + commissions    | `linkme-order-commission-workflow`      |
+| Authentification / roles   | `linkme-auth-patterns`                  |
+| Selections publiques       | `linkme-public-selections-architecture` |
+| Verrouillage prix          | `linkme-price-locking-system`           |
+| Regles commissions         | `linkme-commission-rules`               |
+| Champs commission vs marge | `linkme-commission-vs-margin-fields`    |
+| Contacts commande          | `linkme-order-contact-workflow`         |
+| Demandes d'info            | `linkme-info-request-workflow`          |
+| Schema commandes           | `sales-orders-linkme-details-schema`    |
 
 ---
 
 ## CONNAISSANCES CLES
 
 ### Architecture
+
 - **3 roles** : `enseigne_admin`, `enseigne_collaborateur`, `organisation_admin`
 - **Collaborateur** : pas de commissions, pas de marges, pas de stock, pas de parametres
 - **Utilisateurs externes** : commandes publiques via `/s/[id]`, sans compte
@@ -53,11 +68,13 @@ Par ordre de priorite selon la tache :
 - **Prefix commandes** : specifique par affilie (ex: POK- pour Pokawa)
 
 ### Formulaires commande
+
 - **Le formulaire ACTIF** est dans `orders/steps/`, PAS dans `order-form/`
 - **Defaults schema** : `apps/linkme/src/components/orders/schemas/order-form.schema.ts`
 - **Hook soumission** : `apps/linkme/src/lib/hooks/use-order-form.ts`
 
 ### Pages cles
+
 - Dashboard : `/dashboard`
 - Commandes : `/commandes`
 - Commissions : `/commissions`
@@ -68,6 +85,7 @@ Par ordre de priorite selon la tache :
 - Back-office approbations : `/canaux-vente/linkme/approbations`
 
 ### DB Tables principales
+
 - `sales_orders` (avec channel = 'linkme')
 - `sales_order_items`
 - `linkme_affiliates`
