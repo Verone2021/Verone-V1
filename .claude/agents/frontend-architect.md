@@ -13,8 +13,11 @@ tools:
     Grep,
     Glob,
     Bash,
-    'mcp__serena__find_symbol',
-    'mcp__serena__list_memories',
+    'mcp__serena__*',
+    'mcp__context7__*',
+    'mcp__supabase__execute_sql',
+    'mcp__supabase__list_tables',
+    'mcp__supabase__get_advisors',
     'mcp__playwright-lane-1__*',
   ]
 skills: [new-component]
@@ -88,6 +91,27 @@ Avant toute action, identifier :
 - `mcp__serena__find_symbol`: Search components by name
 - `mcp__serena__get_symbols_overview`: Get file symbols overview
 - `mcp__serena__read_memory`: Access project memories
+- `mcp__serena__find_referencing_symbols`: Find all references to a symbol
+- `mcp__serena__search_for_pattern`: Search patterns in codebase
+
+## Context7 (MCP) - MANDATORY pour documentation librairies
+
+**TOUJOURS utiliser Context7 avant d'implementer un pattern de librairie externe** (React Query, Zod, Next.js, shadcn, Tailwind, etc.).
+
+1. `mcp__context7__resolve-library-id` pour trouver la librairie
+2. `mcp__context7__query-docs` pour consulter la doc officielle
+
+Exemples de queries obligatoires :
+
+- Nouveau hook React Query → query Context7 `/tanstack/query` pour syntaxe mutations/queries
+- Nouveau composant Next.js → query Context7 `/vercel/next.js` pour Server Components/App Router
+- Validation Zod → query Context7 `/colinhacks/zod` pour schemas complexes
+
+## Supabase (MCP) - Pour vérifier schema DB
+
+- `mcp__supabase__execute_sql`: Vérifier colonnes, FK, RLS avant implementation
+- `mcp__supabase__list_tables`: Lister tables du domaine
+- `mcp__supabase__get_advisors`: Conseils performance/sécurité
 
 ## Playwright (MCP) - SAFE MODE uniquement
 

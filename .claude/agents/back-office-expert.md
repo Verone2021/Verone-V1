@@ -5,7 +5,21 @@ model: sonnet
 color: blue
 role: WRITE
 writes-to: [code, ACTIVE.md]
-tools: [Read, Edit, Write, Glob, Grep, Bash, "mcp__supabase__execute_sql", "mcp__supabase__list_tables", "mcp__supabase__get_advisors", "mcp__serena__find_symbol", "mcp__serena__list_memories", "mcp__playwright-lane-2__*"]
+tools:
+  [
+    Read,
+    Edit,
+    Write,
+    Glob,
+    Grep,
+    Bash,
+    'mcp__supabase__execute_sql',
+    'mcp__supabase__list_tables',
+    'mcp__supabase__get_advisors',
+    'mcp__serena__*',
+    'mcp__context7__*',
+    'mcp__playwright-lane-2__*',
+  ]
 skills: [rls-patterns]
 memory: .claude/agent-memory/back-office-expert/
 ---
@@ -22,27 +36,29 @@ memory: .claude/agent-memory/back-office-expert/
 
 ## SERENA MEMORIES A CONSULTER
 
-| Domaine | Memory |
-|---|---|
-| Architecture globale | `project-architecture` |
-| Entites metier | `business-entities-back-office` |
-| Tables par domaine | `database-tables-by-domain` |
-| Stock et alertes | `stock-triggers-alerts-complete` |
-| Commandes vente | `sales-order-status-workflow-complete` |
-| Commandes achat | `purchase-order-status-workflow-complete` |
-| Facturation Qonto | `qonto-invoicing-system` |
-| Notifications | `notifications-system-audit-2026-03` |
+| Domaine              | Memory                                    |
+| -------------------- | ----------------------------------------- |
+| Architecture globale | `project-architecture`                    |
+| Entites metier       | `business-entities-back-office`           |
+| Tables par domaine   | `database-tables-by-domain`               |
+| Stock et alertes     | `stock-triggers-alerts-complete`          |
+| Commandes vente      | `sales-order-status-workflow-complete`    |
+| Commandes achat      | `purchase-order-status-workflow-complete` |
+| Facturation Qonto    | `qonto-invoicing-system`                  |
+| Notifications        | `notifications-system-audit-2026-03`      |
 
 ---
 
 ## CONNAISSANCES CLES
 
 ### Roles staff
+
 - `owner`, `admin`, `sales`, `catalog_manager`
 - Table : `user_app_roles` (app = 'back-office')
 - Helpers RLS : `is_backoffice_user()`, `is_back_office_admin()`
 
 ### Modules principaux
+
 - **Produits** : catalogue, images, categories, variantes, fournisseurs
 - **Stock** : alertes (rouge/orange/vert), triggers PostgreSQL, previsionnel
 - **Commandes** : SO (vente), PO (achat), workflow statuts
@@ -51,6 +67,7 @@ memory: .claude/agent-memory/back-office-expert/
 - **Consultations** : devis clients
 
 ### API INTERDIT DE MODIFIER
+
 - Routes Qonto, adresses, emails, webhooks — JAMAIS toucher
 
 ---

@@ -7,18 +7,11 @@ allowed-tools:
     Glob,
     Grep,
     WebSearch,
-    mcp__serena__find_symbol,
-    mcp__serena__get_symbols_overview,
-    mcp__serena__find_referencing_symbols,
-    mcp__serena__search_for_pattern,
-    mcp__serena__list_dir,
-    mcp__serena__find_file,
-    mcp__serena__read_memory,
+    mcp__serena__*,
+    mcp__context7__*,
     mcp__supabase__execute_sql,
     mcp__supabase__list_tables,
     mcp__supabase__get_advisors,
-    mcp__context7__resolve-library-id,
-    mcp__context7__query-docs,
   ]
 ---
 
@@ -35,12 +28,13 @@ Avant de presenter des resultats, lire au minimum 3 fichiers ou references simil
 ### Etape 1 — IDENTIFIER
 
 Parser la demande pour determiner :
+
 - **Tables DB concernees** (ex: `sales_orders`, `contacts`, `linkme_selections`)
 - **App cible** (back-office, linkme, site-internet)
 - **Domaine metier** (commandes, stock, finance, sourcing, commissions, etc.)
 - **Type de question** : exploration libre ou domaine specifique
 
-### Etape 2 — EXPLORER la DB (via mcp__supabase__execute_sql)
+### Etape 2 — EXPLORER la DB (via mcp**supabase**execute_sql)
 
 Pour CHAQUE table identifiee, executer EN PARALLELE :
 

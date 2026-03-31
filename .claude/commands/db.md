@@ -1,7 +1,19 @@
 ---
 description: /db - Opérations Supabase Rapides
 argument-hint: <operation> [args] (query|logs|migrations|advisors|schema|types|rls-test|stats)
-allowed-tools: [Bash, Read, Grep]
+allowed-tools:
+  [
+    Bash,
+    Read,
+    Grep,
+    mcp__supabase__execute_sql,
+    mcp__supabase__list_tables,
+    mcp__supabase__get_advisors,
+    mcp__supabase__get_logs,
+    mcp__supabase__list_migrations,
+    mcp__supabase__list_extensions,
+    mcp__serena__*,
+  ]
 ---
 
 # /db - Opérations Supabase Rapides
