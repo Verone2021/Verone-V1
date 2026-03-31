@@ -3,6 +3,7 @@
 
 import { useState, useMemo, useRef } from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 
@@ -953,16 +954,21 @@ function SidebarContent() {
       role="complementary"
       aria-label="Navigation principale"
     >
-      {/* Logo Vérone - Adaptive (V compact / VÉRONE expanded) */}
+      {/* Logo Vérone - Adaptive (symbole compact / logo expanded) */}
       <div className="flex h-16 items-center justify-center border-b border-black px-2">
         {isExpanded ? (
           <Link
             href="/dashboard"
             className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-black/5 transition-colors"
           >
-            <div className="logo-black font-logo text-sm font-light tracking-wider">
-              VÉRONE
-            </div>
+            <Image
+              src="/images/verone-logo.png"
+              alt="VÉRONE"
+              width={160}
+              height={48}
+              className="h-10 w-auto object-contain"
+              priority
+            />
           </Link>
         ) : (
           <Tooltip delayDuration={300}>
@@ -971,9 +977,14 @@ function SidebarContent() {
                 href="/dashboard"
                 className="flex items-center justify-center p-2 rounded-md hover:bg-black/5 transition-colors"
               >
-                <div className="logo-black font-logo text-sm font-light tracking-wider">
-                  V
-                </div>
+                <Image
+                  src="/images/verone-symbol.png"
+                  alt="V"
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 object-contain"
+                  priority
+                />
               </Link>
             </TooltipTrigger>
             <TooltipContent side="right">
@@ -1002,9 +1013,9 @@ function SidebarContent() {
                 window.location.href = '/login';
               });
             }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-black/70 hover:text-black hover:bg-black/5 transition-all duration-200 rounded-md"
+            className="flex w-full items-center gap-3 px-3 py-3 text-sm text-black/70 hover:text-black hover:bg-black/5 transition-all duration-200 rounded-md"
           >
-            <LogOut className="h-4 w-4 flex-shrink-0" />
+            <LogOut className="h-5 w-5 flex-shrink-0" />
             <span className="font-medium">Déconnexion</span>
           </button>
         ) : (
@@ -1017,9 +1028,9 @@ function SidebarContent() {
                     window.location.href = '/login';
                   });
                 }}
-                className="flex w-full items-center justify-center px-3 py-2 text-sm text-black opacity-70 hover:opacity-100 hover:bg-black hover:bg-opacity-5 transition-all duration-150 rounded-md"
+                className="flex w-full items-center justify-center p-3 text-sm text-black opacity-70 hover:opacity-100 hover:bg-black hover:bg-opacity-5 transition-all duration-150 rounded-md"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-5 w-5" />
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">
