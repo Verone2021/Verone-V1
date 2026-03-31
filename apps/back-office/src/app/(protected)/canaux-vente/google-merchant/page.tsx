@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 'use client';
 
 import { useState } from 'react';
@@ -79,9 +80,9 @@ export default function GoogleMerchantPage() {
   const { data: syncedProducts = [], isLoading: syncedProductsLoading } =
     useGoogleMerchantProducts();
 
-  // 🚀 Fetch produits éligibles (tous les produits - le filtrage sera fait côté serveur via RPC)
+  // 🚀 Fetch produits éligibles = UNIQUEMENT ceux publiés sur le site internet
   const { products: eligibleProducts = [], loading: eligibleProductsLoading } =
-    useProducts({});
+    useProducts({ is_published_online: true });
 
   // 🚀 Fetch statistiques RÉELLES depuis Supabase
   const { data: stats, isLoading: statsLoading } = useGoogleMerchantStats();
