@@ -23,7 +23,6 @@ import {
   type ProductCompleteness,
 } from './actions/get-product-completeness';
 
-// eslint-disable-next-line max-lines-per-function
 export default function ProduitsPage() {
   const router = useRouter();
   const [data, setData] = useState<ProductCompleteness | null>(null);

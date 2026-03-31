@@ -40,7 +40,6 @@ interface TopProductsWidgetProps {
   products: DashboardMetrics['sales']['topProducts'];
 }
 
-// eslint-disable-next-line max-lines-per-function
 export function TopProductsWidget({ products }: TopProductsWidgetProps) {
   const [period, setPeriod] = useState<Period>('30');
 

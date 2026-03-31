@@ -65,7 +65,6 @@ import {
   type DashboardMetrics,
 } from './actions/get-dashboard-metrics';
 
-// eslint-disable-next-line max-lines-per-function
 export default function DashboardPage() {
   const router = useRouter();
   const [data, setData] = useState<DashboardMetrics | null>(null);
