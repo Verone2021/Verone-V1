@@ -46,7 +46,6 @@ function StatusBadge({ status, label }: { status: string; label: string }) {
   );
 }
 
-// eslint-disable-next-line max-lines-per-function
 export default function VentesDashboardPage() {
   const router = useRouter();
   const [data, setData] = useState<SalesDashboardData | null>(null);
