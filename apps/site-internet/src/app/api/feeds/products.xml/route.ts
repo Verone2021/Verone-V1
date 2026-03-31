@@ -2,9 +2,10 @@
  * GET /api/feeds/products.xml
  *
  * Generates a Google Shopping XML feed using the SAME data source as the site internet.
- * Uses RPC get_site_internet_products() to guarantee price/title/description match.
+ * Uses RPC get_site_internet_products() for prices/titles + products table for stock_status.
  *
  * CRITICAL: Prices MUST match the landing page or Google will disapprove products.
+ * Products with stock_status = 'out_of_stock' are sent as availability = 'out of stock'.
  */
 
 import type { NextRequest } from 'next/server';
@@ -24,8 +25,6 @@ interface SiteProduct {
   brand: string | null;
   primary_image_url: string | null;
   image_urls: string[] | null;
-  status: string;
-  selling_points: string[] | null;
 }
 
 function escapeXml(str: string): string {
@@ -43,19 +42,44 @@ export async function GET(_request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // Use the SAME RPC as the site internet — guarantees identical data
+  // 1. Get products from SAME RPC as site internet (guarantees identical prices)
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const { data, error } = await supabase.rpc('get_site_internet_products');
+  const { data: rpcData, error: rpcError } = await supabase.rpc(
+    'get_site_internet_products'
+  );
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (rpcError) {
+    return NextResponse.json({ error: rpcError.message }, { status: 500 });
   }
 
-  const products = (data ?? []) as unknown as SiteProduct[];
+  const products = (rpcData ?? []) as unknown as SiteProduct[];
+  const productIds = products.map(p => p.product_id);
 
+  // 2. Get stock_status from products table (not in RPC)
+  const { data: stockData } = await supabase
+    .from('products')
+    .select('id, stock_status')
+    .in('id', productIds);
+
+  const stockMap = new Map(
+    (stockData ?? []).map(s => [
+      s.id as string,
+      (s.stock_status as string) ?? 'out_of_stock',
+    ])
+  );
+
+  // 3. Generate XML feed
   const items = products
     .map(product => {
       if (!product.primary_image_url) return null;
+
+      const stockStatus = stockMap.get(product.product_id) ?? 'out_of_stock';
+      const availability =
+        stockStatus === 'in_stock'
+          ? 'in stock'
+          : stockStatus === 'coming_soon'
+            ? 'preorder'
+            : 'out of stock';
 
       const priceTtc = Number(product.price_ttc).toFixed(2);
       const title = escapeXml(String(product.name).substring(0, 150));
@@ -63,9 +87,6 @@ export async function GET(_request: NextRequest) {
         String(product.description ?? product.name).substring(0, 5000)
       );
       const link = `${SITE_URL}/produit/${String(product.slug)}`;
-      // All site internet products are active — availability = in stock
-      const availability =
-        product.status === 'active' ? 'in stock' : 'out of stock';
 
       const additionalImages = (product.image_urls ?? [])
         .filter(url => url !== product.primary_image_url)
