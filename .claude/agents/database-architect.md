@@ -16,8 +16,8 @@ tools:
     'mcp__supabase__execute_sql',
     'mcp__supabase__list_tables',
     'mcp__supabase__get_advisors',
-    'mcp__serena__find_symbol',
-    'mcp__serena__list_memories',
+    'mcp__serena__*',
+    'mcp__context7__*',
   ]
 skills: [rls-patterns, schema-sync]
 ---

@@ -24,6 +24,7 @@ export interface OrganisationWithRevenue {
   is_active: boolean | null;
   city: string | null;
   country: string | null;
+  logo_url: string | null;
   revenue: number;
   // Champs additionnels pour l'organisation mere
   siret?: string | null;

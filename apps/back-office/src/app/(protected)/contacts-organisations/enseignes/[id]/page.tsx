@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 'use client';
 
 /**
@@ -13,7 +14,7 @@
  * @module EnseigneDetailPage
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -29,6 +30,8 @@ import {
   EnseigneKPIGrid,
   EnseigneMapSection,
   EnseigneOrganisationsTable,
+  EnseigneLogoUploadButton,
+  type EnseigneLogoUploadRef,
 } from '@verone/organisations';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
@@ -180,6 +183,7 @@ export default function EnseigneDetailPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isOrganisationModalOpen, setIsOrganisationModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const logoUploadRef = useRef<EnseigneLogoUploadRef>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -318,10 +322,19 @@ export default function EnseigneDetailPage() {
 
     setIsSubmitting(true);
     try {
+      // 1. Upload/suppression logo si en attente
+      if (logoUploadRef.current?.hasPendingFile()) {
+        const success = await logoUploadRef.current.uploadPendingFile();
+        if (!success) return;
+      }
+
+      // 2. Sauver les autres champs du formulaire
+      const { logo_url: _logo_url, ...updateData } = formData;
       await updateEnseigne({
         id: enseigne.id,
-        ...formData,
+        ...updateData,
       });
+
       setIsEditModalOpen(false);
       handleRefresh();
     } finally {
@@ -980,15 +993,19 @@ export default function EnseigneDetailPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="logo_url">URL du logo</Label>
-              <Input
-                id="logo_url"
-                value={formData.logo_url}
-                onChange={e =>
-                  setFormData(prev => ({ ...prev, logo_url: e.target.value }))
-                }
-                placeholder="https://..."
-              />
+              <Label>Logo</Label>
+              {enseigne && (
+                <EnseigneLogoUploadButton
+                  ref={logoUploadRef}
+                  enseigneId={enseigne.id}
+                  enseigneName={enseigne.name}
+                  currentLogoUrl={enseigne.logo_url}
+                  onUploadSuccess={() => {
+                    handleRefresh();
+                  }}
+                  size="md"
+                />
+              )}
             </div>
 
             <div className="flex items-center justify-between">

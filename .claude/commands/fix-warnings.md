@@ -1,3 +1,19 @@
+---
+description: /fix-warnings - ESLint Warning Fix Command
+allowed-tools:
+  [
+    Read,
+    Edit,
+    Write,
+    Glob,
+    Grep,
+    Bash,
+    mcp__serena__*,
+    mcp__context7__*,
+    mcp__supabase__execute_sql,
+  ]
+---
+
 # /fix-warnings - ESLint Warning Fix Command
 
 **Version**: 1.0.0
@@ -64,14 +80,18 @@ Corriger les warnings ESLint de manière **intelligente et durable** en suivant 
    ```
 
 2. **Consulter documentation officielle** (MCP Context7 OBLIGATOIRE)
-   - Pour React : `/websites/react_dev`
-   - Pour Next.js : `/vercel/next.js`
-   - Pour TypeScript : `/microsoft/TypeScript`
+
+   **Utiliser `mcp__context7__resolve-library-id` puis `mcp__context7__query-docs`** :
+   - Pour React : libraryId `/websites/react_dev`
+   - Pour Next.js : libraryId `/vercel/next.js`
+   - Pour TypeScript : libraryId `/microsoft/TypeScript`
+   - Pour React Query : libraryId `/tanstack/query`
+   - Pour Zod : libraryId `/colinhacks/zod`
 
    **Template de recherche** :
 
    ```
-   Query: "[warning_type] official fix pattern best practices 2026"
+   mcp__context7__query-docs({ libraryId: "/vercel/next.js", query: "[warning_type] official fix pattern" })
    ```
 
 3. **Extraire le pattern recommandé**

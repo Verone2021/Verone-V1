@@ -104,15 +104,15 @@ export function SampleRequirementSection({
             </p>
           </div>
 
-          {/* Bouton Commander échantillon si produit existe */}
+          {/* Bouton Commander ce produit (processus normal = pas d'échantillon) */}
           {isProduct && productId && productName && (
             <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
               <div className="text-sm">
                 <p className="font-medium text-blue-900">
-                  Besoin de tester le produit ?
+                  Commander ce produit
                 </p>
                 <p className="text-blue-700">
-                  Commandez un échantillon pour validation qualité
+                  Créer une commande fournisseur directement
                 </p>
               </div>
               <SampleOrderButton
@@ -121,6 +121,8 @@ export function SampleRequirementSection({
                 supplierName={supplierName}
                 costPrice={costPrice}
                 size="sm"
+                label="Commander le produit"
+                mode="product"
               />
             </div>
           )}

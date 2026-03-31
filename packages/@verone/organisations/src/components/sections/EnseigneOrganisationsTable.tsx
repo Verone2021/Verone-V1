@@ -13,6 +13,7 @@
 
 import { useState } from 'react';
 
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
@@ -216,11 +217,23 @@ export function EnseigneOrganisationsTable({
                       <div className="flex items-center space-x-3">
                         <div
                           className={cn(
-                            'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
+                            'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden',
                             isParent ? 'bg-amber-100' : 'bg-gray-100'
                           )}
                         >
-                          {isParent ? (
+                          {org.logo_url ? (
+                            <Image
+                              src={
+                                org.logo_url.startsWith('http')
+                                  ? org.logo_url
+                                  : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/organisation-logos/${org.logo_url}`
+                              }
+                              alt={displayName}
+                              width={36}
+                              height={36}
+                              className="w-full h-full object-contain"
+                            />
+                          ) : isParent ? (
                             <Star className="h-4 w-4 text-amber-600" />
                           ) : (
                             <Building2 className="h-4 w-4 text-gray-400" />

@@ -12,7 +12,10 @@ tools:
     Glob,
     Bash,
     'mcp__supabase__execute_sql',
+    'mcp__supabase__list_tables',
     'mcp__supabase__get_advisors',
+    'mcp__serena__*',
+    'mcp__context7__*',
   ]
 memory: project
 ---

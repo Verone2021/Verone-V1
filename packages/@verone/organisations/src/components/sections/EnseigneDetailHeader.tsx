@@ -82,7 +82,11 @@ export function EnseigneDetailHeader({
               {enseigne.logo_url ? (
                 <div className="w-16 h-16 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
                   <Image
-                    src={enseigne.logo_url}
+                    src={
+                      enseigne.logo_url.startsWith('http')
+                        ? enseigne.logo_url
+                        : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/organisation-logos/${enseigne.logo_url}`
+                    }
                     alt={`Logo ${enseigne.name}`}
                     width={64}
                     height={64}

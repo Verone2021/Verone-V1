@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 import Image from 'next/image';
 
@@ -51,6 +51,7 @@ export function LogoUploadButton({
 }: LogoUploadButtonProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { uploadLogo, deleteLogo, uploading, deleting, error } = useLogoUpload({
     entityId: organisationId,
@@ -115,20 +116,18 @@ export function LogoUploadButton({
   };
 
   /**
-   * Gestion click pour ouvrir sélecteur de fichiers
+   * Gestion click pour ouvrir sélecteur de fichiers (via ref, compatible modals)
    */
   const handleClick = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/png,image/jpeg,image/svg+xml,image/webp';
-    input.onchange = (e: Event) => {
-      const target = e.target as HTMLInputElement;
-      const file = target.files?.[0];
-      if (file) {
-        void handleFileUpload(file);
-      }
-    };
-    input.click();
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      void handleFileUpload(file);
+    }
+    e.target.value = '';
   };
 
   /**
@@ -158,6 +157,14 @@ export function LogoUploadButton({
 
   return (
     <div className={cn('bo-space-y-4', className)}>
+      {/* Input file caché (ref) — fonctionne dans les modals */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/svg+xml,image/webp"
+        onChange={handleFileChange}
+        className="hidden"
+      />
       {/* Zone de drag & drop / affichage logo */}
       <div
         className={cn(

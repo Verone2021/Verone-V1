@@ -82,8 +82,7 @@ export function useProductDetail() {
             id,
             legal_name,
             trade_name,
-            email,
-            phone,
+            website,
             is_active,
             type
           ),

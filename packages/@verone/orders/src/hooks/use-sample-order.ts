@@ -31,8 +31,11 @@ export function useSampleOrder() {
    */
   async function requestSample(
     productId: string,
-    sampleType?: 'internal' | 'customer'
+    sampleType?: 'internal' | 'customer',
+    quantity?: number
   ): Promise<SampleOrderResult> {
+    const orderQuantity = quantity ?? 1;
+    const isSample = sampleType !== undefined;
     setIsLoading(true);
 
     try {
@@ -100,11 +103,13 @@ export function useSampleOrder() {
             {
               purchase_order_id: purchaseOrderId,
               product_id: productId,
-              quantity: 1,
+              quantity: orderQuantity,
               unit_price_ht: product.cost_price,
               discount_percentage: 0,
-              sample_type: sampleType ?? 'internal',
-              notes: `Échantillon pour validation qualité - ${product.name}`,
+              sample_type: isSample ? sampleType : null,
+              notes: isSample
+                ? `Échantillon pour validation qualité - ${product.name}`
+                : `Commande produit - ${product.name}`,
             },
           ]);
 
@@ -113,14 +118,15 @@ export function useSampleOrder() {
         }
 
         // Mettre à jour le total de la commande
-        const newTotal = (draftOrders[0].total_ht || 0) + product.cost_price;
+        const itemTotal = product.cost_price * orderQuantity;
+        const newTotal = (draftOrders[0].total_ht || 0) + itemTotal;
         await supabase
           .from('purchase_orders')
           .update({ total_ht: newTotal, total_ttc: newTotal * 1.2 })
           .eq('id', purchaseOrderId);
 
         toast({
-          title: 'Échantillon ajouté',
+          title: isSample ? 'Échantillon ajouté' : 'Produit ajouté',
           description: `Le produit a été ajouté à la commande draft existante (${draftOrders[0].po_number}).`,
         });
       } else {
@@ -133,7 +139,8 @@ export function useSampleOrder() {
 
         // Générer un ID et numéro de commande
         const newOrderId = crypto.randomUUID();
-        const poNumber = `PO-ECH-${Date.now()}`;
+        const poNumber = isSample ? `PO-ECH-${Date.now()}` : `PO-${Date.now()}`;
+        const orderTotal = product.cost_price * orderQuantity;
 
         const { error: orderError } = await supabase
           .from('purchase_orders')
@@ -145,10 +152,12 @@ export function useSampleOrder() {
               status: 'draft',
               currency: 'EUR',
               tax_rate: 0.2,
-              total_ht: product.cost_price,
-              total_ttc: product.cost_price * 1.2,
+              total_ht: orderTotal,
+              total_ttc: orderTotal * 1.2,
               created_by: userData.user.id,
-              notes: "Commande d'échantillons pour validation qualité",
+              notes: isSample
+                ? "Commande d'échantillons pour validation qualité"
+                : `Commande produit - ${product.name}`,
             },
           ]);
 
@@ -166,11 +175,13 @@ export function useSampleOrder() {
             {
               purchase_order_id: purchaseOrderId,
               product_id: productId,
-              quantity: 1,
+              quantity: orderQuantity,
               unit_price_ht: product.cost_price,
               discount_percentage: 0,
-              sample_type: sampleType ?? 'internal',
-              notes: `Échantillon pour validation qualité - ${product.name}`,
+              sample_type: isSample ? sampleType : null,
+              notes: isSample
+                ? `Échantillon pour validation qualité - ${product.name}`
+                : `Commande produit - ${product.name}`,
             },
           ]);
 
@@ -187,7 +198,7 @@ export function useSampleOrder() {
         }
 
         toast({
-          title: "Commande d'échantillon créée",
+          title: isSample ? "Commande d'échantillon créée" : 'Commande créée',
           description: `Une nouvelle commande (${poNumber}) a été créée avec ce produit.`,
         });
       }

@@ -5,7 +5,18 @@ model: haiku
 color: green
 role: READ
 writes-to: []
-tools: [Read, Grep, Glob, Bash]
+tools:
+  [
+    Read,
+    Grep,
+    Glob,
+    Bash,
+    'mcp__serena__*',
+    'mcp__context7__*',
+    'mcp__supabase__execute_sql',
+    'mcp__supabase__list_tables',
+    'mcp__supabase__get_advisors',
+  ]
 skills: [rls-patterns]
 ---
 
