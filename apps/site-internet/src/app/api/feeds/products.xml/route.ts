@@ -67,7 +67,21 @@ export async function GET(_request: NextRequest) {
     (exclusions ?? []).map(e => e.product_id as string)
   );
 
-  // 3. Generate XML feed
+  // 3b. Get stock quantities for Meta (requires g:quantity)
+  const productIds = products.map(p => p.product_id);
+  const { data: qtyData } = await supabase
+    .from('products')
+    .select('id, stock_quantity')
+    .in('id', productIds);
+
+  const qtyMap = new Map(
+    (qtyData ?? []).map(q => [
+      q.id as string,
+      (q.stock_quantity as number) ?? 0,
+    ])
+  );
+
+  // 4. Generate XML feed
   const items = products
     .map(product => {
       if (!product.primary_image_url) return null;
@@ -99,6 +113,7 @@ export async function GET(_request: NextRequest) {
       <g:link>${link}</g:link>
       <g:image_link>${String(product.primary_image_url)}</g:image_link>
       <g:availability>${availability}</g:availability>
+      <g:quantity>${Math.max(qtyMap.get(product.product_id) ?? 0, availability === 'in stock' ? 1 : 0)}</g:quantity>
       <g:condition>new</g:condition>
       <g:price>${priceTtc} EUR</g:price>
       <g:shipping>
