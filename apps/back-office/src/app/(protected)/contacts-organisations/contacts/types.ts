@@ -15,6 +15,10 @@ export interface Contact {
     type?: string | null;
     [key: string]: unknown;
   } | null;
+  enseigne?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 export interface ContactStats {

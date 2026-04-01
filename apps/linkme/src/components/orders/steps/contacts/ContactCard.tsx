@@ -62,7 +62,7 @@ export function ContactCard({
         {/* Content */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate">
+            <h3 className="font-semibold text-gray-900 text-sm leading-tight break-words">
               {displayName}
             </h3>
             {isSelected && (

@@ -1,5 +1,5 @@
-import ApprobationsClient from './ApprobationsClient';
+import { redirect } from 'next/navigation';
 
 export default function ApprobationsPage() {
-  return <ApprobationsClient />;
+  redirect('/produits/affilies');
 }

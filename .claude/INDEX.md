@@ -1,6 +1,6 @@
 # INDEX CENTRALISE — Verone Back Office
 
-**Derniere mise a jour** : 2026-03-27 (Phase 7 audit global)
+**Derniere mise a jour** : 2026-04-01 (nettoyage ACTIVE.md + restauration 40 docs + agent memories)
 
 Ce fichier est le sommaire unique pour trouver toute l'information du repository.
 Tout agent ou commande doit commencer par consulter cet index.
@@ -115,15 +115,19 @@ Tout agent ou commande doit commencer par consulter cet index.
 | -------------------- | --------------------------------------------------- |
 | Tables par domaine   | Serena `database-tables-by-domain`                  |
 | Triggers stock       | `docs/current/database/triggers-stock-reference.md` |
+| Triggers metriques   | `docs/metrics/database-triggers.md`                 |
 | RLS patterns         | `.claude/rules/database/rls-patterns.md`            |
 | Mapping pages-tables | `docs/current/MAPPING-PAGES-TABLES.md`              |
+| Architecture DB      | `docs/current/serena/database-implementation.md`    |
 
 ### Finance
 
-| Sujet             | Source                                      |
-| ----------------- | ------------------------------------------- |
-| Reference finance | `docs/current/finance/finance-reference.md` |
-| Systeme Qonto     | Serena `qonto-invoicing-system`             |
+| Sujet             | Source                                        |
+| ----------------- | --------------------------------------------- |
+| Reference finance | `docs/current/finance/finance-reference.md`   |
+| Systeme Qonto     | Serena `qonto-invoicing-system`               |
+| Qonto env setup   | `docs/integrations/qonto-env-setup.md`        |
+| Never finalize    | `docs/current/serena/qonto-never-finalize.md` |
 
 ### Modules
 
@@ -132,6 +136,22 @@ Tout agent ou commande doit commencer par consulter cet index.
 | Stock                | `docs/current/modules/stock-module-reference.md`    |
 | Commandes (workflow) | `docs/current/modules/orders-workflow-reference.md` |
 | Sourcing             | `docs/current/modules/sourcing-reference.md`        |
+
+### Regles metier (restaurees 2026-04-01)
+
+| Sujet                      | Source                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------- |
+| Alertes stock              | `docs/business-rules/06-stocks/alertes/`                                        |
+| Backorders                 | `docs/business-rules/06-stocks/backorders/BACKORDERS-POLICY.md`                 |
+| Stock reel vs previsionnel | `docs/business-rules/06-stocks/movements/real-vs-forecast-separation.md`        |
+| Tracabilite stock          | `docs/business-rules/06-stocks/movements/stock-traceability-rules.md`           |
+| Annulation commande        | `docs/business-rules/07-commandes/clients/sales-order-cancellation-workflow.md` |
+| Workflow expedition        | `docs/business-rules/07-commandes/expeditions/`                                 |
+| Workflow PO complet        | `docs/business-rules/07-commandes/fournisseurs/`                                |
+| Notifications commandes    | `docs/business-rules/07-commandes/notifications-workflow.md`                    |
+| Calcul marge LinkMe        | `docs/linkme/margin-calculation.md`                                             |
+| Decisions projet           | `docs/current/serena/project-decisions.md`                                      |
+| Incident runbook           | `docs/runbooks/incident.md`                                                     |
 
 ---
 
@@ -175,6 +195,18 @@ Tout agent ou commande doit commencer par consulter cet index.
 - `auth-middleware-patterns` — Patterns middleware auth
 
 ---
+
+## Agent Memories (7 agents, tous configures)
+
+| Agent                  | Memoire                                      |
+| ---------------------- | -------------------------------------------- |
+| `back-office-expert`   | `.claude/agent-memory/back-office-expert/`   |
+| `linkme-expert`        | `.claude/agent-memory/linkme-expert/`        |
+| `site-internet-expert` | `.claude/agent-memory/site-internet-expert/` |
+| `database-architect`   | `.claude/agent-memory/database-architect/`   |
+| `frontend-architect`   | `.claude/agent-memory/frontend-architect/`   |
+| `code-reviewer`        | `.claude/agent-memory/code-reviewer/`        |
+| `perf-optimizer`       | `.claude/agent-memory/perf-optimizer/`       |
 
 ## Memoire persistante (feedbacks & projets)
 
