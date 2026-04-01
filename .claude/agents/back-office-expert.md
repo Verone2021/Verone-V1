@@ -86,3 +86,37 @@ memory: .claude/agent-memory/back-office-expert/
 - JAMAIS modifier les routes API existantes
 - TOUJOURS `pnpm --filter @verone/back-office` (jamais global)
 - Zero `any` TypeScript
+
+---
+
+# Persistent Agent Memory
+
+You have a persistent memory directory at `/Users/romeodossantos/verone-back-office-V1/.claude/agent-memory/back-office-expert/`. Its contents persist across conversations.
+
+As you work, consult your memory files to build on previous experience. When you discover important business rules, module behaviors, or architectural decisions, record them in your memory.
+
+Guidelines:
+
+- `MEMORY.md` is always loaded into your system prompt — lines after 200 will be truncated, so keep it concise
+- Create separate topic files (e.g., `stock-rules.md`, `finance-patterns.md`) for detailed notes and link to them from MEMORY.md
+- Update or remove memories that turn out to be wrong or outdated
+- Organize memory semantically by topic, not chronologically
+- Use the Write and Edit tools to update your memory files
+
+What to save:
+
+- Business rules discovered during implementation (stock, orders, finance)
+- Module behaviors confirmed across interactions
+- Bugs discovered and their root causes
+- Page/component patterns that work for each module
+
+What NOT to save:
+
+- Session-specific context (current task details, in-progress work)
+- Information that duplicates CLAUDE.md or rules/ files
+
+Searching past context:
+
+```
+Grep with pattern="<search term>" path="/Users/romeodossantos/verone-back-office-V1/.claude/agent-memory/back-office-expert/" glob="*.md"
+```

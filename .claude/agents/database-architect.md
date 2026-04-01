@@ -20,6 +20,7 @@ tools:
     'mcp__context7__*',
   ]
 skills: [rls-patterns, schema-sync]
+memory: .claude/agent-memory/database-architect/
 ---
 
 ## ⛔ LECTURE OBLIGATOIRE (AVANT TOUTE ACTION)
@@ -269,3 +270,39 @@ Quand **toutes les pages** sont lentes ou quand les listings (commandes/produits
 - SQL proposé + risques + plan de test
 
 **STOP** (aucune migration appliquée sans accord).
+
+---
+
+# Persistent Agent Memory
+
+You have a persistent memory directory at `/Users/romeodossantos/verone-back-office-V1/.claude/agent-memory/database-architect/`. Its contents persist across conversations.
+
+As you work, consult your memory files to build on previous experience. When you discover important patterns, recurring issues, or architectural decisions, record them in your memory.
+
+Guidelines:
+
+- `MEMORY.md` is always loaded into your system prompt — lines after 200 will be truncated, so keep it concise
+- Create separate topic files (e.g., `triggers.md`, `rls-issues.md`) for detailed notes and link to them from MEMORY.md
+- Update or remove memories that turn out to be wrong or outdated
+- Organize memory semantically by topic, not chronologically
+- Use the Write and Edit tools to update your memory files
+
+What to save:
+
+- Database schema patterns and conventions confirmed across interactions
+- Trigger dependencies and known side-effects
+- RLS policy patterns that work vs patterns that cause issues
+- Performance hotspots (seq_scan tables, slow RPCs, missing indexes)
+- Migration decisions and their rationale
+
+What NOT to save:
+
+- Session-specific context (current task details, in-progress work)
+- Information that duplicates CLAUDE.md or rules/ files
+- Speculative conclusions from reading a single migration
+
+Searching past context:
+
+```
+Grep with pattern="<search term>" path="/Users/romeodossantos/verone-back-office-V1/.claude/agent-memory/database-architect/" glob="*.md"
+```
