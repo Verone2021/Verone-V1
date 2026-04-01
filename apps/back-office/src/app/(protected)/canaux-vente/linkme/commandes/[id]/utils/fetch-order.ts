@@ -59,6 +59,8 @@ export interface FetchOrderResult {
 // QUERY STRING (outside function to reduce fn line count)
 // ============================================
 
+// Contacts FK JOINs removed from main query — fetched separately by PK
+// to avoid heavy RLS policy evaluation on contacts table (3x subquery per row)
 const ORDER_QUERY = `
   id,
   order_number,
@@ -83,15 +85,6 @@ const ORDER_QUERY = `
   insurance_cost_ht,
   fees_vat_rate,
   responsable_contact_id, billing_contact_id, delivery_contact_id,
-  responsable_contact:contacts!sales_orders_responsable_contact_id_fkey (
-    id, first_name, last_name, email, phone, title
-  ),
-  billing_contact:contacts!sales_orders_billing_contact_id_fkey (
-    id, first_name, last_name, email, phone, title
-  ),
-  delivery_contact:contacts!sales_orders_delivery_contact_id_fkey (
-    id, first_name, last_name, email, phone, title
-  ),
   organisations!sales_orders_customer_id_fkey (
     id, trade_name, legal_name, approval_status, enseigne_id,
     address_line1, address_line2, postal_code, city,
@@ -123,6 +116,8 @@ const ORDER_QUERY = `
     products ( name, sku )
   )
 `;
+
+const CONTACT_FIELDS = 'id, first_name, last_name, email, phone, title';
 
 const ENRICHED_QUERY =
   'id, product_id, product_name, product_sku, product_image_url, quantity, unit_price_ht, total_ht, base_price_ht, margin_rate, commission_rate, selling_price_ht, affiliate_margin, retrocession_rate, created_by_affiliate, affiliate_commission_rate';
@@ -249,6 +244,19 @@ async function fetchCreatedByProfile(
 // FETCH FUNCTION
 // ============================================
 
+async function fetchContactById(
+  supabase: ReturnType<typeof createClient>,
+  contactId: string | null
+): Promise<ContactRef | null> {
+  if (!contactId) return null;
+  const { data } = await supabase
+    .from('contacts')
+    .select(CONTACT_FIELDS)
+    .eq('id', contactId)
+    .single();
+  return data ? (data as ContactRef) : null;
+}
+
 export async function fetchOrderById(
   orderId: string
 ): Promise<FetchOrderResult> {
@@ -264,9 +272,43 @@ export async function fetchOrderById(
 
   const orderData = rawData as Record<string, unknown>;
   const createdByUserId = (orderData['created_by'] as string | null) ?? null;
-  const createdByProfile = createdByUserId
-    ? await fetchCreatedByProfile(supabase, createdByUserId)
+
+  // Fetch contacts by PK in parallel (avoids heavy RLS on FK JOINs)
+  const respId = (orderData['responsable_contact_id'] as string | null) ?? null;
+  const billId = (orderData['billing_contact_id'] as string | null) ?? null;
+  const delId = (orderData['delivery_contact_id'] as string | null) ?? null;
+  // Deduplicate: if same contact has multiple roles, fetch only once
+  const uniqueIds = [
+    ...new Set([respId, billId, delId].filter(Boolean)),
+  ] as string[];
+  const contactResults = await Promise.all(
+    uniqueIds.map(id => fetchContactById(supabase, id))
+  );
+  const contactMap = new Map<string, ContactRef>();
+  uniqueIds.forEach((id, i) => {
+    if (contactResults[i]) contactMap.set(id, contactResults[i]);
+  });
+
+  // Inject contacts into orderData for buildOrderFromData
+  orderData['responsable_contact'] = respId
+    ? (contactMap.get(respId) ?? null)
     : null;
+  orderData['billing_contact'] = billId
+    ? (contactMap.get(billId) ?? null)
+    : null;
+  orderData['delivery_contact'] = delId
+    ? (contactMap.get(delId) ?? null)
+    : null;
+
+  const [createdByProfile, enrichedResult] = await Promise.all([
+    createdByUserId
+      ? fetchCreatedByProfile(supabase, createdByUserId)
+      : Promise.resolve(null),
+    supabase
+      .from('linkme_order_items_enriched')
+      .select(ENRICHED_QUERY)
+      .eq('sales_order_id', orderId),
+  ]);
 
   const order = buildOrderFromData(
     orderData,
@@ -274,11 +316,7 @@ export async function fetchOrderById(
     createdByUserId
   );
 
-  const { data: enrichedData } = await supabase
-    .from('linkme_order_items_enriched')
-    .select(ENRICHED_QUERY)
-    .eq('sales_order_id', orderId);
-
+  const enrichedData = enrichedResult.data;
   const enrichedItems =
     enrichedData && enrichedData.length > 0
       ? buildEnrichedItems(enrichedData as LinkmeOrderItemEnrichedRaw[])

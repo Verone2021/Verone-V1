@@ -216,11 +216,12 @@ export function useCompleteDashboardMetrics() {
           .select('id, status, total_ht, created_at')
           .gte('created_at', startOfMonth.toISOString()),
 
-        // 2. Factures (mois précédent + mois en cours) - FUSIONNÉE
-        // Note: Colonne 'type' supprimée - table invoices contient uniquement des factures
+        // 2. Factures (mois precedent + mois en cours) via financial_documents
+        // Table invoices dropped in migration 20260321190000, replaced by financial_documents
         supabase
-          .from('invoices')
+          .from('financial_documents')
           .select('total_ht, status, created_at')
+          .eq('document_type', 'customer_invoice')
           .gte('created_at', startOfPrevMonth.toISOString())
           .neq('status', 'cancelled'),
 

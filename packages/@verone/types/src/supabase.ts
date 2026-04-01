@@ -461,62 +461,6 @@ export type Database = {
           },
         ];
       };
-      audit_opjet_invoices: {
-        Row: {
-          audited_at: string | null;
-          created_at: string | null;
-          difference_ttc: number | null;
-          id: string;
-          invoice_date: string | null;
-          invoice_number: string;
-          invoice_total_ttc: number | null;
-          notes: string | null;
-          opjet_items: Json | null;
-          po_id: string | null;
-          po_total_ttc: number | null;
-          status: string;
-          verone_items: Json | null;
-        };
-        Insert: {
-          audited_at?: string | null;
-          created_at?: string | null;
-          difference_ttc?: number | null;
-          id?: string;
-          invoice_date?: string | null;
-          invoice_number: string;
-          invoice_total_ttc?: number | null;
-          notes?: string | null;
-          opjet_items?: Json | null;
-          po_id?: string | null;
-          po_total_ttc?: number | null;
-          status: string;
-          verone_items?: Json | null;
-        };
-        Update: {
-          audited_at?: string | null;
-          created_at?: string | null;
-          difference_ttc?: number | null;
-          id?: string;
-          invoice_date?: string | null;
-          invoice_number?: string;
-          invoice_total_ttc?: number | null;
-          notes?: string | null;
-          opjet_items?: Json | null;
-          po_id?: string | null;
-          po_total_ttc?: number | null;
-          status?: string;
-          verone_items?: Json | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'audit_opjet_invoices_po_id_fkey';
-            columns: ['po_id'];
-            isOneToOne: false;
-            referencedRelation: 'purchase_orders';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       bank_transactions: {
         Row: {
           amount: number;
@@ -859,41 +803,6 @@ export type Database = {
             columns: ['family_id'];
             isOneToOne: false;
             referencedRelation: 'families';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
-      category_translations: {
-        Row: {
-          category_id: string;
-          created_at: string | null;
-          description: string | null;
-          id: string;
-          language: Database['public']['Enums']['language_type'];
-          name: string;
-        };
-        Insert: {
-          category_id: string;
-          created_at?: string | null;
-          description?: string | null;
-          id?: string;
-          language: Database['public']['Enums']['language_type'];
-          name: string;
-        };
-        Update: {
-          category_id?: string;
-          created_at?: string | null;
-          description?: string | null;
-          id?: string;
-          language?: Database['public']['Enums']['language_type'];
-          name?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'category_translations_category_id_fkey';
-            columns: ['category_id'];
-            isOneToOne: false;
-            referencedRelation: 'categories';
             referencedColumns: ['id'];
           },
         ];
@@ -1345,65 +1254,6 @@ export type Database = {
           },
         ];
       };
-      channel_product_pricing: {
-        Row: {
-          channel: string;
-          created_at: string | null;
-          id: string;
-          price_ht_cents: number;
-          product_id: string;
-          tva_rate: number;
-          updated_at: string | null;
-        };
-        Insert: {
-          channel: string;
-          created_at?: string | null;
-          id?: string;
-          price_ht_cents: number;
-          product_id: string;
-          tva_rate?: number;
-          updated_at?: string | null;
-        };
-        Update: {
-          channel?: string;
-          created_at?: string | null;
-          id?: string;
-          price_ht_cents?: number;
-          product_id?: string;
-          tva_rate?: number;
-          updated_at?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'channel_product_pricing_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'product_prices_summary';
-            referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'channel_product_pricing_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'products';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'channel_product_pricing_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_alerts_unified_view';
-            referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'channel_product_pricing_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_alerts_view';
-            referencedColumns: ['product_id'];
-          },
-        ];
-      };
       client_consultations: {
         Row: {
           archived_at: string | null;
@@ -1705,41 +1555,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: 'collection_shares_collection_id_fkey';
-            columns: ['collection_id'];
-            isOneToOne: false;
-            referencedRelation: 'collections';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
-      collection_translations: {
-        Row: {
-          collection_id: string;
-          created_at: string | null;
-          description: string | null;
-          id: string;
-          language: Database['public']['Enums']['language_type'];
-          name: string;
-        };
-        Insert: {
-          collection_id: string;
-          created_at?: string | null;
-          description?: string | null;
-          id?: string;
-          language: Database['public']['Enums']['language_type'];
-          name: string;
-        };
-        Update: {
-          collection_id?: string;
-          created_at?: string | null;
-          description?: string | null;
-          id?: string;
-          language?: Database['public']['Enums']['language_type'];
-          name?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'collection_translations_collection_id_fkey';
             columns: ['collection_id'];
             isOneToOne: false;
             referencedRelation: 'collections';
@@ -2315,60 +2130,6 @@ export type Database = {
           },
         ];
       };
-      customer_group_members: {
-        Row: {
-          assignment_method: string | null;
-          created_at: string | null;
-          created_by: string | null;
-          customer_id: string;
-          customer_type: string;
-          expires_at: string | null;
-          group_id: string;
-          is_active: boolean | null;
-          joined_at: string | null;
-          notes: string | null;
-        };
-        Insert: {
-          assignment_method?: string | null;
-          created_at?: string | null;
-          created_by?: string | null;
-          customer_id: string;
-          customer_type: string;
-          expires_at?: string | null;
-          group_id: string;
-          is_active?: boolean | null;
-          joined_at?: string | null;
-          notes?: string | null;
-        };
-        Update: {
-          assignment_method?: string | null;
-          created_at?: string | null;
-          created_by?: string | null;
-          customer_id?: string;
-          customer_type?: string;
-          expires_at?: string | null;
-          group_id?: string;
-          is_active?: boolean | null;
-          joined_at?: string | null;
-          notes?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'customer_group_members_created_by_fkey';
-            columns: ['created_by'];
-            isOneToOne: false;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
-          },
-          {
-            foreignKeyName: 'customer_group_members_group_id_fkey';
-            columns: ['group_id'];
-            isOneToOne: false;
-            referencedRelation: 'customer_groups';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       customer_groups: {
         Row: {
           auto_assignment_rules: Json | null;
@@ -2422,85 +2183,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_linkme_users';
             referencedColumns: ['user_id'];
-          },
-        ];
-      };
-      customer_price_lists: {
-        Row: {
-          approved_at: string | null;
-          approved_by: string | null;
-          assignment_reason: string | null;
-          config: Json | null;
-          contract_reference: string | null;
-          created_at: string | null;
-          created_by: string | null;
-          customer_id: string;
-          customer_type: string;
-          is_active: boolean | null;
-          is_default: boolean | null;
-          price_list_id: string;
-          priority: number | null;
-          updated_at: string | null;
-          valid_from: string | null;
-          valid_until: string | null;
-        };
-        Insert: {
-          approved_at?: string | null;
-          approved_by?: string | null;
-          assignment_reason?: string | null;
-          config?: Json | null;
-          contract_reference?: string | null;
-          created_at?: string | null;
-          created_by?: string | null;
-          customer_id: string;
-          customer_type: string;
-          is_active?: boolean | null;
-          is_default?: boolean | null;
-          price_list_id: string;
-          priority?: number | null;
-          updated_at?: string | null;
-          valid_from?: string | null;
-          valid_until?: string | null;
-        };
-        Update: {
-          approved_at?: string | null;
-          approved_by?: string | null;
-          assignment_reason?: string | null;
-          config?: Json | null;
-          contract_reference?: string | null;
-          created_at?: string | null;
-          created_by?: string | null;
-          customer_id?: string;
-          customer_type?: string;
-          is_active?: boolean | null;
-          is_default?: boolean | null;
-          price_list_id?: string;
-          priority?: number | null;
-          updated_at?: string | null;
-          valid_from?: string | null;
-          valid_until?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'customer_price_lists_approved_by_fkey';
-            columns: ['approved_by'];
-            isOneToOne: false;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
-          },
-          {
-            foreignKeyName: 'customer_price_lists_created_by_fkey';
-            columns: ['created_by'];
-            isOneToOne: false;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
-          },
-          {
-            foreignKeyName: 'customer_price_lists_price_list_id_fkey';
-            columns: ['price_list_id'];
-            isOneToOne: false;
-            referencedRelation: 'price_lists';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -2662,6 +2344,7 @@ export type Database = {
           logo_url: string | null;
           member_count: number;
           name: string;
+          show_on_linkme_globe: boolean | null;
           updated_at: string;
         };
         Insert: {
@@ -2673,6 +2356,7 @@ export type Database = {
           logo_url?: string | null;
           member_count?: number;
           name: string;
+          show_on_linkme_globe?: boolean | null;
           updated_at?: string;
         };
         Update: {
@@ -2684,6 +2368,7 @@ export type Database = {
           logo_url?: string | null;
           member_count?: number;
           name?: string;
+          show_on_linkme_globe?: boolean | null;
           updated_at?: string;
         };
         Relationships: [
@@ -2817,135 +2502,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_linkme_users';
             referencedColumns: ['user_id'];
-          },
-        ];
-      };
-      feed_exports: {
-        Row: {
-          completed_at: string | null;
-          created_at: string | null;
-          duration_seconds: number | null;
-          error_message: string | null;
-          feed_config_id: string;
-          file_size: number | null;
-          file_url: string | null;
-          id: string;
-          ip_address: unknown;
-          logs: Json | null;
-          products_count: number | null;
-          requested_by: string | null;
-          started_at: string | null;
-          status: Database['public']['Enums']['feed_export_status_type'] | null;
-          user_agent: string | null;
-        };
-        Insert: {
-          completed_at?: string | null;
-          created_at?: string | null;
-          duration_seconds?: number | null;
-          error_message?: string | null;
-          feed_config_id: string;
-          file_size?: number | null;
-          file_url?: string | null;
-          id?: string;
-          ip_address?: unknown;
-          logs?: Json | null;
-          products_count?: number | null;
-          requested_by?: string | null;
-          started_at?: string | null;
-          status?:
-            | Database['public']['Enums']['feed_export_status_type']
-            | null;
-          user_agent?: string | null;
-        };
-        Update: {
-          completed_at?: string | null;
-          created_at?: string | null;
-          duration_seconds?: number | null;
-          error_message?: string | null;
-          feed_config_id?: string;
-          file_size?: number | null;
-          file_url?: string | null;
-          id?: string;
-          ip_address?: unknown;
-          logs?: Json | null;
-          products_count?: number | null;
-          requested_by?: string | null;
-          started_at?: string | null;
-          status?:
-            | Database['public']['Enums']['feed_export_status_type']
-            | null;
-          user_agent?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'feed_exports_feed_config_id_fkey';
-            columns: ['feed_config_id'];
-            isOneToOne: false;
-            referencedRelation: 'feed_configs';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'feed_exports_requested_by_fkey';
-            columns: ['requested_by'];
-            isOneToOne: false;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
-          },
-        ];
-      };
-      feed_performance_metrics: {
-        Row: {
-          avg_duration_seconds: number | null;
-          avg_products_count: number | null;
-          created_at: string | null;
-          error_types: Json | null;
-          failed_exports: number | null;
-          feed_config_id: string;
-          id: string;
-          max_duration_seconds: number | null;
-          metrics_date: string;
-          successful_exports: number | null;
-          total_exports: number | null;
-          total_file_size_bytes: number | null;
-          updated_at: string | null;
-        };
-        Insert: {
-          avg_duration_seconds?: number | null;
-          avg_products_count?: number | null;
-          created_at?: string | null;
-          error_types?: Json | null;
-          failed_exports?: number | null;
-          feed_config_id: string;
-          id?: string;
-          max_duration_seconds?: number | null;
-          metrics_date: string;
-          successful_exports?: number | null;
-          total_exports?: number | null;
-          total_file_size_bytes?: number | null;
-          updated_at?: string | null;
-        };
-        Update: {
-          avg_duration_seconds?: number | null;
-          avg_products_count?: number | null;
-          created_at?: string | null;
-          error_types?: Json | null;
-          failed_exports?: number | null;
-          feed_config_id?: string;
-          id?: string;
-          max_duration_seconds?: number | null;
-          metrics_date?: string;
-          successful_exports?: number | null;
-          total_exports?: number | null;
-          total_file_size_bytes?: number | null;
-          updated_at?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'feed_performance_metrics_feed_config_id_fkey';
-            columns: ['feed_config_id'];
-            isOneToOne: false;
-            referencedRelation: 'feed_configs';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -3090,110 +2646,6 @@ export type Database = {
           },
           {
             foreignKeyName: 'financial_document_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_alerts_view';
-            referencedColumns: ['product_id'];
-          },
-        ];
-      };
-      financial_document_lines: {
-        Row: {
-          created_at: string;
-          description: string;
-          document_id: string;
-          id: string;
-          line_number: number;
-          pcg_code: string | null;
-          product_id: string | null;
-          quantity: number;
-          sort_order: number | null;
-          total_ht: number;
-          total_ttc: number | null;
-          tva_amount: number | null;
-          tva_rate: number;
-          unit_price_ht: number;
-          updated_at: string | null;
-        };
-        Insert: {
-          created_at?: string;
-          description: string;
-          document_id: string;
-          id?: string;
-          line_number: number;
-          pcg_code?: string | null;
-          product_id?: string | null;
-          quantity: number;
-          sort_order?: number | null;
-          total_ht: number;
-          total_ttc?: number | null;
-          tva_amount?: number | null;
-          tva_rate: number;
-          unit_price_ht: number;
-          updated_at?: string | null;
-        };
-        Update: {
-          created_at?: string;
-          description?: string;
-          document_id?: string;
-          id?: string;
-          line_number?: number;
-          pcg_code?: string | null;
-          product_id?: string | null;
-          quantity?: number;
-          sort_order?: number | null;
-          total_ht?: number;
-          total_ttc?: number | null;
-          tva_amount?: number | null;
-          tva_rate?: number;
-          unit_price_ht?: number;
-          updated_at?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'financial_document_lines_document_id_fkey';
-            columns: ['document_id'];
-            isOneToOne: false;
-            referencedRelation: 'financial_documents';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'financial_document_lines_document_id_fkey';
-            columns: ['document_id'];
-            isOneToOne: false;
-            referencedRelation: 'v_pending_invoice_uploads';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'financial_document_lines_document_id_fkey';
-            columns: ['document_id'];
-            isOneToOne: false;
-            referencedRelation: 'v_transactions_missing_invoice';
-            referencedColumns: ['financial_document_id'];
-          },
-          {
-            foreignKeyName: 'financial_document_lines_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'product_prices_summary';
-            referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'financial_document_lines_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'products';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'financial_document_lines_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_alerts_unified_view';
-            referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'financial_document_lines_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
@@ -3561,129 +3013,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_linkme_users';
             referencedColumns: ['user_id'];
-          },
-        ];
-      };
-      financial_payments: {
-        Row: {
-          abby_payment_id: string | null;
-          amount_paid: number;
-          bank_transaction_id: string | null;
-          created_at: string;
-          created_by: string | null;
-          document_id: string;
-          id: string;
-          notes: string | null;
-          payment_date: string;
-          payment_method: string | null;
-          synced_from_abby_at: string | null;
-          transaction_reference: string | null;
-        };
-        Insert: {
-          abby_payment_id?: string | null;
-          amount_paid: number;
-          bank_transaction_id?: string | null;
-          created_at?: string;
-          created_by?: string | null;
-          document_id: string;
-          id?: string;
-          notes?: string | null;
-          payment_date: string;
-          payment_method?: string | null;
-          synced_from_abby_at?: string | null;
-          transaction_reference?: string | null;
-        };
-        Update: {
-          abby_payment_id?: string | null;
-          amount_paid?: number;
-          bank_transaction_id?: string | null;
-          created_at?: string;
-          created_by?: string | null;
-          document_id?: string;
-          id?: string;
-          notes?: string | null;
-          payment_date?: string;
-          payment_method?: string | null;
-          synced_from_abby_at?: string | null;
-          transaction_reference?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'financial_payments_bank_transaction_id_fkey';
-            columns: ['bank_transaction_id'];
-            isOneToOne: false;
-            referencedRelation: 'bank_transactions';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'financial_payments_bank_transaction_id_fkey';
-            columns: ['bank_transaction_id'];
-            isOneToOne: false;
-            referencedRelation: 'expenses';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'financial_payments_bank_transaction_id_fkey';
-            columns: ['bank_transaction_id'];
-            isOneToOne: false;
-            referencedRelation: 'expenses';
-            referencedColumns: ['transaction_id'];
-          },
-          {
-            foreignKeyName: 'financial_payments_bank_transaction_id_fkey';
-            columns: ['bank_transaction_id'];
-            isOneToOne: false;
-            referencedRelation: 'v_expenses_with_details';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'financial_payments_bank_transaction_id_fkey';
-            columns: ['bank_transaction_id'];
-            isOneToOne: false;
-            referencedRelation: 'v_expenses_with_details';
-            referencedColumns: ['transaction_id'];
-          },
-          {
-            foreignKeyName: 'financial_payments_bank_transaction_id_fkey';
-            columns: ['bank_transaction_id'];
-            isOneToOne: false;
-            referencedRelation: 'v_transactions_missing_invoice';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'financial_payments_bank_transaction_id_fkey';
-            columns: ['bank_transaction_id'];
-            isOneToOne: false;
-            referencedRelation: 'v_transactions_unified';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'financial_payments_created_by_fkey';
-            columns: ['created_by'];
-            isOneToOne: false;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
-          },
-          {
-            foreignKeyName: 'financial_payments_document_id_fkey';
-            columns: ['document_id'];
-            isOneToOne: false;
-            referencedRelation: 'financial_documents';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'financial_payments_document_id_fkey';
-            columns: ['document_id'];
-            isOneToOne: false;
-            referencedRelation: 'v_pending_invoice_uploads';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'financial_payments_document_id_fkey';
-            columns: ['document_id'];
-            isOneToOne: false;
-            referencedRelation: 'v_transactions_missing_invoice';
-            referencedColumns: ['financial_document_id'];
           },
         ];
       };
@@ -4217,157 +3546,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'linkme_affiliates';
             referencedColumns: ['id'];
-          },
-        ];
-      };
-      invoice_status_history: {
-        Row: {
-          change_reason: string | null;
-          changed_at: string;
-          changed_by: string | null;
-          id: string;
-          invoice_id: string;
-          new_status: string;
-          old_status: string;
-        };
-        Insert: {
-          change_reason?: string | null;
-          changed_at?: string;
-          changed_by?: string | null;
-          id?: string;
-          invoice_id: string;
-          new_status: string;
-          old_status: string;
-        };
-        Update: {
-          change_reason?: string | null;
-          changed_at?: string;
-          changed_by?: string | null;
-          id?: string;
-          invoice_id?: string;
-          new_status?: string;
-          old_status?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'invoice_status_history_changed_by_fkey';
-            columns: ['changed_by'];
-            isOneToOne: false;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
-          },
-          {
-            foreignKeyName: 'invoice_status_history_invoice_id_fkey';
-            columns: ['invoice_id'];
-            isOneToOne: false;
-            referencedRelation: 'invoices';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
-      invoices: {
-        Row: {
-          abby_invoice_id: string;
-          abby_invoice_number: string;
-          abby_pdf_url: string | null;
-          abby_public_url: string | null;
-          created_at: string;
-          created_by: string;
-          due_date: string | null;
-          id: string;
-          invoice_date: string;
-          last_synced_from_abby_at: string | null;
-          sales_order_id: string;
-          status: string;
-          sync_errors: Json | null;
-          synced_to_abby_at: string | null;
-          total_ht: number;
-          total_ttc: number;
-          tva_amount: number;
-          updated_at: string;
-        };
-        Insert: {
-          abby_invoice_id: string;
-          abby_invoice_number: string;
-          abby_pdf_url?: string | null;
-          abby_public_url?: string | null;
-          created_at?: string;
-          created_by: string;
-          due_date?: string | null;
-          id?: string;
-          invoice_date: string;
-          last_synced_from_abby_at?: string | null;
-          sales_order_id: string;
-          status?: string;
-          sync_errors?: Json | null;
-          synced_to_abby_at?: string | null;
-          total_ht: number;
-          total_ttc: number;
-          tva_amount: number;
-          updated_at?: string;
-        };
-        Update: {
-          abby_invoice_id?: string;
-          abby_invoice_number?: string;
-          abby_pdf_url?: string | null;
-          abby_public_url?: string | null;
-          created_at?: string;
-          created_by?: string;
-          due_date?: string | null;
-          id?: string;
-          invoice_date?: string;
-          last_synced_from_abby_at?: string | null;
-          sales_order_id?: string;
-          status?: string;
-          sync_errors?: Json | null;
-          synced_to_abby_at?: string | null;
-          total_ht?: number;
-          total_ttc?: number;
-          tva_amount?: number;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'invoices_created_by_fkey';
-            columns: ['created_by'];
-            isOneToOne: false;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
-          },
-          {
-            foreignKeyName: 'invoices_sales_order_id_fkey';
-            columns: ['sales_order_id'];
-            isOneToOne: true;
-            referencedRelation: 'affiliate_pending_orders';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'invoices_sales_order_id_fkey';
-            columns: ['sales_order_id'];
-            isOneToOne: true;
-            referencedRelation: 'linkme_orders_enriched';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'invoices_sales_order_id_fkey';
-            columns: ['sales_order_id'];
-            isOneToOne: true;
-            referencedRelation: 'linkme_orders_with_margins';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'invoices_sales_order_id_fkey';
-            columns: ['sales_order_id'];
-            isOneToOne: true;
-            referencedRelation: 'sales_orders';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'invoices_sales_order_id_fkey';
-            columns: ['sales_order_id'];
-            isOneToOne: true;
-            referencedRelation: 'v_transactions_missing_invoice';
-            referencedColumns: ['sales_order_id'];
           },
         ];
       };
@@ -5187,124 +4365,6 @@ export type Database = {
           },
         ];
       };
-      linkme_tracking: {
-        Row: {
-          affiliate_id: string;
-          converted_at: string | null;
-          converted_order_id: string | null;
-          created_at: string | null;
-          id: string;
-          referrer_url: string | null;
-          selection_id: string | null;
-          session_id: string;
-          user_agent: string | null;
-          utm_campaign: string | null;
-          utm_content: string | null;
-          utm_medium: string | null;
-          utm_source: string | null;
-          utm_term: string | null;
-          visitor_ip: string | null;
-        };
-        Insert: {
-          affiliate_id: string;
-          converted_at?: string | null;
-          converted_order_id?: string | null;
-          created_at?: string | null;
-          id?: string;
-          referrer_url?: string | null;
-          selection_id?: string | null;
-          session_id: string;
-          user_agent?: string | null;
-          utm_campaign?: string | null;
-          utm_content?: string | null;
-          utm_medium?: string | null;
-          utm_source?: string | null;
-          utm_term?: string | null;
-          visitor_ip?: string | null;
-        };
-        Update: {
-          affiliate_id?: string;
-          converted_at?: string | null;
-          converted_order_id?: string | null;
-          created_at?: string | null;
-          id?: string;
-          referrer_url?: string | null;
-          selection_id?: string | null;
-          session_id?: string;
-          user_agent?: string | null;
-          utm_campaign?: string | null;
-          utm_content?: string | null;
-          utm_medium?: string | null;
-          utm_source?: string | null;
-          utm_term?: string | null;
-          visitor_ip?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'linkme_tracking_affiliate_id_fkey';
-            columns: ['affiliate_id'];
-            isOneToOne: false;
-            referencedRelation: 'linkme_affiliates';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'linkme_tracking_converted_order_id_fkey';
-            columns: ['converted_order_id'];
-            isOneToOne: false;
-            referencedRelation: 'affiliate_pending_orders';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'linkme_tracking_converted_order_id_fkey';
-            columns: ['converted_order_id'];
-            isOneToOne: false;
-            referencedRelation: 'linkme_orders_enriched';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'linkme_tracking_converted_order_id_fkey';
-            columns: ['converted_order_id'];
-            isOneToOne: false;
-            referencedRelation: 'linkme_orders_with_margins';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'linkme_tracking_converted_order_id_fkey';
-            columns: ['converted_order_id'];
-            isOneToOne: false;
-            referencedRelation: 'sales_orders';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'linkme_tracking_converted_order_id_fkey';
-            columns: ['converted_order_id'];
-            isOneToOne: false;
-            referencedRelation: 'v_transactions_missing_invoice';
-            referencedColumns: ['sales_order_id'];
-          },
-          {
-            foreignKeyName: 'linkme_tracking_selection_id_fkey';
-            columns: ['selection_id'];
-            isOneToOne: false;
-            referencedRelation: 'linkme_orders_enriched';
-            referencedColumns: ['selection_id'];
-          },
-          {
-            foreignKeyName: 'linkme_tracking_selection_id_fkey';
-            columns: ['selection_id'];
-            isOneToOne: false;
-            referencedRelation: 'linkme_orders_with_margins';
-            referencedColumns: ['selection_id'];
-          },
-          {
-            foreignKeyName: 'linkme_tracking_selection_id_fkey';
-            columns: ['selection_id'];
-            isOneToOne: false;
-            referencedRelation: 'linkme_selections';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       matching_rules: {
         Row: {
           allow_multiple_categories: boolean | null;
@@ -5494,6 +4554,98 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [];
+      };
+      meta_commerce_syncs: {
+        Row: {
+          catalog_id: string;
+          clicks: number | null;
+          conversions: number | null;
+          created_at: string | null;
+          error_message: string | null;
+          id: string;
+          impressions: number | null;
+          meta_product_id: string | null;
+          meta_status: string | null;
+          meta_status_checked_at: string | null;
+          meta_status_detail: Json | null;
+          product_id: string;
+          response_data: Json | null;
+          revenue_ht: number | null;
+          sync_operation: string;
+          sync_status: string;
+          synced_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          catalog_id?: string;
+          clicks?: number | null;
+          conversions?: number | null;
+          created_at?: string | null;
+          error_message?: string | null;
+          id?: string;
+          impressions?: number | null;
+          meta_product_id?: string | null;
+          meta_status?: string | null;
+          meta_status_checked_at?: string | null;
+          meta_status_detail?: Json | null;
+          product_id: string;
+          response_data?: Json | null;
+          revenue_ht?: number | null;
+          sync_operation?: string;
+          sync_status?: string;
+          synced_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          catalog_id?: string;
+          clicks?: number | null;
+          conversions?: number | null;
+          created_at?: string | null;
+          error_message?: string | null;
+          id?: string;
+          impressions?: number | null;
+          meta_product_id?: string | null;
+          meta_status?: string | null;
+          meta_status_checked_at?: string | null;
+          meta_status_detail?: Json | null;
+          product_id?: string;
+          response_data?: Json | null;
+          revenue_ht?: number | null;
+          sync_operation?: string;
+          sync_status?: string;
+          synced_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'meta_commerce_syncs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: true;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'meta_commerce_syncs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: true;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'meta_commerce_syncs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: true;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'meta_commerce_syncs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: true;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+        ];
       };
       newsletter_subscribers: {
         Row: {
@@ -5741,6 +4893,42 @@ export type Database = {
           },
         ];
       };
+      organisation_families: {
+        Row: {
+          created_at: string | null;
+          family_id: string;
+          id: string;
+          organisation_id: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          family_id: string;
+          id?: string;
+          organisation_id: string;
+        };
+        Update: {
+          created_at?: string | null;
+          family_id?: string;
+          id?: string;
+          organisation_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'organisation_families_family_id_fkey';
+            columns: ['family_id'];
+            isOneToOne: false;
+            referencedRelation: 'families';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'organisation_families_organisation_id_fkey';
+            columns: ['organisation_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       organisations: {
         Row: {
           abby_customer_id: string | null;
@@ -5775,6 +4963,7 @@ export type Database = {
           is_active: boolean | null;
           is_enseigne_parent: boolean;
           is_service_provider: boolean | null;
+          kbis_url: string | null;
           latitude: number | null;
           legal_form: string | null;
           legal_name: string;
@@ -5854,6 +5043,7 @@ export type Database = {
           is_active?: boolean | null;
           is_enseigne_parent?: boolean;
           is_service_provider?: boolean | null;
+          kbis_url?: string | null;
           latitude?: number | null;
           legal_form?: string | null;
           legal_name: string;
@@ -5933,6 +5123,7 @@ export type Database = {
           is_active?: boolean | null;
           is_enseigne_parent?: boolean;
           is_service_provider?: boolean | null;
+          kbis_url?: string | null;
           latitude?: number | null;
           legal_form?: string | null;
           legal_name?: string;
@@ -6020,63 +5211,6 @@ export type Database = {
             columns: ['source_affiliate_id'];
             isOneToOne: false;
             referencedRelation: 'linkme_affiliates';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
-      payments: {
-        Row: {
-          abby_payment_id: string | null;
-          amount_paid: number;
-          created_at: string;
-          created_by: string | null;
-          id: string;
-          invoice_id: string;
-          notes: string | null;
-          payment_date: string;
-          payment_method: string | null;
-          synced_from_abby_at: string | null;
-          transaction_reference: string | null;
-        };
-        Insert: {
-          abby_payment_id?: string | null;
-          amount_paid: number;
-          created_at?: string;
-          created_by?: string | null;
-          id?: string;
-          invoice_id: string;
-          notes?: string | null;
-          payment_date: string;
-          payment_method?: string | null;
-          synced_from_abby_at?: string | null;
-          transaction_reference?: string | null;
-        };
-        Update: {
-          abby_payment_id?: string | null;
-          amount_paid?: number;
-          created_at?: string;
-          created_by?: string | null;
-          id?: string;
-          invoice_id?: string;
-          notes?: string | null;
-          payment_date?: string;
-          payment_method?: string | null;
-          synced_from_abby_at?: string | null;
-          transaction_reference?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'payments_created_by_fkey';
-            columns: ['created_by'];
-            isOneToOne: false;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
-          },
-          {
-            foreignKeyName: 'payments_invoice_id_fkey';
-            columns: ['invoice_id'];
-            isOneToOne: false;
-            referencedRelation: 'invoices';
             referencedColumns: ['id'];
           },
         ];
@@ -6488,138 +5622,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
             referencedColumns: ['product_id'];
-          },
-        ];
-      };
-      product_drafts: {
-        Row: {
-          category_id: string | null;
-          color: string | null;
-          condition: string | null;
-          cost_price: number | null;
-          created_at: string | null;
-          created_by: string | null;
-          description: string | null;
-          dimensions: Json | null;
-          family_id: string | null;
-          gallery_images: Json | null;
-          gtin: string | null;
-          id: string;
-          material: string | null;
-          min_stock_level: number | null;
-          name: string | null;
-          price_ht: number | null;
-          primary_image_url: string | null;
-          product_group_id: string | null;
-          selling_price: number | null;
-          sku: string | null;
-          status: string | null;
-          stock_quantity: number | null;
-          subcategory_id: string | null;
-          supplier_price: number | null;
-          supplier_reference: string | null;
-          tax_rate: number | null;
-          updated_at: string | null;
-          weight: number | null;
-          wizard_step_completed: number | null;
-        };
-        Insert: {
-          category_id?: string | null;
-          color?: string | null;
-          condition?: string | null;
-          cost_price?: number | null;
-          created_at?: string | null;
-          created_by?: string | null;
-          description?: string | null;
-          dimensions?: Json | null;
-          family_id?: string | null;
-          gallery_images?: Json | null;
-          gtin?: string | null;
-          id?: string;
-          material?: string | null;
-          min_stock_level?: number | null;
-          name?: string | null;
-          price_ht?: number | null;
-          primary_image_url?: string | null;
-          product_group_id?: string | null;
-          selling_price?: number | null;
-          sku?: string | null;
-          status?: string | null;
-          stock_quantity?: number | null;
-          subcategory_id?: string | null;
-          supplier_price?: number | null;
-          supplier_reference?: string | null;
-          tax_rate?: number | null;
-          updated_at?: string | null;
-          weight?: number | null;
-          wizard_step_completed?: number | null;
-        };
-        Update: {
-          category_id?: string | null;
-          color?: string | null;
-          condition?: string | null;
-          cost_price?: number | null;
-          created_at?: string | null;
-          created_by?: string | null;
-          description?: string | null;
-          dimensions?: Json | null;
-          family_id?: string | null;
-          gallery_images?: Json | null;
-          gtin?: string | null;
-          id?: string;
-          material?: string | null;
-          min_stock_level?: number | null;
-          name?: string | null;
-          price_ht?: number | null;
-          primary_image_url?: string | null;
-          product_group_id?: string | null;
-          selling_price?: number | null;
-          sku?: string | null;
-          status?: string | null;
-          stock_quantity?: number | null;
-          subcategory_id?: string | null;
-          supplier_price?: number | null;
-          supplier_reference?: string | null;
-          tax_rate?: number | null;
-          updated_at?: string | null;
-          weight?: number | null;
-          wizard_step_completed?: number | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'product_drafts_category_id_fkey';
-            columns: ['category_id'];
-            isOneToOne: false;
-            referencedRelation: 'categories';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'product_drafts_created_by_fkey';
-            columns: ['created_by'];
-            isOneToOne: false;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
-          },
-          {
-            foreignKeyName: 'product_drafts_family_id_fkey';
-            columns: ['family_id'];
-            isOneToOne: false;
-            referencedRelation: 'families';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'product_drafts_product_group_id_fkey';
-            columns: ['product_group_id'];
-            isOneToOne: false;
-            referencedRelation: 'product_groups';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'product_drafts_subcategory_id_fkey';
-            columns: ['subcategory_id'];
-            isOneToOne: false;
-            referencedRelation: 'subcategories';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -7082,62 +6084,6 @@ export type Database = {
           },
         ];
       };
-      product_status_changes: {
-        Row: {
-          change_reason: string;
-          created_at: string | null;
-          id: string;
-          new_status: string;
-          old_status: string;
-          product_id: string;
-        };
-        Insert: {
-          change_reason?: string;
-          created_at?: string | null;
-          id?: string;
-          new_status: string;
-          old_status: string;
-          product_id: string;
-        };
-        Update: {
-          change_reason?: string;
-          created_at?: string | null;
-          id?: string;
-          new_status?: string;
-          old_status?: string;
-          product_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'product_status_changes_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'product_prices_summary';
-            referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'product_status_changes_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'products';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'product_status_changes_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_alerts_unified_view';
-            referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'product_status_changes_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_alerts_view';
-            referencedColumns: ['product_id'];
-          },
-        ];
-      };
       products: {
         Row: {
           affiliate_approval_status:
@@ -7194,6 +6140,8 @@ export type Database = {
           requires_sample: boolean | null;
           search_vector: unknown;
           selling_points: Json | null;
+          shipping_class: string | null;
+          shipping_cost_estimate: number | null;
           show_on_linkme_globe: boolean | null;
           sku: string;
           slug: string | null;
@@ -7277,6 +6225,8 @@ export type Database = {
           requires_sample?: boolean | null;
           search_vector?: unknown;
           selling_points?: Json | null;
+          shipping_class?: string | null;
+          shipping_cost_estimate?: number | null;
           show_on_linkme_globe?: boolean | null;
           sku: string;
           slug?: string | null;
@@ -7360,6 +6310,8 @@ export type Database = {
           requires_sample?: boolean | null;
           search_vector?: unknown;
           selling_points?: Json | null;
+          shipping_class?: string | null;
+          shipping_cost_estimate?: number | null;
           show_on_linkme_globe?: boolean | null;
           sku?: string;
           slug?: string | null;
@@ -8357,39 +7309,69 @@ export type Database = {
       };
       sales_order_shipments: {
         Row: {
+          carrier_name: string | null;
+          carrier_service: string | null;
           created_at: string | null;
+          delivery_method: string | null;
+          estimated_delivery_at: string | null;
           id: string;
+          label_url: string | null;
           notes: string | null;
+          packlink_label_url: string | null;
+          packlink_shipment_id: string | null;
+          packlink_status: string | null;
           product_id: string;
           quantity_shipped: number;
           sales_order_id: string;
           shipped_at: string;
           shipped_by: string;
+          shipping_cost: number | null;
           tracking_number: string | null;
+          tracking_url: string | null;
           updated_at: string | null;
         };
         Insert: {
+          carrier_name?: string | null;
+          carrier_service?: string | null;
           created_at?: string | null;
+          delivery_method?: string | null;
+          estimated_delivery_at?: string | null;
           id?: string;
+          label_url?: string | null;
           notes?: string | null;
+          packlink_label_url?: string | null;
+          packlink_shipment_id?: string | null;
+          packlink_status?: string | null;
           product_id: string;
           quantity_shipped: number;
           sales_order_id: string;
           shipped_at?: string;
           shipped_by: string;
+          shipping_cost?: number | null;
           tracking_number?: string | null;
+          tracking_url?: string | null;
           updated_at?: string | null;
         };
         Update: {
+          carrier_name?: string | null;
+          carrier_service?: string | null;
           created_at?: string | null;
+          delivery_method?: string | null;
+          estimated_delivery_at?: string | null;
           id?: string;
+          label_url?: string | null;
           notes?: string | null;
+          packlink_label_url?: string | null;
+          packlink_shipment_id?: string | null;
+          packlink_status?: string | null;
           product_id?: string;
           quantity_shipped?: number;
           sales_order_id?: string;
           shipped_at?: string;
           shipped_by?: string;
+          shipping_cost?: number | null;
           tracking_number?: string | null;
+          tracking_url?: string | null;
           updated_at?: string | null;
         };
         Relationships: [
@@ -8522,6 +7504,8 @@ export type Database = {
             | Database['public']['Enums']['payment_terms_type']
             | null;
           pending_admin_validation: boolean | null;
+          quote_number: string | null;
+          quote_qonto_id: string | null;
           ready_for_shipment: boolean | null;
           responsable_contact_id: string | null;
           shipped_at: string | null;
@@ -8529,6 +7513,9 @@ export type Database = {
           shipping_address: Json | null;
           shipping_cost_ht: number | null;
           status: Database['public']['Enums']['sales_order_status'];
+          stripe_invoice_id: string | null;
+          stripe_payment_intent_id: string | null;
+          stripe_session_id: string | null;
           tax_rate: number;
           total_discount_amount: number | null;
           total_ht: number;
@@ -8593,6 +7580,8 @@ export type Database = {
             | Database['public']['Enums']['payment_terms_type']
             | null;
           pending_admin_validation?: boolean | null;
+          quote_number?: string | null;
+          quote_qonto_id?: string | null;
           ready_for_shipment?: boolean | null;
           responsable_contact_id?: string | null;
           shipped_at?: string | null;
@@ -8600,6 +7589,9 @@ export type Database = {
           shipping_address?: Json | null;
           shipping_cost_ht?: number | null;
           status?: Database['public']['Enums']['sales_order_status'];
+          stripe_invoice_id?: string | null;
+          stripe_payment_intent_id?: string | null;
+          stripe_session_id?: string | null;
           tax_rate?: number;
           total_discount_amount?: number | null;
           total_ht?: number;
@@ -8664,6 +7656,8 @@ export type Database = {
             | Database['public']['Enums']['payment_terms_type']
             | null;
           pending_admin_validation?: boolean | null;
+          quote_number?: string | null;
+          quote_qonto_id?: string | null;
           ready_for_shipment?: boolean | null;
           responsable_contact_id?: string | null;
           shipped_at?: string | null;
@@ -8671,6 +7665,9 @@ export type Database = {
           shipping_address?: Json | null;
           shipping_cost_ht?: number | null;
           status?: Database['public']['Enums']['sales_order_status'];
+          stripe_invoice_id?: string | null;
+          stripe_payment_intent_id?: string | null;
+          stripe_session_id?: string | null;
           tax_rate?: number;
           total_discount_amount?: number | null;
           total_ht?: number;
@@ -9094,74 +8091,6 @@ export type Database = {
           {
             foreignKeyName: 'site_content_updated_by_fkey';
             columns: ['updated_by'];
-            isOneToOne: false;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
-          },
-        ];
-      };
-      site_orders: {
-        Row: {
-          created_at: string | null;
-          currency: string;
-          customer_email: string;
-          customer_name: string;
-          customer_phone: string | null;
-          id: string;
-          items: Json;
-          notes: string | null;
-          session_id: string | null;
-          shipping_address: string | null;
-          shipping_cost: number;
-          status: string;
-          stripe_session_id: string | null;
-          subtotal: number;
-          total: number;
-          updated_at: string | null;
-          user_id: string | null;
-        };
-        Insert: {
-          created_at?: string | null;
-          currency?: string;
-          customer_email: string;
-          customer_name: string;
-          customer_phone?: string | null;
-          id?: string;
-          items?: Json;
-          notes?: string | null;
-          session_id?: string | null;
-          shipping_address?: string | null;
-          shipping_cost?: number;
-          status?: string;
-          stripe_session_id?: string | null;
-          subtotal?: number;
-          total?: number;
-          updated_at?: string | null;
-          user_id?: string | null;
-        };
-        Update: {
-          created_at?: string | null;
-          currency?: string;
-          customer_email?: string;
-          customer_name?: string;
-          customer_phone?: string | null;
-          id?: string;
-          items?: Json;
-          notes?: string | null;
-          session_id?: string | null;
-          shipping_address?: string | null;
-          shipping_cost?: number;
-          status?: string;
-          stripe_session_id?: string | null;
-          subtotal?: number;
-          total?: number;
-          updated_at?: string | null;
-          user_id?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'site_orders_user_id_fkey';
-            columns: ['user_id'];
             isOneToOne: false;
             referencedRelation: 'v_linkme_users';
             referencedColumns: ['user_id'];
@@ -10208,6 +9137,62 @@ export type Database = {
           },
         ];
       };
+      user_notification_preferences: {
+        Row: {
+          created_at: string | null;
+          email_enabled: boolean;
+          email_urgent_only: boolean;
+          id: string;
+          min_severity: string;
+          notify_business: boolean;
+          notify_catalog: boolean;
+          notify_maintenance: boolean;
+          notify_operations: boolean;
+          notify_performance: boolean;
+          notify_system: boolean;
+          updated_at: string | null;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          email_enabled?: boolean;
+          email_urgent_only?: boolean;
+          id?: string;
+          min_severity?: string;
+          notify_business?: boolean;
+          notify_catalog?: boolean;
+          notify_maintenance?: boolean;
+          notify_operations?: boolean;
+          notify_performance?: boolean;
+          notify_system?: boolean;
+          updated_at?: string | null;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string | null;
+          email_enabled?: boolean;
+          email_urgent_only?: boolean;
+          id?: string;
+          min_severity?: string;
+          notify_business?: boolean;
+          notify_catalog?: boolean;
+          notify_maintenance?: boolean;
+          notify_operations?: boolean;
+          notify_performance?: boolean;
+          notify_system?: boolean;
+          updated_at?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'user_notification_preferences_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: true;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+        ];
+      };
       user_profiles: {
         Row: {
           app_source: Database['public']['Enums']['app_type'] | null;
@@ -10539,63 +9524,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'webhook_configs';
             referencedColumns: ['id'];
-          },
-        ];
-      };
-      wishlist_items: {
-        Row: {
-          created_at: string;
-          id: string;
-          product_id: string;
-          user_id: string;
-        };
-        Insert: {
-          created_at?: string;
-          id?: string;
-          product_id: string;
-          user_id: string;
-        };
-        Update: {
-          created_at?: string;
-          id?: string;
-          product_id?: string;
-          user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'wishlist_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'product_prices_summary';
-            referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'wishlist_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'products';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'wishlist_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_alerts_unified_view';
-            referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'wishlist_items_product_id_fkey';
-            columns: ['product_id'];
-            isOneToOne: false;
-            referencedRelation: 'stock_alerts_view';
-            referencedColumns: ['product_id'];
-          },
-          {
-            foreignKeyName: 'wishlist_items_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
           },
         ];
       };
@@ -11536,24 +10464,6 @@ export type Database = {
           },
         ];
       };
-      v_library_documents: {
-        Row: {
-          created_at: string | null;
-          document_date: string | null;
-          document_direction: string | null;
-          document_number: string | null;
-          document_type: string | null;
-          id: string | null;
-          partner_name: string | null;
-          pcg_code: string | null;
-          pdf_url: string | null;
-          source_table: string | null;
-          status: string | null;
-          total_ht: number | null;
-          total_ttc: number | null;
-        };
-        Relationships: [];
-      };
       v_linkme_users: {
         Row: {
           avatar_url: string | null;
@@ -12112,6 +11022,14 @@ export type Database = {
           google_product_id: string;
           product_id: string;
           success: boolean;
+        }[];
+      };
+      batch_add_meta_commerce_products: {
+        Args: { p_catalog_id?: string; p_product_ids: string[] };
+        Returns: {
+          error_count: number;
+          success_count: number;
+          total_processed: number;
         }[];
       };
       build_single_vat_breakdown: {
@@ -12773,35 +11691,6 @@ export type Database = {
         }[];
       };
       generate_feed_access_token: { Args: never; Returns: string };
-      generate_invoice_from_order: {
-        Args: { p_sales_order_id: string };
-        Returns: {
-          abby_invoice_id: string;
-          abby_invoice_number: string;
-          abby_pdf_url: string | null;
-          abby_public_url: string | null;
-          created_at: string;
-          created_by: string;
-          due_date: string | null;
-          id: string;
-          invoice_date: string;
-          last_synced_from_abby_at: string | null;
-          sales_order_id: string;
-          status: string;
-          sync_errors: Json | null;
-          synced_to_abby_at: string | null;
-          total_ht: number;
-          total_ttc: number;
-          tva_amount: number;
-          updated_at: string;
-        };
-        SetofOptions: {
-          from: '*';
-          to: 'invoices';
-          isOneToOne: true;
-          isSetofReturn: false;
-        };
-      };
       generate_item_group_id: { Args: never; Returns: string };
       generate_linkme_code: { Args: never; Returns: string };
       generate_organisation_code: { Args: never; Returns: string };
@@ -13173,16 +12062,12 @@ export type Database = {
           google_status_detail: Json;
           id: string;
           impressions: number;
-          price_ht_cents: number;
-          price_source: string;
-          price_ttc_cents: number;
           product_id: string;
           product_name: string;
           revenue_ht: number;
           sku: string;
           sync_status: string;
           synced_at: string;
-          tva_rate: number;
         }[];
       };
       get_google_merchant_stats: {
@@ -13341,6 +12226,54 @@ export type Database = {
           processing_tasks: number;
           success_rate_percent: number;
           total_tasks: number;
+        }[];
+      };
+      get_meta_commerce_products: {
+        Args: never;
+        Returns: {
+          catalog_id: string;
+          clicks: number;
+          conversions: number;
+          cost_price: number;
+          custom_description: string;
+          custom_price_ht: number;
+          custom_title: string;
+          description: string;
+          error_message: string;
+          id: string;
+          impressions: number;
+          meta_product_id: string;
+          meta_status: string;
+          primary_image_url: string;
+          product_id: string;
+          product_name: string;
+          revenue_ht: number;
+          sku: string;
+          sync_status: string;
+          synced_at: string;
+        }[];
+      };
+      get_meta_commerce_stats: {
+        Args: never;
+        Returns: {
+          active_products: number;
+          conversion_rate: number;
+          error_products: number;
+          last_sync_at: string;
+          pending_products: number;
+          rejected_products: number;
+          total_clicks: number;
+          total_conversions: number;
+          total_impressions: number;
+          total_products: number;
+        }[];
+      };
+      get_meta_sync_records_for_status_update: {
+        Args: never;
+        Returns: {
+          product_id: string;
+          sku: string;
+          sync_id: string;
         }[];
       };
       get_next_mcp_task: {
@@ -13552,17 +12485,6 @@ export type Database = {
         Args: { limit_param?: number; section_name_param: string };
         Returns: Json;
       };
-      get_shipment_summary: {
-        Args: { p_sales_order_id: string };
-        Returns: {
-          completion_percentage: number;
-          last_shipment_date: string;
-          total_shipments: number;
-          total_units_ordered: number;
-          total_units_remaining: number;
-          total_units_shipped: number;
-        }[];
-      };
       get_site_internet_collection_detail: {
         Args: { p_slug: string };
         Returns: Json;
@@ -13633,6 +12555,7 @@ export type Database = {
           sku: string;
           slug: string;
           status: string;
+          stock_status: string;
           style: string;
           subcategory_id: string;
           subcategory_name: string;
@@ -14188,37 +13111,6 @@ export type Database = {
         Returns: undefined;
       };
       reconcile_linkme_commissions: { Args: never; Returns: Json };
-      record_payment: {
-        Args: {
-          p_amount_paid: number;
-          p_bank_transaction_id?: string;
-          p_document_id: string;
-          p_notes?: string;
-          p_payment_date: string;
-          p_payment_method: string;
-          p_transaction_reference?: string;
-        };
-        Returns: {
-          abby_payment_id: string | null;
-          amount_paid: number;
-          bank_transaction_id: string | null;
-          created_at: string;
-          created_by: string | null;
-          document_id: string;
-          id: string;
-          notes: string | null;
-          payment_date: string;
-          payment_method: string | null;
-          synced_from_abby_at: string | null;
-          transaction_reference: string | null;
-        };
-        SetofOptions: {
-          from: '*';
-          to: 'financial_payments';
-          isOneToOne: true;
-          isSetofReturn: false;
-        };
-      };
       refresh_google_merchant_stats: { Args: never; Returns: undefined };
       regenerate_product_slug: {
         Args: { product_id_param: string };
@@ -14265,6 +13157,10 @@ export type Database = {
           error: string;
           success: boolean;
         }[];
+      };
+      remove_from_meta_commerce: {
+        Args: { p_product_id: string };
+        Returns: undefined;
       };
       request_sample_order: {
         Args: {
@@ -14401,6 +13297,10 @@ export type Database = {
         Args: { p_ignore: boolean; p_reason?: string; p_tx_id: string };
         Returns: Json;
       };
+      toggle_meta_commerce_visibility: {
+        Args: { p_product_id: string; p_visible: boolean };
+        Returns: undefined;
+      };
       track_selection_view: {
         Args: { p_selection_id: string };
         Returns: undefined;
@@ -14453,12 +13353,16 @@ export type Database = {
           success: boolean;
         }[];
       };
-      update_product_pmp_on_po_received: {
-        Args: { p_po_id: string };
+      update_meta_sync_status: {
+        Args: {
+          p_meta_product_id: string;
+          p_meta_status: string;
+          p_sync_id: string;
+        };
         Returns: undefined;
       };
-      update_stock_on_shipment: {
-        Args: { p_product_id: string; p_quantity: number };
+      update_product_pmp_on_po_received: {
+        Args: { p_po_id: string };
         Returns: undefined;
       };
       update_test_status: {

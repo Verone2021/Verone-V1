@@ -110,7 +110,7 @@ const getNavItems = (
         : undefined,
   },
   {
-    title: 'Contacts & Clients',
+    title: 'Organisations & Contacts',
     href: '/contacts-organisations',
     icon: Building2,
     children: [

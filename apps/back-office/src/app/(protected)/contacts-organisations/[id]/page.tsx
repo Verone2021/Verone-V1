@@ -8,7 +8,7 @@
 import { useEffect, useState } from 'react';
 
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 
 import { useOrganisation } from '@verone/organisations';
 import { Card, CardContent } from '@verone/ui';
@@ -18,6 +18,7 @@ import { Building2, ArrowLeft, Loader2 } from 'lucide-react';
 export default function OrganisationRedirectPage() {
   const { id } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [redirecting, setRedirecting] = useState(true);
 
   const { organisation, loading, error } = useOrganisation(id as string);
@@ -44,11 +45,17 @@ export default function OrganisationRedirectPage() {
           targetRoute = `/contacts-organisations/suppliers/${organisation.id}`;
       }
 
+      // Preserve returnUrl query param through the redirect chain
+      const returnUrl = searchParams.get('returnUrl');
+      if (returnUrl) {
+        targetRoute += `?returnUrl=${encodeURIComponent(returnUrl)}`;
+      }
+
       router.replace(targetRoute);
     } else if (error) {
       setRedirecting(false);
     }
-  }, [organisation, loading, error, router]);
+  }, [organisation, loading, error, router, searchParams]);
 
   // État de chargement
   if (loading || redirecting) {

@@ -401,7 +401,15 @@ export function SendInfoRequestDialog({
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          {!canSend && (
+            <p className="text-xs text-amber-600 flex items-center gap-1 mr-auto">
+              <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+              {recipientType === 'manual'
+                ? 'Saisissez au moins un email valide'
+                : 'Aucun email disponible pour ce destinataire'}
+            </p>
+          )}
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Annuler
           </Button>

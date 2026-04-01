@@ -21,6 +21,7 @@ import type { LinkMeOrderDetails } from '../../../hooks/use-linkme-order-actions
 interface RestaurantSectionProps {
   organisation: OrderWithDetails['organisation'];
   details: LinkMeOrderDetails | null;
+  orderId: string;
 }
 
 // ---- OrgIdentifiers sub-component ----
@@ -166,20 +167,23 @@ function OwnerCompanyBlock({ details }: OwnerCompanyBlockProps) {
 interface OrgHeaderProps {
   organisation: Organisation;
   details: LinkMeOrderDetails | null;
+  orderId: string;
 }
 
-function OrgHeader({ organisation, details }: OrgHeaderProps) {
+function OrgHeader({ organisation, details, orderId }: OrgHeaderProps) {
+  const returnUrl = `/canaux-vente/linkme/commandes/${orderId}`;
+  const orgUrl = `/canaux-vente/linkme/organisations/${organisation.id}?returnUrl=${encodeURIComponent(returnUrl)}`;
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <Building2 className="h-4 w-4 text-orange-600 flex-shrink-0" />
       <Link
-        href={`/canaux-vente/linkme/organisations/${organisation.id}`}
+        href={orgUrl}
         className="font-semibold text-gray-900 hover:text-blue-700 hover:underline"
       >
         {organisation.trade_name ?? organisation.legal_name}
       </Link>
       <Link
-        href={`/canaux-vente/linkme/organisations/${organisation.id}`}
+        href={orgUrl}
         className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-gray-100 text-gray-600 hover:bg-blue-100 hover:text-blue-700"
       >
         <Pencil className="h-2.5 w-2.5" />
@@ -222,13 +226,18 @@ function OrgHeader({ organisation, details }: OrgHeaderProps) {
 export function RestaurantSection({
   organisation,
   details,
+  orderId,
 }: RestaurantSectionProps) {
   return (
     <Card>
       <CardContent className="p-4">
         {organisation ? (
           <div className="space-y-3">
-            <OrgHeader organisation={organisation} details={details} />
+            <OrgHeader
+              organisation={organisation}
+              details={details}
+              orderId={orderId}
+            />
             <OrgIdentifiers organisation={organisation} />
             <OrgAddresses organisation={organisation} />
             {details && <OwnerCompanyBlock details={details} />}

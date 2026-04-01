@@ -108,6 +108,10 @@ export const newRestaurantSchema = z.object({
   legalName: z.string().optional().nullable(),
   siret: z.string().optional().nullable(),
   kbisFile: z.unknown().nullable().optional(),
+  // Contact du restaurant
+  contactName: z.string().optional().nullable(),
+  contactEmail: z.string().email().optional().nullable(),
+  contactPhone: z.string().optional().nullable(),
 });
 
 export const restaurantStepSchema = z

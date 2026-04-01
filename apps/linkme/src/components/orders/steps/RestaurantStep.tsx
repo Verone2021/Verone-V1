@@ -34,6 +34,7 @@ import {
   AlertTriangle,
   FileText,
   Upload,
+  User,
 } from 'lucide-react';
 
 import type { EnseigneOrganisation } from '../../../lib/hooks/use-enseigne-organisations';
@@ -683,25 +684,41 @@ export function RestaurantStep({
               </div>
             )}
 
-            {/* Ville (remplie automatiquement mais modifiable) */}
-            <div className="space-y-2">
-              <Label htmlFor="city">
-                Ville <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="city"
-                type="text"
-                placeholder="Paris"
-                value={formData.restaurant.newRestaurant?.city ?? ''}
-                onChange={e =>
-                  handleNewRestaurantChange('city', e.target.value)
-                }
-              />
-              <p className="text-xs text-gray-500">
-                Remplie automatiquement par l&apos;adresse ou saisissez
-                manuellement
-              </p>
+            {/* Code postal + Ville */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="postalCode">
+                  Code postal <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="postalCode"
+                  type="text"
+                  placeholder="75001"
+                  value={formData.restaurant.newRestaurant?.postalCode ?? ''}
+                  onChange={e =>
+                    handleNewRestaurantChange('postalCode', e.target.value)
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="city">
+                  Ville <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="city"
+                  type="text"
+                  placeholder="Paris"
+                  value={formData.restaurant.newRestaurant?.city ?? ''}
+                  onChange={e =>
+                    handleNewRestaurantChange('city', e.target.value)
+                  }
+                />
+              </div>
             </div>
+            <p className="text-xs text-gray-500 -mt-4">
+              Remplis automatiquement par l&apos;adresse ou saisissez
+              manuellement
+            </p>
 
             {/* Informations légales de l'organisation */}
             {formData.restaurant.newRestaurant?.ownershipType && (
@@ -781,6 +798,68 @@ export function RestaurantStep({
                   <p className="text-xs text-gray-500">
                     PDF, JPG ou PNG — Max 10 MB
                   </p>
+                </div>
+              </div>
+            )}
+
+            {/* Contact du restaurant */}
+            {formData.restaurant.newRestaurant?.ownershipType && (
+              <div className="pt-4 border-t space-y-4">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-gray-500" />
+                  <h4 className="font-medium text-gray-700">
+                    Contact du restaurant (facultatif)
+                  </h4>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="contactName">Nom du contact</Label>
+                  <Input
+                    id="contactName"
+                    type="text"
+                    placeholder="Jean Dupont"
+                    value={formData.restaurant.newRestaurant?.contactName ?? ''}
+                    onChange={e =>
+                      handleNewRestaurantChange('contactName', e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="contactEmail">Email</Label>
+                    <Input
+                      id="contactEmail"
+                      type="email"
+                      placeholder="contact@restaurant.fr"
+                      value={
+                        formData.restaurant.newRestaurant?.contactEmail ?? ''
+                      }
+                      onChange={e =>
+                        handleNewRestaurantChange(
+                          'contactEmail',
+                          e.target.value
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contactPhone">Telephone</Label>
+                    <Input
+                      id="contactPhone"
+                      type="tel"
+                      placeholder="06 12 34 56 78"
+                      value={
+                        formData.restaurant.newRestaurant?.contactPhone ?? ''
+                      }
+                      onChange={e =>
+                        handleNewRestaurantChange(
+                          'contactPhone',
+                          e.target.value
+                        )
+                      }
+                    />
+                  </div>
                 </div>
               </div>
             )}
