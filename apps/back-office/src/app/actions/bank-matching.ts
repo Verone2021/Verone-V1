@@ -208,27 +208,19 @@ export async function matchTransactionToOrder(
       };
     }
 
-    // 9. Appeler record_payment() via RPC
-    const paymentDate = (typedTx.settled_at ?? typedTx.emitted_at).split(
-      'T'
-    )[0];
+    // 9. Update financial_document with payment info (record_payment RPC dropped)
     const paymentAmount = Math.abs(typedTx.amount);
 
-    const { data: paymentResult, error: paymentError } = await supabase.rpc(
-      'record_payment',
-      {
-        p_document_id: document.id,
-        p_amount_paid: paymentAmount,
-        p_payment_date: paymentDate,
-        p_payment_method: 'bank_transfer',
-        p_transaction_reference: typedTx.reference ?? typedTx.transaction_id,
-        p_bank_transaction_id: bankTransactionId,
-        p_notes: `Rapprochement automatique - Transaction Qonto ${typedTx.transaction_id}`,
-      }
-    );
+    const { error: paymentError } = await supabase
+      .from('financial_documents')
+      .update({
+        amount_paid: paymentAmount,
+        payment_status: 'paid',
+        status: 'paid',
+      })
+      .eq('id', document.id);
 
     if (paymentError) {
-      // Rollback: supprimer la facture créée
       await supabase.from('financial_documents').delete().eq('id', document.id);
       return {
         success: false,
@@ -236,8 +228,8 @@ export async function matchTransactionToOrder(
       };
     }
 
-    // 10. Succès
-    const paymentId = paymentResult?.id;
+    // 10. Succes
+    const paymentId = document.id;
     console.warn('[Bank Matching] Match completed:', {
       orderId: salesOrderId,
       orderNumber: typedOrder.order_number,
@@ -421,21 +413,14 @@ export async function matchTransactionToMultipleOrders(
 
         result.createdDocuments.push(document.id);
 
-        // Enregistrer le paiement
-        const paymentDate = (
-          transaction.settled_at ?? transaction.emitted_at
-        ).split('T')[0];
-
-        const { error: paymentError } = await supabase.rpc('record_payment', {
-          p_document_id: document.id,
-          p_amount_paid: matchedAmount,
-          p_payment_date: paymentDate,
-          p_payment_method: 'bank_transfer',
-          p_transaction_reference:
-            transaction.reference ?? transaction.transaction_id,
-          p_bank_transaction_id: bankTransactionId,
-          p_notes: `Multi-match - Transaction Qonto ${transaction.transaction_id}`,
-        });
+        const { error: paymentError } = await supabase
+          .from('financial_documents')
+          .update({
+            amount_paid: matchedAmount,
+            payment_status: 'paid',
+            status: 'paid',
+          })
+          .eq('id', document.id);
 
         if (paymentError) {
           result.errors.push(

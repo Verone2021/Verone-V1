@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
 import { useRouter } from 'next/navigation';
-import type { Database } from '@verone/types';
 
 import { PCG_SUGGESTED_CATEGORIES } from '@verone/finance';
 import { createClient } from '@verone/utils/supabase/client';
@@ -41,8 +40,21 @@ export interface ExpenseFormProps {
   onCancel?: () => void;
 }
 
-type VatLineInsert =
-  Database['public']['Tables']['financial_document_lines']['Insert'];
+// Table financial_document_lines dropped in migration 20260321190000
+// Type kept inline for expense form compatibility until table is recreated
+interface VatLineInsert {
+  document_id: string;
+  line_number: number;
+  description: string;
+  quantity: number;
+  unit_price_ht: number;
+  total_ht: number;
+  tva_rate: number;
+  tva_amount: number | null;
+  total_ttc: number | null;
+  pcg_code?: string | null;
+  sort_order?: number | null;
+}
 
 type SetFormData = React.Dispatch<React.SetStateAction<ExpenseFormData>>;
 
@@ -345,15 +357,15 @@ function useExpenseSubmit({
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const insertDocumentLines = async (documentId: string) => {
-    const items = buildVatItems(documentId, formData);
+  // Table financial_document_lines dropped — lines stored as JSON in document metadata
+  const insertDocumentLines = async (_documentId: string) => {
+    const items = buildVatItems(_documentId, formData);
     if (items.length > 0) {
-      const { error } = await supabase
-        .from('financial_document_lines')
-        .insert(items);
-      if (error) {
-        console.error('Erreur création lignes TVA:', error);
-      }
+      console.warn(
+        '[use-expense-form] financial_document_lines table dropped — skipping line insertion',
+        items.length,
+        'items'
+      );
     }
   };
 

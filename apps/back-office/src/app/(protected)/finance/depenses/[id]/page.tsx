@@ -22,7 +22,6 @@ import { ExpenseForm } from '@/components/forms/expense-form';
 import { ExpenseAmounts } from './_components/ExpenseAmounts';
 import { ExpenseDetailHeader } from './_components/ExpenseDetailHeader';
 import { ExpenseInfoCards } from './_components/ExpenseInfoCards';
-import { ExpensePayments } from './_components/ExpensePayments';
 
 // =====================================================================
 // TYPES
@@ -53,7 +52,7 @@ export default function ExpenseDetailPage(props: PageProps) {
   const [document, setDocument] = useState<FinancialDocument | null>(null);
   const [documentItems, setDocumentItems] = useState<DocumentItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [_showPaymentForm, _setShowPaymentForm] = useState(false);
 
   const supabase = createClient();
   const isCreateMode = params.id === 'create';
@@ -75,12 +74,9 @@ export default function ExpenseDetailPage(props: PageProps) {
       if (error) throw error;
       setDocument(data as FinancialDocument);
 
-      const { data: items, error: itemsError } = await supabase
-        .from('financial_document_lines')
-        .select('*')
-        .eq('document_id', params.id)
-        .order('sort_order', { ascending: true });
-      if (!itemsError && items) setDocumentItems(items as DocumentItem[]);
+      // Table financial_document_lines dropped — lines not available
+      // Will be restored in Plan 4 (Module Compta Avance)
+      setDocumentItems([]);
     } catch (error) {
       console.error('[Depenses] fetchDocument error:', error);
     } finally {
@@ -94,12 +90,7 @@ export default function ExpenseDetailPage(props: PageProps) {
     });
   }, [fetchDocument]);
 
-  const handlePaymentSuccess = () => {
-    setShowPaymentForm(false);
-    fetchDocument().catch(error => {
-      console.error('[Depenses] fetchDocument (payment) failed:', error);
-    });
-  };
+  // handlePaymentSuccess removed — ExpensePayments component removed (table dropped)
 
   if (loading) {
     return (
@@ -152,7 +143,6 @@ export default function ExpenseDetailPage(props: PageProps) {
   }
 
   const remaining = document.total_ttc - document.amount_paid;
-  const isPaid = document.status === 'paid';
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -174,16 +164,6 @@ export default function ExpenseDetailPage(props: PageProps) {
         document={document}
         documentItems={documentItems}
         remaining={remaining}
-      />
-
-      <ExpensePayments
-        documentId={document.id}
-        documentNumber={document.document_number}
-        remainingAmount={remaining}
-        isPaid={isPaid}
-        showPaymentForm={showPaymentForm}
-        onTogglePaymentForm={setShowPaymentForm}
-        onPaymentSuccess={handlePaymentSuccess}
       />
 
       {document.notes && (

@@ -113,7 +113,20 @@ export function CreateOrganisationModal({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Handler pour l'autocomplete d'adresse de facturation
+  // Handler pour l'autocomplete d'adresse principale (= livraison)
+  const handleMainAddressSelect = (address: AddressResult) => {
+    setFormData(prev => ({
+      ...prev,
+      // Main address (address_line1 = adresse du restaurant/siege)
+      address_line1: address.streetAddress,
+      city: address.city,
+      postal_code: address.postalCode,
+      region: address.region ?? '',
+      country: address.countryCode ?? 'FR',
+    }));
+  };
+
+  // Handler pour l'autocomplete d'adresse de facturation (si differente)
   const handleBillingAddressSelect = (address: AddressResult) => {
     setFormData(prev => ({
       ...prev,
@@ -122,18 +135,6 @@ export function CreateOrganisationModal({
       billing_postal_code: address.postalCode,
       billing_region: address.region ?? '',
       billing_country: address.countryCode ?? 'FR',
-    }));
-  };
-
-  // Handler pour l'autocomplete d'adresse de livraison
-  const handleShippingAddressSelect = (address: AddressResult) => {
-    setFormData(prev => ({
-      ...prev,
-      shipping_address_line1: address.streetAddress,
-      shipping_city: address.city,
-      shipping_postal_code: address.postalCode,
-      shipping_region: address.region ?? '',
-      shipping_country: address.countryCode ?? 'FR',
     }));
   };
 
@@ -194,21 +195,34 @@ export function CreateOrganisationModal({
             <TabsContent value="general" className="space-y-4">
               <Card>
                 <CardContent className="pt-6 space-y-4">
-                  {/* Nom (obligatoire) */}
+                  {/* Raison sociale (obligatoire) */}
                   <div className="space-y-2">
-                    <Label htmlFor="name">
-                      Nom de l'organisation{' '}
-                      <span className="text-red-500">*</span>
+                    <Label htmlFor="legal_name">
+                      Raison sociale <span className="text-red-500">*</span>
                     </Label>
                     <Input
-                      id="name"
+                      id="legal_name"
                       value={formData.legal_name ?? ''}
                       onChange={e =>
                         handleInputChange('legal_name', e.target.value)
                       }
-                      placeholder="Entreprise SARL"
+                      placeholder="Holding SEG SAS"
                       className="border-black"
                       required
+                    />
+                  </div>
+
+                  {/* Nom commercial */}
+                  <div className="space-y-2">
+                    <Label htmlFor="trade_name">Nom commercial</Label>
+                    <Input
+                      id="trade_name"
+                      value={formData.trade_name ?? ''}
+                      onChange={e =>
+                        handleInputChange('trade_name', e.target.value)
+                      }
+                      placeholder="BCK Burger Nantes"
+                      className="border-black"
                     />
                   </div>
 
@@ -231,6 +245,18 @@ export function CreateOrganisationModal({
                         <SelectItem value="internal">Interne</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {/* SIRET */}
+                  <div className="space-y-2">
+                    <Label htmlFor="siret">SIRET</Label>
+                    <Input
+                      id="siret"
+                      value={formData.siret ?? ''}
+                      onChange={e => handleInputChange('siret', e.target.value)}
+                      placeholder="123 456 789 00012"
+                      className="border-black"
+                    />
                   </div>
 
                   {/* Email */}
@@ -273,20 +299,6 @@ export function CreateOrganisationModal({
                     />
                   </div>
 
-                  {/* Pays */}
-                  <div className="space-y-2">
-                    <Label htmlFor="country">Pays</Label>
-                    <Input
-                      id="country"
-                      value={formData.country ?? ''}
-                      onChange={e =>
-                        handleInputChange('country', e.target.value)
-                      }
-                      placeholder="France"
-                      className="border-black"
-                    />
-                  </div>
-
                   {/* Actif */}
                   <div className="flex items-center space-x-2">
                     <Checkbox
@@ -309,52 +321,46 @@ export function CreateOrganisationModal({
               <Card>
                 <CardContent className="pt-6 space-y-4">
                   <h3 className="font-semibold text-sm">
-                    Adresse de facturation
+                    Adresse principale (livraison)
                   </h3>
 
-                  {/* Autocomplete adresse de facturation */}
+                  {/* Autocomplete adresse principale */}
                   <div className="col-span-2">
                     <AddressAutocomplete
-                      value={formData.billing_address_line1 ?? ''}
+                      value={formData.address_line1 ?? ''}
                       onChange={value =>
-                        handleInputChange('billing_address_line1', value)
+                        handleInputChange('address_line1', value)
                       }
-                      onSelect={handleBillingAddressSelect}
+                      onSelect={handleMainAddressSelect}
                       placeholder="Rechercher une adresse..."
                       label="Adresse"
-                      id="billing-address-autocomplete"
+                      id="main-address-autocomplete"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2 space-y-2">
-                      <Label htmlFor="billing_address_line2">
-                        Complément d'adresse
+                      <Label htmlFor="address_line2">
+                        Complement d&apos;adresse
                       </Label>
                       <Input
-                        id="billing_address_line2"
-                        value={formData.billing_address_line2 ?? ''}
+                        id="address_line2"
+                        value={formData.address_line2 ?? ''}
                         onChange={e =>
-                          handleInputChange(
-                            'billing_address_line2',
-                            e.target.value
-                          )
+                          handleInputChange('address_line2', e.target.value)
                         }
-                        placeholder="Bâtiment A, 3ème étage"
+                        placeholder="Batiment A, 3eme etage"
                         className="border-black"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="billing_postal_code">Code postal</Label>
+                      <Label htmlFor="postal_code">Code postal</Label>
                       <Input
-                        id="billing_postal_code"
-                        value={formData.billing_postal_code ?? ''}
+                        id="postal_code"
+                        value={formData.postal_code ?? ''}
                         onChange={e =>
-                          handleInputChange(
-                            'billing_postal_code',
-                            e.target.value
-                          )
+                          handleInputChange('postal_code', e.target.value)
                         }
                         placeholder="75001"
                         className="border-black"
@@ -362,40 +368,14 @@ export function CreateOrganisationModal({
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="billing_city">Ville</Label>
+                      <Label htmlFor="city">Ville</Label>
                       <Input
-                        id="billing_city"
-                        value={formData.billing_city ?? ''}
+                        id="city"
+                        value={formData.city ?? ''}
                         onChange={e =>
-                          handleInputChange('billing_city', e.target.value)
+                          handleInputChange('city', e.target.value)
                         }
                         placeholder="Paris"
-                        className="border-black"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="billing_region">Région</Label>
-                      <Input
-                        id="billing_region"
-                        value={formData.billing_region ?? ''}
-                        onChange={e =>
-                          handleInputChange('billing_region', e.target.value)
-                        }
-                        placeholder="Île-de-France"
-                        className="border-black"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="billing_country">Pays</Label>
-                      <Input
-                        id="billing_country"
-                        value={formData.billing_country ?? ''}
-                        onChange={e =>
-                          handleInputChange('billing_country', e.target.value)
-                        }
-                        placeholder="France"
                         className="border-black"
                       />
                     </div>
@@ -403,7 +383,7 @@ export function CreateOrganisationModal({
 
                   <div className="flex items-center space-x-2 pt-4">
                     <Checkbox
-                      id="has_different_shipping_address"
+                      id="has_different_billing"
                       checked={formData.has_different_shipping_address ?? false}
                       onCheckedChange={checked =>
                         handleInputChange(
@@ -413,62 +393,62 @@ export function CreateOrganisationModal({
                       }
                     />
                     <Label
-                      htmlFor="has_different_shipping_address"
+                      htmlFor="has_different_billing"
                       className="cursor-pointer"
                     >
-                      Adresse de livraison différente
+                      Adresse de facturation differente
                     </Label>
                   </div>
 
                   {formData.has_different_shipping_address && (
                     <>
                       <h3 className="font-semibold text-sm pt-4">
-                        Adresse de livraison
+                        Adresse de facturation
                       </h3>
 
-                      {/* Autocomplete adresse de livraison */}
+                      {/* Autocomplete adresse de facturation */}
                       <div className="col-span-2">
                         <AddressAutocomplete
-                          value={formData.shipping_address_line1 ?? ''}
+                          value={formData.billing_address_line1 ?? ''}
                           onChange={value =>
-                            handleInputChange('shipping_address_line1', value)
+                            handleInputChange('billing_address_line1', value)
                           }
-                          onSelect={handleShippingAddressSelect}
+                          onSelect={handleBillingAddressSelect}
                           placeholder="Rechercher une adresse..."
                           label="Adresse"
-                          id="shipping-address-autocomplete"
+                          id="billing-address-autocomplete"
                         />
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2 space-y-2">
-                          <Label htmlFor="shipping_address_line2">
-                            Complément d'adresse
+                          <Label htmlFor="billing_address_line2">
+                            Complement d&apos;adresse
                           </Label>
                           <Input
-                            id="shipping_address_line2"
-                            value={formData.shipping_address_line2 ?? ''}
+                            id="billing_address_line2"
+                            value={formData.billing_address_line2 ?? ''}
                             onChange={e =>
                               handleInputChange(
-                                'shipping_address_line2',
+                                'billing_address_line2',
                                 e.target.value
                               )
                             }
-                            placeholder="Entrepôt B"
+                            placeholder="Service comptabilite"
                             className="border-black"
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="shipping_postal_code">
+                          <Label htmlFor="billing_postal_code">
                             Code postal
                           </Label>
                           <Input
-                            id="shipping_postal_code"
-                            value={formData.shipping_postal_code ?? ''}
+                            id="billing_postal_code"
+                            value={formData.billing_postal_code ?? ''}
                             onChange={e =>
                               handleInputChange(
-                                'shipping_postal_code',
+                                'billing_postal_code',
                                 e.target.value
                               )
                             }
@@ -478,46 +458,14 @@ export function CreateOrganisationModal({
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="shipping_city">Ville</Label>
+                          <Label htmlFor="billing_city">Ville</Label>
                           <Input
-                            id="shipping_city"
-                            value={formData.shipping_city ?? ''}
+                            id="billing_city"
+                            value={formData.billing_city ?? ''}
                             onChange={e =>
-                              handleInputChange('shipping_city', e.target.value)
+                              handleInputChange('billing_city', e.target.value)
                             }
                             placeholder="Paris"
-                            className="border-black"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="shipping_region">Région</Label>
-                          <Input
-                            id="shipping_region"
-                            value={formData.shipping_region ?? ''}
-                            onChange={e =>
-                              handleInputChange(
-                                'shipping_region',
-                                e.target.value
-                              )
-                            }
-                            placeholder="Île-de-France"
-                            className="border-black"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="shipping_country">Pays</Label>
-                          <Input
-                            id="shipping_country"
-                            value={formData.shipping_country ?? ''}
-                            onChange={e =>
-                              handleInputChange(
-                                'shipping_country',
-                                e.target.value
-                              )
-                            }
-                            placeholder="France"
                             className="border-black"
                           />
                         </div>
@@ -533,18 +481,7 @@ export function CreateOrganisationModal({
               <Card>
                 <CardContent className="pt-6 space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="siret">SIRET</Label>
-                    <Input
-                      id="siret"
-                      value={formData.siret ?? ''}
-                      onChange={e => handleInputChange('siret', e.target.value)}
-                      placeholder="123 456 789 00012"
-                      className="border-black"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="vat_number">Numéro TVA</Label>
+                    <Label htmlFor="vat_number">Numero TVA</Label>
                     <Input
                       id="vat_number"
                       value={formData.vat_number ?? ''}
@@ -570,14 +507,16 @@ export function CreateOrganisationModal({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="industry_sector">Secteur d'activité</Label>
+                    <Label htmlFor="industry_sector">
+                      Secteur d&apos;activite
+                    </Label>
                     <Input
                       id="industry_sector"
                       value={formData.industry_sector ?? ''}
                       onChange={e =>
                         handleInputChange('industry_sector', e.target.value)
                       }
-                      placeholder="Décoration, Mobilier..."
+                      placeholder="Decoration, Mobilier..."
                       className="border-black"
                     />
                   </div>

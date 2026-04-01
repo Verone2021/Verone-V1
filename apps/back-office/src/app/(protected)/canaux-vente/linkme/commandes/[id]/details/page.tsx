@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 'use client';
 
 /**
@@ -127,6 +128,7 @@ export default function LinkMeOrderDetailsPage() {
     const supabase = createClient();
 
     try {
+      // Main query WITHOUT contacts FK JOINs (avoids heavy RLS evaluation)
       const { data: orderData, error: orderError } = await supabase
         .from('sales_orders')
         .select(
@@ -137,15 +139,6 @@ export default function LinkMeOrderDetailsPage() {
           payment_status_v2, payment_terms, currency, tax_rate,
           shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate,
           responsable_contact_id, billing_contact_id, delivery_contact_id,
-          responsable_contact:contacts!sales_orders_responsable_contact_id_fkey (
-            id, first_name, last_name, email, phone, title
-          ),
-          billing_contact:contacts!sales_orders_billing_contact_id_fkey (
-            id, first_name, last_name, email, phone, title
-          ),
-          delivery_contact:contacts!sales_orders_delivery_contact_id_fkey (
-            id, first_name, last_name, email, phone, title
-          ),
           organisations!sales_orders_customer_id_fkey (
             id, trade_name, legal_name, approval_status, enseigne_id,
             address_line1, address_line2, postal_code, city,
@@ -184,6 +177,22 @@ export default function LinkMeOrderDetailsPage() {
 
       if (orderError) throw orderError;
 
+      // Fetch contacts separately by PK (fast, avoids heavy RLS on FK JOINs)
+      const respContactId = (orderData as Record<string, unknown>)
+        .responsable_contact_id as string | null;
+      const billContactId = (orderData as Record<string, unknown>)
+        .billing_contact_id as string | null;
+      const delContactId = (orderData as Record<string, unknown>)
+        .delivery_contact_id as string | null;
+
+      const uniqueContactIds = [
+        ...new Set(
+          [respContactId, billContactId, delContactId].filter(Boolean)
+        ),
+      ] as string[];
+
+      const contactFields = 'id, first_name, last_name, email, phone, title';
+
       // Organisation data comes from the JOIN in the main query (no separate fetch needed)
       const orgJoinData = (orderData as Record<string, unknown>).organisations;
       const organisation = (orgJoinData ??
@@ -202,10 +211,20 @@ export default function LinkMeOrderDetailsPage() {
         Array.isArray(infoRequestsRaw) ? infoRequestsRaw : []
       ) as InfoRequest[];
 
-      // Fetch user profile + bank transaction match in parallel (independent queries)
+      // Fetch contacts, user profile + bank transaction match in parallel
       const createdByUserId = (orderData as Record<string, unknown>)
         .created_by as string | null;
-      const [profileResult, linkResult] = await Promise.all([
+      const [contactResults, profileResult, linkResult] = await Promise.all([
+        Promise.all(
+          uniqueContactIds.map(id =>
+            supabase
+              .from('contacts')
+              .select(contactFields)
+              .eq('id', id)
+              .single()
+              .then(r => ({ id, data: r.data as ContactRef | null }))
+          )
+        ),
         createdByUserId
           ? supabase
               .from('user_profiles')
@@ -228,6 +247,22 @@ export default function LinkMeOrderDetailsPage() {
           .eq('link_type', 'sales_order')
           .limit(1),
       ]);
+
+      // Build contact map from parallel results
+      const contactMap = new Map<string, ContactRef>();
+      for (const cr of contactResults) {
+        if (cr.data) contactMap.set(cr.id, cr.data);
+      }
+
+      const respContact = respContactId
+        ? (contactMap.get(respContactId) ?? null)
+        : null;
+      const billContact = billContactId
+        ? (contactMap.get(billContactId) ?? null)
+        : null;
+      const delContact = delContactId
+        ? (contactMap.get(delContactId) ?? null)
+        : null;
 
       const createdByProfile = (profileResult.data as CreatedByProfile) ?? null;
 
@@ -281,22 +316,12 @@ export default function LinkMeOrderDetailsPage() {
         fees_vat_rate: orderData.fees_vat_rate ?? null,
         createdByProfile,
         organisation,
-        // Contacts via FK
-        responsable_contact_id: (orderData as Record<string, unknown>)
-          .responsable_contact_id as string | null,
-        billing_contact_id: (orderData as Record<string, unknown>)
-          .billing_contact_id as string | null,
-        delivery_contact_id: (orderData as Record<string, unknown>)
-          .delivery_contact_id as string | null,
-        responsable_contact:
-          ((orderData as Record<string, unknown>)
-            .responsable_contact as ContactRef | null) ?? null,
-        billing_contact:
-          ((orderData as Record<string, unknown>)
-            .billing_contact as ContactRef | null) ?? null,
-        delivery_contact:
-          ((orderData as Record<string, unknown>)
-            .delivery_contact as ContactRef | null) ?? null,
+        responsable_contact_id: respContactId,
+        billing_contact_id: billContactId,
+        delivery_contact_id: delContactId,
+        responsable_contact: respContact,
+        billing_contact: billContact,
+        delivery_contact: delContact,
         items: ((orderData.sales_order_items ?? []) as SalesOrderItemRaw[]).map(
           (item: SalesOrderItemRaw) => ({
             id: item.id,
