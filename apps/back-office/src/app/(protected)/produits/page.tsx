@@ -15,6 +15,7 @@ import {
   Package,
   PackageX,
   Plus,
+  Store,
   Tags,
 } from 'lucide-react';
 
@@ -94,6 +95,13 @@ export default function ProduitsPage() {
                 className="text-gray-500 hover:text-gray-900"
               >
                 Categories
+              </Link>
+              <span className="text-gray-300">|</span>
+              <Link
+                href="/produits/affilies"
+                className="text-gray-500 hover:text-gray-900"
+              >
+                Produits affilies
               </Link>
             </div>
           </div>
@@ -367,6 +375,42 @@ export default function ProduitsPage() {
                     Categories & taxonomie
                   </span>
                 </div>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Produits Affilies */}
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Store className="h-4 w-4 text-purple-500" />
+                <h2 className="text-sm font-semibold text-gray-900">
+                  Produits Affilies
+                </h2>
+              </div>
+              <Link
+                href="/produits/affilies"
+                className="text-xs text-gray-500 hover:text-gray-900"
+              >
+                Gerer →
+              </Link>
+            </div>
+            <div className="p-4 space-y-2">
+              <Link
+                href="/produits/affilies"
+                className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50"
+              >
+                <span className="text-sm text-gray-700">
+                  Approbations produits affilies
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+              </Link>
+              <Link
+                href="/canaux-vente/linkme/catalogue"
+                className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50"
+              >
+                <span className="text-sm text-gray-700">Catalogue LinkMe</span>
                 <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
               </Link>
             </div>

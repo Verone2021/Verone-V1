@@ -94,9 +94,16 @@ export function ContactsTable({
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {contacts.map(contact => {
+                  const hasEnseigne = !!contact.enseigne;
                   const orgTypeInfo = getOrganisationTypeInfo(
-                    contact.organisation?.type ?? ''
+                    contact.organisation?.type ?? '',
+                    hasEnseigne
                   );
+                  const displayName = contact.organisation
+                    ? getOrganisationDisplayName(
+                        contact.organisation as Organisation
+                      )
+                    : (contact.enseigne?.name ?? '');
                   return (
                     <tr key={contact.id} className="hover:bg-gray-50">
                       <td className="py-3 px-4">
@@ -118,12 +125,11 @@ export function ContactsTable({
                       </td>
                       <td className="py-3 px-4">
                         <div className="space-y-1">
-                          <span className="font-medium text-black">
-                            {contact.organisation &&
-                              getOrganisationDisplayName(
-                                contact.organisation as Organisation
-                              )}
-                          </span>
+                          {displayName && (
+                            <span className="font-medium text-black">
+                              {displayName}
+                            </span>
+                          )}
                           <Badge
                             variant="outline"
                             className={orgTypeInfo.color}
