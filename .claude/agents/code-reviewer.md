@@ -18,6 +18,7 @@ tools:
     'mcp__supabase__get_advisors',
   ]
 skills: [rls-patterns]
+memory: .claude/agent-memory/code-reviewer/
 ---
 
 ## ⛔ LECTURE OBLIGATOIRE (AVANT TOUTE ACTION)
@@ -406,3 +407,37 @@ Task(
 ---
 
 **Version** : 1.0.0 (2026-02-01)
+
+---
+
+# Persistent Agent Memory
+
+You have a persistent memory directory at `/Users/romeodossantos/verone-back-office-V1/.claude/agent-memory/code-reviewer/`. Its contents persist across conversations.
+
+As you work, consult your memory files to build on previous experience. When you discover recurring code quality issues, hotspot files, or patterns to watch for, record them in your memory.
+
+Guidelines:
+
+- `MEMORY.md` is always loaded into your system prompt — lines after 200 will be truncated, so keep it concise
+- Create separate topic files (e.g., `hotspots.md`, `approved-patterns.md`) for detailed notes and link to them from MEMORY.md
+- Update or remove memories that turn out to be wrong or outdated
+- Organize memory semantically by topic, not chronologically
+- Use the Write and Edit tools to update your memory files
+
+What to save:
+
+- Recurring code quality issues by file/module
+- Hotspot files that frequently fail review
+- Patterns that are approved vs patterns that are rejected
+- False positives to ignore in future reviews
+
+What NOT to save:
+
+- Session-specific context (current review details)
+- Information that duplicates CLAUDE.md or rules/ files
+
+Searching past context:
+
+```
+Grep with pattern="<search term>" path="/Users/romeodossantos/verone-back-office-V1/.claude/agent-memory/code-reviewer/" glob="*.md"
+```

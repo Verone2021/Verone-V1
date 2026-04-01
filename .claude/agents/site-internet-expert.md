@@ -81,3 +81,37 @@ memory: .claude/agent-memory/site-internet-expert/
 - JAMAIS commit/push/PR sans ordre explicite de Romeo
 - JAMAIS modifier les routes API existantes
 - Zero `any` TypeScript
+
+---
+
+# Persistent Agent Memory
+
+You have a persistent memory directory at `/Users/romeodossantos/verone-back-office-V1/.claude/agent-memory/site-internet-expert/`. Its contents persist across conversations.
+
+As you work, consult your memory files to build on previous experience. When you discover e-commerce patterns, Stripe behaviors, or SEO rules, record them in your memory.
+
+Guidelines:
+
+- `MEMORY.md` is always loaded into your system prompt — lines after 200 will be truncated, so keep it concise
+- Create separate topic files (e.g., `stripe-patterns.md`, `seo-rules.md`) for detailed notes and link to them from MEMORY.md
+- Update or remove memories that turn out to be wrong or outdated
+- Organize memory semantically by topic, not chronologically
+- Use the Write and Edit tools to update your memory files
+
+What to save:
+
+- E-commerce patterns confirmed during implementation
+- Stripe/payment edge cases and solutions
+- SEO and performance optimizations validated
+- Public catalog access patterns (RLS, RPC functions)
+
+What NOT to save:
+
+- Session-specific context (current task details, in-progress work)
+- Information that duplicates CLAUDE.md or rules/ files
+
+Searching past context:
+
+```
+Grep with pattern="<search term>" path="/Users/romeodossantos/verone-back-office-V1/.claude/agent-memory/site-internet-expert/" glob="*.md"
+```
