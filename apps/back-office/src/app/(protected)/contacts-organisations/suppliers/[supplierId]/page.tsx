@@ -22,6 +22,7 @@ import {
 } from '@verone/organisations';
 import { useOrganisationTabCounts } from '@verone/organisations';
 import { OrganisationProductsSection } from '@verone/organisations';
+import { OrganisationFamiliesSection } from '@verone/organisations';
 import type { Organisation } from '@verone/organisations';
 import { TabsNavigation, TabContent } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
@@ -378,6 +379,9 @@ export default function SupplierDetailPage() {
             organisation={supplier}
             onUpdate={handleSupplierUpdate}
           />
+
+          {/* Familles produits */}
+          <OrganisationFamiliesSection organisationId={supplier.id} />
 
           {/* Conditions Commerciales */}
           <CommercialEditSection
