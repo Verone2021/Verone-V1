@@ -1,5 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
+
+import { useSearchParams } from 'next/navigation';
+
 import { Badge } from '@verone/ui';
 import { Tabs, TabsList, TabsTrigger } from '@verone/ui';
 
@@ -76,6 +80,16 @@ function ExpeditionsTabs({ exp }: { exp: UseExpeditionsReturn }) {
 
 export default function ExpeditionsPage() {
   const exp = useExpeditions();
+  const searchParams = useSearchParams();
+
+  // Auto-expand la commande si ?order=UUID present (lien depuis notifications)
+  useEffect(() => {
+    const orderId = searchParams.get('order');
+    if (orderId && exp.orders.length > 0) {
+      exp.toggleRowExpansion(orderId);
+    }
+  }, [searchParams, exp.orders.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div className="space-y-6 p-6">
       <div>

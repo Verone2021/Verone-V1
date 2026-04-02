@@ -191,6 +191,7 @@ export default function EnseigneDetailPage() {
     description: '',
     logo_url: '',
     is_active: true,
+    payment_delay_days: 0,
   });
 
   // État pour les produits de l'enseigne
@@ -311,6 +312,9 @@ export default function EnseigneDetailPage() {
         description: enseigne.description ?? '',
         logo_url: enseigne.logo_url ?? '',
         is_active: enseigne.is_active,
+        payment_delay_days:
+          ((enseigne as unknown as Record<string, unknown>)
+            .payment_delay_days as number) ?? 0,
       });
       setIsEditModalOpen(true);
     }
@@ -329,11 +333,21 @@ export default function EnseigneDetailPage() {
       }
 
       // 2. Sauver les autres champs du formulaire
-      const { logo_url: _logo_url, ...updateData } = formData;
+      const {
+        logo_url: _logo_url,
+        payment_delay_days,
+        ...updateData
+      } = formData;
       await updateEnseigne({
         id: enseigne.id,
         ...updateData,
       });
+
+      // 3. Sauver payment_delay_days separement (trigger propage aux succursales)
+      await supabase
+        .from('enseignes')
+        .update({ payment_delay_days } as Record<string, unknown>)
+        .eq('id', enseigne.id);
 
       setIsEditModalOpen(false);
       handleRefresh();
@@ -1017,6 +1031,33 @@ export default function EnseigneDetailPage() {
                   setFormData(prev => ({ ...prev, is_active: checked }))
                 }
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="payment_delay_days">
+                Delai de paiement (jours)
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="payment_delay_days"
+                  type="number"
+                  min={0}
+                  max={180}
+                  value={formData.payment_delay_days}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      payment_delay_days: parseInt(e.target.value, 10) || 0,
+                    }))
+                  }
+                  className="w-24"
+                />
+                <span className="text-xs text-gray-500">
+                  {formData.payment_delay_days === 0
+                    ? 'Prepaiement'
+                    : `NET ${formData.payment_delay_days} — propage aux succursales`}
+                </span>
+              </div>
             </div>
           </div>
 
