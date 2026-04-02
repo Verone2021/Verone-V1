@@ -4,7 +4,7 @@
 
 // Components
 export * from './components';
-export * from './components/forms';
+export type * from './components/forms';
 export * from './components/buttons';
 export * from './components/kpis';
 
