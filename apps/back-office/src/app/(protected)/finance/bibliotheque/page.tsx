@@ -5,7 +5,10 @@ import { useState, useCallback } from 'react';
 import { ScrollArea } from '@verone/ui';
 import { AlertCircle, FolderArchive } from 'lucide-react';
 
-import { useLibraryDocuments } from '@verone/finance';
+import {
+  useLibraryDocuments,
+  useLibraryMissingDocuments,
+} from '@verone/finance';
 import type { LibraryDocument } from '@verone/finance';
 
 import { LibraryTree } from './_components/library-tree';
@@ -69,6 +72,13 @@ export default function BibliothequeComptablePage() {
     search: search || undefined,
   });
 
+  const { missingDocuments, missingCount } = useLibraryMissingDocuments({
+    year: treeSelection?.year,
+    month: treeSelection?.month,
+    category: treeSelection?.category,
+    search: search || undefined,
+  });
+
   const handleSelectDocument = useCallback((doc: LibraryDocument) => {
     setSelectedDoc(doc);
     setModalOpen(true);
@@ -95,7 +105,9 @@ export default function BibliothequeComptablePage() {
             Bibliotheque comptable
           </h1>
           <p className="text-sm text-muted-foreground">
-            Documents comptables classes par type et periode
+            Tous vos justificatifs (factures, recus) classes par annee et type
+            (Achats/Ventes/Avoirs). Le badge orange montre combien il en manque.
+            Cliquez sur un document pour le visualiser ou telecharger le PDF.
           </p>
         </div>
       </div>
@@ -108,6 +120,8 @@ export default function BibliothequeComptablePage() {
             <LibraryTree
               onSelect={handleTreeSelect}
               selection={treeSelection}
+              missingCount={missingCount}
+              documentsCount={documents.length}
             />
           </ScrollArea>
         </aside>
@@ -142,6 +156,62 @@ export default function BibliothequeComptablePage() {
               loading={isLoading}
               label={getSelectionLabel(treeSelection)}
             />
+
+            {/* Missing documents section */}
+            {missingCount > 0 && (
+              <div className="mt-6 border-t pt-4">
+                <div className="flex items-center gap-2 mb-3 px-1">
+                  <AlertCircle className="h-4 w-4 text-amber-500" />
+                  <p className="text-sm font-medium text-amber-700">
+                    {missingCount} justificatif
+                    {missingCount > 1 ? 's' : ''} manquant
+                    {missingCount > 1 ? 's' : ''}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  {missingDocuments.map(doc => (
+                    <div
+                      key={doc.id}
+                      className="flex items-center justify-between px-3 py-2 rounded-md bg-amber-50 border border-amber-100 text-sm"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">
+                          {doc.document_direction === 'inbound'
+                            ? 'Achat'
+                            : 'Vente'}
+                        </span>
+                        <span className="font-medium truncate">
+                          {doc.partner_name}
+                        </span>
+                        {doc.document_number && (
+                          <span className="text-muted-foreground truncate">
+                            {doc.document_number}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-4 flex-shrink-0">
+                        <span className="text-muted-foreground">
+                          {doc.document_date
+                            ? new Date(doc.document_date).toLocaleDateString(
+                                'fr-FR',
+                                { day: '2-digit', month: '2-digit' }
+                              )
+                            : ''}
+                        </span>
+                        <span className="font-medium tabular-nums">
+                          {doc.total_ttc != null
+                            ? new Intl.NumberFormat('fr-FR', {
+                                style: 'currency',
+                                currency: 'EUR',
+                              }).format(doc.total_ttc)
+                            : '—'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </ScrollArea>
         </main>
       </div>

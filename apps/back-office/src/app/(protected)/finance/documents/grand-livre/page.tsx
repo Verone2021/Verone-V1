@@ -244,6 +244,18 @@ export default function GrandLivrePage() {
         </Select>
       </div>
 
+      {/* Guide */}
+      <Alert className="border-blue-200 bg-blue-50">
+        <Info className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-800 text-sm">
+          <strong>Le Grand Livre</strong> liste tous les comptes comptables avec
+          leurs mouvements. Chaque compte a un numero PCG (ex: 512 = Banque, 607
+          = Achats). Cliquez sur un compte pour voir le detail des ecritures.
+          Les comptes &quot;Non categorise&quot; doivent etre rapproches avant
+          la cloture.
+        </AlertDescription>
+      </Alert>
+
       {/* Alert exercice */}
       {selectedYear !== 'all' && (
         <Alert className="border-orange-200 bg-orange-50">

@@ -1,9 +1,17 @@
 'use client';
 
 /**
- * Preparation Declaration TVA (CA3) — Style Indy epure
+ * Declaration TVA (CA3) — M5 : Report credit + guide formulaire 3310
  *
- * Pas de KPIs cards. Tableau recap par taux + detail mensuel.
+ * Regles fiscales implementees :
+ * - Ligne 16 : TVA brute (collectee sur ventes)
+ * - Ligne 22 : Report credit mois precedent
+ * - Ligne 23 : Total deductible = TVA deduite + report
+ * - Ligne 25 : Credit = ligne 23 - ligne 16 (si positif)
+ * - Ligne 27 : Credit a reporter = ligne 25 (reporte sur ligne 22 mois suivant)
+ * - Ligne 28 : TVA nette due = ligne 16 - ligne 23 (si positif)
+ * - Seuil remboursement : 760 EUR minimum (formulaire 3519)
+ * - Echeance : declarer avant le 19-24 du mois suivant sur impots.gouv.fr
  */
 
 import { useState, useMemo } from 'react';
@@ -14,7 +22,6 @@ import {
   useBankReconciliation,
   calculateHT,
   calculateVAT,
-  TVA_RATES,
   type BankTransaction,
 } from '@verone/finance';
 import {
@@ -30,31 +37,22 @@ import {
   AlertDescription,
 } from '@verone/ui';
 import { Money } from '@verone/ui-business';
-import { Percent, Info, ArrowLeft } from 'lucide-react';
+import { Info, ArrowLeft, HelpCircle } from 'lucide-react';
 
-// =====================================================================
-// TYPES
-// =====================================================================
-
-type TransactionWithVat = BankTransaction & {
-  vat_rate?: number;
-};
+type TransactionWithVat = BankTransaction & { vat_rate?: number };
 
 interface MonthlyTva {
   month: string;
   label: string;
-  collectee: { [rate: string]: number };
-  deductible: { [rate: string]: number };
   totalCollectee: number;
   totalDeductible: number;
-  net: number;
   caHT: number;
-  achatsHT: number;
+  reportCreditPrecedent: number;
+  totalDeductibleAvecReport: number;
+  tvaNettedue: number;
+  creditTva: number;
+  creditAReporter: number;
 }
-
-// =====================================================================
-// HELPERS
-// =====================================================================
 
 function getMonthKey(dateStr: string): string {
   const d = new Date(dateStr);
@@ -67,51 +65,34 @@ function formatMonthLabel(key: string): string {
   return d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
 }
 
-// =====================================================================
-// PAGE
-// =====================================================================
-
 export default function TvaPage() {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(String(currentYear));
+  const [showGuide, setShowGuide] = useState(false);
 
   const { creditTransactions, debitTransactions, loading, error } =
     useBankReconciliation();
 
+  // Calcul mensuel AVEC report de credit
   const monthlyTva = useMemo(() => {
-    const months = new Map<string, MonthlyTva>();
-
-    const ensureMonth = (key: string): MonthlyTva => {
-      if (!months.has(key)) {
-        months.set(key, {
-          month: key,
-          label: formatMonthLabel(key),
-          collectee: {},
-          deductible: {},
-          totalCollectee: 0,
-          totalDeductible: 0,
-          net: 0,
-          caHT: 0,
-          achatsHT: 0,
-        });
-      }
-      return months.get(key)!;
-    };
+    const rawMonths = new Map<
+      string,
+      { collectee: number; deductible: number; caHT: number }
+    >();
 
     (creditTransactions as TransactionWithVat[]).forEach(tx => {
       const date = tx.settled_at ?? tx.emitted_at;
       if (!date) return;
       if (selectedYear !== 'all' && !date.startsWith(selectedYear)) return;
       const key = getMonthKey(date);
-      const m = ensureMonth(key);
+      const m = rawMonths.get(key) ?? { collectee: 0, deductible: 0, caHT: 0 };
       const vatRate = tx.vat_rate ?? 0;
-      const ttc = Math.abs(tx.amount);
-      const tva = calculateVAT(ttc, vatRate as 0 | 5.5 | 10 | 20);
-      const ht = calculateHT(ttc, vatRate as 0 | 5.5 | 10 | 20);
-      const rateKey = String(vatRate);
-      m.collectee[rateKey] = (m.collectee[rateKey] ?? 0) + tva;
-      m.totalCollectee += tva;
-      m.caHT += ht;
+      m.collectee += calculateVAT(
+        Math.abs(tx.amount),
+        vatRate as 0 | 5.5 | 10 | 20
+      );
+      m.caHT += calculateHT(Math.abs(tx.amount), vatRate as 0 | 5.5 | 10 | 20);
+      rawMonths.set(key, m);
     });
 
     (debitTransactions as TransactionWithVat[]).forEach(tx => {
@@ -119,24 +100,46 @@ export default function TvaPage() {
       if (!date) return;
       if (selectedYear !== 'all' && !date.startsWith(selectedYear)) return;
       const key = getMonthKey(date);
-      const m = ensureMonth(key);
-      const vatRate = tx.vat_rate ?? 0;
-      const ttc = Math.abs(tx.amount);
-      const tva = calculateVAT(ttc, vatRate as 0 | 5.5 | 10 | 20);
-      const ht = calculateHT(ttc, vatRate as 0 | 5.5 | 10 | 20);
-      const rateKey = String(vatRate);
-      m.deductible[rateKey] = (m.deductible[rateKey] ?? 0) + tva;
-      m.totalDeductible += tva;
-      m.achatsHT += ht;
+      const m = rawMonths.get(key) ?? { collectee: 0, deductible: 0, caHT: 0 };
+      m.deductible += calculateVAT(
+        Math.abs(tx.amount),
+        (tx.vat_rate ?? 0) as 0 | 5.5 | 10 | 20
+      );
+      rawMonths.set(key, m);
     });
 
-    for (const m of months.values()) {
-      m.net = m.totalCollectee - m.totalDeductible;
+    // Trier chronologiquement (ancien → recent) pour calculer le report
+    const sortedKeys = Array.from(rawMonths.keys()).sort();
+    const result: MonthlyTva[] = [];
+    let previousCredit = 0;
+
+    for (const key of sortedKeys) {
+      const raw = rawMonths.get(key)!;
+      const reportCreditPrecedent = previousCredit;
+      const totalDeductibleAvecReport = raw.deductible + reportCreditPrecedent;
+      const diff = raw.collectee - totalDeductibleAvecReport;
+
+      const tvaNettedue = diff > 0 ? diff : 0;
+      const creditTva = diff < 0 ? Math.abs(diff) : 0;
+      const creditAReporter = creditTva; // Si < 760€ ou pas de demande 3519
+
+      result.push({
+        month: key,
+        label: formatMonthLabel(key),
+        totalCollectee: raw.collectee,
+        totalDeductible: raw.deductible,
+        caHT: raw.caHT,
+        reportCreditPrecedent,
+        totalDeductibleAvecReport,
+        tvaNettedue,
+        creditTva,
+        creditAReporter,
+      });
+
+      previousCredit = creditAReporter;
     }
 
-    return Array.from(months.values()).sort((a, b) =>
-      b.month.localeCompare(a.month)
-    );
+    return result.reverse(); // Afficher recent → ancien
   }, [creditTransactions, debitTransactions, selectedYear]);
 
   const annualTotals = useMemo(() => {
@@ -144,12 +147,15 @@ export default function TvaPage() {
       (acc, m) => ({
         collectee: acc.collectee + m.totalCollectee,
         deductible: acc.deductible + m.totalDeductible,
-        net: acc.net + m.net,
         caHT: acc.caHT + m.caHT,
       }),
-      { collectee: 0, deductible: 0, net: 0, caHT: 0 }
+      { collectee: 0, deductible: 0, caHT: 0 }
     );
   }, [monthlyTva]);
+
+  const annualNet = annualTotals.collectee - annualTotals.deductible;
+  const lastMonthCredit =
+    monthlyTva.length > 0 ? monthlyTva[0].creditAReporter : 0;
 
   const years = Array.from(
     { length: currentYear - 2022 },
@@ -174,28 +180,116 @@ export default function TvaPage() {
           </div>
           <h1 className="text-2xl font-bold">Declaration TVA (CA3)</h1>
         </div>
-        <Select value={selectedYear} onValueChange={setSelectedYear}>
-          <SelectTrigger className="w-44 rounded-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Toutes les annees</SelectItem>
-            {years.map(year => (
-              <SelectItem key={year} value={String(year)}>
-                Exercice {year}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowGuide(!showGuide)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 hover:bg-gray-50"
+          >
+            <HelpCircle className="h-3.5 w-3.5" />
+            {showGuide ? 'Masquer le guide' : 'Guide formulaire 3310'}
+          </button>
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger className="w-44 rounded-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les annees</SelectItem>
+              {years.map(year => (
+                <SelectItem key={year} value={String(year)}>
+                  Exercice {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      {/* Info banner */}
+      {/* Guide "pour les nuls" */}
+      <Alert className="border-blue-200 bg-blue-50">
+        <Info className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-800 text-sm">
+          <strong>La TVA CA3</strong> est votre declaration mensuelle de TVA.{' '}
+          <strong>TVA collectee</strong> = TVA sur vos ventes (vous la devez a
+          l&apos;Etat). <strong>TVA deductible</strong> = TVA sur vos achats
+          (l&apos;Etat vous la rembourse).{' '}
+          <strong>TVA nette = collectee - deductible - report credit</strong>.
+          Si negatif, c&apos;est un credit qui se reporte automatiquement sur le
+          mois suivant. A declarer avant le 19-24 du mois suivant sur{' '}
+          <strong>impots.gouv.fr</strong>.
+        </AlertDescription>
+      </Alert>
+
+      {/* Guide correspondance formulaire 3310 */}
+      {showGuide && (
+        <div className="border rounded-xl bg-white overflow-hidden">
+          <div className="px-5 py-3 bg-indigo-50 border-b">
+            <h2 className="font-semibold text-sm text-indigo-900">
+              Correspondance formulaire 3310-CA3 (impots.gouv.fr)
+            </h2>
+          </div>
+          <div className="px-5 py-4 space-y-2 text-sm">
+            <p>
+              <strong>Ligne 08-09-9B</strong> : Operations imposables (= votre
+              CA HT par taux)
+            </p>
+            <p>
+              <strong>Ligne 16</strong> : TVA brute due = total TVA collectee
+              sur vos ventes
+            </p>
+            <p>
+              <strong>Ligne 19-20</strong> : TVA deductible = TVA sur achats
+              (biens + services)
+            </p>
+            <p>
+              <strong className="text-blue-700">Ligne 22</strong> : Report du
+              credit de TVA du mois precedent (reporte automatiquement ici)
+            </p>
+            <p>
+              <strong>Ligne 23</strong> : Total a deduire = TVA deductible +
+              report credit (ligne 20 + ligne 22)
+            </p>
+            <p>
+              <strong>Ligne 25</strong> : Credit de TVA = ligne 23 - ligne 16
+              (si vous deduisez plus que vous collectez)
+            </p>
+            <p>
+              <strong>Ligne 26</strong> : Remboursement demande (formulaire
+              3519, minimum <strong>760 EUR</strong>)
+            </p>
+            <p>
+              <strong className="text-blue-700">Ligne 27</strong> : Credit a
+              reporter = ligne 25 - ligne 26 (se reporte sur la ligne 22 du mois
+              suivant)
+            </p>
+            <p>
+              <strong className="text-red-700">Ligne 28</strong> : TVA nette due
+              = ligne 16 - ligne 23 (montant a payer a l&apos;Etat)
+            </p>
+            <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+              <strong>Remboursement</strong> : si votre credit depasse 760 EUR,
+              vous pouvez demander un remboursement via le formulaire 3519-SD au
+              lieu de le reporter. En dessous de 760 EUR, le credit est
+              automatiquement reporte.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Warning */}
       <Alert className="border-orange-200 bg-orange-50">
         <Info className="h-4 w-4 text-orange-600" />
         <AlertDescription className="text-orange-700 text-sm">
-          Les montants de TVA sont calcules a partir des transactions bancaires.
-          Verifiez avec votre expert-comptable pour la declaration CA3
-          definitive.
+          Les montants sont calcules a partir des transactions bancaires.
+          Verifiez avant de declarer.
+          {lastMonthCredit > 0 && (
+            <span className="block mt-1 font-medium text-blue-700">
+              Credit a reporter sur le mois en cours :{' '}
+              {lastMonthCredit.toLocaleString('fr-FR', {
+                minimumFractionDigits: 2,
+              })}{' '}
+              EUR (ligne 22)
+            </span>
+          )}
         </AlertDescription>
       </Alert>
 
@@ -214,126 +308,158 @@ export default function TvaPage() {
         </Card>
       ) : (
         <div className="space-y-6">
-          {/* Recap par taux */}
-          <div className="border rounded-xl bg-white overflow-hidden">
-            <div className="px-5 py-3 bg-gray-50 border-b">
-              <h2 className="font-semibold text-sm">
-                Recapitulatif par taux de TVA
-              </h2>
+          {/* KPIs recap annuel */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="bg-white rounded-lg border border-gray-200 px-3 py-2.5">
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide">
+                TVA collectee
+              </p>
+              <p className="text-base font-bold text-gray-900">
+                {annualTotals.collectee.toLocaleString('fr-FR', {
+                  minimumFractionDigits: 2,
+                })}{' '}
+                &euro;
+              </p>
             </div>
-            <div className="grid grid-cols-5 gap-4 px-5 py-2.5 text-xs font-medium text-muted-foreground border-b">
-              <div>Taux</div>
-              <div className="text-right">TVA collectee</div>
-              <div className="text-right">TVA deductible</div>
-              <div className="text-right">Net</div>
-              <div className="text-center">Statut</div>
+            <div className="bg-white rounded-lg border border-gray-200 px-3 py-2.5">
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide">
+                TVA deductible
+              </p>
+              <p className="text-base font-bold text-gray-900">
+                {annualTotals.deductible.toLocaleString('fr-FR', {
+                  minimumFractionDigits: 2,
+                })}{' '}
+                &euro;
+              </p>
             </div>
-            {TVA_RATES.filter(r => r.value > 0).map(rate => {
-              const rateKey = String(rate.value);
-              const collected = monthlyTva.reduce(
-                (sum, m) => sum + (m.collectee[rateKey] ?? 0),
-                0
-              );
-              const deducted = monthlyTva.reduce(
-                (sum, m) => sum + (m.deductible[rateKey] ?? 0),
-                0
-              );
-              const net = collected - deducted;
-              if (collected === 0 && deducted === 0) return null;
-              return (
-                <div
-                  key={rateKey}
-                  className="grid grid-cols-5 gap-4 px-5 py-3 border-b text-sm"
-                >
-                  <div>
-                    <span className="font-mono font-medium">{rate.label}</span>
-                    <span className="text-xs text-muted-foreground ml-2">
-                      {rate.description}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <Money amount={collected} size="sm" />
-                  </div>
-                  <div className="text-right">
-                    <Money amount={deducted} size="sm" />
-                  </div>
-                  <div className="text-right">
-                    <Money amount={net} colorize bold size="sm" />
-                  </div>
-                  <div className="text-center text-xs">
-                    <span
-                      className={net >= 0 ? 'text-red-600' : 'text-green-600'}
-                    >
-                      {net >= 0 ? 'A payer' : 'Credit'}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+            <div className="bg-white rounded-lg border border-gray-200 px-3 py-2.5">
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide">
+                TVA nette {selectedYear}
+              </p>
+              <p
+                className={`text-base font-bold ${annualNet >= 0 ? 'text-red-600' : 'text-green-600'}`}
+              >
+                {annualNet.toLocaleString('fr-FR', {
+                  minimumFractionDigits: 2,
+                })}{' '}
+                &euro;
+              </p>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 px-3 py-2.5">
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide">
+                Credit a reporter
+              </p>
+              <p
+                className={`text-base font-bold ${lastMonthCredit > 0 ? 'text-blue-600' : 'text-gray-900'}`}
+              >
+                {lastMonthCredit.toLocaleString('fr-FR', {
+                  minimumFractionDigits: 2,
+                })}{' '}
+                &euro;
+              </p>
+            </div>
           </div>
 
-          {/* Detail mensuel */}
+          {/* Detail mensuel AVEC report credit */}
           <div className="border rounded-xl bg-white overflow-hidden">
-            <div className="px-5 py-3 bg-gray-50 border-b">
-              <h2 className="font-semibold text-sm">Detail mensuel CA3</h2>
+            <div className="px-5 py-3 bg-gray-50 border-b flex items-center justify-between">
+              <h2 className="font-semibold text-sm">
+                Detail mensuel CA3 — avec report de credit
+              </h2>
+              <span className="text-xs text-muted-foreground">
+                Le credit se reporte automatiquement chaque mois
+              </span>
             </div>
 
             {monthlyTva.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
-                <Percent className="h-12 w-12 mx-auto mb-4 opacity-30" />
                 <p>Aucune donnee TVA pour cette periode</p>
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-7 gap-2 px-5 py-2.5 text-xs font-medium text-muted-foreground border-b">
+                <div className="grid grid-cols-8 gap-1 px-5 py-2.5 text-[10px] font-medium text-muted-foreground border-b uppercase">
                   <div className="col-span-2">Mois</div>
-                  <div className="text-right">CA HT</div>
-                  <div className="text-right">TVA collectee</div>
-                  <div className="text-right">TVA deductible</div>
-                  <div className="text-right">TVA nette</div>
+                  <div className="text-right">Collectee (L16)</div>
+                  <div className="text-right">Deductible (L20)</div>
+                  <div className="text-right text-blue-600">Report (L22)</div>
+                  <div className="text-right">Total deduit (L23)</div>
+                  <div className="text-right">A payer / Credit</div>
                   <div className="text-center">Statut</div>
                 </div>
                 <ScrollArea className="h-[400px]">
-                  {monthlyTva.map(m => (
-                    <div
-                      key={m.month}
-                      className="grid grid-cols-7 gap-2 px-5 py-3 border-b hover:bg-gray-50 transition-colors items-center text-sm"
-                    >
-                      <div className="col-span-2 font-medium capitalize">
-                        {m.label}
+                  {monthlyTva.map(m => {
+                    const isCredit = m.creditTva > 0;
+                    return (
+                      <div
+                        key={m.month}
+                        className="grid grid-cols-8 gap-1 px-5 py-3 border-b hover:bg-gray-50 transition-colors items-center text-sm"
+                      >
+                        <div className="col-span-2">
+                          <span className="font-medium capitalize">
+                            {m.label}
+                          </span>
+                          <span className="text-xs text-muted-foreground ml-2">
+                            CA{' '}
+                            {m.caHT.toLocaleString('fr-FR', {
+                              minimumFractionDigits: 0,
+                            })}{' '}
+                            &euro; HT
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <Money amount={m.totalCollectee} size="sm" />
+                        </div>
+                        <div className="text-right">
+                          <Money amount={m.totalDeductible} size="sm" />
+                        </div>
+                        <div className="text-right">
+                          {m.reportCreditPrecedent > 0 ? (
+                            <span className="text-blue-600 font-medium">
+                              {m.reportCreditPrecedent.toLocaleString('fr-FR', {
+                                minimumFractionDigits: 2,
+                              })}{' '}
+                              &euro;
+                            </span>
+                          ) : (
+                            <span className="text-gray-300">—</span>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <Money
+                            amount={m.totalDeductibleAvecReport}
+                            size="sm"
+                          />
+                        </div>
+                        <div className="text-right">
+                          <Money
+                            amount={isCredit ? -m.creditTva : m.tvaNettedue}
+                            colorize
+                            bold
+                            size="sm"
+                          />
+                        </div>
+                        <div className="text-center text-xs">
+                          {isCredit ? (
+                            <span className="text-green-600 font-medium">
+                              Credit
+                            </span>
+                          ) : m.tvaNettedue === 0 ? (
+                            <span className="text-gray-400">Neutre</span>
+                          ) : (
+                            <span className="text-red-600 font-medium">
+                              A payer
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <Money amount={m.caHT} size="sm" />
-                      </div>
-                      <div className="text-right">
-                        <Money amount={m.totalCollectee} size="sm" />
-                      </div>
-                      <div className="text-right">
-                        <Money amount={m.totalDeductible} size="sm" />
-                      </div>
-                      <div className="text-right">
-                        <Money amount={m.net} colorize bold size="sm" />
-                      </div>
-                      <div className="text-center text-xs">
-                        <span
-                          className={
-                            m.net >= 0 ? 'text-red-600' : 'text-green-600'
-                          }
-                        >
-                          {m.net >= 0 ? 'A payer' : 'Credit'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </ScrollArea>
 
-                {/* Total */}
-                <div className="grid grid-cols-7 gap-2 px-5 py-3 bg-gray-100 font-bold text-sm border-t">
+                {/* Total annuel */}
+                <div className="grid grid-cols-8 gap-1 px-5 py-3 bg-gray-100 font-bold text-sm border-t">
                   <div className="col-span-2">
                     TOTAL {selectedYear === 'all' ? 'GENERAL' : selectedYear}
-                  </div>
-                  <div className="text-right">
-                    <Money amount={annualTotals.caHT} />
                   </div>
                   <div className="text-right">
                     <Money amount={annualTotals.collectee} />
@@ -341,24 +467,42 @@ export default function TvaPage() {
                   <div className="text-right">
                     <Money amount={annualTotals.deductible} />
                   </div>
+                  <div className="text-right text-blue-600">—</div>
+                  <div className="text-right">—</div>
                   <div className="text-right">
-                    <Money amount={annualTotals.net} colorize />
+                    <Money amount={annualNet} colorize />
                   </div>
                   <div className="text-center text-xs">
                     <span
                       className={
-                        annualTotals.net >= 0
+                        annualNet >= 0
                           ? 'text-red-600 font-bold'
                           : 'text-green-600 font-bold'
                       }
                     >
-                      {annualTotals.net >= 0 ? 'A payer' : 'Credit'}
+                      {annualNet >= 0 ? 'A payer' : 'Credit'}
                     </span>
                   </div>
                 </div>
               </>
             )}
           </div>
+
+          {/* Info remboursement */}
+          {lastMonthCredit >= 760 && (
+            <Alert className="border-green-200 bg-green-50">
+              <Info className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800 text-sm">
+                <strong>Remboursement possible</strong> : votre credit de TVA (
+                {lastMonthCredit.toLocaleString('fr-FR', {
+                  minimumFractionDigits: 2,
+                })}{' '}
+                EUR) depasse le seuil de 760 EUR. Vous pouvez demander un
+                remboursement via le formulaire <strong>3519-SD</strong> sur
+                impots.gouv.fr au lieu de le reporter.
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
       )}
     </div>
