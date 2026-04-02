@@ -51,8 +51,11 @@ stock_previsionnel = stock_real - stock_forecasted_out + stock_forecasted_in
 
 ### VERT (Commande en cours)
 
-- Commande fournisseur confirmee couvre le besoin
-- Alerte devient `validated=true`
+- Commande fournisseur **validee** couvre le besoin
+- Alerte devient `validated=true` dans `stock_alert_tracking`
+- Condition : `stock_forecasted_in > 0` ET `stock_forecasted_out > 0`
+- Signifie : PO en transit va couvrir les SO en attente
+- L'alerte reste visible en VERT jusqu'a reception physique
 
 ### DISPARUE (Historique)
 
