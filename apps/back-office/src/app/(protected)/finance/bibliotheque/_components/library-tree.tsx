@@ -40,9 +40,16 @@ interface TreeSelection {
 interface LibraryTreeProps {
   onSelect: (selection: TreeSelection) => void;
   selection: TreeSelection | null;
+  missingCount?: number;
+  documentsCount?: number;
 }
 
-export function LibraryTree({ onSelect, selection }: LibraryTreeProps) {
+export function LibraryTree({
+  onSelect,
+  selection,
+  missingCount = 0,
+  documentsCount = 0,
+}: LibraryTreeProps) {
   const currentYear = new Date().getFullYear();
   const years = [currentYear, currentYear - 1, currentYear - 2];
 
@@ -115,6 +122,14 @@ export function LibraryTree({ onSelect, selection }: LibraryTreeProps) {
               )}
               <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
               <span>{year}</span>
+              {isSelected(year) && missingCount > 0 && (
+                <Badge
+                  variant="outline"
+                  className="ml-auto text-[9px] px-1.5 py-0 border-amber-300 text-amber-600 bg-amber-50"
+                >
+                  {documentsCount}/{documentsCount + missingCount}
+                </Badge>
+              )}
             </button>
 
             {/* Categories under year */}
@@ -148,6 +163,14 @@ export function LibraryTree({ onSelect, selection }: LibraryTreeProps) {
                           <Folder className="h-3.5 w-3.5 flex-shrink-0 text-amber-500" />
                         )}
                         <span>{cat.label}</span>
+                        {isSelected(year, cat.key) && missingCount > 0 && (
+                          <Badge
+                            variant="outline"
+                            className="ml-auto text-[9px] px-1.5 py-0 border-amber-300 text-amber-600 bg-amber-50"
+                          >
+                            {documentsCount}/{documentsCount + missingCount}
+                          </Badge>
+                        )}
                       </button>
 
                       {/* Months under category */}
@@ -183,6 +206,16 @@ export function LibraryTree({ onSelect, selection }: LibraryTreeProps) {
                                     en cours
                                   </Badge>
                                 )}
+                                {isSelected(year, cat.key, monthNum) &&
+                                  missingCount > 0 && (
+                                    <Badge
+                                      variant="outline"
+                                      className="ml-auto text-[9px] px-1.5 py-0 border-amber-300 text-amber-600 bg-amber-50"
+                                    >
+                                      {documentsCount}/
+                                      {documentsCount + missingCount}
+                                    </Badge>
+                                  )}
                               </button>
                             );
                           })}

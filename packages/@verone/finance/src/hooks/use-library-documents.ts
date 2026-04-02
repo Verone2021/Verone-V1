@@ -20,6 +20,21 @@ export interface LibraryDocument {
   created_at: string;
 }
 
+export interface LibraryMissingDocument {
+  id: string;
+  source_table: 'bank_transactions';
+  document_type: string;
+  document_direction: string;
+  document_number: string | null;
+  document_date: string | null;
+  partner_name: string | null;
+  total_ht: number | null;
+  total_ttc: number | null;
+  status: 'missing';
+  pcg_code: string | null;
+  created_at: string;
+}
+
 export interface UseLibraryDocumentsReturn {
   documents: LibraryDocument[];
   isLoading: boolean;
@@ -138,5 +153,86 @@ export function useLibraryDocuments(filters?: {
     isLoading,
     error,
     refetch: fetchDocuments,
+  };
+}
+
+/**
+ * Hook to fetch missing documents (transactions without attachments).
+ * Same filter interface as useLibraryDocuments.
+ */
+export function useLibraryMissingDocuments(filters?: {
+  year?: number;
+  month?: number;
+  category?: 'achats' | 'ventes' | 'avoirs';
+  search?: string;
+}): {
+  missingDocuments: LibraryMissingDocument[];
+  missingCount: number;
+  isLoading: boolean;
+} {
+  const [missingDocuments, setMissingDocuments] = useState<
+    LibraryMissingDocument[]
+  >([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchMissing = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const supabase = createClient();
+
+      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+      let query = (supabase as { from: CallableFunction })
+        .from('v_library_missing_documents')
+        .select(
+          'id, source_table, document_type, document_direction, document_number, document_date, partner_name, total_ht, total_ttc, status, pcg_code, created_at'
+        )
+        .order('document_date', { ascending: false })
+        .limit(500);
+
+      if (filters?.month && filters?.year) {
+        const month = String(filters.month).padStart(2, '0');
+        const startDate = `${filters.year}-${month}-01`;
+        const lastDay = new Date(filters.year, filters.month, 0).getDate();
+        const endDate = `${filters.year}-${month}-${lastDay}`;
+        query = query
+          .gte('document_date', startDate)
+          .lte('document_date', endDate);
+      } else if (filters?.year) {
+        const startDate = `${filters.year}-01-01`;
+        const endDate = `${filters.year}-12-31`;
+        query = query
+          .gte('document_date', startDate)
+          .lte('document_date', endDate);
+      }
+
+      if (filters?.category === 'achats') {
+        query = query.eq('document_direction', 'inbound');
+      } else if (filters?.category === 'ventes') {
+        query = query.eq('document_direction', 'outbound');
+      }
+
+      if (filters?.search) {
+        query = query.ilike('partner_name', `%${filters.search}%`);
+      }
+
+      const { data } = await query;
+      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+
+      setMissingDocuments((data ?? []) as LibraryMissingDocument[]);
+    } catch (err) {
+      console.error('[useLibraryMissingDocuments] Error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [filters?.year, filters?.month, filters?.category, filters?.search]);
+
+  useEffect(() => {
+    void fetchMissing();
+  }, [fetchMissing]);
+
+  return {
+    missingDocuments,
+    missingCount: missingDocuments.length,
+    isLoading,
   };
 }

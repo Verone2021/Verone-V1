@@ -45,9 +45,13 @@ import {
   Link2,
   Calculator,
   LayoutDashboard,
-  ArrowLeftRight,
   Grid3x3,
   BookOpenCheck,
+  Landmark,
+  FolderArchive,
+  Receipt,
+  Monitor,
+  CalendarClock,
 } from 'lucide-react';
 
 import { PhaseIndicator } from '@/components/ui/phase-indicator';
@@ -287,7 +291,7 @@ const getNavItems = (
       },
     ],
   },
-  // ============ FINANCE (5 entrées — Style Indy 2026) ============
+  // ============ FINANCE (Style Indy/Pennylane 2026) ============
   {
     title: 'Finance',
     href: '/finance',
@@ -306,16 +310,36 @@ const getNavItems = (
         icon: FileText,
       },
       {
-        title: 'Transactions',
+        title: 'Banque',
         href: '/finance/transactions',
-        icon: ArrowLeftRight,
+        icon: Landmark,
         badge: transactionsUnreconciledCount,
         badgeVariant: transactionsUnreconciledCount > 0 ? 'urgent' : undefined,
+      },
+      {
+        title: 'Dépenses',
+        href: '/finance/depenses',
+        icon: Receipt,
+      },
+      {
+        title: 'Immobilisations',
+        href: '/finance/immobilisations',
+        icon: Monitor,
+      },
+      {
+        title: 'Bibliothèque',
+        href: '/finance/bibliotheque',
+        icon: FolderArchive,
       },
       {
         title: 'Documents',
         href: '/finance/documents',
         icon: BookOpenCheck,
+      },
+      {
+        title: 'Échéancier',
+        href: '/finance/echeancier',
+        icon: CalendarClock,
       },
     ],
   },

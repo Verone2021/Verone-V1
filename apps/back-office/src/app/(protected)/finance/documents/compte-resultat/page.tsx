@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 'use client';
 
 /**
@@ -46,27 +47,40 @@ export default function CompteResultatPage() {
   const { creditTransactions, debitTransactions, loading, error } =
     useBankReconciliation();
 
+  // Structure légale PCG art. 832-2 — 3 niveaux obligatoires
   const pcgStructure = {
-    produits: [
+    produitsExploitation: [
       { code: '70', label: 'Ventes de produits/services' },
       { code: '74', label: 'Subventions' },
       { code: '75', label: 'Autres produits de gestion' },
-      { code: '76', label: 'Produits financiers' },
-      { code: '77', label: 'Produits exceptionnels' },
     ],
-    charges: [
+    chargesExploitation: [
       { code: '60', label: 'Achats (marchandises, matieres)' },
       { code: '61', label: 'Services exterieurs' },
       { code: '62', label: 'Autres services exterieurs' },
       { code: '63', label: 'Impots et taxes' },
       { code: '64', label: 'Charges de personnel' },
       { code: '65', label: 'Autres charges de gestion' },
-      { code: '66', label: 'Charges financieres' },
-      { code: '67', label: 'Charges exceptionnelles' },
       { code: '68', label: 'Dotations aux amortissements' },
-      { code: '69', label: 'Impot sur les benefices' },
     ],
+    produitsFinanciers: [{ code: '76', label: 'Produits financiers' }],
+    chargesFinancieres: [{ code: '66', label: 'Charges financieres' }],
+    produitsExceptionnels: [{ code: '77', label: 'Produits exceptionnels' }],
+    chargesExceptionnelles: [{ code: '67', label: 'Charges exceptionnelles' }],
+    impots: [{ code: '69', label: 'Impot sur les benefices (IS)' }],
   };
+
+  const allProduits = [
+    ...pcgStructure.produitsExploitation,
+    ...pcgStructure.produitsFinanciers,
+    ...pcgStructure.produitsExceptionnels,
+  ];
+  const allCharges = [
+    ...pcgStructure.chargesExploitation,
+    ...pcgStructure.chargesFinancieres,
+    ...pcgStructure.chargesExceptionnelles,
+    ...pcgStructure.impots,
+  ];
 
   const computeForYear = (year: string) => {
     const filterByYear = (txs: BankTransaction[]) =>
@@ -81,7 +95,7 @@ export default function CompteResultatPage() {
     const debits = filterByYear(debitTransactions);
 
     const produitsClasses: Record<string, number> = {};
-    pcgStructure.produits.forEach(p => (produitsClasses[p.code] = 0));
+    allProduits.forEach(p => (produitsClasses[p.code] = 0));
     credits.forEach(tx => {
       const pcgCode = tx.category_pcg;
       if (pcgCode) {
@@ -93,7 +107,7 @@ export default function CompteResultatPage() {
     });
 
     const chargesClasses: Record<string, number> = {};
-    pcgStructure.charges.forEach(c => (chargesClasses[c.code] = 0));
+    allCharges.forEach(c => (chargesClasses[c.code] = 0));
     (debits as TransactionWithExtras[]).forEach(tx => {
       const pcgCode =
         tx.category_pcg || tx.ignore_reason?.match(/PCG (\d+)/)?.[1];
@@ -122,24 +136,98 @@ export default function CompteResultatPage() {
     [creditTransactions, debitTransactions, yearN1]
   );
 
-  const totalProduitsN = pcgStructure.produits.reduce(
-    (sum, p) => sum + (dataN.produitsClasses[p.code] ?? 0),
-    0
+  const sumGroup = (
+    items: { code: string }[],
+    data: {
+      produitsClasses: Record<string, number>;
+      chargesClasses: Record<string, number>;
+    },
+    type: 'produits' | 'charges'
+  ) =>
+    items.reduce(
+      (sum, item) =>
+        sum +
+        ((type === 'produits'
+          ? data.produitsClasses[item.code]
+          : data.chargesClasses[item.code]) ?? 0),
+      0
+    );
+
+  // Exploitation
+  const prodExplN = sumGroup(
+    pcgStructure.produitsExploitation,
+    dataN,
+    'produits'
   );
-  const totalProduitsN1 = pcgStructure.produits.reduce(
-    (sum, p) => sum + (dataN1.produitsClasses[p.code] ?? 0),
-    0
+  const prodExplN1 = sumGroup(
+    pcgStructure.produitsExploitation,
+    dataN1,
+    'produits'
   );
-  const totalChargesN = pcgStructure.charges.reduce(
-    (sum, c) => sum + (dataN.chargesClasses[c.code] ?? 0),
-    0
+  const charExplN = sumGroup(
+    pcgStructure.chargesExploitation,
+    dataN,
+    'charges'
   );
-  const totalChargesN1 = pcgStructure.charges.reduce(
-    (sum, c) => sum + (dataN1.chargesClasses[c.code] ?? 0),
-    0
+  const charExplN1 = sumGroup(
+    pcgStructure.chargesExploitation,
+    dataN1,
+    'charges'
   );
-  const resultatN = totalProduitsN - totalChargesN;
-  const resultatN1 = totalProduitsN1 - totalChargesN1;
+  const resExplN = prodExplN - charExplN;
+  const resExplN1 = prodExplN1 - charExplN1;
+
+  // Financier
+  const prodFinN = sumGroup(pcgStructure.produitsFinanciers, dataN, 'produits');
+  const prodFinN1 = sumGroup(
+    pcgStructure.produitsFinanciers,
+    dataN1,
+    'produits'
+  );
+  const charFinN = sumGroup(pcgStructure.chargesFinancieres, dataN, 'charges');
+  const charFinN1 = sumGroup(
+    pcgStructure.chargesFinancieres,
+    dataN1,
+    'charges'
+  );
+  const resFinN = prodFinN - charFinN;
+  const resFinN1 = prodFinN1 - charFinN1;
+
+  // Courant
+  const resCourantN = resExplN + resFinN;
+  const resCourantN1 = resExplN1 + resFinN1;
+
+  // Exceptionnel
+  const prodExcN = sumGroup(
+    pcgStructure.produitsExceptionnels,
+    dataN,
+    'produits'
+  );
+  const prodExcN1 = sumGroup(
+    pcgStructure.produitsExceptionnels,
+    dataN1,
+    'produits'
+  );
+  const charExcN = sumGroup(
+    pcgStructure.chargesExceptionnelles,
+    dataN,
+    'charges'
+  );
+  const charExcN1 = sumGroup(
+    pcgStructure.chargesExceptionnelles,
+    dataN1,
+    'charges'
+  );
+  const resExcN = prodExcN - charExcN;
+  const resExcN1 = prodExcN1 - charExcN1;
+
+  // IS
+  const isN = sumGroup(pcgStructure.impots, dataN, 'charges');
+  const isN1 = sumGroup(pcgStructure.impots, dataN1, 'charges');
+
+  // Résultat net
+  const resultatN = resCourantN + resExcN - isN;
+  const resultatN1 = resCourantN1 + resExcN1 - isN1;
 
   const years = Array.from(
     { length: currentYear - 2022 },
@@ -187,7 +275,21 @@ export default function CompteResultatPage() {
         </Select>
       </div>
 
-      {/* Alert */}
+      {/* Guide */}
+      <Alert className="border-blue-200 bg-blue-50">
+        <Info className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-800 text-sm">
+          <strong>Le Compte de Resultat</strong> montre si votre entreprise
+          gagne ou perd de l&apos;argent sur l&apos;annee. En haut : ce que vous
+          gagnez (<strong>Produits</strong>). En bas : ce que vous depensez (
+          <strong>Charges</strong>). La difference = votre{' '}
+          <strong>Resultat Net</strong> (benefice ou perte). Il est structure en
+          3 niveaux : exploitation (activite courante), financier (interets),
+          exceptionnel (evenements rares).
+        </AlertDescription>
+      </Alert>
+
+      {/* Alert exercice */}
       {selectedYear !== 'all' && (
         <Alert className="border-orange-200 bg-orange-50">
           <Info className="h-4 w-4 text-orange-600" />
@@ -221,18 +323,18 @@ export default function CompteResultatPage() {
             <div className="col-span-3 text-right">Exercice {yearN1}</div>
           </div>
 
-          {/* PRODUITS */}
+          {/* ========== I. RESULTAT D'EXPLOITATION ========== */}
           <div className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b bg-gray-50/50 font-semibold text-sm">
-            <div className="col-span-12">PRODUITS (Classe 7)</div>
+            <div className="col-span-12">PRODUITS D&apos;EXPLOITATION</div>
           </div>
-          {pcgStructure.produits.map(p => {
+          {pcgStructure.produitsExploitation.map(p => {
             const amountN = dataN.produitsClasses[p.code] ?? 0;
             const amountN1 = dataN1.produitsClasses[p.code] ?? 0;
             if (amountN === 0 && amountN1 === 0) return null;
             return (
               <div
                 key={p.code}
-                className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm"
+                className="grid grid-cols-12 gap-2 px-5 py-2 border-b text-sm"
               >
                 <div className="col-span-6 pl-4">
                   <span className="text-muted-foreground font-mono mr-2">
@@ -249,28 +351,18 @@ export default function CompteResultatPage() {
               </div>
             );
           })}
-          <div className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm font-semibold bg-green-50/50">
-            <div className="col-span-6">TOTAL PRODUITS</div>
-            <div className="col-span-3 text-right">
-              <Money amount={totalProduitsN} className="text-green-700" />
-            </div>
-            <div className="col-span-3 text-right">
-              <Money amount={totalProduitsN1} className="text-green-700" />
-            </div>
-          </div>
 
-          {/* CHARGES */}
           <div className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b bg-gray-50/50 font-semibold text-sm">
-            <div className="col-span-12">CHARGES (Classe 6)</div>
+            <div className="col-span-12">CHARGES D&apos;EXPLOITATION</div>
           </div>
-          {pcgStructure.charges.map(c => {
+          {pcgStructure.chargesExploitation.map(c => {
             const amountN = dataN.chargesClasses[c.code] ?? 0;
             const amountN1 = dataN1.chargesClasses[c.code] ?? 0;
             if (amountN === 0 && amountN1 === 0) return null;
             return (
               <div
                 key={c.code}
-                className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm"
+                className="grid grid-cols-12 gap-2 px-5 py-2 border-b text-sm"
               >
                 <div className="col-span-6 pl-4">
                   <span className="text-muted-foreground font-mono mr-2">
@@ -287,15 +379,191 @@ export default function CompteResultatPage() {
               </div>
             );
           })}
-          <div className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm font-semibold bg-red-50/50">
-            <div className="col-span-6">TOTAL CHARGES</div>
+
+          <div className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm font-bold bg-blue-50/50">
+            <div className="col-span-6">I. RESULTAT D&apos;EXPLOITATION</div>
             <div className="col-span-3 text-right">
-              <Money amount={-totalChargesN} className="text-red-700" />
+              <Money
+                amount={resExplN}
+                className={resExplN >= 0 ? 'text-green-700' : 'text-red-700'}
+              />
             </div>
             <div className="col-span-3 text-right">
-              <Money amount={-totalChargesN1} className="text-red-700" />
+              <Money
+                amount={resExplN1}
+                className={resExplN1 >= 0 ? 'text-green-700' : 'text-red-700'}
+              />
             </div>
           </div>
+
+          {/* ========== II. RESULTAT FINANCIER ========== */}
+          {(prodFinN > 0 || prodFinN1 > 0 || charFinN > 0 || charFinN1 > 0) && (
+            <>
+              {pcgStructure.produitsFinanciers.map(p => {
+                const amountN = dataN.produitsClasses[p.code] ?? 0;
+                const amountN1 = dataN1.produitsClasses[p.code] ?? 0;
+                if (amountN === 0 && amountN1 === 0) return null;
+                return (
+                  <div
+                    key={p.code}
+                    className="grid grid-cols-12 gap-2 px-5 py-2 border-b text-sm"
+                  >
+                    <div className="col-span-6 pl-4">
+                      <span className="text-muted-foreground font-mono mr-2">
+                        {p.code}
+                      </span>
+                      {p.label}
+                    </div>
+                    <div className="col-span-3 text-right">
+                      {renderAmount(amountN)}
+                    </div>
+                    <div className="col-span-3 text-right">
+                      {renderAmount(amountN1)}
+                    </div>
+                  </div>
+                );
+              })}
+              {pcgStructure.chargesFinancieres.map(c => {
+                const amountN = dataN.chargesClasses[c.code] ?? 0;
+                const amountN1 = dataN1.chargesClasses[c.code] ?? 0;
+                if (amountN === 0 && amountN1 === 0) return null;
+                return (
+                  <div
+                    key={c.code}
+                    className="grid grid-cols-12 gap-2 px-5 py-2 border-b text-sm"
+                  >
+                    <div className="col-span-6 pl-4">
+                      <span className="text-muted-foreground font-mono mr-2">
+                        {c.code}
+                      </span>
+                      {c.label}
+                    </div>
+                    <div className="col-span-3 text-right">
+                      {renderAmount(amountN)}
+                    </div>
+                    <div className="col-span-3 text-right">
+                      {renderAmount(amountN1)}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+          <div className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm font-bold bg-blue-50/50">
+            <div className="col-span-6">II. RESULTAT FINANCIER</div>
+            <div className="col-span-3 text-right">
+              <Money
+                amount={resFinN}
+                className={resFinN >= 0 ? 'text-green-700' : 'text-red-700'}
+              />
+            </div>
+            <div className="col-span-3 text-right">
+              <Money
+                amount={resFinN1}
+                className={resFinN1 >= 0 ? 'text-green-700' : 'text-red-700'}
+              />
+            </div>
+          </div>
+
+          {/* RESULTAT COURANT */}
+          <div className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm font-semibold bg-gray-100">
+            <div className="col-span-6">
+              RESULTAT COURANT AVANT IMPOTS (I + II)
+            </div>
+            <div className="col-span-3 text-right">
+              <Money
+                amount={resCourantN}
+                className={resCourantN >= 0 ? 'text-green-700' : 'text-red-700'}
+              />
+            </div>
+            <div className="col-span-3 text-right">
+              <Money
+                amount={resCourantN1}
+                className={
+                  resCourantN1 >= 0 ? 'text-green-700' : 'text-red-700'
+                }
+              />
+            </div>
+          </div>
+
+          {/* ========== III. RESULTAT EXCEPTIONNEL ========== */}
+          {(prodExcN > 0 || prodExcN1 > 0 || charExcN > 0 || charExcN1 > 0) && (
+            <>
+              {pcgStructure.produitsExceptionnels.map(p => {
+                const amountN = dataN.produitsClasses[p.code] ?? 0;
+                const amountN1 = dataN1.produitsClasses[p.code] ?? 0;
+                return (
+                  <div
+                    key={p.code}
+                    className="grid grid-cols-12 gap-2 px-5 py-2 border-b text-sm"
+                  >
+                    <div className="col-span-6 pl-4">
+                      <span className="text-muted-foreground font-mono mr-2">
+                        {p.code}
+                      </span>
+                      {p.label}
+                    </div>
+                    <div className="col-span-3 text-right">
+                      {renderAmount(amountN)}
+                    </div>
+                    <div className="col-span-3 text-right">
+                      {renderAmount(amountN1)}
+                    </div>
+                  </div>
+                );
+              })}
+              {pcgStructure.chargesExceptionnelles.map(c => {
+                const amountN = dataN.chargesClasses[c.code] ?? 0;
+                const amountN1 = dataN1.chargesClasses[c.code] ?? 0;
+                return (
+                  <div
+                    key={c.code}
+                    className="grid grid-cols-12 gap-2 px-5 py-2 border-b text-sm"
+                  >
+                    <div className="col-span-6 pl-4">
+                      <span className="text-muted-foreground font-mono mr-2">
+                        {c.code}
+                      </span>
+                      {c.label}
+                    </div>
+                    <div className="col-span-3 text-right">
+                      {renderAmount(amountN)}
+                    </div>
+                    <div className="col-span-3 text-right">
+                      {renderAmount(amountN1)}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+          <div className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm font-bold bg-blue-50/50">
+            <div className="col-span-6">III. RESULTAT EXCEPTIONNEL</div>
+            <div className="col-span-3 text-right">
+              <Money
+                amount={resExcN}
+                className={resExcN >= 0 ? 'text-green-700' : 'text-red-700'}
+              />
+            </div>
+            <div className="col-span-3 text-right">
+              <Money
+                amount={resExcN1}
+                className={resExcN1 >= 0 ? 'text-green-700' : 'text-red-700'}
+              />
+            </div>
+          </div>
+
+          {/* IMPOT SUR LES BENEFICES */}
+          {(isN > 0 || isN1 > 0) && (
+            <div className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b text-sm">
+              <div className="col-span-6 pl-4">
+                <span className="text-muted-foreground font-mono mr-2">69</span>
+                Impot sur les benefices (IS)
+              </div>
+              <div className="col-span-3 text-right">{renderAmount(-isN)}</div>
+              <div className="col-span-3 text-right">{renderAmount(-isN1)}</div>
+            </div>
+          )}
 
           {/* RESULTAT NET */}
           <div className="grid grid-cols-12 gap-2 px-5 py-4 text-sm font-bold bg-orange-50">

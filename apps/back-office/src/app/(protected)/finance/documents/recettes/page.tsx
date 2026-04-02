@@ -26,9 +26,11 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Alert,
+  AlertDescription,
 } from '@verone/ui';
 import { Money } from '@verone/ui-business';
-import { TrendingUp, ArrowLeft } from 'lucide-react';
+import { TrendingUp, ArrowLeft, Info } from 'lucide-react';
 
 // =====================================================================
 // HELPERS
@@ -50,15 +52,19 @@ function formatDate(dateStr: string | null): string {
 function getPaymentMethod(tx: BankTransaction): string {
   const detected = detectBankPaymentMethod(tx.label ?? '');
   if (detected) return formatBankPaymentMethod(detected);
-  const rawData = tx.raw_data as { operation_type?: string } | undefined;
-  if (rawData?.operation_type) {
+  const opType = tx.operation_type;
+  if (opType) {
     const typeMap: Record<string, string> = {
+      income: 'Virement recu',
       transfer: 'Virement',
       card: 'Carte bancaire',
       direct_debit: 'Prelevement',
       check: 'Cheque',
+      qonto_fee: 'Frais bancaires',
+      recall: 'Rappel',
+      swift_income: 'Virement international',
     };
-    return typeMap[rawData.operation_type] || rawData.operation_type;
+    return typeMap[opType] ?? opType;
   }
   return '-';
 }
@@ -118,6 +124,18 @@ export default function RecettesPage() {
           </SelectContent>
         </Select>
       </div>
+
+      {/* Guide */}
+      <Alert className="border-blue-200 bg-blue-50">
+        <Info className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-800 text-sm">
+          <strong>Le Livre des Recettes</strong> liste tous vos encaissements
+          (ventes, virements recus) par ordre chronologique. Il montre le
+          client, le numero de facture, le mode de paiement, et les montants
+          HT/TVA/TTC. Ce document est obligatoire pour les societes au regime
+          reel.
+        </AlertDescription>
+      </Alert>
 
       {loading ? (
         <Card>
