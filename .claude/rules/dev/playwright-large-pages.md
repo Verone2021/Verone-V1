@@ -1,63 +1,46 @@
-# Playwright MCP : Mode Hybride Intelligent
+# Playwright MCP : Mode Screenshot Only (Vision)
 
 ## Configuration active (.mcp.json)
 
-`--snapshot-mode incremental` : snapshots legers (diff seulement, pas le DOM complet a chaque fois)
+`--snapshot-mode none --caps vision` : snapshots DESACTIVES, mode vision (screenshots + coordonnees).
 
-## CRITICAL : Regles d'utilisation hybride
+## CRITICAL : ZERO SNAPSHOT
 
-### browser_snapshot — UNIQUEMENT pages legeres
+Les snapshots (`browser_snapshot`) sont **DEFINITIVEMENT INTERDITS**.
+Raison : crash systematique "Request too large (max 20MB)" qui detruit les conversations.
 
-| Page                                  | Snapshot OK ? | Pourquoi          |
-| ------------------------------------- | ------------- | ----------------- |
-| Login, formulaires                    | OUI           | < 50 elements DOM |
-| Modals, dialogs                       | OUI           | Contenu isole     |
-| Pages detail (1 entite)               | OUI           | Peu de donnees    |
-| Dashboard KPIs (sans tableau expande) | OUI           | Widgets legers    |
-| **Tableaux > 50 lignes**              | **NON**       | **Crash 20 Mo**   |
-| **Listes non paginées**               | **NON**       | **Crash 20 Mo**   |
+### Outils INTERDITS
 
-### browser_take_screenshot — OBLIGATOIRE pages lourdes
+- `browser_snapshot` — **JAMAIS**, quel que soit la page
 
-Pages connues comme lourdes (TOUJOURS screenshot, JAMAIS snapshot) :
+### Outils AUTORISES
 
-- `/stocks/mouvements` (300+ lignes)
-- `/stocks/ajustements`
-- `/stocks/analytics`
-- `/finance/transactions` (1000+ lignes)
-- `/finance/documents/grand-livre`
-- `/finance/documents/recettes`
-- `/finance/documents/achats`
-- `/finance/documents/tva`
-- Toute page avec DataTable non paginee
+- `browser_take_screenshot` — toujours safe (quelques Ko)
+- `browser_click` — interactions
+- `browser_fill_form` — formulaires
+- `browser_press_key` — clavier
+- `browser_select_option` — dropdowns
+- `browser_navigate` — navigation
+- `browser_console_messages` — debug
+- `browser_evaluate` — JS evaluation
+- `browser_network_requests` — debug reseau
 
-## CRITICAL : Methode "Screenshot-First" (OBLIGATOIRE)
-
-TOUJOURS commencer par un screenshot. JAMAIS de snapshot en premier appel sur une page.
-
-### Workflow unique (toutes pages)
+## Workflow standard (toutes pages)
 
 1. `browser_navigate` vers la page
-2. `browser_take_screenshot` IMMEDIATEMENT (toujours safe, quelques Ko)
-3. Analyser l'image :
-   - Page legere (formulaire, modal, detail, < 50 elements) → `browser_snapshot` autorise pour lire valeurs exactes
-   - Page lourde (tableau, liste, dashboard data) → RESTER en screenshot, JAMAIS de snapshot
-4. Interagir via `browser_click`/`browser_fill_form`
-5. `browser_take_screenshot` pour verifier le resultat
-6. `browser_console_messages` pour verifier 0 erreur
-
-### Regle d'or
-
-- Premier contact avec une page = TOUJOURS screenshot
-- Snapshot = UNIQUEMENT apres avoir VU que la page est legere
-- Si ca crash ENCORE une seule fois → passage definitif en mode `--snapshot-mode none --caps vision`
-
-## Si "Request too large" arrive malgre tout
-
-1. NE PAS retenter le meme appel
 2. `browser_take_screenshot` pour voir la page
-3. Ajouter la page a la liste des pages lourdes ci-dessus
-4. Continuer en mode screenshot uniquement
+3. Interagir via `browser_click`/`browser_fill_form`/`browser_press_key`
+4. `browser_take_screenshot` pour verifier le resultat
+5. `browser_console_messages` pour verifier 0 erreur
+
+## Lire du texte exact sans snapshot
+
+Si besoin de lire une valeur precise (ex: contenu d'un input) :
+
+```javascript
+// Utiliser browser_evaluate au lieu de browser_snapshot
+browser_evaluate({ expression: "document.querySelector('#mon-input').value" });
+```
 
 ## Nettoyage periodique
 

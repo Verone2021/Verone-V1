@@ -32,7 +32,7 @@ interface NotificationBase {
   message: string;
   action_url?: string;
   action_label?: string;
-  user_id: string;
+  user_id: string | null;
   read: boolean;
   created_at: string;
   updated_at: string;
@@ -103,7 +103,7 @@ export function useDatabaseNotifications(): DatabaseNotificationsHook {
 
   const supabase = createClient();
 
-  // Charger les notifications de l'utilisateur courant
+  // Charger les notifications equipe (user_id IS NULL) + personnelles
   const loadNotifications = useCallback(async () => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
@@ -121,24 +121,32 @@ export function useDatabaseNotifications(): DatabaseNotificationsHook {
         return;
       }
 
+      // Fetch equipe (user_id IS NULL) + personnelles (user_id = moi)
       const { data, error } = await supabase
         .from('notifications')
         .select(
           'id, type, severity, title, message, action_url, action_label, user_id, read, created_at, updated_at'
         )
-        .eq('user_id', user.id)
+        .or(`user_id.is.null,user_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
-        .limit(50); // Limiter à 50 notifications récentes
+        .limit(200);
 
       if (error) throw error;
 
+      // Vrai COUNT non-lus (pas limite par le fetch)
+      const { count: realUnreadCount } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .or(`user_id.is.null,user_id.eq.${user.id}`)
+        .eq('read', false);
+
       const notifications = data || [];
-      const unreadCount = notifications.filter(n => !n.read).length;
 
       setState(prev => ({
         ...prev,
         notifications,
-        unreadCount,
+        unreadCount:
+          realUnreadCount ?? notifications.filter(n => !n.read).length,
         loading: false,
       }));
     } catch (error) {
@@ -196,7 +204,7 @@ export function useDatabaseNotifications(): DatabaseNotificationsHook {
     [supabase]
   );
 
-  // Marquer toutes les notifications comme lues
+  // Marquer toutes les notifications comme lues (equipe + personnelles)
   const markAllAsRead = useCallback(async () => {
     try {
       const {
@@ -204,15 +212,25 @@ export function useDatabaseNotifications(): DatabaseNotificationsHook {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
+      // Marquer les notifs equipe (user_id IS NULL)
+      const { error: teamError } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .is('user_id', null)
+        .eq('read', false);
+
+      if (teamError) throw teamError;
+
+      // Marquer les notifs personnelles
+      const { error: personalError } = await supabase
         .from('notifications')
         .update({ read: true })
         .eq('user_id', user.id)
         .eq('read', false);
 
-      if (error) throw error;
+      if (personalError) throw personalError;
 
-      // Mise à jour optimiste du state
+      // Mise a jour optimiste du state
       setState(prev => ({
         ...prev,
         notifications: prev.notifications.map(n => ({ ...n, read: true })),
