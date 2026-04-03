@@ -239,7 +239,7 @@ export const getDashboardMetrics = cache(
         supabase
           .from('sales_orders')
           .select('total_ttc')
-          .eq('status', 'delivered')
+          .in('status', ['validated', 'shipped'])
           .gte('created_at', thirtyDaysAgoISO)
           .is('cancelled_at', null),
 
@@ -247,7 +247,7 @@ export const getDashboardMetrics = cache(
         supabase
           .from('sales_orders')
           .select('total_ttc, total_ht, channel_id, sales_channels(name)')
-          .in('status', ['shipped', 'delivered', 'validated'])
+          .in('status', ['validated', 'shipped'])
           .gte('created_at', thirtyDaysAgoISO)
           .is('cancelled_at', null),
 

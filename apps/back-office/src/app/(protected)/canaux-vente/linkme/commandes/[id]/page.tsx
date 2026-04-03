@@ -195,6 +195,13 @@ export default function LinkMeOrderDetailPage() {
   const data = useOrderPageData(orderId);
 
   if (data.isLoading) return <OrderPageSkeleton />;
+
+  // Isolation canal : si la commande n'est pas LinkMe, rediriger vers la bonne page
+  if (data.error?.includes('pas partie du canal LinkMe')) {
+    router.replace(`/commandes/clients?id=${orderId}`);
+    return null;
+  }
+
   if (data.error ?? !data.order)
     return <OrderPageError message={data.error ?? 'Commande non trouvee'} />;
 

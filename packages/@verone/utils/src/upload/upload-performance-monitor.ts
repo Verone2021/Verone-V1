@@ -156,8 +156,6 @@ export class UploadPerformanceMonitor {
    * 🚀 Initialisation du monitoring
    */
   private initializeMonitoring(): void {
-    console.warn('📊 Initialisation monitoring performance uploads');
-
     // Nettoyer métriques anciennes (>24h)
     this.cleanupOldMetrics();
 
@@ -174,10 +172,6 @@ export class UploadPerformanceMonitor {
 
     this.sessionMetrics = this.sessionMetrics.filter(
       metrics => now - metrics.timing.startTime < maxAge
-    );
-
-    console.warn(
-      `🧹 Nettoyage: ${this.sessionMetrics.length} métriques conservées`
     );
   }
 

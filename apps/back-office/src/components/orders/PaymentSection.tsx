@@ -142,6 +142,51 @@ export function PaymentSection({
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [createdInvoiceNumber, setCreatedInvoiceNumber] = useState('');
 
+  // Auto-fetch rapprochement si isMatched non fourni en prop
+  const [autoMatched, setAutoMatched] = useState(false);
+  const [autoMatchLabel, setAutoMatchLabel] = useState<string | null>(null);
+  const [autoMatchAmount, setAutoMatchAmount] = useState<number | null>(null);
+  const [autoMatchDate, setAutoMatchDate] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isMatched !== undefined) return; // Prop fournie, pas besoin d'auto-fetch
+    async function checkReconciliation() {
+      try {
+        const { createClient } = await import('@verone/utils/supabase/client');
+        const supabase = createClient();
+        const { data: links } = await supabase
+          .from('transaction_document_links')
+          .select('id, allocated_amount, transaction_id')
+          .eq('sales_order_id', orderId)
+          .limit(1);
+
+        if (links && links.length > 0) {
+          setAutoMatched(true);
+          setAutoMatchAmount(Number(links[0].allocated_amount) || 0);
+          // Chercher le label de la transaction
+          const { data: tx } = await supabase
+            .from('bank_transactions')
+            .select('label, emitted_at')
+            .eq('id', links[0].transaction_id)
+            .single();
+          if (tx) {
+            setAutoMatchLabel(tx.label);
+            setAutoMatchDate(tx.emitted_at);
+          }
+        }
+      } catch (err) {
+        console.error('[PaymentSection] Auto-match check failed:', err);
+      }
+    }
+    void checkReconciliation();
+  }, [orderId, isMatched]);
+
+  // Valeurs finales : prop > auto-fetch
+  const effectiveIsMatched = isMatched ?? autoMatched;
+  const effectiveMatchLabel = matchedTransactionLabel ?? autoMatchLabel;
+  const effectiveMatchAmount = matchedTransactionAmount ?? autoMatchAmount;
+  const effectiveMatchDate = matchedTransactionEmittedAt ?? autoMatchDate;
+
   // Fetch linked invoices from financial_documents
   const fetchLinkedInvoices = useCallback(async () => {
     try {
@@ -270,28 +315,26 @@ export function PaymentSection({
             )}
           </div>
 
-          {/* Rapprochement — intégré */}
-          {isMatched ? (
+          {/* Rapprochement — intégré (auto-fetch si prop non fournie) */}
+          {effectiveIsMatched ? (
             <div className="bg-green-50 p-2 rounded border border-green-200 text-xs space-y-0.5">
               <div className="flex items-center justify-between">
                 <span className="text-green-800 font-medium flex items-center gap-1">
                   <Link2 className="h-3 w-3" />
-                  {matchedTransactionLabel ?? 'Transaction liée'}
+                  {effectiveMatchLabel ?? 'Transaction liée'}
                 </span>
                 <span className="font-bold text-green-700">
                   {new Intl.NumberFormat('fr-FR', {
                     style: 'currency',
                     currency: 'EUR',
-                  }).format(Math.abs(matchedTransactionAmount ?? 0))}
+                  }).format(Math.abs(effectiveMatchAmount ?? 0))}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-gray-500">
-                {matchedTransactionEmittedAt && (
+                {effectiveMatchDate && (
                   <span>
                     Payé le{' '}
-                    {new Date(matchedTransactionEmittedAt).toLocaleDateString(
-                      'fr-FR'
-                    )}
+                    {new Date(effectiveMatchDate).toLocaleDateString('fr-FR')}
                   </span>
                 )}
                 {matchedTransactionId && (

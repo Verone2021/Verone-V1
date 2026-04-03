@@ -177,6 +177,16 @@ export default function LinkMeOrderDetailsPage() {
 
       if (orderError) throw orderError;
 
+      // Isolation canal : rediriger vers la bonne page si la commande n'est pas LinkMe
+      const rawOrder = orderData as Record<string, unknown>;
+      if (
+        !rawOrder['created_by_affiliate_id'] &&
+        !rawOrder['linkme_selection_id']
+      ) {
+        router.replace(`/commandes/clients?id=${orderId}`);
+        return;
+      }
+
       // Fetch contacts separately by PK (fast, avoids heavy RLS on FK JOINs)
       const respContactId = (orderData as Record<string, unknown>)
         .responsable_contact_id as string | null;
@@ -381,7 +391,7 @@ export default function LinkMeOrderDetailsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [orderId]);
+  }, [orderId, router]);
 
   useEffect(() => {
     if (orderId) {

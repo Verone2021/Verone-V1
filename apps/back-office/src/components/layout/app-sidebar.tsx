@@ -1011,7 +1011,8 @@ function SidebarContent() {
                   alt="V"
                   width={32}
                   height={32}
-                  className="h-8 w-8 object-contain"
+                  className="h-8 object-contain"
+                  style={{ width: 'auto' }}
                   priority
                 />
               </Link>

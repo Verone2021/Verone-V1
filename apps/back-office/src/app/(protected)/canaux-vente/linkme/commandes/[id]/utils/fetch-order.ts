@@ -271,6 +271,15 @@ export async function fetchOrderById(
   if (orderError) throw orderError;
 
   const orderData = rawData as Record<string, unknown>;
+
+  // Isolation canal : cette page est reservee aux commandes LinkMe uniquement
+  // Une commande LinkMe a obligatoirement created_by_affiliate_id OU linkme_selection_id
+  if (
+    !orderData['created_by_affiliate_id'] &&
+    !orderData['linkme_selection_id']
+  ) {
+    throw new Error('Cette commande ne fait pas partie du canal LinkMe');
+  }
   const createdByUserId = (orderData['created_by'] as string | null) ?? null;
 
   // Fetch contacts by PK in parallel (avoids heavy RLS on FK JOINs)
