@@ -11,6 +11,7 @@ import {
   Package,
   RefreshCw,
 } from 'lucide-react';
+import Image from 'next/image';
 import { toast } from 'sonner';
 
 import {
@@ -123,9 +124,19 @@ export function GmProductsTable({ products, loading }: GmProductsTableProps) {
                 <TableRow key={p.id}>
                   <TableCell>
                     <div className="h-10 w-10 rounded overflow-hidden bg-muted flex-shrink-0">
-                      <div className="h-full w-full flex items-center justify-center">
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                      </div>
+                      {p.primary_image_url ? (
+                        <Image
+                          src={p.primary_image_url}
+                          alt={p.product_name}
+                          width={40}
+                          height={40}
+                          className="object-cover h-full w-full"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
