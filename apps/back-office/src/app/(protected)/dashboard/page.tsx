@@ -146,7 +146,7 @@ export default function DashboardPage() {
       value: formatRevenue(data.hero.revenue30Days),
       icon: DollarSign,
       color: 'success' as const,
-      description: 'Commandes livrées',
+      description: 'Commandes validees',
       onClick: () => router.push('/ventes'),
     },
     {

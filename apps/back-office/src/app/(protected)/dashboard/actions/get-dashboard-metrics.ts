@@ -239,7 +239,7 @@ export const getDashboardMetrics = cache(
         supabase
           .from('sales_orders')
           .select('total_ttc')
-          .eq('status', 'delivered')
+          .eq('status', 'validated')
           .gte('created_at', thirtyDaysAgoISO)
           .is('cancelled_at', null),
 
