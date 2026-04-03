@@ -147,9 +147,8 @@ export function VatSection({
       {isVentilationMode && (
         <div className="space-y-4">
           {/* En-tetes */}
-          <div className="grid grid-cols-13 gap-2 text-xs font-medium text-slate-500 px-1">
-            <div className="col-span-4">Description</div>
-            <div className="col-span-2 text-right">Montant HT</div>
+          <div className="grid grid-cols-10 gap-2 text-xs font-medium text-slate-500 px-1">
+            <div className="col-span-3 text-right">Montant HT</div>
             <div className="col-span-2 text-center">Taux</div>
             <div className="col-span-2 text-right">TVA</div>
             <div className="col-span-2 text-right">TTC</div>
@@ -163,24 +162,9 @@ export function VatSection({
             return (
               <div
                 key={line.id}
-                className="grid grid-cols-13 gap-2 items-center"
+                className="grid grid-cols-10 gap-2 items-center"
               >
-                <div className="col-span-4">
-                  <Input
-                    placeholder={`Ligne ${index + 1}`}
-                    value={line.description}
-                    onChange={e => {
-                      const newLines = [...vatLines];
-                      newLines[index] = {
-                        ...line,
-                        description: e.target.value,
-                      };
-                      onVatLinesChange(newLines);
-                    }}
-                    className="h-9"
-                  />
-                </div>
-                <div className="col-span-2">
+                <div className="col-span-3">
                   <Input
                     type="number"
                     step="0.01"

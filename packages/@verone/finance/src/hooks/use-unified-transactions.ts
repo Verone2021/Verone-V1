@@ -25,6 +25,17 @@ export type UnifiedStatus =
 
 export type TransactionSide = 'credit' | 'debit';
 
+export interface ReconciliationLinkDetail {
+  id: string;
+  link_type: 'document' | 'sales_order' | 'purchase_order';
+  allocated_amount: number;
+  label: string; // numéro de facture ou commande
+  partner_name: string | null;
+  total_ht: number;
+  total_ttc: number;
+  vat_rate: number; // calculé
+}
+
 export interface UnifiedTransaction {
   id: string;
   transaction_id: string;
@@ -74,6 +85,15 @@ export interface UnifiedTransaction {
   rule_match_value: string | null;
   rule_display_label: string | null;
   rule_allow_multiple_categories: boolean | null;
+
+  // Rapprochement enrichi (depuis transaction_document_links)
+  reconciliation_link_count: number;
+  reconciliation_total_allocated: number;
+  reconciliation_remaining: number;
+  // TVA déduite des documents/commandes rapprochés (lecture seule)
+  reconciliation_vat_rates: number[];
+  // Détails des liens pour affichage dans le panneau de détail
+  reconciliation_links: ReconciliationLinkDetail[];
 
   // Statut unifie
   unified_status: UnifiedStatus;
@@ -360,6 +380,12 @@ export function useUnifiedTransactions(
             rule_display_label: tx.rule_display_label as string | null,
             rule_allow_multiple_categories:
               tx.rule_allow_multiple_categories as boolean | null,
+            // Rapprochement enrichi (rempli après)
+            reconciliation_link_count: 0,
+            reconciliation_total_allocated: 0,
+            reconciliation_remaining: Math.abs(tx.amount as number),
+            reconciliation_vat_rates: [],
+            reconciliation_links: [],
             // Statut unifié (calculé par la vue)
             unified_status: tx.unified_status as UnifiedStatus,
             // TVA
@@ -380,6 +406,195 @@ export function useUnifiedTransactions(
             updated_at: tx.updated_at as string,
           })
         );
+
+        // Enrichir avec les données de rapprochement (transaction_document_links)
+        const txIds = transformed.map(t => t.id);
+        if (txIds.length > 0) {
+          const { data: linksAgg } = await supabase
+            .from('transaction_document_links')
+            .select(
+              'id, transaction_id, allocated_amount, document_id, sales_order_id, purchase_order_id, link_type'
+            )
+            .in('transaction_id', txIds);
+
+          if (linksAgg && linksAgg.length > 0) {
+            // Récupérer les détails des entités liées (documents, commandes, PO)
+            const allDocIds = [
+              ...new Set(
+                linksAgg
+                  .filter(l => l.document_id)
+                  .map(l => l.document_id as string)
+              ),
+            ];
+            const allSoIds = [
+              ...new Set(
+                linksAgg
+                  .filter(l => l.sales_order_id)
+                  .map(l => l.sales_order_id as string)
+              ),
+            ];
+            const allPoIds = [
+              ...new Set(
+                linksAgg
+                  .filter(l => l.purchase_order_id)
+                  .map(l => l.purchase_order_id as string)
+              ),
+            ];
+
+            type EntityDetail = {
+              label: string;
+              partner_name: string | null;
+              total_ht: number;
+              total_ttc: number;
+              vat_rate: number;
+            };
+            const entityDetails = new Map<string, EntityDetail>();
+
+            if (allDocIds.length > 0) {
+              const { data: docs } = await supabase
+                .from('financial_documents')
+                .select(
+                  'id, document_number, total_ht, total_ttc, partner_id, organisations!partner_id(legal_name, trade_name)'
+                )
+                .in('id', allDocIds);
+              docs?.forEach(d => {
+                const ht = Number(d.total_ht) || 0;
+                const ttc = Number(d.total_ttc) || 0;
+                const org = d.organisations as {
+                  legal_name: string;
+                  trade_name: string | null;
+                } | null;
+                entityDetails.set(d.id, {
+                  label: d.document_number ?? 'Document',
+                  partner_name: org?.trade_name ?? org?.legal_name ?? null,
+                  total_ht: ht,
+                  total_ttc: ttc,
+                  vat_rate: ht > 0 ? Math.round(((ttc - ht) / ht) * 100) : 0,
+                });
+              });
+            }
+            if (allSoIds.length > 0) {
+              const { data: sos } = await supabase
+                .from('sales_orders')
+                .select(
+                  'id, order_number, total_ht, total_ttc, customer_id, customer_type'
+                )
+                .in('id', allSoIds);
+              if (sos) {
+                const orgCustIds = sos
+                  .filter(s => s.customer_type === 'organization')
+                  .map(s => s.customer_id)
+                  .filter(Boolean) as string[];
+                const orgNames = new Map<string, string>();
+                if (orgCustIds.length > 0) {
+                  const { data: orgs } = await supabase
+                    .from('organisations')
+                    .select('id, legal_name, trade_name')
+                    .in('id', orgCustIds);
+                  orgs?.forEach(o =>
+                    orgNames.set(o.id, o.trade_name ?? o.legal_name)
+                  );
+                }
+                sos.forEach(s => {
+                  const ht = Number(s.total_ht) || 0;
+                  const ttc = Number(s.total_ttc) || 0;
+                  entityDetails.set(s.id, {
+                    label: `SO-${s.order_number}`,
+                    partner_name:
+                      s.customer_type === 'organization'
+                        ? (orgNames.get(s.customer_id as string) ?? null)
+                        : null,
+                    total_ht: ht,
+                    total_ttc: ttc,
+                    vat_rate: ht > 0 ? Math.round(((ttc - ht) / ht) * 100) : 0,
+                  });
+                });
+              }
+            }
+            if (allPoIds.length > 0) {
+              const { data: pos } = await supabase
+                .from('purchase_orders')
+                .select(
+                  'id, po_number, total_ht, total_ttc, supplier_id, organisations!supplier_id(legal_name, trade_name)'
+                )
+                .in('id', allPoIds);
+              pos?.forEach(p => {
+                const ht = Number(p.total_ht) || 0;
+                const ttc = Number(p.total_ttc) || 0;
+                const org = p.organisations as {
+                  legal_name: string;
+                  trade_name: string | null;
+                } | null;
+                entityDetails.set(p.id, {
+                  label: `PO-${p.po_number}`,
+                  partner_name: org?.trade_name ?? org?.legal_name ?? null,
+                  total_ht: ht,
+                  total_ttc: ttc,
+                  vat_rate: ht > 0 ? Math.round(((ttc - ht) / ht) * 100) : 0,
+                });
+              });
+            }
+
+            // Grouper par transaction et construire les détails
+            const linksByTx = new Map<
+              string,
+              {
+                count: number;
+                total: number;
+                details: ReconciliationLinkDetail[];
+              }
+            >();
+            for (const link of linksAgg) {
+              const txId = link.transaction_id;
+              const existing = linksByTx.get(txId) ?? {
+                count: 0,
+                total: 0,
+                details: [],
+              };
+              existing.count += 1;
+              const allocAmt = Math.abs(Number(link.allocated_amount) || 0);
+              existing.total += allocAmt;
+
+              // Résoudre l'entité liée
+              const entityId = (link.document_id ??
+                link.sales_order_id ??
+                link.purchase_order_id) as string;
+              const detail = entityDetails.get(entityId);
+              existing.details.push({
+                id: link.id,
+                link_type:
+                  link.link_type as ReconciliationLinkDetail['link_type'],
+                allocated_amount: allocAmt,
+                label: detail?.label ?? 'Inconnu',
+                partner_name: detail?.partner_name ?? null,
+                total_ht: detail?.total_ht ?? 0,
+                total_ttc: detail?.total_ttc ?? 0,
+                vat_rate: detail?.vat_rate ?? 0,
+              });
+
+              linksByTx.set(txId, existing);
+            }
+
+            // Appliquer sur les transactions
+            for (const tx of transformed) {
+              const info = linksByTx.get(tx.id);
+              if (info) {
+                tx.reconciliation_link_count = info.count;
+                tx.reconciliation_total_allocated = info.total;
+                tx.reconciliation_remaining = Math.abs(tx.amount) - info.total;
+                tx.reconciliation_links = info.details;
+
+                const vatRates = new Set<number>();
+                for (const d of info.details) {
+                  if (d.vat_rate !== undefined) vatRates.add(d.vat_rate);
+                }
+                tx.reconciliation_vat_rates = [...vatRates].sort(
+                  (a, b) => a - b
+                );
+              }
+            }
+          }
+        }
 
         if (append) {
           setTransactions(prev => [...prev, ...transformed]);
