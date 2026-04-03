@@ -1,772 +1,177 @@
-/* eslint-disable max-lines */
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
-import { useRouter } from 'next/navigation';
+import { AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 
-import { GoogleMerchantConfigModal } from '@verone/channels';
-import { GoogleMerchantProductCard } from '@verone/channels';
-import { GoogleMerchantProductManager } from '@verone/channels';
-import { useGoogleMerchantSync } from '@verone/channels';
-import {
-  useGoogleMerchantProducts,
-  useGoogleMerchantStats,
-} from '@verone/channels';
-import { useProducts } from '@verone/products';
-import { Alert, AlertDescription, AlertTitle } from '@verone/ui';
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@verone/ui';
-import { Input } from '@verone/ui';
-import { Progress } from '@verone/ui';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@verone/ui';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
-import { logger } from '@verone/utils/logger';
-import {
-  Globe,
-  ArrowLeft,
-  RefreshCw,
-  Settings,
-  CheckCircle,
-  AlertCircle,
-  Package,
-  Euro,
-  BarChart,
-  ShoppingBag,
-  Search,
-  Info,
-} from 'lucide-react';
+import { useGoogleMerchantProducts } from '@verone/channels';
+import { cn } from '@verone/utils';
+import { useQueryClient } from '@tanstack/react-query';
+
+import { AddProductsTab } from './add-products-tab';
+import { GmFiltersBar } from './_components/gm-filters';
+import { GmHeader } from './_components/gm-header';
+import { GmProductsTable } from './_components/gm-products-table';
+import { GmStatsCards } from './_components/gm-stats-cards';
+import { DEFAULT_GM_FILTERS } from './_components/types';
+import type { GoogleMerchantFilters } from './_components/types';
 
 export default function GoogleMerchantPage() {
-  const router = useRouter();
-  // Reserved for future multi-select feature
-  const [_selectedProducts, _setSelectedProducts] = useState<string[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'synced' | 'add'>('synced');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [filters, setFilters] =
+    useState<GoogleMerchantFilters>(DEFAULT_GM_FILTERS);
+  const queryClient = useQueryClient();
+  const { data: products, isLoading } = useGoogleMerchantProducts();
 
-  // 🚀 Hooks RÉELS (aucune donnée mock)
-  const {
-    isLoading,
-    isSuccess,
-    isError,
-    synced,
-    failed,
-    skipped,
-    total,
-    progress,
-    duration,
-    results: _results,
-    error,
-    insertProducts,
-    updateProducts: _updateProducts,
-    reset: _reset,
-  } = useGoogleMerchantSync();
-
-  // 🚀 Fetch produits RÉELS synchronisés depuis Supabase
-  const { data: syncedProducts = [], isLoading: syncedProductsLoading } =
-    useGoogleMerchantProducts();
-
-  // 🚀 Fetch produits éligibles = UNIQUEMENT ceux publiés sur le site internet
-  const { products: eligibleProducts = [], loading: eligibleProductsLoading } =
-    useProducts({ is_published_online: true });
-
-  // 🚀 Fetch statistiques RÉELLES depuis Supabase
-  const { data: stats, isLoading: statsLoading } = useGoogleMerchantStats();
-
-  // 🚀 Configuration Google Merchant (TEMPORAIRE - à récupérer depuis DB)
-  // TODO Phase 2: Créer table google_merchant_config
-  const merchantConfig = {
-    merchant_id: '5495521926', // Account ID RÉEL
-    api_connected: true,
-    country: 'FR',
-    currency: 'EUR',
-    language: 'fr',
-    last_sync: stats?.last_sync_at ?? null,
-    auto_sync: false, // Pas encore implémenté
-    sync_frequency: 'manual',
-  };
-
-  // 🚀 Handler: Ajouter produits depuis GoogleMerchantProductManager
-  const handleAddProducts = async (
-    productIds: string[],
-    customData: Record<string, unknown>,
-    onProgress?: (progress: { synced: number; total: number }) => void
-  ) => {
-    logger.info('[Google Merchant Page] Adding products', {
-      count: productIds.length,
-    });
-
-    return new Promise<{ success: boolean; synced: number; failed: number }>(
-      resolve => {
-        void insertProducts(productIds, {
-          onSuccess: data => {
-            logger.info('[Google Merchant Page] Products added successfully', {
-              synced: data.synced,
-              failed: data.failed,
-            });
-            resolve({
-              success: true,
-              synced: data.synced,
-              failed: data.failed,
-            });
-          },
-          onError: error => {
-            logger.error(
-              `[Google Merchant Page] Failed to add products: ${error}`
-            );
-            resolve({ success: false, synced: 0, failed: productIds.length });
-          },
-          onProgress: progress => {
-            if (onProgress) onProgress(progress);
-          },
-        });
-      }
-    );
-  };
-
-  // 🚀 Handler: Mettre à jour prix custom produit
-  const handleUpdatePrice = async (productId: string, newPriceHT: number) => {
-    logger.info('[Google Merchant Page] Updating custom price', {
-      productId,
-      price: newPriceHT,
-    });
-    // TODO: Implémenter API update prix custom
-    // await updateProducts([productId], { custom_price_ht: newPriceHT })
-  };
-
-  // 🚀 Handler: Mettre à jour métadonnées produit
-  const handleUpdateMetadata = async (
-    productId: string,
-    _metadata: { title: string; description: string }
-  ) => {
-    logger.info('[Google Merchant Page] Updating metadata', { productId });
-    // TODO: Implémenter API update métadonnées (will use _metadata)
-  };
-
-  // 🚀 Handler: Re-synchroniser produit
-  const handleResyncProduct = async (productId: string) => {
-    logger.info('[Google Merchant Page] Resyncing product', { productId });
-    await insertProducts([productId]);
-  };
-
-  // 🚀 Handler: Masquer/Retirer produit de Google Merchant
-  const handleHideProduct = async (productId: string) => {
-    logger.info('[Google Merchant Page] Hiding product from Google Merchant', {
-      productId,
-    });
-    // Desactive le produit pour le canal Google Merchant via channel_pricing
-    const supabase = (
-      await import('@verone/utils/supabase/client')
-    ).createClient();
-    const channelId = 'd3d2b018-dfee-41c1-a955-f0690320afec'; // google_merchant
-    const { error } = await supabase.from('channel_pricing').upsert(
-      {
-        product_id: productId,
-        channel_id: channelId,
-        is_active: false,
-        min_quantity: 1,
-      },
-      { onConflict: 'product_id,channel_id,min_quantity' }
-    );
-    if (error) {
-      logger.error(
-        `[Google Merchant] Failed to hide product: ${error.message}`
-      );
-    }
-  };
-
-  // Retirer = meme action que masquer
-  const handleRemoveProduct = async (productId: string) => {
-    await handleHideProduct(productId);
-  };
-
-  // Reserved for future status badge customization
-  const _getStatusBadge = (status: string | null) => {
-    if (!status) {
-      return (
-        <Badge variant="outline" className="border-gray-300 text-gray-500">
-          Non synchronisé
-        </Badge>
-      );
-    }
-    switch (status) {
-      case 'approved':
-        return (
-          <Badge variant="outline" className="border-green-300 text-green-600">
-            Approuvé
-          </Badge>
-        );
-      case 'pending':
-        return (
-          <Badge
-            variant="outline"
-            className="border-yellow-300 text-yellow-600"
-          >
-            En attente
-          </Badge>
-        );
-      case 'rejected':
-        return (
-          <Badge variant="outline" className="border-red-300 text-red-600">
-            Refusé
-          </Badge>
-        );
-      case 'not_synced':
-        return (
-          <Badge variant="outline" className="border-gray-300 text-gray-500">
-            Non synchronisé
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="outline" className="border-gray-300 text-gray-500">
-            {status}
-          </Badge>
-        );
-    }
-  };
-
-  // Reserved for custom currency formatting
-  const _formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  // 🚀 Statistiques RÉELLES (jamais de mock)
-  // Si pas de données, afficher 0 ou N/A
-
-  // 🚀 Handler: Synchroniser manuellement (polling Google statuses)
-  const handleSync = async () => {
-    logger.info('[Google Merchant Page] Manual sync triggered');
-
+  async function handleSyncStatuses() {
+    setIsSyncing(true);
     try {
-      const response = await fetch('/api/google-merchant/poll-statuses', {
+      const res = await fetch('/api/google-merchant/poll-statuses', {
         method: 'POST',
       });
-
-      if (!response.ok) {
-        throw new Error('Sync failed');
+      const data = (await res.json()) as {
+        error?: string;
+        updated?: number;
+        total?: number;
+      };
+      if (!res.ok) {
+        toast.error(data.error ?? 'Erreur lors de la synchronisation');
+        return;
       }
+      await queryClient.invalidateQueries({
+        queryKey: ['google-merchant-products'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['google-merchant-stats'],
+      });
+      toast.success(
+        `${data.updated ?? 0} produits mis a jour sur ${data.total ?? 0} synchronises`
+      );
+    } catch (err) {
+      console.error('[GoogleMerchant] Sync failed:', err);
+      toast.error('Erreur de connexion');
+    } finally {
+      setIsSyncing(false);
+    }
+  }
 
-      const result = (await response.json()) as Record<string, unknown>;
-      logger.info('[Google Merchant Page] Sync completed', result);
+  const filtered = useMemo(() => {
+    if (!products) return [];
+    let result = [...products];
 
-      // Refresh data
-      window.location.reload();
-    } catch (error) {
-      logger.error(
-        '[Google Merchant Page] Sync error:',
-        error instanceof Error ? error : new Error(String(error))
+    if (filters.search) {
+      const q = filters.search.toLowerCase();
+      result = result.filter(
+        p =>
+          p.product_name.toLowerCase().includes(q) ||
+          p.sku.toLowerCase().includes(q)
       );
     }
-  };
 
-  // 🚀 NOUVEAU: Déterminer le statut de synchronisation basé sur le hook
-  const syncStatus = isLoading
-    ? 'syncing'
-    : isSuccess
-      ? 'success'
-      : isError
-        ? 'error'
-        : 'idle';
+    if (filters.status !== 'all') {
+      if (filters.status === 'error') {
+        result = result.filter(p => p.sync_status === 'error');
+      } else {
+        result = result.filter(p => p.google_status === filters.status);
+      }
+    }
+
+    result.sort((a, b) => {
+      let cmp = 0;
+      switch (filters.sortBy) {
+        case 'name':
+          cmp = a.product_name.localeCompare(b.product_name);
+          break;
+        case 'sku':
+          cmp = a.sku.localeCompare(b.sku);
+          break;
+        case 'price':
+          cmp = a.revenue_ht - b.revenue_ht;
+          break;
+        case 'status':
+          cmp = (a.google_status ?? '').localeCompare(b.google_status ?? '');
+          break;
+        case 'synced_at':
+          cmp =
+            new Date(b.synced_at).getTime() - new Date(a.synced_at).getTime();
+          break;
+      }
+      return filters.sortOrder === 'desc' ? -cmp : cmp;
+    });
+
+    return result;
+  }, [products, filters]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Configuration Modal */}
-      <GoogleMerchantConfigModal
-        open={configModalOpen}
-        onOpenChange={setConfigModalOpen}
+    <div className="space-y-6">
+      <GmHeader
+        isSyncing={isSyncing}
+        onSyncStatuses={() => {
+          void handleSyncStatuses().catch((err: unknown) => {
+            console.error('[GoogleMerchant] Sync error:', err);
+          });
+        }}
       />
 
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <ButtonV2
-                variant="outline"
-                size="sm"
-                onClick={() => router.push('/canaux-vente')}
-                className="border-black text-black hover:bg-black hover:text-white"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </ButtonV2>
-              <div>
-                <h1 className="text-3xl font-bold text-black flex items-center space-x-2">
-                  <Globe className="h-8 w-8" />
-                  <span>Google Merchant Center</span>
-                </h1>
-                <p className="text-gray-600 mt-1">
-                  Gérez votre catalogue produits sur Google Shopping
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <ButtonV2
-                variant="outline"
-                className="border-black text-black hover:bg-black hover:text-white"
-                onClick={() => setConfigModalOpen(true)}
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                Configuration
-              </ButtonV2>
-              <ButtonV2
-                className="bg-black hover:bg-gray-800 text-white"
-                onClick={() => {
-                  void handleSync().catch(error => {
-                    console.error('[GoogleMerchant] handleSync failed:', error);
-                  });
-                }}
-                disabled={syncStatus === 'syncing'}
-              >
-                {syncStatus === 'syncing' ? (
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                )}
-                Synchroniser
-              </ButtonV2>
-            </div>
-          </div>
+      <GmStatsCards />
+
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
+        <AlertTriangle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+        <div className="text-sm">
+          <p className="font-medium text-blue-900">
+            Source : produits publies sur le site internet
+          </p>
+          <p className="text-blue-700 mt-1">
+            Seuls les produits actifs sur veronecollections.fr sont
+            selectionnables. Google Merchant redirige vers la fiche produit du
+            site.
+          </p>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* 🚀 NOUVEAU: Feedback de synchronisation enrichi */}
-
-        {/* Synchronisation en cours */}
-        {syncStatus === 'syncing' && (
-          <Card className="mb-6 border-black">
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <RefreshCw className="h-5 w-5 text-black animate-spin" />
-                    <div>
-                      <h3 className="font-semibold text-black">
-                        Synchronisation en cours...
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {synced}/{total} produits synchronisés
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-black">{progress}%</p>
-                  </div>
-                </div>
-                <Progress value={progress} className="h-2" />
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Synchronisation réussie */}
-        {syncStatus === 'success' && (
-          <Alert className="mb-6 border-green-300 bg-green-50">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertTitle className="text-green-800">
-              Synchronisation terminée avec succès
-            </AlertTitle>
-            <AlertDescription className="text-green-700">
-              <div className="mt-2 space-y-1">
-                <p>✅ {synced} produits synchronisés</p>
-                {failed > 0 && (
-                  <p className="text-red-600">❌ {failed} échecs</p>
-                )}
-                {skipped > 0 && (
-                  <p className="text-gray-600">⏭️ {skipped} ignorés</p>
-                )}
-                <p className="text-xs text-gray-600 mt-2">
-                  Durée: {(duration / 1000).toFixed(1)}s
-                </p>
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Synchronisation échouée */}
-        {syncStatus === 'error' && (
-          <Alert className="mb-6 border-red-300 bg-red-50">
-            <AlertCircle className="h-4 w-4 text-red-600" />
-            <AlertTitle className="text-red-800">
-              Échec de synchronisation
-            </AlertTitle>
-            <AlertDescription className="text-red-700">
-              <p>
-                {error ?? 'Une erreur est survenue lors de la synchronisation'}
-              </p>
-              {failed > 0 && (
-                <div className="mt-2 space-y-1">
-                  <p>❌ {failed} produits en échec</p>
-                  {synced > 0 && (
-                    <p>✅ {synced} produits synchronisés avant erreur</p>
-                  )}
-                </div>
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Configuration */}
-        <Card className="border-black mb-6">
-          <CardHeader>
-            <CardTitle className="text-black flex items-center justify-between">
-              Configuration Google Merchant
-              {merchantConfig.api_connected ? (
-                <Badge
-                  variant="outline"
-                  className="border-green-300 text-green-600"
-                >
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Connecté
-                </Badge>
-              ) : (
-                <Badge
-                  variant="outline"
-                  className="border-red-300 text-red-600"
-                >
-                  <AlertCircle className="h-3 w-3 mr-1" />
-                  Non connecté
-                </Badge>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-sm text-gray-600">ID Marchand</p>
-                <p className="font-mono">{merchantConfig.merchant_id}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Pays / Langue</p>
-                <p className="font-medium">
-                  {merchantConfig.country} / {merchantConfig.language}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Devise</p>
-                <p className="font-medium">{merchantConfig.currency}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Dernière synchro</p>
-                <p className="font-medium">
-                  {merchantConfig.last_sync
-                    ? formatDate(merchantConfig.last_sync)
-                    : 'Jamais'}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Statistiques RÉELLES - Affichage conditionnel */}
-        {statsLoading ? (
-          <div className="text-center py-8">
-            <RefreshCw className="h-8 w-8 text-gray-400 animate-spin mx-auto" />
-            <p className="text-gray-600 mt-2">Chargement des statistiques...</p>
-          </div>
-        ) : stats ? (
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
-            <Card className="border-black">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Produits</p>
-                    <p className="text-2xl font-bold text-black">
-                      {stats.total_products}
-                    </p>
-                  </div>
-                  <Package className="h-6 w-6 text-black" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-black">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Approuvés</p>
-                    <p className="text-2xl font-bold text-green-600">
-                      {stats.approved_products}
-                    </p>
-                  </div>
-                  <CheckCircle className="h-6 w-6 text-green-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-black">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Impressions</p>
-                    <p className="text-2xl font-bold text-blue-600">
-                      {stats.total_impressions.toLocaleString('fr-FR')}
-                    </p>
-                  </div>
-                  <BarChart className="h-6 w-6 text-blue-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-black">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Clics</p>
-                    <p className="text-2xl font-bold text-purple-600">
-                      {stats.total_clicks}
-                    </p>
-                  </div>
-                  <ShoppingBag className="h-6 w-6 text-purple-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-black">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Conversions</p>
-                    <p className="text-2xl font-bold text-black">
-                      {stats.total_conversions}
-                    </p>
-                  </div>
-                  <Euro className="h-6 w-6 text-black" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-black">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Taux Conv.</p>
-                    <p className="text-2xl font-bold text-green-600">
-                      {stats.conversion_rate > 0
-                        ? `${stats.conversion_rate}%`
-                        : '0%'}
-                    </p>
-                  </div>
-                  <CheckCircle className="h-6 w-6 text-green-600" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          <Alert className="mb-6 border-gray-300">
-            <Info className="h-4 w-4 text-gray-600" />
-            <AlertDescription className="text-gray-700">
-              Aucune donnée de synchronisation disponible. Synchronisez des
-              produits pour voir les statistiques.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Tabs pour produits et configuration */}
-        <Tabs defaultValue="products" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="products">Produits Synchronisés</TabsTrigger>
-            <TabsTrigger value="add">Ajouter des Produits</TabsTrigger>
-            <TabsTrigger value="settings">Paramètres Feed</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="products">
-            <Card className="border-black">
-              <CardHeader>
-                <CardTitle className="text-black">
-                  Produits sur Google Merchant
-                </CardTitle>
-                <CardDescription>
-                  Gérez les produits synchronisés avec Google Shopping
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {/* Filtres */}
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Rechercher un produit..."
-                      value={searchTerm}
-                      onChange={e => setSearchTerm(e.target.value)}
-                      className="pl-10 border-black"
-                    />
-                  </div>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-48 border-black">
-                      <SelectValue placeholder="Statut" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tous les statuts</SelectItem>
-                      <SelectItem value="active">Actif</SelectItem>
-                      <SelectItem value="pending">En attente</SelectItem>
-                      <SelectItem value="rejected">Rejeté</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Grid des produits RÉELS avec GoogleMerchantProductCard */}
-                {syncedProductsLoading ? (
-                  <div className="text-center py-12">
-                    <RefreshCw className="h-8 w-8 text-gray-400 animate-spin mx-auto" />
-                    <p className="text-gray-600 mt-2">
-                      Chargement des produits...
-                    </p>
-                  </div>
-                ) : syncedProducts.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {syncedProducts.map(product => (
-                      <GoogleMerchantProductCard
-                        key={product.id}
-                        product={product}
-                        onUpdatePrice={handleUpdatePrice}
-                        onUpdateMetadata={handleUpdateMetadata}
-                        onResync={handleResyncProduct}
-                        onHide={handleHideProduct}
-                        onRemove={handleRemoveProduct}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
-                    <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 font-medium">
-                      Aucun produit synchronisé
-                    </p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Utilisez l'onglet "Ajouter des Produits" pour synchroniser
-                      votre catalogue
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="add">
-            <Card className="border-black">
-              <CardHeader>
-                <CardTitle className="text-black">
-                  Ajouter des Produits
-                </CardTitle>
-                <CardDescription>
-                  Sélectionnez les produits à exporter vers Google Merchant
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Alert className="mb-6 border-blue-300 bg-blue-50">
-                  <Info className="h-4 w-4 text-blue-600" />
-                  <AlertDescription className="text-blue-700">
-                    Sélectionnez les produits depuis votre catalogue pour les
-                    synchroniser avec Google Merchant Center. Vous pouvez
-                    définir des prix et métadonnées personnalisés pour chaque
-                    produit.
-                  </AlertDescription>
-                </Alert>
-
-                <GoogleMerchantProductManager
-                  products={
-                    eligibleProducts as unknown as Parameters<
-                      typeof GoogleMerchantProductManager
-                    >[0]['products']
-                  }
-                  onAddProducts={handleAddProducts}
-                  isLoading={eligibleProductsLoading}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="settings">
-            <Card className="border-black">
-              <CardHeader>
-                <CardTitle className="text-black">Paramètres du Feed</CardTitle>
-                <CardDescription>
-                  Configurez les paramètres de synchronisation
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div>
-                    <label className="text-sm font-medium">
-                      Fréquence de synchronisation
-                    </label>
-                    <Select defaultValue={merchantConfig.sync_frequency}>
-                      <SelectTrigger className="w-full mt-1 border-black">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="manual">Manuelle</SelectItem>
-                        <SelectItem value="hourly">
-                          Toutes les heures
-                        </SelectItem>
-                        <SelectItem value="daily">Quotidienne</SelectItem>
-                        <SelectItem value="weekly">Hebdomadaire</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">
-                      Format d'export
-                    </label>
-                    <Select defaultValue="xml">
-                      <SelectTrigger className="w-full mt-1 border-black">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="xml">
-                          XML (Google Shopping)
-                        </SelectItem>
-                        <SelectItem value="csv">CSV</SelectItem>
-                        <SelectItem value="json">JSON</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-4 border-t">
-                    <p className="text-sm text-gray-600">
-                      Synchronisation automatique activée
-                    </p>
-                    <ButtonV2 className="bg-black hover:bg-gray-800 text-white">
-                      Enregistrer les paramètres
-                    </ButtonV2>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+      <div className="border-b">
+        <div className="flex gap-4">
+          <button
+            type="button"
+            className={cn(
+              'pb-2 text-sm font-medium border-b-2 transition-colors',
+              activeTab === 'synced'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            )}
+            onClick={() => setActiveTab('synced')}
+          >
+            Produits synchronises ({products?.length ?? 0})
+          </button>
+          <button
+            type="button"
+            className={cn(
+              'pb-2 text-sm font-medium border-b-2 transition-colors',
+              activeTab === 'add'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            )}
+            onClick={() => setActiveTab('add')}
+          >
+            Ajouter des produits
+          </button>
+        </div>
       </div>
+
+      {activeTab === 'synced' ? (
+        <div className="space-y-4">
+          <GmFiltersBar
+            filters={filters}
+            onFiltersChange={setFilters}
+            resultCount={filtered.length}
+          />
+          <GmProductsTable products={filtered} loading={isLoading} />
+        </div>
+      ) : (
+        <AddProductsTab />
+      )}
     </div>
   );
 }
