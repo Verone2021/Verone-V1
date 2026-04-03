@@ -299,10 +299,10 @@ async function createLinkMeOrder(
       .from('sales_order_linkme_details')
       .insert({
         sales_order_id: order.id,
-        // Requester = utilisateur back-office (champs NOT NULL)
+        // Requester = a remplir via dialog contact (pas l'utilisateur BO)
         requester_type: 'back_office',
-        requester_name: user.email ?? 'Back Office',
-        requester_email: user.email ?? '',
+        requester_name: '',
+        requester_email: '',
         requester_phone: ld.requester_phone ?? null,
         // Contacts facturation
         billing_name: ld.billing_name ?? null,
