@@ -38,6 +38,7 @@ export interface SidebarCounts {
   consultations: number;
   linkmePending: number;
   productsIncomplete: number;
+  sourcingProducts: number;
   ordersPending: number;
   expeditionsPending: number;
   transactionsUnreconciled: number;
@@ -53,6 +54,7 @@ interface RawCounts {
   consultations: number;
   linkmePending: number;
   productsIncomplete: number;
+  sourcingProducts: number;
   ordersPending: number;
   expeditionsPending: number;
   transactionsUnreconciled: number;
@@ -66,6 +68,7 @@ const ZERO_COUNTS: RawCounts = {
   consultations: 0,
   linkmePending: 0,
   productsIncomplete: 0,
+  sourcingProducts: 0,
   ordersPending: 0,
   expeditionsPending: 0,
   transactionsUnreconciled: 0,
@@ -131,6 +134,7 @@ export function useSidebarCounts(options?: {
         consultationsResult,
         linkmeP,
         productsResult,
+        sourcingResult,
         ordersResult,
         expeditionsResult,
         transactionsResult,
@@ -162,38 +166,46 @@ export function useSidebarCounts(options?: {
           .eq('product_status', 'active')
           .or('description.is.null,description.eq.'),
 
-        // 5. Commandes en attente (draft)
+        // 5. Produits en sourcing (draft + preorder)
+        supabase
+          .from('products')
+          .select('id', { count: 'exact', head: true })
+          .eq('creation_mode', 'sourcing')
+          .in('product_status', ['draft', 'preorder'])
+          .is('archived_at', null),
+
+        // 6. Commandes en attente (draft)
         supabase
           .from('sales_orders')
           .select('id', { count: 'exact', head: true })
           .eq('status', 'draft'),
 
-        // 6. Expéditions en attente (validated + partially_shipped)
+        // 7. Expéditions en attente (validated + partially_shipped)
         supabase
           .from('sales_orders')
           .select('id', { count: 'exact', head: true })
           .in('status', ['validated', 'partially_shipped']),
 
-        // 7. Transactions non rapprochées
+        // 8. Transactions non rapprochées
         supabase
           .from('bank_transactions')
           .select('id', { count: 'exact', head: true })
           .eq('matching_status', 'unmatched'),
 
-        // 8. Approbations LinkMe (drafts sur canal LinkMe)
+        // 9. Approbations LinkMe (drafts sur canal LinkMe)
         supabase
           .from('sales_orders')
           .select('id', { count: 'exact', head: true })
           .eq('channel_id', LINKME_CHANNEL_ID)
           .eq('status', 'draft'),
 
-        // 9. Soumissions de formulaire non traitées
+        // 10. Soumissions de formulaire non traitées
         supabase
           .from('form_submissions')
           .select('id', { count: 'exact', head: true })
           .eq('status', 'new'),
 
-        // 10. Demandes info LinkMe en attente
+        // 11. Demandes info LinkMe en attente
         supabase
           .from('linkme_info_requests')
           .select('id', { count: 'exact', head: true })
@@ -236,6 +248,12 @@ export function useSidebarCounts(options?: {
         console.error(
           '[useSidebarCounts] productsIncomplete error:',
           productsResult.error
+        );
+      }
+      if (sourcingResult.error) {
+        console.error(
+          '[useSidebarCounts] sourcingProducts error:',
+          sourcingResult.error
         );
       }
       if (ordersResult.error) {
@@ -282,6 +300,7 @@ export function useSidebarCounts(options?: {
         consultations: getCount(consultationsResult),
         linkmePending: getCount(linkmeP),
         productsIncomplete: getCount(productsResult),
+        sourcingProducts: getCount(sourcingResult),
         ordersPending: getCount(ordersResult),
         expeditionsPending: getCount(expeditionsResult),
         transactionsUnreconciled: getCount(transactionsResult),

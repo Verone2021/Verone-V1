@@ -96,11 +96,14 @@ export default function EnseignesPage() {
   const [archivedLoading, setArchivedLoading] = useState(false);
 
   // Form state
-  const [formData, setFormData] = useState<CreateEnseigneData>({
+  const [formData, setFormData] = useState<
+    CreateEnseigneData & { payment_delay_days: number }
+  >({
     name: '',
     description: '',
     logo_url: '',
     is_active: true,
+    payment_delay_days: 0,
   });
 
   // Filtres selon l'onglet - actives seulement pour l'onglet actif
@@ -259,6 +262,7 @@ export default function EnseignesPage() {
       description: '',
       logo_url: '',
       is_active: true,
+      payment_delay_days: 0,
     });
     setEditingEnseigne(null);
     setIsCreateModalOpen(true);
@@ -270,6 +274,9 @@ export default function EnseignesPage() {
       description: enseigne.description ?? '',
       logo_url: enseigne.logo_url ?? '',
       is_active: enseigne.is_active,
+      payment_delay_days:
+        ((enseigne as unknown as Record<string, unknown>)
+          .payment_delay_days as number) ?? 0,
     });
     setEditingEnseigne(enseigne);
     setIsCreateModalOpen(true);
@@ -283,11 +290,13 @@ export default function EnseignesPage() {
       description: '',
       logo_url: '',
       is_active: true,
+      payment_delay_days: 0,
     });
   };
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) return;
+    const supabase = createClient();
 
     setIsSubmitting(true);
     try {
@@ -299,15 +308,35 @@ export default function EnseignesPage() {
         }
 
         // 2. Sauver les autres champs
-        const { logo_url: _logo_url, ...updateData } = formData;
+        const {
+          logo_url: _logo_url,
+          payment_delay_days,
+          ...updateData
+        } = formData;
         await updateEnseigne({
           id: editingEnseigne.id,
           ...updateData,
         });
+        // 3. Sauver payment_delay_days (trigger propage aux succursales)
+        await supabase
+          .from('enseignes')
+          .update({ payment_delay_days } as Record<string, unknown>)
+          .eq('id', editingEnseigne.id);
       } else {
         // En mode création, pas de logo_url (sera ajouté après)
-        const { logo_url: _logo_url2, ...createData } = formData;
-        await createEnseigne(createData);
+        const {
+          logo_url: _logo_url2,
+          payment_delay_days,
+          ...createData
+        } = formData;
+        const newEnseigne = await createEnseigne(createData);
+        // Sauver payment_delay_days separement (trigger propage aux succursales)
+        if (newEnseigne && payment_delay_days > 0) {
+          await supabase
+            .from('enseignes')
+            .update({ payment_delay_days } as Record<string, unknown>)
+            .eq('id', newEnseigne.id);
+        }
       }
       handleCloseModal();
     } finally {
@@ -948,6 +977,33 @@ export default function EnseignesPage() {
                   setFormData(prev => ({ ...prev, is_active: checked }))
                 }
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="payment_delay_days">
+                Delai de paiement (jours)
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="payment_delay_days"
+                  type="number"
+                  min={0}
+                  max={180}
+                  value={formData.payment_delay_days}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      payment_delay_days: parseInt(e.target.value, 10) || 0,
+                    }))
+                  }
+                  className="w-24"
+                />
+                <span className="text-xs text-gray-500">
+                  {formData.payment_delay_days === 0
+                    ? 'Prepaiement (franchise)'
+                    : `NET ${formData.payment_delay_days} — propage aux succursales`}
+                </span>
+              </div>
             </div>
           </div>
 

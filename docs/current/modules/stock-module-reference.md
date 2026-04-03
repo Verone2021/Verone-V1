@@ -91,7 +91,7 @@ Tracks active stock alerts per product.
 | `product_id`           | uuid FK     |                                                           |
 | `supplier_id`          | uuid FK     |                                                           |
 | `alert_type`           | text        | `'low_stock'`, `'out_of_stock'`, `'no_stock_but_ordered'` |
-| `alert_priority`       | integer     | 1-3 (1=critical)                                          |
+| `alert_priority`       | integer     | 2=important (low_stock), 3=urgent (out_of_stock)          |
 | `stock_real`           | integer     | Snapshot                                                  |
 | `stock_forecasted_in`  | integer     | Snapshot                                                  |
 | `stock_forecasted_out` | integer     | Snapshot                                                  |

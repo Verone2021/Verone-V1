@@ -13,13 +13,17 @@ import type { Contact as BaseContact } from '@verone/types';
 import logger from '@verone/utils/logger';
 import { createClient } from '@verone/utils/supabase/client';
 
-// Contact étendu avec jointure organisation (retourné par les queries)
+// Contact étendu avec jointures organisation + enseigne (retourné par les queries)
 export interface Contact extends BaseContact {
   organisation?: {
     id: string;
     legal_name: string;
     type: string;
     customer_type?: string;
+  };
+  enseigne?: {
+    id: string;
+    name: string;
   };
 }
 
@@ -99,8 +103,12 @@ export function useContacts() {
             legal_name,
             type,
             customer_type
+          ),
+          enseigne:enseignes (
+            id,
+            name
           )
-        `
+`
           )
           .order('organisation_id', { ascending: true })
           .order('is_primary_contact', { ascending: false })
@@ -179,8 +187,12 @@ export function useContacts() {
             legal_name,
             type,
             customer_type
+          ),
+          enseigne:enseignes (
+            id,
+            name
           )
-        `
+`
           )
           .eq('id', contactId)
           .single();
@@ -237,8 +249,12 @@ export function useContacts() {
             legal_name,
             type,
             customer_type
+          ),
+          enseigne:enseignes (
+            id,
+            name
           )
-        `
+`
           )
           .eq('organisation_id', organisationId)
           .eq('is_primary_contact', true)
@@ -310,8 +326,12 @@ export function useContacts() {
             legal_name,
             type,
             customer_type
+          ),
+          enseigne:enseignes (
+            id,
+            name
           )
-        `
+`
           )
           .single();
 
@@ -397,8 +417,12 @@ export function useContacts() {
             legal_name,
             type,
             customer_type
+          ),
+          enseigne:enseignes (
+            id,
+            name
           )
-        `
+`
           )
           .single();
 

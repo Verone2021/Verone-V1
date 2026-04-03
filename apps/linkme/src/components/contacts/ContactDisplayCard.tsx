@@ -72,7 +72,7 @@ export function ContactDisplayCard({
         {/* Informations */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <p className="text-sm font-medium truncate">{displayName}</p>
+            <p className="text-sm font-medium break-words">{displayName}</p>
             {contact.isUser && (
               <Badge
                 variant="outline"

@@ -1,51 +1,79 @@
-# Verone — Vue d'ensemble du projet
+# Verone Back Office - Vue d'ensemble du projet
 
-**Date** : 2026-03-27
+---
 
-## Applications
+Status: CRITICAL
+Last_verified_commit: 1fc9646c
+Primary_sources:
 
-| App | Port | Description |
-|---|---|---|
-| **back-office** | 3000 | CRM/ERP staff — produits, stock, commandes, finance, clients |
-| **site-internet** | 3001 | E-commerce public "concept store" — catalogue, panier, checkout |
-| **linkme** | 3002 | Plateforme B2B affiliation — selections, commissions, commandes affilies |
+- README.md
+- CLAUDE.md
+- apps/back-office/
+- apps/linkme/
+- apps/site-internet/
+  Owner: Romeo Dos Santos
+  Created: 2025-10-01
+  Updated: 2026-01-10
 
-## Stack
+---
 
-- **Framework** : Next.js 15 App Router (RSC)
-- **Language** : TypeScript strict (zero `any`)
-- **UI** : shadcn/ui + Tailwind CSS
-- **DB** : Supabase PostgreSQL (RLS obligatoire)
-- **Cache** : React Query (TanStack Query)
-- **Validation** : Zod
-- **Paiements** : Stripe (site-internet), Revolut (LinkMe)
-- **Emails** : Resend
-- **Monorepo** : pnpm workspaces + Turborepo
+## Objectif du projet
 
-## Packages partages (@verone/*)
+**Verone Back Office** est un CRM/ERP modulaire specialise dans la decoration et le mobilier d'interieur haut de gamme.
 
-26+ packages dans `packages/@verone/` :
-- `@verone/ui` — composants shadcn/ui
-- `@verone/types` — types Supabase generes
-- `@verone/utils` — utilitaires partages
-- `@verone/products` — hooks produits
-- `@verone/orders` — hooks commandes
-- `@verone/organisations` — hooks organisations
-- `@verone/hooks` — hooks generiques
+### Mission Business
 
-## Base de donnees
+Transformer la gestion commerciale de Verone avec un MVP **Catalogue Partageable** :
 
-- **Migrations** : `supabase/migrations/` (source de verite)
-- **Types generes** : `packages/@verone/types/src/supabase.ts`
-- **RLS** : isolation par app/role (voir `.claude/rules/database/rls-patterns.md`)
+- **Admin** : Lien client securise + PDF branded + Feeds Meta/Google
+- **Impact** : -70% temps creation catalogues clients
+- **ROI** : 15% conversion catalogue → devis, 99% uptime, <10s generation feeds
 
-## Domaines metier
+---
 
-| Domaine | Tables principales |
-|---|---|
-| Produits | products, product_images, product_categories |
-| Commandes | sales_orders, sales_order_items, purchase_orders |
-| Stock | stock via triggers PostgreSQL, alertes |
-| Finance | financial_documents, Qonto API |
-| Clients | organisations, contacts |
-| LinkMe | linkme_affiliates, linkme_selections, linkme_commissions |
+## Architecture Technique
+
+- **Type** : Monorepo Turborepo avec packages partages
+- **Backend** : Supabase (PostgreSQL + Auth + RLS + Edge Functions)
+- **Frontend** : Next.js 15 App Router + React 18 + Tailwind + shadcn/ui
+- **Modules** : Catalogue ↔ Stock ↔ Commandes ↔ Facturation ↔ CRM ↔ Integrations
+
+---
+
+## Structure Monorepo
+
+```
+verone-back-office/
+├── apps/
+│   ├── back-office/        # CRM/ERP (Port 3000)
+│   ├── linkme/             # Commissions affilies (Port 3002)
+│   └── site-internet/      # E-commerce B2C (Port 3001)
+├── packages/@verone/        # 26 packages partages
+├── supabase/               # Migrations + functions
+├── docs/                   # Documentation
+└── .claude/                # Configuration Claude Code
+```
+
+---
+
+## 3 Applications
+
+| App               | Port | Description                           |
+| ----------------- | ---- | ------------------------------------- |
+| **back-office**   | 3000 | CRM/ERP principal - pilotage activite |
+| **linkme**        | 3002 | Plateforme commissions & selections   |
+| **site-internet** | 3001 | E-commerce luxury mobilier            |
+
+---
+
+## Non-Goals
+
+- Cette memory ne couvre PAS les details techniques DB (voir `database-implementation.md`)
+- Cette memory ne couvre PAS les workflows specifiques (voir autres memories)
+
+---
+
+## References
+
+- `docs/current/architecture.md` - Architecture detaillee
+- `docs/current/serena/database-implementation.md` - Implementation DB

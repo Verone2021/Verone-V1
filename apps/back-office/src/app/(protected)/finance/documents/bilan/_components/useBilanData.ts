@@ -147,11 +147,18 @@ function computeForYear(
   };
 }
 
+export interface BilanExternalData {
+  stockValue?: number;
+  fixedAssetsBrut?: number;
+  fixedAssetsAmort?: number;
+}
+
 export function useBilanData(
   creditTransactions: BankTransaction[],
   debitTransactions: BankTransaction[],
   selectedYear: string,
-  currentYear: number
+  currentYear: number,
+  externalData?: BilanExternalData
 ): BilanData {
   return useMemo(() => {
     const yearN = selectedYear === 'all' ? String(currentYear) : selectedYear;
@@ -162,6 +169,22 @@ export function useBilanData(
       debitTransactions,
       yearN1
     );
+
+    // Integrate external data (stock + fixed assets) for current year
+    const stockVal = externalData?.stockValue ?? 0;
+    const faBrut = externalData?.fixedAssetsBrut ?? 0;
+    const faAmort = externalData?.fixedAssetsAmort ?? 0;
+    const faNet = faBrut - faAmort;
+
+    // Override stocks with real product inventory value
+    if (stockVal > 0) {
+      dataN.stocks = stockVal;
+    }
+
+    // Override immobilisations with fixed_assets data
+    if (faBrut > 0) {
+      dataN.immoCorporelles = faBrut;
+    }
 
     const actifLines: BilanLine[] = [
       {
@@ -182,9 +205,9 @@ export function useBilanData(
       },
       {
         label: 'Immobilisations corporelles',
-        brut: dataN.immoCorporelles,
-        amortissement: 0,
-        net: dataN.immoCorporelles,
+        brut: faBrut > 0 ? faBrut : dataN.immoCorporelles,
+        amortissement: faAmort,
+        net: faBrut > 0 ? faNet : dataN.immoCorporelles,
         netN1: dataN1.immoCorporelles,
         indent: true,
       },
@@ -199,7 +222,11 @@ export function useBilanData(
     ];
 
     const totalActifImmo =
-      dataN.immoIncorporelles + dataN.immoCorporelles + dataN.immoFinancieres;
+      faBrut > 0
+        ? dataN.immoIncorporelles + faNet + dataN.immoFinancieres
+        : dataN.immoIncorporelles +
+          dataN.immoCorporelles +
+          dataN.immoFinancieres;
     const totalActifImmoN1 =
       dataN1.immoIncorporelles +
       dataN1.immoCorporelles +
@@ -368,5 +395,13 @@ export function useBilanData(
       totalPassif,
       totalPassifN1,
     };
-  }, [creditTransactions, debitTransactions, selectedYear, currentYear]);
+  }, [
+    creditTransactions,
+    debitTransactions,
+    selectedYear,
+    currentYear,
+    externalData?.stockValue,
+    externalData?.fixedAssetsBrut,
+    externalData?.fixedAssetsAmort,
+  ]);
 }

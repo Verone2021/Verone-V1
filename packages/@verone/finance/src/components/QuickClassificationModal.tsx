@@ -82,6 +82,8 @@ export interface QuickClassificationModalProps {
     tva_rate: number;
     tva_amount: number;
   }> | null;
+  /** Si true, la TVA est auto-calculee depuis le rapprochement — masquer la saisie manuelle */
+  hasReconciliationVAT?: boolean;
 }
 
 export function QuickClassificationModal({
@@ -100,6 +102,7 @@ export function QuickClassificationModal({
   currentVatRate,
   currentVatSource,
   currentVatBreakdown,
+  hasReconciliationVAT = false,
 }: QuickClassificationModalProps) {
   // Hooks
   const {
@@ -311,34 +314,40 @@ export function QuickClassificationModal({
 
       // 1. Mettre a jour la transaction
       if (transactionId) {
-        // Preparer les donnees selon le mode (simple ou ventile)
-        const updateData: Record<string, unknown> = isVentilationMode
+        // Si TVA auto depuis rapprochement, ne modifier que la categorie
+        // Sinon, preparer les donnees selon le mode (simple ou ventile)
+        const updateData: Record<string, unknown> = hasReconciliationVAT
           ? {
               category_pcg: selectedCategory,
-              vat_rate: null, // NULL quand ventile
-              vat_breakdown: vatLines
-                .filter(l => l.amount_ht > 0)
-                .map(l => ({
-                  description: l.description || `Ligne ${l.tva_rate}%`,
-                  amount_ht: l.amount_ht,
-                  tva_rate: l.tva_rate,
-                  tva_amount: calculateVAT(
-                    calculateTTC(l.amount_ht, l.tva_rate),
-                    l.tva_rate
-                  ),
-                })),
-              amount_ht: ventilationTotals.totalHT,
-              amount_vat: ventilationTotals.totalVAT,
               matching_status: 'manual_matched',
             }
-          : {
-              category_pcg: selectedCategory,
-              vat_rate: tvaRate,
-              vat_breakdown: null, // NULL quand taux unique
-              amount_ht: htAmount,
-              amount_vat: vatAmount,
-              matching_status: 'manual_matched',
-            };
+          : isVentilationMode
+            ? {
+                category_pcg: selectedCategory,
+                vat_rate: null, // NULL quand ventile
+                vat_breakdown: vatLines
+                  .filter(l => l.amount_ht > 0)
+                  .map(l => ({
+                    description: l.description || `Ligne ${l.tva_rate}%`,
+                    amount_ht: l.amount_ht,
+                    tva_rate: l.tva_rate,
+                    tva_amount: calculateVAT(
+                      calculateTTC(l.amount_ht, l.tva_rate),
+                      l.tva_rate
+                    ),
+                  })),
+                amount_ht: ventilationTotals.totalHT,
+                amount_vat: ventilationTotals.totalVAT,
+                matching_status: 'manual_matched',
+              }
+            : {
+                category_pcg: selectedCategory,
+                vat_rate: tvaRate,
+                vat_breakdown: null, // NULL quand taux unique
+                amount_ht: htAmount,
+                amount_vat: vatAmount,
+                matching_status: 'manual_matched',
+              };
 
         const { error: updateError } = await supabase
           .from('bank_transactions')
@@ -536,20 +545,35 @@ export function QuickClassificationModal({
           {/* TVA - affiche apres selection de categorie */}
           {selectedCategory && (
             <div className="space-y-5">
-              <VatSection
-                tvaRate={tvaRate}
-                onTvaRateChange={setTvaRate}
-                isVentilationMode={isVentilationMode}
-                onVentilationModeChange={setIsVentilationMode}
-                vatLines={vatLines}
-                onVatLinesChange={setVatLines}
-                htAmount={htAmount}
-                vatAmount={vatAmount}
-                amount={amount}
-                ventilationTotals={ventilationTotals}
-                currentVatSource={currentVatSource}
-                formatAmount={formatAmount}
-              />
+              {hasReconciliationVAT ? (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Receipt className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-800">
+                      TVA calculee automatiquement
+                    </span>
+                  </div>
+                  <p className="text-xs text-green-600 mt-1">
+                    Depuis les factures/commandes rapprochees. Pas besoin de
+                    saisir la TVA.
+                  </p>
+                </div>
+              ) : (
+                <VatSection
+                  tvaRate={tvaRate}
+                  onTvaRateChange={setTvaRate}
+                  isVentilationMode={isVentilationMode}
+                  onVentilationModeChange={setIsVentilationMode}
+                  vatLines={vatLines}
+                  onVatLinesChange={setVatLines}
+                  htAmount={htAmount}
+                  vatAmount={vatAmount}
+                  amount={amount}
+                  ventilationTotals={ventilationTotals}
+                  currentVatSource={currentVatSource}
+                  formatAmount={formatAmount}
+                />
+              )}
 
               {/* Creer regle automatique - MASQUE en mode modification */}
               {!isModificationMode && (

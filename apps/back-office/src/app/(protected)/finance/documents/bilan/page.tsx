@@ -7,11 +7,12 @@
  * BILAN PASSIF : Net N | Net N-1
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import Link from 'next/link';
 
-import { useBankReconciliation } from '@verone/finance';
+import { useBankReconciliation, useFixedAssets } from '@verone/finance';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   Card,
   CardContent,
@@ -36,11 +37,43 @@ export default function BilanPage() {
   const { creditTransactions, debitTransactions, loading, error } =
     useBankReconciliation();
 
+  // Fetch stock value from products
+  const [stockValue, setStockValue] = useState(0);
+  useEffect(() => {
+    const supabase = createClient();
+    void supabase
+      .from('products')
+      .select('stock_quantity, cost_price')
+      .then(({ data }) => {
+        if (data) {
+          const total = (
+            data as { stock_quantity: number; cost_price: number }[]
+          ).reduce(
+            (sum, p) =>
+              sum +
+              (p.stock_quantity > 0
+                ? p.stock_quantity * (p.cost_price ?? 0)
+                : 0),
+            0
+          );
+          setStockValue(Math.round(total * 100) / 100);
+        }
+      });
+  }, []);
+
+  // Get fixed assets stats
+  const { stats: faStats } = useFixedAssets();
+
   const bilan = useBilanData(
     creditTransactions,
     debitTransactions,
     selectedYear,
-    currentYear
+    currentYear,
+    {
+      stockValue,
+      fixedAssetsBrut: faStats.totalBrut,
+      fixedAssetsAmort: faStats.totalAmort,
+    }
   );
 
   const years = Array.from(
@@ -81,16 +114,26 @@ export default function BilanPage() {
         </Select>
       </div>
 
-      {/* Alert */}
+      {/* Guide */}
+      <Alert className="border-blue-200 bg-blue-50">
+        <Info className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-800 text-sm">
+          <strong>Le Bilan</strong> est la photo de votre entreprise a un
+          instant T. A gauche : ce que vous possedez (<strong>Actif</strong> —
+          immobilisations, stock, tresorerie). A droite : comment c&apos;est
+          finance (<strong>Passif</strong> — capital, dettes, resultat).
+          L&apos;actif doit toujours etre egal au passif. Il est obligatoire
+          chaque annee pour le depot au Greffe.
+        </AlertDescription>
+      </Alert>
+
+      {/* Alert exercice */}
       <Alert className="border-orange-200 bg-orange-50">
         <Info className="h-4 w-4 text-orange-600" />
         <AlertDescription className="text-orange-700 text-sm">
           Votre bilan {bilan.yearN} n&apos;est{' '}
           <strong>pas encore cloture</strong>, les montants affiches sont{' '}
           <strong>previsionnels</strong>.
-          <br />
-          Rendez-vous dans l&apos;onglet <em>A faire</em> pour acceder a la
-          cloture et <strong>generer votre bilan definitif</strong>.
         </AlertDescription>
       </Alert>
 

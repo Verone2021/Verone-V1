@@ -1,4 +1,4 @@
-import { Building, Users } from 'lucide-react';
+import { Building, Store, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import type { Contact } from './types';
@@ -18,7 +18,17 @@ export interface OrgTypeInfo {
   color: string;
 }
 
-export function getOrganisationTypeInfo(type: string): OrgTypeInfo {
+export function getOrganisationTypeInfo(
+  type: string,
+  hasEnseigne?: boolean
+): OrgTypeInfo {
+  if (hasEnseigne && !type) {
+    return {
+      icon: <Store className="h-4 w-4" />,
+      label: 'Enseigne',
+      color: 'bg-purple-50 text-purple-700 border-purple-200',
+    };
+  }
   switch (type) {
     case 'supplier':
       return {

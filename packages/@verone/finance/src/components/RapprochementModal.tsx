@@ -39,13 +39,26 @@ import {
   Plus,
   Sparkles,
   ArrowRight,
+  X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+interface ExistingLink {
+  id: string;
+  link_type: 'document' | 'sales_order' | 'purchase_order';
+  allocated_amount: number;
+  document_number: string | null;
+  order_number: string | null;
+  po_number: string | null;
+  partner_name: string | null;
+}
 
 interface RapprochementModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   transactionId: string | undefined;
+  /** transaction_id Qonto (pour auto-attachment justificatif) */
+  transactionQontoId?: string | null;
   label: string;
   amount: number;
   counterpartyName?: string | null;
@@ -217,6 +230,7 @@ export function RapprochementModal({
   open,
   onOpenChange,
   transactionId,
+  transactionQontoId,
   label,
   amount,
   counterpartyName,
@@ -251,8 +265,19 @@ export function RapprochementModal({
   const [_transactionSide, setTransactionSide] = useState<
     'credit' | 'debit' | undefined
   >();
+  const [existingLinks, setExistingLinks] = useState<ExistingLink[]>([]);
 
-  const remainingAmount = Math.abs(amount);
+  // Montant total déjà alloué via les liens existants
+  const totalAllocated = useMemo(
+    () =>
+      existingLinks.reduce(
+        (sum, link) => sum + Math.abs(link.allocated_amount),
+        0
+      ),
+    [existingLinks]
+  );
+  // Montant restant à rapprocher = montant transaction - déjà alloué
+  const remainingAmount = Math.abs(amount) - totalAllocated;
 
   // Charger les documents et commandes disponibles
   const fetchAvailableItems = useCallback(async () => {
@@ -270,6 +295,97 @@ export function RapprochementModal({
         if (txData) {
           setTransactionDate(txData.emitted_at);
           setTransactionSide(txData.side);
+        }
+
+        // Charger les liens existants (documents/commandes déjà rapprochés)
+        const { data: linksData } = await supabase
+          .from('transaction_document_links')
+          .select(
+            `
+            id,
+            link_type,
+            allocated_amount,
+            document_id,
+            sales_order_id,
+            purchase_order_id
+          `
+          )
+          .eq('transaction_id', transactionId);
+
+        if (linksData && linksData.length > 0) {
+          // Résoudre les noms des documents/commandes liés
+          const resolvedLinks: ExistingLink[] = [];
+          for (const link of linksData) {
+            const resolved: ExistingLink = {
+              id: link.id,
+              link_type: link.link_type as ExistingLink['link_type'],
+              allocated_amount: Number(link.allocated_amount) || 0,
+              document_number: null,
+              order_number: null,
+              po_number: null,
+              partner_name: null,
+            };
+
+            if (link.document_id) {
+              const { data: doc } = await supabase
+                .from('financial_documents')
+                .select(
+                  'document_number, partner_id, organisations!partner_id(legal_name, trade_name)'
+                )
+                .eq('id', link.document_id)
+                .single();
+              if (doc) {
+                resolved.document_number = doc.document_number;
+                const org = doc.organisations as {
+                  legal_name: string;
+                  trade_name: string | null;
+                } | null;
+                resolved.partner_name =
+                  org?.trade_name ?? org?.legal_name ?? null;
+              }
+            }
+            if (link.sales_order_id) {
+              const { data: so } = await supabase
+                .from('sales_orders')
+                .select('order_number, customer_id, customer_type')
+                .eq('id', link.sales_order_id)
+                .single();
+              if (so) {
+                resolved.order_number = so.order_number;
+                if (so.customer_type === 'organization' && so.customer_id) {
+                  const { data: org } = await supabase
+                    .from('organisations')
+                    .select('legal_name, trade_name')
+                    .eq('id', so.customer_id)
+                    .single();
+                  resolved.partner_name =
+                    org?.trade_name ?? org?.legal_name ?? null;
+                }
+              }
+            }
+            if (link.purchase_order_id) {
+              const { data: po } = await supabase
+                .from('purchase_orders')
+                .select(
+                  'po_number, supplier_id, organisations!supplier_id(legal_name, trade_name)'
+                )
+                .eq('id', link.purchase_order_id)
+                .single();
+              if (po) {
+                resolved.po_number = po.po_number;
+                const org = po.organisations as {
+                  legal_name: string;
+                  trade_name: string | null;
+                } | null;
+                resolved.partner_name =
+                  org?.trade_name ?? org?.legal_name ?? null;
+              }
+            }
+            resolvedLinks.push(resolved);
+          }
+          setExistingLinks(resolvedLinks);
+        } else {
+          setExistingLinks([]);
         }
       }
 
@@ -289,6 +405,7 @@ export function RapprochementModal({
         `
         )
         .in('status', ['sent', 'received', 'partially_paid'])
+        .in('document_type', ['customer_invoice', 'supplier_invoice'])
         .order('document_date', { ascending: false })
         .limit(100);
 
@@ -607,6 +724,192 @@ export function RapprochementModal({
       po.supplier_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Auto-attach: apres rapprochement, attacher le PDF du document comme justificatif Qonto
+  const autoAttachPDF = useCallback(
+    async (documentId: string) => {
+      if (!transactionQontoId) return;
+      try {
+        const res = await fetch('/api/qonto/attachments/auto-attach', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            transactionId: transactionQontoId,
+            documentId,
+          }),
+        });
+        const data = (await res.json()) as {
+          success?: boolean;
+          skipped?: boolean;
+          message?: string;
+          documentNumber?: string;
+        };
+        if (data.success && !data.skipped) {
+          console.warn(
+            `[RapprochementModal] Auto-attach: ${data.documentNumber ?? documentId} attache`
+          );
+        }
+      } catch (err) {
+        // Ne pas bloquer le rapprochement si l'auto-attach echoue
+        console.warn(
+          '[RapprochementModal] Auto-attach failed (non-blocking):',
+          err
+        );
+      }
+    },
+    [transactionQontoId]
+  );
+
+  // Auto-calcul TVA depuis les documents/commandes rapprochés
+  const autoCalculateVAT = useCallback(async () => {
+    if (!transactionId) return;
+    try {
+      const supabase = createClient();
+
+      // Lire tous les liens de la transaction avec les détails des documents
+      const { data: links } = await supabase
+        .from('transaction_document_links')
+        .select(
+          'allocated_amount, document_id, sales_order_id, purchase_order_id'
+        )
+        .eq('transaction_id', transactionId);
+
+      if (!links || links.length === 0) {
+        // Plus de liens → effacer la TVA auto
+        await supabase
+          .from('bank_transactions')
+          .update({
+            vat_rate: null,
+            amount_ht: null,
+            amount_vat: null,
+            vat_breakdown: null,
+            vat_source: null,
+          })
+          .eq('id', transactionId);
+        return;
+      }
+
+      // Collecter HT/TTC de chaque document lié
+      const docIds = links
+        .filter(l => l.document_id)
+        .map(l => l.document_id as string);
+      const soIds = links
+        .filter(l => l.sales_order_id)
+        .map(l => l.sales_order_id as string);
+      const poIds = links
+        .filter(l => l.purchase_order_id)
+        .map(l => l.purchase_order_id as string);
+
+      type AmountPair = { id: string; total_ht: number; total_ttc: number };
+      const amounts: AmountPair[] = [];
+
+      if (docIds.length > 0) {
+        const { data: docs } = await supabase
+          .from('financial_documents')
+          .select('id, total_ht, total_ttc')
+          .in('id', docIds);
+        docs?.forEach(d =>
+          amounts.push({
+            id: d.id,
+            total_ht: Number(d.total_ht) || 0,
+            total_ttc: Number(d.total_ttc) || 0,
+          })
+        );
+      }
+      if (soIds.length > 0) {
+        const { data: sos } = await supabase
+          .from('sales_orders')
+          .select('id, total_ht, total_ttc')
+          .in('id', soIds);
+        sos?.forEach(s =>
+          amounts.push({
+            id: s.id,
+            total_ht: Number(s.total_ht) || 0,
+            total_ttc: Number(s.total_ttc) || 0,
+          })
+        );
+      }
+      if (poIds.length > 0) {
+        const { data: pos } = await supabase
+          .from('purchase_orders')
+          .select('id, total_ht, total_ttc')
+          .in('id', poIds);
+        pos?.forEach(p =>
+          amounts.push({
+            id: p.id,
+            total_ht: Number(p.total_ht) || 0,
+            total_ttc: Number(p.total_ttc) || 0,
+          })
+        );
+      }
+
+      if (amounts.length === 0) return;
+
+      // Calculer les taux uniques
+      const rates = new Set<number>();
+      const breakdownEntries: Array<{
+        description: string;
+        amount_ht: number;
+        tva_rate: number;
+        tva_amount: number;
+      }> = [];
+
+      for (const a of amounts) {
+        const ht = a.total_ht;
+        const ttc = a.total_ttc;
+        const rate =
+          ht > 0 ? Math.round(((ttc - ht) / ht) * 100 * 100) / 100 : 0;
+        rates.add(Math.round(rate));
+        breakdownEntries.push({
+          description: `Document`,
+          amount_ht: ht,
+          tva_rate: Math.round(rate),
+          tva_amount: Math.round((ttc - ht) * 100) / 100,
+        });
+      }
+
+      const totalHT = amounts.reduce((sum, a) => sum + a.total_ht, 0);
+      const totalTTC = amounts.reduce((sum, a) => sum + a.total_ttc, 0);
+      const totalVAT = Math.round((totalTTC - totalHT) * 100) / 100;
+
+      if (rates.size === 1) {
+        // Un seul taux → simple
+        const singleRate = [...rates][0];
+        await supabase
+          .from('bank_transactions')
+          .update({
+            vat_rate: singleRate,
+            amount_ht: Math.round(totalHT * 100) / 100,
+            amount_vat: totalVAT,
+            vat_breakdown: null,
+            vat_source: 'reconciliation',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', transactionId);
+      } else {
+        // Plusieurs taux → ventilation
+        await supabase
+          .from('bank_transactions')
+          .update({
+            vat_rate: null,
+            amount_ht: Math.round(totalHT * 100) / 100,
+            amount_vat: totalVAT,
+            vat_breakdown: breakdownEntries,
+            vat_source: 'reconciliation',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', transactionId);
+      }
+
+      console.warn('[RapprochementModal] Auto-VAT applied:', {
+        rates: [...rates],
+        totalHT,
+        totalVAT,
+      });
+    } catch (err) {
+      console.warn('[RapprochementModal] Auto-VAT failed (non-blocking):', err);
+    }
+  }, [transactionId]);
+
   // Lier à un document
   const handleLinkDocument = async () => {
     if (!transactionId || !selectedDocumentId) return;
@@ -618,13 +921,20 @@ export function RapprochementModal({
         ? parseFloat(allocatedAmount)
         : remainingAmount;
 
-      const { error } = await supabase.rpc('link_transaction_to_document', {
-        p_transaction_id: transactionId,
-        p_document_id: selectedDocumentId,
-        p_allocated_amount: amountToAllocate,
-      });
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      const { error } = (await (supabase.rpc as CallableFunction)(
+        'link_transaction_to_document',
+        {
+          p_transaction_id: transactionId,
+          p_document_id: selectedDocumentId,
+          p_allocated_amount: amountToAllocate,
+        }
+      )) as { data: unknown; error: { message: string } | null };
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
+
+      // Auto-attach PDF comme justificatif Qonto (non-bloquant)
+      void autoAttachPDF(selectedDocumentId);
 
       const linkedDoc = documents.find(d => d.id === selectedDocumentId);
       setLinkSuccess({
@@ -632,6 +942,9 @@ export function RapprochementModal({
         label: linkedDoc?.document_number ?? 'Document',
         amount: amountToAllocate,
       });
+      // Auto-calcul TVA depuis rapprochement + rafraîchir la page
+      void autoCalculateVAT();
+      onSuccess?.();
     } catch (err) {
       console.error('[RapprochementModal] Link error:', err);
       toast.error('Erreur lors du rapprochement');
@@ -651,13 +964,31 @@ export function RapprochementModal({
         ? parseFloat(allocatedAmount)
         : remainingAmount;
 
-      const { error } = await supabase.rpc('link_transaction_to_document', {
-        p_transaction_id: transactionId,
-        p_sales_order_id: selectedOrderId,
-        p_allocated_amount: amountToAllocate,
-      });
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      const { error } = (await (supabase.rpc as CallableFunction)(
+        'link_transaction_to_document',
+        {
+          p_transaction_id: transactionId,
+          p_sales_order_id: selectedOrderId,
+          p_allocated_amount: amountToAllocate,
+        }
+      )) as { data: unknown; error: { message: string } | null };
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
+
+      // Auto-attach: résoudre la facture liée à la commande et attacher son PDF
+      const { data: linkedDoc } = await supabase
+        .from('financial_documents')
+        .select('id')
+        .eq('sales_order_id', selectedOrderId)
+        .eq('document_type', 'customer_invoice')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      if (linkedDoc) {
+        void autoAttachPDF(linkedDoc.id);
+      }
 
       const linkedOrder = orders.find(o => o.id === selectedOrderId);
       setLinkSuccess({
@@ -665,6 +996,8 @@ export function RapprochementModal({
         label: `Commande #${linkedOrder?.order_number ?? ''}`,
         amount: amountToAllocate,
       });
+      void autoCalculateVAT();
+      onSuccess?.();
     } catch (err) {
       console.error('[RapprochementModal] Link order error:', err);
       toast.error('Erreur lors du rapprochement');
@@ -684,13 +1017,31 @@ export function RapprochementModal({
         ? parseFloat(allocatedAmount)
         : remainingAmount;
 
-      const { error } = await supabase.rpc('link_transaction_to_document', {
-        p_transaction_id: transactionId,
-        p_purchase_order_id: selectedPurchaseOrderId,
-        p_allocated_amount: amountToAllocate,
-      });
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      const { error } = (await (supabase.rpc as CallableFunction)(
+        'link_transaction_to_document',
+        {
+          p_transaction_id: transactionId,
+          p_purchase_order_id: selectedPurchaseOrderId,
+          p_allocated_amount: amountToAllocate,
+        }
+      )) as { data: unknown; error: { message: string } | null };
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
+
+      // Auto-attach: résoudre la facture fournisseur liée et attacher son PDF
+      const { data: linkedSupplierDoc } = await supabase
+        .from('financial_documents')
+        .select('id')
+        .eq('purchase_order_id', selectedPurchaseOrderId)
+        .eq('document_type', 'supplier_invoice')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      if (linkedSupplierDoc) {
+        void autoAttachPDF(linkedSupplierDoc.id);
+      }
 
       const linkedPO = purchaseOrders.find(
         po => po.id === selectedPurchaseOrderId
@@ -700,6 +1051,8 @@ export function RapprochementModal({
         label: `Commande #${linkedPO?.po_number ?? ''}`,
         amount: amountToAllocate,
       });
+      void autoCalculateVAT();
+      onSuccess?.();
     } catch (err) {
       console.error('[RapprochementModal] Link purchase order error:', err);
       toast.error('Erreur lors du rapprochement');
@@ -711,19 +1064,108 @@ export function RapprochementModal({
   // Lier directement via suggestion (raccourci) - commandes clients
   const handleQuickLink = async (orderId: string) => {
     setSelectedOrderId(orderId);
-    // Le montant par défaut est le montant restant de la transaction
-    setAllocatedAmount(String(remainingAmount.toFixed(2)));
+    // Montant par défaut = min(restant transaction, restant commande)
+    const order = orders.find(o => o.id === orderId);
+    const orderRemaining = order ? order.remaining : remainingAmount;
+    const defaultAmount = Math.min(remainingAmount, orderRemaining);
+    setAllocatedAmount(String(defaultAmount.toFixed(2)));
   };
 
   // Lier directement via suggestion (raccourci) - commandes fournisseurs
   const handleQuickLinkPurchaseOrder = async (purchaseOrderId: string) => {
     setSelectedPurchaseOrderId(purchaseOrderId);
-    setAllocatedAmount(String(remainingAmount.toFixed(2)));
+    const po = purchaseOrders.find(p => p.id === purchaseOrderId);
+    const poRemaining = po ? po.total_ttc : remainingAmount;
+    const defaultAmount = Math.min(remainingAmount, poRemaining);
+    setAllocatedAmount(String(defaultAmount.toFixed(2)));
+  };
+
+  // Supprimer un rapprochement existant (dérapprocher)
+  const handleUnlink = async (linkId: string) => {
+    if (!transactionId) return;
+
+    if (
+      !confirm(
+        'Supprimer ce rapprochement ? La facture/commande sera remise en attente de paiement.'
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const supabase = createClient();
+
+      // 1. Récupérer le document_id du lien AVANT suppression (pour retirer l'attachment)
+      const { data: linkData } = await supabase
+        .from('transaction_document_links')
+        .select('document_id')
+        .eq('id', linkId)
+        .single();
+
+      // 2. Supprimer le lien — les triggers DB mettent à jour automatiquement :
+      // - payment_status_v2 de la commande (sales_order / purchase_order)
+      // - amount_paid du financial_document
+      const { error } = await supabase
+        .from('transaction_document_links')
+        .delete()
+        .eq('id', linkId);
+
+      if (error) throw error;
+
+      // 3. Retirer l'attachment Qonto associé (non-bloquant)
+      if (linkData?.document_id) {
+        const { data: doc } = await supabase
+          .from('financial_documents')
+          .select('qonto_attachment_id')
+          .eq('id', linkData.document_id)
+          .single();
+
+        if (doc?.qonto_attachment_id) {
+          // Supprimer l'attachment via la route API existante
+          void fetch(
+            `/api/qonto/attachments/${doc.qonto_attachment_id}?transactionId=${transactionId}`,
+            { method: 'DELETE' }
+          ).catch(err => {
+            console.warn(
+              '[RapprochementModal] Auto-detach failed (non-blocking):',
+              err
+            );
+          });
+        }
+      }
+
+      // 4. Vérifier s'il reste des liens pour cette transaction
+      const { data: remainingLinks } = await supabase
+        .from('transaction_document_links')
+        .select('id')
+        .eq('transaction_id', transactionId);
+
+      // Si plus aucun lien, remettre matching_status à 'unmatched'
+      if (!remainingLinks || remainingLinks.length === 0) {
+        await supabase
+          .from('bank_transactions')
+          .update({
+            matching_status: 'unmatched',
+            matched_document_id: null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', transactionId);
+      }
+
+      toast.success('Rapprochement supprime');
+      // Recalculer TVA + rafraîchir modal + page
+      void autoCalculateVAT();
+      void fetchAvailableItems();
+      onSuccess?.();
+    } catch (err) {
+      console.error('[RapprochementModal] Unlink error:', err);
+      toast.error('Erreur lors de la suppression du rapprochement');
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-blue-600" />
@@ -750,21 +1192,47 @@ export function RapprochementModal({
               <p className="text-sm font-medium text-green-600">
                 {formatAmount(linkSuccess.amount)}
               </p>
+              {/* Montant restant après ce rapprochement */}
+              {remainingAmount - linkSuccess.amount > 0.01 && (
+                <p className="text-sm text-amber-600 mt-1">
+                  Reste a rapprocher :{' '}
+                  {formatAmount(remainingAmount - linkSuccess.amount)}
+                </p>
+              )}
             </div>
-            <Button
-              onClick={() => {
-                onSuccess?.();
-                onOpenChange(false);
-              }}
-              className="mt-4"
-            >
-              Fermer
-            </Button>
+            <div className="flex gap-3 mt-4">
+              {/* Bouton "Ajouter un autre" si montant restant */}
+              {remainingAmount - linkSuccess.amount > 0.01 && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    // Refresh les données et revenir au formulaire
+                    setLinkSuccess(null);
+                    setSelectedDocumentId(null);
+                    setSelectedOrderId(null);
+                    setSelectedPurchaseOrderId(null);
+                    setAllocatedAmount('');
+                    void fetchAvailableItems();
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ajouter un autre
+                </Button>
+              )}
+              <Button
+                onClick={() => {
+                  onSuccess?.();
+                  onOpenChange(false);
+                }}
+              >
+                Fermer
+              </Button>
+            </div>
           </div>
         ) : (
           <>
             {/* Info transaction */}
-            <div className="p-4 bg-slate-50 rounded-lg space-y-2">
+            <div className="p-2 bg-slate-50 rounded-lg space-y-1">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="font-medium text-slate-900">{label}</p>
@@ -795,6 +1263,87 @@ export function RapprochementModal({
                 </div>
               )}
             </div>
+
+            {/* Liens existants (documents/commandes déjà rapprochés) — compact */}
+            {existingLinks.length > 0 && (
+              <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-blue-600" />
+                    <span className="text-xs font-medium text-blue-800">
+                      Deja rapproche ({existingLinks.length})
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="font-semibold text-blue-700">
+                      {formatAmount(totalAllocated)}
+                    </span>
+                    {remainingAmount > 0.01 ? (
+                      <span className="font-bold text-amber-600">
+                        Reste: {formatAmount(remainingAmount)}
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 font-medium text-green-700">
+                        <Check className="h-3 w-3" /> Complet
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="max-h-[120px] overflow-y-auto space-y-0.5">
+                  {existingLinks.map(link => (
+                    <div
+                      key={link.id}
+                      className="flex items-center justify-between py-1 px-1.5 bg-white rounded border border-blue-100 text-xs"
+                    >
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {link.link_type === 'sales_order' && (
+                          <Package className="h-3 w-3 text-blue-500 shrink-0" />
+                        )}
+                        {link.link_type === 'purchase_order' && (
+                          <Building2 className="h-3 w-3 text-orange-500 shrink-0" />
+                        )}
+                        {link.link_type === 'document' && (
+                          <FileText className="h-3 w-3 text-slate-500 shrink-0" />
+                        )}
+                        <span className="font-medium truncate">
+                          {link.order_number
+                            ? `#${link.order_number}`
+                            : link.po_number
+                              ? `#${link.po_number}`
+                              : (link.document_number ?? 'Document')}
+                        </span>
+                        {link.partner_name && (
+                          <span className="text-slate-400 truncate hidden sm:inline">
+                            {link.partner_name}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="font-semibold text-blue-700">
+                          {formatAmount(link.allocated_amount)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={e => {
+                            e.stopPropagation();
+                            void handleUnlink(link.id).catch(err => {
+                              console.error(
+                                '[RapprochementModal] Unlink failed:',
+                                err
+                              );
+                            });
+                          }}
+                          className="p-0.5 rounded hover:bg-red-100 transition-colors"
+                          title="Supprimer ce rapprochement"
+                        >
+                          <X className="h-3 w-3 text-red-500" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Suggestions automatiques */}
             {suggestions.length > 0 && !selectedOrderId && (
@@ -908,7 +1457,15 @@ export function RapprochementModal({
                         return (
                           <div
                             key={doc.id}
-                            onClick={() => setSelectedDocumentId(doc.id)}
+                            onClick={() => {
+                              setSelectedDocumentId(doc.id);
+                              // Pré-remplir montant = min(restant transaction, restant document)
+                              const defaultAmt = Math.min(
+                                remainingAmount,
+                                remaining
+                              );
+                              setAllocatedAmount(String(defaultAmt.toFixed(2)));
+                            }}
                             className={`
                           p-3 rounded-lg border cursor-pointer transition-colors
                           ${selectedDocumentId === doc.id ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}
@@ -1017,7 +1574,15 @@ export function RapprochementModal({
                       {filteredOrders.map(order => (
                         <div
                           key={order.id}
-                          onClick={() => setSelectedOrderId(order.id)}
+                          onClick={() => {
+                            setSelectedOrderId(order.id);
+                            // Pré-remplir montant = min(restant transaction, restant commande)
+                            const defaultAmt = Math.min(
+                              remainingAmount,
+                              order.remaining
+                            );
+                            setAllocatedAmount(String(defaultAmt.toFixed(2)));
+                          }}
                           className={`
                         p-3 rounded-lg border cursor-pointer transition-colors
                         ${selectedOrderId === order.id ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}
@@ -1206,7 +1771,15 @@ export function RapprochementModal({
                       {filteredPurchaseOrders.map(po => (
                         <div
                           key={po.id}
-                          onClick={() => setSelectedPurchaseOrderId(po.id)}
+                          onClick={() => {
+                            setSelectedPurchaseOrderId(po.id);
+                            // Pré-remplir montant = min(restant transaction, total TTC PO)
+                            const defaultAmt = Math.min(
+                              remainingAmount,
+                              po.total_ttc
+                            );
+                            setAllocatedAmount(String(defaultAmt.toFixed(2)));
+                          }}
                           className={`
                         p-3 rounded-lg border cursor-pointer transition-colors
                         ${selectedPurchaseOrderId === po.id ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}

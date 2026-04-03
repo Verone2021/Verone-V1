@@ -4,6 +4,7 @@ import Link from 'next/link';
 
 import {
   ArrowRight,
+  Euro,
   Globe,
   Link2,
   MessageCircle,
@@ -112,6 +113,20 @@ export default function CanauxVentePage() {
           ],
     },
     {
+      name: 'Prix Clients',
+      description: 'Tarifs personnalises et ristournes B2B par client',
+      href: '/canaux-vente/prix-clients',
+      icon: Euro,
+      status: 'active',
+      color: 'green',
+      stats: [
+        { label: 'Prix configures', value: '0' },
+        { label: 'Regles actives', value: '0' },
+        { label: 'Clients', value: '0' },
+        { label: 'Remise moyenne', value: '0%' },
+      ],
+    },
+    {
       name: 'Meta (Facebook / Instagram)',
       description:
         'Catalogue Facebook Shop, Instagram Shopping, WhatsApp Business',
@@ -179,6 +194,13 @@ export default function CanauxVentePage() {
                 className="text-gray-500 hover:text-gray-900"
               >
                 Google Merchant
+              </Link>
+              <span className="text-gray-300">|</span>
+              <Link
+                href="/canaux-vente/prix-clients"
+                className="text-gray-500 hover:text-gray-900"
+              >
+                Prix Clients
               </Link>
             </div>
           </div>

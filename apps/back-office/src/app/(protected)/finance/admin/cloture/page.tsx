@@ -27,6 +27,7 @@ import {
 import { ClotureChecks } from './components/ClotureChecks';
 import { ClotureExports } from './components/ClotureExports';
 import { ClotureHeader } from './components/ClotureHeader';
+import { CloturePV } from './components/CloturePV';
 import { ClotureRecap } from './components/ClotureRecap';
 import { useClotureData } from './hooks';
 
@@ -122,6 +123,16 @@ export default function CloturePage() {
           />
 
           <ClotureRecap
+            selectedYear={selectedYear}
+            totalRecettes={yearTransactions.totalRecettes}
+            totalDepenses={yearTransactions.totalDepenses}
+            resultat={yearTransactions.resultat}
+            tvaCollectee={yearTransactions.tvaCollectee}
+            tvaDeductible={yearTransactions.tvaDeductible}
+            tvaNette={yearTransactions.tvaNette}
+          />
+
+          <CloturePV
             selectedYear={selectedYear}
             totalRecettes={yearTransactions.totalRecettes}
             totalDepenses={yearTransactions.totalDepenses}

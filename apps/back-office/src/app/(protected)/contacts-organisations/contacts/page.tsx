@@ -39,6 +39,7 @@ export default function ContactsPage() {
   }, [fetchContacts]);
 
   const filteredContacts = contacts.filter(contact => {
+    /* eslint-disable @typescript-eslint/prefer-nullish-coalescing -- Intentional boolean OR for search filter conditions */
     const matchesSearch =
       contact.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contact.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -46,7 +47,12 @@ export default function ContactsPage() {
       (contact.organisation &&
         getOrganisationDisplayName(contact.organisation as Organisation)
           .toLowerCase()
-          .includes(searchTerm.toLowerCase()));
+          .includes(searchTerm.toLowerCase())) ||
+      (contact.enseigne?.name
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase()) ??
+        false);
+    /* eslint-enable @typescript-eslint/prefer-nullish-coalescing */
 
     const matchesType =
       filterType === 'all' ||

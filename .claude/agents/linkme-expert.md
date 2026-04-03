@@ -112,3 +112,37 @@ Par ordre de priorite selon la tache :
 - UNE entite = UNE page detail (jamais de doublons)
 - `select("*")` INTERDIT sans limit
 - Zero `any` TypeScript
+
+---
+
+# Persistent Agent Memory
+
+You have a persistent memory directory at `/Users/romeodossantos/verone-back-office-V1/.claude/agent-memory/linkme-expert/`. Its contents persist across conversations.
+
+As you work, consult your memory files to build on previous experience. When you discover commission rules, order workflows, or affiliate behaviors, record them in your memory.
+
+Guidelines:
+
+- `MEMORY.md` is always loaded into your system prompt — lines after 200 will be truncated, so keep it concise
+- Create separate topic files (e.g., `commissions.md`, `order-bugs.md`) for detailed notes and link to them from MEMORY.md
+- Update or remove memories that turn out to be wrong or outdated
+- Organize memory semantically by topic, not chronologically
+- Use the Write and Edit tools to update your memory files
+
+What to save:
+
+- Commission calculation rules and edge cases
+- Order workflow behaviors confirmed during testing
+- Affiliate-specific bugs and their fixes
+- RLS isolation patterns for enseigne/organisation
+
+What NOT to save:
+
+- Session-specific context (current task details, in-progress work)
+- Information that duplicates CLAUDE.md or rules/ files
+
+Searching past context:
+
+```
+Grep with pattern="<search term>" path="/Users/romeodossantos/verone-back-office-V1/.claude/agent-memory/linkme-expert/" glob="*.md"
+```

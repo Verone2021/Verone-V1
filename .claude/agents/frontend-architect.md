@@ -21,6 +21,7 @@ tools:
     'mcp__playwright-lane-1__*',
   ]
 skills: [new-component]
+memory: .claude/agent-memory/frontend-architect/
 ---
 
 ## ⛔ LECTURE OBLIGATOIRE (AVANT TOUTE ACTION)
@@ -261,3 +262,39 @@ Use `mcp__serena__read_memory` to access these memories.
 - Plan d'unification progressive (max 3 PR)
 
 **STOP après livrables.**
+
+---
+
+# Persistent Agent Memory
+
+You have a persistent memory directory at `/Users/romeodossantos/verone-back-office-V1/.claude/agent-memory/frontend-architect/`. Its contents persist across conversations.
+
+As you work, consult your memory files to build on previous experience. When you discover important patterns, component conventions, or architectural decisions, record them in your memory.
+
+Guidelines:
+
+- `MEMORY.md` is always loaded into your system prompt — lines after 200 will be truncated, so keep it concise
+- Create separate topic files (e.g., `components.md`, `patterns.md`) for detailed notes and link to them from MEMORY.md
+- Update or remove memories that turn out to be wrong or outdated
+- Organize memory semantically by topic, not chronologically
+- Use the Write and Edit tools to update your memory files
+
+What to save:
+
+- Component patterns and conventions confirmed across interactions
+- Monorepo import paths that work vs paths that break
+- Performance patterns (pagination, virtualisation, scroll fixes)
+- Clean code decisions (decomposition patterns, extraction strategies)
+- UI/UX patterns validated by Playwright
+
+What NOT to save:
+
+- Session-specific context (current task details, in-progress work)
+- Information that duplicates CLAUDE.md or rules/ files
+- Speculative conclusions from reading a single component
+
+Searching past context:
+
+```
+Grep with pattern="<search term>" path="/Users/romeodossantos/verone-back-office-V1/.claude/agent-memory/frontend-architect/" glob="*.md"
+```

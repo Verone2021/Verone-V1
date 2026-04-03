@@ -1,212 +1,473 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState } from 'react';
 
+import { RapprochementModal } from '@verone/finance/components';
+import { QuickPurchaseOrderModal } from '@verone/orders/components/modals';
 import {
-  useDatabaseNotifications,
-  useFormSubmissionsCount,
-  useLinkmeMissingInfoCount,
-} from '@verone/notifications';
-import {
-  Badge,
-  Button,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@verone/ui';
-import { cn } from '@verone/utils';
-import {
-  MessageSquare,
+  AlertTriangle,
+  EyeOff,
   Link2,
-  RefreshCw,
-  Filter,
-  Inbox,
-  FileText,
-  Bell,
-  AlertCircle,
+  Loader2,
+  Package,
+  Truck,
 } from 'lucide-react';
 
-import { MessageList } from './components/message-list';
-import { SystemNotificationsTab } from './components/system-notifications-tab';
-import { useMessages, useFilteredMessages } from './hooks/use-messages';
+import {
+  CategoryCard,
+  EmptyState,
+  MoreItemsLink,
+} from './components/category-card';
+import {
+  CATEGORIES,
+  formatDate,
+  formatCurrency,
+  formatDateWithYear,
+} from './components/constants';
+import { ItemRow } from './components/item-row';
+import { useMessagesItems } from './hooks/use-messages-items';
 
 export default function MessagesHubPage() {
-  const searchParams = useSearchParams();
-  const initialTab =
-    searchParams.get('onglet') ?? searchParams.get('canal') ?? 'tous';
+  const items = useMessagesItems();
 
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  // Modal rapprochement paiements
+  const [rapData, setRapData] = useState({
+    open: false,
+    transactionId: '',
+    label: '',
+    amount: 0,
+    counterpartyName: '',
+  });
 
-  const { messages, loading, error, fetchMessages } = useMessages();
-  const { filtered, linkmeMessages, formMessages } = useFilteredMessages(
-    messages,
-    statusFilter
-  );
+  // Modal commande fournisseur (stock)
+  const [poModal, setPoModal] = useState({
+    open: false,
+    productId: '',
+    shortageQuantity: 0,
+  });
 
-  const { count: formSubmissionsCount } = useFormSubmissionsCount();
-  const { count: linkmeMissingInfoCount } = useLinkmeMissingInfoCount();
-  const { unreadCount: systemUnreadCount } = useDatabaseNotifications();
+  if (items.loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+        <span className="ml-2 text-sm text-gray-500">Chargement...</span>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    void fetchMessages().catch(err => {
-      console.error('[MessagesHub] Initial fetch error:', err);
-    });
-  }, [fetchMessages]);
+  const totalToTreat =
+    items.paiements.count +
+    items.commandes.count +
+    items.expeditions.count +
+    items.stock.count +
+    items.approbations.count +
+    items.sourcing.count +
+    items.consultations.count +
+    items.formulaires.count +
+    items.finance.count +
+    items.organisations.count;
 
-  const pendingLinkme = messages.filter(
-    m =>
-      m.channel === 'linkme' && (m.status === 'pending' || m.status === 'new')
-  ).length;
-  const pendingForms = messages.filter(
-    m =>
-      m.type === 'form_submission' &&
-      (m.status === 'new' || m.status === 'open')
-  ).length;
-  const totalPending = pendingLinkme + pendingForms + systemUnreadCount;
-
-  const statusFilters = [
-    { key: 'all', label: 'Tous' },
-    { key: 'new', label: 'Nouveaux', count: totalPending },
-    { key: 'in_progress', label: 'En cours' },
-    { key: 'resolved', label: 'Resolus' },
-  ] as const;
+  const catConfig = (key: string) => CATEGORIES.find(c => c.key === key)!;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-orange-500">
-            <MessageSquare className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Messages</h1>
-            <p className="text-sm text-muted-foreground">
-              Formulaires, demandes d&apos;informations et notifications — tous
-              canaux
-            </p>
-          </div>
+    <div className="min-h-screen bg-gray-50/50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+        {/* Header */}
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">
+            Centre de traitement
+          </h1>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Actions en attente — donnees en temps reel
+          </p>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            void fetchMessages().catch(err => {
-              console.error('[MessagesHub] Refresh error:', err);
-            });
-          }}
-          disabled={loading}
-        >
-          <RefreshCw
-            className={cn('h-4 w-4 mr-2', loading && 'animate-spin')}
-          />
-          Actualiser
-        </Button>
-      </div>
+        {totalToTreat > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+            <span className="text-xs font-semibold text-amber-900">
+              {totalToTreat} action{totalToTreat > 1 ? 's' : ''} a traiter
+            </span>
+          </div>
+        )}
 
-      {/* Status filter chips */}
-      <div className="flex items-center gap-2">
-        <Filter className="h-4 w-4 text-muted-foreground" />
-        {statusFilters.map(f => (
-          <Button
-            key={f.key}
-            variant={statusFilter === f.key ? 'default' : 'outline'}
-            size="sm"
-            className="h-7 text-xs"
-            onClick={() => setStatusFilter(f.key)}
+        {/* Grille 10 categories */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* ── Paiements ── */}
+          <CategoryCard
+            config={catConfig('paiements')}
+            count={items.paiements.count}
           >
-            {f.label}
-            {'count' in f && f.count != null && f.count > 0 && (
-              <Badge className="ml-1.5 bg-red-500 text-white text-[10px] px-1 py-0">
-                {f.count}
-              </Badge>
+            {items.paiements.items.length === 0 ? (
+              <EmptyState config={catConfig('paiements')} />
+            ) : (
+              items.paiements.items.map(tx => (
+                <ItemRow
+                  key={tx.id}
+                  href={`/finance/transactions/${tx.id}`}
+                  title={tx.counterparty_name ?? tx.label ?? 'Transaction'}
+                  subtitle={`${tx.side === 'credit' ? '+' : '-'}${formatCurrency(tx.amount)}`}
+                  meta={formatDateWithYear(tx.emitted_at)}
+                  borderColor={
+                    tx.side === 'credit' ? 'border-green-300' : 'border-red-300'
+                  }
+                  actions={
+                    <>
+                      <button
+                        className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
+                        onClick={e => {
+                          e.stopPropagation();
+                          setRapData({
+                            open: true,
+                            transactionId: tx.id,
+                            label: tx.label ?? '',
+                            amount: tx.amount,
+                            counterpartyName: tx.counterparty_name ?? '',
+                          });
+                        }}
+                        title="Rapprocher"
+                      >
+                        <Link2 className="h-3 w-3" /> Rapprocher
+                      </button>
+                      <button
+                        className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-gray-50 text-gray-500 hover:bg-gray-100 border border-gray-200"
+                        onClick={e => {
+                          e.stopPropagation();
+                          void items
+                            .ignoreTransaction(tx.id)
+                            .catch(console.error);
+                        }}
+                        title="Ignorer cette transaction"
+                      >
+                        <EyeOff className="h-3 w-3" /> Ignorer
+                      </button>
+                    </>
+                  }
+                />
+              ))
             )}
-          </Button>
-        ))}
+            <MoreItemsLink
+              count={items.paiements.count}
+              href="/finance/transactions?reconciled=false"
+            />
+          </CategoryCard>
+
+          {/* ── Commandes (draft) ── */}
+          <CategoryCard
+            config={catConfig('commandes')}
+            count={items.commandes.count}
+          >
+            {items.commandes.items.length === 0 ? (
+              <EmptyState config={catConfig('commandes')} />
+            ) : (
+              items.commandes.items.map(o => (
+                <ItemRow
+                  key={o.id}
+                  href={`/commandes/clients/${o.id}`}
+                  title={`${o.order_number} — ${formatCurrency(o.total_ttc)}`}
+                  subtitle={o.customer_name ?? 'Client'}
+                  meta={formatDate(o.created_at)}
+                  borderColor="border-blue-300"
+                />
+              ))
+            )}
+            <MoreItemsLink
+              count={items.commandes.count}
+              href="/commandes/clients"
+            />
+          </CategoryCard>
+
+          {/* ── Expeditions ── */}
+          <CategoryCard
+            config={catConfig('expeditions')}
+            count={items.expeditions.count}
+          >
+            {items.expeditions.items.length === 0 ? (
+              <EmptyState config={catConfig('expeditions')} />
+            ) : (
+              items.expeditions.items.map(o => (
+                <ItemRow
+                  key={o.id}
+                  href={`/stocks/expeditions`}
+                  title={`${o.order_number} — ${o.customer_name ?? 'Client'}`}
+                  subtitle={
+                    o.status === 'validated'
+                      ? 'A expedier'
+                      : 'Partiellement expediee'
+                  }
+                  meta={formatDate(o.created_at)}
+                  borderColor="border-indigo-300"
+                  actions={
+                    <a
+                      href="/stocks/expeditions"
+                      className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <Truck className="h-3 w-3" /> Expedier
+                    </a>
+                  }
+                />
+              ))
+            )}
+            <MoreItemsLink
+              count={items.expeditions.count}
+              href="/stocks/expeditions"
+            />
+          </CategoryCard>
+
+          {/* ── Stock ── */}
+          <CategoryCard config={catConfig('stock')} count={items.stock.count}>
+            {items.stock.items.length === 0 ? (
+              <EmptyState config={catConfig('stock')} />
+            ) : (
+              items.stock.items.map(a => (
+                <ItemRow
+                  key={a.id}
+                  href={`/stocks/alertes?product=${a.product_id}`}
+                  title={a.product_name}
+                  subtitle={`${a.sku} — Stock: ${a.stock_real}`}
+                  borderColor={
+                    a.alert_type === 'out_of_stock'
+                      ? 'border-red-400'
+                      : a.alert_type === 'critical'
+                        ? 'border-orange-400'
+                        : 'border-yellow-400'
+                  }
+                  actions={
+                    <button
+                      className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
+                      onClick={e => {
+                        e.stopPropagation();
+                        setPoModal({
+                          open: true,
+                          productId: a.product_id,
+                          shortageQuantity: a.shortage_quantity ?? 1,
+                        });
+                      }}
+                      title="Commander chez le fournisseur"
+                    >
+                      <Package className="h-3 w-3" /> Commander
+                    </button>
+                  }
+                />
+              ))
+            )}
+            <MoreItemsLink count={items.stock.count} href="/stocks/alertes" />
+          </CategoryCard>
+
+          {/* ── Approbations LinkMe ── */}
+          <CategoryCard
+            config={catConfig('approbations')}
+            count={items.approbations.count}
+          >
+            {items.approbations.items.length === 0 ? (
+              <EmptyState config={catConfig('approbations')} />
+            ) : (
+              items.approbations.items.map(o => (
+                <ItemRow
+                  key={o.id}
+                  href={`/canaux-vente/linkme/commandes/${o.id}`}
+                  title={`${o.order_number} — ${formatCurrency(o.total_ttc)}`}
+                  subtitle={o.customer_name ?? 'Affilie'}
+                  meta={formatDate(o.created_at)}
+                  borderColor="border-red-300"
+                />
+              ))
+            )}
+            <MoreItemsLink
+              count={items.approbations.count}
+              href="/canaux-vente/linkme/approbations"
+            />
+          </CategoryCard>
+
+          {/* ── Sourcing Produit ── */}
+          <CategoryCard
+            config={catConfig('sourcing')}
+            count={items.sourcing.count}
+          >
+            {items.sourcing.items.length === 0 ? (
+              <EmptyState config={catConfig('sourcing')} />
+            ) : (
+              items.sourcing.items.map(p => (
+                <ItemRow
+                  key={p.id}
+                  href={`/produits/sourcing/produits/${p.id}`}
+                  title={p.name}
+                  subtitle={`${p.sku} — ${p.product_status === 'draft' ? 'En recherche' : 'Echantillon commande'}${!p.supplier_id ? ' — Fournisseur manquant' : ''}`}
+                  meta={formatDate(p.created_at)}
+                  borderColor={
+                    !p.supplier_id ? 'border-red-300' : 'border-violet-300'
+                  }
+                />
+              ))
+            )}
+            <MoreItemsLink
+              count={items.sourcing.count}
+              href="/produits/sourcing"
+            />
+          </CategoryCard>
+
+          {/* ── Consultations Client ── */}
+          <CategoryCard
+            config={catConfig('consultations')}
+            count={items.consultations.count}
+          >
+            {items.consultations.items.length === 0 ? (
+              <EmptyState config={catConfig('consultations')} />
+            ) : (
+              items.consultations.items.map(c => {
+                const clientName =
+                  c.organisation?.trade_name ??
+                  c.organisation?.legal_name ??
+                  c.client_email;
+                return (
+                  <ItemRow
+                    key={c.id}
+                    href={`/consultations/${c.id}`}
+                    title={clientName}
+                    subtitle={
+                      c.descriptif.length > 60
+                        ? `${c.descriptif.slice(0, 60)}...`
+                        : c.descriptif
+                    }
+                    meta={formatDate(c.created_at)}
+                    borderColor={
+                      c.status === 'en_attente'
+                        ? 'border-orange-300'
+                        : 'border-cyan-300'
+                    }
+                  />
+                );
+              })
+            )}
+            <MoreItemsLink
+              count={items.consultations.count}
+              href="/consultations?status=en_attente,en_cours"
+            />
+          </CategoryCard>
+
+          {/* ── Formulaires ── */}
+          <CategoryCard
+            config={catConfig('formulaires')}
+            count={items.formulaires.count}
+          >
+            {items.formulaires.items.length === 0 ? (
+              <EmptyState config={catConfig('formulaires')} />
+            ) : (
+              items.formulaires.items.map(f => (
+                <ItemRow
+                  key={f.id}
+                  href={
+                    f.source_type === 'form'
+                      ? `/prises-contact/${f.id}`
+                      : `/canaux-vente/linkme/commandes`
+                  }
+                  title={f.name || f.email}
+                  subtitle={f.subject}
+                  meta={formatDate(f.created_at)}
+                  borderColor="border-teal-300"
+                />
+              ))
+            )}
+            <MoreItemsLink
+              count={items.formulaires.count}
+              href="/prises-contact"
+            />
+          </CategoryCard>
+
+          {/* ── Finance ── */}
+          <CategoryCard
+            config={catConfig('finance')}
+            count={items.finance.count}
+          >
+            {items.finance.items.length === 0 ? (
+              <EmptyState config={catConfig('finance')} />
+            ) : (
+              items.finance.items.map(d => (
+                <ItemRow
+                  key={d.id}
+                  href={`/factures`}
+                  title={`${d.document_number ?? 'Brouillon'} — ${d.partner_name}`}
+                  subtitle={`${formatCurrency(d.total_ttc)} — ${d.document_type === 'customer_invoice' ? 'Facture client' : d.document_type === 'supplier_invoice' ? 'Facture fournisseur' : 'Document'}`}
+                  meta={
+                    d.is_overdue
+                      ? `${d.days_overdue}j retard`
+                      : d.status === 'draft'
+                        ? 'Brouillon'
+                        : 'En cours'
+                  }
+                  borderColor={
+                    d.is_overdue
+                      ? 'border-red-400'
+                      : d.status === 'draft'
+                        ? 'border-amber-300'
+                        : 'border-amber-200'
+                  }
+                  actions={
+                    d.is_overdue ? (
+                      <span className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 font-medium">
+                        {d.days_overdue}j en retard
+                      </span>
+                    ) : undefined
+                  }
+                />
+              ))
+            )}
+            <MoreItemsLink count={items.finance.count} href="/factures" />
+          </CategoryCard>
+
+          {/* ── Organisations ── */}
+          <CategoryCard
+            config={catConfig('organisations')}
+            count={items.organisations.count}
+          >
+            {items.organisations.items.length === 0 ? (
+              <EmptyState config={catConfig('organisations')} />
+            ) : (
+              items.organisations.items.map(o => (
+                <ItemRow
+                  key={o.id}
+                  href={`/canaux-vente/linkme/organisations/${o.id}`}
+                  title={o.trade_name ?? o.legal_name}
+                  subtitle={`${o.type} — En attente validation`}
+                  meta={formatDate(o.created_at)}
+                  borderColor="border-purple-300"
+                />
+              ))
+            )}
+            <MoreItemsLink
+              count={items.organisations.count}
+              href="/canaux-vente/linkme/organisations"
+            />
+          </CategoryCard>
+        </div>
       </div>
 
-      {/* Error state */}
-      {error && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 text-red-700 text-sm">
-          <AlertCircle className="h-4 w-4 flex-shrink-0" />
-          {error}
-        </div>
-      )}
+      {/* Modal rapprochement */}
+      <RapprochementModal
+        open={rapData.open}
+        onOpenChange={open => setRapData(prev => ({ ...prev, open }))}
+        transactionId={rapData.transactionId}
+        label={rapData.label}
+        amount={rapData.amount}
+        counterpartyName={rapData.counterpartyName}
+        onSuccess={() => {
+          setRapData(prev => ({ ...prev, open: false }));
+          void items.refetch().catch(console.error);
+        }}
+      />
 
-      {/* Tabs */}
-      <Tabs defaultValue={initialTab} className="w-full">
-        <TabsList>
-          <TabsTrigger value="tous" className="gap-1.5">
-            <Inbox className="h-4 w-4" />
-            Tous
-            {totalPending > 0 && (
-              <Badge className="bg-red-500 text-white text-[10px] px-1 py-0">
-                {totalPending}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="formulaires" className="gap-1.5">
-            <FileText className="h-4 w-4" />
-            Formulaires
-            {formSubmissionsCount > 0 && (
-              <Badge className="bg-blue-500 text-white text-[10px] px-1 py-0">
-                {formSubmissionsCount}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="linkme" className="gap-1.5">
-            <Link2 className="h-4 w-4" />
-            LinkMe
-            {linkmeMissingInfoCount > 0 && (
-              <Badge className="bg-purple-500 text-white text-[10px] px-1 py-0">
-                {linkmeMissingInfoCount}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="systeme" className="gap-1.5">
-            <Bell className="h-4 w-4" />
-            Systeme
-            {systemUnreadCount > 0 && (
-              <Badge className="bg-orange-500 text-white text-[10px] px-1 py-0">
-                {systemUnreadCount}
-              </Badge>
-            )}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="tous" className="mt-4">
-          <MessageList
-            loading={loading}
-            messages={filtered}
-            emptyLabel="Aucun message pour ces filtres"
-          />
-        </TabsContent>
-
-        <TabsContent value="formulaires" className="mt-4">
-          <MessageList
-            loading={loading}
-            messages={formMessages}
-            emptyLabel="Aucun formulaire de contact"
-            skeletonCount={3}
-          />
-        </TabsContent>
-
-        <TabsContent value="linkme" className="mt-4">
-          <MessageList
-            loading={loading}
-            messages={linkmeMessages}
-            emptyLabel="Aucune demande d'information LinkMe"
-            skeletonCount={3}
-          />
-        </TabsContent>
-
-        <TabsContent value="systeme" className="mt-4">
-          <SystemNotificationsTab />
-        </TabsContent>
-      </Tabs>
+      {/* Modal commande fournisseur */}
+      <QuickPurchaseOrderModal
+        open={poModal.open}
+        onClose={() => setPoModal(prev => ({ ...prev, open: false }))}
+        productId={poModal.productId}
+        shortageQuantity={poModal.shortageQuantity}
+        onSuccess={() => {
+          setPoModal(prev => ({ ...prev, open: false }));
+          void items.refetch().catch(console.error);
+        }}
+      />
     </div>
   );
 }

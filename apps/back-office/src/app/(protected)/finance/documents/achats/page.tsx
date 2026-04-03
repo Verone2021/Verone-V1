@@ -27,6 +27,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Alert,
+  AlertDescription,
 } from '@verone/ui';
 import { Money } from '@verone/ui-business';
 import {
@@ -34,6 +36,7 @@ import {
   Paperclip,
   AlertTriangle,
   ArrowLeft,
+  Info,
 } from 'lucide-react';
 
 // =====================================================================
@@ -63,15 +66,19 @@ function hasAttachment(tx: BankTransaction): boolean {
 function getPaymentMethod(tx: BankTransaction): string {
   const detected = detectBankPaymentMethod(tx.label ?? '');
   if (detected) return formatBankPaymentMethod(detected);
-  const rawData = tx.raw_data as { operation_type?: string } | undefined;
-  if (rawData?.operation_type) {
+  const opType = tx.operation_type;
+  if (opType) {
     const typeMap: Record<string, string> = {
+      income: 'Virement recu',
       transfer: 'Virement',
       card: 'Carte bancaire',
       direct_debit: 'Prelevement',
       check: 'Cheque',
+      qonto_fee: 'Frais bancaires',
+      recall: 'Rappel',
+      swift_income: 'Virement international',
     };
-    return typeMap[rawData.operation_type] || rawData.operation_type;
+    return typeMap[opType] ?? opType;
   }
   return '-';
 }
@@ -131,6 +138,19 @@ export default function AchatsPage() {
           </SelectContent>
         </Select>
       </div>
+
+      {/* Guide */}
+      <Alert className="border-blue-200 bg-blue-50">
+        <Info className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-800 text-sm">
+          <strong>Le Livre des Achats</strong> liste toutes vos depenses
+          professionnelles par ordre chronologique. Chaque ligne montre le
+          fournisseur, la categorie comptable (PCG), le mode de paiement, et les
+          montants HT/TVA/TTC. L&apos;icone ⚠ signifie qu&apos;il manque le
+          justificatif (facture fournisseur). Ce document est obligatoire en cas
+          de controle fiscal.
+        </AlertDescription>
+      </Alert>
 
       {loading ? (
         <Card>

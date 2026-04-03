@@ -151,11 +151,23 @@ export default function AnnexeLegalePage() {
         </div>
       </div>
 
+      {/* Guide */}
+      <Alert className="border-blue-200 bg-blue-50">
+        <Info className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-800 text-sm">
+          <strong>L&apos;Annexe Legale</strong> accompagne le Bilan et le Compte
+          de Resultat. Elle explique les methodes comptables utilisees (comment
+          vous calculez les amortissements, valorisez le stock, etc.), les
+          engagements hors bilan, et la ventilation de la TVA. Elle est
+          obligatoire au depot au Greffe chaque annee.
+        </AlertDescription>
+      </Alert>
+
       <Alert className="border-orange-200 bg-orange-50">
         <Info className="h-4 w-4 text-orange-600" />
         <AlertDescription className="text-orange-700 text-sm">
           <strong>Document de travail.</strong> L&apos;annexe legale definitive
-          doit etre validee par votre expert-comptable avant depot au greffe.
+          doit etre validee par votre comptable avant depot au greffe.
         </AlertDescription>
       </Alert>
 
@@ -208,8 +220,8 @@ export default function AnnexeLegalePage() {
                 <div>
                   <span className="text-muted-foreground">Activite :</span>
                   <span className="font-medium ml-2">
-                    Commerce de decoration et mobilier d&apos;interieur haut de
-                    gamme
+                    Commerce de detail de decoration et mobilier
+                    d&apos;interieur — sourcing creatif
                   </span>
                 </div>
                 <div>

@@ -92,10 +92,7 @@ export default function VentesDashboardPage() {
                 Consultations
               </Link>
               <span className="text-gray-300">|</span>
-              <Link
-                href="/factures?tab=devis"
-                className="text-gray-500 hover:text-gray-900"
-              >
+              <Link href="/devis" className="text-gray-500 hover:text-gray-900">
                 Devis
               </Link>
               <span className="text-gray-300">|</span>
@@ -328,7 +325,7 @@ export default function VentesDashboardPage() {
                 <h2 className="text-sm font-semibold text-gray-900">Devis</h2>
               </div>
               <Link
-                href="/factures?tab=devis"
+                href="/devis"
                 className="text-xs text-gray-500 hover:text-gray-900"
               >
                 Voir tous &rarr;
@@ -338,7 +335,7 @@ export default function VentesDashboardPage() {
               <FileText className="h-8 w-8 text-gray-200 mx-auto mb-2" />
               <p className="text-sm text-gray-400">Devis via Qonto</p>
               <Link
-                href="/factures?tab=devis"
+                href="/devis"
                 className="inline-flex items-center gap-1 mt-2 text-xs text-blue-600 hover:text-blue-800"
               >
                 Acceder aux devis &rarr;

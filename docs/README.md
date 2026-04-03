@@ -77,13 +77,65 @@
 | [integrations.md](current/integrations.md)                                  | Vue d'ensemble integrations |
 | [resend-dns-setup.md](integrations/resend-dns-setup.md)                     | DNS emails (Resend)         |
 
+## Regles Metier (restaurees 2026-04-01)
+
+### Stock
+
+| Document                                                                                            | Description                                   |
+| --------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| [guide-configuration-seuils.md](business-rules/06-stocks/alertes/guide-configuration-seuils.md)     | Guide utilisateur seuils alertes stock        |
+| [stock-alert-tracking-system.md](business-rules/06-stocks/alertes/stock-alert-tracking-system.md)   | Architecture technique systeme alertes        |
+| [BACKORDERS-POLICY.md](business-rules/06-stocks/backorders/BACKORDERS-POLICY.md)                    | Politique backorders (stock negatif autorise) |
+| [real-vs-forecast-separation.md](business-rules/06-stocks/movements/real-vs-forecast-separation.md) | Separation stock reel vs previsionnel         |
+| [stock-traceability-rules.md](business-rules/06-stocks/movements/stock-traceability-rules.md)       | Regles tracabilite mouvements stock           |
+
+### Commandes
+
+| Document                                                                                                                           | Description                             |
+| ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| [sales-order-cancellation-workflow.md](business-rules/07-commandes/clients/sales-order-cancellation-workflow.md)                   | Workflow annulation (5 regles absolues) |
+| [COMMANDES-WORKFLOW-VALIDATION-EXPEDITION.md](business-rules/07-commandes/expeditions/COMMANDES-WORKFLOW-VALIDATION-EXPEDITION.md) | Workflow validation + expedition        |
+| [PURCHASE-ORDER-WORKFLOW-COMPLET.md](business-rules/07-commandes/fournisseurs/PURCHASE-ORDER-WORKFLOW-COMPLET.md)                  | Workflow complet commandes fournisseurs |
+| [notifications-workflow.md](business-rules/07-commandes/notifications-workflow.md)                                                 | 13 triggers notifications commandes     |
+| [address-autofill-orders.md](business-rules/07-commandes/clients/address-autofill-orders.md)                                       | Auto-remplissage adresses commandes     |
+
+## Memoires Serena (restaurees 2026-04-01)
+
+| Document                                                                | Description                                    |
+| ----------------------------------------------------------------------- | ---------------------------------------------- |
+| [project-decisions.md](current/serena/project-decisions.md)             | Decisions non-negociables (1 DB, email, git)   |
+| [qonto-never-finalize.md](current/serena/qonto-never-finalize.md)       | JAMAIS finaliser facture Qonto par code        |
+| [linkme-commissions.md](current/serena/linkme-commissions.md)           | Formule commission corrigee (source de verite) |
+| [linkme-architecture.md](current/serena/linkme-architecture.md)         | Architecture 2 tables LinkMe                   |
+| [stock-orders-logic.md](current/serena/stock-orders-logic.md)           | Logique stock reel vs previsionnel             |
+| [database-implementation.md](current/serena/database-implementation.md) | Architecture 78 tables                         |
+| [products-architecture.md](current/serena/products-architecture.md)     | Products = table centrale (jamais dupliquer)   |
+| [user-expectations.md](current/serena/user-expectations.md)             | Regles communication avec Romeo                |
+| [business-context.md](current/serena/business-context.md)               | Contexte business et SLOs                      |
+| [turborepo-paths.md](current/serena/turborepo-paths.md)                 | Chemins corrects monorepo (anti-hallucination) |
+| [migrations-workflow.md](current/serena/migrations-workflow.md)         | Procedure migrations Supabase                  |
+
+## LinkMe (docs supplementaires restaurees)
+
+| Document                                                                  | Description                       |
+| ------------------------------------------------------------------------- | --------------------------------- |
+| [commission-pricing-rules.md](current/linkme/commission-pricing-rules.md) | Audit commissions (97% match)     |
+| [business-rules-linkme.md](current/linkme/business-rules-linkme.md)       | Regles metier LinkMe detaillees   |
+| [routes-index.md](current/linkme/routes-index.md)                         | Audit 60+ routes LinkMe           |
+| [margin-calculation.md](linkme/margin-calculation.md)                     | Calcul marge SSOT (@verone/utils) |
+
 ## Operations
 
-| Document                                                         | Description                 |
-| ---------------------------------------------------------------- | --------------------------- |
-| [deploy-runbooks.md](current/deploy-runbooks.md)                 | Runbooks deploiement Vercel |
-| [GITHUB-RULESETS.md](governance/GITHUB-RULESETS.md)              | Branch protection rules     |
-| [dev-environment.md](current/troubleshooting/dev-environment.md) | Troubleshooting dev         |
+| Document                                                               | Description                        |
+| ---------------------------------------------------------------------- | ---------------------------------- |
+| [deploy-runbooks.md](current/deploy-runbooks.md)                       | Runbooks deploiement Vercel        |
+| [GITHUB-RULESETS.md](governance/GITHUB-RULESETS.md)                    | Branch protection rules            |
+| [dev-environment.md](current/troubleshooting/dev-environment.md)       | Troubleshooting dev                |
+| [incident.md](runbooks/incident.md)                                    | Protocole stabilisation (restaure) |
+| [dev-workflow.md](current/dev-workflow.md)                             | Workflow dev quotidien (restaure)  |
+| [component-audit-guidelines.md](current/component-audit-guidelines.md) | Dead code detection (restaure)     |
+| [qonto-env-setup.md](integrations/qonto-env-setup.md)                  | Config env Qonto (restaure)        |
+| [database-triggers.md](metrics/database-triggers.md)                   | 13+ triggers metriques (restaure)  |
 
 ## Archives
 
