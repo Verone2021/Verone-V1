@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /**
  * Hook: useLinkMeOrders
  * Gestion des commandes LinkMe
@@ -669,8 +670,8 @@ async function createLinkMeOrder(
     .insert({
       sales_order_id: order.id,
       requester_type: 'manual_entry' as const,
-      requester_name: user.email ?? 'Back Office',
-      requester_email: user.email ?? '',
+      requester_name: '',
+      requester_email: '',
       requester_phone: ld?.requester_phone ?? null,
       is_new_restaurant: false,
       delivery_terms_accepted: false,
