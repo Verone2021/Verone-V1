@@ -1,4 +1,7 @@
+/* eslint-disable max-lines */
 'use client';
+
+import { useState } from 'react';
 
 import {
   Badge,
@@ -8,6 +11,11 @@ import {
   CardHeader,
   CardTitle,
   Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Separator,
   Table,
   TableBody,
@@ -75,6 +83,11 @@ export interface LeftColumnProps {
   updateDetailsPending: boolean;
   // Step badge
   isStep4Complete: boolean;
+  // Organisation inline edit
+  onUpdateOrganisation?: (
+    orgId: string,
+    updates: Record<string, unknown>
+  ) => Promise<void>;
 }
 
 // ============================================
@@ -119,8 +132,12 @@ export function LeftColumn({
   onUseOrgAddress,
   updateDetailsPending,
   isStep4Complete,
+  onUpdateOrganisation,
 }: LeftColumnProps) {
   const org = order.organisation;
+  const [editingOwnership, setEditingOwnership] = useState(false);
+  const [editingOrgField, setEditingOrgField] = useState<'siret' | null>(null);
+  const [editOrgValue, setEditOrgValue] = useState('');
 
   return (
     <div className="lg:col-span-2 space-y-4">
@@ -135,22 +152,50 @@ export function LeftColumn({
                   {order.organisation.trade_name ??
                     order.organisation.legal_name}
                 </span>
-                {details?.owner_type && (
+                {/* Badge ownership_type — complétable si vide, lecture seule si renseigné */}
+                {org?.ownership_type ? (
                   <span
                     className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full ${
-                      details.owner_type === 'franchise'
+                      org.ownership_type === 'franchise'
                         ? 'bg-violet-100 text-violet-700'
                         : 'bg-blue-100 text-blue-700'
                     }`}
                   >
-                    {details.owner_type === 'propre'
-                      ? 'Propre'
-                      : details.owner_type === 'succursale'
-                        ? 'Succursale'
-                        : details.owner_type === 'franchise'
-                          ? 'Franchise'
-                          : details.owner_type}
+                    {org.ownership_type === 'franchise'
+                      ? 'Franchise'
+                      : 'Succursale'}
                   </span>
+                ) : editingOwnership && org ? (
+                  <Select
+                    value="none"
+                    onValueChange={v => {
+                      if (v === 'none') return;
+                      if (onUpdateOrganisation) {
+                        void onUpdateOrganisation(org.id, {
+                          ownership_type: v,
+                        }).then(() => setEditingOwnership(false));
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="h-6 text-xs w-[130px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Choisir...</SelectItem>
+                      <SelectItem value="succursale">Succursale</SelectItem>
+                      <SelectItem value="franchise">Franchise</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setEditingOwnership(true)}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-500 cursor-pointer hover:opacity-80"
+                    title="Cliquer pour renseigner le type"
+                  >
+                    Type ?
+                    <Pencil className="h-2.5 w-2.5" />
+                  </button>
                 )}
                 {details?.is_new_restaurant && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-100 text-emerald-700">
@@ -165,31 +210,84 @@ export function LeftColumn({
                   </span>
                 )}
               </div>
-              {/* Identifiants : SIRET / TVA */}
+              {/* Identifiants : SIRET / TVA — complétable si vide */}
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
                 {(() => {
                   const isFrench =
                     !order.organisation.country ||
                     order.organisation.country === 'FR';
-                  if (isFrench) {
-                    return order.organisation.siret ? (
-                      <span>SIRET : {order.organisation.siret}</span>
-                    ) : (
-                      <span className="text-amber-600 flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3" />
-                        SIRET : Non renseigné
-                      </span>
-                    );
-                  } else {
-                    return order.organisation.vat_number ? (
-                      <span>TVA Intra. : {order.organisation.vat_number}</span>
-                    ) : (
-                      <span className="text-amber-600 flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3" />
-                        N° TVA Intracommunautaire : Non renseigné
+                  const label = isFrench ? 'SIRET' : 'TVA Intracommunautaire';
+                  const value = isFrench
+                    ? order.organisation.siret
+                    : order.organisation.vat_number;
+                  const dbField = isFrench ? 'siret' : 'vat_number';
+
+                  if (value) {
+                    return (
+                      <span>
+                        {label} : {value}
                       </span>
                     );
                   }
+
+                  if (editingOrgField === 'siret' && org) {
+                    return (
+                      <div className="flex items-center gap-1">
+                        <span className="text-gray-600">{label} :</span>
+                        <Input
+                          className="h-6 text-xs w-[180px]"
+                          value={editOrgValue}
+                          onChange={e => setEditOrgValue(e.target.value)}
+                          placeholder={label}
+                          autoFocus
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' && onUpdateOrganisation) {
+                              void onUpdateOrganisation(org.id, {
+                                [dbField]: editOrgValue || null,
+                              }).then(() => setEditingOrgField(null));
+                            }
+                            if (e.key === 'Escape') setEditingOrgField(null);
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (onUpdateOrganisation && editOrgValue) {
+                              void onUpdateOrganisation(org.id, {
+                                [dbField]: editOrgValue,
+                              }).then(() => setEditingOrgField(null));
+                            }
+                          }}
+                          className="text-green-600 hover:text-green-800"
+                        >
+                          <Check className="h-3 w-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingOrgField(null)}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          <XCircle className="h-3 w-3" />
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditOrgValue('');
+                        setEditingOrgField('siret');
+                      }}
+                      className="text-amber-600 flex items-center gap-1 hover:text-amber-800 cursor-pointer"
+                      title="Cliquer pour renseigner"
+                    >
+                      <AlertTriangle className="h-3 w-3" />
+                      {label} : Non renseigne
+                      <Pencil className="h-2.5 w-2.5" />
+                    </button>
+                  );
                 })()}
               </div>
               {/* Adresse principale */}

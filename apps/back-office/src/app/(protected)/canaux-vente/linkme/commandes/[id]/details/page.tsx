@@ -19,9 +19,20 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
-import { Badge, Button, Skeleton } from '@verone/ui';
+import {
+  Badge,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Skeleton,
+} from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
-import { ArrowLeft, AlertCircle, Lock } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Calendar, Lock } from 'lucide-react';
 
 import {
   useUpdateLinkMeDetails,
@@ -91,6 +102,8 @@ export default function LinkMeOrderDetailsPage() {
   const [contactDialogFor, setContactDialogFor] = useState<
     'responsable' | 'billing' | 'delivery' | null
   >(null);
+  const [editOrderDateOpen, setEditOrderDateOpen] = useState(false);
+  const [editOrderDateValue, setEditOrderDateValue] = useState('');
   const [selectedContactId, setSelectedContactId] = useState<string | null>(
     null
   );
@@ -102,8 +115,13 @@ export default function LinkMeOrderDetailsPage() {
   // Contacts hooks
   const enseigneId = order?.organisation?.enseigne_id ?? null;
   const organisationId = order?.organisation?.id ?? null;
-  const ownerType = order?.linkmeDetails?.owner_type;
-  const isSuccursale = ownerType === 'propre' || ownerType === 'succursale';
+  // owner_type from linkme details, fallback to organisation.ownership_type
+  const ownerType =
+    order?.linkmeDetails?.owner_type ??
+    order?.organisation?.ownership_type ??
+    null;
+  // Succursale = contacts enseigne, Franchise = contacts organisation
+  const isSuccursale = ownerType === 'succursale' || ownerType === 'propre';
 
   const { data: enseigneContactsData } = useEnseigneContactsBO(
     isSuccursale ? enseigneId : null
@@ -133,14 +151,14 @@ export default function LinkMeOrderDetailsPage() {
         .from('sales_orders')
         .select(
           `
-          id, order_number, linkme_display_number, created_at, status, total_ht, total_ttc, notes,
+          id, order_number, linkme_display_number, created_at, order_date, status, total_ht, total_ttc, notes,
           customer_id, customer_type, expected_delivery_date, pending_admin_validation,
           created_by_affiliate_id, linkme_selection_id, created_by,
           payment_status_v2, payment_terms, currency, tax_rate,
           shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate,
           responsable_contact_id, billing_contact_id, delivery_contact_id,
           organisations!sales_orders_customer_id_fkey (
-            id, trade_name, legal_name, approval_status, enseigne_id,
+            id, trade_name, legal_name, approval_status, enseigne_id, ownership_type,
             address_line1, address_line2, postal_code, city,
             billing_address_line1, billing_address_line2, billing_city, billing_postal_code,
             shipping_address_line1, shipping_address_line2, shipping_city, shipping_postal_code,
@@ -305,6 +323,9 @@ export default function LinkMeOrderDetailsPage() {
           (orderData as unknown as { linkme_display_number?: string | null })
             .linkme_display_number ?? null,
         created_at: orderData.created_at,
+        order_date:
+          (orderData as unknown as { order_date?: string | null }).order_date ??
+          null,
         status: orderData.status,
         total_ht: orderData.total_ht,
         total_ttc: orderData.total_ttc,
@@ -632,6 +653,31 @@ export default function LinkMeOrderDetailsPage() {
     );
   };
 
+  // Handler: mise a jour inline organisation (ownership_type, siret)
+  const handleUpdateOrganisation = useCallback(
+    async (orgId: string, updates: Record<string, unknown>) => {
+      const supabase = createClient();
+      const { error: updateError } = await supabase
+        .from('organisations')
+        .update(updates)
+        .eq('id', orgId);
+      if (updateError) {
+        console.error('[Organisation] Update failed:', updateError);
+        return;
+      }
+      if (order?.organisation) {
+        setOrder({
+          ...order,
+          organisation: {
+            ...order.organisation,
+            ...updates,
+          } as typeof order.organisation,
+        });
+      }
+    },
+    [order]
+  );
+
   // ============================================
   // LOADING / ERROR
   // ============================================
@@ -785,13 +831,43 @@ export default function LinkMeOrderDetailsPage() {
                 </span>
               );
             })()}
-            <span className="text-gray-400 text-xs">
-              {new Date(order.created_at).toLocaleDateString('fr-FR', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-              })}
-            </span>
+            {!locked ? (
+              <button
+                type="button"
+                className="text-gray-600 text-xs hover:text-blue-600 hover:underline flex items-center gap-1"
+                onClick={() => {
+                  setEditOrderDateValue(order.order_date ?? '');
+                  setEditOrderDateOpen(true);
+                }}
+                title="Modifier la date de commande"
+              >
+                <Calendar className="h-3 w-3" />
+                {order.order_date
+                  ? new Date(order.order_date + 'T00:00:00').toLocaleDateString(
+                      'fr-FR',
+                      {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      }
+                    )
+                  : 'Date non renseignee'}
+              </button>
+            ) : (
+              <span className="text-gray-400 text-xs flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {order.order_date
+                  ? new Date(order.order_date + 'T00:00:00').toLocaleDateString(
+                      'fr-FR',
+                      {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      }
+                    )
+                  : 'Date non renseignee'}
+              </span>
+            )}
             {order.createdByProfile && (
               <span className="text-xs text-blue-600">
                 par{' '}
@@ -838,6 +914,7 @@ export default function LinkMeOrderDetailsPage() {
           }}
           updateDetailsPending={updateDetails.isPending}
           isStep4Complete={isStep4Complete()}
+          onUpdateOrganisation={handleUpdateOrganisation}
         />
 
         {/* COLONNE DROITE - SIDEBAR (1/3) */}
@@ -886,6 +963,53 @@ export default function LinkMeOrderDetailsPage() {
         }}
         createContactPending={createContactBO.isPending}
       />
+
+      {/* Dialog modification date de commande (brouillon uniquement) */}
+      <Dialog open={editOrderDateOpen} onOpenChange={setEditOrderDateOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Modifier la date de commande</DialogTitle>
+            <DialogDescription>
+              Modifiable uniquement en brouillon.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              type="date"
+              value={editOrderDateValue}
+              onChange={e => setEditOrderDateValue(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditOrderDateOpen(false)}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={() => {
+                if (!order || !editOrderDateValue) return;
+                const supabase = createClient();
+                void supabase
+                  .from('sales_orders')
+                  .update({ order_date: editOrderDateValue })
+                  .eq('id', order.id)
+                  .then(({ error: err }) => {
+                    if (err) {
+                      console.error('[OrderDate] Update failed:', err);
+                      return;
+                    }
+                    setOrder({ ...order, order_date: editOrderDateValue });
+                    setEditOrderDateOpen(false);
+                  });
+              }}
+            >
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
