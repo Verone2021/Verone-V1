@@ -20,7 +20,7 @@ import {
   type KeyboardEvent,
 } from 'react';
 
-import { MapPin, Loader2, Globe, X } from 'lucide-react';
+import { MapPin, Loader2, Globe, X, PenLine } from 'lucide-react';
 
 import { cn } from '../../design-system/utils';
 
@@ -76,6 +76,8 @@ export interface AddressAutocompleteProps {
   defaultCountry?: string;
   /** ID unique pour l'accessibilité */
   id?: string;
+  /** Afficher les champs GPS en saisie manuelle (pour adresses de livraison) */
+  showGpsFields?: boolean;
 }
 
 interface BanFeature {
@@ -274,6 +276,7 @@ export function AddressAutocomplete({
   geoapifyApiKey,
   defaultCountry,
   id,
+  showGpsFields = false,
 }: AddressAutocompleteProps) {
   const [inputValue, setInputValue] = useState(value);
   const [suggestions, setSuggestions] = useState<AddressResult[]>([]);
@@ -281,6 +284,16 @@ export function AddressAutocomplete({
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [useInternational, setUseInternational] = useState(forceInternational);
+  const [manualMode, setManualMode] = useState(false);
+  const [manualFields, setManualFields] = useState({
+    street: '',
+    postalCode: '',
+    city: '',
+    country: 'France',
+    countryCode: 'FR',
+    latitude: '',
+    longitude: '',
+  });
 
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
@@ -606,23 +619,200 @@ export function AddressAutocomplete({
       {isOpen &&
         suggestions.length === 0 &&
         inputValue.length >= 3 &&
-        !isLoading && (
+        !isLoading &&
+        !manualMode && (
           <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 text-center">
-            <p className="text-sm text-gray-500">Aucune adresse trouvée</p>
-            {!useInternational && apiKey && (
+            <p className="text-sm text-gray-500">Aucune adresse trouvee</p>
+            <div className="flex flex-col gap-2 mt-2">
+              {!useInternational && apiKey && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUseInternational(true);
+                    void handleSearch(inputValue);
+                  }}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  Essayer la recherche internationale
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {
-                  setUseInternational(true);
-                  void handleSearch(inputValue);
+                  setManualMode(true);
+                  setIsOpen(false);
                 }}
-                className="mt-2 text-sm text-blue-600 hover:underline"
+                className="text-sm text-gray-600 hover:text-gray-900 hover:underline flex items-center justify-center gap-1"
               >
-                Essayer la recherche internationale
+                <PenLine className="h-3 w-3" />
+                Saisir manuellement
               </button>
-            )}
+            </div>
           </div>
         )}
+
+      {/* Manual mode link (always visible when not in manual mode) */}
+      {!manualMode && !disabled && (
+        <button
+          type="button"
+          onClick={() => setManualMode(true)}
+          className="mt-1 text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1"
+        >
+          <PenLine className="h-3 w-3" />
+          Saisir manuellement
+        </button>
+      )}
+
+      {/* Manual entry form */}
+      {manualMode && (
+        <div className="mt-2 border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-700">
+              Saisie manuelle
+            </span>
+            <button
+              type="button"
+              onClick={() => setManualMode(false)}
+              className="text-xs text-gray-400 hover:text-gray-600"
+            >
+              Retour a la recherche
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            <input
+              type="text"
+              placeholder="Numero et rue"
+              value={manualFields.street}
+              onChange={e =>
+                setManualFields(f => ({ ...f, street: e.target.value }))
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="text"
+                placeholder="Code postal"
+                value={manualFields.postalCode}
+                onChange={e =>
+                  setManualFields(f => ({ ...f, postalCode: e.target.value }))
+                }
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <input
+                type="text"
+                placeholder="Ville"
+                value={manualFields.city}
+                onChange={e =>
+                  setManualFields(f => ({ ...f, city: e.target.value }))
+                }
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="text"
+                placeholder="Pays"
+                value={manualFields.country}
+                onChange={e =>
+                  setManualFields(f => ({ ...f, country: e.target.value }))
+                }
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <input
+                type="text"
+                placeholder="Code pays (FR, BE...)"
+                value={manualFields.countryCode}
+                onChange={e =>
+                  setManualFields(f => ({
+                    ...f,
+                    countryCode: e.target.value.toUpperCase(),
+                  }))
+                }
+                maxLength={2}
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            {showGpsFields && (
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  placeholder="Latitude"
+                  value={manualFields.latitude}
+                  onChange={e =>
+                    setManualFields(f => ({ ...f, latitude: e.target.value }))
+                  }
+                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <input
+                  type="text"
+                  placeholder="Longitude"
+                  value={manualFields.longitude}
+                  onChange={e =>
+                    setManualFields(f => ({ ...f, longitude: e.target.value }))
+                  }
+                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            disabled={
+              !manualFields.street ||
+              !manualFields.postalCode ||
+              !manualFields.city
+            }
+            onClick={() => {
+              const label = [
+                manualFields.street,
+                manualFields.postalCode,
+                manualFields.city,
+                manualFields.country !== 'France' ? manualFields.country : '',
+              ]
+                .filter(Boolean)
+                .join(', ');
+
+              const result: AddressResult = {
+                label,
+                streetAddress: manualFields.street,
+                city: manualFields.city,
+                postalCode: manualFields.postalCode,
+                countryCode: manualFields.countryCode || 'FR',
+                country: manualFields.country || 'France',
+                latitude: parseFloat(manualFields.latitude) || 0,
+                longitude: parseFloat(manualFields.longitude) || 0,
+                source: 'ban',
+              };
+
+              setInputValue(label);
+              onChange?.(label);
+              onSelect?.(result);
+              setManualMode(false);
+              setManualFields({
+                street: '',
+                postalCode: '',
+                city: '',
+                country: 'France',
+                countryCode: 'FR',
+                latitude: '',
+                longitude: '',
+              });
+            }}
+            className={cn(
+              'w-full py-2 px-4 rounded-md text-sm font-medium transition-colors',
+              !manualFields.street ||
+                !manualFields.postalCode ||
+                !manualFields.city
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : 'bg-black text-white hover:bg-gray-800'
+            )}
+          >
+            Valider l&apos;adresse
+          </button>
+        </div>
+      )}
     </div>
   );
 }
