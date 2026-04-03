@@ -454,7 +454,7 @@ export function useUnifiedTransactions(
               const { data: docs } = await supabase
                 .from('financial_documents')
                 .select(
-                  'id, document_number, total_ht, total_ttc, partner_id, organisations!partner_id(legal_name, trade_name)'
+                  'id, document_number, total_ht, total_ttc, fees_vat_rate, partner_id, organisations!partner_id(legal_name, trade_name)'
                 )
                 .in('id', allDocIds);
               docs?.forEach(d => {
@@ -464,12 +464,17 @@ export function useUnifiedTransactions(
                   legal_name: string;
                   trade_name: string | null;
                 } | null;
+                // TVA depuis fees_vat_rate du document (source fiable), jamais calculée depuis HT/TTC
+                const vatRate =
+                  d.fees_vat_rate != null
+                    ? Math.round(Number(d.fees_vat_rate) * 100)
+                    : 20;
                 entityDetails.set(d.id, {
                   label: d.document_number ?? 'Document',
                   partner_name: org?.trade_name ?? org?.legal_name ?? null,
                   total_ht: ht,
                   total_ttc: ttc,
-                  vat_rate: ht > 0 ? Math.round(((ttc - ht) / ht) * 100) : 0,
+                  vat_rate: vatRate,
                 });
               });
             }
@@ -481,6 +486,37 @@ export function useUnifiedTransactions(
                 )
                 .in('id', allSoIds);
               if (sos) {
+                // Fetch tax_rate from order items (source fiable, jamais calculer depuis HT/TTC)
+                const { data: soItems } = await supabase
+                  .from('sales_order_items')
+                  .select('sales_order_id, tax_rate')
+                  .in(
+                    'sales_order_id',
+                    sos.map(s => s.id)
+                  );
+                const soVatRates = new Map<string, number>();
+                if (soItems) {
+                  // Prendre le tax_rate le plus fréquent par commande
+                  const ratesByOrder = new Map<string, number[]>();
+                  soItems.forEach(item => {
+                    const rates = ratesByOrder.get(item.sales_order_id) ?? [];
+                    rates.push(Number(item.tax_rate) || 0);
+                    ratesByOrder.set(item.sales_order_id, rates);
+                  });
+                  ratesByOrder.forEach((rates, orderId) => {
+                    // tax_rate est stocké en décimal (0.2000 = 20%)
+                    const dominant =
+                      rates.length > 0
+                        ? rates.sort(
+                            (a, b) =>
+                              rates.filter(r => r === b).length -
+                              rates.filter(r => r === a).length
+                          )[0]
+                        : 0.2;
+                    soVatRates.set(orderId, Math.round(dominant * 100));
+                  });
+                }
+
                 const orgCustIds = sos
                   .filter(s => s.customer_type === 'organization')
                   .map(s => s.customer_id)
@@ -506,7 +542,7 @@ export function useUnifiedTransactions(
                         : null,
                     total_ht: ht,
                     total_ttc: ttc,
-                    vat_rate: ht > 0 ? Math.round(((ttc - ht) / ht) * 100) : 0,
+                    vat_rate: soVatRates.get(s.id) ?? 20,
                   });
                 });
               }
@@ -525,12 +561,15 @@ export function useUnifiedTransactions(
                   legal_name: string;
                   trade_name: string | null;
                 } | null;
+                // PO : si HT ≈ TTC → 0% (fournisseur hors France), sinon 20%
+                const vatRate =
+                  ht > 0 && Math.abs(ttc / ht - 1) < 0.02 ? 0 : 20;
                 entityDetails.set(p.id, {
                   label: `PO-${p.po_number}`,
                   partner_name: org?.trade_name ?? org?.legal_name ?? null,
                   total_ht: ht,
                   total_ttc: ttc,
-                  vat_rate: ht > 0 ? Math.round(((ttc - ht) / ht) * 100) : 0,
+                  vat_rate: vatRate,
                 });
               });
             }
@@ -591,6 +630,77 @@ export function useUnifiedTransactions(
                 tx.reconciliation_vat_rates = [...vatRates].sort(
                   (a, b) => a - b
                 );
+              }
+            }
+
+            // Auto-attach justificatifs : pour les transactions rapprochées
+            // qui n'ont pas encore de justificatif, déclencher l'auto-attach en background
+            const missingAttachTxs = transformed.filter(tx => {
+              if (!tx.reconciliation_links?.length) return false;
+              if (tx.attachment_ids?.length) return false;
+              return true; // tout rapprochement sans justificatif
+            });
+            if (missingAttachTxs.length > 0) {
+              // 1. Document_ids directement liés via transaction_document_links
+              const txDocLinks = new Map<string, string[]>();
+              linksAgg
+                .filter(l => l.document_id)
+                .forEach(l => {
+                  const arr = txDocLinks.get(l.transaction_id) ?? [];
+                  arr.push(l.document_id as string);
+                  txDocLinks.set(l.transaction_id, arr);
+                });
+
+              // 2. Pour les liens via sales_order sans document_id,
+              //    chercher la facture liée via financial_documents.sales_order_id
+              const soOnlyLinks = linksAgg.filter(
+                l => l.sales_order_id && !l.document_id
+              );
+              if (soOnlyLinks.length > 0) {
+                const soIds = [
+                  ...new Set(soOnlyLinks.map(l => l.sales_order_id as string)),
+                ];
+                const { data: invoicesForSOs } = await supabase
+                  .from('financial_documents')
+                  .select(
+                    'id, sales_order_id, local_pdf_path, uploaded_file_url'
+                  )
+                  .in('sales_order_id', soIds)
+                  .eq('document_type', 'customer_invoice')
+                  .in('status', ['sent', 'paid']);
+                if (invoicesForSOs?.length) {
+                  const invoiceBySO = new Map<string, string>();
+                  invoicesForSOs.forEach(inv => {
+                    // Ne prendre que les factures qui ont un PDF
+                    if (inv.local_pdf_path || inv.uploaded_file_url) {
+                      invoiceBySO.set(inv.sales_order_id as string, inv.id);
+                    }
+                  });
+                  soOnlyLinks.forEach(l => {
+                    const invId = invoiceBySO.get(l.sales_order_id as string);
+                    if (invId) {
+                      const arr = txDocLinks.get(l.transaction_id) ?? [];
+                      arr.push(invId);
+                      txDocLinks.set(l.transaction_id, arr);
+                    }
+                  });
+                }
+              }
+
+              for (const tx of missingAttachTxs) {
+                const docIds = txDocLinks.get(tx.id) ?? [];
+                for (const docId of docIds) {
+                  void fetch('/api/qonto/attachments/auto-attach', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      transactionId: tx.id,
+                      documentId: docId,
+                    }),
+                  }).catch(err =>
+                    console.warn('[auto-attach] Failed for tx', tx.id, ':', err)
+                  );
+                }
               }
             }
           }

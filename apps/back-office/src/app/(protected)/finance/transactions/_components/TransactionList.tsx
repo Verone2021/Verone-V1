@@ -248,8 +248,19 @@ export function TransactionList({
                                 : 'bg-amber-50 text-amber-700 border-amber-200'
                             }`}
                           >
-                            {tx.reconciliation_link_count} facture
-                            {tx.reconciliation_link_count > 1 ? 's' : ''}
+                            {(() => {
+                              const docCount =
+                                tx.reconciliation_links?.filter(
+                                  l => l.link_type === 'document'
+                                ).length ?? 0;
+                              const orderCount =
+                                (tx.reconciliation_link_count ?? 0) - docCount;
+                              if (docCount > 0 && orderCount > 0)
+                                return `${docCount} fact. + ${orderCount} cmd`;
+                              if (docCount > 0)
+                                return `${docCount} facture${docCount > 1 ? 's' : ''}`;
+                              return `${orderCount} commande${orderCount > 1 ? 's' : ''}`;
+                            })()}
                           </Badge>
                           {tx.reconciliation_remaining > 0.01 && (
                             <p className="text-[10px] text-amber-600 mt-0.5">

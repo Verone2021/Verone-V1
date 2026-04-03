@@ -79,14 +79,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // 4. Get transaction Qonto UUID
-    const { data: txData, error: txError } = await supabase
-      .from('bank_transactions')
-      .select('id, transaction_id, raw_data, attachment_ids')
-      .eq('transaction_id', transactionId)
-      .single();
+    // 4. Get transaction (accept both internal UUID and Qonto transaction_id)
+    const selectFields =
+      'id, transaction_id, raw_data, attachment_ids' as const;
 
-    if (txError || !txData) {
+    const { data: d1 } = await supabase
+      .from('bank_transactions')
+      .select(selectFields)
+      .eq('id', transactionId)
+      .maybeSingle();
+
+    const txData =
+      d1 ??
+      (
+        await supabase
+          .from('bank_transactions')
+          .select(selectFields)
+          .eq('transaction_id', transactionId)
+          .maybeSingle()
+      ).data;
+
+    if (!txData) {
       return NextResponse.json(
         { error: 'Transaction non trouvee' },
         { status: 404 }
@@ -160,7 +173,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .update({
         attachment_ids: [...existingIds, attachment.id],
       })
-      .eq('transaction_id', transactionId);
+      .eq('id', txData.id);
 
     // 9. Update financial_documents tracking
     await supabase
