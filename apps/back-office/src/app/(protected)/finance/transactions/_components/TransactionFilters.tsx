@@ -45,7 +45,7 @@ export function TransactionFilters({
     <div className="flex items-center justify-between flex-wrap gap-4">
       <div>
         <p className="text-3xl font-bold">{formatAmount(totalBalance)}</p>
-        <p className="text-sm text-muted-foreground">Solde affiche</p>
+        <p className="text-sm text-muted-foreground">Tresorerie actuelle</p>
       </div>
       <div className="flex items-center gap-3">
         <div className="relative">

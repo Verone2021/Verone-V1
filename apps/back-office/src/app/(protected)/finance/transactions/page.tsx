@@ -284,13 +284,21 @@ function TransactionsPageV2() {
       ) ?? 0)
     : 0;
 
-  const totalBalance = useMemo(() => {
-    return transactions.reduce((sum, tx) => {
-      const val =
-        tx.side === 'credit' ? Math.abs(tx.amount) : -Math.abs(tx.amount);
-      return sum + val;
-    }, 0);
-  }, [transactions]);
+  // Trésorerie actuelle : solde réel depuis Qonto API
+  const [totalBalance, setTotalBalance] = useState(0);
+  useEffect(() => {
+    async function fetchQontoBalance() {
+      try {
+        const res = await fetch('/api/qonto/balance');
+        if (!res.ok) return;
+        const data = (await res.json()) as { totalBalance?: number };
+        setTotalBalance(data.totalBalance ?? 0);
+      } catch {
+        // Silencieux — le solde reste à 0
+      }
+    }
+    void fetchQontoBalance();
+  }, []);
 
   const groupedByMonth = useMemo(() => {
     const groups: {
