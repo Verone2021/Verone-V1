@@ -1,7 +1,8 @@
 /**
  * Activity Tracker Provider for LinkMe app
  * Tracks page views and user interactions for LinkMe affiliates.
- * Adapted from back-office ActivityTrackerProvider but uses createClient() directly.
+ * Uses AuthContext for user state (no direct Supabase auth calls to avoid
+ * deadlock with GoTrueClient initializePromise).
  */
 
 'use client';
@@ -10,9 +11,9 @@ import { useEffect, useState } from 'react';
 
 import { usePathname } from 'next/navigation';
 
-import type { User } from '@supabase/supabase-js';
 import { useUserActivityTracker } from '@verone/notifications';
-import { createClient } from '@verone/utils/supabase/client';
+
+import { useAuth } from '../../contexts/AuthContext';
 
 interface LinkmeActivityTrackerProviderProps {
   children: React.ReactNode;
@@ -31,37 +32,13 @@ export function LinkmeActivityTrackerProvider({
 }: LinkmeActivityTrackerProviderProps) {
   const pathname = usePathname();
   const [hasMounted, setHasMounted] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useAuth();
 
   const { trackEvent, flushEvents } = useUserActivityTracker();
 
   // SSR guard
   useEffect(() => {
     setHasMounted(true);
-  }, []);
-
-  // Auth state tracking via createClient()
-  useEffect(() => {
-    const supabase = createClient();
-
-    const getSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-    };
-
-    void getSession().catch(error => {
-      console.error('[LinkmeActivityTracker] getSession failed:', error);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
   }, []);
 
   // Auto page_view tracking on pathname change

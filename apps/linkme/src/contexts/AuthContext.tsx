@@ -164,6 +164,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [user, fetchLinkMeRole]);
 
+  // ========================================================================
+  // FIX DEADLOCK: Charger le rôle via useEffect séparé, JAMAIS dans
+  // onAuthStateChange. Raison: chaque query REST appelle getSession() qui
+  // attend initializePromise. Si on fait une query REST dans le callback
+  // onAuthStateChange (déclenché par _initialize), on crée un deadlock
+  // circulaire car initializePromise attend que _initialize finisse, qui
+  // attend que _notifyAllSubscribers finisse, qui attend notre callback.
+  // ========================================================================
+  useEffect(() => {
+    if (user) {
+      void fetchLinkMeRole(user.id).catch(error => {
+        console.error('[AuthContext] fetchLinkMeRole failed:', error);
+      });
+    } else {
+      setLinkMeRole(null);
+    }
+  }, [user?.id, fetchLinkMeRole]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Initialisation et écoute des changements d'auth
   useEffect(() => {
     let cancelled = false;
@@ -172,112 +190,64 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const initSession = async () => {
       const DEBUG = process.env.NEXT_PUBLIC_DEBUG_AUTH === '1';
       const startTime = Date.now();
-      console.warn('[initSession] START', {
-        timestamp: new Date().toISOString(),
-      });
       if (DEBUG) console.error('[AuthContext] initSession START');
 
-      // TIMEOUT DE SÉCURITÉ (3 secondes — reduced from 8s for faster fallback)
+      // TIMEOUT DE SÉCURITÉ (5 secondes)
       const timeoutId = setTimeout(() => {
         if (!cancelled) {
-          const elapsed = Date.now() - startTime;
-          console.error('[initSession] TIMEOUT - getSession() suspendu > 3s', {
-            elapsed,
-          });
+          console.warn('[initSession] TIMEOUT - getSession() > 5s');
           setInitializing(false);
         }
-      }, 3000);
+      }, 5000);
 
       try {
-        const beforeGetSession = Date.now();
         const {
           data: { session: currentSession },
         } = await supabase.auth.getSession();
-        const afterGetSession = Date.now();
-        console.warn('[initSession] getSession completed', {
-          duration: afterGetSession - beforeGetSession,
-          hasSession: !!currentSession,
-          userId: currentSession?.user?.id,
-          expired: currentSession?.expires_at
-            ? new Date(currentSession.expires_at * 1000)
-            : null,
-        });
 
-        if (DEBUG)
-          console.error('[AuthContext] getSession result:', {
-            hasSession: !!currentSession,
-            userId: currentSession?.user?.id,
-            expired: currentSession?.expires_at
-              ? new Date(currentSession.expires_at * 1000)
-              : null,
-          });
-
-        // Vérifier cancelled AVANT setState pour éviter les fuites mémoire
-        if (cancelled) {
-          if (DEBUG) console.error('[AuthContext] initSession CANCELLED');
-          console.warn('[initSession] CANCELLED', {
-            totalElapsed: Date.now() - startTime,
-          });
-          return;
-        }
+        if (cancelled) return;
 
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
+        // Le rôle est chargé par le useEffect ci-dessus (watch user?.id)
 
-        if (currentSession?.user) {
-          const beforeFetch = Date.now();
-          await fetchLinkMeRole(currentSession.user.id);
-          console.warn('[initSession] fetchLinkMeRole completed', {
-            duration: Date.now() - beforeFetch,
+        if (DEBUG)
+          console.error('[AuthContext] initSession OK', {
+            hasSession: !!currentSession,
+            duration: Date.now() - startTime,
           });
-        }
       } catch (error) {
         console.error('[initSession] ERROR:', error);
       } finally {
-        clearTimeout(timeoutId); // Nettoyer le timeout
-        // TOUJOURS setInitializing(false) - critical pour sortir du loading
-        const totalElapsed = Date.now() - startTime;
-        console.warn('[initSession] END', { totalElapsed });
-        if (DEBUG)
-          console.error(
-            '[AuthContext] initSession DONE - setInitializing(false)'
-          );
-        setInitializing(false);
+        clearTimeout(timeoutId);
+        if (!cancelled) setInitializing(false);
       }
     };
 
     void initSession().catch(error => {
       console.error('[AuthContext] initSession failed:', error);
-      setInitializing(false); // CRITIQUE - forcer initializing=false même en cas d'erreur
+      setInitializing(false);
     });
 
     // Écouter les changements d'auth
+    // CRITICAL: Ne JAMAIS faire de query REST (supabase.from(...)) ici.
+    // Ça crée un deadlock avec initializePromise de GoTrueClient.
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+    } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
 
-      if (newSession?.user) {
-        await fetchLinkMeRole(newSession.user.id);
-      } else {
-        setLinkMeRole(null);
-      }
-
-      // Si déconnexion, reset complet
       if (event === 'SIGNED_OUT') {
         setLinkMeRole(null);
       }
     });
 
-    // Cleanup: marquer comme cancelled et unsub
     return () => {
-      const DEBUG = process.env.NEXT_PUBLIC_DEBUG_AUTH === '1';
-      if (DEBUG) console.error('[AuthContext] useEffect CLEANUP');
       cancelled = true;
       subscription.unsubscribe();
     };
-  }, [fetchLinkMeRole]); // supabase retiré car c'est un singleton stable
+  }, [fetchLinkMeRole]);
 
   // Connexion
   // SÉCURITÉ: Vérifie l'accès LinkMe AVANT de créer une session Supabase
@@ -287,62 +257,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     password: string
   ): Promise<{ error: Error | null }> => {
     try {
-      const startTime = Date.now();
-      console.warn('[signIn] START', { timestamp: new Date().toISOString() });
-
-      // ========================================================================
-      // Authentification Supabase
-      // Note: La vérification du rôle LinkMe est maintenant gérée par le
-      // middleware (apps/linkme/src/middleware.ts) qui redirect vers
-      // /unauthorized si l'utilisateur n'a pas de rôle LinkMe actif.
-      // Pattern unifié avec back-office (cross-app protection).
-      // ========================================================================
-      console.warn('[signIn] Authentification Supabase');
-      const beforePassword = Date.now();
       const { data, error: authError } = await supabase.auth.signInWithPassword(
         {
           email,
           password,
         }
       );
-      const afterPassword = Date.now();
-      console.warn('[signIn] signInWithPassword completed', {
-        duration: afterPassword - beforePassword,
-        hasUser: !!data.user,
-        error: authError?.message,
-      });
 
       if (authError) {
-        console.warn('[signIn] END - authError', {
-          totalElapsed: Date.now() - startTime,
-        });
         return { error: authError };
       }
 
       if (!data.user) {
-        console.warn('[signIn] END - no user', {
-          totalElapsed: Date.now() - startTime,
-        });
         return { error: new Error('Utilisateur non trouvé') };
       }
 
-      // ========================================================================
-      // Mise à jour des states et chargement du rôle complet
-      // Note: La vérification du rôle LinkMe est maintenant gérée par le
-      // middleware qui redirect vers /unauthorized si nécessaire.
-      // ========================================================================
-      console.warn('[signIn] Mise à jour states + fetchLinkMeRole');
+      // Mise à jour des states — le rôle est chargé automatiquement
+      // par le useEffect qui watch user?.id
       setSession(data.session);
       setUser(data.user);
-      const beforeFetch = Date.now();
-      await fetchLinkMeRole(data.user.id);
-      const afterFetch = Date.now();
-      console.warn('[signIn] fetchLinkMeRole completed', {
-        duration: afterFetch - beforeFetch,
-      });
-
-      const totalElapsed = Date.now() - startTime;
-      console.warn('[signIn] END - SUCCESS', { totalElapsed });
       return { error: null };
     } catch (err) {
       console.error('[signIn] EXCEPTION:', err);
