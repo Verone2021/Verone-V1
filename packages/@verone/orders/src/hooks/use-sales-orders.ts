@@ -220,8 +220,7 @@ export function useSalesOrders() {
                     )
                   `
                   )
-                  .in('sales_order_id', orderIds)
-                  .eq('link_type', 'sales_order');
+                  .in('sales_order_id', orderIds);
                 if (err)
                   console.warn(
                     '[fetchOrders] Transaction links error:',
@@ -624,7 +623,7 @@ export function useSalesOrders() {
           `
           )
           .eq('sales_order_id', orderId)
-          .eq('link_type', 'sales_order')
+          .limit(1)
           .maybeSingle();
 
         if (linkData?.bank_transactions) {
@@ -683,6 +682,9 @@ export function useSalesOrders() {
           .from('sales_orders')
           .select('status, total_ht, total_ttc');
 
+        if (filters?.channel_id) {
+          query = query.eq('channel_id', filters.channel_id);
+        }
         if (filters?.date_from) {
           query = query.gte('created_at', filters.date_from);
         }
