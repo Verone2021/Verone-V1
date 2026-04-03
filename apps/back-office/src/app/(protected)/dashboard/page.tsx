@@ -45,6 +45,7 @@ import {
   Truck,
   BarChart3,
   Warehouse,
+  Landmark,
 } from 'lucide-react';
 
 // New Components
@@ -69,6 +70,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [data, setData] = useState<DashboardMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [qontoBalance, setQontoBalance] = useState<number | null>(null);
 
   useEffect(() => {
     void getDashboardMetrics()
@@ -77,6 +79,16 @@ export default function DashboardPage() {
         console.error('[DashboardPage] getDashboardMetrics failed:', error);
       })
       .finally(() => setIsLoading(false));
+
+    // Fetch Qonto bank balance
+    void fetch('/api/qonto/balance')
+      .then(res => res.json())
+      .then((bal: { totalBalance?: number }) => {
+        setQontoBalance(bal.totalBalance ?? null);
+      })
+      .catch(() => {
+        // Silencieux
+      });
   }, []);
 
   if (isLoading || !data) {
@@ -97,8 +109,16 @@ export default function DashboardPage() {
     }).format(value);
   };
 
-  // Hero KPIs (4 essential metrics — all clickable)
+  // Hero KPIs (5 essential metrics — all clickable)
   const heroKPIs = [
+    {
+      title: 'Tresorerie',
+      value: qontoBalance != null ? formatRevenue(qontoBalance) : '...',
+      icon: Landmark,
+      color: 'success' as const,
+      description: 'Solde bancaire Qonto',
+      onClick: () => router.push('/finance/transactions'),
+    },
     {
       title: 'Commandes en attente',
       value: data.hero.ordersPending,

@@ -213,21 +213,24 @@ export function TransactionList({
                           {tx.reconciliation_vat_rates.map(rate => (
                             <Badge
                               key={rate}
-                              variant="secondary"
-                              className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                              variant="outline"
+                              className="text-xs border-emerald-300 text-emerald-700"
                             >
                               TVA {rate}%
                             </Badge>
                           ))}
                         </div>
                       ) : tx.vat_rate != null ? (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge
+                          variant="outline"
+                          className="text-xs border-emerald-300 text-emerald-700"
+                        >
                           TVA {tx.vat_rate}%
                         </Badge>
                       ) : tx.vat_breakdown && tx.vat_breakdown.length > 0 ? (
                         <Badge
-                          variant="secondary"
-                          className="text-xs bg-green-50 text-green-700"
+                          variant="outline"
+                          className="text-xs border-emerald-300 text-emerald-700"
                         >
                           TVA OCR
                         </Badge>
