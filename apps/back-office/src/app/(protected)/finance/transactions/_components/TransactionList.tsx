@@ -249,16 +249,15 @@ export function TransactionList({
                             }`}
                           >
                             {(() => {
-                              const docCount =
-                                tx.reconciliation_links?.filter(
-                                  l => l.link_type === 'document'
-                                ).length ?? 0;
-                              const orderCount =
-                                (tx.reconciliation_link_count ?? 0) - docCount;
-                              if (docCount > 0 && orderCount > 0)
-                                return `${docCount} fact. + ${orderCount} cmd`;
-                              if (docCount > 0)
-                                return `${docCount} facture${docCount > 1 ? 's' : ''}`;
+                              const links = tx.reconciliation_links ?? [];
+                              const invoiceCount = links.filter(
+                                l => l.link_type === 'document'
+                              ).length;
+                              const orderCount = links.length - invoiceCount;
+                              if (invoiceCount > 0 && orderCount > 0)
+                                return `${invoiceCount} fact. + ${orderCount} cmd`;
+                              if (invoiceCount > 0)
+                                return `${invoiceCount} facture${invoiceCount > 1 ? 's' : ''}`;
                               return `${orderCount} commande${orderCount > 1 ? 's' : ''}`;
                             })()}
                           </Badge>

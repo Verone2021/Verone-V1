@@ -594,15 +594,17 @@ export function useUnifiedTransactions(
               const allocAmt = Math.abs(Number(link.allocated_amount) || 0);
               existing.total += allocAmt;
 
-              // Résoudre l'entité liée
+              // Résoudre l'entité liée — la facture prime si document_id existe
               const entityId = (link.document_id ??
                 link.sales_order_id ??
                 link.purchase_order_id) as string;
               const detail = entityDetails.get(entityId);
+              const effectiveLinkType = link.document_id
+                ? 'document'
+                : (link.link_type as ReconciliationLinkDetail['link_type']);
               existing.details.push({
                 id: link.id,
-                link_type:
-                  link.link_type as ReconciliationLinkDetail['link_type'],
+                link_type: effectiveLinkType,
                 allocated_amount: allocAmt,
                 label: detail?.label ?? 'Inconnu',
                 partner_name: detail?.partner_name ?? null,
