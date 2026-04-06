@@ -2,135 +2,43 @@
 
 import { useState, useMemo, useEffect } from 'react';
 
-import Link from 'next/link';
-
-import type { RoomType } from '@verone/types';
 import type {
-  VariantGroup,
-  VariantType,
   CreateVariantGroupData,
+  RoomType,
+  VariantType,
 } from '@verone/types';
-import { ButtonV2 } from '@verone/ui';
-import { Checkbox } from '@verone/ui';
 import {
+  ButtonV2,
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
+  Label,
+  RoomMultiSelect,
 } from '@verone/ui';
-import { Input } from '@verone/ui';
-import { Label } from '@verone/ui';
-import { RoomMultiSelect } from '@verone/ui';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@verone/ui';
-import { cn } from '@verone/utils';
-import { Plus, ExternalLink } from 'lucide-react';
-
-import { useFamilies } from '@verone/categories';
-import { useCategories } from '@verone/categories';
-import { useSubcategories } from '@verone/categories';
+  useFamilies,
+  useCategories,
+  useSubcategories,
+} from '@verone/categories';
 import { useToast } from '@verone/common';
 import { useOrganisations } from '@verone/organisations';
 import { useVariantGroups } from '@verone/products';
 import { normalizeForSKU } from '@verone/products/utils/sku-generator';
+import { Plus } from 'lucide-react';
 
-// ============================================
-// TYPES LOCAUX
-// ============================================
-
-interface CommonDimensions {
-  length?: number | null;
-  width?: number | null;
-  height?: number | null;
-  unit: 'cm' | 'm';
-}
-
-interface Subcategory {
-  id: string;
-  name: string;
-}
-
-interface VariantGroupFormProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (data: FormData) => void;
-  editingGroup?: VariantGroup | null;
-}
-
-interface FormData {
-  name: string;
-  base_sku: string;
-  subcategory_id: string;
-  variant_type: VariantType;
-  // Attributs de catégorisation
-  style: string;
-  suitable_rooms: RoomType[];
-  // Nouveaux champs pour attributs communs
-  common_length: string;
-  common_width: string;
-  common_height: string;
-  common_dimensions_unit: 'cm' | 'm';
-  // Fournisseur commun
-  has_common_supplier: boolean;
-  supplier_id: string;
-}
-
-const DECORATIVE_STYLES = [
-  {
-    value: 'minimaliste',
-    label: 'Minimaliste',
-    description: 'Épuré et fonctionnel',
-    icon: '⬜',
-  },
-  {
-    value: 'contemporain',
-    label: 'Contemporain',
-    description: 'Moderne et actuel',
-    icon: '🏙️',
-  },
-  {
-    value: 'moderne',
-    label: 'Moderne',
-    description: 'Design avant-gardiste',
-    icon: '🚀',
-  },
-  {
-    value: 'scandinave',
-    label: 'Scandinave',
-    description: 'Chaleureux et lumineux',
-    icon: '🌲',
-  },
-  {
-    value: 'industriel',
-    label: 'Industriel',
-    description: 'Brut et authentique',
-    icon: '⚙️',
-  },
-  {
-    value: 'classique',
-    label: 'Classique',
-    description: 'Intemporel et élégant',
-    icon: '👑',
-  },
-  {
-    value: 'boheme',
-    label: 'Bohème',
-    description: 'Libre et éclectique',
-    icon: '🌺',
-  },
-  {
-    value: 'art_deco',
-    label: 'Art Déco',
-    description: 'Raffiné et géométrique',
-    icon: '💎',
-  },
-] as const;
+import { VariantGroupBasicFields } from './VariantGroupBasicFields';
+import { VariantGroupCategorySelector } from './VariantGroupCategorySelector';
+import { VariantGroupDimensionsSection } from './VariantGroupDimensionsSection';
+import { VariantGroupStyleSelector } from './VariantGroupStyleSelector';
+import { VariantGroupSupplierSection } from './VariantGroupSupplierSection';
+import type {
+  CommonDimensions,
+  FormData,
+  Subcategory,
+  VariantGroupFormProps,
+} from './variant-group-form.types';
 
 export function VariantGroupForm({
   isOpen,
@@ -141,7 +49,6 @@ export function VariantGroupForm({
   const { toast } = useToast();
   const { createVariantGroup, updateVariantGroup } = useVariantGroups();
 
-  // États du formulaire
   const [formData, setFormData] = useState<FormData>({
     name: '',
     base_sku: '',
@@ -156,24 +63,16 @@ export function VariantGroupForm({
     has_common_supplier: false,
     supplier_id: '',
   });
-  const [filters, setFilters] = useState({
-    familyId: '',
-    categoryId: '',
-  });
+  const [filters, setFilters] = useState({ familyId: '', categoryId: '' });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<FormData>>({});
 
-  // Hooks hiérarchie
   const { families } = useFamilies();
   const { getCategoriesByFamily } = useCategories();
   const { getSubcategoriesByCategory } = useSubcategories();
   const { organisations: suppliers, loading: suppliersLoading } =
-    useOrganisations({
-      type: 'supplier',
-      is_active: true,
-    });
+    useOrganisations({ type: 'supplier', is_active: true });
 
-  // Catégories et sous-catégories filtrées
   const filteredCategories = useMemo(() => {
     if (!filters.familyId) return [];
     return getCategoriesByFamily(filters.familyId);
@@ -183,40 +82,30 @@ export function VariantGroupForm({
     Subcategory[]
   >([]);
 
-  // Charger sous-catégories quand catégorie change
   useEffect(() => {
     if (!filters.categoryId) {
       setFilteredSubcategories([]);
       return;
     }
-
     let isMounted = true;
-
     const loadSubcategories = async () => {
       try {
         const subcats = await getSubcategoriesByCategory(filters.categoryId);
-        if (isMounted) {
-          setFilteredSubcategories(subcats);
-        }
+        if (isMounted) setFilteredSubcategories(subcats);
       } catch (err) {
         console.error('Erreur chargement sous-catégories:', err);
-        if (isMounted) {
-          setFilteredSubcategories([]);
-        }
+        if (isMounted) setFilteredSubcategories([]);
       }
     };
-
     void loadSubcategories().catch(error => {
       console.error('[VariantGroupForm] loadSubcategories failed:', error);
     });
-
     return () => {
       isMounted = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- getSubcategoriesByCategory is memoized in hook, adding it causes infinite re-renders
   }, [filters.categoryId]);
 
-  // Auto-générer base_sku quand le nom change
   useEffect(() => {
     if (formData.name.trim() && !editingGroup) {
       const generatedSku = normalizeForSKU(formData.name, 30);
@@ -224,11 +113,9 @@ export function VariantGroupForm({
     }
   }, [formData.name, editingGroup]);
 
-  // Réinitialiser le formulaire à l'ouverture
   useEffect(() => {
     if (isOpen) {
       if (editingGroup) {
-        // Mode édition
         const dimensions =
           (editingGroup.common_dimensions as CommonDimensions | null) ?? null;
         setFormData({
@@ -246,7 +133,6 @@ export function VariantGroupForm({
           supplier_id: '',
         });
       } else {
-        // Mode création
         setFormData({
           name: '',
           base_sku: '',
@@ -261,37 +147,28 @@ export function VariantGroupForm({
           has_common_supplier: false,
           supplier_id: '',
         });
-        setFilters({
-          familyId: '',
-          categoryId: '',
-        });
+        setFilters({ familyId: '', categoryId: '' });
       }
       setErrors({});
     }
   }, [isOpen, editingGroup]);
 
-  // Validation du formulaire
   const validateForm = (): boolean => {
     const newErrors: Partial<FormData> = {};
-
     if (!formData.name.trim()) {
       newErrors.name = 'Le nom du groupe est obligatoire';
     } else if (formData.name.trim().length < 3) {
       newErrors.name = 'Le nom doit contenir au moins 3 caractères';
     }
-
     if (!formData.subcategory_id) {
       newErrors.subcategory_id = 'La sous-catégorie est obligatoire';
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Soumission du formulaire
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm()) {
       toast({
         title: 'Erreur de validation',
@@ -300,43 +177,32 @@ export function VariantGroupForm({
       });
       return;
     }
-
     setLoading(true);
-
     try {
-      // Parse dimensions (NaN becomes undefined via || undefined pattern)
       const parsedLength = parseFloat(formData.common_length);
       const parsedWidth = parseFloat(formData.common_width);
       const parsedHeight = parseFloat(formData.common_height);
-
-      // Construire groupData avec les champs individuels (aligné avec CreateVariantGroupData)
       const groupData: CreateVariantGroupData = {
         name: formData.name.trim(),
         base_sku: formData.base_sku.trim(),
         subcategory_id: formData.subcategory_id,
         variant_type: formData.variant_type,
-        // Dimensions en champs individuels (format attendu par le hook)
         dimensions_length: !isNaN(parsedLength) ? parsedLength : undefined,
         dimensions_width: !isNaN(parsedWidth) ? parsedWidth : undefined,
         dimensions_height: !isNaN(parsedHeight) ? parsedHeight : undefined,
         dimensions_unit: formData.common_dimensions_unit,
-        // Catégorisation
         style: formData.style || undefined,
         suitable_rooms:
           formData.suitable_rooms.length > 0
             ? (formData.suitable_rooms as string[])
             : undefined,
-        // Fournisseur
         has_common_supplier: formData.has_common_supplier,
         supplier_id: formData.has_common_supplier
           ? formData.supplier_id || null
           : null,
       };
-
       let success = false;
-
       if (editingGroup) {
-        // Mode édition - cast vers le type attendu par updateVariantGroup
         success = await updateVariantGroup(
           editingGroup.id,
           groupData as Parameters<typeof updateVariantGroup>[1]
@@ -348,7 +214,6 @@ export function VariantGroupForm({
           });
         }
       } else {
-        // Mode création - groupData est déjà correctement typé
         success = !!(await createVariantGroup(groupData));
         if (success) {
           toast({
@@ -357,9 +222,8 @@ export function VariantGroupForm({
           });
         }
       }
-
       if (success) {
-        onSubmit(formData); // Callback pour refetch
+        onSubmit(formData);
         onClose();
       }
     } catch (err) {
@@ -399,145 +263,23 @@ export function VariantGroupForm({
           }}
           className="space-y-6"
         >
-          {/* Nom du groupe */}
-          <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm font-medium">
-              Nom du groupe <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="name"
-              type="text"
-              placeholder="Ex: Paniers Osier Naturel"
-              value={formData.name}
-              onChange={e =>
-                setFormData(prev => ({ ...prev, name: e.target.value }))
-              }
-              className={errors.name ? 'border-red-500' : ''}
-            />
-            {errors.name && (
-              <p className="text-sm text-red-500">{errors.name}</p>
-            )}
-          </div>
+          <VariantGroupBasicFields
+            formData={formData}
+            setFormData={setFormData}
+            errors={errors}
+          />
 
-          {/* SKU de base */}
-          <div className="space-y-2">
-            <Label htmlFor="base_sku" className="text-sm font-medium">
-              SKU de base <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="base_sku"
-              type="text"
-              placeholder="Ex: PANIERS-OSIER-NATUREL"
-              value={formData.base_sku}
-              onChange={e =>
-                setFormData(prev => ({ ...prev, base_sku: e.target.value }))
-              }
-              className="font-mono text-sm"
-            />
-            <p className="text-xs text-gray-600">
-              Généré automatiquement depuis le nom. Pattern:{' '}
-              {formData.base_sku
-                ? `${formData.base_sku}-[VARIANTE]`
-                : 'BASE_SKU-[VARIANTE]'}
-            </p>
-          </div>
+          <VariantGroupCategorySelector
+            filters={filters}
+            setFilters={setFilters}
+            formData={formData}
+            setFormData={setFormData}
+            families={families}
+            filteredCategories={filteredCategories}
+            filteredSubcategories={filteredSubcategories}
+            error={errors.subcategory_id}
+          />
 
-          {/* Sélection hiérarchique */}
-          <div className="space-y-4">
-            <Label className="text-sm font-medium">
-              Catégorisation <span className="text-red-500">*</span>
-            </Label>
-            <p className="text-xs text-gray-600">
-              Sélectionnez la hiérarchie pour identifier la sous-catégorie des
-              produits
-            </p>
-
-            <div className="grid grid-cols-3 gap-3">
-              {/* Famille */}
-              <div className="space-y-2">
-                <Label htmlFor="family" className="text-xs text-gray-600">
-                  Famille
-                </Label>
-                <select
-                  id="family"
-                  value={filters.familyId}
-                  onChange={e => {
-                    setFilters({ familyId: e.target.value, categoryId: '' });
-                    setFormData(prev => ({ ...prev, subcategory_id: '' }));
-                  }}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                >
-                  <option value="">Sélectionner...</option>
-                  {families.map(family => (
-                    <option key={family.id} value={family.id}>
-                      {family.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Catégorie */}
-              <div className="space-y-2">
-                <Label htmlFor="category" className="text-xs text-gray-600">
-                  Catégorie
-                </Label>
-                <select
-                  id="category"
-                  value={filters.categoryId}
-                  onChange={e => {
-                    setFilters(prev => ({
-                      ...prev,
-                      categoryId: e.target.value,
-                    }));
-                    setFormData(prev => ({ ...prev, subcategory_id: '' }));
-                  }}
-                  disabled={!filters.familyId}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm disabled:bg-gray-100"
-                >
-                  <option value="">Sélectionner...</option>
-                  {filteredCategories.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Sous-catégorie */}
-              <div className="space-y-2">
-                <Label htmlFor="subcategory" className="text-xs text-gray-600">
-                  Sous-catégorie
-                </Label>
-                <select
-                  id="subcategory"
-                  value={formData.subcategory_id}
-                  onChange={e =>
-                    setFormData(prev => ({
-                      ...prev,
-                      subcategory_id: e.target.value,
-                    }))
-                  }
-                  disabled={!filters.categoryId}
-                  className={`w-full border rounded-md px-3 py-2 text-sm disabled:bg-gray-100 ${
-                    errors.subcategory_id ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                >
-                  <option value="">Sélectionner...</option>
-                  {filteredSubcategories.map(subcategory => (
-                    <option key={subcategory.id} value={subcategory.id}>
-                      {subcategory.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {errors.subcategory_id && (
-              <p className="text-sm text-red-500">{errors.subcategory_id}</p>
-            )}
-          </div>
-
-          {/* Type de variante */}
           <div className="space-y-2">
             <Label htmlFor="variant_type" className="text-sm font-medium">
               Type de variante
@@ -561,7 +303,6 @@ export function VariantGroupForm({
             </select>
           </div>
 
-          {/* Style décoratif */}
           <div className="space-y-3">
             <Label className="text-sm font-medium">
               Style décoratif (optionnel)
@@ -569,47 +310,14 @@ export function VariantGroupForm({
             <p className="text-xs text-gray-600">
               Choisissez le style esthétique des produits de ce groupe
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {DECORATIVE_STYLES.map(styleOption => {
-                const isSelected = formData.style === styleOption.value;
-                return (
-                  <button
-                    key={styleOption.value}
-                    type="button"
-                    onClick={() =>
-                      setFormData(prev => ({
-                        ...prev,
-                        style: isSelected ? '' : styleOption.value,
-                      }))
-                    }
-                    className={cn(
-                      'flex flex-col items-center gap-2 p-4 rounded-lg border-2 text-center transition-all',
-                      isSelected
-                        ? 'border-black bg-black text-white shadow-md'
-                        : 'border-gray-300 hover:border-gray-400 hover:shadow-sm'
-                    )}
-                  >
-                    <div className="text-2xl mb-1">{styleOption.icon}</div>
-                    <div className="space-y-1">
-                      <div className="font-medium text-sm">
-                        {styleOption.label}
-                      </div>
-                      <div
-                        className={cn(
-                          'text-xs',
-                          isSelected ? 'text-gray-200' : 'text-gray-500'
-                        )}
-                      >
-                        {styleOption.description}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+            <VariantGroupStyleSelector
+              style={formData.style}
+              onStyleChange={value =>
+                setFormData(prev => ({ ...prev, style: value }))
+              }
+            />
           </div>
 
-          {/* Pièces compatibles */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Pièces compatibles</Label>
             <p className="text-xs text-gray-600">
@@ -632,155 +340,24 @@ export function VariantGroupForm({
             )}
           </div>
 
-          {/* Fournisseur commun */}
-          <div className="space-y-4 pt-4 border-t">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="has-common-supplier"
-                checked={formData.has_common_supplier}
-                onCheckedChange={checked => {
-                  setFormData(prev => ({
-                    ...prev,
-                    has_common_supplier: checked as boolean,
-                  }));
-                  if (!checked)
-                    setFormData(prev => ({ ...prev, supplier_id: '' }));
-                }}
-              />
-              <Label
-                htmlFor="has-common-supplier"
-                className="text-sm font-medium cursor-pointer"
-              >
-                🏢 Même fournisseur pour tous les produits
-              </Label>
-            </div>
-            <p className="text-xs text-gray-600 ml-6">
-              Si cochée, tous les produits du groupe hériteront automatiquement
-              du fournisseur sélectionné
-            </p>
+          <VariantGroupSupplierSection
+            hasCommonSupplier={formData.has_common_supplier}
+            supplierId={formData.supplier_id}
+            onHasCommonSupplierChange={value =>
+              setFormData(prev => ({ ...prev, has_common_supplier: value }))
+            }
+            onSupplierIdChange={value =>
+              setFormData(prev => ({ ...prev, supplier_id: value }))
+            }
+            suppliers={suppliers}
+            suppliersLoading={suppliersLoading}
+          />
 
-            {formData.has_common_supplier && (
-              <div className="ml-6 space-y-2">
-                <Label htmlFor="supplier" className="text-sm font-medium">
-                  Fournisseur commun <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={formData.supplier_id}
-                  onValueChange={value =>
-                    setFormData(prev => ({ ...prev, supplier_id: value }))
-                  }
-                  disabled={suppliersLoading}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Sélectionner un fournisseur" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {suppliers.map(supplier => (
-                      <SelectItem key={supplier.id} value={supplier.id}>
-                        {supplier.legal_name ??
-                          supplier.trade_name ??
-                          'Sans nom'}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {formData.supplier_id && (
-                  <Link
-                    href={`/contacts-organisations/suppliers/${formData.supplier_id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 hover:underline"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                    Voir la fiche détail du fournisseur
-                  </Link>
-                )}
-                <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
-                  💡 Ce fournisseur sera appliqué automatiquement à tous les
-                  produits du groupe
-                </p>
-              </div>
-            )}
-          </div>
+          <VariantGroupDimensionsSection
+            formData={formData}
+            setFormData={setFormData}
+          />
 
-          {/* Attributs communs */}
-          <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <div>
-              <Label className="text-sm font-medium">
-                Attributs communs (optionnels)
-              </Label>
-              <p className="text-xs text-gray-600 mt-1">
-                Ces informations seront automatiquement copiées vers tous les
-                produits du groupe
-              </p>
-            </div>
-
-            {/* Dimensions */}
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-gray-700">
-                📐 Dimensions
-              </Label>
-              <div className="grid grid-cols-4 gap-2">
-                <Input
-                  type="number"
-                  placeholder="Longueur"
-                  value={formData.common_length}
-                  onChange={e =>
-                    setFormData(prev => ({
-                      ...prev,
-                      common_length: e.target.value,
-                    }))
-                  }
-                  className="text-sm"
-                  step="0.1"
-                  min="0"
-                />
-                <Input
-                  type="number"
-                  placeholder="Largeur"
-                  value={formData.common_width}
-                  onChange={e =>
-                    setFormData(prev => ({
-                      ...prev,
-                      common_width: e.target.value,
-                    }))
-                  }
-                  className="text-sm"
-                  step="0.1"
-                  min="0"
-                />
-                <Input
-                  type="number"
-                  placeholder="Hauteur"
-                  value={formData.common_height}
-                  onChange={e =>
-                    setFormData(prev => ({
-                      ...prev,
-                      common_height: e.target.value,
-                    }))
-                  }
-                  className="text-sm"
-                  step="0.1"
-                  min="0"
-                />
-                <select
-                  value={formData.common_dimensions_unit}
-                  onChange={e =>
-                    setFormData(prev => ({
-                      ...prev,
-                      common_dimensions_unit: e.target.value as 'cm' | 'm',
-                    }))
-                  }
-                  className="border border-gray-300 rounded-md px-2 py-2 text-sm"
-                >
-                  <option value="cm">cm</option>
-                  <option value="m">m</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
           <div className="flex items-center justify-end space-x-3 pt-4 border-t">
             <ButtonV2
               type="button"
