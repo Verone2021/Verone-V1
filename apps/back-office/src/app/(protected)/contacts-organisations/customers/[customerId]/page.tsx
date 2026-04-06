@@ -1,8 +1,6 @@
-/* eslint-disable max-lines */
 'use client';
 
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
+import { useState } from 'react';
 
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
@@ -26,26 +24,19 @@ import {
   getOrganisationDisplayName,
 } from '@verone/organisations';
 import { useOrganisationTabCounts } from '@verone/organisations';
-// Phase 1: organisation-products-section désactivé (Phase 2+)
-// import { OrganisationProductsSection } from '@verone/organisations'
 import type { Organisation } from '@verone/organisations';
 import { TabsNavigation, TabContent } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Badge } from '@verone/ui';
-import { cn } from '@verone/utils';
 import {
   isModuleDeployed,
   getModulePhase,
 } from '@verone/utils/deployed-modules';
-import { createClient } from '@verone/utils/supabase/client';
 import {
-  ArrowLeft,
   Building2,
-  Archive,
-  ArchiveRestore,
-  Package,
   Phone,
+  Package,
   ShoppingCart,
   FileText,
   Euro,
@@ -53,71 +44,20 @@ import {
   Store,
   Sparkles,
   Wallet,
-  Upload,
-  Loader2,
+  ArrowLeft,
 } from 'lucide-react';
+import { cn } from '@verone/utils';
 
-// Interface pour les images de produit (Supabase join)
-interface ProductImageRow {
-  public_url: string | null;
-  is_primary: boolean;
-}
-
-// Interface pour les produits retournés par Supabase
-interface ProductWithImages {
-  id: string;
-  name: string;
-  sku: string | null;
-  product_status: string;
-  created_at: string | null;
-  product_images: ProductImageRow[] | null;
-}
-
-// Interface pour les produits du client
-interface CustomerProduct {
-  id: string;
-  name: string;
-  sku: string | null;
-  product_status: string;
-  created_at: string | null;
-  primary_image_url?: string | null;
-}
-
-// Interface pour les canaux de vente de l'organisation
-interface OrganisationChannel {
-  code: 'linkme' | 'site-internet' | 'b2b';
-  name: string;
-  link: string;
-  isActive: boolean;
-}
-
-// Helper pour générer le badge ownership_type
-function getOwnershipBadge(
-  type: string | null
-): { label: string; className: string } | null {
-  switch (type) {
-    case 'succursale':
-      return { label: 'Propre', className: 'bg-blue-100 text-blue-700' };
-    case 'franchise':
-      return { label: 'Franchise', className: 'bg-amber-100 text-amber-700' };
-    default:
-      return null;
-  }
-}
+import { useCustomerDetail } from './use-customer-detail';
+import { CustomerDetailHeader } from './CustomerDetailHeader';
+import { CustomerKbisCard } from './CustomerKbisCard';
+import { CustomerProductsTab } from './CustomerProductsTab';
 
 export default function CustomerDetailPage() {
   const { customerId } = useParams();
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get('returnUrl');
   const [activeTab, setActiveTab] = useState('contacts');
-  const [customerProducts, setCustomerProducts] = useState<CustomerProduct[]>(
-    []
-  );
-  const [productsLoading, setProductsLoading] = useState(false);
-  // État pour les canaux de vente
-  const [organisationChannels, setOrganisationChannels] = useState<
-    OrganisationChannel[]
-  >([]);
 
   const {
     organisation: customer,
@@ -126,160 +66,53 @@ export default function CustomerDetailPage() {
     refetch: refetchCustomer,
   } = useOrganisation(customerId as string);
 
-  // Fetch kbis_url separately (not in shared hook ORGANISATION_COLUMNS)
-  const [kbisUrl, setKbisUrl] = useState<string | null>(null);
-  useEffect(() => {
-    if (!customerId || typeof customerId !== 'string') return;
-    const supabase = createClient();
-    void supabase
-      .from('organisations')
-      .select('id, kbis_url')
-      .eq('id', customerId)
-      .single()
-      .then(({ data }) => {
-        const row = data as { kbis_url?: string | null } | null;
-        if (row?.kbis_url) setKbisUrl(row.kbis_url);
-      });
-  }, [customerId]);
+  const {
+    kbisUrl,
+    kbisUploading,
+    handleKbisUpload,
+    customerProducts,
+    productsLoading,
+    organisationChannels,
+  } = useCustomerDetail(customerId);
 
   // Merge kbis_url into customer for LegalIdentityEditSection
   const customerWithKbis = customer ? { ...customer, kbis_url: kbisUrl } : null;
 
-  // K-BIS upload handler
-  const [kbisUploading, setKbisUploading] = useState(false);
-  const handleKbisUpload = async (file: File) => {
-    if (!customerId || typeof customerId !== 'string') return;
-    setKbisUploading(true);
-    try {
-      const supabase = createClient();
-      const ext = file.name.split('.').pop() ?? 'pdf';
-      const path = `${customerId}/kbis-${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from('organisation-logos')
-        .upload(path, file, { upsert: true });
-      if (uploadError) {
-        console.error('K-BIS upload error:', uploadError);
-        return;
-      }
-      const { data: urlData } = supabase.storage
-        .from('organisation-logos')
-        .getPublicUrl(path);
-      const publicUrl = urlData.publicUrl;
-      // kbis_url exists in DB but not in generated types — use raw update
-      const { error: updateError } = await supabase
-        .from('organisations')
-        .update({ kbis_url: publicUrl } as Record<string, unknown>)
-        .eq('id', customerId);
-      if (updateError) {
-        console.error('K-BIS DB update error:', updateError);
-        return;
-      }
-      setKbisUrl(publicUrl);
-    } catch (err) {
-      console.error('K-BIS upload failed:', err);
-    } finally {
-      setKbisUploading(false);
-    }
-  };
-
-  // Charger les produits sourcés pour ce client
-  useEffect(() => {
-    async function fetchCustomerProducts() {
-      if (!customerId || typeof customerId !== 'string') return;
-      setProductsLoading(true);
-      try {
-        const supabase = createClient();
-        const { data } = await supabase
-          .from('products')
-          .select(
-            `id, name, sku, product_status, created_at,
-            product_images!left(public_url, is_primary)`
-          )
-          .eq('assigned_client_id', customerId)
-          .order('created_at', { ascending: false });
-
-        // Mapper les données avec l'image primaire
-        const products = data as ProductWithImages[] | null;
-        const mappedProducts: CustomerProduct[] = (products ?? []).map(p => ({
-          id: p.id,
-          name: p.name,
-          sku: p.sku,
-          product_status: p.product_status,
-          created_at: p.created_at,
-          primary_image_url:
-            p.product_images?.find(img => img.is_primary)?.public_url ?? null,
-        }));
-        setCustomerProducts(mappedProducts);
-      } catch (err) {
-        console.error('Erreur chargement produits client:', err);
-      } finally {
-        setProductsLoading(false);
-      }
-    }
-    void fetchCustomerProducts().catch(error => {
-      console.error('[CustomerDetail] Fetch products failed:', error);
-    });
-  }, [customerId]);
-
-  // Charger les canaux de vente de cette organisation
-  useEffect(() => {
-    async function fetchOrganisationChannels() {
-      if (!customerId || typeof customerId !== 'string') return;
-
-      const channels: OrganisationChannel[] = [];
-
-      try {
-        const supabase = createClient();
-        // Requête DIRECTE: chercher affilié avec organisation_id
-        const { data: linkmeAffiliate } = await supabase
-          .from('linkme_affiliates')
-          .select('id, status')
-          .eq('organisation_id', customerId)
-          .single();
-
-        if (linkmeAffiliate) {
-          channels.push({
-            code: 'linkme',
-            name: 'LinkMe',
-            link: `/canaux-vente/linkme/organisations/${customerId}`,
-            isActive: linkmeAffiliate.status === 'active',
-          });
-        }
-
-        setOrganisationChannels(channels);
-      } catch (err) {
-        console.error('Erreur chargement canaux organisation:', err);
-      }
-    }
-    void fetchOrganisationChannels().catch(error => {
-      console.error('[CustomerDetail] Fetch channels failed:', error);
-    });
-  }, [customerId]);
-
   const { archiveOrganisation, unarchiveOrganisation, refetch } =
     useOrganisations({ type: 'customer' });
 
-  // Hook centralisé pour les compteurs d'onglets
   const { counts, refreshCounts } = useOrganisationTabCounts({
     organisationId: customerId as string,
     organisationType: 'customer',
   });
 
-  // Gestionnaire de mise à jour des données client
   const handleCustomerUpdate = (_updatedData: Partial<Organisation>) => {
-    // Rafraîchir les données du customer immédiatement
     refetchCustomer();
-    // Rafraîchir la liste des organisations (cache)
     void refetch().catch(error => {
       console.error('[CustomerDetail] Refetch organisations failed:', error);
     });
-    // Rafraîchir les compteurs
     void refreshCounts().catch(error => {
       console.error('[CustomerDetail] Refresh counts failed:', error);
     });
   };
 
-  // Configuration des onglets avec compteurs du hook + modules déployés
+  const handleArchive = async () => {
+    if (!customer) return;
+    if (!customer.archived_at) {
+      const success = await archiveOrganisation(customer.id);
+      if (success) {
+        console.warn('✅ Client archivé avec succès');
+        await refetch();
+      }
+    } else {
+      const success = await unarchiveOrganisation(customer.id);
+      if (success) {
+        console.warn('✅ Client restauré avec succès');
+        await refetch();
+      }
+    }
+  };
+
   const tabs = [
     {
       id: 'contacts',
@@ -298,7 +131,7 @@ export default function CustomerDetailPage() {
       id: 'pricing',
       label: 'Tarification',
       icon: <Euro className="h-4 w-4" />,
-      disabled: !isModuleDeployed('products'), // Nécessite products pour customer_pricing
+      disabled: !isModuleDeployed('products'),
       disabledBadge: getModulePhase('products'),
     },
     {
@@ -315,7 +148,6 @@ export default function CustomerDetailPage() {
       disabled: !isModuleDeployed('invoices'),
       disabledBadge: getModulePhase('invoices'),
     },
-    // Onglet Échantillons - uniquement pour clients professionnels
     ...(customer?.customer_type === 'professional'
       ? [
           {
@@ -363,8 +195,8 @@ export default function CustomerDetailPage() {
               Client introuvable
             </h3>
             <p className="text-gray-600 mb-4">
-              Ce client n'existe pas ou vous n'avez pas les droits pour le
-              consulter.
+              Ce client n&apos;existe pas ou vous n&apos;avez pas les droits
+              pour le consulter.
             </p>
             <ButtonV2 asChild>
               <Link href="/contacts-organisations/customers">
@@ -378,127 +210,17 @@ export default function CustomerDetailPage() {
     );
   }
 
-  const handleArchive = async () => {
-    if (!customer.archived_at) {
-      // Archiver
-      const success = await archiveOrganisation(customer.id);
-      if (success) {
-        console.warn('✅ Client archivé avec succès');
-        await refetch();
-      }
-    } else {
-      // Restaurer
-      const success = await unarchiveOrganisation(customer.id);
-      if (success) {
-        console.warn('✅ Client restauré avec succès');
-        await refetch();
-      }
-    }
-  };
-
   return (
     <div className="container mx-auto p-4 space-y-4">
-      {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            {returnUrl ? (
-              <Link href={decodeURIComponent(returnUrl)}>
-                <ButtonV2
-                  variant="ghost"
-                  size="sm"
-                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-1" />
-                  Retour à LinkMe
-                </ButtonV2>
-              </Link>
-            ) : (
-              <Link href="/contacts-organisations/customers">
-                <ButtonV2 variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-1" />
-                  Clients
-                </ButtonV2>
-              </Link>
-            )}
-          </div>
-          <div className="flex items-center gap-3 mb-2">
-            <Building2 className="h-5 w-5 text-black" />
-            <h1 className="text-lg font-semibold text-black">
-              {getOrganisationDisplayName(customer)}
-            </h1>
-            <div className="flex gap-2">
-              <Badge
-                variant={customer.is_active ? 'secondary' : 'secondary'}
-                className={
-                  customer.is_active ? 'bg-green-100 text-green-800' : ''
-                }
-              >
-                {customer.is_active ? 'Actif' : 'Inactif'}
-              </Badge>
-              {customer.archived_at && (
-                <Badge
-                  variant="destructive"
-                  className="bg-red-100 text-red-800"
-                >
-                  Archivé
-                </Badge>
-              )}
-              {customer.customer_type && (
-                <Badge
-                  variant="outline"
-                  className="bg-blue-50 text-blue-700 border-blue-200"
-                >
-                  {customer.customer_type === 'professional'
-                    ? 'Client Professionnel'
-                    : 'Client Particulier'}
-                </Badge>
-              )}
-              {customer.ownership_type &&
-                (() => {
-                  const badge = getOwnershipBadge(customer.ownership_type);
-                  return badge ? (
-                    <Badge
-                      variant="outline"
-                      className={cn('border-gray-200', badge.className)}
-                    >
-                      {badge.label}
-                    </Badge>
-                  ) : null;
-                })()}
-            </div>
-          </div>
-          <p className="text-sm text-gray-600">
-            Entreprise •{' '}
-            {customer.customer_type === 'professional' ? 'B2B' : 'B2C'} • ID:{' '}
-            {customer.id.slice(0, 8)}
-          </p>
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-2">
-          <ButtonV2
-            variant={customer.archived_at ? 'success' : 'danger'}
-            onClick={() => {
-              void handleArchive().catch(error => {
-                console.error('[CustomerDetail] Archive failed:', error);
-              });
-            }}
-          >
-            {customer.archived_at ? (
-              <>
-                <ArchiveRestore className="h-4 w-4 mr-2" />
-                Restaurer
-              </>
-            ) : (
-              <>
-                <Archive className="h-4 w-4 mr-2" />
-                Archiver
-              </>
-            )}
-          </ButtonV2>
-        </div>
-      </div>
+      <CustomerDetailHeader
+        customer={customer}
+        returnUrl={returnUrl}
+        onArchive={() => {
+          void handleArchive().catch(error => {
+            console.error('[CustomerDetail] Archive failed:', error);
+          });
+        }}
+      />
 
       {/* Section Canaux de Vente */}
       {organisationChannels.length > 0 && (
@@ -538,29 +260,21 @@ export default function CustomerDetailPage() {
         </Card>
       )}
 
-      {/* Layout en 2 colonnes avec composants EditSection */}
+      {/* Layout en 2 colonnes */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        {/* Colonne principale - Informations éditables */}
         <div className="xl:col-span-2 space-y-4">
-          {/* Identité Légale */}
           <LegalIdentityEditSection
             organisation={customerWithKbis ?? customer}
             onUpdate={handleCustomerUpdate}
           />
-
-          {/* Informations de Contact */}
           <ContactEditSection
             organisation={customer}
             onUpdate={handleCustomerUpdate}
           />
-
-          {/* Adresse */}
           <AddressEditSection
             organisation={customer}
             onUpdate={handleCustomerUpdate}
           />
-
-          {/* Conditions Commerciales - Uniquement pour les clients professionnels */}
           {customer.customer_type === 'professional' && (
             <CommercialEditSection
               organisation={customer}
@@ -570,9 +284,7 @@ export default function CustomerDetailPage() {
           )}
         </div>
 
-        {/* Colonne latérale - Logo, Performance et Statistiques */}
         <div className="space-y-4">
-          {/* Logo de l'organisation - Composant réutilisable */}
           <OrganisationLogoCard
             organisationId={customer.id}
             organisationName={customer.legal_name}
@@ -587,87 +299,11 @@ export default function CustomerDetailPage() {
               });
             }}
           />
-
-          {/* Extrait K-BIS */}
-          <div className="card-verone p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium text-black flex items-center">
-                <FileText className="h-3.5 w-3.5 mr-1.5" />
-                Extrait K-BIS
-              </h3>
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.webp"
-                  className="hidden"
-                  onChange={e => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      void handleKbisUpload(file).catch(err => {
-                        console.error('[KbisUpload] failed:', err);
-                      });
-                    }
-                    e.target.value = '';
-                  }}
-                  disabled={kbisUploading}
-                />
-                <ButtonV2
-                  variant="outline"
-                  size="sm"
-                  asChild
-                  disabled={kbisUploading}
-                >
-                  <span>
-                    {kbisUploading ? (
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                    ) : (
-                      <Upload className="h-3 w-3 mr-1" />
-                    )}
-                    {kbisUrl ? 'Remplacer' : 'Deposer'}
-                  </span>
-                </ButtonV2>
-              </label>
-            </div>
-            {kbisUrl ? (
-              <div className="space-y-2">
-                <div className="border rounded-lg overflow-hidden bg-gray-50">
-                  {kbisUrl.match(/\.(jpg|jpeg|png|webp)(\?|$)/i) ? (
-                    <Image
-                      src={kbisUrl}
-                      alt="K-BIS"
-                      width={400}
-                      height={300}
-                      className="w-full h-auto object-contain"
-                      unoptimized
-                    />
-                  ) : (
-                    <iframe
-                      src={kbisUrl}
-                      title="K-BIS"
-                      className="w-full h-[200px]"
-                    />
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <a
-                    href={kbisUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 font-medium"
-                  >
-                    <ArrowLeft className="h-3 w-3 rotate-[135deg]" />
-                    Telecharger
-                  </a>
-                </div>
-              </div>
-            ) : (
-              <p className="text-xs text-gray-400 italic text-center py-2">
-                Aucun K-BIS depose
-              </p>
-            )}
-          </div>
-
-          {/* Performance & Qualité - Uniquement pour les clients professionnels */}
+          <CustomerKbisCard
+            kbisUrl={kbisUrl}
+            kbisUploading={kbisUploading}
+            onUpload={handleKbisUpload}
+          />
           {customer.customer_type === 'professional' && (
             <PerformanceEditSection
               organisation={customer}
@@ -675,8 +311,6 @@ export default function CustomerDetailPage() {
               organisationType="customer"
             />
           )}
-
-          {/* Statistiques - Composant réutilisable */}
           <OrganisationStatsCard
             organisation={customer}
             organisationType="customer"
@@ -684,7 +318,7 @@ export default function CustomerDetailPage() {
         </div>
       </div>
 
-      {/* Section avec onglets - Modules business */}
+      {/* Onglets */}
       <div className="mt-8">
         <TabsNavigation
           tabs={tabs}
@@ -702,83 +336,10 @@ export default function CustomerDetailPage() {
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="products">
-          {productsLoading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-4" />
-              <p className="text-gray-600">Chargement des produits...</p>
-            </div>
-          ) : customerProducts.length === 0 ? (
-            <div className="text-center py-12">
-              <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-black mb-2">
-                Aucun produit sourcé
-              </h3>
-              <p className="text-gray-600">
-                Aucun produit n'a été sourcé pour ce client.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-black">
-                  Produits sourcés pour ce client
-                </h3>
-                <Badge variant="secondary">{customerProducts.length}</Badge>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {customerProducts.map(product => (
-                  <Link
-                    key={product.id}
-                    href={`/produits/catalogue/${product.id}`}
-                    className="block"
-                  >
-                    <Card className="hover:border-black transition-colors cursor-pointer">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          {product.primary_image_url ? (
-                            <Image
-                              src={product.primary_image_url}
-                              alt={product.name}
-                              width={48}
-                              height={48}
-                              className="object-cover rounded"
-                            />
-                          ) : (
-                            <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
-                              <Package className="h-6 w-6 text-gray-400" />
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-black truncate">
-                              {product.name}
-                            </h4>
-                            {product.sku && (
-                              <p className="text-xs text-gray-500">
-                                SKU: {product.sku}
-                              </p>
-                            )}
-                            <Badge
-                              variant={
-                                product.product_status === 'active'
-                                  ? 'success'
-                                  : 'secondary'
-                              }
-                              size="sm"
-                              className="mt-1"
-                            >
-                              {product.product_status === 'active'
-                                ? 'Actif'
-                                : product.product_status}
-                            </Badge>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
+          <CustomerProductsTab
+            products={customerProducts}
+            loading={productsLoading}
+          />
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="orders">
@@ -816,7 +377,6 @@ export default function CustomerDetailPage() {
           </div>
         </TabContent>
 
-        {/* Onglet Échantillons - uniquement pour clients professionnels */}
         {customer?.customer_type === 'professional' && (
           <TabContent activeTab={activeTab} tabId="samples">
             <CustomerSamplesSection
