@@ -10,287 +10,49 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@verone/common/hooks';
 import { createClient } from '@verone/utils/supabase/client';
 
-import {
-  useStockMovements,
-  type MovementType,
-  type StockReasonCode,
-} from './use-stock-movements';
+import { useStockMovements } from './use-stock-movements';
+import { exportMovementsToCSV } from './use-movements-history.export';
+import { queryMovements, queryStats } from './use-movements-history.fetcher';
+import type {
+  MovementHistoryFilters,
+  MovementWithDetails,
+  MovementsStats,
+  UseMovementsHistoryOptions,
+} from './use-movements-history.types';
 
-// Types pour l'historique des mouvements
-export interface MovementHistoryFilters {
-  dateRange?: {
-    from: Date;
-    to: Date;
-  };
-  movementTypes?: MovementType[];
-  reasonCodes?: StockReasonCode[];
-  userIds?: string[];
-  productSearch?: string;
-  affects_forecast?: boolean;
-  forecast_type?: 'in' | 'out';
-  channelId?: string | null; // Filtre par canal de vente (accepte null et undefined)
-  limit?: number;
-  offset?: number;
-}
-
-export interface MovementWithDetails {
-  id: string;
-  product_id: string;
-  movement_type: 'IN' | 'OUT' | 'ADJUST';
-  quantity_change: number;
-  quantity_before: number;
-  quantity_after: number;
-  unit_cost?: number;
-  reference_type?: string;
-  reference_id?: string;
-  notes?: string;
-  reason_code?: string;
-  affects_forecast: boolean;
-  forecast_type?: 'in' | 'out';
-  performed_by: string;
-  performed_at: string;
-  created_at: string;
-
-  // Données enrichies
-  product_name?: string;
-  product_sku?: string;
-  product_image_url?: string | null; // ✅ NOUVEAU - URL image principale produit
-  user_name?: string;
-  user_first_name?: string;
-  user_last_name?: string;
-  reason_description?: string;
-
-  // Données canal de vente (pour mouvements liés aux commandes clients)
-  channel_id?: string | null;
-  channel_name?: string | null;
-  channel_code?: string | null;
-}
-
-export interface MovementsStats {
-  totalMovements: number;
-  movementsToday: number;
-  movementsThisWeek: number;
-  movementsThisMonth: number;
-
-  byType: {
-    IN: number;
-    OUT: number;
-    ADJUST: number;
-  };
-
-  realMovements?: number;
-  forecastMovements?: number;
-
-  topReasons: Array<{
-    code: string;
-    description: string;
-    count: number;
-  }>;
-
-  topUsers: Array<{
-    user_id: string;
-    user_name: string;
-    count: number;
-  }>;
-}
-
-/**
- * Options pour le hook useMovementsHistory
- * Permet d'initialiser les filtres dès le montage (ex: page ajustements = ADJUST uniquement)
- */
-export interface UseMovementsHistoryOptions {
-  /** Filtres initiaux appliqués au montage (ex: { movementTypes: ['ADJUST'] }) */
-  initialFilters?: Partial<MovementHistoryFilters>;
-}
+export type {
+  MovementHistoryFilters,
+  MovementWithDetails,
+  MovementsStats,
+  UseMovementsHistoryOptions,
+} from './use-movements-history.types';
 
 export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
   const [loading, setLoading] = useState(false);
   const [movements, setMovements] = useState<MovementWithDetails[]>([]);
   const [stats, setStats] = useState<MovementsStats | null>(null);
   const [total, setTotal] = useState(0);
-  // ✅ Phase 3.6 : INITIALISATION par défaut affects_forecast = false (mouvements RÉELS uniquement)
-  // ✅ Phase 4 : Support filtres initiaux via options (ex: page ajustements)
   const [filters, setFilters] = useState<MovementHistoryFilters>({
-    affects_forecast: false, // ✅ Par défaut = mouvements réels uniquement
+    affects_forecast: false,
     forecast_type: undefined,
-    ...options?.initialFilters, // ✅ Fusionner avec filtres initiaux
+    ...options?.initialFilters,
   });
   const { toast } = useToast();
   const { getReasonDescription } = useStockMovements();
 
-  // ✅ Singleton déjà mémorisé - pas besoin de useMemo
   const supabase = createClient();
 
-  // Récupérer les mouvements avec filtres
   const fetchMovements = useCallback(
     async (appliedFilters: MovementHistoryFilters = {}) => {
       setLoading(true);
       try {
-        let query = supabase
-          .from('stock_movements')
-          .select('*', { count: 'exact' });
-
-        // Filtres de date
-        if (appliedFilters.dateRange) {
-          query = query
-            .gte('performed_at', appliedFilters.dateRange.from.toISOString())
-            .lte('performed_at', appliedFilters.dateRange.to.toISOString());
-        }
-
-        // Filtres par type de mouvement
-        if (
-          appliedFilters.movementTypes &&
-          appliedFilters.movementTypes.length > 0
-        ) {
-          query = query.in(
-            'movement_type',
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-            appliedFilters.movementTypes as any
-          );
-        }
-
-        // Filtres par motifs
-        if (
-          appliedFilters.reasonCodes &&
-          appliedFilters.reasonCodes.length > 0
-        ) {
-          query = query.in('reason_code', appliedFilters.reasonCodes);
-        }
-
-        // Filtres par utilisateurs
-        if (appliedFilters.userIds && appliedFilters.userIds.length > 0) {
-          query = query.in('performed_by', appliedFilters.userIds);
-        }
-
-        // Filtre par type de mouvement (réel vs prévisionnel)
-        // ✅ FIX Phase 3.6: .eq() exclut NULL, utiliser .or() pour inclure données historiques
-        if (appliedFilters.affects_forecast !== undefined) {
-          if (appliedFilters.affects_forecast === false) {
-            // Mouvements RÉELS : NULL ou false (inclut données historiques)
-            query = query.or(
-              'affects_forecast.is.null,affects_forecast.eq.false'
-            );
-          } else {
-            // Mouvements PRÉVISIONNELS : strictement true
-            query = query.eq('affects_forecast', true);
-          }
-        }
-
-        // Filtre par direction prévisionnel
-        if (appliedFilters.forecast_type) {
-          query = query.eq('forecast_type', appliedFilters.forecast_type);
-        }
-
-        // Recherche produit
-        if (appliedFilters.productSearch) {
-          // Recherche dans les produits liés
-          const productQuery = supabase
-            .from('products')
-            .select('id')
-            .or(
-              `name.ilike.%${appliedFilters.productSearch}%,sku.ilike.%${appliedFilters.productSearch}%`
-            );
-
-          const { data: matchingProducts } = await productQuery;
-          if (matchingProducts && matchingProducts.length > 0) {
-            const productIds = matchingProducts.map(p => p.id);
-            query = query.in('product_id', productIds);
-          } else {
-            // Aucun produit trouvé, retourner résultat vide
-            setMovements([]);
-            setTotal(0);
-            return;
-          }
-        }
-
-        // Pagination
-        const limit = appliedFilters.limit ?? 50;
-        const offset = appliedFilters.offset ?? 0;
-        query = query.range(offset, offset + limit - 1);
-
-        // Tri par date décroissante
-        query = query.order('performed_at', { ascending: false });
-
-        const { data, error, count } = await query;
-
-        if (error) throw error;
-
-        // Enrichir les données avec jointures réelles
-        if (!data || data.length === 0) {
-          setMovements([]);
-          setTotal(count ?? 0);
-          return;
-        }
-
-        // Récupérer les IDs utilisateurs et produits uniques
-        const userIds = [
-          ...new Set(data.map(m => m.performed_by).filter(Boolean)),
-        ];
-        const productIds = [
-          ...new Set(data.map(m => m.product_id).filter(Boolean)),
-        ];
-
-        // Récupérer les profils utilisateurs en parallèle
-        const [userProfilesResult, productsResult] = await Promise.all([
-          supabase
-            .from('user_profiles')
-            .select('user_id, first_name, last_name')
-            .in('user_id', userIds),
-          supabase
-            .from('products')
-            .select('id, name, sku, product_images!left(public_url)')
-            .eq('product_images.is_primary', true)
-            .limit(1, { foreignTable: 'product_images' })
-            .in('id', productIds),
-        ]);
-
-        const userProfiles = userProfilesResult.data ?? [];
-        const products = productsResult.data ?? [];
-
-        // Enrichir les mouvements avec les données jointes
-        const enrichedMovements = data.map(movement => {
-          const userProfile = userProfiles.find(
-            profile => profile.user_id === movement.performed_by
-          );
-          const product = products.find(
-            prod => prod.id === movement.product_id
-          );
-
-          const userName = userProfile
-            ? `${userProfile.first_name ?? ''} ${userProfile.last_name ?? ''}`.trim()
-            : 'Utilisateur inconnu';
-
-          type ProductWithImages = {
-            id: string;
-            name: string;
-            sku: string;
-            product_images: Array<{ public_url: string | null }> | null;
-          };
-          const typedProduct = product as unknown as
-            | ProductWithImages
-            | undefined;
-
-          return {
-            ...movement,
-            product_name: typedProduct?.name ?? 'Produit supprimé',
-            product_sku: typedProduct?.sku ?? 'SKU inconnu',
-            product_image_url:
-              typedProduct?.product_images?.[0]?.public_url ?? null, // ✅ NOUVEAU - Image produit
-            user_name: userName,
-            user_first_name: userProfile?.first_name,
-            user_last_name: userProfile?.last_name,
-            reason_description: movement.reason_code
-              ? getReasonDescription(
-                  movement.reason_code as Parameters<
-                    typeof getReasonDescription
-                  >[0]
-                )
-              : undefined,
-          };
-        });
-
-        setMovements(enrichedMovements as unknown as MovementWithDetails[]);
-        setTotal(count ?? 0);
+        const result = await queryMovements(
+          supabase,
+          appliedFilters,
+          getReasonDescription
+        );
+        setMovements(result.movements);
+        setTotal(result.total);
       } catch (error) {
         console.error('Erreur lors de la récupération des mouvements:', error);
         toast({
@@ -305,234 +67,15 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
     [supabase, toast, getReasonDescription]
   );
 
-  // Récupérer les statistiques (avec support filtres movementTypes + dateRange)
   const fetchStats = useCallback(
     async (appliedFilters: MovementHistoryFilters = {}) => {
       try {
-        // Use dateRange from filters if provided, otherwise fallback to defaults
-        const hasDateRange = !!appliedFilters.dateRange;
-        const rangeFrom = appliedFilters.dateRange?.from;
-        const rangeTo = appliedFilters.dateRange?.to;
-
-        // Fallback dates for sub-period counts (only used when no dateRange filter)
-        const now = new Date();
-        const today = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate()
+        const result = await queryStats(
+          supabase,
+          appliedFilters,
+          getReasonDescription
         );
-        const weekStart = new Date(
-          today.getTime() - today.getDay() * 24 * 60 * 60 * 1000
-        );
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase query builder types are complex
-        const applyCommonFilters = (query: any) => {
-          if (
-            appliedFilters.movementTypes &&
-            appliedFilters.movementTypes.length > 0
-          ) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            query = query.in(
-              'movement_type',
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              appliedFilters.movementTypes as any
-            );
-          }
-          // Mouvements RÉELS uniquement (NULL ou false)
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-          query = query.or(
-            'affects_forecast.is.null,affects_forecast.eq.false'
-          );
-          // Apply date range filter
-          if (hasDateRange && rangeFrom) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            query = query.gte('performed_at', rangeFrom.toISOString());
-          }
-          if (hasDateRange && rangeTo) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            query = query.lte('performed_at', rangeTo.toISOString());
-          }
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-          return query;
-        };
-
-        // Compter tous les mouvements (dans la période)
-        let totalQuery = supabase
-          .from('stock_movements')
-          .select('*', { count: 'exact', head: true });
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        totalQuery = applyCommonFilters(totalQuery);
-        const { count: totalCount } = await totalQuery;
-
-        // Sub-period counts: only meaningful without dateRange filter
-        let todayCount = 0;
-        let weekCount = 0;
-        let monthCount = 0;
-
-        if (!hasDateRange) {
-          let todayQuery = supabase
-            .from('stock_movements')
-            .select('*', { count: 'exact', head: true })
-            .gte('performed_at', today.toISOString());
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          todayQuery = applyCommonFilters(todayQuery);
-          const todayResult = await todayQuery;
-          todayCount = todayResult.count ?? 0;
-
-          let weekQuery = supabase
-            .from('stock_movements')
-            .select('*', { count: 'exact', head: true })
-            .gte('performed_at', weekStart.toISOString());
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          weekQuery = applyCommonFilters(weekQuery);
-          const weekResult = await weekQuery;
-          weekCount = weekResult.count ?? 0;
-
-          let monthQuery = supabase
-            .from('stock_movements')
-            .select('*', { count: 'exact', head: true })
-            .gte('performed_at', monthStart.toISOString());
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          monthQuery = applyCommonFilters(monthQuery);
-          const monthResult = await monthQuery;
-          monthCount = monthResult.count ?? 0;
-        }
-
-        // Répartition par type (dans la période)
-        let typeQuery = supabase
-          .from('stock_movements')
-          .select('movement_type');
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        typeQuery = applyCommonFilters(typeQuery);
-        if (!hasDateRange) {
-          typeQuery = typeQuery.gte('performed_at', monthStart.toISOString());
-        }
-        const { data: typeStats } = await typeQuery;
-
-        const byType = {
-          IN: typeStats?.filter(m => m.movement_type === 'IN').length ?? 0,
-          OUT: typeStats?.filter(m => m.movement_type === 'OUT').length ?? 0,
-          ADJUST:
-            typeStats?.filter(m => m.movement_type === 'ADJUST').length ?? 0,
-        };
-
-        // Comptage mouvements réels vs prévisionnels (global)
-        const { count: realCount } = await supabase
-          .from('stock_movements')
-          .select('*', { count: 'exact', head: true })
-          .or('affects_forecast.is.null,affects_forecast.is.false');
-
-        const { count: forecastCount } = await supabase
-          .from('stock_movements')
-          .select('*', { count: 'exact', head: true })
-          .eq('affects_forecast', true);
-
-        // Top motifs (dans la période)
-        let reasonQuery = supabase
-          .from('stock_movements')
-          .select('reason_code')
-          .not('reason_code', 'is', null);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        reasonQuery = applyCommonFilters(reasonQuery);
-        if (!hasDateRange) {
-          reasonQuery = reasonQuery.gte(
-            'performed_at',
-            monthStart.toISOString()
-          );
-        }
-        const { data: reasonStats } = await reasonQuery;
-
-        const reasonCounts =
-          reasonStats?.reduce(
-            (acc, item) => {
-              if (item.reason_code) {
-                acc[item.reason_code] = (acc[item.reason_code] ?? 0) + 1;
-              }
-              return acc;
-            },
-            {} as Record<string, number>
-          ) ?? {};
-
-        const topReasons = Object.entries(reasonCounts)
-          .sort(([, a], [, b]) => b - a)
-          .slice(0, 5)
-          .map(([code, count]) => ({
-            code,
-            description: getReasonDescription(
-              code as Parameters<typeof getReasonDescription>[0]
-            ),
-            count,
-          }));
-
-        // Top utilisateurs (dans la période)
-        let userQuery = supabase.from('stock_movements').select('performed_by');
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        userQuery = applyCommonFilters(userQuery);
-        if (!hasDateRange) {
-          userQuery = userQuery.gte('performed_at', monthStart.toISOString());
-        }
-        const { data: userStats } = await userQuery;
-
-        const statsUserIds = [
-          ...new Set(userStats?.map(m => m.performed_by).filter(Boolean) ?? []),
-        ];
-
-        let statsUserProfiles: Array<{
-          user_id: string;
-          first_name: string | null;
-          last_name: string | null;
-        }> = [];
-        if (statsUserIds.length > 0) {
-          const { data } = await supabase
-            .from('user_profiles')
-            .select('user_id, first_name, last_name')
-            .in('user_id', statsUserIds);
-          statsUserProfiles = data ?? [];
-        }
-
-        const userCounts =
-          userStats?.reduce(
-            (acc, item) => {
-              const userId = item.performed_by;
-              const userProfile = statsUserProfiles.find(
-                profile => profile.user_id === userId
-              );
-              const userName = userProfile
-                ? `${userProfile.first_name ?? ''} ${userProfile.last_name ?? ''}`.trim()
-                : 'Utilisateur inconnu';
-
-              if (!acc[userId]) {
-                acc[userId] = {
-                  user_id: userId,
-                  user_name: userName,
-                  count: 0,
-                };
-              }
-              acc[userId].count++;
-              return acc;
-            },
-            {} as Record<
-              string,
-              { user_id: string; user_name: string; count: number }
-            >
-          ) ?? {};
-
-        const topUsers = Object.values(userCounts)
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 5);
-
-        setStats({
-          totalMovements: totalCount ?? 0,
-          movementsToday: todayCount,
-          movementsThisWeek: weekCount,
-          movementsThisMonth: monthCount,
-          byType,
-          realMovements: realCount ?? 0,
-          forecastMovements: forecastCount ?? 0,
-          topReasons,
-          topUsers,
-        });
+        setStats(result);
       } catch (error) {
         console.error(
           'Erreur lors de la récupération des statistiques:',
@@ -543,201 +86,37 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
     [supabase, getReasonDescription]
   );
 
-  // Chargement initial - ÉVITER BOUCLE INFINIE
+  // Chargement initial
   useEffect(() => {
     void fetchMovements(filters);
-    void fetchStats(filters); // ✅ Passer les filtres pour KPI filtrés (ex: ADJUST uniquement)
+    void fetchStats(filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Chargement initial uniquement - éviter boucle infinie avec filters
 
   // Effet séparé pour les changements de filtres
   useEffect(() => {
     void fetchMovements(filters);
-    void fetchStats(filters); // ✅ Recalculer KPI quand filtres changent
+    void fetchStats(filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(filters)]); // Stabiliser avec JSON.stringify
 
-  // Appliquer les filtres
   const applyFilters = useCallback((newFilters: MovementHistoryFilters) => {
     setFilters(newFilters);
   }, []);
 
-  // Reset des filtres
   const resetFilters = useCallback(() => {
     setFilters({});
   }, []);
 
-  // Export des données
   const exportMovements = useCallback(
-    async (format: 'csv' | 'excel' = 'csv') => {
+    async (_format: 'csv' | 'excel' = 'csv') => {
       try {
-        // Récupérer tous les mouvements avec les filtres actuels (sans pagination)
-        const exportFilters = {
-          ...filters,
-          limit: undefined,
-          offset: undefined,
-        };
-
-        let query = supabase.from('stock_movements').select('*');
-
-        // Appliquer les mêmes filtres
-        if (exportFilters.dateRange) {
-          query = query
-            .gte('performed_at', exportFilters.dateRange.from.toISOString())
-            .lte('performed_at', exportFilters.dateRange.to.toISOString());
-        }
-
-        if (
-          exportFilters.movementTypes &&
-          exportFilters.movementTypes.length > 0
-        ) {
-          query = query.in('movement_type', exportFilters.movementTypes);
-        }
-
-        if (exportFilters.reasonCodes && exportFilters.reasonCodes.length > 0) {
-          query = query.in('reason_code', exportFilters.reasonCodes);
-        }
-
-        if (exportFilters.userIds && exportFilters.userIds.length > 0) {
-          query = query.in('performed_by', exportFilters.userIds);
-        }
-
-        // ✅ FIX Phase 3.6: .eq() exclut NULL, utiliser .or() pour inclure données historiques
-        if (exportFilters.affects_forecast !== undefined) {
-          if (exportFilters.affects_forecast === false) {
-            // Mouvements RÉELS : NULL ou false (inclut données historiques)
-            query = query.or(
-              'affects_forecast.is.null,affects_forecast.eq.false'
-            );
-          } else {
-            // Mouvements PRÉVISIONNELS : strictement true
-            query = query.eq('affects_forecast', true);
-          }
-        }
-
-        if (exportFilters.forecast_type) {
-          query = query.eq('forecast_type', exportFilters.forecast_type);
-        }
-
-        if (exportFilters.productSearch) {
-          const productQuery = supabase
-            .from('products')
-            .select('id')
-            .or(
-              `name.ilike.%${exportFilters.productSearch}%,sku.ilike.%${exportFilters.productSearch}%`
-            );
-
-          const { data: matchingProducts } = await productQuery;
-          if (matchingProducts && matchingProducts.length > 0) {
-            const productIds = matchingProducts.map(p => p.id);
-            query = query.in('product_id', productIds);
-          }
-        }
-
-        query = query.order('performed_at', { ascending: false });
-
-        const { data, error } = await query;
-
-        if (error) throw error;
-
-        if (!data || data.length === 0) {
-          toast({
-            title: 'Aucune donnée',
-            description: 'Aucun mouvement à exporter avec les filtres actuels',
-          });
-          return;
-        }
-
-        // Récupérer les IDs utilisateurs et produits uniques pour l'export
-        const exportUserIds = [
-          ...new Set(data.map(m => m.performed_by).filter(Boolean)),
-        ];
-        const exportProductIds = [
-          ...new Set(data.map(m => m.product_id).filter(Boolean)),
-        ];
-
-        // Récupérer les profils utilisateurs et produits en parallèle
-        const [exportUserProfiles, exportProducts] = await Promise.all([
-          exportUserIds.length > 0
-            ? supabase
-                .from('user_profiles')
-                .select('user_id, first_name, last_name')
-                .in('user_id', exportUserIds)
-            : { data: [] },
-          exportProductIds.length > 0
-            ? supabase
-                .from('products')
-                .select('id, name, sku')
-                .in('id', exportProductIds)
-            : { data: [] },
-        ]);
-
-        // Formater les données pour l'export
-        const formattedData = data.map(movement => {
-          const userProfile = exportUserProfiles.data?.find(
-            profile => profile.user_id === movement.performed_by
-          );
-          const product = exportProducts.data?.find(
-            prod => prod.id === movement.product_id
-          );
-
-          const userName = userProfile
-            ? `${userProfile.first_name ?? ''} ${userProfile.last_name ?? ''}`.trim()
-            : 'Utilisateur inconnu';
-
-          return {
-            'Date/Heure': new Date(movement.performed_at).toLocaleString(
-              'fr-FR'
-            ),
-            Produit: product?.name ?? 'Produit supprimé',
-            SKU: product?.sku ?? 'N/A',
-            Type: movement.movement_type,
-            Quantité:
-              movement.movement_type === 'OUT'
-                ? -movement.quantity_change
-                : movement.quantity_change,
-            'Stock Avant': movement.quantity_before,
-            'Stock Après': movement.quantity_after,
-            'Coût Unitaire': movement.unit_cost ?? '',
-            Motif: movement.reason_code
-              ? getReasonDescription(
-                  movement.reason_code as Parameters<
-                    typeof getReasonDescription
-                  >[0]
-                )
-              : '',
-            Utilisateur: userName,
-            Notes: movement.notes ?? '',
-            Référence: movement.reference_type ?? '',
-            Prévisionnel: movement.affects_forecast ? 'Oui' : 'Non',
-          };
-        });
-
-        // Générer le fichier (simplifié pour le moment - CSV)
-        if (format === 'csv') {
-          const headers = Object.keys(formattedData[0] ?? {});
-          const csvContent = [
-            headers.join(','),
-            ...formattedData.map(row =>
-              headers
-                .map(header => `"${row[header as keyof typeof row] ?? ''}"`)
-                .join(',')
-            ),
-          ].join('\n');
-
-          const blob = new Blob([csvContent], {
-            type: 'text/csv;charset=utf-8;',
-          });
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(blob);
-          link.download = `historique-mouvements-${new Date().toISOString().split('T')[0]}.csv`;
-          link.click();
-        }
-
-        toast({
-          title: 'Export réussi',
-          description: `${formattedData.length} mouvements exportés en ${format.toUpperCase()}`,
-        });
+        await exportMovementsToCSV(
+          supabase,
+          filters,
+          getReasonDescription,
+          toast
+        );
       } catch (error) {
         console.error("Erreur lors de l'export:", error);
         toast({
@@ -751,21 +130,16 @@ export function useMovementsHistory(options?: UseMovementsHistoryOptions) {
   );
 
   return {
-    // État
     loading,
     movements,
     stats,
     total,
     filters,
-
-    // Actions
     fetchMovements,
     fetchStats,
     applyFilters,
     resetFilters,
     exportMovements,
-
-    // Helpers
     hasFilters: Object.keys(filters).length > 0,
     pagination: {
       currentPage:
