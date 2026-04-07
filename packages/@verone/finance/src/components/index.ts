@@ -7,7 +7,7 @@ export * from './InvoiceUploadModal';
 export * from './RapprochementModal';
 export * from './RapprochementContent'; // Headless content: embedded bank reconciliation
 export * from './RapprochementFromOrderModal'; // Modal inverse: Commande → Transaction (thin wrapper)
-export * from './InvoiceCreateFromOrderModal'; // Modal: Commande → Facture Qonto
+export * from './InvoiceCreateFromOrderModal/index'; // Modal: Commande → Facture Qonto
 export * from './InvoiceDetailModal'; // Modal: Détail facture avec workflow actions
 export * from './InvoiceCreateServiceModal'; // Modal: Facture service (sans commande) (2026-01-07)
 export * from './PaymentRecordModal'; // Modal: Enregistrer un paiement (2026-01-09)
