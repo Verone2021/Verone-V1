@@ -41,7 +41,7 @@ export interface CreateContactData {
   is_primary_contact?: boolean;
   is_billing_contact?: boolean;
   is_technical_contact?: boolean;
-  is_commercial_contact?: boolean;
+
   preferred_communication_method?: 'email' | 'phone' | 'both';
   accepts_marketing?: boolean;
   accepts_notifications?: boolean;
@@ -62,7 +62,7 @@ export interface UpdateContactData {
   is_primary_contact?: boolean;
   is_billing_contact?: boolean;
   is_technical_contact?: boolean;
-  is_commercial_contact?: boolean;
+
   preferred_communication_method?: 'email' | 'phone' | 'both';
   accepts_marketing?: boolean;
   accepts_notifications?: boolean;
@@ -76,7 +76,7 @@ interface ContactFilters {
   is_primary_contact?: boolean;
   is_billing_contact?: boolean;
   is_technical_contact?: boolean;
-  is_commercial_contact?: boolean;
+
   is_active?: boolean;
   search?: string;
 }
@@ -128,12 +128,6 @@ export function useContacts() {
           query = query.eq(
             'is_technical_contact',
             filters.is_technical_contact
-          );
-        }
-        if (filters?.is_commercial_contact !== undefined) {
-          query = query.eq(
-            'is_commercial_contact',
-            filters.is_commercial_contact
           );
         }
         if (filters?.is_active !== undefined) {
@@ -558,8 +552,7 @@ export function useContacts() {
 
   const getContactRoles = useCallback((contact: Contact) => {
     const roles: string[] = [];
-    if (contact.is_primary_contact) roles.push('Principal');
-    if (contact.is_commercial_contact) roles.push('Commercial');
+    if (contact.is_primary_contact) roles.push('Responsable');
     if (contact.is_billing_contact) roles.push('Facturation');
     if (contact.is_technical_contact) roles.push('Technique');
     const rolesStr = roles.join(', ');

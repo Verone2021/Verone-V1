@@ -69,7 +69,7 @@ export async function createOrderContacts(
         phone: toNullIfEmpty(formData.contacts.responsable.phone),
         title: toNullIfEmpty(formData.contacts.responsable.position),
         is_primary_contact: false,
-        is_commercial_contact: false,
+
         is_active: true,
       })
       .select('id')
@@ -104,7 +104,7 @@ export async function createOrderContacts(
         phone: toNullIfEmpty(bc.phone),
         title: toNullIfEmpty(bc.position),
         is_billing_contact: true,
-        is_commercial_contact: false,
+
         is_active: true,
       })
       .select('id')
@@ -135,7 +135,7 @@ export async function createOrderContacts(
         phone: toNullIfEmpty(dc.phone),
         title: toNullIfEmpty(dc.position),
         is_delivery_only: true,
-        is_commercial_contact: false,
+
         is_active: true,
       })
       .select('id')

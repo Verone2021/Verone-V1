@@ -225,6 +225,7 @@ export default function EnseigneDetailPage() {
           {/* Onglet Contacts */}
           <TabsContent value="contacts" className="mt-4">
             <EnseigneContactsTab
+              enseigneId={params.id as string}
               contactsData={contactsData}
               contactsLoading={contactsLoading}
               showCreateContact={showCreateContact}

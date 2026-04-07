@@ -24,7 +24,7 @@ import {
   Input,
   Label,
 } from '@verone/ui';
-import { Receipt, ShoppingBag, Building2 } from 'lucide-react';
+import { Receipt, Building2 } from 'lucide-react';
 import { createClient } from '@verone/utils/supabase/client';
 import { toast } from 'sonner';
 
@@ -85,7 +85,6 @@ export function CreateEnseigneContactModal({
     phone: '',
     title: '',
     isBillingContact: false,
-    isCommercialContact: false,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -104,7 +103,6 @@ export function CreateEnseigneContactModal({
         phone: formData.phone || null,
         title: formData.title || null,
         is_billing_contact: formData.isBillingContact,
-        is_commercial_contact: formData.isCommercialContact,
         is_active: true,
       });
 
@@ -272,41 +270,6 @@ export function CreateEnseigneContactModal({
                   }`}
                 >
                   Facturation
-                </span>
-              </button>
-
-              {/* Commercial */}
-              <button
-                type="button"
-                onClick={() =>
-                  setFormData(prev => ({
-                    ...prev,
-                    isCommercialContact: !prev.isCommercialContact,
-                  }))
-                }
-                className={`flex flex-col items-center gap-2 rounded-lg border-2 p-3 text-center transition-all ${
-                  formData.isCommercialContact
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <div
-                  className={`flex h-9 w-9 items-center justify-center rounded-full ${
-                    formData.isCommercialContact
-                      ? 'bg-blue-100 text-blue-600'
-                      : 'bg-gray-100 text-gray-400'
-                  }`}
-                >
-                  <ShoppingBag className="h-4 w-4" />
-                </div>
-                <span
-                  className={`text-xs font-medium ${
-                    formData.isCommercialContact
-                      ? 'text-blue-600'
-                      : 'text-gray-500'
-                  }`}
-                >
-                  Commercial
                 </span>
               </button>
             </div>

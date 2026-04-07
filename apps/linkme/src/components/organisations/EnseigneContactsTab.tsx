@@ -81,7 +81,7 @@ export function EnseigneContactsTab({
 
       {/* Stats Cards */}
       <Card className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex-1">
             <p className="text-sm text-gray-500 mb-1">Total Contacts</p>
             <p className="text-2xl font-bold text-gray-900">
@@ -95,14 +95,8 @@ export function EnseigneContactsTab({
             </p>
           </div>
           <div className="flex-1">
-            <p className="text-sm text-gray-500 mb-1">Commercial</p>
-            <p className="text-2xl font-bold text-green-600">
-              {enseigneContacts.filter(c => c.isCommercialContact).length}
-            </p>
-          </div>
-          <div className="flex-1">
             <p className="text-sm text-gray-500 mb-1">Technique</p>
-            <p className="text-2xl font-bold text-purple-600">
+            <p className="text-2xl font-bold text-violet-600">
               {enseigneContacts.filter(c => c.isTechnicalContact).length}
             </p>
           </div>

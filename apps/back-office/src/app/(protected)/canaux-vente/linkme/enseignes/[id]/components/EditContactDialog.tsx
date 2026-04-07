@@ -41,7 +41,6 @@ export function EditContactDialog({
     title: '',
     isPrimaryContact: false,
     isBillingContact: false,
-    isCommercialContact: false,
     isTechnicalContact: false,
   });
 
@@ -56,7 +55,6 @@ export function EditContactDialog({
         title: contact.title ?? '',
         isPrimaryContact: contact.isPrimaryContact,
         isBillingContact: contact.isBillingContact,
-        isCommercialContact: contact.isCommercialContact,
         isTechnicalContact: contact.isTechnicalContact,
       });
     }
@@ -77,7 +75,6 @@ export function EditContactDialog({
         title: form.title || undefined,
         isPrimaryContact: form.isPrimaryContact,
         isBillingContact: form.isBillingContact,
-        isCommercialContact: form.isCommercialContact,
         isTechnicalContact: form.isTechnicalContact,
       })
       .then(() => {
@@ -186,20 +183,6 @@ export function EditContactDialog({
                 />
                 <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-blue-100 text-blue-700">
                   Facturation
-                </span>
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  checked={form.isCommercialContact}
-                  onCheckedChange={(checked: boolean) =>
-                    setForm(prev => ({
-                      ...prev,
-                      isCommercialContact: checked,
-                    }))
-                  }
-                />
-                <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-orange-100 text-orange-700">
-                  Commercial
                 </span>
               </label>
               <label className="flex items-center gap-2 text-sm">

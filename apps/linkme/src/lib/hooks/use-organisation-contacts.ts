@@ -492,7 +492,7 @@ export function useUpdateContact() {
           is_primary_contact: input.is_primary_contact,
           is_billing_contact: input.is_billing_contact,
           is_delivery_only: input.is_delivery_only ?? false,
-          is_commercial_contact: !(input.is_delivery_only ?? false),
+
           notes: emptyToNull(input.notes),
           updated_at: new Date().toISOString(),
         })

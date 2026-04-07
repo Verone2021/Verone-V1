@@ -5,8 +5,7 @@ import type { Contact } from './types';
 
 export function getContactRoles(contact: Contact): string {
   const roles: string[] = [];
-  if (contact.is_primary_contact) roles.push('Principal');
-  if (contact.is_commercial_contact) roles.push('Commercial');
+  if (contact.is_primary_contact) roles.push('Responsable');
   if (contact.is_billing_contact) roles.push('Facturation');
   if (contact.is_technical_contact) roles.push('Technique');
   return roles.join(', ') || 'Aucun rôle';

@@ -30,9 +30,4 @@ export interface ContactStats {
 }
 
 export type FilterType = 'all' | 'supplier' | 'customer';
-export type FilterRole =
-  | 'all'
-  | 'primary'
-  | 'commercial'
-  | 'technical'
-  | 'billing';
+export type FilterRole = 'all' | 'primary' | 'technical' | 'billing';
