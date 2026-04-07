@@ -1,41 +1,22 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-
-import {
-  cn,
-  calculateMargin,
-  calculateMarginRateFromPrices,
-} from '@verone/utils';
+import { cn } from '@verone/utils';
 import {
   X,
   Edit,
-  Package,
-  Plus,
-  Minus,
   AlertCircle,
   Loader2,
   Save,
   Lock,
 } from 'lucide-react';
 
-import {
-  useLinkMeOrder,
-  useUpdateLinkMeOrder,
-  type UpdateLinkMeOrderInput,
-  type LinkMeOrderItem,
-} from '../hooks/use-linkme-orders';
+import { EditOrderItemsList } from './edit-order-items-list';
+import { useEditLinkMeOrder } from './use-edit-linkme-order';
 
 interface EditLinkMeOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
   orderId: string | null;
-}
-
-interface EditableItem extends LinkMeOrderItem {
-  originalQuantity: number;
-  originalUnitPriceHt: number;
-  editableMarginRate: number;
 }
 
 /**
@@ -47,182 +28,29 @@ export function EditLinkMeOrderModal({
   onClose,
   orderId,
 }: EditLinkMeOrderModalProps) {
-  const { data: order, isLoading } = useLinkMeOrder(orderId);
-  const updateOrder = useUpdateLinkMeOrder();
-
-  // Champs editables
-  const [taxRate, setTaxRate] = useState<number>(0.2);
-  const [shippingCostHt, setShippingCostHt] = useState<number>(0);
-  const [insuranceCostHt, setInsuranceCostHt] = useState<number>(0);
-  const [handlingCostHt, setHandlingCostHt] = useState<number>(0);
-  const [internalNotes, setInternalNotes] = useState<string>('');
-  const [items, setItems] = useState<EditableItem[]>([]);
-
-  // Editable uniquement en draft
-  const isEditable = order?.status === 'draft';
-
-  // Charger les donnees de la commande
-  useEffect(() => {
-    if (order) {
-      setTaxRate(order.tax_rate ?? 0.2);
-      setShippingCostHt(order.shipping_cost_ht ?? 0);
-      setInsuranceCostHt(order.insurance_cost_ht ?? 0);
-      setHandlingCostHt(order.handling_cost_ht ?? 0);
-      setInternalNotes(order.notes ?? '');
-      setItems(
-        (order.items ?? []).map(item => ({
-          ...item,
-          originalQuantity: item.quantity,
-          originalUnitPriceHt: item.unit_price_ht,
-          editableMarginRate: calculateMarginRateFromPrices(
-            item.base_price_ht,
-            item.unit_price_ht
-          ),
-        }))
-      );
-    }
-  }, [order]);
-
-  // Calculer les totaux
-  const totals = useMemo(() => {
-    const roundMoney = (value: number): number => Math.round(value * 100) / 100;
-
-    let productsHt = 0;
-    let totalCommission = 0;
-    for (const item of items) {
-      productsHt = roundMoney(productsHt + item.quantity * item.unit_price_ht);
-      // Commission = (unit_price - base_price) x qty
-      const commission =
-        (item.unit_price_ht - item.base_price_ht) * item.quantity;
-      totalCommission = roundMoney(totalCommission + commission);
-    }
-
-    const feesHt = roundMoney(
-      shippingCostHt + insuranceCostHt + handlingCostHt
-    );
-    const totalHt = roundMoney(productsHt + feesHt);
-    const totalTtc = roundMoney(totalHt * (1 + taxRate));
-
-    return { productsHt, feesHt, totalHt, totalTtc, totalCommission };
-  }, [items, taxRate, shippingCostHt, insuranceCostHt, handlingCostHt]);
-
-  // Modifier quantite
-  const updateQuantity = (itemId: string, delta: number) => {
-    setItems(
-      items.map(item => {
-        if (item.id === itemId) {
-          const newQty = Math.max(1, item.quantity + delta);
-          return { ...item, quantity: newQty };
-        }
-        return item;
-      })
-    );
-  };
-
-  // Modifier prix de vente HT → recalcule la marge
-  const updateItemPrice = useCallback((itemId: string, newPrice: number) => {
-    setItems(prev =>
-      prev.map(item => {
-        if (item.id !== itemId) return item;
-        const safePrice = Math.max(0, newPrice);
-        const newMarginRate =
-          safePrice > item.base_price_ht
-            ? calculateMarginRateFromPrices(item.base_price_ht, safePrice)
-            : 0;
-        return {
-          ...item,
-          unit_price_ht: safePrice,
-          editableMarginRate: newMarginRate,
-        };
-      })
-    );
-  }, []);
-
-  // Modifier marge → recalcule le prix de vente
-  const updateItemMarginRate = useCallback(
-    (itemId: string, newRate: number) => {
-      setItems(prev =>
-        prev.map(item => {
-          if (item.id !== itemId) return item;
-          const safeRate = Math.max(0, Math.min(99.9, newRate));
-          const { sellingPriceHt } = calculateMargin({
-            basePriceHt: item.base_price_ht,
-            marginRate: safeRate,
-          });
-          return {
-            ...item,
-            unit_price_ht: sellingPriceHt,
-            editableMarginRate: safeRate,
-          };
-        })
-      );
-    },
-    []
-  );
-
-  // Verifier si modifie
-  const hasChanges = useMemo(() => {
-    if (!order) return false;
-
-    const taxChanged = taxRate !== (order.tax_rate ?? 0.2);
-    const shippingChanged = shippingCostHt !== (order.shipping_cost_ht ?? 0);
-    const insuranceChanged = insuranceCostHt !== (order.insurance_cost_ht ?? 0);
-    const handlingChanged = handlingCostHt !== (order.handling_cost_ht ?? 0);
-    const notesChanged = internalNotes !== (order.notes ?? '');
-    const itemsChanged = items.some(
-      item =>
-        item.quantity !== item.originalQuantity ||
-        item.unit_price_ht !== item.originalUnitPriceHt
-    );
-
-    return (
-      taxChanged ||
-      shippingChanged ||
-      insuranceChanged ||
-      handlingChanged ||
-      notesChanged ||
-      itemsChanged
-    );
-  }, [
+  const {
     order,
-    taxRate,
-    shippingCostHt,
-    insuranceCostHt,
-    handlingCostHt,
-    internalNotes,
+    isLoading,
+    isEditable,
     items,
-  ]);
-
-  // Sauvegarder
-  const handleSave = async () => {
-    if (!orderId || !hasChanges) return;
-
-    const input: UpdateLinkMeOrderInput = {
-      id: orderId,
-      tax_rate: taxRate,
-      shipping_cost_ht: shippingCostHt,
-      insurance_cost_ht: insuranceCostHt,
-      handling_cost_ht: handlingCostHt,
-      internal_notes: internalNotes,
-      items: items.map(item => ({
-        id: item.id,
-        product_id: item.product_id,
-        quantity: item.quantity,
-        unit_price_ht: item.unit_price_ht,
-        // Envoyer retrocession_rate si le prix a change
-        ...(item.unit_price_ht !== item.originalUnitPriceHt
-          ? { retrocession_rate: item.editableMarginRate / 100 }
-          : {}),
-      })),
-    };
-
-    try {
-      await updateOrder.mutateAsync(input);
-      onClose();
-    } catch (error) {
-      console.error('Erreur mise a jour commande:', error);
-    }
-  };
+    totals,
+    hasChanges,
+    taxRate,
+    setTaxRate,
+    shippingCostHt,
+    setShippingCostHt,
+    insuranceCostHt,
+    setInsuranceCostHt,
+    handlingCostHt,
+    setHandlingCostHt,
+    internalNotes,
+    setInternalNotes,
+    updateOrder,
+    updateQuantity,
+    updateItemPrice,
+    updateItemMarginRate,
+    handleSave,
+  } = useEditLinkMeOrder(orderId, onClose);
 
   if (!isOpen) return null;
 
@@ -411,154 +239,13 @@ export function EditLinkMeOrderModal({
                 </div>
 
                 {/* Lignes de commande */}
-                <div className="space-y-3">
-                  <label className="block text-sm font-medium text-gray-700">
-                    <Package className="h-4 w-4 inline mr-1" />
-                    Produits ({items.length})
-                  </label>
-                  <div className="space-y-2 max-h-[340px] overflow-y-auto">
-                    {items.map(item => {
-                      const priceChanged =
-                        item.unit_price_ht !== item.originalUnitPriceHt;
-                      const qtyChanged =
-                        item.quantity !== item.originalQuantity;
-
-                      return (
-                        <div
-                          key={item.id}
-                          className={cn(
-                            'p-3 rounded-lg border',
-                            priceChanged
-                              ? 'bg-blue-50 border-blue-200'
-                              : 'bg-gray-50 border-gray-200'
-                          )}
-                        >
-                          {/* Ligne 1: Nom + Quantite */}
-                          <div className="flex items-center gap-3">
-                            <Package className="h-4 w-4 text-gray-400 shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">
-                                {item.product_name}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => updateQuantity(item.id, -1)}
-                                className="p-1 hover:bg-gray-200 rounded"
-                                disabled={item.quantity <= 1}
-                              >
-                                <Minus className="h-4 w-4" />
-                              </button>
-                              <span className="w-8 text-center text-sm font-medium">
-                                {item.quantity}
-                              </span>
-                              <button
-                                onClick={() => updateQuantity(item.id, 1)}
-                                className="p-1 hover:bg-gray-200 rounded"
-                              >
-                                <Plus className="h-4 w-4" />
-                              </button>
-                            </div>
-                            {qtyChanged && (
-                              <span className="text-xs text-blue-600">
-                                (etait {item.originalQuantity})
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Ligne 2: Prix / Marge (editable si draft) */}
-                          <div className="mt-2 grid grid-cols-4 gap-2 items-end">
-                            {/* Prix base HT (lecture seule) */}
-                            <div>
-                              <label className="block text-[10px] text-gray-400 mb-0.5">
-                                Prix base HT
-                              </label>
-                              <div className="px-2 py-1.5 bg-gray-100 rounded text-xs text-gray-500 tabular-nums">
-                                {item.base_price_ht.toFixed(2)} EUR
-                              </div>
-                            </div>
-
-                            {/* Prix vente HT (editable si draft) */}
-                            <div>
-                              <label className="block text-[10px] text-gray-400 mb-0.5">
-                                Prix vente HT
-                              </label>
-                              {isEditable ? (
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  value={item.unit_price_ht}
-                                  onChange={e =>
-                                    updateItemPrice(
-                                      item.id,
-                                      parseFloat(e.target.value) || 0
-                                    )
-                                  }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs tabular-nums focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                />
-                              ) : (
-                                <div className="px-2 py-1.5 bg-gray-100 rounded text-xs text-gray-500 tabular-nums flex items-center gap-1">
-                                  <Lock className="h-3 w-3" />
-                                  {item.unit_price_ht.toFixed(2)} EUR
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Marge % (editable si draft) */}
-                            <div>
-                              <label className="block text-[10px] text-gray-400 mb-0.5">
-                                Marge %
-                              </label>
-                              {isEditable ? (
-                                <input
-                                  type="number"
-                                  min="0"
-                                  max="99.9"
-                                  step="0.1"
-                                  value={item.editableMarginRate}
-                                  onChange={e =>
-                                    updateItemMarginRate(
-                                      item.id,
-                                      parseFloat(e.target.value) || 0
-                                    )
-                                  }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs tabular-nums focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                />
-                              ) : (
-                                <div className="px-2 py-1.5 bg-gray-100 rounded text-xs text-gray-500 tabular-nums flex items-center gap-1">
-                                  <Lock className="h-3 w-3" />
-                                  {item.editableMarginRate.toFixed(1)}%
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Total ligne */}
-                            <div>
-                              <label className="block text-[10px] text-gray-400 mb-0.5">
-                                Total HT
-                              </label>
-                              <div className="px-2 py-1.5 bg-gray-100 rounded text-xs font-medium tabular-nums">
-                                {(item.unit_price_ht * item.quantity).toFixed(
-                                  2
-                                )}{' '}
-                                EUR
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Indicateur de modification prix */}
-                          {priceChanged && (
-                            <p className="mt-1 text-[10px] text-blue-600">
-                              Prix modifie (etait{' '}
-                              {item.originalUnitPriceHt.toFixed(2)} EUR)
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                <EditOrderItemsList
+                  items={items}
+                  isEditable={isEditable}
+                  onUpdateQuantity={updateQuantity}
+                  onUpdateItemPrice={updateItemPrice}
+                  onUpdateItemMarginRate={updateItemMarginRate}
+                />
 
                 {/* Notes */}
                 <div className="space-y-2">
