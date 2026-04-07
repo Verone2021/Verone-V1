@@ -123,6 +123,7 @@ jobs:
       - name: Build (${{ steps.flags.outputs.apps }})
         run: pnpm turbo run build ${{ steps.flags.outputs.filters }}
         env:
+          NODE_OPTIONS: --max-old-space-size=8192
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
