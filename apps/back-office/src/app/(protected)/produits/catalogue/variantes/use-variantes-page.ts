@@ -93,7 +93,7 @@ export function useVariantesPage() {
   const handleLoadArchivedGroups = useCallback(async () => {
     setArchivedLoading(true);
     const archivedGroups = await loadArchivedVariantGroups();
-    setArchivedVariantGroups(archivedGroups as VariantGroup[]);
+    setArchivedVariantGroups(archivedGroups);
     setArchivedLoading(false);
   }, [loadArchivedVariantGroups]);
 
