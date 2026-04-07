@@ -1,51 +1,63 @@
-name: Quality Checks (ESLint + Type-Check + Build)
+name: Quality Checks
 
 on:
   pull_request:
-    branches:
-      - main
-      - staging
-      - integration/*
+    branches: [main, staging, integration/*]
   push:
-    branches:
-      - main
-      - staging
+    branches: [main, staging]
 
 permissions:
   actions: write
   contents: read
+  pull-requests: write
 
-# Annuler les workflows en cours si nouveau push
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  pre_job:
-    name: Check duplicate
+  # ----------------------------------------------------------------
+  # 1. Detect which apps changed → skip unchanged apps
+  # ----------------------------------------------------------------
+  detect-changes:
+    name: Detect changes
     runs-on: ubuntu-latest
     outputs:
-      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+      back-office: ${{ steps.filter.outputs.back-office }}
+      linkme: ${{ steps.filter.outputs.linkme }}
+      site-internet: ${{ steps.filter.outputs.site-internet }}
+      packages: ${{ steps.filter.outputs.packages }}
     steps:
-      - id: skip_check
-        uses: fkirc/skip-duplicate-actions@v5
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
         with:
-          concurrent_skipping: 'never'
-          skip_after_successful_duplicate: 'true'
-          do_not_skip: '["workflow_dispatch", "schedule"]'
+          filters: |
+            back-office:
+              - 'apps/back-office/**'
+            linkme:
+              - 'apps/linkme/**'
+            site-internet:
+              - 'apps/site-internet/**'
+            packages:
+              - 'packages/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'tsconfig.json'
+              - 'turbo.json'
 
+  # ----------------------------------------------------------------
+  # 2. Quality checks — only on affected apps
+  # ----------------------------------------------------------------
   quality:
     name: ESLint + Type-Check + Build
-    needs: pre_job
-    if: needs.pre_job.outputs.should_skip != 'true'
+    needs: detect-changes
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 60
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Nécessaire pour comparer avec base branch
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
@@ -61,147 +73,76 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: ESLint Check
-        id: eslint
+      # ---- Determine which --filter flags to use ----
+      - name: Build filter flags
+        id: flags
         run: |
-          echo "## 🔍 ESLint Results" >> $GITHUB_STEP_SUMMARY
+          FILTERS=""
+          APPS_CHANGED=""
 
-          # Lancer ESLint et capturer le résultat
-          if pnpm lint 2>&1 | tee eslint-output.txt; then
-            echo "✅ **ESLint**: No errors found" >> $GITHUB_STEP_SUMMARY
-            echo "eslint_status=success" >> $GITHUB_OUTPUT
+          # If shared packages changed → check ALL apps
+          if [ "${{ needs.detect-changes.outputs.packages }}" = "true" ]; then
+            FILTERS="--filter=@verone/back-office --filter=@verone/linkme --filter=@verone/site-internet"
+            APPS_CHANGED="back-office, linkme, site-internet (packages changed)"
           else
-            echo "❌ **ESLint**: Errors detected" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            tail -50 eslint-output.txt >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            echo "eslint_status=failure" >> $GITHUB_OUTPUT
-            exit 1
+            if [ "${{ needs.detect-changes.outputs.back-office }}" = "true" ]; then
+              FILTERS="$FILTERS --filter=@verone/back-office"
+              APPS_CHANGED="$APPS_CHANGED back-office"
+            fi
+            if [ "${{ needs.detect-changes.outputs.linkme }}" = "true" ]; then
+              FILTERS="$FILTERS --filter=@verone/linkme"
+              APPS_CHANGED="$APPS_CHANGED linkme"
+            fi
+            if [ "${{ needs.detect-changes.outputs.site-internet }}" = "true" ]; then
+              FILTERS="$FILTERS --filter=@verone/site-internet"
+              APPS_CHANGED="$APPS_CHANGED site-internet"
+            fi
           fi
 
-      - name: Type-Check
-        id: typecheck
-        run: |
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 📘 Type-Check Results" >> $GITHUB_STEP_SUMMARY
-
-          if pnpm type-check 2>&1 | tee typecheck-output.txt; then
-            echo "✅ **Type-Check**: No type errors" >> $GITHUB_STEP_SUMMARY
-            echo "typecheck_status=success" >> $GITHUB_OUTPUT
-          else
-            echo "❌ **Type-Check**: Type errors detected" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            tail -50 typecheck-output.txt >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            echo "typecheck_status=failure" >> $GITHUB_OUTPUT
-            exit 1
+          # Fallback: if nothing detected, check all
+          if [ -z "$FILTERS" ]; then
+            FILTERS="--filter=@verone/back-office --filter=@verone/linkme --filter=@verone/site-internet"
+            APPS_CHANGED="all (fallback)"
           fi
 
-      - name: Build
-        id: build
+          echo "filters=$FILTERS" >> $GITHUB_OUTPUT
+          echo "apps=$APPS_CHANGED" >> $GITHUB_OUTPUT
+          echo "📦 Apps to check: $APPS_CHANGED"
+
+      # ---- ESLint (fast, always global) ----
+      - name: ESLint
+        run: pnpm lint
+
+      # ---- Type-Check (filtered) ----
+      - name: Type-Check (${{ steps.flags.outputs.apps }})
+        run: pnpm turbo run type-check ${{ steps.flags.outputs.filters }}
         env:
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      # ---- Build (filtered) ----
+      - name: Build (${{ steps.flags.outputs.apps }})
+        run: pnpm turbo run build ${{ steps.flags.outputs.filters }}
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-        run: |
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 🏗️ Build Results" >> $GITHUB_STEP_SUMMARY
 
-          if pnpm build 2>&1 | tee build-output.txt; then
-            echo "✅ **Build**: Successful" >> $GITHUB_STEP_SUMMARY
-            echo "build_status=success" >> $GITHUB_OUTPUT
-          else
-            echo "❌ **Build**: Failed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            tail -100 build-output.txt >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            echo "build_status=failure" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-
+      # ---- PR comment on failure ----
       - name: Comment PR on Failure
         if: failure() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const fs = require('fs');
-
-            let comment = '## ❌ Quality Checks Failed\n\n';
-
-            // Ajouter détails ESLint si échec
-            if (fs.existsSync('eslint-output.txt')) {
-              const eslintOutput = fs.readFileSync('eslint-output.txt', 'utf8');
-              const errorLines = eslintOutput.split('\n').filter(line =>
-                line.includes('error') || line.includes('✖')
-              ).slice(0, 20);
-
-              if (errorLines.length > 0) {
-                comment += '### 🔴 ESLint Errors\n\n';
-                comment += '```\n';
-                comment += errorLines.join('\n');
-                comment += '\n```\n\n';
-              }
-            }
-
-            // Ajouter détails Type-Check si échec
-            if (fs.existsSync('typecheck-output.txt')) {
-              const typecheckOutput = fs.readFileSync('typecheck-output.txt', 'utf8');
-              const errorLines = typecheckOutput.split('\n').filter(line =>
-                line.includes('error TS') || line.includes('Error:')
-              ).slice(0, 20);
-
-              if (errorLines.length > 0) {
-                comment += '### 📘 Type Errors\n\n';
-                comment += '```\n';
-                comment += errorLines.join('\n');
-                comment += '\n```\n\n';
-              }
-            }
-
-            // Ajouter détails Build si échec
-            if (fs.existsSync('build-output.txt')) {
-              const buildOutput = fs.readFileSync('build-output.txt', 'utf8');
-              const errorLines = buildOutput.split('\n').filter(line =>
-                line.includes('Error:') || line.includes('Failed')
-              ).slice(0, 20);
-
-              if (errorLines.length > 0) {
-                comment += '### 🏗️ Build Errors\n\n';
-                comment += '```\n';
-                comment += errorLines.join('\n');
-                comment += '\n```\n\n';
-              }
-            }
-
-            comment += '---\n\n';
-            comment += '**Action Required**: Please fix these errors before merging.\n\n';
-            comment += '**How to fix**:\n';
-            comment += '1. Run `pnpm lint` locally to see all errors\n';
-            comment += '2. Run `pnpm type-check` to check types\n';
-            comment += '3. Run `pnpm build` to verify build\n';
-            comment += '4. Fix errors and push again\n\n';
-            comment += '**Pre-commit hook**: Make sure Husky pre-commit hook is installed (`pnpm prepare`)\n';
-
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: comment
+              body: `## ❌ Quality Checks Failed\n\nApps checked: **${{ steps.flags.outputs.apps }}**\n\nSee [workflow logs](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for details.\n\n**Fix locally:**\n\`\`\`bash\npnpm lint\npnpm turbo run type-check ${{ steps.flags.outputs.filters }}\npnpm turbo run build ${{ steps.flags.outputs.filters }}\n\`\`\``
             });
 
-      - name: Success Summary
+      - name: Summary
         if: success()
         run: |
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## ✅ All Quality Checks Passed!" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ ESLint: No errors" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Type-Check: No type errors" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Build: Successful" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🎉 This PR is ready for review!" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Quality Checks Passed" >> $GITHUB_STEP_SUMMARY
+          echo "Apps checked: **${{ steps.flags.outputs.apps }}**" >> $GITHUB_STEP_SUMMARY

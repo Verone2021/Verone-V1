@@ -25,6 +25,7 @@ export interface OrderWithDetails {
   order_number: string;
   linkme_display_number: string | null;
   created_at: string;
+  order_date: string | null;
   status: string;
   total_ht: number;
   total_ttc: number;
@@ -69,6 +70,7 @@ export interface OrderWithDetails {
     siret: string | null;
     country: string | null;
     vat_number: string | null;
+    ownership_type: 'franchise' | 'succursale' | null;
   } | null;
   items: Array<{
     id: string;

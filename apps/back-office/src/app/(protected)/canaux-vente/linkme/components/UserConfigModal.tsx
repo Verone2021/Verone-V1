@@ -1,9 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-
 import { cn } from '@verone/utils';
-import { createClient } from '@verone/utils/supabase/client';
 import {
   X,
   User,
@@ -20,11 +17,9 @@ import {
   Wallet,
 } from 'lucide-react';
 
-import {
-  useUpdateLinkMeUser,
-  type LinkMeUser,
-  type UpdateLinkMeUserInput,
-} from '../hooks/use-linkme-users';
+import { type LinkMeUser } from '../hooks/use-linkme-users';
+
+import { useUserConfig, type TabType } from './use-user-config';
 
 interface UserConfigModalProps {
   isOpen: boolean;
@@ -32,251 +27,39 @@ interface UserConfigModalProps {
   onClose: () => void;
 }
 
-type TabType = 'profile' | 'security' | 'remuneration';
-
-interface AffiliateData {
-  id: string;
-  default_margin_rate: number;
-  linkme_commission_rate: number;
-}
-
-interface ApiErrorResponse {
-  success: false;
-  message?: string;
-}
-
-/**
- * Modal unifié de configuration utilisateur LinkMe
- * - Onglet Profil : prénom, nom, téléphone
- * - Onglet Sécurité : réinitialisation mot de passe
- */
 export function UserConfigModal({
   isOpen,
   user,
   onClose,
 }: UserConfigModalProps) {
-  const updateUser = useUpdateLinkMeUser();
-
-  // Active tab
-  const [activeTab, setActiveTab] = useState<TabType>('profile');
-
-  // Profile form state
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
-
-  // Password form state
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-
-  // Loading & error states
-  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [passwordSuccess, setPasswordSuccess] = useState(false);
-
-  // Remuneration state
-  const [affiliateData, setAffiliateData] = useState<AffiliateData | null>(
-    null
-  );
-  const [isLoadingAffiliate, setIsLoadingAffiliate] = useState(false);
-
-  // Validation
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  // Initialiser le formulaire avec les valeurs de l'utilisateur
-  useEffect(() => {
-    if (isOpen && user) {
-      setFirstName(user.first_name ?? '');
-      setLastName(user.last_name ?? '');
-      setEmail(user.email ?? '');
-      setPhone(user.phone ?? '');
-      setNewPassword('');
-      setConfirmPassword('');
-      setShowPassword(false);
-      setPasswordError(null);
-      setPasswordSuccess(false);
-      setErrors({});
-      setActiveTab('profile');
-
-      // Récupérer les données de l'affilié
-      async function fetchAffiliateData() {
-        if (!user.enseigne_id && !user.organisation_id) {
-          setAffiliateData(null);
-          return;
-        }
-
-        setIsLoadingAffiliate(true);
-        const supabase = createClient();
-
-        try {
-          let query = supabase
-            .from('linkme_affiliates')
-            .select('id, default_margin_rate, linkme_commission_rate');
-
-          if (user.enseigne_id) {
-            query = query.eq('enseigne_id', user.enseigne_id);
-          } else if (user.organisation_id) {
-            query = query.eq('organisation_id', user.organisation_id);
-          }
-
-          const { data, error } = await query.single();
-
-          if (error) {
-            console.error('Erreur fetch affiliate:', error);
-            setAffiliateData(null);
-          } else if (data) {
-            setAffiliateData(data as AffiliateData);
-          }
-        } catch (err) {
-          console.error('Erreur fetch affiliate:', err);
-        } finally {
-          setIsLoadingAffiliate(false);
-        }
-      }
-
-      // Charger les données affilié pour l'onglet Rémunération
-      void fetchAffiliateData().catch(error => {
-        console.error('[UserConfigModal] fetchAffiliateData failed:', error);
-      });
-    }
-  }, [isOpen, user]);
-
-  // Validation profil
-  const validateProfile = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!firstName.trim()) {
-      newErrors.firstName = 'Prénom requis';
-    }
-
-    if (!lastName.trim()) {
-      newErrors.lastName = 'Nom requis';
-    }
-
-    if (!email.trim()) {
-      newErrors.email = 'Email requis';
-    } else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email.trim())) {
-        newErrors.email = 'Format email invalide';
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // Validation mot de passe
-  const validatePassword = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!newPassword) {
-      newErrors.newPassword = 'Mot de passe requis';
-    } else if (newPassword.length < 8) {
-      newErrors.newPassword = 'Minimum 8 caractères';
-    }
-
-    if (!confirmPassword) {
-      newErrors.confirmPassword = 'Confirmation requise';
-    } else if (newPassword !== confirmPassword) {
-      newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // Submit profil
-  const handleProfileSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateProfile()) return;
-
-    try {
-      // 1. Mettre à jour l'email si changé
-      const emailChanged =
-        email.trim().toLowerCase() !== user.email.toLowerCase();
-      if (emailChanged) {
-        setIsUpdatingEmail(true);
-        const emailResponse = await fetch('/api/linkme/users/update-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: user.user_id,
-            new_email: email.trim(),
-          }),
-        });
-
-        if (!emailResponse.ok) {
-          const data = (await emailResponse.json()) as ApiErrorResponse;
-          setErrors({ email: data.message ?? 'Erreur modification email' });
-          setIsUpdatingEmail(false);
-          return;
-        }
-        setIsUpdatingEmail(false);
-      }
-
-      // 2. Mettre à jour le profil
-      const input: UpdateLinkMeUserInput = {
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        phone: phone.trim() ?? undefined,
-        role: user.linkme_role,
-        enseigne_id: user.enseigne_id,
-        organisation_id: user.organisation_id,
-        is_active: user.is_active,
-      };
-
-      await updateUser.mutateAsync({
-        userId: user.user_id,
-        input,
-      });
-      onClose();
-    } catch (error) {
-      console.error('Erreur modification profil:', error);
-    }
-  };
-
-  // Submit mot de passe
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validatePassword()) return;
-
-    setIsPasswordLoading(true);
-    setPasswordError(null);
-
-    try {
-      const response = await fetch('/api/linkme/users/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_id: user.user_id,
-          new_password: newPassword,
-        }),
-      });
-
-      const data = (await response.json()) as ApiErrorResponse;
-
-      if (!response.ok) {
-        throw new Error(data.message ?? 'Erreur lors de la réinitialisation');
-      }
-
-      setPasswordSuccess(true);
-      setTimeout(() => {
-        onClose();
-      }, 2000);
-    } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : 'Erreur inconnue');
-    } finally {
-      setIsPasswordLoading(false);
-    }
-  };
+  const {
+    activeTab,
+    setActiveTab,
+    firstName,
+    setFirstName,
+    lastName,
+    setLastName,
+    email,
+    setEmail,
+    phone,
+    setPhone,
+    isUpdatingEmail,
+    newPassword,
+    setNewPassword,
+    confirmPassword,
+    setConfirmPassword,
+    showPassword,
+    setShowPassword,
+    isPasswordLoading,
+    passwordError,
+    passwordSuccess,
+    affiliateData,
+    isLoadingAffiliate,
+    errors,
+    updateUser,
+    handleProfileSubmit,
+    handlePasswordSubmit,
+  } = useUserConfig(isOpen, user, onClose);
 
   if (!isOpen) return null;
 
@@ -309,42 +92,42 @@ export function UserConfigModal({
 
           {/* Tabs */}
           <div className="flex border-b border-gray-200">
-            <button
-              onClick={() => setActiveTab('profile')}
-              className={cn(
-                'flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors',
-                activeTab === 'profile'
-                  ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              )}
-            >
-              <User className="h-4 w-4" />
-              Profil
-            </button>
-            <button
-              onClick={() => setActiveTab('remuneration')}
-              className={cn(
-                'flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors',
-                activeTab === 'remuneration'
-                  ? 'text-green-600 border-b-2 border-green-600 bg-green-50/50'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              )}
-            >
-              <Wallet className="h-4 w-4" />
-              Rémunération
-            </button>
-            <button
-              onClick={() => setActiveTab('security')}
-              className={cn(
-                'flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors',
-                activeTab === 'security'
-                  ? 'text-amber-600 border-b-2 border-amber-600 bg-amber-50/50'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              )}
-            >
-              <Key className="h-4 w-4" />
-              Sécurité
-            </button>
+            {(
+              [
+                {
+                  key: 'profile' as TabType,
+                  label: 'Profil',
+                  icon: User,
+                  color: 'blue',
+                },
+                {
+                  key: 'remuneration' as TabType,
+                  label: 'Rémunération',
+                  icon: Wallet,
+                  color: 'green',
+                },
+                {
+                  key: 'security' as TabType,
+                  label: 'Sécurité',
+                  icon: Key,
+                  color: 'amber',
+                },
+              ] as const
+            ).map(({ key, label, icon: Icon, color }) => (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
+                className={cn(
+                  'flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors',
+                  activeTab === key
+                    ? `text-${color}-600 border-b-2 border-${color}-600 bg-${color}-50/50`
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            ))}
           </div>
 
           {/* Content */}

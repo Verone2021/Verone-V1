@@ -11,175 +11,49 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
-export type NotificationType = 'stock' | 'order' | 'system' | 'activity';
-export type NotificationSeverity = 'info' | 'warning' | 'error' | 'critical';
+import {
+  fetchActivityNotifs,
+  fetchOrgNotifs,
+  fetchSampleNotifs,
+} from './dashboard-notifications.fetchers-activity';
+import {
+  fetchErrorLogNotifs,
+  fetchLowStockNotifs,
+  fetchUrgentOrderNotifs,
+} from './dashboard-notifications.fetchers-orders';
+import type {
+  DashboardNotification,
+  UseDashboardNotificationsResult,
+} from './use-dashboard-notifications.types';
 
-export interface DashboardNotification {
-  id: string;
-  type: NotificationType;
-  severity: NotificationSeverity;
-  title: string;
-  message: string;
-  timestamp: Date;
-  actionUrl?: string;
-  actionLabel?: string;
-  commanderUrl?: string; // URL pour creer une commande fournisseur directement
-  isRead?: boolean;
-  read_at?: Date; // Timestamp marquage lu
-}
+export type {
+  DashboardNotification,
+  NotificationSeverity,
+  NotificationType,
+  UseDashboardNotificationsResult,
+} from './use-dashboard-notifications.types';
 
-interface UseDashboardNotificationsResult {
-  notifications: DashboardNotification[];
-  unreadCount: number;
-  loading: boolean;
-  error: string | null;
-  refresh: () => Promise<void>;
-  markAsRead: (id: string) => Promise<void>;
-}
+const STORAGE_KEY = 'verone-dashboard-notifications-read';
 
-// ============================================================================
-// Query result types (matching Supabase select shapes)
-// ============================================================================
+function applyReadState(
+  notifications: DashboardNotification[]
+): DashboardNotification[] {
+  if (typeof window === 'undefined') return notifications;
+  const existingReads = localStorage.getItem(STORAGE_KEY);
+  const readNotifications: Record<string, string> = existingReads
+    ? (JSON.parse(existingReads) as Record<string, string>)
+    : {};
 
-interface LowStockProduct {
-  id: string;
-  name: string | null;
-  sku: string | null;
-  stock_real: number | null;
-  stock_quantity: number | null;
-  min_stock: number | null;
-  supplier_id: string | null;
-  supplier: {
-    id: string;
-    legal_name: string | null;
-    trade_name: string | null;
-  } | null;
-  subcategories: { id: string; name: string | null } | null;
-}
-
-interface OrgRelation {
-  id: string;
-  legal_name: string | null;
-  trade_name: string | null;
-  city: string | null;
-  country: string | null;
-}
-
-interface IndividualRelation {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-}
-
-interface ProductRelation {
-  id?: string;
-  name: string | null;
-}
-
-interface UrgentSalesOrder {
-  id: string;
-  order_number: string | null;
-  created_at: string;
-  total_ttc: number | null;
-  customer_type: string | null;
-  customer_id: string | null;
-  customer_org: OrgRelation | null;
-  customer_ind: IndividualRelation | null;
-  sales_order_items: Array<{
-    id: string;
-    product_id: string | null;
-    products: ProductRelation | null;
-  }>;
-}
-
-interface UrgentPurchaseOrder {
-  id: string;
-  po_number: string | null;
-  created_at: string;
-  total_ht: number | null;
-  supplier_id: string | null;
-  supplier: OrgRelation | null;
-  purchase_order_items: Array<{
-    id: string;
-    product_id: string | null;
-    products: ProductRelation | null;
-  }>;
-}
-
-interface ErrorLog {
-  id: string;
-  action: string;
-  severity: string;
-  created_at: string;
-  metadata: unknown;
-  user_id: string | null;
-  user_profile: {
-    id: string;
-    first_name: string | null;
-    last_name: string | null;
-    role: string | null;
-  } | null;
-}
-
-interface RecentSalesOrder {
-  id: string;
-  order_number: string | null;
-  created_at: string;
-  customer_type: string | null;
-  customer_org: {
-    id: string;
-    legal_name: string | null;
-    trade_name: string | null;
-  } | null;
-  customer_ind: IndividualRelation | null;
-  sales_order_items: Array<{ id: string; products: ProductRelation | null }>;
-}
-
-interface RecentPurchaseOrder {
-  id: string;
-  po_number: string | null;
-  created_at: string;
-  supplier: {
-    id: string;
-    legal_name: string | null;
-    trade_name: string | null;
-  } | null;
-  purchase_order_items: Array<{ id: string; products: ProductRelation | null }>;
-}
-
-interface OrgRow {
-  id: string;
-  legal_name: string | null;
-  trade_name: string | null;
-  city: string | null;
-  country: string | null;
-  created_at: string;
-}
-
-interface IndividualCustomerRow {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  city: string | null;
-  country: string | null;
-  created_at: string;
-}
-
-interface SampleOrder {
-  id: string;
-  order_number: string | null;
-  created_at: string;
-  status?: string;
-  supplier: {
-    id: string;
-    legal_name: string | null;
-    trade_name: string | null;
-  } | null;
-  sample_order_items: Array<{
-    id: string;
-    product_id?: string | null;
-    products: ProductRelation | null;
-  }>;
+  return notifications.map(notif => {
+    if (readNotifications[notif.id]) {
+      return {
+        ...notif,
+        isRead: true,
+        read_at: new Date(readNotifications[notif.id]),
+      };
+    }
+    return notif;
+  });
 }
 
 /**
@@ -201,519 +75,47 @@ export function useDashboardNotifications(
       setError(null);
 
       const supabase = createClient();
-      const allNotifications: DashboardNotification[] = [];
 
-      // 1. STOCKS BAS (stock_real < 10 ou stock_quantity < 10)
-      const { data: lowStockProducts } = await supabase
-        .from('products')
-        .select(
-          `
-          id, name, sku, stock_real, stock_quantity, min_stock, supplier_id,
-          supplier:organisations!supplier_id(id, legal_name, trade_name),
-          subcategories!subcategory_id(id, name)
-        `
-        )
-        .or('stock_real.lt.10,stock_quantity.lt.10')
-        .limit(5);
-
-      if (lowStockProducts && lowStockProducts.length > 0) {
-        (lowStockProducts as unknown as LowStockProduct[]).forEach(product => {
-          const stock = product.stock_real ?? product.stock_quantity ?? 0;
-          const category = product.subcategories?.name ?? 'Sans categorie';
-          const supplierName =
-            product.supplier?.trade_name ??
-            product.supplier?.legal_name ??
-            null;
-
-          // Message enrichi : Nom (Categorie) - Stock - Fournisseur
-          const message = `${product.name} (${category}) - ${stock} unites${supplierName ? ` - ${supplierName}` : ''}`;
-
-          allNotifications.push({
-            id: `stock-${product.id}`,
-            type: 'stock',
-            severity: stock < 5 ? 'critical' : 'warning',
-            title: 'Stock bas',
-            message,
-            timestamp: new Date(),
-            actionUrl: `/produits/catalogue/${product.id}`,
-            actionLabel: 'Voir le produit',
-            commanderUrl: product.supplier_id
-              ? `/commandes/fournisseurs/create?product_id=${product.id}&supplier_id=${product.supplier_id}`
-              : undefined,
-          });
-        });
-      }
-
-      // 2. COMMANDES URGENTES (draft > 3 jours pour sales et purchase)
-      const threeDaysAgo = new Date();
+      const now = new Date();
+      const threeDaysAgo = new Date(now);
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-
-      const [urgentSalesOrders, urgentPurchaseOrders] = await Promise.all([
-        supabase
-          .from('sales_orders')
-          .select(
-            `
-            id, order_number, created_at, total_ttc, customer_type, customer_id,
-            customer_org:organisations!customer_id(id, legal_name, trade_name, city, country),
-            customer_ind:individual_customers!individual_customer_id(id, first_name, last_name),
-            sales_order_items(id, product_id, products(id, name))
-          `
-          )
-          .eq('status', 'draft')
-          .lt('created_at', threeDaysAgo.toISOString())
-          .limit(3),
-        supabase
-          .from('purchase_orders')
-          .select(
-            `
-            id, po_number, created_at, total_ht, supplier_id,
-            supplier:organisations!supplier_id(id, legal_name, trade_name, city, country),
-            purchase_order_items(id, product_id, products(id, name))
-          `
-          )
-          .eq('status', 'draft')
-          .lt('created_at', threeDaysAgo.toISOString())
-          .limit(3),
-      ]);
-
-      // Sales orders urgentes
-      if (urgentSalesOrders.data && urgentSalesOrders.data.length > 0) {
-        (urgentSalesOrders.data as unknown as UrgentSalesOrder[]).forEach(
-          order => {
-            const daysWaiting = Math.floor(
-              (Date.now() - new Date(order.created_at).getTime()) /
-                (1000 * 60 * 60 * 24)
-            );
-
-            // Nom client (polymorphique B2B/B2C)
-            const customerName =
-              order.customer_type === 'organization'
-                ? (order.customer_org?.trade_name ??
-                  order.customer_org?.legal_name ??
-                  'Client')
-                : order.customer_ind
-                  ? `${order.customer_ind.first_name} ${order.customer_ind.last_name}`
-                  : 'Client';
-
-            // Localisation (ville, pays si B2B)
-            const location =
-              order.customer_type === 'organization' &&
-              order.customer_org?.city &&
-              order.customer_org?.country
-                ? ` (${order.customer_org.city}, ${order.customer_org.country})`
-                : '';
-
-            // Produit principal
-            const mainProduct =
-              order.sales_order_items?.[0]?.products?.name ?? null;
-
-            // Message enrichi
-            const message = `${order.order_number ?? 'Sans reference'} - ${customerName}${location}${mainProduct ? ` - ${mainProduct}` : ''} - ${daysWaiting}j d'attente`;
-
-            allNotifications.push({
-              id: `sales-order-${order.id}`,
-              type: 'order',
-              severity: daysWaiting > 7 ? 'critical' : 'warning',
-              title: 'Commande vente en attente',
-              message,
-              timestamp: new Date(order.created_at),
-              actionUrl: `/commandes/clients?id=${order.id}`,
-              actionLabel: 'Voir la commande',
-            });
-          }
-        );
-      }
-
-      // Purchase orders urgentes
-      if (urgentPurchaseOrders.data && urgentPurchaseOrders.data.length > 0) {
-        (urgentPurchaseOrders.data as unknown as UrgentPurchaseOrder[]).forEach(
-          order => {
-            const daysWaiting = Math.floor(
-              (Date.now() - new Date(order.created_at).getTime()) /
-                (1000 * 60 * 60 * 24)
-            );
-
-            // Nom fournisseur
-            const supplierName =
-              order.supplier?.trade_name ??
-              order.supplier?.legal_name ??
-              'Fournisseur';
-
-            // Localisation (ville, pays)
-            const location =
-              order.supplier?.city && order.supplier?.country
-                ? ` (${order.supplier.city}, ${order.supplier.country})`
-                : '';
-
-            // Produit principal
-            const mainProduct =
-              order.purchase_order_items?.[0]?.products?.name ?? null;
-
-            // Message enrichi
-            const message = `${order.po_number ?? 'Sans reference'} - ${supplierName}${location}${mainProduct ? ` - ${mainProduct}` : ''} - ${daysWaiting}j d'attente`;
-
-            allNotifications.push({
-              id: `purchase-order-${order.id}`,
-              type: 'order',
-              severity: daysWaiting > 7 ? 'critical' : 'warning',
-              title: 'Commande achat en attente',
-              message,
-              timestamp: new Date(order.created_at),
-              actionUrl: `/commandes/fournisseurs?id=${order.id}`,
-              actionLabel: 'Voir la commande',
-            });
-          }
-        );
-      }
-
-      // 3. ERREURS SYSTEME RECENTES (logs avec severity error/critical dans les 24h)
-      const oneDayAgo = new Date();
+      const oneDayAgo = new Date(now);
       oneDayAgo.setHours(oneDayAgo.getHours() - 24);
-
-      const { data: errorLogs } = await supabase
-        .from('user_activity_logs')
-        .select(
-          `
-          id, action, severity, created_at, metadata, user_id,
-          user_profile:user_profiles!user_id(id, first_name, last_name, role)
-        `
-        )
-        .in('severity', ['error', 'critical'])
-        .gte('created_at', oneDayAgo.toISOString())
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      if (errorLogs && errorLogs.length > 0) {
-        (errorLogs as unknown as ErrorLog[]).forEach(log => {
-          // Nom utilisateur
-          const userName =
-            log.user_profile?.first_name && log.user_profile?.last_name
-              ? `${log.user_profile.first_name} ${log.user_profile.last_name}`
-              : null;
-
-          // Message enrichi
-          const actionFormatted = log.action.replace(/_/g, ' ');
-          const message = userName
-            ? `${actionFormatted} - Par: ${userName} (${log.user_profile?.role ?? 'User'})`
-            : actionFormatted;
-
-          allNotifications.push({
-            id: `error-${log.id}`,
-            type: 'system',
-            severity: log.severity as NotificationSeverity,
-            title: 'Erreur systeme',
-            message,
-            timestamp: new Date(log.created_at),
-            actionUrl: `/admin/activite-utilisateurs?log=${log.id}`,
-            actionLabel: 'Voir les details',
-          });
-        });
-      }
-
-      // 4. ACTIVITE IMPORTANTE (nouvelles commandes dans les 2 dernieres heures)
-      const twoHoursAgo = new Date();
+      const twoHoursAgo = new Date(now);
       twoHoursAgo.setHours(twoHoursAgo.getHours() - 2);
-
-      const [recentSalesOrders, recentPurchaseOrders] = await Promise.all([
-        supabase
-          .from('sales_orders')
-          .select(
-            `
-            id, order_number, created_at, customer_type,
-            customer_org:organisations!customer_id(id, legal_name, trade_name),
-            customer_ind:individual_customers!individual_customer_id(id, first_name, last_name),
-            sales_order_items(id, products(name))
-          `
-          )
-          .gte('created_at', twoHoursAgo.toISOString())
-          .order('created_at', { ascending: false })
-          .limit(2),
-        supabase
-          .from('purchase_orders')
-          .select(
-            `
-            id, po_number, created_at,
-            supplier:organisations!supplier_id(id, legal_name, trade_name),
-            purchase_order_items(id, products(name))
-          `
-          )
-          .gte('created_at', twoHoursAgo.toISOString())
-          .order('created_at', { ascending: false })
-          .limit(2),
-      ]);
-
-      // Nouvelles sales orders
-      if (recentSalesOrders.data && recentSalesOrders.data.length > 0) {
-        (recentSalesOrders.data as unknown as RecentSalesOrder[]).forEach(
-          order => {
-            // Nom client (polymorphique)
-            const customerName =
-              order.customer_type === 'organization'
-                ? (order.customer_org?.trade_name ??
-                  order.customer_org?.legal_name ??
-                  'Client')
-                : order.customer_ind
-                  ? `${order.customer_ind.first_name} ${order.customer_ind.last_name}`
-                  : 'Client';
-
-            // Produit principal
-            const mainProduct =
-              order.sales_order_items?.[0]?.products?.name ?? null;
-
-            // Message enrichi
-            const message = `${order.order_number ?? 'Sans reference'} - ${customerName}${mainProduct ? ` (${mainProduct})` : ''}`;
-
-            allNotifications.push({
-              id: `activity-sales-${order.id}`,
-              type: 'activity',
-              severity: 'info',
-              title: 'Nouvelle commande vente',
-              message,
-              timestamp: new Date(order.created_at),
-              actionUrl: `/commandes/clients?id=${order.id}`,
-              actionLabel: 'Voir la commande',
-            });
-          }
-        );
-      }
-
-      // Nouvelles purchase orders
-      if (recentPurchaseOrders.data && recentPurchaseOrders.data.length > 0) {
-        (recentPurchaseOrders.data as unknown as RecentPurchaseOrder[]).forEach(
-          order => {
-            // Nom fournisseur
-            const supplierName =
-              order.supplier?.trade_name ??
-              order.supplier?.legal_name ??
-              'Fournisseur';
-
-            // Produit principal
-            const mainProduct =
-              order.purchase_order_items?.[0]?.products?.name ?? null;
-
-            // Message enrichi
-            const message = `${order.po_number ?? 'Sans reference'} - ${supplierName}${mainProduct ? ` (${mainProduct})` : ''}`;
-
-            allNotifications.push({
-              id: `activity-purchase-${order.id}`,
-              type: 'activity',
-              severity: 'info',
-              title: 'Nouvelle commande achat',
-              message,
-              timestamp: new Date(order.created_at),
-              actionUrl: `/commandes/fournisseurs?id=${order.id}`,
-              actionLabel: 'Voir la commande',
-            });
-          }
-        );
-      }
-
-      // 5. NOUVELLES ORGANISATIONS (clients B2B, B2C, fournisseurs dans les 24h)
-      const [newCustomerOrgs, newIndividualCustomers, newSuppliers] =
-        await Promise.all([
-          // Clients B2B
-          supabase
-            .from('organisations')
-            .select('id, legal_name, trade_name, city, country, created_at')
-            .eq('type', 'customer')
-            .gte('created_at', oneDayAgo.toISOString())
-            .order('created_at', { ascending: false })
-            .limit(2),
-          // Clients B2C
-          supabase
-            .from('individual_customers')
-            .select('id, first_name, last_name, city, country, created_at')
-            .gte('created_at', oneDayAgo.toISOString())
-            .order('created_at', { ascending: false })
-            .limit(2),
-          // Fournisseurs
-          supabase
-            .from('organisations')
-            .select('id, legal_name, trade_name, city, country, created_at')
-            .eq('type', 'supplier')
-            .gte('created_at', oneDayAgo.toISOString())
-            .order('created_at', { ascending: false })
-            .limit(2),
-        ]);
-
-      // Clients B2B
-      if (newCustomerOrgs.data && newCustomerOrgs.data.length > 0) {
-        (newCustomerOrgs.data as unknown as OrgRow[]).forEach(org => {
-          const name = org.trade_name ?? org.legal_name;
-          const location =
-            org.city && org.country ? ` - ${org.city}, ${org.country}` : '';
-
-          allNotifications.push({
-            id: `new-customer-org-${org.id}`,
-            type: 'activity',
-            severity: 'info',
-            title: 'Nouveau client B2B',
-            message: `${name}${location}`,
-            timestamp: new Date(org.created_at),
-            actionUrl: `/contacts-organisations/customers/${org.id}`,
-            actionLabel: 'Voir le client',
-          });
-        });
-      }
-
-      // Clients B2C
-      if (
-        newIndividualCustomers.data &&
-        newIndividualCustomers.data.length > 0
-      ) {
-        (
-          newIndividualCustomers.data as unknown as IndividualCustomerRow[]
-        ).forEach(customer => {
-          const name = `${customer.first_name} ${customer.last_name}`;
-          const location =
-            customer.city && customer.country
-              ? ` - ${customer.city}, ${customer.country}`
-              : '';
-
-          allNotifications.push({
-            id: `new-customer-ind-${customer.id}`,
-            type: 'activity',
-            severity: 'info',
-            title: 'Nouveau client particulier',
-            message: `${name}${location}`,
-            timestamp: new Date(customer.created_at),
-            actionUrl: `/contacts-organisations/customers/${customer.id}`,
-            actionLabel: 'Voir le client',
-          });
-        });
-      }
-
-      // Fournisseurs
-      if (newSuppliers.data && newSuppliers.data.length > 0) {
-        (newSuppliers.data as unknown as OrgRow[]).forEach(supplier => {
-          const name = supplier.trade_name ?? supplier.legal_name;
-          const location =
-            supplier.city && supplier.country
-              ? ` - ${supplier.city}, ${supplier.country}`
-              : '';
-
-          allNotifications.push({
-            id: `new-supplier-${supplier.id}`,
-            type: 'activity',
-            severity: 'info',
-            title: 'Nouveau fournisseur',
-            message: `${name}${location}`,
-            timestamp: new Date(supplier.created_at),
-            actionUrl: `/contacts-organisations/suppliers/${supplier.id}`,
-            actionLabel: 'Voir le fournisseur',
-          });
-        });
-      }
-
-      // 6. ECHANTILLONS (urgents >7 jours + livres recemment)
-      const sevenDaysAgo = new Date();
+      const sevenDaysAgo = new Date(now);
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      const [urgentSamples, deliveredSamples] = await Promise.all([
-        // Echantillons en attente
-        supabase
-          .from('sample_orders')
-          .select(
-            `
-            id, order_number, created_at, status,
-            supplier:organisations!supplier_id(id, legal_name, trade_name),
-            sample_order_items(id, product_id, products(id, name))
-          `
-          )
-          .in('status', ['draft', 'submitted'])
-          .lt('created_at', sevenDaysAgo.toISOString())
-          .order('created_at', { ascending: true })
-          .limit(3),
-        // Echantillons livres recemment
-        supabase
-          .from('sample_orders')
-          .select(
-            `
-            id, order_number, created_at,
-            supplier:organisations!supplier_id(id, legal_name, trade_name),
-            sample_order_items(id, products(name))
-          `
-          )
-          .eq('status', 'delivered')
-          .gte('created_at', twoHoursAgo.toISOString())
-          .order('created_at', { ascending: false })
-          .limit(2),
+      const [
+        lowStockNotifs,
+        urgentOrderNotifs,
+        errorLogNotifs,
+        activityNotifs,
+        orgNotifs,
+        sampleNotifs,
+      ] = await Promise.all([
+        fetchLowStockNotifs(supabase),
+        fetchUrgentOrderNotifs(supabase, threeDaysAgo),
+        fetchErrorLogNotifs(supabase, oneDayAgo),
+        fetchActivityNotifs(supabase, twoHoursAgo),
+        fetchOrgNotifs(supabase, oneDayAgo),
+        fetchSampleNotifs(supabase, sevenDaysAgo, twoHoursAgo),
       ]);
 
-      // Echantillons urgents
-      if (urgentSamples.data && urgentSamples.data.length > 0) {
-        (urgentSamples.data as unknown as SampleOrder[]).forEach(sample => {
-          const daysWaiting = Math.floor(
-            (Date.now() - new Date(sample.created_at).getTime()) /
-              (1000 * 60 * 60 * 24)
-          );
+      const allNotifications = [
+        ...lowStockNotifs,
+        ...urgentOrderNotifs,
+        ...errorLogNotifs,
+        ...activityNotifs,
+        ...orgNotifs,
+        ...sampleNotifs,
+      ];
 
-          const supplierName =
-            sample.supplier?.trade_name ??
-            sample.supplier?.legal_name ??
-            'Fournisseur';
-          const mainProduct =
-            sample.sample_order_items?.[0]?.products?.name ?? null;
-
-          allNotifications.push({
-            id: `sample-urgent-${sample.id}`,
-            type: 'order',
-            severity: daysWaiting > 14 ? 'critical' : 'warning',
-            title: 'Echantillon en attente',
-            message: `${sample.order_number} - ${supplierName}${mainProduct ? ` (${mainProduct})` : ''} - ${daysWaiting}j d'attente`,
-            timestamp: new Date(sample.created_at),
-            actionUrl: `/produits/sourcing?sample_id=${sample.id}`,
-            actionLabel: "Voir l'echantillon",
-          });
-        });
-      }
-
-      // Echantillons livres
-      if (deliveredSamples.data && deliveredSamples.data.length > 0) {
-        (deliveredSamples.data as unknown as SampleOrder[]).forEach(sample => {
-          const supplierName =
-            sample.supplier?.trade_name ??
-            sample.supplier?.legal_name ??
-            'Fournisseur';
-          const mainProduct =
-            sample.sample_order_items?.[0]?.products?.name ?? null;
-
-          allNotifications.push({
-            id: `sample-delivered-${sample.id}`,
-            type: 'activity',
-            severity: 'info',
-            title: 'Echantillon livre',
-            message: `${sample.order_number} - ${supplierName}${mainProduct ? ` (${mainProduct})` : ''}`,
-            timestamp: new Date(sample.created_at),
-            actionUrl: `/produits/sourcing?sample_id=${sample.id}`,
-            actionLabel: "Voir l'echantillon",
-          });
-        });
-      }
-
-      // Trier par timestamp decroissant et limiter
       allNotifications.sort(
         (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
       );
-      const limited = allNotifications.slice(0, limit);
 
-      // Charger l'etat "lu" depuis localStorage
-      if (typeof window !== 'undefined') {
-        const storageKey = 'verone-dashboard-notifications-read';
-        const existingReads = localStorage.getItem(storageKey);
-        const readNotifications: Record<string, string> = existingReads
-          ? (JSON.parse(existingReads) as Record<string, string>)
-          : {};
-
-        // Marquer notifications deja lues
-        limited.forEach(notif => {
-          if (readNotifications[notif.id]) {
-            notif.isRead = true;
-            notif.read_at = new Date(readNotifications[notif.id]);
-          }
-        });
-      }
-
+      const limited = applyReadState(allNotifications.slice(0, limit));
       setNotifications(limited);
     } catch (err: unknown) {
       console.error('Erreur chargement notifications:', err);
@@ -731,25 +133,19 @@ export function useDashboardNotifications(
     try {
       const now = new Date();
 
-      // 1. Update optimiste local state
       setNotifications(prev =>
         prev.map(notif =>
           notif.id === id ? { ...notif, isRead: true, read_at: now } : notif
         )
       );
 
-      // 2. Persist dans localStorage pour session persistante
-      // (Les notifications dashboard sont des aggregations dynamiques,
-      // pas des entites persistees en DB, donc localStorage est approprie)
       if (typeof window !== 'undefined') {
-        const storageKey = 'verone-dashboard-notifications-read';
-        const existingReads = localStorage.getItem(storageKey);
+        const existingReads = localStorage.getItem(STORAGE_KEY);
         const readNotifications: Record<string, string> = existingReads
           ? (JSON.parse(existingReads) as Record<string, string>)
           : {};
-
         readNotifications[id] = now.toISOString();
-        localStorage.setItem(storageKey, JSON.stringify(readNotifications));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(readNotifications));
       }
     } catch (err) {
       console.error('Erreur markAsRead:', err);
@@ -759,7 +155,6 @@ export function useDashboardNotifications(
   useEffect(() => {
     void fetchNotifications();
 
-    // Rafraichir les notifications toutes les 5 minutes
     const interval = setInterval(
       () => {
         void fetchNotifications();

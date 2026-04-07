@@ -1,483 +1,31 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-
-import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 
-import type { ClientConsultation } from '@verone/consultations';
-import { ConsultationImageGallery } from '@verone/consultations';
 import { ConsultationOrderInterface } from '@verone/consultations';
-import { ConsultationSummaryPdf } from '@verone/consultations';
 import { ConsultationTimeline } from '@verone/consultations';
-import { EditConsultationModal } from '@verone/consultations';
-import { SendConsultationEmailModal } from '@verone/consultations';
-import { useConsultations } from '@verone/consultations';
-import { useConsultationHistory } from '@verone/consultations';
-import { useConsultationImages } from '@verone/consultations';
-import { useConsultationItems } from '@verone/consultations';
-import { useConsultationQuotes } from '@verone/consultations';
-import { useConsultationSalesOrders } from '@verone/consultations';
-import { useQuotes } from '@verone/finance/hooks';
-import { QuoteCreateFromOrderModal } from '@verone/finance/components';
-import type { IOrderForDocument } from '@verone/finance/components';
-import { useSalesOrders } from '@verone/orders';
-import { Badge } from '@verone/ui';
-import { createClient } from '@verone/utils/supabase/client';
 import { ButtonUnified } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@verone/ui';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@verone/ui';
-import {
-  ArrowLeft,
-  Calendar,
-  Mail,
-  Phone,
-  Building,
-  User,
-  Clock,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Edit,
-  Package,
-  ChevronDown,
-  MoreHorizontal,
-  FileText,
-  ExternalLink,
-  Archive,
-  ArchiveRestore,
-  Trash2,
-  Loader2,
-  ShoppingCart,
-  AlertTriangle,
-} from 'lucide-react';
+import { AlertCircle, ArrowLeft } from 'lucide-react';
 
-// Pre-load images as compressed base64 for @react-pdf (remote URLs block the renderer)
-// Uses canvas to resize + JPEG compress → keeps PDF under 500 KB
-async function imageUrlToBase64(
-  url: string,
-  maxSize = 300,
-  quality = 0.6
-): Promise<string | null> {
-  try {
-    // Load image via HTMLImageElement (handles CORS naturally for public URLs)
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const image = new Image();
-      image.crossOrigin = 'anonymous';
-      image.onload = () => resolve(image);
-      image.onerror = () => reject(new Error('Image load failed'));
-      image.src = url;
-    });
-
-    // Calculate scaled dimensions (never upscale)
-    const ratio = Math.min(
-      maxSize / img.naturalWidth,
-      maxSize / img.naturalHeight,
-      1
-    );
-    const width = Math.round(img.naturalWidth * ratio);
-    const height = Math.round(img.naturalHeight * ratio);
-
-    // Draw on canvas and export as compressed JPEG data URI
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-    ctx.drawImage(img, 0, 0, width, height);
-
-    return canvas.toDataURL('image/jpeg', quality);
-  } catch (err) {
-    console.warn('[imageUrlToBase64] Failed for:', url, err);
-    return null;
-  }
-}
-
-// Dynamic import PdfPreviewModal (no SSR — @react-pdf uses browser APIs)
-const PdfPreviewModal = dynamic(
-  () =>
-    import('@verone/finance/components').then(mod => ({
-      default: mod.PdfPreviewModal,
-    })),
-  { ssr: false }
-);
-
-// Helper pour récupérer le nom du client (enseigne ou organisation)
-function getClientName(consultation: ClientConsultation | null): string {
-  if (!consultation) return 'Client inconnu';
-  if (consultation.enseigne?.name) {
-    return consultation.enseigne.name;
-  }
-  if (consultation.organisation?.trade_name) {
-    return consultation.organisation.trade_name;
-  }
-  if (consultation.organisation?.legal_name) {
-    return consultation.organisation.legal_name;
-  }
-  return 'Client inconnu';
-}
+import { ConsultationHeader } from './ConsultationHeader';
+import { ConsultationInfoCard } from './ConsultationInfoCard';
+import { ConsultationLinkedOrders } from './ConsultationLinkedOrders';
+import { ConsultationLinkedQuotes } from './ConsultationLinkedQuotes';
+import { ConsultationModals } from './ConsultationModals';
+import { ConsultationToolbar } from './ConsultationToolbar';
+import { getClientName } from './helpers';
+import { useConsultationDetail } from './use-consultation-detail';
 
 export default function ConsultationDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const {
-    consultations,
-    loading,
-    fetchConsultations,
-    updateStatus,
-    updateConsultation,
-    validateConsultation,
-    archiveConsultation,
-    unarchiveConsultation,
-    deleteConsultation,
-  } = useConsultations();
-
   const consultationId = params.consultationId as string;
-  const [consultation, setConsultation] = useState<ClientConsultation | null>(
-    null
-  );
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [showPdfPreview, setShowPdfPreview] = useState(false);
-  const [pdfLoading, setPdfLoading] = useState(false);
-  const [emailPdfLoading, setEmailPdfLoading] = useState(false);
-  const [pdfImages, setPdfImages] = useState<{
-    consultationImages: Array<{ id: string; base64: string }>;
-    productImages: Record<string, string>;
-  }>({ consultationImages: [], productImages: {} });
-  const [emailPdfImages, setEmailPdfImages] = useState<{
-    consultationImages: Array<{ id: string; base64: string }>;
-    productImages: Record<string, string>;
-  }>({ consultationImages: [], productImages: {} });
 
-  // Hooks for PDF data
-  const { consultationItems, calculateTotal, fetchConsultationItems } =
-    useConsultationItems(consultationId);
+  const detail = useConsultationDetail(consultationId);
 
-  const { images } = useConsultationImages({ consultationId, autoFetch: true });
-
-  const {
-    quotes: linkedQuotes,
-    loading: quotesLoading,
-    fetchQuotes: refetchLinkedQuotes,
-  } = useConsultationQuotes(consultationId);
-
-  const { deleteQuote } = useQuotes();
-  const [showQuoteModal, setShowQuoteModal] = useState(false);
-  const [orderForQuoteModal, setOrderForQuoteModal] =
-    useState<IOrderForDocument | null>(null);
-  const [supersededQuoteIds, setSupersededQuoteIds] = useState<string[]>([]);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-
-  const { createOrder } = useSalesOrders();
-  const [creatingOrder, setCreatingOrder] = useState(false);
-
-  const {
-    salesOrders: linkedSalesOrders,
-    loading: salesOrdersLoading,
-    refetch: refetchLinkedSalesOrders,
-  } = useConsultationSalesOrders(consultationId);
-
-  const {
-    events: historyEvents,
-    loading: historyLoading,
-    fetchHistory,
-  } = useConsultationHistory(consultationId);
-
-  useEffect(() => {
-    void fetchConsultations().catch(error => {
-      console.error('[ConsultationDetail] Fetch failed:', error);
-    });
-  }, [fetchConsultations]);
-
-  useEffect(() => {
-    if (consultations && consultations.length > 0) {
-      const foundConsultation = consultations.find(
-        c => c.id === consultationId
-      );
-      setConsultation(foundConsultation ?? null);
-    }
-  }, [consultations, consultationId]);
-
-  const handleStatusChange = async (
-    newStatus: ClientConsultation['status']
-  ) => {
-    if (!consultation) return;
-
-    const success = await updateStatus(consultationId, newStatus);
-    if (success) {
-      setConsultation(prev => (prev ? { ...prev, status: newStatus } : null));
-    }
-  };
-
-  const handleUpdateConsultation = async (
-    updates: Partial<ClientConsultation>
-  ): Promise<boolean> => {
-    try {
-      const success = await updateConsultation(consultationId, updates);
-      if (success) {
-        await fetchConsultations();
-      }
-      return success;
-    } catch (error) {
-      console.error('[ConsultationDetail] Update failed:', error);
-      return false;
-    }
-  };
-
-  const handleValidateConsultation = async () => {
-    try {
-      const success = await validateConsultation(consultationId);
-      if (success) {
-        await fetchConsultations();
-      }
-    } catch (error) {
-      console.error('[ConsultationDetail] Validate failed:', error);
-    }
-  };
-
-  const handleArchiveConsultation = async () => {
-    try {
-      const success = await archiveConsultation(consultationId);
-      if (success) {
-        await fetchConsultations();
-      }
-    } catch (error) {
-      console.error('[ConsultationDetail] Archive failed:', error);
-    }
-  };
-
-  const handleUnarchiveConsultation = async () => {
-    try {
-      const success = await unarchiveConsultation(consultationId);
-      if (success) {
-        await fetchConsultations();
-      }
-    } catch (error) {
-      console.error('[ConsultationDetail] Unarchive failed:', error);
-    }
-  };
-
-  const handleItemsChanged = useCallback(() => {
-    void fetchConsultationItems(consultationId).catch(err => {
-      console.error('[ConsultationDetail] Refresh items failed:', err);
-    });
-  }, [fetchConsultationItems, consultationId]);
-
-  const handleCreateOrder = async () => {
-    if (!consultation || consultationItems.length === 0) return;
-    setCreatingOrder(true);
-    try {
-      const supabase = createClient();
-
-      // Resolve partner (same logic as handleCreateQuote)
-      let partnerId: string | null = null;
-      let billingAddress: Record<string, unknown> | undefined;
-
-      if (consultation.enseigne_id) {
-        const { data: parentOrg } = await supabase
-          .from('organisations')
-          .select('id, legal_name, address_line1, city, postal_code, country')
-          .eq('enseigne_id', consultation.enseigne_id)
-          .eq('is_enseigne_parent', true)
-          .single();
-
-        if (parentOrg) {
-          partnerId = parentOrg.id;
-          if (parentOrg.address_line1) {
-            billingAddress = {
-              street: parentOrg.address_line1,
-              city: parentOrg.city ?? '',
-              postal_code: parentOrg.postal_code ?? '',
-              country: parentOrg.country ?? 'FR',
-            };
-          }
-        } else {
-          const { data: firstOrg } = await supabase
-            .from('organisations')
-            .select('id, legal_name, address_line1, city, postal_code, country')
-            .eq('enseigne_id', consultation.enseigne_id)
-            .order('created_at', { ascending: true })
-            .limit(1)
-            .single();
-          if (firstOrg) {
-            partnerId = firstOrg.id;
-            if (firstOrg.address_line1) {
-              billingAddress = {
-                street: firstOrg.address_line1,
-                city: firstOrg.city ?? '',
-                postal_code: firstOrg.postal_code ?? '',
-                country: firstOrg.country ?? 'FR',
-              };
-            }
-          }
-        }
-      } else if (consultation.organisation_id) {
-        partnerId = consultation.organisation_id;
-        const { data: directOrg } = await supabase
-          .from('organisations')
-          .select('address_line1, city, postal_code, country')
-          .eq('id', consultation.organisation_id)
-          .single();
-        if (directOrg?.address_line1) {
-          billingAddress = {
-            street: directOrg.address_line1,
-            city: directOrg.city ?? '',
-            postal_code: directOrg.postal_code ?? '',
-            country: directOrg.country ?? 'FR',
-          };
-        }
-      }
-
-      if (!partnerId) {
-        console.error(
-          '[ConsultationDetail] No partner found for order creation'
-        );
-        return;
-      }
-
-      // Map consultation items to order items (exclude free items)
-      const items = consultationItems
-        .filter(item => !item.is_free)
-        .map(item => ({
-          product_id: item.product_id,
-          quantity: item.quantity,
-          unit_price_ht: item.unit_price ?? 0,
-          tax_rate: 0.2,
-          discount_percentage: 0,
-          eco_tax: 0,
-        }));
-
-      if (items.length === 0) {
-        console.error('[ConsultationDetail] No billable items for order');
-        return;
-      }
-
-      const order = await createOrder({
-        customer_id: partnerId,
-        customer_type: 'organization',
-        items,
-        notes: consultation.descriptif ?? undefined,
-        consultation_id: consultationId,
-        billing_address: billingAddress,
-      });
-
-      if (order) {
-        await refetchLinkedSalesOrders();
-        await fetchHistory();
-        router.push(`/commandes/clients`);
-      }
-    } catch (error) {
-      console.error('[ConsultationDetail] Create order failed:', error);
-    } finally {
-      setCreatingOrder(false);
-    }
-  };
-
-  const handleDeleteConsultation = async () => {
-    setDeleting(true);
-    try {
-      const success = await deleteConsultation(consultationId);
-      if (success) {
-        router.push('/consultations');
-      }
-    } finally {
-      setDeleting(false);
-      setShowDeleteModal(false);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'en_attente':
-        return 'bg-gray-100 text-gray-900 border-gray-200';
-      case 'en_cours':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'terminee':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'annulee':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'en_attente':
-        return <Clock className="h-3 w-3" />;
-      case 'en_cours':
-        return <AlertCircle className="h-3 w-3" />;
-      case 'terminee':
-        return <CheckCircle className="h-3 w-3" />;
-      case 'annulee':
-        return <XCircle className="h-3 w-3" />;
-      default:
-        return <Clock className="h-3 w-3" />;
-    }
-  };
-
-  const getPriorityColor = (level: number) => {
-    switch (level) {
-      case 5:
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 4:
-        return 'bg-gray-100 text-gray-900 border-gray-200';
-      case 3:
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 2:
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 1:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getPriorityLabel = (level: number) => {
-    switch (level) {
-      case 5:
-        return 'Très urgent';
-      case 4:
-        return 'Urgent';
-      case 3:
-        return 'Normal+';
-      case 2:
-        return 'Normal';
-      case 1:
-        return 'Faible';
-      default:
-        return 'Normal';
-    }
-  };
-
-  const statusOptions: {
-    value: ClientConsultation['status'];
-    label: string;
-  }[] = [
-    { value: 'en_attente', label: 'En attente' },
-    { value: 'en_cours', label: 'En cours' },
-    { value: 'terminee', label: 'Terminée' },
-    { value: 'annulee', label: 'Annulée' },
-  ];
-
-  if (loading) {
+  if (detail.loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -488,7 +36,7 @@ export default function ConsultationDetailPage() {
     );
   }
 
-  if (!consultation) {
+  if (!detail.consultation) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="max-w-md">
@@ -513,1001 +61,134 @@ export default function ConsultationDetailPage() {
     );
   }
 
-  const clientName = getClientName(consultation);
+  const clientName = getClientName(detail.consultation);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ── Header compact ── */}
+      {/* Header compact */}
       <div className="bg-white border-b">
         <div className="w-full px-2 py-1">
-          {/* Row 1: Back + Title + Badges */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center space-x-4">
-              <ButtonUnified
-                variant="ghost"
-                onClick={() => router.push('/consultations')}
-                className="flex items-center text-gray-600 hover:text-black"
-              >
-                <ArrowLeft className="h-3 w-3 mr-2" />
-                Retour
-              </ButtonUnified>
-              <div>
-                <h1 className="text-xs font-bold text-black">
-                  Consultation: {clientName}
-                </h1>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Badge
-                variant="outline"
-                className={getStatusColor(consultation.status)}
-              >
-                {getStatusIcon(consultation.status)}
-                <span className="ml-1 capitalize">
-                  {consultation.status.replace('_', ' ')}
-                </span>
-              </Badge>
-              <Badge
-                variant="outline"
-                className={getPriorityColor(consultation.priority_level)}
-              >
-                Priorité: {getPriorityLabel(consultation.priority_level)}
-              </Badge>
-              {consultation.validated_at && (
-                <Badge className="bg-green-600 text-white">
-                  Validée le{' '}
-                  {new Date(consultation.validated_at).toLocaleDateString(
-                    'fr-FR'
-                  )}
-                </Badge>
-              )}
-              {consultation.archived_at && (
-                <Badge
-                  variant="outline"
-                  className="border-gray-400 text-gray-700"
-                >
-                  Archivée le{' '}
-                  {new Date(consultation.archived_at).toLocaleDateString(
-                    'fr-FR'
-                  )}
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          {/* Row 2: Action buttons */}
-          <div className="flex items-center space-x-2">
-            {/* Modifier */}
-            <ButtonUnified
-              variant="outline"
-              size="sm"
-              onClick={() => setShowEditModal(true)}
-            >
-              <Edit className="h-3 w-3 mr-2" />
-              Modifier
-            </ButtonUnified>
-
-            {/* Changer statut dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <ButtonUnified variant="outline" size="sm">
-                  Changer statut
-                  <ChevronDown className="h-3 w-3 ml-2" />
-                </ButtonUnified>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                {statusOptions.map(opt => (
-                  <DropdownMenuItem
-                    key={opt.value}
-                    disabled={consultation.status === opt.value}
-                    onClick={() => {
-                      void handleStatusChange(opt.value).catch(error => {
-                        console.error(
-                          '[ConsultationDetail] Status change failed:',
-                          error
-                        );
-                      });
-                    }}
-                  >
-                    {getStatusIcon(opt.value)}
-                    <span className="ml-2">{opt.label}</span>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Plus d'actions dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <ButtonUnified variant="outline" size="sm">
-                  <MoreHorizontal className="h-3 w-3 mr-2" />
-                  Plus
-                </ButtonUnified>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                {/* Valider */}
-                {!consultation.validated_at && !consultation.archived_at && (
-                  <DropdownMenuItem
-                    onClick={() => {
-                      void handleValidateConsultation().catch(error => {
-                        console.error(
-                          '[ConsultationDetail] Validate failed:',
-                          error
-                        );
-                      });
-                    }}
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-                    Valider la consultation
-                  </DropdownMenuItem>
-                )}
-                {/* Archiver */}
-                {!consultation.archived_at && (
-                  <DropdownMenuItem
-                    onClick={() => {
-                      void handleArchiveConsultation().catch(error => {
-                        console.error(
-                          '[ConsultationDetail] Archive failed:',
-                          error
-                        );
-                      });
-                    }}
-                  >
-                    <Archive className="h-4 w-4 mr-2" />
-                    Archiver
-                  </DropdownMenuItem>
-                )}
-                {/* Désarchiver */}
-                {consultation.archived_at && (
-                  <DropdownMenuItem
-                    onClick={() => {
-                      void handleUnarchiveConsultation().catch(error => {
-                        console.error(
-                          '[ConsultationDetail] Unarchive failed:',
-                          error
-                        );
-                      });
-                    }}
-                  >
-                    <ArchiveRestore className="h-4 w-4 mr-2 text-blue-600" />
-                    Désarchiver
-                  </DropdownMenuItem>
-                )}
-                {/* Supprimer — ouvre le modal de confirmation */}
-                {consultation.archived_at && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-red-600 focus:text-red-600"
-                      onClick={() => setShowDeleteModal(true)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Supprimer définitivement
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Envoyer par email */}
-            <ButtonUnified
-              variant="outline"
-              size="sm"
-              disabled={emailPdfLoading}
-              onClick={() => {
-                setEmailPdfLoading(true);
-                const loadImagesForEmail = async () => {
-                  try {
-                    const productImgEntries = await Promise.all(
-                      consultationItems
-                        .filter(item => item.product?.image_url)
-                        .map(async item => {
-                          const base64 = await imageUrlToBase64(
-                            item.product!.image_url!,
-                            300,
-                            0.6
-                          );
-                          return [item.product_id, base64 ?? ''] as const;
-                        })
-                    );
-                    setEmailPdfImages({
-                      consultationImages: [],
-                      productImages: Object.fromEntries(
-                        productImgEntries.filter(([, b]) => b)
-                      ),
-                    });
-                  } catch (err) {
-                    console.error('[Email] Image preload failed:', err);
-                  } finally {
-                    setEmailPdfLoading(false);
-                    setShowEmailModal(true);
-                  }
-                };
-                void loadImagesForEmail();
-              }}
-            >
-              <Mail className="h-3 w-3 mr-2" />
-              {emailPdfLoading ? 'Chargement...' : 'Envoyer par email'}
-            </ButtonUnified>
-
-            {/* Résumé PDF */}
-            <ButtonUnified
-              variant="outline"
-              size="sm"
-              disabled={pdfLoading}
-              onClick={() => {
-                setPdfLoading(true);
-                // Pre-load product images as base64 before opening PDF
-                const loadImages = async () => {
-                  try {
-                    const productImgEntries = await Promise.all(
-                      consultationItems
-                        .filter(item => item.product?.image_url)
-                        .map(async item => {
-                          const base64 = await imageUrlToBase64(
-                            item.product!.image_url!,
-                            300,
-                            0.6
-                          );
-                          return [item.product_id, base64 ?? ''] as const;
-                        })
-                    );
-
-                    setPdfImages({
-                      consultationImages: [],
-                      productImages: Object.fromEntries(
-                        productImgEntries.filter(([, b]) => b)
-                      ),
-                    });
-                    setShowPdfPreview(true);
-                  } catch (err) {
-                    console.error('[PDF] Image preload failed:', err);
-                    // Open anyway without images
-                    setShowPdfPreview(true);
-                  } finally {
-                    setPdfLoading(false);
-                  }
-                };
-                void loadImages();
-              }}
-            >
-              <FileText className="h-3 w-3 mr-2" />
-              {pdfLoading ? 'Chargement...' : 'Résumé PDF'}
-            </ButtonUnified>
-
-            {/* Creer un devis — ouvre le modal de confirmation */}
-            <ButtonUnified
-              variant="default"
-              size="sm"
-              disabled={consultationItems.length === 0}
-              onClick={() => {
-                void (async () => {
-                  if (!consultation) return;
-
-                  // Check if an active quote already exists (draft or sent)
-                  const activeQuotes = linkedQuotes.filter(
-                    q => q.quote_status === 'draft' || q.quote_status === 'sent'
-                  );
-                  if (activeQuotes.length > 0) {
-                    const activeNumbers = activeQuotes
-                      .map(q => q.document_number)
-                      .join(', ');
-                    const confirmed = window.confirm(
-                      `Un devis actif existe deja (${activeNumbers}).\n\nCreer une nouvelle version ?\nL'ancien sera marque comme "Remplace".`
-                    );
-                    if (!confirmed) return;
-                  }
-
-                  // Store IDs of quotes to supersede (will be handled server-side via API)
-                  setSupersededQuoteIds(activeQuotes.map(q => q.id));
-
-                  const supabase = createClient();
-
-                  // Resolve partner org for the modal
-                  let partnerId: string | null = null;
-                  let partnerOrg: Record<string, unknown> | null = null;
-
-                  if (consultation.enseigne_id) {
-                    const { data: parentOrg } = await supabase
-                      .from('organisations')
-                      .select(
-                        'id, trade_name, legal_name, email, address_line1, postal_code, city, country, siret, vat_number'
-                      )
-                      .eq('enseigne_id', consultation.enseigne_id)
-                      .eq('is_enseigne_parent', true)
-                      .single();
-                    if (parentOrg) {
-                      partnerId = parentOrg.id;
-                      partnerOrg = parentOrg;
-                    } else {
-                      const { data: firstOrg } = await supabase
-                        .from('organisations')
-                        .select(
-                          'id, trade_name, legal_name, email, address_line1, postal_code, city, country, siret, vat_number'
-                        )
-                        .eq('enseigne_id', consultation.enseigne_id)
-                        .order('created_at', { ascending: true })
-                        .limit(1)
-                        .single();
-                      if (firstOrg) {
-                        partnerId = firstOrg.id;
-                        partnerOrg = firstOrg;
-                      }
-                    }
-                  } else if (consultation.organisation_id) {
-                    const { data: directOrg } = await supabase
-                      .from('organisations')
-                      .select(
-                        'id, trade_name, legal_name, email, address_line1, postal_code, city, country, siret, vat_number'
-                      )
-                      .eq('id', consultation.organisation_id)
-                      .single();
-                    if (directOrg) {
-                      partnerId = directOrg.id;
-                      partnerOrg = directOrg;
-                    }
-                  }
-
-                  if (!partnerId || !partnerOrg) return;
-
-                  // Map consultation data to IOrderForDocument for the modal
-                  const org = partnerOrg as Record<
-                    string,
-                    string | null | boolean | number
-                  >;
-                  const orderData: IOrderForDocument = {
-                    id: consultationId,
-                    order_number: `CONSULT-${consultationId.slice(0, 8).toUpperCase()}`,
-                    total_ht: consultationItems.reduce(
-                      (sum, item) =>
-                        sum + (item.unit_price ?? 0) * item.quantity,
-                      0
-                    ),
-                    total_ttc: consultationItems.reduce(
-                      (sum, item) =>
-                        sum + (item.unit_price ?? 0) * item.quantity * 1.2,
-                      0
-                    ),
-                    tax_rate: 0.2,
-                    currency: 'EUR',
-                    customer_id: partnerId,
-                    customer_type: 'organization',
-                    billing_address: org.address_line1
-                      ? {
-                          address_line1: (org.address_line1 as string) ?? '',
-                          postal_code: (org.postal_code as string) ?? '',
-                          city: (org.city as string) ?? '',
-                          country: (org.country as string) ?? 'FR',
-                        }
-                      : null,
-                    organisations: {
-                      name:
-                        (org.trade_name as string) ??
-                        (org.legal_name as string) ??
-                        'Client',
-                      trade_name: org.trade_name as string | null,
-                      legal_name: org.legal_name as string | null,
-                      email:
-                        consultation.client_email ??
-                        (org.email as string | null),
-                      address_line1: org.address_line1 as string | null,
-                      city: org.city as string | null,
-                      postal_code: org.postal_code as string | null,
-                      country: org.country as string | null,
-                      siret: org.siret as string | null,
-                      vat_number: org.vat_number as string | null,
-                    },
-                    sales_order_items: consultationItems
-                      .filter(item => !item.is_free)
-                      .map(item => ({
-                        id: item.id,
-                        quantity: item.quantity,
-                        unit_price_ht: item.unit_price ?? 0,
-                        tax_rate: 0.2,
-                        products: item.product
-                          ? { name: item.product.name }
-                          : null,
-                      })),
-                  };
-
-                  setOrderForQuoteModal(orderData);
-                  setShowQuoteModal(true);
-                })().catch(err => {
-                  console.error(
-                    '[ConsultationDetail] Open quote modal failed:',
-                    err
-                  );
-                });
-              }}
-            >
-              <FileText className="h-3 w-3 mr-2" />
-              Creer un devis
-            </ButtonUnified>
-
-            {/* Creer une commande — uniquement si consultation terminee */}
-            <ButtonUnified
-              variant="default"
-              size="sm"
-              disabled={
-                creatingOrder ||
-                consultationItems.length === 0 ||
-                consultation?.status !== 'terminee'
-              }
-              title={
-                consultation?.status !== 'terminee'
-                  ? 'La consultation doit être terminée pour créer une commande'
-                  : undefined
-              }
-              onClick={() => {
-                void handleCreateOrder().catch(error => {
-                  console.error(
-                    '[ConsultationDetail] Create order failed:',
-                    error
-                  );
-                });
-              }}
-            >
-              {creatingOrder ? (
-                <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-              ) : (
-                <ShoppingCart className="h-3 w-3 mr-2" />
-              )}
-              {creatingOrder ? 'Creation...' : 'Creer une commande'}
-            </ButtonUnified>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Content ── */}
-      <div className="w-full px-2 py-1 space-y-1">
-        {/* Photos + Infos side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-1">
-          {/* Photos gallery */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardContent className="pt-4">
-                <div className="flex items-center mb-3">
-                  <Package className="h-3 w-3 mr-2 text-gray-500" />
-                  <span className="text-sm font-semibold">
-                    Photos consultation
-                  </span>
-                </div>
-                <ConsultationImageGallery
-                  consultationId={consultationId}
-                  consultationTitle={clientName}
-                  consultationStatus={consultation.status}
-                  allowEdit
-                  className="w-full"
-                />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Client info */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardContent className="pt-4">
-                <div className="flex items-center mb-3">
-                  <Building className="h-3 w-3 mr-2 text-gray-500" />
-                  <span className="text-sm font-semibold">Informations</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
-                  <div className="space-y-1">
-                    <div>
-                      <p className="text-xs text-gray-600">Client</p>
-                      <p className="font-medium">{clientName}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600">Email client</p>
-                      <div className="flex items-center">
-                        <Mail className="h-3 w-3 text-gray-400 mr-2" />
-                        <p className="font-medium">
-                          {consultation.client_email}
-                        </p>
-                      </div>
-                    </div>
-                    {consultation.client_phone && (
-                      <div>
-                        <p className="text-xs text-gray-600">Téléphone</p>
-                        <div className="flex items-center">
-                          <Phone className="h-3 w-3 text-gray-400 mr-2" />
-                          <p className="font-medium">
-                            {consultation.client_phone}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-xs text-gray-600">
-                        Canal d&apos;origine
-                      </p>
-                      <p className="font-medium capitalize">
-                        {consultation.source_channel}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <div>
-                      <p className="text-xs text-gray-600">Créée le</p>
-                      <div className="flex items-center">
-                        <Calendar className="h-3 w-3 text-gray-400 mr-2" />
-                        <p className="font-medium">
-                          {new Date(consultation.created_at).toLocaleDateString(
-                            'fr-FR'
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                    {consultation.tarif_maximum && (
-                      <div>
-                        <p className="text-xs text-gray-600">Budget maximum</p>
-                        <p className="font-medium">
-                          {consultation.tarif_maximum}€
-                        </p>
-                      </div>
-                    )}
-                    {consultation.estimated_response_date && (
-                      <div>
-                        <p className="text-xs text-gray-600">Réponse estimée</p>
-                        <p className="font-medium">
-                          {new Date(
-                            consultation.estimated_response_date
-                          ).toLocaleDateString('fr-FR')}
-                        </p>
-                      </div>
-                    )}
-                    {consultation.assigned_to && (
-                      <div>
-                        <p className="text-xs text-gray-600">Assignée à</p>
-                        <div className="flex items-center">
-                          <User className="h-3 w-3 text-gray-400 mr-2" />
-                          <p className="font-medium">
-                            {consultation.assigned_to}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mt-1">
-                  <p className="text-xs text-gray-600 mb-1">Description</p>
-                  <p className="bg-gray-50 p-1 rounded">
-                    {consultation.descriptif}
-                  </p>
-                </div>
-
-                {consultation.notes_internes && (
-                  <div className="mt-1">
-                    <p className="text-xs text-gray-600 mb-1">Notes internes</p>
-                    <p className="bg-gray-50 p-1 rounded border-l-4 border-gray-300">
-                      {consultation.notes_internes}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Produits consultation */}
-        <ConsultationOrderInterface
-          consultationId={consultationId}
-          onItemsChanged={handleItemsChanged}
-        />
-
-        {/* Devis + Commandes + Timeline */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-1">
-          {/* Devis liés */}
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-2 mb-3">
-                <FileText className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-semibold">Devis lies</span>
-                <span className="text-xs text-gray-400">
-                  ({linkedQuotes.length})
-                </span>
-              </div>
-
-              {quotesLoading ? (
-                <div className="flex items-center justify-center py-4">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400" />
-                </div>
-              ) : linkedQuotes.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">
-                  Aucun devis lie a cette consultation
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {linkedQuotes.map(quote => {
-                    const statusColors: Record<string, string> = {
-                      draft: 'bg-gray-100 text-gray-700',
-                      sent: 'bg-blue-100 text-blue-700',
-                      accepted: 'bg-green-100 text-green-700',
-                      declined: 'bg-red-100 text-red-700',
-                      expired: 'bg-amber-100 text-amber-700',
-                      converted: 'bg-purple-100 text-purple-700',
-                      superseded: 'bg-orange-100 text-orange-700',
-                    };
-                    const statusLabels: Record<string, string> = {
-                      draft: 'Brouillon',
-                      sent: 'Envoye',
-                      accepted: 'Accepte',
-                      declined: 'Refuse',
-                      expired: 'Expire',
-                      converted: 'Converti',
-                      superseded: 'Remplace',
-                    };
-
-                    return (
-                      <div
-                        key={quote.id}
-                        className="flex items-center justify-between p-2 rounded border border-gray-100 hover:bg-gray-50"
-                      >
-                        <div className="flex items-center gap-3">
-                          <FileText className="h-4 w-4 text-gray-400" />
-                          <div>
-                            <p className="text-sm font-medium">
-                              {quote.document_number}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(quote.document_date).toLocaleDateString(
-                                'fr-FR'
-                              )}{' '}
-                              —{' '}
-                              {new Intl.NumberFormat('fr-FR', {
-                                style: 'currency',
-                                currency: 'EUR',
-                              }).format(quote.total_ht)}{' '}
-                              HT
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant="outline"
-                            className={
-                              statusColors[quote.quote_status] ??
-                              'bg-gray-100 text-gray-700'
-                            }
-                          >
-                            {statusLabels[quote.quote_status] ??
-                              quote.quote_status}
-                          </Badge>
-                          <ButtonUnified
-                            variant="ghost"
-                            size="sm"
-                            title="Voir le devis (nouvel onglet)"
-                            onClick={() => {
-                              const targetId =
-                                quote.qonto_invoice_id ?? quote.id;
-                              window.open(
-                                `/factures/devis/${targetId}`,
-                                '_blank'
-                              );
-                            }}
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                          </ButtonUnified>
-                          <ButtonUnified
-                            variant="ghost"
-                            size="sm"
-                            title="Supprimer le devis"
-                            onClick={() => {
-                              if (
-                                window.confirm(
-                                  `Supprimer le devis ${quote.document_number} ?\nCela le supprimera aussi de Qonto.`
-                                )
-                              ) {
-                                void (async () => {
-                                  // Delete from Qonto first if synced
-                                  if (quote.qonto_invoice_id) {
-                                    try {
-                                      await fetch(
-                                        `/api/qonto/quotes/${quote.qonto_invoice_id}`,
-                                        {
-                                          method: 'DELETE',
-                                        }
-                                      );
-                                    } catch (err) {
-                                      console.error(
-                                        '[ConsultationDetail] Qonto delete failed:',
-                                        err
-                                      );
-                                      // Continue with local delete even if Qonto fails
-                                    }
-                                  }
-                                  const ok = await deleteQuote(quote.id);
-                                  if (ok) {
-                                    await refetchLinkedQuotes();
-                                    await fetchHistory();
-                                  }
-                                })().catch(err => {
-                                  console.error(
-                                    '[ConsultationDetail] Delete quote failed:',
-                                    err
-                                  );
-                                });
-                              }
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3 text-red-500" />
-                          </ButtonUnified>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Commandes de vente liées */}
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-2 mb-3">
-                <ShoppingCart className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-semibold">Commandes</span>
-                <span className="text-xs text-gray-400">
-                  ({linkedSalesOrders.length})
-                </span>
-              </div>
-
-              {salesOrdersLoading ? (
-                <div className="flex items-center justify-center py-4">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400" />
-                </div>
-              ) : linkedSalesOrders.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">
-                  Aucune commande liee a cette consultation
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {linkedSalesOrders.map(order => {
-                    const soStatusColors: Record<string, string> = {
-                      draft: 'bg-gray-100 text-gray-700',
-                      pending_approval: 'bg-amber-100 text-amber-700',
-                      validated: 'bg-blue-100 text-blue-700',
-                      partially_shipped: 'bg-indigo-100 text-indigo-700',
-                      shipped: 'bg-green-100 text-green-700',
-                      cancelled: 'bg-red-100 text-red-700',
-                    };
-                    const soStatusLabels: Record<string, string> = {
-                      draft: 'Brouillon',
-                      pending_approval: 'En attente',
-                      validated: 'Validee',
-                      partially_shipped: 'Part. expediee',
-                      shipped: 'Expediee',
-                      cancelled: 'Annulee',
-                    };
-
-                    return (
-                      <div
-                        key={order.id}
-                        className="flex items-center justify-between p-2 rounded border border-gray-100 hover:bg-gray-50"
-                      >
-                        <div className="flex items-center gap-3">
-                          <ShoppingCart className="h-4 w-4 text-gray-400" />
-                          <div>
-                            <p className="text-sm font-medium">
-                              {order.order_number}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(order.created_at).toLocaleDateString(
-                                'fr-FR'
-                              )}{' '}
-                              —{' '}
-                              {new Intl.NumberFormat('fr-FR', {
-                                style: 'currency',
-                                currency: 'EUR',
-                              }).format(order.total_ht)}{' '}
-                              HT
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant="outline"
-                            className={
-                              soStatusColors[order.status] ??
-                              'bg-gray-100 text-gray-700'
-                            }
-                          >
-                            {soStatusLabels[order.status] ?? order.status}
-                          </Badge>
-                          <ButtonUnified
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => router.push(`/commandes/clients`)}
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                          </ButtonUnified>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Timeline historique */}
-          <ConsultationTimeline
-            events={historyEvents}
-            loading={historyLoading}
+          <ConsultationHeader
+            consultation={detail.consultation}
+            clientName={clientName}
+            onBack={() => router.push('/consultations')}
+          />
+          <ConsultationToolbar
+            consultation={detail.consultation}
+            consultationItemsCount={detail.consultationItems.length}
+            emailPdfLoading={detail.emailPdfLoading}
+            pdfLoading={detail.pdfLoading}
+            creatingOrder={detail.creatingOrder}
+            onEdit={() => detail.setShowEditModal(true)}
+            onStatusChange={status => {
+              void detail.handleStatusChange(status).catch(error => {
+                console.error(
+                  '[ConsultationDetailPage] Status change failed:',
+                  error
+                );
+              });
+            }}
+            onValidate={() => {
+              void detail.handleValidateConsultation().catch(error => {
+                console.error(
+                  '[ConsultationDetailPage] Validate failed:',
+                  error
+                );
+              });
+            }}
+            onArchive={() => {
+              void detail.handleArchiveConsultation().catch(error => {
+                console.error(
+                  '[ConsultationDetailPage] Archive failed:',
+                  error
+                );
+              });
+            }}
+            onUnarchive={() => {
+              void detail.handleUnarchiveConsultation().catch(error => {
+                console.error(
+                  '[ConsultationDetailPage] Unarchive failed:',
+                  error
+                );
+              });
+            }}
+            onDelete={() => detail.setShowDeleteModal(true)}
+            onEmail={detail.handleOpenEmail}
+            onPdf={detail.handleOpenPdf}
+            onCreateQuote={detail.handleOpenQuoteModal}
+            onCreateOrder={() => {
+              void detail.handleCreateOrder().catch(error => {
+                console.error(
+                  '[ConsultationDetailPage] Create order failed:',
+                  error
+                );
+              });
+            }}
           />
         </div>
       </div>
 
-      {/* Modal d'édition */}
-      {consultation && (
-        <EditConsultationModal
-          open={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          consultation={consultation}
-          onUpdated={handleUpdateConsultation}
-        />
-      )}
-
-      {/* Modal envoi email */}
-      {consultation && (
-        <SendConsultationEmailModal
-          open={showEmailModal}
-          onClose={() => setShowEmailModal(false)}
+      {/* Content */}
+      <div className="w-full px-2 py-1 space-y-1">
+        <ConsultationInfoCard
+          consultation={detail.consultation}
           consultationId={consultationId}
-          clientEmail={consultation.client_email ?? ''}
           clientName={clientName}
-          consultationPdfDocument={
-            <ConsultationSummaryPdf
-              consultation={consultation}
-              items={consultationItems}
-              images={images}
-              totalHT={calculateTotal()}
-              clientName={clientName}
-              preloadedImages={emailPdfImages}
-            />
-          }
-          linkedQuotes={linkedQuotes.map(q => ({
-            id: q.id,
-            document_number: q.document_number,
-            qonto_pdf_url: q.qonto_pdf_url,
-            qonto_invoice_id: q.qonto_invoice_id,
-          }))}
-          onSent={() => {
-            void fetchHistory().catch(err => {
-              console.error(
-                '[ConsultationDetail] Refresh history after email:',
-                err
-              );
-            });
-          }}
         />
-      )}
 
-      {/* Modal creation devis (reutilise le composant des commandes) */}
-      <QuoteCreateFromOrderModal
-        order={orderForQuoteModal}
-        open={showQuoteModal}
-        onOpenChange={setShowQuoteModal}
-        isConsultation
+        {/* Produits consultation */}
+        <ConsultationOrderInterface
+          consultationId={consultationId}
+          onItemsChanged={detail.handleItemsChanged}
+        />
+
+        {/* Devis + Commandes + Timeline */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-1">
+          <ConsultationLinkedQuotes
+            linkedQuotes={detail.linkedQuotes}
+            quotesLoading={detail.quotesLoading}
+            onDeleteQuote={detail.handleDeleteQuote}
+          />
+          <ConsultationLinkedOrders
+            linkedSalesOrders={detail.linkedSalesOrders}
+            salesOrdersLoading={detail.salesOrdersLoading}
+          />
+          <ConsultationTimeline
+            events={detail.historyEvents}
+            loading={detail.historyLoading}
+          />
+        </div>
+      </div>
+
+      <ConsultationModals
+        consultation={detail.consultation}
         consultationId={consultationId}
-        supersededQuoteIds={supersededQuoteIds}
-        onSuccess={quoteId => {
-          setShowQuoteModal(false);
-          setSupersededQuoteIds([]);
-          void (async () => {
-            await refetchLinkedQuotes();
-            await fetchHistory();
-          })().catch(err => {
-            console.error('[ConsultationDetail] Refresh failed:', err);
-          });
-          window.open(`/factures/devis/${quoteId}`, '_blank');
-        }}
+        clientName={clientName}
+        consultationItems={detail.consultationItems}
+        images={detail.images}
+        linkedQuotes={detail.linkedQuotes}
+        linkedSalesOrdersCount={detail.linkedSalesOrders.length}
+        calculateTotal={detail.calculateTotal}
+        showEditModal={detail.showEditModal}
+        setShowEditModal={detail.setShowEditModal}
+        handleUpdateConsultation={detail.handleUpdateConsultation}
+        showEmailModal={detail.showEmailModal}
+        setShowEmailModal={detail.setShowEmailModal}
+        emailPdfImages={detail.emailPdfImages}
+        fetchHistory={detail.fetchHistory}
+        showQuoteModal={detail.showQuoteModal}
+        setShowQuoteModal={detail.setShowQuoteModal}
+        orderForQuoteModal={detail.orderForQuoteModal}
+        supersededQuoteIds={detail.supersededQuoteIds}
+        handleQuoteSuccess={detail.handleQuoteSuccess}
+        showDeleteModal={detail.showDeleteModal}
+        setShowDeleteModal={detail.setShowDeleteModal}
+        deleting={detail.deleting}
+        handleDeleteConsultation={detail.handleDeleteConsultation}
+        showPdfPreview={detail.showPdfPreview}
+        setShowPdfPreview={detail.setShowPdfPreview}
+        pdfImages={detail.pdfImages}
       />
-
-      {/* Modal de confirmation de suppression */}
-      <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <AlertTriangle className="h-5 w-5" />
-              Supprimer la consultation
-            </DialogTitle>
-            <DialogDescription>
-              Cette action est irréversible. Les éléments suivants seront
-              définitivement supprimés :
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div className="flex items-start gap-2 text-sm">
-              <FileText className="h-4 w-4 mt-0.5 text-gray-500" />
-              <div>
-                <p className="font-medium">Consultation "{clientName}"</p>
-                <p className="text-gray-500">
-                  {consultationItems.length} produit(s) associé(s)
-                </p>
-              </div>
-            </div>
-            {linkedQuotes.length > 0 && (
-              <div className="flex items-start gap-2 text-sm">
-                <FileText className="h-4 w-4 mt-0.5 text-red-500" />
-                <div>
-                  <p className="font-medium">
-                    {linkedQuotes.length} devis supprimé(s) de Qonto + DB locale
-                  </p>
-                  <ul className="text-gray-500 mt-1 space-y-0.5">
-                    {linkedQuotes.map(q => (
-                      <li key={q.id}>
-                        {q.document_number} — {Number(q.total_ht).toFixed(2)} €
-                        HT (
-                        {q.quote_status === 'draft'
-                          ? 'Brouillon'
-                          : q.quote_status}
-                        )
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
-            {linkedSalesOrders.length > 0 && (
-              <div className="flex items-start gap-2 text-sm">
-                <ShoppingCart className="h-4 w-4 mt-0.5 text-orange-500" />
-                <p className="font-medium">
-                  {linkedSalesOrders.length} commande(s) liée(s)
-                </p>
-              </div>
-            )}
-          </div>
-          <DialogFooter className="gap-2">
-            <ButtonUnified
-              variant="outline"
-              onClick={() => setShowDeleteModal(false)}
-              disabled={deleting}
-            >
-              Annuler
-            </ButtonUnified>
-            <ButtonUnified
-              variant="destructive"
-              disabled={deleting}
-              onClick={() => {
-                void handleDeleteConsultation().catch(error => {
-                  console.error('[ConsultationDetail] Delete failed:', error);
-                });
-              }}
-            >
-              {deleting ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4 mr-2" />
-              )}
-              {deleting ? 'Suppression...' : 'Supprimer définitivement'}
-            </ButtonUnified>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal PDF preview */}
-      {showPdfPreview && consultation && (
-        <PdfPreviewModal
-          isOpen={showPdfPreview}
-          onClose={() => setShowPdfPreview(false)}
-          title={`Résumé - ${clientName}`}
-          filename={`consultation-${clientName.toLowerCase().replace(/\s+/g, '-')}.pdf`}
-          document={
-            <ConsultationSummaryPdf
-              consultation={consultation}
-              items={consultationItems}
-              images={images}
-              totalHT={calculateTotal()}
-              clientName={clientName}
-              preloadedImages={pdfImages}
-            />
-          }
-        />
-      )}
     </div>
   );
 }
