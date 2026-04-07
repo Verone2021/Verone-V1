@@ -1,17 +1,5 @@
 'use client';
 
-/**
- * Page: Étape 4 - Informations de livraison (Post-approbation)
- *
- * Accessible via token unique envoyé par email après approbation.
- * Permet au contact propriétaire de compléter:
- * - Contact réception sur place
- * - Date de livraison confirmée
- * - Rappel CMR
- */
-
-import { useState, useEffect } from 'react';
-
 import { useParams } from 'next/navigation';
 
 import {
@@ -20,382 +8,38 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Button,
-  Input,
-  Label,
-  Separator,
   Badge,
+  Separator,
   Skeleton,
 } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
-import { createClient } from '@verone/utils/supabase/client';
 import {
   CheckCircle2,
   AlertCircle,
   Truck,
-  User,
-  Mail,
-  Phone,
-  Calendar,
-  Package,
   FileText,
   Building2,
+  Package,
 } from 'lucide-react';
 
-// ============================================
-// TYPES
-// ============================================
-
-interface OrderItem {
-  id: string;
-  quantity: number;
-  products: {
-    name: string;
-  } | null;
-}
-
-interface OrderWithDetails {
-  id: string;
-  order_number: string;
-  total_ttc: number;
-  status: string;
-  expected_delivery_date: string | null;
-  organisation: {
-    trade_name: string | null;
-    legal_name: string;
-  } | null;
-  linkmeDetails: {
-    id: string;
-    requester_name: string;
-    requester_email: string;
-    desired_delivery_date: string | null;
-    step4_completed_at: string | null;
-    reception_contact_name: string | null;
-    reception_contact_email: string | null;
-    reception_contact_phone: string | null;
-    confirmed_delivery_date: string | null;
-  };
-  items: Array<{
-    id: string;
-    quantity: number;
-    product: {
-      name: string;
-    } | null;
-  }>;
-}
-
-interface TokenValidation {
-  valid: boolean;
-  expired: boolean;
-  alreadyCompleted: boolean;
-  order: OrderWithDetails | null;
-  error?: string;
-}
-
-// ============================================
-// PAGE COMPONENT
-// ============================================
+import { DeliveryInfoForm } from './DeliveryInfoForm';
+import { useDeliveryInfoPage } from './use-delivery-info-page';
 
 export default function DeliveryInfoPage() {
   const params = useParams();
   const token = params.token as string;
 
-  const [validation, setValidation] = useState<TokenValidation | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const {
+    validation,
+    isLoading,
+    isSubmitting,
+    submitSuccess,
+    submitError,
+    form,
+    setForm,
+    handleSubmit,
+  } = useDeliveryInfoPage(token);
 
-  // Form state
-  const [receptionName, setReceptionName] = useState('');
-  const [receptionEmail, setReceptionEmail] = useState('');
-  const [receptionPhone, setReceptionPhone] = useState('');
-  const [confirmedDate, setConfirmedDate] = useState('');
-  // Nouveaux champs Step 4 (2026-01-11)
-  const [desiredDeliveryDate, setDesiredDeliveryDate] = useState('');
-  const [mallFormRequired, setMallFormRequired] = useState(false);
-  const [mallFormEmail, setMallFormEmail] = useState('');
-
-  // Validate token and fetch order
-  useEffect(() => {
-    async function validateToken() {
-      setIsLoading(true);
-
-      const supabase = createClient();
-
-      try {
-        // Find the linkme details with this token
-        const { data: detailsData, error: detailsError } = await supabase
-          .from('sales_order_linkme_details')
-          .select(
-            `
-            id,
-            sales_order_id,
-            requester_name,
-            requester_email,
-            desired_delivery_date,
-            step4_token_expires_at,
-            step4_completed_at,
-            reception_contact_name,
-            reception_contact_email,
-            reception_contact_phone,
-            confirmed_delivery_date
-          `
-          )
-          .eq('step4_token', token)
-          .single();
-
-        if (detailsError || !detailsData) {
-          setValidation({
-            valid: false,
-            expired: false,
-            alreadyCompleted: false,
-            order: null,
-            error: 'Lien invalide ou expiré',
-          });
-          return;
-        }
-
-        // Check if expired
-        if (detailsData.step4_token_expires_at) {
-          const expiresAt = new Date(detailsData.step4_token_expires_at);
-          if (expiresAt < new Date()) {
-            setValidation({
-              valid: false,
-              expired: true,
-              alreadyCompleted: false,
-              order: null,
-              error: 'Ce lien a expiré',
-            });
-            return;
-          }
-        }
-
-        // Check if already completed
-        if (detailsData.step4_completed_at) {
-          // Still show the order but mark as completed
-          const { data: orderData } = await supabase
-            .from('sales_orders')
-            .select(
-              `
-              id,
-              order_number,
-              total_ttc,
-              status,
-              expected_delivery_date,
-              organisations!sales_orders_customer_id_fkey (
-                trade_name,
-                legal_name
-              ),
-              sales_order_items (
-                id,
-                quantity,
-                products (name)
-              )
-            `
-            )
-            .eq('id', detailsData.sales_order_id)
-            .single();
-
-          setValidation({
-            valid: false,
-            expired: false,
-            alreadyCompleted: true,
-            order: orderData
-              ? {
-                  id: orderData.id,
-                  order_number: orderData.order_number,
-                  total_ttc: orderData.total_ttc,
-                  status: orderData.status,
-                  expected_delivery_date: orderData.expected_delivery_date,
-                  organisation:
-                    (
-                      orderData.organisations as Array<{
-                        trade_name: string | null;
-                        legal_name: string;
-                      }> | null
-                    )?.[0] ?? null,
-                  linkmeDetails:
-                    detailsData as OrderWithDetails['linkmeDetails'],
-                  items: (orderData.sales_order_items ?? []).map(
-                    (item: OrderItem) => ({
-                      id: item.id,
-                      quantity: item.quantity,
-                      product: item.products,
-                    })
-                  ),
-                }
-              : null,
-          });
-          return;
-        }
-
-        // Fetch full order details
-        const { data: orderData, error: orderError } = await supabase
-          .from('sales_orders')
-          .select(
-            `
-            id,
-            order_number,
-            total_ttc,
-            status,
-            expected_delivery_date,
-            organisations!sales_orders_customer_id_fkey (
-              trade_name,
-              legal_name
-            ),
-            sales_order_items (
-              id,
-              quantity,
-              products (name)
-            )
-          `
-          )
-          .eq('id', detailsData.sales_order_id)
-          .single();
-
-        if (orderError || !orderData) {
-          setValidation({
-            valid: false,
-            expired: false,
-            alreadyCompleted: false,
-            order: null,
-            error: 'Commande non trouvée',
-          });
-          return;
-        }
-
-        // Pre-fill form if data exists
-        if (detailsData.reception_contact_name) {
-          setReceptionName(detailsData.reception_contact_name);
-        }
-        if (detailsData.reception_contact_email) {
-          setReceptionEmail(detailsData.reception_contact_email);
-        }
-        if (detailsData.reception_contact_phone) {
-          setReceptionPhone(detailsData.reception_contact_phone);
-        }
-        if (detailsData.confirmed_delivery_date) {
-          setConfirmedDate(detailsData.confirmed_delivery_date);
-        } else if (detailsData.desired_delivery_date) {
-          setConfirmedDate(detailsData.desired_delivery_date);
-        }
-
-        setValidation({
-          valid: true,
-          expired: false,
-          alreadyCompleted: false,
-          order: {
-            id: orderData.id,
-            order_number: orderData.order_number,
-            total_ttc: orderData.total_ttc,
-            status: orderData.status,
-            expected_delivery_date: orderData.expected_delivery_date,
-            organisation:
-              (
-                orderData.organisations as Array<{
-                  trade_name: string | null;
-                  legal_name: string;
-                }> | null
-              )?.[0] ?? null,
-            linkmeDetails: detailsData as OrderWithDetails['linkmeDetails'],
-            items: (orderData.sales_order_items ?? []).map(
-              (item: OrderItem) => ({
-                id: item.id,
-                quantity: item.quantity,
-                product: item.products,
-              })
-            ),
-          },
-        });
-      } catch (err) {
-        console.error('Error validating token:', err);
-        setValidation({
-          valid: false,
-          expired: false,
-          alreadyCompleted: false,
-          order: null,
-          error: 'Erreur de validation',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    if (token) {
-      void validateToken().catch(error => {
-        console.error('[DeliveryInfo] Validation failed:', error);
-      });
-    }
-  }, [token]);
-
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validation?.order) return;
-
-    setIsSubmitting(true);
-    setSubmitError(null);
-
-    const supabase = createClient();
-
-    try {
-      const { error } = await supabase
-        .from('sales_order_linkme_details')
-        .update({
-          reception_contact_name: receptionName,
-          reception_contact_email: receptionEmail,
-          reception_contact_phone: receptionPhone || null,
-          confirmed_delivery_date: confirmedDate || null,
-          // Nouveaux champs Step 4 (2026-01-11)
-          desired_delivery_date: desiredDeliveryDate || null,
-          mall_form_required: mallFormRequired,
-          mall_form_email: mallFormRequired ? mallFormEmail : null,
-          step4_completed_at: new Date().toISOString(),
-        })
-        .eq('id', validation.order.linkmeDetails.id);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      setSubmitSuccess(true);
-
-      // Envoyer email de confirmation (non bloquant)
-      try {
-        await fetch('/api/emails/step4-confirmed', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            salesOrderId: validation.order.id,
-            orderNumber: validation.order.order_number,
-            requesterEmail: validation.order.linkmeDetails.requester_email,
-            requesterName: validation.order.linkmeDetails.requester_name,
-            organisationName:
-              validation.order.organisation?.trade_name ??
-              validation.order.organisation?.legal_name ??
-              null,
-            receptionContactName: receptionName,
-            receptionContactEmail: receptionEmail,
-            receptionContactPhone: receptionPhone || null,
-            desiredDeliveryDate: desiredDeliveryDate || null,
-          }),
-        });
-      } catch (emailError) {
-        console.error('[DeliveryInfo] Confirmation email failed:', emailError);
-        // Non bloquant - les données sont déjà sauvegardées
-      }
-    } catch (err) {
-      setSubmitError(
-        err instanceof Error ? err.message : 'Erreur lors de la soumission'
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -412,7 +56,6 @@ export default function DeliveryInfoPage() {
     );
   }
 
-  // Invalid/expired token
   if (!validation?.valid && !validation?.alreadyCompleted) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -434,8 +77,8 @@ export default function DeliveryInfoPage() {
     );
   }
 
-  // Already completed
   if (validation?.alreadyCompleted && validation.order) {
+    const d = validation.order.linkmeDetails;
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-2xl">
@@ -456,23 +99,19 @@ export default function DeliveryInfoPage() {
             <div className="bg-gray-50 p-4 rounded-lg space-y-2">
               <div className="flex justify-between">
                 <span className="text-gray-600">Contact réception</span>
-                <span className="font-medium">
-                  {validation.order.linkmeDetails.reception_contact_name}
-                </span>
+                <span className="font-medium">{d.reception_contact_name}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Email</span>
-                <span>
-                  {validation.order.linkmeDetails.reception_contact_email}
-                </span>
+                <span>{d.reception_contact_email}</span>
               </div>
-              {validation.order.linkmeDetails.confirmed_delivery_date && (
+              {d.confirmed_delivery_date && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Date confirmée</span>
                   <span>
-                    {new Date(
-                      validation.order.linkmeDetails.confirmed_delivery_date
-                    ).toLocaleDateString('fr-FR')}
+                    {new Date(d.confirmed_delivery_date).toLocaleDateString(
+                      'fr-FR'
+                    )}
                   </span>
                 </div>
               )}
@@ -483,7 +122,6 @@ export default function DeliveryInfoPage() {
     );
   }
 
-  // Success state
   if (submitSuccess) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -504,7 +142,7 @@ export default function DeliveryInfoPage() {
             <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
               <p className="text-green-800">
                 Vous recevrez une confirmation par email à{' '}
-                <strong>{receptionEmail}</strong>.
+                <strong>{form.receptionEmail}</strong>.
               </p>
             </div>
           </CardContent>
@@ -518,7 +156,6 @@ export default function DeliveryInfoPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* Header */}
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900">
             Informations de livraison
@@ -546,9 +183,7 @@ export default function DeliveryInfoPage() {
                   '-'}
               </span>
             </div>
-
             <Separator />
-
             <div className="space-y-2">
               {order.items.map(item => (
                 <div key={item.id} className="flex justify-between text-sm">
@@ -557,9 +192,7 @@ export default function DeliveryInfoPage() {
                 </div>
               ))}
             </div>
-
             <Separator />
-
             <div className="flex justify-between text-lg font-bold">
               <span>Total TTC</span>
               <span className="text-green-600">
@@ -606,143 +239,13 @@ export default function DeliveryInfoPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form
-              onSubmit={e => {
-                void handleSubmit(e).catch(error => {
-                  console.error('[DeliveryInfo] Submit failed:', error);
-                });
-              }}
-              className="space-y-4"
-            >
-              <div className="space-y-2">
-                <Label
-                  htmlFor="receptionName"
-                  className="flex items-center gap-1"
-                >
-                  <User className="h-4 w-4" />
-                  Nom complet *
-                </Label>
-                <Input
-                  id="receptionName"
-                  value={receptionName}
-                  onChange={e => setReceptionName(e.target.value)}
-                  placeholder="Jean Dupont"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="receptionEmail"
-                  className="flex items-center gap-1"
-                >
-                  <Mail className="h-4 w-4" />
-                  Email *
-                </Label>
-                <Input
-                  id="receptionEmail"
-                  type="email"
-                  value={receptionEmail}
-                  onChange={e => setReceptionEmail(e.target.value)}
-                  placeholder="jean.dupont@restaurant.fr"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="receptionPhone"
-                  className="flex items-center gap-1"
-                >
-                  <Phone className="h-4 w-4" />
-                  Téléphone
-                </Label>
-                <Input
-                  id="receptionPhone"
-                  type="tel"
-                  value={receptionPhone}
-                  onChange={e => setReceptionPhone(e.target.value)}
-                  placeholder="06 12 34 56 78"
-                />
-              </div>
-
-              <Separator />
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="desiredDeliveryDate"
-                  className="flex items-center gap-1"
-                >
-                  <Calendar className="h-4 w-4" />
-                  Date de livraison souhaitée
-                </Label>
-                <Input
-                  id="desiredDeliveryDate"
-                  type="date"
-                  value={desiredDeliveryDate}
-                  onChange={e => setDesiredDeliveryDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                />
-                <p className="text-xs text-gray-500">
-                  Notre équipe vous confirmera la date finale par email.
-                </p>
-              </div>
-
-              <Separator />
-
-              {/* Centre commercial */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id="mallFormRequired"
-                    checked={mallFormRequired}
-                    onChange={e => setMallFormRequired(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                  />
-                  <Label htmlFor="mallFormRequired" className="cursor-pointer">
-                    Livraison en centre commercial (formulaire requis)
-                  </Label>
-                </div>
-
-                {mallFormRequired && (
-                  <div className="space-y-2 pl-7">
-                    <Label htmlFor="mallFormEmail">
-                      Email du centre commercial *
-                    </Label>
-                    <Input
-                      id="mallFormEmail"
-                      type="email"
-                      value={mallFormEmail}
-                      onChange={e => setMallFormEmail(e.target.value)}
-                      placeholder="contact@centre-commercial.fr"
-                      required={mallFormRequired}
-                    />
-                    <p className="text-xs text-gray-500">
-                      Nous vous enverrons le formulaire à remplir pour
-                      l'autorisation de livraison.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {submitError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                  {submitError}
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={isSubmitting || !receptionName || !receptionEmail}
-              >
-                {isSubmitting
-                  ? 'Envoi en cours...'
-                  : 'Confirmer les informations'}
-              </Button>
-            </form>
+            <DeliveryInfoForm
+              form={form}
+              setForm={setForm}
+              isSubmitting={isSubmitting}
+              submitError={submitError}
+              onSubmit={handleSubmit}
+            />
           </CardContent>
         </Card>
       </div>
