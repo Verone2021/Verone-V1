@@ -185,9 +185,8 @@ export function ContactCard({
 }: ContactCardProps) {
   const fullName = `${contact.firstName} ${contact.lastName}`;
   const roles: string[] = [];
-  if (contact.isPrimaryContact) roles.push('Principal');
+  if (contact.isPrimaryContact) roles.push('Responsable');
   if (contact.isBillingContact) roles.push('Facturation');
-  if (contact.isCommercialContact) roles.push('Commercial');
   if (contact.isTechnicalContact) roles.push('Technique');
 
   return (

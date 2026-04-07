@@ -52,7 +52,6 @@ const contactSchema = z.object({
   is_primary_contact: z.boolean(),
   is_billing_contact: z.boolean(),
   is_technical_contact: z.boolean(),
-  is_commercial_contact: z.boolean(),
   preferred_communication_method: z.enum(['email', 'phone', 'both']),
   accepts_marketing: z.boolean(),
   accepts_notifications: z.boolean(),
@@ -97,7 +96,7 @@ export function ContactFormModal({
       is_primary_contact: false,
       is_billing_contact: false,
       is_technical_contact: false,
-      is_commercial_contact: true,
+
       preferred_communication_method: 'email',
       accepts_marketing: true,
       accepts_notifications: true,
@@ -122,7 +121,7 @@ export function ContactFormModal({
         is_primary_contact: contact.is_primary_contact ?? false,
         is_billing_contact: contact.is_billing_contact ?? false,
         is_technical_contact: contact.is_technical_contact ?? false,
-        is_commercial_contact: contact.is_commercial_contact ?? true,
+
         preferred_communication_method:
           (contact.preferred_communication_method as
             | 'email'
@@ -148,7 +147,7 @@ export function ContactFormModal({
         is_primary_contact: false,
         is_billing_contact: false,
         is_technical_contact: false,
-        is_commercial_contact: true,
+
         preferred_communication_method: 'email',
         accepts_marketing: true,
         accepts_notifications: true,
@@ -377,27 +376,6 @@ export function ContactFormModal({
                     </Label>
                     <p className="text-xs text-gray-600">
                       Contact prioritaire pour cette organisation
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <Switch
-                    id="is_commercial_contact"
-                    checked={form.watch('is_commercial_contact')}
-                    onCheckedChange={checked =>
-                      form.setValue('is_commercial_contact', checked)
-                    }
-                  />
-                  <div>
-                    <Label
-                      htmlFor="is_commercial_contact"
-                      className="font-medium"
-                    >
-                      Contact commercial
-                    </Label>
-                    <p className="text-xs text-gray-600">
-                      Commandes et négociations
                     </p>
                   </div>
                 </div>

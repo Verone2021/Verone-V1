@@ -20,7 +20,6 @@ import type { ContactBO } from '../../../hooks/use-organisation-contacts-bo';
 import { useCreateContactBO } from '../../../hooks/use-organisation-contacts-bo';
 
 import { DeleteContactDialog } from './DeleteContactDialog';
-import { EditContactDialog } from './EditContactDialog';
 import { EnseigneContactCard } from './EnseigneContactCard';
 
 interface EnseigneContactsSectionProps {
@@ -37,7 +36,6 @@ const EMPTY_CONTACT_FORM = {
   title: '',
   isBillingContact: false,
   isPrimaryContact: false,
-  isCommercialContact: false,
   isTechnicalContact: false,
 };
 
@@ -50,9 +48,6 @@ export function EnseigneContactsSection({
   const [showCreateContact, setShowCreateContact] = useState(false);
   const [newContact, setNewContact] = useState(EMPTY_CONTACT_FORM);
   const createContactMutation = useCreateContactBO();
-
-  // Edit dialog
-  const [editContact, setEditContact] = useState<ContactBO | null>(null);
 
   // Delete dialog
   const [deleteContact, setDeleteContact] = useState<ContactBO | null>(null);
@@ -70,7 +65,6 @@ export function EnseigneContactsSection({
         title: newContact.title || undefined,
         isBillingContact: newContact.isBillingContact,
         isPrimaryContact: newContact.isPrimaryContact,
-        isCommercialContact: newContact.isCommercialContact,
         isTechnicalContact: newContact.isTechnicalContact,
       })
       .then(() => {
@@ -133,7 +127,6 @@ export function EnseigneContactsSection({
                 <EnseigneContactCard
                   key={contact.id}
                   contact={contact}
-                  onEdit={setEditContact}
                   onDelete={setDeleteContact}
                 />
               ))}
@@ -261,20 +254,6 @@ export function EnseigneContactsSection({
                 </label>
                 <label className="flex items-center gap-2 text-sm">
                   <Checkbox
-                    checked={newContact.isCommercialContact}
-                    onCheckedChange={(checked: boolean) =>
-                      setNewContact(prev => ({
-                        ...prev,
-                        isCommercialContact: checked,
-                      }))
-                    }
-                  />
-                  <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-orange-100 text-orange-700">
-                    Commercial
-                  </span>
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <Checkbox
                     checked={newContact.isTechnicalContact}
                     onCheckedChange={(checked: boolean) =>
                       setNewContact(prev => ({
@@ -317,16 +296,6 @@ export function EnseigneContactsSection({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Edit Contact Dialog */}
-      <EditContactDialog
-        open={!!editContact}
-        onOpenChange={open => {
-          if (!open) setEditContact(null);
-        }}
-        contact={editContact}
-        enseigneId={enseigneId}
-      />
 
       {/* Delete Contact Dialog */}
       <DeleteContactDialog

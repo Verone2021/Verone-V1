@@ -29,7 +29,6 @@ export interface ContactBO {
   title: string | null;
   isPrimaryContact: boolean;
   isBillingContact: boolean;
-  isCommercialContact: boolean;
   isTechnicalContact: boolean;
   linkmeUserId: string | null;
   linkmeRole: string | null;
@@ -48,7 +47,6 @@ export interface UpdateContactInput {
   title?: string;
   isBillingContact?: boolean;
   isPrimaryContact?: boolean;
-  isCommercialContact?: boolean;
   isTechnicalContact?: boolean;
 }
 
@@ -62,7 +60,6 @@ export interface CreateContactInput {
   title?: string;
   isBillingContact?: boolean;
   isPrimaryContact?: boolean;
-  isCommercialContact?: boolean;
   isTechnicalContact?: boolean;
   isDeliveryContact?: boolean;
 }
@@ -98,7 +95,7 @@ export function useOrganisationContactsBO(organisationId: string | null) {
           title,
           is_primary_contact,
           is_billing_contact,
-          is_commercial_contact,
+
           is_technical_contact
         `
         )
@@ -122,7 +119,7 @@ export function useOrganisationContactsBO(organisationId: string | null) {
         title: c.title,
         isPrimaryContact: c.is_primary_contact ?? false,
         isBillingContact: c.is_billing_contact ?? false,
-        isCommercialContact: c.is_commercial_contact ?? false,
+
         isTechnicalContact: c.is_technical_contact ?? false,
         linkmeUserId: null,
         linkmeRole: null,
@@ -172,7 +169,7 @@ export function useEnseigneContactsBO(enseigneId: string | null) {
           title,
           is_primary_contact,
           is_billing_contact,
-          is_commercial_contact,
+
           is_technical_contact
         `
         )
@@ -243,7 +240,7 @@ export function useEnseigneContactsBO(enseigneId: string | null) {
           title: c.title,
           isPrimaryContact: c.is_primary_contact ?? false,
           isBillingContact: c.is_billing_contact ?? false,
-          isCommercialContact: c.is_commercial_contact ?? false,
+
           isTechnicalContact: c.is_technical_contact ?? false,
           linkmeUserId: linkmeUser?.user_id ?? null,
           linkmeRole: linkmeUser?.linkme_role ?? null,
@@ -288,7 +285,7 @@ export function useCreateContactBO() {
           title: input.title ?? null,
           is_billing_contact: input.isBillingContact ?? false,
           is_primary_contact: input.isPrimaryContact ?? false,
-          is_commercial_contact: input.isCommercialContact ?? false,
+
           is_technical_contact: input.isTechnicalContact ?? false,
           is_active: true,
         })
@@ -344,7 +341,7 @@ export function useUpdateContactBO() {
           title: input.title ?? null,
           is_billing_contact: input.isBillingContact ?? false,
           is_primary_contact: input.isPrimaryContact ?? false,
-          is_commercial_contact: input.isCommercialContact ?? false,
+
           is_technical_contact: input.isTechnicalContact ?? false,
         })
         .eq('id', input.contactId)
