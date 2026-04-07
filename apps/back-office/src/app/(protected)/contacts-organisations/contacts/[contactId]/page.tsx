@@ -26,7 +26,6 @@ import {
   Archive,
   ArchiveRestore,
   Star,
-  Users,
   Calculator,
   Wrench,
 } from 'lucide-react';
@@ -110,22 +109,10 @@ export default function ContactDetailPage() {
         <Badge
           key="primary"
           variant="secondary"
-          className="bg-gray-100 text-gray-900 border-gray-200"
+          className="bg-green-100 text-green-700 border-green-200"
         >
           <Star className="h-3 w-3 mr-1" />
-          Principal
-        </Badge>
-      );
-    }
-    if (contact.is_commercial_contact) {
-      badges.push(
-        <Badge
-          key="commercial"
-          variant="outline"
-          className="bg-blue-50 text-blue-700 border-blue-200"
-        >
-          <Users className="h-3 w-3 mr-1" />
-          Commercial
+          Responsable
         </Badge>
       );
     }
@@ -134,7 +121,7 @@ export default function ContactDetailPage() {
         <Badge
           key="billing"
           variant="outline"
-          className="bg-green-50 text-green-700 border-green-200"
+          className="bg-blue-100 text-blue-700 border-blue-200"
         >
           <Calculator className="h-3 w-3 mr-1" />
           Facturation
@@ -146,7 +133,7 @@ export default function ContactDetailPage() {
         <Badge
           key="technical"
           variant="outline"
-          className="bg-purple-50 text-purple-700 border-purple-200"
+          className="bg-violet-100 text-violet-700 border-violet-200"
         >
           <Wrench className="h-3 w-3 mr-1" />
           Technique

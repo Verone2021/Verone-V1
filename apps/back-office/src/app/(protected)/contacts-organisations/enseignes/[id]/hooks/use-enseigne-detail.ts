@@ -67,7 +67,6 @@ export function useEnseigneDetail(enseigneId: string) {
     title: '',
     isBillingContact: false,
     isPrimaryContact: false,
-    isCommercialContact: false,
     isTechnicalContact: false,
   });
 
@@ -84,7 +83,6 @@ export function useEnseigneDetail(enseigneId: string) {
         title: newContact.title || undefined,
         isBillingContact: newContact.isBillingContact,
         isPrimaryContact: newContact.isPrimaryContact,
-        isCommercialContact: newContact.isCommercialContact,
         isTechnicalContact: newContact.isTechnicalContact,
       })
       .then(() => {
@@ -97,7 +95,6 @@ export function useEnseigneDetail(enseigneId: string) {
           title: '',
           isBillingContact: false,
           isPrimaryContact: false,
-          isCommercialContact: false,
           isTechnicalContact: false,
         });
       })

@@ -19,7 +19,6 @@ interface Contact {
   is_primary_contact: boolean;
   is_billing_contact: boolean;
   is_technical_contact: boolean;
-  is_commercial_contact: boolean;
   is_active: boolean;
 }
 

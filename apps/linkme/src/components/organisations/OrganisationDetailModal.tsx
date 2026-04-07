@@ -83,18 +83,11 @@ export function OrganisationDetailModal({
     return {
       primary: contacts.filter(c => c.isPrimaryContact),
       billing: contacts.filter(c => c.isBillingContact && !c.isPrimaryContact),
-      commercial: contacts.filter(
-        c => c.isCommercialContact && !c.isPrimaryContact && !c.isBillingContact
-      ),
       technical: contacts.filter(
         c => c.isTechnicalContact && !c.isPrimaryContact && !c.isBillingContact
       ),
       others: contacts.filter(
-        c =>
-          !c.isPrimaryContact &&
-          !c.isBillingContact &&
-          !c.isCommercialContact &&
-          !c.isTechnicalContact
+        c => !c.isPrimaryContact && !c.isBillingContact && !c.isTechnicalContact
       ),
     };
   }, [contactsData]);
@@ -250,23 +243,6 @@ export function OrganisationDetailModal({
                     </h5>
                     <div className="space-y-2">
                       {groupedContacts.billing.map(contact => (
-                        <ContactDisplayCard
-                          key={contact.id}
-                          contact={contact}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Commercial Contact */}
-                {groupedContacts.commercial.length > 0 && (
-                  <div>
-                    <h5 className="text-sm font-medium text-gray-600 mb-2">
-                      Contact Commercial
-                    </h5>
-                    <div className="space-y-2">
-                      {groupedContacts.commercial.map(contact => (
                         <ContactDisplayCard
                           key={contact.id}
                           contact={contact}

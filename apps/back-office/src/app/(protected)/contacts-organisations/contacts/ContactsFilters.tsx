@@ -76,14 +76,14 @@ export function ContactsFilters({
                 size="sm"
                 onClick={() => onFilterRoleChange('primary')}
               >
-                Principaux
+                Responsables
               </ButtonV2>
               <ButtonV2
-                variant={filterRole === 'commercial' ? 'secondary' : 'outline'}
+                variant={filterRole === 'billing' ? 'secondary' : 'outline'}
                 size="sm"
-                onClick={() => onFilterRoleChange('commercial')}
+                onClick={() => onFilterRoleChange('billing')}
               >
-                Commercial
+                Facturation
               </ButtonV2>
               <ButtonV2
                 variant={filterRole === 'technical' ? 'secondary' : 'outline'}

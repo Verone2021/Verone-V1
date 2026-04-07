@@ -196,7 +196,6 @@ export const SecureContactSchema = z.object({
   is_primary_contact: z.boolean(),
   is_billing_contact: z.boolean(),
   is_technical_contact: z.boolean(),
-  is_commercial_contact: z.boolean(),
 });
 
 /**

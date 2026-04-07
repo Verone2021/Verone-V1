@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { Card, cn } from '@verone/ui';
 import {
   ExternalLink,
+  Eye,
   Mail,
-  Pencil,
   Phone,
   ShoppingCart,
   Smartphone,
@@ -18,7 +18,6 @@ import type { ContactBO } from '../../../hooks/use-organisation-contacts-bo';
 
 interface EnseigneContactCardProps {
   contact: ContactBO;
-  onEdit: (contact: ContactBO) => void;
   onDelete: (contact: ContactBO) => void;
 }
 
@@ -55,12 +54,6 @@ function getRoleBadges(contact: ContactBO): RoleBadge[] {
       className: 'bg-blue-100 text-blue-700',
     });
   }
-  if (contact.isCommercialContact) {
-    badges.push({
-      label: 'Commercial',
-      className: 'bg-orange-100 text-orange-700',
-    });
-  }
   if (contact.isTechnicalContact) {
     badges.push({
       label: 'Technique',
@@ -72,7 +65,6 @@ function getRoleBadges(contact: ContactBO): RoleBadge[] {
 
 export function EnseigneContactCard({
   contact,
-  onEdit,
   onDelete,
 }: EnseigneContactCardProps) {
   const isLinkmeUser = !!contact.linkmeUserId;
@@ -94,17 +86,13 @@ export function EnseigneContactCard({
         </div>
       ) : (
         <div className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            type="button"
-            onClick={e => {
-              e.stopPropagation();
-              onEdit(contact);
-            }}
+          <Link
+            href={`/contacts-organisations/contacts/${contact.id}`}
             className="p-1.5 rounded-md bg-white border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors"
-            title="Modifier le contact"
+            title="Voir le detail du contact"
           >
-            <Pencil className="h-3.5 w-3.5 text-gray-500" />
-          </button>
+            <Eye className="h-3.5 w-3.5 text-gray-500" />
+          </Link>
           <button
             type="button"
             onClick={e => {

@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import type { UseMutationResult } from '@tanstack/react-query';
 
 import { ButtonV2 } from '@verone/ui';
@@ -16,10 +18,9 @@ import { Label } from '@verone/ui';
 import { Switch } from '@verone/ui';
 import { Loader2, Mail, Phone, Plus, Users, X } from 'lucide-react';
 
-import {
-  ContactCardBO,
-  CreateNewContactCard,
-} from '../../../../canaux-vente/linkme/components/contacts/ContactCardBO';
+import { CreateNewContactCard } from '../../../../canaux-vente/linkme/components/contacts/ContactCardBO';
+import { DeleteContactDialog } from '../../../../canaux-vente/linkme/enseignes/[id]/components/DeleteContactDialog';
+import { EnseigneContactCard } from '../../../../canaux-vente/linkme/enseignes/[id]/components/EnseigneContactCard';
 import type {
   ContactBO,
   CreateContactInput,
@@ -39,11 +40,11 @@ interface NewContactState {
   title: string;
   isBillingContact: boolean;
   isPrimaryContact: boolean;
-  isCommercialContact: boolean;
   isTechnicalContact: boolean;
 }
 
 interface EnseigneContactsTabProps {
+  enseigneId: string;
   contactsData: ContactData | null | undefined;
   contactsLoading: boolean;
   showCreateContact: boolean;
@@ -59,6 +60,7 @@ interface EnseigneContactsTabProps {
 }
 
 export function EnseigneContactsTab({
+  enseigneId,
   contactsData,
   contactsLoading,
   showCreateContact,
@@ -68,6 +70,8 @@ export function EnseigneContactsTab({
   createContactMutation,
   handleCreateEnseigneContact,
 }: EnseigneContactsTabProps) {
+  const [deleteContact, setDeleteContact] = useState<ContactBO | null>(null);
+
   return (
     <>
       <Card>
@@ -116,11 +120,17 @@ export function EnseigneContactsTab({
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {contactsData.contacts.map(contact => (
-                <ContactCardBO key={contact.id} contact={contact} showBadges />
+                <EnseigneContactCard
+                  key={contact.id}
+                  contact={contact}
+                  onDelete={setDeleteContact}
+                />
               ))}
-              <CreateNewContactCard
-                onClick={() => setShowCreateContact(true)}
-              />
+              <div className="min-h-[180px]">
+                <CreateNewContactCard
+                  onClick={() => setShowCreateContact(true)}
+                />
+              </div>
             </div>
           )}
         </CardContent>
@@ -242,6 +252,18 @@ export function EnseigneContactsTab({
                   />
                   <span className="text-sm">Facturation</span>
                 </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Switch
+                    checked={newContact.isTechnicalContact}
+                    onCheckedChange={checked =>
+                      setNewContact(prev => ({
+                        ...prev,
+                        isTechnicalContact: checked,
+                      }))
+                    }
+                  />
+                  <span className="text-sm">Technique</span>
+                </label>
               </div>
             </div>
           </div>
@@ -272,6 +294,16 @@ export function EnseigneContactsTab({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Contact Dialog */}
+      <DeleteContactDialog
+        open={!!deleteContact}
+        onOpenChange={open => {
+          if (!open) setDeleteContact(null);
+        }}
+        contact={deleteContact}
+        enseigneId={enseigneId}
+      />
     </>
   );
 }

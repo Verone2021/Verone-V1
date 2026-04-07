@@ -6,7 +6,6 @@ import {
   X,
   Edit,
   Star,
-  Users,
   Calculator,
   Wrench,
 } from 'lucide-react';
@@ -57,7 +56,6 @@ export function ContactRolesEditSection({
   const handleStartEdit = () => {
     startEdit(section, {
       is_primary_contact: contact.is_primary_contact ?? false,
-      is_commercial_contact: contact.is_commercial_contact ?? false,
       is_billing_contact: contact.is_billing_contact ?? false,
       is_technical_contact: contact.is_technical_contact ?? false,
     });
@@ -82,10 +80,7 @@ export function ContactRolesEditSection({
     contactData: Partial<
       Pick<
         Contact,
-        | 'is_primary_contact'
-        | 'is_commercial_contact'
-        | 'is_billing_contact'
-        | 'is_technical_contact'
+        'is_primary_contact' | 'is_billing_contact' | 'is_technical_contact'
       >
     >
   ) => {
@@ -96,22 +91,10 @@ export function ContactRolesEditSection({
         <Badge
           key="primary"
           variant="secondary"
-          className="bg-gray-100 text-gray-900 border-gray-200"
+          className="bg-green-100 text-green-700 border-green-200"
         >
           <Star className="h-3 w-3 mr-1" />
-          Principal
-        </Badge>
-      );
-    }
-    if (contactData?.is_commercial_contact) {
-      badges.push(
-        <Badge
-          key="commercial"
-          variant="outline"
-          className="bg-blue-50 text-blue-700 border-blue-200"
-        >
-          <Users className="h-3 w-3 mr-1" />
-          Commercial
+          Responsable
         </Badge>
       );
     }
@@ -120,7 +103,7 @@ export function ContactRolesEditSection({
         <Badge
           key="billing"
           variant="outline"
-          className="bg-green-50 text-green-700 border-green-200"
+          className="bg-blue-100 text-blue-700 border-blue-200"
         >
           <Calculator className="h-3 w-3 mr-1" />
           Facturation
@@ -132,7 +115,7 @@ export function ContactRolesEditSection({
         <Badge
           key="technical"
           variant="outline"
-          className="bg-purple-50 text-purple-700 border-purple-200"
+          className="bg-violet-100 text-violet-700 border-violet-200"
         >
           <Wrench className="h-3 w-3 mr-1" />
           Technique
@@ -198,39 +181,10 @@ export function ContactRolesEditSection({
             >
               <div className="flex items-center">
                 <Star className="h-4 w-4 mr-2 text-gray-700" />
-                <span className="font-medium text-black">
-                  Contact Principal
-                </span>
+                <span className="font-medium text-black">Responsable</span>
               </div>
               <div className="text-sm text-gray-600 mt-1">
-                Contact privilégié pour toutes les communications importantes
-              </div>
-            </label>
-          </div>
-
-          {/* Contact Commercial */}
-          <div className="flex items-center space-x-3 p-3 border rounded-lg">
-            <input
-              type="checkbox"
-              id="is_commercial_contact"
-              checked={editData?.is_commercial_contact ?? false}
-              onChange={e =>
-                handleRoleChange('is_commercial_contact', e.target.checked)
-              }
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label
-              htmlFor="is_commercial_contact"
-              className="flex-1 cursor-pointer"
-            >
-              <div className="flex items-center">
-                <Users className="h-4 w-4 mr-2 text-blue-600" />
-                <span className="font-medium text-black">
-                  Contact Commercial
-                </span>
-              </div>
-              <div className="text-sm text-gray-600 mt-1">
-                Responsable des relations commerciales, devis et négociations
+                Contact privilegie pour toutes les communications importantes
               </div>
             </label>
           </div>
@@ -327,12 +281,6 @@ export function ContactRolesEditSection({
               Contact privilégié pour toutes les communications importantes
             </div>
           )}
-          {contact.is_commercial_contact && (
-            <div className="flex items-center">
-              <Users className="h-3 w-3 mr-2 text-blue-600" />
-              Responsable des relations commerciales, devis et négociations
-            </div>
-          )}
           {contact.is_billing_contact && (
             <div className="flex items-center">
               <Calculator className="h-3 w-3 mr-2 text-green-600" />
@@ -349,7 +297,6 @@ export function ContactRolesEditSection({
 
         {/* Message si aucun rôle spécifique */}
         {!contact.is_primary_contact &&
-          !contact.is_commercial_contact &&
           !contact.is_billing_contact &&
           !contact.is_technical_contact && (
             <div className="text-center text-gray-400 text-xs italic py-2">

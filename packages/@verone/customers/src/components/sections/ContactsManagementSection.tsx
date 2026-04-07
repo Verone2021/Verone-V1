@@ -8,7 +8,6 @@ import {
   Plus,
   Phone,
   Mail,
-  Edit,
   Trash2,
   Users,
   Star,
@@ -45,18 +44,16 @@ interface ContactsManagementSectionProps {
 export function ContactsManagementSection({
   organisationId,
   organisationName,
-  organisationType,
+  organisationType: _organisationType,
   onUpdate,
 }: ContactsManagementSectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingContact, setEditingContact] = useState<Contact | null>(null);
 
   const {
     loading,
     contacts,
     fetchOrganisationContacts,
     createContact,
-    updateContact,
     deactivateContact,
     setPrimaryContact,
     getContactFullName,
@@ -84,50 +81,23 @@ export function ContactsManagementSection({
   };
 
   const handleCreateContact = () => {
-    setEditingContact(null);
-    setIsModalOpen(true);
-  };
-
-  const handleEditContact = (contact: Contact) => {
-    setEditingContact(contact);
     setIsModalOpen(true);
   };
 
   const handleContactSaved = async (contactData: UpdateContactData) => {
     try {
-      console.warn('ContactsManagementSection - Sauvegarde contact:', {
-        organisationId,
-        organisationName,
-        organisationType,
-        contactData,
-        editingContact: editingContact?.id,
-      });
-
-      if (editingContact) {
-        // Mise à jour
-        await updateContact(editingContact.id, contactData);
-      } else {
-        // Création avec association automatique
-        const fullContactData: CreateContactData = {
-          ...(contactData as unknown as CreateContactData),
-          organisation_id: organisationId,
-        };
-        console.warn('Données finales pour création:', fullContactData);
-        await createContact(fullContactData);
-      }
+      const fullContactData: CreateContactData = {
+        ...(contactData as unknown as CreateContactData),
+        organisation_id: organisationId,
+      };
+      await createContact(fullContactData);
 
       setIsModalOpen(false);
-      setEditingContact(null);
       await loadContacts();
       onUpdate?.();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      console.error(
-        '❌ ERREUR SAUVEGARDE CONTACT - ContactsManagementSection:'
-      );
-      console.error('Error:', message);
-      console.error('OrganisationId:', organisationId);
-      console.error('ContactData received:', contactData);
+      console.error('[ContactsManagement] Create failed:', message);
     }
   };
 
@@ -175,21 +145,9 @@ export function ContactsManagementSection({
         <Badge
           key="primary"
           variant="secondary"
-          className="bg-gray-100 text-gray-900 border-gray-200"
+          className="bg-green-100 text-green-700 border-green-200"
         >
-          <Star className="h-3 w-3 mr-1" />
-          Principal
-        </Badge>
-      );
-    }
-    if (contact.is_commercial_contact) {
-      badges.push(
-        <Badge
-          key="commercial"
-          variant="outline"
-          className="bg-blue-50 text-blue-700 border-blue-200"
-        >
-          Commercial
+          Responsable
         </Badge>
       );
     }
@@ -198,7 +156,7 @@ export function ContactsManagementSection({
         <Badge
           key="billing"
           variant="outline"
-          className="bg-green-50 text-green-700 border-green-200"
+          className="bg-blue-100 text-blue-700 border-blue-200"
         >
           Facturation
         </Badge>
@@ -209,7 +167,7 @@ export function ContactsManagementSection({
         <Badge
           key="technical"
           variant="outline"
-          className="bg-purple-50 text-purple-700 border-purple-200"
+          className="bg-violet-100 text-violet-700 border-violet-200"
         >
           Technique
         </Badge>
@@ -357,14 +315,6 @@ export function ContactsManagementSection({
                       <ButtonV2
                         variant="outline"
                         size="sm"
-                        onClick={() => handleEditContact(contact)}
-                        title="Modifier le contact"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </ButtonV2>
-                      <ButtonV2
-                        variant="outline"
-                        size="sm"
                         onClick={() => {
                           void handleDeleteContact(contact);
                         }}
@@ -387,12 +337,10 @@ export function ContactsManagementSection({
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setEditingContact(null);
         }}
         onSave={contactData => {
           void handleContactSaved(contactData as unknown as UpdateContactData);
         }}
-        contact={editingContact ?? undefined}
         organisationId={organisationId}
         organisationName={organisationName}
       />

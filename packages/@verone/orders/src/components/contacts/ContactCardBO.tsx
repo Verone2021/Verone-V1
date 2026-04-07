@@ -64,13 +64,6 @@ function getRoleBadges(contact: ContactBO): RoleBadge[] {
     });
   }
 
-  if (contact.isCommercialContact) {
-    badges.push({
-      label: 'Commercial',
-      className: 'bg-orange-100 text-orange-700',
-    });
-  }
-
   if (contact.isTechnicalContact) {
     badges.push({
       label: 'Technique',

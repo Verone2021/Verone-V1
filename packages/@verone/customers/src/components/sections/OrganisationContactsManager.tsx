@@ -23,7 +23,6 @@ interface Contact {
   is_primary_contact: boolean;
   is_billing_contact: boolean;
   is_technical_contact: boolean;
-  is_commercial_contact: boolean;
   is_active: boolean;
 }
 
@@ -304,11 +303,6 @@ export function OrganisationContactsManager({
                     marginTop: spacing[2],
                   }}
                 >
-                  {contact.is_commercial_contact && (
-                    <Badge variant="outline" style={{ fontSize: '0.625rem' }}>
-                      Commercial
-                    </Badge>
-                  )}
                   {contact.is_billing_contact && (
                     <Badge variant="outline" style={{ fontSize: '0.625rem' }}>
                       Facturation

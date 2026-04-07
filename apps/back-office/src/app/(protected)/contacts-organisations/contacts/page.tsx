@@ -64,7 +64,6 @@ export default function ContactsPage() {
     const matchesRole =
       filterRole === 'all' ||
       (filterRole === 'primary' && contact.is_primary_contact) ||
-      (filterRole === 'commercial' && contact.is_commercial_contact) ||
       (filterRole === 'technical' && contact.is_technical_contact) ||
       (filterRole === 'billing' && contact.is_billing_contact);
     /* eslint-enable @typescript-eslint/prefer-nullish-coalescing */
