@@ -2,59 +2,22 @@
 
 import { ButtonV2 } from '@verone/ui';
 import { Checkbox } from '@verone/ui';
-import { AddressAutocomplete, type AddressResult } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
   MapPin,
   Save,
   X,
   Edit,
-  Home,
   Building,
-  Copy,
+  Home,
   Navigation,
+  Copy,
 } from 'lucide-react';
 
-import { useInlineEdit, type EditableSection } from '@verone/common/hooks';
-
-interface Organisation {
-  id: string;
-  address_line1?: string | null;
-  address_line2?: string | null;
-  postal_code?: string | null;
-  city?: string | null;
-  region?: string | null;
-  country?: string | null;
-
-  // Adresse de facturation
-  billing_address_line1?: string | null;
-  billing_address_line2?: string | null;
-  billing_postal_code?: string | null;
-  billing_city?: string | null;
-  billing_region?: string | null;
-  billing_country?: string | null;
-
-  // Adresse de livraison
-  shipping_address_line1?: string | null;
-  shipping_address_line2?: string | null;
-  shipping_postal_code?: string | null;
-  shipping_city?: string | null;
-  shipping_region?: string | null;
-  shipping_country?: string | null;
-
-  // Coordonnées GPS (adresse de livraison)
-  latitude?: number | null;
-  longitude?: number | null;
-
-  // Indicateur adresses différentes
-  has_different_shipping_address?: boolean | null;
-}
-
-interface AddressEditSectionProps {
-  organisation: Organisation;
-  onUpdate: (updatedOrganisation: Partial<Organisation>) => void;
-  className?: string;
-}
+import { AddressFormFields } from './AddressFormFields';
+import { AddressReadView } from './AddressReadView';
+import type { AddressEditSectionProps } from './address-edit.types';
+import { useAddressEditSection } from './use-address-edit-section';
 
 export function AddressEditSection({
   organisation,
@@ -62,206 +25,23 @@ export function AddressEditSection({
   className,
 }: AddressEditSectionProps) {
   const {
+    editData,
+    error,
     isEditing,
     isSaving,
-    getError,
-    getEditedData,
-    startEdit,
-    cancelEdit,
-    updateEditedData,
-    saveChanges,
     hasChanges,
-  } = useInlineEdit({
-    organisationId: organisation.id,
-    onUpdate: (updatedData: Partial<Organisation>) => {
-      onUpdate(updatedData);
-    },
-    onError: error => {
-      console.error('❌ Erreur mise à jour adresse:', error);
-    },
-  });
+    handleStartEdit,
+    handleSave,
+    handleCancel,
+    handleFieldChange,
+    handleBillingAddressSelect,
+    handleShippingAddressSelect,
+    handleCopyShippingToBilling,
+    handleToggleDifferentShipping,
+    copyAddressToClipboard,
+  } = useAddressEditSection(organisation, onUpdate);
 
-  const section: EditableSection = 'address';
-  const editData = getEditedData(section) as Organisation | null;
-  const error = getError(section);
-
-  const handleStartEdit = () => {
-    // Utiliser les données legacy comme fallback si les nouveaux champs sont vides
-    const billingData = {
-      billing_address_line1:
-        organisation.billing_address_line1 ?? organisation.address_line1 ?? '',
-      billing_address_line2:
-        organisation.billing_address_line2 ?? organisation.address_line2 ?? '',
-      billing_postal_code:
-        organisation.billing_postal_code ?? organisation.postal_code ?? '',
-      billing_city: organisation.billing_city ?? organisation.city ?? '',
-      billing_region: organisation.billing_region ?? organisation.region ?? '',
-      billing_country:
-        organisation.billing_country ?? organisation.country ?? 'FR',
-    };
-
-    startEdit(section, {
-      // Garder les champs legacy pour compatibilité
-      address_line1: organisation.address_line1 ?? '',
-      address_line2: organisation.address_line2 ?? '',
-      postal_code: organisation.postal_code ?? '',
-      city: organisation.city ?? '',
-      region: organisation.region ?? '',
-      country: organisation.country ?? 'FR',
-
-      // Adresses billing avec fallback
-      ...billingData,
-
-      // Adresses shipping
-      shipping_address_line1: organisation.shipping_address_line1 ?? '',
-      shipping_address_line2: organisation.shipping_address_line2 ?? '',
-      shipping_postal_code: organisation.shipping_postal_code ?? '',
-      shipping_city: organisation.shipping_city ?? '',
-      shipping_region: organisation.shipping_region ?? '',
-      shipping_country: organisation.shipping_country ?? 'FR',
-
-      // Coordonnées GPS (adresse de livraison)
-      latitude: organisation.latitude ?? null,
-      longitude: organisation.longitude ?? null,
-
-      has_different_shipping_address:
-        organisation.has_different_shipping_address ?? false,
-    });
-  };
-
-  const handleSave = async () => {
-    // Nettoyer les données avant sauvegarde (trim des espaces)
-    const cleanedData = Object.fromEntries(
-      Object.entries(editData ?? {}).map(([key, val]) => {
-        if (typeof val === 'string') {
-          const trimmed = val.trim();
-          // Convertir les chaînes vides en null pour les champs optionnels
-          return [key, trimmed === '' ? null : trimmed];
-        }
-        return [key, val];
-      })
-    );
-
-    // Mettre à jour avec les données nettoyées
-    // Note: Le filtrage des legacy fields est fait dans use-inline-edit.ts
-    updateEditedData(section, cleanedData);
-
-    // Attendre un tick pour que l'état soit mis à jour
-    await new Promise(resolve => setTimeout(resolve, 0));
-
-    const success = await saveChanges(section);
-    if (success) {
-      console.warn('✅ Adresse mise à jour avec succès');
-    }
-  };
-
-  const handleCancel = () => {
-    cancelEdit(section);
-  };
-
-  const copyAddressToClipboard = async (
-    addressData: Record<string, string | null | undefined>,
-    title: string
-  ) => {
-    const lines = [
-      addressData.line1,
-      addressData.line2,
-      addressData.postal_code && addressData.city
-        ? `${addressData.postal_code} ${addressData.city}`
-        : (addressData.city ?? addressData.postal_code),
-      addressData.region,
-      addressData.country && addressData.country !== 'FR'
-        ? countries.find(c => c.code === addressData.country)?.name
-        : null,
-    ].filter(Boolean);
-
-    const text = lines.join('\n');
-
-    try {
-      await navigator.clipboard.writeText(text);
-      console.warn(`✅ ${title} copiée dans le presse-papiers`);
-      // TODO: Ajouter un toast si disponible
-    } catch (err) {
-      console.error('❌ Erreur lors de la copie:', err);
-    }
-  };
-
-  const handleFieldChange = (field: string, value: string) => {
-    let processedValue = value; // Pas de trim ici, seulement à la sauvegarde
-
-    // Formatage automatique du code postal français
-    if (
-      (field.includes('postal_code') || field === 'postal_code') &&
-      processedValue.length <= 5
-    ) {
-      processedValue = processedValue.replace(/\D/g, ''); // Garder seulement les chiffres
-    }
-
-    // Mise en forme automatique des villes (première lettre en majuscule)
-    if (
-      field.includes('city') ||
-      field.includes('region') ||
-      field === 'city' ||
-      field === 'region'
-    ) {
-      processedValue = processedValue
-        .toLowerCase()
-        .split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-    }
-
-    updateEditedData(section, { [field]: processedValue ?? null });
-  };
-
-  // Handler pour l'autocomplete d'adresse de facturation
-  const handleBillingAddressSelect = (address: AddressResult) => {
-    const updates: Record<string, unknown> = {
-      billing_address_line1: address.streetAddress,
-      billing_city: address.city,
-      billing_postal_code: address.postalCode,
-      billing_region: address.region ?? '',
-      billing_country: address.countryCode ?? 'FR',
-    };
-
-    // Si adresse de livraison = facturation, mettre à jour les coordonnées GPS
-    if (!editData?.has_different_shipping_address) {
-      updates.latitude = address.latitude ?? null;
-      updates.longitude = address.longitude ?? null;
-    }
-
-    updateEditedData(section, updates);
-  };
-
-  // Handler pour l'autocomplete d'adresse de livraison
-  const handleShippingAddressSelect = (address: AddressResult) => {
-    updateEditedData(section, {
-      shipping_address_line1: address.streetAddress,
-      shipping_city: address.city,
-      shipping_postal_code: address.postalCode,
-      shipping_region: address.region ?? '',
-      shipping_country: address.countryCode ?? 'FR',
-      // Coordonnées GPS automatiquement mises à jour
-      latitude: address.latitude ?? null,
-      longitude: address.longitude ?? null,
-    });
-  };
-
-  // Options de pays
-  const countries = [
-    { code: 'FR', name: 'France' },
-    { code: 'BE', name: 'Belgique' },
-    { code: 'DE', name: 'Allemagne' },
-    { code: 'IT', name: 'Italie' },
-    { code: 'ES', name: 'Espagne' },
-    { code: 'CH', name: 'Suisse' },
-    { code: 'UK', name: 'Royaume-Uni' },
-    { code: 'NL', name: 'Pays-Bas' },
-    { code: 'LU', name: 'Luxembourg' },
-    { code: 'OTHER', name: 'Autre' },
-  ];
-
-  if (isEditing(section)) {
+  if (isEditing) {
     return (
       <div className={cn('card-verone p-4', className)}>
         <div className="flex items-center justify-between mb-3">
@@ -274,7 +54,7 @@ export function AddressEditSection({
               variant="outline"
               size="sm"
               onClick={handleCancel}
-              disabled={isSaving(section)}
+              disabled={isSaving}
             >
               <X className="h-3 w-3 mr-1" />
               Annuler
@@ -283,10 +63,10 @@ export function AddressEditSection({
               variant="secondary"
               size="sm"
               onClick={() => void handleSave()}
-              disabled={!hasChanges(section) || isSaving(section)}
+              disabled={!hasChanges || isSaving}
             >
               <Save className="h-3 w-3 mr-1" />
-              {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
+              {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
             </ButtonV2>
           </div>
         </div>
@@ -294,133 +74,34 @@ export function AddressEditSection({
         <div className="space-y-6">
           {/* Adresse de facturation */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="text-md font-semibold text-black flex items-center gap-2">
-                <Building className="h-4 w-4" />
-                Adresse de facturation
-              </h4>
-              <ButtonV2
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  // Copier l'adresse de livraison vers facturation
-                  updateEditedData(section, {
-                    billing_address_line1:
-                      editData?.shipping_address_line1 ?? '',
-                    billing_address_line2:
-                      editData?.shipping_address_line2 ?? '',
-                    billing_postal_code: editData?.shipping_postal_code ?? '',
-                    billing_city: editData?.shipping_city ?? '',
-                    billing_region: editData?.shipping_region ?? '',
-                    billing_country: editData?.shipping_country ?? 'FR',
-                  });
-                }}
-                className="flex items-center gap-2"
-                disabled={!editData?.has_different_shipping_address}
-              >
-                <Copy className="h-3 w-3" />
-                Copier vers facturation
-              </ButtonV2>
-            </div>
-
-            {/* Autocomplete adresse de facturation */}
-            <div className="md:col-span-2 mb-4">
-              <AddressAutocomplete
-                value={editData?.billing_address_line1 ?? ''}
-                onChange={value =>
-                  handleFieldChange('billing_address_line1', value)
-                }
-                onSelect={handleBillingAddressSelect}
-                placeholder="Rechercher une adresse..."
-                label="Adresse"
-                id="billing-address-edit"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-black mb-1">
-                  Complément d'adresse
-                </label>
-                <input
-                  type="text"
-                  value={editData?.billing_address_line2 ?? ''}
-                  onChange={e =>
-                    handleFieldChange('billing_address_line2', e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                  placeholder="Bâtiment, étage, etc. (optionnel)"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-black mb-1">
-                  Code postal
-                </label>
-                <input
-                  type="text"
-                  value={editData?.billing_postal_code ?? ''}
-                  onChange={e =>
-                    handleFieldChange('billing_postal_code', e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                  placeholder="75001"
-                  maxLength={5}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-black mb-1">
-                  Ville
-                </label>
-                <input
-                  type="text"
-                  value={editData?.billing_city ?? ''}
-                  onChange={e =>
-                    handleFieldChange('billing_city', e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                  placeholder="Paris"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-black mb-1">
-                  Région / Département
-                </label>
-                <input
-                  type="text"
-                  value={editData?.billing_region ?? ''}
-                  onChange={e =>
-                    handleFieldChange('billing_region', e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                  placeholder="Île-de-France"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-black mb-1">
-                  Pays
-                </label>
-                <select
-                  value={editData?.billing_country ?? 'FR'}
-                  onChange={e =>
-                    updateEditedData(section, {
-                      billing_country: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                >
-                  {countries.map(country => (
-                    <option key={country.code} value={country.code}>
-                      {country.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            <AddressFormFields
+              prefix="billing"
+              editData={editData}
+              onFieldChange={handleFieldChange}
+              onAddressSelect={handleBillingAddressSelect}
+              onCountryChange={(field, value) =>
+                handleFieldChange(field, value)
+              }
+              headerSlot={
+                <div className="flex items-center justify-between">
+                  <h4 className="text-md font-semibold text-black flex items-center gap-2">
+                    <Building className="h-4 w-4" />
+                    Adresse de facturation
+                  </h4>
+                  <ButtonV2
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyShippingToBilling}
+                    className="flex items-center gap-2"
+                    disabled={!editData?.has_different_shipping_address}
+                  >
+                    <Copy className="h-3 w-3" />
+                    Copier vers facturation
+                  </ButtonV2>
+                </div>
+              }
+            />
           </div>
 
           {/* Toggle adresse de livraison différente */}
@@ -428,22 +109,9 @@ export function AddressEditSection({
             <Checkbox
               id="different_shipping"
               checked={editData?.has_different_shipping_address ?? false}
-              onCheckedChange={checked => {
-                updateEditedData(section, {
-                  has_different_shipping_address: checked,
-                });
-                if (!checked) {
-                  // Vider les champs shipping si on désactive
-                  updateEditedData(section, {
-                    shipping_address_line1: '',
-                    shipping_address_line2: '',
-                    shipping_postal_code: '',
-                    shipping_city: '',
-                    shipping_region: '',
-                    shipping_country: 'FR',
-                  });
-                }
-              }}
+              onCheckedChange={checked =>
+                handleToggleDifferentShipping(checked as boolean)
+              }
             />
             <label
               htmlFor="different_shipping"
@@ -456,115 +124,25 @@ export function AddressEditSection({
           {/* Adresse de livraison (conditionnelle) */}
           {editData?.has_different_shipping_address && (
             <div className="space-y-4 border-t pt-4">
-              <h4 className="text-md font-semibold text-black flex items-center gap-2">
-                <Home className="h-4 w-4" />
-                Adresse de livraison
-              </h4>
-
-              {/* Autocomplete adresse de livraison */}
-              <div className="md:col-span-2">
-                <AddressAutocomplete
-                  value={editData?.shipping_address_line1 ?? ''}
-                  onChange={value =>
-                    handleFieldChange('shipping_address_line1', value)
-                  }
-                  onSelect={handleShippingAddressSelect}
-                  placeholder="Rechercher une adresse..."
-                  label="Adresse"
-                  id="shipping-address-edit"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-black mb-1">
-                    Complément d'adresse
-                  </label>
-                  <input
-                    type="text"
-                    value={editData?.shipping_address_line2 ?? ''}
-                    onChange={e =>
-                      handleFieldChange(
-                        'shipping_address_line2',
-                        e.target.value
-                      )
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                    placeholder="Bâtiment, étage, etc. (optionnel)"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-black mb-1">
-                    Code postal
-                  </label>
-                  <input
-                    type="text"
-                    value={editData?.shipping_postal_code ?? ''}
-                    onChange={e =>
-                      handleFieldChange('shipping_postal_code', e.target.value)
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                    placeholder="75001"
-                    maxLength={5}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-black mb-1">
-                    Ville
-                  </label>
-                  <input
-                    type="text"
-                    value={editData?.shipping_city ?? ''}
-                    onChange={e =>
-                      handleFieldChange('shipping_city', e.target.value)
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                    placeholder="Paris"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-black mb-1">
-                    Région / Département
-                  </label>
-                  <input
-                    type="text"
-                    value={editData?.shipping_region ?? ''}
-                    onChange={e =>
-                      handleFieldChange('shipping_region', e.target.value)
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                    placeholder="Île-de-France"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-black mb-1">
-                    Pays
-                  </label>
-                  <select
-                    value={editData?.shipping_country ?? 'FR'}
-                    onChange={e =>
-                      updateEditedData(section, {
-                        shipping_country: e.target.value,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                  >
-                    {countries.map(country => (
-                      <option key={country.code} value={country.code}>
-                        {country.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              <AddressFormFields
+                prefix="shipping"
+                editData={editData}
+                onFieldChange={handleFieldChange}
+                onAddressSelect={handleShippingAddressSelect}
+                onCountryChange={(field, value) =>
+                  handleFieldChange(field, value)
+                }
+                headerSlot={
+                  <h4 className="text-md font-semibold text-black flex items-center gap-2">
+                    <Home className="h-4 w-4" />
+                    Adresse de livraison
+                  </h4>
+                }
+              />
             </div>
           )}
 
-          {/* Coordonnées GPS (lecture seule) */}
+          {/* Coordonnées GPS (lecture seule en édition) */}
           {(editData?.latitude ?? editData?.longitude) && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-3">
               <div className="flex items-center gap-2 text-green-700">
@@ -587,7 +165,6 @@ export function AddressEditSection({
           )}
         </div>
 
-        {/* Message d'erreur */}
         {error && (
           <div className="mt-3 text-sm text-red-600 bg-red-50 p-2 rounded">
             ❌ {error}
@@ -596,90 +173,6 @@ export function AddressEditSection({
       </div>
     );
   }
-
-  // Mode affichage - avec fallback vers legacy comme dans l'édition
-  const billingData = {
-    line1: organisation.billing_address_line1 ?? organisation.address_line1,
-    line2: organisation.billing_address_line2 ?? organisation.address_line2,
-    postal_code: organisation.billing_postal_code ?? organisation.postal_code,
-    city: organisation.billing_city ?? organisation.city,
-    region: organisation.billing_region ?? organisation.region,
-    country: organisation.billing_country ?? organisation.country,
-  };
-
-  const shippingData = {
-    line1: organisation.shipping_address_line1,
-    line2: organisation.shipping_address_line2,
-    postal_code: organisation.shipping_postal_code,
-    city: organisation.shipping_city,
-    region: organisation.shipping_region,
-    country: organisation.shipping_country,
-  };
-
-  const hasBillingAddress =
-    billingData.line1 ?? billingData.city ?? billingData.country;
-  const hasShippingAddress =
-    shippingData.line1 ?? shippingData.city ?? shippingData.country;
-  const hasLegacyAddress =
-    organisation.address_line1 ?? organisation.city ?? organisation.country;
-
-  const renderAddress = (
-    _prefix: string,
-    addressData: Record<string, string | null | undefined>,
-    icon: React.ReactNode,
-    title: string
-  ) => {
-    if (!addressData.line1 && !addressData.city && !addressData.country)
-      return null;
-
-    return (
-      <div className="bg-gray-50 p-3 rounded-lg">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-2">
-            {icon}
-            <div className="text-xs font-medium text-gray-600 uppercase">
-              {title}
-            </div>
-          </div>
-          <ButtonV2
-            variant="outline"
-            size="md"
-            onClick={() => void copyAddressToClipboard(addressData, title)}
-            title={`Copier ${title}`}
-          >
-            <Copy className="h-4 w-4" />
-          </ButtonV2>
-        </div>
-        <div className="flex-1 pl-6">
-          {addressData.line1 && (
-            <div className="text-sm text-black">{addressData.line1}</div>
-          )}
-          {addressData.line2 && (
-            <div className="text-sm text-black opacity-80">
-              {addressData.line2}
-            </div>
-          )}
-          {(addressData.postal_code ?? addressData.city) && (
-            <div className="text-sm text-black mt-1">
-              {addressData.postal_code && `${addressData.postal_code} `}
-              {addressData.city}
-            </div>
-          )}
-          {addressData.region && (
-            <div className="text-sm text-black opacity-80">
-              {addressData.region}
-            </div>
-          )}
-          {addressData.country && addressData.country !== 'FR' && (
-            <div className="text-sm text-black font-medium mt-1">
-              {countries.find(c => c.code === addressData.country)?.name ??
-                addressData.country}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className={cn('card-verone p-4', className)}>
@@ -694,60 +187,10 @@ export function AddressEditSection({
         </ButtonV2>
       </div>
 
-      <div className="space-y-3">
-        {/* Adresse de facturation - TOUJOURS affichée si on a des données */}
-        {hasBillingAddress &&
-          renderAddress(
-            'billing',
-            billingData,
-            <Building className="h-4 w-4 mt-1 text-gray-600" />,
-            'Adresse de facturation'
-          )}
-
-        {/* Adresse de livraison - Affichée si différente ET qu'on a des données shipping */}
-        {hasShippingAddress &&
-          organisation.has_different_shipping_address &&
-          renderAddress(
-            'shipping',
-            shippingData,
-            <Home className="h-4 w-4 mt-1 text-gray-600" />,
-            'Adresse de livraison'
-          )}
-
-        {/* Message si adresses identiques */}
-        {hasBillingAddress && !organisation.has_different_shipping_address && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
-            <div className="text-sm text-blue-700">
-              📦 Adresse de livraison identique à l'adresse de facturation
-            </div>
-          </div>
-        )}
-
-        {/* Coordonnées GPS (lecture seule) */}
-        {(organisation.latitude ?? organisation.longitude) && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-            <div className="flex items-center gap-2 text-green-700">
-              <Navigation className="h-4 w-4" />
-              <span className="text-sm font-medium">Coordonnées GPS</span>
-              <span className="text-xs text-green-600 ml-auto">
-                Adresse de livraison
-              </span>
-            </div>
-            <div className="mt-2 pl-6 text-sm text-green-800 font-mono">
-              {organisation.latitude?.toFixed(6)},{' '}
-              {organisation.longitude?.toFixed(6)}
-            </div>
-          </div>
-        )}
-
-        {/* Aucune adresse */}
-        {!hasBillingAddress && !hasShippingAddress && !hasLegacyAddress && (
-          <div className="text-center text-gray-400 text-xs italic py-4">
-            <Building className="h-8 w-8 mx-auto mb-2 opacity-30" />
-            Aucune adresse renseignée
-          </div>
-        )}
-      </div>
+      <AddressReadView
+        organisation={organisation}
+        onCopy={copyAddressToClipboard}
+      />
     </div>
   );
 }

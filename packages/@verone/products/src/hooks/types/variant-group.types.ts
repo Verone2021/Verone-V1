@@ -2,6 +2,14 @@
 // TYPES LOCAUX (pour typage interne des requêtes Supabase)
 // ============================================================================
 
+/** Type du toast passé en dépendance aux sous-hooks */
+export type ToastFn = (options: {
+  title?: string;
+  description?: string;
+  variant?: 'default' | 'destructive' | 'success';
+  duration?: number;
+}) => void;
+
 /** Produit tel que retourné par la requête Supabase dans fetchVariantGroups */
 export interface FetchedProduct {
   id: string;

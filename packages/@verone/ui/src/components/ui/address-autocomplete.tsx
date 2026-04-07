@@ -23,243 +23,19 @@ import {
 import { MapPin, Loader2, Globe, X } from 'lucide-react';
 
 import { cn } from '../../design-system/utils';
+import {
+  searchBan,
+  searchGeoapify,
+  seemsFrench,
+} from './address-autocomplete.api';
+import type {
+  AddressResult,
+  AddressAutocompleteProps,
+} from './address-autocomplete.types';
+import { AddressManualForm, AddressManualModeLink } from './AddressManualForm';
+import { AddressSuggestionsList } from './AddressSuggestionsList';
 
-// =====================================================================
-// TYPES
-// =====================================================================
-
-export interface AddressResult {
-  /** Adresse formatée complète */
-  label: string;
-  /** Numéro et rue */
-  streetAddress: string;
-  /** Ville */
-  city: string;
-  /** Code postal */
-  postalCode: string;
-  /** Région/Département */
-  region?: string;
-  /** Code pays (ISO 2) */
-  countryCode: string;
-  /** Nom du pays */
-  country: string;
-  /** Latitude */
-  latitude: number;
-  /** Longitude */
-  longitude: number;
-  /** Source de l'API (ban ou geoapify) */
-  source: 'ban' | 'geoapify';
-}
-
-export interface AddressAutocompleteProps {
-  /** Valeur actuelle (adresse texte) */
-  value?: string;
-  /** Callback quand l'utilisateur tape */
-  onChange?: (value: string) => void;
-  /** Callback quand une adresse est sélectionnée */
-  onSelect?: (address: AddressResult) => void;
-  /** Placeholder */
-  placeholder?: string;
-  /** Label du champ */
-  label?: string;
-  /** Message d'erreur */
-  error?: string;
-  /** Désactiver le champ */
-  disabled?: boolean;
-  /** Classes CSS additionnelles */
-  className?: string;
-  /** Forcer l'utilisation de Geoapify (international) */
-  forceInternational?: boolean;
-  /** Clé API Geoapify (si non définie dans env) */
-  geoapifyApiKey?: string;
-  /** Pays par défaut pour filtrer les résultats */
-  defaultCountry?: string;
-  /** ID unique pour l'accessibilité */
-  id?: string;
-}
-
-interface BanFeature {
-  type: string;
-  geometry: {
-    type: string;
-    coordinates: [number, number];
-  };
-  properties: {
-    label: string;
-    score: number;
-    housenumber?: string;
-    street?: string;
-    name?: string;
-    postcode: string;
-    citycode: string;
-    city: string;
-    context: string;
-    type: string;
-    importance: number;
-    x: number;
-    y: number;
-  };
-}
-
-interface BanResponse {
-  type: string;
-  version: string;
-  features: BanFeature[];
-  attribution: string;
-  licence: string;
-  query: string;
-  limit: number;
-}
-
-interface GeoapifyFeature {
-  type: string;
-  properties: {
-    name?: string;
-    housenumber?: string;
-    street?: string;
-    postcode?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    country_code?: string;
-    formatted: string;
-    lat: number;
-    lon: number;
-  };
-  geometry: {
-    type: string;
-    coordinates: [number, number];
-  };
-}
-
-interface GeoapifyResponse {
-  type: string;
-  features: GeoapifyFeature[];
-}
-
-// =====================================================================
-// API FUNCTIONS
-// =====================================================================
-
-/**
- * Recherche d'adresses via l'API BAN (France)
- */
-async function searchBan(query: string): Promise<AddressResult[]> {
-  if (!query || query.length < 3) return [];
-
-  try {
-    const response = await fetch(
-      `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=5&autocomplete=1`
-    );
-
-    if (!response.ok) {
-      throw new Error(`BAN API error: ${response.status}`);
-    }
-
-    const data = (await response.json()) as BanResponse;
-
-    return data.features.map(feature => ({
-      label: feature.properties.label,
-      streetAddress: feature.properties.housenumber
-        ? `${feature.properties.housenumber} ${feature.properties.street ?? feature.properties.name ?? ''}`
-        : (feature.properties.street ??
-          feature.properties.name ??
-          feature.properties.label),
-      city: feature.properties.city,
-      postalCode: feature.properties.postcode,
-      region: feature.properties.context?.split(',')[1]?.trim(),
-      countryCode: 'FR',
-      country: 'France',
-      latitude: feature.geometry.coordinates[1],
-      longitude: feature.geometry.coordinates[0],
-      source: 'ban' as const,
-    }));
-  } catch (error) {
-    console.error('BAN API error:', error);
-    return [];
-  }
-}
-
-/**
- * Recherche d'adresses via Geoapify (International)
- */
-async function searchGeoapify(
-  query: string,
-  apiKey: string,
-  countryCode?: string
-): Promise<AddressResult[]> {
-  if (!query || query.length < 3 || !apiKey) return [];
-
-  try {
-    let url = `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(query)}&limit=5&apiKey=${apiKey}`;
-
-    if (countryCode) {
-      url += `&filter=countrycode:${countryCode.toLowerCase()}`;
-    }
-
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`Geoapify API error: ${response.status}`);
-    }
-
-    const data = (await response.json()) as GeoapifyResponse;
-
-    return data.features.map(feature => ({
-      label: feature.properties.formatted,
-      streetAddress: feature.properties.housenumber
-        ? `${feature.properties.housenumber} ${feature.properties.street ?? ''}`
-        : (feature.properties.street ?? feature.properties.name ?? ''),
-      city: feature.properties.city ?? '',
-      postalCode: feature.properties.postcode ?? '',
-      region: feature.properties.state,
-      countryCode: feature.properties.country_code?.toUpperCase() ?? '',
-      country: feature.properties.country ?? '',
-      latitude: feature.properties.lat,
-      longitude: feature.properties.lon,
-      source: 'geoapify' as const,
-    }));
-  } catch (error) {
-    console.error('Geoapify API error:', error);
-    return [];
-  }
-}
-
-/**
- * Détecte si une requête semble être française
- */
-function seemsFrench(query: string): boolean {
-  // Patterns français: code postal 5 chiffres, villes connues, etc.
-  const frenchPatterns = [
-    /\b\d{5}\b/, // Code postal français
-    /\bfrance\b/i,
-    /\bparis\b/i,
-    /\blyon\b/i,
-    /\bmarseille\b/i,
-    /\btoulouse\b/i,
-    /\bnice\b/i,
-    /\bnantes\b/i,
-    /\bstrasbourg\b/i,
-    /\bmontpellier\b/i,
-    /\bbordeaux\b/i,
-    /\blille\b/i,
-    /\brennes\b/i,
-    /\breims\b/i,
-    /\bsaint-/i,
-    /\brue\b/i,
-    /\bavenue\b/i,
-    /\bboulevard\b/i,
-    /\bplace\b/i,
-    /\bimpasse\b/i,
-    /\ballée\b/i,
-  ];
-
-  return frenchPatterns.some(pattern => pattern.test(query));
-}
-
-// =====================================================================
-// COMPONENT
-// =====================================================================
+export type { AddressResult, AddressAutocompleteProps };
 
 export function AddressAutocomplete({
   value = '',
@@ -274,6 +50,7 @@ export function AddressAutocomplete({
   geoapifyApiKey,
   defaultCountry,
   id,
+  showGpsFields = false,
 }: AddressAutocompleteProps) {
   const [inputValue, setInputValue] = useState(value);
   const [suggestions, setSuggestions] = useState<AddressResult[]>([]);
@@ -281,24 +58,22 @@ export function AddressAutocomplete({
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [useInternational, setUseInternational] = useState(forceInternational);
+  const [manualMode, setManualMode] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
 
-  // Get API key from props or environment
   const apiKey =
     geoapifyApiKey ??
     (typeof window !== 'undefined'
       ? (process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY ?? '')
       : '');
 
-  // Sync with external value
   useEffect(() => {
     setInputValue(value);
   }, [value]);
 
-  // Search function with debounce
   const handleSearch = useCallback(
     async (query: string) => {
       if (query.length < 3) {
@@ -312,19 +87,16 @@ export function AddressAutocomplete({
       try {
         let results: AddressResult[] = [];
 
-        // Si on force l'international ou si la requête ne semble pas française
         if (forceInternational || useInternational || !seemsFrench(query)) {
           if (apiKey) {
             results = await searchGeoapify(query, apiKey, defaultCountry);
           }
         }
 
-        // Si pas de résultats internationaux ou si ça semble français, essayer BAN
         if (results.length === 0 && !forceInternational) {
           results = await searchBan(query);
         }
 
-        // Si toujours pas de résultats et qu'on a une clé Geoapify, fallback
         if (results.length === 0 && apiKey && !forceInternational) {
           results = await searchGeoapify(query, apiKey, defaultCountry);
         }
@@ -332,8 +104,8 @@ export function AddressAutocomplete({
         setSuggestions(results);
         setIsOpen(results.length > 0);
         setHighlightedIndex(-1);
-      } catch (error) {
-        console.error('Address search error:', error);
+      } catch (err) {
+        console.error('Address search error:', err);
         setSuggestions([]);
       } finally {
         setIsLoading(false);
@@ -342,19 +114,16 @@ export function AddressAutocomplete({
     [apiKey, defaultCountry, forceInternational, useInternational]
   );
 
-  // Handle input change with debounce
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const newValue = e.target.value;
       setInputValue(newValue);
       onChange?.(newValue);
 
-      // Clear previous timeout
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
 
-      // Debounce search
       debounceRef.current = setTimeout(() => {
         void handleSearch(newValue);
       }, 300);
@@ -362,7 +131,6 @@ export function AddressAutocomplete({
     [onChange, handleSearch]
   );
 
-  // Handle suggestion selection
   const handleSelectSuggestion = useCallback(
     (suggestion: AddressResult) => {
       setInputValue(suggestion.label);
@@ -375,7 +143,6 @@ export function AddressAutocomplete({
     [onChange, onSelect]
   );
 
-  // Keyboard navigation
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
       if (!isOpen) return;
@@ -406,7 +173,6 @@ export function AddressAutocomplete({
     [isOpen, suggestions, highlightedIndex, handleSelectSuggestion]
   );
 
-  // Clear input
   const handleClear = useCallback(() => {
     setInputValue('');
     onChange?.('');
@@ -415,7 +181,6 @@ export function AddressAutocomplete({
     inputRef.current?.focus();
   }, [onChange]);
 
-  // Close on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -432,7 +197,6 @@ export function AddressAutocomplete({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Cleanup debounce on unmount
   useEffect(() => {
     return () => {
       if (debounceRef.current) {
@@ -445,7 +209,6 @@ export function AddressAutocomplete({
 
   return (
     <div className={cn('relative', className)}>
-      {/* Label */}
       {label && (
         <label
           htmlFor={inputId}
@@ -455,9 +218,7 @@ export function AddressAutocomplete({
         </label>
       )}
 
-      {/* Input container */}
       <div className="relative">
-        {/* Icon */}
         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -466,7 +227,6 @@ export function AddressAutocomplete({
           )}
         </div>
 
-        {/* Input */}
         <input
           ref={inputRef}
           id={inputId}
@@ -499,9 +259,7 @@ export function AddressAutocomplete({
           )}
         />
 
-        {/* Actions */}
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-          {/* Toggle international */}
           {apiKey && !forceInternational && (
             <button
               type="button"
@@ -527,7 +285,6 @@ export function AddressAutocomplete({
             </button>
           )}
 
-          {/* Clear button */}
           {inputValue && !disabled && (
             <button
               type="button"
@@ -541,90 +298,47 @@ export function AddressAutocomplete({
         </div>
       </div>
 
-      {/* Error message */}
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
 
-      {/* Suggestions dropdown */}
-      {isOpen && suggestions.length > 0 && (
-        <ul
-          ref={listRef}
-          id={`${inputId}-listbox`}
-          role="listbox"
-          className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto"
-        >
-          {suggestions.map((suggestion, index) => (
-            <li
-              key={`${suggestion.label}-${index}`}
-              id={`${inputId}-option-${index}`}
-              role="option"
-              aria-selected={highlightedIndex === index}
-              onClick={() => handleSelectSuggestion(suggestion)}
-              onMouseEnter={() => setHighlightedIndex(index)}
-              className={cn(
-                'px-4 py-3 cursor-pointer transition-colors',
-                'border-b border-gray-100 last:border-b-0',
-                highlightedIndex === index ? 'bg-blue-50' : 'hover:bg-gray-50'
-              )}
-            >
-              <div className="flex items-start gap-3">
-                <MapPin
-                  className={cn(
-                    'h-4 w-4 mt-0.5 flex-shrink-0',
-                    suggestion.source === 'ban'
-                      ? 'text-blue-500'
-                      : 'text-green-500'
-                  )}
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {suggestion.streetAddress || suggestion.label}
-                  </p>
-                  <p className="text-xs text-gray-500 truncate">
-                    {suggestion.postalCode} {suggestion.city}
-                    {suggestion.country !== 'France' &&
-                      ` - ${suggestion.country}`}
-                  </p>
-                </div>
-                {/* Source badge */}
-                <span
-                  className={cn(
-                    'text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0',
-                    suggestion.source === 'ban'
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'bg-green-100 text-green-700'
-                  )}
-                >
-                  {suggestion.source === 'ban' ? 'FR' : 'INT'}
-                </span>
-              </div>
-            </li>
-          ))}
-        </ul>
+      {!manualMode && (
+        <AddressSuggestionsList
+          suggestions={suggestions}
+          isOpen={isOpen}
+          inputValue={inputValue}
+          isLoading={isLoading}
+          highlightedIndex={highlightedIndex}
+          listRef={listRef}
+          inputId={inputId}
+          apiKey={apiKey}
+          forceInternational={forceInternational}
+          useInternational={useInternational}
+          onSelect={handleSelectSuggestion}
+          onHighlight={setHighlightedIndex}
+          onToggleInternational={() => {
+            setUseInternational(true);
+            void handleSearch(inputValue);
+          }}
+          onOpenManualMode={() => {
+            setManualMode(true);
+            setIsOpen(false);
+          }}
+        />
       )}
 
-      {/* No results message */}
-      {isOpen &&
-        suggestions.length === 0 &&
-        inputValue.length >= 3 &&
-        !isLoading && (
-          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 text-center">
-            <p className="text-sm text-gray-500">Aucune adresse trouvée</p>
-            {!useInternational && apiKey && (
-              <button
-                type="button"
-                onClick={() => {
-                  setUseInternational(true);
-                  void handleSearch(inputValue);
-                }}
-                className="mt-2 text-sm text-blue-600 hover:underline"
-              >
-                Essayer la recherche internationale
-              </button>
-            )}
-          </div>
-        )}
+      <AddressManualModeLink
+        disabled={disabled || manualMode}
+        onOpen={() => setManualMode(true)}
+      />
+
+      {manualMode && (
+        <AddressManualForm
+          showGpsFields={showGpsFields}
+          onChange={onChange}
+          onSelect={onSelect}
+          onClose={() => setManualMode(false)}
+          setInputValue={setInputValue}
+        />
+      )}
     </div>
   );
 }
-
-export default AddressAutocomplete;

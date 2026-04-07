@@ -1,4 +1,4 @@
-export { AffiliatesSection } from './AffiliatesSection';
+export { AffiliatesSection } from './AffiliatesSection/index';
 export { CommissionsSection } from './CommissionsSection';
 export { ConfigurationSection } from './ConfigurationSection';
 export { DashboardSection } from './DashboardSection';
