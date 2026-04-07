@@ -2,7 +2,6 @@
 
 import React from 'react';
 
-import type { PurchaseOrder } from '@verone/orders';
 import {
   Badge,
   Button,
@@ -27,23 +26,11 @@ import {
   MoreHorizontal,
 } from 'lucide-react';
 
+import type { PurchaseOrderExtended } from '../types';
+
 // =====================================================================
 // TYPES
 // =====================================================================
-
-type PurchaseOrderExtended = PurchaseOrder & {
-  payment_status_v2?:
-    | 'paid'
-    | 'pending'
-    | 'partially_paid'
-    | 'overpaid'
-    | 'failed'
-    | null;
-  manual_payment_type?: string | null;
-  is_matched?: boolean | null;
-  matched_transaction_label?: string | null;
-  matched_transaction_amount?: number | null;
-};
 
 interface PurchaseOrderActionMenuProps {
   order: PurchaseOrderExtended;
