@@ -1,7 +1,5 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-
 import Image from 'next/image';
 
 import {
@@ -9,7 +7,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  Button,
   Badge,
   Separator,
   Input,
@@ -17,55 +14,32 @@ import {
 } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
-  X,
   Package,
   Tag,
   Truck,
   Check,
-  FileDown,
   Euro,
-  Loader2,
   Calculator,
   TrendingDown,
 } from 'lucide-react';
 
 import { MarginSlider } from './MarginSlider';
-import {
-  useCalculateLinkMeMargins,
-  LINKME_MARGIN_DEFAULTS,
-} from '../hooks/use-linkme-margin-calculator';
+import { SelectionProductDetailActions } from './SelectionProductDetailActions';
+import { useSelectionProductDetail } from './use-selection-product-detail';
 import type { SelectionItem } from '../hooks/use-linkme-selections';
 
 interface SelectionProductDetailModalProps {
-  /** État d'ouverture du modal */
   open: boolean;
-  /** Callback pour changer l'état d'ouverture */
   onOpenChange: (open: boolean) => void;
-  /** Item de la sélection à afficher */
   item: SelectionItem | null;
-  /** Mode du modal: 'view' (lecture seule) ou 'edit' (éditable) */
   mode?: 'view' | 'edit';
-  /** Callback pour sauvegarder (mode edit) - marginRate en %, customPriceHT en € */
   onSave?: (
     itemId: string,
     updates: { marginRate?: number; customPriceHT?: number }
   ) => Promise<void>;
-  /** Indique si une sauvegarde est en cours */
   isSaving?: boolean;
 }
 
-/**
- * Modal de détail produit pour les sélections LinkMe
- *
- * MODE VUE (view):
- * - Design professionnel, lecture seule
- * - Téléchargement PDF avec/sans marge
- *
- * MODE ÉDITION (edit):
- * - Slider marge interactif
- * - Champ prix de vente modifiable
- * - Prix client LinkMe (calculé) affiché
- */
 export function SelectionProductDetailModal({
   open,
   onOpenChange,
@@ -74,192 +48,31 @@ export function SelectionProductDetailModal({
   onSave,
   isSaving = false,
 }: SelectionProductDetailModalProps) {
-  // États locaux pour l'édition
-  const [localMarginRate, setLocalMarginRate] = useState<number>(0);
-  const [localCustomPriceHT, setLocalCustomPriceHT] = useState<number>(0);
-  const [hasChanges, setHasChanges] = useState(false);
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-
-  // Ref pour le contenu PDF
-  const pdfContentRef = useRef<HTMLDivElement>(null);
-
-  // Sync états locaux avec item
-  useEffect(() => {
-    if (item) {
-      // margin_rate est stocké en % (ex: 11 = 11%), on convertit en décimal (0.11)
-      setLocalMarginRate(item.margin_rate / 100);
-      setLocalCustomPriceHT(item.base_price_ht ?? 0);
-      setHasChanges(false);
-    }
-  }, [item]);
-
-  // Calcul dynamique des marges avec le hook
-  // FORMULE CORRECTE: basePriceHT = prix de vente sélection (PAS cost_price!)
-  // Ce hook calcule automatiquement min, max, suggested, zones de couleur
-  const marginResult = useCalculateLinkMeMargins(
-    mode === 'edit' ? localCustomPriceHT : item?.base_price_ht,
-    item?.public_price_ht,
-    item?.commission_rate,
-    item?.buffer_rate ?? LINKME_MARGIN_DEFAULTS.bufferRate
-  );
-
-  // Calcul des prix
-  const basePrice =
-    mode === 'edit' ? localCustomPriceHT : (item?.base_price_ht ?? 0);
-  const commissionRate = (item?.commission_rate ?? 0) / 100; // Conversion % → décimal (5.00 → 0.05)
-
-  // Produit affilié = créé par l'affilié (revendeur)
-  // Commission DÉDUITE du revenu, PAS ajoutée au prix client
-  const isAffiliateProduct = !!item?.product?.created_by_affiliate;
-
-  // Prix de vente avec taux de marge additif
-  // Note: sellingPriceWithMargin = ce que l'affilié gagne (basePrice * (1 + tauxMarge))
-  // Taux de marge additif: PVHT = PAHT * (1 + taux%)
-  const sellingPriceWithMargin = basePrice * (1 + localMarginRate);
-
-  // FORMULE SELON TYPE DE PRODUIT:
-  // Catalogue: PrixFinal = PVHT × (1 + commission) → commission ajoutée au prix
-  // Affilié: PrixFinal = basePrice → commission déduite du revenu affilié
-  const finalPriceWithCommission = isAffiliateProduct
-    ? basePrice
-    : basePrice * (1 + localMarginRate) * (1 + commissionRate);
-
-  // Prix client LinkMe (calculé)
-  // Catalogue: base × (1 + commission%) → client paie plus
-  // Affilié: base tel quel → client paie le prix fixé par l'affilié
-  const prixClientLinkMe = isAffiliateProduct
-    ? basePrice
-    : basePrice * (1 + commissionRate);
-
-  // Commission Vérone déduite du revenu affilié (uniquement produits affiliés)
-  const affiliateCommissionRate = item?.product?.affiliate_commission_rate ?? 0;
-  const affiliateCommissionAmount = isAffiliateProduct
-    ? basePrice * (affiliateCommissionRate / 100)
-    : 0;
-  const affiliateNetRevenue = isAffiliateProduct
-    ? basePrice - affiliateCommissionAmount
-    : 0;
-
-  // Prix catalogue LinkMe (pour comparaison)
-  // C'est le prix que le client paie si on utilise le prix catalogue standard
-  const prixCatalogueLinkMe = item?.catalog_price_ht
-    ? item.catalog_price_ht * (1 + commissionRate)
-    : null;
-
-  // Remise vs catalogue (en %)
-  // Négatif = moins cher que le catalogue, Positif = plus cher
-  const remiseVsCatalogue =
-    prixCatalogueLinkMe && prixClientLinkMe
-      ? ((prixClientLinkMe - prixCatalogueLinkMe) / prixCatalogueLinkMe) * 100
-      : null;
-
-  // Buffer rate pour les calculs
-  const bufferRate = item?.buffer_rate ?? LINKME_MARGIN_DEFAULTS.bufferRate;
-
-  // Handler changement marge (décimal)
-  const handleMarginChange = useCallback((newRate: number) => {
-    setLocalMarginRate(newRate);
-    setHasChanges(true);
-  }, []);
-
-  // Handler changement prix de vente
-  const handlePriceChange = useCallback((newPrice: number) => {
-    setLocalCustomPriceHT(newPrice);
-    setHasChanges(true);
-  }, []);
-
-  // Handler sauvegarde
-  const handleSave = async () => {
-    if (!item || !hasChanges || !onSave) return;
-
-    // Validation: vérifier que le prix final ne dépasse pas le prix public
-    if (item.public_price_ht && item.public_price_ht > 0) {
-      const commissionRate = (item.commission_rate ?? 0) / 100;
-      const marginRateDecimal = localMarginRate;
-      const bufferRate = item.buffer_rate ?? 0.05;
-
-      // Prix final avec taux de marge additif + commission
-      const finalPrice =
-        localCustomPriceHT * (1 + marginRateDecimal) * (1 + commissionRate);
-      // Prix maximum autorisé = prix public × (1 - buffer)
-      const maxAllowedPrice = item.public_price_ht * (1 - bufferRate);
-
-      if (finalPrice > maxAllowedPrice) {
-        alert(
-          `Le prix de vente final (${finalPrice.toFixed(2)} €) dépasse le prix public autorisé (${maxAllowedPrice.toFixed(2)} €).\n\n` +
-            `Veuillez réduire la marge ou le prix de vente HT.`
-        );
-        return;
-      }
-    }
-
-    await onSave(item.id, {
-      marginRate: localMarginRate * 100, // Reconvertir en %
-      customPriceHT: localCustomPriceHT,
-    });
-    setHasChanges(false);
-    onOpenChange(false);
-  };
-
-  // Handler annuler
-  const handleCancel = () => {
-    if (item) {
-      setLocalMarginRate(item.margin_rate / 100);
-      setLocalCustomPriceHT(item.base_price_ht ?? 0);
-      setHasChanges(false);
-    }
-    onOpenChange(false);
-  };
-
-  // Téléchargement PDF
-  const handleDownloadPdf = async (showMargin: boolean) => {
-    if (!item || !pdfContentRef.current) return;
-
-    setIsGeneratingPdf(true);
-
-    try {
-      // Import dynamique pour éviter le SSR
-      const html2canvas = (await import('html2canvas')).default;
-      const jsPDF = (await import('jspdf')).default;
-
-      // Masquer/afficher la section marge selon l'option
-      const marginSection =
-        pdfContentRef.current.querySelector('.margin-section');
-      if (marginSection && !showMargin) {
-        (marginSection as HTMLElement).style.display = 'none';
-      }
-
-      const canvas = await html2canvas(pdfContentRef.current, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-      });
-
-      // Restaurer la section marge
-      if (marginSection && !showMargin) {
-        (marginSection as HTMLElement).style.display = '';
-      }
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
-
-      const imgWidth = 190;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-
-      const filename = `fiche-produit-${item.product?.sku ?? item.id}${showMargin ? '' : '-sans-marge'}.pdf`;
-      pdf.save(filename);
-    } catch (error) {
-      console.error('Erreur génération PDF:', error);
-    } finally {
-      setIsGeneratingPdf(false);
-    }
-  };
+  const {
+    localMarginRate,
+    localCustomPriceHT,
+    hasChanges,
+    isGeneratingPdf,
+    pdfContentRef,
+    marginResult,
+    basePrice,
+    commissionRate,
+    isAffiliateProduct,
+    sellingPriceWithMargin,
+    finalPriceWithCommission,
+    prixClientLinkMe,
+    affiliateCommissionRate,
+    affiliateCommissionAmount,
+    affiliateNetRevenue,
+    prixCatalogueLinkMe,
+    remiseVsCatalogue,
+    bufferRate,
+    handleMarginChange,
+    handlePriceChange,
+    handleSave,
+    handleCancel,
+    handleDownloadPdf,
+  } = useSelectionProductDetail({ item, mode, onSave, onOpenChange });
 
   if (!item) return null;
 
@@ -639,92 +452,15 @@ export function SelectionProductDetailModal({
 
         <Separator />
 
-        {/* === ACTIONS === */}
-        <div className="flex items-center justify-between gap-3">
-          {/* Boutons PDF (Mode Vue) */}
-          {isViewMode && (
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  void handleDownloadPdf(true).catch(error => {
-                    console.error(
-                      '[SelectionProductDetailModal] handleDownloadPdf failed:',
-                      error
-                    );
-                  });
-                }}
-                disabled={isGeneratingPdf}
-              >
-                {isGeneratingPdf ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <FileDown className="h-4 w-4 mr-2" />
-                )}
-                PDF avec marge
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  void handleDownloadPdf(false).catch(error => {
-                    console.error(
-                      '[SelectionProductDetailModal] handleDownloadPdf (no margin) failed:',
-                      error
-                    );
-                  });
-                }}
-                disabled={isGeneratingPdf}
-              >
-                {isGeneratingPdf ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <FileDown className="h-4 w-4 mr-2" />
-                )}
-                PDF sans marge
-              </Button>
-            </div>
-          )}
-
-          {/* Spacer si mode édition */}
-          {!isViewMode && <div />}
-
-          {/* Boutons Annuler/Enregistrer */}
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isSaving}
-            >
-              <X className="h-4 w-4 mr-2" />
-              {isViewMode ? 'Fermer' : 'Annuler'}
-            </Button>
-            {!isViewMode && (
-              <Button
-                onClick={() => {
-                  void handleSave().catch(error => {
-                    console.error(
-                      '[SelectionProductDetailModal] handleSave failed:',
-                      error
-                    );
-                  });
-                }}
-                disabled={!hasChanges || isSaving}
-                className={cn(hasChanges && 'bg-primary hover:bg-primary/90')}
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Enregistrement...
-                  </>
-                ) : (
-                  'Enregistrer modifications'
-                )}
-              </Button>
-            )}
-          </div>
-        </div>
+        <SelectionProductDetailActions
+          isViewMode={isViewMode}
+          isSaving={isSaving}
+          isGeneratingPdf={isGeneratingPdf}
+          hasChanges={hasChanges}
+          handleSave={handleSave}
+          handleCancel={handleCancel}
+          handleDownloadPdf={handleDownloadPdf}
+        />
       </DialogContent>
     </Dialog>
   );
