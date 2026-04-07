@@ -365,7 +365,7 @@ export function usePurchaseOrderForm(props: PurchaseOrderFormModalProps) {
 
         toast({
           title: 'Commande créée',
-          description: `Commande ${newOrder?.po_number || ''} créée avec ${localItems.length} article(s)`,
+          description: `Commande ${newOrder?.po_number ?? ''} créée avec ${localItems.length} article(s)`,
         });
 
         resetForm();
