@@ -1,6 +1,6 @@
 'use client';
 
-import type { VariantGroup } from '@verone/types';
+import type { VariantGroup, UpdateVariantGroupData } from '@verone/types';
 
 import { VariantAddProductModal } from '@verone/products';
 import { VariantGroupEditModal } from '@verone/products';
@@ -18,7 +18,7 @@ interface VariantesModalsProps {
   refetch: () => Promise<void>;
   updateVariantGroup: (
     id: string,
-    data: Partial<VariantGroup>
+    data: UpdateVariantGroupData
   ) => Promise<boolean>;
 }
 
