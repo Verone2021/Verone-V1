@@ -3,7 +3,10 @@
 import { formatPrice } from '@verone/utils';
 import { CheckCircle2, FileText, Copy } from 'lucide-react';
 
-import { VERONE_LEGAL_INFO, type CommissionForModal } from './use-payment-request';
+import {
+  VERONE_LEGAL_INFO,
+  type CommissionForModal,
+} from './use-payment-request';
 
 interface InvoiceTemplateTotals {
   totalHT: number;
@@ -33,9 +36,9 @@ export function PaymentRequestInvoiceTemplate({
     <div className="space-y-4">
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
         <p className="text-sm text-yellow-800">
-          <strong>Important :</strong> Ce modèle montre les informations
-          que l&apos;affilié devra inclure dans sa facture. Vous pouvez
-          copier ces informations pour les lui transmettre.
+          <strong>Important :</strong> Ce modèle montre les informations que
+          l&apos;affilié devra inclure dans sa facture. Vous pouvez copier ces
+          informations pour les lui transmettre.
         </p>
       </div>
 

@@ -32,7 +32,10 @@ export function SelectionProductDetailActions({
             size="sm"
             onClick={() => {
               void handleDownloadPdf(true).catch(error => {
-                console.error('[SelectionProductDetailModal] PDF failed:', error);
+                console.error(
+                  '[SelectionProductDetailModal] PDF failed:',
+                  error
+                );
               });
             }}
             disabled={isGeneratingPdf}
@@ -49,7 +52,10 @@ export function SelectionProductDetailActions({
             size="sm"
             onClick={() => {
               void handleDownloadPdf(false).catch(error => {
-                console.error('[SelectionProductDetailModal] PDF (no margin) failed:', error);
+                console.error(
+                  '[SelectionProductDetailModal] PDF (no margin) failed:',
+                  error
+                );
               });
             }}
             disabled={isGeneratingPdf}
@@ -75,7 +81,10 @@ export function SelectionProductDetailActions({
           <Button
             onClick={() => {
               void handleSave().catch(error => {
-                console.error('[SelectionProductDetailModal] save failed:', error);
+                console.error(
+                  '[SelectionProductDetailModal] save failed:',
+                  error
+                );
               });
             }}
             disabled={!hasChanges || isSaving}

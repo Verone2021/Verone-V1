@@ -1,14 +1,7 @@
 'use client';
 
 import { cn } from '@verone/utils';
-import {
-  X,
-  Edit,
-  AlertCircle,
-  Loader2,
-  Save,
-  Lock,
-} from 'lucide-react';
+import { X, Edit, AlertCircle, Loader2, Save, Lock } from 'lucide-react';
 
 import { EditOrderItemsList } from './edit-order-items-list';
 import { useEditLinkMeOrder } from './use-edit-linkme-order';

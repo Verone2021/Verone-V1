@@ -21,15 +21,10 @@ import {
   SelectValue,
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import {
-  ContactCardBO,
-} from '@verone/orders';
+import { ContactCardBO } from '@verone/orders';
 import { ArrowLeft, Send, Calendar, AlertCircle, Users, X } from 'lucide-react';
 
-import {
-  useCreateConsultation,
-  MAX_IMAGES,
-} from './use-create-consultation';
+import { useCreateConsultation, MAX_IMAGES } from './use-create-consultation';
 
 export default function CreateConsultationPage() {
   const {

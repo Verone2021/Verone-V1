@@ -7,7 +7,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  Button,
   Badge,
   Separator,
   Input,
@@ -20,7 +19,6 @@ import {
   Truck,
   Check,
   Euro,
-  Loader2,
   Calculator,
   TrendingDown,
 } from 'lucide-react';

@@ -23,7 +23,11 @@ interface ApiErrorResponse {
   message?: string;
 }
 
-export function useUserConfig(isOpen: boolean, user: LinkMeUser, onClose: () => void) {
+export function useUserConfig(
+  isOpen: boolean,
+  user: LinkMeUser,
+  onClose: () => void
+) {
   const updateUser = useUpdateLinkMeUser();
 
   const [activeTab, setActiveTab] = useState<TabType>('profile');
@@ -46,7 +50,9 @@ export function useUserConfig(isOpen: boolean, user: LinkMeUser, onClose: () => 
   const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   // Remuneration state
-  const [affiliateData, setAffiliateData] = useState<AffiliateData | null>(null);
+  const [affiliateData, setAffiliateData] = useState<AffiliateData | null>(
+    null
+  );
   const [isLoadingAffiliate, setIsLoadingAffiliate] = useState(false);
 
   // Validation

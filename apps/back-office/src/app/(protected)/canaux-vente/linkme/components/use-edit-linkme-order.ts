@@ -2,10 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 
-import {
-  calculateMargin,
-  calculateMarginRateFromPrices,
-} from '@verone/utils';
+import { calculateMargin, calculateMarginRateFromPrices } from '@verone/utils';
 
 import {
   useLinkMeOrder,
@@ -20,7 +17,10 @@ export interface EditableItem extends LinkMeOrderItem {
   editableMarginRate: number;
 }
 
-export function useEditLinkMeOrder(orderId: string | null, onClose: () => void) {
+export function useEditLinkMeOrder(
+  orderId: string | null,
+  onClose: () => void
+) {
   const { data: order, isLoading } = useLinkMeOrder(orderId);
   const updateOrder = useUpdateLinkMeOrder();
 

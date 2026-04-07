@@ -94,9 +94,24 @@ export function UserConfigModal({
           <div className="flex border-b border-gray-200">
             {(
               [
-                { key: 'profile' as TabType, label: 'Profil', icon: User, color: 'blue' },
-                { key: 'remuneration' as TabType, label: 'Rémunération', icon: Wallet, color: 'green' },
-                { key: 'security' as TabType, label: 'Sécurité', icon: Key, color: 'amber' },
+                {
+                  key: 'profile' as TabType,
+                  label: 'Profil',
+                  icon: User,
+                  color: 'blue',
+                },
+                {
+                  key: 'remuneration' as TabType,
+                  label: 'Rémunération',
+                  icon: Wallet,
+                  color: 'green',
+                },
+                {
+                  key: 'security' as TabType,
+                  label: 'Sécurité',
+                  icon: Key,
+                  color: 'amber',
+                },
               ] as const
             ).map(({ key, label, icon: Icon, color }) => (
               <button
