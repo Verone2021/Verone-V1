@@ -240,14 +240,15 @@ export default defineConfig([
   // ==========================================================================
   {
     files: ['apps/back-office/src/**/*.{ts,tsx}'],
+    ignores: [
+      'apps/back-office/src/app/(protected)/factures/**',
+      'apps/back-office/src/app/api/qonto/**',
+    ],
     rules: {
       'max-lines': [
         'warn',
         { max: 500, skipBlankLines: true, skipComments: true },
       ],
-      // max-lines-per-function: disabled (aligned with Vercel/Airbnb/Google — none enable this rule)
-      // max-lines: 500 per file is sufficient for React/JSX codebases
-      // See: https://github.com/eslint/eslint/issues/12236 (JSX incompatibility)
     },
   },
 
