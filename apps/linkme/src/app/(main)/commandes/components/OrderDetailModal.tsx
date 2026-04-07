@@ -10,8 +10,6 @@
 
 import React, { useCallback, useState } from 'react';
 
-import Image from 'next/image';
-
 import {
   Badge,
   Button,
@@ -21,37 +19,30 @@ import {
   DialogDescription,
   DialogTitle,
   Separator,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
 } from '@verone/ui';
-import { LINKME_CONSTANTS } from '@verone/utils';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import {
   CalendarIcon,
   DownloadIcon,
   EyeIcon,
-  FileTextIcon,
-  ImageIcon,
   Loader2Icon,
-  MapPinIcon,
-  PackageIcon,
   PhoneIcon,
-  TruckIcon,
   UserIcon,
   XIcon,
 } from 'lucide-react';
 
 import { usePermissions } from '@/hooks/use-permissions';
 
-import type {
-  LinkMeOrder,
-  StructuredAddress,
-} from '../../../../hooks/use-linkme-orders';
+import type { LinkMeOrder } from '../../../../hooks/use-linkme-orders';
+import {
+  formatDate,
+  STATUS_COLORS,
+  STATUS_LABELS,
+} from './order-detail.helpers';
+import { OrderAddressesSection } from './OrderAddressesSection';
+import { ContactCard } from './OrderContactCard';
+import { OrderItemsTable } from './OrderItemsTable';
+import { OrderShipmentSection } from './OrderShipmentSection';
+import { OrderTotalsSection } from './OrderTotalsSection';
 
 interface OrderDetailModalProps {
   order: LinkMeOrder | null;
@@ -59,113 +50,12 @@ interface OrderDetailModalProps {
   onClose: () => void;
 }
 
-// Couleurs des badges par statut
-const STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-amber-100 text-amber-800 border-amber-200',
-  pending: 'bg-amber-100 text-amber-800 border-amber-200',
-  validated: 'bg-blue-100 text-blue-800 border-blue-200',
-  processing: 'bg-blue-100 text-blue-800 border-blue-200',
-  shipped: 'bg-purple-100 text-purple-800 border-purple-200',
-  delivered: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  cancelled: 'bg-gray-100 text-gray-600 border-gray-200',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  draft: 'Brouillon',
-  pending: 'En attente',
-  validated: 'Validee',
-  processing: 'En cours',
-  shipped: 'Expediee',
-  delivered: 'Livree',
-  cancelled: 'Annulee',
-};
-
-/**
- * Formatte une adresse structuree en texte lisible
- */
-function formatAddress(address: StructuredAddress | null): string[] {
-  if (!address || Object.keys(address).length === 0) {
-    return ['Non renseignee'];
-  }
-
-  const lines: string[] = [];
-
-  if (address.contact_name) {
-    lines.push(address.contact_name);
-  }
-  // Support both key formats: line1 (frontend) and address_line1 (DB JSONB)
-  const line1 = address.line1 ?? address.address_line1;
-  const line2 = address.line2 ?? address.address_line2;
-  if (line1) {
-    lines.push(line1);
-  }
-  if (line2) {
-    lines.push(line2);
-  }
-  if (address.postal_code || address.city) {
-    lines.push([address.postal_code, address.city].filter(Boolean).join(' '));
-  }
-  if (address.country) {
-    lines.push(address.country);
-  }
-
-  return lines.length > 0 ? lines : ['Non renseignee'];
-}
-
-/**
- * Formatte un prix en euros
- */
-function formatPrice(amount: number): string {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-  }).format(amount);
-}
-
-/**
- * Formatte une date
- */
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return '-';
-  try {
-    return format(new Date(dateStr), 'dd MMM yyyy', { locale: fr });
-  } catch {
-    return dateStr;
-  }
-}
-
-/**
- * Contact info card (reusable)
- */
-function ContactCard({
-  label,
-  name,
-  email,
-  phone,
-  position,
-}: {
-  label: string;
-  name: string | null;
-  email: string | null;
-  phone: string | null;
-  position?: string | null;
-}) {
-  if (!name && !email && !phone) return null;
-
-  return (
-    <div className="bg-gray-50 rounded-lg p-3">
-      <p className="text-xs text-gray-500 mb-1">{label}</p>
-      {name && <p className="font-medium text-[#183559] text-sm">{name}</p>}
-      {position && <p className="text-xs text-gray-500">{position}</p>}
-      {email && <p className="text-sm text-gray-600">{email}</p>}
-      {phone && (
-        <p className="text-sm text-gray-600 flex items-center gap-1">
-          <PhoneIcon className="h-3 w-3" />
-          {phone}
-        </p>
-      )}
-    </div>
-  );
+interface ShipmentRow {
+  tracking_number: string | null;
+  tracking_url: string | null;
+  carrier_name: string | null;
+  packlink_status: string | null;
+  shipped_at: string | null;
 }
 
 export function OrderDetailModal({
@@ -175,7 +65,6 @@ export function OrderDetailModal({
 }: OrderDetailModalProps) {
   const { canViewCommissions } = usePermissions();
 
-  // État facture (partagé entre visualiser et télécharger)
   const [invoiceLoading, setInvoiceLoading] = useState<
     'view' | 'download' | null
   >(null);
@@ -207,10 +96,8 @@ export function OrderDetailModal({
         const url = URL.createObjectURL(blob);
 
         if (action === 'view') {
-          // Visualiser : ouvrir dans un nouvel onglet
           window.open(url, '_blank');
         } else {
-          // Télécharger : déclencher le download du fichier
           const link = document.createElement('a');
           link.href = url;
           link.download = `facture-${order.linkme_display_number ?? order.order_number}.pdf`;
@@ -230,22 +117,15 @@ export function OrderDetailModal({
     [order?.id, order?.linkme_display_number, order?.order_number]
   );
 
-  const [shipmentTracking, setShipmentTracking] = React.useState<
-    Array<{
-      tracking_number: string | null;
-      tracking_url: string | null;
-      carrier_name: string | null;
-      packlink_status: string | null;
-      shipped_at: string | null;
-    }>
-  >([]);
+  const [shipmentTracking, setShipmentTracking] = React.useState<ShipmentRow[]>(
+    []
+  );
 
   React.useEffect(() => {
     if (!isOpen || !order?.id) {
       setShipmentTracking([]);
       return;
     }
-    // Charger tracking (SANS shipping_cost — coût interne Verone)
     const load = async () => {
       const { createClient } = await import('@verone/utils/supabase/client');
       const supabase = createClient();
@@ -256,7 +136,7 @@ export function OrderDetailModal({
         )
         .eq('sales_order_id', order.id)
         .order('shipped_at', { ascending: false });
-      const rows = (data ?? []) as unknown as typeof shipmentTracking;
+      const rows = (data ?? []) as unknown as ShipmentRow[];
       setShipmentTracking(rows);
     };
     void load().catch(console.error);
@@ -267,18 +147,15 @@ export function OrderDetailModal({
   const statusColor = STATUS_COLORS[order.status] ?? STATUS_COLORS.pending;
   const statusLabel = STATUS_LABELS[order.status] ?? order.status;
 
-  // Verifier si adresse livraison = facturation
   const isSameAddress =
     JSON.stringify(order.billing_address) ===
     JSON.stringify(order.shipping_address);
 
-  // Check if delivery text address exists (from linkme_details)
   const hasDeliveryTextAddress =
     order.delivery_address_text ??
     order.delivery_postal_code ??
     order.delivery_city;
 
-  // Check if any contact data exists
   const hasRequester =
     order.requester_name ?? order.requester_email ?? order.requester_phone;
   const hasDeliveryContact =
@@ -289,31 +166,6 @@ export function OrderDetailModal({
     order.reception_contact_name ??
     order.reception_contact_email ??
     order.reception_contact_phone;
-
-  // Calculate total payout (catalogue commission + affiliate product revenue)
-  const catalogueItems = order.items.filter(i => !i.is_affiliate_product);
-  const affiliateItems = order.items.filter(i => i.is_affiliate_product);
-
-  const catalogueCommissionHT = catalogueItems.reduce(
-    (sum, i) => sum + i.affiliate_margin,
-    0
-  );
-
-  const affiliateRevenueHT = affiliateItems.reduce(
-    (sum, i) => sum + i.total_ht,
-    0
-  );
-  const affiliateCommissionLinkMeHT = affiliateItems.reduce(
-    (sum, i) => sum + i.total_ht * (i.affiliate_commission_rate / 100),
-    0
-  );
-  const affiliateVersementHT = affiliateRevenueHT - affiliateCommissionLinkMeHT;
-
-  const totalPayoutHT = catalogueCommissionHT + affiliateVersementHT;
-  const totalPayoutTTC =
-    totalPayoutHT * (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE);
-
-  const hasAffiliateProducts = affiliateItems.length > 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
@@ -350,7 +202,7 @@ export function OrderDetailModal({
         </DialogHeader>
 
         <div className="space-y-6 mt-4">
-          {/* Section: Informations client + Affiliate */}
+          {/* Section: Client */}
           <section>
             <h3 className="flex items-center gap-2 text-sm font-semibold text-[#183559] mb-3">
               <UserIcon className="h-4 w-4 text-[#5DBEBB]" />
@@ -394,7 +246,7 @@ export function OrderDetailModal({
 
           <Separator />
 
-          {/* Section: Contacts (requester, billing, delivery, reception) */}
+          {/* Section: Contacts */}
           {(hasRequester ??
             order.billing_name ??
             hasDeliveryContact ??
@@ -439,87 +291,11 @@ export function OrderDetailModal({
           )}
 
           {/* Section: Adresses */}
-          <section>
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-[#183559] mb-3">
-              <MapPinIcon className="h-4 w-4 text-[#5DBEBB]" />
-              Adresses
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Adresse de facturation */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <FileTextIcon className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm font-medium text-gray-700">
-                    Facturation
-                  </span>
-                </div>
-                {formatAddress(order.billing_address).map((line, i) => (
-                  <p key={i} className="text-sm text-gray-600">
-                    {line}
-                  </p>
-                ))}
-                {order.billing_name && (
-                  <p className="text-sm text-gray-600 mt-1">
-                    Contact: {order.billing_name}
-                  </p>
-                )}
-                {order.billing_email && (
-                  <p className="text-sm text-gray-500">{order.billing_email}</p>
-                )}
-              </div>
-
-              {/* Adresse de livraison */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <TruckIcon className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm font-medium text-gray-700">
-                    Livraison
-                  </span>
-                </div>
-                {isSameAddress && !hasDeliveryTextAddress ? (
-                  <p className="text-sm text-gray-500 italic">
-                    Identique a l&apos;adresse de facturation
-                  </p>
-                ) : hasDeliveryTextAddress ? (
-                  <>
-                    {order.delivery_contact_name && (
-                      <p className="text-sm font-medium text-gray-700">
-                        {order.delivery_contact_name}
-                      </p>
-                    )}
-                    {order.delivery_address_text && (
-                      <p className="text-sm text-gray-600">
-                        {order.delivery_address_text}
-                      </p>
-                    )}
-                    {(order.delivery_postal_code ?? order.delivery_city) && (
-                      <p className="text-sm text-gray-600">
-                        {[order.delivery_postal_code, order.delivery_city]
-                          .filter(Boolean)
-                          .join(' ')}
-                      </p>
-                    )}
-                  </>
-                ) : (
-                  formatAddress(order.shipping_address).map((line, i) => (
-                    <p key={i} className="text-sm text-gray-600">
-                      {line}
-                    </p>
-                  ))
-                )}
-                {order.is_mall_delivery && (
-                  <Badge variant="secondary" className="mt-2 text-xs">
-                    Livraison en centre commercial
-                  </Badge>
-                )}
-                {order.delivery_notes && (
-                  <p className="text-xs text-gray-500 mt-2 italic">
-                    {order.delivery_notes}
-                  </p>
-                )}
-              </div>
-            </div>
-          </section>
+          <OrderAddressesSection
+            order={order}
+            isSameAddress={isSameAddress}
+            hasDeliveryTextAddress={hasDeliveryTextAddress}
+          />
 
           <Separator />
 
@@ -551,237 +327,29 @@ export function OrderDetailModal({
             </div>
           </section>
 
-          {/* Section: Suivi expedition (SANS shipping_cost — coût interne Verone) */}
+          {/* Section: Suivi expedition */}
           {shipmentTracking.length > 0 && (
             <>
               <Separator />
-              <section>
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-[#183559] mb-3">
-                  <TruckIcon className="h-4 w-4 text-[#5DBEBB]" />
-                  Suivi expedition
-                </h3>
-                <div className="space-y-2">
-                  {shipmentTracking
-                    .filter(s => s.tracking_number ?? s.carrier_name)
-                    .map((s, idx) => (
-                      <div
-                        key={idx}
-                        className="bg-gray-50 rounded-lg p-3 flex items-center justify-between"
-                      >
-                        <div>
-                          {s.carrier_name && (
-                            <p className="text-sm font-medium text-[#183559]">
-                              {s.carrier_name}
-                            </p>
-                          )}
-                          {s.tracking_number && (
-                            <p className="text-xs text-gray-600">
-                              Suivi :{' '}
-                              {s.tracking_url ? (
-                                <a
-                                  href={s.tracking_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-[#5DBEBB] underline hover:no-underline"
-                                >
-                                  {s.tracking_number}
-                                </a>
-                              ) : (
-                                s.tracking_number
-                              )}
-                            </p>
-                          )}
-                          {s.shipped_at && (
-                            <p className="text-xs text-gray-500">
-                              Expedie le{' '}
-                              {format(new Date(s.shipped_at), 'dd MMM yyyy', {
-                                locale: fr,
-                              })}
-                            </p>
-                          )}
-                        </div>
-                        {s.packlink_status && (
-                          <Badge
-                            className={`text-xs ${
-                              s.packlink_status === 'in_transit'
-                                ? 'bg-blue-100 text-blue-800'
-                                : s.packlink_status === 'delivered'
-                                  ? 'bg-emerald-100 text-emerald-800'
-                                  : s.packlink_status === 'paye'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-gray-100 text-gray-600'
-                            }`}
-                          >
-                            {s.packlink_status === 'in_transit'
-                              ? 'En transit'
-                              : s.packlink_status === 'delivered'
-                                ? 'Livre'
-                                : s.packlink_status === 'paye'
-                                  ? 'Expedie'
-                                  : s.packlink_status}
-                          </Badge>
-                        )}
-                      </div>
-                    ))}
-                </div>
-              </section>
+              <OrderShipmentSection shipmentTracking={shipmentTracking} />
             </>
           )}
 
           <Separator />
 
           {/* Section: Articles */}
-          <section>
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-[#183559] mb-3">
-              <PackageIcon className="h-4 w-4 text-[#5DBEBB]" />
-              Articles ({order.items_count})
-            </h3>
-            <div className="border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="w-16 text-[#183559]">Image</TableHead>
-                    <TableHead className="text-[#183559]">Produit</TableHead>
-                    <TableHead className="text-center text-[#183559]">
-                      Qte
-                    </TableHead>
-                    <TableHead className="text-right text-[#183559]">
-                      Prix unit. HT
-                    </TableHead>
-                    <TableHead className="text-right text-[#183559]">
-                      Total HT
-                    </TableHead>
-                    {canViewCommissions && (
-                      <TableHead className="text-center text-[#183559]">
-                        Marge %
-                      </TableHead>
-                    )}
-                    {canViewCommissions && (
-                      <TableHead className="text-right text-[#183559]">
-                        Commission TTC
-                      </TableHead>
-                    )}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {order.items.map(item => (
-                    <TableRow key={item.id}>
-                      <TableCell className="w-16">
-                        {item.product_image_url ? (
-                          <Image
-                            src={item.product_image_url}
-                            alt={item.product_name}
-                            width={48}
-                            height={48}
-                            className="rounded-md object-cover"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center">
-                            <ImageIcon className="h-5 w-5 text-gray-400" />
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium text-[#183559]">
-                            {item.product_name}
-                          </p>
-                          {item.product_sku && (
-                            <p className="text-xs text-gray-500">
-                              SKU: {item.product_sku}
-                            </p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {item.quantity}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatPrice(item.unit_price_ht)}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatPrice(item.total_ht)}
-                      </TableCell>
-                      {canViewCommissions && (
-                        <TableCell className="text-center">
-                          <Badge variant="secondary" className="text-xs">
-                            {item.margin_rate.toFixed(2)}%
-                          </Badge>
-                        </TableCell>
-                      )}
-                      {canViewCommissions && (
-                        <TableCell className="text-right font-semibold text-emerald-600">
-                          +
-                          {formatPrice(
-                            item.affiliate_margin *
-                              (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE)
-                          )}
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </section>
+          <OrderItemsTable
+            order={order}
+            canViewCommissions={canViewCommissions}
+          />
 
           <Separator />
 
           {/* Section: Totaux */}
-          <section>
-            <div className="bg-gradient-to-r from-gray-50 to-white rounded-lg p-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Total HT</p>
-                  <p className="text-lg font-semibold text-[#183559]">
-                    {formatPrice(order.total_ht)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">
-                    Frais livraison HT
-                  </p>
-                  <p className="text-lg font-semibold text-[#183559]">
-                    {formatPrice(order.shipping_cost_ht)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Total TTC</p>
-                  <p className="text-lg font-bold text-[#183559]">
-                    {formatPrice(order.total_ttc)}
-                  </p>
-                </div>
-                {canViewCommissions && (
-                  <div className="bg-emerald-50 rounded-lg p-3 -m-1">
-                    <p className="text-xs text-emerald-600 mb-1">
-                      Total a percevoir TTC
-                    </p>
-                    <p className="text-lg font-bold text-emerald-600">
-                      +{formatPrice(totalPayoutTTC)}
-                    </p>
-                    {hasAffiliateProducts && (
-                      <div className="mt-1 space-y-0.5">
-                        <p className="text-[10px] text-emerald-500">
-                          Commission catalogue : +
-                          {formatPrice(
-                            catalogueCommissionHT *
-                              (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE)
-                          )}
-                        </p>
-                        <p className="text-[10px] text-emerald-500">
-                          Vos produits : +
-                          {formatPrice(
-                            affiliateVersementHT *
-                              (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE)
-                          )}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
+          <OrderTotalsSection
+            order={order}
+            canViewCommissions={canViewCommissions}
+          />
 
           {/* Section: Actions facture */}
           <section className="flex flex-col items-end gap-2 pt-4">

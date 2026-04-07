@@ -1,167 +1,38 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 
 import {
-  AlertTriangle,
-  Bug,
-  Camera,
-  Code,
-  FileText,
-  Image,
-  Monitor,
-  Send,
-  Trash2,
-  Upload,
-  User,
-  X,
-  Zap,
-  Info,
-  CheckCircle,
-} from 'lucide-react';
-
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
-import {
+  ButtonV2,
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from '@verone/ui';
-import { Input } from '@verone/ui';
-import { Label } from '@verone/ui';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@verone/ui';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
-import { Textarea } from '@verone/ui';
 import { cn } from '@verone/utils';
+import { AlertTriangle, CheckCircle, Send } from 'lucide-react';
 
-export type ErrorType =
-  | 'console_error'
-  | 'ui_bug'
-  | 'performance'
-  | 'functionality'
-  | 'accessibility'
-  | 'design';
-export type ErrorSeverity = 'low' | 'medium' | 'high' | 'critical';
-export type ReportStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
+import type {
+  ErrorReport,
+  ErrorReportModalProps,
+} from './error-report-modal.types';
+import { useBrowserInfo } from './error-report-modal.types';
+import { ErrorReportTabDetails } from './ErrorReportTabDetails';
+import { ErrorReportTabMedia } from './ErrorReportTabMedia';
+import { ErrorReportTabTechnical } from './ErrorReportTabTechnical';
+import { ErrorReportTabWorkflow } from './ErrorReportTabWorkflow';
 
-interface ErrorReport {
-  id?: string;
-  testId: string;
-  title: string;
-  description: string;
-  errorType: ErrorType;
-  severity: ErrorSeverity;
-  status: ReportStatus;
-  screenshots: File[];
-  codeSnippet?: string;
-  browserInfo?: BrowserInfo;
-  steps?: string[];
-  expectedBehavior?: string;
-  actualBehavior?: string;
-  assignedTo?: string;
-  createdAt: Date;
-  updatedAt?: Date;
-}
-
-interface BrowserInfo {
-  userAgent: string;
-  url: string;
-  viewport: string;
-  timestamp: string;
-}
-
-interface ErrorReportModalProps {
-  testId: string;
-  testTitle: string;
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (report: ErrorReport) => Promise<void>;
-  existingReport?: ErrorReport;
-  children?: React.ReactNode;
-}
-
-// Configuration des types d'erreurs
-const ERROR_TYPE_CONFIG = {
-  console_error: {
-    label: 'Erreur Console',
-    icon: Code,
-    description: 'Erreurs JavaScript dans la console',
-    color: 'text-red-600',
-  },
-  ui_bug: {
-    label: 'Bug Interface',
-    icon: Monitor,
-    description: "Problème d'affichage ou d'interaction",
-    color: 'text-black',
-  },
-  performance: {
-    label: 'Performance',
-    icon: Zap,
-    description: 'Lenteur ou problème de performance',
-    color: 'text-gray-700',
-  },
-  functionality: {
-    label: 'Fonctionnalité',
-    icon: Bug,
-    description: 'Fonctionnalité qui ne marche pas',
-    color: 'text-blue-600',
-  },
-  accessibility: {
-    label: 'Accessibilité',
-    icon: User,
-    description: "Problème d'accessibilité (A11y)",
-    color: 'text-purple-600',
-  },
-  design: {
-    label: 'Design System',
-    icon: FileText,
-    description: 'Non-respect du Design System Vérone',
-    color: 'text-pink-600',
-  },
-} as const;
-
-// Configuration de sévérité
-const SEVERITY_CONFIG = {
-  low: {
-    label: 'Faible',
-    color: 'bg-gray-200 text-gray-800',
-    description: 'Problème mineur, peut attendre',
-  },
-  medium: {
-    label: 'Moyenne',
-    color: 'bg-gray-400 text-white',
-    description: 'Problème notable, à corriger',
-  },
-  high: {
-    label: 'Élevée',
-    color: 'bg-gray-600 text-white',
-    description: 'Problème important, prioritaire',
-  },
-  critical: {
-    label: 'Critique',
-    color: 'bg-red-600 text-white', // ✅ Rouge au lieu de noir pour critique
-    description: 'Problème bloquant, urgent',
-  },
-} as const;
-
-// Hook pour la détection automatique du navigateur
-const useBrowserInfo = (): BrowserInfo => {
-  return {
-    userAgent: navigator.userAgent,
-    url: window.location.href,
-    viewport: `${window.innerWidth}x${window.innerHeight}`,
-    timestamp: new Date().toISOString(),
-  };
-};
+export type {
+  ErrorType,
+  ErrorSeverity,
+  ReportStatus,
+} from './error-report-modal.types';
+export type { ErrorReport };
 
 export function ErrorReportModal({
   testId,
@@ -174,10 +45,8 @@ export function ErrorReportModal({
 }: ErrorReportModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentTab, setCurrentTab] = useState('details');
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const browserInfo = useBrowserInfo();
 
-  // État du formulaire
   const [formData, setFormData] = useState<Partial<ErrorReport>>({
     testId,
     title: existingReport?.title ?? '',
@@ -194,53 +63,6 @@ export function ErrorReportModal({
     createdAt: existingReport?.createdAt ?? new Date(),
   });
 
-  // Gestion de l'upload de screenshots
-  const handleFileUpload = (files: FileList | null) => {
-    if (!files) return;
-
-    const newFiles = Array.from(files).filter(file => {
-      const isImage = file.type.startsWith('image/');
-      const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB max
-      return isImage && isValidSize;
-    });
-
-    setFormData(prev => ({
-      ...prev,
-      screenshots: [...(prev.screenshots ?? []), ...newFiles],
-    }));
-  };
-
-  // Supprimer un screenshot
-  const removeScreenshot = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      screenshots: prev.screenshots?.filter((_, i) => i !== index) ?? [],
-    }));
-  };
-
-  // Ajouter une étape de reproduction
-  const addStep = () => {
-    setFormData(prev => ({
-      ...prev,
-      steps: [...(prev.steps ?? []), ''],
-    }));
-  };
-
-  const updateStep = (index: number, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      steps: prev.steps?.map((step, i) => (i === index ? value : step)) ?? [],
-    }));
-  };
-
-  const removeStep = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      steps: prev.steps?.filter((_, i) => i !== index) ?? [],
-    }));
-  };
-
-  // Soumission du formulaire
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title || !formData.description) return;
@@ -260,47 +82,6 @@ export function ErrorReportModal({
       console.error('Error submitting report:', error);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  // Capture automatique de screenshot
-  const captureScreenshot = async () => {
-    try {
-      // Utilisation de l'API Screen Capture si disponible
-      if ('getDisplayMedia' in navigator.mediaDevices) {
-        const stream = await navigator.mediaDevices.getDisplayMedia({
-          video: true,
-        });
-
-        const video = document.createElement('video');
-        video.srcObject = stream;
-        void video.play();
-
-        video.addEventListener('loadedmetadata', () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-
-          const ctx = canvas.getContext('2d');
-          ctx?.drawImage(video, 0, 0);
-
-          canvas.toBlob(blob => {
-            if (blob) {
-              const file = new File([blob], `screenshot-${Date.now()}.png`, {
-                type: 'image/png',
-              });
-              setFormData(prev => ({
-                ...prev,
-                screenshots: [...(prev.screenshots ?? []), file],
-              }));
-            }
-          });
-
-          stream.getTracks().forEach(track => track.stop());
-        });
-      }
-    } catch (error) {
-      console.warn('Screenshot capture not available:', error);
     }
   };
 
@@ -334,394 +115,37 @@ export function ErrorReportModal({
               <TabsTrigger value="workflow">Reproduction</TabsTrigger>
             </TabsList>
 
-            {/* Onglet Détails */}
             <TabsContent value="details" className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Titre du problème *</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={e =>
-                      setFormData(prev => ({ ...prev, title: e.target.value }))
-                    }
-                    placeholder="Ex: Bouton 'Valider' ne répond pas"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="errorType">Type d'erreur</Label>
-                  <Select
-                    value={formData.errorType}
-                    onValueChange={(value: ErrorType) =>
-                      setFormData(prev => ({ ...prev, errorType: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(ERROR_TYPE_CONFIG).map(
-                        ([key, config]) => {
-                          const Icon = config.icon;
-                          return (
-                            <SelectItem key={key} value={key}>
-                              <div className="flex items-center gap-2">
-                                <Icon className="h-4 w-4" />
-                                <div>
-                                  <div className="font-medium">
-                                    {config.label}
-                                  </div>
-                                  <div className="text-xs text-gray-600">
-                                    {config.description}
-                                  </div>
-                                </div>
-                              </div>
-                            </SelectItem>
-                          );
-                        }
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="severity">Sévérité</Label>
-                  <Select
-                    value={formData.severity}
-                    onValueChange={(value: ErrorSeverity) =>
-                      setFormData(prev => ({ ...prev, severity: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(SEVERITY_CONFIG).map(([key, config]) => (
-                        <SelectItem key={key} value={key}>
-                          <div className="flex items-center gap-2">
-                            <Badge className={cn('text-xs', config.color)}>
-                              {config.label}
-                            </Badge>
-                            <span className="text-sm">
-                              {config.description}
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="status">Statut</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value: ReportStatus) =>
-                      setFormData(prev => ({ ...prev, status: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="open">
-                        <div className="flex items-center gap-2">
-                          <div className="h-2 w-2 bg-red-500 rounded-full" />
-                          Ouvert
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="in_progress">
-                        <div className="flex items-center gap-2">
-                          <div className="h-2 w-2 bg-gray-500 rounded-full" />
-                          En cours
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="resolved">
-                        <div className="flex items-center gap-2">
-                          <div className="h-2 w-2 bg-green-500 rounded-full" />
-                          Résolu
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="closed">
-                        <div className="flex items-center gap-2">
-                          <div className="h-2 w-2 bg-gray-500 rounded-full" />
-                          Fermé
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description détaillée *</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={e =>
-                    setFormData(prev => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
-                  }
-                  placeholder="Décrivez le problème en détail..."
-                  className="min-h-[100px]"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="expected">Comportement attendu</Label>
-                  <Textarea
-                    id="expected"
-                    value={formData.expectedBehavior}
-                    onChange={e =>
-                      setFormData(prev => ({
-                        ...prev,
-                        expectedBehavior: e.target.value,
-                      }))
-                    }
-                    placeholder="Ce qui devrait se passer..."
-                    className="min-h-[80px]"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="actual">Comportement observé</Label>
-                  <Textarea
-                    id="actual"
-                    value={formData.actualBehavior}
-                    onChange={e =>
-                      setFormData(prev => ({
-                        ...prev,
-                        actualBehavior: e.target.value,
-                      }))
-                    }
-                    placeholder="Ce qui se passe réellement..."
-                    className="min-h-[80px]"
-                  />
-                </div>
-              </div>
+              <ErrorReportTabDetails
+                formData={formData}
+                setFormData={setFormData}
+              />
             </TabsContent>
 
-            {/* Onglet Captures */}
             <TabsContent value="media" className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label>Screenshots et captures</Label>
-                  <div className="flex gap-2">
-                    <ButtonV2
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        void captureScreenshot();
-                      }}
-                    >
-                      <Camera className="h-4 w-4 mr-2" />
-                      Capture écran
-                    </ButtonV2>
-                    <ButtonV2
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload fichier
-                    </ButtonV2>
-                  </div>
-                </div>
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={e => handleFileUpload(e.target.files)}
-                />
-
-                {/* Zone de drag & drop */}
-                <div
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors"
-                  onDrop={e => {
-                    e.preventDefault();
-                    handleFileUpload(e.dataTransfer.files);
-                  }}
-                  onDragOver={e => e.preventDefault()}
-                >
-                  {/* eslint-disable-next-line jsx-a11y/alt-text */}
-                  <Image
-                    className="h-12 w-12 mx-auto text-gray-400 mb-4"
-                    aria-hidden="true"
-                  />
-                  <p className="text-gray-600">
-                    Glissez-déposez vos images ici ou cliquez pour sélectionner
-                  </p>
-                  <p className="text-sm text-gray-500 mt-2">
-                    PNG, JPG, GIF jusqu'à 10MB
-                  </p>
-                </div>
-
-                {/* Aperçu des screenshots */}
-                {formData.screenshots && formData.screenshots.length > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {formData.screenshots.map((file, index) => (
-                      <Card key={index} className="relative">
-                        <CardContent className="p-2">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={URL.createObjectURL(file)}
-                            alt={`Screenshot ${index + 1}`}
-                            className="w-full h-32 object-cover rounded"
-                          />
-                          <ButtonV2
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            className="absolute top-1 right-1 h-6 w-6 p-0"
-                            onClick={() => removeScreenshot(index)}
-                          >
-                            <X className="h-3 w-3" />
-                          </ButtonV2>
-                          <p className="text-xs text-gray-600 mt-1 truncate">
-                            {file.name}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <ErrorReportTabMedia
+                formData={formData}
+                setFormData={setFormData}
+              />
             </TabsContent>
 
-            {/* Onglet Technique */}
             <TabsContent value="technical" className="space-y-4">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="codeSnippet">Code d'erreur / Console</Label>
-                  <Textarea
-                    id="codeSnippet"
-                    value={formData.codeSnippet}
-                    onChange={e =>
-                      setFormData(prev => ({
-                        ...prev,
-                        codeSnippet: e.target.value,
-                      }))
-                    }
-                    placeholder="Coller le code d'erreur de la console JavaScript..."
-                    className="font-mono text-sm min-h-[120px]"
-                  />
-                </div>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Info className="h-4 w-4" />
-                      Informations du navigateur
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div>
-                      <Label className="text-xs text-gray-600">
-                        User Agent
-                      </Label>
-                      <p className="text-sm font-mono bg-gray-100 p-2 rounded">
-                        {browserInfo.userAgent}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-xs text-gray-600">URL</Label>
-                      <p className="text-sm font-mono bg-gray-100 p-2 rounded">
-                        {browserInfo.url}
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <Label className="text-xs text-gray-600">
-                          Résolution
-                        </Label>
-                        <p className="text-sm font-mono bg-gray-100 p-2 rounded">
-                          {browserInfo.viewport}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-xs text-gray-600">
-                          Timestamp
-                        </Label>
-                        <p className="text-sm font-mono bg-gray-100 p-2 rounded">
-                          {new Date(browserInfo.timestamp).toLocaleString(
-                            'fr-FR'
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <ErrorReportTabTechnical
+                formData={formData}
+                setFormData={setFormData}
+                browserInfo={browserInfo}
+              />
             </TabsContent>
 
-            {/* Onglet Reproduction */}
             <TabsContent value="workflow" className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label>Étapes de reproduction</Label>
-                  <ButtonV2
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addStep}
-                  >
-                    Ajouter étape
-                  </ButtonV2>
-                </div>
-
-                {formData.steps && formData.steps.length > 0 ? (
-                  <div className="space-y-3">
-                    {formData.steps.map((step, index) => (
-                      <div key={index} className="flex items-start gap-3">
-                        <Badge variant="outline" className="mt-2">
-                          {index + 1}
-                        </Badge>
-                        <div className="flex-1">
-                          <Textarea
-                            value={step}
-                            onChange={e => updateStep(index, e.target.value)}
-                            placeholder={`Étape ${index + 1}: Décrire l'action...`}
-                            className="min-h-[60px]"
-                          />
-                        </div>
-                        <ButtonV2
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeStep(index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </ButtonV2>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                    <p>Aucune étape de reproduction ajoutée</p>
-                    <p className="text-sm">
-                      Cliquez sur "Ajouter étape" pour commencer
-                    </p>
-                  </div>
-                )}
-              </div>
+              <ErrorReportTabWorkflow
+                formData={formData}
+                setFormData={setFormData}
+              />
             </TabsContent>
           </Tabs>
 
-          {/* Footer avec boutons d'action */}
+          {/* Footer */}
           <div className="flex items-center justify-between pt-4 border-t">
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <CheckCircle className="h-4 w-4" />
