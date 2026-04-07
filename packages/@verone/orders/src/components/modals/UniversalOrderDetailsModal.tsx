@@ -1,12 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-
-import { useInlineEdit } from '@verone/common/hooks';
-import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
-import { OrganisationNameDisplay } from '@verone/ui';
-import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import {
   Dialog,
   DialogContent,
@@ -14,110 +8,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@verone/ui';
-import { Separator } from '@verone/ui';
-import { Table, TableBody, TableHead, TableHeader, TableRow } from '@verone/ui';
-import { formatCurrency } from '@verone/utils';
-import { createClient } from '@verone/utils/supabase/client';
-import {
-  X,
-  Package,
-  Calendar,
-  User,
-  Loader2,
-  ShoppingCart,
-  TruckIcon,
-  Edit,
-  Save,
-} from 'lucide-react';
+import { X, Loader2, ShoppingCart, TruckIcon, Edit, Save } from 'lucide-react';
 
 import { AddProductToOrderModal } from '@verone/orders/components/modals/AddProductToOrderModal';
 import { OrderHeaderEditSection } from '@verone/orders/components/sections/OrderHeaderEditSection';
-import { EditableOrderItemRow } from '@verone/orders/components/tables/EditableOrderItemRow';
-import type { CreateOrderItemData, OrderItem } from '@verone/orders/hooks';
-import { useOrderItems } from '@verone/orders/hooks';
 
-interface UniversalOrderDetailsModalProps {
-  orderId: string | null;
-  orderType: 'sales' | 'purchase' | null;
-  open: boolean;
-  onClose: () => void;
-  initialEditMode?: boolean; // Mode édition initial optionnel
-  onUpdate?: () => void; // Callback après modification
-  /** Slot for action components (PaymentSection, SendDocuments, etc.) rendered below items */
-  renderActions?: (order: {
-    id: string;
-    order_number: string;
-    status: string;
-    total_ht: number;
-    total_ttc: number;
-    tax_rate: number;
-    currency: string;
-    payment_terms: string;
-    payment_status: string;
-    customer_name: string;
-    customer_email: string | null;
-    customer_type: 'organization' | 'individual';
-    shipping_cost_ht: number;
-    handling_cost_ht: number;
-    insurance_cost_ht: number;
-    fees_vat_rate: number;
-    items: OrderItem[];
-  }) => React.ReactNode;
-}
-
-interface OrderHeader {
-  id: string;
-  order_number: string;
-  status: string;
-  created_at: string;
-  expected_delivery_date: string | null;
-  total_ht?: number;
-  total_ttc: number;
-  customer_id?: string | null;
-  customer_name?: string;
-  customer_trade_name?: string | null;
-  customer_email?: string | null;
-  customer_type?: 'organization' | 'individual';
-  supplier_name?: string;
-  billing_address?: Record<string, unknown> | string | null;
-  shipping_address?: Record<string, unknown> | string | null;
-  delivery_address?: string | null;
-  payment_terms?: string | null;
-  payment_status_v2?: string | null;
-  tax_rate?: number;
-  currency?: string;
-  eco_tax_vat_rate?: number | null;
-  shipping_cost_ht?: number | null;
-  handling_cost_ht?: number | null;
-  insurance_cost_ht?: number | null;
-  fees_vat_rate?: number | null;
-  // Info créateur
-  creator_name?: string;
-  creator_email?: string;
-  channel_name?: string;
-}
-
-const statusLabels: Record<string, string> = {
-  draft: 'Brouillon',
-  validated: 'Validée',
-  sent: 'Envoyée',
-  received: 'Reçue',
-  partially_received: 'Partiellement reçue',
-  cancelled: 'Annulée',
-  partially_shipped: 'Partiellement expédiée',
-  shipped: 'Expédiée',
-};
-
-const statusColors: Record<string, string> = {
-  draft: 'bg-gray-100 text-gray-800',
-  validated: 'bg-blue-100 text-blue-800',
-  sent: 'bg-purple-100 text-purple-800',
-  received: 'bg-green-100 text-green-800',
-  partially_received: 'bg-yellow-100 text-yellow-800',
-  cancelled: 'bg-red-100 text-red-800',
-  partially_shipped: 'bg-yellow-100 text-yellow-800',
-  shipped: 'bg-green-100 text-green-800',
-};
+import { UniversalOrderHeaderCard } from './UniversalOrderHeaderCard';
+import { UniversalOrderItemsCard } from './UniversalOrderItemsCard';
+import type { UniversalOrderDetailsModalProps } from './universal-order-modal.types';
+import { useUniversalOrderModal } from './use-universal-order-modal';
 
 export function UniversalOrderDetailsModal({
   orderId,
@@ -128,332 +27,28 @@ export function UniversalOrderDetailsModal({
   onUpdate,
   renderActions,
 }: UniversalOrderDetailsModalProps) {
-  const [orderHeader, setOrderHeader] = useState<OrderHeader | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // 🎯 Mode édition géré en local (peut basculer view ↔ edit)
-  const [isEditMode, setIsEditMode] = useState(initialEditMode);
-  const [showAddProductModal, setShowAddProductModal] = useState(false);
-
-  // 🎯 Hook réutilisable pour charger les items avec images et métriques complètes
   const {
+    isEditMode,
+    showAddProductModal,
+    setShowAddProductModal,
+    orderHeader,
     items,
-    loading: itemsLoading,
-    error: itemsError,
-    addItem,
-    updateItem,
-    removeItem,
-    refetch: _refetch,
-  } = useOrderItems({
-    orderId: orderId ?? '',
-    orderType: orderType ?? 'purchase',
+    isLoading,
+    hasError,
+    inlineEdit,
+    toggleMode,
+    handleSaveHeader,
+    handleHeaderChange,
+    handleAddProduct,
+    handleUpdateItem,
+    handleRemoveItem,
+  } = useUniversalOrderModal({
+    orderId,
+    orderType,
+    open,
+    initialEditMode,
+    onUpdate,
   });
-
-  // 🎯 Hook useInlineEdit pour édition header
-  const inlineEdit = useInlineEdit({
-    salesOrderId: orderType === 'sales' ? (orderId ?? undefined) : undefined,
-    purchaseOrderId:
-      orderType === 'purchase' ? (orderId ?? undefined) : undefined,
-    onUpdate: updatedData => {
-      console.warn(
-        '[UniversalOrderDetailsModal] Order header updated:',
-        updatedData
-      );
-      // Mettre à jour le state local
-      setOrderHeader(prev => (prev ? { ...prev, ...updatedData } : null));
-      onUpdate?.();
-    },
-    onError: error => {
-      console.error('❌ Order header update error:', error);
-      setError(error);
-    },
-  });
-
-  // Basculer entre view et edit
-  const toggleMode = () => {
-    if (!isEditMode && orderHeader) {
-      // Démarrer édition
-      inlineEdit.startEdit('order_header', {
-        billing_address: orderHeader.billing_address,
-        shipping_address: orderHeader.shipping_address,
-        delivery_address: orderHeader.delivery_address,
-        expected_delivery_date: orderHeader.expected_delivery_date,
-        payment_terms: orderHeader.payment_terms,
-        tax_rate: orderHeader.tax_rate,
-        eco_tax_vat_rate: orderHeader.eco_tax_vat_rate,
-      });
-    } else {
-      // Annuler édition
-      inlineEdit.cancelEdit('order_header');
-    }
-    setIsEditMode(prev => !prev);
-  };
-
-  // Handler sauvegarde header
-  const handleSaveHeader = async () => {
-    const success = await inlineEdit.saveChanges('order_header');
-    if (success) {
-      setIsEditMode(false);
-    }
-  };
-
-  // Handler modification champ header
-  const handleHeaderChange = (field: string, value: string | number | null) => {
-    inlineEdit.updateEditedData('order_header', { [field]: value });
-  };
-
-  // Handler ajout produit
-  const handleAddProduct = async (data: CreateOrderItemData) => {
-    try {
-      await addItem(data);
-      setShowAddProductModal(false);
-      onUpdate?.(); // Notifier le parent
-    } catch (error) {
-      console.error(
-        '[UniversalOrderDetailsModal] Erreur ajout produit:',
-        error
-      );
-    }
-  };
-
-  // Handler modification item
-  const handleUpdateItem = async (itemId: string, data: Partial<OrderItem>) => {
-    try {
-      await updateItem(itemId, data);
-      onUpdate?.(); // Notifier le parent
-    } catch (error) {
-      console.error(
-        '[UniversalOrderDetailsModal] Erreur modification item:',
-        error
-      );
-    }
-  };
-
-  // Handler suppression item
-  const handleRemoveItem = async (itemId: string) => {
-    try {
-      await removeItem(itemId);
-      onUpdate?.(); // Notifier le parent
-    } catch (error) {
-      console.error(
-        '[UniversalOrderDetailsModal] Erreur suppression item:',
-        error
-      );
-    }
-  };
-
-  // Charger uniquement l'en-tête de commande (items gérés par useOrderItems)
-  useEffect(() => {
-    if (!orderId || !orderType || !open) {
-      setOrderHeader(null);
-      return;
-    }
-
-    const fetchOrderHeader = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const supabase = createClient();
-
-        /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/no-explicit-any */
-        if (orderType === 'sales') {
-          // Récupérer Sales Order SANS items
-          // Type cast needed: Supabase types might be stale, eco_tax_vat_rate exists in DB
-          const { data: order, error: orderError } = (await supabase
-            .from('sales_orders')
-            .select(
-              'id, order_number, status, created_at, expected_delivery_date, total_ht, total_ttc, customer_id, customer_type, billing_address, shipping_address, payment_terms, payment_status_v2, tax_rate, currency, eco_tax_vat_rate, shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate, created_by, channel_id, sales_channels!left(id, name, code)'
-            )
-            .eq('id', orderId)
-            .single()) as any;
-
-          if (orderError) throw orderError;
-
-          // Récupérer nom client selon type (jointure manuelle polymorphe)
-          let customerName = 'Client inconnu';
-
-          let customerTradeName: string | null = null;
-
-          if (order.customer_type === 'organization' && order.customer_id) {
-            const { data: org } = await supabase
-              .from('organisations')
-              .select('legal_name, trade_name')
-              .eq('id', order.customer_id)
-              .single();
-            customerName = org?.legal_name || 'Organisation inconnue';
-            customerTradeName =
-              org?.trade_name && org.trade_name !== org?.legal_name
-                ? org.trade_name
-                : null;
-          } else if (
-            order.customer_type === 'individual' &&
-            order.individual_customer_id
-          ) {
-            const { data: individual } = await supabase
-              .from('individual_customers')
-              .select('first_name, last_name')
-              .eq('id', order.individual_customer_id)
-              .single();
-            customerName = individual
-              ? `${individual.first_name} ${individual.last_name}`
-              : 'Particulier inconnu';
-          }
-
-          // 🆕 Récupérer info créateur via RPC
-          let creatorName = '';
-          let creatorEmail = '';
-
-          if (order.created_by) {
-            const { data: creatorInfo } = await (supabase.rpc as any)(
-              'get_user_info',
-              { p_user_id: order.created_by }
-            );
-
-            if (creatorInfo && creatorInfo.length > 0) {
-              const firstName = creatorInfo[0].first_name || 'Utilisateur';
-              const lastName = creatorInfo[0].last_name || '';
-              creatorName = `${firstName} ${lastName}`.trim();
-              creatorEmail = creatorInfo[0].email || '';
-            }
-          }
-
-          // 🆕 Récupérer canal de vente
-          const channelName = order.sales_channels?.name || '';
-
-          setOrderHeader({
-            id: order.id,
-            order_number: order.order_number,
-            status: order.status,
-            created_at: order.created_at,
-            expected_delivery_date: order.expected_delivery_date,
-            total_ht: order.total_ht ?? 0,
-            total_ttc: order.total_ttc,
-            customer_id: order.customer_id,
-            customer_name: customerName,
-            customer_trade_name: customerTradeName,
-            customer_type:
-              order.customer_type === 'individual'
-                ? 'individual'
-                : 'organization',
-            billing_address: order.billing_address ?? null,
-            shipping_address: order.shipping_address ?? null,
-            payment_terms: order.payment_terms,
-            payment_status_v2: order.payment_status_v2,
-            tax_rate: order.tax_rate,
-            currency: order.currency ?? 'EUR',
-            eco_tax_vat_rate: order.eco_tax_vat_rate,
-            shipping_cost_ht: order.shipping_cost_ht,
-            handling_cost_ht: order.handling_cost_ht,
-            insurance_cost_ht: order.insurance_cost_ht,
-            fees_vat_rate: order.fees_vat_rate,
-            creator_name: creatorName,
-            creator_email: creatorEmail,
-            channel_name: channelName,
-          });
-        } else if (orderType === 'purchase') {
-          // Récupérer Purchase Order SANS items
-          // ⚠️ Type cast needed: Supabase types might be stale, eco_tax_vat_rate exists in DB
-          const { data: order, error: orderError } = (await supabase
-            .from('purchase_orders')
-            .select(
-              'id, po_number, status, created_at, expected_delivery_date, total_ttc, supplier_id, delivery_address, payment_terms, tax_rate, eco_tax_vat_rate'
-            )
-            .eq('id', orderId)
-            .single()) as any;
-
-          if (orderError) throw orderError;
-
-          // Récupérer nom fournisseur (supplier_id → organisations)
-          let supplierName = 'Fournisseur inconnu';
-
-          if (order.supplier_id) {
-            const { data: supplier } = await supabase
-              .from('organisations')
-              .select('legal_name, trade_name')
-              .eq('id', order.supplier_id)
-              .single();
-            supplierName =
-              supplier?.trade_name ||
-              supplier?.legal_name ||
-              'Fournisseur inconnu';
-          }
-
-          setOrderHeader({
-            id: order.id,
-            order_number: order.po_number,
-            status: order.status,
-            created_at: order.created_at,
-            expected_delivery_date: order.expected_delivery_date,
-            total_ttc: order.total_ttc,
-            supplier_name: supplierName,
-            delivery_address: order.delivery_address
-              ? JSON.stringify(order.delivery_address)
-              : null,
-            payment_terms: order.payment_terms,
-            tax_rate: order.tax_rate,
-            eco_tax_vat_rate: order.eco_tax_vat_rate,
-          });
-        }
-      } catch (err: unknown) {
-        const supaError = err as {
-          message?: string;
-          code?: string;
-          details?: string;
-          hint?: string;
-        };
-        console.error(
-          '[UniversalOrderDetailsModal] Erreur chargement en-tête commande:',
-          {
-            orderId,
-            orderType,
-            errorMessage: supaError.message,
-            errorCode: supaError.code,
-            errorDetails: supaError.details,
-            errorHint: supaError.hint,
-            fullError: err,
-          }
-        );
-
-        const errorMessage =
-          supaError.message ??
-          `Impossible de charger la commande ${orderType === 'sales' ? 'client' : 'fournisseur'}`;
-
-        setError(errorMessage);
-        /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/no-explicit-any */
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void fetchOrderHeader();
-  }, [orderId, orderType, open]);
-
-  const formatDate = (date: string | null) => {
-    if (!date) return 'Non définie';
-    return new Date(date).toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-  };
-
-  // Calculer total à partir des items du hook
-  // L'écotaxe est TOUJOURS par unité, donc on multiplie par la quantité
-  const calculateTotal = () => {
-    return items.reduce((sum, item) => {
-      const subtotal =
-        item.quantity *
-        item.unit_price_ht *
-        (1 - (item.discount_percentage ?? 0) / 100);
-      return sum + subtotal + (item.eco_tax ?? 0) * item.quantity;
-    }, 0);
-  };
-
-  // Loading combiné (header + items)
-  const isLoading = loading || itemsLoading;
-  const hasError = error ?? itemsError;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -475,7 +70,6 @@ export function UniversalOrderDetailsModal({
               )}
             </DialogTitle>
             <div className="flex items-center gap-2">
-              {/* Bouton Modifier uniquement si status = draft */}
               {orderHeader?.status === 'draft' && !isEditMode && (
                 <ButtonV2 variant="outline" size="sm" onClick={toggleMode}>
                   <Edit className="h-4 w-4 mr-2" />
@@ -505,7 +99,6 @@ export function UniversalOrderDetailsModal({
 
         {!isLoading && !hasError && orderHeader && (
           <div className="space-y-6">
-            {/* En-tête commande - Mode READ ou EDIT */}
             {isEditMode ? (
               <OrderHeaderEditSection
                 orderType={orderType ?? 'purchase'}
@@ -526,173 +119,25 @@ export function UniversalOrderDetailsModal({
                 readonly={false}
               />
             ) : (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-xl">
-                        {orderHeader.order_number}
-                      </CardTitle>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Créée le {formatDate(orderHeader.created_at)}
-                      </p>
-                    </div>
-                    <Badge
-                      className={
-                        statusColors[orderHeader.status] ||
-                        'bg-gray-100 text-gray-800'
-                      }
-                    >
-                      {statusLabels[orderHeader.status] || orderHeader.status}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    {orderHeader.customer_name && (
-                      <div className="flex items-start gap-3">
-                        <User className="h-5 w-5 text-gray-400 mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">
-                            Client
-                          </p>
-                          <OrganisationNameDisplay
-                            legalName={orderHeader.customer_name}
-                            tradeName={orderHeader.customer_trade_name}
-                            variant="compact"
-                            className="text-sm text-gray-900"
-                          />
-                        </div>
-                      </div>
-                    )}
-                    {orderHeader.supplier_name && (
-                      <div className="flex items-start gap-3">
-                        <TruckIcon className="h-5 w-5 text-gray-400 mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">
-                            Fournisseur
-                          </p>
-                          <p className="text-sm text-gray-900">
-                            {orderHeader.supplier_name}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    <div className="flex items-start gap-3">
-                      <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">
-                          Livraison prévue
-                        </p>
-                        <p className="text-sm text-gray-900">
-                          {formatDate(orderHeader.expected_delivery_date)}
-                        </p>
-                      </div>
-                    </div>
-                    {orderHeader.creator_name && (
-                      <div className="flex items-start gap-3">
-                        <User className="h-5 w-5 text-gray-400 mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">
-                            Créateur
-                          </p>
-                          <p className="text-sm text-gray-900">
-                            {orderHeader.creator_name}
-                            {orderHeader.creator_email && (
-                              <span className="text-gray-500">
-                                {' '}
-                                ({orderHeader.creator_email})
-                              </span>
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    {orderHeader.channel_name && (
-                      <div className="flex items-start gap-3">
-                        <ShoppingCart className="h-5 w-5 text-gray-400 mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">
-                            Source
-                          </p>
-                          <p className="text-sm text-gray-900">
-                            {orderHeader.channel_name}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <UniversalOrderHeaderCard orderHeader={orderHeader} />
             )}
 
-            {/* Articles avec composant réutilisable */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5" />
-                    Articles ({items.length})
-                  </CardTitle>
-                  {/* Bouton Ajouter Produit (mode edit uniquement) */}
-                  {isEditMode && orderHeader?.status === 'draft' && (
-                    <ButtonV2
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowAddProductModal(true)}
-                    >
-                      <Package className="h-4 w-4 mr-2" />
-                      Ajouter un produit
-                    </ButtonV2>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Produit</TableHead>
-                      <TableHead>Qté</TableHead>
-                      <TableHead>Prix HT</TableHead>
-                      <TableHead>Remise</TableHead>
-                      <TableHead>Éco-taxe</TableHead>
-                      {orderType === 'sales' && <TableHead>TVA</TableHead>}
-                      <TableHead>Total HT</TableHead>
-                      <TableHead />
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {items.map(item => (
-                      <EditableOrderItemRow
-                        key={item.id}
-                        item={item}
-                        orderType={orderType ?? 'purchase'}
-                        readonly={!isEditMode}
-                        onUpdate={(id, data) => {
-                          void handleUpdateItem(id, data);
-                        }}
-                        onDelete={id => {
-                          void handleRemoveItem(id);
-                        }}
-                      />
-                    ))}
-                  </TableBody>
-                </Table>
-
-                <Separator className="my-4" />
-
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-bold">Total HT</span>
-                  <span className="text-2xl font-bold">
-                    {formatCurrency(calculateTotal())}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+            <UniversalOrderItemsCard
+              items={items}
+              orderType={orderType ?? 'purchase'}
+              isEditMode={isEditMode}
+              isDraft={orderHeader?.status === 'draft'}
+              onAddProduct={() => setShowAddProductModal(true)}
+              onUpdateItem={(id, data) => {
+                void handleUpdateItem(id, data);
+              }}
+              onRemoveItem={id => {
+                void handleRemoveItem(id);
+              }}
+            />
           </div>
         )}
 
-        {/* Actions (Devis, Facture, Envoi documents) — injected by parent */}
         {renderActions &&
           orderHeader &&
           orderType === 'sales' &&
@@ -719,7 +164,6 @@ export function UniversalOrderDetailsModal({
             items,
           })}
 
-        {/* Modal Ajout Produit */}
         <AddProductToOrderModal
           open={showAddProductModal}
           onClose={() => setShowAddProductModal(false)}
@@ -729,7 +173,6 @@ export function UniversalOrderDetailsModal({
           }}
         />
 
-        {/* Footer avec boutons Enregistrer/Annuler en mode édition */}
         {isEditMode && orderHeader && (
           <DialogFooter className="border-t pt-4">
             <ButtonV2
