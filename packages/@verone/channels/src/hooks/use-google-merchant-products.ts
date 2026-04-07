@@ -22,6 +22,7 @@ export interface GoogleMerchantProduct {
   product_id: string;
   sku: string;
   product_name: string;
+  primary_image_url: string | null;
   google_product_id: string;
   sync_status: 'success' | 'pending' | 'error' | 'skipped';
   google_status: 'approved' | 'pending' | 'rejected' | 'not_synced' | null;
@@ -73,7 +74,7 @@ export function useGoogleMerchantProducts() {
           id, product_id, google_product_id, sync_status, google_status,
           google_status_detail, impressions, clicks, conversions, revenue_ht,
           synced_at, google_status_checked_at, error_message,
-          products!inner(sku, name)
+          products!inner(sku, name, product_images(public_url, is_primary))
         `
         )
         .neq('sync_status', 'deleted')
@@ -92,12 +93,22 @@ export function useGoogleMerchantProducts() {
         const product = row.products as unknown as {
           sku: string;
           name: string;
+          product_images?: Array<{
+            public_url: string;
+            is_primary: boolean | null;
+          }>;
         };
+        const primaryImg = product.product_images?.find(img => img.is_primary);
+        const imageUrl =
+          primaryImg?.public_url ??
+          product.product_images?.[0]?.public_url ??
+          null;
         return {
           id: row.id,
           product_id: row.product_id,
           sku: product.sku,
           product_name: product.name,
+          primary_image_url: imageUrl,
           google_product_id: row.google_product_id ?? '',
           sync_status: row.sync_status as GoogleMerchantProduct['sync_status'],
           google_status:
