@@ -28,7 +28,7 @@ export {
   PCG_SUGGESTED_CATEGORIES,
   PCG_SUGGESTED_INCOME_CATEGORIES,
   PCG_TO_CATEGORY_COLOR,
-} from './lib/pcg-categories';
+} from './lib/pcg-categories/index';
 
 // Lib - TVA (French VAT)
 export * from './lib/tva';
