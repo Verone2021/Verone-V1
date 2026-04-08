@@ -42,7 +42,7 @@ export function DocumentModal({
   if (!doc) return null;
 
   const pdfUrl = getPdfUrl(doc);
-  const canDeletePdf = doc.pdf_url && doc.source_table !== 'invoices';
+  const canDeletePdf = !!doc.pdf_url;
 
   const date = doc.document_date
     ? new Date(doc.document_date).toLocaleDateString('fr-FR', {
@@ -209,9 +209,7 @@ export function DocumentModal({
                 <p className="text-xs text-muted-foreground">
                   {doc.source_table === 'financial_documents'
                     ? 'Document financier (Qonto)'
-                    : doc.source_table === 'bank_transactions'
-                      ? 'Justificatif bancaire (Qonto)'
-                      : 'Facture client (Abby)'}
+                    : 'Justificatif bancaire (Qonto)'}
                 </p>
               </div>
 

@@ -56,9 +56,6 @@ export interface FinancialDocument {
   status: DocumentStatus;
 
   // Intégrations
-  abby_invoice_id: string | null;
-  abby_invoice_number: string | null;
-  abby_pdf_url: string | null;
   uploaded_file_url: string | null;
 
   // Relations
@@ -132,9 +129,6 @@ export function useFinancialDocuments(filters?: FinancialDocumentFilters) {
             tva_amount,
             amount_paid,
             status,
-            abby_invoice_id,
-            abby_invoice_number,
-            abby_pdf_url,
             uploaded_file_url,
             sales_order_id,
             purchase_order_id,

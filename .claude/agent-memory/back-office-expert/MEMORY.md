@@ -13,7 +13,7 @@
 - **Produits** : catalogue 231 produits, alertes "A traiter", KPIs compacts, grille 2x2
 - **Stock** : pas de table stock_levels — tout calcule via 12 triggers PostgreSQL interdependants
 - **Commandes** : SO (vente) + PO (achat), cycle Consultation → Devis → Commande → Expedition → Facture
-- **Finance** : double table invoices (legacy Abby 23 lignes) + financial_documents (Qonto STI)
+- **Finance** : financial_documents (Qonto STI) — table `invoices` (legacy Abby) droppee le 2026-03-21
 - **Contacts** : 5 KPIs (Total, Fournisseurs, Clients Pro, Prestataires, Enseignes), banniere alertes
 - **Ventes** : hub avec liens rapides, KPIs, grille 2 colonnes
 - **Achats** : hub identique design Ventes

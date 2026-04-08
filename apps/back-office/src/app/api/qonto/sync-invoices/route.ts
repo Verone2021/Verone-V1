@@ -241,11 +241,6 @@ export async function POST(_request: NextRequest): Promise<
               : mapQontoStatus(invoice.status),
           partner_id: partnerId,
           partner_type: 'customer' as const,
-          // Stocker l'ID Qonto (requis par contrainte check_qonto_required_for_customer_invoices)
-          qonto_invoice_id: invoice.id,
-          // Retro-compatibilite avec les records existants
-          abby_invoice_id: invoice.id,
-          abby_invoice_number: invoiceNumber,
           qonto_invoice_id: invoice.id,
           description: `Facture Qonto ${invoiceNumber}`,
           notes: `Client: ${invoice.client?.name ?? 'N/A'}`,

@@ -4,13 +4,8 @@ Intégrations externes pour le système Vérone CRM/ERP
 
 ## 📦 Contenu
 
-### Abby (Facturation)
-- Client API Abby
-- Sync processor pour synchronisation
-- Webhook validator
-- Types & erreurs
-
 ### Google Merchant (E-commerce)
+
 - Client Google Content API
 - Product mapper & transformer
 - Sync client pour synchronisation
@@ -18,6 +13,7 @@ Intégrations externes pour le système Vérone CRM/ERP
 - Auth & configuration
 
 ### Qonto (Banking)
+
 - Client Qonto API
 - Types transactions bancaires
 - Error handling
@@ -25,12 +21,6 @@ Intégrations externes pour le système Vérone CRM/ERP
 ## 🚀 Usage
 
 ```tsx
-// Abby
-import { AbbyClient } from '@verone/integrations/abby';
-
-const abby = new AbbyClient();
-await abby.sync();
-
 // Google Merchant
 import { GoogleMerchantClient } from '@verone/integrations/google-merchant';
 
@@ -47,7 +37,7 @@ const transactions = await qonto.getTransactions();
 ## 📊 Statistiques
 
 - **17 fichiers** TypeScript
-- **3 intégrations** tierces
+- **2 intégrations** tierces
 - **100% types** stricts
 
 **Version** : 1.0.0

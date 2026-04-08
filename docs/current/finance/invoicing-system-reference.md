@@ -3,6 +3,8 @@
 **Version** : 2026-03-10
 **Status** : Documentation canonique du systeme de facturation
 
+> **ATTENTION** : La table `invoices` (legacy Abby) a ete droppee le 2026-03-21. Seule `financial_documents` (Qonto) est active. Les sections ci-dessous referant a la table `invoices` sont obsoletes.
+
 ---
 
 ## Architecture Double Table

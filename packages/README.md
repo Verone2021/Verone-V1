@@ -54,7 +54,7 @@ packages/@verone/
 │
 └── Testing & Integrations (2 packages)
     ├── testing/         # Utilities tests
-    └── integrations/    # Intégrations externes (Abby, Google Merchant, Qonto)
+    └── integrations/    # Intégrations externes (Google Merchant, Qonto)
 ```
 
 **Total** : 25 packages @verone/\*
@@ -227,7 +227,6 @@ packages/@verone/
 
 #### @verone/integrations
 
-- **Abby** : Client synchronisation stock
 - **Google Merchant** : Feeds XML, sync produits
 - **Qonto** : Rapprochement bancaire
 - **Usage** : `import { GoogleMerchantClient } from '@verone/integrations/google-merchant'`
