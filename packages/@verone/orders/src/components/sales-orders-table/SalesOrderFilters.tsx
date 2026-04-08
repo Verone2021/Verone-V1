@@ -15,7 +15,7 @@ import {
 } from '@verone/ui';
 import { Tabs, TabsList, TabsTrigger } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { Search, RotateCcw, FileSpreadsheet } from 'lucide-react';
+import { Search, RotateCcw } from 'lucide-react';
 
 import type { SalesAdvancedFilters } from '../../types/advanced-filters';
 import { DEFAULT_SALES_FILTERS } from '../../types/advanced-filters';
@@ -57,9 +57,6 @@ export interface SalesOrderFiltersProps {
   /** Enseignes for filter dropdown */
   enseignes: Enseigne[];
 
-  /** Export handler */
-  onExportExcel: () => void;
-
   /** Create button config */
   onCreateClick?: () => void;
   renderCreateButton: React.ReactNode;
@@ -81,7 +78,7 @@ export function SalesOrderFilters({
   availableYears,
   isPeriodEnabled,
   enseignes,
-  onExportExcel,
+
   renderCreateButton,
   renderHeaderRight,
 }: SalesOrderFiltersProps) {
@@ -91,17 +88,6 @@ export function SalesOrderFilters({
         <div className="flex items-center justify-between">
           <CardTitle>Filtres</CardTitle>
           <div className="flex gap-2">
-            <ButtonUnified
-              onClick={() => {
-                void Promise.resolve(onExportExcel()).catch((err: unknown) => {
-                  console.error('[SalesOrderFilters] export failed:', err);
-                });
-              }}
-              variant="outline"
-              icon={FileSpreadsheet}
-            >
-              Exporter Excel
-            </ButtonUnified>
             {renderCreateButton}
             {renderHeaderRight?.()}
           </div>

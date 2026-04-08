@@ -128,24 +128,24 @@ export function useUserActivityTracker() {
   );
 
   // Query pour les statistiques d'activité
+  // ✅ FIX: enabled=false par défaut — la RPC scanne 91k rows (71MB) et timeout
+  // sur le rôle authenticated (8s limit). Ne charger que quand explicitement demandé.
   const activityStatsQuery = useSupabaseQuery(
     'activity-stats',
     async supabase => {
-      // ✅ PHASE 3: Calculs déplacés côté serveur (RPC PostgreSQL)
-      // Gain: 2900ms (JS) → <500ms (RPC)
       const { data, error } = await supabase.rpc('get_activity_stats', {
         days_ago: 7,
       } as never);
 
       if (error) throw error;
 
-      // Type assertion pour compatibilité ActivityStats interface
       return { data: data as unknown as ActivityStats, error: null };
     },
     {
-      staleTime: 60 * 60 * 1000, // 60 minutes (stats changent peu, RPC lente ~2800ms)
-      cacheTime: 90 * 60 * 1000, // 90 minutes
-      sloThreshold: 4000, // Seuil élevé pour RPC PostgreSQL lente
+      enabled: false,
+      staleTime: 60 * 60 * 1000,
+      cacheTime: 90 * 60 * 1000,
+      sloThreshold: 4000,
     }
   );
 

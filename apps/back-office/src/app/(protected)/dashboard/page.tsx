@@ -174,7 +174,7 @@ export default function DashboardPage() {
       id: 'new-order',
       label: 'Nouvelle Commande',
       icon: ShoppingCart,
-      href: '/commandes/clients/nouvelle',
+      href: '/commandes/clients?action=new',
     },
     {
       id: 'new-organisation',
