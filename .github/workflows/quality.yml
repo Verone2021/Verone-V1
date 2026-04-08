@@ -75,7 +75,7 @@ jobs:
 
       # ---- Turborepo cache (GitHub Actions native) ----
       - name: Cache Turborepo
-        uses: rharkor/caching-for-turbo@v2
+        uses: rharkor/caching-for-turbo@v2.3.11
 
       # ---- Determine which --filter flags to use ----
       - name: Build filter flags
