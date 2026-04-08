@@ -2,6 +2,11 @@
 
 Concept store e-commerce public. Affiche les produits publies via la RPC `get_site_internet_products()`.
 
+## CRITICAL : Index a consulter AVANT toute modification
+
+- Pages, routes, composants site : @docs/current/INDEX-SITE-INTERNET-COMPLET.md
+- Composants et hooks partages : @docs/current/INDEX-COMPOSANTS-FORMULAIRES.md
+
 ## Documentation
 
 | Tache                | Lire AVANT                                            |

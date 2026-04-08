@@ -93,6 +93,13 @@ Tout agent ou commande doit commencer par consulter cet index.
 | Entites metier | `docs/current/back-office-entities-index.md` |
 | CLAUDE.md      | `apps/back-office/CLAUDE.md`                 |
 
+### Composants & Formulaires partages (CRITIQUE)
+
+| Sujet                | Source                                          |
+| -------------------- | ----------------------------------------------- |
+| Index transversal    | `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md`  |
+| 22 packages @verone/ | Tous les modals, hooks, formulaires par package |
+
 ### LinkMe
 
 | Sujet         | Source                                        |

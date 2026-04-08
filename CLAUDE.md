@@ -14,7 +14,9 @@ Monorepo Turborepo : back-office (3000), linkme (3002), site-internet (3001).
 
 - `supabase/migrations/` — source de verite schema DB
 - `packages/@verone/types/src/supabase.ts` — types generes
-- `packages/@verone/` — 26 packages partages (hooks, composants, utils)
+- `packages/@verone/` — 22 packages partages (hooks, composants, utils)
+- `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md` — **INDEX TRANSVERSAL** composants, formulaires, hooks
+- `docs/current/INDEX-PAGES-BACK-OFFICE.md` — index pages back-office
 - `.claude/work/ACTIVE.md` — sprints et taches en cours
 - `.claude/INDEX.md` — sommaire centralise complet
 - `.claude/rules/` — regles auto-discovered
