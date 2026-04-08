@@ -150,16 +150,28 @@ class VeroneLogger {
   private output(entry: LogEntry): void {
     const logString = JSON.stringify(entry);
 
+    // Dispatch vers la bonne méthode console selon le niveau
+    const consoleMethod: 'debug' | 'info' | 'warn' | 'error' =
+      entry.level === 'debug'
+        ? 'debug'
+        : entry.level === 'info'
+          ? 'info'
+          : entry.level === 'warn'
+            ? 'warn'
+            : 'error';
+
     // En development, output lisible
     if (this.environment === 'development') {
       const emoji = this.getLevelEmoji(entry.level);
       const timestamp = new Date(entry.timestamp).toLocaleTimeString();
-      console.warn(
+      // eslint-disable-next-line no-console
+      console[consoleMethod](
         `${emoji} ${timestamp} [${entry.level.toUpperCase()}] ${entry.message}`
       );
 
       if (entry.context) {
-        console.warn('  Context:', entry.context);
+        // eslint-disable-next-line no-console
+        console[consoleMethod]('  Context:', entry.context);
       }
 
       if (entry.error) {
@@ -170,11 +182,13 @@ class VeroneLogger {
       }
 
       if (entry.metrics) {
-        console.warn('  Metrics:', entry.metrics);
+        // eslint-disable-next-line no-console
+        console[consoleMethod]('  Metrics:', entry.metrics);
       }
     } else {
       // En production, JSON structuré pour parsing
-      console.warn(logString);
+      // eslint-disable-next-line no-console
+      console[consoleMethod](logString);
     }
   }
 
