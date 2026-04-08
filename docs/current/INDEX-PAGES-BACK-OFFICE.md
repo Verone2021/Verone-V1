@@ -300,10 +300,11 @@
 
 ### 19. DEVIS (2 pages)
 
-| Route         | Type   | Description  |
-| ------------- | ------ | ------------ |
-| `/devis`      | List   | Devis        |
-| `/devis/[id]` | Detail | Detail devis |
+| Route            | Type   | Description                                       |
+| ---------------- | ------ | ------------------------------------------------- |
+| `/devis`         | List   | Devis (redirect → /factures?tab=devis)            |
+| `/devis/nouveau` | Form   | Creation devis (choix: depuis commande ou vierge) |
+| `/devis/[id]`    | Detail | Detail devis                                      |
 
 ---
 

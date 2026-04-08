@@ -1,6 +1,6 @@
 'use client';
 
-import { Store, Globe, Users, ChevronRight } from 'lucide-react';
+import { Store, Users, ChevronRight } from 'lucide-react';
 
 type SalesChannelType = 'manual' | 'site-internet' | 'linkme';
 
@@ -36,24 +36,6 @@ export function ChannelSelector({
           <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-500" />
         </button>
 
-        {/* Option: Site Internet */}
-        <button
-          type="button"
-          onClick={() => onChannelSelect('site-internet')}
-          className="flex items-center gap-4 p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all text-left group"
-        >
-          <div className="flex-shrink-0 w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200">
-            <Globe className="h-6 w-6 text-green-600" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-gray-900">Site Internet</h3>
-            <p className="text-sm text-gray-500">
-              Commande e-commerce (prix catalogue, remises uniquement)
-            </p>
-          </div>
-          <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-green-500" />
-        </button>
-
         {/* Option: LinkMe */}
         <button
           type="button"
@@ -83,8 +65,8 @@ export function ChannelSelector({
       <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
         <p className="text-sm text-amber-800">
           <strong>Note :</strong> Seules les commandes manuelles permettent de
-          modifier librement les prix. Les commandes Site Internet et LinkMe
-          utilisent les prix définis dans le catalogue ou les sélections.
+          modifier librement les prix. Les commandes LinkMe utilisent les prix
+          definis dans les selections.
         </p>
       </div>
     </div>

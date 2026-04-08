@@ -127,14 +127,16 @@ export default function VentesDashboardPage() {
               Consultation
             </button>
             <button
-              onClick={() => router.push('/commandes/clients?action=new')}
+              onClick={() =>
+                router.push('/commandes/clients?action=new&from=ventes')
+              }
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-700 text-xs font-medium rounded-lg border border-gray-300 hover:bg-gray-50"
             >
               <Plus className="h-3.5 w-3.5" />
               Commande
             </button>
             <button
-              onClick={() => router.push('/factures?tab=devis')}
+              onClick={() => router.push('/devis/nouveau')}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-700 text-xs font-medium rounded-lg border border-gray-300 hover:bg-gray-50"
             >
               <Plus className="h-3.5 w-3.5" />
