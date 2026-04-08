@@ -117,6 +117,7 @@ export async function GET(
     let documentNumber: string | null = null;
     let documentType: string | null = null;
     let documentDate: string | null = null;
+    let documentStatus: string | null = null;
     let qontoInvoiceId: string | null = null;
 
     if (isUUID) {
@@ -124,7 +125,7 @@ export async function GET(
       const { data: doc } = await supabase
         .from('financial_documents')
         .select(
-          'id, document_number, document_type, document_date, qonto_invoice_id, local_pdf_path'
+          'id, document_number, document_type, document_date, status, qonto_invoice_id, local_pdf_path'
         )
         .eq('id', id)
         .single();
@@ -134,6 +135,7 @@ export async function GET(
         documentNumber = doc.document_number;
         documentType = doc.document_type;
         documentDate = doc.document_date ?? null;
+        documentStatus = doc.status;
         qontoInvoiceId = doc.qonto_invoice_id;
         localPdfPath = doc.local_pdf_path ?? null;
       } else {
@@ -143,7 +145,7 @@ export async function GET(
         const { data: docByQonto } = await supabase
           .from('financial_documents')
           .select(
-            'id, document_number, document_type, document_date, qonto_invoice_id, local_pdf_path'
+            'id, document_number, document_type, document_date, status, qonto_invoice_id, local_pdf_path'
           )
           .eq('qonto_invoice_id', id)
           .single();
@@ -153,10 +155,21 @@ export async function GET(
           documentNumber = docByQonto.document_number;
           documentType = docByQonto.document_type;
           documentDate = docByQonto.document_date ?? null;
+          documentStatus = docByQonto.status;
           qontoInvoiceId = docByQonto.qonto_invoice_id;
           localPdfPath = docByQonto.local_pdf_path ?? null;
         }
       }
+    }
+
+    // Skip local cache for draft documents — their cached PDF is a proforma
+    // that becomes stale once the invoice is finalized in Qonto
+    if (documentStatus === 'draft') {
+      console.warn(
+        '[API Invoice PDF] Skipping local cache for draft document:',
+        documentNumber
+      );
+      localPdfPath = null;
     }
 
     // Si PDF local disponible, le servir depuis Supabase Storage
