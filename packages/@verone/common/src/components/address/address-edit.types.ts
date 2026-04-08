@@ -44,7 +44,7 @@ export const COUNTRIES = [
   { code: 'IT', name: 'Italie' },
   { code: 'ES', name: 'Espagne' },
   { code: 'CH', name: 'Suisse' },
-  { code: 'UK', name: 'Royaume-Uni' },
+  { code: 'GB', name: 'Royaume-Uni' },
   { code: 'NL', name: 'Pays-Bas' },
   { code: 'LU', name: 'Luxembourg' },
   { code: 'OTHER', name: 'Autre' },
