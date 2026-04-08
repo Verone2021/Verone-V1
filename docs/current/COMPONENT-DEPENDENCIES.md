@@ -12,11 +12,12 @@
 
 ### Factures (Invoices)
 
-| Composant                     | Package           | Depend de                                                   | Utilise par |
-| ----------------------------- | ----------------- | ----------------------------------------------------------- | ----------- |
-| `InvoiceCreateFromOrderModal` | `@verone/finance` | `IOrderForDocument`, `useInvoiceActions`                    | `/factures` |
-| `InvoiceDetailModal`          | `@verone/finance` | `InvoiceInfoCard`, `InvoiceItemsTable`, `InvoiceTotalsCard` | `/factures` |
-| `CreditNoteCreateModal`       | `@verone/finance` | Invoice parent                                              | `/factures` |
+| Composant                     | Package           | Depend de                                                   | Utilise par          |
+| ----------------------------- | ----------------- | ----------------------------------------------------------- | -------------------- |
+| `InvoiceCreateFromOrderModal` | `@verone/finance` | `IOrderForDocument`, `useInvoiceActions`                    | `/factures/nouvelle` |
+| `InvoiceCreateServiceModal`   | `@verone/finance` | —                                                           | `/factures/nouvelle` |
+| `InvoiceDetailModal`          | `@verone/finance` | `InvoiceInfoCard`, `InvoiceItemsTable`, `InvoiceTotalsCard` | `/factures`          |
+| `CreditNoteCreateModal`       | `@verone/finance` | Invoice parent                                              | `/factures`          |
 
 ### Commandes (Orders)
 
