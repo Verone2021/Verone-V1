@@ -45,7 +45,7 @@ Migration complète vers architecture monorepo pnpm avec 21 packages `@verone/*`
 **Dev & Config**:
 - `@verone/testing` : Utils tests & mocks
 - `@verone/admin` : Gestion utilisateurs & permissions
-- `@verone/integrations` : Intégrations externes (Abby, etc.)
+- `@verone/integrations` : Intégrations externes (Google Merchant, Qonto)
 - `@verone/dashboard` : Composants & hooks dashboard
 - `@verone/notifications` : Système notifications
 

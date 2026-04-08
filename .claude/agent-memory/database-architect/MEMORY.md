@@ -15,7 +15,7 @@
 - **Stock** : stock_movements (affects_forecast, quantity_change NEGATIF pour sorties), stock_alert_tracking
 - **Ventes** : sales_orders, sales_order_items, sales_shipments, sales_shipment_items
 - **Achats** : purchase_orders, purchase_order_items, purchase_order_receptions
-- **Finance** : financial_documents (Qonto STI), invoices (legacy Abby — 23 lignes), bank_transactions, transaction_document_links
+- **Finance** : financial_documents (Qonto STI — SEULE table active depuis 2026-03-21), bank_transactions, transaction_document_links
 - **LinkMe** : linkme_affiliates, linkme_selections, linkme_selection_items, linkme_commissions, channel_pricing
 
 ## Triggers critiques (ne JAMAIS modifier sans audit complet)
