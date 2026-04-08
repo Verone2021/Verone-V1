@@ -2,6 +2,11 @@
 
 Canal de vente **linkme** (PAS "affilie"). Plateforme B2B ou les affilies (enseignes/organisations) passent des commandes depuis les selections Verone.
 
+## CRITICAL : Index a consulter AVANT toute modification
+
+- Pages, routes, formulaires LinkMe : @docs/current/INDEX-LINKME-COMPLET.md
+- Composants et hooks partages : @docs/current/INDEX-COMPOSANTS-FORMULAIRES.md
+
 ## Source de Verite Unique
 
 **TOUJOURS lire en premier** : `docs/current/linkme/GUIDE-COMPLET-LINKME.md`

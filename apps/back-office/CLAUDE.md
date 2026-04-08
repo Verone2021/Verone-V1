@@ -3,6 +3,12 @@
 Staff CRM/ERP pour concept store decoration et mobilier d'interieur.
 Gestion complete : produits, stock, commandes, finance, clients, fournisseurs.
 
+## CRITICAL : Index a consulter AVANT toute modification
+
+- Pages, routes, sidebar : @docs/current/INDEX-PAGES-BACK-OFFICE.md
+- Composants, formulaires, hooks partages : @docs/current/INDEX-COMPOSANTS-FORMULAIRES.md
+- Entites metier : @docs/current/back-office-entities-index.md
+
 ## Documentation par Tache
 
 | Tache              | Lire AVANT                                          |

@@ -213,12 +213,15 @@ export function SalesOrderFormModal({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <ButtonV2 className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          {buttonLabel}
-        </ButtonV2>
-      </DialogTrigger>
+      {/* Trigger visible uniquement en mode non-contrôlé (pas de prop open) */}
+      {controlledOpen === undefined && (
+        <DialogTrigger asChild>
+          <ButtonV2 className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            {buttonLabel}
+          </ButtonV2>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>

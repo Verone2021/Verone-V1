@@ -17,12 +17,12 @@
  * - Single Source of Truth: un seul formulaire LinkMe (canaux-vente)
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-import { SalesOrdersTable } from '@verone/orders';
+import { SalesOrderFormModal, SalesOrdersTable } from '@verone/orders';
 import {
   ButtonUnified,
   Select,
@@ -46,12 +46,31 @@ type ChannelFilter = 'all' | 'linkme' | 'siteInternet';
 
 export default function SalesOrdersClientsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [channelFilter, setChannelFilter] = useState<ChannelFilter>('all');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Ouvrir le modal si ?action=new
+  useEffect(() => {
+    if (searchParams.get('action') === 'new') {
+      setShowCreateModal(true);
+      // Nettoyer l'URL sans recharger
+      router.replace('/commandes/clients', { scroll: false });
+    }
+  }, [searchParams, router]);
 
   // Rediriger vers le formulaire LinkMe unique (canaux-vente)
   const handleCreateLinkMeOrder = useCallback(() => {
     router.push('/canaux-vente/linkme/commandes?action=new');
   }, [router]);
+
+  const handleCreateClick = useCallback(() => {
+    if (channelFilter === 'linkme') {
+      handleCreateLinkMeOrder();
+    } else {
+      setShowCreateModal(true);
+    }
+  }, [channelFilter, handleCreateLinkMeOrder]);
 
   return (
     <div className="space-y-6 p-6">
@@ -88,6 +107,13 @@ export default function SalesOrdersClientsPage() {
         </div>
       </div>
 
+      {/* Modal creation commande (controle par la page) */}
+      <SalesOrderFormModal
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        onLinkMeClick={handleCreateLinkMeOrder}
+      />
+
       {/* Table des commandes */}
       <SalesOrdersTable
         channelId={CHANNEL_IDS[channelFilter]}
@@ -107,9 +133,7 @@ export default function SalesOrdersClientsPage() {
           amount: true,
           orderNumber: true,
         }}
-        onCreateClick={
-          channelFilter === 'linkme' ? handleCreateLinkMeOrder : undefined
-        }
+        onCreateClick={handleCreateClick}
         onLinkMeClick={handleCreateLinkMeOrder}
       />
     </div>
