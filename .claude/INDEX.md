@@ -129,12 +129,15 @@ Tout agent ou commande doit commencer par consulter cet index.
 
 ### Finance
 
-| Sujet             | Source                                        |
-| ----------------- | --------------------------------------------- |
-| Reference finance | `docs/current/finance/finance-reference.md`   |
-| Systeme Qonto     | Serena `qonto-invoicing-system`               |
-| Qonto env setup   | `docs/integrations/qonto-env-setup.md`        |
-| Never finalize    | `docs/current/serena/qonto-never-finalize.md` |
+| Sujet                     | Source                                               |
+| ------------------------- | ---------------------------------------------------- |
+| Reference finance         | `docs/current/finance/finance-reference.md`          |
+| Systeme Qonto             | Serena `qonto-invoicing-system`                      |
+| Qonto env setup           | `docs/integrations/qonto-env-setup.md`               |
+| Never finalize            | `docs/current/serena/qonto-never-finalize.md`        |
+| Invoicing system (routes) | `docs/current/finance/invoicing-system-reference.md` |
+| Workflow ventes complet   | `docs/current/WORKFLOW-VENTES.md`                    |
+| Dependances composants    | `docs/current/COMPONENT-DEPENDENCIES.md`             |
 
 ### Modules
 

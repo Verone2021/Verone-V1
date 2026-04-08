@@ -63,6 +63,21 @@ Consultation → Commande (SO) → Devis → Facture → Paiement → Rapprochem
 
 ---
 
+## 7. Cycle de vie proforma (facture brouillon)
+
+1. Creation : `POST /api/qonto/invoices` avec `autoFinalize=false` → status `draft` + `document_number = PROFORMA-xxx`
+2. Finalisation : `POST /api/qonto/invoices/[id]/finalize` → status `sent` + `document_number = F-2026-xxx` + cache PDF invalide
+3. Annulation : `POST /api/qonto/invoices/[id]/cancel` → status `cancelled`
+4. Suppression : `DELETE /api/qonto/invoices/[id]/delete` → `deleted_at = NOW()` (soft-delete)
+
+Contraintes DB :
+
+- `check_qonto_required_for_customer_invoices` : qonto_invoice_id obligatoire
+- `check_sales_order_only_customer` : sales_order_id obligatoire
+- Une customer_invoice est TOUJOURS liee a une commande
+
+---
+
 ## Navigation depuis /ventes
 
 | Action       | Destination                                 | Type  | Retour vers /ventes        |

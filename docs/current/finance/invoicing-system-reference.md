@@ -207,6 +207,30 @@ La page `/factures` lit principalement la table `financial_documents`.
 
 ---
 
+## Routes API Qonto — Comportement local
+
+Ces routes appellent l'API Qonto et mettent a jour `financial_documents` en consequence.
+
+| Route                                    | Action Qonto         | Mise a jour locale (`financial_documents`)                                                |
+| ---------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------- |
+| `POST /api/qonto/invoices`               | Cree facture         | INSERT avec `sales_order_id`, `qonto_invoice_id`                                          |
+| `POST /api/qonto/invoices/[id]/finalize` | Finalise draft       | UPDATE `document_number`, `status='sent'`, clear `local_pdf_path`                         |
+| `POST /api/qonto/invoices/[id]/cancel`   | Annule facture       | UPDATE `status='cancelled'`                                                               |
+| `DELETE /api/qonto/invoices/[id]/delete` | Supprime draft       | UPDATE `deleted_at=NOW()` (soft-delete)                                                   |
+| `POST /api/qonto/invoices/[id]/send`     | Envoie facture       | Pas de mise a jour locale                                                                 |
+| `GET /api/qonto/invoices/[id]/pdf`       | Telecharge PDF       | Store-on-read (cache local `local_pdf_path` si absent) ; bypass cache si `status='draft'` |
+| `POST /api/qonto/sync-invoices`          | Sync toutes factures | UPDATE existantes par `qonto_invoice_id` ; skip INSERT sans `sales_order_id`              |
+| `POST /api/qonto/invoices/backfill-pdfs` | Cache PDFs en masse  | UPDATE `local_pdf_path`                                                                   |
+
+### Regles importantes
+
+- La route `finalize` invalide le cache PDF local (`local_pdf_path = NULL`) car le numero de document change (PROFORMA-xxx → F-2026-xxx)
+- La route `delete` utilise un **soft-delete** (`deleted_at`) et ne supprime pas la ligne en base
+- La route `sync-invoices` recherche d'abord par `qonto_invoice_id` (et non `abby_invoice_id`) ; elle invalide le cache si `document_number` change
+- Les INSERT via `sync-invoices` sont skipes si `sales_order_id` est absent (pas de commande associee)
+
+---
+
 ## Composants Frontend Cles
 
 | Composant            | Package         | Role                                  |

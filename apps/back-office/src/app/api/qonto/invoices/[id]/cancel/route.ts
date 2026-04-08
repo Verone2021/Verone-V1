@@ -10,6 +10,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { QontoClient } from '@verone/integrations/qonto';
+import { createAdminClient } from '@verone/utils/supabase/server';
 
 function getQontoClient(): QontoClient {
   return new QontoClient({
@@ -29,6 +30,21 @@ export async function POST(
     const client = getQontoClient();
 
     const invoice = await client.cancelClientInvoice(id);
+
+    // Update local status in financial_documents
+    try {
+      const supabase = createAdminClient();
+      await supabase
+        .from('financial_documents')
+        .update({ status: 'cancelled' as const })
+        .eq('qonto_invoice_id', id);
+    } catch (dbError) {
+      console.error(
+        '[API Qonto Invoice Cancel] Failed to update local status:',
+        dbError
+      );
+      // Don't fail the request — Qonto cancellation succeeded
+    }
 
     return NextResponse.json({
       success: true,
