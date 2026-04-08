@@ -184,13 +184,25 @@ export async function POST(_request: NextRequest): Promise<
           continue;
         }
 
-        // Verifier si la facture existe deja (par document_number)
-        const { data: existing } = await supabase
+        // Verifier si la facture existe deja (par qonto_invoice_id d'abord, puis document_number)
+        // qonto_invoice_id est stable même quand document_number change (ex: PROFORMA → F-2026-xxx)
+        const { data: existingByQontoId } = await supabase
           .from('financial_documents')
-          .select('id, updated_at, status, amount_paid')
-          .eq('document_number', invoiceNumber)
+          .select('id, document_number, updated_at, status, amount_paid')
+          .eq('qonto_invoice_id', invoice.id)
           .eq('document_type', 'customer_invoice')
           .maybeSingle();
+
+        const existing =
+          existingByQontoId ??
+          (
+            await supabase
+              .from('financial_documents')
+              .select('id, document_number, updated_at, status, amount_paid')
+              .eq('document_number', invoiceNumber)
+              .eq('document_type', 'customer_invoice')
+              .maybeSingle()
+          ).data;
 
         // Ne pas écraser le statut/montant si un rapprochement local a déjà marqué la facture comme payée
         const existingIsPaidLocally =
@@ -218,16 +230,26 @@ export async function POST(_request: NextRequest): Promise<
           // Stocker l'ID Qonto dans les champs abby (requis par contrainte DB)
           abby_invoice_id: invoice.id,
           abby_invoice_number: invoiceNumber,
+          qonto_invoice_id: invoice.id,
           description: `Facture Qonto ${invoiceNumber}`,
           notes: `Client: ${invoice.client?.name ?? 'N/A'}`,
           updated_at: new Date().toISOString(),
         };
 
         if (existing) {
+          // If document_number changed (proforma finalized), invalidate cached PDF
+          const updatePayload = { ...documentData } as Record<string, unknown>;
+          if (existing.document_number !== invoiceNumber) {
+            // Number changed (e.g. PROFORMA-xxx → F-2026-xxx) — clear cached PDF
+            updatePayload.local_pdf_path = null;
+            updatePayload.pdf_stored_at = null;
+            updatePayload.finalized_at = new Date().toISOString();
+          }
+
           // Update
           const { error: updateError } = await supabase
             .from('financial_documents')
-            .update(documentData)
+            .update(updatePayload)
             .eq('id', existing.id);
 
           if (updateError) {
