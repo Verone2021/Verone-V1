@@ -16,48 +16,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ----------------------------------------------------------------
-  # 1. Detect which apps changed → skip unchanged apps
-  # ----------------------------------------------------------------
-  detect-changes:
-    name: Detect changes
-    runs-on: ubuntu-latest
-    outputs:
-      back-office: ${{ steps.filter.outputs.back-office }}
-      linkme: ${{ steps.filter.outputs.linkme }}
-      site-internet: ${{ steps.filter.outputs.site-internet }}
-      packages: ${{ steps.filter.outputs.packages }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            back-office:
-              - 'apps/back-office/**'
-            linkme:
-              - 'apps/linkme/**'
-            site-internet:
-              - 'apps/site-internet/**'
-            packages:
-              - 'packages/**'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'tsconfig.json'
-              - 'turbo.json'
-
-  # ----------------------------------------------------------------
-  # 2. Quality checks — only on affected apps
-  # ----------------------------------------------------------------
   quality:
-    name: ESLint + Type-Check + Build
-    needs: detect-changes
+    name: Lint + Type-Check + Build
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
@@ -73,64 +44,29 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # ---- Turborepo local cache (official pattern from turborepo.dev) ----
-      - name: Cache Turborepo
+      # ---- Next.js build cache (official pattern from nextjs.org/docs) ----
+      - name: Cache Next.js builds
         uses: actions/cache@v4
         with:
-          path: .turbo
-          key: turbo-${{ runner.os }}-${{ github.sha }}
+          path: |
+            apps/back-office/.next/cache
+            apps/linkme/.next/cache
+            apps/site-internet/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('**/*.ts', '**/*.tsx') }}
           restore-keys: |
-            turbo-${{ runner.os }}-
+            ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-
 
-      # ---- Determine which --filter flags to use ----
-      - name: Build filter flags
-        id: flags
+      # ---- Quality checks ----
+      - name: Run quality checks
         run: |
-          FILTERS=""
-          APPS_CHANGED=""
-
-          # If shared packages changed → check ALL apps
-          if [ "${{ needs.detect-changes.outputs.packages }}" = "true" ]; then
-            FILTERS="--filter=@verone/back-office --filter=@verone/linkme --filter=@verone/site-internet"
-            APPS_CHANGED="back-office, linkme, site-internet (packages changed)"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "Push event — running all packages"
+            pnpm turbo run lint type-check build
           else
-            if [ "${{ needs.detect-changes.outputs.back-office }}" = "true" ]; then
-              FILTERS="$FILTERS --filter=@verone/back-office"
-              APPS_CHANGED="$APPS_CHANGED back-office"
-            fi
-            if [ "${{ needs.detect-changes.outputs.linkme }}" = "true" ]; then
-              FILTERS="$FILTERS --filter=@verone/linkme"
-              APPS_CHANGED="$APPS_CHANGED linkme"
-            fi
-            if [ "${{ needs.detect-changes.outputs.site-internet }}" = "true" ]; then
-              FILTERS="$FILTERS --filter=@verone/site-internet"
-              APPS_CHANGED="$APPS_CHANGED site-internet"
-            fi
+            echo "PR event — running affected packages only"
+            pnpm turbo run lint type-check build --affected
           fi
-
-          # Fallback: if nothing detected, check all
-          if [ -z "$FILTERS" ]; then
-            FILTERS="--filter=@verone/back-office --filter=@verone/linkme --filter=@verone/site-internet"
-            APPS_CHANGED="all (fallback)"
-          fi
-
-          echo "filters=$FILTERS" >> $GITHUB_OUTPUT
-          echo "apps=$APPS_CHANGED" >> $GITHUB_OUTPUT
-          echo "📦 Apps to check: $APPS_CHANGED"
-
-      # ---- ESLint (fast, always global) ----
-      - name: ESLint
-        run: pnpm lint
-
-      # ---- Type-Check (filtered) ----
-      - name: Type-Check (${{ steps.flags.outputs.apps }})
-        run: pnpm turbo run type-check ${{ steps.flags.outputs.filters }}
-        env:
-          NODE_OPTIONS: --max-old-space-size=4096
-
-      # ---- Build (filtered) ----
-      - name: Build (${{ steps.flags.outputs.apps }})
-        run: pnpm turbo run build ${{ steps.flags.outputs.filters }}
         env:
           NODE_OPTIONS: --max-old-space-size=8192
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
@@ -147,11 +83,15 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `## ❌ Quality Checks Failed\n\nApps checked: **${{ steps.flags.outputs.apps }}**\n\nSee [workflow logs](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for details.\n\n**Fix locally:**\n\`\`\`bash\npnpm lint\npnpm turbo run type-check ${{ steps.flags.outputs.filters }}\npnpm turbo run build ${{ steps.flags.outputs.filters }}\n\`\`\``
+              body: `## Quality Checks Failed\n\nSee [workflow logs](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for details.\n\n**Fix locally:**\n\`\`\`bash\npnpm turbo run lint type-check build\n\`\`\``
             });
 
       - name: Summary
         if: success()
         run: |
-          echo "## ✅ Quality Checks Passed" >> $GITHUB_STEP_SUMMARY
-          echo "Apps checked: **${{ steps.flags.outputs.apps }}**" >> $GITHUB_STEP_SUMMARY
+          echo "## Quality Checks Passed" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "Mode: **full** (push to ${{ github.ref_name }})" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Mode: **affected only** (pull request)" >> $GITHUB_STEP_SUMMARY
+          fi
