@@ -6,11 +6,26 @@ import { PenLine } from 'lucide-react';
 
 import type { AddressResult } from './address-autocomplete.types';
 
+const COUNTRIES = [
+  { code: 'FR', name: 'France' },
+  { code: 'BE', name: 'Belgique' },
+  { code: 'CH', name: 'Suisse' },
+  { code: 'LU', name: 'Luxembourg' },
+  { code: 'DE', name: 'Allemagne' },
+  { code: 'IT', name: 'Italie' },
+  { code: 'ES', name: 'Espagne' },
+  { code: 'NL', name: 'Pays-Bas' },
+  { code: 'GB', name: 'Royaume-Uni' },
+  { code: 'PT', name: 'Portugal' },
+  { code: 'PL', name: 'Pologne' },
+  { code: 'US', name: 'États-Unis' },
+  { code: 'MA', name: 'Maroc' },
+];
+
 interface ManualFields {
   street: string;
   postalCode: string;
   city: string;
-  country: string;
   countryCode: string;
   latitude: string;
   longitude: string;
@@ -20,7 +35,6 @@ export const defaultManualFields: ManualFields = {
   street: '',
   postalCode: '',
   city: '',
-  country: 'France',
   countryCode: 'FR',
   latitude: '',
   longitude: '',
@@ -48,12 +62,16 @@ export function AddressManualForm({
   const gridInputClass =
     'px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
 
+  const countryName =
+    COUNTRIES.find(c => c.code === fields.countryCode)?.name ??
+    fields.countryCode;
+
   const handleSubmit = () => {
     const label = [
       fields.street,
       fields.postalCode,
       fields.city,
-      fields.country !== 'France' ? fields.country : '',
+      fields.countryCode !== 'FR' ? countryName : '',
     ]
       .filter(Boolean)
       .join(', ');
@@ -64,7 +82,7 @@ export function AddressManualForm({
       city: fields.city,
       postalCode: fields.postalCode,
       countryCode: fields.countryCode || 'FR',
-      country: fields.country || 'France',
+      country: countryName,
       latitude: parseFloat(fields.latitude) || 0,
       longitude: parseFloat(fields.longitude) || 0,
       source: 'ban',
@@ -120,28 +138,19 @@ export function AddressManualForm({
             className={gridInputClass}
           />
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <input
-            type="text"
-            placeholder="Pays"
-            value={fields.country}
-            onChange={e => setFields(f => ({ ...f, country: e.target.value }))}
-            className={gridInputClass}
-          />
-          <input
-            type="text"
-            placeholder="Code pays (FR, BE...)"
-            value={fields.countryCode}
-            onChange={e =>
-              setFields(f => ({
-                ...f,
-                countryCode: e.target.value.toUpperCase(),
-              }))
-            }
-            maxLength={2}
-            className={gridInputClass}
-          />
-        </div>
+        <select
+          value={fields.countryCode}
+          onChange={e =>
+            setFields(f => ({ ...f, countryCode: e.target.value }))
+          }
+          className={inputClass}
+        >
+          {COUNTRIES.map(c => (
+            <option key={c.code} value={c.code}>
+              {c.name}
+            </option>
+          ))}
+        </select>
         {showGpsFields && (
           <div className="grid grid-cols-2 gap-2">
             <input

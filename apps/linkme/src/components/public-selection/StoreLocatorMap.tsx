@@ -194,7 +194,9 @@ function StoreListItem({
           <p className="font-medium text-sm text-white truncate">{org.name}</p>
           <p className="text-xs text-white/60 truncate">
             {org.postalCode} {org.city}
-            {org.country && org.country !== 'France' ? `, ${org.country}` : ''}
+            {org.country && org.country !== 'France' && org.country !== 'FR'
+              ? `, ${org.country}`
+              : ''}
           </p>
         </div>
       </div>
@@ -250,7 +252,7 @@ function StorePopup({ org, branding, onClose }: StorePopupProps) {
             {org.city && (
               <div>
                 {org.postalCode} {org.city}
-                {org.country && org.country !== 'France'
+                {org.country && org.country !== 'France' && org.country !== 'FR'
                   ? `, ${org.country}`
                   : ''}
               </div>

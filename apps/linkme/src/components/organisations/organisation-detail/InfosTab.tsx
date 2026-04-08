@@ -211,7 +211,7 @@ export function InfosTab({
               data.organisation.shipping_address_line2 ?? '',
             shipping_city: data.organisation.shipping_city ?? '',
             shipping_postal_code: data.organisation.shipping_postal_code ?? '',
-            shipping_country: data.organisation.shipping_country ?? 'France',
+            shipping_country: data.organisation.shipping_country ?? 'FR',
             latitude: data.organisation.latitude,
             longitude: data.organisation.longitude,
           });
@@ -303,7 +303,7 @@ export function InfosTab({
               data.organisation.billing_address_line2 ?? '',
             billing_city: data.organisation.billing_city ?? '',
             billing_postal_code: data.organisation.billing_postal_code ?? '',
-            billing_country: data.organisation.billing_country ?? 'France',
+            billing_country: data.organisation.billing_country ?? 'FR',
           });
           setEditingSection(null);
         }}

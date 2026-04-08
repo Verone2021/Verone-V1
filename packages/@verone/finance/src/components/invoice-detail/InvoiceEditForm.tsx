@@ -25,6 +25,20 @@ import type {
   EditState,
   InvoiceDetail,
 } from './types';
+
+const INVOICE_COUNTRIES = [
+  { code: 'FR', name: 'France' },
+  { code: 'BE', name: 'Belgique' },
+  { code: 'CH', name: 'Suisse' },
+  { code: 'LU', name: 'Luxembourg' },
+  { code: 'DE', name: 'Allemagne' },
+  { code: 'IT', name: 'Italie' },
+  { code: 'ES', name: 'Espagne' },
+  { code: 'NL', name: 'Pays-Bas' },
+  { code: 'GB', name: 'Royaume-Uni' },
+  { code: 'PT', name: 'Portugal' },
+  { code: 'MA', name: 'Maroc' },
+];
 import { formatAmount, generateTempId } from './utils';
 
 interface InvoiceEditFormProps {
@@ -160,13 +174,20 @@ export function InvoiceEditForm({
             </div>
             <div>
               <Label htmlFor="billing_country">Pays</Label>
-              <Input
+              <select
                 id="billing_country"
                 value={editState.billing_address.country ?? 'FR'}
                 onChange={e =>
                   handleAddressChange('billing', 'country', e.target.value)
                 }
-              />
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                {INVOICE_COUNTRIES.map(c => (
+                  <option key={c.code} value={c.code}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </CardContent>
@@ -214,13 +235,20 @@ export function InvoiceEditForm({
             </div>
             <div>
               <Label htmlFor="shipping_country">Pays</Label>
-              <Input
+              <select
                 id="shipping_country"
                 value={editState.shipping_address.country ?? 'FR'}
                 onChange={e =>
                   handleAddressChange('shipping', 'country', e.target.value)
                 }
-              />
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                {INVOICE_COUNTRIES.map(c => (
+                  <option key={c.code} value={c.code}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </CardContent>

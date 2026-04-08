@@ -12,6 +12,23 @@ import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Separator } from '@verone/ui';
 
+const COUNTRIES = [
+  { code: 'FR', name: 'France' },
+  { code: 'BE', name: 'Belgique' },
+  { code: 'CH', name: 'Suisse' },
+  { code: 'LU', name: 'Luxembourg' },
+  { code: 'DE', name: 'Allemagne' },
+  { code: 'IT', name: 'Italie' },
+  { code: 'ES', name: 'Espagne' },
+  { code: 'NL', name: 'Pays-Bas' },
+  { code: 'GB', name: 'Royaume-Uni' },
+  { code: 'PT', name: 'Portugal' },
+  { code: 'MA', name: 'Maroc' },
+];
+
+const SELECT_CLASS =
+  'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
+
 interface _AddressData {
   address_line1?: string;
   address_line2?: string;
@@ -165,11 +182,17 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
 
             <div>
               <Label htmlFor="billing_country">Pays</Label>
-              <Input
+              <select
                 id="billing_country"
-                placeholder="FR"
+                className={SELECT_CLASS}
                 {...form.register('billing_country')}
-              />
+              >
+                {COUNTRIES.map(c => (
+                  <option key={c.code} value={c.code}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </CardContent>
@@ -285,11 +308,17 @@ export function AddressSelector({ form, className }: AddressSelectorProps) {
 
               <div>
                 <Label htmlFor="shipping_country">Pays</Label>
-                <Input
+                <select
                   id="shipping_country"
-                  placeholder="FR"
+                  className={SELECT_CLASS}
                   {...form.register('shipping_country')}
-                />
+                >
+                  {COUNTRIES.map(c => (
+                    <option key={c.code} value={c.code}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </CardContent>
