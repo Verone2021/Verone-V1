@@ -1,2 +1,2 @@
-export { CustomerFormModal } from './CustomerFormModal';
+// CustomerFormModal supprime — utiliser CustomerOrganisationFormModal de @verone/organisations
 export { ContactFormModal } from './contact-form-modal';

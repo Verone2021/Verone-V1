@@ -105,6 +105,15 @@
         ]
       },
       {
+        "matcher": "Write(**/orders/src/**/*Modal*) || Write(**/orders/src/**/*Form*) || Write(**/customers/src/**/*Modal*) || Write(**/customers/src/**/*Form*) || Write(**/apps/**/*Modal*) || Write(**/apps/**/*Form*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'ALERTE DUPLICATION — Vous creez un formulaire/modal dans un package non-source.\n\nRegles :\n- Formulaires Organisation → @verone/organisations UNIQUEMENT\n- Formulaires Produit → @verone/products UNIQUEMENT\n- JAMAIS de formulaire de creation d entite dans @verone/orders ou apps/\n\nVerifier INDEX-COMPOSANTS-FORMULAIRES.md AVANT de continuer.\nSi le composant existe deja, le REUTILISER.' && exit 0"
+          }
+        ]
+      },
+      {
         "matcher": "Edit(*middleware*)",
         "hooks": [
           {

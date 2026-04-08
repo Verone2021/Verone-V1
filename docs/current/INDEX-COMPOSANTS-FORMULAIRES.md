@@ -5,6 +5,23 @@
 
 ---
 
+## REGISTRE COMPOSANTS : Source de verite unique
+
+**REGLE** : Avant de creer un composant, CHERCHER dans cet index. Si un composant similaire existe, le REUTILISER.
+
+| Entite       | Package source          | Composant de base               | Wrappers types disponibles                                               |
+| ------------ | ----------------------- | ------------------------------- | ------------------------------------------------------------------------ |
+| Organisation | `@verone/organisations` | `UnifiedOrganisationForm`       | `CustomerOrganisationFormModal`, `SupplierFormModal`, `PartnerFormModal` |
+| Produit      | `@verone/products`      | `CompleteProductWizard`         | —                                                                        |
+| Commande SO  | `@verone/orders`        | `SalesOrderFormModal`           | —                                                                        |
+| Commande PO  | `@verone/orders`        | `PurchaseOrderFormModal`        | —                                                                        |
+| Client B2C   | `@verone/orders`        | `CreateIndividualCustomerModal` | —                                                                        |
+| Finance      | `@verone/finance`       | Voir section finance            | —                                                                        |
+
+**INTERDIT** : Creer un formulaire d'entite dans `apps/` ou dans un package non-source.
+
+---
+
 ## Formulaires & Modals partages (par package)
 
 ### @verone/orders — Commandes
@@ -67,16 +84,17 @@
 
 ### @verone/organisations — Organisations
 
-| Composant                        | Action                                      | Props cles                          |
-| -------------------------------- | ------------------------------------------- | ----------------------------------- |
-| `UnifiedOrganisationForm`        | Formulaire organisation unifie (6 sections) | `mode: 'create'\|'edit'`, `org?`    |
-| `SupplierFormModal`              | Creation/edition fournisseur                | `open`, `onOpenChange`, `supplier?` |
-| `PartnerFormModal`               | Creation/edition partenaire                 | `open`, `onOpenChange`, `partner?`  |
-| `AssignOrganisationsModal`       | Assignation organisations                   | `open`, `onOpenChange`              |
-| `ConfirmDeleteOrganisationModal` | Confirmation suppression                    | `open`, `onOpenChange`, `orgId`     |
-| `OrganisationQuickViewModal`     | Vue rapide organisation                     | `open`, `onOpenChange`, `orgId`     |
-| `OrganisationSelectorModal`      | Selecteur organisation                      | `open`, `onOpenChange`, `onSelect`  |
-| `QuickSupplierModal`             | Creation rapide fournisseur                 | `open`, `onOpenChange`              |
+| Composant                        | Action                                      | Props cles                                          |
+| -------------------------------- | ------------------------------------------- | --------------------------------------------------- |
+| `UnifiedOrganisationForm`        | Formulaire organisation unifie (6 sections) | `mode: 'create'\|'edit'`, `org?`                    |
+| `CustomerOrganisationFormModal`  | Creation/edition client pro                 | `isOpen`, `onClose`, `organisation?`, `enseigneId?` |
+| `SupplierFormModal`              | Creation/edition fournisseur                | `isOpen`, `onClose`, `supplier?`                    |
+| `PartnerFormModal`               | Creation/edition partenaire                 | `isOpen`, `onClose`, `partner?`                     |
+| `AssignOrganisationsModal`       | Assignation organisations                   | `open`, `onOpenChange`                              |
+| `ConfirmDeleteOrganisationModal` | Confirmation suppression                    | `open`, `onOpenChange`, `orgId`                     |
+| `OrganisationQuickViewModal`     | Vue rapide organisation                     | `open`, `onOpenChange`, `orgId`                     |
+| `OrganisationSelectorModal`      | Selecteur organisation                      | `open`, `onOpenChange`, `onSelect`                  |
+| `QuickSupplierModal`             | Creation rapide fournisseur                 | `open`, `onOpenChange`                              |
 
 ### @verone/stock — Stock
 
@@ -90,9 +108,9 @@
 
 ### @verone/customers — Clients
 
-| Composant           | Action                               | Props cles                          |
-| ------------------- | ------------------------------------ | ----------------------------------- |
-| `CustomerFormModal` | Creation/edition client (7 sections) | `open`, `onOpenChange`, `customer?` |
+| Composant           | Action                                                                               | Props cles |
+| ------------------- | ------------------------------------------------------------------------------------ | ---------- |
+| `CustomerFormModal` | **DEPRECATED** → utiliser `CustomerOrganisationFormModal` de `@verone/organisations` | —          |
 
 ### @verone/consultations — Consultations
 

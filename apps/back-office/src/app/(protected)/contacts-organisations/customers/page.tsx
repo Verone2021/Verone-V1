@@ -1,7 +1,9 @@
 'use client';
 
-import { CustomerFormModal } from '@verone/customers';
-import { ConfirmDeleteOrganisationModal } from '@verone/organisations';
+import {
+  ConfirmDeleteOrganisationModal,
+  CustomerOrganisationFormModal,
+} from '@verone/organisations';
 
 import { useCustomersPage } from './hooks/use-customers-page';
 import { CustomerPageHeader } from './components/CustomerPageHeader';
@@ -138,13 +140,11 @@ export default function CustomersPage() {
         />
       )}
 
-      <CustomerFormModal
+      <CustomerOrganisationFormModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        onCustomerCreated={handleCustomerSuccess}
-        onCustomerUpdated={handleCustomerSuccess}
-        customer={selectedCustomer ?? undefined}
-        mode={selectedCustomer ? 'edit' : 'create'}
+        onSuccess={handleCustomerSuccess}
+        organisation={selectedCustomer ?? null}
       />
 
       <ConfirmDeleteOrganisationModal

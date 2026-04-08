@@ -1,7 +1,10 @@
 'use client';
 
+import { useState } from 'react';
+
 import { Building2, User, Search, Plus, Check, Loader2 } from 'lucide-react';
 
+import { CustomerOrganisationFormModal } from '@verone/organisations';
 import { cn } from '@verone/utils';
 
 import type {
@@ -23,9 +26,10 @@ interface CustomerSectionProps {
   customersLoading: boolean;
   selectedCustomerId: string;
   onSelectCustomer: (id: string) => void;
-  // Formulaire création
-  newCustomerName: string;
-  onNewCustomerNameChange: (v: string) => void;
+  // Props pour le modal org (remplace le formulaire inline org)
+  enseigneId?: string;
+  onOrganisationCreated?: (orgId: string) => void;
+  // Formulaire création particulier (gardé en inline)
   newCustomerFirstName: string;
   onNewCustomerFirstNameChange: (v: string) => void;
   newCustomerLastName: string;
@@ -34,6 +38,9 @@ interface CustomerSectionProps {
   onNewCustomerEmailChange: (v: string) => void;
   newCustomerPhone: string;
   onNewCustomerPhoneChange: (v: string) => void;
+  // Legacy org props (still needed for individual form + backward compat)
+  newCustomerName: string;
+  onNewCustomerNameChange: (v: string) => void;
   newOrgOwnershipType: 'succursale' | 'franchise' | null;
   onNewOrgOwnershipTypeChange: (v: 'succursale' | 'franchise' | null) => void;
   newOrgAddress: string;
@@ -59,6 +66,8 @@ export function CustomerSection({
   customersLoading,
   selectedCustomerId,
   onSelectCustomer,
+  enseigneId,
+  onOrganisationCreated,
   newCustomerName,
   onNewCustomerNameChange,
   newCustomerFirstName,
@@ -81,6 +90,7 @@ export function CustomerSection({
   onCreateCustomer,
   onCancelCreateForm,
 }: CustomerSectionProps) {
+  const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
   return (
     <div className="space-y-3">
       <label className="block text-sm font-medium text-gray-700">
@@ -160,7 +170,13 @@ export function CustomerSection({
           />
         </div>
         <button
-          onClick={onToggleCreateForm}
+          onClick={() => {
+            if (customerType === 'organization') {
+              setIsOrgModalOpen(true);
+            } else {
+              onToggleCreateForm();
+            }
+          }}
           className={cn(
             'flex items-center gap-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors',
             showCreateForm
@@ -173,8 +189,19 @@ export function CustomerSection({
         </button>
       </div>
 
-      {/* Formulaire création client */}
-      {showCreateForm && (
+      {/* Modal création organisation (remplace le formulaire inline) */}
+      <CustomerOrganisationFormModal
+        isOpen={isOrgModalOpen}
+        onClose={() => setIsOrgModalOpen(false)}
+        enseigneId={enseigneId}
+        onSuccess={org => {
+          onOrganisationCreated?.(org.id);
+          setIsOrgModalOpen(false);
+        }}
+      />
+
+      {/* Formulaire création particulier (inline, gardé tel quel) */}
+      {showCreateForm && customerType === 'individual' && (
         <CustomerCreateForm
           customerType={customerType}
           newCustomerName={newCustomerName}

@@ -53,6 +53,32 @@ pnpm lint:fix                           # ESLint auto-fix
 - Fichier > 400 lignes = refactoring obligatoire
 - Feature branch depuis `staging` — format `[APP-DOMAIN-NNN] type: desc`
 
+## CRITICAL : Registre composants — Zero duplication
+
+**AVANT de creer un composant, formulaire ou modal :**
+
+1. Consulter `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md` — registre exhaustif
+2. Chercher dans `packages/@verone/` si un composant similaire existe (`Grep` ou `Serena`)
+3. Si un composant existe : le REUTILISER ou l'ETENDRE avec des props — JAMAIS en creer un nouveau
+4. Si aucun composant n'existe : le creer dans le package `@verone/` approprie (PAS dans `apps/`)
+5. Apres creation : AJOUTER le composant dans l'index `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md`
+
+**Sources de verite par entite :**
+
+| Entite       | Package source          | Composant principal       | Wrappers typés                                                           |
+| ------------ | ----------------------- | ------------------------- | ------------------------------------------------------------------------ |
+| Organisation | `@verone/organisations` | `UnifiedOrganisationForm` | `SupplierFormModal`, `PartnerFormModal`, `CustomerOrganisationFormModal` |
+| Produit      | `@verone/products`      | Voir index                | —                                                                        |
+| Commande SO  | `@verone/orders`        | `SalesOrderFormModal`     | —                                                                        |
+| Commande PO  | `@verone/orders`        | `PurchaseOrderFormModal`  | —                                                                        |
+| Finance      | `@verone/finance`       | Voir index                | —                                                                        |
+
+**INTERDIT :**
+
+- Creer un formulaire de creation/edition dans `apps/` — toujours dans `packages/@verone/`
+- Creer un composant inline quand un modal partage existe
+- Dupliquer de la logique metier entre packages (utiliser les hooks partages)
+
 ## CRITICAL : Ne JAMAIS s'arreter
 
 - NE JAMAIS proposer de s'arreter, faire une pause, ou reprendre plus tard
