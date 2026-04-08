@@ -1,14 +1,7 @@
 'use client';
 
 import { ButtonV2 } from '@verone/ui';
-import {
-  Store,
-  Globe,
-  Link2,
-  Briefcase,
-  ChevronRight,
-  ArrowLeft,
-} from 'lucide-react';
+import { Store, Link2, Briefcase, ChevronRight, ArrowLeft } from 'lucide-react';
 
 import type { QuoteChannelType } from './types';
 
@@ -51,24 +44,6 @@ export function QuoteChannelStep({ onSelect, onBack }: QuoteChannelStepProps) {
             </p>
           </div>
           <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-500" />
-        </button>
-
-        {/* Site Internet */}
-        <button
-          type="button"
-          onClick={() => onSelect('site-internet')}
-          className="flex items-center gap-4 p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all text-left group"
-        >
-          <div className="flex-shrink-0 w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200">
-            <Globe className="h-6 w-6 text-green-600" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-gray-900">Site Internet</h3>
-            <p className="text-sm text-gray-500">
-              Produits du catalogue, prix site internet
-            </p>
-          </div>
-          <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-green-500" />
         </button>
 
         {/* LinkMe */}

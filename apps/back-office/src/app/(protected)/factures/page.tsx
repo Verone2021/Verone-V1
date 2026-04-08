@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { OrderDetailModal } from '@verone/orders/components/modals';
 import { useSalesOrders } from '@verone/orders/hooks';
@@ -16,16 +16,8 @@ import {
 } from '@verone/finance';
 import {
   InvoiceUploadModal,
-  InvoiceCreateFromOrderModal,
-  InvoiceCreateServiceModal,
-  OrderSelectModal,
-  QuoteCreateFromOrderModal,
-  QuoteCreateServiceModal,
-  QuoteFormModal,
   RapprochementFromOrderModal,
   type TransactionForUpload,
-  type IOrderForInvoice,
-  type IOrderForDocument,
   type OrderForLink,
 } from '@verone/finance/components';
 import {
@@ -40,10 +32,6 @@ import {
   TabsTrigger,
   Button,
   Badge,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -71,9 +59,6 @@ import {
   CheckCircle,
   RefreshCw,
   AlertTriangle,
-  Briefcase,
-  ChevronDown,
-  ShoppingCart,
   FileEdit,
   FileX,
   Loader2,
@@ -102,6 +87,7 @@ import { MissingInvoicesTable } from './components/MissingInvoicesTable';
 // =====================================================================
 
 export default function FacturationPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get('tab') as TabType | null;
   const [activeTab, setActiveTab] = useState<TabType>(
@@ -121,28 +107,10 @@ export default function FacturationPage() {
   const [selectedMissingTx, setSelectedMissingTx] =
     useState<TransactionMissingInvoice | null>(null);
 
-  // Etats pour creation de facture depuis commande
-  const [showOrderSelect, setShowOrderSelect] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<IOrderForInvoice | null>(
-    null
-  );
-  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-
-  // Etat pour facture de service (sans commande)
-  const [showServiceModal, setShowServiceModal] = useState(false);
-
   // Etats pour les devis (Qonto API)
-  const [showQuoteForm, setShowQuoteForm] = useState(false);
   const [qontoQuotes, setQontoQuotes] = useState<QontoQuote[]>([]);
   const [loadingQuotes, setLoadingQuotes] = useState(false);
   const [errorQuotes, setErrorQuotes] = useState<string | null>(null);
-
-  // Legacy states (kept for Qonto finalization/PDF features)
-  const [showQuoteOrderSelect, setShowQuoteOrderSelect] = useState(false);
-  const [showQuoteCreate, setShowQuoteCreate] = useState(false);
-  const [showQuoteServiceModal, setShowQuoteServiceModal] = useState(false);
-  const [selectedQuoteOrder, setSelectedQuoteOrder] =
-    useState<IOrderForDocument | null>(null);
   const [quoteToDelete, setQuoteToDelete] = useState<QontoQuote | null>(null);
   const [deletingQuote, setDeletingQuote] = useState(false);
 
@@ -324,24 +292,6 @@ export default function FacturationPage() {
     setShowUploadModal(true);
   };
 
-  // Handler pour selection de commande et ouverture du modal de creation facture
-  const handleOrderSelected = (order: IOrderForInvoice): void => {
-    setSelectedOrder(order);
-    setShowOrderSelect(false);
-    setShowInvoiceModal(true);
-  };
-
-  // Handler pour fermeture du modal de creation facture
-  const handleInvoiceModalClose = (): void => {
-    setShowInvoiceModal(false);
-    setSelectedOrder(null);
-  };
-
-  // Handler pour succes de creation facture
-  const handleInvoiceCreated = (_invoiceId: string): void => {
-    void fetchInvoices();
-  };
-
   // Handler pour telecharger le PDF d'une facture
   const handleDownloadInvoicePdf = async (invoice: Invoice): Promise<void> => {
     try {
@@ -414,24 +364,6 @@ export default function FacturationPage() {
         err instanceof Error ? err.message : 'Erreur de telechargement'
       );
     }
-  };
-
-  // Quote handlers
-  const handleQuoteOrderSelected = (order: IOrderForDocument): void => {
-    setSelectedQuoteOrder(order);
-    setShowQuoteOrderSelect(false);
-    setShowQuoteCreate(true);
-  };
-
-  const handleQuoteCreated = (): void => {
-    setShowQuoteCreate(false);
-    setSelectedQuoteOrder(null);
-    void fetchQontoQuotes().catch((err: unknown) => {
-      console.error(
-        '[Factures] fetchQontoQuotes after handleQuoteCreated failed:',
-        err
-      );
-    });
   };
 
   // Delete quote via Qonto API
@@ -693,28 +625,13 @@ export default function FacturationPage() {
           </Link>
           <SyncButton onSync={handleSync} label="Sync Qonto" showLastSync />
           {activeTab === 'factures' && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nouvelle facture
-                  <ChevronDown className="h-4 w-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setShowOrderSelect(true)}>
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Depuis une commande
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setShowServiceModal(true)}>
-                  <Briefcase className="h-4 w-4 mr-2" />
-                  Facture de service
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button onClick={() => router.push('/factures/nouvelle')}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nouvelle facture
+            </Button>
           )}
           {activeTab === 'devis' && (
-            <Button onClick={() => setShowQuoteForm(true)}>
+            <Button onClick={() => router.push('/devis/nouveau')}>
               <Plus className="h-4 w-4 mr-2" />
               Nouveau devis
             </Button>
@@ -960,71 +877,6 @@ export default function FacturationPage() {
           void refreshMissing();
           setShowUploadModal(false);
           setSelectedMissingTx(null);
-        }}
-      />
-
-      {/* Modal selection commande pour nouvelle facture */}
-      <OrderSelectModal
-        open={showOrderSelect}
-        onOpenChange={setShowOrderSelect}
-        onSelectOrder={handleOrderSelected}
-      />
-
-      {/* Modal creation facture depuis commande */}
-      <InvoiceCreateFromOrderModal
-        order={selectedOrder}
-        open={showInvoiceModal}
-        onOpenChange={open => {
-          if (!open) handleInvoiceModalClose();
-        }}
-        onSuccess={handleInvoiceCreated}
-      />
-
-      {/* Modal creation facture de service (sans commande) */}
-      <InvoiceCreateServiceModal
-        open={showServiceModal}
-        onOpenChange={setShowServiceModal}
-        onSuccess={() => {
-          void fetchInvoices();
-        }}
-      />
-
-      {/* Nouveau formulaire unifie de creation de devis */}
-      <QuoteFormModal
-        open={showQuoteForm}
-        onOpenChange={setShowQuoteForm}
-        onSuccess={() => {
-          void fetchQontoQuotes().catch((err: unknown) => {
-            console.error(
-              '[Factures] fetchQontoQuotes after quote create failed:',
-              err
-            );
-          });
-        }}
-      />
-
-      {/* Legacy modals (kept for backward compatibility with existing Qonto quotes) */}
-      <OrderSelectModal
-        open={showQuoteOrderSelect}
-        onOpenChange={setShowQuoteOrderSelect}
-        onSelectOrder={handleQuoteOrderSelected}
-      />
-      <QuoteCreateFromOrderModal
-        order={selectedQuoteOrder}
-        open={showQuoteCreate}
-        onOpenChange={setShowQuoteCreate}
-        onSuccess={handleQuoteCreated}
-      />
-      <QuoteCreateServiceModal
-        open={showQuoteServiceModal}
-        onOpenChange={setShowQuoteServiceModal}
-        onSuccess={() => {
-          void fetchQontoQuotes().catch((err: unknown) => {
-            console.error(
-              '[Factures] fetchQontoQuotes after legacy quote create failed:',
-              err
-            );
-          });
         }}
       />
 

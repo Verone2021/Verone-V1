@@ -112,10 +112,24 @@ export type IOrderForInvoice = IOrderForDocument;
 // Alias pour rétrocompatibilité avec les devis
 export type IOrderForQuote = IOrderForDocument;
 
+type SalesOrderStatus =
+  | 'pending_approval'
+  | 'draft'
+  | 'validated'
+  | 'partially_shipped'
+  | 'shipped'
+  | 'delivered'
+  | 'closed'
+  | 'cancelled';
+
+const DEFAULT_STATUSES: SalesOrderStatus[] = ['validated', 'shipped'];
+
 export interface OrderSelectModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectOrder: (order: IOrderForDocument) => void;
+  /** Filter orders by status. Default: ['validated', 'shipped'] */
+  statuses?: SalesOrderStatus[];
 }
 
 interface OrderListItem {
@@ -139,6 +153,7 @@ export function OrderSelectModal({
   open,
   onOpenChange,
   onSelectOrder,
+  statuses = DEFAULT_STATUSES,
 }: OrderSelectModalProps): React.ReactNode {
   const [orders, setOrders] = useState<OrderListItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -153,6 +168,11 @@ export function OrderSelectModal({
     setLoading(true);
     try {
       // Requete pour toutes les commandes validees
+      // Only show orders from the last 6 months by order_date (business date, not created_at which is import date)
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      const sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0];
+
       const { data: ordersData, error: ordersError } = await supabase
         .from('sales_orders')
         .select(
@@ -168,11 +188,17 @@ export function OrderSelectModal({
           created_at,
           customer_id,
           customer_type,
-          payment_status_v2
+          payment_status_v2,
+          invoiced_at,
+          order_date
         `
         )
-        .in('status', ['validated', 'shipped'])
+        .in('status', statuses)
         .or('payment_status_v2.is.null,payment_status_v2.neq.paid')
+        .is('invoiced_at', null)
+        .or(
+          `order_date.gte.${sixMonthsAgoStr},and(order_date.is.null,created_at.gte.${sixMonthsAgo.toISOString()})`
+        )
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -314,7 +340,7 @@ export function OrderSelectModal({
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [supabase, statuses]);
 
   // Charger les commandes a l'ouverture
   useEffect(() => {

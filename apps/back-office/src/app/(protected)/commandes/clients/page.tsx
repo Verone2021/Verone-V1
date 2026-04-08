@@ -50,6 +50,9 @@ export default function SalesOrdersClientsPage() {
   const [channelFilter, setChannelFilter] = useState<ChannelFilter>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
+  // Track where the user came from (e.g. /ventes) to navigate back on modal close
+  const [cameFrom] = useState(() => searchParams.get('from'));
+
   // Ouvrir le modal si ?action=new
   useEffect(() => {
     if (searchParams.get('action') === 'new') {
@@ -58,6 +61,17 @@ export default function SalesOrdersClientsPage() {
       router.replace('/commandes/clients', { scroll: false });
     }
   }, [searchParams, router]);
+
+  // When modal closes, return to origin page if applicable
+  const handleModalClose = useCallback(
+    (open: boolean) => {
+      setShowCreateModal(open);
+      if (!open && cameFrom === 'ventes') {
+        router.push('/ventes');
+      }
+    },
+    [cameFrom, router]
+  );
 
   // Rediriger vers le formulaire LinkMe unique (canaux-vente)
   const handleCreateLinkMeOrder = useCallback(() => {
@@ -110,7 +124,7 @@ export default function SalesOrdersClientsPage() {
       {/* Modal creation commande (controle par la page) */}
       <SalesOrderFormModal
         open={showCreateModal}
-        onOpenChange={setShowCreateModal}
+        onOpenChange={handleModalClose}
         onLinkMeClick={handleCreateLinkMeOrder}
       />
 

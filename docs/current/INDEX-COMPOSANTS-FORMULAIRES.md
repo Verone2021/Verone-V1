@@ -51,19 +51,21 @@
 
 ### @verone/finance — Finance
 
-| Composant                     | Action                     | Props cles                              |
-| ----------------------------- | -------------------------- | --------------------------------------- |
-| `RapprochementModal`          | Rapprochement transaction  | `open`, `onOpenChange`, `transactionId` |
-| `QuoteFormModal`              | Formulaire devis           | `open`, `onOpenChange`, `quoteId?`      |
-| `InvoiceCreateFromOrderModal` | Facture depuis commande    | `open`, `onOpenChange`, `orderId`       |
-| `InvoiceDetailModal`          | Detail facture             | `open`, `onOpenChange`, `invoiceId`     |
-| `InvoiceCreateServiceModal`   | Facture prestation         | `open`, `onOpenChange`                  |
-| `InvoiceUploadModal`          | Upload facture fournisseur | `open`, `onOpenChange`                  |
-| `CreditNoteCreateModal`       | Creation avoir             | `open`, `onOpenChange`                  |
-| `PdfPreviewModal`             | Preview PDF                | `open`, `onOpenChange`, `url`           |
-| `PaymentRecordModal`          | Enregistrement paiement    | `open`, `onOpenChange`, `transactionId` |
-| `TransactionDetailSheet`      | Sheet detail transaction   | `open`, `onOpenChange`, `transactionId` |
-| `BFAReportModal`              | Rapport BFA                | `open`, `onOpenChange`                  |
+| Composant                     | Action                     | Props cles                                                       |
+| ----------------------------- | -------------------------- | ---------------------------------------------------------------- |
+| `RapprochementModal`          | Rapprochement transaction  | `open`, `onOpenChange`, `transactionId`                          |
+| `QuoteFormModal`              | Formulaire devis (scratch) | `open`, `onOpenChange`, `onSuccess?`                             |
+| `QuoteCreateFromOrderModal`   | Devis depuis commande      | `order`, `open`, `onOpenChange`, `onSuccess?`, `isConsultation?` |
+| `OrderSelectModal`            | Selecteur commande         | `open`, `onOpenChange`, `onSelectOrder`                          |
+| `InvoiceCreateFromOrderModal` | Facture depuis commande    | `open`, `onOpenChange`, `orderId`                                |
+| `InvoiceDetailModal`          | Detail facture             | `open`, `onOpenChange`, `invoiceId`                              |
+| `InvoiceCreateServiceModal`   | Facture prestation         | `open`, `onOpenChange`                                           |
+| `InvoiceUploadModal`          | Upload facture fournisseur | `open`, `onOpenChange`                                           |
+| `CreditNoteCreateModal`       | Creation avoir             | `open`, `onOpenChange`                                           |
+| `PdfPreviewModal`             | Preview PDF                | `open`, `onOpenChange`, `url`                                    |
+| `PaymentRecordModal`          | Enregistrement paiement    | `open`, `onOpenChange`, `transactionId`                          |
+| `TransactionDetailSheet`      | Sheet detail transaction   | `open`, `onOpenChange`, `transactionId`                          |
+| `BFAReportModal`              | Rapport BFA                | `open`, `onOpenChange`                                           |
 
 ### @verone/organisations — Organisations
 
