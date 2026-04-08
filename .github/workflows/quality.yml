@@ -73,6 +73,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # ---- Turborepo cache (GitHub Actions native) ----
+      - name: Cache Turborepo
+        uses: rharkor/caching-for-turbo@v2
+
       # ---- Determine which --filter flags to use ----
       - name: Build filter flags
         id: flags
