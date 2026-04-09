@@ -7,6 +7,7 @@ import Link from 'next/link';
 import {
   useContacts,
   getOrganisationDisplayName,
+  NewContactModal,
   type Organisation,
 } from '@verone/organisations';
 import { ButtonV2 } from '@verone/ui';
@@ -31,6 +32,7 @@ export default function ContactsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [filterRole, setFilterRole] = useState<FilterRole>('all');
+  const [isNewContactOpen, setIsNewContactOpen] = useState(false);
 
   useEffect(() => {
     void fetchContacts().catch(error => {
@@ -124,12 +126,13 @@ export default function ContactsPage() {
             professionnels
           </p>
         </div>
-        <Link href="/contacts-organisations/enseignes">
-          <ButtonV2 className="bg-black text-white hover:bg-gray-800">
-            <Plus className="h-4 w-4 mr-2" />
-            Nouveau contact
-          </ButtonV2>
-        </Link>
+        <ButtonV2
+          className="bg-black text-white hover:bg-gray-800"
+          onClick={() => setIsNewContactOpen(true)}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Nouveau contact
+        </ButtonV2>
       </div>
 
       <ContactsStats stats={stats} />
@@ -154,6 +157,17 @@ export default function ContactsPage() {
       />
 
       <ContactsInfo />
+
+      <NewContactModal
+        isOpen={isNewContactOpen}
+        onClose={() => setIsNewContactOpen(false)}
+        onSuccess={() => {
+          setIsNewContactOpen(false);
+          void fetchContacts().catch((error: unknown) => {
+            console.error('[ContactsPage] fetchContacts failed:', error);
+          });
+        }}
+      />
     </div>
   );
 }
