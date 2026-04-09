@@ -51,6 +51,7 @@ export function useFetchOrdersList({
           payment_status_v2, channel_id,
           individual_customer_id, eco_tax_total, order_date, created_by,
           responsable_contact_id, billing_contact_id, delivery_contact_id,
+          shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate,
           sales_channel:sales_channels!left(id, name, code),
           billing_contact:contacts!sales_orders_billing_contact_id_fkey(id, first_name, last_name, email, phone),
           delivery_contact:contacts!sales_orders_delivery_contact_id_fkey(id, first_name, last_name, email, phone),

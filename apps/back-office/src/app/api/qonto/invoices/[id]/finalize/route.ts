@@ -55,6 +55,46 @@ export async function POST(
       // Don't fail the request — Qonto finalization succeeded
     }
 
+    // Auto-validate linked sales_order if still in draft
+    // Finaliser une facture = la commande doit être au minimum validée
+    const { data: linkedDoc } = await supabase
+      .from('financial_documents')
+      .select('sales_order_id')
+      .eq('qonto_invoice_id', id)
+      .is('deleted_at', null)
+      .limit(1)
+      .maybeSingle();
+
+    if (linkedDoc?.sales_order_id) {
+      const { data: linkedOrder } = await supabase
+        .from('sales_orders')
+        .select('id, status')
+        .eq('id', linkedDoc.sales_order_id)
+        .single();
+
+      if (linkedOrder?.status === 'draft') {
+        const { error: validateError } = await supabase
+          .from('sales_orders')
+          .update({
+            status: 'validated',
+            confirmed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', linkedOrder.id);
+
+        if (validateError) {
+          console.error(
+            '[API Qonto Invoice Finalize] Auto-validate order failed:',
+            validateError
+          );
+        } else {
+          console.warn(
+            `[API Qonto Invoice Finalize] Auto-validated order ${linkedDoc.sales_order_id} (was draft)`
+          );
+        }
+      }
+    }
+
     return NextResponse.json({
       success: true,
       invoice,

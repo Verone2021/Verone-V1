@@ -25,6 +25,7 @@ import {
   ExternalLink,
   FileText,
   Pencil,
+  Trash2,
 } from 'lucide-react';
 
 import type { Invoice } from './types';
@@ -44,6 +45,7 @@ interface InvoicesTableProps {
   onOpenOrder?: (orderId: string) => void;
   onRapprochement?: (invoice: Invoice) => void;
   onOpenOrg?: (orgId: string) => void;
+  onDelete?: (invoice: Invoice) => Promise<void>;
 }
 
 export function InvoicesTable({
@@ -59,6 +61,7 @@ export function InvoicesTable({
   onOpenOrder,
   onRapprochement,
   onOpenOrg,
+  onDelete,
 }: InvoicesTableProps) {
   if (loading) {
     return (
@@ -83,7 +86,7 @@ export function InvoicesTable({
   }
 
   return (
-    <Table>
+    <Table className="w-auto">
       <TableHeader>
         <TableRow>
           <TableHead>N° Facture</TableHead>
@@ -94,13 +97,15 @@ export function InvoicesTable({
           <TableHead>Statut</TableHead>
           <TableHead>Paiement</TableHead>
           <TableHead className="text-right">Montant</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
+          <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {invoices.map(invoice => (
           <TableRow key={invoice.id}>
-            <TableCell className="font-mono">{invoice.number}</TableCell>
+            <TableCell className="font-mono text-xs">
+              {invoice.number}
+            </TableCell>
             <TableCell>
               {invoice.partner_id && invoice.partner_legal_name ? (
                 <button
@@ -155,11 +160,11 @@ export function InvoicesTable({
             </TableCell>
             <TableCell>
               {invoice.status !== 'draft' && invoice.status !== 'canceled' ? (
-                <div className="flex items-center gap-1">
+                <div className="flex flex-col gap-1">
                   {invoice.status === 'paid' ? (
                     <Badge
                       variant="default"
-                      className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100"
+                      className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100 w-fit"
                     >
                       <CheckCircle className="h-3 w-3 mr-1" />
                       Payee
@@ -168,7 +173,7 @@ export function InvoicesTable({
                     <>
                       <Badge
                         variant="outline"
-                        className="text-amber-600 border-amber-200"
+                        className="text-amber-600 border-amber-200 w-fit"
                       >
                         <Clock className="h-3 w-3 mr-1" />
                         Non payee
@@ -177,7 +182,7 @@ export function InvoicesTable({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          className="h-5 px-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 w-fit"
                           onClick={() => onRapprochement(invoice)}
                           title="Rapprocher avec une transaction"
                         >
@@ -198,9 +203,9 @@ export function InvoicesTable({
                 invoice.total_amount.currency
               )}
             </TableCell>
-            <TableCell className="text-right">
-              <div className="flex justify-end gap-1">
-                {/* Draft actions: Edit + Finalize */}
+            <TableCell>
+              <div className="flex gap-0.5">
+                {/* Draft actions: Edit + Delete + Finalize */}
                 {isDraft && (
                   <>
                     <Button variant="ghost" size="icon" asChild>
@@ -211,6 +216,17 @@ export function InvoicesTable({
                         <Pencil className="h-4 w-4" />
                       </Link>
                     </Button>
+                    {onDelete && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => void onDelete(invoice)}
+                        title="Supprimer le brouillon"
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                     {onFinalize && (
                       <Button
                         variant="ghost"
@@ -224,15 +240,17 @@ export function InvoicesTable({
                     )}
                   </>
                 )}
-                {/* Common: View detail */}
-                <Button variant="ghost" size="icon" asChild>
-                  <Link
-                    href={`/factures/${invoice.id}?type=invoice`}
-                    title="Voir"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Link>
-                </Button>
+                {/* Non-draft: View detail */}
+                {!isDraft && (
+                  <Button variant="ghost" size="icon" asChild>
+                    <Link
+                      href={`/factures/${invoice.id}?type=invoice`}
+                      title="Voir"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                )}
                 {/* Finalized: PDF actions */}
                 {!isDraft && (
                   <>

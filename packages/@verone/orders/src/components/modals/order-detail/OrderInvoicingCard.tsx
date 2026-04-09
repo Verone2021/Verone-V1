@@ -49,8 +49,7 @@ export function OrderInvoicingCard({
   onShowInvoiceModal,
   onShowQuoteModal,
 }: OrderInvoicingCardProps) {
-  const showInvoicing =
-    !readOnly && order.status !== 'draft' && order.status !== 'cancelled';
+  const showInvoicing = !readOnly && order.status !== 'cancelled';
 
   const showQuotes =
     showInvoicing && !linkedInvoices.some(inv => inv.status !== 'draft');

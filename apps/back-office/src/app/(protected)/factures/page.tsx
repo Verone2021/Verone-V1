@@ -772,6 +772,32 @@ export default function FacturationPage() {
               void handleRapprochement(invoice).catch(console.error);
             }}
             fetchInvoices={() => void fetchInvoices()}
+            onDeleteDraft={async invoice => {
+              if (
+                !confirm(
+                  `Supprimer le brouillon ${invoice.number ?? invoice.id} ?`
+                )
+              )
+                return;
+              try {
+                const response = await fetch(
+                  `/api/qonto/invoices/${invoice.id}/delete`,
+                  { method: 'DELETE' }
+                );
+                const data = (await response.json()) as {
+                  success?: boolean;
+                  error?: string;
+                };
+                if (!response.ok || !data.success) {
+                  throw new Error(
+                    data.error ?? 'Erreur lors de la suppression'
+                  );
+                }
+                void fetchInvoices();
+              } catch (error) {
+                console.error('[Factures] Delete draft error:', error);
+              }
+            }}
           />
         </TabsContent>
 
