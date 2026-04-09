@@ -44,11 +44,14 @@ export function useProductDetail() {
   const [isCategorizeModalOpen, setIsCategorizeModalOpen] = useState(false);
   const [channelPricing, setChannelPricing] = useState<ChannelPricingRow[]>([]);
 
-  const { images: productImages, primaryImage: _primaryImage } =
-    useProductImages({
-      productId: productId ?? '',
-      autoFetch: true,
-    });
+  const {
+    images: productImages,
+    primaryImage: _primaryImage,
+    fetchImages: refreshHeaderImages,
+  } = useProductImages({
+    productId: productId ?? '',
+    autoFetch: true,
+  });
 
   const fetchProduct = useCallback(
     async (options?: { silent?: boolean }) => {
@@ -424,6 +427,7 @@ export function useProductDetail() {
     primaryImageUrl,
     tabs,
     fetchProduct,
+    refreshHeaderImages,
     handleProductUpdate,
     handleShare,
     router,

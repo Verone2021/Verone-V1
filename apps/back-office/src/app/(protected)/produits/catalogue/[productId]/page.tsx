@@ -37,6 +37,7 @@ export default function ProductDetailPage() {
     sourcing,
     primaryImageUrl,
     tabs,
+    refreshHeaderImages,
     handleProductUpdate,
     handleShare,
     router,
@@ -47,7 +48,7 @@ export default function ProductDetailPage() {
       <ProductLoadingState
         loading={loading}
         error={null}
-        onBack={() => router.push('/produits/catalogue')}
+        onBack={() => router.back()}
       />
     );
   }
@@ -57,7 +58,7 @@ export default function ProductDetailPage() {
       <ProductLoadingState
         loading={false}
         error={error}
-        onBack={() => router.push('/produits/catalogue')}
+        onBack={() => router.back()}
       />
     );
   }
@@ -70,7 +71,7 @@ export default function ProductDetailPage() {
         completionPercentage={completionPercentage}
         primaryImageUrl={primaryImageUrl}
         sourcing={sourcing}
-        onBack={() => router.push('/produits/catalogue')}
+        onBack={() => router.back()}
         onShare={handleShare}
         onImageClick={() => setShowPhotosModal(true)}
       />
@@ -146,8 +147,11 @@ export default function ProductDetailPage() {
         onCloseCategorize={() => setIsCategorizeModalOpen(false)}
         onProductUpdate={handleProductUpdate}
         onImagesUpdated={() => {
-          // useProductImages gere son propre refresh via fetchImages()
-          // Pas besoin de recharger tout le produit pour les images
+          // Rafraichir l'instance images du header (thumbnail)
+          // Le modal a sa propre instance de useProductImages — il faut synchroniser
+          void refreshHeaderImages().catch(err => {
+            console.error('[ProductDetail] Header images refresh failed:', err);
+          });
         }}
       />
     </div>
