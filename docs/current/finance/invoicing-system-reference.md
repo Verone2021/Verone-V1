@@ -256,4 +256,4 @@ Ces routes appellent l'API Qonto et mettent a jour `financial_documents` en cons
 
 - `docs/current/finance/finance-reference.md` -- Regles matching, rapprochement, PCG
 - `docs/current/finance/invoice-workflow-implementation.md` -- Implementation workflow 3 statuts
-- Serena memory `sales-invoices-processing-rules` -- Regles traitement factures de vente
+- `docs/current/finance/finance-reference.md` -- Regles traitement factures de vente

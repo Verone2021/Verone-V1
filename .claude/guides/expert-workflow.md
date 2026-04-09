@@ -74,14 +74,11 @@
 
 **Actions** :
 
-1. **Chercher patterns existants** (MCP Serena)
+1. **Chercher patterns existants** (Grep/Glob)
 
-   ```typescript
-   mcp__serena__search_for_pattern({
-     substring_pattern: 'useCallback',
-     restrict_search_to_code_files: true,
-     paths_include_glob: '**/*.tsx',
-   });
+   ```bash
+   # Rechercher un pattern dans le codebase
+   Grep pattern="useCallback" glob="**/*.tsx"
    ```
 
 2. **Lire conventions projet**
@@ -334,7 +331,7 @@ Expert: "⚠️ ATTENTION : as any est une anti-pattern.
 ```markdown
 # Mémoire créée après 1er problème
 
-# .serena/memories/supabase-organisations-columns.md
+# Pattern appris : supabase-organisations-columns
 
 Problème rencontré : Column 'name' does not exist
 Cause : Table organisations utilise 'legal_name'
@@ -376,7 +373,7 @@ Fichiers concernés : expense-form.tsx, supplier-list.tsx
 - [ ] 1. LIRE l'erreur complète (pas juste 1ère ligne)
 - [ ] 2. CHERCHER docs officielles (MCP Context7)
 - [ ] 3. LIRE tous exemples + anti-patterns
-- [ ] 4. CHERCHER patterns projet (MCP Serena)
+- [ ] 4. CHERCHER patterns projet (Grep/Glob)
 - [ ] 5. IDENTIFIER divergences pattern officiel vs projet
 - [ ] 6. CHALLENGER si demande user sub-optimale
 - [ ] 7. EXPLIQUER problème + solution + pourquoi
@@ -404,7 +401,6 @@ Fichiers concernés : expense-form.tsx, supplier-list.tsx
 ### Outils MCP
 
 - **Context7** : Documentation officielle (React, Next.js, TypeScript, Supabase)
-- **Serena** : Exploration code projet, patterns existants
 - **Supabase MCP** : Types générés, migrations, queries
 
 ### Best Practices Sources

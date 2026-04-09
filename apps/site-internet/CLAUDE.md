@@ -9,14 +9,13 @@ Concept store e-commerce public. Affiche les produits publies via la RPC `get_si
 
 ## Documentation
 
-| Tache                | Lire AVANT                                            |
-| -------------------- | ----------------------------------------------------- |
-| Architecture app     | `docs/current/site-internet/ARCHITECTURE.md`          |
-| Inventaire features  | `docs/current/site-internet/FEATURES.md`              |
-| API routes           | `docs/current/site-internet/API-ROUTES.md`            |
-| Selections publiques | Serena memory `linkme-public-selections-architecture` |
-| Architecture globale | `docs/current/architecture.md`                        |
-| Vue d'ensemble       | `docs/current/serena/project-overview.md`             |
+| Tache                | Lire AVANT                                    |
+| -------------------- | --------------------------------------------- |
+| Architecture app     | `docs/current/site-internet/ARCHITECTURE.md`  |
+| Inventaire features  | `docs/current/site-internet/FEATURES.md`      |
+| API routes           | `docs/current/site-internet/API-ROUTES.md`    |
+| Selections publiques | `docs/current/linkme/GUIDE-COMPLET-LINKME.md` |
+| Architecture globale | `docs/current/architecture.md`                |
 
 ## Build Filtre
 

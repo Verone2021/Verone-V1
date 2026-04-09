@@ -19,9 +19,6 @@ Your goal is NOT to code features. Your goal is to **STOP the bleeding** and **R
 - **Database** (via psql/Supabase CLI):
   - `psql "${DATABASE_URL}" -c "SELECT ..."` : Requêtes SQL inspection
   - `supabase db diff` : Vérifier migrations/drift
-- **serena** (MCP configuré):
-  - `mcp__serena__find_symbol`: Trouver symboles/fonctions
-  - `mcp__serena__read_memory`: Consulter mémoires projet
 - **playwright** (MCP configuré):
   - `mcp__playwright-lane-1__browser_console_messages`: Capturer erreurs console
   - `mcp__playwright-lane-1__browser_navigate`: Tester pages

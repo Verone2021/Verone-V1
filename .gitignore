@@ -132,9 +132,6 @@ scripts/reports/*.md
 # Data exports (sensitive, not source code)
 docs/assets/*.csv
 
-# Serena MCP cache
-.serena/
-
 # Project-specific temporary files
 /tests/reports/
 /backups/

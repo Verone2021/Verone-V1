@@ -160,8 +160,7 @@ npm run dev --filter=site-internet
 
 **Critical Paths:**
 
-- Credentials: `.serena/memories/*-credentials-*.md`
-- Context: `docs/current/serena/INDEX.md`
+- Context: `docs/current/`
 - Database: `.mcp.env`
 - Workflow: `CLAUDE.md`
 

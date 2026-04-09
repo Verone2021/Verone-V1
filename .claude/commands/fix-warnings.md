@@ -8,7 +8,6 @@ allowed-tools:
     Glob,
     Grep,
     Bash,
-    mcp__serena__*,
     mcp__context7__*,
     mcp__supabase__execute_sql,
   ]
@@ -122,7 +121,6 @@ Corriger les warnings ESLint de manière **intelligente et durable** en suivant 
 3. **Vérifier conventions**
    - Lire `CLAUDE.md` section pertinente
    - Lire `.claude/rules/` si existe
-   - Lire mémoires Serena pertinentes
 
 **✅ Checkpoint 2** : Patterns projet identifiés ✓
 
@@ -593,12 +591,6 @@ Après **CHAQUE** échec (commit bloqué, erreur introduite) :
    - Ajouter cas edge dans "Anti-Patterns"
    - Ajouter exemple dans "Patterns Courants"
    - Améliorer workflow si nécessaire
-
-3. **Créer mémoire Serena si nécessaire**
-   ```bash
-   # Si pattern métier spécifique découvert
-   .serena/memories/eslint-[pattern]-fix-[date].md
-   ```
 
 ---
 
