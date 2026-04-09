@@ -324,6 +324,61 @@ export async function POST(request: NextRequest): Promise<
       finalizedInvoice = await qontoClient.finalizeClientInvoice(invoice.id);
     }
 
+    // INSERT dans financial_documents — uniquement pour les organisations (partner_id FK NOT NULL)
+    if (clientType === 'organization') {
+      const systemUserId = '00000000-0000-0000-0000-000000000000'; // system user (même pattern que route standard)
+
+      // Calculer les totaux depuis les items
+      const totalHt = items.reduce(
+        (sum, item) => sum + item.unitPrice * item.quantity,
+        0
+      );
+      const totalVat = items.reduce(
+        (sum, item) => sum + item.unitPrice * item.quantity * item.vatRate,
+        0
+      );
+      const totalTtc = totalHt + totalVat;
+
+      const insertPayload: Database['public']['Tables']['financial_documents']['Insert'] =
+        {
+          document_type: 'customer_invoice',
+          document_direction: 'inbound',
+          document_number: finalizedInvoice.invoice_number ?? undefined,
+          partner_id: clientId,
+          partner_type: 'customer',
+          document_date: issueDate,
+          due_date: dueDate,
+          total_ht: totalHt,
+          total_ttc: totalTtc,
+          tva_amount: totalVat,
+          amount_paid: 0,
+          status: autoFinalize ? 'sent' : 'draft',
+          sales_order_id: null,
+          qonto_invoice_id: finalizedInvoice.id,
+          qonto_pdf_url: finalizedInvoice.pdf_url ?? null,
+          qonto_public_url: finalizedInvoice.public_url ?? null,
+          invoice_source: 'crm',
+          created_by: systemUserId,
+          customer_type: clientType,
+        };
+
+      const { error: insertDocError } = await supabase
+        .from('financial_documents')
+        .insert(insertPayload);
+
+      if (insertDocError) {
+        console.error(
+          '[API Qonto Invoices Service] Failed to insert financial_document:',
+          insertDocError
+        );
+        // Ne pas échouer la requête - la facture Qonto est créée
+      }
+    } else {
+      console.warn(
+        '[API Qonto Invoices Service] Skipping financial_documents INSERT: clientType=individual is not supported (partner_id FK requires organisation UUID)'
+      );
+    }
+
     return NextResponse.json({
       success: true,
       invoice: finalizedInvoice,
