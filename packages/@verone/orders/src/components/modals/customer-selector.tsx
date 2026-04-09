@@ -3,14 +3,19 @@
 import { useState, useEffect } from 'react';
 
 import { useToast } from '@verone/common/hooks';
-import { Combobox } from '@verone/ui';
-import { Label } from '@verone/ui';
-import { RadioGroup, RadioGroupItem } from '@verone/ui';
+import { CustomerOrganisationFormModal } from '@verone/organisations';
+import {
+  ButtonV2,
+  Combobox,
+  Label,
+  RadioGroup,
+  RadioGroupItem,
+} from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import { getOrganisationCardName } from '@verone/utils/utils/organisation-helpers';
+import { Plus } from 'lucide-react';
 
 import { CreateIndividualCustomerModal } from './create-individual-customer-modal';
-import { CreateOrganisationModal } from './create-organisation-modal';
 
 export type CustomerType = 'professional' | 'individual';
 
@@ -77,6 +82,7 @@ export function CustomerSelector({
   const [customers, setCustomers] = useState<UnifiedCustomer[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCreateOrgOpen, setIsCreateOrgOpen] = useState(false);
   const { toast } = useToast();
 
   // Charger les clients selon le type sélectionné (et l'enseigne si fournie)
@@ -382,12 +388,28 @@ export function CustomerSelector({
 
             {/* Bouton création selon le type */}
             {customerType === 'professional' ? (
-              <CreateOrganisationModal
-                onOrganisationCreated={(...args) => {
-                  void handleOrganisationCreated(...args);
-                }}
-                defaultType="customer"
-              />
+              <>
+                <ButtonV2
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCreateOrgOpen(true)}
+                  className="shrink-0"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Nouveau
+                </ButtonV2>
+                <CustomerOrganisationFormModal
+                  isOpen={isCreateOrgOpen}
+                  onClose={() => setIsCreateOrgOpen(false)}
+                  enseigneId={enseigneId}
+                  onSuccess={org => {
+                    void handleOrganisationCreated(
+                      org.id,
+                      org.legal_name ?? org.trade_name ?? 'Organisation'
+                    );
+                  }}
+                />
+              </>
             ) : (
               <CreateIndividualCustomerModal
                 onCustomerCreated={(...args) => {

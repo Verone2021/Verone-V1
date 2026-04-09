@@ -20,8 +20,7 @@ export { QuickEditShippingAddressModal } from './QuickEditShippingAddressModal';
 export { QuickEditBillingAddressModal } from './QuickEditBillingAddressModal';
 export { QuickEditOwnershipTypeModal } from './QuickEditOwnershipTypeModal';
 
-// Create Organisation
-export { CreateOrganisationModal } from './CreateOrganisationModal';
+// CreateOrganisationModal — DEPRECATED: remplacé par CustomerOrganisationFormModal de @verone/organisations
 
 // Enseigne Contacts
 export { EnseigneContactsTab } from './EnseigneContactsTab';

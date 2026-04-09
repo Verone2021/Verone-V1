@@ -107,6 +107,13 @@ export function CreateLinkMeOrderModal({
                     customersLoading={form.customers.isLoading}
                     selectedCustomerId={form.selectedCustomerId}
                     onSelectCustomer={form.setSelectedCustomerId}
+                    enseigneId={
+                      form.selectedAffiliate?.enseigne_id ?? undefined
+                    }
+                    onOrganisationCreated={orgId => {
+                      form.setSelectedCustomerId(orgId);
+                      void form.customers.refetch();
+                    }}
                     newCustomerName={form.newCustomerName}
                     onNewCustomerNameChange={form.setNewCustomerName}
                     newCustomerFirstName={form.newCustomerFirstName}

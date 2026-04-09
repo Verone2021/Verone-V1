@@ -1,14 +1,17 @@
 'use client';
 
+import { useState } from 'react';
+
 import type { Organisation } from '@verone/organisations/hooks';
-import { EcoTaxVatInput } from '@verone/ui';
+import { SupplierFormModal } from '@verone/organisations';
+import { ButtonV2, EcoTaxVatInput } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Textarea } from '@verone/ui';
+import { Plus } from 'lucide-react';
 
 import { paymentTermsOptions } from '../constants';
-import { CreateOrganisationModal } from '../../create-organisation-modal';
 import { SupplierSelector } from '../../supplier-selector';
 
 interface GeneralInfoCardProps {
@@ -48,6 +51,8 @@ export function GeneralInfoCard({
   onNotesChange,
   onEcoTaxVatRateChange,
 }: GeneralInfoCardProps) {
+  const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
+
   return (
     <Card>
       <CardHeader>
@@ -67,12 +72,30 @@ export function GeneralInfoCard({
               />
             </div>
             {!isEditMode && (
-              <CreateOrganisationModal
-                onOrganisationCreated={(...args) => {
-                  void onSupplierCreated(...args);
-                }}
-                defaultType="supplier"
-              />
+              <>
+                <ButtonV2
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsSupplierModalOpen(true)}
+                  className="shrink-0 self-end"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Nouveau
+                </ButtonV2>
+                <SupplierFormModal
+                  isOpen={isSupplierModalOpen}
+                  onClose={() => setIsSupplierModalOpen(false)}
+                  onSuccess={supplier => {
+                    onSupplierCreated(
+                      supplier.id,
+                      supplier.legal_name ??
+                        supplier.trade_name ??
+                        'Fournisseur'
+                    );
+                    setIsSupplierModalOpen(false);
+                  }}
+                />
+              </>
             )}
           </div>
         </div>

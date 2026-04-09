@@ -27,6 +27,8 @@ import {
   Users,
 } from 'lucide-react';
 
+import { CustomerOrganisationFormModal } from '@verone/organisations';
+
 import {
   OrganisationCard,
   OrganisationDetailSheet,
@@ -34,7 +36,6 @@ import {
   OrganisationFilterTabs,
   QuickEditShippingAddressModal,
   QuickEditOwnershipTypeModal,
-  CreateOrganisationModal,
 } from '../../../components/organisations';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useArchiveOrganisation } from '../../../lib/hooks/use-archive-organisation';
@@ -614,9 +615,9 @@ function OrganisationsPageContent(): JSX.Element | null {
       />
 
       {/* Create Organisation Modal */}
-      <CreateOrganisationModal
-        enseigneId={enseigneId ?? ''}
-        enseigneName={linkMeRole?.enseigne_name ?? ''}
+      <CustomerOrganisationFormModal
+        enseigneId={enseigneId}
+        sourceType="linkme"
         isOpen={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
       />
