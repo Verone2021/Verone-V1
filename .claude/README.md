@@ -50,7 +50,7 @@
 ## Regles importantes
 
 1. **Commit/Push/PR** = UNIQUEMENT sur ordre explicite de Romeo
-2. **Avant de coder** = Lire ACTIVE.md + memoire + CLAUDE.md app + docs/current/
+2. **Avant de coder** = Lire ACTIVE.md + memoire + CLAUDE.md app + Serena
 3. **Rules** dans `rules/` sont auto-discovered par Claude Code
 4. **Hooks** dans `settings.json` sont bloquants (PreToolUse) ou informatifs (PostToolUse)
 5. **Tache terminee** = supprimer de ACTIVE.md

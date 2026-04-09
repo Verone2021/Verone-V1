@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import type { Organisation } from '@verone/organisations/hooks';
 import { useSuppliers } from '@verone/organisations/hooks';
@@ -42,14 +42,14 @@ export function SupplierFormModal({
   const isEditing = !!supplier;
 
   // Charger données taxonomie en mode édition
-  useState(() => {
+  useEffect(() => {
     if (isEditing && supplier) {
       setTaxonomyData({
         supplier_segment:
-          (supplier.supplier_segment as SupplierSegmentType) ?? undefined,
+          (supplier.supplier_segment as SupplierSegmentType) ?? null,
       });
     }
-  });
+  }, [isEditing, supplier]);
 
   const handleSubmit = async (
     data: OrganisationFormData,
@@ -70,21 +70,51 @@ export function SupplierFormModal({
         id: supplier.id,
         legal_name: supplierData.legal_name,
         email: supplierData.email ?? undefined,
+        secondary_email: supplierData.secondary_email ?? undefined,
         country: supplierData.country,
         phone: supplierData.phone ?? undefined,
         website: supplierData.website ?? undefined,
         is_active: supplierData.is_active,
         notes: supplierData.notes ?? undefined,
 
-        // Adresse principale
+        // Adresse principale (legacy)
         address_line1: supplierData.address_line1 ?? undefined,
         address_line2: supplierData.address_line2 ?? undefined,
         postal_code: supplierData.postal_code ?? undefined,
         city: supplierData.city ?? undefined,
         region: supplierData.region ?? undefined,
 
+        // Adresse facturation
+        billing_address_line1: supplierData.billing_address_line1 ?? undefined,
+        billing_address_line2: supplierData.billing_address_line2 ?? undefined,
+        billing_postal_code: supplierData.billing_postal_code ?? undefined,
+        billing_city: supplierData.billing_city ?? undefined,
+        billing_region: supplierData.billing_region ?? undefined,
+        billing_country: supplierData.billing_country ?? undefined,
+
+        // Adresse livraison
+        shipping_address_line1:
+          supplierData.shipping_address_line1 ?? undefined,
+        shipping_address_line2:
+          supplierData.shipping_address_line2 ?? undefined,
+        shipping_postal_code: supplierData.shipping_postal_code ?? undefined,
+        shipping_city: supplierData.shipping_city ?? undefined,
+        shipping_region: supplierData.shipping_region ?? undefined,
+        shipping_country: supplierData.shipping_country ?? undefined,
+        has_different_shipping_address:
+          supplierData.has_different_shipping_address,
+
+        // GPS
+        latitude: supplierData.latitude ?? undefined,
+        longitude: supplierData.longitude ?? undefined,
+
+        // Identite commerciale
+        has_different_trade_name: supplierData.has_different_trade_name,
+        trade_name: supplierData.trade_name ?? undefined,
+
         // Légal
         legal_form: supplierData.legal_form ?? undefined,
+        siren: supplierData.siren ?? undefined,
         siret: supplierData.siret ?? undefined,
         vat_number: supplierData.vat_number ?? undefined,
         industry_sector: supplierData.industry_sector ?? undefined,
@@ -100,24 +130,54 @@ export function SupplierFormModal({
     } else {
       // Création
       result = await createOrganisation({
-        legal_name: supplierData.legal_name ?? supplierData.name, // Fallback to name
+        legal_name: supplierData.legal_name ?? supplierData.name,
         type: 'supplier',
         email: supplierData.email ?? undefined,
+        secondary_email: supplierData.secondary_email ?? undefined,
         country: supplierData.country,
         phone: supplierData.phone ?? undefined,
         website: supplierData.website ?? undefined,
         is_active: supplierData.is_active,
         notes: supplierData.notes ?? undefined,
 
-        // Adresse principale
+        // Adresse principale (legacy)
         address_line1: supplierData.address_line1 ?? undefined,
         address_line2: supplierData.address_line2 ?? undefined,
         postal_code: supplierData.postal_code ?? undefined,
         city: supplierData.city ?? undefined,
         region: supplierData.region ?? undefined,
 
+        // Adresse facturation
+        billing_address_line1: supplierData.billing_address_line1 ?? undefined,
+        billing_address_line2: supplierData.billing_address_line2 ?? undefined,
+        billing_postal_code: supplierData.billing_postal_code ?? undefined,
+        billing_city: supplierData.billing_city ?? undefined,
+        billing_region: supplierData.billing_region ?? undefined,
+        billing_country: supplierData.billing_country ?? undefined,
+
+        // Adresse livraison
+        shipping_address_line1:
+          supplierData.shipping_address_line1 ?? undefined,
+        shipping_address_line2:
+          supplierData.shipping_address_line2 ?? undefined,
+        shipping_postal_code: supplierData.shipping_postal_code ?? undefined,
+        shipping_city: supplierData.shipping_city ?? undefined,
+        shipping_region: supplierData.shipping_region ?? undefined,
+        shipping_country: supplierData.shipping_country ?? undefined,
+        has_different_shipping_address:
+          supplierData.has_different_shipping_address,
+
+        // GPS
+        latitude: supplierData.latitude ?? undefined,
+        longitude: supplierData.longitude ?? undefined,
+
+        // Identite commerciale
+        has_different_trade_name: supplierData.has_different_trade_name,
+        trade_name: supplierData.trade_name ?? undefined,
+
         // Légal
         legal_form: supplierData.legal_form ?? undefined,
+        siren: supplierData.siren ?? undefined,
         siret: supplierData.siret ?? undefined,
         vat_number: supplierData.vat_number ?? undefined,
         industry_sector: supplierData.industry_sector ?? undefined,

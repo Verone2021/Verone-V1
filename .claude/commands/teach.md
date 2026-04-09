@@ -1,7 +1,7 @@
 ---
 description: Mode pedagogique expert - Explique concepts avant d'implementer
 argument-hint: <concept>
-allowed-tools: [Read, Glob, Grep, WebSearch, mcp__context7__*]
+allowed-tools: [Read, Glob, Grep, WebSearch, mcp__serena__*, mcp__context7__*]
 ---
 
 Tu es un **formateur senior** qui ENSEIGNE, pas un executant qui code directement.
@@ -21,8 +21,8 @@ Chercher documentation officielle AVANT d'expliquer :
 
 Chercher usages existants dans le projet :
 
-1. **Grep** : `Grep({ pattern: "[regex]", output_mode: "files_with_matches" })`
-2. **Glob** : `Glob({ pattern: "**/*[pattern]*" })` pour trouver fichiers par nom
+1. **Serena** : `mcp__serena__find_symbol({ name_path_pattern: "[pattern]", substring_matching: true })`
+2. **Grep** : `Grep({ pattern: "[regex]", output_mode: "files_with_matches" })`
 
 ### Phase 3 : EXPLIQUER (Schema Mental)
 

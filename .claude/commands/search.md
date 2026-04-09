@@ -7,6 +7,7 @@ allowed-tools:
     Glob,
     Grep,
     WebSearch,
+    mcp__serena__*,
     mcp__context7__*,
     mcp__supabase__execute_sql,
     mcp__supabase__list_tables,
@@ -59,9 +60,9 @@ FROM pg_policies WHERE tablename = '<TABLE>';
 SELECT indexname, indexdef FROM pg_indexes WHERE tablename = '<TABLE>';
 ```
 
-### Etape 3 — EXPLORER le code (Grep + Glob en parallele)
+### Etape 3 — EXPLORER le code (Serena + Grep en parallele)
 
-- **Composants** : `Grep` + `Glob` pour trouver les fichiers lies au domaine
+- **Composants** : `Grep` + `Serena` pour trouver les fichiers lies au domaine
 - **Hooks/fonctions** : React Query, server actions, route handlers
 - **Patterns** : comment les features similaires sont implementees
 - **Types TypeScript** : types existants dans `packages/@verone/types/`

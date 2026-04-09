@@ -6,13 +6,13 @@ allowed-tools:
     Bash,
     Read,
     Grep,
-    Glob,
     mcp__supabase__execute_sql,
     mcp__supabase__list_tables,
     mcp__supabase__get_advisors,
     mcp__supabase__get_logs,
     mcp__supabase__list_migrations,
     mcp__supabase__list_extensions,
+    mcp__serena__*,
   ]
 ---
 

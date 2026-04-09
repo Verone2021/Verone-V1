@@ -16,6 +16,7 @@ tools:
     'mcp__supabase__execute_sql',
     'mcp__supabase__list_tables',
     'mcp__supabase__get_advisors',
+    'mcp__serena__*',
     'mcp__context7__*',
   ]
 skills: [rls-patterns, schema-sync]
@@ -29,8 +30,9 @@ memory: .claude/agent-memory/database-architect/
 1. **Toujours** : CLAUDE.md (section comportement mentor)
 2. **Migrations** : `.claude/rules/database/supabase.md`
 3. **RLS patterns** : `.claude/rules/database/rls-patterns.md`
+4. **Serena memories** : `database-tables-by-domain`, `business-rules-organisations`
 
-**Avant de coder** : Lire `.claude/work/ACTIVE.md`, CLAUDE.md de l'app, et explorer le code existant avec Grep/Glob/Read.
+**Avant de coder** : Lire `.claude/work/ACTIVE.md`, CLAUDE.md de l'app, et consulter Serena memories pertinentes.
 
 ---
 
@@ -101,15 +103,16 @@ Senior Database Architect pour Vérone. Expert Supabase, PostgreSQL, stock manag
 
 **OBLIGATOIRE** - Ne jamais sauter cette etape.
 
-1. Explorer le codebase avec Grep/Glob/Read pour comprendre l'architecture
-2. Lire les fichiers de documentation pertinents (`docs/current/`, `.claude/rules/database/`)
-3. Verifier le schema DB des tables concernees :
+1. `mcp__serena__list_memories()` — decouvrir les memories disponibles
+2. Lire `project-architecture` et `database-tables-by-domain` pour le contexte
+3. Lire les memories pertinentes a la tache (RLS, triggers, etc.)
+4. Verifier le schema DB des tables concernees :
    ```sql
    SELECT column_name, data_type, is_nullable
    FROM information_schema.columns
    WHERE table_name = '<TABLE>' ORDER BY ordinal_position;
    ```
-4. Verifier les RLS policies existantes :
+5. Verifier les RLS policies existantes :
    ```sql
    SELECT policyname, cmd, qual FROM pg_policies WHERE tablename = '<TABLE>';
    ```

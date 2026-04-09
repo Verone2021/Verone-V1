@@ -5,6 +5,7 @@ allowed-tools:
   [
     Read,
     Edit,
+    mcp__serena__*,
     mcp__context7__*,
     mcp__supabase__execute_sql,
     mcp__supabase__list_tables,
@@ -41,7 +42,7 @@ Tu es en **mode PLAN**.
    - Comprendre le contexte, les steps to reproduce, les evidences, les hypothèses
 
 3. **Explorer le code** :
-   - Utiliser Grep pour chercher des patterns et Glob pour trouver des fichiers
+   - Utiliser les outils Serena (find_symbol, get_symbols_overview, search_for_pattern)
    - Lire les fichiers mentionnés dans les "Hypothèses"
    - Comprendre l'architecture existante
 

@@ -101,7 +101,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://votre-projet.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJ...votre-service-key...
 ```
 
-💡 **Où trouver les credentials ?** Voir les variables d'environnement dans `.env.local`
+💡 **Où trouver les credentials ?** Voir `.serena/memories/*-credentials-*.md`
 
 ---
 

@@ -385,7 +385,7 @@ Après toute modification de routing ou ajout de page :
 - [ ] Vérifier console errors : `browser_console_messages({ level: 'error' })`
 - [ ] Mettre à jour cet index avec statut (✅/🔴)
 - [ ] Recalculer taux de disponibilité
-- [ ] Documenter les resultats
+- [ ] Sauvegarder dans Serena memory
 
 ### Commandes Utiles
 
@@ -418,7 +418,7 @@ vercel logs https://linkme-blue.vercel.app --since 1h
 - **Production** : https://linkme-blue.vercel.app
 - **Vercel Dashboard** : https://vercel.com/verone2021s-projects/linkme
 - **Supabase Console** : Voir `.mcp.env` pour DATABASE_URL
-- **Credentials Test** : Voir variables d'environnement
+- **Credentials Test** : `.serena/memories/linkme-test-credentials-2026-01.md`
 - **Plan Original** : `.plans/linkme-404-audit-2026-01-30.md`
 
 ---

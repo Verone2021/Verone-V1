@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
@@ -9,6 +11,7 @@ import {
   EnseigneMapSection,
   EnseigneOrganisationsTable,
   OrganisationSelectorModal,
+  CustomerOrganisationFormModal,
 } from '@verone/organisations';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
@@ -69,6 +72,8 @@ export default function EnseigneDetailPage() {
     handleSaveOrganisations,
     handleRemoveOrganisation,
   } = useEnseigneDetail(enseigneId);
+
+  const [isCreateOrgModalOpen, setIsCreateOrgModalOpen] = useState(false);
 
   // Loading state
   if (loading) {
@@ -207,6 +212,7 @@ export default function EnseigneDetailPage() {
             <EnseigneOrganisationsTable
               organisations={stats?.organisationsWithRevenue ?? []}
               parentOrganisation={stats?.parentOrganisation ?? null}
+              onCreateOrganisation={() => setIsCreateOrgModalOpen(true)}
               onAddOrganisations={() => setIsOrganisationModalOpen(true)}
               onRemoveOrganisation={async orgId => {
                 try {
@@ -268,6 +274,18 @@ export default function EnseigneDetailPage() {
           />
         </div>
       )}
+
+      {/* Modal Creation Organisation (formulaire unifie) */}
+      <CustomerOrganisationFormModal
+        isOpen={isCreateOrgModalOpen}
+        onClose={() => setIsCreateOrgModalOpen(false)}
+        enseigneId={enseigneId}
+        sourceType="manual"
+        onSuccess={() => {
+          setIsCreateOrgModalOpen(false);
+          handleRefresh();
+        }}
+      />
 
       {/* Modal Gestion Organisations (deux colonnes) */}
       <OrganisationSelectorModal
