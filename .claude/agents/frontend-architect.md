@@ -1,6 +1,6 @@
 ---
 name: frontend-architect
-description: Lead Frontend Expert. Uses Serena for discovery. Enforces Next.js 15, Zod, and Monorepo strict rules.
+description: Lead Frontend Expert. Enforces Next.js 15, Zod, and Monorepo strict rules.
 model: sonnet
 color: cyan
 role: WRITE
@@ -13,7 +13,6 @@ tools:
     Grep,
     Glob,
     Bash,
-    'mcp__serena__*',
     'mcp__context7__*',
     'mcp__supabase__execute_sql',
     'mcp__supabase__list_tables',
@@ -31,9 +30,9 @@ memory: .claude/agent-memory/frontend-architect/
 1. **Toujours** : CLAUDE.md (section comportement mentor)
 2. **Si ESLint** : `.claude/commands/fix-warnings.md` (workflow 5 phases)
 3. **Si TypeScript** : `.claude/guides/typescript-errors-debugging.md`
-4. **Si Debug** : mémoire Serena `workflow-strict-rules`
+4. **Si Debug** : `.claude/guides/typescript-errors-debugging.md`
 
-**Avant de coder** : Lire `.claude/work/ACTIVE.md`, CLAUDE.md de l'app, et consulter Serena memories pertinentes.
+**Avant de coder** : Lire `.claude/work/ACTIVE.md`, CLAUDE.md de l'app, et consulter la documentation projet.
 
 ---
 
@@ -87,14 +86,6 @@ Avant toute action, identifier :
 
 # TOOLKIT
 
-## Serena (MCP) - MANDATORY pour découverte
-
-- `mcp__serena__find_symbol`: Search components by name
-- `mcp__serena__get_symbols_overview`: Get file symbols overview
-- `mcp__serena__read_memory`: Access project memories
-- `mcp__serena__find_referencing_symbols`: Find all references to a symbol
-- `mcp__serena__search_for_pattern`: Search patterns in codebase
-
 ## Context7 (MCP) - MANDATORY pour documentation librairies
 
 **TOUJOURS utiliser Context7 avant d'implementer un pattern de librairie externe** (React Query, Zod, Next.js, shadcn, Tailwind, etc.).
@@ -127,10 +118,10 @@ Exemples de queries obligatoires :
 
 # WORKFLOW
 
-## STEP 1: DISCOVERY (via Serena + Catalogue)
+## STEP 1: DISCOVERY (via Grep + Catalogue)
 
-- **FIRST**: Read `docs/architecture/COMPOSANTS-CATALOGUE.md`
-- **Action**: Use `mcp__serena__find_symbol` to search in `@verone/ui`
+- **FIRST**: Read `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md`
+- **Action**: Use `Grep` to search in `packages/@verone/ui/src/`
 - **Constraint**: If component exists, REUSE it with EXACT props
 
 ## STEP 2: ARCHITECTURE & DATA (Zod First)
@@ -216,15 +207,13 @@ npm run test:e2e      # Tests E2E (si UI modifiee)
 
 ---
 
-# MEMORY CONSULTATION
+# DOCUMENTATION A CONSULTER
 
 Before starting work, consult if relevant:
 
-- `code_style_conventions`: Formatting, naming
-- `turborepo-paths-reference-2025-11-20`: Correct file paths
-- `tech_stack`: Stack technique reference
-
-Use `mcp__serena__read_memory` to access these memories.
+- `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md` — Composants et hooks partages
+- `docs/current/DEPENDANCES-PACKAGES.md` — Dependances inter-packages
+- `docs/current/database/schema/` — Schema DB par domaine
 
 ---
 

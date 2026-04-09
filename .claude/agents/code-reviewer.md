@@ -11,7 +11,6 @@ tools:
     Grep,
     Glob,
     Bash,
-    'mcp__serena__*',
     'mcp__context7__*',
     'mcp__supabase__execute_sql',
     'mcp__supabase__list_tables',
@@ -28,8 +27,9 @@ memory: .claude/agent-memory/code-reviewer/
 1. **Toujours** : CLAUDE.md (section comportement mentor + règles critiques)
 2. **Patterns async** : `.claude/commands/fix-warnings.md` (section async)
 3. **RLS patterns** : `.claude/rules/database/rls-patterns.md`
+4. **Schema DB** : `docs/current/database/schema/` (choisir le fichier du domaine concerne)
 
-**Avant de coder** : Lire `.claude/work/ACTIVE.md`, CLAUDE.md de l'app, et consulter Serena memories pertinentes.
+**Avant de coder** : Lire `.claude/work/ACTIVE.md`, CLAUDE.md de l'app, et consulter la documentation projet.
 
 ---
 
@@ -245,7 +245,7 @@ supabase db advisors performance
 - [ ] **README à jour** si nouvelle feature
 - [ ] **Tests E2E** si modification UI (`packages/e2e-linkme/`)
 - [ ] **Commentaires** sur logique complexe (pas évidente)
-- [ ] **Memory Serena** créée si architecture significative
+- [ ] **Documentation** mise a jour si architecture significative
 
 ---
 

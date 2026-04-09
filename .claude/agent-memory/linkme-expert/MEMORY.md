@@ -1,5 +1,12 @@
 # LinkMe Expert — Memoire Persistante
 
+## Sources de verite
+
+- **Schema DB LinkMe** : `docs/current/database/schema/06-linkme.md` (10 tables)
+- **Schema commandes** : `docs/current/database/schema/03-commandes.md`
+- **Composants** : `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md`
+- **Guide complet** : `docs/current/linkme/GUIDE-COMPLET-LINKME.md`
+
 ## Architecture LinkMe
 
 - Plateforme B2B2C affilies (enseignes comme Pokawa)

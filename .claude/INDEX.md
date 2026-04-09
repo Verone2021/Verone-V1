@@ -1,6 +1,6 @@
 # INDEX CENTRALISE — Verone Back Office
 
-**Derniere mise a jour** : 2026-04-01 (nettoyage ACTIVE.md + restauration 40 docs + agent memories)
+**Derniere mise a jour** : 2026-04-09 (nettoyage Serena, ajout regles manquantes, mise a jour MCP)
 
 Ce fichier est le sommaire unique pour trouver toute l'information du repository.
 Tout agent ou commande doit commencer par consulter cet index.
@@ -64,21 +64,24 @@ Tout agent ou commande doit commencer par consulter cet index.
 
 ## Regles (auto-discovered par Claude Code)
 
-| Fichier                                        | Contenu                                                        |
-| ---------------------------------------------- | -------------------------------------------------------------- |
-| `.claude/rules/dev/git-workflow.md`            | Branches, commits, PR — **STOP avant commit/push/PR**          |
-| `.claude/rules/dev/context-loading.md`         | **OBLIGATOIRE** — consulter contexte avant de coder            |
-| `.claude/rules/dev/build-commands.md`          | Toujours filtrer `pnpm --filter @verone/[app]`                 |
-| `.claude/rules/dev/hooks-bloquants.md`         | Documentation des hooks actifs                                 |
-| `.claude/rules/dev/servers.md`                 | Ports 3000/3001/3002 — JAMAIS lancer dev                       |
-| `.claude/rules/dev/multi-agent.md`             | Coordination multi-agents                                      |
-| `.claude/rules/dev/deployment-verification.md` | Checklist post-deploiement                                     |
-| `.claude/rules/dev/playwright-screenshots.md`  | Screenshots dans `.playwright-mcp/screenshots/`                |
-| `.claude/rules/frontend/async-patterns.md`     | Promesses, handlers async, invalidateQueries                   |
-| `.claude/rules/backend/api.md`                 | Route handlers, validation Zod, JAMAIS modifier API existantes |
-| `.claude/rules/database/supabase.md`           | Migrations, RLS, queries, types                                |
-| `.claude/rules/database/rls-patterns.md`       | Patterns RLS complets (staff, affilies, public)                |
-| `.claude/rules/dev/clean-code.md`              | Fichier > 400 lignes = refactoring obligatoire                 |
+| Fichier                                         | Contenu                                                        |
+| ----------------------------------------------- | -------------------------------------------------------------- |
+| `.claude/rules/dev/git-workflow.md`             | Branches, commits, PR — **STOP avant commit/push/PR**          |
+| `.claude/rules/dev/context-loading.md`          | **OBLIGATOIRE** — consulter contexte avant de coder            |
+| `.claude/rules/dev/build-commands.md`           | Toujours filtrer `pnpm --filter @verone/[app]`                 |
+| `.claude/rules/dev/hooks-bloquants.md`          | Documentation des hooks actifs                                 |
+| `.claude/rules/dev/servers.md`                  | Ports 3000/3001/3002 — JAMAIS lancer dev                       |
+| `.claude/rules/dev/multi-agent.md`              | Coordination multi-agents                                      |
+| `.claude/rules/dev/deployment-verification.md`  | Checklist post-deploiement                                     |
+| `.claude/rules/dev/playwright-screenshots.md`   | Screenshots dans `.playwright-mcp/screenshots/`                |
+| `.claude/rules/frontend/async-patterns.md`      | Promesses, handlers async, invalidateQueries                   |
+| `.claude/rules/backend/api.md`                  | Route handlers, validation Zod, JAMAIS modifier API existantes |
+| `.claude/rules/database/supabase.md`            | Migrations, RLS, queries, types                                |
+| `.claude/rules/database/rls-patterns.md`        | Patterns RLS complets (staff, affilies, public)                |
+| `.claude/rules/dev/clean-code.md`               | Fichier > 400 lignes = refactoring obligatoire                 |
+| `.claude/rules/dev/component-safety.md`         | Zero swap composants, fixes cibles uniquement                  |
+| `.claude/rules/dev/stock-triggers-protected.md` | Triggers stock IMMUABLES — JAMAIS modifier                     |
+| `.claude/rules/database/post-migration.md`      | Mise a jour doc DB apres chaque migration                      |
 
 ---
 
@@ -123,21 +126,21 @@ Tout agent ou commande doit commencer par consulter cet index.
 | Schema DB complet (par domaine) | `docs/current/database/schema/` (9 fichiers)        |
 | Script re-generation doc DB     | `scripts/generate-db-docs.py`                       |
 | Dependances inter-packages      | `docs/current/DEPENDANCES-PACKAGES.md`              |
-| Tables par domaine              | Serena `database-tables-by-domain`                  |
+| Tables par domaine              | `docs/current/database/schema/`                     |
 | Triggers stock                  | `docs/current/database/triggers-stock-reference.md` |
 | Triggers metriques              | `docs/metrics/database-triggers.md`                 |
 | RLS patterns                    | `.claude/rules/database/rls-patterns.md`            |
 | Mapping pages-tables            | `docs/current/MAPPING-PAGES-TABLES.md`              |
-| Architecture DB                 | `docs/current/serena/database-implementation.md`    |
+| Architecture DB                 | `docs/current/database/schema/`                     |
 
 ### Finance
 
 | Sujet                     | Source                                               |
 | ------------------------- | ---------------------------------------------------- |
 | Reference finance         | `docs/current/finance/finance-reference.md`          |
-| Systeme Qonto             | Serena `qonto-invoicing-system`                      |
+| Systeme Qonto             | `docs/current/finance/invoicing-system-reference.md` |
 | Qonto env setup           | `docs/integrations/qonto-env-setup.md`               |
-| Never finalize            | `docs/current/serena/qonto-never-finalize.md`        |
+| Never finalize            | `docs/current/finance/invoicing-system-reference.md` |
 | Invoicing system (routes) | `docs/current/finance/invoicing-system-reference.md` |
 | Workflow ventes complet   | `docs/current/WORKFLOW-VENTES.md`                    |
 | Dependances composants    | `docs/current/COMPONENT-DEPENDENCIES.md`             |
@@ -163,49 +166,8 @@ Tout agent ou commande doit commencer par consulter cet index.
 | Workflow PO complet        | `docs/business-rules/07-commandes/fournisseurs/`                                |
 | Notifications commandes    | `docs/business-rules/07-commandes/notifications-workflow.md`                    |
 | Calcul marge LinkMe        | `docs/linkme/margin-calculation.md`                                             |
-| Decisions projet           | `docs/current/serena/project-decisions.md`                                      |
+| Decisions projet           | `docs/current/`                                                                 |
 | Incident runbook           | `docs/runbooks/incident.md`                                                     |
-
----
-
-## Serena Memories (contexte metier persistant)
-
-### Architecture
-
-- `project-architecture` — Architecture globale monorepo
-- `site-internet-architecture` — Architecture site e-commerce
-- `back-office-sections-index` — Sections du back-office
-- `linkme-business-model` — Modele metier LinkMe
-
-### Database
-
-- `database-tables-by-domain` — Tables par domaine metier
-- `address-system-architecture` — Systeme d'adresses
-- `business-rules-organisations` — Regles metier organisations
-
-### LinkMe (11 memories)
-
-- `linkme-order-commission-workflow` — Workflow commandes + commissions
-- `linkme-auth-patterns` — Authentification et roles
-- `linkme-public-selections-architecture` — Selections publiques
-- `linkme-price-locking-system` — Verrouillage prix
-- `linkme-commission-rules` — Regles de commission
-- `linkme-commission-vs-margin-fields` — Champs commission vs marge
-- `linkme-order-contact-workflow` — Workflow contacts commande
-- `linkme-info-request-workflow` — Workflow demandes d'info
-- `linkme-price-correction-workflow` — Correction prix post-commande
-- `linkme-order-forms-comparison` — Comparaison 2 formulaires commande
-- `linkme-facture-verification-bubble-rules` — Regles verification facturation
-
-### Operations
-
-- `stock-triggers-alerts-complete` — Triggers stock et alertes
-- `notifications-system-audit-2026-03` — Systeme notifications
-- `sales-order-status-workflow-complete` — Workflow commandes vente
-- `purchase-order-status-workflow-complete` — Workflow commandes achat
-- `sales-invoices-processing-rules` — Regles traitement factures
-- `qonto-invoicing-system` — Systeme facturation Qonto
-- `auth-middleware-patterns` — Patterns middleware auth
 
 ---
 
@@ -235,7 +197,6 @@ Tout agent ou commande doit commencer par consulter cet index.
 | ---------------------------- | ------------------------------------------------- |
 | Supabase                     | SQL, tables, migrations, types                    |
 | Playwright (lane-1 & lane-2) | Tests visuels, navigation, screenshots            |
-| Serena                       | Navigation code semantique, memories              |
 | Context7                     | Documentation librairies a jour                   |
 | shadcn                       | Registre composants shadcn/ui (officiel, gratuit) |
 

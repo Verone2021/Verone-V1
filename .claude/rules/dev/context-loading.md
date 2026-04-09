@@ -13,20 +13,20 @@ Avant TOUTE modification de code, lire au minimum **3 fichiers ou references sim
 2. **Lire ACTIVE.md** (`.claude/work/ACTIVE.md`) — taches en cours, sprints, bugs connus
 3. **Lire le CLAUDE.md de l'app concernee** — regles specifiques, documentation par tache
 4. **Consulter la memoire persistante** — feedbacks, bugs connus, decisions passees
-5. **Verifier Serena memories pertinentes** — workflows, schemas, patterns metier
+5. **Consulter la documentation projet** — `docs/current/database/schema/`, `docs/current/modules/`, `docs/current/linkme/`
 6. **Explorer le code existant** — patterns, hooks, composants similaires AVANT de creer
 7. **Lire 3 fichiers similaires** — composants, hooks ou pages qui font la meme chose
 
 ### Sources par domaine
 
-| Domaine       | Sources a consulter                                                                          |
-| ------------- | -------------------------------------------------------------------------------------------- |
-| LinkMe        | `apps/linkme/CLAUDE.md`, Serena `linkme-*` memories, `docs/current/linkme/`                  |
-| Back-office   | `apps/back-office/CLAUDE.md`, Serena `business-entities-*`, `docs/current/modules/`          |
-| Site-internet | `apps/site-internet/CLAUDE.md`, `docs/current/site-internet/`                                |
-| Database      | `.claude/rules/database/`, Serena `database-tables-by-domain`, schema SQL                    |
-| Finance       | Serena `qonto-invoicing-system`, `docs/current/finance/`                                     |
-| Stock         | Serena `stock-triggers-alerts-complete`, `docs/current/database/triggers-stock-reference.md` |
+| Domaine       | Sources a consulter                                                           |
+| ------------- | ----------------------------------------------------------------------------- |
+| LinkMe        | `apps/linkme/CLAUDE.md`, `docs/current/linkme/`                               |
+| Back-office   | `apps/back-office/CLAUDE.md`, `docs/current/modules/`                         |
+| Site-internet | `apps/site-internet/CLAUDE.md`, `docs/current/site-internet/`                 |
+| Database      | `.claude/rules/database/`, `docs/current/database/schema/`                    |
+| Finance       | `docs/current/finance/invoicing-system-reference.md`, `docs/current/finance/` |
+| Stock         | `docs/current/database/triggers-stock-reference.md`                           |
 
 ### CRITICAL : Verifier l'historique AVANT d'implementer
 

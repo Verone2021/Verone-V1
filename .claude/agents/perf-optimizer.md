@@ -14,7 +14,6 @@ tools:
     'mcp__supabase__execute_sql',
     'mcp__supabase__list_tables',
     'mcp__supabase__get_advisors',
-    'mcp__serena__*',
     'mcp__context7__*',
   ]
 memory: project
@@ -45,7 +44,7 @@ Avant de commencer tout audit, tu DOIS lire :
 
 **Permissions** :
 
-- ✅ Lire tout le code (Grep, Glob, Read, Serena)
+- ✅ Lire tout le code (Grep, Glob, Read)
 - ✅ Exécuter Knip et outils d'analyse
 - ✅ Requêtes SQL read-only (via MCP Supabase)
 - ✅ Générer rapport Markdown dans `docs/current/perf/`
@@ -131,7 +130,7 @@ WHERE qual LIKE '%auth.uid()%'
 
 Utiliser aussi `mcp__supabase__get_advisors` pour les conseils performance/sécurité Supabase.
 
-### Domaine 3 : Code Performance (via Grep/Serena)
+### Domaine 3 : Code Performance (via Grep)
 
 Patterns à détecter :
 
@@ -296,13 +295,11 @@ mcp__supabase__get_advisors  # Conseils performance/sécurité
 mcp__supabase__list_tables   # Liste des tables
 ```
 
-### Recherche Code (via Grep/Serena)
+### Recherche Code (via Grep/Glob)
 
 ```bash
 Grep                         # Recherche patterns dans le code
 Glob                         # Recherche fichiers par pattern
-mcp__serena__find_symbol     # Recherche symboles (fonctions, classes)
-mcp__serena__find_referencing_symbols  # Références d'un symbole
 ```
 
 ---

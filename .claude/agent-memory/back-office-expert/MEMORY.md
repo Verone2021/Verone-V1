@@ -1,5 +1,12 @@
 # Back-Office Expert — Memoire Persistante
 
+## Sources de verite
+
+- **Schema DB** : `docs/current/database/schema/` (91 tables documentees par domaine)
+- **Composants** : `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md` (150+ hooks, 100+ composants)
+- **Dependances** : `docs/current/DEPENDANCES-PACKAGES.md`
+- **Script re-generation DB** : `python scripts/generate-db-docs.py`
+
 ## Architecture globale
 
 - CRM/ERP modulaire : 165 pages, 22 modules, 78+ tables DB
@@ -70,3 +77,6 @@
 - `docs/business-rules/07-commandes/` — workflows commandes (restaurees)
 - `docs/current/modules/orders-workflow-reference.md` — statuts SO/PO
 - `docs/current/modules/stock-module-reference.md` — architecture stock
+- `docs/current/database/schema/03-commandes.md` — schema commandes
+- `docs/current/database/schema/04-stock.md` — schema stock
+- `docs/current/database/schema/05-finance.md` — schema finance

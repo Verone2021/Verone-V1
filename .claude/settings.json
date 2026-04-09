@@ -1,7 +1,6 @@
 {
   "enableAllProjectMcpServers": true,
   "enabledMcpServers": [
-    "serena",
     "playwright-lane-1",
     "playwright-lane-2",
     "context7",
@@ -21,7 +20,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'CONTEXTE VERONE (post-compaction):\n- LIRE EN PREMIER: .claude/work/ACTIVE.md (taches en cours) + .claude/INDEX.md (sommaire complet)\n- Monorepo: back-office (3000), linkme (3002), site-internet (3001)\n- LinkMe = plateforme affiliation B2B2C. SELECTIONS = coeur du revenu\n- Explorer AVANT coder: schema DB + code existant + CLAUDE.md app + Serena memories\n- UNE entite = UNE page detail (jamais de doublons entre canaux)\n- JAMAIS commit/push/PR sans ordre explicite de Romeo\n- Context7 MCP pour docs librairies, Serena MCP pour navigation code, Supabase MCP pour DB'"
+            "command": "echo 'CONTEXTE VERONE (post-compaction):\n- LIRE EN PREMIER: .claude/work/ACTIVE.md (taches en cours) + .claude/INDEX.md (sommaire complet)\n- Monorepo: back-office (3000), linkme (3002), site-internet (3001)\n- LinkMe = plateforme affiliation B2B2C. SELECTIONS = coeur du revenu\n- Explorer AVANT coder: schema DB + code existant + CLAUDE.md app + documentation projet\n- UNE entite = UNE page detail (jamais de doublons entre canaux)\n- JAMAIS commit/push/PR sans ordre explicite de Romeo\n- Context7 MCP pour docs librairies, Supabase MCP pour DB'"
           }
         ]
       },
@@ -228,7 +227,6 @@
       "WebFetch",
       "Task",
       "TodoWrite",
-      "mcp__serena__*",
       "mcp__context7__*",
       "mcp__playwright-lane-1__*",
       "mcp__playwright-lane-2__*",

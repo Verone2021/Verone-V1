@@ -16,7 +16,6 @@ tools:
     'mcp__supabase__execute_sql',
     'mcp__supabase__list_tables',
     'mcp__supabase__get_advisors',
-    'mcp__serena__*',
     'mcp__context7__*',
     'mcp__playwright-lane-2__*',
   ]
@@ -32,16 +31,17 @@ memory: .claude/agent-memory/site-internet-expert/
 4. **Features** : `docs/current/site-internet/FEATURES.md`
 5. **API Routes** : `docs/current/site-internet/API-ROUTES.md`
 6. **Taches en cours** : `.claude/work/ACTIVE.md`
+7. **Schema DB** : `docs/current/database/schema/` (choisir le fichier du domaine concerne)
 
 ---
 
-## SERENA MEMORIES A CONSULTER
+## DOCUMENTATION PROJET A CONSULTER
 
-| Domaine              | Memory                                  |
-| -------------------- | --------------------------------------- |
-| Architecture site    | `site-internet-architecture`            |
-| Architecture globale | `project-architecture`                  |
-| Selections publiques | `linkme-public-selections-architecture` |
+| Domaine           | Source                                       |
+| ----------------- | -------------------------------------------- |
+| Architecture site | `docs/current/site-internet/ARCHITECTURE.md` |
+| Features site     | `docs/current/site-internet/FEATURES.md`     |
+| Schema DB         | `docs/current/database/schema/`              |
 
 ---
 

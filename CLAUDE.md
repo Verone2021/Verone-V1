@@ -74,7 +74,7 @@ pnpm lint:fix                           # ESLint auto-fix
 **AVANT de creer un composant, formulaire ou modal :**
 
 1. Consulter `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md` — registre exhaustif
-2. Chercher dans `packages/@verone/` si un composant similaire existe (`Grep` ou `Serena`)
+2. Chercher dans `packages/@verone/` si un composant similaire existe (`Grep`)
 3. Si un composant existe : le REUTILISER ou l'ETENDRE avec des props — JAMAIS en creer un nouveau
 4. Si aucun composant n'existe : le creer dans le package `@verone/` approprie (PAS dans `apps/`)
 5. Apres creation : AJOUTER le composant dans l'index `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md`

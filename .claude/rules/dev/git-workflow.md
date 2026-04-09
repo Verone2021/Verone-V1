@@ -4,7 +4,7 @@
 
 ### Actions AUTONOMES (Claude fait seul)
 
-- Explorer le codebase (Glob, Grep, Read, Serena)
+- Explorer le codebase (Glob, Grep, Read)
 - Ecrire/modifier code (Edit, Write)
 - Creer commits locaux (format convention)
 - Pousser sur feature branch (`git push origin feature-branch`)

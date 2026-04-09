@@ -16,7 +16,6 @@ tools:
     'mcp__supabase__execute_sql',
     'mcp__supabase__list_tables',
     'mcp__supabase__get_advisors',
-    'mcp__serena__*',
     'mcp__context7__*',
     'mcp__playwright-lane-2__*',
   ]
@@ -34,26 +33,22 @@ memory: .claude/agent-memory/linkme-expert/
 4. **Commissions** : `docs/current/linkme/commission-reference.md`
 5. **RLS patterns** : `.claude/rules/database/rls-patterns.md` (section LinkMe)
 6. **Regles context** : `.claude/rules/dev/context-loading.md`
+7. **Schema DB** : `docs/current/database/schema/` (choisir le fichier du domaine concerne)
 
-**Avant de coder** : Lire `.claude/work/ACTIVE.md`, consulter Serena memories linkme-\*.
+**Avant de coder** : Lire `.claude/work/ACTIVE.md`, consulter la documentation projet.
 
 ---
 
-## SERENA MEMORIES A CONSULTER
+## DOCUMENTATION PROJET A CONSULTER
 
 Par ordre de priorite selon la tache :
 
-| Domaine                    | Memory                                  |
-| -------------------------- | --------------------------------------- |
-| Commandes + commissions    | `linkme-order-commission-workflow`      |
-| Authentification / roles   | `linkme-auth-patterns`                  |
-| Selections publiques       | `linkme-public-selections-architecture` |
-| Verrouillage prix          | `linkme-price-locking-system`           |
-| Regles commissions         | `linkme-commission-rules`               |
-| Champs commission vs marge | `linkme-commission-vs-margin-fields`    |
-| Contacts commande          | `linkme-order-contact-workflow`         |
-| Demandes d'info            | `linkme-info-request-workflow`          |
-| Schema commandes           | `sales-orders-linkme-details-schema`    |
+| Domaine               | Source                                                    |
+| --------------------- | --------------------------------------------------------- |
+| Guide complet LinkMe  | `docs/current/linkme/GUIDE-COMPLET-LINKME.md`             |
+| Commissions           | `docs/current/linkme/commission-reference.md`             |
+| Schema DB par domaine | `docs/current/database/schema/`                           |
+| RLS patterns LinkMe   | `.claude/rules/database/rls-patterns.md` (section LinkMe) |
 
 ---
 
