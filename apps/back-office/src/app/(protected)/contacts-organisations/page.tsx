@@ -1,9 +1,14 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
-import { useOrganisations } from '@verone/organisations';
+import Link from 'next/link';
+
+import {
+  useOrganisations,
+  GenericOrganisationFormModal,
+  NewContactModal,
+} from '@verone/organisations';
 import {
   AlertTriangle,
   ArrowRight,
@@ -17,8 +22,9 @@ import {
 } from 'lucide-react';
 
 export default function ContactsOrganisationsPage() {
-  const router = useRouter();
   const { organisations, loading } = useOrganisations();
+  const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
   if (loading) {
     return (
@@ -102,16 +108,14 @@ export default function ContactsOrganisationsPage() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() =>
-                router.push('/contacts-organisations/nouveau?type=organisation')
-              }
+              onClick={() => setIsOrgModalOpen(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-800"
             >
               <Plus className="h-3.5 w-3.5" />
               Organisation
             </button>
             <button
-              onClick={() => router.push('/contacts-organisations/nouveau')}
+              onClick={() => setIsContactModalOpen(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-700 text-xs font-medium rounded-lg border border-gray-300 hover:bg-gray-50"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -345,6 +349,16 @@ export default function ContactsOrganisationsPage() {
           </div>
         </div>
       </div>
+
+      <GenericOrganisationFormModal
+        isOpen={isOrgModalOpen}
+        onClose={() => setIsOrgModalOpen(false)}
+      />
+
+      <NewContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+      />
     </div>
   );
 }

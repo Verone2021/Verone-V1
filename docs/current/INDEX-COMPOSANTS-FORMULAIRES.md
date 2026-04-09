@@ -167,7 +167,8 @@
 | `OrganisationSelectorModal`      | Selecteur organisation                      | `open`, `onOpenChange`, `onSelect`                  |
 | `OrgBrowseModal`                 | Navigation organisations                    | `open`, `onOpenChange`                              |
 | `QuickSupplierModal`             | Creation rapide fournisseur                 | `open`, `onOpenChange`                              |
-| `ContactFormModalWrapper`        | Wrapper formulaire contact                  | `open`, `onOpenChange`, `contactId?`                |
+| `ContactFormModalWrapper`        | Wrapper formulaire contact (avec save reel) | `isOpen`, `onClose`, `organisationId`, `onSuccess`  |
+| `NewContactModal`                | Selection org puis formulaire contact       | `isOpen`, `onClose`, `onSuccess?`                   |
 
 **Sections :**
 

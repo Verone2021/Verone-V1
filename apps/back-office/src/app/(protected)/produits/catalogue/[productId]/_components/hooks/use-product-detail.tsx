@@ -33,7 +33,8 @@ export function useProductDetail() {
   const productId = params.productId as string;
 
   const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Chargement initial uniquement
+  const [isRefreshing, setIsRefreshing] = useState(false); // Refresh post-mutation (silencieux)
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('general');
   const [showPhotosModal, setShowPhotosModal] = useState(false);
@@ -43,31 +44,40 @@ export function useProductDetail() {
   const [isCategorizeModalOpen, setIsCategorizeModalOpen] = useState(false);
   const [channelPricing, setChannelPricing] = useState<ChannelPricingRow[]>([]);
 
-  const { images: productImages, primaryImage: _primaryImage } =
-    useProductImages({
-      productId: productId ?? '',
-      autoFetch: true,
-    });
+  const {
+    images: productImages,
+    primaryImage: _primaryImage,
+    fetchImages: refreshHeaderImages,
+  } = useProductImages({
+    productId: productId ?? '',
+    autoFetch: true,
+  });
 
-  const fetchProduct = useCallback(async () => {
-    const startTime = Date.now();
-    try {
-      setLoading(true);
-      setError(null);
+  const fetchProduct = useCallback(
+    async (options?: { silent?: boolean }) => {
+      const startTime = Date.now();
+      const isSilent = options?.silent ?? false;
+      try {
+        if (isSilent) {
+          setIsRefreshing(true);
+        } else {
+          setLoading(true);
+        }
+        setError(null);
 
-      const uuidRegex =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!productId || !uuidRegex.test(productId)) {
-        router.push('/produits/catalogue');
-        return;
-      }
+        const uuidRegex =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!productId || !uuidRegex.test(productId)) {
+          router.push('/produits/catalogue');
+          return;
+        }
 
-      const supabase = createClient();
+        const supabase = createClient();
 
-      const { data, error: fetchError } = await supabase
-        .from('products')
-        .select(
-          `
+        const { data, error: fetchError } = await supabase
+          .from('products')
+          .select(
+            `
           *,
           enseigne:enseignes!products_enseigne_id_fkey(
             id,
@@ -124,31 +134,34 @@ export function useProductDetail() {
             organisation:organisations!linkme_affiliates_organisation_id_fkey(id, legal_name, trade_name)
           )
         `
-        )
-        .eq('id', productId)
-        .single();
+          )
+          .eq('id', productId)
+          .single();
 
-      if (fetchError) {
-        throw new Error(fetchError.message);
+        if (fetchError) {
+          throw new Error(fetchError.message);
+        }
+
+        if (!data) {
+          throw new Error('Produit non trouvé');
+        }
+
+        setProduct(data as Product);
+      } catch (err) {
+        console.error('Erreur lors du chargement du produit:', err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Erreur lors du chargement du produit'
+        );
+      } finally {
+        setLoading(false);
+        setIsRefreshing(false);
+        checkSLOCompliance(startTime, 'dashboard');
       }
-
-      if (!data) {
-        throw new Error('Produit non trouvé');
-      }
-
-      setProduct(data as Product);
-    } catch (err) {
-      console.error('Erreur lors du chargement du produit:', err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Erreur lors du chargement du produit'
-      );
-    } finally {
-      setLoading(false);
-      checkSLOCompliance(startTime, 'dashboard');
-    }
-  }, [productId, router]);
+    },
+    [productId, router]
+  );
 
   const handleProductUpdate = useCallback(
     async (updatedData: Partial<ProductRow>) => {
@@ -164,7 +177,7 @@ export function useProductDetail() {
 
         if (updateError) {
           console.error('Erreur sauvegarde produit:', updateError);
-          void fetchProduct().catch(fetchError => {
+          void fetchProduct({ silent: true }).catch(fetchError => {
             console.error('[ProductDetail] Rollback fetch failed:', fetchError);
           });
         } else {
@@ -178,7 +191,7 @@ export function useProductDetail() {
             'enseigne_id' in updatedData ||
             'assigned_client_id' in updatedData
           ) {
-            void fetchProduct().catch(fetchError => {
+            void fetchProduct({ silent: true }).catch(fetchError => {
               console.error(
                 '[ProductDetail] Fetch after update failed:',
                 fetchError
@@ -188,7 +201,7 @@ export function useProductDetail() {
         }
       } catch (err) {
         console.error('Erreur sauvegarde produit:', err);
-        void fetchProduct().catch(fetchError => {
+        void fetchProduct({ silent: true }).catch(fetchError => {
           console.error('[ProductDetail] Rollback fetch failed:', fetchError);
         });
       }
@@ -392,6 +405,7 @@ export function useProductDetail() {
     productId,
     product,
     loading,
+    isRefreshing,
     error,
     activeTab,
     setActiveTab,
@@ -413,6 +427,7 @@ export function useProductDetail() {
     primaryImageUrl,
     tabs,
     fetchProduct,
+    refreshHeaderImages,
     handleProductUpdate,
     handleShare,
     router,
