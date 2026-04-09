@@ -1,7 +1,11 @@
 'use client';
 
+import { useState } from 'react';
+
+import { CustomerOrganisationFormModal } from '@verone/organisations';
 import { cn } from '@verone/utils';
 import { Building2, User, Search, Plus, Check, Loader2 } from 'lucide-react';
+
 import type { CustomerType } from '../../hooks/use-create-linkme-order-form';
 import type {
   EnseigneOrganisationCustomer,
@@ -22,9 +26,10 @@ interface CustomerSectionProps {
   isLoading: boolean;
   filteredOrganisations: EnseigneOrganisationCustomer[];
   filteredIndividuals: EnseigneIndividualCustomer[];
-  // Create form fields
-  newCustomerName: string;
-  onNewCustomerNameChange: (v: string) => void;
+  // Props pour le modal organisation unifié
+  enseigneId?: string | null;
+  onOrganisationCreated?: (orgId: string) => void;
+  // Create form fields (particulier uniquement)
   newCustomerFirstName: string;
   onNewCustomerFirstNameChange: (v: string) => void;
   newCustomerLastName: string;
@@ -33,14 +38,6 @@ interface CustomerSectionProps {
   onNewCustomerEmailChange: (v: string) => void;
   newCustomerPhone: string;
   onNewCustomerPhoneChange: (v: string) => void;
-  newOrgOwnershipType: 'succursale' | 'franchise' | null;
-  onNewOrgOwnershipTypeChange: (v: 'succursale' | 'franchise' | null) => void;
-  newOrgAddress: string;
-  onNewOrgAddressChange: (v: string) => void;
-  newOrgPostalCode: string;
-  onNewOrgPostalCodeChange: (v: string) => void;
-  newOrgCity: string;
-  onNewOrgCityChange: (v: string) => void;
 }
 
 export function CustomerSection({
@@ -57,8 +54,8 @@ export function CustomerSection({
   isLoading,
   filteredOrganisations,
   filteredIndividuals,
-  newCustomerName,
-  onNewCustomerNameChange,
+  enseigneId,
+  onOrganisationCreated,
   newCustomerFirstName,
   onNewCustomerFirstNameChange,
   newCustomerLastName,
@@ -67,15 +64,9 @@ export function CustomerSection({
   onNewCustomerEmailChange,
   newCustomerPhone,
   onNewCustomerPhoneChange,
-  newOrgOwnershipType,
-  onNewOrgOwnershipTypeChange,
-  newOrgAddress,
-  onNewOrgAddressChange,
-  newOrgPostalCode,
-  onNewOrgPostalCodeChange,
-  newOrgCity,
-  onNewOrgCityChange,
 }: CustomerSectionProps) {
+  const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
+
   return (
     <div className="space-y-3 border-t pt-6">
       <label className="block text-sm font-medium text-gray-700">
@@ -161,7 +152,13 @@ export function CustomerSection({
           />
         </div>
         <button
-          onClick={() => onToggleCreateForm(!showCreateForm)}
+          onClick={() => {
+            if (customerType === 'organization') {
+              setIsOrgModalOpen(true);
+            } else {
+              onToggleCreateForm(!showCreateForm);
+            }
+          }}
           className={cn(
             'flex items-center gap-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors',
             showCreateForm
@@ -174,41 +171,41 @@ export function CustomerSection({
         </button>
       </div>
 
-      {/* Formulaire création client */}
-      {showCreateForm && (
+      {/* Modal création organisation (formulaire unifié complet) */}
+      <CustomerOrganisationFormModal
+        isOpen={isOrgModalOpen}
+        onClose={() => setIsOrgModalOpen(false)}
+        enseigneId={enseigneId}
+        sourceType="linkme"
+        onSuccess={org => {
+          onOrganisationCreated?.(org.id);
+          setIsOrgModalOpen(false);
+        }}
+      />
+
+      {/* Formulaire création particulier (inline, gardé tel quel) */}
+      {showCreateForm && customerType === 'individual' && (
         <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg space-y-3">
           <p className="text-sm font-medium text-purple-800">
-            {customerType === 'organization'
-              ? 'Nouvelle organisation'
-              : 'Nouveau particulier'}
+            Nouveau particulier
           </p>
 
-          {customerType === 'organization' ? (
+          <div className="grid grid-cols-2 gap-2">
             <input
               type="text"
-              value={newCustomerName}
-              onChange={e => onNewCustomerNameChange(e.target.value)}
-              placeholder="Nom de l'organisation *"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              value={newCustomerFirstName}
+              onChange={e => onNewCustomerFirstNameChange(e.target.value)}
+              placeholder="Prénom *"
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
-          ) : (
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="text"
-                value={newCustomerFirstName}
-                onChange={e => onNewCustomerFirstNameChange(e.target.value)}
-                placeholder="Prénom *"
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-              <input
-                type="text"
-                value={newCustomerLastName}
-                onChange={e => onNewCustomerLastNameChange(e.target.value)}
-                placeholder="Nom *"
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-          )}
+            <input
+              type="text"
+              value={newCustomerLastName}
+              onChange={e => onNewCustomerLastNameChange(e.target.value)}
+              placeholder="Nom *"
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+          </div>
 
           <div className="grid grid-cols-2 gap-2">
             <input
@@ -227,81 +224,6 @@ export function CustomerSection({
             />
           </div>
 
-          {customerType === 'organization' && (
-            <>
-              <div className="space-y-1">
-                <label className="block text-xs text-purple-700">
-                  Type de point de vente
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onNewOrgOwnershipTypeChange(
-                        newOrgOwnershipType === 'succursale'
-                          ? null
-                          : 'succursale'
-                      )
-                    }
-                    className={cn(
-                      'px-3 py-1.5 rounded-lg border text-sm transition-all',
-                      newOrgOwnershipType === 'succursale'
-                        ? 'border-purple-500 bg-purple-100 text-purple-700 font-medium'
-                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
-                    )}
-                  >
-                    Propre (succursale)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onNewOrgOwnershipTypeChange(
-                        newOrgOwnershipType === 'franchise' ? null : 'franchise'
-                      )
-                    }
-                    className={cn(
-                      'px-3 py-1.5 rounded-lg border text-sm transition-all',
-                      newOrgOwnershipType === 'franchise'
-                        ? 'border-purple-500 bg-purple-100 text-purple-700 font-medium'
-                        : 'border-gray-200 hover:border-gray-300 text-gray-600'
-                    )}
-                  >
-                    Franchise
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-xs text-purple-700">
-                  Adresse du restaurant
-                </label>
-                <input
-                  type="text"
-                  value={newOrgAddress}
-                  onChange={e => onNewOrgAddressChange(e.target.value)}
-                  placeholder="Adresse (rue, numéro)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    value={newOrgPostalCode}
-                    onChange={e => onNewOrgPostalCodeChange(e.target.value)}
-                    placeholder="Code postal"
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  />
-                  <input
-                    type="text"
-                    value={newOrgCity}
-                    onChange={e => onNewOrgCityChange(e.target.value)}
-                    placeholder="Ville"
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
           <div className="flex gap-2">
             <button
               onClick={() => {
@@ -315,9 +237,8 @@ export function CustomerSection({
               }}
               disabled={
                 isCreating ||
-                (customerType === 'organization' && !newCustomerName.trim()) ||
-                (customerType === 'individual' &&
-                  (!newCustomerFirstName.trim() || !newCustomerLastName.trim()))
+                !newCustomerFirstName.trim() ||
+                !newCustomerLastName.trim()
               }
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
             >

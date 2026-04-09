@@ -40,6 +40,7 @@ export function UnifiedOrganisationForm({
   title,
   onLogoUploadSuccess,
   customSections,
+  enseigneId,
 }: UnifiedOrganisationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isCustomer = organisationType === 'customer';
@@ -166,7 +167,11 @@ export function UnifiedOrganisationForm({
 
             {/* Section 3bis: Rattachement Enseigne (clients B2B uniquement) */}
             {isCustomer && (
-              <EnseigneSection form={form} isSubmitting={isSubmitting} />
+              <EnseigneSection
+                form={form}
+                isSubmitting={isSubmitting}
+                lockedEnseigneId={enseigneId}
+              />
             )}
 
             {/* Section 4: Informations légales */}

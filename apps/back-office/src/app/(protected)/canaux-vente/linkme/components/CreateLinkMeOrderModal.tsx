@@ -119,15 +119,15 @@ export function CreateLinkMeOrderModal({
                     );
                   });
                 }}
-                isCreating={
-                  form.createOrganisation.isPending ||
-                  form.createIndividualCustomer.isPending
-                }
+                isCreating={form.createIndividualCustomer.isPending}
                 isLoading={form.customers.isLoading}
                 filteredOrganisations={form.filteredOrganisations}
                 filteredIndividuals={form.filteredIndividuals}
-                newCustomerName={form.newCustomerName}
-                onNewCustomerNameChange={form.setNewCustomerName}
+                enseigneId={form.selectedAffiliate?.enseigne_id}
+                onOrganisationCreated={orgId => {
+                  form.setSelectedCustomerId(orgId);
+                  form.customers.refetch();
+                }}
                 newCustomerFirstName={form.newCustomerFirstName}
                 onNewCustomerFirstNameChange={form.setNewCustomerFirstName}
                 newCustomerLastName={form.newCustomerLastName}
@@ -136,14 +136,6 @@ export function CreateLinkMeOrderModal({
                 onNewCustomerEmailChange={form.setNewCustomerEmail}
                 newCustomerPhone={form.newCustomerPhone}
                 onNewCustomerPhoneChange={form.setNewCustomerPhone}
-                newOrgOwnershipType={form.newOrgOwnershipType}
-                onNewOrgOwnershipTypeChange={form.setNewOrgOwnershipType}
-                newOrgAddress={form.newOrgAddress}
-                onNewOrgAddressChange={form.setNewOrgAddress}
-                newOrgPostalCode={form.newOrgPostalCode}
-                onNewOrgPostalCodeChange={form.setNewOrgPostalCode}
-                newOrgCity={form.newOrgCity}
-                onNewOrgCityChange={form.setNewOrgCity}
               />
             )}
 

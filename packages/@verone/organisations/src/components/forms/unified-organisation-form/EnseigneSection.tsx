@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+
 import { Label } from '@verone/ui';
 import { RadioGroup, RadioGroupItem } from '@verone/ui';
 import {
@@ -10,7 +12,7 @@ import {
   SelectValue,
 } from '@verone/ui';
 import { spacing, colors } from '@verone/ui';
-import { Store, Info } from 'lucide-react';
+import { Store, Info, Lock } from 'lucide-react';
 import { type UseFormReturn } from 'react-hook-form';
 
 import { useActiveEnseignes } from '../../../hooks/use-enseignes';
@@ -20,10 +22,24 @@ import type { OrganisationFormData } from './types';
 interface EnseigneSectionProps {
   form: UseFormReturn<OrganisationFormData>;
   isSubmitting: boolean;
+  /** When provided, pre-selects and locks the enseigne field */
+  lockedEnseigneId?: string | null;
 }
 
-export function EnseigneSection({ form, isSubmitting }: EnseigneSectionProps) {
+export function EnseigneSection({
+  form,
+  isSubmitting,
+  lockedEnseigneId,
+}: EnseigneSectionProps) {
   const { enseignes, loading: enseignesLoading } = useActiveEnseignes();
+  const isLocked = !!lockedEnseigneId;
+
+  // Pre-select enseigne when locked
+  useEffect(() => {
+    if (lockedEnseigneId) {
+      form.setValue('enseigne_id', lockedEnseigneId);
+    }
+  }, [lockedEnseigneId, form]);
 
   return (
     <div>
@@ -49,18 +65,22 @@ export function EnseigneSection({ form, isSubmitting }: EnseigneSectionProps) {
         <div>
           <Label
             htmlFor="enseigne_id"
-            className="text-sm font-medium"
+            className="text-sm font-medium flex items-center gap-2"
             style={{
               color: colors.text.DEFAULT,
-              display: 'block',
+              display: 'flex',
               marginBottom: spacing[2],
             }}
           >
-            Rattacher à une enseigne (facultatif)
+            {isLocked
+              ? 'Enseigne rattachée'
+              : 'Rattacher à une enseigne (facultatif)'}
+            {isLocked && <Lock className="h-3.5 w-3.5 text-gray-400" />}
           </Label>
           <Select
             value={form.watch('enseigne_id') ?? '__none__'}
             onValueChange={value => {
+              if (isLocked) return;
               if (value === '__none__') {
                 form.setValue('enseigne_id', null);
                 form.setValue('ownership_type', null);
@@ -68,7 +88,7 @@ export function EnseigneSection({ form, isSubmitting }: EnseigneSectionProps) {
                 form.setValue('enseigne_id', value);
               }
             }}
-            disabled={isSubmitting ?? enseignesLoading}
+            disabled={isLocked || isSubmitting || enseignesLoading}
           >
             <SelectTrigger
               style={{
