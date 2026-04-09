@@ -24,6 +24,14 @@
             "command": "echo 'CONTEXTE VERONE (post-compaction):\n- LIRE EN PREMIER: .claude/work/ACTIVE.md (taches en cours) + .claude/INDEX.md (sommaire complet)\n- Monorepo: back-office (3000), linkme (3002), site-internet (3001)\n- LinkMe = plateforme affiliation B2B2C. SELECTIONS = coeur du revenu\n- Explorer AVANT coder: schema DB + code existant + CLAUDE.md app + Serena memories\n- UNE entite = UNE page detail (jamais de doublons entre canaux)\n- JAMAIS commit/push/PR sans ordre explicite de Romeo\n- Context7 MCP pour docs librairies, Serena MCP pour navigation code, Supabase MCP pour DB'"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-context.sh"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
@@ -37,6 +45,15 @@
       }
     ],
     "PreToolUse": [
+      {
+        "matcher": "Write(*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-component-creation.sh"
+          }
+        ]
+      },
       {
         "matcher": "Edit(*) || Write(*) || mcp__supabase__apply_migration(*)",
         "hooks": [

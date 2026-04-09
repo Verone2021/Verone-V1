@@ -118,14 +118,17 @@ Tout agent ou commande doit commencer par consulter cet index.
 
 ### Database
 
-| Sujet                | Source                                              |
-| -------------------- | --------------------------------------------------- |
-| Tables par domaine   | Serena `database-tables-by-domain`                  |
-| Triggers stock       | `docs/current/database/triggers-stock-reference.md` |
-| Triggers metriques   | `docs/metrics/database-triggers.md`                 |
-| RLS patterns         | `.claude/rules/database/rls-patterns.md`            |
-| Mapping pages-tables | `docs/current/MAPPING-PAGES-TABLES.md`              |
-| Architecture DB      | `docs/current/serena/database-implementation.md`    |
+| Sujet                           | Source                                              |
+| ------------------------------- | --------------------------------------------------- |
+| Schema DB complet (par domaine) | `docs/current/database/schema/` (9 fichiers)        |
+| Script re-generation doc DB     | `scripts/generate-db-docs.py`                       |
+| Dependances inter-packages      | `docs/current/DEPENDANCES-PACKAGES.md`              |
+| Tables par domaine              | Serena `database-tables-by-domain`                  |
+| Triggers stock                  | `docs/current/database/triggers-stock-reference.md` |
+| Triggers metriques              | `docs/metrics/database-triggers.md`                 |
+| RLS patterns                    | `.claude/rules/database/rls-patterns.md`            |
+| Mapping pages-tables            | `docs/current/MAPPING-PAGES-TABLES.md`              |
+| Architecture DB                 | `docs/current/serena/database-implementation.md`    |
 
 ### Finance
 

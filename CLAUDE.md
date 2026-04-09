@@ -20,6 +20,22 @@ Monorepo Turborepo : back-office (3000), linkme (3002), site-internet (3001).
 - `.claude/work/ACTIVE.md` — sprints et taches en cours
 - `.claude/INDEX.md` — sommaire centralise complet
 - `.claude/rules/` — regles auto-discovered
+- `docs/current/database/schema/` — **SOURCE DE VERITE** schema DB par domaine (tables, colonnes, FK, RLS, triggers)
+- `docs/current/DEPENDANCES-PACKAGES.md` — carte des dependances inter-packages
+- `scripts/generate-db-docs.py` — script pour re-generer la doc DB apres migration
+
+## CRITICAL : Sources de verite — LIRE avant de coder
+
+| Quoi                    | Fichier                                        | Quand le lire                        |
+| ----------------------- | ---------------------------------------------- | ------------------------------------ |
+| Schema DB (par domaine) | `docs/current/database/schema/`                | Avant TOUT travail touchant la DB    |
+| Composants & hooks      | `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md` | Avant de creer/modifier un composant |
+| Dependances packages    | `docs/current/DEPENDANCES-PACKAGES.md`         | Avant de modifier les imports        |
+| Pages back-office       | `docs/current/INDEX-PAGES-BACK-OFFICE.md`      | Avant de creer/modifier une page     |
+
+**INTERDIT** : Deviner la structure d'une table, d'un composant ou d'une dependance. Toujours LIRE le fichier de documentation correspondant.
+
+**Apres chaque migration SQL** : Executer `python scripts/generate-db-docs.py` pour mettre a jour la doc DB.
 
 ## Commandes
 

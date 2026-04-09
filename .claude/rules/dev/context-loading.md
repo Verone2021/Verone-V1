@@ -8,12 +8,14 @@ Avant TOUTE modification de code, lire au minimum **3 fichiers ou references sim
 
 ### Etapes obligatoires
 
-1. **Lire ACTIVE.md** (`.claude/work/ACTIVE.md`) — taches en cours, sprints, bugs connus
-2. **Lire le CLAUDE.md de l'app concernee** — regles specifiques, documentation par tache
-3. **Consulter la memoire persistante** — feedbacks, bugs connus, decisions passees
-4. **Verifier Serena memories pertinentes** — workflows, schemas, patterns metier
-5. **Explorer le code existant** — patterns, hooks, composants similaires AVANT de creer
-6. **Lire 3 fichiers similaires** — composants, hooks ou pages qui font la meme chose
+0. **Lire la doc DB du domaine concerne** dans `docs/current/database/schema/` si le travail touche la DB
+1. **Lire `docs/current/DEPENDANCES-PACKAGES.md`** si le travail touche les imports entre packages
+2. **Lire ACTIVE.md** (`.claude/work/ACTIVE.md`) — taches en cours, sprints, bugs connus
+3. **Lire le CLAUDE.md de l'app concernee** — regles specifiques, documentation par tache
+4. **Consulter la memoire persistante** — feedbacks, bugs connus, decisions passees
+5. **Verifier Serena memories pertinentes** — workflows, schemas, patterns metier
+6. **Explorer le code existant** — patterns, hooks, composants similaires AVANT de creer
+7. **Lire 3 fichiers similaires** — composants, hooks ou pages qui font la meme chose
 
 ### Sources par domaine
 
