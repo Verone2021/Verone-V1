@@ -35,6 +35,10 @@ export function useAllLinkMeOrders(status?: OrderValidationStatus) {
           customer_id,
           customer_type,
           pending_admin_validation,
+          shipping_cost_ht,
+          handling_cost_ht,
+          insurance_cost_ht,
+          fees_vat_rate,
           sales_order_linkme_details (
             is_new_restaurant,
             requester_type,

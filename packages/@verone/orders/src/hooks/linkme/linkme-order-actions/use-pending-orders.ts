@@ -60,6 +60,10 @@ export function usePendingOrders() {
           created_at,
           customer_id,
           customer_type,
+          shipping_cost_ht,
+          handling_cost_ht,
+          insurance_cost_ht,
+          fees_vat_rate,
           sales_order_linkme_details (
             is_new_restaurant,
             requester_type,

@@ -17,7 +17,10 @@ import { QontoClient } from '@verone/integrations/qonto';
 import type { CreateClientInvoiceParams } from '@verone/integrations/qonto';
 import type { Database, Json } from '@verone/types';
 import { withRateLimit, RATE_LIMIT_PRESETS } from '@verone/utils/security';
-import { createAdminClient } from '@verone/utils/supabase/server';
+import {
+  createAdminClient,
+  createServerClient,
+} from '@verone/utils/supabase/server';
 
 type SalesOrder = Database['public']['Tables']['sales_orders']['Row'];
 type Organisation = Database['public']['Tables']['organisations']['Row'];
@@ -334,12 +337,9 @@ export async function POST(request: NextRequest): Promise<
       .from('sales_orders')
       .select(
         `
-        id, order_number, customer_id, customer_type, individual_customer_id,
-        billing_address, shipping_address, payment_terms,
-        shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate,
-        billing_contact_id, delivery_contact_id, responsable_contact_id,
+        *,
         sales_order_items (
-          id, quantity, unit_price_ht, tax_rate, notes,
+          *,
           products:product_id (id, name, sku)
         )
       `
@@ -375,10 +375,10 @@ export async function POST(request: NextRequest): Promise<
       ) {
         const { data: indiv } = await supabase
           .from('individual_customers')
-          .select('id, first_name, last_name, email')
+          .select('*')
           .eq('id', orderWithItems.individual_customer_id)
           .single();
-        customer = indiv as IndividualCustomer | null;
+        customer = indiv;
       }
     }
 
@@ -733,9 +733,12 @@ export async function POST(request: NextRequest): Promise<
       partnerId = typedOrder.customer_id;
     }
 
-    // Récupérer l'utilisateur connecté (via cookies, si disponible)
-    // Dans une API route, on n'a pas toujours l'auth - utiliser un ID système
-    const systemUserId = '00000000-0000-0000-0000-000000000000'; // TODO: remplacer par vraie auth
+    // Récupérer l'utilisateur connecté
+    const supabaseAuth = await createServerClient();
+    const {
+      data: { user: authUser },
+    } = await supabaseAuth.auth.getUser();
+    const currentUserId = authUser?.id ?? null;
 
     // INSERT dans financial_documents (avec données sync de la commande)
     let localDocumentId: string | null = null;
@@ -744,7 +747,11 @@ export async function POST(request: NextRequest): Promise<
         {
           document_type: 'customer_invoice',
           document_direction: 'inbound',
-          document_number: finalizedInvoice.invoice_number,
+          document_number: autoFinalize
+            ? (finalizedInvoice.invoice_number ??
+              ((finalizedInvoice as unknown as Record<string, unknown>)
+                .number as string))
+            : `PROFORMA-${(customerName ?? 'CLIENT').split(' ').pop()?.toUpperCase() ?? 'CLIENT'}-${issueDate.slice(0, 4)}-${issueDate.slice(5, 7)}`,
           partner_id: partnerId,
           partner_type: 'customer',
           document_date: issueDate,
@@ -759,7 +766,7 @@ export async function POST(request: NextRequest): Promise<
           qonto_pdf_url: finalizedInvoice.pdf_url ?? null,
           qonto_public_url: finalizedInvoice.public_url ?? null,
           synchronized_at: new Date().toISOString(),
-          created_by: systemUserId,
+          created_by: currentUserId!,
           // Données synchronisées : body (édité par l'utilisateur) > commande DB
           billing_address: (bodyBillingAddress ??
             typedOrder.billing_address) as Json,
@@ -782,9 +789,20 @@ export async function POST(request: NextRequest): Promise<
       if (insertDocError) {
         console.error(
           '[API Qonto Invoices] Failed to insert financial_document:',
-          insertDocError
+          JSON.stringify(insertDocError)
         );
-        // Ne pas échouer la requête - la facture Qonto est créée
+        // TEMPORAIRE: retourner l'erreur pour diagnostic
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Erreur creation document local: ${insertDocError.message ?? insertDocError.code ?? JSON.stringify(insertDocError)}`,
+            invoice: {
+              id: finalizedInvoice.id,
+              invoice_number: finalizedInvoice.invoice_number,
+            },
+          },
+          { status: 500 }
+        );
       } else if (insertedDoc) {
         localDocumentId = insertedDoc.id;
 
