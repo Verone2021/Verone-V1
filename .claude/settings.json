@@ -1,7 +1,6 @@
 {
   "enableAllProjectMcpServers": true,
   "enabledMcpServers": [
-    "serena",
     "playwright-lane-1",
     "playwright-lane-2",
     "context7",
@@ -21,7 +20,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'CONTEXTE VERONE (post-compaction):\n- LIRE EN PREMIER: .claude/work/ACTIVE.md (taches en cours) + .claude/INDEX.md (sommaire complet)\n- Monorepo: back-office (3000), linkme (3002), site-internet (3001)\n- LinkMe = plateforme affiliation B2B2C. SELECTIONS = coeur du revenu\n- Explorer AVANT coder: schema DB + code existant + CLAUDE.md app + Serena memories\n- UNE entite = UNE page detail (jamais de doublons entre canaux)\n- JAMAIS commit/push/PR sans ordre explicite de Romeo\n- Context7 MCP pour docs librairies, Serena MCP pour navigation code, Supabase MCP pour DB'"
+            "command": "echo 'CONTEXTE VERONE (post-compaction):\n- LIRE EN PREMIER: .claude/work/ACTIVE.md (taches en cours) + .claude/INDEX.md (sommaire complet)\n- Monorepo: back-office (3000), linkme (3002), site-internet (3001)\n- LinkMe = plateforme affiliation B2B2C. SELECTIONS = coeur du revenu\n- Explorer AVANT coder: schema DB + code existant + CLAUDE.md app\n- UNE entite = UNE page detail (jamais de doublons entre canaux)\n- JAMAIS commit/push/PR sans ordre explicite de Romeo\n- Context7 MCP pour docs librairies, Supabase MCP pour DB'"
           }
         ]
       }
@@ -43,15 +42,6 @@
           {
             "type": "command",
             "command": "bash -c 'BRANCH=$(git branch --show-current 2>/dev/null || echo \"unknown\"); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"BLOQUE: Operation d ecriture INTERDITE sur main.\n\nSolution : Creer une feature branch MAINTENANT :\n  git checkout -b feat/[APP]-[DOMAIN]-[NNN]-description\"; exit 1; fi'"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash(git checkout*)",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/validate-git-checkout.sh"
           }
         ]
       },
@@ -105,67 +95,22 @@
         ]
       },
       {
-        "matcher": "Write(**/orders/src/**/*Modal*) || Write(**/orders/src/**/*Form*) || Write(**/customers/src/**/*Modal*) || Write(**/customers/src/**/*Form*) || Write(**/apps/**/*Modal*) || Write(**/apps/**/*Form*)",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo 'ALERTE DUPLICATION — Vous creez un formulaire/modal dans un package non-source.\n\nRegles :\n- Formulaires Organisation → @verone/organisations UNIQUEMENT\n- Formulaires Produit → @verone/products UNIQUEMENT\n- JAMAIS de formulaire de creation d entite dans @verone/orders ou apps/\n\nVerifier INDEX-COMPOSANTS-FORMULAIRES.md AVANT de continuer.\nSi le composant existe deja, le REUTILISER.' && exit 0"
-          }
-        ]
-      },
-      {
-        "matcher": "Edit(*middleware*)",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo 'MIDDLEWARE CRITIQUE - Verifier patterns existants avant modification' && exit 0"
-          }
-        ]
-      },
-      {
-        "matcher": "Edit(*_rls_*)",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo 'RLS CRITIQUE - Approbation requise pour migrations auth' && exit 0"
-          }
-        ]
-      },
-      {
         "matcher": "Edit(*) || Write(*)",
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'CONTENT=$(echo \"$TOOL_INPUT\" | jq -r \".new_string // .content // empty\"); if echo \"$CONTENT\" | grep -qE \"(: any([^A-Za-z]|$)|as any([^A-Za-z]|$)|as unknown as|<any>|any\\[\\]|eslint-disable.*no-explicit-any)\"; then echo \"BLOQUE: TypeScript any detecte\n\nPatterns interdits :\n- : any\n- as any\n- as unknown as\n- any[]\n- eslint-disable no-explicit-any\n\nSolutions :\n1. Types DB : Database[public][Tables][table][Row]\n2. unknown + validation Zod\n\nREFUS.\"; exit 1; fi'"
-          }
-        ]
-      },
-      {
-        "matcher": "mcp__playwright-lane-1__browser_take_screenshot(*) || mcp__playwright-lane-2__browser_take_screenshot(*)",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/validate-playwright-screenshot.sh"
+            "command": "bash -c 'CONTENT=$(echo \"$TOOL_INPUT\" | jq -r \".new_string // .content // empty\"); if echo \"$CONTENT\" | grep -qE \"(: any([^A-Za-z]|$)|as any([^A-Za-z]|$)|as unknown as|<any>|any\\[\\]|eslint-disable.*no-explicit-any)\"; then echo \"BLOQUE: TypeScript any detecte. Utiliser unknown + Zod.\"; exit 1; fi'"
           }
         ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "Edit(*.(ts|tsx)) || Write(*.(ts|tsx))",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash -c 'FILE_PATH=$(echo \"$TOOL_INPUT\" | jq -r \".file_path // empty\"); if echo \"$FILE_PATH\" | grep -qE \"apps/back-office/\"; then timeout 15 pnpm --filter @verone/back-office type-check 2>&1 | head -30 || true; elif echo \"$FILE_PATH\" | grep -qE \"apps/linkme/\"; then timeout 15 pnpm --filter @verone/linkme type-check 2>&1 | head -30 || true; elif echo \"$FILE_PATH\" | grep -qE \"apps/site-internet/\"; then timeout 15 pnpm --filter @verone/site-internet type-check 2>&1 | head -30 || true; fi; exit 0'"
-          }
-        ]
-      },
-      {
         "matcher": "Bash(git commit*)",
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'CHANGED=$(git diff --cached --name-only 2>/dev/null | grep -cE \"\\.(tsx)$\" || echo 0); if [ \"$CHANGED\" -gt 3 ]; then echo \"Rappel: $CHANGED composants modifies - verifier visuellement avec Playwright MCP apres commit.\"; fi; $CLAUDE_PROJECT_DIR/.claude/scripts/cleanup-active-tasks.sh; exit 0'"
+            "command": "bash -c 'CHANGED=$(git diff --cached --name-only 2>/dev/null | grep -cE \"\\.(tsx?)$\" || echo 0); if [ \"$CHANGED\" -gt 0 ]; then echo \"Type-check avant commit...\"; for APP in back-office linkme site-internet; do if git diff --cached --name-only 2>/dev/null | grep -qE \"apps/$APP/\"; then timeout 30 pnpm --filter @verone/$APP type-check 2>&1 | tail -20 || true; fi; done; fi; $CLAUDE_PROJECT_DIR/.claude/scripts/cleanup-active-tasks.sh; exit 0'"
           }
         ]
       }
@@ -211,7 +156,6 @@
       "WebFetch",
       "Task",
       "TodoWrite",
-      "mcp__serena__*",
       "mcp__context7__*",
       "mcp__playwright-lane-1__*",
       "mcp__playwright-lane-2__*",

@@ -20,11 +20,11 @@
 
 ## Base de donnees
 
-| Document                                                                    | Description                           |
-| --------------------------------------------------------------------------- | ------------------------------------- |
-| [database.md](current/database/database.md)                                 | Schema DB (78+ tables)                |
-| [triggers-stock-reference.md](current/database/triggers-stock-reference.md) | Reference 48 triggers stock           |
-| [database-schema-mappings.md](current/serena/database-schema-mappings.md)   | Mapping colonnes (anti-hallucination) |
+| Document                                                                    | Description                    |
+| --------------------------------------------------------------------------- | ------------------------------ |
+| [database.md](current/database/database.md)                                 | Schema DB (78+ tables)         |
+| [triggers-stock-reference.md](current/database/triggers-stock-reference.md) | Reference 48 triggers stock    |
+| [tables-by-domain.md](current/database/tables-by-domain.md)                 | Tables par domaine (99 tables) |
 
 ## Modules metier
 
@@ -99,23 +99,7 @@
 | [notifications-workflow.md](business-rules/07-commandes/notifications-workflow.md)                                                 | 13 triggers notifications commandes     |
 | [address-autofill-orders.md](business-rules/07-commandes/clients/address-autofill-orders.md)                                       | Auto-remplissage adresses commandes     |
 
-## Memoires Serena (restaurees 2026-04-01)
-
-| Document                                                                | Description                                    |
-| ----------------------------------------------------------------------- | ---------------------------------------------- |
-| [project-decisions.md](current/serena/project-decisions.md)             | Decisions non-negociables (1 DB, email, git)   |
-| [qonto-never-finalize.md](current/serena/qonto-never-finalize.md)       | JAMAIS finaliser facture Qonto par code        |
-| [linkme-commissions.md](current/serena/linkme-commissions.md)           | Formule commission corrigee (source de verite) |
-| [linkme-architecture.md](current/serena/linkme-architecture.md)         | Architecture 2 tables LinkMe                   |
-| [stock-orders-logic.md](current/serena/stock-orders-logic.md)           | Logique stock reel vs previsionnel             |
-| [database-implementation.md](current/serena/database-implementation.md) | Architecture 78 tables                         |
-| [products-architecture.md](current/serena/products-architecture.md)     | Products = table centrale (jamais dupliquer)   |
-| [user-expectations.md](current/serena/user-expectations.md)             | Regles communication avec Romeo                |
-| [business-context.md](current/serena/business-context.md)               | Contexte business et SLOs                      |
-| [turborepo-paths.md](current/serena/turborepo-paths.md)                 | Chemins corrects monorepo (anti-hallucination) |
-| [migrations-workflow.md](current/serena/migrations-workflow.md)         | Procedure migrations Supabase                  |
-
-## LinkMe (docs supplementaires restaurees)
+## LinkMe (docs supplementaires)
 
 | Document                                                                  | Description                       |
 | ------------------------------------------------------------------------- | --------------------------------- |

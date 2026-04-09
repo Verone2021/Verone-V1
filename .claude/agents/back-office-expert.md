@@ -16,7 +16,6 @@ tools:
     'mcp__supabase__execute_sql',
     'mcp__supabase__list_tables',
     'mcp__supabase__get_advisors',
-    'mcp__serena__*',
     'mcp__context7__*',
     'mcp__playwright-lane-2__*',
   ]
@@ -31,21 +30,6 @@ memory: .claude/agent-memory/back-office-expert/
 3. **Taches en cours** : `.claude/work/ACTIVE.md`
 4. **Entites metier** : `docs/current/back-office-entities-index.md`
 5. **Regles context** : `.claude/rules/dev/context-loading.md`
-
----
-
-## SERENA MEMORIES A CONSULTER
-
-| Domaine              | Memory                                    |
-| -------------------- | ----------------------------------------- |
-| Architecture globale | `project-architecture`                    |
-| Entites metier       | `business-entities-back-office`           |
-| Tables par domaine   | `database-tables-by-domain`               |
-| Stock et alertes     | `stock-triggers-alerts-complete`          |
-| Commandes vente      | `sales-order-status-workflow-complete`    |
-| Commandes achat      | `purchase-order-status-workflow-complete` |
-| Facturation Qonto    | `qonto-invoicing-system`                  |
-| Notifications        | `notifications-system-audit-2026-03`      |
 
 ---
 

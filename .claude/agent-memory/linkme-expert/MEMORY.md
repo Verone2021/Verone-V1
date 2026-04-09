@@ -82,5 +82,5 @@
 - `docs/current/linkme/business-rules-linkme.md` — regles metier (restaure)
 - `docs/current/linkme/routes-index.md` — audit routes (restaure)
 - `docs/linkme/margin-calculation.md` — calcul marge SSOT (restaure)
-- `docs/current/serena/linkme-commissions.md` — formule corrigee (restaure)
-- `docs/current/serena/linkme-architecture.md` — architecture 2 tables (restaure)
+- `docs/current/linkme/linkme-commissions.md` — formule corrigee (restaure)
+- `docs/current/linkme/linkme-architecture.md` — architecture 2 tables (restaure)

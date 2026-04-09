@@ -229,30 +229,26 @@ pnpm --filter @verone/[app] type-check 2>&1 | grep "file.tsx"
 
 **Si le même problème se répète** (ex: 5 fichiers utilisent `name` au lieu de `legal_name`) :
 
-```bash
-# Créer mémoire Serena
-cat > .serena/memories/supabase-organisations-columns.md <<EOF
+Documenter le pattern dans les notes projet ou agent memories pour reference future :
+
+```markdown
 # Supabase Organisations - Colonnes Réelles
 
 **Table** : organisations
-**Colonne name** : ❌ N'EXISTE PAS
+**Colonne name** : N'EXISTE PAS
 **Colonnes correctes** :
+
 - legal_name (string) - Raison sociale
 - trade_name (string | null) - Nom commercial
 
 **Pattern** :
-\`\`\`typescript
-// ❌ INCORRECT
-.select('id, name, type')
 
-// ✅ CORRECT
-.select('id, legal_name, type')
-\`\`\`
+- INCORRECT : `.select('id, name, type')`
+- CORRECT : `.select('id, legal_name, type')`
 
 **Fichiers corrigés** :
+
 - expense-form.tsx (2026-02-01)
-- ...
-EOF
 ```
 
 ---

@@ -71,4 +71,4 @@
 - `docs/current/INDEX-PAGES-BACK-OFFICE.md` — 165 pages
 - `docs/current/component-audit-guidelines.md` — dead code detection (restaure)
 - `docs/current/dev-workflow.md` — workflow quotidien (restaure)
-- `docs/current/serena/turborepo-paths.md` — chemins corrects (restaure)
+- `docs/current/turborepo-paths.md` — chemins corrects (restaure)

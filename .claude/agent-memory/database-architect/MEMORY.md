@@ -75,5 +75,5 @@
 - `docs/current/database/triggers-stock-reference.md` — 48 triggers documentes
 - `docs/business-rules/06-stocks/` — regles metier stock (restaurees)
 - `docs/business-rules/07-commandes/` — workflows commandes (restaurees)
-- `docs/current/serena/database-implementation.md` — architecture 78 tables
-- `docs/current/serena/stock-orders-logic.md` — logique stock/commandes
+- `docs/current/database/database-implementation.md` — architecture 78 tables
+- `docs/current/database/stock-orders-logic.md` — logique stock/commandes

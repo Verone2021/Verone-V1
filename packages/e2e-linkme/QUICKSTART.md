@@ -8,24 +8,28 @@
 ## 🎯 Ce Qui a Été Fait
 
 ### ✅ Structure Migrée
+
 - **Ancien** : `apps/linkme/e2e/` (couplé à l'app)
 - **Nouveau** : `packages/e2e-linkme/` (package dédié - best practice Turborepo 2026)
 
 ### ✅ Fixtures Améliorées
+
 - **Typed fixtures** avec `test.extend<>()` pour type safety
 - **Worker-scoped DB** : 90% de réduction des connexions DB
 - **Combined exports** : Import unique depuis `../../fixtures`
 
 ### ✅ 18 Tests Migrés
-| Suite | Tests |
-|-------|-------|
-| Data Consistency | 4 |
-| Product Creation | 3 |
-| Editing Restrictions | 6 |
-| Approval Workflow | 3 |
-| Data Isolation | 2 |
+
+| Suite                | Tests |
+| -------------------- | ----- |
+| Data Consistency     | 4     |
+| Product Creation     | 3     |
+| Editing Restrictions | 6     |
+| Approval Workflow    | 3     |
+| Data Isolation       | 2     |
 
 ### ✅ Documentation Corrigée
+
 - ✅ Remplacé `npm` → `pnpm` partout
 - ✅ Clarifié que Turborepo démarre TOUTES les apps automatiquement
 - ✅ Simplifié workflow (1 terminal au lieu de 3)
@@ -43,6 +47,7 @@ pnpm exec playwright install chromium
 ```
 
 **Attendu** :
+
 - `@playwright/test@^1.40.0` installé
 - `@supabase/supabase-js@^2.38.0` installé
 - Chromium browser téléchargé (~100 MB)
@@ -60,11 +65,13 @@ pnpm dev
 **⚠️ UN SEUL TERMINAL SUFFIT !**
 
 Turborepo démarre automatiquement :
+
 - ✅ `back-office` sur http://localhost:3000
 - ✅ `linkme` sur http://localhost:3002
 - ✅ `site-internet` sur http://localhost:3001
 
 **Vérification** :
+
 ```bash
 # Dans un autre terminal
 curl http://localhost:3000  # Doit retourner HTML
@@ -81,36 +88,41 @@ cat .env.local | grep SUPABASE
 ```
 
 **Attendu** :
+
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
 ```
 
 **Si manquant**, créer `.env.local` à la racine :
+
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://votre-projet.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJ...votre-service-key...
 ```
 
-💡 **Où trouver les credentials ?** Voir `.serena/memories/*-credentials-*.md`
+💡 **Où trouver les credentials ?** Voir les variables d'environnement dans `.env.local`
 
 ---
 
 ### Étape 4 : Lancer les Tests (2 min)
 
 **Option A** : Avec Turbo (recommandé)
+
 ```bash
 # Depuis la racine
 pnpm turbo run test:e2e --filter=e2e-linkme
 ```
 
 **Option B** : Directement dans le package
+
 ```bash
 cd packages/e2e-linkme
 pnpm test:e2e
 ```
 
 **Option C** : Mode UI (pour déboguer)
+
 ```bash
 cd packages/e2e-linkme
 pnpm test:e2e:ui
@@ -126,6 +138,7 @@ pnpm show-report
 ```
 
 **Attendu** :
+
 - ✅ 18/18 tests passent
 - ✅ Aucune erreur
 - ✅ Test data nettoyée automatiquement
@@ -165,14 +178,17 @@ node -e "
 Les tests utilisent 3 comptes :
 
 **Pokawa (Enseigne)** :
+
 - Email : `admin@pokawa-test.fr`
 - Password : `TestLinkMe2025`
 
 **Organisation Indépendante** :
+
 - Email : `test-org@verone.fr`
 - Password : `TestLinkMe2025`
 
 **Back-Office** :
+
 - Email : `veronebyromeo@gmail.com`
 - Password : `Abc123456`
 
@@ -196,17 +212,20 @@ Ce script vérifie que tous les fichiers sont en place.
 **IMPORTANT** : Les tests automatisés ne remplacent PAS les tests manuels !
 
 ### Quand Utiliser les Tests Automatisés ?
+
 - ✅ Validation systématique après changements
 - ✅ Tests de régression (s'assurer qu'un bug ne revient pas)
 - ✅ CI/CD (GitHub Actions)
 
 ### Quand Utiliser les Tests Manuels (MCP) ?
+
 - ✅ Déboguer une erreur spécifique
 - ✅ Explorer une nouvelle fonctionnalité
 - ✅ Tester un cas particulier non couvert
 - ✅ Créer un nouveau test après avoir trouvé un bug
 
 ### Workflow Recommandé
+
 1. **Test Manuel** → Trouver un bug avec MCP Playwright Browser
 2. **Corriger** → Fix le code
 3. **Re-tester** → Valider avec MCP
@@ -217,24 +236,28 @@ Ce script vérifie que tous les fichiers sont en place.
 ## 📊 Validation Manuelle Recommandée
 
 ### 1. Connexion Pokawa
+
 ```
 Email: admin@pokawa-test.fr
 Password: TestLinkMe2025
 ```
 
 **À Vérifier** :
+
 - [ ] `/catalogue` → Produits Pokawa visibles
 - [ ] `/mes-produits` → Produits créés par Pokawa
 - [ ] `/commandes` → Commandes Pokawa visibles
 - [ ] Isolation : Ne voit pas produits test-org
 
 ### 2. Connexion Organisation Indépendante
+
 ```
 Email: test-org@verone.fr
 Password: TestLinkMe2025
 ```
 
 **À Vérifier** :
+
 - [ ] Créer produit AVEC stockage → Dimensions obligatoires
 - [ ] Créer produit SANS stockage → Dimensions optionnelles
 - [ ] Soumettre pour approbation → Statut pending
@@ -242,12 +265,14 @@ Password: TestLinkMe2025
 - [ ] Isolation : Ne voit pas produits Pokawa
 
 ### 3. Connexion Back-Office
+
 ```
 Email: veronebyromeo@gmail.com
 Password: Abc123456
 ```
 
 **À Vérifier** :
+
 - [ ] `/produits/affilies` → Produits en attente visibles
 - [ ] Approuver produit → Définir commission_rate
 - [ ] `/commandes` → Commandes LinkMe avec channel correct
@@ -319,6 +344,7 @@ packages/e2e-linkme/
 **🎯 Objectif** : Avoir 18/18 tests verts et validation manuelle OK
 
 **📝 Notes** : Si vous rencontrez des erreurs, vérifiez d'abord que :
+
 1. Les applications tournent sur les bons ports
 2. Les credentials Supabase sont corrects
 3. Les comptes de test existent dans la DB
