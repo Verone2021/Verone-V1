@@ -19,12 +19,6 @@ export interface PurchaseOrder {
   payment_status_v2?: 'pending' | 'paid' | 'partially_paid' | 'overpaid' | null;
   paid_amount?: number;
   paid_at?: string | null;
-  // 🆕 Paiement manuel
-  manual_payment_type?: ManualPaymentType | null;
-  manual_payment_date?: string | null;
-  manual_payment_reference?: string | null;
-  manual_payment_note?: string | null;
-  manual_payment_by?: string | null;
   // 🆕 Transaction liée (enrichissement)
   is_matched?: boolean;
   matched_transaction_id?: string | null;

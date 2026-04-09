@@ -37,12 +37,6 @@ export interface SalesOrder {
   individual_customer_id?: string | null;
   status: SalesOrderStatus;
   payment_status_v2?: 'pending' | 'partially_paid' | 'paid' | 'overpaid' | null; // Statut calculé via rapprochement bancaire
-  // 🆕 Paiement manuel
-  manual_payment_type?: ManualPaymentType | null;
-  manual_payment_date?: string | null;
-  manual_payment_reference?: string | null;
-  manual_payment_note?: string | null;
-  manual_payment_by?: string | null;
   currency: string;
   tax_rate: number;
   eco_tax_total: number;
