@@ -7,7 +7,6 @@ allowed-tools:
     Glob,
     Grep,
     Bash,
-    mcp__serena__*,
     mcp__context7__*,
     mcp__supabase__execute_sql,
     mcp__supabase__list_tables,
@@ -128,7 +127,7 @@ Sous-ensemble de typescript, concentre sur :
 
 1. `Grep` pour exports non utilises :
    - Lister les `export function` et `export const`
-   - Verifier avec `mcp__serena__find_referencing_symbols` si references existent
+   - Verifier avec `Grep` si references existent
 2. Detecter fichiers potentiellement morts :
    - Fichiers dans `components/` non importes nulle part
    - Routes API non appelees

@@ -109,41 +109,18 @@ export function CreateLinkMeOrderModal({
                 onSelectCustomer={form.setSelectedCustomerId}
                 searchQuery={form.searchQuery}
                 onSearchChange={form.setSearchQuery}
-                showCreateForm={form.showCreateForm}
-                onToggleCreateForm={form.setShowCreateForm}
-                onCreateCustomer={() => {
-                  void form.handleCreateCustomer().catch(error => {
-                    console.error(
-                      '[CreateLinkMeOrderModal] handleCreateCustomer failed:',
-                      error
-                    );
-                  });
-                }}
-                isCreating={
-                  form.createOrganisation.isPending ||
-                  form.createIndividualCustomer.isPending
-                }
                 isLoading={form.customers.isLoading}
                 filteredOrganisations={form.filteredOrganisations}
                 filteredIndividuals={form.filteredIndividuals}
-                newCustomerName={form.newCustomerName}
-                onNewCustomerNameChange={form.setNewCustomerName}
-                newCustomerFirstName={form.newCustomerFirstName}
-                onNewCustomerFirstNameChange={form.setNewCustomerFirstName}
-                newCustomerLastName={form.newCustomerLastName}
-                onNewCustomerLastNameChange={form.setNewCustomerLastName}
-                newCustomerEmail={form.newCustomerEmail}
-                onNewCustomerEmailChange={form.setNewCustomerEmail}
-                newCustomerPhone={form.newCustomerPhone}
-                onNewCustomerPhoneChange={form.setNewCustomerPhone}
-                newOrgOwnershipType={form.newOrgOwnershipType}
-                onNewOrgOwnershipTypeChange={form.setNewOrgOwnershipType}
-                newOrgAddress={form.newOrgAddress}
-                onNewOrgAddressChange={form.setNewOrgAddress}
-                newOrgPostalCode={form.newOrgPostalCode}
-                onNewOrgPostalCodeChange={form.setNewOrgPostalCode}
-                newOrgCity={form.newOrgCity}
-                onNewOrgCityChange={form.setNewOrgCity}
+                enseigneId={form.selectedAffiliate?.enseigne_id}
+                onOrganisationCreated={orgId => {
+                  form.setSelectedCustomerId(orgId);
+                  form.customers.refetch();
+                }}
+                onIndividualCreated={customerId => {
+                  form.setSelectedCustomerId(customerId);
+                  form.customers.refetch();
+                }}
               />
             )}
 

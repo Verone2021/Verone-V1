@@ -1,5 +1,11 @@
 # Perf Optimizer Agent Memory
 
+## Sources de verite
+
+- **Schema DB** : `docs/current/database/schema/` — pour verifier index, FK, RLS
+- **Composants** : `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md` — pour detecter doublons
+- **Dependances** : `docs/current/DEPENDANCES-PACKAGES.md` — pour detecter dead imports
+
 # Last updated: 2026-03-18 (audit pricing & commissions LinkMe ajouté)
 
 ## Rapports Disponibles

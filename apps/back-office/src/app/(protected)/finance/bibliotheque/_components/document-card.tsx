@@ -37,7 +37,7 @@ export const DocumentCard = memo(function DocumentCard({
       })
     : null;
 
-  const canDeletePdf = doc.pdf_url && doc.source_table !== 'invoices';
+  const canDeletePdf = !!doc.pdf_url;
 
   const handleDeletePdf = async () => {
     try {

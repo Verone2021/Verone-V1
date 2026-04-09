@@ -1,12 +1,13 @@
 /**
  * API Route: POST /api/qonto/invoices/[id]/finalize
- * Finalise une facture draft
+ * Finalise une facture draft dans Qonto et met à jour le record local
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { QontoClient } from '@verone/integrations/qonto';
+import { createAdminClient } from '@verone/utils/supabase/server';
 
 function getQontoClient(): QontoClient {
   return new QontoClient({
@@ -26,6 +27,73 @@ export async function POST(
     const client = getQontoClient();
 
     const invoice = await client.finalizeClientInvoice(id);
+
+    // Update the local financial_documents record:
+    // - document_number changes from PROFORMA-xxx to F-2026-xxx
+    // - status changes from draft to sent
+    // - local_pdf_path cleared to force re-fetch of finalized PDF
+    const supabase = createAdminClient();
+    const { error: updateError } = await supabase
+      .from('financial_documents')
+      .update({
+        document_number: invoice.invoice_number,
+        status: 'sent' as const,
+        local_pdf_path: null,
+        pdf_stored_at: null,
+        finalized_at: new Date().toISOString(),
+        qonto_pdf_url: invoice.pdf_url ?? null,
+        qonto_public_url: invoice.public_url ?? null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('qonto_invoice_id', id);
+
+    if (updateError) {
+      console.error(
+        '[API Qonto Invoice Finalize] DB update failed:',
+        updateError
+      );
+      // Don't fail the request — Qonto finalization succeeded
+    }
+
+    // Auto-validate linked sales_order if still in draft
+    // Finaliser une facture = la commande doit être au minimum validée
+    const { data: linkedDoc } = await supabase
+      .from('financial_documents')
+      .select('sales_order_id')
+      .eq('qonto_invoice_id', id)
+      .is('deleted_at', null)
+      .limit(1)
+      .maybeSingle();
+
+    if (linkedDoc?.sales_order_id) {
+      const { data: linkedOrder } = await supabase
+        .from('sales_orders')
+        .select('id, status')
+        .eq('id', linkedDoc.sales_order_id)
+        .single();
+
+      if (linkedOrder?.status === 'draft') {
+        const { error: validateError } = await supabase
+          .from('sales_orders')
+          .update({
+            status: 'validated',
+            confirmed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', linkedOrder.id);
+
+        if (validateError) {
+          console.error(
+            '[API Qonto Invoice Finalize] Auto-validate order failed:',
+            validateError
+          );
+        } else {
+          console.warn(
+            `[API Qonto Invoice Finalize] Auto-validated order ${linkedDoc.sales_order_id} (was draft)`
+          );
+        }
+      }
+    }
 
     return NextResponse.json({
       success: true,

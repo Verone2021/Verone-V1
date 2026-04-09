@@ -5,7 +5,6 @@
 // Components
 export * from './components';
 export type * from './components/forms';
-export * from './components/buttons';
 export * from './components/kpis';
 
 // Hooks

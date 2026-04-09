@@ -5,7 +5,6 @@
  * Gere plusieurs sources de fichiers:
  * - Qonto attachments (URL temporaire 30 min)
  * - Supabase Storage (signed URL)
- * - Abby PDF URL (redirect direct)
  *
  * Usage:
  * - Depuis l'UI: window.open('/api/documents/{documentId}/download', '_blank')

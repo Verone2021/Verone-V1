@@ -1,5 +1,12 @@
 # LinkMe Expert — Memoire Persistante
 
+## Sources de verite
+
+- **Schema DB LinkMe** : `docs/current/database/schema/06-linkme.md` (10 tables)
+- **Schema commandes** : `docs/current/database/schema/03-commandes.md`
+- **Composants** : `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md`
+- **Guide complet** : `docs/current/linkme/GUIDE-COMPLET-LINKME.md`
+
 ## Architecture LinkMe
 
 - Plateforme B2B2C affilies (enseignes comme Pokawa)
@@ -82,5 +89,5 @@
 - `docs/current/linkme/business-rules-linkme.md` — regles metier (restaure)
 - `docs/current/linkme/routes-index.md` — audit routes (restaure)
 - `docs/linkme/margin-calculation.md` — calcul marge SSOT (restaure)
-- `docs/current/serena/linkme-commissions.md` — formule corrigee (restaure)
-- `docs/current/serena/linkme-architecture.md` — architecture 2 tables (restaure)
+- `docs/current/linkme/linkme-commissions.md` — formule corrigee (restaure)
+- `docs/current/linkme/linkme-architecture.md` — architecture 2 tables (restaure)

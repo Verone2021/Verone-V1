@@ -1,7 +1,7 @@
 # Claude Code Configuration - Verone Back Office
 
-**Version**: 13.0.0
-**Date**: 2026-03-27
+**Version**: 14.0.0
+**Date**: 2026-04-09
 
 ## Structure
 
@@ -10,31 +10,39 @@
 ├── settings.json           # Permissions MCP + hooks
 ├── README.md               # Ce fichier
 ├── INDEX.md                # INDEX CENTRALISE — sommaire complet
-├── scripts/                # Hook scripts (5)
-│   ├── auto-sync-with-main.sh
-│   ├── clarify-before-code.sh
-│   ├── statusline-debug.sh
-│   ├── validate-git-checkout.sh
-│   └── validate-playwright-screenshot.sh
-├── agents/                 # 6 agents specialises
+├── agents/                 # 7 agents specialises
+│   ├── back-office-expert.md
 │   ├── code-reviewer.md
 │   ├── database-architect.md
 │   ├── frontend-architect.md
+│   ├── linkme-expert.md
 │   ├── perf-optimizer.md
-│   ├── verone-debug-investigator.md
-│   └── verone-orchestrator.md
+│   └── site-internet-expert.md
 ├── commands/               # 9 slash commands
 │   ├── db.md               # /db — Operations Supabase rapides
-│   ├── explore.md          # /explore — Exploration codebase
 │   ├── fix-warnings.md     # /fix-warnings — ESLint auto-fix
 │   ├── implement.md        # /implement — Feature implementation
 │   ├── plan.md             # /plan — Observations → checklist
 │   ├── pr.md               # /pr — Push + PR (sur ordre uniquement)
-│   ├── research.md         # /research — DB + Code + RLS
 │   ├── review.md           # /review — Audit code complet
+│   ├── search.md           # /search — Exploration codebase + DB + RLS
+│   ├── status.md           # /status — Resume rapide projet
 │   └── teach.md            # /teach — Mode pedagogique
-├── skills/                 # Skills invocables
-│   └── rls-patterns/SKILL.md
+├── skills/                 # 4 skills invocables
+│   ├── new-component/SKILL.md
+│   ├── oneshot/SKILL.md
+│   ├── rls-patterns/SKILL.md
+│   └── schema-sync/SKILL.md
+├── hooks/                  # 2 hook scripts
+│   ├── check-component-creation.sh
+│   └── session-context.sh
+├── scripts/                # 6 scripts utilitaires
+│   ├── auto-sync-with-main.sh
+│   ├── clarify-before-code.sh
+│   ├── cleanup-active-tasks.sh
+│   ├── statusline-debug.sh
+│   ├── validate-git-checkout.sh
+│   └── validate-playwright-screenshot.sh
 ├── rules/                  # Regles comportementales (auto-discovered)
 │   ├── dev/                # Git, builds, servers, hooks, contexte
 │   ├── frontend/           # Next.js, React, async patterns
@@ -50,7 +58,7 @@
 ## Regles importantes
 
 1. **Commit/Push/PR** = UNIQUEMENT sur ordre explicite de Romeo
-2. **Avant de coder** = Lire ACTIVE.md + memoire + CLAUDE.md app + Serena
+2. **Avant de coder** = Lire ACTIVE.md + memoire + CLAUDE.md app + documentation projet
 3. **Rules** dans `rules/` sont auto-discovered par Claude Code
 4. **Hooks** dans `settings.json` sont bloquants (PreToolUse) ou informatifs (PostToolUse)
 5. **Tache terminee** = supprimer de ACTIVE.md

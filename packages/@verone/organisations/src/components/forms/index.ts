@@ -1,3 +1,5 @@
+export { CustomerOrganisationFormModal } from './CustomerOrganisationFormModal';
+export { GenericOrganisationFormModal } from './GenericOrganisationFormModal';
 export { PartnerFormModal } from './PartnerFormModal';
 export { SupplierFormModal } from './SupplierFormModal';
 export { UnifiedOrganisationForm } from './unified-organisation-form';

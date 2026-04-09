@@ -189,15 +189,16 @@
 
 ---
 
-### 8. FACTURES (5 pages)
+### 8. FACTURES (6 pages)
 
-| Route                  | Type     | Description       |
-| ---------------------- | -------- | ----------------- |
-| `/factures`            | List     | Factures          |
-| `/factures/[id]`       | Detail   | Detail facture    |
-| `/factures/[id]/edit`  | Form     | Editer facture    |
-| `/factures/devis/[id]` | Detail   | Detail devis      |
-| `/factures/qonto`      | Settings | Integration Qonto |
+| Route                  | Type     | Description                                          |
+| ---------------------- | -------- | ---------------------------------------------------- |
+| `/factures`            | List     | Factures                                             |
+| `/factures/nouvelle`   | Form     | Creation facture (choix: depuis commande ou service) |
+| `/factures/[id]`       | Detail   | Detail facture                                       |
+| `/factures/[id]/edit`  | Form     | Editer facture                                       |
+| `/factures/devis/[id]` | Detail   | Detail devis                                         |
+| `/factures/qonto`      | Settings | Integration Qonto                                    |
 
 ---
 
@@ -300,10 +301,11 @@
 
 ### 19. DEVIS (2 pages)
 
-| Route         | Type   | Description  |
-| ------------- | ------ | ------------ |
-| `/devis`      | List   | Devis        |
-| `/devis/[id]` | Detail | Detail devis |
+| Route            | Type   | Description                                       |
+| ---------------- | ------ | ------------------------------------------------- |
+| `/devis`         | List   | Devis (redirect → /factures?tab=devis)            |
+| `/devis/nouveau` | Form   | Creation devis (choix: depuis commande ou vierge) |
+| `/devis/[id]`    | Detail | Detail devis                                      |
 
 ---
 

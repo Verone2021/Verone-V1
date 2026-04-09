@@ -14,10 +14,28 @@ Monorepo Turborepo : back-office (3000), linkme (3002), site-internet (3001).
 
 - `supabase/migrations/` — source de verite schema DB
 - `packages/@verone/types/src/supabase.ts` — types generes
-- `packages/@verone/` — 26 packages partages (hooks, composants, utils)
+- `packages/@verone/` — 22 packages partages (hooks, composants, utils)
+- `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md` — **INDEX TRANSVERSAL** composants, formulaires, hooks
+- `docs/current/INDEX-PAGES-BACK-OFFICE.md` — index pages back-office
 - `.claude/work/ACTIVE.md` — sprints et taches en cours
 - `.claude/INDEX.md` — sommaire centralise complet
 - `.claude/rules/` — regles auto-discovered
+- `docs/current/database/schema/` — **SOURCE DE VERITE** schema DB par domaine (tables, colonnes, FK, RLS, triggers)
+- `docs/current/DEPENDANCES-PACKAGES.md` — carte des dependances inter-packages
+- `scripts/generate-db-docs.py` — script pour re-generer la doc DB apres migration
+
+## CRITICAL : Sources de verite — LIRE avant de coder
+
+| Quoi                    | Fichier                                        | Quand le lire                        |
+| ----------------------- | ---------------------------------------------- | ------------------------------------ |
+| Schema DB (par domaine) | `docs/current/database/schema/`                | Avant TOUT travail touchant la DB    |
+| Composants & hooks      | `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md` | Avant de creer/modifier un composant |
+| Dependances packages    | `docs/current/DEPENDANCES-PACKAGES.md`         | Avant de modifier les imports        |
+| Pages back-office       | `docs/current/INDEX-PAGES-BACK-OFFICE.md`      | Avant de creer/modifier une page     |
+
+**INTERDIT** : Deviner la structure d'une table, d'un composant ou d'une dependance. Toujours LIRE le fichier de documentation correspondant.
+
+**Apres chaque migration SQL** : Executer `python scripts/generate-db-docs.py` pour mettre a jour la doc DB.
 
 ## Commandes
 
@@ -50,6 +68,32 @@ pnpm lint:fix                           # ESLint auto-fix
 - UNE entite = UNE page detail — jamais de doublons entre canaux
 - Fichier > 400 lignes = refactoring obligatoire
 - Feature branch depuis `staging` — format `[APP-DOMAIN-NNN] type: desc`
+
+## CRITICAL : Registre composants — Zero duplication
+
+**AVANT de creer un composant, formulaire ou modal :**
+
+1. Consulter `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md` — registre exhaustif
+2. Chercher dans `packages/@verone/` si un composant similaire existe (`Grep`)
+3. Si un composant existe : le REUTILISER ou l'ETENDRE avec des props — JAMAIS en creer un nouveau
+4. Si aucun composant n'existe : le creer dans le package `@verone/` approprie (PAS dans `apps/`)
+5. Apres creation : AJOUTER le composant dans l'index `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md`
+
+**Sources de verite par entite :**
+
+| Entite       | Package source          | Composant principal       | Wrappers typés                                                           |
+| ------------ | ----------------------- | ------------------------- | ------------------------------------------------------------------------ |
+| Organisation | `@verone/organisations` | `UnifiedOrganisationForm` | `SupplierFormModal`, `PartnerFormModal`, `CustomerOrganisationFormModal` |
+| Produit      | `@verone/products`      | Voir index                | —                                                                        |
+| Commande SO  | `@verone/orders`        | `SalesOrderFormModal`     | —                                                                        |
+| Commande PO  | `@verone/orders`        | `PurchaseOrderFormModal`  | —                                                                        |
+| Finance      | `@verone/finance`       | Voir index                | —                                                                        |
+
+**INTERDIT :**
+
+- Creer un formulaire de creation/edition dans `apps/` — toujours dans `packages/@verone/`
+- Creer un composant inline quand un modal partage existe
+- Dupliquer de la logique metier entre packages (utiliser les hooks partages)
 
 ## CRITICAL : Ne JAMAIS s'arreter
 

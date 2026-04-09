@@ -56,13 +56,32 @@ interface CreateIndividualCustomerData {
 interface CreateIndividualCustomerModalProps {
   onCustomerCreated?: (customerId: string, customerName: string) => void;
   trigger?: React.ReactNode;
+  /** Controlled mode: external open state */
+  isOpen?: boolean;
+  /** Controlled mode: close callback */
+  onClose?: () => void;
+  /** Pre-fill enseigne_id (LinkMe context) */
+  enseigneId?: string | null;
+  /** Track origin */
+  sourceType?: 'manual' | 'linkme' | 'site-internet' | 'internal';
 }
 
 export function CreateIndividualCustomerModal({
   onCustomerCreated,
   trigger,
+  isOpen: controlledOpen,
+  onClose,
+  enseigneId,
+  sourceType,
 }: CreateIndividualCustomerModalProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled
+    ? (v: boolean) => {
+        if (!v) onClose?.();
+      }
+    : setInternalOpen;
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<
     Partial<CreateIndividualCustomerData>
@@ -95,9 +114,14 @@ export function CreateIndividualCustomerModal({
 
     try {
       // Type assertion sécurisé: validation des champs obligatoires effectuée ligne 84-91
+      const insertData = {
+        ...formData,
+        ...(enseigneId ? { enseigne_id: enseigneId } : {}),
+        ...(sourceType ? { source_type: sourceType } : {}),
+      };
       const { data, error } = await supabase
         .from('individual_customers')
-        .insert([formData as CreateIndividualCustomerData])
+        .insert([insertData as CreateIndividualCustomerData])
         .select('id')
         .single();
 
@@ -146,14 +170,16 @@ export function CreateIndividualCustomerModal({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger ?? (
-          <Button variant="outline" size="sm" className="border-black">
-            <Plus className="h-4 w-4 mr-2" />
-            Nouveau client particulier
-          </Button>
-        )}
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          {trigger ?? (
+            <Button variant="outline" size="sm" className="border-black">
+              <Plus className="h-4 w-4 mr-2" />
+              Nouveau client particulier
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

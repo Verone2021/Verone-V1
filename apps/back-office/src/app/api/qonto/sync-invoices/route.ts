@@ -82,7 +82,7 @@ export async function POST(_request: NextRequest): Promise<
   }>
 > {
   const errors: string[] = [];
-  let created = 0;
+  const created = 0;
   let updated = 0;
 
   try {
@@ -184,13 +184,37 @@ export async function POST(_request: NextRequest): Promise<
           continue;
         }
 
-        // Verifier si la facture existe deja (par document_number)
-        const { data: existing } = await supabase
+        // Verifier si la facture existe deja (par qonto_invoice_id d'abord, puis document_number)
+        // qonto_invoice_id est stable même quand document_number change (ex: PROFORMA → F-2026-xxx)
+        let existing: {
+          id: string;
+          document_number?: string;
+          updated_at: string;
+          status: string;
+          amount_paid: number | null;
+        } | null = null;
+
+        const { data: existingByQontoId } = await supabase
           .from('financial_documents')
-          .select('id, updated_at, status, amount_paid')
-          .eq('document_number', invoiceNumber)
+          .select('id, document_number, updated_at, status, amount_paid')
+          .eq('qonto_invoice_id', invoice.id)
           .eq('document_type', 'customer_invoice')
           .maybeSingle();
+
+        if (existingByQontoId) {
+          existing = existingByQontoId;
+        } else {
+          const { data: existingByNumber } = await supabase
+            .from('financial_documents')
+            .select('id, document_number, updated_at, status, amount_paid')
+            .eq('document_number', invoiceNumber)
+            .eq('document_type', 'customer_invoice')
+            .maybeSingle();
+
+          if (existingByNumber) {
+            existing = existingByNumber;
+          }
+        }
 
         // Ne pas écraser le statut/montant si un rapprochement local a déjà marqué la facture comme payée
         const existingIsPaidLocally =
@@ -205,29 +229,38 @@ export async function POST(_request: NextRequest): Promise<
           total_ht: totalHt,
           total_ttc: totalTtc,
           tva_amount: tvaAmount,
-          amount_paid: existingIsPaidLocally
-            ? (existing.amount_paid ?? 0)
-            : invoice.status === 'paid'
-              ? totalTtc
-              : 0,
-          status: existingIsPaidLocally
-            ? existing.status
-            : mapQontoStatus(invoice.status),
+          amount_paid:
+            existingIsPaidLocally && existing
+              ? (existing.amount_paid ?? 0)
+              : invoice.status === 'paid'
+                ? totalTtc
+                : 0,
+          status:
+            existingIsPaidLocally && existing
+              ? (existing.status as 'paid' | 'partially_paid')
+              : mapQontoStatus(invoice.status),
           partner_id: partnerId,
           partner_type: 'customer' as const,
-          // Stocker l'ID Qonto dans les champs abby (requis par contrainte DB)
-          abby_invoice_id: invoice.id,
-          abby_invoice_number: invoiceNumber,
+          qonto_invoice_id: invoice.id,
           description: `Facture Qonto ${invoiceNumber}`,
           notes: `Client: ${invoice.client?.name ?? 'N/A'}`,
           updated_at: new Date().toISOString(),
         };
 
         if (existing) {
+          // If document_number changed (proforma finalized), invalidate cached PDF
+          const updatePayload = { ...documentData } as Record<string, unknown>;
+          if (existing.document_number !== invoiceNumber) {
+            // Number changed (e.g. PROFORMA-xxx → F-2026-xxx) — clear cached PDF
+            updatePayload.local_pdf_path = null;
+            updatePayload.pdf_stored_at = null;
+            updatePayload.finalized_at = new Date().toISOString();
+          }
+
           // Update
           const { error: updateError } = await supabase
             .from('financial_documents')
-            .update(documentData)
+            .update(updatePayload)
             .eq('id', existing.id);
 
           if (updateError) {
@@ -236,22 +269,12 @@ export async function POST(_request: NextRequest): Promise<
             updated++;
           }
         } else {
-          // Insert - need created_by (required), use system placeholder
-          // Note: created_by expects a UUID - using a fixed system UUID
-          const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000';
-          const { error: insertError } = await supabase
-            .from('financial_documents')
-            .insert({
-              ...documentData,
-              created_at: invoice.created_at,
-              created_by: SYSTEM_USER_ID,
-            });
-
-          if (insertError) {
-            errors.push(`Insert ${invoiceNumber}: ${insertError.message}`);
-          } else {
-            created++;
-          }
+          // customer_invoice requires sales_order_id (constraint check_sales_order_only_customer)
+          // Skip new invoices that can't be linked to an order - they exist in Qonto as source of truth
+          errors.push(
+            `${invoiceNumber}: Cannot create customer_invoice without sales_order_id (constraint check_sales_order_only_customer) — skipped`
+          );
+          continue;
         }
       } catch (invoiceError) {
         const num = invoice.number ?? invoice.invoice_number ?? invoice.id;

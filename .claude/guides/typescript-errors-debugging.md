@@ -230,8 +230,8 @@ pnpm --filter @verone/[app] type-check 2>&1 | grep "file.tsx"
 **Si le même problème se répète** (ex: 5 fichiers utilisent `name` au lieu de `legal_name`) :
 
 ```bash
-# Créer mémoire Serena
-cat > .serena/memories/supabase-organisations-columns.md <<EOF
+# Documenter le pattern
+cat > docs/current/notes/supabase-organisations-columns.md <<EOF
 # Supabase Organisations - Colonnes Réelles
 
 **Table** : organisations

@@ -1,5 +1,10 @@
 # Site-Internet Expert — Memoire Persistante
 
+## Sources de verite
+
+- **Schema DB** : `docs/current/database/schema/` (tables produits, commandes site)
+- **Composants** : `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md`
+
 ## Architecture
 
 - Next.js 15 App Router avec SSR, React 18
@@ -73,4 +78,4 @@
 - `docs/current/site-internet/API-ROUTES.md` — 20 routes API
 - `docs/current/site-internet/FEATURES.md` — fonctionnalites
 - `docs/current/site-internet/DMARC-HARDENING-PLAN.md` — securite DNS
-- `docs/current/serena/project-overview.md` — vue projet (restaure)
+- `docs/current/project-overview.md` — vue projet (restaure)

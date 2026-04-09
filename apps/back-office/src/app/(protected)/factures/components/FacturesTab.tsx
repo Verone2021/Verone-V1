@@ -16,6 +16,7 @@ interface FacturesTabProps {
   onOpenOrg: (orgId: string) => void;
   onRapprochement: (invoice: Invoice) => void;
   fetchInvoices: () => void;
+  onDeleteDraft?: (invoice: Invoice) => Promise<void>;
 }
 
 export function FacturesTab({
@@ -28,6 +29,7 @@ export function FacturesTab({
   onOpenOrg,
   onRapprochement,
   fetchInvoices,
+  onDeleteDraft,
 }: FacturesTabProps) {
   const [invoiceView, setInvoiceView] = useState<
     'drafts' | 'finalized' | 'archived'
@@ -85,6 +87,7 @@ export function FacturesTab({
           }}
           onDownloadPdf={onDownloadPdf}
           isDraft
+          onDelete={onDeleteDraft}
           onFinalize={async invoice => {
             try {
               const response = await fetch(

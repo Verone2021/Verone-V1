@@ -1,8 +1,14 @@
 # Database Architect — Memoire Persistante
 
+## Sources de verite
+
+- **Schema DB COMPLET** : `docs/current/database/schema/` — LIRE AVANT toute migration
+- **Resume global** : `docs/current/database/schema/00-SUMMARY.md`
+- **Script re-generation** : `python scripts/generate-db-docs.py` — EXECUTER apres chaque migration
+
 ## Architecture DB Verone
 
-- 78+ tables, 158+ triggers, 239+ RLS policies, 180+ migrations
+- 91 tables documentees dans `docs/current/database/schema/` (9 fichiers par domaine)
 - 1 SEULE base Supabase (dev = preview = production) — decision non-negociable
 - Helper functions RLS : `is_backoffice_user()`, `is_back_office_admin()` (SECURITY DEFINER)
 - Migrations : TOUJOURS psql avec $DATABASE_URL, JAMAIS Dashboard Supabase
@@ -15,7 +21,7 @@
 - **Stock** : stock_movements (affects_forecast, quantity_change NEGATIF pour sorties), stock_alert_tracking
 - **Ventes** : sales_orders, sales_order_items, sales_shipments, sales_shipment_items
 - **Achats** : purchase_orders, purchase_order_items, purchase_order_receptions
-- **Finance** : financial_documents (Qonto STI), invoices (legacy Abby — 23 lignes), bank_transactions, transaction_document_links
+- **Finance** : financial_documents (Qonto STI — SEULE table active depuis 2026-03-21), bank_transactions, transaction_document_links
 - **LinkMe** : linkme_affiliates, linkme_selections, linkme_selection_items, linkme_commissions, channel_pricing
 
 ## Triggers critiques (ne JAMAIS modifier sans audit complet)
@@ -71,9 +77,9 @@
 
 ## Documentation de reference
 
-- `docs/current/database/database.md` — schema global
+- `docs/current/database/schema/` — schema complet par domaine (9 fichiers)
 - `docs/current/database/triggers-stock-reference.md` — 48 triggers documentes
 - `docs/business-rules/06-stocks/` — regles metier stock (restaurees)
 - `docs/business-rules/07-commandes/` — workflows commandes (restaurees)
-- `docs/current/serena/database-implementation.md` — architecture 78 tables
-- `docs/current/serena/stock-orders-logic.md` — logique stock/commandes
+- `docs/current/database/stock-orders-logic.md` — logique stock/commandes
+- `.claude/rules/database/rls-patterns.md` — patterns RLS obligatoires

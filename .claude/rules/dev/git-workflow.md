@@ -3,7 +3,8 @@
 ## Autonomie et Protections
 
 ### Actions AUTONOMES (Claude fait seul)
-- Explorer le codebase (Glob, Grep, Read, Serena)
+
+- Explorer le codebase (Glob, Grep, Read)
 - Ecrire/modifier code (Edit, Write)
 - Creer commits locaux (format convention)
 - Pousser sur feature branch (`git push origin feature-branch`)
@@ -11,12 +12,14 @@
 - Proposer une PR apres implementation
 
 ### Actions BLOQUEES par hooks (impossible techniquement)
+
 - Commit/push sur `main` ou `master`
 - `--no-verify` sur commit/push
 - PR avec `--base main` (doit etre `--base staging`)
 - TypeScript `any`
 
 ### Actions DESTRUCTRICES (STOP + confirmer)
+
 - Force push (`git push --force`)
 - Supprimer branches distantes
 - Merger vers main/production

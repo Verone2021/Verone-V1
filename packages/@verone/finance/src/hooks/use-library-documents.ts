@@ -6,7 +6,7 @@ import { createClient } from '@verone/utils/supabase/client';
 
 export interface LibraryDocument {
   id: string;
-  source_table: 'financial_documents' | 'invoices' | 'bank_transactions';
+  source_table: 'financial_documents' | 'bank_transactions';
   document_type: string;
   document_direction: string;
   document_number: string | null;
@@ -46,7 +46,6 @@ export interface UseLibraryDocumentsReturn {
  * Returns the PDF URL for a library document.
  * - financial_documents: Qonto invoice proxy (with store-on-read)
  * - bank_transactions: Qonto attachment proxy (with store-on-read)
- * - invoices: direct Abby URL
  */
 export function getPdfUrl(doc: LibraryDocument): string | null {
   if (doc.source_table === 'financial_documents') {

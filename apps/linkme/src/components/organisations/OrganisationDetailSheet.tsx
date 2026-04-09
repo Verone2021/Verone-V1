@@ -108,7 +108,7 @@ export function OrganisationDetailSheet({
     shipping_address_line2: '',
     shipping_city: '',
     shipping_postal_code: '',
-    shipping_country: 'France',
+    shipping_country: 'FR',
     latitude: null as number | null,
     longitude: null as number | null,
   });
@@ -118,7 +118,7 @@ export function OrganisationDetailSheet({
     billing_address_line2: '',
     billing_city: '',
     billing_postal_code: '',
-    billing_country: 'France',
+    billing_country: 'FR',
   });
 
   const [contactsForm, setContactsForm] = useState({
@@ -177,7 +177,7 @@ export function OrganisationDetailSheet({
         shipping_address_line2: org.shipping_address_line2 ?? '',
         shipping_city: org.shipping_city ?? '',
         shipping_postal_code: org.shipping_postal_code ?? '',
-        shipping_country: org.shipping_country ?? 'France',
+        shipping_country: org.shipping_country ?? 'FR',
         latitude: org.latitude,
         longitude: org.longitude,
       });
@@ -186,7 +186,7 @@ export function OrganisationDetailSheet({
         billing_address_line2: org.billing_address_line2 ?? '',
         billing_city: org.billing_city ?? '',
         billing_postal_code: org.billing_postal_code ?? '',
-        billing_country: org.billing_country ?? 'France',
+        billing_country: org.billing_country ?? 'FR',
       });
       setContactsForm({
         phone: org.phone ?? '',
@@ -235,7 +235,7 @@ export function OrganisationDetailSheet({
       shipping_address_line1: address.streetAddress,
       shipping_city: address.city,
       shipping_postal_code: address.postalCode,
-      shipping_country: address.country || 'France',
+      shipping_country: address.countryCode || 'FR',
       latitude: address.latitude,
       longitude: address.longitude,
     }));
@@ -247,7 +247,7 @@ export function OrganisationDetailSheet({
       billing_address_line1: address.streetAddress,
       billing_city: address.city,
       billing_postal_code: address.postalCode,
-      billing_country: address.country || 'France',
+      billing_country: address.countryCode || 'FR',
     }));
   };
 
@@ -259,7 +259,7 @@ export function OrganisationDetailSheet({
       org.shipping_address_line1,
       org.shipping_address_line2,
       [org.shipping_postal_code, org.shipping_city].filter(Boolean).join(' '),
-      org.shipping_country && org.shipping_country !== 'France'
+      org.shipping_country && org.shipping_country !== 'FR'
         ? org.shipping_country
         : null,
     ].filter(Boolean);
@@ -273,7 +273,7 @@ export function OrganisationDetailSheet({
       org.billing_address_line1,
       org.billing_address_line2,
       [org.billing_postal_code, org.billing_city].filter(Boolean).join(' '),
-      org.billing_country && org.billing_country !== 'France'
+      org.billing_country && org.billing_country !== 'FR'
         ? org.billing_country
         : null,
     ].filter(Boolean);

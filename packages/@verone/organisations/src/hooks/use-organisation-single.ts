@@ -15,7 +15,7 @@ const SINGLE_ORG_COLUMNS = `
   siren, siret, vat_number, legal_form, logo_url, notes, currency, default_vat_rate, default_channel_id,
   delivery_time_days, minimum_order_amount, preferred_supplier, rating, supplier_segment, certification_labels,
   industry_sector, linkme_code, secondary_email, website, source, source_type, source_affiliate_id,
-  abby_customer_id, show_on_linkme_globe, approval_status, approved_at, approved_by,
+  show_on_linkme_globe, approval_status, approved_at, approved_by,
   archived_at, created_at, created_by, updated_at,
   enseigne:enseignes(name)
 `;

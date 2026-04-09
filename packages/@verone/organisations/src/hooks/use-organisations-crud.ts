@@ -117,6 +117,11 @@ export function buildOrganisationsOps({
             prepayment_required: data.prepayment_required ?? false,
             enseigne_id: data.enseigne_id ?? null,
             ownership_type: data.ownership_type ?? null,
+            secondary_email: data.secondary_email ?? null,
+            notes: data.notes ?? null,
+            industry_sector: data.industry_sector ?? null,
+            payment_terms: data.payment_terms ?? null,
+            supplier_segment: data.supplier_segment ?? null,
           },
         ])
         .select(ORGANISATION_COLUMNS)
@@ -180,6 +185,13 @@ export function buildOrganisationsOps({
         'prepayment_required',
         'enseigne_id',
         'ownership_type',
+        'phone',
+        'website',
+        'secondary_email',
+        'notes',
+        'industry_sector',
+        'payment_terms',
+        'supplier_segment',
       ];
 
       allowedFields.forEach(field => {

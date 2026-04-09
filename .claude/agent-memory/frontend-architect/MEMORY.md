@@ -1,9 +1,15 @@
 # Frontend Architect — Memoire Persistante
 
+## Sources de verite
+
+- **Composants** : `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md` — LIRE AVANT de creer un composant
+- **Dependances** : `docs/current/DEPENDANCES-PACKAGES.md` — LIRE AVANT de modifier imports
+- **17 doublons detectes** : voir section "ALERTE DOUBLONS" dans INDEX-COMPOSANTS-FORMULAIRES.md
+
 ## Architecture monorepo
 
 - 3 apps : back-office (3000), site-internet (3001), linkme (3002)
-- 26 packages partages sous @verone/ (ui=62 composants, orders=60, products=69)
+- 22 packages partages sous @verone/ (ui=62 composants, orders=60, products=69)
 - 150+ hooks partages dans packages/@verone/
 - Anciens chemins src/ OBSOLETES — toujours @verone/\* pour imports partages
 - Turborepo + pnpm 10, JAMAIS npm/yarn
@@ -66,9 +72,10 @@
 
 ## Documentation de reference
 
-- `docs/current/architecture-packages.md` — 347 composants, packages
+- `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md` — index transversal composants
+- `docs/current/DEPENDANCES-PACKAGES.md` — dependances inter-packages
 - `docs/current/architecture.md` — structure monorepo
 - `docs/current/INDEX-PAGES-BACK-OFFICE.md` — 165 pages
 - `docs/current/component-audit-guidelines.md` — dead code detection (restaure)
 - `docs/current/dev-workflow.md` — workflow quotidien (restaure)
-- `docs/current/serena/turborepo-paths.md` — chemins corrects (restaure)
+- `docs/current/turborepo-paths.md` — chemins corrects (restaure)

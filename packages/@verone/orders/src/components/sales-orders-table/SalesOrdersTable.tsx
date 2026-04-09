@@ -32,7 +32,7 @@ import { useSalesOrdersModals } from './hooks/use-sales-orders-modals';
 import { useSalesOrdersPagination } from './hooks/use-sales-orders-pagination';
 import { useSalesOrdersSort } from './hooks/use-sales-orders-sort';
 import { useSalesOrdersStats } from './hooks/use-sales-orders-stats';
-import { useSalesOrdersExport } from './hooks/use-sales-orders-export';
+
 import { useSalesOrdersSuccessHandlers } from './hooks/use-sales-orders-success-handlers';
 import type { SalesOrdersTableProps } from './types';
 
@@ -172,14 +172,6 @@ export function SalesOrdersTable({
     setOrderToCancel: modals.setOrderToCancel,
   });
 
-  const { handleExportExcel } = useSalesOrdersExport({
-    channelId,
-    activeTab,
-    searchTerm,
-    customerType: advancedFilters.customerType,
-    period: advancedFilters.period,
-  });
-
   // Build create button for the filter bar
   const renderCreateButton = onCreateClick ? (
     <ButtonUnified onClick={onCreateClick} icon={Plus}>
@@ -216,11 +208,6 @@ export function SalesOrdersTable({
         availableYears={availableYears}
         isPeriodEnabled={isPeriodEnabled}
         enseignes={enseignes}
-        onExportExcel={() => {
-          void handleExportExcel().catch((err: unknown) => {
-            console.error('[SalesOrdersTable] export failed:', err);
-          });
-        }}
         renderCreateButton={renderCreateButton}
         renderHeaderRight={renderHeaderRight}
       />

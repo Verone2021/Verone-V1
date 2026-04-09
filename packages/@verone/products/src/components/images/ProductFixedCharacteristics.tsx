@@ -25,6 +25,10 @@ interface Product {
   variant_group_id?: string | null;
   video_url?: string;
 
+  // Champs directs du produit (pour produits SANS variante groupe)
+  weight?: number | null;
+  dimensions?: Record<string, unknown> | null;
+
   // Navigation catégorielle
   subcategory?: {
     name?: string;
@@ -211,19 +215,68 @@ export function ProductFixedCharacteristics({
   className,
   onEditVideoUrl,
 }: ProductFixedCharacteristicsProps) {
-  // Récupérer les dimensions depuis variant_group (colonnes séparées alignées avec SQL)
+  // Récupérer les dimensions :
+  // 1. Si produit dans un variant_group → lire depuis variant_group (heritage)
+  // 2. Sinon → lire depuis product.dimensions (JSONB — formats varies en base)
   const variantGroup = product.variant_group;
-  const dimensions =
-    variantGroup?.dimensions_length ||
-    variantGroup?.dimensions_width ||
-    variantGroup?.dimensions_height
+  const hasGroupDimensions =
+    variantGroup?.dimensions_length != null ||
+    variantGroup?.dimensions_width != null ||
+    variantGroup?.dimensions_height != null;
+
+  // Extraire les dimensions du JSONB produit (cles: width_cm/width, height_cm/height, etc.)
+  const dims = product.dimensions as Record<string, unknown> | null;
+  const getNum = (
+    obj: Record<string, unknown> | null,
+    ...keys: string[]
+  ): number | null => {
+    if (!obj) return null;
+    for (const k of keys) {
+      const v = obj[k];
+      if (v != null && typeof v === 'number') return v;
+    }
+    return null;
+  };
+
+  const productLength = getNum(dims, 'length_cm', 'length');
+  const productWidth = getNum(dims, 'width_cm', 'width');
+  const productHeight = getNum(dims, 'height_cm', 'height');
+  const productDepth = getNum(dims, 'depth_cm', 'depth');
+  const productDiameter = getNum(dims, 'diameter_cm', 'diameter');
+  const hasProductDimensions =
+    productLength != null ||
+    productWidth != null ||
+    productHeight != null ||
+    productDepth != null ||
+    productDiameter != null;
+
+  const dimensions = hasGroupDimensions
+    ? {
+        length: variantGroup?.dimensions_length ?? null,
+        width: variantGroup?.dimensions_width ?? null,
+        height: variantGroup?.dimensions_height ?? null,
+        diameter: null as number | null,
+        unit: variantGroup?.dimensions_unit ?? 'cm',
+        fromGroup: true,
+      }
+    : hasProductDimensions
       ? {
-          length: variantGroup.dimensions_length,
-          width: variantGroup.dimensions_width,
-          height: variantGroup.dimensions_height,
-          unit: variantGroup.dimensions_unit ?? 'cm',
+          length: productLength ?? productDepth,
+          width: productWidth,
+          height: productHeight,
+          diameter: productDiameter,
+          unit: 'cm',
+          fromGroup: false,
         }
       : null;
+
+  // Poids : variant_group.common_weight (heritage) OU product.weight (direct)
+  const displayWeight = product.variant_group_id
+    ? (product.variant_group?.common_weight ?? null)
+    : (product.weight ?? null);
+  const weightFromGroup = !!(
+    product.variant_group_id && product.variant_group?.common_weight
+  );
 
   const compatibleRooms = getCompatibleRooms(product);
   const variantAttributes = product.variant_attributes ?? {};
@@ -391,19 +444,34 @@ export function ProductFixedCharacteristics({
         <div>
           <h4 className="text-sm font-medium text-black mb-2 opacity-70 flex items-center gap-2">
             📐 Dimensions
-            {product.variant_group_id && dimensions && (
+            {dimensions?.fromGroup && (
               <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
                 🔒 Héritées du groupe
               </span>
             )}
           </h4>
           {dimensions ? (
-            <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+            <div
+              className={cn(
+                'p-3 rounded-lg border',
+                dimensions.fromGroup
+                  ? 'bg-green-50 border-green-200'
+                  : 'bg-blue-50 border-blue-200'
+              )}
+            >
               <div className="text-sm font-medium text-black">
-                L: {dimensions.length ?? '-'} × l: {dimensions.width ?? '-'} ×
-                H: {dimensions.height ?? '-'} {dimensions.unit ?? 'cm'}
+                {dimensions.diameter != null ? (
+                  <>
+                    &#8960; {dimensions.diameter} {dimensions.unit}
+                  </>
+                ) : (
+                  <>
+                    L: {dimensions.length ?? '-'} × l: {dimensions.width ?? '-'}{' '}
+                    × H: {dimensions.height ?? '-'} {dimensions.unit ?? 'cm'}
+                  </>
+                )}
               </div>
-              {product.variant_group_id && (
+              {dimensions.fromGroup && product.variant_group_id && (
                 <div className="text-xs text-green-600 mt-2 flex items-center gap-1">
                   📏 Dimensions communes à toutes les variantes du groupe
                   <a
@@ -428,19 +496,18 @@ export function ProductFixedCharacteristics({
         <div>
           <h4 className="text-sm font-medium text-black mb-2 opacity-70 flex items-center gap-2">
             ⚖️ Poids
-            {product.variant_group_id &&
-              product.variant_group?.common_weight && (
-                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                  🔒 Hérité du groupe
-                </span>
-              )}
+            {weightFromGroup && (
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                🔒 Hérité du groupe
+              </span>
+            )}
           </h4>
-          {product.variant_group?.common_weight ? (
+          {displayWeight != null ? (
             <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
               <div className="text-sm font-medium text-black">
-                {product.variant_group.common_weight} kg
+                {displayWeight} kg
               </div>
-              {product.variant_group_id && (
+              {weightFromGroup && product.variant_group_id && (
                 <div className="text-xs text-blue-600 mt-2 flex items-center gap-1">
                   ⚖️ Poids commun à toutes les variantes du groupe
                   <a

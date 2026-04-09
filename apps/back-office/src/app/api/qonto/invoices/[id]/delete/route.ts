@@ -10,6 +10,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { QontoClient } from '@verone/integrations/qonto';
+import { createAdminClient } from '@verone/utils/supabase/server';
 
 function getQontoClient(): QontoClient {
   return new QontoClient({
@@ -44,6 +45,21 @@ export async function DELETE(
 
     // Supprimer la facture brouillon
     await client.deleteClientInvoice(id);
+
+    // Soft-delete le record local dans financial_documents
+    const supabase = createAdminClient();
+    const { error: updateError } = await supabase
+      .from('financial_documents')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('qonto_invoice_id', id);
+
+    if (updateError) {
+      console.error(
+        '[API Qonto Invoice Delete] DB soft-delete failed:',
+        updateError
+      );
+      // Ne pas faire echouer la requete — Qonto est source de verite
+    }
 
     return NextResponse.json({
       success: true,

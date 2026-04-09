@@ -12,7 +12,6 @@ allowed-tools:
     mcp__supabase__get_logs,
     mcp__supabase__list_migrations,
     mcp__supabase__list_extensions,
-    mcp__serena__*,
   ]
 ---
 

@@ -17,7 +17,7 @@ graph TB
     subgraph Packages["26 Packages @verone"]
         CORE["Core: types, utils, ui, hooks"]
         BIZ["Business: products, orders, stock, customers"]
-        INT["Integrations: Google, Qonto, Abby"]
+        INT["Integrations: Google Merchant, Qonto"]
     end
 
     subgraph Supabase["Supabase PostgreSQL"]

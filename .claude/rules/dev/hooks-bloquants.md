@@ -14,10 +14,11 @@
 
 ## Avertissements (non-bloquants)
 
-| Hook         | Declencheur          | Message                                        |
-| ------------ | -------------------- | ---------------------------------------------- |
-| Middleware   | `Edit(*middleware*)` | Verifier patterns existants avant modification |
-| RLS policies | `Edit(*_rls_*)`      | Approbation requise pour migrations RLS        |
+| Hook             | Declencheur                                         | Message                                                |
+| ---------------- | --------------------------------------------------- | ------------------------------------------------------ |
+| Anti-duplication | `Write(*Modal*\|*Form*)` dans orders/customers/apps | Verifier INDEX-COMPOSANTS avant de creer un formulaire |
+| Middleware       | `Edit(*middleware*)`                                | Verifier patterns existants avant modification         |
+| RLS policies     | `Edit(*_rls_*)`                                     | Approbation requise pour migrations RLS                |
 
 ## Validation
 

@@ -58,11 +58,6 @@
     "@playwright/test",
     "playwright"
   ],
-  "ignoreBinaries": [
-    "tsx",
-    "playwright",
-    "turbo",
-    "pnpm"
-  ],
+  "ignoreBinaries": ["tsx", "playwright", "turbo", "pnpm"],
   "includeEntryExports": false
 }
