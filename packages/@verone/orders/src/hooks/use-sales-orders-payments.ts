@@ -105,19 +105,6 @@ export function useSalesOrdersPayments({
 
         if (rpcError) throw rpcError;
 
-        const { error: updateError } = await supabase
-          .from('sales_orders')
-          .update({
-            manual_payment_type: paymentType,
-            manual_payment_date:
-              options?.date?.toISOString() ?? new Date().toISOString(),
-            manual_payment_reference: options?.reference ?? null,
-            manual_payment_note: options?.note ?? null,
-          } as Record<string, unknown>)
-          .eq('id', orderId);
-
-        if (updateError) throw updateError;
-
         const paymentLabels: Record<ManualPaymentType, string> = {
           cash: 'Espèces',
           check: 'Chèque',

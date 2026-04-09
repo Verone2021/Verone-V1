@@ -272,20 +272,6 @@ export async function markAsManuallyPaid(
   });
 
   if (rpcError) throw rpcError;
-
-  // 2. Mettre à jour les champs legacy (type, date, référence, note)
-  const { error: updateError } = await supabase
-    .from('purchase_orders')
-    .update({
-      manual_payment_type: paymentType,
-      manual_payment_date:
-        options?.date?.toISOString() ?? new Date().toISOString(),
-      manual_payment_reference: options?.reference ?? null,
-      manual_payment_note: options?.note ?? null,
-    } as Record<string, unknown>)
-    .eq('id', orderId);
-
-  if (updateError) throw updateError;
 }
 
 // Delete a manual payment from order_payments
