@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
@@ -21,7 +21,7 @@ export function useDatabaseNotifications(): DatabaseNotificationsHook {
     error: null,
   });
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const loadNotifications = useCallback(async () => {
     try {

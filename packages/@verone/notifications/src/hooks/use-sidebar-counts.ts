@@ -24,7 +24,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -97,7 +97,7 @@ export function useSidebarCounts(options?: {
   const [counts, setCounts] = useState<RawCounts>(ZERO_COUNTS);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   // Refs pour cleanup des canaux Realtime
   const channelSalesOrdersRef = useRef<RealtimeChannel | null>(null);
