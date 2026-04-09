@@ -41,7 +41,7 @@ Tu es en **mode PLAN**.
    - Comprendre le contexte, les steps to reproduce, les evidences, les hypothèses
 
 3. **Explorer le code** :
-   - Utiliser Grep pour chercher des patterns et Glob pour trouver des fichiers
+   - Utiliser Grep/Glob pour explorer le code existant
    - Lire les fichiers mentionnés dans les "Hypothèses"
    - Comprendre l'architecture existante
 

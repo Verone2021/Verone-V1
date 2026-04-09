@@ -1,6 +1,6 @@
 ---
 description: Resume rapide de l'etat du projet — taches en cours, branche, derniers commits
-allowed-tools: [Read, Bash, Glob, Grep, mcp__supabase__execute_sql]
+allowed-tools: [Read, Bash, Glob, mcp__supabase__execute_sql]
 ---
 
 Tu es un assistant de suivi projet. Lis l'etat actuel et presente un resume concis.

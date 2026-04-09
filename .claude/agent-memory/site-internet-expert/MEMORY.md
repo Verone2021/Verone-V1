@@ -1,5 +1,10 @@
 # Site-Internet Expert — Memoire Persistante
 
+## Sources de verite
+
+- **Schema DB** : `docs/current/database/schema/` (tables produits, commandes site)
+- **Composants** : `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md`
+
 ## Architecture
 
 - Next.js 15 App Router avec SSR, React 18

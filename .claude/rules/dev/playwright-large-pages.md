@@ -1,4 +1,4 @@
-# Playwright MCP : Guide Complet
+# Playwright MCP : Mode Screenshot Only (Vision)
 
 ## Configuration active (.mcp.json)
 
@@ -33,27 +33,17 @@ Raison : crash systematique "Request too large (max 20MB)" qui detruit les conve
 4. `browser_take_screenshot` pour verifier le resultat
 5. `browser_console_messages` pour verifier 0 erreur
 
-## Screenshots : dossier obligatoire
-
-Tous les screenshots dans `.playwright-mcp/screenshots/`
-Format : `.playwright-mcp/screenshots/[context]-[description]-[YYYYMMDD].png`
-
 ## Lire du texte exact sans snapshot
 
+Si besoin de lire une valeur precise (ex: contenu d'un input) :
+
 ```javascript
+// Utiliser browser_evaluate au lieu de browser_snapshot
 browser_evaluate({ expression: "document.querySelector('#mon-input').value" });
 ```
 
-## Verification Post-Deploiement
+## Nettoyage periodique
 
-Apres chaque merge staging → main, tester avec Playwright :
-
-| Page              | URL                     | Verifier                             |
-| ----------------- | ----------------------- | ------------------------------------ |
-| Dashboard         | `/dashboard`            | KPIs charges, pas de NaN             |
-| Commandes clients | `/commandes/clients`    | Table chargee, ouvrir 1 modal        |
-| Factures/Devis    | `/factures`             | Onglets, montants, PDF               |
-| Expeditions       | `/stocks/expeditions`   | Statuts coherents avec les commandes |
-| Finance           | `/finance/transactions` | Transactions chargees                |
-
-Console : `browser_console_messages(level: "error")` → 0 erreur toleree.
+```bash
+rm -rf .playwright-mcp/snapshots .playwright-mcp/*.yml .playwright-mcp/*.log
+```

@@ -13,13 +13,15 @@ Gestion complete : produits, stock, commandes, finance, clients, fournisseurs.
 
 | Tache              | Lire AVANT                                          |
 | ------------------ | --------------------------------------------------- |
-| Produits/Catalogue | `docs/current/modules/sourcing-reference.md`        |
+| Produits/Catalogue | `docs/current/modules/`                             |
 | Stock/Alertes      | `docs/current/modules/stock-module-reference.md`    |
 | Triggers stock     | `docs/current/database/triggers-stock-reference.md` |
 | Commandes SO/PO    | `docs/current/modules/orders-workflow-reference.md` |
 | Finance/Factures   | `docs/current/finance/finance-reference.md`         |
+| Sourcing           | `docs/current/modules/sourcing-reference.md`        |
 | Dashboard/KPIs     | `docs/current/users/daily-workflows.md`             |
-| Schema DB          | `docs/current/database/tables-by-domain.md`         |
+| Composants UI      | `docs/architecture/COMPOSANTS-CATALOGUE.md`         |
+| Schema DB          | `docs/current/database/schema/`                     |
 
 ## Source de Verite DB
 
@@ -43,9 +45,10 @@ pnpm --filter @verone/back-office type-check
 - Table : `user_app_roles` (app='back-office')
 - Helper RLS : `is_backoffice_user()`, `is_back_office_admin()`
 
-## Documentation Complementaire
+## Documentation Projet
 
-- Tables par domaine : `docs/current/database/tables-by-domain.md`
-- Triggers stock : `docs/current/database/triggers-stock-reference.md`
-- Workflow commandes : `docs/current/modules/orders-workflow-reference.md`
-- Facturation Qonto : `docs/current/finance/finance-reference.md`
+- `docs/current/database/schema/` — Schema DB par domaine
+- `docs/current/database/triggers-stock-reference.md` — Triggers stock
+- `docs/current/modules/orders-workflow-reference.md` — Workflow commandes
+- `docs/current/finance/invoicing-system-reference.md` — Systeme facturation Qonto
+- `docs/current/modules/` — Modules (stock, commandes, sourcing)

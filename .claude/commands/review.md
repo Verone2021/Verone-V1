@@ -127,7 +127,7 @@ Sous-ensemble de typescript, concentre sur :
 
 1. `Grep` pour exports non utilises :
    - Lister les `export function` et `export const`
-   - Verifier avec `Grep` si ces exports sont importes ailleurs dans le codebase
+   - Verifier avec `Grep` si references existent
 2. Detecter fichiers potentiellement morts :
    - Fichiers dans `components/` non importes nulle part
    - Routes API non appelees

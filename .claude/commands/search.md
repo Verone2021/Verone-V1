@@ -59,9 +59,9 @@ FROM pg_policies WHERE tablename = '<TABLE>';
 SELECT indexname, indexdef FROM pg_indexes WHERE tablename = '<TABLE>';
 ```
 
-### Etape 3 — EXPLORER le code (Grep + Glob en parallele)
+### Etape 3 — EXPLORER le code (Grep en parallele)
 
-- **Composants** : `Grep` + `Glob` pour trouver les fichiers lies au domaine
+- **Composants** : `Grep` pour trouver les fichiers lies au domaine
 - **Hooks/fonctions** : React Query, server actions, route handlers
 - **Patterns** : comment les features similaires sont implementees
 - **Types TypeScript** : types existants dans `packages/@verone/types/`

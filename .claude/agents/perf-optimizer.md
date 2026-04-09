@@ -130,7 +130,7 @@ WHERE qual LIKE '%auth.uid()%'
 
 Utiliser aussi `mcp__supabase__get_advisors` pour les conseils performance/sécurité Supabase.
 
-### Domaine 3 : Code Performance (via Grep/Glob)
+### Domaine 3 : Code Performance (via Grep)
 
 Patterns à détecter :
 
@@ -295,12 +295,11 @@ mcp__supabase__get_advisors  # Conseils performance/sécurité
 mcp__supabase__list_tables   # Liste des tables
 ```
 
-### Recherche Code (via Grep/Glob/Read)
+### Recherche Code (via Grep/Glob)
 
 ```bash
 Grep                         # Recherche patterns dans le code
 Glob                         # Recherche fichiers par pattern
-Read                         # Lecture fichiers pour analyse detaillee
 ```
 
 ---

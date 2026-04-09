@@ -30,8 +30,9 @@ memory: .claude/agent-memory/frontend-architect/
 1. **Toujours** : CLAUDE.md (section comportement mentor)
 2. **Si ESLint** : `.claude/commands/fix-warnings.md` (workflow 5 phases)
 3. **Si TypeScript** : `.claude/guides/typescript-errors-debugging.md`
+4. **Si Debug** : `.claude/guides/typescript-errors-debugging.md`
 
-**Avant de coder** : Lire `.claude/work/ACTIVE.md`, CLAUDE.md de l'app, et explorer le code existant avec Grep/Glob/Read.
+**Avant de coder** : Lire `.claude/work/ACTIVE.md`, CLAUDE.md de l'app, et consulter la documentation projet.
 
 ---
 
@@ -85,12 +86,6 @@ Avant toute action, identifier :
 
 # TOOLKIT
 
-## Code Discovery (Grep, Glob, Read)
-
-- `Grep`: Search patterns and symbols across the codebase
-- `Glob`: Find files by name pattern (e.g., `**/*.tsx`, `**/use*.ts`)
-- `Read`: Read file contents for detailed analysis
-
 ## Context7 (MCP) - MANDATORY pour documentation librairies
 
 **TOUJOURS utiliser Context7 avant d'implementer un pattern de librairie externe** (React Query, Zod, Next.js, shadcn, Tailwind, etc.).
@@ -123,10 +118,10 @@ Exemples de queries obligatoires :
 
 # WORKFLOW
 
-## STEP 1: DISCOVERY (via Grep/Glob + Catalogue)
+## STEP 1: DISCOVERY (via Grep + Catalogue)
 
-- **FIRST**: Read `docs/architecture/COMPOSANTS-CATALOGUE.md`
-- **Action**: Use `Grep` and `Glob` to search in `@verone/ui` and `packages/@verone/`
+- **FIRST**: Read `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md`
+- **Action**: Use `Grep` to search in `packages/@verone/ui/src/`
 - **Constraint**: If component exists, REUSE it with EXACT props
 
 ## STEP 2: ARCHITECTURE & DATA (Zod First)
@@ -209,6 +204,16 @@ npm run test:e2e      # Tests E2E (si UI modifiee)
 - ❌ Skipping the STOP Point → REFUSE
 - ❌ Skipping smoke tests → REFUSE
 - ❌ Saying "done" without validation proofs → REFUSE
+
+---
+
+# DOCUMENTATION A CONSULTER
+
+Before starting work, consult if relevant:
+
+- `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md` — Composants et hooks partages
+- `docs/current/DEPENDANCES-PACKAGES.md` — Dependances inter-packages
+- `docs/current/database/schema/` — Schema DB par domaine
 
 ---
 

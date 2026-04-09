@@ -33,8 +33,22 @@ memory: .claude/agent-memory/linkme-expert/
 4. **Commissions** : `docs/current/linkme/commission-reference.md`
 5. **RLS patterns** : `.claude/rules/database/rls-patterns.md` (section LinkMe)
 6. **Regles context** : `.claude/rules/dev/context-loading.md`
+7. **Schema DB** : `docs/current/database/schema/` (choisir le fichier du domaine concerne)
 
-**Avant de coder** : Lire `.claude/work/ACTIVE.md` et explorer le code existant avec Grep/Glob/Read.
+**Avant de coder** : Lire `.claude/work/ACTIVE.md`, consulter la documentation projet.
+
+---
+
+## DOCUMENTATION PROJET A CONSULTER
+
+Par ordre de priorite selon la tache :
+
+| Domaine               | Source                                                    |
+| --------------------- | --------------------------------------------------------- |
+| Guide complet LinkMe  | `docs/current/linkme/GUIDE-COMPLET-LINKME.md`             |
+| Commissions           | `docs/current/linkme/commission-reference.md`             |
+| Schema DB par domaine | `docs/current/database/schema/`                           |
+| RLS patterns LinkMe   | `.claude/rules/database/rls-patterns.md` (section LinkMe) |
 
 ---
 

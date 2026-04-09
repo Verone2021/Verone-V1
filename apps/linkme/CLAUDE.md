@@ -17,9 +17,13 @@ Canal de vente **linkme** (PAS "affilie"). Plateforme B2B ou les affilies (ensei
 | -------------------- | --------------------------------------------------------- |
 | Guide complet        | `docs/current/linkme/GUIDE-COMPLET-LINKME.md`             |
 | Commissions          | `docs/current/linkme/commission-reference.md`             |
-| Commissions/Prix     | `docs/current/linkme/commission-reference.md`             |
-| Formulaires commande | `docs/current/linkme/formulaires-commande-comparaison.md` |
+| Commandes affilies   | `docs/current/linkme/GUIDE-COMPLET-LINKME.md`             |
+| Auth/Roles           | `docs/current/linkme/GUIDE-COMPLET-LINKME.md`             |
+| Selections publiques | `docs/current/linkme/GUIDE-COMPLET-LINKME.md`             |
+| Prix/Corrections     | `docs/current/linkme/commission-reference.md`             |
 | RLS affilies         | `.claude/rules/database/rls-patterns.md` (section LinkMe) |
+| Formulaires commande | `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md`            |
+| Facture verification | `docs/current/finance/invoicing-system-reference.md`      |
 
 ## Regles Specifiques LinkMe
 
@@ -46,9 +50,9 @@ pnpm --filter @verone/linkme type-check
 - `org_independante` : Organisation independante (voit uniquement sa propre org)
 - Table : `user_app_roles` (app='linkme')
 
-## Documentation Complementaire
+## Documentation Projet
 
-- Guide complet : `docs/current/linkme/GUIDE-COMPLET-LINKME.md`
-- Commissions : `docs/current/linkme/commission-reference.md`
-- Glossaire prix : `docs/current/linkme/GLOSSAIRE-CHAMPS-PRIX.md`
-- Formulaires : `docs/current/linkme/formulaires-commande-comparaison.md`
+- `docs/current/linkme/GUIDE-COMPLET-LINKME.md` — Guide complet LinkMe
+- `docs/current/linkme/commission-reference.md` — Regles de commission
+- `docs/current/database/schema/` — Schema DB par domaine
+- `.claude/rules/database/rls-patterns.md` — Patterns RLS (section LinkMe)

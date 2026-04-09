@@ -2,7 +2,7 @@
 
 **Version** : 1.0.0 (2026-02-19)
 **Status** : SOURCE DE VERITE consolidee
-**Sources** : Documentation officielle Qonto + audit interne
+**Sources** : Documentation officielle Qonto + audit interne + memoires Serena
 
 ---
 

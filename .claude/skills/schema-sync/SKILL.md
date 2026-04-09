@@ -7,6 +7,15 @@ description: Reference rapide du schema DB Supabase. Interroge la DB pour affich
 
 **Quand utiliser** : Avant d'implementer une feature, pour connaitre le schema exact d'un domaine sans fouiller les migrations.
 
+## NOUVEAU : Documentation DB pre-generee disponible
+
+Avant d'executer des requetes SQL, verifier si la documentation existe deja :
+
+- `docs/current/database/schema/00-SUMMARY.md` — resume global
+- `docs/current/database/schema/01-organisations.md` a `04-autres.md` — documentation par domaine
+
+Si la doc existe et est a jour, la LIRE au lieu d'executer des requetes SQL. N'executer des requetes que si la doc est absente ou si tu as besoin de donnees temps reel.
+
 ## Usage
 
 Specifier un domaine ou une table :

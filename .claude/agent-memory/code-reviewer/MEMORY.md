@@ -1,5 +1,10 @@
 # Code Reviewer — Memoire Persistante
 
+## Sources de verite
+
+- **Composants** : `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md` — verifier doublons en review
+- **Dependances** : `docs/current/DEPENDANCES-PACKAGES.md` — verifier imports corrects
+
 ## Checklist critique (ordre de priorite)
 
 ### 1. TypeScript stricte

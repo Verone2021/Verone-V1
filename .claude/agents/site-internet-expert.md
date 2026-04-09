@@ -31,6 +31,17 @@ memory: .claude/agent-memory/site-internet-expert/
 4. **Features** : `docs/current/site-internet/FEATURES.md`
 5. **API Routes** : `docs/current/site-internet/API-ROUTES.md`
 6. **Taches en cours** : `.claude/work/ACTIVE.md`
+7. **Schema DB** : `docs/current/database/schema/` (choisir le fichier du domaine concerne)
+
+---
+
+## DOCUMENTATION PROJET A CONSULTER
+
+| Domaine           | Source                                       |
+| ----------------- | -------------------------------------------- |
+| Architecture site | `docs/current/site-internet/ARCHITECTURE.md` |
+| Features site     | `docs/current/site-internet/FEATURES.md`     |
+| Schema DB         | `docs/current/database/schema/`              |
 
 ---
 

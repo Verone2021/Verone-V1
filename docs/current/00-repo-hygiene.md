@@ -107,6 +107,7 @@ jobs:
 # AI/Agent workspace
 .claude/scratch/
 .claude/reports/**
+.serena/
 
 # Local configs
 *.local.json
@@ -133,7 +134,7 @@ docs/current/**            # Current documentation
 - [ ] Audit `.claude/scripts/` - archive orphan scripts
 - [ ] Check CI workflows - remove deprecated jobs
 - [ ] Verify `.gitignore` - no sensitive files tracked
-- [ ] Review docs/current/ - delete outdated docs
+- [ ] Review Serena memories - delete outdated ones
 
 ## Emergency Cleanup
 

@@ -21,8 +21,8 @@ Chercher documentation officielle AVANT d'expliquer :
 
 Chercher usages existants dans le projet :
 
-1. **Grep** : `Grep({ pattern: "[regex]", output_mode: "files_with_matches" })`
-2. **Glob** : `Glob({ pattern: "**/*[pattern]*" })` pour trouver fichiers par nom
+1. **Grep** : `Grep pattern="[pattern]" glob="**/*.{ts,tsx}"`
+2. **Grep** : `Grep({ pattern: "[regex]", output_mode: "files_with_matches" })`
 
 ### Phase 3 : EXPLIQUER (Schema Mental)
 

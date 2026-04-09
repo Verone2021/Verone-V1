@@ -46,6 +46,7 @@ interface EnseigneOrganisationsTableProps {
   organisations: OrganisationWithRevenue[];
   parentOrganisation: OrganisationWithRevenue | null;
   onAddOrganisations?: () => void;
+  onCreateOrganisation?: () => void;
   onRemoveOrganisation?: (organisationId: string) => Promise<void>;
   loading?: boolean;
   className?: string;
@@ -105,6 +106,7 @@ export function EnseigneOrganisationsTable({
   organisations,
   parentOrganisation: _parentOrganisation,
   onAddOrganisations,
+  onCreateOrganisation,
   onRemoveOrganisation,
   loading = false,
   className,
@@ -159,12 +161,28 @@ export function EnseigneOrganisationsTable({
             <Building2 className="h-5 w-5 mr-2 text-gray-500" />
             Organisations membres ({organisations.length})
           </CardTitle>
-          {onAddOrganisations && (
-            <ButtonV2 variant="outline" size="sm" onClick={onAddOrganisations}>
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter
-            </ButtonV2>
-          )}
+          <div className="flex items-center gap-2">
+            {onCreateOrganisation && (
+              <ButtonV2
+                variant="primary"
+                size="sm"
+                onClick={onCreateOrganisation}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Nouvelle organisation
+              </ButtonV2>
+            )}
+            {onAddOrganisations && (
+              <ButtonV2
+                variant="outline"
+                size="sm"
+                onClick={onAddOrganisations}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Ajouter existante
+              </ButtonV2>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent>

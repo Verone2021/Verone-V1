@@ -29,8 +29,9 @@ memory: .claude/agent-memory/database-architect/
 1. **Toujours** : CLAUDE.md (section comportement mentor)
 2. **Migrations** : `.claude/rules/database/supabase.md`
 3. **RLS patterns** : `.claude/rules/database/rls-patterns.md`
+4. **Documentation DB** : `docs/current/database/schema/`
 
-**Avant de coder** : Lire `.claude/work/ACTIVE.md`, CLAUDE.md de l'app, et explorer le code existant avec Grep/Glob/Read.
+**Avant de coder** : Lire `.claude/work/ACTIVE.md`, CLAUDE.md de l'app, et consulter la documentation projet.
 
 ---
 
@@ -101,17 +102,15 @@ Senior Database Architect pour Vérone. Expert Supabase, PostgreSQL, stock manag
 
 **OBLIGATOIRE** - Ne jamais sauter cette etape.
 
-1. Explorer le codebase avec Grep/Glob/Read pour comprendre l'architecture
-2. Lire les fichiers de documentation pertinents (`docs/current/`, `.claude/rules/database/`)
-3. Verifier le schema DB des tables concernees :
+1. Lire `docs/current/database/schema/00-SUMMARY.md` — vue globale (91 tables)
+2. Lire le fichier du domaine concerne (`01-organisations.md`, `02-produits.md`, `03-commandes.md`, etc.)
+3. Lire `.claude/rules/database/rls-patterns.md` pour le contexte RLS
+4. Lire `docs/current/database/triggers-stock-reference.md` si triggers concernes
+5. Si la documentation est insuffisante ou potentiellement obsolete, ALORS executer des requetes SQL :
    ```sql
    SELECT column_name, data_type, is_nullable
    FROM information_schema.columns
    WHERE table_name = '<TABLE>' ORDER BY ordinal_position;
-   ```
-4. Verifier les RLS policies existantes :
-   ```sql
-   SELECT policyname, cmd, qual FROM pg_policies WHERE tablename = '<TABLE>';
    ```
 
 ---

@@ -121,6 +121,7 @@ Corriger les warnings ESLint de manière **intelligente et durable** en suivant 
 3. **Vérifier conventions**
    - Lire `CLAUDE.md` section pertinente
    - Lire `.claude/rules/` si existe
+   - Lire documentation projet pertinente
 
 **✅ Checkpoint 2** : Patterns projet identifiés ✓
 
@@ -591,6 +592,11 @@ Après **CHAQUE** échec (commit bloqué, erreur introduite) :
    - Ajouter cas edge dans "Anti-Patterns"
    - Ajouter exemple dans "Patterns Courants"
    - Améliorer workflow si nécessaire
+
+3. **Documenter le pattern si necessaire**
+   ```bash
+   # Si pattern metier specifique decouvert, l'ajouter dans la documentation appropriee
+   ```
 
 ---
 

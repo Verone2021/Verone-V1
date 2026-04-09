@@ -6,7 +6,6 @@ allowed-tools:
     Bash,
     Read,
     Grep,
-    Glob,
     mcp__supabase__execute_sql,
     mcp__supabase__list_tables,
     mcp__supabase__get_advisors,

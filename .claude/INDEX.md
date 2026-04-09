@@ -1,6 +1,6 @@
 # INDEX CENTRALISE — Verone Back Office
 
-**Derniere mise a jour** : 2026-04-01 (nettoyage ACTIVE.md + restauration 40 docs + agent memories)
+**Derniere mise a jour** : 2026-04-09 (nettoyage Serena, ajout regles manquantes, mise a jour MCP)
 
 Ce fichier est le sommaire unique pour trouver toute l'information du repository.
 Tout agent ou commande doit commencer par consulter cet index.
@@ -64,21 +64,24 @@ Tout agent ou commande doit commencer par consulter cet index.
 
 ## Regles (auto-discovered par Claude Code)
 
-| Fichier                                        | Contenu                                                        |
-| ---------------------------------------------- | -------------------------------------------------------------- |
-| `.claude/rules/dev/git-workflow.md`            | Branches, commits, PR — **STOP avant commit/push/PR**          |
-| `.claude/rules/dev/context-loading.md`         | **OBLIGATOIRE** — consulter contexte avant de coder            |
-| `.claude/rules/dev/build-commands.md`          | Toujours filtrer `pnpm --filter @verone/[app]`                 |
-| `.claude/rules/dev/hooks-bloquants.md`         | Documentation des hooks actifs                                 |
-| `.claude/rules/dev/servers.md`                 | Ports 3000/3001/3002 — JAMAIS lancer dev                       |
-| `.claude/rules/dev/multi-agent.md`             | Coordination multi-agents                                      |
-| `.claude/rules/dev/deployment-verification.md` | Checklist post-deploiement                                     |
-| `.claude/rules/dev/playwright-screenshots.md`  | Screenshots dans `.playwright-mcp/screenshots/`                |
-| `.claude/rules/frontend/async-patterns.md`     | Promesses, handlers async, invalidateQueries                   |
-| `.claude/rules/backend/api.md`                 | Route handlers, validation Zod, JAMAIS modifier API existantes |
-| `.claude/rules/database/supabase.md`           | Migrations, RLS, queries, types                                |
-| `.claude/rules/database/rls-patterns.md`       | Patterns RLS complets (staff, affilies, public)                |
-| `.claude/rules/dev/clean-code.md`              | Fichier > 400 lignes = refactoring obligatoire                 |
+| Fichier                                         | Contenu                                                        |
+| ----------------------------------------------- | -------------------------------------------------------------- |
+| `.claude/rules/dev/git-workflow.md`             | Branches, commits, PR — **STOP avant commit/push/PR**          |
+| `.claude/rules/dev/context-loading.md`          | **OBLIGATOIRE** — consulter contexte avant de coder            |
+| `.claude/rules/dev/build-commands.md`           | Toujours filtrer `pnpm --filter @verone/[app]`                 |
+| `.claude/rules/dev/hooks-bloquants.md`          | Documentation des hooks actifs                                 |
+| `.claude/rules/dev/servers.md`                  | Ports 3000/3001/3002 — JAMAIS lancer dev                       |
+| `.claude/rules/dev/multi-agent.md`              | Coordination multi-agents                                      |
+| `.claude/rules/dev/deployment-verification.md`  | Checklist post-deploiement                                     |
+| `.claude/rules/dev/playwright-screenshots.md`   | Screenshots dans `.playwright-mcp/screenshots/`                |
+| `.claude/rules/frontend/async-patterns.md`      | Promesses, handlers async, invalidateQueries                   |
+| `.claude/rules/backend/api.md`                  | Route handlers, validation Zod, JAMAIS modifier API existantes |
+| `.claude/rules/database/supabase.md`            | Migrations, RLS, queries, types                                |
+| `.claude/rules/database/rls-patterns.md`        | Patterns RLS complets (staff, affilies, public)                |
+| `.claude/rules/dev/clean-code.md`               | Fichier > 400 lignes = refactoring obligatoire                 |
+| `.claude/rules/dev/component-safety.md`         | Zero swap composants, fixes cibles uniquement                  |
+| `.claude/rules/dev/stock-triggers-protected.md` | Triggers stock IMMUABLES — JAMAIS modifier                     |
+| `.claude/rules/database/post-migration.md`      | Mise a jour doc DB apres chaque migration                      |
 
 ---
 
@@ -118,14 +121,17 @@ Tout agent ou commande doit commencer par consulter cet index.
 
 ### Database
 
-| Sujet                | Source                                              |
-| -------------------- | --------------------------------------------------- |
-| Tables par domaine   | `docs/current/database/database.md`                 |
-| Triggers stock       | `docs/current/database/triggers-stock-reference.md` |
-| Triggers metriques   | `docs/metrics/database-triggers.md`                 |
-| RLS patterns         | `.claude/rules/database/rls-patterns.md`            |
-| Mapping pages-tables | `docs/current/MAPPING-PAGES-TABLES.md`              |
-| Architecture DB      | `docs/current/database/database-implementation.md`  |
+| Sujet                           | Source                                              |
+| ------------------------------- | --------------------------------------------------- |
+| Schema DB complet (par domaine) | `docs/current/database/schema/` (9 fichiers)        |
+| Script re-generation doc DB     | `scripts/generate-db-docs.py`                       |
+| Dependances inter-packages      | `docs/current/DEPENDANCES-PACKAGES.md`              |
+| Tables par domaine              | `docs/current/database/schema/`                     |
+| Triggers stock                  | `docs/current/database/triggers-stock-reference.md` |
+| Triggers metriques              | `docs/metrics/database-triggers.md`                 |
+| RLS patterns                    | `.claude/rules/database/rls-patterns.md`            |
+| Mapping pages-tables            | `docs/current/MAPPING-PAGES-TABLES.md`              |
+| Architecture DB                 | `docs/current/database/schema/`                     |
 
 ### Finance
 
@@ -134,7 +140,7 @@ Tout agent ou commande doit commencer par consulter cet index.
 | Reference finance         | `docs/current/finance/finance-reference.md`          |
 | Systeme Qonto             | `docs/current/finance/invoicing-system-reference.md` |
 | Qonto env setup           | `docs/integrations/qonto-env-setup.md`               |
-| Never finalize            | `docs/current/finance/qonto-never-finalize.md`       |
+| Never finalize            | `docs/current/finance/invoicing-system-reference.md` |
 | Invoicing system (routes) | `docs/current/finance/invoicing-system-reference.md` |
 | Workflow ventes complet   | `docs/current/WORKFLOW-VENTES.md`                    |
 | Dependances composants    | `docs/current/COMPONENT-DEPENDENCIES.md`             |
@@ -160,7 +166,7 @@ Tout agent ou commande doit commencer par consulter cet index.
 | Workflow PO complet        | `docs/business-rules/07-commandes/fournisseurs/`                                |
 | Notifications commandes    | `docs/business-rules/07-commandes/notifications-workflow.md`                    |
 | Calcul marge LinkMe        | `docs/linkme/margin-calculation.md`                                             |
-| Decisions projet           | `docs/current/project-decisions.md`                                             |
+| Decisions projet           | `docs/current/`                                                                 |
 | Incident runbook           | `docs/runbooks/incident.md`                                                     |
 
 ---

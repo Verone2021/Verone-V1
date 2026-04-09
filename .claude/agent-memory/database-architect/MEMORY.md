@@ -1,8 +1,14 @@
 # Database Architect — Memoire Persistante
 
+## Sources de verite
+
+- **Schema DB COMPLET** : `docs/current/database/schema/` — LIRE AVANT toute migration
+- **Resume global** : `docs/current/database/schema/00-SUMMARY.md`
+- **Script re-generation** : `python scripts/generate-db-docs.py` — EXECUTER apres chaque migration
+
 ## Architecture DB Verone
 
-- 78+ tables, 158+ triggers, 239+ RLS policies, 180+ migrations
+- 91 tables documentees dans `docs/current/database/schema/` (9 fichiers par domaine)
 - 1 SEULE base Supabase (dev = preview = production) — decision non-negociable
 - Helper functions RLS : `is_backoffice_user()`, `is_back_office_admin()` (SECURITY DEFINER)
 - Migrations : TOUJOURS psql avec $DATABASE_URL, JAMAIS Dashboard Supabase
@@ -71,9 +77,9 @@
 
 ## Documentation de reference
 
-- `docs/current/database/database.md` — schema global
+- `docs/current/database/schema/` — schema complet par domaine (9 fichiers)
 - `docs/current/database/triggers-stock-reference.md` — 48 triggers documentes
 - `docs/business-rules/06-stocks/` — regles metier stock (restaurees)
 - `docs/business-rules/07-commandes/` — workflows commandes (restaurees)
-- `docs/current/database/database-implementation.md` — architecture 78 tables
 - `docs/current/database/stock-orders-logic.md` — logique stock/commandes
+- `.claude/rules/database/rls-patterns.md` — patterns RLS obligatoires

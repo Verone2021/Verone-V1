@@ -43,6 +43,7 @@
     "**/build/**",
     "**/node_modules/**",
     "**/.claude/**",
+    "**/.serena/**",
     "**/docs/**",
     "**/.github/**",
     "scripts/**/*.{ts,tsx}",

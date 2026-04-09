@@ -30,6 +30,19 @@ memory: .claude/agent-memory/back-office-expert/
 3. **Taches en cours** : `.claude/work/ACTIVE.md`
 4. **Entites metier** : `docs/current/back-office-entities-index.md`
 5. **Regles context** : `.claude/rules/dev/context-loading.md`
+6. **Schema DB** : `docs/current/database/schema/` (choisir le fichier du domaine concerne)
+
+---
+
+## DOCUMENTATION PROJET A CONSULTER
+
+| Domaine               | Source                                               |
+| --------------------- | ---------------------------------------------------- |
+| Schema DB par domaine | `docs/current/database/schema/`                      |
+| Stock et alertes      | `docs/current/database/triggers-stock-reference.md`  |
+| Commandes (workflow)  | `docs/current/modules/orders-workflow-reference.md`  |
+| Facturation Qonto     | `docs/current/finance/invoicing-system-reference.md` |
+| Modules               | `docs/current/modules/`                              |
 
 ---
 

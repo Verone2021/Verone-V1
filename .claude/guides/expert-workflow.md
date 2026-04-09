@@ -74,10 +74,9 @@
 
 **Actions** :
 
-1. **Chercher patterns existants** (Grep/Glob)
+1. **Chercher patterns existants** (Grep)
 
    ```bash
-   # Rechercher un pattern dans le codebase
    Grep pattern="useCallback" glob="**/*.tsx"
    ```
 
@@ -331,7 +330,7 @@ Expert: "⚠️ ATTENTION : as any est une anti-pattern.
 ```markdown
 # Mémoire créée après 1er problème
 
-# Pattern appris : supabase-organisations-columns
+# memory: supabase-organisations-columns
 
 Problème rencontré : Column 'name' does not exist
 Cause : Table organisations utilise 'legal_name'
