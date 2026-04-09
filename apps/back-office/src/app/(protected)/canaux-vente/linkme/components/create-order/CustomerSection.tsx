@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import { CustomerOrganisationFormModal } from '@verone/organisations';
+import { CreateIndividualCustomerModal } from '@verone/orders';
 import { cn } from '@verone/utils';
 import { Building2, User, Search, Plus, Check, Loader2 } from 'lucide-react';
 
@@ -19,25 +20,13 @@ interface CustomerSectionProps {
   onSelectCustomer: (id: string) => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
-  showCreateForm: boolean;
-  onToggleCreateForm: (show: boolean) => void;
-  onCreateCustomer: () => void;
-  isCreating: boolean;
   isLoading: boolean;
   filteredOrganisations: EnseigneOrganisationCustomer[];
   filteredIndividuals: EnseigneIndividualCustomer[];
-  // Props pour le modal organisation unifié
+  // Props pour les modaux unifiés (org + particulier)
   enseigneId?: string | null;
   onOrganisationCreated?: (orgId: string) => void;
-  // Create form fields (particulier uniquement)
-  newCustomerFirstName: string;
-  onNewCustomerFirstNameChange: (v: string) => void;
-  newCustomerLastName: string;
-  onNewCustomerLastNameChange: (v: string) => void;
-  newCustomerEmail: string;
-  onNewCustomerEmailChange: (v: string) => void;
-  newCustomerPhone: string;
-  onNewCustomerPhoneChange: (v: string) => void;
+  onIndividualCreated?: (customerId: string) => void;
 }
 
 export function CustomerSection({
@@ -47,25 +36,15 @@ export function CustomerSection({
   onSelectCustomer,
   searchQuery,
   onSearchChange,
-  showCreateForm,
-  onToggleCreateForm,
-  onCreateCustomer,
-  isCreating,
   isLoading,
   filteredOrganisations,
   filteredIndividuals,
   enseigneId,
   onOrganisationCreated,
-  newCustomerFirstName,
-  onNewCustomerFirstNameChange,
-  newCustomerLastName,
-  onNewCustomerLastNameChange,
-  newCustomerEmail,
-  onNewCustomerEmailChange,
-  newCustomerPhone,
-  onNewCustomerPhoneChange,
+  onIndividualCreated,
 }: CustomerSectionProps) {
   const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
+  const [isIndividualModalOpen, setIsIndividualModalOpen] = useState(false);
 
   return (
     <div className="space-y-3 border-t pt-6">
@@ -156,15 +135,10 @@ export function CustomerSection({
             if (customerType === 'organization') {
               setIsOrgModalOpen(true);
             } else {
-              onToggleCreateForm(!showCreateForm);
+              setIsIndividualModalOpen(true);
             }
           }}
-          className={cn(
-            'flex items-center gap-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors',
-            showCreateForm
-              ? 'bg-purple-600 text-white border-purple-600'
-              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-          )}
+          className="flex items-center gap-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
         >
           <Plus className="h-4 w-4" />
           <span className="hidden sm:inline">Nouveau</span>
@@ -183,86 +157,17 @@ export function CustomerSection({
         }}
       />
 
-      {/* Formulaire création particulier (inline, gardé tel quel) */}
-      {showCreateForm && customerType === 'individual' && (
-        <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg space-y-3">
-          <p className="text-sm font-medium text-purple-800">
-            Nouveau particulier
-          </p>
-
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              type="text"
-              value={newCustomerFirstName}
-              onChange={e => onNewCustomerFirstNameChange(e.target.value)}
-              placeholder="Prénom *"
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-            <input
-              type="text"
-              value={newCustomerLastName}
-              onChange={e => onNewCustomerLastNameChange(e.target.value)}
-              placeholder="Nom *"
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              type="email"
-              value={newCustomerEmail}
-              onChange={e => onNewCustomerEmailChange(e.target.value)}
-              placeholder="Email"
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-            <input
-              type="tel"
-              value={newCustomerPhone}
-              onChange={e => onNewCustomerPhoneChange(e.target.value)}
-              placeholder="Téléphone"
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => {
-                void (async () => {
-                  try {
-                    onCreateCustomer();
-                  } catch (error) {
-                    console.error('[CustomerSection] Create failed:', error);
-                  }
-                })();
-              }}
-              disabled={
-                isCreating ||
-                !newCustomerFirstName.trim() ||
-                !newCustomerLastName.trim()
-              }
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-            >
-              {isCreating ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Création...
-                </>
-              ) : (
-                <>
-                  <Check className="h-4 w-4" />
-                  Créer et sélectionner
-                </>
-              )}
-            </button>
-            <button
-              onClick={() => onToggleCreateForm(false)}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-white text-sm"
-            >
-              Annuler
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Modal création particulier (formulaire complet) */}
+      <CreateIndividualCustomerModal
+        isOpen={isIndividualModalOpen}
+        onClose={() => setIsIndividualModalOpen(false)}
+        enseigneId={enseigneId}
+        sourceType="linkme"
+        onCustomerCreated={customerId => {
+          onIndividualCreated?.(customerId);
+          setIsIndividualModalOpen(false);
+        }}
+      />
 
       {/* Liste clients */}
       <div className="space-y-2 max-h-40 overflow-y-auto">

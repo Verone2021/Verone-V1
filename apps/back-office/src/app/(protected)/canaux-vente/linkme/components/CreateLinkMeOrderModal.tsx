@@ -109,17 +109,6 @@ export function CreateLinkMeOrderModal({
                 onSelectCustomer={form.setSelectedCustomerId}
                 searchQuery={form.searchQuery}
                 onSearchChange={form.setSearchQuery}
-                showCreateForm={form.showCreateForm}
-                onToggleCreateForm={form.setShowCreateForm}
-                onCreateCustomer={() => {
-                  void form.handleCreateCustomer().catch(error => {
-                    console.error(
-                      '[CreateLinkMeOrderModal] handleCreateCustomer failed:',
-                      error
-                    );
-                  });
-                }}
-                isCreating={form.createIndividualCustomer.isPending}
                 isLoading={form.customers.isLoading}
                 filteredOrganisations={form.filteredOrganisations}
                 filteredIndividuals={form.filteredIndividuals}
@@ -128,14 +117,10 @@ export function CreateLinkMeOrderModal({
                   form.setSelectedCustomerId(orgId);
                   form.customers.refetch();
                 }}
-                newCustomerFirstName={form.newCustomerFirstName}
-                onNewCustomerFirstNameChange={form.setNewCustomerFirstName}
-                newCustomerLastName={form.newCustomerLastName}
-                onNewCustomerLastNameChange={form.setNewCustomerLastName}
-                newCustomerEmail={form.newCustomerEmail}
-                onNewCustomerEmailChange={form.setNewCustomerEmail}
-                newCustomerPhone={form.newCustomerPhone}
-                onNewCustomerPhoneChange={form.setNewCustomerPhone}
+                onIndividualCreated={customerId => {
+                  form.setSelectedCustomerId(customerId);
+                  form.customers.refetch();
+                }}
               />
             )}
 
