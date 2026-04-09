@@ -37,7 +37,6 @@ export default function ProductDetailPage() {
     sourcing,
     primaryImageUrl,
     tabs,
-    fetchProduct,
     handleProductUpdate,
     handleShare,
     router,
@@ -147,12 +146,8 @@ export default function ProductDetailPage() {
         onCloseCategorize={() => setIsCategorizeModalOpen(false)}
         onProductUpdate={handleProductUpdate}
         onImagesUpdated={() => {
-          void fetchProduct().catch(err => {
-            console.error(
-              '[ProductDetail] Fetch after images updated failed:',
-              err
-            );
-          });
+          // useProductImages gere son propre refresh via fetchImages()
+          // Pas besoin de recharger tout le produit pour les images
         }}
       />
     </div>
