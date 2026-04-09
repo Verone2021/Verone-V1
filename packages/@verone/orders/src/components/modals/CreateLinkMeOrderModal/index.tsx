@@ -98,10 +98,6 @@ export function CreateLinkMeOrderModal({
                     }}
                     searchQuery={form.searchQuery}
                     onSearchQueryChange={form.setSearchQuery}
-                    showCreateForm={form.showCreateForm}
-                    onToggleCreateForm={() =>
-                      form.setShowCreateForm(!form.showCreateForm)
-                    }
                     filteredOrganisations={form.filteredOrganisations}
                     filteredIndividuals={form.filteredIndividuals}
                     customersLoading={form.customers.isLoading}
@@ -114,37 +110,10 @@ export function CreateLinkMeOrderModal({
                       form.setSelectedCustomerId(orgId);
                       void form.customers.refetch();
                     }}
-                    newCustomerName={form.newCustomerName}
-                    onNewCustomerNameChange={form.setNewCustomerName}
-                    newCustomerFirstName={form.newCustomerFirstName}
-                    onNewCustomerFirstNameChange={form.setNewCustomerFirstName}
-                    newCustomerLastName={form.newCustomerLastName}
-                    onNewCustomerLastNameChange={form.setNewCustomerLastName}
-                    newCustomerEmail={form.newCustomerEmail}
-                    onNewCustomerEmailChange={form.setNewCustomerEmail}
-                    newCustomerPhone={form.newCustomerPhone}
-                    onNewCustomerPhoneChange={form.setNewCustomerPhone}
-                    newOrgOwnershipType={form.newOrgOwnershipType}
-                    onNewOrgOwnershipTypeChange={form.setNewOrgOwnershipType}
-                    newOrgAddress={form.newOrgAddress}
-                    onNewOrgAddressChange={form.setNewOrgAddress}
-                    newOrgPostalCode={form.newOrgPostalCode}
-                    onNewOrgPostalCodeChange={form.setNewOrgPostalCode}
-                    newOrgCity={form.newOrgCity}
-                    onNewOrgCityChange={form.setNewOrgCity}
-                    isCreatingCustomer={
-                      form.createOrganisation.isPending ||
-                      form.createIndividualCustomer.isPending
-                    }
-                    onCreateCustomer={() => {
-                      void form.handleCreateCustomer().catch(error => {
-                        console.error(
-                          '[CreateLinkMeOrderModal] handleCreateCustomer failed:',
-                          error
-                        );
-                      });
+                    onIndividualCreated={customerId => {
+                      form.setSelectedCustomerId(customerId);
+                      void form.customers.refetch();
                     }}
-                    onCancelCreateForm={() => form.setShowCreateForm(false)}
                   />
                 )}
               </div>

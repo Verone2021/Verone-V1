@@ -11,7 +11,7 @@ import type {
   EnseigneOrganisationCustomer,
   EnseigneIndividualCustomer,
 } from '../../../hooks/linkme/use-linkme-enseigne-customers';
-import { CustomerCreateForm } from './CustomerCreateForm';
+import { CreateIndividualCustomerModal } from '../create-individual-customer-modal';
 import type { CustomerType } from './types';
 
 interface CustomerSectionProps {
@@ -19,39 +19,15 @@ interface CustomerSectionProps {
   onCustomerTypeChange: (type: CustomerType) => void;
   searchQuery: string;
   onSearchQueryChange: (q: string) => void;
-  showCreateForm: boolean;
-  onToggleCreateForm: () => void;
   filteredOrganisations: EnseigneOrganisationCustomer[];
   filteredIndividuals: EnseigneIndividualCustomer[];
   customersLoading: boolean;
   selectedCustomerId: string;
   onSelectCustomer: (id: string) => void;
-  // Props pour le modal org (remplace le formulaire inline org)
+  // Props pour les modaux unifiés (org + particulier)
   enseigneId?: string;
   onOrganisationCreated?: (orgId: string) => void;
-  // Formulaire création particulier (gardé en inline)
-  newCustomerFirstName: string;
-  onNewCustomerFirstNameChange: (v: string) => void;
-  newCustomerLastName: string;
-  onNewCustomerLastNameChange: (v: string) => void;
-  newCustomerEmail: string;
-  onNewCustomerEmailChange: (v: string) => void;
-  newCustomerPhone: string;
-  onNewCustomerPhoneChange: (v: string) => void;
-  // Legacy org props (still needed for individual form + backward compat)
-  newCustomerName: string;
-  onNewCustomerNameChange: (v: string) => void;
-  newOrgOwnershipType: 'succursale' | 'franchise' | null;
-  onNewOrgOwnershipTypeChange: (v: 'succursale' | 'franchise' | null) => void;
-  newOrgAddress: string;
-  onNewOrgAddressChange: (v: string) => void;
-  newOrgPostalCode: string;
-  onNewOrgPostalCodeChange: (v: string) => void;
-  newOrgCity: string;
-  onNewOrgCityChange: (v: string) => void;
-  isCreatingCustomer: boolean;
-  onCreateCustomer: () => void;
-  onCancelCreateForm: () => void;
+  onIndividualCreated?: (customerId: string) => void;
 }
 
 export function CustomerSection({
@@ -59,8 +35,6 @@ export function CustomerSection({
   onCustomerTypeChange,
   searchQuery,
   onSearchQueryChange,
-  showCreateForm,
-  onToggleCreateForm,
   filteredOrganisations,
   filteredIndividuals,
   customersLoading,
@@ -68,29 +42,10 @@ export function CustomerSection({
   onSelectCustomer,
   enseigneId,
   onOrganisationCreated,
-  newCustomerName,
-  onNewCustomerNameChange,
-  newCustomerFirstName,
-  onNewCustomerFirstNameChange,
-  newCustomerLastName,
-  onNewCustomerLastNameChange,
-  newCustomerEmail,
-  onNewCustomerEmailChange,
-  newCustomerPhone,
-  onNewCustomerPhoneChange,
-  newOrgOwnershipType,
-  onNewOrgOwnershipTypeChange,
-  newOrgAddress,
-  onNewOrgAddressChange,
-  newOrgPostalCode,
-  onNewOrgPostalCodeChange,
-  newOrgCity,
-  onNewOrgCityChange,
-  isCreatingCustomer,
-  onCreateCustomer,
-  onCancelCreateForm,
+  onIndividualCreated,
 }: CustomerSectionProps) {
   const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
+  const [isIndividualModalOpen, setIsIndividualModalOpen] = useState(false);
   return (
     <div className="space-y-3">
       <label className="block text-sm font-medium text-gray-700">
@@ -174,15 +129,10 @@ export function CustomerSection({
             if (customerType === 'organization') {
               setIsOrgModalOpen(true);
             } else {
-              onToggleCreateForm();
+              setIsIndividualModalOpen(true);
             }
           }}
-          className={cn(
-            'flex items-center gap-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors',
-            showCreateForm
-              ? 'bg-purple-600 text-white border-purple-600'
-              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-          )}
+          className="flex items-center gap-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
         >
           <Plus className="h-4 w-4" />
           <span className="hidden sm:inline">Nouveau</span>
@@ -200,33 +150,17 @@ export function CustomerSection({
         }}
       />
 
-      {/* Formulaire création particulier (inline, gardé tel quel) */}
-      {showCreateForm && customerType === 'individual' && (
-        <CustomerCreateForm
-          customerType={customerType}
-          newCustomerName={newCustomerName}
-          onNewCustomerNameChange={onNewCustomerNameChange}
-          newCustomerFirstName={newCustomerFirstName}
-          onNewCustomerFirstNameChange={onNewCustomerFirstNameChange}
-          newCustomerLastName={newCustomerLastName}
-          onNewCustomerLastNameChange={onNewCustomerLastNameChange}
-          newCustomerEmail={newCustomerEmail}
-          onNewCustomerEmailChange={onNewCustomerEmailChange}
-          newCustomerPhone={newCustomerPhone}
-          onNewCustomerPhoneChange={onNewCustomerPhoneChange}
-          newOrgOwnershipType={newOrgOwnershipType}
-          onNewOrgOwnershipTypeChange={onNewOrgOwnershipTypeChange}
-          newOrgAddress={newOrgAddress}
-          onNewOrgAddressChange={onNewOrgAddressChange}
-          newOrgPostalCode={newOrgPostalCode}
-          onNewOrgPostalCodeChange={onNewOrgPostalCodeChange}
-          newOrgCity={newOrgCity}
-          onNewOrgCityChange={onNewOrgCityChange}
-          isCreatingCustomer={isCreatingCustomer}
-          onCreateCustomer={onCreateCustomer}
-          onCancelCreateForm={onCancelCreateForm}
-        />
-      )}
+      {/* Modal création particulier (formulaire complet) */}
+      <CreateIndividualCustomerModal
+        isOpen={isIndividualModalOpen}
+        onClose={() => setIsIndividualModalOpen(false)}
+        enseigneId={enseigneId}
+        sourceType="linkme"
+        onCustomerCreated={customerId => {
+          onIndividualCreated?.(customerId);
+          setIsIndividualModalOpen(false);
+        }}
+      />
 
       {/* Liste clients */}
       <div className="space-y-2 max-h-64 overflow-y-auto">

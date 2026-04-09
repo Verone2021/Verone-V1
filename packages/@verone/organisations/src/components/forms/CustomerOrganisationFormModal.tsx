@@ -204,6 +204,7 @@ export function CustomerOrganisationFormModal({
       organisationType="customer"
       organisation={organisation}
       mode={isEditing ? 'edit' : 'create'}
+      enseigneId={enseigneId}
       title={
         isEditing
           ? "Modifier l'organisation cliente"

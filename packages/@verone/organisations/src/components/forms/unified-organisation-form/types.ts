@@ -100,4 +100,6 @@ export interface UnifiedOrganisationFormProps {
   title?: string;
   onLogoUploadSuccess?: () => void;
   customSections?: React.ReactNode;
+  /** Pre-fill and lock enseigne (from enseigne detail page or LinkMe context) */
+  enseigneId?: string | null;
 }
