@@ -236,24 +236,61 @@ export function useFetchOrder(orderId: string) {
 
       if (enrichedData && enrichedData.length > 0) {
         const typed = enrichedData as LinkmeOrderItemEnrichedRaw[];
+
+        // Fetch stock for all products
+        const productIds = typed.map(i => i.product_id).filter(Boolean);
+        const { data: stockData } =
+          productIds.length > 0
+            ? await supabase
+                .from('products')
+                .select(
+                  'id, stock_real, stock_forecasted_in, stock_forecasted_out'
+                )
+                .in('id', productIds)
+            : { data: null };
+        const stockMap = new Map(
+          (stockData ?? []).map(
+            (p: {
+              id: string;
+              stock_real: number | null;
+              stock_forecasted_in: number | null;
+              stock_forecasted_out: number | null;
+            }) => [
+              p.id,
+              {
+                stock_real: p.stock_real,
+                stock_forecasted:
+                  (p.stock_real ?? 0) +
+                  (p.stock_forecasted_in ?? 0) -
+                  (p.stock_forecasted_out ?? 0),
+              },
+            ]
+          )
+        );
+
         setEnrichedItems(
-          typed.map((item: LinkmeOrderItemEnrichedRaw) => ({
-            id: item.id,
-            product_id: item.product_id,
-            product_name: item.product_name ?? 'Produit inconnu',
-            product_sku: item.product_sku ?? '-',
-            product_image_url: item.product_image_url,
-            quantity: item.quantity ?? 0,
-            unit_price_ht: item.unit_price_ht ?? 0,
-            total_ht: item.total_ht ?? 0,
-            base_price_ht: item.base_price_ht ?? 0,
-            margin_rate: item.margin_rate ?? 0,
-            commission_rate: item.commission_rate ?? 0,
-            selling_price_ht: item.selling_price_ht ?? 0,
-            affiliate_margin: item.affiliate_margin ?? 0,
-            retrocession_rate: item.retrocession_rate ?? 0,
-            created_by_affiliate: item.created_by_affiliate ?? null,
-          }))
+          typed.map((item: LinkmeOrderItemEnrichedRaw) => {
+            const stock = stockMap.get(item.product_id);
+            return {
+              id: item.id,
+              product_id: item.product_id,
+              product_name: item.product_name ?? 'Produit inconnu',
+              product_sku: item.product_sku ?? '-',
+              product_image_url: item.product_image_url,
+              quantity: item.quantity ?? 0,
+              unit_price_ht: item.unit_price_ht ?? 0,
+              total_ht: item.total_ht ?? 0,
+              base_price_ht: item.base_price_ht ?? 0,
+              margin_rate: item.margin_rate ?? 0,
+              commission_rate: item.commission_rate ?? 0,
+              selling_price_ht: item.selling_price_ht ?? 0,
+              affiliate_margin: item.affiliate_margin ?? 0,
+              retrocession_rate: item.retrocession_rate ?? 0,
+              created_by_affiliate: item.created_by_affiliate ?? null,
+              stock_real: stock?.stock_real ?? null,
+              stock_forecasted: stock?.stock_forecasted ?? null,
+            };
+          })
         );
       }
     } catch (err) {

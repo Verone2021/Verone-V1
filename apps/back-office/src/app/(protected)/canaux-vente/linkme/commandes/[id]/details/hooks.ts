@@ -48,6 +48,7 @@ export function useOrderDetailsPage() {
   >(null);
   const [editOrderDateOpen, setEditOrderDateOpen] = useState(false);
   const [editOrderDateValue, setEditOrderDateValue] = useState('');
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(
     null
   );
@@ -120,9 +121,14 @@ export function useOrderDetailsPage() {
       for (const [itemId, quantity] of Object.entries(editedQuantities)) {
         const item = order!.items.find(i => i.id === itemId);
         if (!item) continue;
+        const total_ht = quantity * item.unit_price_ht;
+        // retrocession_rate comes from enrichedItems (linkme_order_items_enriched view)
+        const enriched = enrichedItems.find(e => e.id === itemId);
+        const retrocession_rate = enriched?.retrocession_rate ?? 0;
+        const retrocession_amount = total_ht * retrocession_rate;
         await supabase
           .from('sales_order_items')
-          .update({ quantity, total_ht: quantity * item.unit_price_ht })
+          .update({ quantity, total_ht, retrocession_amount })
           .eq('id', itemId);
       }
       setEditedQuantities({});
@@ -402,6 +408,8 @@ export function useOrderDetailsPage() {
     setEditOrderDateOpen,
     editOrderDateValue,
     setEditOrderDateValue,
+    showQuoteModal,
+    setShowQuoteModal,
     selectedContactId,
     setSelectedContactId,
     availableContacts,

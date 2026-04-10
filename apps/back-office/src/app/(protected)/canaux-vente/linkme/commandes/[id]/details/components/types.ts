@@ -128,6 +128,8 @@ export interface EnrichedOrderItem {
   affiliate_margin: number;
   retrocession_rate: number;
   created_by_affiliate: string | null;
+  stock_real?: number | null;
+  stock_forecasted?: number | null;
 }
 
 export interface SalesOrderItemRaw {
