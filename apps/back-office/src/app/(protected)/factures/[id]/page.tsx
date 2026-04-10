@@ -6,6 +6,12 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import {
+  SendDocumentEmailModal,
+  DocumentEmailHistory,
+  type DocumentEmailType,
+} from '@verone/finance/components';
+import { useDocumentEmails } from '@verone/finance/hooks';
+import {
   Button,
   Card,
   CardContent,
@@ -35,6 +41,13 @@ export default function DocumentDetailPage({
   const typeParam = searchParams.get('type') as DocumentType | null;
 
   const detail = useDocumentDetail({ id, typeParam, router });
+
+  // Email history (must be before any early return — React hooks rules)
+  const {
+    emails: documentEmails,
+    loading: emailsLoading,
+    fetchEmails,
+  } = useDocumentEmails(id);
 
   // Feature flag check
   if (!featureFlags.financeEnabled) {
@@ -94,6 +107,22 @@ export default function DocumentDetailPage({
 
   const docNumber = getDocumentNumber(detail.document, detail.documentType);
 
+  // Map DocumentType to DocumentEmailType
+  const emailDocType: DocumentEmailType =
+    detail.documentType === 'quote'
+      ? 'quote'
+      : detail.documentType === 'credit_note'
+        ? 'credit_note'
+        : 'invoice';
+
+  // PDF URL for the email modal
+  const pdfUrl =
+    detail.documentType === 'invoice'
+      ? `/api/qonto/invoices/${id}/pdf`
+      : detail.documentType === 'quote'
+        ? `/api/qonto/quotes/${id}/pdf`
+        : `/api/qonto/credit-notes/${id}/pdf`;
+
   return (
     <div className="space-y-6">
       <DocumentDetailHeader
@@ -108,11 +137,7 @@ export default function DocumentDetailPage({
         isOverdue={detail.isOverdue}
         actionLoading={detail.actionLoading}
         onDownloadPdf={detail.handleDownloadPdf}
-        onSendEmail={() => {
-          void detail.handleSendEmail().catch(error => {
-            console.error('[DocumentDetail] Send email failed:', error);
-          });
-        }}
+        onSendEmail={() => detail.setShowEmailModal(true)}
         onShowFinalize={() => detail.setShowFinalizeDialog(true)}
         onShowDelete={() => detail.setShowDeleteDialog(true)}
         onShowConvert={() => detail.setShowConvertDialog(true)}
@@ -180,6 +205,26 @@ export default function DocumentDetailPage({
         handleDeclineQuote={detail.handleDeclineQuote}
         handleArchive={detail.handleArchive}
       />
+
+      {/* Email sending modal */}
+      <SendDocumentEmailModal
+        open={detail.showEmailModal}
+        onClose={() => detail.setShowEmailModal(false)}
+        documentType={emailDocType}
+        documentId={id}
+        documentNumber={docNumber}
+        clientEmail={detail.document.client?.email ?? ''}
+        clientName={detail.document.client?.name ?? ''}
+        pdfUrl={pdfUrl}
+        onSent={() => {
+          void fetchEmails().catch(err => {
+            console.error('[DocumentDetail] Refresh emails failed:', err);
+          });
+        }}
+      />
+
+      {/* Email history */}
+      <DocumentEmailHistory emails={documentEmails} loading={emailsLoading} />
     </div>
   );
 }

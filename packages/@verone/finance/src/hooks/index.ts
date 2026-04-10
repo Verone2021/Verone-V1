@@ -22,3 +22,4 @@ export * from './use-quotes';
 export * from './use-valorisation-report';
 export * from './use-library-documents';
 export * from './use-fixed-assets';
+export * from './use-document-emails';

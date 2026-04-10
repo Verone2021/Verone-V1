@@ -30,6 +30,10 @@ export * from './OrganisationTransactionsSection';
 export * from './TransactionDetailDialog';
 export * from './TransactionDetailSheet';
 
+// Email sending
+export * from './SendDocumentEmailModal';
+export * from './DocumentEmailHistory';
+
 // PDF Preview
 export * from './PdfPreviewModal';
 export { PdfPreviewModalDynamic } from './PdfPreviewModalDynamic';

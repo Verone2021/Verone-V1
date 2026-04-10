@@ -135,30 +135,7 @@ export function GeneralInfoSection({
           </div>
         )}
 
-        {/* Active Status */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: spacing[2],
-          }}
-        >
-          <Checkbox
-            id="is_active"
-            checked={form.watch('is_active')}
-            onCheckedChange={checked =>
-              form.setValue('is_active', checked as boolean)
-            }
-            disabled={isSubmitting}
-          />
-          <Label
-            htmlFor="is_active"
-            className="text-sm font-medium cursor-pointer"
-            style={{ color: colors.text.DEFAULT }}
-          >
-            Organisation active
-          </Label>
-        </div>
+        {/* is_active always true — no checkbox needed */}
       </div>
     </div>
   );
