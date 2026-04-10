@@ -10,6 +10,12 @@ import type {
   UpdateOrganisationData,
 } from './organisations.types';
 
+/** Convert empty strings to null (CHECK constraints reject "" but accept NULL) */
+function emptyToNull(val: string | null | undefined): string | null {
+  if (val === undefined || val === null || val.trim() === '') return null;
+  return val;
+}
+
 interface CRUDOpsParams {
   supabase: SupabaseClient;
   refetch: () => Promise<void>;
@@ -88,27 +94,27 @@ export function buildOrganisationsOps({
             trade_name: data.trade_name ?? null,
             has_different_trade_name: data.has_different_trade_name ?? false,
             type: data.type,
-            email: data.email ?? null,
-            phone: data.phone ?? null,
-            country: data.country ?? 'FR',
+            email: emptyToNull(data.email),
+            phone: emptyToNull(data.phone),
+            country: emptyToNull(data.country) ?? 'FR',
             is_active: data.is_active ?? true,
-            website: data.website ?? null,
-            siren: data.siren ?? null,
-            siret: data.siret ?? null,
-            vat_number: data.vat_number ?? null,
-            legal_form: data.legal_form ?? null,
-            billing_address_line1: data.billing_address_line1 ?? null,
-            billing_address_line2: data.billing_address_line2 ?? null,
-            billing_postal_code: data.billing_postal_code ?? null,
-            billing_city: data.billing_city ?? null,
-            billing_region: data.billing_region ?? null,
-            billing_country: data.billing_country ?? 'FR',
-            shipping_address_line1: data.shipping_address_line1 ?? null,
-            shipping_address_line2: data.shipping_address_line2 ?? null,
-            shipping_postal_code: data.shipping_postal_code ?? null,
-            shipping_city: data.shipping_city ?? null,
-            shipping_region: data.shipping_region ?? null,
-            shipping_country: data.shipping_country ?? 'FR',
+            website: emptyToNull(data.website),
+            siren: emptyToNull(data.siren),
+            siret: emptyToNull(data.siret),
+            vat_number: emptyToNull(data.vat_number),
+            legal_form: emptyToNull(data.legal_form),
+            billing_address_line1: emptyToNull(data.billing_address_line1),
+            billing_address_line2: emptyToNull(data.billing_address_line2),
+            billing_postal_code: emptyToNull(data.billing_postal_code),
+            billing_city: emptyToNull(data.billing_city),
+            billing_region: emptyToNull(data.billing_region),
+            billing_country: emptyToNull(data.billing_country) ?? 'FR',
+            shipping_address_line1: emptyToNull(data.shipping_address_line1),
+            shipping_address_line2: emptyToNull(data.shipping_address_line2),
+            shipping_postal_code: emptyToNull(data.shipping_postal_code),
+            shipping_city: emptyToNull(data.shipping_city),
+            shipping_region: emptyToNull(data.shipping_region),
+            shipping_country: emptyToNull(data.shipping_country) ?? 'FR',
             has_different_shipping_address:
               data.has_different_shipping_address ?? false,
             latitude: data.latitude ?? null,
@@ -116,12 +122,15 @@ export function buildOrganisationsOps({
             customer_type: data.customer_type ?? null,
             prepayment_required: data.prepayment_required ?? false,
             enseigne_id: data.enseigne_id ?? null,
-            ownership_type: data.ownership_type ?? null,
-            secondary_email: data.secondary_email ?? null,
-            notes: data.notes ?? null,
-            industry_sector: data.industry_sector ?? null,
-            payment_terms: data.payment_terms ?? null,
-            supplier_segment: data.supplier_segment ?? null,
+            ownership_type: emptyToNull(data.ownership_type),
+            secondary_email: emptyToNull(data.secondary_email),
+            notes: emptyToNull(data.notes),
+            industry_sector: emptyToNull(data.industry_sector),
+            payment_terms: emptyToNull(data.payment_terms),
+            supplier_segment: emptyToNull(data.supplier_segment),
+            source: data.source ?? 'manual',
+            source_type: data.source_type ?? null,
+            source_affiliate_id: data.source_affiliate_id ?? null,
           },
         ])
         .select(ORGANISATION_COLUMNS)
