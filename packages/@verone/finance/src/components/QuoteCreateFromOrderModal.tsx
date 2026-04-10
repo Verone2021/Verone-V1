@@ -375,11 +375,14 @@ export function QuoteCreateFromOrderModal({
 
   if (!order) return null;
 
-  const customerName =
-    order.organisations?.trade_name ??
-    order.organisations?.legal_name ??
-    (`${order.individual_customers?.first_name ?? ''} ${order.individual_customers?.last_name ?? ''}`.trim() ||
-      'Client');
+  const legalName = order.organisations?.legal_name;
+  const tradeName = order.organisations?.trade_name;
+  const customerName = legalName
+    ? tradeName && tradeName !== legalName
+      ? `${legalName} (${tradeName})`
+      : legalName
+    : `${order.individual_customers?.first_name ?? ''} ${order.individual_customers?.last_name ?? ''}`.trim() ||
+      'Client';
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -485,6 +488,16 @@ export function QuoteCreateFromOrderModal({
                     {order.organisations?.email ??
                       order.individual_customers?.email}
                   </p>
+                  {order.organisations?.siret && (
+                    <p className="text-xs text-muted-foreground font-mono">
+                      SIRET : {order.organisations.siret}
+                    </p>
+                  )}
+                  {order.organisations?.vat_number && (
+                    <p className="text-xs text-muted-foreground font-mono">
+                      TVA : {order.organisations.vat_number}
+                    </p>
+                  )}
                 </div>
                 {/* Adresse de facturation résolue */}
                 {(() => {
