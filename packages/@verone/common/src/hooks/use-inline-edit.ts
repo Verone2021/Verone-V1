@@ -252,19 +252,32 @@ export function useInlineEdit(options: UseInlineEditOptions) {
           // Nettoyer les données avant la mise à jour
           const cleanedData = { ...sectionState.editedData };
 
-          // 🔧 FIX BUG #2 : Exclure les champs legacy pour éviter écrasement des données
-          // Les champs legacy (address_line1, etc.) sont obsolètes, on utilise maintenant billing_* et shipping_*
-          const LEGACY_ADDRESS_FIELDS = [
-            'address_line1',
-            'address_line2',
-            'postal_code',
-            'city',
-            'region',
-            'country',
-          ];
-          LEGACY_ADDRESS_FIELDS.forEach(field => {
-            delete cleanedData[field];
-          });
+          // Sync legacy address fields from billing_* (legacy fields still read by some components)
+          const LEGACY_SYNC_MAP: Record<string, string> = {
+            billing_address_line1: 'address_line1',
+            billing_address_line2: 'address_line2',
+            billing_postal_code: 'postal_code',
+            billing_city: 'city',
+            billing_region: 'region',
+            billing_country: 'country',
+          };
+          for (const [billingField, legacyField] of Object.entries(
+            LEGACY_SYNC_MAP
+          )) {
+            if (billingField in cleanedData) {
+              cleanedData[legacyField] = cleanedData[billingField];
+            }
+          }
+
+          // If shipping is not different, clear shipping fields
+          if (cleanedData['has_different_shipping_address'] === false) {
+            cleanedData['shipping_address_line1'] = null;
+            cleanedData['shipping_address_line2'] = null;
+            cleanedData['shipping_postal_code'] = null;
+            cleanedData['shipping_city'] = null;
+            cleanedData['shipping_region'] = null;
+            cleanedData['shipping_country'] = null;
+          }
 
           // Convertir les chaînes vides en null pour les champs optionnels
           Object.keys(cleanedData).forEach(key => {
