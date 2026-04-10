@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
@@ -12,7 +12,7 @@ export function useNotificationRealtime(
   loadNotifications: () => Promise<void>,
   setState: SetState
 ) {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     let isMounted = true;
