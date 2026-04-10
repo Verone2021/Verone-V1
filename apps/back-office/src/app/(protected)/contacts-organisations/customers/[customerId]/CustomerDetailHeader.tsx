@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import type { Organisation } from '@verone/organisations';
 import { getOrganisationDisplayName } from '@verone/organisations';
@@ -21,6 +22,8 @@ export function CustomerDetailHeader({
   returnUrl,
   onArchive,
 }: CustomerDetailHeaderProps) {
+  const router = useRouter();
+
   return (
     <div className="flex justify-between items-start">
       <div>
@@ -33,16 +36,14 @@ export function CustomerDetailHeader({
                 className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
               >
                 <ArrowLeft className="h-4 w-4 mr-1" />
-                Retour à LinkMe
+                Retour
               </ButtonV2>
             </Link>
           ) : (
-            <Link href="/contacts-organisations/customers">
-              <ButtonV2 variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-1" />
-                Clients
-              </ButtonV2>
-            </Link>
+            <ButtonV2 variant="ghost" size="sm" onClick={() => router.back()}>
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Retour
+            </ButtonV2>
           )}
         </div>
         <div className="flex items-center gap-3 mb-2">
