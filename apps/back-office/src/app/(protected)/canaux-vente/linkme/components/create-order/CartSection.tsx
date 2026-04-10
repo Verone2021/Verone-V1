@@ -157,9 +157,19 @@ export function CartSection({
                 >
                   <Minus className="h-4 w-4" />
                 </button>
-                <span className="w-8 text-center text-sm font-medium">
-                  {item.quantity}
-                </span>
+                <input
+                  type="number"
+                  min={1}
+                  max={999}
+                  value={item.quantity}
+                  onChange={e => {
+                    const val = parseInt(e.target.value, 10);
+                    if (!isNaN(val) && val > 0) {
+                      updateQuantity(item.id, val - item.quantity);
+                    }
+                  }}
+                  className="w-16 h-8 text-center text-sm font-medium border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
                 <button
                   onClick={() => updateQuantity(item.id, 1)}
                   className="p-1 hover:bg-gray-200 rounded"
