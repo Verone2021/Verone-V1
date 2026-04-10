@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, FileEdit } from 'lucide-react';
 
 import {
   Button,
@@ -14,6 +14,10 @@ import {
   Skeleton,
 } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
+import {
+  QuoteCreateFromOrderModal,
+  type IOrderForDocument,
+} from '@verone/finance/components';
 
 import type { NewContactFormData } from '../../../components/contacts/NewContactForm';
 
@@ -47,6 +51,8 @@ export default function LinkMeOrderDetailsPage() {
     setEditOrderDateOpen,
     editOrderDateValue,
     setEditOrderDateValue,
+    showQuoteModal,
+    setShowQuoteModal,
     selectedContactId,
     setSelectedContactId,
     availableContacts,
@@ -93,15 +99,93 @@ export default function LinkMeOrderDetailsPage() {
     );
   }
 
+  // Build IOrderForDocument from order data for QuoteCreateFromOrderModal
+  const orderForDocument: IOrderForDocument | null =
+    order && (order.status === 'draft' || order.status === 'validated')
+      ? {
+          id: order.id,
+          order_number: order.order_number,
+          total_ht: order.total_ht,
+          total_ttc: order.total_ttc,
+          tax_rate: order.tax_rate ?? 0.2,
+          currency: order.currency ?? 'EUR',
+          customer_id: order.customer_id,
+          customer_type: 'organization',
+          shipping_cost_ht: order.shipping_cost_ht,
+          handling_cost_ht: order.handling_cost_ht,
+          insurance_cost_ht: order.insurance_cost_ht,
+          fees_vat_rate: order.fees_vat_rate,
+          billing_address: order.organisation?.billing_address_line1
+            ? {
+                address_line1: order.organisation.billing_address_line1,
+                postal_code: order.organisation.billing_postal_code ?? '',
+                city: order.organisation.billing_city ?? '',
+                country: order.organisation.country ?? 'FR',
+              }
+            : order.organisation?.address_line1
+              ? {
+                  address_line1: order.organisation.address_line1,
+                  postal_code: order.organisation.postal_code ?? '',
+                  city: order.organisation.city ?? '',
+                  country: order.organisation.country ?? 'FR',
+                }
+              : null,
+          organisations: order.organisation
+            ? {
+                name:
+                  order.organisation.trade_name ??
+                  order.organisation.legal_name,
+                trade_name: order.organisation.trade_name,
+                legal_name: order.organisation.legal_name,
+                email: order.organisation.email,
+                address_line1: order.organisation.address_line1,
+                city: order.organisation.city,
+                postal_code: order.organisation.postal_code,
+                country: order.organisation.country,
+                billing_address_line1: order.organisation.billing_address_line1,
+                billing_city: order.organisation.billing_city,
+                billing_postal_code: order.organisation.billing_postal_code,
+                has_different_shipping_address:
+                  order.organisation.has_different_shipping_address,
+                shipping_address_line1:
+                  order.organisation.shipping_address_line1,
+                shipping_city: order.organisation.shipping_city,
+                shipping_postal_code: order.organisation.shipping_postal_code,
+                siret: order.organisation.siret,
+                vat_number: order.organisation.vat_number,
+              }
+            : null,
+          sales_order_items: order.items.map(item => ({
+            id: item.id,
+            quantity: item.quantity,
+            unit_price_ht: item.unit_price_ht,
+            tax_rate: order.tax_rate ?? 0.2,
+            products: item.product ? { name: item.product.name } : null,
+          })),
+        }
+      : null;
+
   return (
     <div className="space-y-4 p-4">
-      <OrderHeader
-        order={order}
-        locked={locked}
-        editOrderDateOpen={editOrderDateOpen}
-        setEditOrderDateOpen={setEditOrderDateOpen}
-        setEditOrderDateValue={setEditOrderDateValue}
-      />
+      <div className="flex items-center justify-between gap-3">
+        <OrderHeader
+          order={order}
+          locked={locked}
+          editOrderDateOpen={editOrderDateOpen}
+          setEditOrderDateOpen={setEditOrderDateOpen}
+          setEditOrderDateValue={setEditOrderDateValue}
+        />
+        {(order.status === 'draft' || order.status === 'validated') && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowQuoteModal(true)}
+          >
+            <FileEdit className="mr-2 h-4 w-4" />
+            Créer un devis
+          </Button>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <LeftColumn
@@ -177,6 +261,14 @@ export default function LinkMeOrderDetailsPage() {
         }}
         createContactPending={createContactBO.isPending}
       />
+
+      {orderForDocument && (
+        <QuoteCreateFromOrderModal
+          order={orderForDocument}
+          open={showQuoteModal}
+          onOpenChange={setShowQuoteModal}
+        />
+      )}
 
       <Dialog open={editOrderDateOpen} onOpenChange={setEditOrderDateOpen}>
         <DialogContent className="sm:max-w-[400px]">

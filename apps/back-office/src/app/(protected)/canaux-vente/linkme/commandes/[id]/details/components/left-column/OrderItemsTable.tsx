@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 import {
   Badge,
   Button,
@@ -94,18 +96,31 @@ export function OrderItemsTable({
                       ? (item.affiliate_margin ?? 0) / item.quantity
                       : 0;
                   // For affiliate products, show affiliate_commission_rate; for catalogue, retrocession_rate
-                  const displayCommissionPct = isRevendeur
+                  const rawPct = isRevendeur
                     ? item.affiliate_margin > 0 && item.total_ht > 0
-                      ? Math.round(
-                          (item.affiliate_margin / item.total_ht) * 100
-                        )
+                      ? (item.affiliate_margin / item.total_ht) * 100
                       : 0
-                    : Math.round(item.retrocession_rate * 100);
+                    : item.retrocession_rate * 100;
+                  const displayCommissionPct =
+                    rawPct % 1 === 0 ? rawPct.toFixed(0) : rawPct.toFixed(2);
 
                   return (
                     <TableRow key={item.id}>
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
+                          {item.product_image_url ? (
+                            <Image
+                              src={item.product_image_url}
+                              alt={item.product_name}
+                              width={40}
+                              height={40}
+                              className="rounded border border-gray-200 object-cover flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded border border-gray-200 bg-gray-50 flex items-center justify-center flex-shrink-0">
+                              <Package className="h-4 w-4 text-gray-300" />
+                            </div>
+                          )}
                           <div>
                             <p className="font-medium text-sm">
                               {item.product_name}
@@ -125,6 +140,19 @@ export function OrderItemsTable({
                                 {isRevendeur ? 'REVENDEUR' : 'CATALOGUE'}
                               </Badge>
                             </div>
+                            {item.stock_real !== undefined && (
+                              <p className="text-[11px] mt-0.5">
+                                <span className="text-blue-600 font-medium">
+                                  {item.stock_real ?? 0}
+                                </span>
+                                <span className="text-gray-500"> réel</span>
+                                <span className="text-gray-400"> / </span>
+                                <span className="text-emerald-600 font-medium">
+                                  {item.stock_forecasted ?? 0}
+                                </span>
+                                <span className="text-gray-500"> prévi</span>
+                              </p>
+                            )}
                           </div>
                         </div>
                       </TableCell>
@@ -165,7 +193,7 @@ export function OrderItemsTable({
                           <Input
                             type="number"
                             min={1}
-                            className="w-16 h-8 text-center mx-auto"
+                            className="w-20 h-8 text-center mx-auto"
                             value={editedQuantities[item.id] ?? item.quantity}
                             onChange={e => {
                               const val = parseInt(e.target.value, 10);
