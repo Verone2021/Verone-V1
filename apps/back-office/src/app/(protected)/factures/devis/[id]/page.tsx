@@ -5,7 +5,12 @@ import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { QuoteStatusBadge } from '@verone/finance/components';
+import {
+  QuoteStatusBadge,
+  SendDocumentEmailModal,
+  DocumentEmailHistory,
+} from '@verone/finance/components';
+import { useDocumentEmails } from '@verone/finance/hooks';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,7 +46,7 @@ import {
   ExternalLink,
   FileText,
   Loader2,
-  Send,
+  Mail,
   Trash2,
   XCircle,
 } from 'lucide-react';
@@ -222,7 +227,15 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<StatusAction | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Email history
+  const {
+    emails: documentEmails,
+    loading: emailsLoading,
+    fetchEmails,
+  } = useDocumentEmails(id);
 
   // -----------------------------------------------------------------
   // LOAD QUOTE FROM QONTO API
@@ -360,7 +373,6 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
 
   const statusActions = getStatusActions(quote.status);
   const canDelete = !quote.converted_to_invoice_id;
-  const isDraft = quote.status === 'draft';
 
   // Compute totals from items if _cents fields are missing (Qonto may not return them)
   const computedTotals = (() => {
@@ -464,19 +476,11 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
             Télécharger
           </Button>
 
-          {/* Send button */}
-          {(isDraft || quote.status === 'finalized') && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                void handleAction('send').catch(console.error);
-              }}
-              disabled={actionLoading}
-            >
-              <Send className="mr-2 h-4 w-4" />
-              Envoyer
-            </Button>
-          )}
+          {/* Send email button */}
+          <Button variant="outline" onClick={() => setShowEmailModal(true)}>
+            <Mail className="mr-2 h-4 w-4" />
+            Envoyer par email
+          </Button>
 
           {/* Delete */}
           {canDelete && (
@@ -827,6 +831,26 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Email sending modal */}
+      <SendDocumentEmailModal
+        open={showEmailModal}
+        onClose={() => setShowEmailModal(false)}
+        documentType="quote"
+        documentId={id}
+        documentNumber={quote.number ?? quote.quote_number ?? id}
+        clientEmail={quote.client?.email ?? ''}
+        clientName={quote.client?.name ?? ''}
+        pdfUrl={`/api/qonto/quotes/${id}/pdf`}
+        onSent={() => {
+          void fetchEmails().catch(err => {
+            console.error('[QuoteDetail] Refresh emails failed:', err);
+          });
+        }}
+      />
+
+      {/* Email history */}
+      <DocumentEmailHistory emails={documentEmails} loading={emailsLoading} />
 
       {/* DELETE CONFIRMATION */}
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>

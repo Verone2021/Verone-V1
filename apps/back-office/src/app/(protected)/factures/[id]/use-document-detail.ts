@@ -49,6 +49,7 @@ export function useDocumentDetail({
   const [showReconcileModal, setShowReconcileModal] = useState(false);
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [showOrgModal, setShowOrgModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const [organisationId, setOrganisationId] = useState<string | null>(null);
   const [partnerLegalName, setPartnerLegalName] = useState<string | null>(null);
   const [partnerTradeName, setPartnerTradeName] = useState<string | null>(null);
@@ -291,6 +292,8 @@ export function useDocumentDetail({
     setShowArchiveDialog,
     showOrgModal,
     setShowOrgModal,
+    showEmailModal,
+    setShowEmailModal,
     // Action state
     actionLoading,
     // Handlers (from useDocumentActions)
