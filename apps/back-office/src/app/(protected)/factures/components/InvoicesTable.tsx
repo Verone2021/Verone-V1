@@ -91,7 +91,6 @@ export function InvoicesTable({
         <TableRow>
           <TableHead>N° Facture</TableHead>
           <TableHead>Client</TableHead>
-          <TableHead>Commande</TableHead>
           <TableHead>Date</TableHead>
           <TableHead>Echeance</TableHead>
           <TableHead>Statut</TableHead>
@@ -103,8 +102,16 @@ export function InvoicesTable({
       <TableBody>
         {invoices.map(invoice => (
           <TableRow key={invoice.id}>
-            <TableCell className="font-mono text-xs">
-              {invoice.number}
+            <TableCell>
+              <div className="font-mono text-xs">{invoice.number}</div>
+              {invoice.sales_order_id && invoice.order_number && (
+                <button
+                  onClick={() => onOpenOrder?.(invoice.sales_order_id!)}
+                  className="text-[11px] text-muted-foreground hover:text-primary hover:underline mt-0.5 block"
+                >
+                  {invoice.order_number}
+                </button>
+              )}
             </TableCell>
             <TableCell>
               {invoice.partner_id && invoice.partner_legal_name ? (
@@ -121,24 +128,6 @@ export function InvoicesTable({
                 </button>
               ) : (
                 <span>{invoice.client?.name ?? '-'}</span>
-              )}
-            </TableCell>
-            <TableCell>
-              {invoice.sales_order_id && invoice.order_number ? (
-                <button
-                  onClick={() => onOpenOrder?.(invoice.sales_order_id!)}
-                  className="inline-flex items-center gap-1"
-                >
-                  <Badge
-                    variant="outline"
-                    className="cursor-pointer hover:bg-accent"
-                  >
-                    {invoice.order_number}
-                  </Badge>
-                  <ExternalLink className="h-3 w-3 text-muted-foreground opacity-60" />
-                </button>
-              ) : (
-                <span className="text-muted-foreground text-sm">-</span>
               )}
             </TableCell>
             <TableCell>{formatDate(invoice.issue_date)}</TableCell>

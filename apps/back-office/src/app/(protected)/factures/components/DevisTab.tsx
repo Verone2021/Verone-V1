@@ -108,8 +108,13 @@ export function DevisTab({
             <TableBody>
               {quotes.map(quote => (
                 <TableRow key={quote.id}>
-                  <TableCell className="font-mono">
-                    {quote.quote_number}
+                  <TableCell>
+                    <div className="font-mono">{quote.quote_number}</div>
+                    {quote.purchase_order_number && (
+                      <div className="text-[11px] text-muted-foreground mt-0.5">
+                        {quote.purchase_order_number}
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell>{quote.client?.name ?? '-'}</TableCell>
                   <TableCell>{formatDate(quote.issue_date)}</TableCell>
