@@ -33,6 +33,22 @@ function getAdminClient() {
   );
 }
 
+// document_emails table not yet in generated types — use untyped insert
+function insertDocumentEmail(
+  supabase: ReturnType<typeof getAdminClient>,
+  data: Record<string, unknown>
+) {
+  return (
+    supabase as unknown as {
+      from: (t: string) => {
+        insert: (d: Record<string, unknown>) => Promise<{ error: unknown }>;
+      };
+    }
+  )
+    .from('document_emails')
+    .insert(data);
+}
+
 // ── Validation ───────────────────────────────────────────────────────
 
 const SendDocumentSchema = z.object({
@@ -137,7 +153,7 @@ export async function POST(request: NextRequest) {
 
       // Log failure
       const supabase = getAdminClient();
-      await supabase.from('document_emails').insert({
+      await insertDocumentEmail(supabase, {
         document_type: documentType,
         document_id: documentId,
         document_number: documentNumber ?? null,
@@ -161,7 +177,7 @@ export async function POST(request: NextRequest) {
 
     // Log success
     const supabase = getAdminClient();
-    await supabase.from('document_emails').insert({
+    await insertDocumentEmail(supabase, {
       document_type: documentType,
       document_id: documentId,
       document_number: documentNumber ?? null,
