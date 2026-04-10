@@ -33,6 +33,7 @@ export interface OrganisationWithRevenue {
   billing_address_line2?: string | null;
   billing_postal_code?: string | null;
   billing_city?: string | null;
+  shipping_city?: string | null;
 }
 
 /**
@@ -82,7 +83,7 @@ export function useEnseigneStats(
       const { data: organisations, error: orgsError } = await supabase
         .from('organisations')
         .select(
-          'id, legal_name, trade_name, is_enseigne_parent, is_active, city, country, logo_url, siret, siren, billing_address_line1, billing_address_line2, billing_postal_code, billing_city'
+          'id, legal_name, trade_name, is_enseigne_parent, is_active, city, country, logo_url, siret, siren, billing_address_line1, billing_address_line2, billing_postal_code, billing_city, shipping_city'
         )
         .eq('enseigne_id', enseigneId)
         .order('is_enseigne_parent', { ascending: false })

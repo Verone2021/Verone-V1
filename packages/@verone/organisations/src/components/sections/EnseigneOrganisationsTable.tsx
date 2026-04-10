@@ -283,10 +283,10 @@ export function EnseigneOrganisationsTable({
 
                     {/* Ville */}
                     <TableCell>
-                      {org.city ? (
+                      {(org.shipping_city ?? org.billing_city ?? org.city) ? (
                         <div className="flex items-center text-sm text-gray-600">
                           <MapPin className="h-3.5 w-3.5 mr-1 text-gray-400" />
-                          {org.city}
+                          {org.shipping_city ?? org.billing_city ?? org.city}
                           {org.country && (
                             <span className="text-gray-400 ml-1">
                               ({org.country})
