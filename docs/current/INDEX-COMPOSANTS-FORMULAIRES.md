@@ -120,29 +120,31 @@
 
 ### @verone/finance — Finance
 
-| Composant                     | Action                        | Props cles                                                       |
-| ----------------------------- | ----------------------------- | ---------------------------------------------------------------- |
-| `RapprochementModal`          | Rapprochement transaction     | `open`, `onOpenChange`, `transactionId`                          |
-| `RapprochementFromOrderModal` | Rapprochement depuis commande | `open`, `onOpenChange`, `orderId`                                |
-| `ReconcileTransactionModal`   | Reconciliation transaction    | `open`, `onOpenChange`, `transactionId`                          |
-| `QuoteFormModal`              | Formulaire devis (scratch)    | `open`, `onOpenChange`, `onSuccess?`                             |
-| `QuoteCreateFromOrderModal`   | Devis depuis commande         | `order`, `open`, `onOpenChange`, `onSuccess?`, `isConsultation?` |
-| `QuoteCreateServiceModal`     | Devis prestation service      | `open`, `onOpenChange`                                           |
-| `OrderSelectModal`            | Selecteur commande            | `open`, `onOpenChange`, `onSelectOrder`                          |
-| `InvoiceCreateFromOrderModal` | Facture depuis commande       | `open`, `onOpenChange`, `orderId`                                |
-| `InvoiceDetailModal`          | Detail facture                | `open`, `onOpenChange`, `invoiceId`                              |
-| `InvoiceCreateServiceModal`   | Facture prestation            | `open`, `onOpenChange`                                           |
-| `InvoiceUploadModal`          | Upload facture fournisseur    | `open`, `onOpenChange`                                           |
-| `CreditNoteCreateModal`       | Creation avoir                | `open`, `onOpenChange`                                           |
-| `PdfPreviewModal`             | Preview PDF                   | `open`, `onOpenChange`, `url`                                    |
-| `PdfPreviewModalDynamic`      | Preview PDF (lazy-loaded)     | `open`, `onOpenChange`, `url`                                    |
-| `PaymentRecordModal`          | Enregistrement paiement       | `open`, `onOpenChange`, `transactionId`                          |
-| `TransactionDetailSheet`      | Sheet detail transaction      | `open`, `onOpenChange`, `transactionId`                          |
-| `TransactionDetailDialog`     | Dialog detail transaction     | `open`, `onOpenChange`, `transactionId`                          |
-| `QuickClassificationModal`    | Classification rapide         | `open`, `onOpenChange`                                           |
-| `OrganisationLinkingModal`    | Liaison org-transaction       | `open`, `onOpenChange`                                           |
-| `RuleModal`                   | Regles de rapprochement       | `open`, `onOpenChange`                                           |
-| `ApplyExistingWizard`         | Appliquer regle existante     | `open`, `onOpenChange`                                           |
+| Composant                     | Action                        | Props cles                                                                                               |
+| ----------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `RapprochementModal`          | Rapprochement transaction     | `open`, `onOpenChange`, `transactionId`                                                                  |
+| `RapprochementFromOrderModal` | Rapprochement depuis commande | `open`, `onOpenChange`, `orderId`                                                                        |
+| `ReconcileTransactionModal`   | Reconciliation transaction    | `open`, `onOpenChange`, `transactionId`                                                                  |
+| `QuoteFormModal`              | Formulaire devis (scratch)    | `open`, `onOpenChange`, `onSuccess?`                                                                     |
+| `QuoteCreateFromOrderModal`   | Devis depuis commande         | `order`, `open`, `onOpenChange`, `onSuccess?`, `isConsultation?`                                         |
+| `QuoteCreateServiceModal`     | Devis prestation service      | `open`, `onOpenChange`                                                                                   |
+| `OrderSelectModal`            | Selecteur commande            | `open`, `onOpenChange`, `onSelectOrder`                                                                  |
+| `InvoiceCreateFromOrderModal` | Facture depuis commande       | `open`, `onOpenChange`, `orderId`                                                                        |
+| `InvoiceDetailModal`          | Detail facture                | `open`, `onOpenChange`, `invoiceId`                                                                      |
+| `InvoiceCreateServiceModal`   | Facture prestation            | `open`, `onOpenChange`                                                                                   |
+| `InvoiceUploadModal`          | Upload facture fournisseur    | `open`, `onOpenChange`                                                                                   |
+| `CreditNoteCreateModal`       | Creation avoir                | `open`, `onOpenChange`                                                                                   |
+| `SendDocumentEmailModal`      | Envoi email devis/facture     | `open`, `onClose`, `documentType`, `documentId`, `documentNumber`, `clientEmail`, `clientName`, `pdfUrl` |
+| `DocumentEmailHistory`        | Historique envois email       | `emails`, `loading`                                                                                      |
+| `PdfPreviewModal`             | Preview PDF                   | `open`, `onOpenChange`, `url`                                                                            |
+| `PdfPreviewModalDynamic`      | Preview PDF (lazy-loaded)     | `open`, `onOpenChange`, `url`                                                                            |
+| `PaymentRecordModal`          | Enregistrement paiement       | `open`, `onOpenChange`, `transactionId`                                                                  |
+| `TransactionDetailSheet`      | Sheet detail transaction      | `open`, `onOpenChange`, `transactionId`                                                                  |
+| `TransactionDetailDialog`     | Dialog detail transaction     | `open`, `onOpenChange`, `transactionId`                                                                  |
+| `QuickClassificationModal`    | Classification rapide         | `open`, `onOpenChange`                                                                                   |
+| `OrganisationLinkingModal`    | Liaison org-transaction       | `open`, `onOpenChange`                                                                                   |
+| `RuleModal`                   | Regles de rapprochement       | `open`, `onOpenChange`                                                                                   |
+| `ApplyExistingWizard`         | Appliquer regle existante     | `open`, `onOpenChange`                                                                                   |
 
 **Sections :** `OrganisationTransactionsSection`
 
@@ -386,31 +388,32 @@
 
 ### @verone/finance — Finance
 
-| Hook                                                                          | Role                      |
-| ----------------------------------------------------------------------------- | ------------------------- |
-| `useFinancialDocuments`                                                       | Documents financiers      |
-| `useQuotes`                                                                   | CRUD devis                |
-| `useExpenses`                                                                 | Depenses                  |
-| `usePcgCategories`                                                            | Categories PCG            |
-| `useBankReconciliation`                                                       | Rapprochement bancaire    |
-| `useBankTransactionStats`                                                     | Stats transactions        |
-| `useAutoClassification`                                                       | Classification auto       |
-| `useMatchingRules`                                                            | Regles rapprochement      |
-| `useMissingInvoices`                                                          | Factures manquantes       |
-| `useLibraryDocuments`                                                         | Documents bibliotheque    |
-| `useTreasuryStats`                                                            | Stats tresorerie          |
-| `useUniqueLabels`                                                             | Labels uniques            |
-| `useUnreconciledOrders`                                                       | Commandes non rapprochees |
-| `useOrganisationTransactions`                                                 | Transactions par org      |
-| `useAbcAnalysis`                                                              | Analyse ABC               |
-| `useAgingReport`                                                              | Rapport aging             |
-| `usePricing`                                                                  | Calculs tarifs            |
-| `useFixedAssets`                                                              | Immobilisations           |
-| `useValorisation`                                                             | Rapport valorisation      |
-| `useUnifiedTransactions`, `useTransactionActions`                             | Transactions unifiees     |
-| `useRapprochement`, `useRapprochementData`, `useRapprochementActions`         | Rapprochement             |
-| `useRapprochementScoring`, `useRapprochementSelection`, `useRapprochementVat` | Scoring/selection/TVA     |
-| `usePriceListQueries`, `usePriceListMutations`, `usePriceListItemMutations`   | Grilles tarifaires        |
+| Hook                                                                          | Role                        |
+| ----------------------------------------------------------------------------- | --------------------------- |
+| `useFinancialDocuments`                                                       | Documents financiers        |
+| `useQuotes`                                                                   | CRUD devis                  |
+| `useDocumentEmails`                                                           | Historique emails documents |
+| `useExpenses`                                                                 | Depenses                    |
+| `usePcgCategories`                                                            | Categories PCG              |
+| `useBankReconciliation`                                                       | Rapprochement bancaire      |
+| `useBankTransactionStats`                                                     | Stats transactions          |
+| `useAutoClassification`                                                       | Classification auto         |
+| `useMatchingRules`                                                            | Regles rapprochement        |
+| `useMissingInvoices`                                                          | Factures manquantes         |
+| `useLibraryDocuments`                                                         | Documents bibliotheque      |
+| `useTreasuryStats`                                                            | Stats tresorerie            |
+| `useUniqueLabels`                                                             | Labels uniques              |
+| `useUnreconciledOrders`                                                       | Commandes non rapprochees   |
+| `useOrganisationTransactions`                                                 | Transactions par org        |
+| `useAbcAnalysis`                                                              | Analyse ABC                 |
+| `useAgingReport`                                                              | Rapport aging               |
+| `usePricing`                                                                  | Calculs tarifs              |
+| `useFixedAssets`                                                              | Immobilisations             |
+| `useValorisation`                                                             | Rapport valorisation        |
+| `useUnifiedTransactions`, `useTransactionActions`                             | Transactions unifiees       |
+| `useRapprochement`, `useRapprochementData`, `useRapprochementActions`         | Rapprochement               |
+| `useRapprochementScoring`, `useRapprochementSelection`, `useRapprochementVat` | Scoring/selection/TVA       |
+| `usePriceListQueries`, `usePriceListMutations`, `usePriceListItemMutations`   | Grilles tarifaires          |
 
 ### @verone/notifications — Notifications
 
