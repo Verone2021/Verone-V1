@@ -232,7 +232,7 @@ export function ConsultationImageGallery({
                 variant="secondary"
                 className="text-xs"
                 type="button"
-                onClick={(): void => fileInputRef.current?.click()}
+                onClick={(): void => setShowPhotosModal(true)}
               >
                 <Camera className="h-3 w-3 mr-1" />
                 Ajouter
@@ -308,7 +308,7 @@ export function ConsultationImageGallery({
               size="sm"
               className="mt-1"
               type="button"
-              onClick={(): void => fileInputRef.current?.click()}
+              onClick={(): void => setShowPhotosModal(true)}
             >
               <Upload className="h-3 w-3 mr-1" />
               Ajouter des photos
@@ -332,7 +332,7 @@ export function ConsultationImageGallery({
       )}
 
       {/* Actions rapides */}
-      {hasImages && allowEdit && (
+      {allowEdit && (
         <div className="space-y-1">
           <ButtonV2
             variant="outline"
@@ -343,17 +343,19 @@ export function ConsultationImageGallery({
             <Camera className="h-3 w-3 mr-1" />
             Gérer les photos
           </ButtonV2>
-          <ButtonV2
-            variant="outline"
-            size="sm"
-            className="w-full text-xs"
-            onClick={(): void => {
-              void fetchImages();
-            }}
-          >
-            <RotateCw className="h-3 w-3 mr-1" />
-            Actualiser
-          </ButtonV2>
+          {hasImages && (
+            <ButtonV2
+              variant="outline"
+              size="sm"
+              className="w-full text-xs"
+              onClick={(): void => {
+                void fetchImages();
+              }}
+            >
+              <RotateCw className="h-3 w-3 mr-1" />
+              Actualiser
+            </ButtonV2>
+          )}
         </div>
       )}
 
