@@ -140,8 +140,8 @@ export function DocumentDetailHeader({
           </Button>
         )}
 
-        {/* Send email (finalized only) */}
-        {isFinalized && (
+        {/* Send email (draft or finalized) */}
+        {(isDraft || isFinalized) && (
           <Button
             variant="outline"
             onClick={onSendEmail}

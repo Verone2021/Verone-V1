@@ -1,6 +1,6 @@
 # Database Schema Complete — Index
 
-_Generated: 2026-04-09 23:55 — 106 tables, 0 FK, 0 RLS, 0 triggers_
+_Generated: 2026-04-10 05:16 — 106 tables, 0 FK, 0 RLS, 0 triggers_
 
 ## Domaines
 

@@ -71,6 +71,26 @@ export function AddressSection({
           id="org-billing-address"
           disabled={isSubmitting}
         />
+        {form.watch('billing_city') && (
+          <div
+            style={{
+              fontSize: '13px',
+              color: colors.text.muted,
+              padding: `${spacing[2]} ${spacing[3]}`,
+              backgroundColor: '#f9fafb',
+              borderRadius: '8px',
+              border: `1px solid ${colors.border.DEFAULT}`,
+            }}
+          >
+            {[
+              form.watch('billing_postal_code'),
+              form.watch('billing_city'),
+              form.watch('billing_region'),
+            ]
+              .filter(Boolean)
+              .join(' — ')}
+          </div>
+        )}
         <Input
           id="billing_address_line2"
           {...form.register('billing_address_line2')}
@@ -146,6 +166,26 @@ export function AddressSection({
             id="org-shipping-address"
             disabled={isSubmitting}
           />
+          {form.watch('shipping_city') && (
+            <div
+              style={{
+                fontSize: '13px',
+                color: colors.text.muted,
+                padding: `${spacing[2]} ${spacing[3]}`,
+                backgroundColor: '#f9fafb',
+                borderRadius: '8px',
+                border: `1px solid ${colors.border.DEFAULT}`,
+              }}
+            >
+              {[
+                form.watch('shipping_postal_code'),
+                form.watch('shipping_city'),
+                form.watch('shipping_region'),
+              ]
+                .filter(Boolean)
+                .join(' — ')}
+            </div>
+          )}
           <Input
             id="shipping_address_line2"
             {...form.register('shipping_address_line2')}
