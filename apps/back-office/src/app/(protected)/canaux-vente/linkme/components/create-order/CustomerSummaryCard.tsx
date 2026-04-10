@@ -46,19 +46,27 @@ export function CustomerSummaryCard({
                 📞 {selectedCustomer.phone}
               </p>
             )}
-            {'address_line1' in selectedCustomer &&
-              (selectedCustomer.address_line1 ?? selectedCustomer.city) && (
+            {(() => {
+              const addr =
+                'billing_address_line1' in selectedCustomer
+                  ? (selectedCustomer.billing_address_line1 ??
+                    selectedCustomer.address_line1)
+                  : selectedCustomer.address_line1;
+              const cp =
+                'billing_postal_code' in selectedCustomer
+                  ? (selectedCustomer.billing_postal_code ??
+                    selectedCustomer.postal_code)
+                  : selectedCustomer.postal_code;
+              const ville =
+                'billing_city' in selectedCustomer
+                  ? (selectedCustomer.billing_city ?? selectedCustomer.city)
+                  : selectedCustomer.city;
+              return (addr ?? ville) ? (
                 <p className="text-sm text-purple-700">
-                  📍{' '}
-                  {[
-                    selectedCustomer.address_line1,
-                    selectedCustomer.postal_code,
-                    selectedCustomer.city,
-                  ]
-                    .filter(Boolean)
-                    .join(', ')}
+                  📍 {[addr, cp, ville].filter(Boolean).join(', ')}
                 </p>
-              )}
+              ) : null;
+            })()}
           </div>
         </div>
         <button
