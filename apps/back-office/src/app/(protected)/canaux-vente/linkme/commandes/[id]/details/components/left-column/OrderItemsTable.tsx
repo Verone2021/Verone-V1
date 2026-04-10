@@ -141,9 +141,16 @@ export function OrderItemsTable({
                               </Badge>
                             </div>
                             {item.stock_real !== undefined && (
-                              <p className="text-[10px] text-gray-400 mt-0.5">
-                                Stock: {item.stock_real ?? 0} réel /{' '}
-                                {item.stock_forecasted ?? 0} prévi
+                              <p className="text-[11px] mt-0.5">
+                                <span className="text-blue-600 font-medium">
+                                  {item.stock_real ?? 0}
+                                </span>
+                                <span className="text-gray-500"> réel</span>
+                                <span className="text-gray-400"> / </span>
+                                <span className="text-emerald-600 font-medium">
+                                  {item.stock_forecasted ?? 0}
+                                </span>
+                                <span className="text-gray-500"> prévi</span>
                               </p>
                             )}
                           </div>
