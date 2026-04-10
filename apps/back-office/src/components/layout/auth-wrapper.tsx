@@ -12,7 +12,6 @@ import { usePathname } from 'next/navigation';
 
 import type { User } from '@supabase/supabase-js';
 import { SidebarProvider } from '@verone/ui';
-import { TooltipProvider } from '@verone/ui';
 
 import { AppHeader } from './app-header';
 import { AppSidebar } from './app-sidebar';
@@ -81,19 +80,18 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   }
 
   // Layout authentifié avec sidebar/header
+  // Note: TooltipProvider est déjà dans layout.tsx — pas de doublon
   return (
-    <TooltipProvider>
-      <SidebarProvider defaultOpen={false} className="h-screen overflow-hidden">
-        {/* Sidebar fixe */}
-        <AppSidebar />
+    <SidebarProvider defaultOpen={false} className="h-screen overflow-hidden">
+      {/* Sidebar fixe */}
+      <AppSidebar />
 
-        {/* Contenu principal avec scroll localisé */}
-        <div className="flex flex-1 flex-col min-h-0">
-          <AppHeader />
-          <ChannelTabs />
-          <main className="relative flex-1 overflow-auto p-6">{children}</main>
-        </div>
-      </SidebarProvider>
-    </TooltipProvider>
+      {/* Contenu principal avec scroll localisé */}
+      <div className="flex flex-1 flex-col min-h-0">
+        <AppHeader />
+        <ChannelTabs />
+        <main className="relative flex-1 overflow-auto p-6">{children}</main>
+      </div>
+    </SidebarProvider>
   );
 }
