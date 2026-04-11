@@ -216,6 +216,7 @@ export default function DocumentDetailPage({
         clientEmail={detail.document.client?.email ?? ''}
         clientName={detail.document.client?.name ?? ''}
         pdfUrl={pdfUrl}
+        contacts={detail.orderContacts}
         onSent={() => {
           void fetchEmails().catch(err => {
             console.error('[DocumentDetail] Refresh emails failed:', err);
