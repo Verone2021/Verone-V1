@@ -12,5 +12,5 @@ cat << EOF
 3. Index composants: docs/current/INDEX-COMPOSANTS-FORMULAIRES.md ($COMPONENT_COUNT composants) — LIRE AVANT de créer un composant
 4. Carte dépendances: docs/current/DEPENDANCES-PACKAGES.md — LIRE AVANT de modifier les imports
 5. RÈGLE ABSOLUE: Consulter la documentation AVANT de coder. Ne JAMAIS deviner la structure.
-6. Si tu crées une migration SQL, exécuter après: python scripts/generate-db-docs.py"}
+6. Si tu crées une migration SQL, exécuter après: python3 scripts/generate-docs.py --db"}
 EOF

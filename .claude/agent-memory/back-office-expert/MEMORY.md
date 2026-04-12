@@ -5,7 +5,7 @@
 - **Schema DB** : `docs/current/database/schema/` (91 tables documentees par domaine)
 - **Composants** : `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md` (150+ hooks, 100+ composants)
 - **Dependances** : `docs/current/DEPENDANCES-PACKAGES.md`
-- **Script re-generation DB** : `python scripts/generate-db-docs.py`
+- **Script re-generation DB** : `python3 scripts/generate-docs.py --db`
 
 ## Architecture globale
 
