@@ -32,6 +32,7 @@ Monorepo Turborepo : back-office (3000), linkme (3002), site-internet (3001).
 - `docs/current/database/schema/` — **SOURCE DE VERITE** schema DB par domaine (tables, colonnes, FK, RLS, triggers)
 - `docs/current/DEPENDANCES-PACKAGES.md` — carte des dependances inter-packages
 - `scripts/generate-db-docs.py` — script pour re-generer la doc DB apres migration
+- `.claude/test-credentials.md` — credentials de test Playwright (BO, LinkMe, Site)
 
 ## CRITICAL : Sources de verite — LIRE avant de coder
 
