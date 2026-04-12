@@ -110,9 +110,9 @@ export function DevisTab({
                 <TableRow key={quote.id}>
                   <TableCell>
                     <div className="font-mono">{quote.quote_number}</div>
-                    {quote.purchase_order_number && (
+                    {(quote.order_number ?? quote.purchase_order_number) && (
                       <div className="text-[11px] text-muted-foreground mt-0.5">
-                        {quote.purchase_order_number}
+                        {quote.order_number ?? quote.purchase_order_number}
                       </div>
                     )}
                   </TableCell>

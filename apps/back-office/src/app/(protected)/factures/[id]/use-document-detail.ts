@@ -38,6 +38,11 @@ export function useDocumentDetail({
     order_number: string | null;
   } | null>(null);
 
+  // Contacts from linked sales order (for email sending)
+  const [orderContacts, setOrderContacts] = useState<
+    Array<{ id: string; name: string; email: string; role: string }>
+  >([]);
+
   // Dialog states
   const [showFinalizeDialog, setShowFinalizeDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -158,6 +163,50 @@ export function useDocumentDetail({
           }
         }
       }
+
+      // Load contacts linked to the sales order
+      const { data: orderData } = await supabase
+        .from('sales_orders')
+        .select(
+          'billing_contact_id, responsable_contact_id, delivery_contact_id'
+        )
+        .eq('id', orderLink.sales_order_id)
+        .single();
+
+      if (orderData) {
+        const contactIds = [
+          orderData.billing_contact_id,
+          orderData.responsable_contact_id,
+          orderData.delivery_contact_id,
+        ].filter((cid): cid is string => !!cid);
+
+        const uniqueIds = [...new Set(contactIds)];
+        if (uniqueIds.length > 0) {
+          const { data: contacts } = await supabase
+            .from('contacts')
+            .select(
+              'id, first_name, last_name, email, is_billing_contact, is_primary_contact'
+            )
+            .in('id', uniqueIds);
+
+          if (contacts) {
+            const mapped = contacts
+              .filter(c => !!c.email)
+              .map(c => ({
+                id: c.id,
+                name: `${c.first_name ?? ''} ${c.last_name ?? ''}`.trim(),
+                email: c.email,
+                role:
+                  c.id === orderData.billing_contact_id
+                    ? 'Facturation'
+                    : c.id === orderData.responsable_contact_id
+                      ? 'Responsable'
+                      : 'Livraison',
+              }));
+            setOrderContacts(mapped);
+          }
+        }
+      }
     };
 
     void loadCustomerData().catch((err: unknown) => {
@@ -260,6 +309,7 @@ export function useDocumentDetail({
     loading,
     error,
     orderLink,
+    orderContacts,
     organisationId,
     partnerLegalName,
     partnerTradeName,

@@ -149,11 +149,9 @@ export async function POST(request: NextRequest): Promise<
         `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim() || 'Client';
     }
 
-    // Email optionnel - utiliser placeholder si pas d'email
-    // Cela permet de créer la facture, mais l'envoi automatique sera désactivé
+    // Email facultatif — Qonto accepte la création de client sans email
     const hasRealEmail = !!customerEmail;
-    const emailForQonto =
-      customerEmail ?? `noreply+${clientId.slice(0, 8)}@verone.app`;
+    const emailForQonto = customerEmail ?? undefined;
 
     const qontoClient = getQontoClient();
 
@@ -228,7 +226,9 @@ export async function POST(request: NextRequest): Promise<
 
     // Chercher ou créer le client Qonto
     let qontoClientId: string;
-    const existingClient = await qontoClient.findClientByEmail(emailForQonto);
+    const existingClient = emailForQonto
+      ? await qontoClient.findClientByEmail(emailForQonto)
+      : await qontoClient.findClientByName(customerName);
 
     if (existingClient) {
       await qontoClient.updateClient(existingClient.id, {

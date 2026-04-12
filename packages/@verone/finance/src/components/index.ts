@@ -15,8 +15,7 @@ export * from './ReconcileTransactionModal'; // Modal: Rapprochement bancaire (2
 export * from './OrderSelectModal'; // Modal: Selection commande pour facturation
 export * from './CreditNoteCreateModal'; // Modal: Facture → Avoir Qonto (2026-01-07)
 export * from './QuoteCreateFromOrderModal'; // Modal: Commande → Devis Qonto (2026-01-07)
-export * from './QuoteCreateServiceModal'; // Modal: Devis service (sans commande) (2026-01-07)
-export * from './QuoteFormModal'; // Modal: Nouveau formulaire unifié devis (2026-02-28)
+export * from './QuoteFormModal'; // Modal: Devis service (lignes libres, sans commande) (2026-02-28)
 export * from './RuleModal/index'; // SLICE 2: RuleModal universel (création + édition)
 export * from './ApplyExistingWizard'; // Wizard preview/confirm pour application de règles
 
