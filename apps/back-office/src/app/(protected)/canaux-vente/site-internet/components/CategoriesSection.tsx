@@ -1,248 +1,46 @@
 /**
- * Composant: CategoriesSection
- * Gestion catégories pour le canal site internet (arborescence + toggle visibilité menu)
+ * CategoriesSection - Arborescence categories du site internet
+ *
+ * Affiche automatiquement Famille -> Categorie -> Sous-categorie
+ * filtrees par produits publies. Source de verite = catalogue back-office.
+ * Pas de gestion manuelle — si un produit est publie, sa categorie apparait.
  */
 
 'use client';
 
-import { useState, useMemo, useCallback, memo } from 'react';
+import { useState } from 'react';
 
-import { useToast } from '@verone/common/hooks';
-import { useDebounce } from '@verone/hooks';
 import {
+  Badge,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from '@verone/ui';
-import { Badge } from '@verone/ui';
-import { ErrorStateCard } from '@verone/ui';
-import { Input } from '@verone/ui';
-import { KPICardUnified } from '@verone/ui';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@verone/ui';
-import { Switch } from '@verone/ui';
-import {
-  Search,
   FolderTree,
-  Eye,
-  EyeOff,
-  ChevronRight,
   ChevronDown,
-  Loader2,
+  ChevronRight,
   Folder,
   FolderOpen,
+  Tag,
+  Package,
+  Loader2,
 } from 'lucide-react';
 
-// Hooks
-import {
-  useSiteInternetCategories,
-  useToggleCategoryVisibility,
-  useSiteInternetCategoriesStats,
-  buildCategoryTree,
+import { useSiteInternetCategories } from '../hooks/use-site-internet-categories';
+
+import type {
+  SiteFamily,
+  SiteCategory,
+  SiteSubcategory,
 } from '../hooks/use-site-internet-categories';
 
-// Interface basée sur schéma categories (consulté via MCP Supabase)
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  level: number | null;
-  is_active: boolean | null;
-  is_visible_menu: boolean | null;
-  display_order: number | null;
-  description?: string | null;
-  image_url?: string | null;
-  children?: Category[];
-  [key: string]: unknown;
-}
-
-/**
- * Composant Ligne Catégorie (récursif pour enfants) - Memoized
- */
-const CategoryRow = memo(function CategoryRow({
-  category,
-  level = 0,
-  onToggleVisibility,
-  isTogglingId,
-}: {
-  category: Category;
-  level?: number;
-  onToggleVisibility: (categoryId: string, isVisible: boolean) => void;
-  isTogglingId?: string;
-}) {
-  const [isExpanded, setIsExpanded] = useState(level < 2); // Auto-expand 2 premiers niveaux
-
-  const hasChildren = category.children && category.children.length > 0;
-
-  return (
-    <>
-      <TableRow>
-        {/* Nom avec indentation */}
-        <TableCell>
-          <div
-            className="flex items-center gap-2"
-            style={{ paddingLeft: `${level * 24}px` }}
-          >
-            {hasChildren ? (
-              <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="hover:bg-muted rounded p-1"
-              >
-                {isExpanded ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </button>
-            ) : (
-              <div className="w-6" />
-            )}
-
-            {hasChildren ? (
-              isExpanded ? (
-                <FolderOpen className="h-4 w-4 text-blue-600" />
-              ) : (
-                <Folder className="h-4 w-4 text-blue-600" />
-              )
-            ) : (
-              <div className="h-4 w-4 rounded border bg-muted" />
-            )}
-
-            <span className="font-medium">{category.name}</span>
-          </div>
-        </TableCell>
-
-        {/* Slug */}
-        <TableCell className="text-sm text-muted-foreground">
-          {category.slug ?? '—'}
-        </TableCell>
-
-        {/* Level */}
-        <TableCell>
-          <Badge variant="outline">Niveau {category.level}</Badge>
-        </TableCell>
-
-        {/* Statut actif */}
-        <TableCell>
-          {category.is_active ? (
-            <div className="flex items-center gap-2 text-green-600">
-              <Eye className="h-4 w-4" />
-              <span className="text-sm">Active</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <EyeOff className="h-4 w-4" />
-              <span className="text-sm">Inactive</span>
-            </div>
-          )}
-        </TableCell>
-
-        {/* Ordre */}
-        <TableCell className="text-sm text-muted-foreground">
-          {category.display_order}
-        </TableCell>
-
-        {/* Toggle Visible Menu */}
-        <TableCell>
-          <Switch
-            checked={category.is_visible_menu ?? false}
-            onCheckedChange={() =>
-              onToggleVisibility(
-                category.id,
-                !(category.is_visible_menu ?? false)
-              )
-            }
-            disabled={!category.is_active || isTogglingId === category.id}
-          />
-        </TableCell>
-      </TableRow>
-
-      {/* Enfants (récursif) */}
-      {hasChildren &&
-        isExpanded &&
-        category.children?.map((child: Category) => (
-          <CategoryRow
-            key={child.id}
-            category={child}
-            level={level + 1}
-            onToggleVisibility={onToggleVisibility}
-            isTogglingId={isTogglingId}
-          />
-        ))}
-    </>
-  );
-});
-
-/**
- * Section Catégories Principale
- */
 export function CategoriesSection() {
-  const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearch = useDebounce(searchTerm, 300);
-  const [togglingId, setTogglingId] = useState<string | undefined>();
-
-  // Hooks
-  const {
-    data: categories = [],
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useSiteInternetCategories();
-  const { data: stats } = useSiteInternetCategoriesStats();
-  const toggleVisibility = useToggleCategoryVisibility();
-
-  // Filtrage catégories (memoized avec debounce)
-  const filteredCategories = useMemo(
-    () =>
-      categories.filter(category =>
-        category.name.toLowerCase().includes(debouncedSearch.toLowerCase())
-      ),
-    [categories, debouncedSearch]
-  );
-
-  // Construire arborescence (memoized avec debounce)
-  const categoryTree = useMemo(
-    () => buildCategoryTree(debouncedSearch ? filteredCategories : categories),
-    [debouncedSearch, filteredCategories, categories]
-  );
-
-  // Handler toggle visibilité (memoized)
-  const handleToggleVisibility = useCallback(
-    async (categoryId: string, newVisibility: boolean) => {
-      setTogglingId(categoryId);
-      try {
-        await toggleVisibility.mutateAsync({
-          categoryId,
-          isVisible: newVisibility,
-        });
-        toast({
-          title: newVisibility
-            ? 'Catégorie visible dans le menu'
-            : 'Catégorie masquée du menu',
-          description: `La catégorie a été ${newVisibility ? 'rendue visible' : 'masquée'} dans la navigation du site.`,
-        });
-      } catch (_error) {
-        toast({
-          title: 'Erreur',
-          description: 'Impossible de modifier la visibilité de la catégorie.',
-          variant: 'destructive',
-        });
-      } finally {
-        setTogglingId(undefined);
-      }
-    },
-    [toggleVisibility, toast, setTogglingId]
-  );
+  const { data, isLoading } = useSiteInternetCategories();
+  const tree = data?.tree ?? [];
+  const stats = data?.stats;
 
   if (isLoading) {
     return (
@@ -256,155 +54,152 @@ export function CategoriesSection() {
     );
   }
 
-  if (isError) {
-    return (
-      <ErrorStateCard
-        title="Erreur de chargement"
-        message={
-          error instanceof Error
-            ? error.message
-            : 'Impossible de charger les catégories. Veuillez réessayer.'
-        }
-        variant="destructive"
-        onRetry={() => {
-          void refetch().catch(error => {
-            console.error('[CategoriesSection] Refetch failed:', error);
-          });
-        }}
-      />
-    );
-  }
-
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
+      {/* KPIs */}
       <div className="grid gap-4 md:grid-cols-4">
-        <KPICardUnified
-          variant="elegant"
-          title="Catégories Total"
-          value={stats?.total ?? 0}
-          icon={FolderTree}
-        />
-
-        <KPICardUnified
-          variant="elegant"
-          title="Actives"
-          value={stats?.active ?? 0}
-          icon={Eye}
-        />
-
-        <KPICardUnified
-          variant="elegant"
-          title="Visibles Menu"
-          value={stats?.visibleMenu ?? 0}
-          icon={Folder}
-        />
-
-        <KPICardUnified
-          variant="elegant"
-          title="Racines"
-          value={stats?.rootCategories ?? 0}
-          icon={FolderTree}
-        />
+        <StatCard label="Familles" value={stats?.families ?? 0} />
+        <StatCard label="Categories" value={stats?.categories ?? 0} />
+        <StatCard label="Sous-categories" value={stats?.subcategories ?? 0} />
+        <StatCard label="Produits publies" value={stats?.totalPublished ?? 0} />
       </div>
 
-      {/* Header Actions */}
+      {/* Tree */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Catégories Site Internet</CardTitle>
-              <CardDescription>
-                {filteredCategories.length} catégories (
-                {stats?.visibleMenu ?? 0} visibles dans le menu)
-              </CardDescription>
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <FolderTree className="h-5 w-5" />
+            Arborescence du site
+          </CardTitle>
+          <CardDescription>
+            Affichage automatique base sur les produits publies. Modifiez les
+            categories depuis le catalogue back-office.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Filtres */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher une catégorie..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+          {tree.length === 0 ? (
+            <p className="text-center py-8 text-gray-500">
+              Aucune categorie avec des produits publies.
+            </p>
+          ) : (
+            <div className="space-y-1">
+              {tree.map(family => (
+                <FamilyRow key={family.id} family={family} />
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Table Catégories (Arborescence) */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nom</TableHead>
-                <TableHead>Slug</TableHead>
-                <TableHead>Niveau</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Ordre</TableHead>
-                <TableHead>Visible Menu</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {categoryTree.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                      <FolderTree className="h-8 w-8 opacity-50" />
-                      <p>Aucune catégorie trouvée</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                categoryTree.map(category => (
-                  <CategoryRow
-                    key={category.id}
-                    category={category}
-                    level={0}
-                    onToggleVisibility={(categoryId, newVisibility) => {
-                      void handleToggleVisibility(
-                        categoryId,
-                        newVisibility
-                      ).catch(error => {
-                        console.error(
-                          '[CategoriesSection] handleToggleVisibility failed:',
-                          error
-                        );
-                      });
-                    }}
-                    isTogglingId={togglingId}
-                  />
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Info Helper */}
-      <Card className="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950">
+      {/* Info */}
+      <Card className="border-blue-200 bg-blue-50">
         <CardContent className="pt-6">
           <div className="flex gap-3">
-            <FolderTree className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+            <FolderTree className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                Navigation Arborescente
+              <p className="text-sm font-medium text-blue-900">
+                Source de verite unique
               </p>
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                Les catégories sont affichées en arborescence selon leur
-                hiérarchie (parent → enfants). Une catégorie doit être{' '}
-                <strong>active</strong> ET <strong>visible menu</strong> pour
-                apparaître dans la navigation du site. Cliquez sur les flèches
-                pour déplier/replier les sous-catégories.
+              <p className="text-sm text-blue-800">
+                Cette arborescence se met a jour automatiquement quand vous
+                publiez ou depubliez des produits. Pour modifier les categories,
+                utilisez le module <strong>Catalogue &gt; Categories</strong> du
+                back-office.
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 px-4 py-3">
+      <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
+      <p className="text-2xl font-bold text-gray-900">{value}</p>
+    </div>
+  );
+}
+
+function FamilyRow({ family }: { family: SiteFamily }) {
+  const [expanded, setExpanded] = useState(true);
+
+  return (
+    <div>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-2 w-full px-3 py-2.5 rounded-lg hover:bg-gray-50 text-left"
+      >
+        {expanded ? (
+          <ChevronDown className="h-4 w-4 text-gray-400" />
+        ) : (
+          <ChevronRight className="h-4 w-4 text-gray-400" />
+        )}
+        <Folder className="h-4 w-4 text-amber-500" />
+        <span className="font-semibold text-gray-900">{family.name}</span>
+        <Badge variant="outline" className="ml-auto text-xs">
+          {family.publishedCount} produits
+        </Badge>
+      </button>
+      {expanded && (
+        <div className="ml-6 space-y-0.5">
+          {family.categories.map(cat => (
+            <CategoryRow key={cat.id} category={cat} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CategoryRow({ category }: { category: SiteCategory }) {
+  const [expanded, setExpanded] = useState(true);
+
+  return (
+    <div>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-gray-50 text-left"
+      >
+        {expanded ? (
+          <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
+        ) : (
+          <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
+        )}
+        <FolderOpen className="h-4 w-4 text-blue-500" />
+        <span className="font-medium text-gray-800">{category.name}</span>
+        {category.slug && (
+          <span className="text-xs text-gray-400">/{category.slug}</span>
+        )}
+        <Badge variant="outline" className="ml-auto text-xs">
+          {category.publishedCount}
+        </Badge>
+      </button>
+      {expanded && (
+        <div className="ml-6 space-y-0.5">
+          {category.subcategories.map(sub => (
+            <SubcategoryRow key={sub.id} subcategory={sub} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SubcategoryRow({ subcategory }: { subcategory: SiteSubcategory }) {
+  return (
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-50">
+      <Tag className="h-3.5 w-3.5 text-gray-400" />
+      <span className="text-sm text-gray-700">{subcategory.name}</span>
+      {subcategory.slug && (
+        <span className="text-xs text-gray-400">/{subcategory.slug}</span>
+      )}
+      <div className="ml-auto flex items-center gap-1 text-xs text-gray-500">
+        <Package className="h-3 w-3" />
+        {subcategory.publishedCount}
+      </div>
     </div>
   );
 }
