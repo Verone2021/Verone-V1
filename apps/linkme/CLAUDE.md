@@ -5,6 +5,7 @@ Canal de vente **linkme** (PAS "affilie"). Plateforme B2B ou les affilies (ensei
 ## CRITICAL : Index a consulter AVANT toute modification
 
 - Pages, routes, formulaires LinkMe : @docs/current/INDEX-LINKME-COMPLET.md
+- Index auto-genere (pages, API, composants) : @docs/current/INDEX-LINKME-APP.md
 - Composants et hooks partages : @docs/current/INDEX-COMPOSANTS-FORMULAIRES.md
 
 ## Source de Verite Unique

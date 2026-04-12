@@ -5,6 +5,7 @@ Concept store e-commerce public. Affiche les produits publies via la RPC `get_si
 ## CRITICAL : Index a consulter AVANT toute modification
 
 - Pages, routes, composants site : @docs/current/INDEX-SITE-INTERNET-COMPLET.md
+- Index auto-genere (pages, API, composants) : @docs/current/INDEX-SITE-INTERNET-APP.md
 - Composants et hooks partages : @docs/current/INDEX-COMPOSANTS-FORMULAIRES.md
 
 ## Documentation
