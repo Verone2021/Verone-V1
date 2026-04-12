@@ -108,6 +108,7 @@ export async function updateProfile(formData: FormData) {
   const lastName = formData.get('lastName') as string;
   const phone = (formData.get('phone') as string) || undefined;
 
+  // 1. Update auth.users metadata
   const { error } = await supabase.auth.updateUser({
     data: {
       first_name: firstName,
@@ -118,6 +119,59 @@ export async function updateProfile(formData: FormData) {
 
   if (error) {
     redirect(`/compte?error=${encodeURIComponent(error.message)}`);
+  }
+
+  // 2. Sync individual_customers table
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    const { createClient: createServiceClient } = await import(
+      '@supabase/supabase-js'
+    );
+    const serviceClient = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    // Update by auth_user_id first, fallback to email
+    const { data: customer } = await serviceClient
+      .from('individual_customers')
+      .select('id')
+      .eq('auth_user_id', user.id)
+      .limit(1)
+      .single();
+
+    const customerId = customer?.id as string | undefined;
+    if (!customerId && user.email) {
+      const { data: byEmail } = await serviceClient
+        .from('individual_customers')
+        .select('id')
+        .eq('email', user.email)
+        .limit(1)
+        .single();
+      if (byEmail) {
+        await serviceClient
+          .from('individual_customers')
+          .update({
+            first_name: firstName,
+            last_name: lastName,
+            phone: phone ?? null,
+            auth_user_id: user.id,
+          })
+          .eq('id', byEmail.id);
+      }
+    } else if (customerId) {
+      await serviceClient
+        .from('individual_customers')
+        .update({
+          first_name: firstName,
+          last_name: lastName,
+          phone: phone ?? null,
+        })
+        .eq('id', customerId);
+    }
   }
 
   revalidatePath('/compte');
