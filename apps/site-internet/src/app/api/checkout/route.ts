@@ -13,6 +13,14 @@ const CheckoutItemSchema = z.object({
   eco_participation: z.number().min(0),
 });
 
+const DiscountSchema = z.object({
+  discount_id: z.string().uuid(),
+  code: z.string().nullable(),
+  discount_type: z.string(),
+  discount_value: z.number().min(0),
+  discount_amount: z.number().min(0),
+});
+
 const CheckoutSchema = z.object({
   items: z.array(CheckoutItemSchema).min(1),
   customer: z.object({
@@ -25,6 +33,7 @@ const CheckoutSchema = z.object({
     city: z.string().min(1),
     country: z.string().default('FR'),
   }),
+  discount: DiscountSchema.optional(),
 });
 
 interface ShippingConfig {
@@ -175,7 +184,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { items, customer } = validated.data;
+    const { items, customer, discount } = validated.data;
 
     // Check if Stripe is configured
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -268,6 +277,9 @@ export async function POST(request: Request) {
         country: shippingCountry,
       };
 
+      const discountAmount = discount?.discount_amount ?? 0;
+      const finalTtc = Math.max(subtotalAmount - discountAmount, 0);
+
       const { data: orderDataRaw, error: orderError } = await supabase
         .from('sales_orders')
         .insert({
@@ -278,8 +290,15 @@ export async function POST(request: Request) {
           status: 'draft',
           payment_status_v2: 'pending',
           shipping_address: shippingAddressJson,
-          total_ttc: subtotalAmount,
-          total_ht: Math.round((subtotalAmount / 1.2) * 100) / 100,
+          total_ttc: finalTtc,
+          total_ht: Math.round((finalTtc / 1.2) * 100) / 100,
+          ...(discount
+            ? {
+                applied_discount_id: discount.discount_id,
+                applied_discount_code: discount.code,
+                applied_discount_amount: discountAmount,
+              }
+            : {}),
         })
         .select('id')
         .single();
@@ -386,11 +405,36 @@ export async function POST(request: Request) {
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3001';
 
+    // Create Stripe coupon if discount applied
+    let stripeCouponId: string | undefined;
+    if (discount && discount.discount_amount > 0) {
+      if (discount.discount_type === 'free_shipping') {
+        // Free shipping is handled by shipping_options — no Stripe coupon needed
+      } else if (discount.discount_type === 'percentage') {
+        const coupon = await stripe.coupons.create({
+          percent_off: discount.discount_value,
+          duration: 'once',
+          name: discount.code ?? 'Promotion',
+        });
+        stripeCouponId = coupon.id;
+      } else {
+        // fixed_amount
+        const coupon = await stripe.coupons.create({
+          amount_off: Math.round(discount.discount_amount * 100),
+          currency: 'eur',
+          duration: 'once',
+          name: discount.code ?? 'Promotion',
+        });
+        stripeCouponId = coupon.id;
+      }
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card', 'link'],
       line_items: lineItems,
       mode: 'payment',
       invoice_creation: { enabled: true },
+      ...(stripeCouponId ? { discounts: [{ coupon: stripeCouponId }] } : {}),
       shipping_options: shippingOptions,
       shipping_address_collection: {
         allowed_countries:
@@ -406,6 +450,13 @@ export async function POST(request: Request) {
         customer_phone: customer.phone,
         shipping_address: `${customer.address}, ${customer.postalCode} ${customer.city}`,
         ...(orderId ? { order_id: orderId } : {}),
+        ...(discount
+          ? {
+              discount_id: discount.discount_id,
+              discount_code: discount.code ?? '',
+              discount_amount: String(discount.discount_amount),
+            }
+          : {}),
       },
     });
 

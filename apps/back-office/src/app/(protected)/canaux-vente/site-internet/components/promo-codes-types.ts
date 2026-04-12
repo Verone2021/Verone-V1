@@ -1,6 +1,6 @@
 export interface PromoCode {
   id: string;
-  code: string;
+  code: string | null;
   name: string;
   description: string | null;
   discount_type: string;
@@ -13,7 +13,17 @@ export interface PromoCode {
   max_uses_per_customer: number;
   current_uses: number;
   is_active: boolean;
+  is_automatic: boolean;
+  target_type: 'all' | 'products' | 'collections';
+  exclude_sale_items: boolean;
   created_at: string;
+}
+
+export interface PromoTarget {
+  id: string;
+  discount_id: string;
+  target_type: 'product' | 'collection';
+  target_id: string;
 }
 
 export interface PromoFormData {
@@ -29,4 +39,8 @@ export interface PromoFormData {
   max_uses_total: string;
   max_uses_per_customer: number;
   is_active: boolean;
+  is_automatic: boolean;
+  target_type: 'all' | 'products' | 'collections';
+  exclude_sale_items: boolean;
+  selected_target_ids: string[];
 }

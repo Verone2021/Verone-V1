@@ -4,6 +4,61 @@ import { createClient } from '@supabase/supabase-js';
 
 const SITE_INTERNET_CHANNEL_ID = '0c2639e9-df80-41fa-84d0-9da96a128f7f';
 
+/**
+ * Track promotion usage after successful payment.
+ * Increments current_uses counter and creates audit record.
+ * Uses service role client — tables are untyped here, casts needed.
+ */
+async function trackPromoUsage(
+  supabaseUrl: string,
+  supabaseServiceKey: string,
+  discountId: string,
+  orderId: string,
+  discountAmount: number
+) {
+  const sb = createClient(supabaseUrl, supabaseServiceKey);
+
+  // 1. Increment current_uses via raw SQL-like approach
+  const { data: promoRow } = (await sb
+    .from('order_discounts')
+    .select('current_uses')
+    .eq('id', discountId)
+    .single()) as { data: { current_uses: number } | null };
+
+  if (promoRow) {
+    await (
+      sb.from('order_discounts') as unknown as {
+        update: (val: Record<string, unknown>) => {
+          eq: (col: string, val: string) => Promise<unknown>;
+        };
+      }
+    )
+      .update({ current_uses: (promoRow.current_uses ?? 0) + 1 })
+      .eq('id', discountId);
+  }
+
+  // 2. Get customer_id from order
+  const { data: orderRow } = (await sb
+    .from('sales_orders')
+    .select('individual_customer_id')
+    .eq('id', orderId)
+    .single()) as { data: { individual_customer_id: string | null } | null };
+
+  // 3. Insert audit record
+  await (
+    sb.from('promotion_usages') as unknown as {
+      insert: (val: Record<string, unknown>) => Promise<unknown>;
+    }
+  ).insert({
+    discount_id: discountId,
+    order_id: orderId,
+    customer_id: orderRow?.individual_customer_id ?? null,
+    discount_amount: discountAmount,
+  });
+
+  console.warn('[Stripe Webhook] Promo tracked:', discountId);
+}
+
 export async function POST(request: Request) {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -76,6 +131,21 @@ export async function POST(request: Request) {
             console.error('[Stripe Webhook] Order update failed:', error);
           } else {
             console.warn('[Stripe Webhook] Order validated:', existingOrderId);
+
+            // Track promotion usage if discount was applied
+            const discountId = metadata.discount_id;
+            const discountAmountStr = metadata.discount_amount;
+            if (discountId && discountAmountStr) {
+              void trackPromoUsage(
+                supabaseUrl,
+                supabaseServiceKey,
+                discountId,
+                existingOrderId,
+                parseFloat(discountAmountStr)
+              ).catch(err => {
+                console.error('[Stripe Webhook] Promo tracking failed:', err);
+              });
+            }
           }
         } else {
           // Fallback: create order directly (legacy or no pre-creation)

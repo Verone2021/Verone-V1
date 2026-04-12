@@ -730,6 +730,13 @@ export type Database = {
             foreignKeyName: 'bank_transactions_enrichment_audit_transaction_id_fkey';
             columns: ['transaction_id'];
             isOneToOne: false;
+            referencedRelation: 'v_library_missing_documents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bank_transactions_enrichment_audit_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
             referencedRelation: 'v_transactions_missing_invoice';
             referencedColumns: ['id'];
           },
@@ -2295,6 +2302,65 @@ export type Database = {
           },
         ];
       };
+      document_emails: {
+        Row: {
+          attachments: Json | null;
+          created_at: string;
+          document_id: string;
+          document_number: string | null;
+          document_type: string;
+          error_message: string | null;
+          id: string;
+          message_body: string | null;
+          recipient_email: string;
+          resend_email_id: string | null;
+          sent_at: string | null;
+          sent_by: string | null;
+          status: string;
+          subject: string;
+        };
+        Insert: {
+          attachments?: Json | null;
+          created_at?: string;
+          document_id: string;
+          document_number?: string | null;
+          document_type: string;
+          error_message?: string | null;
+          id?: string;
+          message_body?: string | null;
+          recipient_email: string;
+          resend_email_id?: string | null;
+          sent_at?: string | null;
+          sent_by?: string | null;
+          status?: string;
+          subject: string;
+        };
+        Update: {
+          attachments?: Json | null;
+          created_at?: string;
+          document_id?: string;
+          document_number?: string | null;
+          document_type?: string;
+          error_message?: string | null;
+          id?: string;
+          message_body?: string | null;
+          recipient_email?: string;
+          resend_email_id?: string | null;
+          sent_at?: string | null;
+          sent_by?: string | null;
+          status?: string;
+          subject?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'document_emails_sent_by_fkey';
+            columns: ['sent_by'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+        ];
+      };
       email_templates: {
         Row: {
           active: boolean | null;
@@ -2344,6 +2410,7 @@ export type Database = {
           logo_url: string | null;
           member_count: number;
           name: string;
+          payment_delay_days: number | null;
           show_on_linkme_globe: boolean | null;
           updated_at: string;
         };
@@ -2356,6 +2423,7 @@ export type Database = {
           logo_url?: string | null;
           member_count?: number;
           name: string;
+          payment_delay_days?: number | null;
           show_on_linkme_globe?: boolean | null;
           updated_at?: string;
         };
@@ -2368,6 +2436,7 @@ export type Database = {
           logo_url?: string | null;
           member_count?: number;
           name?: string;
+          payment_delay_days?: number | null;
           show_on_linkme_globe?: boolean | null;
           updated_at?: string;
         };
@@ -3010,6 +3079,156 @@ export type Database = {
           {
             foreignKeyName: 'financial_documents_uploaded_by_fkey';
             columns: ['uploaded_by'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+        ];
+      };
+      fiscal_obligations_done: {
+        Row: {
+          completed_at: string;
+          completed_by: string | null;
+          id: string;
+          notes: string | null;
+          obligation_id: string;
+        };
+        Insert: {
+          completed_at?: string;
+          completed_by?: string | null;
+          id?: string;
+          notes?: string | null;
+          obligation_id: string;
+        };
+        Update: {
+          completed_at?: string;
+          completed_by?: string | null;
+          id?: string;
+          notes?: string | null;
+          obligation_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'fiscal_obligations_done_completed_by_fkey';
+            columns: ['completed_by'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+        ];
+      };
+      fixed_asset_depreciations: {
+        Row: {
+          created_at: string;
+          cumulative_amount: number;
+          depreciation_amount: number;
+          fiscal_year: number;
+          fixed_asset_id: string;
+          id: string;
+          is_computed: boolean;
+          net_book_value: number;
+        };
+        Insert: {
+          created_at?: string;
+          cumulative_amount: number;
+          depreciation_amount: number;
+          fiscal_year: number;
+          fixed_asset_id: string;
+          id?: string;
+          is_computed?: boolean;
+          net_book_value: number;
+        };
+        Update: {
+          created_at?: string;
+          cumulative_amount?: number;
+          depreciation_amount?: number;
+          fiscal_year?: number;
+          fixed_asset_id?: string;
+          id?: string;
+          is_computed?: boolean;
+          net_book_value?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'fixed_asset_depreciations_fixed_asset_id_fkey';
+            columns: ['fixed_asset_id'];
+            isOneToOne: false;
+            referencedRelation: 'fixed_assets';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      fixed_assets: {
+        Row: {
+          acquisition_amount: number;
+          acquisition_date: string;
+          asset_category: string;
+          created_at: string;
+          created_by: string | null;
+          depreciation_duration_years: number;
+          depreciation_method: string;
+          description: string | null;
+          disposal_amount: number | null;
+          disposal_date: string | null;
+          id: string;
+          invoice_reference: string | null;
+          label: string;
+          pcg_account: string;
+          pcg_amortissement: string;
+          residual_value: number;
+          status: string;
+          supplier_name: string | null;
+          total_depreciated: number;
+          updated_at: string;
+        };
+        Insert: {
+          acquisition_amount: number;
+          acquisition_date: string;
+          asset_category?: string;
+          created_at?: string;
+          created_by?: string | null;
+          depreciation_duration_years?: number;
+          depreciation_method?: string;
+          description?: string | null;
+          disposal_amount?: number | null;
+          disposal_date?: string | null;
+          id?: string;
+          invoice_reference?: string | null;
+          label: string;
+          pcg_account?: string;
+          pcg_amortissement?: string;
+          residual_value?: number;
+          status?: string;
+          supplier_name?: string | null;
+          total_depreciated?: number;
+          updated_at?: string;
+        };
+        Update: {
+          acquisition_amount?: number;
+          acquisition_date?: string;
+          asset_category?: string;
+          created_at?: string;
+          created_by?: string | null;
+          depreciation_duration_years?: number;
+          depreciation_method?: string;
+          description?: string | null;
+          disposal_amount?: number | null;
+          disposal_date?: string | null;
+          id?: string;
+          invoice_reference?: string | null;
+          label?: string;
+          pcg_account?: string;
+          pcg_amortissement?: string;
+          residual_value?: number;
+          status?: string;
+          supplier_name?: string | null;
+          total_depreciated?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'fixed_assets_created_by_fkey';
+            columns: ['created_by'];
             isOneToOne: false;
             referencedRelation: 'v_linkme_users';
             referencedColumns: ['user_id'];
@@ -4686,7 +4905,7 @@ export type Database = {
           title: string;
           type: string;
           updated_at: string | null;
-          user_id: string;
+          user_id: string | null;
         };
         Insert: {
           action_label?: string | null;
@@ -4699,7 +4918,7 @@ export type Database = {
           title: string;
           type: string;
           updated_at?: string | null;
-          user_id: string;
+          user_id?: string | null;
         };
         Update: {
           action_label?: string | null;
@@ -4712,7 +4931,7 @@ export type Database = {
           title?: string;
           type?: string;
           updated_at?: string | null;
-          user_id?: string;
+          user_id?: string | null;
         };
         Relationships: [
           {
@@ -4724,19 +4943,53 @@ export type Database = {
           },
         ];
       };
+      order_discount_targets: {
+        Row: {
+          created_at: string;
+          discount_id: string;
+          id: string;
+          target_id: string;
+          target_type: string;
+        };
+        Insert: {
+          created_at?: string;
+          discount_id: string;
+          id?: string;
+          target_id: string;
+          target_type: string;
+        };
+        Update: {
+          created_at?: string;
+          discount_id?: string;
+          id?: string;
+          target_id?: string;
+          target_type?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'order_discount_targets_discount_id_fkey';
+            columns: ['discount_id'];
+            isOneToOne: false;
+            referencedRelation: 'order_discounts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       order_discounts: {
         Row: {
           applicable_channels: string[] | null;
           applicable_customer_types: string[] | null;
-          code: string;
+          code: string | null;
           created_at: string | null;
           created_by: string | null;
           current_uses: number | null;
           description: string | null;
           discount_type: string;
           discount_value: number;
+          exclude_sale_items: boolean;
           id: string;
           is_active: boolean | null;
+          is_automatic: boolean;
           is_combinable: boolean | null;
           max_discount_amount: number | null;
           max_uses_per_customer: number | null;
@@ -4744,6 +4997,7 @@ export type Database = {
           min_order_amount: number | null;
           name: string;
           requires_code: boolean | null;
+          target_type: string;
           updated_at: string | null;
           valid_from: string;
           valid_until: string;
@@ -4751,15 +5005,17 @@ export type Database = {
         Insert: {
           applicable_channels?: string[] | null;
           applicable_customer_types?: string[] | null;
-          code: string;
+          code?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           current_uses?: number | null;
           description?: string | null;
           discount_type: string;
           discount_value: number;
+          exclude_sale_items?: boolean;
           id?: string;
           is_active?: boolean | null;
+          is_automatic?: boolean;
           is_combinable?: boolean | null;
           max_discount_amount?: number | null;
           max_uses_per_customer?: number | null;
@@ -4767,6 +5023,7 @@ export type Database = {
           min_order_amount?: number | null;
           name: string;
           requires_code?: boolean | null;
+          target_type?: string;
           updated_at?: string | null;
           valid_from: string;
           valid_until: string;
@@ -4774,15 +5031,17 @@ export type Database = {
         Update: {
           applicable_channels?: string[] | null;
           applicable_customer_types?: string[] | null;
-          code?: string;
+          code?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           current_uses?: number | null;
           description?: string | null;
           discount_type?: string;
           discount_value?: number;
+          exclude_sale_items?: boolean;
           id?: string;
           is_active?: boolean | null;
+          is_automatic?: boolean;
           is_combinable?: boolean | null;
           max_discount_amount?: number | null;
           max_uses_per_customer?: number | null;
@@ -4790,6 +5049,7 @@ export type Database = {
           min_order_amount?: number | null;
           name?: string;
           requires_code?: boolean | null;
+          target_type?: string;
           updated_at?: string | null;
           valid_from?: string;
           valid_until?: string;
@@ -6399,6 +6659,83 @@ export type Database = {
           },
         ];
       };
+      promotion_usages: {
+        Row: {
+          customer_id: string | null;
+          discount_amount: number;
+          discount_id: string;
+          id: string;
+          order_id: string;
+          used_at: string;
+        };
+        Insert: {
+          customer_id?: string | null;
+          discount_amount: number;
+          discount_id: string;
+          id?: string;
+          order_id: string;
+          used_at?: string;
+        };
+        Update: {
+          customer_id?: string | null;
+          discount_amount?: number;
+          discount_id?: string;
+          id?: string;
+          order_id?: string;
+          used_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'promotion_usages_customer_id_fkey';
+            columns: ['customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'individual_customers';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'promotion_usages_discount_id_fkey';
+            columns: ['discount_id'];
+            isOneToOne: false;
+            referencedRelation: 'order_discounts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'promotion_usages_order_id_fkey';
+            columns: ['order_id'];
+            isOneToOne: false;
+            referencedRelation: 'affiliate_pending_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'promotion_usages_order_id_fkey';
+            columns: ['order_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_enriched';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'promotion_usages_order_id_fkey';
+            columns: ['order_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_with_margins';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'promotion_usages_order_id_fkey';
+            columns: ['order_id'];
+            isOneToOne: false;
+            referencedRelation: 'sales_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'promotion_usages_order_id_fkey';
+            columns: ['order_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['sales_order_id'];
+          },
+        ];
+      };
       purchase_order_items: {
         Row: {
           allocated_customs_ht: number;
@@ -7452,7 +7789,10 @@ export type Database = {
           accepts_semi_truck: boolean;
           affiliate_total_ht: number | null;
           affiliate_total_ttc: number | null;
+          applied_discount_amount: number | null;
+          applied_discount_code: string | null;
           applied_discount_codes: string[] | null;
+          applied_discount_id: string | null;
           billing_address: Json | null;
           billing_contact_id: string | null;
           cancellation_reason: string | null;
@@ -7528,7 +7868,10 @@ export type Database = {
           accepts_semi_truck?: boolean;
           affiliate_total_ht?: number | null;
           affiliate_total_ttc?: number | null;
+          applied_discount_amount?: number | null;
+          applied_discount_code?: string | null;
           applied_discount_codes?: string[] | null;
+          applied_discount_id?: string | null;
           billing_address?: Json | null;
           billing_contact_id?: string | null;
           cancellation_reason?: string | null;
@@ -7604,7 +7947,10 @@ export type Database = {
           accepts_semi_truck?: boolean;
           affiliate_total_ht?: number | null;
           affiliate_total_ttc?: number | null;
+          applied_discount_amount?: number | null;
+          applied_discount_code?: string | null;
           applied_discount_codes?: string[] | null;
+          applied_discount_id?: string | null;
           billing_address?: Json | null;
           billing_contact_id?: string | null;
           cancellation_reason?: string | null;
@@ -7677,6 +8023,13 @@ export type Database = {
           warehouse_exit_by?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: 'sales_orders_applied_discount_id_fkey';
+            columns: ['applied_discount_id'];
+            isOneToOne: false;
+            referencedRelation: 'order_discounts';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'sales_orders_billing_contact_id_fkey';
             columns: ['billing_contact_id'];
@@ -8967,6 +9320,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_expenses_with_details';
             referencedColumns: ['transaction_id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_library_missing_documents';
+            referencedColumns: ['id'];
           },
           {
             foreignKeyName: 'transaction_document_links_transaction_id_fkey';
@@ -10464,6 +10824,41 @@ export type Database = {
           },
         ];
       };
+      v_library_documents: {
+        Row: {
+          created_at: string | null;
+          document_date: string | null;
+          document_direction: string | null;
+          document_number: string | null;
+          document_type: string | null;
+          id: string | null;
+          partner_name: string | null;
+          pcg_code: string | null;
+          pdf_url: string | null;
+          source_table: string | null;
+          status: string | null;
+          total_ht: number | null;
+          total_ttc: number | null;
+        };
+        Relationships: [];
+      };
+      v_library_missing_documents: {
+        Row: {
+          created_at: string | null;
+          document_date: string | null;
+          document_direction: string | null;
+          document_number: string | null;
+          document_type: string | null;
+          id: string | null;
+          partner_name: string | null;
+          pcg_code: string | null;
+          source_table: string | null;
+          status: string | null;
+          total_ht: number | null;
+          total_ttc: number | null;
+        };
+        Relationships: [];
+      };
       v_linkme_users: {
         Row: {
           avatar_url: string | null;
@@ -10726,6 +11121,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_expenses_with_details';
             referencedColumns: ['transaction_id'];
+          },
+          {
+            foreignKeyName: 'transaction_document_links_transaction_id_fkey';
+            columns: ['transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_library_missing_documents';
+            referencedColumns: ['id'];
           },
           {
             foreignKeyName: 'transaction_document_links_transaction_id_fkey';
@@ -12810,6 +13212,23 @@ export type Database = {
         Args: { p_end_date?: string; p_start_date?: string };
         Returns: Json;
       };
+      get_unpaid_invoices: {
+        Args: { max_items?: number };
+        Returns: {
+          days_overdue: number;
+          document_date: string;
+          document_number: string;
+          document_type: Database['public']['Enums']['document_type'];
+          due_date: string;
+          id: string;
+          is_overdue: boolean;
+          partner_id: string;
+          partner_name: string;
+          status: Database['public']['Enums']['document_status'];
+          total_ttc: number;
+        }[];
+      };
+      get_unpaid_invoices_count: { Args: never; Returns: number };
       get_user_activity_stats: {
         Args: { p_days?: number; p_user_id: string };
         Returns: {
@@ -12915,6 +13334,14 @@ export type Database = {
         Args: { target_enseigne_id: string };
         Returns: boolean;
       };
+      is_own_linkme_order: {
+        Args: {
+          p_affiliate_id: string;
+          p_order_id: string;
+          p_selection_id: string;
+        };
+        Returns: boolean;
+      };
       is_staff_user_cached: { Args: never; Returns: boolean };
       is_tester_or_admin: { Args: never; Returns: boolean };
       is_transaction_locked: { Args: { p_tx_date: string }; Returns: boolean };
@@ -12977,23 +13404,18 @@ export type Database = {
         Args: { p_document_id: string; p_transaction_id: string };
         Returns: Json;
       };
-      mark_payment_received:
-        | {
-            Args: { p_amount: number; p_order_id: string; p_user_id?: string };
-            Returns: undefined;
-          }
-        | {
-            Args: {
-              p_amount: number;
-              p_date?: string;
-              p_note?: string;
-              p_order_id: string;
-              p_payment_type?: string;
-              p_reference?: string;
-              p_user_id?: string;
-            };
-            Returns: string;
-          };
+      mark_payment_received: {
+        Args: {
+          p_amount: number;
+          p_date?: string;
+          p_note?: string;
+          p_order_id: string;
+          p_payment_type?: string;
+          p_reference?: string;
+          p_user_id?: string;
+        };
+        Returns: string;
+      };
       mark_po_payment_received:
         | { Args: { p_amount: number; p_order_id: string }; Returns: undefined }
         | {

@@ -13,7 +13,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import {
   Globe,
   ArrowLeft,
-  BarChart,
   LayoutDashboard,
   ShoppingBag,
   Palette,
@@ -25,7 +24,7 @@ import {
   FileText,
   AlertTriangle,
   ArrowRight,
-  TrendingUp,
+  Tag,
 } from 'lucide-react';
 
 // Local Components
@@ -34,38 +33,44 @@ import { ClientsSection } from './components/ClientsSection';
 import { CMSSection } from './components/CMSSection';
 import { CollectionsSection } from './components/CollectionsSection';
 import { ConfigurationSection } from './components/ConfigurationSection';
+import { NewsletterSection } from './components/NewsletterSection';
 import { OrdersSection } from './components/OrdersSection';
 import { ProductsSection } from './components/ProductsSection';
+import { PromoCodesSection } from './components/PromoCodesSection';
 import { ReviewsSection } from './components/ReviewsSection';
-import { VercelAnalyticsDashboard } from './components/VercelAnalyticsDashboard';
 
 // Local Hooks
+import { useSiteInternetCollections } from './hooks/use-site-internet-collections';
 import { useSiteInternetConfig } from './hooks/use-site-internet-config';
 import { useSiteInternetProducts } from './hooks/use-site-internet-products';
-import { useVercelAnalytics } from './hooks/use-vercel-analytics';
 
 /**
  * Page Canal Site Internet - Back Office CMS
  *
  * Sections:
- * - Dashboard: Métriques Vercel Analytics + KPI produits
+ * - Dashboard: KPIs produits, commandes, CA
  * - Produits: Gestion complète (add/edit/delete + variantes)
  * - Collections: Toggle visibilité collections
  * - Catégories: Gestion arborescence catégories
- * - Configuration: Domaine, SEO, contact, analytics
- * - Commandes: Suivi commandes e-commerce (site_orders)
- * - Clients: Clients uniques agrégés depuis site_orders
+ * - Promotions: Codes promo par article ou collection
+ * - Configuration: Domaine, SEO, contact
+ * - Commandes: Suivi commandes e-commerce
+ * - Clients: Clients du site
  */
 export default function SiteInternetPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
 
   // Hooks
-  const { data: _products, isLoading: _productsLoading } =
-    useSiteInternetProducts();
-  const { data: _config, isLoading: _configLoading } = useSiteInternetConfig();
-  const { data: _analytics, isLoading: _analyticsLoading } =
-    useVercelAnalytics();
+  const { data: products } = useSiteInternetProducts();
+  const { data: collections } = useSiteInternetCollections();
+  const { data: _config } = useSiteInternetConfig();
+
+  // KPIs dynamiques
+  const publishedCount = products?.filter(p => p.is_published).length ?? 0;
+  const totalCount = products?.length ?? 0;
+  const unpublishedCount = totalCount - publishedCount;
+  const activeCollections = collections?.filter(c => c.is_active).length ?? 0;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -159,9 +164,9 @@ export default function SiteInternetPage() {
               <FileText className="h-4 w-4" />
               Contenu
             </TabsTrigger>
-            <TabsTrigger value="analytique" className="flex items-center gap-2">
-              <BarChart className="h-4 w-4" />
-              Analytique
+            <TabsTrigger value="promos" className="flex items-center gap-2">
+              <Tag className="h-4 w-4" />
+              Promotions
             </TabsTrigger>
           </TabsList>
 
@@ -173,14 +178,20 @@ export default function SiteInternetPage() {
                 <p className="text-xs text-gray-500 uppercase tracking-wide">
                   Produits publies
                 </p>
-                <p className="text-2xl font-bold text-gray-900">18</p>
-                <p className="text-xs text-gray-400">sur 231 au catalogue</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {publishedCount}
+                </p>
+                <p className="text-xs text-gray-400">
+                  sur {totalCount} au catalogue
+                </p>
               </div>
               <div className="bg-white rounded-lg border border-gray-200 px-4 py-3">
                 <p className="text-xs text-gray-500 uppercase tracking-wide">
                   Collections
                 </p>
-                <p className="text-2xl font-bold text-blue-600">2</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {activeCollections}
+                </p>
                 <p className="text-xs text-gray-400">actives sur le site</p>
               </div>
               <div className="bg-white rounded-lg border border-gray-200 px-4 py-3">
@@ -215,7 +226,8 @@ export default function SiteInternetPage() {
                   <div className="flex items-center gap-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
                     <span className="text-sm text-gray-900">
-                      <strong>213</strong> produits non publies sur le site
+                      <strong>{unpublishedCount}</strong> produits non publies
+                      sur le site
                     </span>
                   </div>
                   <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
@@ -270,14 +282,14 @@ export default function SiteInternetPage() {
                     onClick={() => setActiveTab('produits')}
                     className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900 w-full text-left"
                   >
-                    <span>18 produits publies</span>
+                    <span>{publishedCount} produits publies</span>
                     <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
                   </button>
                   <button
                     onClick={() => setActiveTab('collections')}
                     className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900 w-full text-left"
                   >
-                    <span>2 collections actives</span>
+                    <span>{activeCollections} collections actives</span>
                     <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
                   </button>
                   <button
@@ -358,28 +370,28 @@ export default function SiteInternetPage() {
                 </div>
               </div>
 
-              {/* Analytique */}
+              {/* Promotions */}
               <div className="bg-white rounded-xl border border-gray-200 p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-purple-600" />
+                    <Tag className="h-5 w-5 text-purple-600" />
                     <h2 className="text-base font-semibold text-gray-900">
-                      Performance
+                      Promotions
                     </h2>
                   </div>
                   <button
-                    onClick={() => setActiveTab('analytique')}
+                    onClick={() => setActiveTab('promos')}
                     className="text-xs text-gray-500 hover:text-gray-900"
                   >
-                    Voir →
+                    Gerer →
                   </button>
                 </div>
                 <div className="space-y-2">
                   <button
-                    onClick={() => setActiveTab('analytique')}
+                    onClick={() => setActiveTab('promos')}
                     className="flex items-center justify-between py-1.5 text-sm text-gray-700 hover:text-gray-900 w-full text-left"
                   >
-                    <span>Web Vitals et analytique</span>
+                    <span>Codes promo et reductions</span>
                     <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
                   </button>
                   <button
@@ -394,9 +406,9 @@ export default function SiteInternetPage() {
             </div>
           </TabsContent>
 
-          {/* Tab: Analytique (ancien Dashboard) */}
-          <TabsContent value="analytique" className="space-y-6">
-            <VercelAnalyticsDashboard />
+          {/* Tab: Promotions */}
+          <TabsContent value="promos" className="space-y-6">
+            <PromoCodesSection />
           </TabsContent>
 
           {/* Tab: Produits */}
@@ -434,12 +446,11 @@ export default function SiteInternetPage() {
             <ReviewsSection />
           </TabsContent>
 
-          {/* Tab: Contenu CMS */}
+          {/* Tab: Contenu CMS + Newsletter */}
           <TabsContent value="contenu" className="space-y-6">
             <CMSSection />
+            <NewsletterSection />
           </TabsContent>
-
-          {/* Tab: Promotions — accessible via Analytique > Promos */}
         </Tabs>
       </div>
     </div>
