@@ -1,6 +1,6 @@
 # Domaine Autres — Schema Base de Donnees
 
-_Generated: 2026-04-12 16:31_
+_Generated: 2026-04-12 17:32_
 
 **Tables : 42**
 
@@ -31,7 +31,7 @@ _Generated: 2026-04-12 16:31_
 | [price_list_history](#price-list-history)                                   | 15       | 1   | 1   | 0        |
 | [price_list_items](#price-list-items)                                       | 21       | 2   | 2   | 4        |
 | [price_lists](#price-lists)                                                 | 18       | 0   | 2   | 2        |
-| [promotion_usages](#promotion-usages)                                       | 6        | 3   | 3   | 0        |
+| [promotion_usages](#promotion-usages)                                       | 6        | 3   | 2   | 0        |
 | [sales_channels](#sales-channels)                                           | 22       | 0   | 2   | 1        |
 | [stock_alerts_unified_view](#stock-alerts-unified-view)                     | 23       | 0   | 0   | 0        |
 | [stock_alerts_view](#stock-alerts-view)                                     | 8        | 0   | 0   | 0        |
@@ -897,11 +897,10 @@ _Generated: 2026-04-12 16:31_
 - `order_id` → `sales_orders.id`
 - `customer_id` → `individual_customers.id`
 
-**RLS :** 3 policies
+**RLS :** 2 policies
 
 - `staff_full_access_promotion_usages` : ALL — authenticated
-- `authenticated_insert_promotion_usages` : INSERT — authenticated
-- `authenticated_read_own_promotion_usages` : SELECT — authenticated
+- `staff_read_promotion_usages` : SELECT — authenticated
 
 ---
 
@@ -1336,7 +1335,7 @@ _Generated: 2026-04-12 16:31_
 
 - `users_delete_own_wishlist` : DELETE — authenticated
 - `users_insert_own_wishlist` : INSERT — authenticated
-- `users_read_own_wishlist` : SELECT — authenticated
 - `staff_read_all_wishlists` : SELECT — authenticated
+- `users_read_own_wishlist` : SELECT — authenticated
 
 ---

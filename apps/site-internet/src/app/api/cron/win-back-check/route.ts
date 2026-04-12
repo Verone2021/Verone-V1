@@ -27,11 +27,18 @@ export async function GET(request: Request) {
       Date.now() - 60 * 24 * 60 * 60 * 1000
     ).toISOString();
 
-    // Find customers who last ordered 60+ days ago
+    const SITE_CHANNEL_ID = '0c2639e9-df80-41fa-84d0-9da96a128f7f';
+
+    // Find customers who last ordered 60+ days ago (sales_orders replaces site_orders)
     const { data: oldOrders, error } = await supabase
-      .from('site_orders')
-      .select('customer_email, customer_name, created_at')
+      .from('sales_orders')
+      .select(
+        'id, individual_customer_id, created_at, individual_customers(email, first_name, last_name)'
+      )
+      .eq('channel_id', SITE_CHANNEL_ID)
       .lt('created_at', sixtyDaysAgo)
+      .neq('status', 'cancelled')
+      .neq('status', 'draft')
       .order('created_at', { ascending: false })
       .limit(500);
 
@@ -42,13 +49,25 @@ export async function GET(request: Request) {
 
     // Deduplicate by email and exclude those who ordered recently
     const { data: recentOrders } = await supabase
-      .from('site_orders')
-      .select('customer_email')
+      .from('sales_orders')
+      .select('individual_customers(email)')
+      .eq('channel_id', SITE_CHANNEL_ID)
       .gte('created_at', sixtyDaysAgo)
+      .neq('status', 'cancelled')
+      .neq('status', 'draft')
       .limit(1000);
 
     const recentEmails = new Set(
-      (recentOrders ?? []).map(o => (o.customer_email as string).toLowerCase())
+      (recentOrders ?? [])
+        .map(o => {
+          const rawCust = (o as Record<string, unknown>).individual_customers;
+          const cust: unknown = Array.isArray(rawCust) ? rawCust[0] : rawCust;
+          return (
+            (cust as { email: string | null } | null)?.email?.toLowerCase() ??
+            ''
+          );
+        })
+        .filter(Boolean)
     );
 
     const eligibleMap = new Map<
@@ -57,14 +76,22 @@ export async function GET(request: Request) {
     >();
 
     for (const order of oldOrders ?? []) {
-      const email = (order.customer_email as string).toLowerCase();
-      if (!recentEmails.has(email) && !eligibleMap.has(email)) {
-        eligibleMap.set(email, {
-          email: order.customer_email as string,
-          name: order.customer_name as string,
-          lastOrder: order.created_at as string,
-        });
-      }
+      const rawCust = (order as Record<string, unknown>).individual_customers;
+      const cust: unknown = Array.isArray(rawCust) ? rawCust[0] : rawCust;
+      const typedCust = cust as {
+        email: string | null;
+        first_name: string | null;
+        last_name: string | null;
+      } | null;
+      const email = typedCust?.email?.toLowerCase();
+      if (!email || recentEmails.has(email) || eligibleMap.has(email)) continue;
+      eligibleMap.set(email, {
+        email,
+        name:
+          `${typedCust?.first_name ?? ''} ${typedCust?.last_name ?? ''}`.trim() ||
+          'Client',
+        lastOrder: (order as { created_at: string }).created_at,
+      });
     }
 
     let sent = 0;

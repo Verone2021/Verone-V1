@@ -6,8 +6,8 @@ const SITE_INTERNET_CHANNEL_ID = '0c2639e9-df80-41fa-84d0-9da96a128f7f';
 
 /**
  * Track promotion usage after successful payment.
- * Increments current_uses counter and creates audit record.
- * Uses service role client — tables are untyped here, casts needed.
+ * Uses atomic SQL UPDATE for current_uses (no race condition).
+ * Uses service role client (bypasses RLS).
  */
 async function trackPromoUsage(
   supabaseUrl: string,
@@ -18,41 +18,23 @@ async function trackPromoUsage(
 ) {
   const sb = createClient(supabaseUrl, supabaseServiceKey);
 
-  // 1. Increment current_uses via raw SQL-like approach
-  const { data: promoRow } = (await sb
-    .from('order_discounts')
-    .select('current_uses')
-    .eq('id', discountId)
-    .single()) as { data: { current_uses: number } | null };
-
-  if (promoRow) {
-    await (
-      sb.from('order_discounts') as unknown as {
-        update: (val: Record<string, unknown>) => {
-          eq: (col: string, val: string) => Promise<unknown>;
-        };
-      }
-    )
-      .update({ current_uses: (promoRow.current_uses ?? 0) + 1 })
-      .eq('id', discountId);
-  }
+  // 1. Atomic increment of current_uses — single SQL statement, no race condition
+  await sb.rpc('increment_promo_usage', { p_discount_id: discountId });
 
   // 2. Get customer_id from order
-  const { data: orderRow } = (await sb
+  const { data: orderRow } = await sb
     .from('sales_orders')
     .select('individual_customer_id')
     .eq('id', orderId)
-    .single()) as { data: { individual_customer_id: string | null } | null };
+    .single();
 
-  // 3. Insert audit record
-  await (
-    sb.from('promotion_usages') as unknown as {
-      insert: (val: Record<string, unknown>) => Promise<unknown>;
-    }
-  ).insert({
+  // 3. Insert audit record via service role (bypasses RLS)
+  await sb.from('promotion_usages').insert({
     discount_id: discountId,
     order_id: orderId,
-    customer_id: orderRow?.individual_customer_id ?? null,
+    customer_id:
+      (orderRow as { individual_customer_id: string | null } | null)
+        ?.individual_customer_id ?? null,
     discount_amount: discountAmount,
   });
 
@@ -282,17 +264,20 @@ export async function POST(request: Request) {
       case 'charge.refunded': {
         // Handle refund — find order by payment_intent
         const charge = event.data.object;
+        const rawPI = charge.payment_intent;
         const paymentIntentId =
-          typeof charge.payment_intent === 'string'
-            ? charge.payment_intent
-            : (charge.payment_intent as unknown as { id?: string } | null)?.id;
+          typeof rawPI === 'string'
+            ? rawPI
+            : rawPI && typeof rawPI === 'object' && 'id' in rawPI
+              ? String((rawPI as { id: string }).id)
+              : undefined;
 
         if (paymentIntentId) {
           const { error } = await supabase
             .from('sales_orders')
             .update({
               status: 'cancelled',
-              payment_status_v2: 'pending',
+              payment_status_v2: 'refunded',
               cancelled_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             })

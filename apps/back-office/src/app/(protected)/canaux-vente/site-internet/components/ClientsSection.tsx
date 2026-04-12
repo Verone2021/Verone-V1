@@ -51,13 +51,14 @@ function useSiteCustomers() {
   return useQuery({
     queryKey: ['site-internet-customers'],
     queryFn: async (): Promise<SiteCustomer[]> => {
+      // Show customers created from site-internet (source_type = 'site-internet')
       const { data, error } = await supabase
         .from('individual_customers')
         .select(
-          'id, first_name, last_name, email, phone, city, postal_code, country, is_active, created_at'
+          'id, first_name, last_name, email, phone, city, postal_code, country, is_active, created_at, source_type'
         )
-        .eq('source_type', 'site-internet')
         .eq('is_active', true)
+        .eq('source_type', 'site-internet')
         .order('created_at', { ascending: false })
         .limit(200);
 

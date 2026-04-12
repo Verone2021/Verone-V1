@@ -55,6 +55,101 @@ interface ShippingConfig {
   shipping_info_message?: string;
 }
 
+const SITE_INTERNET_CHANNEL_ID = '0c2639e9-df80-41fa-84d0-9da96a128f7f';
+
+interface ValidatedDiscount {
+  discount_id: string;
+  code: string | null;
+  discount_type: string;
+  discount_value: number;
+  discount_amount: number;
+}
+
+/**
+ * Server-side promo validation — never trust the frontend discount_amount.
+ * Revalidates the code against DB and recalculates the discount.
+ */
+async function validatePromoServerSide(
+  discount: z.infer<typeof DiscountSchema>,
+  subtotalTtc: number,
+  supabaseUrl: string,
+  supabaseServiceKey: string
+): Promise<ValidatedDiscount | { error: string }> {
+  if (!discount.code) {
+    return { error: 'Code promo requis' };
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  const { data, error } = await supabase
+    .from('order_discounts')
+    .select(
+      'id, code, name, discount_type, discount_value, min_order_amount, max_discount_amount, valid_from, valid_until, max_uses_total, current_uses, is_active'
+    )
+    .eq('code', discount.code.toUpperCase())
+    .eq('is_active', true)
+    .single();
+
+  if (error || !data) {
+    return { error: 'Code promo invalide ou expire' };
+  }
+
+  const promo = data as {
+    id: string;
+    code: string | null;
+    discount_type: string;
+    discount_value: number;
+    min_order_amount: number | null;
+    max_discount_amount: number | null;
+    valid_from: string;
+    valid_until: string;
+    max_uses_total: number | null;
+    current_uses: number;
+    is_active: boolean;
+  };
+
+  const now = new Date();
+  if (now < new Date(promo.valid_from) || now > new Date(promo.valid_until)) {
+    return { error: 'Ce code promo a expire' };
+  }
+
+  if (
+    promo.max_uses_total !== null &&
+    promo.current_uses >= promo.max_uses_total
+  ) {
+    return { error: "Ce code promo a atteint sa limite d'utilisation" };
+  }
+
+  if (promo.min_order_amount !== null && subtotalTtc < promo.min_order_amount) {
+    return {
+      error: `Minimum de commande : ${promo.min_order_amount.toFixed(2)} \u20ac`,
+    };
+  }
+
+  let discountAmount = 0;
+  if (promo.discount_type === 'percentage') {
+    discountAmount = subtotalTtc * (promo.discount_value / 100);
+  } else if (promo.discount_type === 'fixed') {
+    discountAmount = promo.discount_value;
+  }
+  // free_shipping handled by Stripe shipping_options — discount_amount = 0
+
+  if (
+    promo.max_discount_amount !== null &&
+    discountAmount > promo.max_discount_amount
+  ) {
+    discountAmount = promo.max_discount_amount;
+  }
+
+  return {
+    discount_id: promo.id,
+    code: promo.code,
+    discount_type: promo.discount_type,
+    discount_value: promo.discount_value,
+    discount_amount: Math.round(discountAmount * 100) / 100,
+  };
+}
+
 const DEFAULT_SHIPPING: ShippingConfig = {
   standard_enabled: true,
   standard_label: 'Livraison standard',
@@ -185,7 +280,47 @@ export async function POST(request: Request) {
       );
     }
 
-    const { items, customer, userId, discount } = validated.data;
+    const {
+      items,
+      customer,
+      userId,
+      discount: frontendDiscount,
+    } = validated.data;
+
+    // Server-side promo revalidation — NEVER trust frontend discount_amount
+    let discount: ValidatedDiscount | undefined;
+    if (frontendDiscount?.code) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+      if (supabaseUrl && supabaseServiceKey) {
+        const subtotalForPromo = items.reduce(
+          (sum, item) =>
+            sum +
+            (item.price_ttc +
+              item.eco_participation +
+              (item.include_assembly ? item.assembly_price : 0)) *
+              item.quantity,
+          0
+        );
+
+        const promoResult = await validatePromoServerSide(
+          frontendDiscount,
+          subtotalForPromo,
+          supabaseUrl,
+          supabaseServiceKey
+        );
+
+        if ('error' in promoResult) {
+          return NextResponse.json(
+            { error: promoResult.error },
+            { status: 400 }
+          );
+        }
+
+        discount = promoResult;
+      }
+    }
 
     // Check if Stripe is configured
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -263,22 +398,19 @@ export async function POST(request: Request) {
         customerId = newCustomer ? String(newCustomer.id) : null;
       }
 
-      // Generate order number
-      const year = new Date().getFullYear();
-      const prefix = `SO-${year}-`;
-      const { data: lastOrderRaw } = await supabase
-        .from('sales_orders')
-        .select('order_number')
-        .like('order_number', `${prefix}%`)
-        .order('order_number', { ascending: false })
-        .limit(1)
-        .single();
+      // Generate order number atomically via PostgreSQL sequence
+      const { data: seqData, error: seqError } = (await supabase
+        .rpc('nextval_text', { seq_name: 'site_order_number_seq' })
+        .single()) as { data: string | null; error: unknown };
 
-      const lastOrder = lastOrderRaw as { order_number?: string } | null;
-      const lastNum = lastOrder?.order_number
-        ? parseInt(lastOrder.order_number.replace(prefix, ''), 10)
-        : 0;
-      const orderNumber = `${prefix}${String(lastNum + 1).padStart(5, '0')}`;
+      let orderNumber: string;
+      if (seqError || !seqData) {
+        // Fallback: timestamp-based to avoid collision
+        orderNumber = `VER-SI-${Date.now()}`;
+        console.warn('[Checkout] Sequence fallback used:', orderNumber);
+      } else {
+        orderNumber = `VER-SI-${seqData}`;
+      }
 
       // Shipping address as JSONB
       const shippingCountry = String(customer.country ?? 'FR');
@@ -296,7 +428,7 @@ export async function POST(request: Request) {
         .from('sales_orders')
         .insert({
           order_number: orderNumber,
-          channel_id: '0c2639e9-df80-41fa-84d0-9da96a128f7f',
+          channel_id: SITE_INTERNET_CHANNEL_ID,
           customer_type: 'individual',
           individual_customer_id: customerId,
           status: 'draft',

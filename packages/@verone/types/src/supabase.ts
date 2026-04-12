@@ -1409,6 +1409,42 @@ export type Database = {
           },
         ];
       };
+      cms_pages: {
+        Row: {
+          content: string;
+          id: string;
+          is_published: boolean;
+          meta_description: string | null;
+          meta_title: string | null;
+          slug: string;
+          title: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          content?: string;
+          id?: string;
+          is_published?: boolean;
+          meta_description?: string | null;
+          meta_title?: string | null;
+          slug: string;
+          title: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          content?: string;
+          id?: string;
+          is_published?: boolean;
+          meta_description?: string | null;
+          meta_title?: string | null;
+          slug?: string;
+          title?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
       collection_images: {
         Row: {
           alt_text: string | null;
@@ -3623,6 +3659,7 @@ export type Database = {
           accepts_notifications: boolean | null;
           address_line1: string | null;
           address_line2: string | null;
+          auth_user_id: string | null;
           billing_address_line1: string | null;
           billing_address_line2: string | null;
           billing_city: string | null;
@@ -3663,6 +3700,7 @@ export type Database = {
           accepts_notifications?: boolean | null;
           address_line1?: string | null;
           address_line2?: string | null;
+          auth_user_id?: string | null;
           billing_address_line1?: string | null;
           billing_address_line2?: string | null;
           billing_city?: string | null;
@@ -3703,6 +3741,7 @@ export type Database = {
           accepts_notifications?: boolean | null;
           address_line1?: string | null;
           address_line2?: string | null;
+          auth_user_id?: string | null;
           billing_address_line1?: string | null;
           billing_address_line2?: string | null;
           billing_city?: string | null;
@@ -9887,6 +9926,56 @@ export type Database = {
           },
         ];
       };
+      wishlist_items: {
+        Row: {
+          created_at: string;
+          id: string;
+          product_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          product_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          product_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'wishlist_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'wishlist_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'wishlist_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'wishlist_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+        ];
+      };
     };
     Views: {
       affiliate_pending_orders: {
@@ -13309,6 +13398,10 @@ export type Database = {
       };
       has_been_ordered: { Args: { p_product_id: string }; Returns: boolean };
       has_scope: { Args: { required_scope: string }; Returns: boolean };
+      increment_promo_usage: {
+        Args: { p_discount_id: string };
+        Returns: undefined;
+      };
       increment_quantity_shipped: {
         Args: { p_item_id: string; p_quantity: number };
         Returns: undefined;
@@ -13460,6 +13553,7 @@ export type Database = {
             Args: { p_order_id: string; p_user_id?: string };
             Returns: boolean;
           };
+      nextval_text: { Args: { seq_name: string }; Returns: string };
       normalize_for_sku: {
         Args: { max_length?: number; text_input: string };
         Returns: string;

@@ -31,9 +31,15 @@ export async function GET(request: Request) {
       Date.now() - 8 * 24 * 60 * 60 * 1000
     ).toISOString();
 
+    const SITE_CHANNEL_ID = '0c2639e9-df80-41fa-84d0-9da96a128f7f';
+
+    // Query sales_orders (site_orders was dropped and migrated)
     const { data: orders, error } = await supabase
-      .from('site_orders')
-      .select('id, customer_email, customer_name, updated_at')
+      .from('sales_orders')
+      .select(
+        'id, individual_customer_id, updated_at, individual_customers(email, first_name, last_name)'
+      )
+      .eq('channel_id', SITE_CHANNEL_ID)
       .eq('status', 'delivered')
       .gte('updated_at', eightDaysAgo)
       .lte('updated_at', sevenDaysAgo)
@@ -46,19 +52,26 @@ export async function GET(request: Request) {
 
     let sent = 0;
     for (const order of orders ?? []) {
-      const row = order as {
-        id: string;
-        customer_email: string;
-        customer_name: string;
-      };
+      // Supabase returns joined relations as arrays
+      const rawCust = (order as Record<string, unknown>).individual_customers;
+      const cust: unknown = Array.isArray(rawCust) ? rawCust[0] : rawCust;
+      const typedCust = cust as {
+        email: string | null;
+        first_name: string | null;
+        last_name: string | null;
+      } | null;
+      const customerEmail = typedCust?.email;
+      if (!customerEmail) continue;
       try {
         await fetch(`${siteUrl}/api/emails/review-request`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            email: row.customer_email,
-            customerName: row.customer_name,
-            orderId: row.id,
+            email: customerEmail,
+            customerName:
+              `${typedCust?.first_name ?? ''} ${typedCust?.last_name ?? ''}`.trim() ||
+              'Client',
+            orderId: (order as { id: string }).id,
           }),
         });
         sent++;

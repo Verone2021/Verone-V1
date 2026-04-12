@@ -1,6 +1,6 @@
 # Domaine Notifications & Formulaires — Schema Base de Donnees
 
-_Generated: 2026-04-12 16:31_
+_Generated: 2026-04-12 17:32_
 
 **Tables : 9**
 
@@ -189,8 +189,8 @@ _Generated: 2026-04-12 16:31_
 
 **RLS :** 3 policies
 
-- `backoffice_full_access_notifications` : ALL — authenticated
 - `users_own_notifications` : ALL — authenticated
+- `backoffice_full_access_notifications` : ALL — authenticated
 - `notifications_insert_system` : INSERT — public
 
 **Triggers :** 1

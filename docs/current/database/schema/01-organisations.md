@@ -1,6 +1,6 @@
 # Domaine Organisations & Contacts — Schema Base de Donnees
 
-_Generated: 2026-04-12 16:31_
+_Generated: 2026-04-12 17:32_
 
 **Tables : 8**
 
@@ -11,7 +11,7 @@ _Generated: 2026-04-12 16:31_
 | [counterparty_bank_accounts](#counterparty-bank-accounts) | 10       | 1   | 5   | 0        |
 | [customer_addresses](#customer-addresses)                 | 13       | 0   | 2   | 0        |
 | [enseignes](#enseignes)                                   | 11       | 0   | 2   | 4        |
-| [individual_customers](#individual-customers)             | 35       | 3   | 3   | 1        |
+| [individual_customers](#individual-customers)             | 35       | 3   | 4   | 1        |
 | [organisation_families](#organisation-families)           | 4        | 2   | 1   | 0        |
 | [organisations](#organisations)                           | 70       | 3   | 5   | 10       |
 
@@ -248,10 +248,11 @@ _Generated: 2026-04-12 16:31_
 - `source_affiliate_id` → `linkme_affiliates.id`
 - `organisation_id` → `organisations.id`
 
-**RLS :** 3 policies
+**RLS :** 4 policies
 
 - `backoffice_full_access_individual_customers` : ALL — authenticated
 - `individual_customers_insert_self` : INSERT — authenticated
+- `customer_read_own_profile` : SELECT — authenticated
 - `linkme_users_read_individual_customers` : SELECT — authenticated
 
 **Triggers :** 1
