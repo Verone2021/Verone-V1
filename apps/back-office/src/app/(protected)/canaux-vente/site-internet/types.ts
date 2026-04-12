@@ -164,7 +164,6 @@ export interface SiteInternetConfig {
   contact_phone: string;
   config: {
     analytics?: {
-      vercel_enabled?: boolean;
       google_analytics_id?: string | null;
       google_tag_manager_id?: string | null;
     };
@@ -252,49 +251,6 @@ export interface ChannelConfigEditorProps {
   onSave: (config: Partial<SiteInternetConfig>) => Promise<void>;
 }
 
-// =====================================================
-// Types Vercel Analytics
-// =====================================================
-
-/**
- * Métriques Vercel Analytics
- */
-export interface VercelAnalyticsMetrics {
-  // Overview
-  pageviews: number;
-  uniqueVisitors: number;
-  bounceRate: number;
-  avgSessionDuration: number;
-
-  // Web Vitals
-  lcp: number; // Largest Contentful Paint
-  fid: number; // First Input Delay
-  cls: number; // Cumulative Layout Shift
-  ttfb: number; // Time to First Byte
-  fcp: number; // First Contentful Paint
-
-  // Top Pages
-  topPages: Array<{
-    path: string;
-    pageviews: number;
-    uniqueVisitors: number;
-  }>;
-
-  // Devices
-  devices: {
-    mobile: number;
-    desktop: number;
-    tablet: number;
-  };
-
-  // Time series (30 derniers jours)
-  timeSeries: Array<{
-    date: string;
-    pageviews: number;
-    uniqueVisitors: number;
-  }>;
-}
-
 /**
  * Stats Dashboard Canal
  */
@@ -305,9 +261,6 @@ export interface SiteInternetStats {
   collectionsTotal: number;
   categoriesVisible: number;
   categoriesTotal: number;
-
-  // Analytics Vercel
-  analytics: VercelAnalyticsMetrics | null;
 }
 
 // =====================================================

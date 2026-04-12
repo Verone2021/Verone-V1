@@ -68,19 +68,28 @@ export default async function ComptePage() {
   const lastName = userMeta.last_name ?? '';
   const phone = userMeta.phone ?? '';
 
-  // Fetch user orders from sales_orders (via individual_customer email match)
+  // Fetch user orders from sales_orders (via auth_user_id link, fallback to email)
   const ordersClient = createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // Find customer by email
-  const { data: customerData } = await ordersClient
+  // Find customer by auth_user_id first, fallback to email
+  let { data: customerData } = await ordersClient
     .from('individual_customers')
     .select('id')
-    .eq('email', user.email ?? '')
+    .eq('auth_user_id', user.id)
     .limit(1)
     .single();
+
+  if (!customerData) {
+    ({ data: customerData } = await ordersClient
+      .from('individual_customers')
+      .select('id')
+      .eq('email', user.email ?? '')
+      .limit(1)
+      .single());
+  }
 
   let orders: SiteOrder[] = [];
   if (customerData) {

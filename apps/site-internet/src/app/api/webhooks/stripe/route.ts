@@ -4,6 +4,43 @@ import { createClient } from '@supabase/supabase-js';
 
 const SITE_INTERNET_CHANNEL_ID = '0c2639e9-df80-41fa-84d0-9da96a128f7f';
 
+/**
+ * Track promotion usage after successful payment.
+ * Uses atomic SQL UPDATE for current_uses (no race condition).
+ * Uses service role client (bypasses RLS).
+ */
+async function trackPromoUsage(
+  supabaseUrl: string,
+  supabaseServiceKey: string,
+  discountId: string,
+  orderId: string,
+  discountAmount: number
+) {
+  const sb = createClient(supabaseUrl, supabaseServiceKey);
+
+  // 1. Atomic increment of current_uses — single SQL statement, no race condition
+  await sb.rpc('increment_promo_usage', { p_discount_id: discountId });
+
+  // 2. Get customer_id from order
+  const { data: orderRow } = await sb
+    .from('sales_orders')
+    .select('individual_customer_id')
+    .eq('id', orderId)
+    .single();
+
+  // 3. Insert audit record via service role (bypasses RLS)
+  await sb.from('promotion_usages').insert({
+    discount_id: discountId,
+    order_id: orderId,
+    customer_id:
+      (orderRow as { individual_customer_id: string | null } | null)
+        ?.individual_customer_id ?? null,
+    discount_amount: discountAmount,
+  });
+
+  console.warn('[Stripe Webhook] Promo tracked:', discountId);
+}
+
 export async function POST(request: Request) {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -76,6 +113,21 @@ export async function POST(request: Request) {
             console.error('[Stripe Webhook] Order update failed:', error);
           } else {
             console.warn('[Stripe Webhook] Order validated:', existingOrderId);
+
+            // Track promotion usage if discount was applied
+            const discountId = metadata.discount_id;
+            const discountAmountStr = metadata.discount_amount;
+            if (discountId && discountAmountStr) {
+              void trackPromoUsage(
+                supabaseUrl,
+                supabaseServiceKey,
+                discountId,
+                existingOrderId,
+                parseFloat(discountAmountStr)
+              ).catch(err => {
+                console.error('[Stripe Webhook] Promo tracking failed:', err);
+              });
+            }
           }
         } else {
           // Fallback: create order directly (legacy or no pre-creation)
@@ -212,17 +264,20 @@ export async function POST(request: Request) {
       case 'charge.refunded': {
         // Handle refund — find order by payment_intent
         const charge = event.data.object;
+        const rawPI = charge.payment_intent;
         const paymentIntentId =
-          typeof charge.payment_intent === 'string'
-            ? charge.payment_intent
-            : (charge.payment_intent as unknown as { id?: string } | null)?.id;
+          typeof rawPI === 'string'
+            ? rawPI
+            : rawPI && typeof rawPI === 'object' && 'id' in rawPI
+              ? String((rawPI as { id: string }).id)
+              : undefined;
 
         if (paymentIntentId) {
           const { error } = await supabase
             .from('sales_orders')
             .update({
               status: 'cancelled',
-              payment_status_v2: 'pending',
+              payment_status_v2: 'refunded',
               cancelled_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             })

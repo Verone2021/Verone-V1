@@ -4,7 +4,7 @@
 
 Apres CHAQUE creation ou modification de fichier dans `supabase/migrations/` :
 
-1. Executer `python scripts/generate-db-docs.py` pour re-generer la documentation DB
+1. Executer `python3 scripts/generate-docs.py --db` pour re-generer la documentation DB
 2. Verifier que les fichiers dans `docs/current/database/schema/` sont a jour
 3. Commiter la documentation mise a jour avec la migration
 
@@ -16,7 +16,7 @@ Si elle n'est pas a jour, les agents devinent la structure des tables au lieu de
 ## Commande rapide
 
 ```bash
-python scripts/generate-db-docs.py
+python3 scripts/generate-docs.py --db
 ```
 
 ## INTERDIT

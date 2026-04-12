@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { ShoppingCart, Menu, Search, User, Heart } from 'lucide-react';
+import { ShoppingCart, Menu, Search, User, Heart, LogIn } from 'lucide-react';
 
 import { useCart } from '@/contexts/CartContext';
 import { useAuthUser } from '@/hooks/use-auth-user';
@@ -90,14 +90,30 @@ export function Header() {
                 )}
               </Link>
 
-              {/* Account */}
-              <Link
-                href="/compte"
-                className="hidden md:inline-flex p-2.5 text-verone-gray-600 hover:text-verone-black hover:bg-verone-gray-50 rounded-full transition-all duration-300"
-                aria-label="Mon compte"
-              >
-                <User className="h-5 w-5" />
-              </Link>
+              {/* Account / Login */}
+              {user ? (
+                <Link
+                  href="/compte"
+                  className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 text-verone-gray-600 hover:text-verone-black hover:bg-verone-gray-50 rounded-full transition-all duration-300"
+                  aria-label="Mon compte"
+                >
+                  <User className="h-5 w-5" />
+                  <span className="text-xs font-medium max-w-[80px] truncate">
+                    {user.user_metadata?.first_name ??
+                      user.email?.split('@')[0] ??
+                      'Compte'}
+                  </span>
+                </Link>
+              ) : (
+                <Link
+                  href="/auth/login"
+                  className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 text-verone-gray-600 hover:text-verone-black hover:bg-verone-gray-50 rounded-full transition-all duration-300"
+                  aria-label="Se connecter"
+                >
+                  <LogIn className="h-5 w-5" />
+                  <span className="text-xs font-medium">Connexion</span>
+                </Link>
+              )}
 
               {/* Cart */}
               <Link
