@@ -149,7 +149,7 @@ export function DashboardSection({ onNavigate }: DashboardSectionProps) {
               <div className="flex items-center gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
                 <span className="text-sm text-gray-900">
-                  <strong>{kpis?.ordersPending}</strong> commandes en attente
+                  <strong>{kpis?.ordersPending}</strong> commandes a expedier
                 </span>
               </div>
               <ArrowRight className="h-3.5 w-3.5 text-gray-400" />

@@ -69,12 +69,13 @@ async function fetchDashboardKPIs(): Promise<DashboardKPIs> {
       .gte('created_at', thisMonth.start)
       .lte('created_at', thisMonth.end),
 
-    // Pending orders
+    // Orders awaiting shipment (paid but not yet shipped)
     supabase
       .from('sales_orders')
       .select('id', { count: 'exact', head: true })
       .eq('channel_id', SITE_INTERNET_CHANNEL_ID)
-      .eq('status', 'pending'),
+      .eq('status', 'validated')
+      .eq('payment_status_v2', 'paid'),
 
     // Pending reviews
     supabase

@@ -32,9 +32,11 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Users, Search, Mail, Phone, MapPin } from 'lucide-react';
 
+import { CustomerDetailModal } from './CustomerDetailModal';
+
 const supabase = createClient();
 
-interface SiteCustomer {
+export interface SiteCustomer {
   id: string;
   first_name: string | null;
   last_name: string | null;
@@ -45,6 +47,8 @@ interface SiteCustomer {
   country: string | null;
   is_active: boolean | null;
   created_at: string | null;
+  auth_user_id: string | null;
+  accepts_marketing: boolean | null;
 }
 
 function useSiteCustomers() {
@@ -55,7 +59,7 @@ function useSiteCustomers() {
       const { data, error } = await supabase
         .from('individual_customers')
         .select(
-          'id, first_name, last_name, email, phone, city, postal_code, country, is_active, created_at, source_type'
+          'id, first_name, last_name, email, phone, city, postal_code, country, is_active, created_at, source_type, auth_user_id, accepts_marketing'
         )
         .eq('is_active', true)
         .eq('source_type', 'site-internet')
@@ -75,6 +79,9 @@ function useSiteCustomers() {
 
 export function ClientsSection() {
   const [search, setSearch] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState<SiteCustomer | null>(
+    null
+  );
   const { data: customers, isLoading, error } = useSiteCustomers();
 
   const filtered =
@@ -153,7 +160,11 @@ export function ClientsSection() {
                 </TableHeader>
                 <TableBody>
                   {filtered.map(customer => (
-                    <TableRow key={customer.id}>
+                    <TableRow
+                      key={customer.id}
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() => setSelectedCustomer(customer)}
+                    >
                       <TableCell className="font-medium">
                         {customer.first_name} {customer.last_name}
                       </TableCell>
@@ -200,6 +211,13 @@ export function ClientsSection() {
           )}
         </CardContent>
       </Card>
+      {selectedCustomer && (
+        <CustomerDetailModal
+          customer={selectedCustomer}
+          open={!!selectedCustomer}
+          onClose={() => setSelectedCustomer(null)}
+        />
+      )}
     </div>
   );
 }
