@@ -8,6 +8,9 @@
 import { useState, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 
+import { useQueryClient } from '@tanstack/react-query';
+import { createClient } from '@verone/utils/supabase/client';
+
 import { useToast } from '@verone/common/hooks';
 import { useDebounce } from '@verone/hooks';
 import {
@@ -69,6 +72,32 @@ export function CollectionsSection() {
   const { data: config } = useSiteInternetConfig();
   const { data: stats } = useSiteInternetCollectionsStats();
   const toggleVisibility = useToggleCollectionVisibility();
+  const queryClient = useQueryClient();
+  const supabaseClient = createClient();
+
+  // Update collection image URL
+  const updateCollectionImage = useCallback(
+    async (collectionId: string, imageUrl: string | null) => {
+      const { error: updateError } = await supabaseClient
+        .from('collections')
+        .update({ image_url: imageUrl })
+        .eq('id', collectionId);
+
+      if (updateError) {
+        toast({
+          title: 'Erreur',
+          description: "Impossible de modifier l'image",
+          variant: 'destructive',
+        });
+      } else {
+        toast({ title: 'Image mise a jour' });
+        await queryClient.invalidateQueries({
+          queryKey: ['site-internet-collections'],
+        });
+      }
+    },
+    [supabaseClient, queryClient, toast]
+  );
 
   // Filtrage collections (memoized avec debounce)
   const filteredCollections = useMemo(
@@ -227,22 +256,40 @@ export function CollectionsSection() {
 
                   return (
                     <TableRow key={collection.id}>
-                      {/* Image */}
+                      {/* Image (click to edit URL) */}
                       <TableCell>
-                        {collection.image_url ? (
-                          <div className="relative h-12 w-12 overflow-hidden rounded-md border bg-muted">
-                            <Image
-                              src={collection.image_url}
-                              alt={collection.name}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-md border bg-muted">
-                            <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                          </div>
-                        )}
+                        <button
+                          type="button"
+                          className="group relative"
+                          onClick={() => {
+                            const url = window.prompt(
+                              "URL de l'image de la collection:",
+                              collection.image_url ?? ''
+                            );
+                            if (url !== null) {
+                              void updateCollectionImage(
+                                collection.id,
+                                url || null
+                              );
+                            }
+                          }}
+                          title="Cliquer pour modifier l'image"
+                        >
+                          {collection.image_url ? (
+                            <div className="relative h-12 w-12 overflow-hidden rounded-md border bg-muted group-hover:ring-2 group-hover:ring-blue-400">
+                              <Image
+                                src={collection.image_url}
+                                alt={collection.name}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex h-12 w-12 items-center justify-center rounded-md border bg-muted group-hover:ring-2 group-hover:ring-blue-400 group-hover:bg-blue-50">
+                              <ImageIcon className="h-6 w-6 text-muted-foreground group-hover:text-blue-500" />
+                            </div>
+                          )}
+                        </button>
                       </TableCell>
 
                       {/* Nom */}

@@ -14,6 +14,8 @@ export const productSchema = z.object({
     .optional()
     .nullable(),
   is_published_online: z.boolean(),
+  publication_date: z.string().optional().nullable(),
+  unpublication_date: z.string().optional().nullable(),
 
   // SEO
   custom_title: z.string().max(60, 'Maximum 60 caractères').optional(),

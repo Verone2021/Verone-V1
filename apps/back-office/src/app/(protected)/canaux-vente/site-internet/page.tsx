@@ -31,6 +31,7 @@ import {
 import { CategoriesSection } from './components/CategoriesSection';
 import { ClientsSection } from './components/ClientsSection';
 import { CMSSection } from './components/CMSSection';
+import { CmsPagesSection } from './components/CmsPagesSection';
 import { CollectionsSection } from './components/CollectionsSection';
 import { ConfigurationSection } from './components/ConfigurationSection';
 import { NewsletterSection } from './components/NewsletterSection';
@@ -446,9 +447,10 @@ export default function SiteInternetPage() {
             <ReviewsSection />
           </TabsContent>
 
-          {/* Tab: Contenu CMS + Newsletter */}
+          {/* Tab: Contenu CMS + Pages + Newsletter */}
           <TabsContent value="contenu" className="space-y-6">
             <CMSSection />
+            <CmsPagesSection />
             <NewsletterSection />
           </TabsContent>
         </Tabs>
