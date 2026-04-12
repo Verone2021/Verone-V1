@@ -95,13 +95,35 @@ export function useAmbassadors() {
     queryKey: QUERY_KEY,
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase
+
+      // Fetch ambassadors
+      const { data: ambassadors, error } = await supabase
         .from('site_ambassadors')
-        .select('*, ambassador_codes(*)')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Ambassador[];
+      if (!ambassadors || ambassadors.length === 0) return [] as Ambassador[];
+
+      // Fetch codes separately (avoids PostgREST relation issues)
+      const ids = ambassadors.map(a => a.id);
+      const { data: codes } = await supabase
+        .from('ambassador_codes')
+        .select('*')
+        .in('ambassador_id', ids);
+
+      // Merge codes into ambassadors
+      const codesByAmbassador = new Map<string, AmbassadorCode[]>();
+      for (const code of (codes ?? []) as AmbassadorCode[]) {
+        const existing = codesByAmbassador.get(code.ambassador_id) ?? [];
+        existing.push(code);
+        codesByAmbassador.set(code.ambassador_id, existing);
+      }
+
+      return (ambassadors as Ambassador[]).map(a => ({
+        ...a,
+        codes: codesByAmbassador.get(a.id) ?? [],
+      }));
     },
   });
 }
@@ -113,12 +135,21 @@ export function useAmbassadorDetail(id: string) {
       const supabase = createClient();
       const { data, error } = await supabase
         .from('site_ambassadors')
-        .select('*, ambassador_codes(*)')
+        .select('*')
         .eq('id', id)
         .single();
 
       if (error) throw error;
-      return data as Ambassador;
+
+      const { data: codes } = await supabase
+        .from('ambassador_codes')
+        .select('*')
+        .eq('ambassador_id', id);
+
+      return {
+        ...(data as Ambassador),
+        codes: (codes ?? []) as AmbassadorCode[],
+      };
     },
     enabled: !!id,
   });
