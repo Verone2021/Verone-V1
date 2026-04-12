@@ -1,30 +1,33 @@
-/**
- * Composant: CollectionsSection
- * Gestion visibilité collections pour le canal site internet
- */
-
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 
-import { useQueryClient } from '@tanstack/react-query';
-import { createClient } from '@verone/utils/supabase/client';
-
-import { useToast } from '@verone/common/hooks';
 import { useDebounce } from '@verone/hooks';
+import { CollectionFormModal } from '@verone/common/components/collections';
+import type {
+  Collection as CollectionType,
+  CreateCollectionData,
+} from '@verone/types';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@verone/ui';
-import { Badge } from '@verone/ui';
-import { ErrorStateCard } from '@verone/ui';
-import { Input } from '@verone/ui';
-import { KPICardUnified } from '@verone/ui';
-import {
+  Badge,
+  ButtonV2,
+  Input,
+  Switch,
   Table,
   TableBody,
   TableCell,
@@ -32,34 +35,39 @@ import {
   TableHeader,
   TableRow,
 } from '@verone/ui';
-import { Switch } from '@verone/ui';
 import {
   Search,
-  Palette,
   Eye,
   EyeOff,
   Star,
   Loader2,
   Image as ImageIcon,
-  Package,
+  Plus,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 // Hooks
 import {
   useSiteInternetCollections,
   useToggleCollectionVisibility,
+  useCreateCollection,
+  useUpdateCollection,
+  useDeleteCollection,
   isCollectionVisibleOnChannel,
   useSiteInternetCollectionsStats,
 } from '../hooks/use-site-internet-collections';
 import { useSiteInternetConfig } from '../hooks/use-site-internet-config';
 
-/**
- * Section Collections Principale
- */
 export function CollectionsSection() {
-  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 300);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [editingCollection, setEditingCollection] = useState<
+    CollectionType | undefined
+  >();
 
   // Hooks
   const {
@@ -72,31 +80,54 @@ export function CollectionsSection() {
   const { data: config } = useSiteInternetConfig();
   const { data: stats } = useSiteInternetCollectionsStats();
   const toggleVisibility = useToggleCollectionVisibility();
-  const queryClient = useQueryClient();
-  const supabaseClient = createClient();
+  const createCollection = useCreateCollection();
+  const updateCollection = useUpdateCollection();
+  const deleteCollection = useDeleteCollection();
 
-  // Update collection image URL
-  const updateCollectionImage = useCallback(
-    async (collectionId: string, imageUrl: string | null) => {
-      const { error: updateError } = await supabaseClient
-        .from('collections')
-        .update({ image_url: imageUrl })
-        .eq('id', collectionId);
+  const openCreate = useCallback(() => {
+    setEditingCollection(undefined);
+    setModalMode('create');
+    setModalOpen(true);
+  }, []);
 
-      if (updateError) {
-        toast({
-          title: 'Erreur',
-          description: "Impossible de modifier l'image",
-          variant: 'destructive',
+  const openEdit = useCallback((collection: CollectionType) => {
+    setEditingCollection(collection);
+    setModalMode('edit');
+    setModalOpen(true);
+  }, []);
+
+  const handleFormSubmit = useCallback(
+    async (rawData: Omit<CreateCollectionData, 'created_by'>) => {
+      const data = {
+        name: rawData.name ?? '',
+        description: rawData.description ?? undefined,
+        style: (rawData.style as string) ?? undefined,
+        suitable_rooms: rawData.suitable_rooms ?? undefined,
+        theme_tags: rawData.theme_tags ?? undefined,
+        visibility: (rawData.visibility as string) ?? undefined,
+        is_active: rawData.is_active ?? true,
+      };
+      if (modalMode === 'create') {
+        await createCollection.mutateAsync(data);
+        toast.success('Collection creee');
+      } else if (editingCollection) {
+        await updateCollection.mutateAsync({
+          collectionId: editingCollection.id,
+          data,
         });
-      } else {
-        toast({ title: 'Image mise a jour' });
-        await queryClient.invalidateQueries({
-          queryKey: ['site-internet-collections'],
-        });
+        toast.success('Collection mise a jour');
       }
+      setModalOpen(false);
     },
-    [supabaseClient, queryClient, toast]
+    [modalMode, editingCollection, createCollection, updateCollection]
+  );
+
+  const handleDelete = useCallback(
+    async (collectionId: string) => {
+      await deleteCollection.mutateAsync(collectionId);
+      toast.success('Collection supprimee');
+    },
+    [deleteCollection]
   );
 
   // Filtrage collections (memoized avec debounce)
@@ -116,19 +147,16 @@ export function CollectionsSection() {
           collectionId,
           isVisible: !currentlyVisible,
         });
-        toast({
-          title: currentlyVisible ? 'Collection masquée' : 'Collection visible',
-          description: `La collection a été ${currentlyVisible ? 'masquée du' : 'rendue visible sur le'} site internet.`,
-        });
+        toast.success(
+          currentlyVisible
+            ? 'Collection masquee du site'
+            : 'Collection visible sur le site'
+        );
       } catch (_error) {
-        toast({
-          title: 'Erreur',
-          description: 'Impossible de modifier la visibilité de la collection.',
-          variant: 'destructive',
-        });
+        toast.error('Impossible de modifier la visibilite');
       }
     },
-    [toggleVisibility, toast]
+    [toggleVisibility]
   );
 
   if (isLoading) {
@@ -145,56 +173,27 @@ export function CollectionsSection() {
 
   if (isError) {
     return (
-      <ErrorStateCard
-        title="Erreur de chargement"
-        message={
-          error instanceof Error
-            ? error.message
-            : 'Impossible de charger les collections. Veuillez réessayer.'
-        }
-        variant="destructive"
-        onRetry={() => {
-          void refetch().catch(error => {
-            console.error('[CollectionsSection] refetch failed:', error);
-          });
-        }}
-      />
+      <Card>
+        <CardContent className="py-8 text-center text-red-600">
+          Erreur :{' '}
+          {error instanceof Error ? error.message : 'Chargement impossible'}
+          <ButtonV2
+            variant="outline"
+            size="sm"
+            className="ml-3"
+            onClick={() => {
+              void refetch();
+            }}
+          >
+            Reessayer
+          </ButtonV2>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <KPICardUnified
-          variant="elegant"
-          title="Collections Total"
-          value={stats?.total ?? 0}
-          icon={Palette}
-        />
-
-        <KPICardUnified
-          variant="elegant"
-          title="Actives"
-          value={stats?.active ?? 0}
-          icon={Eye}
-        />
-
-        <KPICardUnified
-          variant="elegant"
-          title="Visibles Site Internet"
-          value={stats?.visible ?? 0}
-          icon={Package}
-        />
-
-        <KPICardUnified
-          variant="elegant"
-          title="À la Une"
-          value={stats?.featured ?? 0}
-          icon={Star}
-        />
-      </div>
-
       {/* Header Actions */}
       <Card>
         <CardHeader>
@@ -206,6 +205,10 @@ export function CollectionsSection() {
                 visibles sur le site)
               </CardDescription>
             </div>
+            <ButtonV2 size="sm" onClick={openCreate}>
+              <Plus className="h-4 w-4 mr-1" />
+              Nouvelle collection
+            </ButtonV2>
           </div>
         </CardHeader>
         <CardContent>
@@ -236,16 +239,17 @@ export function CollectionsSection() {
                 <TableHead>Statut</TableHead>
                 <TableHead>Ordre</TableHead>
                 <TableHead>Visible Site</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredCollections.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center">
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                      <Palette className="h-8 w-8 opacity-50" />
-                      <p>Aucune collection trouvée</p>
-                    </div>
+                  <TableCell
+                    colSpan={9}
+                    className="h-24 text-center text-muted-foreground"
+                  >
+                    Aucune collection trouvee
                   </TableCell>
                 </TableRow>
               ) : (
@@ -256,40 +260,22 @@ export function CollectionsSection() {
 
                   return (
                     <TableRow key={collection.id}>
-                      {/* Image (click to edit URL) */}
+                      {/* Image */}
                       <TableCell>
-                        <button
-                          type="button"
-                          className="group relative"
-                          onClick={() => {
-                            const url = window.prompt(
-                              "URL de l'image de la collection:",
-                              collection.image_url ?? ''
-                            );
-                            if (url !== null) {
-                              void updateCollectionImage(
-                                collection.id,
-                                url || null
-                              );
-                            }
-                          }}
-                          title="Cliquer pour modifier l'image"
-                        >
-                          {collection.image_url ? (
-                            <div className="relative h-12 w-12 overflow-hidden rounded-md border bg-muted group-hover:ring-2 group-hover:ring-blue-400">
-                              <Image
-                                src={collection.image_url}
-                                alt={collection.name}
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                          ) : (
-                            <div className="flex h-12 w-12 items-center justify-center rounded-md border bg-muted group-hover:ring-2 group-hover:ring-blue-400 group-hover:bg-blue-50">
-                              <ImageIcon className="h-6 w-6 text-muted-foreground group-hover:text-blue-500" />
-                            </div>
-                          )}
-                        </button>
+                        {collection.image_url ? (
+                          <div className="relative h-12 w-12 overflow-hidden rounded-md border bg-muted">
+                            <Image
+                              src={collection.image_url}
+                              alt={collection.name}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex h-12 w-12 items-center justify-center rounded-md border bg-muted">
+                            <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                        )}
                       </TableCell>
 
                       {/* Nom */}
@@ -309,8 +295,7 @@ export function CollectionsSection() {
 
                       {/* Slug */}
                       <TableCell className="text-sm text-muted-foreground">
-                        {collection.name.toLowerCase().replace(/\s+/g, '-') ||
-                          '—'}
+                        {collection.slug ?? '—'}
                       </TableCell>
 
                       {/* Produits */}
@@ -361,17 +346,59 @@ export function CollectionsSection() {
                             void handleToggleVisibility(
                               collection.id,
                               isVisible
-                            ).catch(error => {
-                              console.error(
-                                '[CollectionsSection] handleToggleVisibility failed:',
-                                error
-                              );
+                            ).catch(err => {
+                              console.error('[CollectionsSection]', err);
                             });
                           }}
                           disabled={
                             !collection.is_active || toggleVisibility.isPending
                           }
                         />
+                      </TableCell>
+
+                      {/* Actions */}
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <ButtonV2
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEdit(collection)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </ButtonV2>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <ButtonV2 variant="ghost" size="sm">
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </ButtonV2>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Supprimer &quot;{collection.name}&quot; ?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Cette action supprimera la collection et
+                                  dissociera tous ses produits. Les produits
+                                  eux-memes ne seront pas supprimes.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-red-600 hover:bg-red-700"
+                                  onClick={() => {
+                                    void handleDelete(collection.id).catch(
+                                      () => undefined
+                                    );
+                                  }}
+                                >
+                                  Supprimer
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -382,25 +409,14 @@ export function CollectionsSection() {
         </CardContent>
       </Card>
 
-      {/* Info Helper */}
-      <Card className="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950">
-        <CardContent className="pt-6">
-          <div className="flex gap-3">
-            <Palette className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                Visibilité Collections
-              </p>
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                Une collection doit être <strong>active</strong> ET{' '}
-                <strong>visible sur le site internet</strong> pour apparaître
-                sur le site public. Les collections inactives ne peuvent pas
-                être rendues visibles.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Collection Form Modal (create/edit) */}
+      <CollectionFormModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSubmit={handleFormSubmit}
+        collection={editingCollection}
+        mode={modalMode}
+      />
     </div>
   );
 }
