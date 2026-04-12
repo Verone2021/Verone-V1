@@ -16,7 +16,7 @@ import type { SalesOrder } from '@verone/orders';
 
 import { updateSalesOrderStatus } from '@/app/actions/sales-orders';
 
-const SITE_INTERNET_CHANNEL_ID = '0c2639e9-df80-41fa-84d0-9da96a128f7f';
+import { SITE_INTERNET_CHANNEL_ID } from '../constants';
 
 export function OrdersSection() {
   const router = useRouter();
