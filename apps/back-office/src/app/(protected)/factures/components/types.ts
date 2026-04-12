@@ -78,6 +78,7 @@ export interface QontoQuote {
   };
   converted_to_invoice_id?: string | null;
   purchase_order_number?: string | null;
+  order_number?: string | null;
 }
 
 export interface QontoQuotesResponse
