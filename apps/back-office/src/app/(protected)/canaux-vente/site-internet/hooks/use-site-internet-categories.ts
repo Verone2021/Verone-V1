@@ -1,191 +1,161 @@
 /**
  * Hook: useSiteInternetCategories
- * Gère catégories pour le canal site internet
+ *
+ * Builds the real hierarchy: Family -> Category -> Subcategory
+ * Filtered to only show branches with published products (is_published_online = true).
+ * Source of truth = back-office catalogue. No manual management.
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
-
-import type { Category } from '../types';
 
 const supabase = createClient();
 
-/**
- * Fetch toutes catégories
- */
-async function fetchCategories() {
-  const { data, error } = await supabase
-    .from('categories')
-    .select('id, name, display_order, is_active, is_visible_menu, family_id')
-    .order('display_order', { ascending: true });
+export interface SiteSubcategory {
+  id: string;
+  name: string;
+  slug: string | null;
+  publishedCount: number;
+}
 
-  if (error) {
-    console.error('Erreur fetch categories:', error);
-    throw error;
+export interface SiteCategory {
+  id: string;
+  name: string;
+  slug: string | null;
+  subcategories: SiteSubcategory[];
+  publishedCount: number;
+}
+
+export interface SiteFamily {
+  id: string;
+  name: string;
+  categories: SiteCategory[];
+  publishedCount: number;
+}
+
+export interface SiteCategoryStats {
+  families: number;
+  categories: number;
+  subcategories: number;
+  totalPublished: number;
+}
+
+async function fetchCategoryTree(): Promise<{
+  tree: SiteFamily[];
+  stats: SiteCategoryStats;
+}> {
+  // Query families, categories, subcategories with product counts
+  const [familiesRes, categoriesRes, subcategoriesRes, productsRes] =
+    await Promise.all([
+      supabase
+        .from('families')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name'),
+      supabase
+        .from('categories')
+        .select('id, name, slug, family_id')
+        .eq('is_active', true)
+        .order('name'),
+      supabase
+        .from('subcategories')
+        .select('id, name, slug, category_id')
+        .eq('is_active', true)
+        .order('name'),
+      supabase
+        .from('products')
+        .select('subcategory_id')
+        .eq('is_published_online', true)
+        .eq('product_status', 'active'),
+    ]);
+
+  // Count published products per subcategory
+  const countMap = new Map<string, number>();
+  for (const p of productsRes.data ?? []) {
+    const scId = (p as { subcategory_id: string | null }).subcategory_id;
+    if (scId) countMap.set(scId, (countMap.get(scId) ?? 0) + 1);
   }
 
-  return (data ?? []) as Category[];
+  type FamilyRow = { id: string; name: string };
+  type CategoryRow = {
+    id: string;
+    name: string;
+    slug: string | null;
+    family_id: string;
+  };
+  type SubcategoryRow = {
+    id: string;
+    name: string;
+    slug: string | null;
+    category_id: string;
+  };
+
+  const families = (familiesRes.data ?? []) as FamilyRow[];
+  const categories = (categoriesRes.data ?? []) as CategoryRow[];
+  const subcategories = (subcategoriesRes.data ?? []) as SubcategoryRow[];
+
+  // Build tree, filtering out branches with 0 published products
+  const tree: SiteFamily[] = [];
+
+  for (const f of families) {
+    const fCats = categories.filter(c => c.family_id === f.id);
+    const siteCats: SiteCategory[] = [];
+
+    for (const c of fCats) {
+      const cSubs = subcategories.filter(sc => sc.category_id === c.id);
+      const siteSubs: SiteSubcategory[] = [];
+
+      for (const sc of cSubs) {
+        const count = countMap.get(sc.id) ?? 0;
+        if (count > 0) {
+          siteSubs.push({
+            id: sc.id,
+            name: sc.name,
+            slug: sc.slug,
+            publishedCount: count,
+          });
+        }
+      }
+
+      if (siteSubs.length > 0) {
+        siteCats.push({
+          id: c.id,
+          name: c.name,
+          slug: c.slug,
+          subcategories: siteSubs,
+          publishedCount: siteSubs.reduce((s, sc) => s + sc.publishedCount, 0),
+        });
+      }
+    }
+
+    if (siteCats.length > 0) {
+      tree.push({
+        id: f.id,
+        name: f.name,
+        categories: siteCats,
+        publishedCount: siteCats.reduce((s, c) => s + c.publishedCount, 0),
+      });
+    }
+  }
+
+  const stats: SiteCategoryStats = {
+    families: tree.length,
+    categories: tree.reduce((sum, f) => sum + f.categories.length, 0),
+    subcategories: tree.reduce(
+      (sum, f) =>
+        sum + f.categories.reduce((s, c) => s + c.subcategories.length, 0),
+      0
+    ),
+    totalPublished: tree.reduce((sum, f) => sum + f.publishedCount, 0),
+  };
+
+  return { tree, stats };
 }
 
-/**
- * Hook principal: récupère catégories
- */
 export function useSiteInternetCategories() {
   return useQuery({
-    queryKey: ['site-internet-categories'],
-    queryFn: fetchCategories,
-    staleTime: 60000, // 1 minute
+    queryKey: ['site-internet-categories-tree'],
+    queryFn: fetchCategoryTree,
+    staleTime: 120_000,
   });
-}
-
-/**
- * Toggle visibilité catégorie dans menu navigation (avec optimistic update)
- */
-export function useToggleCategoryVisibility() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      categoryId,
-      isVisible,
-    }: {
-      categoryId: string;
-      isVisible: boolean;
-    }) => {
-      const { error } = await supabase
-        .from('categories')
-        .update({
-          is_visible_menu: isVisible,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', categoryId);
-
-      if (error) throw error;
-    },
-    onMutate: async ({ categoryId, isVisible }) => {
-      // 1. Cancel ongoing queries
-      await queryClient.cancelQueries({
-        queryKey: ['site-internet-categories'],
-      });
-
-      // 2. Snapshot previous value
-      const previousData = queryClient.getQueryData<Category[]>([
-        'site-internet-categories',
-      ]);
-
-      // 3. Optimistically update cache
-      if (previousData) {
-        queryClient.setQueryData<Category[]>(
-          ['site-internet-categories'],
-          old =>
-            old?.map(category =>
-              category.id === categoryId
-                ? { ...category, is_visible_menu: isVisible }
-                : category
-            ) ?? []
-        );
-      }
-
-      // 4. Return context for rollback
-      return { previousData };
-    },
-    onError: (err, variables, context) => {
-      // 5. Rollback on error
-      if (context?.previousData) {
-        queryClient.setQueryData(
-          ['site-internet-categories'],
-          context.previousData
-        );
-      }
-    },
-    onSettled: async () => {
-      // 6. Refetch to sync with server
-      await queryClient.invalidateQueries({
-        queryKey: ['site-internet-categories'],
-      });
-    },
-  });
-}
-
-/**
- * Mettre à jour ordre affichage catégorie
- */
-export function useUpdateCategoryOrder() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      categoryId,
-      displayOrder,
-    }: {
-      categoryId: string;
-      displayOrder: number;
-    }) => {
-      const { error } = await supabase
-        .from('categories')
-        .update({
-          display_order: displayOrder,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', categoryId);
-
-      if (error) throw error;
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ['site-internet-categories'],
-      });
-    },
-  });
-}
-
-/**
- * Stats catégories site internet
- */
-export function useSiteInternetCategoriesStats() {
-  return useQuery({
-    queryKey: ['site-internet-categories-stats'],
-    queryFn: async () => {
-      const { data: categories } = await supabase
-        .from('categories')
-        .select(
-          'id, name, display_order, is_active, is_visible_menu, family_id'
-        );
-
-      if (!categories) return null;
-
-      const categoriesData = categories as Category[];
-
-      const total = categoriesData.length;
-      const active = categoriesData.filter(c => c.is_active).length;
-      const visibleMenu = categoriesData.filter(
-        c => c.is_active && c.is_visible_menu
-      ).length;
-      const rootCategories = categoriesData.filter(
-        c => c.family_id === null
-      ).length;
-
-      return {
-        total,
-        active,
-        visibleMenu,
-        rootCategories,
-        visiblePercentage: total > 0 ? (visibleMenu / total) * 100 : 0,
-      };
-    },
-    staleTime: 60000, // 1 minute
-  });
-}
-
-/**
- * Helper: Construire arborescence catégories
- * Note: Pour l'instant, structure plate (pas de parent_id)
- */
-export function buildCategoryTree(categories: Category[]): Category[] {
-  // Toutes les catégories sont racines (niveau 0)
-  // Retourner avec children vides pour compatibilité UI
-  return categories.map(cat => ({
-    ...cat,
-    children: [] as Category[],
-  }));
 }

@@ -197,6 +197,96 @@ export function useAddProductsToSiteInternet() {
   });
 }
 
+/** Add a full variant group with a single price for all variants. */
+export function useAddVariantGroupToSiteInternet() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      variantGroupId,
+      customPriceHt,
+    }: {
+      variantGroupId: string;
+      customPriceHt: number;
+    }) => {
+      // 1. Get all products in this variant group
+      const { data: products, error } = await supabase
+        .from('products')
+        .select('id')
+        .eq('variant_group_id', variantGroupId)
+        .eq('product_status', 'active');
+
+      if (error) throw error;
+      if (!products || products.length === 0) {
+        throw new Error('Aucun produit dans ce groupe de variantes');
+      }
+
+      const productIds = products.map(p => p.id);
+
+      // 2. Get channel id
+      const { data: channel } = await supabase
+        .from('sales_channels')
+        .select('id')
+        .eq('code', 'site_internet')
+        .single();
+
+      if (!channel) throw new Error('Canal site_internet non trouve');
+
+      // 3. Create metadata + pricing with SAME price for all variants
+      const { error: metadataError } = await supabase
+        .from('channel_product_metadata')
+        .upsert(
+          productIds.map(id => ({
+            product_id: id,
+            channel_id: channel.id,
+            metadata: {},
+          })),
+          { onConflict: 'product_id,channel_id' }
+        );
+      if (metadataError) throw metadataError;
+
+      // Get eco_tax for each product
+      const { data: productDetails } = await supabase
+        .from('products')
+        .select('id, eco_tax_default')
+        .in('id', productIds);
+
+      const pricingRows = productIds.map(id => {
+        const detail = productDetails?.find(p => p.id === id);
+        return {
+          product_id: id,
+          channel_id: channel.id,
+          custom_price_ht: customPriceHt,
+          eco_participation_amount: Number(detail?.eco_tax_default ?? 0),
+          is_active: true,
+        };
+      });
+
+      const { error: pricingError } = await supabase
+        .from('channel_pricing')
+        .upsert(pricingRows, { onConflict: 'product_id,channel_id' });
+      if (pricingError) throw pricingError;
+
+      // 4. Publish all
+      const { error: publishError } = await supabase
+        .from('products')
+        .update({
+          is_published_online: true,
+          publication_date: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .in('id', productIds);
+      if (publishError) throw publishError;
+
+      return productIds.length;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['site-internet-products'],
+      });
+    },
+  });
+}
+
 /**
  * Supprimer produit du canal site internet
  */
