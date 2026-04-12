@@ -471,6 +471,68 @@ export async function POST(request: Request) {
         }
 
         console.warn('[Checkout] Pre-created draft order:', orderNumber);
+
+        // Ambassador attribution: check if the discount code belongs to an ambassador
+        if (orderId && discount?.code) {
+          const { data: ambassadorCode } = await supabase
+            .from('ambassador_codes')
+            .select('id, ambassador_id, code')
+            .eq('code', discount.code.toUpperCase())
+            .eq('is_active', true)
+            .single();
+
+          if (ambassadorCode) {
+            const ambCode = ambassadorCode as {
+              id: string;
+              ambassador_id: string;
+              code: string;
+            };
+            // Fetch ambassador commission rate
+            const { data: ambassador } = await supabase
+              .from('site_ambassadors')
+              .select('id, commission_rate')
+              .eq('id', ambCode.ambassador_id)
+              .eq('is_active', true)
+              .single();
+
+            if (ambassador) {
+              const amb = ambassador as { id: string; commission_rate: number };
+              const orderHt = Math.round((finalTtc / 1.2) * 100) / 100;
+              const primeAmount =
+                Math.round(
+                  orderHt * (Number(amb.commission_rate) / 100) * 100
+                ) / 100;
+              const validationDate = new Date();
+              validationDate.setDate(validationDate.getDate() + 30);
+
+              const { error: attrError } = await supabase
+                .from('ambassador_attributions')
+                .insert({
+                  order_id: orderId,
+                  ambassador_id: amb.id,
+                  code_id: ambCode.id,
+                  order_total_ht: orderHt,
+                  commission_rate: Number(ambassador.commission_rate),
+                  prime_amount: primeAmount,
+                  status: 'pending',
+                  validation_date: validationDate.toISOString(),
+                  attribution_method: 'coupon_code',
+                });
+
+              if (attrError) {
+                // Non-blocking: log but don't fail the checkout
+                console.error(
+                  '[Checkout] Ambassador attribution failed:',
+                  attrError
+                );
+              } else {
+                console.warn(
+                  `[Checkout] Ambassador attribution created: ${ambCode.code} → ${primeAmount} EUR`
+                );
+              }
+            }
+          }
+        }
       }
     }
 
