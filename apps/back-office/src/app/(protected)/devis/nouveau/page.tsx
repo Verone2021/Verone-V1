@@ -78,7 +78,7 @@ export default function NouveauDevisPage() {
           </CardContent>
         </Card>
 
-        {/* Option 2: From scratch */}
+        {/* Option 2: Service quote */}
         <Card
           className="cursor-pointer transition-shadow hover:shadow-md hover:border-green-300"
           onClick={() => setShowQuoteFromScratch(true)}
@@ -88,13 +88,13 @@ export default function NouveauDevisPage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
                 <FileText className="h-5 w-5 text-green-600" />
               </div>
-              <CardTitle className="text-base">Devis vierge</CardTitle>
+              <CardTitle className="text-base">Devis de service</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-500">
-              Creez un devis de zero. Ajoutez manuellement les produits, les
-              lignes de service et le client.
+              Creez un devis avec des lignes de prestation libres (titre,
+              description, prix).
             </p>
           </CardContent>
         </Card>
