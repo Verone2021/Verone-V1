@@ -27,6 +27,18 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
+import { PdfPreviewDialog } from './PdfPreviewDialog';
+import { RecipientSelector } from './RecipientSelector';
+import {
+  type AttachmentBlob,
+  blobToBase64,
+  DOC_TYPE_LABELS,
+  DOC_TYPE_FILENAME_PREFIX,
+  getDefaultMessage,
+  getDefaultSubject,
+  sendToRecipients,
+} from './send-document-helpers';
+
 // ── Types ──────────────────────────────────────────────────────────
 
 export type DocumentEmailType =
@@ -35,11 +47,11 @@ export type DocumentEmailType =
   | 'proforma'
   | 'credit_note';
 
-interface AttachmentBlob {
-  blob: Blob;
-  url: string;
-  ready: boolean;
-  error: string | null;
+export interface EmailContact {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
 }
 
 interface SendDocumentEmailModalProps {
@@ -51,58 +63,9 @@ interface SendDocumentEmailModalProps {
   clientEmail: string;
   clientName: string;
   pdfUrl: string;
+  /** Contacts from linked sales order (billing, responsable, etc.) */
+  contacts?: EmailContact[];
   onSent?: () => void;
-}
-
-// ── Helpers ─────────────────────────────────────────────────────────
-
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      const base64 = result.split(',')[1] ?? result;
-      resolve(base64);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-}
-
-const DOC_TYPE_LABELS: Record<DocumentEmailType, string> = {
-  quote: 'Devis',
-  invoice: 'Facture',
-  proforma: 'Facture proforma',
-  credit_note: 'Avoir',
-};
-
-const DOC_TYPE_FILENAME_PREFIX: Record<DocumentEmailType, string> = {
-  quote: 'devis',
-  invoice: 'facture',
-  proforma: 'facture-proforma',
-  credit_note: 'avoir',
-};
-
-function getDefaultMessage(
-  docType: DocumentEmailType,
-  docNumber: string
-): string {
-  const label = DOC_TYPE_LABELS[docType].toLowerCase();
-  return `Bonjour,
-
-Veuillez trouver ci-joint votre ${label} n${String.fromCharCode(176)}${docNumber}.
-
-N'hesitez pas a nous contacter pour toute question.
-
-Cordialement,
-L'equipe Verone`;
-}
-
-function getDefaultSubject(
-  docType: DocumentEmailType,
-  docNumber: string
-): string {
-  return `${DOC_TYPE_LABELS[docType]} ${docNumber} — Verone`;
 }
 
 // ── Component ───────────────────────────────────────────────────────
@@ -116,11 +79,13 @@ export function SendDocumentEmailModal({
   clientEmail,
   clientName: _clientName,
   pdfUrl,
+  contacts = [],
   onSent,
 }: SendDocumentEmailModalProps) {
   const { toast: _toast } = useToast();
 
-  const [to, setTo] = useState(clientEmail);
+  const [recipients, setRecipients] = useState<string[]>([]);
+  const [manualEmail, setManualEmail] = useState('');
   const [subject, setSubject] = useState(
     getDefaultSubject(documentType, documentNumber)
   );
@@ -140,7 +105,10 @@ export function SendDocumentEmailModal({
   // ── Reset state when modal opens ──
   useEffect(() => {
     if (open) {
-      setTo(clientEmail);
+      // Pre-fill recipients: client email if available
+      const initial = clientEmail ? [clientEmail] : [];
+      setRecipients(initial);
+      setManualEmail('');
       setSubject(getDefaultSubject(documentType, documentNumber));
       setMessage(getDefaultMessage(documentType, documentNumber));
       setAttachPdf(true);
@@ -150,6 +118,32 @@ export function SendDocumentEmailModal({
       fetchingRef.current = false;
     }
   }, [open, clientEmail, documentType, documentNumber]);
+
+  // ── Recipient helpers ──
+  const addRecipient = (email: string) => {
+    const trimmed = email.trim().toLowerCase();
+    if (
+      trimmed &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed) &&
+      !recipients.includes(trimmed)
+    ) {
+      setRecipients(prev => [...prev, trimmed]);
+    }
+  };
+
+  const removeRecipient = (email: string) => {
+    setRecipients(prev => prev.filter(r => r !== email));
+  };
+
+  const handleManualEmailKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addRecipient(manualEmail);
+      setManualEmail('');
+    }
+  };
 
   // ── Fetch PDF when modal opens ──
   const fetchPdf = useCallback(async () => {
@@ -187,14 +181,16 @@ export function SendDocumentEmailModal({
   }, [open]);
 
   const pdfReady = pdfBlob?.ready ?? false;
-  const canSend = to && subject && message && (!attachPdf || pdfReady);
+  const canSend =
+    recipients.length > 0 && subject && message && (!attachPdf || pdfReady);
 
   // ── Send handler ──
   const handleSend = async () => {
-    if (!to || !subject || !message) {
+    if (recipients.length === 0 || !subject || !message) {
       _toast({
         title: 'Champs requis',
-        description: 'Email, objet et message sont obligatoires.',
+        description:
+          'Au moins un destinataire, objet et message sont obligatoires.',
         variant: 'destructive',
       });
       return;
@@ -217,33 +213,31 @@ export function SendDocumentEmailModal({
         });
       }
 
-      const response = await fetch('/api/emails/send-document', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          documentType,
-          documentId,
-          documentNumber,
-          to,
-          subject,
-          message,
-          attachments,
-        }),
+      const { succeeded, failed } = await sendToRecipients({
+        recipients,
+        documentType,
+        documentId,
+        documentNumber,
+        subject,
+        message,
+        attachments,
       });
 
-      const result = (await response.json()) as {
-        success: boolean;
-        error?: string;
-      };
-
-      if (!result.success) {
-        throw new Error(result.error ?? 'Erreur inconnue');
+      if (failed > 0 && succeeded > 0) {
+        _toast({
+          title: 'Envoi partiel',
+          description: `${String(succeeded)} envoye(s), ${String(failed)} echoue(s)`,
+          variant: 'destructive',
+        });
+      } else if (failed > 0) {
+        throw new Error(`Echec d'envoi pour ${String(failed)} destinataire(s)`);
+      } else {
+        _toast({
+          title: 'Email envoye',
+          description: `${docLabel} envoye a ${String(succeeded)} destinataire(s)`,
+        });
       }
 
-      _toast({
-        title: 'Email envoye',
-        description: `${docLabel} envoye a ${to}`,
-      });
       onSent?.();
       onClose();
     } catch (error) {
@@ -298,17 +292,22 @@ export function SendDocumentEmailModal({
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            {/* Recipient */}
-            <div className="space-y-1.5">
-              <Label htmlFor="doc-email-to">Destinataire</Label>
-              <Input
-                id="doc-email-to"
-                type="email"
-                value={to}
-                onChange={e => setTo(e.target.value)}
-                placeholder="email@exemple.com"
-              />
-            </div>
+            {/* Recipients */}
+            <RecipientSelector
+              recipients={recipients}
+              manualEmail={manualEmail}
+              contacts={contacts}
+              onAddRecipient={addRecipient}
+              onRemoveRecipient={removeRecipient}
+              onManualEmailChange={setManualEmail}
+              onManualEmailKeyDown={handleManualEmailKeyDown}
+              onManualEmailBlur={() => {
+                if (manualEmail.trim()) {
+                  addRecipient(manualEmail);
+                  setManualEmail('');
+                }
+              }}
+            />
 
             {/* Subject */}
             <div className="space-y-1.5">
@@ -418,38 +417,11 @@ export function SendDocumentEmailModal({
         </DialogContent>
       </Dialog>
 
-      {/* Preview dialog */}
-      <Dialog open={!!previewUrl} onOpenChange={() => setPreviewUrl(null)}>
-        <DialogContent
-          dialogSize="full"
-          hideCloseButton
-          className="flex flex-col !p-0 !h-[90vh]"
-        >
-          <DialogHeader className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <DialogTitle className="text-lg font-bold">
-                {docLabel} {documentNumber}
-              </DialogTitle>
-              <ButtonUnified
-                variant="outline"
-                size="sm"
-                onClick={() => setPreviewUrl(null)}
-              >
-                Fermer
-              </ButtonUnified>
-            </div>
-          </DialogHeader>
-          <div className="flex-1 overflow-hidden">
-            {previewUrl && (
-              <iframe
-                src={previewUrl}
-                className="w-full h-full border-0"
-                title={`${docLabel} ${documentNumber}`}
-              />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <PdfPreviewDialog
+        previewUrl={previewUrl}
+        onClose={() => setPreviewUrl(null)}
+        title={`${docLabel} ${documentNumber}`}
+      />
     </>
   );
 }
