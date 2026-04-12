@@ -33,6 +33,7 @@ const CheckoutSchema = z.object({
     city: z.string().min(1),
     country: z.string().default('FR'),
   }),
+  userId: z.string().uuid().optional(),
   discount: DiscountSchema.optional(),
 });
 
@@ -184,7 +185,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { items, customer, discount } = validated.data;
+    const { items, customer, userId, discount } = validated.data;
 
     // Check if Stripe is configured
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -218,17 +219,27 @@ export async function POST(request: Request) {
         0
       );
 
-      // Find or create individual_customer
-      const { data: existingCustomer } = await supabase
-        .from('individual_customers')
-        .select('id')
-        .eq('email', customer.email)
-        .limit(1)
-        .single();
+      // Find or create individual_customer (by auth_user_id first, then email)
+      let customerId: string | null = null;
 
-      let customerId: string | null = existingCustomer
-        ? String(existingCustomer.id)
-        : null;
+      if (userId) {
+        const { data } = await supabase
+          .from('individual_customers')
+          .select('id')
+          .eq('auth_user_id', userId)
+          .limit(1)
+          .single();
+        if (data) customerId = String(data.id);
+      }
+      if (!customerId) {
+        const { data } = await supabase
+          .from('individual_customers')
+          .select('id')
+          .eq('email', customer.email)
+          .limit(1)
+          .single();
+        if (data) customerId = String(data.id);
+      }
 
       if (!customerId) {
         const { data: newCustomer } = await supabase
@@ -244,6 +255,7 @@ export async function POST(request: Request) {
             country: (customer.country as string | undefined) ?? 'FR',
             source_type: 'site-internet',
             is_active: true,
+            ...(userId ? { auth_user_id: userId } : {}),
           })
           .select('id')
           .single();

@@ -12,6 +12,18 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
+      // For OAuth signups, ensure source metadata is set
+      // This allows the DB trigger to create individual_customer
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user && !user.user_metadata?.source) {
+        await supabase.auth.updateUser({
+          data: { source: 'site-internet' },
+        });
+      }
+
       return NextResponse.redirect(`${origin}${next}`);
     }
   }
