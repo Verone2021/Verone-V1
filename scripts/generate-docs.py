@@ -29,6 +29,20 @@ from datetime import datetime
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GENERATED_AT = datetime.now().strftime("%Y-%m-%d %H:%M")
 
+# Load env vars from .env.local / .mcp.env (no external deps needed)
+for _env_file in [".env.local", ".mcp.env"]:
+    _path = os.path.join(ROOT, _env_file)
+    if os.path.isfile(_path):
+        with open(_path) as _f:
+            for _line in _f:
+                _line = _line.strip()
+                if _line and not _line.startswith("#") and "=" in _line:
+                    _key, _, _val = _line.partition("=")
+                    _key = _key.strip()
+                    _val = _val.strip().strip('"').strip("'")
+                    if _key not in os.environ:
+                        os.environ[_key] = _val
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # HELPERS
@@ -230,6 +244,18 @@ def load_db_data():
                 enums[row["enum_name"]].append(row["enum_value"])
             conn.close()
             print("Connected to live DB via psycopg2")
+            # Auto-save snapshot for offline use
+            snapshot_path = os.path.join(ROOT, "scripts", "db-schema-snapshot.json")
+            snap = {
+                "columns_by_table": columns_by_table,
+                "fks": [row for rows in fk_map.values() for row in rows],
+                "rls": [row for rows in rls_map.values() for row in rows],
+                "triggers": [row for rows in trigger_map.values() for row in rows],
+                "enums": dict(enums),
+            }
+            with open(snapshot_path, "w") as sf:
+                json.dump(snap, sf, indent=2, default=str)
+            print(f"  Snapshot saved: {snapshot_path}")
             return columns_by_table, fk_map, rls_map, trigger_map, enums
         except Exception as e:
             print(f"psycopg2 failed: {e}, falling back to snapshot...")
