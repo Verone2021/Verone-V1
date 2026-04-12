@@ -81,10 +81,28 @@ export async function GET(request: NextRequest): Promise<
     const quotes = result.client_quotes.map(q =>
       mapQontoQuote(q as IQontoQuoteRaw, false)
     );
+
+    // Enrich quotes with linked order numbers from sales_orders
+    const qontoIds = quotes.map(q => String(q.id)).filter(Boolean);
+    const supabase = createAdminClient();
+    const { data: linkedOrders } = await supabase
+      .from('sales_orders')
+      .select('quote_qonto_id, order_number')
+      .in('quote_qonto_id', qontoIds);
+
+    const orderMap = new Map(
+      (linkedOrders ?? []).map(o => [o.quote_qonto_id, o.order_number])
+    );
+
+    const enrichedQuotes = quotes.map(q => ({
+      ...q,
+      order_number: orderMap.get(String(q.id)) ?? null,
+    }));
+
     return NextResponse.json({
       success: true,
-      quotes,
-      count: quotes.length,
+      quotes: enrichedQuotes,
+      count: enrichedQuotes.length,
       meta: result.meta,
     });
   } catch (error) {

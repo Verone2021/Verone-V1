@@ -1,25 +1,18 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import type { UnifiedCustomer } from '@verone/orders/components/modals/customer-selector';
-import type { SelectionItem } from '@verone/orders/hooks';
 
 import type { QuoteItemLocal, QuoteTotals } from './types';
-import { useQuoteChannels } from './use-quote-channels';
 import { useQuoteCustomer } from './use-quote-customer';
 import { useQuoteItems } from './use-quote-items';
 import { useQuoteSubmit } from './use-quote-submit';
-import type { UseQuoteChannelsReturn } from './use-quote-channels';
 
 // -----------------------------------------------------------------------
-// Aggregated return type (all public surface the modal needs)
+// Public surface the modal needs
 // -----------------------------------------------------------------------
-export interface UseQuoteFormReturn
-  extends Omit<
-    UseQuoteChannelsReturn,
-    'resetChannels' | 'setSelectedChannel' | 'setChannelId'
-  > {
+export interface UseQuoteFormReturn {
   // Customer
   selectedCustomer: UnifiedCustomer | null;
   handleCustomerChange: (customer: UnifiedCustomer | null) => void;
@@ -32,22 +25,6 @@ export interface UseQuoteFormReturn
 
   // Items
   items: QuoteItemLocal[];
-  showAddProduct: boolean;
-  setShowAddProduct: (v: boolean) => void;
-  handleAddProduct: (data: {
-    product_id: string;
-    quantity: number;
-    unit_price_ht: number;
-    tax_rate?: number;
-    discount_percentage?: number;
-    eco_tax?: number;
-    notes?: string;
-    product_name?: string;
-    product_sku?: string;
-    product_image_url?: string;
-    product_description?: string;
-  }) => void;
-  handleAddLinkMeProduct: (item: SelectionItem) => void;
   handleAddServiceLine: () => void;
   handleRemoveItem: (itemId: string) => void;
   handleItemChange: (
@@ -79,18 +56,17 @@ export interface UseQuoteFormReturn
   isSubmitting: boolean;
   handleSubmit: () => Promise<void>;
   handleClose: () => void;
-  handleBackFromForm: () => void;
 }
 
 // -----------------------------------------------------------------------
-// Orchestrator hook
+// Orchestrator hook — service-only mode
 // -----------------------------------------------------------------------
 export function useQuoteForm(
   open: boolean,
   onOpenChange: (open: boolean) => void,
   onSuccess?: () => void
 ): UseQuoteFormReturn {
-  // Options state (not split into sub-hooks as they are simple scalars)
+  // Options state
   const [validityDays, setValidityDays] = useState('30');
   const [reference, setReference] = useState('');
   const [notes, setNotes] = useState('');
@@ -102,11 +78,6 @@ export function useQuoteForm(
   // Sub-hooks
   const itemsHook = useQuoteItems();
   const customerHook = useQuoteCustomer();
-  const channelsHook = useQuoteChannels({
-    open,
-    setItems: itemsHook.setItems,
-    resetItems: itemsHook.resetItems,
-  });
 
   const resetOptions = useCallback(() => {
     setValidityDays('30');
@@ -119,17 +90,36 @@ export function useQuoteForm(
   }, []);
 
   const handleClose = useCallback(() => {
-    channelsHook.resetChannels();
     itemsHook.resetItems();
     customerHook.resetCustomer();
     resetOptions();
     onOpenChange(false);
-  }, [channelsHook, itemsHook, customerHook, resetOptions, onOpenChange]);
+  }, [itemsHook, customerHook, resetOptions, onOpenChange]);
+
+  // Initialize with one empty service line when modal opens
+  const setItems = itemsHook.setItems;
+  useEffect(() => {
+    if (open) {
+      setItems([
+        {
+          id: Math.random().toString(36).substring(2, 9),
+          product_id: null,
+          description: '',
+          quantity: 1,
+          unit_price_ht: 0,
+          tva_rate: 20,
+          discount_percentage: 0,
+          eco_tax: 0,
+          is_service: true,
+        },
+      ]);
+    }
+  }, [open, setItems]);
 
   const submitHook = useQuoteSubmit({
     selectedCustomer: customerHook.selectedCustomer,
     items: itemsHook.items,
-    channelId: channelsHook.channelId,
+    channelId: null,
     validityDays,
     notes,
     reference,
@@ -139,38 +129,13 @@ export function useQuoteForm(
     handlingCostHt,
     insuranceCostHt,
     feesVatRate,
-    selectedSelectionId: channelsHook.selectedSelectionId,
-    selectedAffiliateId: channelsHook.selectedAffiliateId,
+    selectedSelectionId: null,
+    selectedAffiliateId: null,
     onClose: handleClose,
     onSuccess,
   });
 
-  const handleBackFromForm = useCallback(() => {
-    channelsHook.handleBackFromForm(channelsHook.selectedChannel);
-  }, [channelsHook]);
-
   return {
-    // Channels
-    wizardStep: channelsHook.wizardStep,
-    setWizardStep: channelsHook.setWizardStep,
-    selectedChannel: channelsHook.selectedChannel,
-    channelId: channelsHook.channelId,
-    channelLabel: channelsHook.channelLabel,
-    isServiceMode: channelsHook.isServiceMode,
-    isLinkMeMode: channelsHook.isLinkMeMode,
-    selectedAffiliateId: channelsHook.selectedAffiliateId,
-    setSelectedAffiliateId: channelsHook.setSelectedAffiliateId,
-    selectedSelectionId: channelsHook.selectedSelectionId,
-    setSelectedSelectionId: channelsHook.setSelectedSelectionId,
-    affiliateSearch: channelsHook.affiliateSearch,
-    setAffiliateSearch: channelsHook.setAffiliateSearch,
-    linkmeAffiliates: channelsHook.linkmeAffiliates,
-    linkmeSelections: channelsHook.linkmeSelections,
-    linkmeSelectionDetails: channelsHook.linkmeSelectionDetails,
-    handleChannelSelect: channelsHook.handleChannelSelect,
-    handleBackToChannelSelection: channelsHook.handleBackToChannelSelection,
-    handleBackFromLinkmeSelection: channelsHook.handleBackFromLinkmeSelection,
-
     // Customer
     selectedCustomer: customerHook.selectedCustomer,
     handleCustomerChange: customerHook.handleCustomerChange,
@@ -183,10 +148,6 @@ export function useQuoteForm(
 
     // Items
     items: itemsHook.items,
-    showAddProduct: itemsHook.showAddProduct,
-    setShowAddProduct: itemsHook.setShowAddProduct,
-    handleAddProduct: itemsHook.handleAddProduct,
-    handleAddLinkMeProduct: itemsHook.handleAddLinkMeProduct,
     handleAddServiceLine: itemsHook.handleAddServiceLine,
     handleRemoveItem: itemsHook.handleRemoveItem,
     handleItemChange: itemsHook.handleItemChange,
@@ -214,6 +175,5 @@ export function useQuoteForm(
     isSubmitting: submitHook.isSubmitting,
     handleSubmit: submitHook.handleSubmit,
     handleClose,
-    handleBackFromForm,
   };
 }

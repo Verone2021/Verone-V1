@@ -133,17 +133,15 @@ export function useQuoteSubmit({
 
       const quoteItems: CreateQuoteItemData[] = validItems.map(item => ({
         product_id: item.product_id,
-        description: item.is_service
-          ? item.description
-          : (item.product?.name ?? item.description),
+        description: item.description,
         quantity: item.quantity,
         unit_price_ht: item.unit_price_ht,
         tva_rate: item.tva_rate,
         discount_percentage: item.discount_percentage,
         eco_tax: item.eco_tax,
-        linkme_selection_item_id: item.linkme_selection_item_id ?? null,
-        base_price_ht: item.base_price_ht ?? null,
-        retrocession_rate: item.retrocession_rate ?? null,
+        linkme_selection_item_id: null,
+        base_price_ht: null,
+        retrocession_rate: null,
       }));
 
       const quoteData: CreateQuoteData = {

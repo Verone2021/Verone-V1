@@ -1,18 +1,6 @@
 // =====================================================================
-// Types locaux — QuoteFormModal
+// Types locaux — QuoteFormModal (Service-only)
 // =====================================================================
-
-export type QuoteChannelType =
-  | 'manual'
-  | 'site-internet'
-  | 'linkme'
-  | 'service';
-
-export type WizardStep =
-  | 'channel-selection'
-  | 'linkme-affiliate'
-  | 'linkme-selection'
-  | 'form';
 
 export interface QuoteItemLocal {
   id: string;
@@ -24,15 +12,6 @@ export interface QuoteItemLocal {
   discount_percentage: number;
   eco_tax: number;
   is_service: boolean;
-  product?: {
-    name: string;
-    sku: string;
-    primary_image_url?: string;
-  };
-  // LinkMe metadata
-  linkme_selection_item_id?: string | null;
-  base_price_ht?: number | null;
-  retrocession_rate?: number | null;
 }
 
 export interface QuoteFormModalProps {
