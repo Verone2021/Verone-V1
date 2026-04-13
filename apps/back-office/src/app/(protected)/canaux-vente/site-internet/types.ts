@@ -70,10 +70,13 @@ export interface SiteInternetProduct {
   is_published: boolean;
   publication_date: string | null;
 
+  // Cout
+  cost_price: number;
+
   // Variantes
   has_variants: boolean;
   variants_count: number; // Total variantes (toutes)
-  variant_group_id: string | null; // ✨ Ajouté 2025-11-19
+  variant_group_id: string | null;
   eligible_variants_count: number; // ✨ Ajouté 2025-11-19 - Uniquement variantes éligibles
 
   // Éligibilité

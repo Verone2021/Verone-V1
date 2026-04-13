@@ -2,90 +2,48 @@
 
 import { useState, useMemo } from 'react';
 
-import { Search, CheckCircle, Package, Loader2, Plus } from 'lucide-react';
+import {
+  Search,
+  CheckCircle,
+  Package,
+  Loader2,
+  Plus,
+  ImageOff,
+  AlertTriangle,
+} from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 
 import {
-  useMetaCommerceProducts,
   useAddProductsToMeta,
+  useMetaEligibleProducts,
 } from '@verone/channels';
+import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
 import { Checkbox } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { useQuery } from '@tanstack/react-query';
-
-import { callRpc } from '@verone/channels/hooks/meta/rpc-helper';
-
-interface RpcProduct {
-  product_id: string;
-  sku: string;
-  name: string;
-  primary_image_url: string | null;
-  cost_price: number;
-  stock_status: string;
-  status: string;
-  price_ttc: number | null;
-}
-
-interface EligibleProduct {
-  id: string;
-  sku: string;
-  name: string;
-  primary_image_url: string | null;
-  cost_price: number;
-  stock_status: string;
-  product_status: string;
-  price_ttc: number | null;
-}
 
 export function AddProductsTab() {
-  const { data: metaProducts } = useMetaCommerceProducts();
+  const { data: eligible, isLoading } = useMetaEligibleProducts();
   const addProducts = useAddProductsToMeta();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
 
-  const { data: allProducts, isLoading } = useQuery<EligibleProduct[]>({
-    queryKey: ['meta-eligible-products'],
-    queryFn: async () => {
-      const { data, error } = await callRpc<RpcProduct[]>(
-        'get_site_internet_products'
-      );
-      if (error) throw new Error(error.message);
-      const rpcProducts = data ?? [];
-      return rpcProducts.map(p => ({
-        id: p.product_id,
-        sku: p.sku,
-        name: p.name,
-        primary_image_url: p.primary_image_url,
-        cost_price: p.cost_price,
-        stock_status: p.stock_status,
-        product_status: p.status,
-        price_ttc: p.price_ttc,
-      }));
-    },
-    staleTime: 60000,
-  });
-
-  const syncedIds = useMemo(
-    () => new Set((metaProducts ?? []).map(p => p.product_id)),
-    [metaProducts]
-  );
-
-  const eligible = useMemo(() => {
-    if (!allProducts) return [];
-    return allProducts.filter(p => !syncedIds.has(p.id));
-  }, [allProducts, syncedIds]);
-
   const filtered = useMemo(() => {
+    if (!eligible) return [];
     if (!search) return eligible;
     const q = search.toLowerCase();
     return eligible.filter(
-      p => p.name.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q)
+      p => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)
     );
   }, [eligible, search]);
+
+  const withImages = useMemo(
+    () => filtered.filter(p => p.image_count > 0),
+    [filtered]
+  );
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -96,11 +54,11 @@ export function AddProductsTab() {
     });
   };
 
-  const selectAll = () => {
-    if (selectedIds.size === filtered.length) {
+  const selectAllWithImages = () => {
+    if (selectedIds.size === withImages.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filtered.map(p => p.id)));
+      setSelectedIds(new Set(withImages.map(p => p.id)));
     }
   };
 
@@ -109,9 +67,17 @@ export function AddProductsTab() {
     if (ids.length === 0) return;
     try {
       const result = await addProducts.mutateAsync(ids);
-      toast.success(`${result.success_count} produit(s) ajoute(s) a Meta`);
+      const errorCount = (result as { error_count?: number }).error_count ?? 0;
+      if (errorCount > 0) {
+        toast.warning(
+          `${result.success_count} ajoute(s), ${errorCount} en erreur`
+        );
+      } else {
+        toast.success(`${result.success_count} produit(s) ajoute(s) a Meta`);
+      }
       setSelectedIds(new Set());
-    } catch {
+    } catch (err) {
+      console.error('[AddProductsTab] Add failed:', err);
       toast.error("Erreur lors de l'ajout");
     }
   };
@@ -124,7 +90,7 @@ export function AddProductsTab() {
     );
   }
 
-  if (eligible.length === 0) {
+  if (!eligible || eligible.length === 0) {
     return (
       <div className="text-center py-16">
         <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
@@ -147,28 +113,40 @@ export function AddProductsTab() {
             className="pl-10"
           />
         </div>
-        <ButtonV2 variant="outline" size="sm" onClick={selectAll}>
-          {selectedIds.size === filtered.length
-            ? 'Tout desélectionner'
-            : `Tout selectionner (${filtered.length})`}
+        <Badge variant="outline" className="whitespace-nowrap">
+          {eligible.length} eligible(s)
+        </Badge>
+        <ButtonV2 variant="outline" size="sm" onClick={selectAllWithImages}>
+          {selectedIds.size === withImages.length && withImages.length > 0
+            ? 'Tout deselectionner'
+            : `Tout selectionner (${withImages.length})`}
         </ButtonV2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {filtered.map(p => {
           const isSelected = selectedIds.has(p.id);
+          const noImages = p.image_count === 0;
+          const outOfStock = p.stock_status === 'out_of_stock';
           return (
             <Card
               key={p.id}
               className={cn(
                 'cursor-pointer transition-all hover:shadow-sm',
-                isSelected && 'ring-2 ring-primary'
+                isSelected && 'ring-2 ring-primary',
+                noImages && 'opacity-60'
               )}
-              onClick={() => toggleSelect(p.id)}
+              onClick={() => {
+                if (!noImages) toggleSelect(p.id);
+              }}
             >
               <CardContent className="p-3">
                 <div className="flex items-center gap-3">
-                  <Checkbox checked={isSelected} className="flex-shrink-0" />
+                  <Checkbox
+                    checked={isSelected}
+                    disabled={noImages}
+                    className="flex-shrink-0"
+                  />
                   <div className="h-12 w-12 rounded-md overflow-hidden bg-muted flex-shrink-0">
                     {p.primary_image_url ? (
                       <Image
@@ -186,10 +164,30 @@ export function AddProductsTab() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{p.name}</p>
-                    <p className="text-xs text-muted-foreground">{p.sku}</p>
-                    {p.price_ttc != null && (
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <p className="text-xs text-muted-foreground">{p.sku}</p>
+                      {noImages && (
+                        <Badge
+                          variant="destructive"
+                          className="text-[10px] px-1 py-0"
+                        >
+                          <ImageOff className="h-2.5 w-2.5 mr-0.5" />
+                          Sans image
+                        </Badge>
+                      )}
+                      {outOfStock && (
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] px-1 py-0"
+                        >
+                          <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+                          Rupture
+                        </Badge>
+                      )}
+                    </div>
+                    {p.site_price_ht != null && (
                       <p className="text-xs font-semibold mt-0.5">
-                        {Number(p.price_ttc).toFixed(2)} € TTC
+                        {(Number(p.site_price_ht) * 1.2).toFixed(2)} EUR TTC
                       </p>
                     )}
                   </div>

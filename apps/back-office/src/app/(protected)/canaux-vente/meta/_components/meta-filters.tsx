@@ -52,7 +52,7 @@ export function MetaFiltersBar({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tous les statuts</SelectItem>
-              <SelectItem value="active">Actif</SelectItem>
+              <SelectItem value="active">Publie</SelectItem>
               <SelectItem value="pending">En attente</SelectItem>
               <SelectItem value="rejected">Rejete</SelectItem>
               <SelectItem value="error">Erreur</SelectItem>
