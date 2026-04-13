@@ -115,7 +115,17 @@ export default function VariantesPage() {
               {selectedGroups.length !== 1 ? 's' : ''} sélectionné
               {selectedGroups.length !== 1 ? 's' : ''}
             </span>
-            <ButtonV2 variant="destructive" size="sm" onClick={() => {}}>
+            <ButtonV2
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                for (const groupId of selectedGroups) {
+                  void handleDeleteGroup(groupId).catch((err: unknown) => {
+                    console.error('[VariantesPage] Bulk delete failed:', err);
+                  });
+                }
+              }}
+            >
               Supprimer
             </ButtonV2>
           </div>

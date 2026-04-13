@@ -1,6 +1,6 @@
 # Domaine Produits & Catalogue — Schema Base de Donnees
 
-_Generated: 2026-04-12 23:28_
+_Generated: 2026-04-13 17:08_
 
 **Tables : 17**
 
@@ -20,7 +20,7 @@ _Generated: 2026-04-12 23:28_
 | [product_packages](#product-packages)                     | 14       | 1   | 4   | 2        |
 | [product_purchase_history](#product-purchase-history)     | 9        | 3   | 1   | 0        |
 | [product_reviews](#product-reviews)                       | 10       | 1   | 4   | 0        |
-| [products](#products)                                     | 79       | 6   | 3   | 18       |
+| [products](#products)                                     | 85       | 7   | 3   | 17       |
 | [subcategories](#subcategories)                           | 12       | 1   | 2   | 1        |
 | [variant_groups](#variant-groups)                         | 24       | 2   | 2   | 1        |
 
@@ -304,8 +304,8 @@ _Generated: 2026-04-12 23:28_
 
 **RLS :** 3 policies
 
-- `product_group_members_admin_policy` : ALL — public
 - `backoffice_full_access_product_group_members` : ALL — authenticated
+- `product_group_members_admin_policy` : ALL — public
 - `product_group_members_public_read` : SELECT — public
 
 **Triggers :** 1
@@ -371,9 +371,9 @@ _Generated: 2026-04-12 23:28_
 **RLS :** 4 policies
 
 - `backoffice_full_access_product_images` : ALL — authenticated
-- `public_read_product_images` : SELECT — anon
 - `product_images_select_authenticated` : SELECT — authenticated
 - `customers_read_active_product_images` : SELECT — public
+- `public_read_product_images` : SELECT — anon
 
 **Triggers :** 4
 
@@ -558,6 +558,12 @@ _Generated: 2026-04-12 23:28_
 | sourcing_channel           | text                                   | YES      |                                       |
 | shipping_cost_estimate     | numeric                                | YES      |                                       |
 | shipping_class             | text                                   | YES      | 'standard'::text                      |
+| sourcing_status            | text                                   | YES      | 'need_identified'::text               |
+| sourcing_priority          | text                                   | YES      | 'medium'::text                        |
+| sourcing_tags              | text[]                                 | YES      |                                       |
+| consultation_id            | uuid                                   | YES      |                                       |
+| target_price               | numeric                                | YES      |                                       |
+| sourcing_notes             | text                                   | YES      |                                       |
 
 **Relations :**
 
@@ -567,14 +573,15 @@ _Generated: 2026-04-12 23:28_
 - `enseigne_id` → `enseignes.id`
 - `created_by_affiliate` → `linkme_affiliates.id`
 - `assigned_client_id` → `organisations.id`
+- `consultation_id` → `client_consultations.id`
 
 **RLS :** 3 policies
 
 - `backoffice_full_access_products` : ALL — authenticated
-- `linkme_users_view_catalog_products` : SELECT — authenticated
 - `Allow anon read products on LinkMe globe` : SELECT — anon
+- `linkme_users_view_catalog_products` : SELECT — authenticated
 
-**Triggers :** 18
+**Triggers :** 17
 
 - `products_auto_sku_trigger` : BEFORE INSERT
 - `products_updated_at` : BEFORE UPDATE
@@ -588,7 +595,6 @@ _Generated: 2026-04-12 23:28_
 - `trigger_calculate_completion` : BEFORE INSERT
 - `trigger_log_sample_requirement_changes_products` : AFTER UPDATE
 - `trigger_products_search_vector_update` : BEFORE INSERT
-- `trigger_set_product_sku` : BEFORE INSERT
 - `trigger_stock_negative_forecast_notification` : AFTER UPDATE
 - `trigger_sync_item_group_id` : BEFORE INSERT
 - `trigger_sync_stock_alert_tracking_v4` : AFTER INSERT

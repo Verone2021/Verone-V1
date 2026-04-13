@@ -8,13 +8,17 @@ import { useParams } from 'next/navigation';
 
 import { useToast } from '@verone/common';
 import { useProductConsultations } from '@verone/consultations/hooks';
-import { ConsultationSuggestions } from '@verone/consultations/components/suggestions';
 import {
   ProductPhotosModal,
   SourcingProductEditCard,
   useSourcingProducts,
   useProductImages,
+  SourcingPipelineBar,
+  SourcingCommunications,
+  SourcingUrls,
+  SourcingPriceHistory,
 } from '@verone/products';
+import { useSourcingNotebook } from '@verone/products';
 import { Alert, AlertDescription, Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -30,11 +34,9 @@ import {
   Package,
   AlertCircle,
   Building2,
-  FileText,
-  Clock,
-  Link,
-  ExternalLink,
 } from 'lucide-react';
+
+import { SourcingConsultationsSection } from './SourcingConsultationsSection';
 
 export default function SourcingProductDetailPage() {
   const router = useRouter();
@@ -52,6 +54,9 @@ export default function SourcingProductDetailPage() {
 
   const productId = params.id as string;
   const product = products.find(p => p.id === productId);
+
+  // Hook pour le carnet de sourcing
+  const notebook = useSourcingNotebook(productId);
 
   // Hook pour les consultations liées au produit
   const {
@@ -228,6 +233,38 @@ export default function SourcingProductDetailPage() {
       </div>
 
       <div className="w-full px-4 py-8 space-y-6">
+        {/* Pipeline Status */}
+        <Card className="border-black">
+          <CardContent className="pt-4 pb-3">
+            <SourcingPipelineBar
+              currentStatus={product.sourcing_status ?? 'need_identified'}
+              onStatusChange={status => {
+                void notebook
+                  .updateSourcingPipeline({ sourcing_status: status })
+                  .then(() => refetch())
+                  .catch(err => {
+                    console.error(
+                      '[SourcingDetail] Pipeline update failed:',
+                      err
+                    );
+                  });
+              }}
+              priority={product.sourcing_priority ?? 'medium'}
+              onPriorityChange={priority => {
+                void notebook
+                  .updateSourcingPipeline({ sourcing_priority: priority })
+                  .then(() => refetch())
+                  .catch(err => {
+                    console.error(
+                      '[SourcingDetail] Priority update failed:',
+                      err
+                    );
+                  });
+              }}
+            />
+          </CardContent>
+        </Card>
+
         {/* Product Info Card - Éditable inline */}
         <SourcingProductEditCard
           product={
@@ -354,121 +391,43 @@ export default function SourcingProductDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Consultations liées */}
-        <Card className="border-blue-200">
-          <CardHeader>
-            <CardTitle className="flex items-center text-black">
-              <FileText className="h-5 w-5 mr-2" />
-              Consultations
-              {linkedConsultations.length > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  {linkedConsultations.length}
-                </Badge>
-              )}
-            </CardTitle>
-            <CardDescription>
-              Consultations liées à ce produit sourcing
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Consultations déjà liées */}
-            {consultationsLoading ? (
-              <div className="text-center py-4">
-                <p className="text-sm text-gray-500">Chargement...</p>
-              </div>
-            ) : linkedConsultations.length > 0 ? (
-              <div className="space-y-3">
-                {linkedConsultations.map(item => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Link className="h-4 w-4 text-blue-600" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {item.consultation?.enseigne?.name ??
-                            item.consultation?.organisation?.trade_name ??
-                            item.consultation?.organisation?.legal_name ??
-                            'Consultation'}
-                        </p>
-                        <p className="text-xs text-gray-500 line-clamp-1">
-                          {item.consultation?.descriptif}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge
-                            variant="outline"
-                            className={
-                              item.consultation?.status === 'en_cours'
-                                ? 'border-blue-300 text-blue-600'
-                                : item.consultation?.status === 'terminee'
-                                  ? 'border-green-300 text-green-600'
-                                  : 'border-gray-300 text-gray-600'
-                            }
-                          >
-                            {item.consultation?.status?.replace('_', ' ')}
-                          </Badge>
-                          <span className="text-xs text-gray-400 flex items-center">
-                            <Clock className="h-3 w-3 mr-1" />
-                            {new Date(
-                              item.consultation?.created_at || ''
-                            ).toLocaleDateString('fr-FR')}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <ButtonV2
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        router.push(`/consultations/${item.consultation_id}`)
-                      }
-                    >
-                      <ExternalLink className="h-3 w-3 mr-1" />
-                      Voir
-                    </ButtonV2>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500 text-center py-2">
-                Aucune consultation liée
-              </p>
-            )}
+        {/* Carnet de sourcing */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <SourcingCommunications
+            communications={notebook.communications}
+            onAdd={notebook.addCommunication}
+            onResolve={notebook.resolveCommunication}
+          />
+          <div className="space-y-4">
+            <SourcingUrls
+              urls={notebook.urls}
+              onAdd={notebook.addUrl}
+              onRemove={notebook.removeUrl}
+            />
+            <SourcingPriceHistory
+              priceHistory={notebook.priceHistory}
+              onAdd={notebook.addPriceEntry}
+              currentCostPrice={product.cost_price}
+              targetPrice={product.target_price}
+            />
+          </div>
+        </div>
 
-            {/* Suggestions pour associer */}
-            {product.assigned_client_id && (
-              <div className="pt-2 border-t border-gray-200">
-                <ConsultationSuggestions
-                  clientId={product.assigned_client_id}
-                  _productId={productId}
-                  onLinkToConsultation={consultationId => {
-                    void handleLinkToConsultation(consultationId).catch(
-                      error => {
-                        console.error(
-                          '[SourcingDetail] Link consultation failed:',
-                          error
-                        );
-                      }
-                    );
-                  }}
-                  className="bg-blue-50 border-blue-200"
-                />
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Workflow Info */}
-        <Alert className="border-blue-200 bg-blue-50">
-          <AlertCircle className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800">
-            <strong>Workflow sourcing :</strong> Les produits en sourcing
-            doivent être validés avant d'apparaître dans le catalogue. Si un
-            échantillon est requis, utilisez d'abord l'action "Demander un
-            échantillon" avant la validation finale.
-          </AlertDescription>
-        </Alert>
+        {/* Consultations + Workflow info */}
+        <SourcingConsultationsSection
+          linkedConsultations={linkedConsultations}
+          consultationsLoading={consultationsLoading}
+          assignedClientId={product.assigned_client_id}
+          productId={productId}
+          onLinkToConsultation={consultationId => {
+            void handleLinkToConsultation(consultationId).catch(error => {
+              console.error(
+                '[SourcingDetail] Link consultation failed:',
+                error
+              );
+            });
+          }}
+        />
       </div>
 
       {/* Modal de gestion des photos */}

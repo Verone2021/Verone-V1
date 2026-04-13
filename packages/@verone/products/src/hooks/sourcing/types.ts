@@ -23,6 +23,13 @@ export interface SourcingProduct {
   creation_mode: string;
   sourcing_type?: string;
   requires_sample: boolean;
+  // Sourcing pipeline
+  sourcing_status?: string;
+  sourcing_priority?: string;
+  sourcing_tags?: string[];
+  target_price?: number | null;
+  sourcing_notes?: string | null;
+  consultation_id?: string | null;
   assigned_client_id: string | null;
   assigned_client?: {
     id: string;

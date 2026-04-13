@@ -5,6 +5,13 @@ export { useSourcingFetch } from './use-sourcing-fetch';
 export { useSourcingMutations } from './use-sourcing-mutations';
 export { useSourcingSampleOrder } from './use-sourcing-sample-order';
 export { useSourcingCreateUpdate } from './use-sourcing-create-update';
+export { useSourcingNotebook } from './use-sourcing-notebook';
+export type {
+  SourcingUrl,
+  SourcingCommunication,
+  SourcingPriceEntry,
+  SourcingCandidateSupplier,
+} from './use-sourcing-notebook';
 
 import type { SourcingFilters } from './types';
 import { useSourcingFetch } from './use-sourcing-fetch';
