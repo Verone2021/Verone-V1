@@ -21,6 +21,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { CatalogueProduct } from '@/hooks/use-catalogue-products';
 import { createClient } from '@/lib/supabase/client';
 import { trackViewItem } from '@/components/analytics/GoogleAnalytics';
+import { trackMetaViewContent } from '@/components/analytics/MetaPixel';
 import { ShareButtons } from '@/components/product/ShareButtons';
 import { StickyAddToCart } from '@/components/product/StickyAddToCart';
 import { JsonLdProduct } from '@/components/seo/JsonLdProduct';
@@ -130,7 +131,7 @@ export default function ProductPage({
   // Review stats for JSON-LD
   const reviewStats = useReviewStats(product?.product_id);
 
-  // GA4: track view_item when product loads
+  // GA4 + Meta Pixel: track view when product loads
   useEffect(() => {
     if (product) {
       trackViewItem({
@@ -138,6 +139,12 @@ export default function ProductPage({
         name: product.name,
         price: product.price_ttc ?? 0,
         brand: product.brand ?? undefined,
+        category: product.subcategory_name ?? undefined,
+      });
+      trackMetaViewContent({
+        id: product.product_id,
+        name: product.name,
+        price: product.price_ttc ?? 0,
         category: product.subcategory_name ?? undefined,
       });
     }
