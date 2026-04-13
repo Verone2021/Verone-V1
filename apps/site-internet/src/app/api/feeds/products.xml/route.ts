@@ -49,7 +49,8 @@ function escapeXml(str: string): string {
     .replace(/'/g, '&apos;');
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
+  const channel = request.nextUrl.searchParams.get('channel'); // 'google', 'meta', or null (all)
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -86,8 +87,21 @@ export async function GET(_request: NextRequest) {
   const metaExcludedIds = new Set(
     (metaExclusions ?? []).map(e => e.product_id as string)
   );
-  // Combined: exclude if disabled on EITHER channel
-  const excludedIds = new Set([...gmExcludedIds, ...metaExcludedIds]);
+  // Channel-aware exclusions:
+  // ?channel=google → exclude only google-disabled products
+  // ?channel=meta → exclude only meta-disabled products
+  // no param → exclude if disabled on BOTH channels (intersection)
+  let excludedIds: Set<string>;
+  if (channel === 'google') {
+    excludedIds = gmExcludedIds;
+  } else if (channel === 'meta') {
+    excludedIds = metaExcludedIds;
+  } else {
+    // Default: only exclude products disabled on BOTH channels
+    excludedIds = new Set(
+      [...gmExcludedIds].filter(id => metaExcludedIds.has(id))
+    );
+  }
 
   // 3b. Get stock quantities + variant data for Google/Meta
   const productIds = products.map(p => p.product_id);
