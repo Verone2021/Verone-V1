@@ -7,6 +7,7 @@ import { ProductDescriptionsTab } from './_components/product-descriptions-tab';
 import { ProductCharacteristicsTab } from './_components/product-characteristics-tab';
 import { ProductGeneralTab } from './_components/product-general-tab';
 import { ProductImagesTab } from './_components/product-images-tab';
+import { ProductPublicationTab } from './_components/product-publication-tab';
 import { ProductLoadingState } from './_components/ProductLoadingState';
 import { ProductModals } from './_components/ProductModals';
 import { ProductPricingTab } from './_components/product-pricing-tab';
@@ -132,6 +133,10 @@ export default function ProductDetailPage() {
             imageCount={productImages.length}
             onOpenPhotosModal={() => setShowPhotosModal(true)}
           />
+        </TabContent>
+
+        <TabContent activeTab={activeTab} tabId="publication">
+          <ProductPublicationTab product={product} />
         </TabContent>
       </div>
 

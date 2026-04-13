@@ -17,3 +17,4 @@ export { ProductViewMode } from './ProductViewMode';
 export { ProductVariantsSection } from './ProductVariantsSection';
 export { VariantSiblings } from './VariantSiblings';
 export { ProductProfitabilitySection } from './ProductProfitabilitySection';
+export { SerpPreview } from './SerpPreview';
