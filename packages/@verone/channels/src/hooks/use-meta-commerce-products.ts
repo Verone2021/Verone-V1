@@ -25,8 +25,12 @@ export interface MetaCommerceProduct {
   clicks: number;
   conversions: number;
   revenue_ht: number;
+  meta_status_detail: Record<string, unknown> | null;
+  meta_status_checked_at: string | null;
   synced_at: string;
   error_message: string | null;
+  image_count: number;
+  is_channel_active: boolean;
 }
 
 export interface MetaCommerceStats {
