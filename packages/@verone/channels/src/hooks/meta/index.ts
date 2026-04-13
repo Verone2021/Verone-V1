@@ -3,3 +3,5 @@ export { useToggleMetaVisibility } from './use-toggle-meta-visibility';
 export { useRemoveFromMeta } from './use-remove-from-meta';
 export { useUpdateMetaMetadata } from './use-update-meta-metadata';
 export { useUpdateMetaPrice } from './use-update-meta-price';
+export { useMetaEligibleProducts } from './use-meta-eligible-products';
+export type { MetaEligibleProduct } from './use-meta-eligible-products';

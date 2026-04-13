@@ -141,6 +141,11 @@ export async function POST() {
  * See: https://developers.facebook.com/docs/marketing-api/reference/product-item/
  *
  * Meta review_status values: approved, pending, rejected, ""
+ *
+ * In Europe (redirect-to-website mode), review_status is always ""
+ * because Meta does not review products when checkout is off-site.
+ * An empty review_status with a valid meta_product_id means the
+ * product IS published in the catalog and visible in the shop.
  */
 function mapReviewStatus(
   reviewStatus: string
@@ -152,6 +157,9 @@ function mapReviewStatus(
       return 'rejected';
     case 'pending':
       return 'pending';
+    case '':
+      // Empty = product exists in catalog, visible in shop (redirect mode)
+      return 'active';
     default:
       return 'pending';
   }

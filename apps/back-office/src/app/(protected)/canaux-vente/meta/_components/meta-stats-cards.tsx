@@ -23,7 +23,7 @@ export function MetaStatsCards() {
       icon: Package,
     },
     {
-      label: 'Actifs',
+      label: 'Publies',
       value: stats?.active_products ?? 0,
       icon: CheckCircle,
       color: 'text-green-600',
