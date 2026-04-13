@@ -1,6 +1,6 @@
 # Domaine Stock & Stockage — Schema Base de Donnees
 
-_Generated: 2026-04-12 16:31_
+_Generated: 2026-04-12 23:28_
 
 **Tables : 9**
 
@@ -63,8 +63,8 @@ _Generated: 2026-04-12 16:31_
 
 **RLS :** 4 policies
 
-- `backoffice_full_access_affiliate_storage_allocations` : ALL — authenticated
 - `Admin manage storage` : ALL — public
+- `backoffice_full_access_affiliate_storage_allocations` : ALL — authenticated
 - `Admin view all storage` : SELECT — public
 - `Affiliate view own storage` : SELECT — public
 
@@ -202,8 +202,8 @@ _Generated: 2026-04-12 16:31_
 
 **RLS :** 5 policies
 
-- `users_own_stock_movements` : ALL — authenticated
 - `backoffice_full_access_stock_movements` : ALL — authenticated
+- `users_own_stock_movements` : ALL — authenticated
 - `system_triggers_can_insert_stock_movements` : INSERT — public
 - `authenticated_users_can_view_stock_movements` : SELECT — authenticated
 - `Utilisateurs peuvent consulter les mouvements de stock` : SELECT — public

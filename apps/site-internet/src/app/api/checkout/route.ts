@@ -13,6 +13,14 @@ const CheckoutItemSchema = z.object({
   eco_participation: z.number().min(0),
 });
 
+const DiscountSchema = z.object({
+  discount_id: z.string().uuid(),
+  code: z.string().nullable(),
+  discount_type: z.string(),
+  discount_value: z.number().min(0),
+  discount_amount: z.number().min(0),
+});
+
 const CheckoutSchema = z.object({
   items: z.array(CheckoutItemSchema).min(1),
   customer: z.object({
@@ -25,6 +33,8 @@ const CheckoutSchema = z.object({
     city: z.string().min(1),
     country: z.string().default('FR'),
   }),
+  userId: z.string().uuid().optional(),
+  discount: DiscountSchema.optional(),
 });
 
 interface ShippingConfig {
@@ -43,6 +53,101 @@ interface ShippingConfig {
   free_shipping_applies_to: 'standard' | 'all';
   allowed_countries: string[];
   shipping_info_message?: string;
+}
+
+const SITE_INTERNET_CHANNEL_ID = '0c2639e9-df80-41fa-84d0-9da96a128f7f';
+
+interface ValidatedDiscount {
+  discount_id: string;
+  code: string | null;
+  discount_type: string;
+  discount_value: number;
+  discount_amount: number;
+}
+
+/**
+ * Server-side promo validation — never trust the frontend discount_amount.
+ * Revalidates the code against DB and recalculates the discount.
+ */
+async function validatePromoServerSide(
+  discount: z.infer<typeof DiscountSchema>,
+  subtotalTtc: number,
+  supabaseUrl: string,
+  supabaseServiceKey: string
+): Promise<ValidatedDiscount | { error: string }> {
+  if (!discount.code) {
+    return { error: 'Code promo requis' };
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  const { data, error } = await supabase
+    .from('order_discounts')
+    .select(
+      'id, code, name, discount_type, discount_value, min_order_amount, max_discount_amount, valid_from, valid_until, max_uses_total, current_uses, is_active'
+    )
+    .eq('code', discount.code.toUpperCase())
+    .eq('is_active', true)
+    .single();
+
+  if (error || !data) {
+    return { error: 'Code promo invalide ou expire' };
+  }
+
+  const promo = data as {
+    id: string;
+    code: string | null;
+    discount_type: string;
+    discount_value: number;
+    min_order_amount: number | null;
+    max_discount_amount: number | null;
+    valid_from: string;
+    valid_until: string;
+    max_uses_total: number | null;
+    current_uses: number;
+    is_active: boolean;
+  };
+
+  const now = new Date();
+  if (now < new Date(promo.valid_from) || now > new Date(promo.valid_until)) {
+    return { error: 'Ce code promo a expire' };
+  }
+
+  if (
+    promo.max_uses_total !== null &&
+    promo.current_uses >= promo.max_uses_total
+  ) {
+    return { error: "Ce code promo a atteint sa limite d'utilisation" };
+  }
+
+  if (promo.min_order_amount !== null && subtotalTtc < promo.min_order_amount) {
+    return {
+      error: `Minimum de commande : ${promo.min_order_amount.toFixed(2)} \u20ac`,
+    };
+  }
+
+  let discountAmount = 0;
+  if (promo.discount_type === 'percentage') {
+    discountAmount = subtotalTtc * (promo.discount_value / 100);
+  } else if (promo.discount_type === 'fixed') {
+    discountAmount = promo.discount_value;
+  }
+  // free_shipping handled by Stripe shipping_options — discount_amount = 0
+
+  if (
+    promo.max_discount_amount !== null &&
+    discountAmount > promo.max_discount_amount
+  ) {
+    discountAmount = promo.max_discount_amount;
+  }
+
+  return {
+    discount_id: promo.id,
+    code: promo.code,
+    discount_type: promo.discount_type,
+    discount_value: promo.discount_value,
+    discount_amount: Math.round(discountAmount * 100) / 100,
+  };
 }
 
 const DEFAULT_SHIPPING: ShippingConfig = {
@@ -175,7 +280,47 @@ export async function POST(request: Request) {
       );
     }
 
-    const { items, customer } = validated.data;
+    const {
+      items,
+      customer,
+      userId,
+      discount: frontendDiscount,
+    } = validated.data;
+
+    // Server-side promo revalidation — NEVER trust frontend discount_amount
+    let discount: ValidatedDiscount | undefined;
+    if (frontendDiscount?.code) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+      if (supabaseUrl && supabaseServiceKey) {
+        const subtotalForPromo = items.reduce(
+          (sum, item) =>
+            sum +
+            (item.price_ttc +
+              item.eco_participation +
+              (item.include_assembly ? item.assembly_price : 0)) *
+              item.quantity,
+          0
+        );
+
+        const promoResult = await validatePromoServerSide(
+          frontendDiscount,
+          subtotalForPromo,
+          supabaseUrl,
+          supabaseServiceKey
+        );
+
+        if ('error' in promoResult) {
+          return NextResponse.json(
+            { error: promoResult.error },
+            { status: 400 }
+          );
+        }
+
+        discount = promoResult;
+      }
+    }
 
     // Check if Stripe is configured
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -209,17 +354,27 @@ export async function POST(request: Request) {
         0
       );
 
-      // Find or create individual_customer
-      const { data: existingCustomer } = await supabase
-        .from('individual_customers')
-        .select('id')
-        .eq('email', customer.email)
-        .limit(1)
-        .single();
+      // Find or create individual_customer (by auth_user_id first, then email)
+      let customerId: string | null = null;
 
-      let customerId: string | null = existingCustomer
-        ? String(existingCustomer.id)
-        : null;
+      if (userId) {
+        const { data } = await supabase
+          .from('individual_customers')
+          .select('id')
+          .eq('auth_user_id', userId)
+          .limit(1)
+          .single();
+        if (data) customerId = String(data.id);
+      }
+      if (!customerId) {
+        const { data } = await supabase
+          .from('individual_customers')
+          .select('id')
+          .eq('email', customer.email)
+          .limit(1)
+          .single();
+        if (data) customerId = String(data.id);
+      }
 
       if (!customerId) {
         const { data: newCustomer } = await supabase
@@ -235,6 +390,7 @@ export async function POST(request: Request) {
             country: (customer.country as string | undefined) ?? 'FR',
             source_type: 'site-internet',
             is_active: true,
+            ...(userId ? { auth_user_id: userId } : {}),
           })
           .select('id')
           .single();
@@ -242,22 +398,19 @@ export async function POST(request: Request) {
         customerId = newCustomer ? String(newCustomer.id) : null;
       }
 
-      // Generate order number
-      const year = new Date().getFullYear();
-      const prefix = `SO-${year}-`;
-      const { data: lastOrderRaw } = await supabase
-        .from('sales_orders')
-        .select('order_number')
-        .like('order_number', `${prefix}%`)
-        .order('order_number', { ascending: false })
-        .limit(1)
-        .single();
+      // Generate order number atomically via PostgreSQL sequence
+      const { data: seqData, error: seqError } = (await supabase
+        .rpc('nextval_text', { seq_name: 'site_order_number_seq' })
+        .single()) as { data: string | null; error: unknown };
 
-      const lastOrder = lastOrderRaw as { order_number?: string } | null;
-      const lastNum = lastOrder?.order_number
-        ? parseInt(lastOrder.order_number.replace(prefix, ''), 10)
-        : 0;
-      const orderNumber = `${prefix}${String(lastNum + 1).padStart(5, '0')}`;
+      let orderNumber: string;
+      if (seqError || !seqData) {
+        // Fallback: timestamp-based to avoid collision
+        orderNumber = `VER-SI-${Date.now()}`;
+        console.warn('[Checkout] Sequence fallback used:', orderNumber);
+      } else {
+        orderNumber = `VER-SI-${seqData}`;
+      }
 
       // Shipping address as JSONB
       const shippingCountry = String(customer.country ?? 'FR');
@@ -268,18 +421,28 @@ export async function POST(request: Request) {
         country: shippingCountry,
       };
 
+      const discountAmount = discount?.discount_amount ?? 0;
+      const finalTtc = Math.max(subtotalAmount - discountAmount, 0);
+
       const { data: orderDataRaw, error: orderError } = await supabase
         .from('sales_orders')
         .insert({
           order_number: orderNumber,
-          channel_id: '0c2639e9-df80-41fa-84d0-9da96a128f7f',
+          channel_id: SITE_INTERNET_CHANNEL_ID,
           customer_type: 'individual',
           individual_customer_id: customerId,
           status: 'draft',
           payment_status_v2: 'pending',
           shipping_address: shippingAddressJson,
-          total_ttc: subtotalAmount,
-          total_ht: Math.round((subtotalAmount / 1.2) * 100) / 100,
+          total_ttc: finalTtc,
+          total_ht: Math.round((finalTtc / 1.2) * 100) / 100,
+          ...(discount
+            ? {
+                applied_discount_id: discount.discount_id,
+                applied_discount_code: discount.code,
+                applied_discount_amount: discountAmount,
+              }
+            : {}),
         })
         .select('id')
         .single();
@@ -308,6 +471,68 @@ export async function POST(request: Request) {
         }
 
         console.warn('[Checkout] Pre-created draft order:', orderNumber);
+
+        // Ambassador attribution: check if the discount code belongs to an ambassador
+        if (orderId && discount?.code) {
+          const { data: ambassadorCode } = await supabase
+            .from('ambassador_codes')
+            .select('id, ambassador_id, code')
+            .eq('code', discount.code.toUpperCase())
+            .eq('is_active', true)
+            .single();
+
+          if (ambassadorCode) {
+            const ambCode = ambassadorCode as {
+              id: string;
+              ambassador_id: string;
+              code: string;
+            };
+            // Fetch ambassador commission rate
+            const { data: ambassador } = await supabase
+              .from('site_ambassadors')
+              .select('id, commission_rate')
+              .eq('id', ambCode.ambassador_id)
+              .eq('is_active', true)
+              .single();
+
+            if (ambassador) {
+              const amb = ambassador as { id: string; commission_rate: number };
+              const orderHt = Math.round((finalTtc / 1.2) * 100) / 100;
+              const primeAmount =
+                Math.round(
+                  orderHt * (Number(amb.commission_rate) / 100) * 100
+                ) / 100;
+              const validationDate = new Date();
+              validationDate.setDate(validationDate.getDate() + 30);
+
+              const { error: attrError } = await supabase
+                .from('ambassador_attributions')
+                .insert({
+                  order_id: orderId,
+                  ambassador_id: amb.id,
+                  code_id: ambCode.id,
+                  order_total_ht: orderHt,
+                  commission_rate: Number(ambassador.commission_rate),
+                  prime_amount: primeAmount,
+                  status: 'pending',
+                  validation_date: validationDate.toISOString(),
+                  attribution_method: 'coupon_code',
+                });
+
+              if (attrError) {
+                // Non-blocking: log but don't fail the checkout
+                console.error(
+                  '[Checkout] Ambassador attribution failed:',
+                  attrError
+                );
+              } else {
+                console.warn(
+                  `[Checkout] Ambassador attribution created: ${ambCode.code} → ${primeAmount} EUR`
+                );
+              }
+            }
+          }
+        }
       }
     }
 
@@ -386,11 +611,36 @@ export async function POST(request: Request) {
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3001';
 
+    // Create Stripe coupon if discount applied
+    let stripeCouponId: string | undefined;
+    if (discount && discount.discount_amount > 0) {
+      if (discount.discount_type === 'free_shipping') {
+        // Free shipping is handled by shipping_options — no Stripe coupon needed
+      } else if (discount.discount_type === 'percentage') {
+        const coupon = await stripe.coupons.create({
+          percent_off: discount.discount_value,
+          duration: 'once',
+          name: discount.code ?? 'Promotion',
+        });
+        stripeCouponId = coupon.id;
+      } else {
+        // fixed_amount
+        const coupon = await stripe.coupons.create({
+          amount_off: Math.round(discount.discount_amount * 100),
+          currency: 'eur',
+          duration: 'once',
+          name: discount.code ?? 'Promotion',
+        });
+        stripeCouponId = coupon.id;
+      }
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card', 'link'],
       line_items: lineItems,
       mode: 'payment',
       invoice_creation: { enabled: true },
+      ...(stripeCouponId ? { discounts: [{ coupon: stripeCouponId }] } : {}),
       shipping_options: shippingOptions,
       shipping_address_collection: {
         allowed_countries:
@@ -406,6 +656,13 @@ export async function POST(request: Request) {
         customer_phone: customer.phone,
         shipping_address: `${customer.address}, ${customer.postalCode} ${customer.city}`,
         ...(orderId ? { order_id: orderId } : {}),
+        ...(discount
+          ? {
+              discount_id: discount.discount_id,
+              discount_code: discount.code ?? '',
+              discount_amount: String(discount.discount_amount),
+            }
+          : {}),
       },
     });
 

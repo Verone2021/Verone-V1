@@ -3,6 +3,7 @@
 import type React from 'react';
 
 import {
+  Checkbox,
   Dialog,
   DialogContent,
   DialogHeader,
@@ -23,30 +24,69 @@ import { ButtonV2 } from '@verone/ui';
 import type { PromoFormData } from './promo-codes-types';
 
 // ============================================
-// Promo Form Dialog — field sections
+// Types for selectors
 // ============================================
+
+interface SelectableItem {
+  id: string;
+  name: string;
+}
 
 interface PromoFormSetterProps {
   form: PromoFormData;
   setForm: React.Dispatch<React.SetStateAction<PromoFormData>>;
 }
 
+interface PromoFormSetterWithDataProps extends PromoFormSetterProps {
+  products: SelectableItem[];
+  collections: SelectableItem[];
+}
+
+// ============================================
+// Field sections
+// ============================================
+
 function PromoBasicFields({ form, setForm }: PromoFormSetterProps) {
   return (
     <>
-      <div className="grid grid-cols-2 gap-4">
+      {/* Automatic toggle */}
+      <div className="flex items-center gap-3 rounded-lg border p-3 bg-gray-50">
+        <Switch
+          checked={form.is_automatic}
+          onCheckedChange={checked =>
+            setForm(prev => ({
+              ...prev,
+              is_automatic: checked,
+              code: checked ? '' : prev.code,
+            }))
+          }
+        />
         <div>
-          <Label>Code *</Label>
-          <Input
-            value={form.code}
-            onChange={e =>
-              setForm(prev => ({ ...prev, code: e.target.value.toUpperCase() }))
-            }
-            placeholder="BIENVENUE10"
-            className="font-mono"
-          />
+          <Label className="font-medium">Promotion automatique</Label>
+          <p className="text-xs text-muted-foreground">
+            Appliquee sans code quand les conditions sont remplies
+          </p>
         </div>
-        <div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        {!form.is_automatic && (
+          <div>
+            <Label>Code *</Label>
+            <Input
+              value={form.code}
+              onChange={e =>
+                setForm(prev => ({
+                  ...prev,
+                  code: e.target.value.toUpperCase(),
+                }))
+              }
+              placeholder="BIENVENUE10"
+              className="font-mono"
+            />
+          </div>
+        )}
+        <div className={form.is_automatic ? 'col-span-2' : ''}>
           <Label>Nom *</Label>
           <Input
             value={form.name}
@@ -73,7 +113,7 @@ function PromoDiscountFields({ form, setForm }: PromoFormSetterProps) {
   return (
     <div className="grid grid-cols-2 gap-4">
       <div>
-        <Label>Type de réduction</Label>
+        <Label>Type de reduction</Label>
         <Select
           value={form.discount_type}
           onValueChange={v => setForm(prev => ({ ...prev, discount_type: v }))}
@@ -83,25 +123,110 @@ function PromoDiscountFields({ form, setForm }: PromoFormSetterProps) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="percentage">Pourcentage (%)</SelectItem>
-            <SelectItem value="fixed_amount">Montant fixe (€)</SelectItem>
+            <SelectItem value="fixed_amount">Montant fixe (EUR)</SelectItem>
+            <SelectItem value="free_shipping">Livraison gratuite</SelectItem>
           </SelectContent>
         </Select>
       </div>
+      {form.discount_type !== 'free_shipping' && (
+        <div>
+          <Label>
+            Valeur {form.discount_type === 'percentage' ? '(%)' : '(EUR)'}
+          </Label>
+          <Input
+            type="number"
+            min={0}
+            value={form.discount_value}
+            onChange={e =>
+              setForm(prev => ({
+                ...prev,
+                discount_value: parseFloat(e.target.value) || 0,
+              }))
+            }
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PromoTargetingFields({
+  form,
+  setForm,
+  products,
+  collections,
+}: PromoFormSetterWithDataProps) {
+  const items =
+    form.target_type === 'products'
+      ? products
+      : form.target_type === 'collections'
+        ? collections
+        : [];
+
+  return (
+    <div className="space-y-3">
       <div>
-        <Label>
-          Valeur {form.discount_type === 'percentage' ? '(%)' : '(€)'}
-        </Label>
-        <Input
-          type="number"
-          min={0}
-          value={form.discount_value}
-          onChange={e =>
+        <Label>Ciblage</Label>
+        <Select
+          value={form.target_type}
+          onValueChange={(v: 'all' | 'products' | 'collections') =>
             setForm(prev => ({
               ...prev,
-              discount_value: parseFloat(e.target.value) || 0,
+              target_type: v,
+              selected_target_ids: [],
             }))
           }
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous les produits</SelectItem>
+            <SelectItem value="products">Produits specifiques</SelectItem>
+            <SelectItem value="collections">Collections specifiques</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {form.target_type !== 'all' && (
+        <div className="max-h-48 overflow-y-auto rounded-md border p-2 space-y-1">
+          {items.length === 0 ? (
+            <p className="text-sm text-muted-foreground p-2">
+              Aucun {form.target_type === 'products' ? 'produit' : 'collection'}{' '}
+              disponible
+            </p>
+          ) : (
+            items.map(item => (
+              <label
+                key={item.id}
+                className="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-gray-50 cursor-pointer"
+              >
+                <Checkbox
+                  checked={form.selected_target_ids.includes(item.id)}
+                  onCheckedChange={checked => {
+                    setForm(prev => ({
+                      ...prev,
+                      selected_target_ids: checked
+                        ? [...prev.selected_target_ids, item.id]
+                        : prev.selected_target_ids.filter(id => id !== item.id),
+                    }));
+                  }}
+                />
+                <span className="text-sm">{item.name}</span>
+              </label>
+            ))
+          )}
+        </div>
+      )}
+
+      <div className="flex items-center gap-3">
+        <Switch
+          checked={form.exclude_sale_items}
+          onCheckedChange={checked =>
+            setForm(prev => ({ ...prev, exclude_sale_items: checked }))
+          }
         />
+        <Label className="text-sm">Exclure les articles deja en promo</Label>
       </div>
     </div>
   );
@@ -111,7 +236,7 @@ function PromoAmountLimitsFields({ form, setForm }: PromoFormSetterProps) {
   return (
     <div className="grid grid-cols-2 gap-4">
       <div>
-        <Label>Montant min. commande (€)</Label>
+        <Label>Montant min. commande (EUR)</Label>
         <Input
           type="number"
           value={form.min_order_amount}
@@ -121,17 +246,22 @@ function PromoAmountLimitsFields({ form, setForm }: PromoFormSetterProps) {
           placeholder="Pas de minimum"
         />
       </div>
-      <div>
-        <Label>Réduction max. (€)</Label>
-        <Input
-          type="number"
-          value={form.max_discount_amount}
-          onChange={e =>
-            setForm(prev => ({ ...prev, max_discount_amount: e.target.value }))
-          }
-          placeholder="Pas de plafond"
-        />
-      </div>
+      {form.discount_type !== 'free_shipping' && (
+        <div>
+          <Label>Reduction max. (EUR)</Label>
+          <Input
+            type="number"
+            value={form.max_discount_amount}
+            onChange={e =>
+              setForm(prev => ({
+                ...prev,
+                max_discount_amount: e.target.value,
+              }))
+            }
+            placeholder="Pas de plafond"
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -170,7 +300,7 @@ function PromoDatesAndUsageFields({ form, setForm }: PromoFormSetterProps) {
             onChange={e =>
               setForm(prev => ({ ...prev, max_uses_total: e.target.value }))
             }
-            placeholder="Illimité"
+            placeholder="Illimite"
           />
         </div>
         <div>
@@ -195,7 +325,7 @@ function PromoDatesAndUsageFields({ form, setForm }: PromoFormSetterProps) {
             setForm(prev => ({ ...prev, is_active: checked }))
           }
         />
-        <Label>Code actif</Label>
+        <Label>Promotion active</Label>
       </div>
     </>
   );
@@ -213,6 +343,8 @@ interface PromoFormDialogProps {
   editingId: string | null;
   onSave: () => void;
   isSaving: boolean;
+  products: SelectableItem[];
+  collections: SelectableItem[];
 }
 
 export function PromoFormDialog({
@@ -223,18 +355,26 @@ export function PromoFormDialog({
   editingId,
   onSave,
   isSaving,
+  products,
+  collections,
 }: PromoFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {editingId ? 'Modifier le code promo' : 'Nouveau code promo'}
+            {editingId ? 'Modifier la promotion' : 'Nouvelle promotion'}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <PromoBasicFields form={form} setForm={setForm} />
           <PromoDiscountFields form={form} setForm={setForm} />
+          <PromoTargetingFields
+            form={form}
+            setForm={setForm}
+            products={products}
+            collections={collections}
+          />
           <PromoAmountLimitsFields form={form} setForm={setForm} />
           <PromoDatesAndUsageFields form={form} setForm={setForm} />
         </div>
@@ -246,8 +386,8 @@ export function PromoFormDialog({
             {isSaving
               ? 'Enregistrement...'
               : editingId
-                ? 'Mettre à jour'
-                : 'Créer'}
+                ? 'Mettre a jour'
+                : 'Creer'}
           </ButtonV2>
         </DialogFooter>
       </DialogContent>

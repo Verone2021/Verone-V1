@@ -137,15 +137,23 @@ export function useEditSiteInternetProduct(
       console.warn('✅ Channel ID récupéré:', channelId);
 
       // 1. Update products table (slug, meta_title, meta_description, is_published_online)
+      // Use scheduled date if provided, otherwise now() on publish
+      const publicationDate = data.publication_date
+        ? new Date(data.publication_date).toISOString()
+        : data.is_published_online
+          ? new Date().toISOString()
+          : null;
+
       const { error: productsError } = await supabase
         .from('products')
         .update({
-          slug: data.slug ?? null, // Convertir chaîne vide en null
+          slug: data.slug ?? null,
           meta_title: data.meta_title,
           meta_description: data.meta_description,
           is_published_online: data.is_published_online,
-          publication_date: data.is_published_online
-            ? new Date().toISOString()
+          publication_date: publicationDate,
+          unpublication_date: data.unpublication_date
+            ? new Date(data.unpublication_date).toISOString()
             : null,
         })
         .eq('id', product.product_id)

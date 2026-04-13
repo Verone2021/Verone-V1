@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { signup } from '../actions';
+import { GoogleAuthButton } from '../google-auth-button';
 
 export default async function RegisterPage({
   searchParams,
@@ -27,6 +28,19 @@ export default async function RegisterPage({
               : decodeURIComponent(error)}
           </div>
         )}
+
+        <GoogleAuthButton />
+
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-verone-gray-200" />
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="bg-white px-4 text-verone-gray-400">
+              ou par email
+            </span>
+          </div>
+        </div>
 
         <form className="space-y-5">
           <div className="grid grid-cols-2 gap-4">

@@ -55,6 +55,7 @@ import {
 
 import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
 
+import { AddVariantGroupModal } from './AddVariantGroupModal';
 import { EditSiteInternetProductModal } from './EditSiteInternetProductModal';
 import { ProductPreviewModal } from './ProductPreviewModal';
 
@@ -64,6 +65,7 @@ import {
   useToggleProductPublication,
   useRemoveProductFromSiteInternet,
   useAddProductsToSiteInternet,
+  useAddVariantGroupToSiteInternet,
 } from '../hooks/use-site-internet-products';
 import type { SiteInternetProduct } from '../types';
 
@@ -86,6 +88,7 @@ export function ProductsSection() {
   const [previewProduct, setPreviewProduct] =
     useState<SiteInternetProduct | null>(null);
   const [addProductsOpen, setAddProductsOpen] = useState(false);
+  const [addVariantGroupOpen, setAddVariantGroupOpen] = useState(false);
 
   // Hooks
   const {
@@ -98,6 +101,7 @@ export function ProductsSection() {
   const togglePublication = useToggleProductPublication();
   const removeProduct = useRemoveProductFromSiteInternet();
   const addProducts = useAddProductsToSiteInternet();
+  const addVariantGroup = useAddVariantGroupToSiteInternet();
 
   // Filtrage produits (memoized avec debounce)
   const filteredProducts = useMemo(
@@ -210,10 +214,18 @@ export function ProductsSection() {
                 {products.filter(p => p.is_published).length} publiés)
               </CardDescription>
             </div>
-            <ButtonV2 onClick={() => setAddProductsOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter des produits
-            </ButtonV2>
+            <div className="flex items-center gap-2">
+              <ButtonV2
+                variant="outline"
+                onClick={() => setAddVariantGroupOpen(true)}
+              >
+                Ajouter variantes
+              </ButtonV2>
+              <ButtonV2 onClick={() => setAddProductsOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Ajouter des produits
+              </ButtonV2>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -463,6 +475,23 @@ export function ProductsSection() {
           setPreviewModalOpen(false);
           setPreviewProduct(null);
         }}
+      />
+
+      {/* Modal ajout groupe variantes */}
+      <AddVariantGroupModal
+        open={addVariantGroupOpen}
+        onClose={() => setAddVariantGroupOpen(false)}
+        onConfirm={async (variantGroupId, customPriceHt) => {
+          const count = await addVariantGroup.mutateAsync({
+            variantGroupId,
+            customPriceHt,
+          });
+          toast({
+            title: 'Groupe ajoute',
+            description: `${String(count)} variantes ajoutees au site internet`,
+          });
+        }}
+        existingProductIds={products.map(p => p.product_id)}
       />
 
       {/* Modal ajout produits au canal */}

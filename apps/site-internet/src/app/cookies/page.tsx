@@ -65,8 +65,8 @@ export default function CookiesPage() {
               </p>
               <ul className="list-disc pl-5 mt-2 space-y-1 text-xs">
                 <li>
-                  <strong>Vercel Analytics :</strong> mesure d&apos;audience
-                  anonymisée (durée : 24 heures)
+                  <strong>Google Analytics :</strong> mesure d&apos;audience
+                  anonymisée (durée : session)
                 </li>
               </ul>
             </div>

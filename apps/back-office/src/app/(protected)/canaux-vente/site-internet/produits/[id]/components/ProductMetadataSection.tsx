@@ -30,10 +30,14 @@ export default function ProductMetadataSection({
           <div className="flex items-center gap-2 mb-2">
             <span className="text-sm font-medium text-gray-700">Titre SEO</span>
             <Badge variant="outline" className="text-xs">
-              {product.seo_title.length} caractères
+              {product.seo_title?.length ?? 0} caracteres
             </Badge>
           </div>
-          <p className="text-sm text-gray-700">{product.seo_title}</p>
+          <p className="text-sm text-gray-700">
+            {product.seo_title ?? (
+              <span className="text-gray-400 italic">Non defini</span>
+            )}
+          </p>
         </div>
 
         {/* Meta Description */}
@@ -43,11 +47,13 @@ export default function ProductMetadataSection({
               Meta Description
             </span>
             <Badge variant="outline" className="text-xs">
-              {product.seo_meta_description.length} caractères
+              {product.seo_meta_description?.length ?? 0} caracteres
             </Badge>
           </div>
           <p className="text-sm text-gray-700">
-            {product.seo_meta_description}
+            {product.seo_meta_description ?? (
+              <span className="text-gray-400 italic">Non defini</span>
+            )}
           </p>
         </div>
 

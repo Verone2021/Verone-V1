@@ -73,6 +73,21 @@ export default function CheckoutPage() {
       });
   }, []);
 
+  // Ambassador: pre-fill promo code from verone_ref cookie
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const cookies = document.cookie.split(';');
+    const refCookie = cookies
+      .map(c => c.trim())
+      .find(c => c.startsWith('verone_ref='));
+    if (refCookie && !promoCode) {
+      const refCode = refCookie.split('=')[1];
+      if (refCode && refCode.length >= 3) {
+        setPromoCode(refCode);
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // GA4: track begin_checkout once
   useEffect(() => {
     if (items.length > 0 && !hasTrackedCheckout.current) {

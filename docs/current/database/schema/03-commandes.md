@@ -1,6 +1,6 @@
 # Domaine Commandes & Consultations — Schema Base de Donnees
 
-_Generated: 2026-04-12 16:31_
+_Generated: 2026-04-12 23:28_
 
 **Tables : 17**
 
@@ -465,8 +465,8 @@ _Generated: 2026-04-12 16:31_
 - `staff_delete_sales_order_items` : DELETE — authenticated
 - `linkme_users_delete_own_order_items` : DELETE — authenticated
 - `Public can create sales_order_items` : INSERT — anon,authenticated
-- `affiliates_select_own_order_items` : SELECT — authenticated
 - `staff_select_sales_order_items` : SELECT — authenticated
+- `affiliates_select_own_order_items` : SELECT — authenticated
 - `linkme_users_update_own_order_items` : UPDATE — authenticated
 
 **Triggers :** 6
@@ -544,8 +544,8 @@ _Generated: 2026-04-12 16:31_
 
 - `affiliates_can_insert_own_linkme_details` : INSERT — authenticated
 - `staff_can_insert_linkme_details` : INSERT — authenticated
-- `affiliates_select_own_order_linkme_details` : SELECT — authenticated
 - `staff_select_sales_order_linkme_details` : SELECT — authenticated
+- `affiliates_select_own_order_linkme_details` : SELECT — authenticated
 - `staff_can_update_linkme_details` : UPDATE — authenticated
 - `linkme_users_update_own_linkme_details` : UPDATE — authenticated
 
@@ -693,10 +693,10 @@ _Generated: 2026-04-12 16:31_
 **RLS :** 7 policies
 
 - `staff_delete_sales_orders` : DELETE — authenticated
-- `Public can create sales_orders` : INSERT — anon,authenticated
 - `LinkMe users can create sales_orders` : INSERT — authenticated
-- `staff_select_sales_orders` : SELECT — authenticated
+- `Public can create sales_orders` : INSERT — anon,authenticated
 - `affiliates_select_own_orders` : SELECT — authenticated
+- `staff_select_sales_orders` : SELECT — authenticated
 - `staff_update_sales_orders` : UPDATE — authenticated
 - `linkme_users_update_own_draft_orders` : UPDATE — authenticated
 
@@ -811,14 +811,14 @@ _Generated: 2026-04-12 16:31_
 **RLS :** 9 policies
 
 - `staff_full_access_shopping_carts` : ALL — authenticated
-- `users_own_cart_delete` : DELETE — authenticated
 - `anon_cart_delete` : DELETE — anon
-- `anon_cart_insert` : INSERT — anon
+- `users_own_cart_delete` : DELETE — authenticated
 - `users_own_cart_insert` : INSERT — authenticated
-- `users_own_cart_select` : SELECT — authenticated
+- `anon_cart_insert` : INSERT — anon
 - `anon_cart_select` : SELECT — anon
-- `anon_cart_update` : UPDATE — anon
+- `users_own_cart_select` : SELECT — authenticated
 - `users_own_cart_update` : UPDATE — authenticated
+- `anon_cart_update` : UPDATE — anon
 
 **Triggers :** 1
 

@@ -23,6 +23,8 @@ import {
   Trash2,
   Percent,
   BadgeEuro,
+  Truck,
+  Zap,
 } from 'lucide-react';
 
 import type { PromoCode } from './promo-codes-types';
@@ -71,7 +73,7 @@ export function PromoStatusBadge({
 
 interface PromoTableRowProps {
   promo: PromoCode;
-  onEdit: (promo: PromoCode) => void;
+  onEdit: (promo: PromoCode) => void | Promise<void>;
   onDelete: (id: string, code: string) => void;
   isDeleting: boolean;
 }
@@ -84,11 +86,29 @@ function PromoTableRow({
 }: PromoTableRowProps) {
   return (
     <TableRow>
-      <TableCell className="font-mono font-bold">{promo.code}</TableCell>
+      <TableCell>
+        <div className="flex items-center gap-1.5">
+          {promo.is_automatic && (
+            <span title="Automatique">
+              <Zap className="h-3.5 w-3.5 text-amber-500" />
+            </span>
+          )}
+          {promo.code ? (
+            <span className="font-mono font-bold">{promo.code}</span>
+          ) : (
+            <span className="text-sm text-muted-foreground italic">Auto</span>
+          )}
+        </div>
+      </TableCell>
       <TableCell>{promo.name}</TableCell>
       <TableCell>
         <div className="flex items-center gap-1">
-          {promo.discount_type === 'percentage' ? (
+          {promo.discount_type === 'free_shipping' ? (
+            <>
+              <Truck className="h-3.5 w-3.5" />
+              Livraison gratuite
+            </>
+          ) : promo.discount_type === 'percentage' ? (
             <>
               <Percent className="h-3.5 w-3.5" />
               {promo.discount_value}%
@@ -96,7 +116,7 @@ function PromoTableRow({
           ) : (
             <>
               <BadgeEuro className="h-3.5 w-3.5" />
-              {promo.discount_value}€
+              {promo.discount_value} EUR
             </>
           )}
         </div>
@@ -117,14 +137,22 @@ function PromoTableRow({
       </TableCell>
       <TableCell className="text-right">
         <div className="flex items-center justify-end gap-1">
-          <ButtonV2 variant="ghost" size="sm" onClick={() => onEdit(promo)}>
+          <ButtonV2
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              void Promise.resolve(onEdit(promo)).catch((err: unknown) => {
+                console.error('[PromoTable] Edit error:', err);
+              });
+            }}
+          >
             <Pencil className="h-4 w-4" />
           </ButtonV2>
           <ButtonV2
             variant="ghost"
             size="sm"
             className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            onClick={() => onDelete(promo.id, promo.code)}
+            onClick={() => onDelete(promo.id, promo.code ?? promo.name)}
             disabled={isDeleting}
           >
             <Trash2 className="h-4 w-4" />
@@ -144,7 +172,7 @@ export interface PromoTableProps {
   isLoading: boolean;
   searchQuery: string;
   onSearchChange: (v: string) => void;
-  onEdit: (promo: PromoCode) => void;
+  onEdit: (promo: PromoCode) => void | Promise<void>;
   onDelete: (id: string, code: string) => void;
   isDeleting: boolean;
   onCreateClick: () => void;
@@ -166,11 +194,11 @@ export function PromoTable({
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Tag className="h-5 w-5" />
-            Codes promotionnels
+            Promotions
           </CardTitle>
           <ButtonV2 size="sm" onClick={onCreateClick}>
             <Plus className="h-4 w-4 mr-2" />
-            Nouveau code
+            Nouvelle promotion
           </ButtonV2>
         </div>
       </CardHeader>

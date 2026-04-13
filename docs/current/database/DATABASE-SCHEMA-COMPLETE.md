@@ -1,6 +1,6 @@
 # Database Schema Complete — Index
 
-_Generated: 2026-04-12 16:31 — 133 tables_
+_Generated: 2026-04-12 23:28 — 136 tables_
 
 | Table                               | Domaine                     | Colonnes |
 | ----------------------------------- | --------------------------- | -------- |
@@ -9,6 +9,8 @@ _Generated: 2026-04-12 16:31 — 133 tables_
 | affiliate_pending_orders            | Autres                      | 66       |
 | affiliate_storage_allocations       | Stock & Stockage            | 8        |
 | affiliate_storage_requests          | Stock & Stockage            | 14       |
+| ambassador_attributions             | Autres                      | 14       |
+| ambassador_codes                    | Autres                      | 8        |
 | app_settings                        | Utilisateurs & Securite     | 8        |
 | audit_logs                          | Utilisateurs & Securite     | 11       |
 | bank_transactions                   | Finance & Comptabilite      | 42       |
@@ -104,6 +106,7 @@ _Generated: 2026-04-12 16:31 — 133 tables_
 | sample_order_items                  | Commandes & Consultations   | 12       |
 | sample_orders                       | Commandes & Consultations   | 17       |
 | shopping_carts                      | Commandes & Consultations   | 11       |
+| site_ambassadors                    | Autres                      | 26       |
 | site_contact_messages               | Notifications & Formulaires | 8        |
 | site_content                        | Notifications & Formulaires | 5        |
 | stock_alert_tracking                | Stock & Stockage            | 20       |
