@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 
 import './globals.css';
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
+import { MetaPixel } from '@/components/analytics/MetaPixel';
 import { CookieConsent } from '@/components/CookieConsent';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
@@ -75,6 +76,7 @@ export default function RootLayout({
     <html lang="fr" className={`${playfairDisplay.variable} ${inter.variable}`}>
       <body className="min-h-screen bg-verone-white font-inter antialiased">
         <GoogleAnalytics />
+        <MetaPixel />
         <JsonLdOrganization />
         <Providers>
           <div className="flex flex-col min-h-screen">

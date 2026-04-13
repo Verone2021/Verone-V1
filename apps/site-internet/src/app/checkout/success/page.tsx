@@ -8,6 +8,7 @@ import { useSearchParams } from 'next/navigation';
 import { CheckCircle, Package } from 'lucide-react';
 
 import { trackPurchase } from '@/components/analytics/GoogleAnalytics';
+import { trackMetaPurchase } from '@/components/analytics/MetaPixel';
 import { useCart } from '@/contexts/CartContext';
 
 function PurchaseTracker() {
@@ -19,11 +20,21 @@ function PurchaseTracker() {
     hasTracked.current = true;
 
     const sessionId = searchParams.get('session_id');
+    const value = parseFloat(searchParams.get('total') ?? '0');
+    const itemCount = parseInt(searchParams.get('items') ?? '1', 10);
+    const transactionId = sessionId ?? crypto.randomUUID().slice(0, 8);
+
     trackPurchase({
-      transactionId: sessionId ?? crypto.randomUUID().slice(0, 8),
-      value: parseFloat(searchParams.get('total') ?? '0'),
+      transactionId,
+      value,
       shipping: parseFloat(searchParams.get('shipping') ?? '0'),
-      itemCount: parseInt(searchParams.get('items') ?? '1', 10),
+      itemCount,
+    });
+    trackMetaPurchase({
+      transactionId,
+      value,
+      contentIds: [],
+      itemCount,
     });
   }, [searchParams]);
 
