@@ -12,6 +12,7 @@ import {
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
 import { useAuthUser } from '@/hooks/use-auth-user';
+import { trackMetaAddToCart } from '@/components/analytics/MetaPixel';
 
 // ============================================
 // Types
@@ -205,6 +206,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
         void syncToSupabase(updated).catch(error => {
           console.error('[CartContext] addItem sync failed:', error);
+        });
+
+        // Meta Pixel: track AddToCart
+        trackMetaAddToCart({
+          id: input.product_id,
+          name: input.name,
+          price: input.price_ttc,
+          quantity: input.quantity,
         });
 
         return updated;

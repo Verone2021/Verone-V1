@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 
 import { trackBeginCheckout } from '@/components/analytics/GoogleAnalytics';
+import { trackMetaInitiateCheckout } from '@/components/analytics/MetaPixel';
 import { useCart } from '@/contexts/CartContext';
 import { useAuthUser } from '@/hooks/use-auth-user';
 
@@ -88,13 +89,18 @@ export default function CheckoutPage() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // GA4: track begin_checkout once
+  // GA4 + Meta Pixel: track begin_checkout once
   useEffect(() => {
     if (items.length > 0 && !hasTrackedCheckout.current) {
       trackBeginCheckout(subtotal, itemCount);
+      trackMetaInitiateCheckout({
+        value: subtotal,
+        itemCount,
+        contentIds: items.map(item => item.product_id),
+      });
       hasTrackedCheckout.current = true;
     }
-  }, [items.length, subtotal, itemCount]);
+  }, [items.length, subtotal, itemCount, items]);
 
   const applyPromo = async () => {
     if (!promoCode.trim()) return;
