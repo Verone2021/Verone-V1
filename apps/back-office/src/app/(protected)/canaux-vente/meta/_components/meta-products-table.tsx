@@ -105,7 +105,7 @@ function StatusBadge({
         return (
           <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
             <CheckCircle className="h-3 w-3 mr-1" />
-            Actif
+            Publie
           </Badge>
         );
       case 'pending':
