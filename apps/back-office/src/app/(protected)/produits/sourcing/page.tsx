@@ -22,6 +22,10 @@ export default function SourcingPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sourcingTypeFilter, setSourcingTypeFilter] = useState('all');
   const [supplierFilter, setSupplierFilter] = useState<string | null>(null);
+  const [pipelineFilter, setPipelineFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [sortBy, setSortBy] = useState<string>('created_at');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [isQuickSourcingModalOpen, setIsQuickSourcingModalOpen] =
     useState(false);
   const [completedThisMonth, setCompletedThisMonth] = useState(0);
@@ -87,6 +91,52 @@ export default function SourcingPage() {
       console.error('[Sourcing] fetchCompletedCount failed:', error);
     });
   }, []);
+
+  // Client-side filtering for pipeline + priority + sorting
+  const filteredAndSortedProducts = useMemo(() => {
+    let filtered = [...(sourcingProducts ?? [])];
+
+    // Pipeline filter
+    if (pipelineFilter !== 'all') {
+      filtered = filtered.filter(p => p.sourcing_status === pipelineFilter);
+    }
+
+    // Priority filter
+    if (priorityFilter !== 'all') {
+      filtered = filtered.filter(p => p.sourcing_priority === priorityFilter);
+    }
+
+    // Sorting
+    filtered.sort((a, b) => {
+      const dir = sortDir === 'asc' ? 1 : -1;
+      switch (sortBy) {
+        case 'name':
+          return dir * a.name.localeCompare(b.name);
+        case 'cost_price':
+          return dir * ((a.cost_price ?? 0) - (b.cost_price ?? 0));
+        case 'supplier':
+          return (
+            dir *
+            (
+              a.supplier?.trade_name ??
+              a.supplier?.legal_name ??
+              ''
+            ).localeCompare(
+              b.supplier?.trade_name ?? b.supplier?.legal_name ?? ''
+            )
+          );
+        case 'created_at':
+        default:
+          return (
+            dir *
+            (new Date(a.created_at).getTime() -
+              new Date(b.created_at).getTime())
+          );
+      }
+    });
+
+    return filtered;
+  }, [sourcingProducts, pipelineFilter, priorityFilter, sortBy, sortDir]);
 
   const stats = {
     totalDrafts:
@@ -160,10 +210,24 @@ export default function SourcingPage() {
         onSourcingTypeChange={setSourcingTypeFilter}
         supplierFilter={supplierFilter}
         onSupplierChange={setSupplierFilter}
+        pipelineFilter={pipelineFilter}
+        onPipelineChange={setPipelineFilter}
+        priorityFilter={priorityFilter}
+        onPriorityChange={setPriorityFilter}
       />
 
       <SourcingProductList
-        products={sourcingProducts}
+        products={filteredAndSortedProducts}
+        sortBy={sortBy}
+        sortDir={sortDir}
+        onSort={col => {
+          if (sortBy === col) {
+            setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+          } else {
+            setSortBy(col);
+            setSortDir('desc');
+          }
+        }}
         loading={loading}
         error={error}
         onView={id => router.push(`/produits/sourcing/produits/${id}`)}

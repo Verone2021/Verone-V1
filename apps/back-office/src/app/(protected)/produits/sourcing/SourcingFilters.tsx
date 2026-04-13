@@ -16,6 +16,23 @@ import {
 import { colors } from '@verone/ui/design-system';
 import { Search } from 'lucide-react';
 
+const PIPELINE_STATUSES = [
+  { value: 'all', label: 'Tous les pipelines' },
+  { value: 'need_identified', label: 'Besoin identifié' },
+  { value: 'supplier_search', label: 'Recherche fournisseur' },
+  { value: 'initial_contact', label: 'Premier contact' },
+  { value: 'evaluation', label: 'Évaluation' },
+  { value: 'negotiation', label: 'Négociation' },
+  { value: 'sample_requested', label: 'Échantillon demandé' },
+  { value: 'sample_received', label: 'Échantillon reçu' },
+  { value: 'sample_approved', label: 'Échantillon validé' },
+  { value: 'sample_rejected', label: 'Échantillon refusé' },
+  { value: 'order_placed', label: 'Commande passée' },
+  { value: 'received', label: 'Reçu' },
+  { value: 'on_hold', label: 'En pause' },
+  { value: 'cancelled', label: 'Annulé' },
+] as const;
+
 interface SourcingFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
@@ -25,6 +42,10 @@ interface SourcingFiltersProps {
   onSourcingTypeChange: (value: string) => void;
   supplierFilter: string | null;
   onSupplierChange: (id: string | null) => void;
+  pipelineFilter: string;
+  onPipelineChange: (value: string) => void;
+  priorityFilter: string;
+  onPriorityChange: (value: string) => void;
 }
 
 export function SourcingFilters({
@@ -36,6 +57,10 @@ export function SourcingFilters({
   onSourcingTypeChange,
   supplierFilter,
   onSupplierChange,
+  pipelineFilter,
+  onPipelineChange,
+  priorityFilter,
+  onPriorityChange,
 }: SourcingFiltersProps) {
   return (
     <Card>
@@ -44,8 +69,9 @@ export function SourcingFilters({
           Filtres et Recherche
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <CardContent className="space-y-3">
+        {/* Row 1: Search + Status + Type + Supplier */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="relative">
             <Search
               className="absolute left-3 top-3 h-4 w-4"
@@ -93,6 +119,35 @@ export function SourcingFilters({
             placeholder="Tous les fournisseurs"
             required={false}
           />
+        </div>
+
+        {/* Row 2: Pipeline status + Priority */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <Select value={pipelineFilter} onValueChange={onPipelineChange}>
+            <SelectTrigger style={{ borderColor: colors.border.DEFAULT }}>
+              <SelectValue placeholder="Pipeline" />
+            </SelectTrigger>
+            <SelectContent>
+              {PIPELINE_STATUSES.map(s => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={priorityFilter} onValueChange={onPriorityChange}>
+            <SelectTrigger style={{ borderColor: colors.border.DEFAULT }}>
+              <SelectValue placeholder="Priorité" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les priorités</SelectItem>
+              <SelectItem value="urgent">Urgente</SelectItem>
+              <SelectItem value="high">Haute</SelectItem>
+              <SelectItem value="medium">Moyenne</SelectItem>
+              <SelectItem value="low">Basse</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </CardContent>
     </Card>
