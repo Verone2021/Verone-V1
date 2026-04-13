@@ -1,6 +1,6 @@
 # Domaine Produits & Catalogue — Schema Base de Donnees
 
-_Generated: 2026-04-12 17:32_
+_Generated: 2026-04-12 23:28_
 
 **Tables : 17**
 
@@ -304,8 +304,8 @@ _Generated: 2026-04-12 17:32_
 
 **RLS :** 3 policies
 
-- `backoffice_full_access_product_group_members` : ALL — authenticated
 - `product_group_members_admin_policy` : ALL — public
+- `backoffice_full_access_product_group_members` : ALL — authenticated
 - `product_group_members_public_read` : SELECT — public
 
 **Triggers :** 1
@@ -371,9 +371,9 @@ _Generated: 2026-04-12 17:32_
 **RLS :** 4 policies
 
 - `backoffice_full_access_product_images` : ALL — authenticated
-- `customers_read_active_product_images` : SELECT — public
 - `public_read_product_images` : SELECT — anon
 - `product_images_select_authenticated` : SELECT — authenticated
+- `customers_read_active_product_images` : SELECT — public
 
 **Triggers :** 4
 
@@ -571,8 +571,8 @@ _Generated: 2026-04-12 17:32_
 **RLS :** 3 policies
 
 - `backoffice_full_access_products` : ALL — authenticated
-- `Allow anon read products on LinkMe globe` : SELECT — anon
 - `linkme_users_view_catalog_products` : SELECT — authenticated
+- `Allow anon read products on LinkMe globe` : SELECT — anon
 
 **Triggers :** 18
 

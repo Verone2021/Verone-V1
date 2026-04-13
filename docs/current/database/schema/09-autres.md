@@ -1,12 +1,14 @@
 # Domaine Autres — Schema Base de Donnees
 
-_Generated: 2026-04-12 17:32_
+_Generated: 2026-04-12 23:28_
 
-**Tables : 42**
+**Tables : 45**
 
 | Table                                                                       | Colonnes | FK  | RLS | Triggers |
 | --------------------------------------------------------------------------- | -------- | --- | --- | -------- |
 | [affiliate_pending_orders](#affiliate-pending-orders)                       | 66       | 0   | 0   | 0        |
+| [ambassador_attributions](#ambassador-attributions)                         | 14       | 3   | 2   | 2        |
+| [ambassador_codes](#ambassador-codes)                                       | 8        | 2   | 2   | 0        |
 | [channel_price_lists](#channel-price-lists)                                 | 17       | 2   | 2   | 2        |
 | [channel_pricing](#channel-pricing)                                         | 35       | 2   | 2   | 4        |
 | [channel_pricing_history](#channel-pricing-history)                         | 16       | 3   | 2   | 0        |
@@ -33,6 +35,7 @@ _Generated: 2026-04-12 17:32_
 | [price_lists](#price-lists)                                                 | 18       | 0   | 2   | 2        |
 | [promotion_usages](#promotion-usages)                                       | 6        | 3   | 2   | 0        |
 | [sales_channels](#sales-channels)                                           | 22       | 0   | 2   | 1        |
+| [site_ambassadors](#site-ambassadors)                                       | 26       | 0   | 3   | 1        |
 | [stock_alerts_unified_view](#stock-alerts-unified-view)                     | 23       | 0   | 0   | 0        |
 | [stock_alerts_view](#stock-alerts-view)                                     | 8        | 0   | 0   | 0        |
 | [sync_runs](#sync-runs)                                                     | 27       | 0   | 1   | 0        |
@@ -119,6 +122,68 @@ _Generated: 2026-04-12 17:32_
 | affiliate_email             | text                     | YES      |         |
 | affiliate_type              | text                     | YES      |         |
 | selection_name              | text                     | YES      |         |
+
+---
+
+## ambassador_attributions
+
+| Colonne             | Type        | Nullable | Default             |
+| ------------------- | ----------- | -------- | ------------------- |
+| id                  | uuid        | NO       | gen_random_uuid()   |
+| order_id            | uuid        | NO       |                     |
+| ambassador_id       | uuid        | NO       |                     |
+| code_id             | uuid        | YES      |                     |
+| order_total_ht      | numeric     | NO       |                     |
+| commission_rate     | numeric     | NO       |                     |
+| prime_amount        | numeric     | NO       |                     |
+| status              | text        | NO       | 'pending'::text     |
+| validation_date     | timestamptz | YES      |                     |
+| validated_at        | timestamptz | YES      |                     |
+| paid_at             | timestamptz | YES      |                     |
+| cancellation_reason | text        | YES      |                     |
+| attribution_method  | text        | NO       | 'coupon_code'::text |
+| created_at          | timestamptz | NO       | now()               |
+
+**Relations :**
+
+- `order_id` → `sales_orders.id`
+- `ambassador_id` → `site_ambassadors.id`
+- `code_id` → `ambassador_codes.id`
+
+**RLS :** 2 policies
+
+- `staff_full_access_ambassador_attributions` : ALL — authenticated
+- `ambassador_read_own_attributions` : SELECT — authenticated
+
+**Triggers :** 2
+
+- `trg_increment_ambassador_code_usage` : AFTER INSERT
+- `trg_update_ambassador_counters` : AFTER INSERT
+
+---
+
+## ambassador_codes
+
+| Colonne       | Type        | Nullable | Default           |
+| ------------- | ----------- | -------- | ----------------- |
+| id            | uuid        | NO       | gen_random_uuid() |
+| ambassador_id | uuid        | NO       |                   |
+| discount_id   | uuid        | NO       |                   |
+| code          | text        | NO       |                   |
+| qr_code_url   | text        | YES      |                   |
+| is_active     | boolean     | NO       | true              |
+| usage_count   | integer     | NO       | 0                 |
+| created_at    | timestamptz | NO       | now()             |
+
+**Relations :**
+
+- `ambassador_id` → `site_ambassadors.id`
+- `discount_id` → `order_discounts.id`
+
+**RLS :** 2 policies
+
+- `staff_full_access_ambassador_codes` : ALL — authenticated
+- `ambassador_read_own_codes` : SELECT — authenticated
 
 ---
 
@@ -939,6 +1004,49 @@ _Generated: 2026-04-12 17:32_
 **Triggers :** 1
 
 - `sales_channels_updated_at` : BEFORE UPDATE
+
+---
+
+## site_ambassadors
+
+| Colonne               | Type        | Nullable | Default           |
+| --------------------- | ----------- | -------- | ----------------- |
+| id                    | uuid        | NO       | gen_random_uuid() |
+| first_name            | text        | NO       |                   |
+| last_name             | text        | NO       |                   |
+| email                 | text        | NO       |                   |
+| phone                 | text        | YES      |                   |
+| auth_user_id          | uuid        | YES      |                   |
+| iban                  | text        | YES      |                   |
+| bic                   | text        | YES      |                   |
+| bank_name             | text        | YES      |                   |
+| account_holder_name   | text        | YES      |                   |
+| siret                 | text        | YES      |                   |
+| commission_rate       | numeric     | NO       | 10.00             |
+| discount_rate         | numeric     | NO       | 10.00             |
+| is_active             | boolean     | NO       | true              |
+| cgu_accepted_at       | timestamptz | YES      |                   |
+| cgu_version           | text        | YES      |                   |
+| total_sales_generated | numeric     | NO       | 0                 |
+| total_primes_earned   | numeric     | NO       | 0                 |
+| total_primes_paid     | numeric     | NO       | 0                 |
+| current_balance       | numeric     | NO       | 0                 |
+| annual_earnings_ytd   | numeric     | NO       | 0                 |
+| siret_required        | boolean     | NO       | false             |
+| notes                 | text        | YES      |                   |
+| created_by            | uuid        | YES      |                   |
+| created_at            | timestamptz | NO       | now()             |
+| updated_at            | timestamptz | NO       | now()             |
+
+**RLS :** 3 policies
+
+- `staff_full_access_site_ambassadors` : ALL — authenticated
+- `ambassador_read_own_profile` : SELECT — authenticated
+- `ambassador_update_own_profile` : UPDATE — authenticated
+
+**Triggers :** 1
+
+- `trg_set_updated_at_site_ambassadors` : BEFORE UPDATE
 
 ---
 

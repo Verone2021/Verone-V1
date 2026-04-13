@@ -23,6 +23,7 @@ import {
   Star,
   FileText,
   Tag,
+  Megaphone,
 } from 'lucide-react';
 
 // Local Components
@@ -36,6 +37,7 @@ import { DashboardSection } from './components/DashboardSection';
 import { NewsletterSection } from './components/NewsletterSection';
 import { OrdersSection } from './components/OrdersSection';
 import { ProductsSection } from './components/ProductsSection';
+import { AmbassadorsSection } from './components/AmbassadorsSection';
 import { PromoCodesSection } from './components/PromoCodesSection';
 import { ReviewsSection } from './components/ReviewsSection';
 
@@ -108,7 +110,7 @@ export default function SiteInternetPage() {
           className="space-y-6"
         >
           {/* Navigation Tabs */}
-          <TabsList className="grid grid-cols-10 w-full">
+          <TabsList className="grid grid-cols-11 w-full">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <LayoutDashboard className="h-4 w-4" />
               Dashboard
@@ -151,6 +153,13 @@ export default function SiteInternetPage() {
             <TabsTrigger value="promos" className="flex items-center gap-2">
               <Tag className="h-4 w-4" />
               Promotions
+            </TabsTrigger>
+            <TabsTrigger
+              value="ambassadeurs"
+              className="flex items-center gap-2"
+            >
+              <Megaphone className="h-4 w-4" />
+              Ambassadeurs
             </TabsTrigger>
           </TabsList>
 
@@ -197,6 +206,11 @@ export default function SiteInternetPage() {
           {/* Tab: Avis */}
           <TabsContent value="avis" className="space-y-6">
             <ReviewsSection />
+          </TabsContent>
+
+          {/* Tab: Ambassadeurs */}
+          <TabsContent value="ambassadeurs" className="space-y-6">
+            <AmbassadorsSection />
           </TabsContent>
 
           {/* Tab: Contenu CMS + Pages + Newsletter */}

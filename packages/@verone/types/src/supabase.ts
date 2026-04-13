@@ -378,6 +378,155 @@ export type Database = {
           },
         ];
       };
+      ambassador_attributions: {
+        Row: {
+          ambassador_id: string;
+          attribution_method: string;
+          cancellation_reason: string | null;
+          code_id: string | null;
+          commission_rate: number;
+          created_at: string;
+          id: string;
+          order_id: string;
+          order_total_ht: number;
+          paid_at: string | null;
+          prime_amount: number;
+          status: string;
+          validated_at: string | null;
+          validation_date: string | null;
+        };
+        Insert: {
+          ambassador_id: string;
+          attribution_method?: string;
+          cancellation_reason?: string | null;
+          code_id?: string | null;
+          commission_rate: number;
+          created_at?: string;
+          id?: string;
+          order_id: string;
+          order_total_ht: number;
+          paid_at?: string | null;
+          prime_amount: number;
+          status?: string;
+          validated_at?: string | null;
+          validation_date?: string | null;
+        };
+        Update: {
+          ambassador_id?: string;
+          attribution_method?: string;
+          cancellation_reason?: string | null;
+          code_id?: string | null;
+          commission_rate?: number;
+          created_at?: string;
+          id?: string;
+          order_id?: string;
+          order_total_ht?: number;
+          paid_at?: string | null;
+          prime_amount?: number;
+          status?: string;
+          validated_at?: string | null;
+          validation_date?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'ambassador_attributions_ambassador_id_fkey';
+            columns: ['ambassador_id'];
+            isOneToOne: false;
+            referencedRelation: 'site_ambassadors';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'ambassador_attributions_code_id_fkey';
+            columns: ['code_id'];
+            isOneToOne: false;
+            referencedRelation: 'ambassador_codes';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'ambassador_attributions_order_id_fkey';
+            columns: ['order_id'];
+            isOneToOne: true;
+            referencedRelation: 'affiliate_pending_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'ambassador_attributions_order_id_fkey';
+            columns: ['order_id'];
+            isOneToOne: true;
+            referencedRelation: 'linkme_orders_enriched';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'ambassador_attributions_order_id_fkey';
+            columns: ['order_id'];
+            isOneToOne: true;
+            referencedRelation: 'linkme_orders_with_margins';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'ambassador_attributions_order_id_fkey';
+            columns: ['order_id'];
+            isOneToOne: true;
+            referencedRelation: 'sales_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'ambassador_attributions_order_id_fkey';
+            columns: ['order_id'];
+            isOneToOne: true;
+            referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['sales_order_id'];
+          },
+        ];
+      };
+      ambassador_codes: {
+        Row: {
+          ambassador_id: string;
+          code: string;
+          created_at: string;
+          discount_id: string;
+          id: string;
+          is_active: boolean;
+          qr_code_url: string | null;
+          usage_count: number;
+        };
+        Insert: {
+          ambassador_id: string;
+          code: string;
+          created_at?: string;
+          discount_id: string;
+          id?: string;
+          is_active?: boolean;
+          qr_code_url?: string | null;
+          usage_count?: number;
+        };
+        Update: {
+          ambassador_id?: string;
+          code?: string;
+          created_at?: string;
+          discount_id?: string;
+          id?: string;
+          is_active?: boolean;
+          qr_code_url?: string | null;
+          usage_count?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'ambassador_codes_ambassador_id_fkey';
+            columns: ['ambassador_id'];
+            isOneToOne: false;
+            referencedRelation: 'site_ambassadors';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'ambassador_codes_discount_id_fkey';
+            columns: ['discount_id'];
+            isOneToOne: false;
+            referencedRelation: 'order_discounts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       app_settings: {
         Row: {
           category: string | null;
@@ -8421,6 +8570,108 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'variant_groups';
             referencedColumns: ['id'];
+          },
+        ];
+      };
+      site_ambassadors: {
+        Row: {
+          account_holder_name: string | null;
+          annual_earnings_ytd: number;
+          auth_user_id: string | null;
+          bank_name: string | null;
+          bic: string | null;
+          cgu_accepted_at: string | null;
+          cgu_version: string | null;
+          commission_rate: number;
+          created_at: string;
+          created_by: string | null;
+          current_balance: number;
+          discount_rate: number;
+          email: string;
+          first_name: string;
+          iban: string | null;
+          id: string;
+          is_active: boolean;
+          last_name: string;
+          notes: string | null;
+          phone: string | null;
+          siret: string | null;
+          siret_required: boolean;
+          total_primes_earned: number;
+          total_primes_paid: number;
+          total_sales_generated: number;
+          updated_at: string;
+        };
+        Insert: {
+          account_holder_name?: string | null;
+          annual_earnings_ytd?: number;
+          auth_user_id?: string | null;
+          bank_name?: string | null;
+          bic?: string | null;
+          cgu_accepted_at?: string | null;
+          cgu_version?: string | null;
+          commission_rate?: number;
+          created_at?: string;
+          created_by?: string | null;
+          current_balance?: number;
+          discount_rate?: number;
+          email: string;
+          first_name: string;
+          iban?: string | null;
+          id?: string;
+          is_active?: boolean;
+          last_name: string;
+          notes?: string | null;
+          phone?: string | null;
+          siret?: string | null;
+          siret_required?: boolean;
+          total_primes_earned?: number;
+          total_primes_paid?: number;
+          total_sales_generated?: number;
+          updated_at?: string;
+        };
+        Update: {
+          account_holder_name?: string | null;
+          annual_earnings_ytd?: number;
+          auth_user_id?: string | null;
+          bank_name?: string | null;
+          bic?: string | null;
+          cgu_accepted_at?: string | null;
+          cgu_version?: string | null;
+          commission_rate?: number;
+          created_at?: string;
+          created_by?: string | null;
+          current_balance?: number;
+          discount_rate?: number;
+          email?: string;
+          first_name?: string;
+          iban?: string | null;
+          id?: string;
+          is_active?: boolean;
+          last_name?: string;
+          notes?: string | null;
+          phone?: string | null;
+          siret?: string | null;
+          siret_required?: boolean;
+          total_primes_earned?: number;
+          total_primes_paid?: number;
+          total_sales_generated?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'site_ambassadors_auth_user_id_fkey';
+            columns: ['auth_user_id'];
+            isOneToOne: true;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+          {
+            foreignKeyName: 'site_ambassadors_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
           },
         ];
       };
