@@ -14,12 +14,15 @@ import {
   RefreshCw,
   ExternalLink,
   ImageOff,
+  Pencil,
 } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 
 import { useToggleMetaVisibility, useRemoveFromMeta } from '@verone/channels';
 import type { MetaCommerceProduct } from '@verone/channels/hooks/use-meta-commerce-products';
+
+import { MetaEditDialog } from './meta-edit-dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -155,6 +158,9 @@ export function MetaProductsTable({
     id: string;
     name: string;
   } | null>(null);
+  const [editTarget, setEditTarget] = useState<MetaCommerceProduct | null>(
+    null
+  );
 
   function handleRemove() {
     if (!removeTarget) return;
@@ -284,6 +290,14 @@ export function MetaProductsTable({
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
+                          <ButtonV2
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setEditTarget(p)}
+                            title="Modifier titre, description, prix"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </ButtonV2>
                           {cmUrl && (
                             <ButtonV2
                               variant="ghost"
@@ -389,6 +403,11 @@ export function MetaProductsTable({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <MetaEditDialog
+        product={editTarget}
+        onClose={() => setEditTarget(null)}
+      />
     </>
   );
 }
