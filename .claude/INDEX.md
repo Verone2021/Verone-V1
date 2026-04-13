@@ -11,22 +11,27 @@ Tout agent ou commande doit commencer par consulter cet index.
 
 - **`.claude/work/ACTIVE.md`** — Sprints, taches, bugs en cours. LIRE EN PREMIER.
 - **`.claude/work/MEGA-PLAN-REFONTE.md`** — Plan de refonte infrastructure (7 phases).
+- **`.claude/work/plan-canaux-de-vente.md`** — Plan developpement canaux de vente (site-internet, LinkMe).
 
 ---
 
 ## Commandes Slash
 
-| Commande        | Description                                                                 | Fichier                            |
-| --------------- | --------------------------------------------------------------------------- | ---------------------------------- |
-| `/search`       | Exploration exhaustive codebase + DB + RLS (remplace /explore et /research) | `.claude/commands/search.md`       |
-| `/implement`    | Feature implementation (search → plan → code → verify)                      | `.claude/commands/implement.md`    |
-| `/plan`         | Transformer observations en checklist dans ACTIVE.md                        | `.claude/commands/plan.md`         |
-| `/db`           | Operations Supabase rapides                                                 | `.claude/commands/db.md`           |
-| `/pr`           | Push + PR (**sur ordre Romeo uniquement**)                                  | `.claude/commands/pr.md`           |
-| `/review`       | Audit code complet avec rapport                                             | `.claude/commands/review.md`       |
-| `/fix-warnings` | ESLint auto-fix                                                             | `.claude/commands/fix-warnings.md` |
-| `/teach`        | Mode pedagogique (expliquer avant implementer)                              | `.claude/commands/teach.md`        |
-| `/status`       | Resume rapide (branche, taches, fichiers non commites)                      | `.claude/commands/status.md`       |
+| Commande        | Description                                                                 | Fichier                                                   |
+| --------------- | --------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `/search`       | Exploration exhaustive codebase + DB + RLS (remplace /explore et /research) | `.claude/commands/search.md`                              |
+| `/implement`    | Feature implementation (search → plan → code → verify)                      | `.claude/commands/implement.md`                           |
+| `/plan`         | Transformer observations en checklist dans ACTIVE.md                        | `.claude/commands/plan.md`                                |
+| `/db`           | Operations Supabase rapides                                                 | `.claude/commands/db.md`                                  |
+| `/pr`           | Push + PR (**sur ordre Romeo uniquement**)                                  | `.claude/commands/pr.md`                                  |
+| `/review`       | Audit code complet avec rapport                                             | `.claude/commands/review.md`                              |
+|                 | — Reference: performance rules                                              | `.claude/commands/review-references/performance-rules.md` |
+|                 | — Reference: security rules                                                 | `.claude/commands/review-references/security-rules.md`    |
+|                 | — Reference: size thresholds                                                | `.claude/commands/review-references/size-thresholds.md`   |
+|                 | — Reference: typescript rules                                               | `.claude/commands/review-references/typescript-rules.md`  |
+| `/fix-warnings` | ESLint auto-fix                                                             | `.claude/commands/fix-warnings.md`                        |
+| `/teach`        | Mode pedagogique (expliquer avant implementer)                              | `.claude/commands/teach.md`                               |
+| `/status`       | Resume rapide (branche, taches, fichiers non commites)                      | `.claude/commands/status.md`                              |
 
 ---
 
@@ -34,20 +39,20 @@ Tout agent ou commande doit commencer par consulter cet index.
 
 ### Agents par application (utiliser en priorite)
 
-| Agent                  | App           | Quand l'utiliser                                                               |
-| ---------------------- | ------------- | ------------------------------------------------------------------------------ |
-| `linkme-expert`        | LinkMe        | Commandes affilies, commissions, selections, formulaires, organisations, roles |
-| `back-office-expert`   | Back-Office   | Produits, stock, commandes, factures, finance Qonto, expeditions               |
-| `site-internet-expert` | Site-Internet | E-commerce, catalogue, checkout, panier, SEO                                   |
+| Agent                  | App           | Fichier                                  | Quand l'utiliser                                                               |
+| ---------------------- | ------------- | ---------------------------------------- | ------------------------------------------------------------------------------ |
+| `linkme-expert`        | LinkMe        | `.claude/agents/linkme-expert.md`        | Commandes affilies, commissions, selections, formulaires, organisations, roles |
+| `back-office-expert`   | Back-Office   | `.claude/agents/back-office-expert.md`   | Produits, stock, commandes, factures, finance Qonto, expeditions               |
+| `site-internet-expert` | Site-Internet | `.claude/agents/site-internet-expert.md` | E-commerce, catalogue, checkout, panier, SEO                                   |
 
 ### Agents transversaux
 
-| Agent                | Role               | Quand l'utiliser                             |
-| -------------------- | ------------------ | -------------------------------------------- |
-| `code-reviewer`      | QA avant PR        | Audit qualite TypeScript, async, RLS         |
-| `database-architect` | Expert DB Supabase | Tables, migrations, triggers, RLS            |
-| `frontend-architect` | Expert UI/UX       | Next.js 15, composants, patterns generiques  |
-| `perf-optimizer`     | Performance        | Dead code, overfetch, bundle, DB bottlenecks |
+| Agent                | Role               | Fichier                                | Quand l'utiliser                             |
+| -------------------- | ------------------ | -------------------------------------- | -------------------------------------------- |
+| `code-reviewer`      | QA avant PR        | `.claude/agents/code-reviewer.md`      | Audit qualite TypeScript, async, RLS         |
+| `database-architect` | Expert DB Supabase | `.claude/agents/database-architect.md` | Tables, migrations, triggers, RLS            |
+| `frontend-architect` | Expert UI/UX       | `.claude/agents/frontend-architect.md` | Next.js 15, composants, patterns generiques  |
+| `perf-optimizer`     | Performance        | `.claude/agents/perf-optimizer.md`     | Dead code, overfetch, bundle, DB bottlenecks |
 
 ---
 
@@ -82,6 +87,47 @@ Tout agent ou commande doit commencer par consulter cet index.
 | `.claude/rules/dev/component-safety.md`         | Zero swap composants, fixes cibles uniquement                  |
 | `.claude/rules/dev/stock-triggers-protected.md` | Triggers stock IMMUABLES — JAMAIS modifier                     |
 | `.claude/rules/database/post-migration.md`      | Mise a jour doc DB apres chaque migration                      |
+| `.claude/rules/dev/playwright-large-pages.md`   | Mode screenshot only (vision) — ZERO snapshot                  |
+
+---
+
+## Guides
+
+| Fichier                                         | Contenu                                                     |
+| ----------------------------------------------- | ----------------------------------------------------------- |
+| `.claude/guides/cross-app-protection.md`        | Pattern protection cross-app (isolation back-office/linkme) |
+| `.claude/guides/expert-workflow.md`             | Workflow expert — bonnes pratiques developpement            |
+| `.claude/guides/typescript-errors-debugging.md` | Guide debugging erreurs TypeScript apres corrections ESLint |
+
+---
+
+## Patterns
+
+| Fichier                           | Contenu                                                      |
+| --------------------------------- | ------------------------------------------------------------ |
+| `.claude/patterns/auth-logout.md` | Pattern logout standard (`window.location.href` obligatoire) |
+
+---
+
+## Templates
+
+| Fichier                                        | Contenu                                             |
+| ---------------------------------------------- | --------------------------------------------------- |
+| `.claude/templates/supabase-client-pattern.md` | Pattern client Supabase type — eliminer warnings TS |
+
+---
+
+## Credentials de test
+
+- **`.claude/test-credentials.md`** — Credentials de test Playwright (BO, LinkMe, Site). **LOCAL ONLY — never commit.**
+
+---
+
+## Audits
+
+| Fichier                                       | Contenu                            |
+| --------------------------------------------- | ---------------------------------- |
+| `.claude/audits/security-audit-2026-02-04.md` | Audit securite complet (fev. 2026) |
 
 ---
 
@@ -121,17 +167,17 @@ Tout agent ou commande doit commencer par consulter cet index.
 
 ### Database
 
-| Sujet                           | Source                                              |
-| ------------------------------- | --------------------------------------------------- |
-| Schema DB complet (par domaine) | `docs/current/database/schema/` (9 fichiers)        |
-| Script re-generation doc DB     | `scripts/generate-db-docs.py`                       |
-| Dependances inter-packages      | `docs/current/DEPENDANCES-PACKAGES.md`              |
-| Tables par domaine              | `docs/current/database/schema/`                     |
-| Triggers stock                  | `docs/current/database/triggers-stock-reference.md` |
-| Triggers metriques              | `docs/metrics/database-triggers.md`                 |
-| RLS patterns                    | `.claude/rules/database/rls-patterns.md`            |
-| Mapping pages-tables            | `docs/current/MAPPING-PAGES-TABLES.md`              |
-| Architecture DB                 | `docs/current/database/schema/`                     |
+| Sujet                           | Source                                                                  |
+| ------------------------------- | ----------------------------------------------------------------------- |
+| Schema DB complet (par domaine) | `docs/current/database/schema/` (9 fichiers)                            |
+| Script re-generation docs       | `scripts/generate-docs.py` (--db, --components, --deps, --index, --all) |
+| Dependances inter-packages      | `docs/current/DEPENDANCES-PACKAGES.md`                                  |
+| Tables par domaine              | `docs/current/database/schema/`                                         |
+| Triggers stock                  | `docs/current/database/triggers-stock-reference.md`                     |
+| Triggers metriques              | `docs/metrics/database-triggers.md`                                     |
+| RLS patterns                    | `.claude/rules/database/rls-patterns.md`                                |
+| Mapping pages-tables            | `docs/current/MAPPING-PAGES-TABLES.md`                                  |
+| Architecture DB                 | `docs/current/database/schema/`                                         |
 
 ### Finance
 

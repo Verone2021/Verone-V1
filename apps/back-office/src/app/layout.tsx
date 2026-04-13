@@ -1,7 +1,6 @@
 import './globals.css';
 import { Inter } from 'next/font/google';
 
-import { Analytics } from '@vercel/analytics/react';
 import { TooltipProvider } from '@verone/ui';
 import { Toaster } from 'sonner';
 
@@ -62,8 +61,6 @@ export default function RootLayout({
         </TooltipProvider>
         {/* Toast notifications */}
         <Toaster position="top-right" richColors />
-        {/* Vercel Analytics - production only */}
-        {process.env.VERCEL_ENV === 'production' && <Analytics />}
       </body>
     </html>
   );

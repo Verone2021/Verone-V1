@@ -31,7 +31,8 @@ Monorepo Turborepo : back-office (3000), linkme (3002), site-internet (3001).
 - `.claude/rules/` — regles auto-discovered
 - `docs/current/database/schema/` — **SOURCE DE VERITE** schema DB par domaine (tables, colonnes, FK, RLS, triggers)
 - `docs/current/DEPENDANCES-PACKAGES.md` — carte des dependances inter-packages
-- `scripts/generate-db-docs.py` — script pour re-generer la doc DB apres migration
+- `scripts/generate-docs.py` — script unifie de generation docs (--db, --components, --deps, --index, --all)
+- `.claude/test-credentials.md` — credentials de test Playwright (BO, LinkMe, Site)
 
 ## CRITICAL : Sources de verite — LIRE avant de coder
 
@@ -44,7 +45,7 @@ Monorepo Turborepo : back-office (3000), linkme (3002), site-internet (3001).
 
 **INTERDIT** : Deviner la structure d'une table, d'un composant ou d'une dependance. Toujours LIRE le fichier de documentation correspondant.
 
-**Apres chaque migration SQL** : Executer `python scripts/generate-db-docs.py` pour mettre a jour la doc DB.
+**Apres chaque migration SQL** : Executer `python3 scripts/generate-docs.py --db` pour mettre a jour la doc DB.
 
 ## Commandes
 

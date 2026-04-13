@@ -39,6 +39,42 @@ export function TabGeneral({
           />
         </div>
 
+        {/* Publication planifiee */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Date de publication</Label>
+            <Input
+              type="datetime-local"
+              value={formData.publication_date ?? ''}
+              onChange={e =>
+                setFormData({
+                  ...formData,
+                  publication_date: e.target.value || null,
+                })
+              }
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Planifier la publication a une date future
+            </p>
+          </div>
+          <div>
+            <Label>Date de depublication</Label>
+            <Input
+              type="datetime-local"
+              value={formData.unpublication_date ?? ''}
+              onChange={e =>
+                setFormData({
+                  ...formData,
+                  unpublication_date: e.target.value || null,
+                })
+              }
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Retirer automatiquement du site a cette date
+            </p>
+          </div>
+        </div>
+
         {/* Éligibilité */}
         {!product.is_eligible && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">

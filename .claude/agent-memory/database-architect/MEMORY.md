@@ -4,7 +4,7 @@
 
 - **Schema DB COMPLET** : `docs/current/database/schema/` — LIRE AVANT toute migration
 - **Resume global** : `docs/current/database/schema/00-SUMMARY.md`
-- **Script re-generation** : `python scripts/generate-db-docs.py` — EXECUTER apres chaque migration
+- **Script re-generation** : `python3 scripts/generate-docs.py --db` — EXECUTER apres chaque migration
 
 ## Architecture DB Verone
 

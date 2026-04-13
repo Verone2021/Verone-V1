@@ -6,6 +6,7 @@ Gestion complete : produits, stock, commandes, finance, clients, fournisseurs.
 ## CRITICAL : Index a consulter AVANT toute modification
 
 - Pages, routes, sidebar : @docs/current/INDEX-PAGES-BACK-OFFICE.md
+- Index auto-genere (pages, API, composants) : @docs/current/INDEX-BACK-OFFICE-APP.md
 - Composants, formulaires, hooks partages : @docs/current/INDEX-COMPOSANTS-FORMULAIRES.md
 - Entites metier : @docs/current/back-office-entities-index.md
 

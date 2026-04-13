@@ -30,6 +30,11 @@ const inter = Inter({
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://verone.fr';
 
 export const metadata: Metadata = {
+  verification: {
+    other: {
+      'facebook-domain-verification': 'trojockg37hwcn77so0hup2246lqfx',
+    },
+  },
   title: {
     default: 'Vérone — Concept Store Déco & Mobilier Original',
     template: '%s | Vérone',

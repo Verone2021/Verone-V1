@@ -169,3 +169,12 @@ Client checkout → POST /api/checkout → Stripe.checkout.sessions.create()
 - Refresh session Supabase (cookie SSR)
 - Protection `/compte` → redirect `/auth/login` si non connecte
 - Pas d'app-isolation (supprime, site autonome)
+
+## Audits (12 avril 2026)
+
+| Document                                                     | Contenu                                                                               |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| `docs/current/site-internet/AUDIT-BACK-OFFICE-CMS.md`        | Inventaire back-office CMS : 10 onglets, sections, hooks, ce qui fonctionne vs manque |
+| `docs/current/site-internet/AUDIT-SITE-INTERNET-FRONTEND.md` | Inventaire app frontend : 27 pages, 29 composants, 11 hooks, 20 API routes            |
+| `docs/current/site-internet/AUDIT-DATABASE-SITE.md`          | 17 tables DB site-internet : colonnes, RLS, triggers, verdicts                        |
+| `docs/current/site-internet/AUDIT-ISSUES-CRITIQUES.md`       | 14 CRITICAL + 16 WARNING avec plan de correction par phase                            |
