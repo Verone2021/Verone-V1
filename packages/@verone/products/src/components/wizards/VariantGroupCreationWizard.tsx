@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars, @typescript-eslint/prefer-nullish-coalescing */
 /**
  * VariantGroupCreationWizard - Wizard 3 étapes pour créer un groupe de variantes
  *
@@ -16,22 +15,12 @@
 import * as React from 'react';
 import { useState } from 'react';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import {
-  Check,
-  ArrowLeft,
-  ArrowRight,
-  Loader2,
-  X,
-  ExternalLink,
-} from 'lucide-react';
+import { Check, ArrowLeft, ArrowRight, Loader2, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
-import { Checkbox } from '@verone/ui';
 import {
   Dialog,
   DialogContent,
@@ -40,22 +29,14 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@verone/ui';
-import { Input } from '@verone/ui';
-import { Label } from '@verone/ui';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@verone/ui';
-import { Textarea } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { CategoryFilterCombobox } from '@verone/categories/components/filters/CategoryFilterCombobox';
 import { useOrganisations } from '@verone/organisations/hooks';
 import { useVariantGroups } from '@verone/products/hooks';
-import { ROOM_TYPES } from '@verone/types';
-import { DECORATIVE_STYLES, type DecorativeStyle } from '@verone/types';
+import type { DecorativeStyle, CreateVariantGroupData } from '@verone/types';
+
+import { WizardStep1Basic } from './variant-group-creation/WizardStep1Basic';
+import { WizardStep2Style } from './variant-group-creation/WizardStep2Style';
+import { WizardStep3Supplier } from './variant-group-creation/WizardStep3Supplier';
 
 // =====================================================================
 // TYPES
@@ -128,7 +109,7 @@ export function VariantGroupCreationWizard({
   // Fournisseurs actifs uniquement
   const suppliers = React.useMemo(() => {
     return (organisations ?? []).filter(
-      org => (org as any).organisation_type === 'supplier' && !org.archived_at
+      org => org.type === 'supplier' && !org.archived_at
     );
   }, [organisations]);
 
@@ -201,7 +182,7 @@ export function VariantGroupCreationWizard({
     }
 
     if (currentStep === 3) {
-      handleSubmit();
+      void handleSubmit().catch(console.error);
       return;
     }
 
@@ -231,7 +212,7 @@ export function VariantGroupCreationWizard({
     setIsSubmitting(true);
 
     try {
-      const payload: any = {
+      const payload: CreateVariantGroupData = {
         name: formData.name.trim(),
         base_sku: formData.base_sku.trim(),
         subcategory_id: formData.subcategory_id,
@@ -365,306 +346,36 @@ export function VariantGroupCreationWizard({
             CONTENU DES ÉTAPES
         =============================================================== */}
         <div className="space-y-6 py-4">
-          {/* ÉTAPE 1: Informations de base */}
           {currentStep === 1 && (
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="name">
-                  Nom du groupe <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={e => updateFormData({ name: e.target.value })}
-                  placeholder="Ex: Fauteuil Milo"
-                  className="mt-1"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Nom descriptif pour identifier le groupe de variantes
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="base_sku">
-                  SKU de base <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="base_sku"
-                  value={formData.base_sku}
-                  onChange={e =>
-                    updateFormData({ base_sku: e.target.value.toUpperCase() })
-                  }
-                  placeholder="Ex: FAUT-MILO"
-                  className="mt-1 uppercase"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  SKU de base pour la génération automatique des SKU produits
-                  (ex: FAUT-MILO-001, FAUT-MILO-002)
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="subcategory">
-                  Catégorisation <span className="text-red-500">*</span>
-                </Label>
-                <CategoryFilterCombobox
-                  value={formData.subcategory_id}
-                  onValueChange={value =>
-                    updateFormData({ subcategory_id: value ?? '' })
-                  }
-                  placeholder="Sélectionner une sous-catégorie"
-                  entityType="variant_groups"
-                  className="mt-1"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Famille {'>'} Catégorie {'>'} Sous-catégorie
-                </p>
-              </div>
-            </div>
+            <WizardStep1Basic
+              name={formData.name}
+              baseSku={formData.base_sku}
+              subcategoryId={formData.subcategory_id}
+              onUpdate={updateFormData}
+            />
           )}
 
-          {/* ÉTAPE 2: Style & Attributs */}
           {currentStep === 2 && (
-            <div className="space-y-6">
-              {/* Style décoratif avec icônes Lucide */}
-              <div>
-                <Label>Style décoratif</Label>
-                <div className="grid grid-cols-2 gap-3 mt-2">
-                  {DECORATIVE_STYLES.map(option => {
-                    const Icon = option.icon;
-                    const isSelected = formData.style === option.value;
-
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => updateFormData({ style: option.value })}
-                        className={cn(
-                          'flex items-center space-x-3 p-3 rounded-lg border-2 transition-colors text-left',
-                          isSelected
-                            ? 'border-black bg-black text-white'
-                            : 'border-gray-200 hover:border-gray-300'
-                        )}
-                      >
-                        <Icon className="h-5 w-5 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm">
-                            {option.label}
-                          </div>
-                          <div
-                            className={cn(
-                              'text-xs',
-                              isSelected ? 'text-gray-200' : 'text-gray-500'
-                            )}
-                          >
-                            {option.description}
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Pièces compatibles */}
-              <div>
-                <Label>Pièces compatibles</Label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {ROOM_TYPES.map(room => {
-                    const isSelected = formData.suitable_rooms.includes(
-                      room.value
-                    );
-
-                    return (
-                      <Badge
-                        key={room.value}
-                        variant={isSelected ? 'secondary' : 'outline'}
-                        className={cn(
-                          'cursor-pointer transition-colors',
-                          isSelected && 'bg-black hover:bg-black/90'
-                        )}
-                        onClick={() => toggleRoom(room.value)}
-                      >
-                        {room.emoji} {room.label}
-                      </Badge>
-                    );
-                  })}
-                </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  Cliquez pour sélectionner les pièces adaptées
-                </p>
-              </div>
-
-              {/* Dimensions communes */}
-              <div>
-                <Label>Dimensions communes (optionnel)</Label>
-                <div className="grid grid-cols-4 gap-3 mt-2">
-                  <div className="col-span-1">
-                    <Input
-                      type="number"
-                      value={formData.dimensions_length}
-                      onChange={e =>
-                        updateFormData({
-                          dimensions_length: e.target.value
-                            ? Number(e.target.value)
-                            : '',
-                        })
-                      }
-                      placeholder="Longueur"
-                      min="0"
-                      step="0.1"
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <Input
-                      type="number"
-                      value={formData.dimensions_width}
-                      onChange={e =>
-                        updateFormData({
-                          dimensions_width: e.target.value
-                            ? Number(e.target.value)
-                            : '',
-                        })
-                      }
-                      placeholder="Largeur"
-                      min="0"
-                      step="0.1"
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <Input
-                      type="number"
-                      value={formData.dimensions_height}
-                      onChange={e =>
-                        updateFormData({
-                          dimensions_height: e.target.value
-                            ? Number(e.target.value)
-                            : '',
-                        })
-                      }
-                      placeholder="Hauteur"
-                      min="0"
-                      step="0.1"
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <Select
-                      value={formData.dimensions_unit}
-                      onValueChange={(value: any) =>
-                        updateFormData({ dimensions_unit: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cm">cm</SelectItem>
-                        <SelectItem value="m">m</SelectItem>
-                        <SelectItem value="mm">mm</SelectItem>
-                        <SelectItem value="in">in</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Dimensions partagées par tous les produits du groupe
-                </p>
-              </div>
-            </div>
+            <WizardStep2Style
+              style={formData.style}
+              suitableRooms={formData.suitable_rooms}
+              dimensionsLength={formData.dimensions_length}
+              dimensionsWidth={formData.dimensions_width}
+              dimensionsHeight={formData.dimensions_height}
+              dimensionsUnit={formData.dimensions_unit}
+              onUpdate={updateFormData}
+              onToggleRoom={toggleRoom}
+            />
           )}
 
-          {/* ÉTAPE 3: Fournisseur & Options */}
           {currentStep === 3 && (
-            <div className="space-y-4">
-              {/* Fournisseur commun */}
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="has-common-supplier"
-                    checked={formData.has_common_supplier}
-                    onCheckedChange={checked => {
-                      updateFormData({
-                        has_common_supplier: checked as boolean,
-                      });
-                      if (!checked) updateFormData({ supplier_id: '' });
-                    }}
-                  />
-                  <Label
-                    htmlFor="has-common-supplier"
-                    className="text-sm font-medium cursor-pointer"
-                  >
-                    Même fournisseur pour tous les produits
-                  </Label>
-                </div>
-
-                {formData.has_common_supplier && (
-                  <div>
-                    <Label htmlFor="supplier">
-                      Fournisseur <span className="text-red-500">*</span>
-                    </Label>
-                    <Select
-                      value={formData.supplier_id}
-                      onValueChange={value =>
-                        updateFormData({ supplier_id: value })
-                      }
-                    >
-                      <SelectTrigger id="supplier" className="mt-1">
-                        <SelectValue placeholder="Sélectionner un fournisseur" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {suppliers.map(supplier => (
-                          <SelectItem key={supplier.id} value={supplier.id}>
-                            {supplier.legal_name ||
-                              supplier.trade_name ||
-                              'Sans nom'}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {formData.supplier_id && (
-                      <div className="mt-2">
-                        <Link
-                          href={`/contacts-organisations/${formData.supplier_id}`}
-                          target="_blank"
-                          className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1"
-                        >
-                          Voir fiche fournisseur
-                          <ExternalLink className="h-3 w-3" />
-                        </Link>
-                      </div>
-                    )}
-                    <p className="text-xs text-gray-500 mt-1">
-                      Ce fournisseur sera automatiquement assigné à tous les
-                      produits du groupe
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Poids commun */}
-              <div>
-                <Label htmlFor="common_weight">Poids commun (kg)</Label>
-                <Input
-                  id="common_weight"
-                  type="number"
-                  value={formData.common_weight}
-                  onChange={e =>
-                    updateFormData({
-                      common_weight: e.target.value
-                        ? Number(e.target.value)
-                        : '',
-                    })
-                  }
-                  placeholder="Ex: 12.5"
-                  min="0"
-                  step="0.1"
-                  className="mt-1"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Poids partagé par tous les produits (optionnel)
-                </p>
-              </div>
-            </div>
+            <WizardStep3Supplier
+              hasCommonSupplier={formData.has_common_supplier}
+              supplierId={formData.supplier_id}
+              commonWeight={formData.common_weight}
+              suppliers={suppliers}
+              onUpdate={updateFormData}
+            />
           )}
         </div>
 
