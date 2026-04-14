@@ -87,26 +87,6 @@ export default function SourcingProductDetailPage() {
   const currentStatus = product?.sourcing_status ?? 'need_identified';
   const visibleSections = getSectionsForStatus(currentStatus);
 
-  // Fallback photos sourcing quand pas d'images dans product_images
-  const sourcingPrimaryImage =
-    primaryImage ??
-    (notebook.photos.length > 0
-      ? {
-          id: notebook.photos[0].id,
-          public_url: notebook.photos[0].public_url,
-          alt_text: notebook.photos[0].caption,
-        }
-      : null);
-
-  const sourcingImages =
-    images.length > 0
-      ? images
-      : notebook.photos.map(p => ({
-          id: p.id,
-          public_url: p.public_url,
-          alt_text: p.caption,
-        }));
-
   const handleOrderSample = async () => {
     try {
       await orderSample(productId);
@@ -303,8 +283,8 @@ export default function SourcingProductDetailPage() {
           product={
             product as ComponentProps<typeof SourcingProductEditCard>['product']
           }
-          primaryImage={sourcingPrimaryImage}
-          images={sourcingImages}
+          primaryImage={primaryImage}
+          images={images}
           imagesLoading={imagesLoading}
           onProductUpdate={async updates => {
             try {

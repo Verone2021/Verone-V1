@@ -379,39 +379,69 @@ export async function POST(request: NextRequest) {
     }
 
     // ================================================================
-    // STEP 4 : Images dans product_images + sourcing_photos
+    // STEP 4 : Telecharger les images et les stocker dans Supabase Storage
+    // Puis inserer dans product_images (le trigger genere public_url)
     // ================================================================
     if (input.images && input.images.length > 0) {
       const validImages = input.images
         .filter(url => url && !url.includes('icon') && !url.includes('logo'))
         .slice(0, 10);
 
-      if (validImages.length > 0) {
-        // NOTE: On n'insère PAS dans product_images car le trigger
-        // generate_product_image_url() écrase public_url avec une URL
-        // Supabase Storage basée sur storage_path. Les images externes
-        // (URLs Alibaba/OpJet) sont stockées dans sourcing_photos uniquement.
-        // Quand le produit passe en catalogue, les images seront uploadées
-        // dans Supabase Storage via le workflow standard.
+      for (let i = 0; i < validImages.length; i++) {
+        const imageUrl = validImages[i];
+        try {
+          // Telecharger l'image depuis l'URL externe
+          const imgResponse = await fetch(imageUrl);
+          if (!imgResponse.ok) continue;
 
-        // sourcing_photos — stockage des images externes pour le sourcing
-        const sourcingPhotoRows = validImages.map((url, i) => ({
-          product_id: productId,
-          public_url: url,
-          storage_path: `external/${input.source_platform}/${sku}-${i}`,
-          photo_type: 'supplier_catalog',
-          caption: `Import ${input.source_platform} - Photo ${i + 1}`,
-          sort_order: i,
-        }));
+          const contentType =
+            imgResponse.headers.get('content-type') ?? 'image/jpeg';
+          const ext = contentType.includes('png') ? 'png' : 'jpg';
+          const blob = await imgResponse.blob();
+          const buffer = Buffer.from(await blob.arrayBuffer());
 
-        const { error: photoError } = await supabase
-          .from('sourcing_photos')
-          .insert(sourcingPhotoRows);
+          // Upload dans Supabase Storage
+          const storagePath = `sourcing/${productId}/${i}.${ext}`;
+          const { error: uploadError } = await supabase.storage
+            .from('product-images')
+            .upload(storagePath, buffer, {
+              contentType,
+              upsert: true,
+            });
 
-        if (photoError) {
+          if (uploadError) {
+            console.error(
+              `[API sourcing/import] Image ${i} upload failed:`,
+              uploadError
+            );
+            continue;
+          }
+
+          // Inserer dans product_images (le trigger genere public_url)
+          const { error: imgInsertError } = await supabase
+            .from('product_images')
+            .insert({
+              product_id: productId,
+              storage_path: storagePath,
+              display_order: i,
+              is_primary: i === 0,
+              image_type: (i === 0 ? 'primary' : 'gallery') as
+                | 'primary'
+                | 'gallery',
+              alt_text: `${input.name} - Photo ${i + 1}`,
+              format: ext,
+            });
+
+          if (imgInsertError) {
+            console.error(
+              `[API sourcing/import] Image ${i} insert failed:`,
+              imgInsertError
+            );
+          }
+        } catch (imgErr) {
           console.error(
-            '[API sourcing/import] Sourcing photos insert failed:',
-            photoError
+            `[API sourcing/import] Image ${i} download failed:`,
+            imgErr
           );
         }
       }
@@ -446,7 +476,7 @@ export async function POST(request: NextRequest) {
 
     // Compter les images et URLs insérées
     const { count: imageCount } = await supabase
-      .from('sourcing_photos')
+      .from('product_images')
       .select('id', { count: 'exact', head: true })
       .eq('product_id', productId);
 
