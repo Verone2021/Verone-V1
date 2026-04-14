@@ -13,129 +13,21 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
-/**
- * Item de ventilation TVA multi-taux
- * Ex: restaurant avec 10% sur nourriture et 20% sur alcool
- */
-export interface VatBreakdownItem {
-  /** Taux TVA (10, 20, etc.) */
-  tva_rate: number;
-  /** Pourcentage du montant total à ce taux (ex: 50 pour 50%) */
-  percent: number;
-}
-
-export interface MatchingRule {
-  id: string;
-  priority: number;
-  enabled: boolean;
-  match_type: 'label_contains' | 'label_exact';
-  match_value: string;
-  /** Tableau de patterns alternatifs. Ex: ["AMÉRICO", "AMERICO"] */
-  match_patterns: string[] | null;
-  display_label: string | null;
-  organisation_id: string | null;
-  individual_customer_id: string | null;
-  counterparty_type: 'organisation' | 'individual' | null;
-  default_category: string | null;
-  default_role_type: 'supplier' | 'customer' | 'partner' | 'internal' | null;
-  /**
-   * Si TRUE, les transactions peuvent avoir des catégories différentes.
-   * Si FALSE (défaut), la catégorie est verrouillée par la règle.
-   */
-  allow_multiple_categories: boolean;
-  /** Si TRUE, les transactions matchées n'ont pas besoin de justificatif */
-  justification_optional: boolean;
-  default_vat_rate: number | null;
-  created_at: string;
-  created_by: string | null;
-  // Joined from organisation
-  organisation_name: string | null;
-  organisation_type: string | null;
-  // Computed
-  matched_expenses_count: number;
-}
-
-/**
- * Résultat de la prévisualisation d'application de règle
- * Retourné par preview_apply_matching_rule
- */
-export interface PreviewMatchResult {
-  normalized_label_group: string;
-  sample_labels: string[];
-  transaction_count: number;
-  total_amount: number;
-  first_seen: string;
-  last_seen: string;
-  counterparty_hint: string | null;
-  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
-  confidence_score: number;
-  reasons: string[];
-  sample_transaction_ids: string[];
-  /** Nombre de transactions déjà appliquées avec la bonne catégorie */
-  already_applied_count: number;
-  /** Nombre de transactions à appliquer ou mettre à jour */
-  pending_count: number;
-}
-
-/**
- * Résultat de confirmation d'application de règle
- */
-export interface ConfirmApplyResult {
-  nb_updated: number;
-  updated_ids: string[];
-}
-
-export interface CreateRuleData {
-  match_type: 'label_contains' | 'label_exact';
-  match_value: string;
-  /** Patterns alternatifs (facultatif). Si non fourni, match_value est utilisé. */
-  match_patterns?: string[] | null;
-  display_label?: string;
-  /** Organisation liée (facultatif) */
-  organisation_id?: string | null;
-  /** Client particulier lié (facultatif - pour B2C) */
-  individual_customer_id?: string | null;
-  /** Type de contrepartie: 'organisation' ou 'individual' */
-  counterparty_type?: 'organisation' | 'individual' | null;
-  /** Catégorie PCG (facultatif - peut être défini plus tard) */
-  default_category?: string | null;
-  default_role_type: 'supplier' | 'customer' | 'partner' | 'internal';
-  priority?: number;
-  /** Si TRUE, permet de modifier la catégorie individuellement par transaction */
-  allow_multiple_categories?: boolean;
-  /** Si TRUE, les transactions matchées n'ont pas besoin de justificatif */
-  justification_optional?: boolean;
-  /** Taux TVA par défaut (0, 5.5, 10, 20) — appliqué automatiquement aux transactions matchées */
-  default_vat_rate?: number | null;
-}
-
-export interface UseMatchingRulesReturn {
-  rules: MatchingRule[];
-  isLoading: boolean;
-  error: string | null;
-  create: (data: CreateRuleData) => Promise<MatchingRule | null>;
-  update: (
-    id: string,
-    data: Partial<CreateRuleData & { enabled: boolean }>
-  ) => Promise<boolean>;
-  remove: (id: string) => Promise<boolean>;
-  applyAll: () => Promise<{ rulesApplied: number; expensesClassified: number }>;
-  /** @deprecated Use previewApply + confirmApply instead */
-  applyOne: (ruleId: string) => Promise<number>;
-  /** Preview which transactions will be affected - READ ONLY */
-  previewApply: (
-    ruleId: string,
-    newCategory?: string
-  ) => Promise<PreviewMatchResult[]>;
-  /** Confirm application with selected normalized labels */
-  confirmApply: (
-    ruleId: string,
-    selectedNormalizedLabels: string[]
-  ) => Promise<ConfirmApplyResult>;
-  /** Auto-classify all unmatched transactions using active rules */
-  autoClassifyAll: () => Promise<number>;
-  refetch: () => Promise<void>;
-}
+export type {
+  VatBreakdownItem,
+  MatchingRule,
+  PreviewMatchResult,
+  ConfirmApplyResult,
+  CreateRuleData,
+  UseMatchingRulesReturn,
+} from './matching-rules-types';
+import type {
+  MatchingRule,
+  CreateRuleData,
+  ConfirmApplyResult,
+  PreviewMatchResult,
+  UseMatchingRulesReturn,
+} from './matching-rules-types';
 
 export function useMatchingRules(): UseMatchingRulesReturn {
   const [rules, setRules] = useState<MatchingRule[]>([]);

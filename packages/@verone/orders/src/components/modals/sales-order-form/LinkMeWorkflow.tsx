@@ -28,76 +28,18 @@ import {
   Package,
 } from 'lucide-react';
 
-import type { AffiliateType } from '@verone/orders/hooks/linkme/use-linkme-affiliates';
 import type { SelectionItem } from '@verone/orders/hooks/linkme/use-linkme-selections';
 
-import type { LinkMeCartItem, LinkMeCartTotals } from './LinkMeCartTable';
 import { LinkMeCartTable } from './LinkMeCartTable';
+import type {
+  LinkMeAffiliate,
+  LinkMeSelection,
+  LinkMeSelectionDetail,
+  LinkMeWorkflowProps,
+  PreviewSelection,
+} from './linkme-workflow-types';
 
-interface LinkMeAffiliate {
-  id: string;
-  display_name: string;
-  enseigne_id: string | null;
-  selections_count: number;
-}
-
-interface LinkMeSelection {
-  id: string;
-  name: string;
-  products_count?: number | null;
-  affiliate_name?: string;
-}
-
-interface LinkMeSelectionDetail {
-  name?: string;
-  affiliate_id?: string;
-  items?: SelectionItem[];
-}
-
-interface PreviewSelection {
-  name?: string;
-  items?: SelectionItem[];
-}
-
-interface LinkMeWorkflowProps {
-  // Affiliate state
-  affiliateType: AffiliateType | null;
-  onAffiliateTypeChange: (type: AffiliateType) => void;
-  affiliateId: string | null;
-  onAffiliateIdChange: (id: string | null) => void;
-  affiliates: LinkMeAffiliate[] | undefined;
-  loadingAffiliates: boolean;
-
-  // Selection state
-  selectionId: string | null;
-  onSelectionIdChange: (id: string | null) => void;
-  selections: LinkMeSelection[] | undefined;
-  loadingSelections: boolean;
-  selectionDetail: LinkMeSelectionDetail | null | undefined;
-  loadingSelectionDetail: boolean;
-
-  // Cart state
-  cart: LinkMeCartItem[];
-  cartTotals: LinkMeCartTotals;
-  onAddProduct: (item: SelectionItem) => void;
-  onUpdateQuantity: (itemId: string, quantity: number) => void;
-  onRemoveItem: (itemId: string) => void;
-  onClearCart: () => void;
-
-  // Notes
-  notes: string;
-  onNotesChange: (notes: string) => void;
-
-  // Actions
-  loading: boolean;
-  canSubmit: boolean;
-  onSubmit: () => void;
-  onCancel: () => void;
-
-  // Preview
-  previewSelection: PreviewSelection | null | undefined;
-  previewLoading: boolean;
-}
+export type { LinkMeWorkflowProps } from './linkme-workflow-types';
 
 export function LinkMeWorkflow({
   affiliateType,

@@ -10,41 +10,17 @@ import { useToast } from '@verone/common/hooks';
 
 import type { StockReasonCode } from './use-stock-movements';
 
-// Types pour le stock unifié
-export interface StockData {
-  product_id: string;
-  stock_real: number;
-  stock_forecasted_in: number;
-  stock_forecasted_out: number;
-  stock_available: number;
-  stock_total_forecasted: number;
-  min_stock: number;
-
-  // Méta-données
-  product_name?: string;
-  product_sku?: string;
-  last_movement_at?: string;
-}
-
-export interface StockSummary {
-  total_products: number;
-  total_stock_value: number;
-  low_stock_count: number;
-  out_of_stock_count: number;
-  forecasted_shortage_count: number;
-  total_real: number;
-  total_forecasted_in: number;
-  total_forecasted_out: number;
-}
-
-export interface ManualMovementData {
-  product_id: string;
-  movement_type: 'add' | 'remove' | 'adjust';
-  quantity: number;
-  reason_code: StockReasonCode;
-  notes?: string;
-  unit_cost?: number;
-}
+export type {
+  StockData,
+  StockSummary,
+  ManualMovementData,
+} from './stock-types';
+import type {
+  StockData,
+  StockSummary,
+  ManualMovementData,
+} from './stock-types';
+import { calculateStockSummary as _calculateStockSummary } from './stock-utils';
 
 export function useStock() {
   const [loading, setLoading] = useState(false);
@@ -151,40 +127,7 @@ export function useStock() {
 
   // Calculer résumé stock
   const calculateStockSummary = useCallback(
-    (data: StockData[]): StockSummary => {
-      return data.reduce(
-        (acc, item) => {
-          acc.total_products++;
-          acc.total_real += item.stock_real;
-          acc.total_forecasted_in += item.stock_forecasted_in;
-          acc.total_forecasted_out += item.stock_forecasted_out;
-
-          // Alertes stock
-          if (item.stock_real <= 0) {
-            acc.out_of_stock_count++;
-          } else if (item.stock_real <= item.min_stock) {
-            acc.low_stock_count++;
-          }
-
-          // Prévision rupture stock
-          if (item.stock_available <= item.min_stock) {
-            acc.forecasted_shortage_count++;
-          }
-
-          return acc;
-        },
-        {
-          total_products: 0,
-          total_stock_value: 0,
-          low_stock_count: 0,
-          out_of_stock_count: 0,
-          forecasted_shortage_count: 0,
-          total_real: 0,
-          total_forecasted_in: 0,
-          total_forecasted_out: 0,
-        }
-      );
-    },
+    (data: StockData[]): StockSummary => _calculateStockSummary(data),
     []
   );
 

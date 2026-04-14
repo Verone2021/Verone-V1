@@ -25,180 +25,27 @@
 
 import { useState, useCallback } from 'react';
 
-import type { SupabaseClient } from '@supabase/supabase-js';
-
-// ============================================================================
-// TYPES & INTERFACES
-// ============================================================================
-
-/**
- * Types de mouvements stock
- */
-export type MovementType = 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER';
-
-/**
- * Types de références documentaires
- */
-export type ReferenceType =
-  | 'sales_order' // Commande vente client
-  | 'purchase_order' // Commande achat fournisseur
-  | 'manual_adjustment' // Ajustement manuel inventaire
-  | 'transfer' // Transfert inter-entrepôts
-  | 'return' // Retour client/fournisseur
-  | 'damage' // Casse/perte
-  | 'sample'; // Échantillon
-
-/**
- * Codes raison standardisés
- */
-export type ReasonCode =
-  | 'sale' // Vente client
-  | 'purchase' // Achat fournisseur
-  | 'return_customer' // Retour client
-  | 'return_supplier' // Retour fournisseur
-  | 'adjustment' // Ajustement inventaire
-  | 'damage' // Casse/perte
-  | 'transfer_in' // Transfert entrant
-  | 'transfer_out' // Transfert sortant
-  | 'sample' // Échantillon
-  | 'cancelled'; // Annulation commande
-
-/**
- * Type prévisionnel (forecast_type)
- */
-export type ForecastType = 'in' | 'out' | null;
-
-/**
- * Interface complète mouvement stock (20 colonnes)
- * Correspond à table stock_movements avec channel_id (migrations 003+004)
- */
-export interface StockMovement {
-  id: string;
-  product_id: string;
-  movement_type: MovementType;
-  quantity_change: number; // Négatif pour OUT, positif pour IN
-  quantity_before: number;
-  quantity_after: number;
-  reason_code: string; // ✅ FIX: string pour stock_reason_code PostgreSQL (25 valeurs)
-  reference_type: ReferenceType | null;
-  reference_id: string | null;
-  notes: string | null;
-  affects_forecast: boolean; // true = prévisionnel, false = réel
-  forecast_type: ForecastType;
-  performed_by: string | null; // user_id
-  performed_at: string;
-  channel_id: string | null; // 🆕 Canal vente (b2b, ecommerce, retail, wholesale)
-  created_at: string;
-  updated_at: string;
-
-  // Relations
-  products?: {
-    id: string;
-    sku: string;
-    name: string;
-  } | null;
-  sales_channels?: {
-    id: string;
-    name: string;
-    code: string;
-    is_active: boolean;
-  } | null;
-}
-
-/**
- * Interface élément stock (product avec infos stock)
- * Stock = GLOBAL unique (pas séparé par canal)
- */
-export interface StockItem {
-  id: string;
-  sku: string;
-  name: string;
-  stock_real: number; // Stock physique actuel
-  stock_quantity: number; // Alias stock_real (legacy)
-  stock_forecasted_in: number; // Entrées prévisionnelles (commandes fournisseurs)
-  stock_forecasted_out: number; // Sorties prévisionnelles (commandes clients confirmées)
-  min_stock: number | null; // Seuil alerte stock minimum
-  cost_price: number | null; // Prix de revient unitaire
-  archived_at: string | null;
-  product_image_url?: string | null; // URL image principale produit
-}
-
-/**
- * Paramètres création mouvement stock
- */
-export interface CreateMovementParams {
-  product_id: string;
-  movement_type: MovementType;
-  quantity_change: number; // Déjà signé (négatif pour OUT, positif pour IN)
-  reason_code: string; // ✅ FIX: Accepter string pour stock_reason_code PostgreSQL (25 valeurs)
-  reference_type?: ReferenceType | null;
-  reference_id?: string | null;
-  notes?: string | null;
-  affects_forecast?: boolean; // Default false (mouvement réel)
-  forecast_type?: ForecastType;
-  channel_id?: string | null; // Auto-injecté si OUT sale (via config hook)
-}
-
-/**
- * Filtres recherche mouvements
- */
-export interface MovementFilters {
-  product_id?: string;
-  movement_type?: MovementType | MovementType[];
-  reference_type?: ReferenceType;
-  reference_id?: string;
-  channel_id?: string | null; // Filtrer par canal vente
-  affects_forecast?: boolean;
-  date_from?: string;
-  date_to?: string;
-  limit?: number;
-}
-
-/**
- * Configuration hook avec injection dépendances
- */
-export interface UseStockCoreConfig {
-  supabase: SupabaseClient; // Client Supabase (browser/server/edge)
-  channelId?: string | null; // Canal vente actif (b2b, ecommerce, retail, wholesale)
-  userId: string; // User ID pour audit trails
-}
-
-/**
- * API retournée par hook
- */
-export interface UseStockCoreReturn {
-  // State
-  loading: boolean;
-  error: string | null;
-
-  // Stock Items (GLOBAL - pas de séparation par canal)
-  stockItems: StockItem[];
-  getStockItems: (filters?: {
-    search?: string;
-    archived?: boolean;
-  }) => Promise<StockItem[]>;
-  getStockItem: (productId: string) => Promise<StockItem | null>;
-
-  // Movements
-  movements: StockMovement[];
-  getMovements: (filters?: MovementFilters) => Promise<StockMovement[]>;
-  createMovement: (params: CreateMovementParams) => Promise<StockMovement>;
-
-  // Analytics par canal (traceability)
-  filterByChannel: (channelId: string) => Promise<StockMovement[]>;
-  getMovementsByChannel: (
-    channelId: string,
-    dateFrom?: string,
-    dateTo?: string
-  ) => Promise<StockMovement[]>;
-
-  // Refresh
-  refetch: () => Promise<void>;
-}
-
-// ============================================================================
-// HOOK IMPLEMENTATION
-// ============================================================================
+export type {
+  MovementType,
+  ReferenceType,
+  ReasonCode,
+  ForecastType,
+  StockMovement,
+  StockItem,
+  CreateMovementParams,
+  MovementFilters,
+  UseStockCoreConfig,
+  UseStockCoreReturn,
+} from './stock-core-types';
+import type {
+  MovementType,
+  StockMovement,
+  StockItem,
+  CreateMovementParams,
+  MovementFilters,
+  UseStockCoreConfig,
+  UseStockCoreReturn,
+} from './stock-core-types';
 
 export function useStockCore({
   supabase,

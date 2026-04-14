@@ -7,33 +7,29 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
-import { ProductThumbnail } from '@verone/products';
 import type { ShipmentItem } from '@verone/types';
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import { Card } from '@verone/ui';
-import { Input } from '@verone/ui';
-import { Label } from '@verone/ui';
-import { SuccessDialog } from '@verone/ui';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Badge,
+  ButtonV2,
+  Card,
+  Input,
+  Label,
+  SuccessDialog,
+  Textarea,
 } from '@verone/ui';
-import { Textarea } from '@verone/ui';
-import { formatDate, formatCurrency } from '@verone/utils';
+import { formatCurrency } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
-import { Package, CheckCircle2, Truck, AlertTriangle } from 'lucide-react';
+import { Truck } from 'lucide-react';
 
 import {
   useSalesShipments,
   type SalesOrderForShipment,
 } from '@verone/orders/hooks';
 
-interface ShipmentResultSummary {
+import { ShipmentHistorySection } from './ShipmentHistorySection';
+import { ShipmentItemsTable } from './ShipmentItemsTable';
+
+interface IShipmentResultSummary {
   isComplete: boolean;
   orderNumber: string;
   customerName: string;
@@ -46,7 +42,7 @@ interface ShipmentResultSummary {
   trackingNumber?: string;
 }
 
-interface SalesOrderShipmentFormProps {
+interface ISalesOrderShipmentFormProps {
   salesOrder: SalesOrderForShipment;
   onSuccess: () => void;
   onCancel: () => void;
@@ -56,7 +52,7 @@ export function SalesOrderShipmentForm({
   salesOrder,
   onSuccess,
   onCancel,
-}: SalesOrderShipmentFormProps) {
+}: ISalesOrderShipmentFormProps): React.ReactNode {
   const supabase = createClient();
   const {
     prepareShipmentItems,
@@ -84,22 +80,19 @@ export function SalesOrderShipmentForm({
     }>
   >([]);
   const [shipmentResult, setShipmentResult] =
-    useState<ShipmentResultSummary | null>(null);
+    useState<IShipmentResultSummary | null>(null);
 
-  // Initialiser items
   useEffect(() => {
     const shipmentItems = prepareShipmentItems(salesOrder);
     setItems(shipmentItems);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [salesOrder]);
 
-  // Charger historique expéditions
   useEffect(() => {
     void loadShipmentHistory(salesOrder.id).then(setHistory);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [salesOrder.id]);
 
-  // Calculer totaux
   const totals = useMemo(() => {
     const totalQuantityToShip = items.reduce(
       (sum, item) => sum + (item.quantity_to_ship || 0),
@@ -114,17 +107,13 @@ export function SalesOrderShipmentForm({
         item.quantity_already_shipped + item.quantity_to_ship >=
         item.quantity_ordered
     );
-
-    // Vérifier si tous les items ont assez de stock
     const hasStockIssue = items.some(
       item => item.quantity_to_ship > item.stock_available
     );
-
     return { totalQuantityToShip, totalValue, allFullyShipped, hasStockIssue };
   }, [items]);
 
-  // Update quantité item
-  const handleQuantityChange = (itemId: string, value: string) => {
+  const handleQuantityChange = (itemId: string, value: string): void => {
     const numValue = parseInt(value) || 0;
     setItems(prev =>
       prev.map(item =>
@@ -141,8 +130,7 @@ export function SalesOrderShipmentForm({
     );
   };
 
-  // Expédier tout (auto-fill quantités restantes limitées par stock)
-  const handleShipAll = () => {
+  const handleShipAll = (): void => {
     setItems(prev =>
       prev.map(item => ({
         ...item,
@@ -154,9 +142,7 @@ export function SalesOrderShipmentForm({
     );
   };
 
-  // Validation
-  const handleValidate = async () => {
-    // Obtenir l'utilisateur courant
+  const handleValidate = async (): Promise<void> => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -178,7 +164,6 @@ export function SalesOrderShipmentForm({
       return;
     }
 
-    // Vérifier stock
     const stockIssues = items.filter(
       item => item.quantity_to_ship > item.stock_available
     );
@@ -208,7 +193,6 @@ export function SalesOrderShipmentForm({
           product_sku: item.product_sku,
           quantity_shipped: item.quantity_to_ship,
         }));
-
       setShipmentResult({
         isComplete: totals.allFullyShipped,
         orderNumber: salesOrder.order_number,
@@ -224,7 +208,6 @@ export function SalesOrderShipmentForm({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -235,14 +218,11 @@ export function SalesOrderShipmentForm({
             Commande {salesOrder.order_number} • {salesOrder.customer_name}
           </p>
         </div>
-        <div className="flex gap-2">
-          <ButtonV2 variant="outline" onClick={handleShipAll}>
-            Tout expédier
-          </ButtonV2>
-        </div>
+        <ButtonV2 variant="outline" onClick={handleShipAll}>
+          Tout expédier
+        </ButtonV2>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         <Card className="p-4 border-l-4 border-l-blue-500">
           <div className="text-sm font-medium text-gray-600">À expédier</div>
@@ -276,147 +256,11 @@ export function SalesOrderShipmentForm({
         </Card>
       </div>
 
-      {/* Table Items */}
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold">Produit</TableHead>
-              <TableHead className="text-center font-semibold text-blue-700">
-                Commandée
-              </TableHead>
-              <TableHead className="text-center font-semibold text-green-700">
-                Déjà expédiée
-              </TableHead>
-              <TableHead className="text-center font-semibold text-amber-700">
-                Restante
-              </TableHead>
-              <TableHead className="text-center font-semibold text-purple-700">
-                Stock dispo
-              </TableHead>
-              <TableHead className="text-center font-semibold text-indigo-700">
-                À expédier
-              </TableHead>
-              <TableHead className="text-right font-semibold">
-                Prix Unit.
-              </TableHead>
-              <TableHead className="text-right font-semibold">Total</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {items.map(item => {
-              const progressPercent =
-                item.quantity_ordered > 0
-                  ? Math.round(
-                      (item.quantity_already_shipped / item.quantity_ordered) *
-                        100
-                    )
-                  : 0;
+      <ShipmentItemsTable
+        items={items}
+        onQuantityChange={handleQuantityChange}
+      />
 
-              const hasStockProblem =
-                item.quantity_to_ship > item.stock_available;
-
-              return (
-                <TableRow
-                  key={item.sales_order_item_id}
-                  className={`hover:bg-gray-50 ${hasStockProblem ? 'bg-red-50' : ''}`}
-                >
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <ProductThumbnail
-                        src={item.primary_image_url}
-                        alt={item.product_name}
-                        size="sm"
-                      />
-                      <div>
-                        <div className="font-medium">{item.product_name}</div>
-                        <div className="text-xs text-gray-500">
-                          {item.product_sku}
-                        </div>
-                        {/* Mini barre de progression */}
-                        <div className="mt-1 flex items-center gap-2">
-                          <div className="flex-1 bg-gray-200 rounded-full h-1.5 max-w-[100px]">
-                            <div
-                              className="bg-green-500 h-1.5 rounded-full transition-all"
-                              style={{ width: `${progressPercent}%` }}
-                            />
-                          </div>
-                          <span className="text-xs text-gray-500">
-                            {progressPercent}%
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className="font-semibold text-blue-600 text-lg">
-                      {item.quantity_ordered}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {item.quantity_already_shipped > 0 ? (
-                      <Badge className="bg-green-100 text-green-800 border border-green-300">
-                        ✓ {item.quantity_already_shipped}
-                      </Badge>
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {item.quantity_remaining > 0 ? (
-                      <span className="font-semibold text-amber-600 text-lg">
-                        {item.quantity_remaining}
-                      </span>
-                    ) : (
-                      <Badge className="bg-green-500 text-white">Complet</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span
-                      className={`font-semibold ${item.stock_available < item.quantity_remaining ? 'text-red-600' : 'text-purple-600'}`}
-                    >
-                      {item.stock_available}
-                    </span>
-                    {item.stock_available < item.quantity_remaining && (
-                      <AlertTriangle className="w-3 h-3 text-red-500 inline ml-1" />
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Input
-                      type="number"
-                      min="0"
-                      max={Math.min(
-                        item.quantity_remaining,
-                        item.stock_available
-                      )}
-                      value={item.quantity_to_ship}
-                      onChange={e =>
-                        handleQuantityChange(
-                          item.sales_order_item_id,
-                          e.target.value
-                        )
-                      }
-                      className={`w-20 text-center ${hasStockProblem ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-indigo-300 focus:border-indigo-500 focus:ring-indigo-500'}`}
-                    />
-                  </TableCell>
-                  <TableCell className="text-right text-gray-600">
-                    {formatCurrency(item.unit_price_ht)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <span className="font-semibold text-emerald-600">
-                      {formatCurrency(
-                        item.quantity_to_ship * item.unit_price_ht
-                      )}
-                    </span>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </Card>
-
-      {/* Metadata */}
       <div className="grid grid-cols-3 gap-4">
         <div>
           <Label>Date expédition</Label>
@@ -448,81 +292,8 @@ export function SalesOrderShipmentForm({
         </div>
       </div>
 
-      {/* Historique enrichi */}
-      {history.length > 0 && (
-        <Card className="p-4">
-          <h4 className="font-semibold mb-3 flex items-center gap-2">
-            <Package className="w-4 h-4 text-verone-primary" />
-            Historique des expéditions ({history.length})
-          </h4>
-          <div className="space-y-3">
-            {history.map((h, idx) => (
-              <div
-                key={`shipment-${idx}`}
-                className="border rounded-lg p-3 bg-gray-50"
-              >
-                {/* Header expédition */}
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    <span className="font-semibold text-gray-800">
-                      Expédition #{idx + 1}
-                    </span>
-                    <span className="text-gray-500">—</span>
-                    <span className="text-gray-600">
-                      {formatDate(h.shipped_at)}
-                    </span>
-                    {h.tracking_number && (
-                      <>
-                        <span className="text-gray-500">•</span>
-                        <span className="text-xs text-blue-600 font-mono">
-                          {h.tracking_number}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                  <Badge className="bg-green-100 text-green-800 border border-green-300">
-                    {h.total_quantity} unité{h.total_quantity > 1 ? 's' : ''}{' '}
-                    expédiée{h.total_quantity > 1 ? 's' : ''}
-                  </Badge>
-                </div>
+      <ShipmentHistorySection history={history} items={items} />
 
-                {/* Détails par produit */}
-                <div className="space-y-1 ml-6">
-                  {h.items?.map((item, itemIdx) => {
-                    const orderItem = items.find(
-                      i => i.product_sku === item.product_sku
-                    );
-                    const qtyOrdered = orderItem?.quantity_ordered ?? '?';
-
-                    return (
-                      <div
-                        key={itemIdx}
-                        className="flex items-center justify-between text-sm py-1 border-b border-gray-100 last:border-0"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-400">├─</span>
-                          <span className="font-medium text-gray-700">
-                            {item.product_name ?? item.product_sku}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-600">
-                            {item.quantity_shipped}/{qtyOrdered} expédié
-                            {item.quantity_shipped > 1 ? 's' : ''}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* Actions */}
       <div className="flex justify-end gap-3">
         <ButtonV2 variant="outline" onClick={onCancel} disabled={validating}>
           Annuler
@@ -546,7 +317,6 @@ export function SalesOrderShipmentForm({
         </ButtonV2>
       </div>
 
-      {/* Modal Confirmation Expédition */}
       <SuccessDialog
         open={shipmentResult !== null}
         onOpenChange={open => {
