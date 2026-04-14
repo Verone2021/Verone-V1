@@ -1,272 +1,14 @@
 import { NextResponse } from 'next/server';
 
-import { createClient } from '@supabase/supabase-js';
-import { z } from 'zod';
-
-const CheckoutItemSchema = z.object({
-  product_id: z.string(),
-  name: z.string(),
-  price_ttc: z.number().min(0),
-  quantity: z.number().int().min(1),
-  include_assembly: z.boolean(),
-  assembly_price: z.number().min(0),
-  eco_participation: z.number().min(0),
-});
-
-const DiscountSchema = z.object({
-  discount_id: z.string().uuid(),
-  code: z.string().nullable(),
-  discount_type: z.string(),
-  discount_value: z.number().min(0),
-  discount_amount: z.number().min(0),
-});
-
-const CheckoutSchema = z.object({
-  items: z.array(CheckoutItemSchema).min(1),
-  customer: z.object({
-    firstName: z.string().min(1),
-    lastName: z.string().min(1),
-    email: z.string().email(),
-    phone: z.string().min(1),
-    address: z.string().min(1),
-    postalCode: z.string().min(1),
-    city: z.string().min(1),
-    country: z.string().default('FR'),
-  }),
-  userId: z.string().uuid().optional(),
-  discount: DiscountSchema.optional(),
-});
-
-interface ShippingConfig {
-  standard_enabled: boolean;
-  standard_label: string;
-  standard_price_cents: number;
-  standard_min_days: number;
-  standard_max_days: number;
-  express_enabled: boolean;
-  express_label: string;
-  express_price_cents: number;
-  express_min_days: number;
-  express_max_days: number;
-  free_shipping_enabled: boolean;
-  free_shipping_threshold_cents: number;
-  free_shipping_applies_to: 'standard' | 'all';
-  allowed_countries: string[];
-  shipping_info_message?: string;
-}
-
-const SITE_INTERNET_CHANNEL_ID = '0c2639e9-df80-41fa-84d0-9da96a128f7f';
-
-interface ValidatedDiscount {
-  discount_id: string;
-  code: string | null;
-  discount_type: string;
-  discount_value: number;
-  discount_amount: number;
-}
-
-/**
- * Server-side promo validation — never trust the frontend discount_amount.
- * Revalidates the code against DB and recalculates the discount.
- */
-async function validatePromoServerSide(
-  discount: z.infer<typeof DiscountSchema>,
-  subtotalTtc: number,
-  supabaseUrl: string,
-  supabaseServiceKey: string
-): Promise<ValidatedDiscount | { error: string }> {
-  if (!discount.code) {
-    return { error: 'Code promo requis' };
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-  const { data, error } = await supabase
-    .from('order_discounts')
-    .select(
-      'id, code, name, discount_type, discount_value, min_order_amount, max_discount_amount, valid_from, valid_until, max_uses_total, current_uses, is_active'
-    )
-    .eq('code', discount.code.toUpperCase())
-    .eq('is_active', true)
-    .single();
-
-  if (error || !data) {
-    return { error: 'Code promo invalide ou expire' };
-  }
-
-  const promo = data as {
-    id: string;
-    code: string | null;
-    discount_type: string;
-    discount_value: number;
-    min_order_amount: number | null;
-    max_discount_amount: number | null;
-    valid_from: string;
-    valid_until: string;
-    max_uses_total: number | null;
-    current_uses: number;
-    is_active: boolean;
-  };
-
-  const now = new Date();
-  if (now < new Date(promo.valid_from) || now > new Date(promo.valid_until)) {
-    return { error: 'Ce code promo a expire' };
-  }
-
-  if (
-    promo.max_uses_total !== null &&
-    promo.current_uses >= promo.max_uses_total
-  ) {
-    return { error: "Ce code promo a atteint sa limite d'utilisation" };
-  }
-
-  if (promo.min_order_amount !== null && subtotalTtc < promo.min_order_amount) {
-    return {
-      error: `Minimum de commande : ${promo.min_order_amount.toFixed(2)} \u20ac`,
-    };
-  }
-
-  let discountAmount = 0;
-  if (promo.discount_type === 'percentage') {
-    discountAmount = subtotalTtc * (promo.discount_value / 100);
-  } else if (promo.discount_type === 'fixed') {
-    discountAmount = promo.discount_value;
-  }
-  // free_shipping handled by Stripe shipping_options — discount_amount = 0
-
-  if (
-    promo.max_discount_amount !== null &&
-    discountAmount > promo.max_discount_amount
-  ) {
-    discountAmount = promo.max_discount_amount;
-  }
-
-  return {
-    discount_id: promo.id,
-    code: promo.code,
-    discount_type: promo.discount_type,
-    discount_value: promo.discount_value,
-    discount_amount: Math.round(discountAmount * 100) / 100,
-  };
-}
-
-const DEFAULT_SHIPPING: ShippingConfig = {
-  standard_enabled: true,
-  standard_label: 'Livraison standard',
-  standard_price_cents: 1290,
-  standard_min_days: 5,
-  standard_max_days: 7,
-  express_enabled: false,
-  express_label: 'Livraison express',
-  express_price_cents: 1990,
-  express_min_days: 2,
-  express_max_days: 3,
-  free_shipping_enabled: true,
-  free_shipping_threshold_cents: 15000,
-  free_shipping_applies_to: 'standard',
-  allowed_countries: ['FR'],
-};
-
-async function getShippingConfig(): Promise<ShippingConfig> {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    console.warn('[Checkout] Supabase not configured - using default shipping');
-    return DEFAULT_SHIPPING;
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
-  const { data, error } = await supabase
-    .from('sales_channels')
-    .select('config')
-    .eq('code', 'site_internet')
-    .single();
-
-  if (error || !data) {
-    console.warn('[Checkout] Failed to fetch shipping config:', error?.message);
-    return DEFAULT_SHIPPING;
-  }
-
-  const config = data.config as Record<string, unknown> | null;
-  const shipping = config?.shipping as ShippingConfig | undefined;
-
-  return shipping ?? DEFAULT_SHIPPING;
-}
-
-interface ShippingRateData {
-  shipping_rate_data: {
-    type: 'fixed_amount';
-    fixed_amount: { amount: number; currency: string };
-    display_name: string;
-    delivery_estimate: {
-      minimum: { unit: 'business_day'; value: number };
-      maximum: { unit: 'business_day'; value: number };
-    };
-  };
-}
-
-function buildShippingOptions(
-  shipping: ShippingConfig,
-  subtotalCents: number,
-  maxProductShippingCents: number
-): ShippingRateData[] {
-  const options: ShippingRateData[] = [];
-
-  if (shipping.standard_enabled) {
-    const isFreeBase =
-      shipping.free_shipping_enabled &&
-      subtotalCents >= shipping.free_shipping_threshold_cents &&
-      ['standard', 'all'].includes(shipping.free_shipping_applies_to);
-
-    // Use the higher of: base rate OR max product shipping supplement
-    const baseAmount = isFreeBase ? 0 : shipping.standard_price_cents;
-    const finalAmount = Math.max(baseAmount, maxProductShippingCents);
-
-    const label =
-      finalAmount === 0
-        ? `${shipping.standard_label} (offerte)`
-        : shipping.standard_label;
-
-    options.push({
-      shipping_rate_data: {
-        type: 'fixed_amount',
-        fixed_amount: { amount: finalAmount, currency: 'eur' },
-        display_name: label,
-        delivery_estimate: {
-          minimum: { unit: 'business_day', value: shipping.standard_min_days },
-          maximum: { unit: 'business_day', value: shipping.standard_max_days },
-        },
-      },
-    });
-  }
-
-  if (shipping.express_enabled) {
-    const isFree =
-      shipping.free_shipping_enabled &&
-      shipping.free_shipping_applies_to === 'all' &&
-      subtotalCents >= shipping.free_shipping_threshold_cents;
-
-    const baseAmount = isFree ? 0 : shipping.express_price_cents;
-    const finalAmount = Math.max(baseAmount, maxProductShippingCents);
-
-    options.push({
-      shipping_rate_data: {
-        type: 'fixed_amount',
-        fixed_amount: { amount: finalAmount, currency: 'eur' },
-        display_name: isFree
-          ? `${shipping.express_label} (offerte)`
-          : shipping.express_label,
-        delivery_estimate: {
-          minimum: { unit: 'business_day', value: shipping.express_min_days },
-          maximum: { unit: 'business_day', value: shipping.express_max_days },
-        },
-      },
-    });
-  }
-
-  return options;
-}
+import {
+  createAmbassadorAttribution,
+  createDraftOrder,
+  fetchMaxProductShippingCents,
+} from './helpers/create-order';
+import { buildShippingOptions, getShippingConfig } from './helpers/shipping';
+import { CheckoutSchema } from './helpers/types';
+import { validatePromoServerSide } from './helpers/validate-promo';
+import type { ValidatedDiscount } from './helpers/types';
 
 export async function POST(request: Request) {
   try {
@@ -287,39 +29,34 @@ export async function POST(request: Request) {
       discount: frontendDiscount,
     } = validated.data;
 
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
     // Server-side promo revalidation — NEVER trust frontend discount_amount
     let discount: ValidatedDiscount | undefined;
-    if (frontendDiscount?.code) {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (frontendDiscount?.code && supabaseUrl && supabaseServiceKey) {
+      const subtotalForPromo = items.reduce(
+        (sum, item) =>
+          sum +
+          (item.price_ttc +
+            item.eco_participation +
+            (item.include_assembly ? item.assembly_price : 0)) *
+            item.quantity,
+        0
+      );
 
-      if (supabaseUrl && supabaseServiceKey) {
-        const subtotalForPromo = items.reduce(
-          (sum, item) =>
-            sum +
-            (item.price_ttc +
-              item.eco_participation +
-              (item.include_assembly ? item.assembly_price : 0)) *
-              item.quantity,
-          0
-        );
+      const promoResult = await validatePromoServerSide(
+        frontendDiscount,
+        subtotalForPromo,
+        supabaseUrl,
+        supabaseServiceKey
+      );
 
-        const promoResult = await validatePromoServerSide(
-          frontendDiscount,
-          subtotalForPromo,
-          supabaseUrl,
-          supabaseServiceKey
-        );
-
-        if ('error' in promoResult) {
-          return NextResponse.json(
-            { error: promoResult.error },
-            { status: 400 }
-          );
-        }
-
-        discount = promoResult;
+      if ('error' in promoResult) {
+        return NextResponse.json({ error: promoResult.error }, { status: 400 });
       }
+
+      discount = promoResult;
     }
 
     // Check if Stripe is configured
@@ -336,14 +73,11 @@ export async function POST(request: Request) {
     // Fetch shipping config from DB
     const shipping = await getShippingConfig();
 
-    // Pre-create order in sales_orders as draft
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    // Pre-create draft order
     let orderId: string | null = null;
+    let finalTtc = 0;
 
     if (supabaseUrl && supabaseServiceKey) {
-      const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
       const subtotalAmount = items.reduce(
         (sum, item) =>
           sum +
@@ -353,186 +87,28 @@ export async function POST(request: Request) {
             item.quantity,
         0
       );
-
-      // Find or create individual_customer (by auth_user_id first, then email)
-      let customerId: string | null = null;
-
-      if (userId) {
-        const { data } = await supabase
-          .from('individual_customers')
-          .select('id')
-          .eq('auth_user_id', userId)
-          .limit(1)
-          .single();
-        if (data) customerId = String(data.id);
-      }
-      if (!customerId) {
-        const { data } = await supabase
-          .from('individual_customers')
-          .select('id')
-          .eq('email', customer.email)
-          .limit(1)
-          .single();
-        if (data) customerId = String(data.id);
-      }
-
-      if (!customerId) {
-        const { data: newCustomer } = await supabase
-          .from('individual_customers')
-          .insert({
-            first_name: customer.firstName,
-            last_name: customer.lastName,
-            email: customer.email,
-            phone: customer.phone || null,
-            address_line1: customer.address,
-            postal_code: customer.postalCode,
-            city: customer.city,
-            country: (customer.country as string | undefined) ?? 'FR',
-            source_type: 'site-internet',
-            is_active: true,
-            ...(userId ? { auth_user_id: userId } : {}),
-          })
-          .select('id')
-          .single();
-
-        customerId = newCustomer ? String(newCustomer.id) : null;
-      }
-
-      // Generate order number atomically via PostgreSQL sequence
-      const { data: seqData, error: seqError } = (await supabase
-        .rpc('nextval_text', { seq_name: 'site_order_number_seq' })
-        .single()) as { data: string | null; error: unknown };
-
-      let orderNumber: string;
-      if (seqError || !seqData) {
-        // Fallback: timestamp-based to avoid collision
-        orderNumber = `VER-SI-${Date.now()}`;
-        console.warn('[Checkout] Sequence fallback used:', orderNumber);
-      } else {
-        orderNumber = `VER-SI-${seqData}`;
-      }
-
-      // Shipping address as JSONB
-      const shippingCountry = String(customer.country ?? 'FR');
-      const shippingAddressJson = {
-        line1: customer.address,
-        postal_code: customer.postalCode,
-        city: customer.city,
-        country: shippingCountry,
-      };
-
       const discountAmount = discount?.discount_amount ?? 0;
-      const finalTtc = Math.max(subtotalAmount - discountAmount, 0);
+      finalTtc = Math.max(subtotalAmount - discountAmount, 0);
 
-      const { data: orderDataRaw, error: orderError } = await supabase
-        .from('sales_orders')
-        .insert({
-          order_number: orderNumber,
-          channel_id: SITE_INTERNET_CHANNEL_ID,
-          customer_type: 'individual',
-          individual_customer_id: customerId,
-          status: 'draft',
-          payment_status_v2: 'pending',
-          shipping_address: shippingAddressJson,
-          total_ttc: finalTtc,
-          total_ht: Math.round((finalTtc / 1.2) * 100) / 100,
-          ...(discount
-            ? {
-                applied_discount_id: discount.discount_id,
-                applied_discount_code: discount.code,
-                applied_discount_amount: discountAmount,
-              }
-            : {}),
-        })
-        .select('id')
-        .single();
+      const result = await createDraftOrder(
+        items,
+        customer,
+        userId,
+        discount,
+        supabaseUrl,
+        supabaseServiceKey
+      );
+      orderId = result.orderId;
 
-      if (orderError) {
-        console.error('[Checkout] Pre-create order failed:', orderError);
-      } else {
-        const orderData = orderDataRaw as { id: string } | null;
-        orderId = orderData ? String(orderData.id) : null;
-
-        // Create sales_order_items
-        const orderItems = items.map(item => ({
-          sales_order_id: orderId,
-          product_id: item.product_id,
-          quantity: item.quantity,
-          unit_price_ht: Math.round((item.price_ttc / 1.2) * 100) / 100,
-          tax_rate: 0.2,
-        }));
-
-        const { error: itemsError } = await supabase
-          .from('sales_order_items')
-          .insert(orderItems);
-
-        if (itemsError) {
-          console.error('[Checkout] Order items creation failed:', itemsError);
-        }
-
-        console.warn('[Checkout] Pre-created draft order:', orderNumber);
-
-        // Ambassador attribution: check if the discount code belongs to an ambassador
-        if (orderId && discount?.code) {
-          const { data: ambassadorCode } = await supabase
-            .from('ambassador_codes')
-            .select('id, ambassador_id, code')
-            .eq('code', discount.code.toUpperCase())
-            .eq('is_active', true)
-            .single();
-
-          if (ambassadorCode) {
-            const ambCode = ambassadorCode as {
-              id: string;
-              ambassador_id: string;
-              code: string;
-            };
-            // Fetch ambassador commission rate
-            const { data: ambassador } = await supabase
-              .from('site_ambassadors')
-              .select('id, commission_rate')
-              .eq('id', ambCode.ambassador_id)
-              .eq('is_active', true)
-              .single();
-
-            if (ambassador) {
-              const amb = ambassador as { id: string; commission_rate: number };
-              const orderHt = Math.round((finalTtc / 1.2) * 100) / 100;
-              const primeAmount =
-                Math.round(
-                  orderHt * (Number(amb.commission_rate) / 100) * 100
-                ) / 100;
-              const validationDate = new Date();
-              validationDate.setDate(validationDate.getDate() + 30);
-
-              const { error: attrError } = await supabase
-                .from('ambassador_attributions')
-                .insert({
-                  order_id: orderId,
-                  ambassador_id: amb.id,
-                  code_id: ambCode.id,
-                  order_total_ht: orderHt,
-                  commission_rate: Number(ambassador.commission_rate),
-                  prime_amount: primeAmount,
-                  status: 'pending',
-                  validation_date: validationDate.toISOString(),
-                  attribution_method: 'coupon_code',
-                });
-
-              if (attrError) {
-                // Non-blocking: log but don't fail the checkout
-                console.error(
-                  '[Checkout] Ambassador attribution failed:',
-                  attrError
-                );
-              } else {
-                console.warn(
-                  `[Checkout] Ambassador attribution created: ${ambCode.code} → ${primeAmount} EUR`
-                );
-              }
-            }
-          }
-        }
+      // Ambassador attribution (non-blocking)
+      if (orderId && discount?.code) {
+        await createAmbassadorAttribution(
+          orderId,
+          discount.code,
+          finalTtc,
+          supabaseUrl,
+          supabaseServiceKey
+        );
       }
     }
 
@@ -548,7 +124,6 @@ export async function POST(request: Request) {
           (item.include_assembly ? item.assembly_price : 0)) *
           100
       );
-
       return {
         price_data: {
           currency: 'eur',
@@ -564,7 +139,6 @@ export async function POST(request: Request) {
       };
     });
 
-    // Calculate subtotal in cents for shipping threshold
     const subtotalCents = items.reduce(
       (sum, item) =>
         sum +
@@ -578,29 +152,14 @@ export async function POST(request: Request) {
       0
     );
 
-    // Fetch product shipping estimates for per-product shipping calculation
+    // Fetch product shipping estimates
     let maxProductShippingCents = 0;
     if (supabaseUrl && supabaseServiceKey) {
-      const supabaseForShipping = createClient(supabaseUrl, supabaseServiceKey);
-      const productIds = items.map(item => item.product_id);
-      const { data: productsData } = await supabaseForShipping
-        .from('products')
-        .select('id, shipping_cost_estimate')
-        .in('id', productIds);
-
-      if (productsData) {
-        const estimates = (
-          productsData as Array<{
-            id: string;
-            shipping_cost_estimate: number | null;
-          }>
-        )
-          .filter(p => p.shipping_cost_estimate != null)
-          .map(p => Math.round((p.shipping_cost_estimate ?? 0) * 100));
-        if (estimates.length > 0) {
-          maxProductShippingCents = Math.max(...estimates);
-        }
-      }
+      maxProductShippingCents = await fetchMaxProductShippingCents(
+        items.map(item => item.product_id),
+        supabaseUrl,
+        supabaseServiceKey
+      );
     }
 
     const shippingOptions = buildShippingOptions(
@@ -615,22 +174,27 @@ export async function POST(request: Request) {
     let stripeCouponId: string | undefined;
     if (discount && discount.discount_amount > 0) {
       if (discount.discount_type === 'free_shipping') {
-        // Free shipping is handled by shipping_options — no Stripe coupon needed
+        // Free shipping handled by shipping_options — no Stripe coupon needed
       } else if (discount.discount_type === 'percentage') {
-        const coupon = await stripe.coupons.create({
-          percent_off: discount.discount_value,
-          duration: 'once',
-          name: discount.code ?? 'Promotion',
-        });
+        const coupon = await stripe.coupons.create(
+          {
+            percent_off: discount.discount_value,
+            duration: 'once',
+            name: discount.code ?? 'Promotion',
+          },
+          { idempotencyKey: `coupon_pct_${discount.discount_id}` }
+        );
         stripeCouponId = coupon.id;
       } else {
-        // fixed_amount
-        const coupon = await stripe.coupons.create({
-          amount_off: Math.round(discount.discount_amount * 100),
-          currency: 'eur',
-          duration: 'once',
-          name: discount.code ?? 'Promotion',
-        });
+        const coupon = await stripe.coupons.create(
+          {
+            amount_off: Math.round(discount.discount_amount * 100),
+            currency: 'eur',
+            duration: 'once',
+            name: discount.code ?? 'Promotion',
+          },
+          { idempotencyKey: `coupon_amt_${discount.discount_id}` }
+        );
         stripeCouponId = coupon.id;
       }
     }
