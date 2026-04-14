@@ -329,6 +329,7 @@ export async function POST(request: NextRequest) {
         supplier_reference: input.supplier_reference ?? null,
         brand: input.brand ?? null,
         product_status: 'draft' as const,
+        creation_mode: 'sourcing',
         sourcing_status: 'supplier_search',
         sourcing_priority: 'medium',
         cost_price: input.cost_price ?? null,
