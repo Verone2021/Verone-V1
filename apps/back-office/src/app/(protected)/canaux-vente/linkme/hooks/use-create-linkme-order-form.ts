@@ -157,7 +157,7 @@ export function useCreateLinkMeOrderForm({
         deliverySameAsBillingAddress: false,
       });
     }
-  }, [isOpen, preselectedAffiliateId]);
+  }, [isOpen, preselectedAffiliateId, resetNewCustomerForm]);
 
   useEffect(() => {
     setSelectedAffiliateId('');
