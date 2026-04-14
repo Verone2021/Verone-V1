@@ -33,34 +33,12 @@ import { Loader2, Info, Package } from 'lucide-react';
 
 import { useDraftPurchaseOrder } from '@verone/orders/hooks';
 
-export interface QuickPurchaseOrderModalProps {
-  open: boolean;
-  onClose: () => void;
-  productId: string;
-  shortageQuantity?: number; // Quantité minimale à commander (écart stock)
-  onSuccess?: () => void;
-}
-
-interface ProductData {
-  id: string;
-  name: string;
-  sku: string;
-  supplier_id: string;
-  cost_price: number;
-  supplier_moq: number; // ✅ Phase 2.5: Minimum Order Quantity fournisseur
-  eco_tax_default: number; // ✅ Taxe éco-responsable par défaut
-  primary_image_url?: string;
-  supplier?: {
-    id: string;
-    legal_name: string;
-  };
-}
-
-interface DraftOrderInfo {
-  exists: boolean;
-  po_number?: string;
-  order_id?: string;
-}
+export type { QuickPurchaseOrderModalProps } from './quick-po-types';
+import type {
+  DraftOrderInfo,
+  ProductData,
+  QuickPurchaseOrderModalProps,
+} from './quick-po-types';
 
 export function QuickPurchaseOrderModal({
   open,
