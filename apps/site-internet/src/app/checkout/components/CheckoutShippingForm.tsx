@@ -1,6 +1,6 @@
 'use client';
 
-import { CreditCard, Lock, Package, Shield, Truck } from 'lucide-react';
+import { CreditCard, Lock, Package, Shield } from 'lucide-react';
 
 import { formatPrice } from '@verone/utils';
 
