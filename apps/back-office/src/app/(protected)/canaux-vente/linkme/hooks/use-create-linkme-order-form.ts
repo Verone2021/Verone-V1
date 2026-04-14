@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -13,37 +12,23 @@ import {
   useCreateEnseigneOrganisation,
   useCreateEnseigneIndividualCustomer,
 } from './use-linkme-enseigne-customers';
-import {
-  useCreateLinkMeOrder,
-  type CreateLinkMeOrderInput,
-  type LinkMeOrderItemInput,
-  type LinkMeDetailsInput,
-} from './use-linkme-orders';
+import { useCreateLinkMeOrder } from './use-linkme-orders';
 import {
   useLinkMeSelection,
   type SelectionItem,
 } from './use-linkme-selections';
 import type { ContactsAddressesData } from '../components/contacts';
-import { buildLinkMeDetails } from '../utils/build-linkme-details';
+import {
+  buildCartItemFromSelection,
+  computeCartTotals,
+  buildOrderInput,
+  type CustomerType,
+  type AffiliateSelection,
+  type CartItem,
+} from './create-order-form-helpers';
+import { useNewCustomerForm } from './use-new-customer-form';
 
-// ---- Types ----
-
-export type CustomerType = 'organization' | 'individual';
-
-export type AffiliateSelection = {
-  id: string;
-  name: string;
-  slug: string;
-  products_count: number | null;
-  archived_at: string | null;
-};
-
-export interface CartItem extends LinkMeOrderItemInput {
-  id: string;
-  tax_rate: number;
-  is_affiliate_product: boolean;
-  affiliate_commission_rate: number;
-}
+export type { CustomerType, AffiliateSelection, CartItem };
 
 // ---- Hook ----
 
@@ -74,10 +59,7 @@ export function useCreateLinkMeOrderForm({
     useState<CustomerType>('organization');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
 
-  // Panier
   const [cart, setCart] = useState<CartItem[]>([]);
-
-  // Frais additionnels
   const [shippingCostHt, setShippingCostHt] = useState<number>(0);
   const [handlingCostHt, setHandlingCostHt] = useState<number>(0);
   const [insuranceCostHt, setInsuranceCostHt] = useState<number>(0);
@@ -101,17 +83,29 @@ export function useCreateLinkMeOrderForm({
   const [previewSelectionId, setPreviewSelectionId] = useState<string | null>(
     null
   );
-  const [newCustomerName, setNewCustomerName] = useState('');
-  const [newCustomerFirstName, setNewCustomerFirstName] = useState('');
-  const [newCustomerLastName, setNewCustomerLastName] = useState('');
-  const [newCustomerEmail, setNewCustomerEmail] = useState('');
-  const [newCustomerPhone, setNewCustomerPhone] = useState('');
-  const [newOrgOwnershipType, setNewOrgOwnershipType] = useState<
-    'succursale' | 'franchise' | null
-  >(null);
-  const [newOrgAddress, setNewOrgAddress] = useState('');
-  const [newOrgPostalCode, setNewOrgPostalCode] = useState('');
-  const [newOrgCity, setNewOrgCity] = useState('');
+
+  // Formulaire nouveau client
+  const {
+    newCustomerName,
+    setNewCustomerName,
+    newCustomerFirstName,
+    setNewCustomerFirstName,
+    newCustomerLastName,
+    setNewCustomerLastName,
+    newCustomerEmail,
+    setNewCustomerEmail,
+    newCustomerPhone,
+    setNewCustomerPhone,
+    newOrgOwnershipType,
+    setNewOrgOwnershipType,
+    newOrgAddress,
+    setNewOrgAddress,
+    newOrgPostalCode,
+    setNewOrgPostalCode,
+    newOrgCity,
+    setNewOrgCity,
+    resetNewCustomerForm,
+  } = useNewCustomerForm();
 
   // Contacts & Addresses
   const [contactsAddressesData, setContactsAddressesData] =
@@ -164,15 +158,7 @@ export function useCreateLinkMeOrderForm({
       setSearchQuery('');
       setInternalNotes('');
       setShowCreateForm(false);
-      setNewCustomerName('');
-      setNewCustomerFirstName('');
-      setNewCustomerLastName('');
-      setNewCustomerEmail('');
-      setNewCustomerPhone('');
-      setNewOrgOwnershipType(null);
-      setNewOrgAddress('');
-      setNewOrgPostalCode('');
-      setNewOrgCity('');
+      resetNewCustomerForm();
       setContactsAddressesData({
         billingContact: null,
         billingAddress: null,
@@ -265,49 +251,19 @@ export function useCreateLinkMeOrderForm({
     });
   }, [selectionDetails?.items, productSearchQuery, selectedSubcategoryId]);
 
-  const cartTotals = useMemo(() => {
-    const roundMoney = (value: number): number => Math.round(value * 100) / 100;
+  const cartTotals = useMemo(
+    () =>
+      computeCartTotals(
+        cart,
+        shippingCostHt,
+        handlingCostHt,
+        insuranceCostHt,
+        fraisTaxRate
+      ),
+    [cart, shippingCostHt, handlingCostHt, insuranceCostHt, fraisTaxRate]
+  );
 
-    let productsHt = 0;
-    let totalTva = 0;
-    let totalRetrocession = 0;
-
-    for (const item of cart) {
-      const lineHt = roundMoney(item.quantity * item.unit_price_ht);
-      const lineTva = roundMoney(lineHt * (item.tax_rate ?? 0.2));
-      productsHt = roundMoney(productsHt + lineHt);
-      totalTva = roundMoney(totalTva + lineTva);
-      if (item.is_affiliate_product) {
-        totalRetrocession = roundMoney(
-          totalRetrocession +
-            item.quantity * item.unit_price_ht * item.affiliate_commission_rate
-        );
-      } else {
-        totalRetrocession = roundMoney(
-          totalRetrocession +
-            (item.unit_price_ht - item.base_price_ht) * item.quantity
-        );
-      }
-    }
-
-    const totalFrais = roundMoney(
-      shippingCostHt + handlingCostHt + insuranceCostHt
-    );
-    const totalHt = roundMoney(productsHt + totalFrais);
-    const totalTvaFrais = roundMoney(totalFrais * fraisTaxRate);
-    const totalTtc = roundMoney(totalHt + totalTva + totalTvaFrais);
-
-    return {
-      productsHt,
-      totalFrais,
-      totalHt,
-      totalTva: roundMoney(totalTva + totalTvaFrais),
-      totalTtc,
-      totalRetrocession,
-    };
-  }, [cart, shippingCostHt, handlingCostHt, insuranceCostHt, fraisTaxRate]);
-
-  // ---- Handlers ----
+  // Handlers
   const handleCreateCustomer = async () => {
     const hasEnseigne = !!selectedAffiliate?.enseigne_id;
     const hasOrganisation = !!selectedAffiliate?.organisation_id;
@@ -353,23 +309,13 @@ export function useCreateLinkMeOrderForm({
         customers.refetch();
       }
       setShowCreateForm(false);
-      setNewCustomerName('');
-      setNewCustomerFirstName('');
-      setNewCustomerLastName('');
-      setNewCustomerEmail('');
-      setNewCustomerPhone('');
-      setNewOrgOwnershipType(null);
-      setNewOrgAddress('');
-      setNewOrgPostalCode('');
-      setNewOrgCity('');
+      resetNewCustomerForm();
     } catch (error) {
       console.error('Erreur création client:', error);
     }
   };
 
   const addProductFromSelection = (item: SelectionItem) => {
-    const roundMoney = (value: number): number => Math.round(value * 100) / 100;
-
     const existing = cart.find(c => c.product_id === item.product_id);
     if (existing) {
       setCart(prev =>
@@ -381,54 +327,7 @@ export function useCreateLinkMeOrderForm({
       );
       return;
     }
-
-    const isAffiliateProduct = !!item.product?.created_by_affiliate;
-
-    let newItem: CartItem;
-
-    if (isAffiliateProduct) {
-      const affiliateCommRate =
-        (item.product?.affiliate_commission_rate ?? 0) / 100;
-      const sellingPrice = item.selling_price_ht ?? item.base_price_ht;
-
-      newItem = {
-        id: `${item.product_id}-${Date.now()}`,
-        product_id: item.product_id,
-        product_name: item.product?.name ?? 'Produit inconnu',
-        sku: item.product?.sku ?? '',
-        quantity: 1,
-        unit_price_ht: sellingPrice,
-        tax_rate: 0.2,
-        base_price_ht: item.base_price_ht,
-        retrocession_rate: affiliateCommRate,
-        linkme_selection_item_id: item.id,
-        is_affiliate_product: true,
-        affiliate_commission_rate: affiliateCommRate,
-      };
-    } else {
-      const marginRate = item.margin_rate / 100;
-      const sellingPrice = roundMoney(
-        item.selling_price_ht ?? item.base_price_ht * (1 + marginRate)
-      );
-      const retrocessionRate = marginRate;
-
-      newItem = {
-        id: `${item.product_id}-${Date.now()}`,
-        product_id: item.product_id,
-        product_name: item.product?.name ?? 'Produit inconnu',
-        sku: item.product?.sku ?? '',
-        quantity: 1,
-        unit_price_ht: sellingPrice,
-        tax_rate: 0.2,
-        base_price_ht: item.base_price_ht,
-        retrocession_rate: retrocessionRate,
-        linkme_selection_item_id: item.id,
-        is_affiliate_product: false,
-        affiliate_commission_rate: 0,
-      };
-    }
-
-    setCart(prev => [...prev, newItem]);
+    setCart(prev => [...prev, buildCartItemFromSelection(item)]);
   };
 
   const updateQuantity = (itemId: string, delta: number) => {
@@ -437,15 +336,14 @@ export function useCreateLinkMeOrderForm({
         prev
           .map(item => {
             if (item.id === itemId) {
-              const newQty = Math.max(0, item.quantity + delta);
-              return newQty === 0 ? null : { ...item, quantity: newQty };
+              const q = Math.max(0, item.quantity + delta);
+              return q === 0 ? null : { ...item, quantity: q };
             }
             return item;
           })
           .filter(Boolean) as CartItem[]
     );
   };
-
   const updateUnitPrice = (itemId: string, newPrice: number) => {
     if (newPrice < 0 || isNaN(newPrice)) return;
     setCart(prev =>
@@ -456,7 +354,6 @@ export function useCreateLinkMeOrderForm({
       )
     );
   };
-
   const updateRetrocessionRate = (itemId: string, newRatePercent: number) => {
     if (newRatePercent < 0 || newRatePercent > 100 || isNaN(newRatePercent))
       return;
@@ -467,7 +364,6 @@ export function useCreateLinkMeOrderForm({
       )
     );
   };
-
   const updateCommissionRate = (itemId: string, newRatePercent: number) => {
     if (newRatePercent < 0 || newRatePercent > 100 || isNaN(newRatePercent))
       return;
@@ -498,75 +394,21 @@ export function useCreateLinkMeOrderForm({
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
-
-    const input: CreateLinkMeOrderInput = {
-      customer_type: customerType,
-      customer_organisation_id:
-        customerType === 'organization' ? selectedCustomerId : null,
-      individual_customer_id:
-        customerType === 'individual' ? selectedCustomerId : null,
-      affiliate_id: selectedAffiliateId,
-      items: cart.map(item => ({
-        product_id: item.product_id,
-        product_name: item.product_name,
-        sku: item.sku,
-        quantity: item.quantity,
-        unit_price_ht: item.unit_price_ht,
-        tax_rate: item.tax_rate ?? 0.2,
-        base_price_ht: item.base_price_ht,
-        retrocession_rate: item.is_affiliate_product
-          ? item.affiliate_commission_rate
-          : item.retrocession_rate,
-        linkme_selection_item_id: item.linkme_selection_item_id,
-        is_affiliate_product: item.is_affiliate_product,
-      })),
-      order_date: orderDate,
-      internal_notes: internalNotes ?? undefined,
-      shipping_cost_ht: shippingCostHt ?? 0,
-      handling_cost_ht: handlingCostHt ?? 0,
-      insurance_cost_ht: insuranceCostHt ?? 0,
-      frais_tax_rate: fraisTaxRate,
-      linkme_selection_id: selectedSelectionId || null,
-      responsable_contact_id: contactsAddressesData.billingContact?.id ?? null,
-      billing_contact_id: contactsAddressesData.billingContact?.id ?? null,
-      delivery_contact_id: contactsAddressesData.deliverySameAsBillingContact
-        ? (contactsAddressesData.billingContact?.id ?? null)
-        : (contactsAddressesData.deliveryContact?.id ?? null),
-      billing_address: contactsAddressesData.billingAddress?.customAddress
-        ? {
-            address_line1:
-              contactsAddressesData.billingAddress.customAddress.addressLine1,
-            city: contactsAddressesData.billingAddress.customAddress.city,
-            postal_code:
-              contactsAddressesData.billingAddress.customAddress.postalCode,
-            country:
-              contactsAddressesData.billingAddress.customAddress.country ??
-              'FR',
-          }
-        : undefined,
-      shipping_address: (() => {
-        const deliveryAddr = contactsAddressesData.deliverySameAsBillingAddress
-          ? contactsAddressesData.billingAddress
-          : contactsAddressesData.deliveryAddress;
-        if (!deliveryAddr?.customAddress) return undefined;
-        return {
-          address_line1: deliveryAddr.customAddress.addressLine1,
-          city: deliveryAddr.customAddress.city,
-          postal_code: deliveryAddr.customAddress.postalCode,
-          country: deliveryAddr.customAddress.country ?? 'FR',
-        };
-      })(),
-      linkme_details: (() => {
-        const contactDetails = buildLinkMeDetails(contactsAddressesData);
-        if (!contactDetails) return null;
-        const details: LinkMeDetailsInput = {
-          ...contactDetails,
-        };
-        return details;
-      })(),
-    };
-
     try {
+      const input = buildOrderInput({
+        customerType,
+        selectedCustomerId,
+        selectedAffiliateId,
+        cart,
+        orderDate,
+        internalNotes,
+        shippingCostHt,
+        handlingCostHt,
+        insuranceCostHt,
+        fraisTaxRate,
+        selectedSelectionId,
+        contactsAddressesData,
+      });
       await createOrder.mutateAsync(input);
       onClose();
     } catch (error) {
@@ -575,7 +417,6 @@ export function useCreateLinkMeOrderForm({
   };
 
   return {
-    // State
     affiliateType,
     setAffiliateType,
     selectedAffiliateId,

@@ -8,7 +8,6 @@ import {
   CardTitle,
   Badge,
   ErrorStateCard,
-  ButtonV2,
 } from '@verone/ui';
 import { Loader2, CheckCircle2, Settings } from 'lucide-react';
 
