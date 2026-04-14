@@ -10,129 +10,34 @@
 
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 
-import type {
-  QontoTransaction,
-  QontoTransactionSide,
-} from '@verone/integrations/qonto';
+import type { QontoTransaction } from '@verone/integrations/qonto';
 import { QontoClient } from '@verone/integrations/qonto';
 import { createAdminClient } from '@verone/utils/supabase/server';
 
-// =====================================================================
-// TYPES
-// =====================================================================
+export type { QontoTransaction } from '@verone/integrations/qonto';
+export type { QontoTransactionSide } from '@verone/integrations/qonto';
 
-export type SyncType =
-  | 'transactions'
-  | 'client_invoices'
-  | 'attachments'
-  | 'labels'
-  | 'full';
+export type {
+  SyncType,
+  SyncRunStatus,
+  SyncResult,
+  SyncError,
+  SyncOptions,
+  SyncProgress,
+  LastSyncStatus,
+  TransactionDbData,
+} from './qonto-sync-types';
 
-export type SyncRunStatus =
-  | 'pending'
-  | 'running'
-  | 'completed'
-  | 'partial'
-  | 'failed'
-  | 'cancelled';
-
-export interface SyncResult {
-  success: boolean;
-  syncRunId: string;
-  status: SyncRunStatus;
-  itemsFetched: number;
-  itemsCreated: number;
-  itemsUpdated: number;
-  itemsSkipped: number;
-  itemsFailed: number;
-  durationMs: number;
-  errors: SyncError[];
-  cursor?: string;
-  message: string;
-}
-
-export interface SyncError {
-  transactionId?: string;
-  code: string;
-  message: string;
-  timestamp: string;
-}
-
-export interface SyncOptions {
-  /** Date de début pour la sync (défaut: 30 jours) */
-  since?: Date;
-  /** Sync complète depuis le début */
-  fullSync?: boolean;
-  /**
-   * Scope de synchronisation:
-   * - 'incremental': Sync depuis la dernière sync (défaut)
-   * - 'all': Sync TOUT l'historique depuis fromDate (backfill complet)
-   */
-  syncScope?: 'incremental' | 'all';
-  /** Date de début pour scope=all (défaut: 2022-01-01) */
-  fromDate?: string;
-  /** Nombre max de pages à traiter (défaut: 50, scope=all: 1000) */
-  maxPages?: number;
-  /** Nombre d'items par page (défaut: 100, max: 100) */
-  pageSize?: number;
-  /** Timeout en secondes (défaut: 300, scope=all: 900) */
-  timeoutSeconds?: number;
-  /** Créer automatiquement les expenses pour les débits */
-  autoCreateExpenses?: boolean;
-  /** Callback progression */
-  onProgress?: (progress: SyncProgress) => void;
-}
-
-export interface SyncProgress {
-  currentPage: number;
-  totalItems: number;
-  itemsProcessed: number;
-  status: 'fetching' | 'processing' | 'saving';
-}
-
-export interface LastSyncStatus {
-  syncRunId: string | null;
-  status: SyncRunStatus | null;
-  startedAt: string | null;
-  completedAt: string | null;
-  itemsFetched: number;
-  itemsCreated: number;
-  itemsUpdated: number;
-  durationMs: number;
-  hasActiveLock: boolean;
-}
-
-// Type interne pour les données de transaction en DB
-// Colonnes existantes dans bank_transactions
-interface TransactionDbData {
-  transaction_id: string;
-  bank_provider: 'qonto' | 'revolut';
-  bank_account_id: string;
-  amount: number;
-  currency: string;
-  side: QontoTransactionSide;
-  operation_type?: string;
-  label?: string;
-  note?: string;
-  reference?: string;
-  counterparty_name?: string;
-  counterparty_iban?: string;
-  emitted_at?: string;
-  settled_at?: string;
-  raw_data?: Record<string, unknown>;
-  // Pièces jointes - source unique
-  attachment_ids?: string[] | null;
-  updated_at?: string;
-  // TVA Qonto OCR (amount_vat is computed by trigger trg_calculate_ht_vat)
-  vat_rate?: number | null;
-  vat_source?: 'qonto_ocr' | 'manual' | null;
-  vat_breakdown?: Array<{
-    description: string;
-    amount_ht: number;
-    tva_rate: number;
-    tva_amount: number;
-  }> | null;
-}
+import {
+  type SyncType,
+  type SyncRunStatus,
+  type SyncResult,
+  type SyncError,
+  type SyncOptions,
+  type LastSyncStatus,
+  type TransactionDbData,
+  extractErrorMessage,
+} from './qonto-sync-types';
 
 // =====================================================================
 // SERVICE CLASS
@@ -146,7 +51,6 @@ export class QontoSyncService {
     if (qontoClient) {
       this.qontoClient = qontoClient;
     } else {
-      // Créer un client avec les variables d'environnement
       this.qontoClient = new QontoClient({
         authMode:
           (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') || 'oauth',
@@ -161,7 +65,6 @@ export class QontoSyncService {
    * Vérifie l'état de la dernière sync
    */
   async getLastSyncStatus(syncType: SyncType): Promise<LastSyncStatus> {
-    // NOTE: RPC non typée car la migration n'est pas encore appliquée aux types générés
     const { data, error } = (await (this.supabase.rpc as CallableFunction)(
       'get_last_sync_status',
       { p_sync_type: syncType }
@@ -200,10 +103,6 @@ export class QontoSyncService {
 
   /**
    * Sync manuelle des transactions Qonto → Database
-   *
-   * @param options.syncScope - 'incremental' (défaut) ou 'all' pour backfill complet
-   * @param options.fromDate - Date de début pour scope=all (défaut: '2022-01-01')
-   * @param options.autoCreateExpenses - Créer automatiquement les expenses pour débits
    */
   async syncTransactions(options: SyncOptions = {}): Promise<SyncResult> {
     const {
@@ -211,14 +110,13 @@ export class QontoSyncService {
       fullSync = false,
       syncScope = 'incremental',
       fromDate = '2022-01-01',
-      maxPages = syncScope === 'all' ? 1000 : 50, // Plus de pages pour backfill
+      maxPages = syncScope === 'all' ? 1000 : 50,
       pageSize = 100,
-      timeoutSeconds = syncScope === 'all' ? 900 : 300, // 15 min pour backfill
+      timeoutSeconds = syncScope === 'all' ? 900 : 300,
       autoCreateExpenses = true,
       onProgress,
     } = options;
 
-    // Log mode de sync
     console.warn(
       `[Qonto Sync] Starting sync: scope=${syncScope}, fromDate=${fromDate}, maxPages=${maxPages}`
     );
@@ -230,7 +128,6 @@ export class QontoSyncService {
 
     try {
       // 1. Acquérir le lock (anti-boucle)
-      // NOTE: RPC non typée car la migration n'est pas encore appliquée aux types générés
       const lockResult = (await (this.supabase.rpc as CallableFunction)(
         'acquire_sync_lock',
         {
@@ -267,10 +164,9 @@ export class QontoSyncService {
       lockToken = lockData.lock_token as string;
 
       // 2. Déterminer la date de début selon le mode
-      let syncFrom: Date | null = null; // null = pas de filtre date (scope=all sans limite)
+      let syncFrom: Date | null = null;
 
       if (syncScope === 'all') {
-        // Backfill complet depuis fromDate
         syncFrom = new Date(fromDate);
         console.warn(`[Qonto Sync] Backfill mode: syncing from ${fromDate}`);
       } else if (fullSync) {
@@ -278,7 +174,6 @@ export class QontoSyncService {
       } else if (since) {
         syncFrom = since;
       } else {
-        // Par défaut: dernière sync ou 30 jours
         const lastSync = await this.getLastSyncStatus('transactions');
         if (lastSync.completedAt) {
           syncFrom = new Date(lastSync.completedAt);
@@ -302,14 +197,11 @@ export class QontoSyncService {
       let totalSkipped = 0;
       let totalFailed = 0;
 
-      // Parcourir TOUS les comptes bancaires
       for (const account of bankAccounts) {
         let currentPage = 0;
-        // Compteurs par compte pour le logging
         const accountStats = { fetched: 0, created: 0, updated: 0, skipped: 0 };
 
         do {
-          // Notifier la progression
           onProgress?.({
             currentPage,
             totalItems: totalFetched,
@@ -317,18 +209,14 @@ export class QontoSyncService {
             status: 'fetching',
           });
 
-          // Récupérer une page de transactions (completed uniquement)
           const response = await this.qontoClient.getTransactions({
             bankAccountId: account.id,
             status: 'completed',
-            // Pour scope=all avec fromDate, on utilise updatedAtFrom
-            // Si syncFrom est null (pas de filtre), on ne passe pas le paramètre
             ...(syncFrom ? { updatedAtFrom: syncFrom.toISOString() } : {}),
             perPage: pageSize,
             currentPage: currentPage + 1,
           });
 
-          // getTransactions retourne QontoTransactionsResponse
           const transactions = response.transactions;
           totalFetched += transactions.length;
           accountStats.fetched += transactions.length;
@@ -340,7 +228,6 @@ export class QontoSyncService {
             status: 'processing',
           });
 
-          // Traiter chaque transaction
           for (const tx of transactions) {
             try {
               const result = await this.upsertTransaction(tx, account.id);
@@ -359,39 +246,20 @@ export class QontoSyncService {
               errors.push({
                 transactionId: tx.transaction_id,
                 code: 'UPSERT_ERROR',
-                message:
-                  err instanceof Error
-                    ? err.message
-                    : typeof err === 'object' &&
-                        err !== null &&
-                        'message' in err
-                      ? String((err as { message: unknown }).message)
-                      : 'Erreur inconnue',
+                message: extractErrorMessage(err),
                 timestamp: new Date().toISOString(),
               });
             }
           }
 
-          // Préparer la page suivante
           currentPage++;
 
-          // Vérifier les limites
-          if (transactions.length < pageSize) {
-            // Dernière page de ce compte atteinte
-            break;
-          }
-          if (currentPage >= maxPages) {
-            // Limite de pages atteinte pour ce compte
-            break;
-          }
-          if (Date.now() - startTime > timeoutSeconds * 1000) {
-            // Timeout
-            break;
-          }
+          if (transactions.length < pageSize) break;
+          if (currentPage >= maxPages) break;
+          if (Date.now() - startTime > timeoutSeconds * 1000) break;
           // eslint-disable-next-line no-constant-condition -- intentional infinite loop with break conditions above
         } while (true);
 
-        // Log par compte bancaire (observabilité)
         console.warn(
           `[Qonto Sync] Account ${account.name} (${account.id.slice(0, 8)}...):`,
           `fetched=${accountStats.fetched},`,
@@ -400,19 +268,12 @@ export class QontoSyncService {
           `skipped=${accountStats.skipped}`
         );
 
-        // Vérifier timeout global
-        if (Date.now() - startTime > timeoutSeconds * 1000) {
-          break;
-        }
+        if (Date.now() - startTime > timeoutSeconds * 1000) break;
       }
 
       // 5. Relâcher le lock avec succès
       const finalStatus: SyncRunStatus =
-        totalFailed > 0
-          ? 'partial'
-          : errors.length > 0
-            ? 'partial'
-            : 'completed';
+        totalFailed > 0 || errors.length > 0 ? 'partial' : 'completed';
 
       await (this.supabase.rpc as CallableFunction)('release_sync_lock', {
         p_sync_run_id: syncRunId,
@@ -435,12 +296,8 @@ export class QontoSyncService {
             'create_expenses_from_debits'
           )) as { data: number | null };
           expensesCreated = data ?? 0;
-          console.warn(
-            `[Qonto Sync] Auto-created ${expensesCreated} expenses for debit transactions`
-          );
         } catch (expenseErr) {
           console.error('[Qonto Sync] Error creating expenses:', expenseErr);
-          // Ne pas faire échouer la sync pour ça
         }
       }
 
@@ -461,7 +318,6 @@ export class QontoSyncService {
           (expensesCreated > 0 ? `, ${expensesCreated} expenses créées` : ''),
       };
     } catch (err) {
-      // Relâcher le lock en cas d'erreur
       if (syncRunId && lockToken) {
         await (this.supabase.rpc as CallableFunction)('release_sync_lock', {
           p_sync_run_id: syncRunId,
@@ -475,12 +331,7 @@ export class QontoSyncService {
           p_errors: JSON.stringify([
             {
               code: 'SYNC_ERROR',
-              message:
-                err instanceof Error
-                  ? err.message
-                  : typeof err === 'object' && err !== null && 'message' in err
-                    ? String((err as { message: unknown }).message)
-                    : 'Erreur inconnue',
+              message: extractErrorMessage(err),
               timestamp: new Date().toISOString(),
             },
           ]),
@@ -488,12 +339,7 @@ export class QontoSyncService {
         });
       }
 
-      const errMessage =
-        err instanceof Error
-          ? err.message
-          : typeof err === 'object' && err !== null && 'message' in err
-            ? String((err as { message: unknown }).message)
-            : 'Erreur de synchronisation';
+      const errMessage = extractErrorMessage(err);
 
       return {
         success: false,
@@ -524,26 +370,22 @@ export class QontoSyncService {
     tx: QontoTransaction,
     bankAccountId: string
   ): Promise<'created' | 'updated' | 'skipped'> {
-    // Vérifier si la transaction existe déjà
     const { data: existing } = await this.supabase
       .from('bank_transactions')
       .select('id, updated_at')
       .eq('transaction_id', tx.transaction_id)
       .single();
 
-    // Extraire vat_details de Qonto si disponible (OCR multi-TVA)
     let vat_breakdown: TransactionDbData['vat_breakdown'] = null;
     if (tx.vat_details?.items && tx.vat_details.items.length > 0) {
       vat_breakdown = tx.vat_details.items.map((item, idx) => ({
         description: `Ligne ${idx + 1}`,
-        amount_ht: 0, // Qonto ne fournit pas le HT
+        amount_ht: 0,
         tva_rate: item.rate,
         tva_amount: item.amount_cents / 100,
       }));
     }
 
-    // Déterminer la source de la TVA
-    // vat_rate = -1 signifie que Qonto n'a pas pu analyser (pas de justificatif ou OCR échoué)
     const hasQontoVat =
       tx.vat_rate !== undefined && tx.vat_rate !== null && tx.vat_rate !== -1;
 
@@ -563,18 +405,14 @@ export class QontoSyncService {
       emitted_at: tx.emitted_at,
       settled_at: tx.settled_at ?? undefined,
       raw_data: tx as unknown as Record<string, unknown>,
-      // Pièces jointes - SOURCE UNIQUE pour la colonne attachment_ids
       attachment_ids: tx.attachment_ids ?? null,
       updated_at: new Date().toISOString(),
-      // TVA Qonto OCR - stocker uniquement si valide (pas -1)
-      // amount_vat is computed by trigger trg_calculate_ht_vat from amount + vat_rate
       vat_rate: hasQontoVat ? tx.vat_rate : null,
       vat_source: hasQontoVat ? 'qonto_ocr' : null,
       vat_breakdown: hasQontoVat ? null : vat_breakdown,
     };
 
     if (existing) {
-      // Vérifier si mise à jour nécessaire
       const existingDate = new Date(existing.updated_at);
       const txDate = new Date(tx.updated_at || tx.emitted_at);
 
@@ -582,7 +420,6 @@ export class QontoSyncService {
         return 'skipped';
       }
 
-      // Update - cast as any car les types Supabase ne sont pas encore générés avec les nouvelles colonnes
       const { error } = await this.supabase
         .from('bank_transactions')
         .update(transactionData as never)
@@ -591,7 +428,6 @@ export class QontoSyncService {
       if (error) throw error;
       return 'updated';
     } else {
-      // Insert - cast as any car les types Supabase ne sont pas encore générés avec les nouvelles colonnes
       const { error } = await this.supabase
         .from('bank_transactions')
         .insert(transactionData as never);
@@ -626,6 +462,3 @@ export function getQontoSyncService(): QontoSyncService {
   syncServiceInstance ??= new QontoSyncService();
   return syncServiceInstance;
 }
-
-// Re-export des types Qonto utiles
-export type { QontoTransaction, QontoTransactionSide };
