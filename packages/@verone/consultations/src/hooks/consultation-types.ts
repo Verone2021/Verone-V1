@@ -1,0 +1,124 @@
+export interface ClientConsultation {
+  id: string;
+  enseigne_id?: string;
+  organisation_id?: string;
+  client_email: string;
+  client_phone?: string;
+  descriptif: string;
+  image_url?: string;
+  tarif_maximum?: number;
+  status: 'en_attente' | 'en_cours' | 'terminee' | 'annulee';
+  assigned_to?: string;
+  notes_internes?: string;
+  priority_level: number;
+  source_channel: 'website' | 'email' | 'phone' | 'other';
+  estimated_response_date?: string;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+  responded_at?: string;
+  responded_by?: string;
+  validated_at?: string;
+  validated_by?: string;
+  archived_at?: string;
+  archived_by?: string;
+  deleted_at?: string;
+  deleted_by?: string;
+  enseigne?: { id: string; name: string };
+  organisation?: { id: string; legal_name: string; trade_name?: string };
+}
+
+export interface ConsultationProduct {
+  id: string;
+  consultation_id: string;
+  product_id: string;
+  proposed_price?: number;
+  notes?: string;
+  is_primary_proposal: boolean;
+  quantity: number;
+  is_free: boolean;
+  created_at: string;
+  created_by?: string;
+  product?: {
+    id: string;
+    name: string;
+    sku: string;
+    requires_sample: boolean;
+    supplier_name?: string;
+  };
+}
+
+export interface ConsultationItem {
+  id: string;
+  consultation_id: string;
+  product_id: string;
+  quantity: number;
+  unit_price?: number;
+  is_free: boolean;
+  notes?: string;
+  created_at: string;
+  created_by?: string;
+  product?: {
+    id: string;
+    name: string;
+    sku: string;
+    requires_sample: boolean;
+    supplier_name?: string;
+    cost_price?: number;
+    image_url?: string | null;
+  };
+}
+
+export interface CreateConsultationData {
+  enseigne_id?: string;
+  organisation_id?: string;
+  client_email: string;
+  client_phone?: string;
+  descriptif: string;
+  image_url?: string;
+  tarif_maximum?: number;
+  priority_level?: number;
+  source_channel?: 'website' | 'email' | 'phone' | 'other';
+  estimated_response_date?: string;
+  images?: Array<{
+    publicUrl: string;
+    storagePath: string;
+    fileName: string;
+    fileSize: number;
+  }>;
+}
+
+export interface AssignProductData {
+  consultation_id: string;
+  product_id: string;
+  proposed_price?: number;
+  notes?: string;
+  is_primary_proposal?: boolean;
+  quantity?: number;
+  is_free?: boolean;
+}
+
+export interface CreateConsultationItemData {
+  consultation_id: string;
+  product_id: string;
+  quantity: number;
+  unit_price?: number;
+  is_free?: boolean;
+  notes?: string;
+}
+
+export interface UpdateConsultationItemData {
+  quantity?: number;
+  unit_price?: number;
+  is_free?: boolean;
+  notes?: string;
+}
+
+export interface ConsultationFilters {
+  status?: string;
+  assigned_to?: string;
+  priority_level?: number | 'all';
+  search_client?: string;
+  source_channel?: string;
+  date_range?: { start: string; end: string };
+}
