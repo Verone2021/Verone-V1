@@ -9,7 +9,7 @@ import { useEffect, useState, useCallback } from 'react';
 
 import Link from 'next/link';
 
-import { Package, Plus, Eye, Barcode, Euro, Box } from 'lucide-react';
+import { Package, Plus } from 'lucide-react';
 
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
