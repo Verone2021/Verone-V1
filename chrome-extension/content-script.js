@@ -31,29 +31,53 @@ function extractAlibabaProduct() {
     ? h1.textContent.trim()
     : document.title.split(' - ')[0].trim();
 
-  // Images produit — filtrer les vraies photos (ratio carre ou portrait, pas les banners)
-  const imgs = document.querySelectorAll('img[src*="alicdn"]');
-  const uniqueUrls = new Set();
-  imgs.forEach(img => {
-    const src = img.src || img.getAttribute('data-src');
-    if (!src || !src.includes('alicdn')) return;
-    // Exclure icones, logos, SVG, petites images
-    if (src.includes('icon') || src.includes('logo') || src.includes('svg'))
-      return;
-    if (src.includes('-tps-') && !src.includes('kf/')) return; // Exclure les images template Alibaba
-    const w = img.naturalWidth;
-    const h = img.naturalHeight;
-    if (w < 200 || h < 200) return;
-    // Exclure les banners (ratio > 2:1 = trop large pour etre une photo produit)
-    const ratio = w / h;
-    if (ratio > 2 || ratio < 0.3) return;
-    // Exclure les images du header/footer Alibaba
-    if (src.includes('imgextra') && (w > 1200 || h < 300)) return;
-    // Garder uniquement les photos produit (kf/ = hosted product images sur alicdn)
-    const hiRes = src.replace(/_\d+x\d+/, '').replace(/\.\d+x\d+\./, '.');
-    uniqueUrls.add(hiRes);
-  });
-  data.images = Array.from(uniqueUrls).slice(0, 10);
+  // Images produit — extraire depuis les scripts JSON embarques (source fiable)
+  // Alibaba stocke les URLs de la galerie produit dans le JS de la page
+  const galleryImages = [];
+  const scripts = document.querySelectorAll('script:not([src])');
+  const seenBases = new Set();
+  for (const script of scripts) {
+    const content = script.textContent;
+    // Chercher les URLs avec suffixe de taille (_120x120, _350x350, _50x50)
+    // Ces patterns indiquent les thumbnails de la galerie produit
+    const matches = content.match(
+      /["'](https?:\/\/[^"']*alicdn[^"']*kf\/[^"']*\.(jpg|png|jpeg)(?:_\d+x\d+\.\w+)?)/gi
+    );
+    if (matches) {
+      matches.forEach(m => {
+        const url = m.replace(/^["']/, '');
+        // Ne garder que les URLs avec suffixe de taille (= galerie produit, pas description)
+        if (!url.match(/_\d+x\d+\./)) return;
+        // Extraire la base de l'URL (sans le suffixe de taille)
+        const base = url.replace(/_\d+x\d+\.\w+$/, '');
+        if (seenBases.has(base)) return;
+        seenBases.add(base);
+        // Reconstruire l'URL en pleine resolution
+        galleryImages.push(base);
+      });
+    }
+  }
+
+  if (galleryImages.length > 0) {
+    data.images = galleryImages.slice(0, 10);
+  } else {
+    // Fallback : images DOM (moins fiable)
+    const imgs = document.querySelectorAll('img[src*="alicdn"]');
+    const uniqueUrls = new Set();
+    imgs.forEach(img => {
+      const src = img.src || '';
+      if (!src.includes('kf/')) return;
+      if (src.includes('icon') || src.includes('logo') || src.includes('svg'))
+        return;
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
+      if (w < 300 || h < 300) return;
+      const ratio = w / h;
+      if (ratio > 2 || ratio < 0.3) return;
+      uniqueUrls.add(src);
+    });
+    data.images = Array.from(uniqueUrls).slice(0, 10);
+  }
 
   // Prix — parser les paliers
   const priceElements = document.querySelectorAll('[class*="price"]');
