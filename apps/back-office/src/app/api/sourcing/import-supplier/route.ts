@@ -32,9 +32,13 @@ const ImportSupplierSchema = z.object({
 export async function POST(request: NextRequest) {
   const supabase = await createServerClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Auth — support cookies (navigateur) OU Bearer token (extension Chrome)
+  const authHeader = request.headers.get('Authorization');
+  const authResult = authHeader?.startsWith('Bearer ')
+    ? await supabase.auth.getUser(authHeader.slice(7))
+    : await supabase.auth.getUser();
+  const user = authResult.data.user;
+
   if (!user) {
     return NextResponse.json({ error: 'Non autorise' }, { status: 401 });
   }

@@ -7,6 +7,7 @@
 
 let extractedData = null;
 let imageSelections = {}; // url -> boolean
+let authToken = null; // Token Supabase pour l'API
 
 const statusEl = document.getElementById('status');
 const pageTypeEl = document.getElementById('page-type');
@@ -26,7 +27,37 @@ const backofficeUrl = document.getElementById('backoffice-url');
 // Init
 btnRefresh.addEventListener('click', extractFromPage);
 btnImport.addEventListener('click', doImport);
-extractFromPage();
+
+// Charger le token d'auth depuis le storage, puis extraire
+chrome.storage.local.get(['authToken', 'authExpires'], result => {
+  const now = Math.floor(Date.now() / 1000);
+  if (result.authToken && result.authExpires && result.authExpires > now) {
+    authToken = result.authToken;
+  }
+  extractFromPage();
+  // Rafraichir le token en arriere-plan
+  refreshAuthToken();
+});
+
+async function refreshAuthToken() {
+  const baseUrl = backofficeUrl.value.replace(/\/$/, '');
+  try {
+    const res = await fetch(baseUrl + '/api/sourcing/auth', {
+      credentials: 'include',
+    });
+    if (res.ok) {
+      const data = await res.json();
+      authToken = data.access_token;
+      chrome.storage.local.set({
+        authToken: data.access_token,
+        authExpires: data.expires_at,
+        authEmail: data.user_email,
+      });
+    }
+  } catch (_e) {
+    // Silencieux — le token existant sera utilise si disponible
+  }
+}
 
 // ============================================================
 // Extraction
@@ -407,6 +438,14 @@ function addSupplierField(id, label, value, checked) {
 async function doImport() {
   if (!extractedData) return;
 
+  if (!authToken) {
+    setStatus(
+      'error',
+      'Non connecte. Ouvrez votre back-office Verone dans un onglet, connectez-vous, puis revenez ici et cliquez "Reanalyser".'
+    );
+    return;
+  }
+
   btnImport.disabled = true;
   btnImport.textContent = 'Import en cours...';
   setStatus('detecting', 'Envoi vers Verone...');
@@ -430,9 +469,11 @@ async function doImport() {
         delivery_terms: extractedData.supplier?.delivery_terms,
       };
 
+      const headers = { 'Content-Type': 'application/json' };
+      if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
       const res = await fetch(baseUrl + '/api/sourcing/import-supplier', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         credentials: 'include',
         body: JSON.stringify(body),
       });
@@ -492,9 +533,11 @@ async function doImport() {
       };
     }
 
+    const importHeaders = { 'Content-Type': 'application/json' };
+    if (authToken) importHeaders['Authorization'] = 'Bearer ' + authToken;
     const res = await fetch(baseUrl + '/api/sourcing/import', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: importHeaders,
       credentials: 'include',
       body: JSON.stringify(body),
     });
