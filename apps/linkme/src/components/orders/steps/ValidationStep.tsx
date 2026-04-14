@@ -3,54 +3,37 @@
 /**
  * ValidationStep - Étape 7 du formulaire de commande
  *
- * Récapitulatif complet en sections accordéon :
- * 1. Restaurant
- * 2. Sélection utilisée
- * 3. Produits (liste résumée)
- * 4. Contacts
- * 5. Livraison
- * 6. Facturation (totaux)
+ * Récapitulatif en sections accordéon :
+ * Restaurant, Sélection, Produits, Contacts, Livraison, Totaux
  *
  * @module ValidationStep
  * @since 2026-01-20
+ * @updated 2026-04-14 - Refactoring: extraction sous-composants
  */
 
 import { useState } from 'react';
 
 import Image from 'next/image';
 
-import {
-  Card,
-  Checkbox,
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-  Label,
-  cn,
-} from '@verone/ui';
+import { Card, Checkbox, Label } from '@verone/ui';
 import {
   Store,
   ListChecks,
   Package,
-  Users,
   Truck,
-  Calculator,
-  ChevronDown,
   CheckCircle,
   MapPin,
-  User,
-  FileText,
   Calendar,
-  Coins,
   Loader2 as _Loader2,
 } from 'lucide-react';
-
-import { usePermissions } from '@/hooks/use-permissions';
 
 import type {
   OrderFormData,
   DeliveryStepData,
 } from '../schemas/order-form.schema';
+import { ValidationSectionWrapper } from './validation/ValidationSectionWrapper';
+import { ValidationContactsSection } from './validation/ValidationContactsSection';
+import { ValidationTotalsSection } from './validation/ValidationTotalsSection';
 
 // ============================================================================
 // TYPES
@@ -106,7 +89,6 @@ export function ValidationStep({
   onUpdateDelivery,
   isSubmitting: _isSubmitting,
 }: ValidationStepProps) {
-  const { canViewCommissions } = usePermissions();
   const [openSections, setOpenSections] = useState<string[]>([
     'restaurant',
     'products',
@@ -121,7 +103,6 @@ export function ValidationStep({
     );
   };
 
-  // Données du restaurant
   const restaurantName =
     formData.restaurant.mode === 'existing'
       ? formData.restaurant.existingName
@@ -148,451 +129,184 @@ export function ValidationStep({
               Récapitulatif de votre commande
             </h3>
             <p className="text-sm text-green-700 mt-1">
-              Vérifiez les informations ci-dessous avant de confirmer. Vous
-              pouvez revenir aux étapes précédentes pour modifier si nécessaire.
+              Vérifiez les informations ci-dessous avant de confirmer.
             </p>
           </div>
         </div>
       </div>
 
       {/* Section 1: Restaurant */}
-      <Collapsible
-        open={openSections.includes('restaurant')}
-        onOpenChange={() => toggleSection('restaurant')}
+      <ValidationSectionWrapper
+        sectionKey="restaurant"
+        title="Restaurant"
+        subtitle={restaurantName ?? undefined}
+        icon={Store}
+        iconBgClass="bg-blue-100"
+        iconColorClass="text-blue-600"
+        isOpen={openSections.includes('restaurant')}
+        onToggle={() => toggleSection('restaurant')}
       >
-        <Card className="overflow-hidden">
-          <CollapsibleTrigger asChild>
-            <button
-              type="button"
-              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm">
+            <Store className="h-4 w-4 text-gray-400" />
+            <span className="text-gray-600">Nom :</span>
+            <span className="font-medium">{restaurantName}</span>
+            <span
+              className={
+                restaurantType === 'succursale'
+                  ? 'ml-2 px-2 py-0.5 text-xs font-medium rounded bg-blue-100 text-blue-700'
+                  : 'ml-2 px-2 py-0.5 text-xs font-medium rounded bg-amber-100 text-amber-700'
+              }
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Store className="h-5 w-5 text-blue-600" />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-semibold text-gray-900">Restaurant</h3>
-                  <p className="text-sm text-gray-500">{restaurantName}</p>
-                </div>
-              </div>
-              <ChevronDown
-                className={cn(
-                  'h-5 w-5 text-gray-400 transition-transform',
-                  openSections.includes('restaurant') && 'rotate-180'
-                )}
-              />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="p-4 pt-0 border-t space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <Store className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-600">Nom :</span>
-                <span className="font-medium">{restaurantName}</span>
-                <span
-                  className={cn(
-                    'ml-2 px-2 py-0.5 text-xs font-medium rounded',
-                    restaurantType === 'succursale'
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'bg-amber-100 text-amber-700'
-                  )}
-                >
-                  {getOwnershipLabel(restaurantType ?? null)}
-                </span>
-              </div>
-              {restaurantCity && (
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-600">Ville :</span>
-                  <span className="font-medium">{restaurantCity}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-gray-500 text-xs">
-                  {formData.restaurant.mode === 'new'
-                    ? '(Nouveau restaurant à créer)'
-                    : '(Restaurant existant)'}
-                </span>
-              </div>
+              {getOwnershipLabel(restaurantType ?? null)}
+            </span>
+          </div>
+          {restaurantCity && (
+            <div className="flex items-center gap-2 text-sm">
+              <MapPin className="h-4 w-4 text-gray-400" />
+              <span className="text-gray-600">Ville :</span>
+              <span className="font-medium">{restaurantCity}</span>
             </div>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
+          )}
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-gray-500 text-xs">
+              {formData.restaurant.mode === 'new'
+                ? '(Nouveau restaurant à créer)'
+                : '(Restaurant existant)'}
+            </span>
+          </div>
+        </div>
+      </ValidationSectionWrapper>
 
       {/* Section 2: Sélection */}
-      <Collapsible
-        open={openSections.includes('selection')}
-        onOpenChange={() => toggleSection('selection')}
+      <ValidationSectionWrapper
+        sectionKey="selection"
+        title="Sélection"
+        subtitle={formData.selection.selectionName}
+        icon={ListChecks}
+        iconBgClass="bg-purple-100"
+        iconColorClass="text-purple-600"
+        isOpen={openSections.includes('selection')}
+        onToggle={() => toggleSection('selection')}
       >
-        <Card className="overflow-hidden">
-          <CollapsibleTrigger asChild>
-            <button
-              type="button"
-              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                  <ListChecks className="h-5 w-5 text-purple-600" />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-semibold text-gray-900">Sélection</h3>
-                  <p className="text-sm text-gray-500">
-                    {formData.selection.selectionName}
-                  </p>
-                </div>
-              </div>
-              <ChevronDown
-                className={cn(
-                  'h-5 w-5 text-gray-400 transition-transform',
-                  openSections.includes('selection') && 'rotate-180'
-                )}
-              />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="p-4 pt-0 border-t">
-              <div className="flex items-center gap-2 text-sm">
-                <Package className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-600">
-                  {formData.selection.productsCount} produits disponibles
-                </span>
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
+        <div className="flex items-center gap-2 text-sm">
+          <Package className="h-4 w-4 text-gray-400" />
+          <span className="text-gray-600">
+            {formData.selection.productsCount} produits disponibles
+          </span>
+        </div>
+      </ValidationSectionWrapper>
 
       {/* Section 3: Produits */}
-      <Collapsible
-        open={openSections.includes('products')}
-        onOpenChange={() => toggleSection('products')}
+      <ValidationSectionWrapper
+        sectionKey="products"
+        title="Produits"
+        subtitle={`${cartTotals.itemsCount} article${cartTotals.itemsCount > 1 ? 's' : ''} • ${formatCurrency(cartTotals.totalHT)} € HT`}
+        icon={Package}
+        iconBgClass="bg-linkme-turquoise/10"
+        iconColorClass="text-linkme-turquoise"
+        isOpen={openSections.includes('products')}
+        onToggle={() => toggleSection('products')}
       >
-        <Card className="overflow-hidden">
-          <CollapsibleTrigger asChild>
-            <button
-              type="button"
-              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+        <div className="space-y-3">
+          {formData.cart.items.map(item => (
+            <div
+              key={item.selectionItemId}
+              className="flex items-center gap-3 py-2 border-b last:border-b-0"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-linkme-turquoise/10 flex items-center justify-center">
-                  <Package className="h-5 w-5 text-linkme-turquoise" />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-semibold text-gray-900">Produits</h3>
-                  <p className="text-sm text-gray-500">
-                    {cartTotals.itemsCount} article
-                    {cartTotals.itemsCount > 1 ? 's' : ''} •{' '}
-                    {formatCurrency(cartTotals.totalHT)} € HT
-                  </p>
-                </div>
-              </div>
-              <ChevronDown
-                className={cn(
-                  'h-5 w-5 text-gray-400 transition-transform',
-                  openSections.includes('products') && 'rotate-180'
-                )}
-              />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="p-4 pt-0 border-t">
-              <div className="space-y-3">
-                {formData.cart.items.map(item => (
-                  <div
-                    key={item.selectionItemId}
-                    className="flex items-center gap-3 py-2 border-b last:border-b-0"
-                  >
-                    <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0 relative">
-                      {item.productImage ? (
-                        <Image
-                          src={item.productImage}
-                          alt={item.productName}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <Package className="h-6 w-6 text-gray-300" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 text-sm truncate">
-                        {item.productName}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {item.quantity} × {formatCurrency(item.unitPriceHt)} €
-                        HT
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-gray-900 text-sm">
-                        {formatCurrency(item.unitPriceHt * item.quantity)} €
-                      </p>
-                    </div>
+              <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0 relative">
+                {item.productImage ? (
+                  <Image
+                    src={item.productImage}
+                    alt={item.productName}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Package className="h-6 w-6 text-gray-300" />
                   </div>
-                ))}
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-gray-900 text-sm truncate">
+                  {item.productName}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {item.quantity} × {formatCurrency(item.unitPriceHt)} € HT
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="font-medium text-gray-900 text-sm">
+                  {formatCurrency(item.unitPriceHt * item.quantity)} €
+                </p>
               </div>
             </div>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
+          ))}
+        </div>
+      </ValidationSectionWrapper>
 
       {/* Section 4: Contacts */}
-      <Collapsible
-        open={openSections.includes('contacts')}
-        onOpenChange={() => toggleSection('contacts')}
-      >
-        <Card className="overflow-hidden">
-          <CollapsibleTrigger asChild>
-            <button
-              type="button"
-              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                  <Users className="h-5 w-5 text-amber-600" />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-semibold text-gray-900">Contacts</h3>
-                  <p className="text-sm text-gray-500">
-                    {formData.contacts.responsable.firstName
-                      ? `${formData.contacts.responsable.firstName} ${formData.contacts.responsable.lastName}`
-                      : 'Non renseigné'}
-                  </p>
-                </div>
-              </div>
-              <ChevronDown
-                className={cn(
-                  'h-5 w-5 text-gray-400 transition-transform',
-                  openSections.includes('contacts') && 'rotate-180'
-                )}
-              />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="p-4 pt-0 border-t space-y-4">
-              {/* Responsable */}
-              <div>
-                <div className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                  <User className="h-4 w-4" />
-                  Responsable
-                </div>
-                {formData.contacts.responsable.firstName ? (
-                  <p className="text-sm text-gray-600 ml-6">
-                    {formData.contacts.responsable.firstName}{' '}
-                    {formData.contacts.responsable.lastName}
-                    <br />
-                    {formData.contacts.responsable.email}
-                  </p>
-                ) : (
-                  <p className="text-sm text-gray-400 italic ml-6">
-                    Non renseigné — à compléter ultérieurement
-                  </p>
-                )}
-              </div>
-
-              {/* Facturation */}
-              <div>
-                <div className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                  <FileText className="h-4 w-4" />
-                  Facturation
-                </div>
-                {formData.contacts.billingContact?.mode ===
-                'same_as_responsable' ? (
-                  <p className="text-sm text-gray-600 ml-6">
-                    {formData.contacts.responsable.firstName
-                      ? 'Même contact que responsable'
-                      : 'Non renseigné'}
-                  </p>
-                ) : formData.contacts.billingContact?.contact?.firstName ? (
-                  <p className="text-sm text-gray-600 ml-6">
-                    {formData.contacts.billingContact.contact.firstName}{' '}
-                    {formData.contacts.billingContact.contact.lastName}
-                  </p>
-                ) : (
-                  <p className="text-sm text-gray-400 italic ml-6">
-                    Non renseigné — à compléter ultérieurement
-                  </p>
-                )}
-              </div>
-
-              {/* Livraison */}
-              <div>
-                <div className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                  <Truck className="h-4 w-4" />
-                  Livraison
-                </div>
-                {formData.contacts.delivery.sameAsResponsable ? (
-                  <p className="text-sm text-gray-600 ml-6">
-                    {formData.contacts.responsable.firstName
-                      ? 'Même contact que responsable'
-                      : 'Non renseigné'}
-                  </p>
-                ) : formData.contacts.delivery.contact?.firstName ? (
-                  <p className="text-sm text-gray-600 ml-6">
-                    {formData.contacts.delivery.contact.firstName}{' '}
-                    {formData.contacts.delivery.contact.lastName}
-                  </p>
-                ) : (
-                  <p className="text-sm text-gray-400 italic ml-6">
-                    Non renseigné — à compléter ultérieurement
-                  </p>
-                )}
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
+      <ValidationContactsSection
+        formData={formData}
+        isOpen={openSections.includes('contacts')}
+        onToggle={() => toggleSection('contacts')}
+      />
 
       {/* Section 5: Livraison */}
-      <Collapsible
-        open={openSections.includes('delivery')}
-        onOpenChange={() => toggleSection('delivery')}
+      <ValidationSectionWrapper
+        sectionKey="delivery"
+        title="Livraison"
+        subtitle={formData.delivery.city || 'Non renseigné'}
+        icon={Truck}
+        iconBgClass="bg-green-100"
+        iconColorClass="text-green-600"
+        isOpen={openSections.includes('delivery')}
+        onToggle={() => toggleSection('delivery')}
       >
-        <Card className="overflow-hidden">
-          <CollapsibleTrigger asChild>
-            <button
-              type="button"
-              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                  <Truck className="h-5 w-5 text-green-600" />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-semibold text-gray-900">Livraison</h3>
-                  <p className="text-sm text-gray-500">
-                    {formData.delivery.city || 'Non renseigné'}
-                  </p>
-                </div>
-              </div>
-              <ChevronDown
-                className={cn(
-                  'h-5 w-5 text-gray-400 transition-transform',
-                  openSections.includes('delivery') && 'rotate-180'
-                )}
-              />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="p-4 pt-0 border-t space-y-2">
-              {formData.delivery.address ? (
-                <div className="flex items-start gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-gray-900">{formData.delivery.address}</p>
-                    <p className="text-gray-600">
-                      {formData.delivery.postalCode} {formData.delivery.city}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-sm text-gray-400 italic">
-                  Adresse non renseignée — à compléter ultérieurement
+        <div className="space-y-2">
+          {formData.delivery.address ? (
+            <div className="flex items-start gap-2 text-sm">
+              <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
+              <div>
+                <p className="text-gray-900">{formData.delivery.address}</p>
+                <p className="text-gray-600">
+                  {formData.delivery.postalCode} {formData.delivery.city}
                 </p>
-              )}
-              {formData.delivery.desiredDate && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-600">Date souhaitée :</span>
-                  <span className="font-medium">
-                    {new Date(formData.delivery.desiredDate).toLocaleDateString(
-                      'fr-FR',
-                      {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                      }
-                    )}
-                  </span>
-                </div>
-              )}
-              {formData.delivery.isMallDelivery && (
-                <div className="text-sm text-amber-600 mt-2">
-                  Livraison en centre commercial
-                </div>
-              )}
+              </div>
             </div>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
+          ) : (
+            <p className="text-sm text-gray-400 italic">
+              Adresse non renseignée — à compléter ultérieurement
+            </p>
+          )}
+          {formData.delivery.desiredDate && (
+            <div className="flex items-center gap-2 text-sm">
+              <Calendar className="h-4 w-4 text-gray-400" />
+              <span className="text-gray-600">Date souhaitée :</span>
+              <span className="font-medium">
+                {new Date(formData.delivery.desiredDate).toLocaleDateString(
+                  'fr-FR',
+                  { day: 'numeric', month: 'long', year: 'numeric' }
+                )}
+              </span>
+            </div>
+          )}
+          {formData.delivery.isMallDelivery && (
+            <div className="text-sm text-amber-600 mt-2">
+              Livraison en centre commercial
+            </div>
+          )}
+        </div>
+      </ValidationSectionWrapper>
 
       {/* Section 6: Totaux */}
-      <Collapsible
-        open={openSections.includes('totals')}
-        onOpenChange={() => toggleSection('totals')}
-      >
-        <Card className="overflow-hidden border-2 border-linkme-turquoise/30">
-          <CollapsibleTrigger asChild>
-            <button
-              type="button"
-              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-linkme-turquoise/10 flex items-center justify-center">
-                  <Calculator className="h-5 w-5 text-linkme-turquoise" />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-semibold text-gray-900">Total</h3>
-                  <p className="text-lg font-bold text-linkme-turquoise">
-                    {formatCurrency(cartTotals.totalTTC)} € TTC
-                  </p>
-                </div>
-              </div>
-              <ChevronDown
-                className={cn(
-                  'h-5 w-5 text-gray-400 transition-transform',
-                  openSections.includes('totals') && 'rotate-180'
-                )}
-              />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="p-4 pt-0 border-t space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Total HT</span>
-                <span className="font-medium">
-                  {formatCurrency(cartTotals.totalHT)} €
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">
-                  {cartTotals.effectiveTaxRate === 0
-                    ? 'TVA (0%) - Export'
-                    : `TVA (${Math.round(cartTotals.effectiveTaxRate * 100)}%)`}
-                </span>
-                <span className="font-medium">
-                  {formatCurrency(cartTotals.totalTVA)} €
-                </span>
-              </div>
-              <div className="flex justify-between pt-2 border-t">
-                <span className="font-semibold">Total TTC</span>
-                <span className="text-xl font-bold">
-                  {formatCurrency(cartTotals.totalTTC)} €
-                </span>
-              </div>
-
-              {/* Commission */}
-              {canViewCommissions && (
-                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Coins className="h-5 w-5 text-green-600" />
-                      <span className="font-medium text-green-800">
-                        Votre commission
-                      </span>
-                    </div>
-                    <span className="text-lg font-bold text-green-700">
-                      +{formatCurrency(cartTotals.totalCommission)} € HT
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
+      <ValidationTotalsSection
+        cartTotals={cartTotals}
+        isOpen={openSections.includes('totals')}
+        onToggle={() => toggleSection('totals')}
+        formatCurrency={formatCurrency}
+      />
 
       {/* Conditions de livraison */}
       <Card className="p-5">
@@ -619,7 +333,6 @@ export function ValidationStep({
               </p>
             </div>
           </div>
-
           {!formData.delivery.deliveryTermsAccepted && (
             <p className="text-xs text-amber-600 ml-7">
               Vous devez accepter les conditions de livraison pour valider la
@@ -629,7 +342,7 @@ export function ValidationStep({
         </div>
       </Card>
 
-      {/* Info transport et surcouts */}
+      {/* Info transport */}
       <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <div className="flex items-start gap-3">
           <Truck className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
@@ -637,14 +350,7 @@ export function ValidationStep({
             <p className="font-medium">Frais de transport</p>
             <p className="mt-1">
               Le montant affich&#233; correspond uniquement aux produits. Les
-              frais de transport seront calcul&#233;s ult&#233;rieurement en
-              fonction de l&apos;accessibilit&#233; du lieu de r&#233;ception de
-              la marchandise.
-            </p>
-            <p className="mt-1 font-medium">
-              Veuillez imp&#233;rativement indiquer la date de livraison
-              souhait&#233;e. Sans cette information, il sera impossible
-              d&apos;&#233;tablir un devis pour le transport.
+              frais de transport seront calcul&#233;s ult&#233;rieurement.
             </p>
           </div>
         </div>
@@ -658,9 +364,7 @@ export function ValidationStep({
             <p className="font-medium">Prochaine &#233;tape</p>
             <p className="mt-1">
               Apr&#232;s validation, votre commande sera soumise &#224; notre
-              &#233;quipe pour approbation. Vous recevrez un email de
-              confirmation, puis un devis d&#233;taill&#233; incluant les frais
-              de transport vous sera adress&#233;.
+              &#233;quipe pour approbation.
             </p>
           </div>
         </div>

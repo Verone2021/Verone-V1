@@ -10,6 +10,7 @@
  *
  * @module useSubmitUnifiedOrder
  * @since 2026-01-11
+ * @updated 2026-04-14 - Refactoring: extraction helpers payload
  */
 
 import { useState, useCallback } from 'react';
@@ -30,6 +31,7 @@ import {
   clientDeliverySchema,
   clientExistingResponsableSchema,
 } from '@/components/orders/schemas/client-order-form.schema';
+import { buildNewRestaurantRpcParams } from './use-submit-unified-order-helpers';
 
 // =====================================================================
 // TYPES
@@ -83,7 +85,6 @@ export function useSubmitUnifiedOrder() {
         // CAS 1: Restaurant existant → draft + linkme_details
         // =============================================================
         if (!data.isNewRestaurant && data.existingOrganisationId) {
-          // Validation Zod avant soumission
           const requesterResult = clientRequesterSchema.safeParse(
             data.requester
           );
@@ -114,18 +115,14 @@ export function useSubmitUnifiedOrder() {
             quantity: item.quantity,
           }));
 
-          // Build linkme_details with all collected data
           const linkmeDetails = {
-            // Requester (Step 1)
             requester_type: 'responsable_enseigne',
             requester_name: data.requester.name,
             requester_email: data.requester.email,
             requester_phone: data.requester.phone || null,
             requester_position: data.requester.position || null,
             is_new_restaurant: false,
-            // Responsable (Step 3)
             owner_type: null,
-            // Billing (Step 4)
             billing_contact_source: data.billing.useParentOrganisation
               ? 'parent_organisation'
               : data.billing.contactSource || 'responsable',
@@ -141,7 +138,6 @@ export function useSubmitUnifiedOrder() {
               data.billing.contactSource === 'custom'
                 ? data.billing.phone || null
                 : data.responsable.phone || null,
-            // Delivery (Step 5)
             delivery_contact_name: data.delivery.useResponsableContact
               ? null
               : data.delivery.contactName || null,
@@ -192,7 +188,6 @@ export function useSubmitUnifiedOrder() {
             throw new Error(`Erreur création commande: ${rpcError.message}`);
           }
 
-          // RPC returns {order_id, order_number} as JSONB
           const rpcData = rpcResult as unknown as {
             order_id: string;
             order_number: string;
@@ -206,7 +201,7 @@ export function useSubmitUnifiedOrder() {
             orderNumber
           );
 
-          // Send confirmation email to requester (non-blocking)
+          // Send confirmation email (non-blocking)
           try {
             const { data: selectionData } = await supabase
               .from('linkme_selections')
@@ -249,23 +244,21 @@ export function useSubmitUnifiedOrder() {
                 .json()
                 .catch(() => null)) as { error?: string } | null;
               console.error(
-                '[useSubmitUnifiedOrder] Email confirmation HTTP error:',
+                '[useSubmitUnifiedOrder] Email HTTP error:',
                 emailResponse.status,
                 errorBody?.error ?? 'no details'
               );
             }
           } catch (emailError) {
-            console.error(
-              '[useSubmitUnifiedOrder] Email confirmation error:',
-              emailError
-            );
+            console.error('[useSubmitUnifiedOrder] Email error:', emailError);
             toast.warning(
               "Commande enregistrée, mais l'email de confirmation n'a pas pu être envoyé.",
-              { description: "Vous recevrez un email lors de l'approbation." }
+              {
+                description: "Vous recevrez un email lors de l'approbation.",
+              }
             );
           }
 
-          // Invalider les caches
           await queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
           await queryClient.invalidateQueries({
             queryKey: ['affiliate-orders', affiliateId],
@@ -287,7 +280,6 @@ export function useSubmitUnifiedOrder() {
         // CAS 2: Ouverture de restaurant → Validation requise
         // =============================================================
         if (data.isNewRestaurant) {
-          // Validation Zod avant soumission
           const requesterResult = clientRequesterSchema.safeParse(
             data.requester
           );
@@ -337,164 +329,17 @@ export function useSubmitUnifiedOrder() {
             }
           }
 
-          // Panier format RPC
-          const p_cart = cart.map(item => ({
-            product_id: item.product_id,
-            quantity: item.quantity,
-            selling_price_ttc: item.selling_price_ttc,
-            id: item.id,
-          }));
-
-          // Demandeur (Step 1)
-          const p_requester = {
-            type: 'responsable_enseigne',
-            name: data.requester.name,
-            email: data.requester.email,
-            phone: data.requester.phone ?? null,
-            position: data.requester.position ?? null,
-            notes: data.requester.notes ?? null,
-          };
-
-          // Organisation (Step 2)
-          const p_organisation = {
-            is_new: true,
-            trade_name: data.newRestaurant.tradeName,
-            legal_name:
-              data.newRestaurant.ownershipType === 'franchise'
-                ? data.responsable.companyLegalName
-                : data.newRestaurant.tradeName,
-            city: data.newRestaurant.city,
-            postal_code: data.newRestaurant.postalCode ?? null,
-            address: data.newRestaurant.address ?? null,
-            latitude: data.newRestaurant.latitude ?? null,
-            longitude: data.newRestaurant.longitude ?? null,
-            ownership_type: data.newRestaurant.ownershipType, // 'succursale' | 'franchise'
-            kbis_url: kbisUrl,
-          };
-
-          // Responsable (Step 3)
-          const p_responsable = data.isNewRestaurant
-            ? {
-                // Nouveau restaurant : créer nouveau contact
-                is_new: true,
-                name: data.responsable.name,
-                email: data.responsable.email,
-                phone: data.responsable.phone ?? null,
-                type: data.newRestaurant.ownershipType ?? null,
-                company_legal_name:
-                  data.newRestaurant.ownershipType === 'franchise'
-                    ? (data.responsable.companyLegalName ?? null)
-                    : null,
-                siret:
-                  data.newRestaurant.ownershipType === 'franchise'
-                    ? (data.responsable.siret ?? null)
-                    : null,
-              }
-            : data.existingContact.isNewContact
-              ? {
-                  // Restaurant existant + nouveau contact
-                  is_new: true,
-                  name: data.responsable.name,
-                  email: data.responsable.email,
-                  phone: data.responsable.phone ?? null,
-                  company_legal_name: null,
-                  siret: null,
-                }
-              : {
-                  // Restaurant existant + contact existant
-                  is_new: false,
-                  contact_id: data.existingContact.selectedContactId,
-                };
-
-          // Facturation (Step 4)
-          // useParentOrganisation only applies to succursales (propre), never franchises
-          const isFranchiseOrder =
-            data.newRestaurant?.ownershipType === 'franchise';
-          const useParent =
-            data.billing.useParentOrganisation && !isFranchiseOrder;
-          const p_billing = useParent
-            ? {
-                use_parent: true,
-                contact_source: null,
-                name: null,
-                email: null,
-                phone: null,
-                address: null,
-                postal_code: null,
-                city: null,
-                latitude: null,
-                longitude: null,
-                company_legal_name: null,
-                siret: null,
-              }
-            : {
-                use_parent: false,
-                contact_source:
-                  data.billing.contactSource === 'custom'
-                    ? ('custom' as const)
-                    : ('responsable' as const),
-                name:
-                  data.billing.contactSource === 'custom'
-                    ? data.billing.name
-                    : data.responsable.name,
-                email:
-                  data.billing.contactSource === 'custom'
-                    ? data.billing.email
-                    : data.responsable.email,
-                phone:
-                  data.billing.contactSource === 'custom'
-                    ? (data.billing.phone ?? null)
-                    : (data.responsable.phone ?? null),
-                address: data.billing.address ?? null,
-                postal_code: data.billing.postalCode ?? null,
-                city: data.billing.city ?? null,
-                latitude: data.billing.latitude ?? null,
-                longitude: data.billing.longitude ?? null,
-                company_legal_name: data.billing.companyLegalName ?? null,
-                siret: data.billing.siret ?? null,
-              };
-
-          // Livraison (Step 5)
-          const p_delivery = {
-            use_responsable_contact: data.delivery.useResponsableContact,
-            contact_name: data.delivery.useResponsableContact
-              ? null
-              : (data.delivery.contactName ?? null),
-            contact_email: data.delivery.useResponsableContact
-              ? null
-              : (data.delivery.contactEmail ?? null),
-            contact_phone: data.delivery.useResponsableContact
-              ? null
-              : (data.delivery.contactPhone ?? null),
-            address: data.delivery.address ?? null,
-            postal_code: data.delivery.postalCode ?? null,
-            city: data.delivery.city ?? null,
-            latitude: data.delivery.latitude ?? null,
-            longitude: data.delivery.longitude ?? null,
-            delivery_date: data.delivery.deliveryDate ?? null,
-            is_mall_delivery: data.delivery.isMallDelivery ?? false,
-            mall_email: data.delivery.isMallDelivery
-              ? (data.delivery.mallEmail ?? null)
-              : null,
-            access_form_required: data.delivery.accessFormRequired ?? false,
-            access_form_url: data.delivery.accessFormUrl ?? null,
-            semi_trailer_accessible:
-              data.delivery.semiTrailerAccessible !== false, // true par défaut
-            notes: data.delivery.notes ?? null,
-          };
+          const rpcParams = buildNewRestaurantRpcParams(
+            data,
+            affiliateId,
+            selectionId,
+            cart,
+            kbisUrl
+          );
 
           const { data: result, error: rpcError } = await supabase.rpc(
             'create_public_linkme_order',
-            {
-              p_affiliate_id: affiliateId,
-              p_selection_id: selectionId,
-              p_cart: p_cart,
-              p_requester: p_requester,
-              p_organisation: p_organisation,
-              p_owner: p_responsable,
-              p_billing: p_billing,
-              p_delivery: p_delivery,
-            }
+            rpcParams
           );
 
           if (rpcError) {
@@ -529,11 +374,8 @@ export function useSubmitUnifiedOrder() {
           try {
             interface SelectionWithAffiliate {
               name: string;
-              linkme_affiliates: {
-                name: string;
-              } | null;
+              linkme_affiliates: { name: string } | null;
             }
-
             const { data: selectionData } = await supabase
               .from('linkme_selections')
               .select('name, linkme_affiliates(name)')
@@ -551,9 +393,8 @@ export function useSubmitUnifiedOrder() {
                 requesterType: 'responsable_enseigne',
                 organisationName: data.newRestaurant.tradeName,
                 isNewRestaurant: true,
-                totalTtc: totalTtc,
+                totalTtc,
                 source: 'unified_form',
-
                 affiliateName: selectionData?.linkme_affiliates?.name,
                 selectionName: selectionData?.name,
               }),
@@ -572,7 +413,6 @@ export function useSubmitUnifiedOrder() {
             );
           }
 
-          // Invalider les caches
           await queryClient.invalidateQueries({ queryKey: ['linkme-orders'] });
           await queryClient.invalidateQueries({
             queryKey: ['affiliate-orders', affiliateId],
@@ -590,19 +430,13 @@ export function useSubmitUnifiedOrder() {
           };
         }
 
-        // Cas fallback (ne devrait pas arriver)
         throw new Error('Configuration invalide');
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : 'Erreur inconnue';
         setError(errorMessage);
-        toast.error('Erreur', {
-          description: errorMessage,
-        });
-        return {
-          success: false,
-          error: errorMessage,
-        };
+        toast.error('Erreur', { description: errorMessage });
+        return { success: false, error: errorMessage };
       } finally {
         setIsSubmitting(false);
       }
@@ -610,11 +444,7 @@ export function useSubmitUnifiedOrder() {
     [queryClient]
   );
 
-  return {
-    submitOrder,
-    isSubmitting,
-    error,
-  };
+  return { submitOrder, isSubmitting, error };
 }
 
 export default useSubmitUnifiedOrder;
