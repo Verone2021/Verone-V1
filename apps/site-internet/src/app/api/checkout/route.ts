@@ -176,19 +176,25 @@ export async function POST(request: Request) {
       if (discount.discount_type === 'free_shipping') {
         // Free shipping handled by shipping_options — no Stripe coupon needed
       } else if (discount.discount_type === 'percentage') {
-        const coupon = await stripe.coupons.create({
-          percent_off: discount.discount_value,
-          duration: 'once',
-          name: discount.code ?? 'Promotion',
-        });
+        const coupon = await stripe.coupons.create(
+          {
+            percent_off: discount.discount_value,
+            duration: 'once',
+            name: discount.code ?? 'Promotion',
+          },
+          { idempotencyKey: `coupon_pct_${discount.discount_id}` }
+        );
         stripeCouponId = coupon.id;
       } else {
-        const coupon = await stripe.coupons.create({
-          amount_off: Math.round(discount.discount_amount * 100),
-          currency: 'eur',
-          duration: 'once',
-          name: discount.code ?? 'Promotion',
-        });
+        const coupon = await stripe.coupons.create(
+          {
+            amount_off: Math.round(discount.discount_amount * 100),
+            currency: 'eur',
+            duration: 'once',
+            name: discount.code ?? 'Promotion',
+          },
+          { idempotencyKey: `coupon_amt_${discount.discount_id}` }
+        );
         stripeCouponId = coupon.id;
       }
     }
