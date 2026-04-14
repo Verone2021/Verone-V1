@@ -87,6 +87,26 @@ export default function SourcingProductDetailPage() {
   const currentStatus = product?.sourcing_status ?? 'need_identified';
   const visibleSections = getSectionsForStatus(currentStatus);
 
+  // Fallback photos sourcing quand pas d'images dans product_images
+  const sourcingPrimaryImage =
+    primaryImage ??
+    (notebook.photos.length > 0
+      ? {
+          id: notebook.photos[0].id,
+          public_url: notebook.photos[0].public_url,
+          alt_text: notebook.photos[0].caption,
+        }
+      : null);
+
+  const sourcingImages =
+    images.length > 0
+      ? images
+      : notebook.photos.map(p => ({
+          id: p.id,
+          public_url: p.public_url,
+          alt_text: p.caption,
+        }));
+
   const handleOrderSample = async () => {
     try {
       await orderSample(productId);
@@ -278,35 +298,13 @@ export default function SourcingProductDetailPage() {
         {/* Guide contextuel de l'etape en cours */}
         <SourcingStageGuide currentStatus={currentStatus} />
 
-        {/* Photos sourcing (images externes importees) */}
-        {notebook.photos.length > 0 && images.length === 0 && (
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">
-              Photos sourcing ({notebook.photos.length})
-            </h3>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {notebook.photos.map(photo => (
-                <img
-                  key={photo.id}
-                  src={photo.public_url ?? ''}
-                  alt={photo.caption ?? 'Photo sourcing'}
-                  className="h-32 w-32 object-cover rounded-lg border border-gray-200 shrink-0"
-                  onError={e => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Fiche produit - Editable inline */}
         <SourcingProductEditCard
           product={
             product as ComponentProps<typeof SourcingProductEditCard>['product']
           }
-          primaryImage={primaryImage || notebook.photos[0]?.public_url || null}
-          images={images}
+          primaryImage={sourcingPrimaryImage}
+          images={sourcingImages}
           imagesLoading={imagesLoading}
           onProductUpdate={async updates => {
             try {

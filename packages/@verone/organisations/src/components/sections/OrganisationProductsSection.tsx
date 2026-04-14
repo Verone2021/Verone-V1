@@ -167,8 +167,8 @@ export function OrganisationProductsSection({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="divide-y divide-gray-100">
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {products.map(product => {
               const isSourcing = product.product_status === 'draft';
               const detailUrl = isSourcing
@@ -176,68 +176,54 @@ export function OrganisationProductsSection({
                 : `/catalogue/${product.id}`;
 
               return (
-                <div
+                <Link
                   key={product.id}
-                  className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors"
+                  href={detailUrl}
+                  className="block border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
                 >
-                  {/* Image 64x64 */}
-                  <div className="h-16 w-16 bg-gray-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
+                  {/* Image */}
+                  <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
                     {product.image_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={product.image_url}
                         alt={product.name}
-                        className="h-16 w-16 object-cover"
+                        className="w-full h-full object-cover"
                         onError={e => {
                           (e.target as HTMLImageElement).style.display = 'none';
                         }}
                       />
                     ) : (
-                      <Package className="h-6 w-6 text-gray-400" />
+                      <Package className="h-8 w-8 text-gray-400" />
                     )}
                   </div>
 
                   {/* Infos */}
-                  <div className="flex-1 min-w-0">
-                    <Link
-                      href={detailUrl}
-                      className="text-sm font-medium text-black hover:underline block truncate max-w-[400px]"
+                  <div className="p-3 space-y-1">
+                    <p
+                      className="text-xs font-medium text-black truncate"
                       title={product.name}
                     >
                       {product.name}
-                    </Link>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Barcode className="h-3 w-3" />
-                        {product.sku}
-                      </span>
-                      {product.cost_price && (
-                        <span className="flex items-center gap-1">
-                          <Euro className="h-3 w-3" />
-                          {formatCurrency(product.cost_price)} HT
-                        </span>
+                    </p>
+                    <div className="flex items-center justify-between text-[10px] text-gray-500">
+                      <span>{product.sku}</span>
+                      {isSourcing && (
+                        <Badge
+                          variant="secondary"
+                          className="text-[9px] px-1 py-0"
+                        >
+                          Sourcing
+                        </Badge>
                       )}
-                      <span className="flex items-center gap-1">
-                        <Box className="h-3 w-3" />
-                        Stock: {product.stock_quantity ?? 0}
-                      </span>
                     </div>
-                  </div>
-
-                  {/* Badges */}
-                  <div className="flex items-center gap-2 shrink-0">
-                    {isSourcing && (
-                      <Badge variant="secondary" className="text-xs">
-                        Sourcing
-                      </Badge>
+                    {product.cost_price && (
+                      <p className="text-xs font-semibold text-black">
+                        {formatCurrency(product.cost_price)} HT
+                      </p>
                     )}
-                    <ButtonV2 variant="ghost" size="sm" asChild>
-                      <Link href={detailUrl}>
-                        <Eye className="h-4 w-4" />
-                      </Link>
-                    </ButtonV2>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
