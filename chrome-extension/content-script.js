@@ -205,6 +205,7 @@ function extractGenericProduct() {
     source_url: window.location.href,
     name: '',
     description: '',
+    reference: '',
     images: [],
     cost_price: null,
     moq: null,
@@ -212,6 +213,8 @@ function extractGenericProduct() {
     price_tiers: [],
     supplier: null,
   };
+
+  const text = document.body.innerText;
 
   // Open Graph
   const ogTitle = document.querySelector('meta[property="og:title"]');
@@ -222,48 +225,114 @@ function extractGenericProduct() {
   const ogPrice = document.querySelector(
     'meta[property="product:price:amount"], meta[property="og:price:amount"]'
   );
+  const ogSiteName = document.querySelector('meta[property="og:site_name"]');
 
-  data.name = ogTitle ? ogTitle.content : document.title.split(' - ')[0].trim();
-  data.description = ogDescription ? ogDescription.content : '';
+  data.name = ogTitle
+    ? ogTitle.content.split('|')[0].trim()
+    : document.title.split('|')[0].split('-')[0].trim();
+  data.description = ogDescription ? ogDescription.content.trim() : '';
   if (ogImage) data.images.push(ogImage.content);
   if (ogPrice) data.cost_price = parseFloat(ogPrice.content);
 
-  // JSON-LD (schema.org Product)
+  // JSON-LD (schema.org Product) — handle @graph arrays
   const ldScripts = document.querySelectorAll(
     'script[type="application/ld+json"]'
   );
   ldScripts.forEach(script => {
     try {
       const json = JSON.parse(script.textContent);
-      const product = json['@type'] === 'Product' ? json : null;
-      if (product) {
-        if (product.name) data.name = product.name;
-        if (product.description)
-          data.description = product.description.substring(0, 500);
-        if (product.image) {
-          const imgs = Array.isArray(product.image)
-            ? product.image
-            : [product.image];
-          data.images = [...data.images, ...imgs].slice(0, 10);
-        }
-        if (product.offers) {
-          const offer = Array.isArray(product.offers)
-            ? product.offers[0]
-            : product.offers;
-          if (offer && offer.price) {
-            data.cost_price = parseFloat(offer.price);
+      const items = json['@graph'] ? json['@graph'] : [json];
+      items.forEach(item => {
+        if (item['@type'] === 'Product') {
+          if (item.name) data.name = item.name;
+          if (item.description)
+            data.description = item.description.substring(0, 500);
+          if (item.sku) data.reference = item.sku;
+          if (item.image) {
+            const imgs = Array.isArray(item.image) ? item.image : [item.image];
+            data.images = [
+              ...data.images,
+              ...imgs.map(i => (typeof i === 'string' ? i : i.url || '')),
+            ]
+              .filter(Boolean)
+              .slice(0, 10);
+          }
+          if (item.offers) {
+            const offer = Array.isArray(item.offers)
+              ? item.offers[0]
+              : item.offers;
+            if (offer && offer.price) {
+              data.cost_price = parseFloat(offer.price);
+            }
+          }
+          if (item.brand && item.brand.name) {
+            data.brand = item.brand.name;
           }
         }
-      }
+      });
     } catch (_e) {
       // Ignore invalid JSON-LD
     }
   });
 
-  // Fallback: chercher des images produit dans la page
+  // Reference / SKU depuis le texte (si pas trouve en JSON-LD)
+  if (!data.reference) {
+    const refMatch = text.match(
+      /(?:R[eé]f|Ref|SKU|Code article|Reference)[.\s:]*([A-Z0-9\-]{4,20})/i
+    );
+    if (refMatch) data.reference = refMatch[1];
+  }
+
+  // Prix depuis le texte (si pas trouve en OG/JSON-LD)
+  if (!data.cost_price) {
+    const priceEls = document.querySelectorAll(
+      '[class*="price"], .oe_currency_value, [itemprop="price"]'
+    );
+    for (const el of priceEls) {
+      const match = el.textContent.match(/(\d+[.,]\d{2})/);
+      if (match) {
+        data.cost_price = parseFloat(match[1].replace(',', '.'));
+        break;
+      }
+    }
+  }
+
+  // Description depuis le DOM (si OG description est vide ou trop courte)
+  if (!data.description || data.description.length < 20) {
+    const descEl = document.querySelector(
+      '[itemprop="description"], .product_description, [class*="description"]'
+    );
+    if (descEl) {
+      const descText = descEl.textContent.trim();
+      if (descText.length > 20) data.description = descText.substring(0, 500);
+    }
+  }
+
+  // Images produit — recherche specifique pour Odoo et autres CMS
+  const productImgs = document.querySelectorAll(
+    '.carousel img, [class*="product"] img, [itemprop="image"]'
+  );
+  productImgs.forEach(img => {
+    let src = img.src || img.getAttribute('data-src') || '';
+    if (
+      src &&
+      !src.includes('lazy_load') &&
+      !src.includes('icon') &&
+      !src.includes('logo') &&
+      !src.includes('placeholder')
+    ) {
+      // Convertir en haute resolution pour Odoo
+      src = src
+        .replace('image_128', 'image_1024')
+        .replace('image_256', 'image_1024')
+        .replace('image_512', 'image_1024');
+      if (!data.images.includes(src)) data.images.push(src);
+    }
+  });
+
+  // Fallback: grandes images dans la page
   if (data.images.length === 0) {
-    const mainImages = document.querySelectorAll('img[src]');
-    mainImages.forEach(img => {
+    document.querySelectorAll('img[src]').forEach(img => {
       if (
         img.naturalWidth > 200 &&
         img.naturalHeight > 200 &&
@@ -272,6 +341,13 @@ function extractGenericProduct() {
         data.images.push(img.src);
       }
     });
+  }
+
+  data.images = data.images.slice(0, 12);
+
+  // Fournisseur depuis le nom du site
+  if (ogSiteName && ogSiteName.content) {
+    data.supplier = { name: ogSiteName.content.trim() };
   }
 
   return data;

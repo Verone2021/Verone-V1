@@ -1,55 +1,31 @@
 /**
- * Verone Sourcing Import — Popup Script
+ * Verone Sourcing Import — Popup editable
  *
- * Detecte le type de page (produit vs fournisseur) et propose
- * l'action appropriee.
+ * Affiche tous les champs extraits avec cases a cocher et champs editables.
+ * L'utilisateur peut modifier/decocher avant d'importer.
  */
 
 let extractedData = null;
-
-// ============================================================
-// Elements DOM
-// ============================================================
+let imageSelections = {}; // url -> boolean
 
 const statusEl = document.getElementById('status');
-const pageTypeInfo = document.getElementById('page-type-info');
-const productPreview = document.getElementById('product-preview');
-const productName = document.getElementById('product-name');
-const productPrice = document.getElementById('product-price');
-const productMoq = document.getElementById('product-moq');
-const productLead = document.getElementById('product-lead');
-const productImages = document.getElementById('product-images');
-const supplierPreview = document.getElementById('supplier-preview');
-const supplierName = document.getElementById('supplier-name');
+const pageTypeEl = document.getElementById('page-type');
+const fieldsContainer = document.getElementById('fields-container');
+const imagesContainer = document.getElementById('images-container');
+const imagesGrid = document.getElementById('images-grid');
+const supplierSection = document.getElementById('supplier-section');
+const supplierFields = document.getElementById('supplier-fields');
 const supplierBadges = document.getElementById('supplier-badges');
-const backofficeUrl = document.getElementById('backoffice-url');
-const actionsProduct = document.getElementById('actions-product');
-const actionsSupplier = document.getElementById('actions-supplier');
-const btnImportProduct = document.getElementById('btn-import-product');
-const btnImportSupplier = document.getElementById('btn-import-supplier');
+const actionsBar = document.getElementById('actions-bar');
+const btnImport = document.getElementById('btn-import');
+const btnRefresh = document.getElementById('btn-refresh');
 const successLink = document.getElementById('success-link');
-const productLink = document.getElementById('product-link');
+const resultLink = document.getElementById('result-link');
+const backofficeUrl = document.getElementById('backoffice-url');
 
-// ============================================================
 // Init
-// ============================================================
-
-// URL de production — pas configurable par l'utilisateur
-backofficeUrl.value = 'https://verone-backoffice.vercel.app';
-
-// Refresh buttons
-document
-  .getElementById('btn-refresh')
-  .addEventListener('click', extractFromPage);
-document
-  .getElementById('btn-refresh-2')
-  .addEventListener('click', extractFromPage);
-
-// Import buttons
-btnImportProduct.addEventListener('click', () => importToVerone('product'));
-btnImportSupplier.addEventListener('click', () => importToVerone('supplier'));
-
-// Start
+btnRefresh.addEventListener('click', extractFromPage);
+btnImport.addEventListener('click', doImport);
 extractFromPage();
 
 // ============================================================
@@ -58,14 +34,12 @@ extractFromPage();
 
 function extractFromPage() {
   setStatus('detecting', 'Analyse de la page en cours...');
-  productPreview.style.display = 'none';
-  supplierPreview.style.display = 'none';
-  actionsProduct.style.display = 'none';
-  actionsSupplier.style.display = 'none';
-  pageTypeInfo.style.display = 'none';
+  fieldsContainer.innerHTML = '';
+  imagesContainer.style.display = 'none';
+  supplierSection.style.display = 'none';
+  actionsBar.style.display = 'none';
   successLink.style.display = 'none';
-  btnImportProduct.disabled = true;
-  btnImportSupplier.disabled = true;
+  pageTypeEl.style.display = 'none';
 
   chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
     const tab = tabs[0];
@@ -76,7 +50,6 @@ function extractFromPage() {
 
     chrome.tabs.sendMessage(tab.id, { action: 'extractProduct' }, response => {
       if (chrome.runtime.lastError) {
-        // Content script pas charge — l'injecter
         chrome.scripting.executeScript(
           { target: { tabId: tab.id }, files: ['content-script.js'] },
           () => {
@@ -84,196 +57,242 @@ function extractFromPage() {
               chrome.tabs.sendMessage(
                 tab.id,
                 { action: 'extractProduct' },
-                retryResponse => {
-                  if (!retryResponse || !retryResponse.success) {
+                retry => {
+                  if (!retry || !retry.success) {
                     setStatus(
                       'unsupported',
-                      'Page non reconnue. Ouvrez une page produit ou fournisseur.'
+                      'Page non reconnue. Ouvrez une page produit.'
                     );
                     return;
                   }
-                  handleExtractedData(retryResponse.data);
+                  handleData(retry.data);
                 }
               );
-            }, 500);
+            }, 800);
           }
         );
         return;
       }
-
       if (!response || !response.success) {
-        setStatus('error', "Erreur lors de l'extraction. Rechargez la page.");
+        setStatus('error', "Erreur d'extraction. Rechargez la page.");
         return;
       }
-
-      handleExtractedData(response.data);
+      handleData(response.data);
     });
   });
 }
 
 // ============================================================
-// Affichage selon le type de page
+// Affichage des champs editables
 // ============================================================
 
-function handleExtractedData(data) {
+function handleData(data) {
   extractedData = data;
-  const pageType = data.pageType;
+  const pt = data.pageType;
 
-  // === PAGE FOURNISSEUR (entreprise Alibaba) ===
-  if (pageType === 'alibaba_supplier') {
+  // Page type indicator
+  if (pt === 'alibaba_product') {
+    showPageType('Page produit Alibaba', '#dcfce7', '#166534');
+  } else if (pt === 'alibaba_supplier') {
+    showPageType('Fiche entreprise Alibaba', '#dbeafe', '#1d4ed8');
+  } else {
+    showPageType('Page produit (extraction generique)', '#fef3c7', '#92400e');
+  }
+
+  // === FOURNISSEUR SEUL ===
+  if (pt === 'alibaba_supplier') {
     if (!data.supplier || !data.supplier.name) {
-      setStatus('error', 'Aucun fournisseur detecte sur cette page.');
+      setStatus('error', 'Aucun fournisseur detecte.');
       return;
     }
-
-    showPageType('Fiche entreprise Alibaba', '#dbeafe', '#1d4ed8');
-    showSupplierPreview(data.supplier);
-
-    actionsSupplier.style.display = 'flex';
-    btnImportSupplier.disabled = false;
-    setStatus(
-      'ready',
-      'Fournisseur detecte — pret a importer dans les organisations'
-    );
+    showSupplierFields(data.supplier);
+    actionsBar.style.display = 'flex';
+    btnImport.disabled = false;
+    btnImport.textContent = 'Importer le fournisseur';
+    setStatus('ready', 'Fournisseur detecte — verifiez et importez');
     return;
   }
 
-  // === PAGE PRODUIT (Alibaba ou generique) ===
+  // === PRODUIT ===
   if (!data.name) {
     setStatus('error', 'Aucun produit detecte sur cette page.');
     return;
   }
 
-  if (pageType === 'alibaba_product') {
-    showPageType('Page produit Alibaba', '#dcfce7', '#166534');
+  // Champs produit editables
+  fieldsContainer.innerHTML = '';
+  addField('name', 'Nom du produit', data.name, 'text', true);
+  addField('reference', 'Reference / SKU', data.reference || '', 'text', true);
+  addField(
+    'cost_price',
+    "Prix d'achat (EUR)",
+    data.cost_price ? String(data.cost_price) : '',
+    'number',
+    true
+  );
+  addField(
+    'description',
+    'Description',
+    data.description || '',
+    'textarea',
+    true
+  );
+
+  // Dimensions (si extraites du titre ou specs)
+  const dimMatch = (data.name || '').match(/D(\d+).*H(\d+)/i);
+  if (dimMatch) {
+    addField('diameter', 'Diametre (cm)', dimMatch[1], 'number', true);
+    addField('height', 'Hauteur (cm)', dimMatch[2], 'number', true);
   } else {
-    showPageType('Page produit (extraction generique)', '#fef3c7', '#92400e');
+    addField('diameter', 'Diametre (cm)', '', 'number', false);
+    addField('height', 'Hauteur (cm)', '', 'number', false);
   }
 
-  // Preview produit
-  productName.textContent = data.name.substring(0, 100);
-  productPrice.textContent = data.cost_price
-    ? data.cost_price.toFixed(2) + ' EUR'
-    : '';
-  productMoq.textContent = data.moq ? 'MOQ: ' + data.moq : '';
-  productLead.textContent = data.lead_days
-    ? 'Delai: ' + data.lead_days + 'j'
-    : '';
+  addField(
+    'moq',
+    'MOQ (quantite min.)',
+    data.moq ? String(data.moq) : '',
+    'number',
+    !!data.moq
+  );
+  addField(
+    'lead_days',
+    'Delai (jours)',
+    data.lead_days ? String(data.lead_days) : '',
+    'number',
+    !!data.lead_days
+  );
 
-  productImages.innerHTML = '';
+  // Images
   if (data.images && data.images.length > 0) {
-    data.images.slice(0, 6).forEach(url => {
-      const img = document.createElement('img');
-      img.src = url;
-      img.alt = 'Photo produit';
-      img.onerror = () => (img.style.display = 'none');
-      productImages.appendChild(img);
-    });
+    showImages(data.images);
   }
-  productPreview.style.display = 'block';
 
-  // Preview fournisseur (si disponible)
+  // Fournisseur (si disponible)
   if (data.supplier && data.supplier.name) {
-    showSupplierPreview(data.supplier);
+    showSupplierFields(data.supplier);
   }
 
-  actionsProduct.style.display = 'flex';
-  btnImportProduct.disabled = false;
-
-  const label =
-    data.supplier && data.supplier.name
-      ? 'Produit + fournisseur detectes'
-      : 'Produit detecte (sans fournisseur)';
-  setStatus('ready', label);
+  actionsBar.style.display = 'flex';
+  btnImport.disabled = false;
+  btnImport.textContent = data.supplier
+    ? 'Importer produit + fournisseur'
+    : 'Importer le produit';
+  setStatus(
+    'ready',
+    'Verifiez les champs, decochez ce que vous ne voulez pas, puis importez.'
+  );
 }
 
-// ============================================================
-// Import vers Verone
-// ============================================================
+function addField(id, label, value, type, checked) {
+  const row = document.createElement('div');
+  row.className = 'field-row' + (checked ? '' : ' disabled');
+  row.id = 'row-' + id;
 
-async function importToVerone(mode) {
-  if (!extractedData) return;
+  const cb = document.createElement('input');
+  cb.type = 'checkbox';
+  cb.checked = checked;
+  cb.id = 'cb-' + id;
+  cb.addEventListener('change', () => {
+    const input = document.getElementById('val-' + id);
+    input.disabled = !cb.checked;
+    row.className = 'field-row' + (cb.checked ? '' : ' disabled');
+  });
 
-  const baseUrl = backofficeUrl.value.replace(/\/$/, '');
-  const btn = mode === 'supplier' ? btnImportSupplier : btnImportProduct;
+  const info = document.createElement('div');
+  info.className = 'field-info';
 
-  btn.disabled = true;
-  btn.textContent = 'Import en cours...';
-  setStatus('detecting', 'Envoi vers Verone Back-Office...');
+  const lbl = document.createElement('div');
+  lbl.className = 'field-label';
+  lbl.textContent = label;
 
-  try {
-    let endpoint, body;
+  let input;
+  if (type === 'textarea') {
+    input = document.createElement('textarea');
+    input.rows = 2;
+  } else {
+    input = document.createElement('input');
+    input.type = type === 'number' ? 'number' : 'text';
+    if (type === 'number') input.step = '0.01';
+  }
+  input.className = 'field-value';
+  input.id = 'val-' + id;
+  input.value = value;
+  input.disabled = !checked;
 
-    if (mode === 'supplier') {
-      // Import fournisseur seul
-      endpoint = '/api/sourcing/import-supplier';
-      body = extractedData.supplier;
-    } else {
-      // Import produit (+ fournisseur si disponible)
-      endpoint = '/api/sourcing/import';
-      body = extractedData;
-    }
+  info.appendChild(lbl);
+  info.appendChild(input);
+  row.appendChild(cb);
+  row.appendChild(info);
+  fieldsContainer.appendChild(row);
+}
 
-    const response = await fetch(baseUrl + endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(body),
+function showImages(urls) {
+  imagesGrid.innerHTML = '';
+  imageSelections = {};
+
+  // Filter real product images
+  const filtered = urls
+    .filter(
+      u =>
+        u &&
+        !u.includes('icon') &&
+        !u.includes('logo') &&
+        !u.includes('lazy_load') &&
+        !u.includes('website/1/')
+    )
+    .slice(0, 12);
+
+  if (filtered.length === 0) return;
+
+  filtered.forEach((url, i) => {
+    imageSelections[url] = true;
+
+    const thumb = document.createElement('div');
+    thumb.className = 'img-thumb';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = true;
+    cb.addEventListener('change', () => {
+      imageSelections[url] = cb.checked;
+      thumb.className = 'img-thumb' + (cb.checked ? '' : ' unchecked');
     });
 
-    const result = await response.json();
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = 'Photo ' + (i + 1);
+    img.onerror = () => {
+      thumb.style.display = 'none';
+    };
 
-    if (!response.ok) {
-      throw new Error(result.error || 'Erreur serveur');
-    }
+    thumb.appendChild(cb);
+    thumb.appendChild(img);
+    imagesGrid.appendChild(thumb);
+  });
 
-    if (mode === 'supplier') {
-      setStatus(
-        'success',
-        'Fournisseur "' + result.supplier_name + '" importe avec succes !'
-      );
-      btn.textContent = 'Importe !';
-      productLink.href = baseUrl + result.redirect_url;
-      productLink.textContent = 'Ouvrir la fiche fournisseur';
-    } else {
-      setStatus(
-        'success',
-        'Produit "' + result.product_name + '" importe avec succes !'
-      );
-      btn.textContent = 'Importe !';
-      productLink.href = baseUrl + result.redirect_url;
-      productLink.textContent = 'Ouvrir la fiche sourcing';
-    }
-
-    successLink.style.display = 'block';
-  } catch (error) {
-    setStatus('error', 'Erreur: ' + error.message);
-    btn.disabled = false;
-    btn.textContent = 'Reessayer';
-  }
+  imagesContainer.style.display = 'block';
 }
 
-// ============================================================
-// Helpers
-// ============================================================
-
-function setStatus(type, message) {
-  statusEl.className = 'status ' + type;
-  statusEl.textContent = message;
-}
-
-function showPageType(label, bgColor, textColor) {
-  pageTypeInfo.textContent = label;
-  pageTypeInfo.style.display = 'block';
-  pageTypeInfo.style.background = bgColor;
-  pageTypeInfo.style.color = textColor;
-  pageTypeInfo.style.border = '1px solid ' + textColor + '33';
-}
-
-function showSupplierPreview(supplier) {
-  supplierName.textContent = supplier.name;
+function showSupplierFields(supplier) {
+  supplierFields.innerHTML = '';
   supplierBadges.innerHTML = '';
 
+  addSupplierField('supplier_name', 'Nom', supplier.name, true);
+  addSupplierField(
+    'supplier_country',
+    'Pays',
+    supplier.country || '',
+    !!supplier.country
+  );
+  addSupplierField(
+    'supplier_url',
+    'URL boutique',
+    supplier.alibaba_store_url || '',
+    !!supplier.alibaba_store_url
+  );
+
+  // Badges
   if (supplier.trade_assurance) addBadge('Trade Assurance', 'green');
   if (supplier.verified) addBadge('Verifie', 'blue');
   if (supplier.supplier_score)
@@ -283,16 +302,189 @@ function showSupplierPreview(supplier) {
   if (supplier.year_established)
     addBadge('Depuis ' + supplier.year_established, '');
   if (supplier.employees) addBadge(supplier.employees, '');
-  if (supplier.certifications && supplier.certifications.length > 0)
+  if (supplier.certifications && supplier.certifications.length)
     addBadge(supplier.certifications.join(', '), '');
-  if (supplier.delivery_terms) addBadge(supplier.delivery_terms, '');
 
-  supplierPreview.style.display = 'block';
+  supplierSection.style.display = 'block';
+}
+
+function addSupplierField(id, label, value, checked) {
+  const row = document.createElement('div');
+  row.className = 'field-row' + (checked ? '' : ' disabled');
+
+  const cb = document.createElement('input');
+  cb.type = 'checkbox';
+  cb.checked = checked;
+  cb.id = 'cb-' + id;
+  cb.addEventListener('change', () => {
+    const input = document.getElementById('val-' + id);
+    input.disabled = !cb.checked;
+    row.className = 'field-row' + (cb.checked ? '' : ' disabled');
+  });
+
+  const info = document.createElement('div');
+  info.className = 'field-info';
+
+  const lbl = document.createElement('div');
+  lbl.className = 'field-label';
+  lbl.textContent = label;
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'field-value';
+  input.id = 'val-' + id;
+  input.value = value;
+  input.disabled = !checked;
+
+  info.appendChild(lbl);
+  info.appendChild(input);
+  row.appendChild(cb);
+  row.appendChild(info);
+  supplierFields.appendChild(row);
+}
+
+// ============================================================
+// Import
+// ============================================================
+
+async function doImport() {
+  if (!extractedData) return;
+
+  btnImport.disabled = true;
+  btnImport.textContent = 'Import en cours...';
+  setStatus('detecting', 'Envoi vers Verone...');
+
+  const baseUrl = backofficeUrl.value.replace(/\/$/, '');
+  const pt = extractedData.pageType;
+
+  try {
+    // === FOURNISSEUR SEUL ===
+    if (pt === 'alibaba_supplier') {
+      const body = {
+        name: getVal('supplier_name'),
+        country: getVal('supplier_country'),
+        alibaba_store_url: getVal('supplier_url'),
+        supplier_score: extractedData.supplier?.supplier_score,
+        trade_assurance: extractedData.supplier?.trade_assurance,
+        verified: extractedData.supplier?.verified,
+        certifications: extractedData.supplier?.certifications,
+        year_established: extractedData.supplier?.year_established,
+        employees: extractedData.supplier?.employees,
+        delivery_terms: extractedData.supplier?.delivery_terms,
+      };
+
+      const res = await fetch(baseUrl + '/api/sourcing/import-supplier', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Erreur serveur');
+
+      setStatus(
+        'success',
+        'Fournisseur "' + result.supplier_name + '" importe !'
+      );
+      btnImport.textContent = 'Importe !';
+      resultLink.href = baseUrl + result.redirect_url;
+      resultLink.textContent = 'Ouvrir la fiche fournisseur';
+      successLink.style.display = 'block';
+      return;
+    }
+
+    // === PRODUIT ===
+    const selectedImages = Object.entries(imageSelections)
+      .filter(([, selected]) => selected)
+      .map(([url]) => url);
+
+    const body = {
+      name: getCheckedVal('name', ''),
+      description: getCheckedVal('description', undefined),
+      source_url: extractedData.source_url,
+      source_platform: extractedData.source_platform || 'other',
+      images: selectedImages.length > 0 ? selectedImages : undefined,
+      cost_price: getCheckedVal('cost_price', undefined, parseFloat),
+      moq: getCheckedVal('moq', undefined, parseInt),
+      lead_days: getCheckedVal('lead_days', undefined, parseInt),
+    };
+
+    // Supplier data (si coche)
+    const supplierName = getVal('supplier_name');
+    if (supplierName && isChecked('supplier_name')) {
+      body.supplier = {
+        name: supplierName,
+        country: getCheckedVal('supplier_country', undefined),
+        alibaba_store_url: getCheckedVal('supplier_url', undefined),
+        supplier_score: extractedData.supplier?.supplier_score,
+        trade_assurance: extractedData.supplier?.trade_assurance,
+        verified: extractedData.supplier?.verified,
+        certifications: extractedData.supplier?.certifications,
+      };
+    }
+
+    const res = await fetch(baseUrl + '/api/sourcing/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(body),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Erreur serveur');
+
+    setStatus('success', 'Produit "' + result.product_name + '" importe !');
+    btnImport.textContent = 'Importe !';
+    resultLink.href = baseUrl + result.redirect_url;
+    resultLink.textContent = 'Ouvrir la fiche sourcing';
+    successLink.style.display = 'block';
+  } catch (error) {
+    setStatus('error', 'Erreur: ' + error.message);
+    btnImport.disabled = false;
+    btnImport.textContent = 'Reessayer';
+  }
+}
+
+// ============================================================
+// Helpers
+// ============================================================
+
+function getVal(id) {
+  const el = document.getElementById('val-' + id);
+  return el ? el.value.trim() : '';
+}
+
+function isChecked(id) {
+  const el = document.getElementById('cb-' + id);
+  return el ? el.checked : false;
+}
+
+function getCheckedVal(id, fallback, parser) {
+  if (!isChecked(id)) return fallback;
+  const val = getVal(id);
+  if (!val) return fallback;
+  if (parser) {
+    const parsed = parser(val);
+    return isNaN(parsed) ? fallback : parsed;
+  }
+  return val;
+}
+
+function setStatus(type, message) {
+  statusEl.className = 'status ' + type;
+  statusEl.textContent = message;
+}
+
+function showPageType(label, bg, color) {
+  pageTypeEl.textContent = label;
+  pageTypeEl.style.display = 'block';
+  pageTypeEl.style.background = bg;
+  pageTypeEl.style.color = color;
+  pageTypeEl.style.border = '1px solid ' + color + '33';
 }
 
 function addBadge(text, color) {
   const span = document.createElement('span');
-  span.className = 'badge ' + color;
+  span.className = 'badge-tag ' + color;
   span.textContent = text;
   supplierBadges.appendChild(span);
 }
