@@ -17,32 +17,13 @@ import {
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import { Checkbox } from '@verone/ui';
+import { Loader2, Mail } from 'lucide-react';
+
 import {
-  Mail,
-  Loader2,
-  Paperclip,
-  Eye,
-  Download,
-  CheckCircle,
-  AlertCircle,
-} from 'lucide-react';
-
-// ── Types ──────────────────────────────────────────────────────────
-
-interface LinkedQuote {
-  id: string;
-  document_number: string;
-  qonto_pdf_url: string | null;
-  qonto_invoice_id: string | null;
-}
-
-interface AttachmentBlob {
-  blob: Blob;
-  url: string;
-  ready: boolean;
-  error: string | null;
-}
+  ConsultationEmailAttachments,
+  type AttachmentBlob,
+  type LinkedQuote,
+} from './ConsultationEmailAttachments';
 
 interface SendConsultationEmailModalProps {
   open: boolean;
@@ -55,13 +36,10 @@ interface SendConsultationEmailModalProps {
   onSent?: () => void;
 }
 
-// ── Helpers ─────────────────────────────────────────────────────────
-
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onloadend = () => {
-      // Strip data:...;base64, prefix — Resend expects raw base64
       const result = reader.result as string;
       const base64 = result.split(',')[1] ?? result;
       resolve(base64);
@@ -71,8 +49,6 @@ function blobToBase64(blob: Blob): Promise<string> {
   });
 }
 
-// ── Constants ───────────────────────────────────────────────────────
-
 const DEFAULT_MESSAGE = `Bonjour,
 
 Suite a notre echange, veuillez trouver ci-joint le resume de votre consultation.
@@ -81,8 +57,6 @@ N'hesitez pas a nous contacter pour toute question.
 
 Cordialement,
 L'equipe Verone`;
-
-// ── Component ───────────────────────────────────────────────────────
 
 export function SendConsultationEmailModal({
   open,
@@ -104,15 +78,12 @@ export function SendConsultationEmailModal({
     new Set()
   );
   const [sending, setSending] = useState(false);
-
-  // PDF blob storage: key = 'consultation' | quote.id
   const [blobs, setBlobs] = useState<Map<string, AttachmentBlob>>(new Map());
-  // Preview state
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewTitle, setPreviewTitle] = useState('');
   const generatingRef = useRef(false);
 
-  // ── Reset state when modal opens ──
+  // Reset on open
   useEffect(() => {
     if (open) {
       setTo(clientEmail);
@@ -127,12 +98,11 @@ export function SendConsultationEmailModal({
     }
   }, [open, clientEmail, clientName]);
 
-  // ── Generate PDFs when modal opens ──
+  // Generate PDFs when modal opens
   const generatePdfs = useCallback(async () => {
     if (generatingRef.current) return;
     generatingRef.current = true;
 
-    // Generate consultation PDF
     if (consultationPdfDocument) {
       try {
         const blob = await pdf(consultationPdfDocument).toBlob();
@@ -157,7 +127,6 @@ export function SendConsultationEmailModal({
       }
     }
 
-    // Fetch quote PDFs via API proxy (real-time from Qonto)
     for (const quote of linkedQuotes) {
       if (!quote.qonto_invoice_id) {
         setBlobs(prev => {
@@ -185,10 +154,6 @@ export function SendConsultationEmailModal({
           return next;
         });
       } catch (err) {
-        console.error(
-          `[SendEmail] Quote ${quote.document_number} PDF failed:`,
-          err
-        );
         setBlobs(prev => {
           const next = new Map(prev);
           next.set(quote.id, {
@@ -209,7 +174,6 @@ export function SendConsultationEmailModal({
         console.error('[SendEmail] PDF generation error:', err);
       });
     }
-    // Cleanup blob URLs on close
     return () => {
       setBlobs(prev => {
         for (const entry of prev.values()) {
@@ -221,7 +185,6 @@ export function SendConsultationEmailModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot on open
   }, [open]);
 
-  // ── Check if all selected attachments are ready ──
   const allSelectedReady = (() => {
     if (attachConsultationPdf) {
       const entry = blobs.get('consultation');
@@ -234,7 +197,6 @@ export function SendConsultationEmailModal({
     return true;
   })();
 
-  // ── Toggle quote selection ──
   const toggleQuote = (quoteId: string, checked: boolean) => {
     setSelectedQuoteIds(prev => {
       const next = new Set(prev);
@@ -244,26 +206,6 @@ export function SendConsultationEmailModal({
     });
   };
 
-  // ── Status badge for an attachment ──
-  const StatusBadge = ({ id }: { id: string }) => {
-    const entry = blobs.get(id);
-    if (!entry) {
-      return <Loader2 className="h-3.5 w-3.5 animate-spin text-gray-400" />;
-    }
-    if (entry.error) {
-      return (
-        <span title={entry.error}>
-          <AlertCircle className="h-3.5 w-3.5 text-red-500" />
-        </span>
-      );
-    }
-    if (entry.ready) {
-      return <CheckCircle className="h-3.5 w-3.5 text-green-500" />;
-    }
-    return <Loader2 className="h-3.5 w-3.5 animate-spin text-gray-400" />;
-  };
-
-  // ── Preview handler ──
   const handlePreview = (id: string, title: string) => {
     const entry = blobs.get(id);
     if (entry?.url) {
@@ -272,7 +214,6 @@ export function SendConsultationEmailModal({
     }
   };
 
-  // ── Download handler ──
   const handleDownload = (id: string, filename: string) => {
     const entry = blobs.get(id);
     if (entry?.blob) {
@@ -280,7 +221,6 @@ export function SendConsultationEmailModal({
     }
   };
 
-  // ── Send handler ──
   const handleSend = async () => {
     if (!to || !subject || !message) {
       _toast({
@@ -293,7 +233,6 @@ export function SendConsultationEmailModal({
 
     setSending(true);
     try {
-      // Build attachments array with base64 content
       const attachments: Array<{
         filename: string;
         contentBase64: string;
@@ -369,9 +308,6 @@ export function SendConsultationEmailModal({
     }
   };
 
-  // ── Consultation PDF filename ──
-  const consultationFilename = `consultation-${clientName.toLowerCase().replace(/\s+/g, '-')}.pdf`;
-
   return (
     <>
       <Dialog
@@ -389,7 +325,6 @@ export function SendConsultationEmailModal({
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            {/* Recipient */}
             <div className="space-y-1.5">
               <Label htmlFor="email-to">Destinataire</Label>
               <Input
@@ -401,7 +336,6 @@ export function SendConsultationEmailModal({
               />
             </div>
 
-            {/* Subject */}
             <div className="space-y-1.5">
               <Label htmlFor="email-subject">Objet</Label>
               <Input
@@ -411,7 +345,6 @@ export function SendConsultationEmailModal({
               />
             </div>
 
-            {/* Message */}
             <div className="space-y-1.5">
               <Label htmlFor="email-message">Message</Label>
               <Textarea
@@ -423,117 +356,18 @@ export function SendConsultationEmailModal({
               />
             </div>
 
-            {/* Attachments */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-1.5">
-                <Paperclip className="h-3.5 w-3.5 text-gray-500" />
-                Pieces jointes
-              </Label>
-
-              {/* Consultation PDF */}
-              {consultationPdfDocument && (
-                <div className="flex items-center justify-between rounded border border-gray-100 px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="attach-consultation-pdf"
-                      checked={attachConsultationPdf}
-                      onCheckedChange={checked =>
-                        setAttachConsultationPdf(checked === true)
-                      }
-                    />
-                    <label
-                      htmlFor="attach-consultation-pdf"
-                      className="text-sm cursor-pointer"
-                    >
-                      PDF consultation
-                    </label>
-                    <StatusBadge id="consultation" />
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <ButtonUnified
-                      variant="ghost"
-                      size="sm"
-                      disabled={!blobs.get('consultation')?.ready}
-                      onClick={() =>
-                        handlePreview(
-                          'consultation',
-                          `Consultation — ${clientName}`
-                        )
-                      }
-                      title="Apercu"
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                    </ButtonUnified>
-                    <ButtonUnified
-                      variant="ghost"
-                      size="sm"
-                      disabled={!blobs.get('consultation')?.ready}
-                      onClick={() =>
-                        handleDownload('consultation', consultationFilename)
-                      }
-                      title="Telecharger"
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                    </ButtonUnified>
-                  </div>
-                </div>
-              )}
-
-              {/* Quote PDFs */}
-              {linkedQuotes.map(quote => (
-                <div
-                  key={quote.id}
-                  className="flex items-center justify-between rounded border border-gray-100 px-3 py-2"
-                >
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id={`attach-quote-${quote.id}`}
-                      checked={selectedQuoteIds.has(quote.id)}
-                      onCheckedChange={checked =>
-                        toggleQuote(quote.id, checked === true)
-                      }
-                    />
-                    <label
-                      htmlFor={`attach-quote-${quote.id}`}
-                      className="text-sm cursor-pointer"
-                    >
-                      Devis {quote.document_number}
-                    </label>
-                    <StatusBadge id={quote.id} />
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <ButtonUnified
-                      variant="ghost"
-                      size="sm"
-                      disabled={!blobs.get(quote.id)?.ready}
-                      onClick={() =>
-                        handlePreview(
-                          quote.id,
-                          `Devis ${quote.document_number}`
-                        )
-                      }
-                      title="Apercu"
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                    </ButtonUnified>
-                    <ButtonUnified
-                      variant="ghost"
-                      size="sm"
-                      disabled={!blobs.get(quote.id)?.ready}
-                      onClick={() =>
-                        handleDownload(
-                          quote.id,
-                          `devis-${quote.document_number}.pdf`
-                        )
-                      }
-                      title="Telecharger"
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                    </ButtonUnified>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <ConsultationEmailAttachments
+              blobs={blobs}
+              clientName={clientName}
+              consultationPdfDocument={consultationPdfDocument}
+              linkedQuotes={linkedQuotes}
+              attachConsultationPdf={attachConsultationPdf}
+              selectedQuoteIds={selectedQuoteIds}
+              onToggleConsultationPdf={setAttachConsultationPdf}
+              onToggleQuote={toggleQuote}
+              onPreview={handlePreview}
+              onDownload={handleDownload}
+            />
           </div>
 
           <DialogFooter>
