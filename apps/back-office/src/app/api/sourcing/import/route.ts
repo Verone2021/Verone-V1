@@ -1,17 +1,64 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient } from '@verone/utils/supabase/server';
 
 // ============================================================
-// Schema de validation pour l'import produit sourcing
+// Mapping pays → code ISO 2 lettres
 // ============================================================
 
-const PriceTierSchema = z.object({
-  min_qty: z.number().optional(),
-  max_qty: z.number().optional(),
-  price: z.number(),
-  currency: z.string().default('EUR'),
-});
+const COUNTRY_MAP: Record<string, string> = {
+  china: 'CN',
+  chine: 'CN',
+  vietnam: 'VN',
+  germany: 'DE',
+  allemagne: 'DE',
+  france: 'FR',
+  india: 'IN',
+  inde: 'IN',
+  taiwan: 'TW',
+  'south korea': 'KR',
+  italy: 'IT',
+  italie: 'IT',
+  spain: 'ES',
+  espagne: 'ES',
+  turkey: 'TR',
+  turquie: 'TR',
+  thailand: 'TH',
+  thailande: 'TH',
+  indonesia: 'ID',
+  indonesie: 'ID',
+  bangladesh: 'BD',
+  pakistan: 'PK',
+  portugal: 'PT',
+  netherlands: 'NL',
+  'pays-bas': 'NL',
+  japan: 'JP',
+  japon: 'JP',
+  'united states': 'US',
+  'united kingdom': 'GB',
+  brazil: 'BR',
+  bresil: 'BR',
+  poland: 'PL',
+  pologne: 'PL',
+  romania: 'RO',
+  roumanie: 'RO',
+  belgium: 'BE',
+  belgique: 'BE',
+  morocco: 'MA',
+  maroc: 'MA',
+};
+
+function toCountryCode(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (trimmed.length === 2) return trimmed.toUpperCase();
+  return COUNTRY_MAP[trimmed.toLowerCase()] ?? null;
+}
+
+// ============================================================
+// Schema Zod
+// ============================================================
 
 const ImportProductSchema = z.object({
   // Produit
@@ -24,7 +71,7 @@ const ImportProductSchema = z.object({
   source_platform: z
     .enum(['alibaba', 'zentrada', 'faire', 'ankorstore', 'other'])
     .default('alibaba'),
-  images: z.array(z.string().url()).nullish(),
+  images: z.array(z.string()).nullish(),
   cost_price: z.number().nullish(),
   eco_tax: z.number().nullish(),
   target_price: z.number().nullish(),
@@ -35,12 +82,10 @@ const ImportProductSchema = z.object({
   material: z.string().nullish(),
   color: z.string().nullish(),
   style: z.string().nullish(),
-  condition: z.string().nullish(),
   moq: z.number().nullish(),
   lead_days: z.number().nullish(),
-  price_tiers: z.array(PriceTierSchema).nullish(),
 
-  // Fournisseur (optionnel — cree ou lie si fourni)
+  // Fournisseur
   supplier: z
     .object({
       name: z.string().min(1),
@@ -55,14 +100,12 @@ const ImportProductSchema = z.object({
       response_rate: z.string().nullish(),
       response_time: z.string().nullish(),
       supplier_score: z.number().nullish(),
-      alibaba_store_url: z.string().url().nullish(),
+      alibaba_store_url: z.string().nullish(),
       delivery_terms: z.string().nullish(),
       specialties: z.array(z.string()).nullish(),
     })
-    .optional(),
+    .nullish(),
 });
-
-type ImportProductInput = z.infer<typeof ImportProductSchema>;
 
 // ============================================================
 // POST /api/sourcing/import
@@ -71,7 +114,7 @@ type ImportProductInput = z.infer<typeof ImportProductSchema>;
 export async function POST(request: NextRequest) {
   const supabase = await createServerClient();
 
-  // Auth check — support cookies (navigateur) OU Bearer token (extension Chrome)
+  // --- Auth : cookies OU Bearer token ---
   const authHeader = request.headers.get('Authorization');
   const authResult = authHeader?.startsWith('Bearer ')
     ? await supabase.auth.getUser(authHeader.slice(7))
@@ -82,7 +125,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Non autorise' }, { status: 401 });
   }
 
-  // Parse and validate body
+  // --- Vérifier rôle staff back-office ---
+  const { data: roleData } = await supabase
+    .from('user_app_roles')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('app', 'back-office')
+    .eq('is_active', true)
+    .limit(1)
+    .maybeSingle();
+
+  if (!roleData) {
+    return NextResponse.json(
+      { error: 'Acces reserve au staff back-office' },
+      { status: 403 }
+    );
+  }
+
+  // --- Validation Zod ---
   const body: unknown = await request.json();
   const parsed = ImportProductSchema.safeParse(body);
   if (!parsed.success) {
@@ -92,53 +152,55 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const input: ImportProductInput = parsed.data;
+  const input = parsed.data;
 
   try {
     let supplierId: string | null = null;
 
-    // ---- Step 1: Creer ou trouver le fournisseur ----
+    // ================================================================
+    // STEP 1 : Créer ou trouver le fournisseur
+    // ================================================================
     if (input.supplier) {
-      // Chercher par nom ou URL Alibaba
+      // Échapper les wildcards SQL pour .ilike()
+      const escapedName = input.supplier.name.replace(/[%_]/g, '\\$&');
+
       const { data: existingSupplier } = await supabase
         .from('organisations')
         .select('id, trade_name')
         .or(
-          `trade_name.ilike.%${input.supplier.name}%,legal_name.ilike.%${input.supplier.name}%`
+          `trade_name.ilike.%${escapedName}%,legal_name.ilike.%${escapedName}%`
         )
         .eq('type', 'supplier')
+        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
       if (existingSupplier) {
         supplierId = existingSupplier.id;
 
-        // Mettre a jour les champs Alibaba si pas encore remplis
+        // Mettre à jour les champs Alibaba si pas encore remplis
         if (input.supplier.alibaba_store_url) {
-          await supabase
+          const { error: updateErr } = await supabase
             .from('organisations')
             .update({
               alibaba_store_url: input.supplier.alibaba_store_url,
-              supplier_reliability_score:
-                input.supplier.supplier_score ?? undefined,
+              supplier_reliability_score: input.supplier.supplier_score
+                ? Math.round(input.supplier.supplier_score)
+                : undefined,
+              certification_labels: input.supplier.certifications ?? undefined,
             })
             .eq('id', supplierId);
+
+          if (updateErr) {
+            console.error(
+              '[API sourcing/import] Supplier update failed:',
+              updateErr
+            );
+          }
         }
       } else {
-        // Creer le fournisseur
-        // country doit etre un code ISO 2 lettres (varchar(2))
-        const countryCode = input.supplier.country
-          ? input.supplier.country.length === 2
-            ? input.supplier.country.toUpperCase()
-            : input.supplier.country.toLowerCase().includes('chin')
-              ? 'CN'
-              : input.supplier.country.substring(0, 2).toUpperCase()
-          : null;
-
-        // supplier_reliability_score est un integer (1-5), pas un decimal
-        const reliabilityScore = input.supplier.supplier_score
-          ? Math.round(input.supplier.supplier_score)
-          : null;
+        // Créer le fournisseur
+        const countryCode = toCountryCode(input.supplier.country);
 
         const { data: newSupplier, error: supplierError } = await supabase
           .from('organisations')
@@ -150,7 +212,9 @@ export async function POST(request: NextRequest) {
             city: input.supplier.city ?? null,
             address_line1: input.supplier.address ?? null,
             alibaba_store_url: input.supplier.alibaba_store_url ?? null,
-            supplier_reliability_score: reliabilityScore,
+            supplier_reliability_score: input.supplier.supplier_score
+              ? Math.round(input.supplier.supplier_score)
+              : null,
             supplier_specialties: input.supplier.specialties ?? null,
             preferred_comm_channel: 'alibaba',
             certification_labels: input.supplier.certifications ?? null,
@@ -176,13 +240,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ---- Step 2: Creer le produit sourcing ----
-    // Generer un SKU temporaire pour le brouillon
-    const skuPrefix = 'SRC';
-    const skuTimestamp = Date.now().toString(36).toUpperCase();
-    const sku = `${skuPrefix}-${skuTimestamp}`;
+    // ================================================================
+    // STEP 2 : Créer le produit sourcing
+    // ================================================================
+    const sku = `SRC-${Date.now().toString(36).toUpperCase()}`;
 
-    // Construire les dimensions en jsonb si fournies
+    // Dimensions en jsonb
     const dimensions =
       input.dim_length || input.dim_width || input.dim_height
         ? {
@@ -190,7 +253,14 @@ export async function POST(request: NextRequest) {
             width: input.dim_width ?? null,
             height: input.dim_height ?? null,
           }
-        : null;
+        : undefined;
+
+    // Material + color → internal_notes (colonnes inexistantes dans products)
+    const noteParts: string[] = [];
+    if (input.material) noteParts.push(`Materiau: ${input.material}`);
+    if (input.color) noteParts.push(`Couleur: ${input.color}`);
+    const internalNotes =
+      noteParts.length > 0 ? noteParts.join(' | ') : undefined;
 
     const { data: product, error: productError } = await supabase
       .from('products')
@@ -210,11 +280,12 @@ export async function POST(request: NextRequest) {
         weight: input.weight ?? null,
         dimensions,
         style: input.style ?? null,
-        condition: input.condition ?? 'Neuf',
+        // condition: laisser le default DB ('new')
         supplier_id: supplierId,
         supplier_moq: input.moq ?? null,
         supplier_page_url: input.source_url,
         sourcing_channel: input.source_platform,
+        internal_notes: internalNotes ?? null,
       })
       .select('id, name')
       .single();
@@ -232,61 +303,103 @@ export async function POST(request: NextRequest) {
 
     const productId = product.id;
 
-    // ---- Step 3: Ajouter l'URL source ----
-    await supabase.from('sourcing_urls').insert({
+    // ================================================================
+    // STEP 3 : URL source dans sourcing_urls (PAS les images)
+    // ================================================================
+    const { error: urlError } = await supabase.from('sourcing_urls').insert({
       product_id: productId,
       url: input.source_url,
       platform: input.source_platform,
       label: `Import ${input.source_platform}`,
     });
 
-    // ---- Step 4: Ajouter les prix par palier ----
-    if (input.price_tiers && input.price_tiers.length > 0) {
-      const priceEntries = input.price_tiers.map(tier => ({
-        product_id: productId,
-        supplier_id: supplierId,
-        price: tier.price,
-        currency: tier.currency,
-        quantity: tier.min_qty ?? null,
-        proposed_by: 'supplier' as const,
-        notes: tier.max_qty
-          ? `${tier.min_qty ?? 1}-${tier.max_qty} pcs`
-          : tier.min_qty
-            ? `>= ${tier.min_qty} pcs`
-            : null,
-      }));
-
-      await supabase.from('sourcing_price_history').insert(priceEntries);
+    if (urlError) {
+      console.error(
+        '[API sourcing/import] Sourcing URL insert failed:',
+        urlError
+      );
     }
 
-    // ---- Step 5: Ajouter le fournisseur comme candidat ----
-    if (supplierId) {
-      await supabase.from('sourcing_candidate_suppliers').insert({
-        product_id: productId,
-        supplier_id: supplierId,
-        status: 'identified',
-        quoted_price: input.cost_price ?? null,
-        quoted_moq: input.moq ?? null,
-        quoted_lead_days: input.lead_days ?? null,
-        notes: `Import automatique depuis ${input.source_platform}`,
-      });
-    }
-
-    // ---- Step 6: Stocker les URLs des images ----
+    // ================================================================
+    // STEP 4 : Images dans product_images + sourcing_photos
+    // ================================================================
     if (input.images && input.images.length > 0) {
-      const imageUrls = input.images
-        .filter(url => !url.includes('icon') && !url.includes('logo'))
+      const validImages = input.images
+        .filter(url => url && !url.includes('icon') && !url.includes('logo'))
         .slice(0, 10);
 
-      if (imageUrls.length > 0) {
-        const urlEntries = imageUrls.map((url, i) => ({
+      if (validImages.length > 0) {
+        // product_images — pour l'affichage catalogue
+        const productImageRows = validImages.map((url, i) => ({
           product_id: productId,
-          url,
-          platform: input.source_platform,
-          label: `Photo ${i + 1}`,
+          public_url: url,
+          storage_path: `external/${input.source_platform}/${sku}-${i}`,
+          display_order: i,
+          is_primary: i === 0,
+          image_type: (i === 0 ? 'primary' : 'gallery') as
+            | 'primary'
+            | 'gallery',
+          alt_text: `${input.name} - Photo ${i + 1}`,
         }));
 
-        await supabase.from('sourcing_urls').insert(urlEntries);
+        const { error: imgError } = await supabase
+          .from('product_images')
+          .insert(productImageRows);
+
+        if (imgError) {
+          console.error(
+            '[API sourcing/import] Product images insert failed:',
+            imgError
+          );
+        }
+
+        // sourcing_photos — pour le suivi sourcing
+        const sourcingPhotoRows = validImages.map((url, i) => ({
+          product_id: productId,
+          public_url: url,
+          storage_path: `external/${input.source_platform}/${sku}-${i}`,
+          photo_type: 'supplier_catalog',
+          caption: `Import ${input.source_platform} - Photo ${i + 1}`,
+          sort_order: i,
+        }));
+
+        const { error: photoError } = await supabase
+          .from('sourcing_photos')
+          .insert(sourcingPhotoRows);
+
+        if (photoError) {
+          console.error(
+            '[API sourcing/import] Sourcing photos insert failed:',
+            photoError
+          );
+        }
+      }
+    }
+
+    // ================================================================
+    // STEP 5 : Fournisseur candidat (upsert pour éviter UNIQUE violation)
+    // ================================================================
+    if (supplierId) {
+      const { error: candidateError } = await supabase
+        .from('sourcing_candidate_suppliers')
+        .upsert(
+          {
+            product_id: productId,
+            supplier_id: supplierId,
+            status: 'identified',
+            quoted_price: input.cost_price ?? null,
+            quoted_moq: input.moq ?? null,
+            quoted_lead_days: input.lead_days ?? null,
+            notes: `Import automatique depuis ${input.source_platform}`,
+          },
+          { onConflict: 'product_id,supplier_id' }
+        );
+
+      if (candidateError) {
+        console.error(
+          '[API sourcing/import] Candidate supplier upsert failed:',
+          candidateError
+        );
       }
     }
 

@@ -4,7 +4,60 @@ import { z } from 'zod';
 import { createServerClient } from '@verone/utils/supabase/server';
 
 // ============================================================
-// Schema — Import fournisseur seul (depuis page entreprise Alibaba)
+// Mapping pays → code ISO 2 lettres
+// ============================================================
+
+const COUNTRY_MAP: Record<string, string> = {
+  china: 'CN',
+  chine: 'CN',
+  vietnam: 'VN',
+  germany: 'DE',
+  allemagne: 'DE',
+  france: 'FR',
+  india: 'IN',
+  inde: 'IN',
+  taiwan: 'TW',
+  'south korea': 'KR',
+  italy: 'IT',
+  italie: 'IT',
+  spain: 'ES',
+  espagne: 'ES',
+  turkey: 'TR',
+  turquie: 'TR',
+  thailand: 'TH',
+  thailande: 'TH',
+  indonesia: 'ID',
+  indonesie: 'ID',
+  bangladesh: 'BD',
+  pakistan: 'PK',
+  portugal: 'PT',
+  netherlands: 'NL',
+  'pays-bas': 'NL',
+  japan: 'JP',
+  japon: 'JP',
+  'united states': 'US',
+  'united kingdom': 'GB',
+  brazil: 'BR',
+  bresil: 'BR',
+  poland: 'PL',
+  pologne: 'PL',
+  romania: 'RO',
+  roumanie: 'RO',
+  belgium: 'BE',
+  belgique: 'BE',
+  morocco: 'MA',
+  maroc: 'MA',
+};
+
+function toCountryCode(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (trimmed.length === 2) return trimmed.toUpperCase();
+  return COUNTRY_MAP[trimmed.toLowerCase()] ?? null;
+}
+
+// ============================================================
+// Schema Zod
 // ============================================================
 
 const ImportSupplierSchema = z.object({
@@ -32,7 +85,7 @@ const ImportSupplierSchema = z.object({
 export async function POST(request: NextRequest) {
   const supabase = await createServerClient();
 
-  // Auth — support cookies (navigateur) OU Bearer token (extension Chrome)
+  // --- Auth : cookies OU Bearer token ---
   const authHeader = request.headers.get('Authorization');
   const authResult = authHeader?.startsWith('Bearer ')
     ? await supabase.auth.getUser(authHeader.slice(7))
@@ -43,6 +96,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Non autorise' }, { status: 401 });
   }
 
+  // --- Vérifier rôle staff back-office ---
+  const { data: roleData } = await supabase
+    .from('user_app_roles')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('app', 'back-office')
+    .eq('is_active', true)
+    .limit(1)
+    .maybeSingle();
+
+  if (!roleData) {
+    return NextResponse.json(
+      { error: 'Acces reserve au staff back-office' },
+      { status: 403 }
+    );
+  }
+
+  // --- Validation Zod ---
   const body: unknown = await request.json();
   const parsed = ImportSupplierSchema.safeParse(body);
   if (!parsed.success) {
@@ -53,34 +124,28 @@ export async function POST(request: NextRequest) {
   }
 
   const input = parsed.data;
+  const countryCode = toCountryCode(input.country);
+  const reliabilityScore = input.supplier_score
+    ? Math.round(input.supplier_score)
+    : null;
 
   try {
-    // country doit etre un code ISO 2 lettres (varchar(2))
-    const countryCode = input.country
-      ? input.country.length === 2
-        ? input.country.toUpperCase()
-        : input.country.toLowerCase().includes('chin')
-          ? 'CN'
-          : input.country.substring(0, 2).toUpperCase()
-      : null;
+    // Échapper les wildcards SQL
+    const escapedName = input.name.replace(/[%_]/g, '\\$&');
 
-    // supplier_reliability_score est un integer (1-5)
-    const reliabilityScore = input.supplier_score
-      ? Math.round(input.supplier_score)
-      : null;
-
-    // Verifier si le fournisseur existe deja
+    // Chercher si le fournisseur existe déjà
     const { data: existing } = await supabase
       .from('organisations')
       .select('id, trade_name')
-      .or(`trade_name.ilike.%${input.name}%,legal_name.ilike.%${input.name}%`)
+      .or(`trade_name.ilike.%${escapedName}%,legal_name.ilike.%${escapedName}%`)
       .eq('type', 'supplier')
+      .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
 
     if (existing) {
-      // Mettre a jour les champs Alibaba manquants
-      await supabase
+      // Mettre à jour les champs manquants
+      const { error: updateErr } = await supabase
         .from('organisations')
         .update({
           alibaba_store_url: input.alibaba_store_url ?? undefined,
@@ -92,6 +157,13 @@ export async function POST(request: NextRequest) {
         })
         .eq('id', existing.id);
 
+      if (updateErr) {
+        console.error(
+          '[API sourcing/import-supplier] Update failed:',
+          updateErr
+        );
+      }
+
       return NextResponse.json({
         success: true,
         supplier_id: existing.id,
@@ -101,7 +173,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Creer le fournisseur
+    // Créer le fournisseur
     const { data: newSupplier, error } = await supabase
       .from('organisations')
       .insert({
