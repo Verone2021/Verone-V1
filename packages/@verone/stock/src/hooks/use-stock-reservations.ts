@@ -8,60 +8,18 @@ import { useState, useCallback } from 'react';
 import { useToast } from '@verone/common/hooks';
 import { createClient } from '@verone/utils/supabase/client';
 
-// Types pour les réservations de stock
-export interface StockReservation {
-  id: string;
-  product_id: string;
-  reserved_quantity: number;
-  reference_type: string;
-  reference_id: string;
-  reserved_by: string;
-  reserved_at: string;
-  expires_at: string | null;
-  released_at: string | null;
-  released_by: string | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-
-  // Relations jointes
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  products?: any; // Type flexible pour éviter erreur TypeScript avant régénération types Supabase
-  user_profiles?: {
-    first_name?: string;
-    last_name?: string;
-  };
-  released_user_profiles?: {
-    first_name?: string;
-    last_name?: string;
-  };
-}
-
-export interface CreateReservationData {
-  product_id: string;
-  reserved_quantity: number;
-  reference_type: string;
-  reference_id: string;
-  expires_at?: string;
-  notes?: string;
-}
-
-export interface ReservationFilters {
-  product_id?: string;
-  reference_type?: string;
-  reference_id?: string;
-  is_active?: boolean;
-  expires_soon?: boolean; // Expire dans les 24h
-  reserved_by?: string;
-}
-
-interface ReservationStats {
-  total_reservations: number;
-  active_reservations: number;
-  expired_reservations: number;
-  total_reserved_quantity: number;
-  expiring_soon_count: number;
-}
+export type {
+  StockReservation,
+  CreateReservationData,
+  ReservationFilters,
+  ReservationStats,
+} from './stock-reservations-types';
+import type {
+  StockReservation,
+  CreateReservationData,
+  ReservationFilters,
+  ReservationStats,
+} from './stock-reservations-types';
 
 export function useStockReservations() {
   const [loading, setLoading] = useState(false);
@@ -70,7 +28,6 @@ export function useStockReservations() {
   const { toast } = useToast();
   const supabase = createClient();
 
-  // Récupérer toutes les réservations avec filtres
   const fetchReservations = useCallback(
     async (filters?: ReservationFilters) => {
       setLoading(true);
@@ -155,7 +112,6 @@ export function useStockReservations() {
     [supabase, toast]
   );
 
-  // Récupérer les statistiques des réservations
   const fetchStats = useCallback(
     async (filters?: ReservationFilters) => {
       try {
@@ -227,7 +183,6 @@ export function useStockReservations() {
     [supabase]
   );
 
-  // Créer une nouvelle réservation
   const createReservation = useCallback(
     async (data: CreateReservationData) => {
       setLoading(true);
@@ -288,7 +243,6 @@ export function useStockReservations() {
     [supabase, toast, fetchReservations]
   );
 
-  // Libérer une réservation
   const releaseReservation = useCallback(
     async (reservationId: string, notes?: string) => {
       setLoading(true);
@@ -329,7 +283,6 @@ export function useStockReservations() {
     [supabase, toast, fetchReservations]
   );
 
-  // Libérer toutes les réservations d'une référence
   const releaseReservationsForReference = useCallback(
     async (referenceType: string, referenceId: string, notes?: string) => {
       setLoading(true);
@@ -378,7 +331,6 @@ export function useStockReservations() {
     [supabase, toast, fetchReservations]
   );
 
-  // Étendre l'expiration d'une réservation
   const extendReservation = useCallback(
     async (reservationId: string, newExpiresAt: string) => {
       setLoading(true);
@@ -416,7 +368,6 @@ export function useStockReservations() {
     [supabase, toast, fetchReservations]
   );
 
-  // Nettoyer les réservations expirées
   const cleanupExpiredReservations = useCallback(async () => {
     setLoading(true);
     try {
@@ -462,7 +413,6 @@ export function useStockReservations() {
     }
   }, [supabase, toast, fetchReservations]);
 
-  // Récupérer les réservations actives d'un produit
   const getActiveReservationsForProduct = useCallback(
     async (productId: string) => {
       try {
@@ -489,7 +439,6 @@ export function useStockReservations() {
     [supabase]
   );
 
-  // Calculer le stock réellement disponible pour un produit
   const getAvailableStockForProduct = useCallback(
     async (productId: string) => {
       try {
@@ -508,7 +457,6 @@ export function useStockReservations() {
     [supabase]
   );
 
-  // Fonctions utilitaires pour les réservations courantes
   const reserveForSalesOrder = useCallback(
     (
       productId: string,
@@ -567,12 +515,9 @@ export function useStockReservations() {
   );
 
   return {
-    // État
     loading,
     reservations,
     stats,
-
-    // Actions principales
     fetchReservations,
     fetchStats,
     createReservation,
@@ -580,12 +525,8 @@ export function useStockReservations() {
     releaseReservationsForReference,
     extendReservation,
     cleanupExpiredReservations,
-
-    // Utilitaires
     getActiveReservationsForProduct,
     getAvailableStockForProduct,
-
-    // Actions simplifiées
     reserveForSalesOrder,
     reserveForProduction,
     reserveManual,

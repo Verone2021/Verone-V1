@@ -8,107 +8,26 @@ import { useState, useCallback } from 'react';
 import { useToast } from '@verone/common/hooks';
 import { createClient } from '@verone/utils/supabase/client';
 
-// Types pour les mouvements de stock
-export type MovementType = 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER';
-
-// Motifs détaillés pour les mouvements (enum de la DB)
-export type StockReasonCode =
-  // Sorties normales
-  | 'sale'
-  | 'transfer_out'
-  // Pertes & Dégradations
-  | 'damage_transport'
-  | 'damage_handling'
-  | 'damage_storage'
-  | 'theft'
-  | 'loss_unknown'
-  // Usage Commercial
-  | 'sample_client'
-  | 'sample_showroom'
-  | 'marketing_event'
-  | 'photography'
-  // R&D & Production
-  | 'rd_testing'
-  | 'prototype'
-  | 'quality_control'
-  // Retours & SAV
-  | 'return_supplier'
-  | 'return_customer'
-  | 'warranty_replacement'
-  // Ajustements & Corrections
-  | 'inventory_correction'
-  | 'write_off'
-  | 'obsolete'
-  // Entrées spéciales
-  | 'purchase_reception'
-  | 'return_from_client'
-  | 'found_inventory'
-  | 'manual_adjustment';
-
-export interface StockMovement {
-  id: string;
-  product_id: string;
-  warehouse_id?: string;
-  movement_type: MovementType;
-  quantity_change: number;
-  quantity_before: number;
-  quantity_after: number;
-  unit_cost?: number;
-  reference_type?: string;
-  reference_id?: string;
-  notes?: string;
-  reason_code?: StockReasonCode;
-  affects_forecast?: boolean;
-  forecast_type?: 'in' | 'out';
-  performed_by: string;
-  performed_at: string;
-  created_at: string;
-  updated_at: string;
-
-  // Relations jointes
-  products?: {
-    id: string;
-    name: string;
-    sku: string;
-    primary_image_url?: string;
-  };
-  user_profiles?: {
-    first_name?: string;
-    last_name?: string;
-  };
-}
-
-export interface CreateStockMovementData {
-  product_id: string;
-  movement_type: MovementType;
-  quantity_change: number;
-  unit_cost?: number;
-  reference_type?: string;
-  reference_id?: string;
-  notes?: string;
-  reason_code?: StockReasonCode;
-  affects_forecast?: boolean;
-  forecast_type?: 'in' | 'out';
-}
-
-export interface StockMovementFilters {
-  product_id?: string;
-  movement_type?: MovementType;
-  reference_type?: string;
-  reason_code?: StockReasonCode;
-  affects_forecast?: boolean;
-  date_from?: string;
-  date_to?: string;
-  performed_by?: string;
-}
-
-interface StockMovementStats {
-  total_movements: number;
-  total_in: number;
-  total_out: number;
-  total_adjustments: number;
-  total_transfers: number;
-}
+export type {
+  MovementType,
+  StockReasonCode,
+  StockMovement,
+  CreateStockMovementData,
+  StockMovementFilters,
+  StockMovementStats,
+} from './stock-movements-types';
+import type {
+  MovementType,
+  StockReasonCode,
+  StockMovement,
+  CreateStockMovementData,
+  StockMovementFilters,
+  StockMovementStats,
+} from './stock-movements-types';
+import {
+  getReasonDescription as _getReasonDescription,
+  getReasonsByCategory as _getReasonsByCategory,
+} from './stock-reason-utils';
 
 export function useStockMovements() {
   const [loading, setLoading] = useState(false);
@@ -560,135 +479,12 @@ export function useStockMovements() {
     [createMovement]
   );
 
-  // Obtenir la description d'un motif
   const getReasonDescription = useCallback(
-    (reasonCode: StockReasonCode): string => {
-      const descriptions: Record<StockReasonCode, string> = {
-        // Sorties normales
-        sale: 'Vente client',
-        transfer_out: 'Transfert sortant',
-        // Pertes & Dégradations
-        damage_transport: 'Casse transport',
-        damage_handling: 'Casse manipulation',
-        damage_storage: 'Dégradation stockage',
-        theft: 'Vol/Disparition',
-        loss_unknown: 'Perte inexpliquée',
-        // Usage Commercial
-        sample_client: 'Échantillon client',
-        sample_showroom: 'Échantillon showroom',
-        marketing_event: 'Événement marketing',
-        photography: 'Séance photo',
-        // R&D & Production
-        rd_testing: 'Tests R&D',
-        prototype: 'Prototype',
-        quality_control: 'Contrôle qualité',
-        // Retours & SAV
-        return_supplier: 'Retour fournisseur',
-        return_customer: 'Retour client SAV',
-        warranty_replacement: 'Remplacement garantie',
-        // Ajustements
-        inventory_correction: 'Correction inventaire',
-        write_off: 'Mise au rebut',
-        obsolete: 'Produit obsolète',
-        // Entrées spéciales
-        purchase_reception: 'Réception fournisseur',
-        return_from_client: 'Retour client',
-        found_inventory: 'Trouvaille inventaire',
-        manual_adjustment: 'Ajustement manuel',
-      };
-      return descriptions[reasonCode] ?? 'Motif inconnu';
-    },
+    (reasonCode: StockReasonCode): string => _getReasonDescription(reasonCode),
     []
   );
 
-  // Obtenir les motifs groupés par catégorie
-  const getReasonsByCategory = useCallback(() => {
-    return {
-      sorties_normales: [
-        { code: 'sale' as StockReasonCode, label: 'Vente client' },
-        { code: 'transfer_out' as StockReasonCode, label: 'Transfert sortant' },
-      ],
-      pertes_degradations: [
-        {
-          code: 'damage_transport' as StockReasonCode,
-          label: 'Casse transport',
-        },
-        {
-          code: 'damage_handling' as StockReasonCode,
-          label: 'Casse manipulation',
-        },
-        {
-          code: 'damage_storage' as StockReasonCode,
-          label: 'Dégradation stockage',
-        },
-        { code: 'theft' as StockReasonCode, label: 'Vol/Disparition' },
-        { code: 'loss_unknown' as StockReasonCode, label: 'Perte inexpliquée' },
-      ],
-      usage_commercial: [
-        {
-          code: 'sample_client' as StockReasonCode,
-          label: 'Échantillon client',
-        },
-        {
-          code: 'sample_showroom' as StockReasonCode,
-          label: 'Échantillon showroom',
-        },
-        {
-          code: 'marketing_event' as StockReasonCode,
-          label: 'Événement marketing',
-        },
-        { code: 'photography' as StockReasonCode, label: 'Séance photo' },
-      ],
-      rd_production: [
-        { code: 'rd_testing' as StockReasonCode, label: 'Tests R&D' },
-        { code: 'prototype' as StockReasonCode, label: 'Prototype' },
-        {
-          code: 'quality_control' as StockReasonCode,
-          label: 'Contrôle qualité',
-        },
-      ],
-      retours_sav: [
-        {
-          code: 'return_supplier' as StockReasonCode,
-          label: 'Retour fournisseur',
-        },
-        {
-          code: 'return_customer' as StockReasonCode,
-          label: 'Retour client SAV',
-        },
-        {
-          code: 'warranty_replacement' as StockReasonCode,
-          label: 'Remplacement garantie',
-        },
-      ],
-      ajustements: [
-        {
-          code: 'inventory_correction' as StockReasonCode,
-          label: 'Correction inventaire',
-        },
-        { code: 'write_off' as StockReasonCode, label: 'Mise au rebut' },
-        { code: 'obsolete' as StockReasonCode, label: 'Produit obsolète' },
-      ],
-      entrees_speciales: [
-        {
-          code: 'purchase_reception' as StockReasonCode,
-          label: 'Réception fournisseur',
-        },
-        {
-          code: 'return_from_client' as StockReasonCode,
-          label: 'Retour client',
-        },
-        {
-          code: 'found_inventory' as StockReasonCode,
-          label: 'Trouvaille inventaire',
-        },
-        {
-          code: 'manual_adjustment' as StockReasonCode,
-          label: 'Ajustement manuel',
-        },
-      ],
-    };
-  }, []);
+  const getReasonsByCategory = useCallback(() => _getReasonsByCategory(), []);
 
   return {
     // État
