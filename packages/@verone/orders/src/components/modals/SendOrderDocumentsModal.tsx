@@ -14,7 +14,6 @@ import {
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import { Checkbox } from '@verone/ui';
 import {
   Select,
   SelectContent,
@@ -22,39 +21,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
+import { Loader2, Mail } from 'lucide-react';
+
 import {
-  Mail,
-  Loader2,
-  Paperclip,
-  Eye,
-  Download,
-  CheckCircle,
-  AlertCircle,
-} from 'lucide-react';
+  OrderDocumentsList,
+  type LinkedDocument,
+  type AttachmentBlob,
+} from './OrderDocumentsList';
 
-// ── Types ──────────────────────────────────────────────────────────
-
-export interface LinkedDocument {
-  id: string;
-  document_number: string;
-  document_type: 'customer_quote' | 'customer_invoice';
-  qonto_invoice_id: string | null;
-  qonto_pdf_url: string | null;
-  total_ttc: number;
-  status: string;
-  quote_status: string | null;
-}
+export type { LinkedDocument };
 
 export interface OrderContact {
   label: string;
   email: string;
-}
-
-interface AttachmentBlob {
-  blob: Blob;
-  url: string;
-  ready: boolean;
-  error: string | null;
 }
 
 export interface SendOrderDocumentsModalProps {
@@ -68,8 +47,6 @@ export interface SendOrderDocumentsModalProps {
   onSent?: () => void;
 }
 
-// ── Helpers ─────────────────────────────────────────────────────────
-
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -82,12 +59,6 @@ function blobToBase64(blob: Blob): Promise<string> {
     reader.readAsDataURL(blob);
   });
 }
-
-function documentTypeLabel(type: string): string {
-  return type === 'customer_quote' ? 'Devis' : 'Facture';
-}
-
-// ── Component ───────────────────────────────────────────────────────
 
 export function SendOrderDocumentsModal({
   open,
@@ -118,15 +89,12 @@ L'equipe Verone`;
   const [message, setMessage] = useState(defaultMessage);
   const [selectedDocIds, setSelectedDocIds] = useState<Set<string>>(new Set());
   const [sending, setSending] = useState(false);
-
-  // PDF blob storage: key = document.id
   const [blobs, setBlobs] = useState<Map<string, AttachmentBlob>>(new Map());
-  // Preview state
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewTitle, setPreviewTitle] = useState('');
   const generatingRef = useRef(false);
 
-  // ── Reset state when modal opens ──
+  // Reset on open
   useEffect(() => {
     if (open) {
       setTo(defaultEmail);
@@ -141,7 +109,7 @@ L'equipe Verone`;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reset on open
   }, [open]);
 
-  // ── Fetch PDFs when modal opens ──
+  // Fetch PDFs when modal opens
   const fetchPdfs = useCallback(async () => {
     if (generatingRef.current) return;
     generatingRef.current = true;
@@ -162,7 +130,6 @@ L'equipe Verone`;
       }
 
       try {
-        // Use the appropriate proxy route depending on document type
         const proxyPath =
           doc.document_type === 'customer_quote'
             ? `/api/qonto/quotes/${doc.qonto_invoice_id}/pdf`
@@ -178,10 +145,6 @@ L'equipe Verone`;
           return next;
         });
       } catch (err) {
-        console.error(
-          `[SendOrderDocs] PDF fetch failed for ${doc.document_number}:`,
-          err
-        );
         setBlobs(prev => {
           const next = new Map(prev);
           next.set(doc.id, {
@@ -213,7 +176,6 @@ L'equipe Verone`;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot on open
   }, [open]);
 
-  // ── Check if all selected attachments are ready ──
   const allSelectedReady = (() => {
     if (selectedDocIds.size === 0) return true;
     for (const docId of selectedDocIds) {
@@ -223,7 +185,6 @@ L'equipe Verone`;
     return true;
   })();
 
-  // ── Toggle document selection ──
   const toggleDoc = (docId: string, checked: boolean) => {
     setSelectedDocIds(prev => {
       const next = new Set(prev);
@@ -233,26 +194,6 @@ L'equipe Verone`;
     });
   };
 
-  // ── Status badge ──
-  const StatusBadge = ({ id }: { id: string }) => {
-    const entry = blobs.get(id);
-    if (!entry) {
-      return <Loader2 className="h-3.5 w-3.5 animate-spin text-gray-400" />;
-    }
-    if (entry.error) {
-      return (
-        <span title={entry.error}>
-          <AlertCircle className="h-3.5 w-3.5 text-red-500" />
-        </span>
-      );
-    }
-    if (entry.ready) {
-      return <CheckCircle className="h-3.5 w-3.5 text-green-500" />;
-    }
-    return <Loader2 className="h-3.5 w-3.5 animate-spin text-gray-400" />;
-  };
-
-  // ── Preview handler ──
   const handlePreview = (id: string, title: string) => {
     const entry = blobs.get(id);
     if (entry?.url) {
@@ -261,7 +202,6 @@ L'equipe Verone`;
     }
   };
 
-  // ── Download handler ──
   const handleDownload = (id: string, filename: string) => {
     const entry = blobs.get(id);
     if (entry?.url) {
@@ -274,7 +214,6 @@ L'equipe Verone`;
     }
   };
 
-  // ── Send handler ──
   const handleSend = async () => {
     if (!to || !subject || !message) {
       _toast({
@@ -352,8 +291,6 @@ L'equipe Verone`;
     }
   };
 
-  const hasDocuments = linkedDocuments.length > 0;
-
   return (
     <>
       <Dialog
@@ -408,7 +345,6 @@ L'equipe Verone`;
               )}
             </div>
 
-            {/* Subject */}
             <div className="space-y-1.5">
               <Label htmlFor="email-subject">Objet</Label>
               <Input
@@ -418,7 +354,6 @@ L'equipe Verone`;
               />
             </div>
 
-            {/* Message */}
             <div className="space-y-1.5">
               <Label htmlFor="email-message">Message</Label>
               <Textarea
@@ -430,75 +365,14 @@ L'equipe Verone`;
               />
             </div>
 
-            {/* Attachments */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-1.5">
-                <Paperclip className="h-3.5 w-3.5 text-gray-500" />
-                Pieces jointes
-              </Label>
-
-              {!hasDocuments && (
-                <p className="text-sm text-gray-500 italic">
-                  Aucun devis ou facture lie a cette commande. Generez-en un
-                  avant d&apos;envoyer.
-                </p>
-              )}
-
-              {linkedDocuments.map(doc => {
-                const typeLabel = documentTypeLabel(doc.document_type);
-                const filename = `${typeLabel.toLowerCase()}-${doc.document_number}.pdf`;
-
-                return (
-                  <div
-                    key={doc.id}
-                    className="flex items-center justify-between rounded border border-gray-100 px-3 py-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id={`attach-${doc.id}`}
-                        checked={selectedDocIds.has(doc.id)}
-                        onCheckedChange={checked =>
-                          toggleDoc(doc.id, checked === true)
-                        }
-                        disabled={!blobs.get(doc.id)?.ready}
-                      />
-                      <label
-                        htmlFor={`attach-${doc.id}`}
-                        className="text-sm cursor-pointer"
-                      >
-                        {typeLabel} {doc.document_number}
-                      </label>
-                      <StatusBadge id={doc.id} />
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <ButtonUnified
-                        variant="ghost"
-                        size="sm"
-                        disabled={!blobs.get(doc.id)?.ready}
-                        onClick={() =>
-                          handlePreview(
-                            doc.id,
-                            `${typeLabel} ${doc.document_number}`
-                          )
-                        }
-                        title="Apercu"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </ButtonUnified>
-                      <ButtonUnified
-                        variant="ghost"
-                        size="sm"
-                        disabled={!blobs.get(doc.id)?.ready}
-                        onClick={() => handleDownload(doc.id, filename)}
-                        title="Telecharger"
-                      >
-                        <Download className="h-3.5 w-3.5" />
-                      </ButtonUnified>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <OrderDocumentsList
+              blobs={blobs}
+              linkedDocuments={linkedDocuments}
+              selectedDocIds={selectedDocIds}
+              onToggleDoc={toggleDoc}
+              onPreview={handlePreview}
+              onDownload={handleDownload}
+            />
           </div>
 
           <DialogFooter>
