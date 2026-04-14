@@ -180,18 +180,18 @@ export function OrganisationProductsSection({
           <Card key={product.id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-4">
               {/* Image produit */}
-              <div className="aspect-square relative bg-gray-100 rounded-lg mb-3 overflow-hidden">
+              <div className="h-24 w-24 relative bg-gray-100 rounded-lg mb-3 overflow-hidden shrink-0">
                 {product.primary_image_url ? (
                   <Image
                     src={product.primary_image_url}
                     alt={product.name}
                     fill
                     className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    sizes="96px"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <Package className="h-12 w-12 text-gray-400" />
+                    <Package className="h-8 w-8 text-gray-400" />
                   </div>
                 )}
               </div>
