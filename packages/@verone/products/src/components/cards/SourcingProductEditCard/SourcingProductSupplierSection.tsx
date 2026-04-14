@@ -141,6 +141,8 @@ export function SourcingProductSupplierSection({
           <div className="flex flex-col space-y-1">
             <a
               href={`/contacts-organisations/suppliers/${product.supplier.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center text-blue-600 hover:underline text-sm"
             >
               <Building className="h-4 w-4 mr-2" />
