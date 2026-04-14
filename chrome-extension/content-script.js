@@ -278,21 +278,145 @@ function extractGenericProduct() {
 }
 
 // ============================================================
-// Detecter la plateforme et extraire
+// Extraction fournisseur seul (page entreprise Alibaba)
 // ============================================================
 
-function detectAndExtract() {
-  const url = window.location.href;
+function extractAlibabaSupplierOnly() {
+  const text = document.body.innerText;
+  const supplier = {
+    name: '',
+    country: '',
+    city: '',
+    address: '',
+    alibaba_store_url: window.location.href.split('?')[0],
+    year_established: null,
+    employees: '',
+    response_rate: '',
+    response_time: '',
+    supplier_score: null,
+    trade_assurance: false,
+    verified: false,
+    certifications: [],
+    specialties: [],
+    delivery_terms: '',
+  };
 
-  if (
-    url.includes('alibaba.com/product-detail') ||
-    url.includes('alibaba.com/company_profile')
-  ) {
-    return extractAlibabaProduct();
+  // Nom du fournisseur — h1 ou premier element company
+  const h1 = document.querySelector('h1');
+  if (h1) {
+    supplier.name = h1.textContent.trim();
+  }
+  if (!supplier.name) {
+    const companyEls = document.querySelectorAll('[class*="company"]');
+    for (const el of companyEls) {
+      const t = el.textContent.trim();
+      if (t.length > 5 && t.length < 80 && t.includes('Co.')) {
+        supplier.name = t;
+        break;
+      }
+    }
   }
 
-  // Fallback generique (fonctionne sur la plupart des sites e-commerce)
-  return extractGenericProduct();
+  // Pays / Region
+  const countryMatch = text.match(
+    /(?:Pays\s*\/\s*r[eé]gion|Country\s*\/\s*Region)\s*\n?\s*([^\n]+)/i
+  );
+  if (countryMatch) supplier.country = countryMatch[1].trim();
+
+  // Adresse usine
+  const factoryMatch = text.match(
+    /(?:Lieu de l'usine|Factory Location)\s*\n?\s*([^\n]+)/i
+  );
+  if (factoryMatch) supplier.address = factoryMatch[1].trim();
+
+  // Annee de creation
+  const yearMatch = text.match(
+    /(?:Ann[eé]e de cr[eé]ation|Year Established)\s*\n?\s*(\d{4})/i
+  );
+  if (yearMatch) supplier.year_established = parseInt(yearMatch[1]);
+
+  // Nombre d'employes
+  const empMatch = text.match(
+    /(?:Nombre d'employ[eé]s total|Total Employees)\s*\n?\s*([^\n]+)/i
+  );
+  if (empMatch) supplier.employees = empMatch[1].trim();
+
+  // Taux de reponse
+  const rateMatch = text.match(
+    /(?:Taux de r[eé]ponse|Response Rate)\s*\n?\s*(\d+\.?\d*%?)/i
+  );
+  if (rateMatch) supplier.response_rate = rateMatch[1];
+
+  // Temps de reponse
+  const timeMatch = text.match(
+    /(?:Temps de r[eé]ponse|Response Time)\s*\n?\s*([^\n]+)/i
+  );
+  if (timeMatch) supplier.response_time = timeMatch[1].trim().substring(0, 20);
+
+  // Score
+  const scoreMatch = text.match(
+    /(\d\.\d)\s*(?:\/\s*5|Tr[eè]s satisfait|Very satisfied)/i
+  );
+  if (scoreMatch) supplier.supplier_score = parseFloat(scoreMatch[1]);
+
+  // Trade Assurance
+  supplier.trade_assurance = text.toLowerCase().includes('trade assurance');
+
+  // Verified
+  supplier.verified = text.includes('Verified') || text.includes('Vérifié');
+
+  // Certifications
+  ['CE', 'RoHS', 'LVD', 'UL', 'FCC', 'ISO', 'SGS', 'BSCI', 'SA8000'].forEach(
+    cert => {
+      if (text.includes(cert)) supplier.certifications.push(cert);
+    }
+  );
+
+  // Incoterms / Conditions de livraison
+  const deliveryMatch = text.match(
+    /(?:Conditions de livraison accept[eé]es|Delivery Terms)\s*\n?\s*([^\n]+)/i
+  );
+  if (deliveryMatch) supplier.delivery_terms = deliveryMatch[1].trim();
+
+  return supplier;
+}
+
+// ============================================================
+// Detecter le type de page
+// ============================================================
+
+function detectPageType() {
+  const url = window.location.href;
+
+  if (url.includes('alibaba.com/product-detail')) {
+    return 'alibaba_product';
+  }
+  if (
+    url.includes('alibaba.com/company_profile') ||
+    (url.includes('.en.alibaba.com') && !url.includes('/product-detail'))
+  ) {
+    return 'alibaba_supplier';
+  }
+  if (url.includes('1688.com/offer/')) {
+    return 'alibaba_product';
+  }
+
+  // Site generique
+  return 'generic_product';
+}
+
+function detectAndExtract() {
+  const pageType = detectPageType();
+
+  if (pageType === 'alibaba_product') {
+    return { pageType, ...extractAlibabaProduct() };
+  }
+  if (pageType === 'alibaba_supplier') {
+    return { pageType, supplier: extractAlibabaSupplierOnly() };
+  }
+
+  // Generique
+  return { pageType, ...extractGenericProduct() };
 }
 
 // ============================================================

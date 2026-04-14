@@ -158,16 +158,25 @@
       <div class="hint">L'URL de votre instance Verone Back-Office</div>
     </div>
 
-    <!-- Actions -->
-    <div class="actions">
+    <!-- Page type indicator -->
+    <div id="page-type-info" style="display:none; margin-bottom:12px; padding:8px 12px; border-radius:6px; font-size:11px; font-weight:500;"></div>
+
+    <!-- Actions : produit -->
+    <div id="actions-product" class="actions" style="display:none">
       <button class="btn secondary" id="btn-refresh">Reanalyser</button>
-      <button class="btn primary" id="btn-import" disabled>Importer dans Verone</button>
+      <button class="btn primary" id="btn-import-product" disabled>Importer le produit</button>
+    </div>
+
+    <!-- Actions : fournisseur seul -->
+    <div id="actions-supplier" class="actions" style="display:none">
+      <button class="btn secondary" id="btn-refresh-2">Reanalyser</button>
+      <button class="btn primary" id="btn-import-supplier" disabled>Importer le fournisseur</button>
     </div>
 
     <!-- Success link -->
     <div id="success-link" style="display:none; margin-top:12px; text-align:center;">
       <a class="link" id="product-link" href="#" target="_blank">
-        Ouvrir la fiche sourcing
+        Ouvrir la fiche
       </a>
     </div>
   </div>
