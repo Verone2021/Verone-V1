@@ -145,6 +145,66 @@ export async function queryCollectionById(
   return { collectionResult, productsResult };
 }
 
+type RawCollectionProduct = {
+  products: {
+    id: string;
+    name: string;
+    product_images?: Array<{ public_url: string | null }>;
+  } | null;
+};
+
+/**
+ * Mappe les produits bruts (avec thumbnails) pour useCollections
+ */
+export function mapCollectionProducts(
+  collection: Record<string, unknown>,
+  products: Array<RawCollectionProduct> | null
+): Record<string, unknown> {
+  const images = collection.collection_images as
+    | Array<{ public_url: string | null; is_primary: boolean }>
+    | null
+    | undefined;
+
+  return {
+    ...collection,
+    cover_image_url: extractCoverImage(
+      images,
+      collection.image_url as string | null
+    ),
+    products:
+      products
+        ?.map(cp => {
+          if (!cp.products) return null;
+          return {
+            id: cp.products.id,
+            name: cp.products.name,
+            image_url: cp.products.product_images?.[0]?.public_url,
+          };
+        })
+        .filter(Boolean) ?? [],
+  };
+}
+
+/**
+ * Mappe une collection sans produits (pour les collections restantes)
+ */
+export function mapCollectionWithoutProducts(
+  collection: Record<string, unknown>
+): Record<string, unknown> {
+  const images = collection.collection_images as
+    | Array<{ public_url: string | null; is_primary: boolean }>
+    | null
+    | undefined;
+  return {
+    ...collection,
+    cover_image_url: extractCoverImage(
+      images,
+      collection.image_url as string | null
+    ),
+    products: [],
+  };
+}
+
 /**
  * Récupère les collections archivées
  */
