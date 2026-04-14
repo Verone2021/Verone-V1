@@ -1,40 +1,25 @@
-/* eslint-disable @typescript-eslint/no-misused-promises, @typescript-eslint/no-unused-vars */
 'use client';
 
-/**
- * 🎯 VÉRONE - Modal Gestion Caractéristiques Produit
- *
- * Modal dédié pour la gestion complète des caractéristiques produit
- * - Variant attributes (couleur, matière, style, etc.)
- * - Dimensions physiques (largeur, hauteur, profondeur)
- * - Propriétés techniques (poids, matériau, finition)
- * - Interface claire et validation en temps réel
- */
-
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import {
   Settings,
-  Plus,
-  X,
   Save,
   Ruler,
   Weight,
-  Palette,
-  Layers,
   AlertCircle,
   CheckCircle,
-  Package,
 } from 'lucide-react';
 
 import { Alert, AlertDescription } from '@verone/ui';
-import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
-import { cn } from '@verone/utils';
+
+import { ProductVariantAttributesForm } from './product-characteristics/ProductVariantAttributesForm';
+import { ProductCustomAttributesForm } from './product-characteristics/ProductCustomAttributesForm';
 
 interface ProductCharacteristicsUpdate {
   variant_attributes: Record<string, string | string[]> | null;
@@ -56,64 +41,13 @@ interface ProductCharacteristicsModalProps {
   onUpdate: (data: ProductCharacteristicsUpdate) => void;
 }
 
-// Caractéristiques prédéfinies pour l'interface
-const VARIANT_TEMPLATES = {
-  color: {
-    label: 'Couleur',
-    icon: Palette,
-    placeholder: 'ex: Blanc cassé, Bleu marine...',
-    suggestions: [
-      'Blanc',
-      'Noir',
-      'Gris',
-      'Beige',
-      'Marron',
-      'Bleu',
-      'Rouge',
-      'Vert',
-    ],
-  },
-  material: {
-    label: 'Matériau',
-    icon: Layers,
-    placeholder: 'ex: Chêne massif, Métal brossé...',
-    suggestions: [
-      'Bois',
-      'Métal',
-      'Tissu',
-      'Cuir',
-      'Plastique',
-      'Verre',
-      'Céramique',
-      'Marbre',
-    ],
-  },
-  style: {
-    label: 'Style',
-    icon: Package,
-    placeholder: 'ex: Moderne, Classique...',
-    suggestions: [
-      'Moderne',
-      'Classique',
-      'Industriel',
-      'Scandinave',
-      'Rustique',
-      'Art déco',
-    ],
-  },
-  finish: {
-    label: 'Finition',
-    icon: Settings,
-    placeholder: 'ex: Vernis mat, Laqué brillant...',
-    suggestions: ['Mat', 'Brillant', 'Satiné', 'Brossé', 'Poli', 'Texturé'],
-  },
-};
-
 const DIMENSION_FIELDS = [
   { key: 'width', label: 'Largeur', unit: 'cm' },
   { key: 'height', label: 'Hauteur', unit: 'cm' },
   { key: 'depth', label: 'Profondeur', unit: 'cm' },
 ];
+
+const PREDEFINED_KEYS = ['color', 'material', 'style', 'finish'];
 
 export function ProductCharacteristicsModal({
   isOpen,
@@ -125,7 +59,6 @@ export function ProductCharacteristicsModal({
 }: ProductCharacteristicsModalProps) {
   const supabase = createClient();
 
-  // États locaux pour les formulaires
   const [variantAttributes, setVariantAttributes] = useState<
     Record<string, string>
   >({});
@@ -134,26 +67,20 @@ export function ProductCharacteristicsModal({
   const [customAttributes, setCustomAttributes] = useState<
     Record<string, string>
   >({});
-
-  // États UI
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [newAttributeKey, setNewAttributeKey] = useState('');
   const [newAttributeValue, setNewAttributeValue] = useState('');
 
-  // Initialiser les données
   useEffect(() => {
     if (initialData) {
-      // Variant attributes
       const variants = initialData.variant_attributes ?? {};
-      const predefinedKeys = Object.keys(VARIANT_TEMPLATES);
-
       const predefined: Record<string, string> = {};
       const custom: Record<string, string> = {};
 
       Object.entries(variants).forEach(([key, value]) => {
-        if (predefinedKeys.includes(key)) {
+        if (PREDEFINED_KEYS.includes(key)) {
           predefined[key] = String(value);
         } else {
           custom[key] = String(value);
@@ -162,30 +89,20 @@ export function ProductCharacteristicsModal({
 
       setVariantAttributes(predefined);
       setCustomAttributes(custom);
-
-      // Dimensions - JSONB values are stored as unknown, but are always numbers
       setDimensions((initialData.dimensions ?? {}) as Record<string, number>);
-
-      // Weight
       setWeight(initialData.weight);
     }
   }, [initialData]);
 
-  /**
-   * 💾 Sauvegarde des caractéristiques
-   */
   const handleSave = async () => {
     try {
       setSaving(true);
       setError(null);
 
-      // Combiner tous les variant_attributes
       const allVariantAttributes = {
         ...variantAttributes,
         ...customAttributes,
       };
-
-      // Nettoyer les valeurs vides
       Object.keys(allVariantAttributes).forEach(key => {
         if (
           !allVariantAttributes[key] ||
@@ -195,7 +112,6 @@ export function ProductCharacteristicsModal({
         }
       });
 
-      // Nettoyer les dimensions vides
       const cleanDimensions = { ...dimensions };
       Object.keys(cleanDimensions).forEach(key => {
         if (!cleanDimensions[key] || cleanDimensions[key] === 0) {
@@ -214,32 +130,28 @@ export function ProductCharacteristicsModal({
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
+      const { error: dbError } = await supabase
         .from('products')
         .update(updateData)
         .eq('id', productId);
 
-      if (error) throw error;
+      if (dbError) throw dbError;
 
       setSuccess(true);
       onUpdate(updateData);
 
-      // Fermer le modal après 1.5s
       setTimeout(() => {
         setSuccess(false);
         onClose();
       }, 1500);
     } catch (err) {
-      console.error('❌ Erreur sauvegarde caractéristiques:', err);
+      console.error('Erreur sauvegarde caractéristiques:', err);
       setError(err instanceof Error ? err.message : 'Erreur sauvegarde');
     } finally {
       setSaving(false);
     }
   };
 
-  /**
-   * ➕ Ajouter attribut personnalisé
-   */
   const handleAddCustomAttribute = () => {
     if (newAttributeKey.trim() && newAttributeValue.trim()) {
       setCustomAttributes(prev => ({
@@ -251,26 +163,9 @@ export function ProductCharacteristicsModal({
     }
   };
 
-  /**
-   * 🗑️ Supprimer attribut personnalisé
-   */
-  const handleRemoveCustomAttribute = (key: string) => {
-    setCustomAttributes(prev => {
-      const updated = { ...prev };
-      delete updated[key];
-      return updated;
-    });
-  };
-
-  /**
-   * 📐 Mise à jour dimension
-   */
   const handleDimensionChange = (key: string, value: string) => {
     const numValue = parseFloat(value);
-    setDimensions(prev => ({
-      ...prev,
-      [key]: isNaN(numValue) ? 0 : numValue,
-    }));
+    setDimensions(prev => ({ ...prev, [key]: isNaN(numValue) ? 0 : numValue }));
   };
 
   return (
@@ -291,7 +186,6 @@ export function ProductCharacteristicsModal({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-6 py-6">
-          {/* Messages d'état */}
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -303,68 +197,18 @@ export function ProductCharacteristicsModal({
             <Alert className="border-green-200 bg-green-50">
               <CheckCircle className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-800">
-                ✅ Caractéristiques mises à jour avec succès !
+                Caractéristiques mises à jour avec succès !
               </AlertDescription>
             </Alert>
           )}
 
-          {/* Section 1: Caractéristiques prédéfinies */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-black flex items-center gap-2">
-              <Palette className="h-5 w-5" />
-              Caractéristiques principales
-            </h3>
+          <ProductVariantAttributesForm
+            variantAttributes={variantAttributes}
+            onAttributeChange={(key, value) =>
+              setVariantAttributes(prev => ({ ...prev, [key]: value }))
+            }
+          />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Object.entries(VARIANT_TEMPLATES).map(([key, template]) => {
-                const Icon = template.icon;
-                return (
-                  <div key={key} className="space-y-2">
-                    <Label
-                      htmlFor={key}
-                      className="text-sm font-medium flex items-center gap-2"
-                    >
-                      <Icon className="h-4 w-4 text-gray-600" />
-                      {template.label}
-                    </Label>
-                    <Input
-                      id={key}
-                      value={variantAttributes[key] ?? ''}
-                      onChange={e =>
-                        setVariantAttributes(prev => ({
-                          ...prev,
-                          [key]: e.target.value,
-                        }))
-                      }
-                      placeholder={template.placeholder}
-                      className="text-sm"
-                    />
-                    {template.suggestions && (
-                      <div className="flex flex-wrap gap-1">
-                        {template.suggestions.slice(0, 4).map(suggestion => (
-                          <Badge
-                            key={suggestion}
-                            variant="outline"
-                            className="text-xs cursor-pointer hover:bg-gray-100"
-                            onClick={() =>
-                              setVariantAttributes(prev => ({
-                                ...prev,
-                                [key]: suggestion,
-                              }))
-                            }
-                          >
-                            {suggestion}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Section 2: Dimensions physiques */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-black flex items-center gap-2">
               <Ruler className="h-5 w-5" />
@@ -398,7 +242,6 @@ export function ProductCharacteristicsModal({
               ))}
             </div>
 
-            {/* Poids */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label
@@ -429,71 +272,23 @@ export function ProductCharacteristicsModal({
             </div>
           </div>
 
-          {/* Section 3: Attributs personnalisés */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-black flex items-center gap-2">
-              <Plus className="h-5 w-5" />
-              Attributs personnalisés
-            </h3>
-
-            {/* Liste des attributs existants */}
-            {Object.keys(customAttributes).length > 0 && (
-              <div className="space-y-2">
-                {Object.entries(customAttributes).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg"
-                  >
-                    <div className="flex-1 grid grid-cols-2 gap-2">
-                      <div className="text-sm font-medium text-black">
-                        {key}
-                      </div>
-                      <div className="text-sm text-gray-700">{value}</div>
-                    </div>
-                    <ButtonV2
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveCustomAttribute(key)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      <X className="h-4 w-4" />
-                    </ButtonV2>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Ajouter nouvel attribut */}
-            <div className="grid grid-cols-2 gap-2">
-              <Input
-                value={newAttributeKey}
-                onChange={e => setNewAttributeKey(e.target.value)}
-                placeholder="Nom de l'attribut"
-                className="text-sm"
-              />
-              <div className="flex gap-2">
-                <Input
-                  value={newAttributeValue}
-                  onChange={e => setNewAttributeValue(e.target.value)}
-                  placeholder="Valeur"
-                  className="text-sm flex-1"
-                />
-                <ButtonV2
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddCustomAttribute}
-                  disabled={
-                    !newAttributeKey.trim() || !newAttributeValue.trim()
-                  }
-                >
-                  <Plus className="h-4 w-4" />
-                </ButtonV2>
-              </div>
-            </div>
-          </div>
+          <ProductCustomAttributesForm
+            customAttributes={customAttributes}
+            newAttributeKey={newAttributeKey}
+            newAttributeValue={newAttributeValue}
+            onNewKeyChange={setNewAttributeKey}
+            onNewValueChange={setNewAttributeValue}
+            onAddAttribute={handleAddCustomAttribute}
+            onRemoveAttribute={key =>
+              setCustomAttributes(prev => {
+                const updated = { ...prev };
+                delete updated[key];
+                return updated;
+              })
+            }
+          />
         </div>
 
-        {/* Footer avec actions */}
         <div className="border-t pt-4 bg-gray-50 -mx-6 -mb-6 px-6 pb-6 mt-6">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-600">
@@ -506,7 +301,9 @@ export function ProductCharacteristicsModal({
                 Annuler
               </ButtonV2>
               <ButtonV2
-                onClick={handleSave}
+                onClick={() => {
+                  void handleSave().catch(() => undefined);
+                }}
                 disabled={saving}
                 className="bg-black hover:bg-gray-800 text-white"
               >

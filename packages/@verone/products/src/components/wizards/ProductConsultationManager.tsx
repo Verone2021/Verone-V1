@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises, react-hooks/exhaustive-deps, @typescript-eslint/no-misused-promises, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/ban-ts-comment */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 // @ts-nocheck - Hooks consultations non migrés
 
 'use client';
@@ -8,7 +8,6 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@verone/common/hooks';
 import { useConsultations, useConsultationItems } from '@verone/consultations';
 import { Alert, AlertDescription } from '@verone/ui';
-import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
   Card,
@@ -26,21 +25,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-// cn removed - unused
-import {
-  Search,
-  Link,
-  Unlink,
-  Users,
-  Package,
-  ArrowRight,
-  Plus,
-  CheckCircle,
-} from 'lucide-react';
+import { Search, Link, ArrowRight, Plus } from 'lucide-react';
+
+import { ConsultationOverviewStats } from './consultation-manager/ConsultationOverviewStats';
+import { ProductConsultationView } from './consultation-manager/ProductConsultationView';
+import { ConsultationProductsView } from './consultation-manager/ConsultationProductsView';
 
 interface ProductConsultationManagerProps {
-  productId?: string; // Si fourni, focus sur ce produit
-  consultationId?: string; // Si fourni, focus sur cette consultation
+  productId?: string;
+  consultationId?: string;
   mode?: 'product-centric' | 'consultation-centric' | 'overview';
   onLinkCreated?: () => void;
 }
@@ -68,8 +61,6 @@ export function ProductConsultationManager({
   const [isPrimaryProposal, setIsPrimaryProposal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
-
-  // Filtres
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [clientFilter, setClientFilter] = useState<string>('all');
 
@@ -78,30 +69,23 @@ export function ProductConsultationManager({
     fetchEligibleProducts();
   }, []);
 
-  // Filtrer les consultations
   const filteredConsultations = consultations.filter(consultation => {
     const matchesSearch =
       consultation.organisation_name
         .toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
       consultation.descriptif.toLowerCase().includes(searchTerm.toLowerCase());
-
     const matchesStatus =
       statusFilter === 'all' || consultation.status === statusFilter;
-
     return matchesSearch && matchesStatus;
   });
 
-  // Filtrer les produits éligibles
-  const filteredProducts = eligibleProducts.filter(product => {
-    const matchesSearch =
+  const filteredProducts = eligibleProducts.filter(
+    product =>
       product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.sku?.toLowerCase().includes(searchTerm.toLowerCase());
+      product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    return matchesSearch;
-  });
-
-  // Créer une association
   const handleCreateLink = async () => {
     if (!selectedConsultation || !selectedProduct) {
       toast({
@@ -111,29 +95,22 @@ export function ProductConsultationManager({
       });
       return;
     }
-
     setLoading(true);
-
     try {
       const success = await assignProduct({
         consultation_id: selectedConsultation,
         product_id: selectedProduct,
-        quantity: 1, // Default quantity
+        quantity: 1,
         unit_price: proposedPrice ? parseFloat(proposedPrice) : undefined,
         is_free: false,
         notes: notes ?? undefined,
-        // is_primary_proposal: isPrimaryProposal, // DEPRECATED - plus utilisé dans nouveau workflow
       });
-
       if (success) {
-        // Reset form
         setSelectedProduct('');
         setProposedPrice('');
         setNotes('');
         setIsPrimaryProposal(false);
-
         onLinkCreated?.();
-
         toast({
           title: 'Association créée',
           description: 'Le produit a été ajouté à la consultation',
@@ -144,7 +121,6 @@ export function ProductConsultationManager({
     }
   };
 
-  // Supprimer une association
   const handleRemoveLink = async (consultationProductId: string) => {
     if (
       window.confirm(
@@ -179,72 +155,12 @@ export function ProductConsultationManager({
 
   return (
     <div className="space-y-6">
-      {/* En-tête avec statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Consultations actives</p>
-                <p className="text-2xl font-bold">
-                  {consultations.filter(c => c.status === 'en_cours').length}
-                </p>
-              </div>
-              <Users className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
+      <ConsultationOverviewStats
+        consultations={consultations}
+        eligibleProducts={eligibleProducts}
+        consultationProducts={consultationProducts}
+      />
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Produits sourcing</p>
-                <p className="text-2xl font-bold">{eligibleProducts.length}</p>
-              </div>
-              <Package className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Associations actives</p>
-                <p className="text-2xl font-bold">
-                  {consultationProducts.length}
-                </p>
-              </div>
-              <Link className="h-8 w-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Taux de conversion</p>
-                <p className="text-2xl font-bold">
-                  {consultations.length > 0
-                    ? Math.round(
-                        (consultations.filter(c => c.status === 'terminee')
-                          .length /
-                          consultations.length) *
-                          100
-                      )
-                    : 0}
-                  %
-                </p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-black" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Interface de création d'associations */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
@@ -257,7 +173,6 @@ export function ProductConsultationManager({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Sélection consultation */}
             <div className="space-y-2">
               <Label>Consultation</Label>
               <Select
@@ -284,7 +199,6 @@ export function ProductConsultationManager({
               </Select>
             </div>
 
-            {/* Sélection produit */}
             <div className="space-y-2">
               <Label>Produit sourcing</Label>
               <Select
@@ -310,7 +224,6 @@ export function ProductConsultationManager({
             </div>
           </div>
 
-          {/* Options avancées */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Prix proposé (€ HT)</Label>
@@ -322,7 +235,6 @@ export function ProductConsultationManager({
                 placeholder="Prix personnalisé..."
               />
             </div>
-
             <div className="space-y-2">
               <Label>Notes</Label>
               <Input
@@ -331,7 +243,6 @@ export function ProductConsultationManager({
                 placeholder="Notes commerciales..."
               />
             </div>
-
             <div className="space-y-2">
               <Label className="flex items-center space-x-2">
                 <input
@@ -364,7 +275,6 @@ export function ProductConsultationManager({
         </CardContent>
       </Card>
 
-      {/* Filtres et recherche */}
       <Card>
         <CardHeader>
           <CardTitle>Filtres et recherche</CardTitle>
@@ -383,7 +293,6 @@ export function ProductConsultationManager({
                 />
               </div>
             </div>
-
             <div className="space-y-2">
               <Label>Statut consultation</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -399,7 +308,6 @@ export function ProductConsultationManager({
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
               <Label>Client</Label>
               <Select value={clientFilter} onValueChange={setClientFilter}>
@@ -408,11 +316,9 @@ export function ProductConsultationManager({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les clients</SelectItem>
-                  {/* TODO: Ajouter liste des clients */}
                 </SelectContent>
               </Select>
             </div>
-
             <div className="flex items-end">
               <ButtonV2
                 variant="outline"
@@ -430,7 +336,6 @@ export function ProductConsultationManager({
         </CardContent>
       </Card>
 
-      {/* Informations workflow */}
       <Alert>
         <ArrowRight className="h-4 w-4" />
         <AlertDescription>
@@ -458,98 +363,6 @@ export function ProductConsultationManager({
           </div>
         </AlertDescription>
       </Alert>
-    </div>
-  );
-}
-
-// Composant pour vue centrée sur un produit
-function ProductConsultationView({
-  productId: _productId,
-  consultations: _consultations,
-  onCreateLink: _onCreateLink,
-}: {
-  productId: string;
-  consultations: any[];
-  onCreateLink: () => void;
-}) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Consultations pour ce produit</CardTitle>
-        <CardDescription>
-          Gérer les associations entre ce produit et les consultations clients
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {/* Interface simplifiée pour un produit spécifique */}
-        <div className="text-center text-gray-500">
-          Interface produit-centrique à implémenter
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Composant pour vue centrée sur une consultation
-function ConsultationProductsView({
-  consultationId: _consultationId,
-  consultationProducts,
-  eligibleProducts: _eligibleProducts,
-  onCreateLink: _onCreateLink,
-  onRemoveLink,
-}: {
-  consultationId: string;
-  consultationProducts: any[];
-  eligibleProducts: any[];
-  onCreateLink: () => void;
-  onRemoveLink: (id: string) => void;
-}) {
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Produits associés à cette consultation</CardTitle>
-          <CardDescription>
-            Gérer les produits proposés pour cette consultation client
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {consultationProducts.length === 0 ? (
-            <div className="text-center text-gray-500 py-8">
-              Aucun produit associé à cette consultation
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {consultationProducts.map(cp => (
-                <div
-                  key={cp.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
-                >
-                  <div>
-                    <h4 className="font-medium">{cp.product?.name}</h4>
-                    <p className="text-sm text-gray-500">{cp.product?.sku}</p>
-                    {cp.proposed_price && (
-                      <p className="text-sm font-medium text-green-600">
-                        {cp.proposed_price}€ HT
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {cp.is_primary_proposal && <Badge>Principale</Badge>}
-                    <ButtonV2
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onRemoveLink(cp.id)}
-                    >
-                      <Unlink className="h-4 w-4" />
-                    </ButtonV2>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }

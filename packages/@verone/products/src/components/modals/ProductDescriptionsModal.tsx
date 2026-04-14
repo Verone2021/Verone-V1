@@ -1,18 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 'use client';
 
-/**
- * 🎯 VÉRONE - Modal Gestion Descriptions Produit
- *
- * Modal dédié pour la gestion complète des descriptions produit
- * - Description principale avec formatage riche
- * - Description technique détaillée
- * - Points de vente clés (bullet points)
- * - Aperçu en temps réel
- * - Compteur de caractères et SEO-friendly
- */
-
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import {
   FileText,
@@ -25,7 +13,6 @@ import {
   Hash,
   Type,
   List,
-  Edit,
 } from 'lucide-react';
 
 import { Alert, AlertDescription } from '@verone/ui';
@@ -37,6 +24,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import { cn } from '@verone/utils';
+
+import { ProductDescriptionsPreview } from './product-descriptions/ProductDescriptionsPreview';
+import { ProductDescriptionsFooter } from './product-descriptions/ProductDescriptionsFooter';
 
 interface ProductDescriptionsUpdate {
   description: string | null;
@@ -58,7 +48,6 @@ interface ProductDescriptionsModalProps {
   onUpdate: (data: ProductDescriptionsUpdate) => void;
 }
 
-// Suggestions de points de vente par type de produit
 const SELLING_POINTS_SUGGESTIONS = [
   'Qualité garantie',
   'Livraison rapide et soignée',
@@ -72,6 +61,21 @@ const SELLING_POINTS_SUGGESTIONS = [
   'Personnalisation disponible',
 ];
 
+function getTextStats(text: string) {
+  const chars = text.length;
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  return {
+    chars,
+    words,
+    charColor:
+      chars < 50
+        ? 'text-red-600'
+        : chars > 500
+          ? 'text-black'
+          : 'text-green-600',
+  };
+}
+
 export function ProductDescriptionsModal({
   isOpen,
   onClose,
@@ -82,20 +86,16 @@ export function ProductDescriptionsModal({
 }: ProductDescriptionsModalProps) {
   const supabase = createClient();
 
-  // États locaux pour les formulaires
   const [description, setDescription] = useState('');
   const [technicalDescription, setTechnicalDescription] = useState('');
   const [sellingPoints, setSellingPoints] = useState<string[]>([]);
   const [newSellingPoint, setNewSellingPoint] = useState('');
-
-  // États UI
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState('main');
   const [previewMode, setPreviewMode] = useState(false);
 
-  // Initialiser les données
   useEffect(() => {
     if (initialData) {
       setDescription(initialData.description ?? '');
@@ -104,9 +104,6 @@ export function ProductDescriptionsModal({
     }
   }, [initialData]);
 
-  /**
-   * 💾 Sauvegarde des descriptions
-   */
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -119,52 +116,41 @@ export function ProductDescriptionsModal({
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
+      const { error: dbError } = await supabase
         .from('products')
         .update(updateData)
         .eq('id', productId);
 
-      if (error) throw error;
+      if (dbError) throw dbError;
 
       setSuccess(true);
       onUpdate(updateData);
 
-      // Fermer le modal après 1.5s
       setTimeout(() => {
         setSuccess(false);
         onClose();
       }, 1500);
     } catch (err) {
-      // Amélioration de la gestion d'erreur pour éviter les objets vides
       let errorMessage = 'Erreur lors de la sauvegarde des descriptions';
-
       if (err instanceof Error) {
         errorMessage = err.message;
       } else if (typeof err === 'string') {
         errorMessage = err;
-      } else if (err && typeof err === 'object' && 'message' in err) {
-        errorMessage = (err as any).message ?? errorMessage;
+      } else if (
+        err &&
+        typeof err === 'object' &&
+        'message' in err &&
+        typeof (err as { message: unknown }).message === 'string'
+      ) {
+        errorMessage = (err as { message: string }).message;
       }
-
-      console.error('❌ Erreur sauvegarde descriptions:', {
-        error: err,
-        message: errorMessage,
-        productId,
-        updateData: {
-          description: description.trim(),
-          technical_description: technicalDescription.trim(),
-        },
-      });
-
+      console.error('Erreur sauvegarde descriptions:', err);
       setError(errorMessage);
     } finally {
       setSaving(false);
     }
   };
 
-  /**
-   * ➕ Ajouter point de vente
-   */
   const handleAddSellingPoint = () => {
     if (
       newSellingPoint.trim() &&
@@ -175,32 +161,8 @@ export function ProductDescriptionsModal({
     }
   };
 
-  /**
-   * 🗑️ Supprimer point de vente
-   */
   const handleRemoveSellingPoint = (index: number) => {
     setSellingPoints(prev => prev.filter((_, i) => i !== index));
-  };
-
-  /**
-   * 📊 Statistiques texte
-   */
-  const getTextStats = (text: string) => {
-    const chars = text.length;
-    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-    const lines = text.split('\n').length;
-
-    return {
-      chars,
-      words,
-      lines,
-      charColor:
-        chars < 50
-          ? 'text-red-600'
-          : chars > 500
-            ? 'text-black'
-            : 'text-green-600',
-    };
   };
 
   const mainStats = getTextStats(description);
@@ -235,7 +197,6 @@ export function ProductDescriptionsModal({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto py-6">
-          {/* Messages d'état */}
           {error && (
             <Alert variant="destructive" className="mb-6">
               <AlertCircle className="h-4 w-4" />
@@ -247,88 +208,19 @@ export function ProductDescriptionsModal({
             <Alert className="border-green-200 bg-green-50 mb-6">
               <CheckCircle className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-800">
-                ✅ Descriptions mises à jour avec succès !
+                Descriptions mises à jour avec succès !
               </AlertDescription>
             </Alert>
           )}
 
-          {/* Mode Aperçu Global */}
           {previewMode ? (
-            <div className="space-y-6">
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-black mb-4">
-                  Aperçu Final - {productName}
-                </h3>
-
-                {/* Description principale */}
-                <div className="mb-6">
-                  <h4 className="text-sm font-medium text-gray-800 mb-2">
-                    Description
-                  </h4>
-                  <div className="text-sm text-gray-700 whitespace-pre-wrap">
-                    {description || 'Aucune description générale.'}
-                  </div>
-                </div>
-
-                {/* Description technique */}
-                {technicalDescription && (
-                  <div className="mb-6">
-                    <h4 className="text-sm font-medium text-gray-800 mb-2">
-                      Spécifications techniques
-                    </h4>
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap">
-                      {technicalDescription}
-                    </div>
-                  </div>
-                )}
-
-                {/* Points de vente */}
-                {sellingPoints.length > 0 && (
-                  <div className="mb-6">
-                    <h4 className="text-sm font-medium text-gray-800 mb-2">
-                      Points forts
-                    </h4>
-                    <ul className="space-y-1">
-                      {sellingPoints.map((point, index) => (
-                        <li
-                          key={index}
-                          className="flex items-start gap-2 text-sm text-gray-700"
-                        >
-                          <div className="w-1.5 h-1.5 bg-black rounded-full flex-shrink-0 mt-2" />
-                          {point}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Message si tout est vide */}
-                {!description &&
-                  !technicalDescription &&
-                  sellingPoints.length === 0 && (
-                    <div className="text-center py-8 text-gray-500">
-                      <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                      <div className="text-sm">
-                        Aucune description disponible
-                      </div>
-                      <div className="text-xs text-gray-400 mt-1">
-                        Commencez par remplir la description générale
-                      </div>
-                    </div>
-                  )}
-              </div>
-
-              <div className="flex justify-center">
-                <ButtonV2
-                  variant="outline"
-                  onClick={() => setPreviewMode(false)}
-                  className="text-sm"
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Retour à l'édition
-                </ButtonV2>
-              </div>
-            </div>
+            <ProductDescriptionsPreview
+              productName={productName}
+              description={description}
+              technicalDescription={technicalDescription}
+              sellingPoints={sellingPoints}
+              onEdit={() => setPreviewMode(false)}
+            />
           ) : (
             <Tabs
               value={activeTab}
@@ -356,7 +248,6 @@ export function ProductDescriptionsModal({
                 </TabsTrigger>
               </TabsList>
 
-              {/* Description principale */}
               <TabsContent value="main" className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -376,30 +267,20 @@ export function ProductDescriptionsModal({
                       </span>
                     </div>
                   </div>
-
-                  {previewMode ? (
-                    <div className="min-h-[120px] p-4 border border-gray-200 rounded-lg bg-gray-50 whitespace-pre-wrap text-sm">
-                      {description || 'Aucune description'}
-                    </div>
-                  ) : (
-                    <Textarea
-                      id="description"
-                      value={description}
-                      onChange={e => setDescription(e.target.value)}
-                      placeholder="Décrivez ce produit de manière attractive pour vos clients..."
-                      className="min-h-[120px] text-sm"
-                      rows={6}
-                    />
-                  )}
-
+                  <Textarea
+                    id="description"
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
+                    placeholder="Décrivez ce produit de manière attractive pour vos clients..."
+                    className="min-h-[120px] text-sm"
+                    rows={6}
+                  />
                   <div className="text-xs text-gray-500">
-                    💡 Cette description sera visible par vos clients. Restez
-                    concis et mettez en avant les bénéfices.
+                    Cette description sera visible par vos clients.
                   </div>
                 </div>
               </TabsContent>
 
-              {/* Description technique */}
               <TabsContent value="technical" className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -419,30 +300,20 @@ export function ProductDescriptionsModal({
                       </span>
                     </div>
                   </div>
-
-                  {previewMode ? (
-                    <div className="min-h-[120px] p-4 border border-gray-200 rounded-lg bg-gray-50 whitespace-pre-wrap text-sm">
-                      {technicalDescription || 'Aucune description technique'}
-                    </div>
-                  ) : (
-                    <Textarea
-                      id="technical_description"
-                      value={technicalDescription}
-                      onChange={e => setTechnicalDescription(e.target.value)}
-                      placeholder="Spécifications techniques, matériaux, instructions d'entretien, etc..."
-                      className="min-h-[120px] text-sm"
-                      rows={6}
-                    />
-                  )}
-
+                  <Textarea
+                    id="technical_description"
+                    value={technicalDescription}
+                    onChange={e => setTechnicalDescription(e.target.value)}
+                    placeholder="Spécifications techniques, matériaux, instructions d'entretien..."
+                    className="min-h-[120px] text-sm"
+                    rows={6}
+                  />
                   <div className="text-xs text-gray-500">
-                    🔧 Informations techniques détaillées pour les
-                    professionnels et clients avertis.
+                    Informations techniques pour les professionnels.
                   </div>
                 </div>
               </TabsContent>
 
-              {/* Points de vente */}
               <TabsContent value="selling" className="space-y-4">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -455,7 +326,6 @@ export function ProductDescriptionsModal({
                     </Badge>
                   </div>
 
-                  {/* Liste des points existants */}
                   {sellingPoints.length > 0 && (
                     <div className="space-y-2">
                       {sellingPoints.map((point, index) => (
@@ -478,7 +348,6 @@ export function ProductDescriptionsModal({
                     </div>
                   )}
 
-                  {/* Ajouter nouveau point */}
                   <div className="space-y-3">
                     <div className="flex gap-2">
                       <Textarea
@@ -499,7 +368,6 @@ export function ProductDescriptionsModal({
                       </ButtonV2>
                     </div>
 
-                    {/* Suggestions */}
                     <div className="space-y-2">
                       <div className="text-xs text-gray-600 font-medium">
                         Suggestions :
@@ -529,8 +397,7 @@ export function ProductDescriptionsModal({
                   </div>
 
                   <div className="text-xs text-gray-500">
-                    🎯 Utilisez des phrases courtes et impactantes qui mettent
-                    en avant les bénéfices clients.
+                    Utilisez des phrases courtes et impactantes.
                   </div>
                 </div>
               </TabsContent>
@@ -538,45 +405,16 @@ export function ProductDescriptionsModal({
           )}
         </div>
 
-        {/* Footer avec statistiques et actions */}
-        <div className="border-t pt-4 bg-gray-50 -mx-6 -mb-6 px-6 pb-6 mt-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6 text-sm text-gray-600">
-              <span>{mainStats.chars + techStats.chars} caractères total</span>
-              <span>
-                {sellingPoints.length} point
-                {sellingPoints.length > 1 ? 's' : ''} de vente
-              </span>
-              {description.trim() &&
-                technicalDescription.trim() &&
-                sellingPoints.length > 0 && (
-                  <span className="flex items-center text-green-600">
-                    <CheckCircle className="h-4 w-4 mr-1" />
-                    Complet
-                  </span>
-                )}
-            </div>
-            <div className="flex gap-2">
-              <ButtonV2 variant="outline" onClick={onClose} disabled={saving}>
-                Annuler
-              </ButtonV2>
-              <ButtonV2
-                onClick={handleSave}
-                disabled={saving}
-                className="bg-black hover:bg-gray-800 text-white"
-              >
-                {saving ? (
-                  <>Sauvegarde...</>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Sauvegarder
-                  </>
-                )}
-              </ButtonV2>
-            </div>
-          </div>
-        </div>
+        <ProductDescriptionsFooter
+          description={description}
+          technicalDescription={technicalDescription}
+          sellingPoints={sellingPoints}
+          saving={saving}
+          onCancel={onClose}
+          onSave={() => {
+            void handleSave().catch(() => undefined);
+          }}
+        />
       </DialogContent>
     </Dialog>
   );

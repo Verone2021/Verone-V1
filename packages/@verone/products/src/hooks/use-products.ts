@@ -1,12 +1,17 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import useSWR from 'swr';
 
-import { calculateMinimumSellingPrice } from '@verone/finance/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
+
+import {
+  productsFetcher,
+  PRODUCTS_PER_PAGE,
+  CACHE_REVALIDATION_TIME,
+} from './products-fetcher';
 
 export interface Product {
   id: string;
@@ -162,131 +167,6 @@ export interface SourcingFormData {
   sourcing_type: 'interne' | 'client'; // Calculé automatiquement selon assigned_client_id
   assigned_client_id?: string; // Facultatif - si rempli → sourcing_type = 'client'
 }
-
-// 🚀 Configuration pagination et cache
-const PRODUCTS_PER_PAGE = 50;
-const CACHE_REVALIDATION_TIME = 5 * 60 * 1000; // 5 minutes
-
-// 📊 Fetcher optimisé SWR avec SELECT allégé pour vue liste
-const productsFetcher = async (
-  key: string,
-  filters: ProductFilters | undefined,
-  page: number = 0
-) => {
-  const supabase = createClient();
-
-  // 🎯 SELECT optimisé - colonnes essentielles + stock + images + supplier (BR-TECH-002)
-  let query = supabase
-    .from('products')
-    .select(
-      `
-      id,
-      name,
-      sku,
-      slug,
-      stock_status,
-      product_status,
-      condition,
-      stock_quantity,
-      margin_percentage,
-      cost_price,
-      variant_attributes,
-      created_at,
-      updated_at,
-      subcategory_id,
-      supplier_id,
-      product_images (
-        public_url,
-        is_primary
-      ),
-      organisations!products_supplier_id_fkey (
-        id,
-        legal_name,
-        trade_name
-      )
-    `,
-      { count: 'exact' }
-    )
-    .order('created_at', { ascending: false })
-    .range(page * PRODUCTS_PER_PAGE, (page + 1) * PRODUCTS_PER_PAGE - 1);
-
-  // Appliquer les filtres
-  if (filters?.search?.trim()) {
-    query = query.or(
-      `name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`
-    );
-  }
-
-  if (filters?.status) {
-    query = query.eq(
-      'product_status',
-      filters.status as NonNullable<Product['product_status']>
-    );
-  }
-
-  if (filters?.supplier_id) {
-    query = query.eq('supplier_id', filters.supplier_id);
-  }
-
-  if (filters?.subcategory_id) {
-    query = query.eq('subcategory_id', filters.subcategory_id);
-  }
-
-  if (filters?.in_stock_only) {
-    query = query.gt('stock_quantity', 0);
-  }
-
-  if (filters?.is_published_online !== undefined) {
-    query = query.eq('is_published_online', filters.is_published_online);
-  }
-
-  const { data, error, count } = await query;
-
-  if (error) throw error;
-
-  // Enrichir avec prix minimum de vente + images + supplier (BR-TECH-002)
-
-  const enriched = (data ?? []).map(product => {
-    const { organisations, ...productWithoutOrgs } = product as Record<
-      string,
-      unknown
-    >;
-
-    return {
-      ...productWithoutOrgs,
-      primary_image_url: (product as Record<string, unknown>).product_images
-        ? ((
-            (product as Record<string, unknown>).product_images as Array<{
-              public_url: string;
-            }>
-          )?.[0]?.public_url ?? null)
-        : null,
-      supplier_name:
-        (organisations as Record<string, unknown>)?.trade_name ??
-        (organisations as Record<string, unknown>)?.legal_name ??
-        undefined,
-      supplier: organisations
-        ? {
-            id: (organisations as Record<string, unknown>).id,
-            name:
-              (organisations as Record<string, unknown>).trade_name ??
-              (organisations as Record<string, unknown>).legal_name ??
-              '',
-            type: 'supplier',
-          }
-        : undefined,
-      minimumSellingPrice:
-        product.cost_price && product.margin_percentage
-          ? calculateMinimumSellingPrice(
-              Number(product.cost_price),
-              Number(product.margin_percentage)
-            )
-          : 0,
-    };
-  });
-
-  return { products: enriched, totalCount: count ?? 0 };
-};
 
 export function useProducts(filters?: ProductFilters, page: number = 0) {
   const { toast } = useToast();
@@ -476,106 +356,5 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
   };
 }
 
-export function useProduct(id: string) {
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const supabase = createClient();
-
-  useEffect(() => {
-    const fetchProduct = async () => {
-      if (!id) return;
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const { data, error: fetchError } = await supabase
-          .from('products')
-          .select(
-            `
-            id,
-            sku,
-            name,
-            slug,
-            cost_price,
-            stock_status,
-            product_status,
-            condition,
-            variant_attributes,
-            dimensions,
-            weight,
-            video_url,
-            supplier_reference,
-            gtin,
-            stock_quantity,
-            min_stock,
-            supplier_page_url,
-            supplier_id,
-            margin_percentage,
-            target_margin_percentage,
-            availability_type,
-            description,
-            technical_description,
-            selling_points,
-            product_type,
-            assigned_client_id,
-            creation_mode,
-            created_at,
-            updated_at,
-            supplier:organisations!supplier_id (
-              id,
-              legal_name,
-              trade_name,
-              type
-            ),
-            product_images!left (
-              public_url,
-              is_primary
-            )
-          `
-          )
-          .eq('id', id)
-          .single();
-
-        if (fetchError) {
-          setError(fetchError.message);
-          return;
-        }
-
-        // Enrichir le produit avec le prix minimum de vente + image primaire
-        if (data) {
-          const supplierCost = data.cost_price;
-          const margin = data.margin_percentage ?? 0;
-
-          const minimumSellingPrice =
-            supplierCost && margin
-              ? calculateMinimumSellingPrice(supplierCost, margin)
-              : 0;
-
-          // Extraire image primaire depuis product_images (BR-TECH-002)
-          const primaryImage = data.product_images?.find(img => img.is_primary);
-          const primaryImageUrl =
-            primaryImage?.public_url ??
-            data.product_images?.[0]?.public_url ??
-            null;
-
-          setProduct({
-            ...data,
-            primary_image_url: primaryImageUrl,
-            minimumSellingPrice,
-          } as unknown as Product);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Erreur inconnue');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void fetchProduct();
-  }, [id, supabase]);
-
-  return { product, loading, error };
-}
+// useProduct extracted to use-product.ts for file size
+export { useProduct } from './use-product';

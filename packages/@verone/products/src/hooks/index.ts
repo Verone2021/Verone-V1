@@ -17,3 +17,6 @@ export * from './use-products';
 export * from './use-product-primary-image';
 export * from './use-archived-products';
 export * from './use-product-profitability';
+export * from './use-variant-products-create';
+export * from './use-product-images-batch';
+export * from './use-product';
