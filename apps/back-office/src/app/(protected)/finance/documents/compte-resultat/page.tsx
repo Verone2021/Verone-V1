@@ -49,10 +49,6 @@ export default function CompteResultatPage() {
   );
 
   const {
-    prodExplN,
-    prodExplN1,
-    charExplN,
-    charExplN1,
     resExplN,
     resExplN1,
     prodFinN,

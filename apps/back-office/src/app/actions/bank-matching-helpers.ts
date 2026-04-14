@@ -1,4 +1,4 @@
-import { createServerClient } from '@verone/utils/supabase/server';
+import type { createServerClient } from '@verone/utils/supabase/server';
 
 export interface MatchResult {
   success: boolean;
