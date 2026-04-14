@@ -5,12 +5,11 @@
  * Utilisé dans page détail fournisseur - onglet Produits
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
-import { Package, Plus, Eye, Barcode, Euro, Box } from 'lucide-react';
+import { Package, Plus } from 'lucide-react';
 
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -21,17 +20,17 @@ import {
   CardTitle,
   CardDescription,
 } from '@verone/ui';
-import { formatCurrency } from '@verone/utils';
-import { useProducts } from '@verone/products/hooks';
+import { formatCurrency, createClient } from '@verone/utils';
 
 interface OrganisationProduct {
   id: string;
   name: string;
   sku: string;
-  supplier_id: string | null;
-  primary_image_url: string | null;
-  selling_price_ht: number | null;
+  cost_price: number | null;
   stock_quantity: number | null;
+  product_status: string;
+  sourcing_status: string | null;
+  image_url: string | null;
 }
 
 interface OrganisationProductsSectionProps {
@@ -49,32 +48,68 @@ export function OrganisationProductsSection({
   onUpdate: _onUpdate,
   className: _className,
 }: OrganisationProductsSectionProps) {
-  const { products, loading, refetch: fetchProducts } = useProducts();
-  const [organisationProducts, setOrganisationProducts] = useState<
-    OrganisationProduct[]
-  >([]);
+  const [products, setProducts] = useState<OrganisationProduct[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Charger les produits
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    const supabase = createClient();
+
+    // Charger les produits avec image principale (product_images OU sourcing_photos)
+    const { data } = await supabase
+      .from('products')
+      .select(
+        `id, name, sku, cost_price, stock_quantity, product_status, sourcing_status,
+         product_images!left(public_url, is_primary),
+         sourcing_photos!left(public_url, sort_order)`
+      )
+      .eq('supplier_id', organisationId)
+      .order('created_at', { ascending: false });
+
+    if (data) {
+      const mapped: OrganisationProduct[] = data.map(
+        (p: Record<string, unknown>) => {
+          // Image : product_images d'abord, sourcing_photos en fallback
+          const productImgs =
+            (p.product_images as Array<{
+              public_url: string | null;
+              is_primary: boolean;
+            }>) ?? [];
+          const sourcingPhotos =
+            (p.sourcing_photos as Array<{
+              public_url: string | null;
+              sort_order: number;
+            }>) ?? [];
+
+          const primaryImg = productImgs.find(img => img.is_primary);
+          const imageUrl =
+            primaryImg?.public_url ??
+            productImgs[0]?.public_url ??
+            sourcingPhotos[0]?.public_url ??
+            null;
+
+          return {
+            id: p.id as string,
+            name: p.name as string,
+            sku: p.sku as string,
+            cost_price: p.cost_price as number | null,
+            stock_quantity: p.stock_quantity as number | null,
+            product_status: p.product_status as string,
+            sourcing_status: p.sourcing_status as string | null,
+            image_url: imageUrl,
+          };
+        }
+      );
+      setProducts(mapped);
+    }
+    setLoading(false);
+  }, [organisationId]);
+
   useEffect(() => {
     void fetchProducts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only fetch on mount
-  }, []);
+  }, [fetchProducts]);
 
-  // Filtrer les produits pour cette organisation
-  useEffect(() => {
-    let filtered: OrganisationProduct[] = [];
-
-    if (organisationType === 'supplier') {
-      filtered = (products as unknown as OrganisationProduct[]).filter(
-        p => p.supplier_id === organisationId
-      );
-    }
-    // Pour les clients, on pourrait filtrer autrement (commandes clients, etc.)
-
-    setOrganisationProducts(filtered);
-  }, [products, organisationId, organisationType]);
-
-  if (loading && organisationProducts.length === 0) {
+  if (loading && products.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-pulse text-gray-500">
@@ -84,7 +119,7 @@ export function OrganisationProductsSection({
     );
   }
 
-  if (organisationProducts.length === 0) {
+  if (products.length === 0) {
     return (
       <Card>
         <CardContent className="p-12">
@@ -95,14 +130,14 @@ export function OrganisationProductsSection({
             </h3>
             <p className="text-gray-600 mb-6">
               {organisationType === 'supplier'
-                ? `Aucun produit associé à ce fournisseur ${organisationName}.`
-                : `Aucun produit trouvé pour ${organisationName}.`}
+                ? `Aucun produit associe a ${organisationName}.`
+                : `Aucun produit trouve pour ${organisationName}.`}
             </p>
             {organisationType === 'supplier' && (
               <ButtonV2 asChild>
                 <Link href={`/catalogue/create?supplier_id=${organisationId}`}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Créer un produit
+                  Creer un produit
                 </Link>
               </ButtonV2>
             )}
@@ -112,142 +147,88 @@ export function OrganisationProductsSection({
     );
   }
 
-  // Calculer stats
   const stats = {
-    total: organisationProducts.length,
-    inStock: organisationProducts.filter(p => (p.stock_quantity ?? 0) > 0)
-      .length,
-    outOfStock: organisationProducts.filter(p => (p.stock_quantity ?? 0) === 0)
-      .length,
-    totalValue: organisationProducts.reduce(
-      (sum, p) => sum + (p.selling_price_ht ?? 0) * (p.stock_quantity ?? 0),
-      0
-    ),
+    total: products.length,
+    inStock: products.filter(p => (p.stock_quantity ?? 0) > 0).length,
+    outOfStock: products.filter(p => (p.stock_quantity ?? 0) === 0).length,
   };
 
   return (
     <div className="space-y-6">
-      {/* En-tête avec stats */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-base">
                 <Package className="h-5 w-5" />
-                Produits {organisationType === 'supplier' ? 'Fournisseur' : ''}
+                Produits
               </CardTitle>
-              <CardDescription>
-                {stats.total} produit(s) • Valeur stock:{' '}
-                {formatCurrency(stats.totalValue)} HT
-              </CardDescription>
+              <CardDescription>{stats.total} produit(s)</CardDescription>
             </div>
-            {organisationType === 'supplier' && (
-              <ButtonV2 asChild>
-                <Link href={`/catalogue/create?supplier_id=${organisationId}`}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nouveau produit
-                </Link>
-              </ButtonV2>
-            )}
           </div>
         </CardHeader>
         <CardContent>
-          {/* Stats rapides */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-black">{stats.total}</div>
-              <div className="text-xs text-gray-600">Total produits</div>
-            </div>
-            <div className="text-center p-3 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">
-                {stats.inStock}
-              </div>
-              <div className="text-xs text-gray-600">En stock</div>
-            </div>
-            <div className="text-center p-3 bg-red-50 rounded-lg">
-              <div className="text-2xl font-bold text-red-600">
-                {stats.outOfStock}
-              </div>
-              <div className="text-xs text-gray-600">Rupture</div>
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {products.map(product => {
+              const isSourcing = product.product_status === 'draft';
+              const detailUrl = isSourcing
+                ? `/produits/sourcing/produits/${product.id}`
+                : `/catalogue/${product.id}`;
+
+              return (
+                <Link
+                  key={product.id}
+                  href={detailUrl}
+                  className="block border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+                >
+                  {/* Image */}
+                  <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
+                    {product.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                        onError={e => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <Package className="h-8 w-8 text-gray-400" />
+                    )}
+                  </div>
+
+                  {/* Infos */}
+                  <div className="p-3 space-y-1">
+                    <p
+                      className="text-xs font-medium text-black truncate"
+                      title={product.name}
+                    >
+                      {product.name}
+                    </p>
+                    <div className="flex items-center justify-between text-[10px] text-gray-500">
+                      <span>{product.sku}</span>
+                      {isSourcing && (
+                        <Badge
+                          variant="secondary"
+                          className="text-[9px] px-1 py-0"
+                        >
+                          Sourcing
+                        </Badge>
+                      )}
+                    </div>
+                    {product.cost_price && (
+                      <p className="text-xs font-semibold text-black">
+                        {formatCurrency(product.cost_price)} HT
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
-
-      {/* Grille produits */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {organisationProducts.map(product => (
-          <Card key={product.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              {/* Image produit */}
-              <div className="aspect-square relative bg-gray-100 rounded-lg mb-3 overflow-hidden">
-                {product.primary_image_url ? (
-                  <Image
-                    src={product.primary_image_url}
-                    alt={product.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package className="h-12 w-12 text-gray-400" />
-                  </div>
-                )}
-              </div>
-
-              {/* Infos produit */}
-              <div className="space-y-2">
-                <h4 className="font-medium text-black line-clamp-2">
-                  {product.name}
-                </h4>
-
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Barcode className="h-4 w-4" />
-                  <span>{product.sku}</span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1 text-sm">
-                    <Euro className="h-4 w-4 text-gray-400" />
-                    <span className="font-medium text-black">
-                      {formatCurrency(product.selling_price_ht ?? 0)} HT
-                    </span>
-                  </div>
-
-                  <Badge
-                    variant={
-                      (product.stock_quantity ?? 0) > 0
-                        ? 'secondary'
-                        : 'destructive'
-                    }
-                    className={
-                      (product.stock_quantity ?? 0) > 0
-                        ? 'bg-green-100 text-green-800'
-                        : ''
-                    }
-                  >
-                    <Box className="h-3 w-3 mr-1" />
-                    Stock: {product.stock_quantity ?? 0}
-                  </Badge>
-                </div>
-
-                <ButtonV2
-                  variant="outline"
-                  size="sm"
-                  className="w-full mt-2"
-                  asChild
-                >
-                  <Link href={`/catalogue/${product.id}`}>
-                    <Eye className="h-4 w-4 mr-2" />
-                    Voir détails
-                  </Link>
-                </ButtonV2>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
     </div>
   );
 }

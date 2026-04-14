@@ -1,6 +1,6 @@
 # Database Schema Complete — Index
 
-_Generated: 2026-04-12 23:28 — 136 tables_
+_Generated: 2026-04-13 17:08 — 141 tables_
 
 | Table                               | Domaine                     | Colonnes |
 | ----------------------------------- | --------------------------- | -------- |
@@ -79,7 +79,7 @@ _Generated: 2026-04-12 23:28 — 136 tables_
 | order_discounts                     | Commandes & Consultations   | 24       |
 | order_payments                      | Commandes & Consultations   | 10       |
 | organisation_families               | Organisations & Contacts    | 4        |
-| organisations                       | Organisations & Contacts    | 70       |
+| organisations                       | Organisations & Contacts    | 78       |
 | pcg_categories                      | Finance & Comptabilite      | 10       |
 | price_list_history                  | Autres                      | 15       |
 | price_list_items                    | Autres                      | 21       |
@@ -92,7 +92,7 @@ _Generated: 2026-04-12 23:28 — 136 tables_
 | product_packages                    | Produits & Catalogue        | 14       |
 | product_purchase_history            | Produits & Catalogue        | 9        |
 | product_reviews                     | Produits & Catalogue        | 10       |
-| products                            | Produits & Catalogue        | 79       |
+| products                            | Produits & Catalogue        | 85       |
 | promotion_usages                    | Autres                      | 6        |
 | purchase_order_items                | Commandes & Consultations   | 21       |
 | purchase_order_receptions           | Commandes & Consultations   | 14       |
@@ -103,12 +103,17 @@ _Generated: 2026-04-12 23:28 — 136 tables_
 | sales_order_linkme_details          | Commandes & Consultations   | 51       |
 | sales_order_shipments               | Commandes & Consultations   | 20       |
 | sales_orders                        | Commandes & Consultations   | 73       |
-| sample_order_items                  | Commandes & Consultations   | 12       |
+| sample_order_items                  | Commandes & Consultations   | 13       |
 | sample_orders                       | Commandes & Consultations   | 17       |
 | shopping_carts                      | Commandes & Consultations   | 11       |
 | site_ambassadors                    | Autres                      | 26       |
 | site_contact_messages               | Notifications & Formulaires | 8        |
 | site_content                        | Notifications & Formulaires | 5        |
+| sourcing_candidate_suppliers        | Autres                      | 11       |
+| sourcing_communications             | Autres                      | 15       |
+| sourcing_photos                     | Autres                      | 9        |
+| sourcing_price_history              | Autres                      | 9        |
+| sourcing_urls                       | Autres                      | 6        |
 | stock_alert_tracking                | Stock & Stockage            | 20       |
 | stock_alerts_unified_view           | Autres                      | 23       |
 | stock_alerts_view                   | Autres                      | 8        |

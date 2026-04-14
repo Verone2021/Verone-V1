@@ -1,6 +1,6 @@
 'use client';
 
-import { ProductDescriptionsEditSection } from '@verone/products';
+import { ProductDescriptionsEditSection, SerpPreview } from '@verone/products';
 
 import type { Product, ProductRow } from './types';
 
@@ -25,6 +25,20 @@ export function ProductDescriptionsTab({
           }}
           onUpdate={updates => {
             void onProductUpdate(updates).catch(console.error);
+          }}
+        />
+      </section>
+
+      {/* SEO — Apercu Google + Meta */}
+      <section className="bg-white rounded-lg border border-neutral-200 p-5">
+        <SerpPreview
+          productId={product.id}
+          productName={product.name}
+          initialMetaTitle={product.meta_title}
+          initialMetaDescription={product.meta_description}
+          slug={product.slug}
+          onUpdate={() => {
+            void onProductUpdate({}).catch(console.error);
           }}
         />
       </section>

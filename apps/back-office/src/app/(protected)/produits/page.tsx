@@ -50,6 +50,8 @@ export default function ProduitsPage() {
   const totalAlerts =
     data.missingPhotos +
     data.missingDescription +
+    data.missingCategory +
+    data.missingMetaDescription +
     data.activeNoStock +
     data.draft +
     data.stockAlerts;
@@ -183,6 +185,36 @@ export default function ProduitsPage() {
                   <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
                 </Link>
               )}
+              {data.missingCategory > 0 && (
+                <Link
+                  href="/produits/catalogue?tab=incomplete"
+                  className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                    <span className="text-sm text-gray-900">
+                      <strong>{data.missingCategory}</strong> produit(s) sans
+                      categorie
+                    </span>
+                  </div>
+                  <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                </Link>
+              )}
+              {data.missingMetaDescription > 0 && (
+                <Link
+                  href="/produits/catalogue?tab=incomplete"
+                  className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                    <span className="text-sm text-gray-900">
+                      <strong>{data.missingMetaDescription}</strong> produit(s)
+                      sans meta description SEO
+                    </span>
+                  </div>
+                  <ArrowRight className="h-3.5 w-3.5 text-gray-400" />
+                </Link>
+              )}
               {data.stockAlerts > 0 && (
                 <Link
                   href="/stocks"
@@ -203,21 +235,13 @@ export default function ProduitsPage() {
         )}
 
         {/* KPIs compacts */}
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-5 gap-3">
           <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
             <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
               Total produits
             </p>
             <p className="text-lg font-bold text-gray-900 mt-0.5">
               {data.total}
-            </p>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
-            <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
-              Sans photo
-            </p>
-            <p className="text-lg font-bold text-gray-900 mt-0.5">
-              {data.missingPhotos}
             </p>
           </div>
           <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
@@ -230,15 +254,28 @@ export default function ProduitsPage() {
           </div>
           <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
             <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
-              Completude
+              Sans prix de vente
             </p>
-            <p className="text-lg font-bold text-gray-900 mt-0.5">
-              {data.total > 0
-                ? Math.round(
-                    ((data.total - data.missingPhotos) / data.total) * 100
-                  )
-                : 100}
-              %
+            <p className="text-lg font-bold text-orange-600 mt-0.5">
+              {data.missingSellPrice}
+            </p>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
+            <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+              Sans photo
+            </p>
+            <p className="text-lg font-bold text-orange-600 mt-0.5">
+              {data.missingPhotos}
+            </p>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
+            <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+              Completude moy.
+            </p>
+            <p
+              className={`text-lg font-bold mt-0.5 ${data.avgCompletion >= 80 ? 'text-green-600' : data.avgCompletion >= 50 ? 'text-orange-600' : 'text-red-600'}`}
+            >
+              {data.avgCompletion}%
             </p>
           </div>
         </div>

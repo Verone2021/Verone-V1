@@ -8,8 +8,15 @@ import {
   CardHeader,
   CardTitle,
 } from '@verone/ui';
+import { cn } from '@verone/ui';
 import { colors } from '@verone/ui/design-system';
-import { AlertCircle, Package } from 'lucide-react';
+import {
+  AlertCircle,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Package,
+} from 'lucide-react';
 
 import { SourcingProductRow } from './SourcingProductRow';
 
@@ -23,6 +30,27 @@ interface SourcingProductListProps {
   onValidate: (id: string) => void;
   onArchive: (id: string) => void;
   onDelete: (id: string) => void;
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
+  onSort?: (column: string) => void;
+}
+
+function SortIcon({
+  column,
+  currentSort,
+  currentDir,
+}: {
+  column: string;
+  currentSort?: string;
+  currentDir?: 'asc' | 'desc';
+}) {
+  if (currentSort !== column)
+    return <ArrowUpDown className="h-3 w-3 text-gray-300" />;
+  return currentDir === 'asc' ? (
+    <ArrowUp className="h-3 w-3 text-black" />
+  ) : (
+    <ArrowDown className="h-3 w-3 text-black" />
+  );
 }
 
 export function SourcingProductList({
@@ -35,6 +63,9 @@ export function SourcingProductList({
   onValidate,
   onArchive,
   onDelete,
+  sortBy,
+  sortDir,
+  onSort,
 }: SourcingProductListProps) {
   return (
     <Card>
@@ -47,6 +78,68 @@ export function SourcingProductList({
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {/* Sort headers */}
+        {onSort && !loading && products.length > 0 && (
+          <div className="flex items-center gap-4 pb-3 mb-3 border-b border-gray-200 text-xs text-gray-500">
+            <span className="w-10" />
+            <button
+              onClick={() => onSort('name')}
+              className={cn(
+                'flex items-center gap-1 hover:text-black',
+                sortBy === 'name' && 'text-black font-medium'
+              )}
+            >
+              Nom{' '}
+              <SortIcon
+                column="name"
+                currentSort={sortBy}
+                currentDir={sortDir}
+              />
+            </button>
+            <button
+              onClick={() => onSort('supplier')}
+              className={cn(
+                'flex items-center gap-1 hover:text-black ml-auto',
+                sortBy === 'supplier' && 'text-black font-medium'
+              )}
+            >
+              Fournisseur{' '}
+              <SortIcon
+                column="supplier"
+                currentSort={sortBy}
+                currentDir={sortDir}
+              />
+            </button>
+            <button
+              onClick={() => onSort('created_at')}
+              className={cn(
+                'flex items-center gap-1 hover:text-black',
+                sortBy === 'created_at' && 'text-black font-medium'
+              )}
+            >
+              Date{' '}
+              <SortIcon
+                column="created_at"
+                currentSort={sortBy}
+                currentDir={sortDir}
+              />
+            </button>
+            <button
+              onClick={() => onSort('cost_price')}
+              className={cn(
+                'flex items-center gap-1 hover:text-black',
+                sortBy === 'cost_price' && 'text-black font-medium'
+              )}
+            >
+              Prix{' '}
+              <SortIcon
+                column="cost_price"
+                currentSort={sortBy}
+                currentDir={sortDir}
+              />
+            </button>
+          </div>
+        )}
         {loading && (
           <div className="text-center py-8">
             <Package

@@ -14,6 +14,7 @@ import {
   Boxes,
   Settings,
   ImageIcon,
+  Globe,
 } from 'lucide-react';
 
 import {
@@ -396,6 +397,11 @@ export function useProductDetail() {
         label: 'Images',
         icon: <ImageIcon className="h-4 w-4" />,
         badge: productImages.length > 0 ? productImages.length : undefined,
+      },
+      {
+        id: 'publication',
+        label: 'Publication',
+        icon: <Globe className="h-4 w-4" />,
       },
     ],
     [tabBadges, productImages.length]
