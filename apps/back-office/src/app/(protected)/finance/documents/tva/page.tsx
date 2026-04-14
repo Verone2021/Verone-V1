@@ -30,7 +30,6 @@ export default function TvaPage() {
   const { creditTransactions, debitTransactions, loading, error } =
     useBankReconciliation();
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const monthlyTva = useMemo(
     () =>
       computeMonthlyTva(creditTransactions, debitTransactions, selectedYear),

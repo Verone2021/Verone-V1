@@ -39,12 +39,10 @@ export default function CompteResultatPage() {
   const yearN = selectedYear === 'all' ? String(currentYear) : selectedYear;
   const yearN1 = String(Number(yearN) - 1);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const dataN = useMemo(
     () => computeForYear(yearN, creditTransactions, debitTransactions),
     [creditTransactions, debitTransactions, yearN]
   );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const dataN1 = useMemo(
     () => computeForYear(yearN1, creditTransactions, debitTransactions),
     [creditTransactions, debitTransactions, yearN1]
