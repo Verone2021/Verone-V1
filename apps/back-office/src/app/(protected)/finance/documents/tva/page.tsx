@@ -1,29 +1,10 @@
 'use client';
 
-/**
- * Declaration TVA (CA3) — M5 : Report credit + guide formulaire 3310
- *
- * Regles fiscales implementees :
- * - Ligne 16 : TVA brute (collectee sur ventes)
- * - Ligne 22 : Report credit mois precedent
- * - Ligne 23 : Total deductible = TVA deduite + report
- * - Ligne 25 : Credit = ligne 23 - ligne 16 (si positif)
- * - Ligne 27 : Credit a reporter = ligne 25 (reporte sur ligne 22 mois suivant)
- * - Ligne 28 : TVA nette due = ligne 16 - ligne 23 (si positif)
- * - Seuil remboursement : 760 EUR minimum (formulaire 3519)
- * - Echeance : declarer avant le 19-24 du mois suivant sur impots.gouv.fr
- */
-
 import { useState, useMemo } from 'react';
 
 import Link from 'next/link';
 
-import {
-  useBankReconciliation,
-  calculateHT,
-  calculateVAT,
-  type BankTransaction,
-} from '@verone/finance';
+import { useBankReconciliation } from '@verone/finance';
 import {
   Card,
   CardContent,
@@ -39,31 +20,7 @@ import {
 import { Money } from '@verone/ui-business';
 import { Info, ArrowLeft, HelpCircle } from 'lucide-react';
 
-type TransactionWithVat = BankTransaction & { vat_rate?: number };
-
-interface MonthlyTva {
-  month: string;
-  label: string;
-  totalCollectee: number;
-  totalDeductible: number;
-  caHT: number;
-  reportCreditPrecedent: number;
-  totalDeductibleAvecReport: number;
-  tvaNettedue: number;
-  creditTva: number;
-  creditAReporter: number;
-}
-
-function getMonthKey(dateStr: string): string {
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
-
-function formatMonthLabel(key: string): string {
-  const [year, month] = key.split('-');
-  const d = new Date(parseInt(year), parseInt(month) - 1);
-  return d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-}
+import { computeMonthlyTva } from './tva-helpers';
 
 export default function TvaPage() {
   const currentYear = new Date().getFullYear();
@@ -73,74 +30,11 @@ export default function TvaPage() {
   const { creditTransactions, debitTransactions, loading, error } =
     useBankReconciliation();
 
-  // Calcul mensuel AVEC report de credit
-  const monthlyTva = useMemo(() => {
-    const rawMonths = new Map<
-      string,
-      { collectee: number; deductible: number; caHT: number }
-    >();
-
-    (creditTransactions as TransactionWithVat[]).forEach(tx => {
-      const date = tx.settled_at ?? tx.emitted_at;
-      if (!date) return;
-      if (selectedYear !== 'all' && !date.startsWith(selectedYear)) return;
-      const key = getMonthKey(date);
-      const m = rawMonths.get(key) ?? { collectee: 0, deductible: 0, caHT: 0 };
-      const vatRate = tx.vat_rate ?? 0;
-      m.collectee += calculateVAT(
-        Math.abs(tx.amount),
-        vatRate as 0 | 5.5 | 10 | 20
-      );
-      m.caHT += calculateHT(Math.abs(tx.amount), vatRate as 0 | 5.5 | 10 | 20);
-      rawMonths.set(key, m);
-    });
-
-    (debitTransactions as TransactionWithVat[]).forEach(tx => {
-      const date = tx.settled_at ?? tx.emitted_at;
-      if (!date) return;
-      if (selectedYear !== 'all' && !date.startsWith(selectedYear)) return;
-      const key = getMonthKey(date);
-      const m = rawMonths.get(key) ?? { collectee: 0, deductible: 0, caHT: 0 };
-      m.deductible += calculateVAT(
-        Math.abs(tx.amount),
-        (tx.vat_rate ?? 0) as 0 | 5.5 | 10 | 20
-      );
-      rawMonths.set(key, m);
-    });
-
-    // Trier chronologiquement (ancien → recent) pour calculer le report
-    const sortedKeys = Array.from(rawMonths.keys()).sort();
-    const result: MonthlyTva[] = [];
-    let previousCredit = 0;
-
-    for (const key of sortedKeys) {
-      const raw = rawMonths.get(key)!;
-      const reportCreditPrecedent = previousCredit;
-      const totalDeductibleAvecReport = raw.deductible + reportCreditPrecedent;
-      const diff = raw.collectee - totalDeductibleAvecReport;
-
-      const tvaNettedue = diff > 0 ? diff : 0;
-      const creditTva = diff < 0 ? Math.abs(diff) : 0;
-      const creditAReporter = creditTva; // Si < 760€ ou pas de demande 3519
-
-      result.push({
-        month: key,
-        label: formatMonthLabel(key),
-        totalCollectee: raw.collectee,
-        totalDeductible: raw.deductible,
-        caHT: raw.caHT,
-        reportCreditPrecedent,
-        totalDeductibleAvecReport,
-        tvaNettedue,
-        creditTva,
-        creditAReporter,
-      });
-
-      previousCredit = creditAReporter;
-    }
-
-    return result.reverse(); // Afficher recent → ancien
-  }, [creditTransactions, debitTransactions, selectedYear]);
+  const monthlyTva = useMemo(
+    () =>
+      computeMonthlyTva(creditTransactions, debitTransactions, selectedYear),
+    [creditTransactions, debitTransactions, selectedYear]
+  );
 
   const annualTotals = useMemo(() => {
     return monthlyTva.reduce(

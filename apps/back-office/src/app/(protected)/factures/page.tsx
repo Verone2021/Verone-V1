@@ -1,25 +1,8 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
-
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
-import { OrderDetailModal } from '@verone/orders/components/modals';
-import { useSalesOrders } from '@verone/orders/hooks';
-import type { SalesOrder } from '@verone/orders/hooks';
-import { OrganisationQuickViewModal } from '@verone/organisations';
-
-import {
-  useMissingInvoices,
-  type TransactionMissingInvoice,
-} from '@verone/finance';
-import {
-  InvoiceUploadModal,
-  RapprochementFromOrderModal,
-  type TransactionForUpload,
-  type OrderForLink,
-} from '@verone/finance/components';
 import {
   Card,
   CardContent,
@@ -32,14 +15,6 @@ import {
   TabsTrigger,
   Button,
   Badge,
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
 } from '@verone/ui';
 import {
   KpiCard,
@@ -48,7 +23,6 @@ import {
   SyncButton,
 } from '@verone/ui-business';
 import { featureFlags } from '@verone/utils/feature-flags';
-import { toast } from 'sonner';
 import {
   FileText,
   Plus,
@@ -65,485 +39,73 @@ import {
   Link2,
 } from 'lucide-react';
 
-import type {
-  TabType,
-  Invoice,
-  QontoQuote,
-  CreditNote,
-  ApiResponse,
-  InvoicesResponse,
-  QontoQuotesResponse,
-  CreditNotesResponse,
-  ConsolidateReport,
-} from './components/types';
-import { VALID_TABS } from './components/types';
+import type { TabType } from './components/types';
 import { FacturesTab } from './components/FacturesTab';
 import { DevisTab } from './components/DevisTab';
 import { AvoirsTab } from './components/AvoirsTab';
 import { MissingInvoicesTable } from './components/MissingInvoicesTable';
-
-// =====================================================================
-// PAGE COMPONENT
-// =====================================================================
+import { FacturesModals } from './components/FacturesModals';
+import { useFacturesPage } from './hooks/use-factures-page';
 
 export default function FacturationPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const tabFromUrl = searchParams.get('tab') as TabType | null;
-  const [activeTab, setActiveTab] = useState<TabType>(
-    tabFromUrl && VALID_TABS.includes(tabFromUrl) ? tabFromUrl : 'factures'
-  );
-  // Sync activeTab when URL query param changes (e.g. sidebar click while page is already open)
-  useEffect(() => {
-    const tab = searchParams.get('tab') as TabType | null;
-    if (tab && VALID_TABS.includes(tab)) {
-      setActiveTab(tab);
-    }
-  }, [searchParams]);
-
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [selectedMissingTx, setSelectedMissingTx] =
-    useState<TransactionMissingInvoice | null>(null);
-
-  // Etats pour les devis (Qonto API)
-  const [qontoQuotes, setQontoQuotes] = useState<QontoQuote[]>([]);
-  const [loadingQuotes, setLoadingQuotes] = useState(false);
-  const [errorQuotes, setErrorQuotes] = useState<string | null>(null);
-  const [quoteToDelete, setQuoteToDelete] = useState<QontoQuote | null>(null);
-  const [deletingQuote, setDeletingQuote] = useState(false);
-
-  // Etat consolidation liaisons
-  const [isConsolidating, setIsConsolidating] = useState(false);
-
-  // Etats pour les avoirs
-  const [creditNotes, setCreditNotes] = useState<CreditNote[]>([]);
-  const [loadingCreditNotes, setLoadingCreditNotes] = useState(false);
-  const [errorCreditNotes, setErrorCreditNotes] = useState<string | null>(null);
-
-  // Etat pour ouverture modale commande en place (depuis lien facture)
-  const [selectedOrderForModal, setSelectedOrderForModal] =
-    useState<SalesOrder | null>(null);
-  const [showOrderModal, setShowOrderModal] = useState(false);
-
-  // Etat pour ouverture modale organisation (depuis nom client cliquable)
-  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
-  const [showOrgModal, setShowOrgModal] = useState(false);
-  const { fetchOrder } = useSalesOrders();
-
-  const handleOpenOrderModal = useCallback(
-    async (orderId: string) => {
-      const order = await fetchOrder(orderId);
-      if (order) {
-        setSelectedOrderForModal(order);
-        setShowOrderModal(true);
-      }
-    },
-    [fetchOrder]
-  );
-
-  const handleRapprochement = useCallback(
-    async (invoice: Invoice) => {
-      if (!invoice.sales_order_id) return;
-      const order = await fetchOrder(invoice.sales_order_id);
-      if (order) {
-        const customerName =
-          order.organisations?.legal_name ??
-          (order.individual_customers
-            ? `${order.individual_customers.first_name} ${order.individual_customers.last_name}`
-            : null);
-        setRapprochementOrder({
-          id: order.id,
-          order_number: order.order_number,
-          customer_name: customerName ?? null,
-          customer_name_alt: order.organisations?.trade_name ?? null,
-          total_ttc: order.total_ttc,
-          created_at: order.created_at,
-          order_date: order.order_date ?? null,
-          shipped_at: order.shipped_at ?? null,
-        });
-        setShowRapprochementModal(true);
-      }
-    },
-    [fetchOrder]
-  );
-
-  // Etat pour rapprochement depuis facture
-  const [showRapprochementModal, setShowRapprochementModal] = useState(false);
-  const [rapprochementOrder, setRapprochementOrder] =
-    useState<OrderForLink | null>(null);
-
-  // Etats pour les factures (Qonto)
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [loadingInvoices, setLoadingInvoices] = useState(true);
-  const [errorInvoices, setErrorInvoices] = useState<string | null>(null);
-
-  // Recuperer les transactions sans facture
   const {
-    transactions: missingInvoices,
-    loading: loadingMissing,
-    error: errorMissing,
-    refresh: refreshMissing,
-    count: missingCount,
-  } = useMissingInvoices();
+    activeTab,
+    setActiveTab,
+    search,
+    setSearch,
+    statusFilter,
+    setStatusFilter,
+    showUploadModal,
+    setShowUploadModal,
+    selectedMissingTx,
+    transactionForUpload,
+    handleOpenUpload,
+    invoices,
+    loadingInvoices,
+    errorInvoices,
+    fetchInvoices,
+    kpis,
+    handleDownloadInvoicePdf,
+    qontoQuotes,
+    loadingQuotes,
+    errorQuotes,
+    quoteToDelete,
+    setQuoteToDelete,
+    deletingQuote,
+    handleDeleteQuote,
+    handleDownloadQuotePdf,
+    fetchQontoQuotes,
+    creditNotes,
+    loadingCreditNotes,
+    errorCreditNotes,
+    handleDownloadCreditNotePdf,
+    fetchCreditNotes,
+    missingInvoices,
+    loadingMissing,
+    errorMissing,
+    refreshMissing,
+    missingCount,
+    selectedOrderForModal,
+    showOrderModal,
+    setShowOrderModal,
+    setSelectedOrderForModal,
+    handleOpenOrderModal,
+    selectedOrgId,
+    setSelectedOrgId,
+    showOrgModal,
+    setShowOrgModal,
+    showRapprochementModal,
+    setShowRapprochementModal,
+    rapprochementOrder,
+    setRapprochementOrder,
+    handleRapprochement,
+    isConsolidating,
+    handleConsolidate,
+    handleSync,
+    handleView,
+  } = useFacturesPage();
 
-  // Fetch invoices (Qonto)
-  const fetchInvoices = async (): Promise<void> => {
-    setLoadingInvoices(true);
-    setErrorInvoices(null);
-
-    try {
-      const response = await fetch('/api/qonto/invoices');
-      const data = (await response.json()) as InvoicesResponse;
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error ?? 'Failed to fetch invoices');
-      }
-
-      setInvoices(data.invoices ?? []);
-    } catch (err) {
-      setErrorInvoices(err instanceof Error ? err.message : 'Erreur inconnue');
-    } finally {
-      setLoadingInvoices(false);
-    }
-  };
-
-  // Fetch quotes from Qonto API (source of truth for devis)
-  const fetchQontoQuotes = async (): Promise<void> => {
-    setLoadingQuotes(true);
-    setErrorQuotes(null);
-
-    try {
-      const response = await fetch('/api/qonto/quotes');
-      const data = (await response.json()) as QontoQuotesResponse;
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error ?? 'Failed to fetch quotes');
-      }
-
-      setQontoQuotes(data.quotes ?? []);
-    } catch (err) {
-      setErrorQuotes(err instanceof Error ? err.message : 'Erreur inconnue');
-    } finally {
-      setLoadingQuotes(false);
-    }
-  };
-
-  // Fetch credit notes
-  const fetchCreditNotes = async (): Promise<void> => {
-    setLoadingCreditNotes(true);
-    setErrorCreditNotes(null);
-
-    try {
-      const response = await fetch('/api/qonto/credit-notes');
-      const data = (await response.json()) as CreditNotesResponse;
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error ?? 'Failed to fetch credit notes');
-      }
-
-      setCreditNotes(data.credit_notes ?? []);
-    } catch (err) {
-      setErrorCreditNotes(
-        err instanceof Error ? err.message : 'Erreur inconnue'
-      );
-    } finally {
-      setLoadingCreditNotes(false);
-    }
-  };
-
-  // Load invoices at mount
-  useEffect(() => {
-    void fetchInvoices();
-  }, []);
-
-  // Load data when tab changes
-  useEffect(() => {
-    if (activeTab === 'factures' && invoices.length === 0) {
-      void fetchInvoices();
-    } else if (activeTab === 'devis' && qontoQuotes.length === 0) {
-      void fetchQontoQuotes();
-    } else if (activeTab === 'avoirs' && creditNotes.length === 0) {
-      void fetchCreditNotes();
-    }
-  }, [activeTab, invoices.length, qontoQuotes.length, creditNotes.length]);
-
-  // Convertir TransactionMissingInvoice en TransactionForUpload
-  const transactionForUpload: TransactionForUpload | null = useMemo(() => {
-    if (!selectedMissingTx) return null;
-    return {
-      id: selectedMissingTx.id,
-      transaction_id: selectedMissingTx.transaction_id,
-      label: selectedMissingTx.label,
-      counterparty_name: selectedMissingTx.counterparty_name,
-      amount: selectedMissingTx.amount,
-      currency: selectedMissingTx.currency,
-      emitted_at: selectedMissingTx.emitted_at,
-      has_attachment: selectedMissingTx.has_attachment,
-      matched_document_id: selectedMissingTx.matched_document_id,
-      order_number: selectedMissingTx.order_number,
-    };
-  }, [selectedMissingTx]);
-
-  // Handler pour ouvrir le modal d'upload
-  const handleOpenUpload = (tx: TransactionMissingInvoice): void => {
-    setSelectedMissingTx(tx);
-    setShowUploadModal(true);
-  };
-
-  // Handler pour telecharger le PDF d'une facture
-  const handleDownloadInvoicePdf = async (invoice: Invoice): Promise<void> => {
-    try {
-      const response = await fetch(`/api/qonto/invoices/${invoice.id}/pdf`);
-
-      if (!response.ok) {
-        const errorData = (await response.json().catch(() => ({}))) as {
-          error?: string;
-        };
-        throw new Error(
-          errorData.error ?? `Erreur ${response.status}: ${response.statusText}`
-        );
-      }
-
-      const blob = await response.blob();
-
-      if (blob.size === 0) {
-        throw new Error('Le PDF est vide');
-      }
-
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `facture-${invoice.number}.pdf`;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }, 1000);
-    } catch (err) {
-      console.error('Download error:', err);
-      setErrorInvoices(
-        err instanceof Error ? err.message : 'Erreur de telechargement'
-      );
-    }
-  };
-
-  const handleDownloadQuotePdf = async (quote: QontoQuote): Promise<void> => {
-    try {
-      const response = await fetch(`/api/qonto/quotes/${quote.id}/pdf`);
-      if (!response.ok) {
-        const errorData = (await response.json().catch(() => ({}))) as {
-          error?: string;
-        };
-        throw new Error(
-          errorData.error ?? `Erreur ${response.status}: ${response.statusText}`
-        );
-      }
-      const blob = await response.blob();
-      if (blob.size === 0) {
-        throw new Error('Le PDF est vide');
-      }
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `devis-${quote.quote_number}.pdf`;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }, 1000);
-    } catch (err) {
-      console.error('[Quote] Download PDF error:', err);
-      toast.error(
-        err instanceof Error ? err.message : 'Erreur de telechargement'
-      );
-    }
-  };
-
-  // Delete quote via Qonto API
-  const handleDeleteQuote = async (): Promise<void> => {
-    if (!quoteToDelete) return;
-
-    setDeletingQuote(true);
-    try {
-      const response = await fetch(`/api/qonto/quotes/${quoteToDelete.id}`, {
-        method: 'DELETE',
-      });
-      const data = (await response.json()) as ApiResponse<unknown>;
-      if (!response.ok || !data.success) {
-        throw new Error(data.error ?? 'Erreur lors de la suppression');
-      }
-      toast.success('Devis supprime');
-      void fetchQontoQuotes();
-    } catch (err) {
-      console.error('[Factures] deleteQuote error:', err);
-      toast.error(err instanceof Error ? err.message : 'Erreur de suppression');
-    } finally {
-      setDeletingQuote(false);
-      setQuoteToDelete(null);
-    }
-  };
-
-  // Credit note handlers
-  const handleDownloadCreditNotePdf = async (
-    creditNote: CreditNote
-  ): Promise<void> => {
-    try {
-      const response = await fetch(
-        `/api/qonto/credit-notes/${creditNote.id}/pdf`
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to download PDF');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `avoir-${creditNote.credit_note_number}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (err) {
-      console.error('Download error:', err);
-    }
-  };
-
-  // Calculer les KPIs pour les factures (Qonto)
-  const kpis = useMemo(() => {
-    const isAnnulee = (status: string) =>
-      status === 'cancelled' || status === 'canceled';
-
-    const facturesActives = invoices.filter(
-      inv => !isAnnulee(inv.status) && inv.status !== 'draft'
-    );
-    const totalFacture =
-      facturesActives.reduce(
-        (sum, inv) => sum + (inv.total_amount_cents ?? 0),
-        0
-      ) / 100;
-    const totalPaye =
-      invoices
-        .filter(inv => inv.status === 'paid' || inv.status === 'partially_paid')
-        .reduce(
-          (sum, inv) =>
-            sum +
-            (inv.local_amount_paid != null
-              ? inv.local_amount_paid * 100
-              : (inv.total_amount_cents ?? 0)),
-          0
-        ) / 100;
-    const enRetard = invoices.filter(
-      inv =>
-        inv.due_date &&
-        new Date(inv.due_date) < new Date() &&
-        inv.status !== 'paid' &&
-        !isAnnulee(inv.status)
-    );
-    const enAttente = invoices.filter(
-      inv =>
-        inv.status !== 'paid' &&
-        !isAnnulee(inv.status) &&
-        inv.status !== 'draft'
-    );
-
-    return {
-      totalFacture,
-      totalPaye,
-      nombreFacturesActives: facturesActives.length,
-      enAttente: enAttente.length,
-      montantEnAttente:
-        enAttente.reduce((sum, inv) => sum + (inv.total_amount_cents ?? 0), 0) /
-        100,
-      enRetard: enRetard.length,
-      montantEnRetard:
-        enRetard.reduce((sum, inv) => sum + (inv.total_amount_cents ?? 0), 0) /
-        100,
-    };
-  }, [invoices]);
-
-  // Handler pour voir une facture
-  const handleView = (
-    id: string,
-    type: 'invoice' | 'quote' | 'credit_note' = 'invoice'
-  ) => {
-    window.location.href = `/factures/${id}?type=${type}`;
-  };
-
-  // Handler sync Qonto - Sync transactions ET factures
-  const handleSync = async () => {
-    try {
-      const transactionsResponse = await fetch('/api/qonto/sync', {
-        method: 'POST',
-      });
-      const transactionsResult =
-        (await transactionsResponse.json()) as ApiResponse<unknown>;
-
-      if (!transactionsResult.success) {
-        console.error(
-          '[Qonto Sync Transactions] Failed:',
-          transactionsResult.message
-        );
-      } else {
-        console.warn('[Qonto Sync Transactions] Success:', transactionsResult);
-      }
-
-      const invoicesResponse = await fetch('/api/qonto/sync-invoices', {
-        method: 'POST',
-      });
-      const invoicesResult =
-        (await invoicesResponse.json()) as ApiResponse<unknown>;
-
-      if (!invoicesResult.success) {
-        console.error('[Qonto Sync Invoices] Failed:', invoicesResult.message);
-      } else {
-        console.warn('[Qonto Sync Invoices] Success:', invoicesResult);
-      }
-
-      void fetchInvoices();
-      void fetchQontoQuotes();
-      void fetchCreditNotes();
-    } catch (error) {
-      console.error('[Qonto Sync] Error:', error);
-      void fetchInvoices();
-    }
-  };
-
-  // Handler consolidation historique liaisons commandes <-> factures Qonto
-  const handleConsolidate = () => {
-    setIsConsolidating(true);
-    void fetch('/api/qonto/invoices/consolidate', { method: 'POST' })
-      .then(r => r.json())
-      .then((report: ConsolidateReport) => {
-        toast.success(
-          `${report.synced.toString()} liaisons creees · ${report.skipped_existing.toString()} deja existantes`
-        );
-        if (report.errors.length > 0) {
-          toast.error(
-            `${report.errors.length.toString()} erreur(s) lors de la consolidation`
-          );
-        }
-        if (report.synced > 0) {
-          void fetchInvoices();
-        }
-      })
-      .catch(() => {
-        toast.error('Erreur de consolidation');
-      })
-      .finally(() => {
-        setIsConsolidating(false);
-      });
-  };
-
-  // FEATURE FLAG: Finance module disabled for Phase 1
   if (!featureFlags.financeEnabled) {
     return (
       <div className="w-full py-8">
@@ -595,7 +157,6 @@ export default function FacturationPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Facturation</h1>
@@ -639,7 +200,6 @@ export default function FacturationPage() {
         </div>
       </div>
 
-      {/* KPIs - Only show for factures tab */}
       {activeTab === 'factures' && (
         <KpiGrid columns={4}>
           <KpiCard
@@ -675,7 +235,6 @@ export default function FacturationPage() {
         </KpiGrid>
       )}
 
-      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={v => setActiveTab(v as TabType)}>
         <TabsList>
           <TabsTrigger value="factures">
@@ -710,7 +269,6 @@ export default function FacturationPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Toolbar - Only for factures */}
         {activeTab === 'factures' && (
           <div className="mt-4">
             <DataTableToolbar
@@ -746,7 +304,6 @@ export default function FacturationPage() {
           </div>
         )}
 
-        {/* Contenu des tabs */}
         <TabsContent value="factures" className="mt-4 space-y-4">
           <FacturesTab
             invoices={invoices}
@@ -754,24 +311,19 @@ export default function FacturationPage() {
             statusFilter={statusFilter}
             onView={handleView}
             onDownloadPdf={invoice => {
-              void handleDownloadInvoicePdf(invoice).catch(error => {
-                console.error(
-                  '[Factures] handleDownloadInvoicePdf failed:',
-                  error
-                );
-              });
+              handleDownloadInvoicePdf(invoice);
             }}
             onOpenOrder={orderId => {
-              void handleOpenOrderModal(orderId).catch(console.error);
+              handleOpenOrderModal(orderId);
             }}
             onOpenOrg={orgId => {
               setSelectedOrgId(orgId);
               setShowOrgModal(true);
             }}
             onRapprochement={invoice => {
-              void handleRapprochement(invoice).catch(console.error);
+              handleRapprochement(invoice);
             }}
-            fetchInvoices={() => void fetchInvoices()}
+            fetchInvoices={fetchInvoices}
             onDeleteDraft={async invoice => {
               if (
                 !confirm(
@@ -788,12 +340,11 @@ export default function FacturationPage() {
                   success?: boolean;
                   error?: string;
                 };
-                if (!response.ok || !data.success) {
+                if (!response.ok || !data.success)
                   throw new Error(
                     data.error ?? 'Erreur lors de la suppression'
                   );
-                }
-                void fetchInvoices();
+                fetchInvoices();
               } catch (error) {
                 console.error('[Factures] Delete draft error:', error);
               }
@@ -807,17 +358,10 @@ export default function FacturationPage() {
             loading={loadingQuotes}
             error={errorQuotes}
             onRefresh={() => {
-              void fetchQontoQuotes().catch((err: unknown) => {
-                console.error('[Factures] fetchQontoQuotes failed:', err);
-              });
+              fetchQontoQuotes();
             }}
             onDownloadPdf={quote => {
-              void handleDownloadQuotePdf(quote).catch((error: unknown) => {
-                console.error(
-                  '[Factures] handleDownloadQuotePdf failed:',
-                  error
-                );
-              });
+              handleDownloadQuotePdf(quote);
             }}
             onDelete={quote => setQuoteToDelete(quote)}
           />
@@ -828,9 +372,9 @@ export default function FacturationPage() {
             creditNotes={creditNotes}
             loading={loadingCreditNotes}
             error={errorCreditNotes}
-            onRefresh={() => void fetchCreditNotes()}
+            onRefresh={() => fetchCreditNotes()}
             onDownloadPdf={creditNote => {
-              void handleDownloadCreditNotePdf(creditNote);
+              handleDownloadCreditNotePdf(creditNote);
             }}
           />
         </TabsContent>
@@ -846,7 +390,7 @@ export default function FacturationPage() {
                   </CardTitle>
                   <CardDescription>
                     Ces transactions ont ete rapprochees mais n&apos;ont pas de
-                    piece jointe dans Qonto. Uploadez les factures manquantes.
+                    piece jointe dans Qonto.
                   </CardDescription>
                 </div>
                 <Button
@@ -870,7 +414,6 @@ export default function FacturationPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Error state */}
       {errorInvoices && (
         <Card className="border-red-200 bg-red-50">
           <CardContent className="pt-6">
@@ -881,8 +424,6 @@ export default function FacturationPage() {
           </CardContent>
         </Card>
       )}
-
-      {/* Error state for missing invoices */}
       {errorMissing && activeTab === 'manquantes' && (
         <Card className="border-red-200 bg-red-50">
           <CardContent className="pt-6">
@@ -894,82 +435,39 @@ export default function FacturationPage() {
         </Card>
       )}
 
-      {/* Modal upload facture */}
-      <InvoiceUploadModal
-        transaction={transactionForUpload}
-        open={showUploadModal}
-        onOpenChange={setShowUploadModal}
+      <FacturesModals
+        transactionForUpload={transactionForUpload}
+        showUploadModal={showUploadModal}
+        setShowUploadModal={setShowUploadModal}
         onUploadComplete={() => {
           void refreshMissing();
           setShowUploadModal(false);
-          setSelectedMissingTx(null);
         }}
-      />
-
-      {/* Dialog confirmation suppression devis Qonto */}
-      <AlertDialog
-        open={!!quoteToDelete}
-        onOpenChange={open => !open && setQuoteToDelete(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer ce devis ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Vous allez supprimer le devis{' '}
-              <strong>{quoteToDelete?.quote_number}</strong>. Cette action est
-              irreversible.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletingQuote}>
-              Annuler
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                void handleDeleteQuote().catch(error => {
-                  console.error('[Factures] handleDeleteQuote failed:', error);
-                });
-              }}
-              disabled={deletingQuote}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deletingQuote ? 'Suppression...' : 'Supprimer'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Modal detail commande (ouverture en place depuis lien facture) */}
-      <OrderDetailModal
-        order={selectedOrderForModal}
-        open={showOrderModal}
-        onClose={() => {
+        quoteToDelete={quoteToDelete}
+        setQuoteToDelete={setQuoteToDelete}
+        deletingQuote={deletingQuote}
+        onDeleteQuote={handleDeleteQuote}
+        selectedOrderForModal={selectedOrderForModal}
+        showOrderModal={showOrderModal}
+        onCloseOrderModal={() => {
           setShowOrderModal(false);
           setSelectedOrderForModal(null);
         }}
-        readOnly
-      />
-
-      {/* Modal rapprochement depuis facture */}
-      <RapprochementFromOrderModal
-        open={showRapprochementModal}
-        onOpenChange={setShowRapprochementModal}
-        order={rapprochementOrder}
-        onSuccess={() => {
+        showRapprochementModal={showRapprochementModal}
+        setShowRapprochementModal={setShowRapprochementModal}
+        rapprochementOrder={rapprochementOrder}
+        onRapprochementSuccess={() => {
           setShowRapprochementModal(false);
           setRapprochementOrder(null);
-          void fetchInvoices();
+          fetchInvoices();
         }}
-      />
-
-      {/* Modal quick view organisation (depuis nom client cliquable) */}
-      <OrganisationQuickViewModal
-        organisationId={selectedOrgId}
-        open={showOrgModal}
-        onOpenChange={open => {
+        selectedOrgId={selectedOrgId}
+        showOrgModal={showOrgModal}
+        onOrgModalChange={open => {
           setShowOrgModal(open);
           if (!open) setSelectedOrgId(null);
         }}
+        selectedMissingTx={selectedMissingTx}
       />
     </div>
   );

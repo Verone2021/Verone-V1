@@ -1,97 +1,16 @@
 'use server';
 
-/**
- * Server Actions pour le rapprochement bancaire
- *
- * Workflow:
- * 1. Récupère la commande (sales_order) et la transaction (bank_transaction)
- * 2. Crée une facture (financial_document) liée à la commande
- * 3. Appelle record_payment() pour enregistrer le paiement
- * 4. La propagation vers sales_orders est automatique via trigger
- */
-
 import { createServerClient } from '@verone/utils/supabase/server';
 
-// =====================================================================
-// TYPES
-// =====================================================================
-
-interface MatchResult {
-  success: boolean;
-  documentId?: string;
-  paymentId?: string;
-  error?: string;
-}
-
-interface SalesOrder {
-  id: string;
-  order_number: string;
-  customer_id: string;
-  total_ht: number;
-  total_ttc: number;
-  tax_rate: number;
-  created_at: string;
-  shipped_at: string | null;
-}
-
-interface BankTransaction {
-  id: string;
-  transaction_id: string;
-  amount: number;
-  settled_at: string | null;
-  emitted_at: string;
-  reference: string | null;
-  raw_data: Record<string, unknown>;
-}
-
-// =====================================================================
-// HELPER: Générer numéro de facture
-// =====================================================================
-
-async function generateInvoiceNumber(
-  supabase: Awaited<ReturnType<typeof createServerClient>>
-): Promise<string> {
-  const year = new Date().getFullYear();
-
-  // Compter les factures de l'année
-  const { count } = await supabase
-    .from('financial_documents')
-    .select('*', { count: 'exact', head: true })
-    .eq('document_type', 'customer_invoice')
-    .gte('created_at', `${year}-01-01`)
-    .lt('created_at', `${year + 1}-01-01`);
-
-  const nextNumber = (count ?? 0) + 1;
-  return `INV-${year}-${String(nextNumber).padStart(5, '0')}`;
-}
-
-// =====================================================================
-// HELPER: Extraire attachment_id depuis raw_data
-// =====================================================================
-
-function extractFirstAttachmentId(rawData: unknown): string | null {
-  if (!rawData || typeof rawData !== 'object') return null;
-  const data = rawData as Record<string, unknown>;
-
-  // Qonto stocke les attachments comme un tableau d'objets avec id
-  if (Array.isArray(data.attachments) && data.attachments.length > 0) {
-    const first: unknown = data.attachments[0];
-    if (typeof first === 'object' && first !== null && 'id' in first) {
-      return String((first as Record<string, unknown>).id);
-    }
-  }
-
-  // Ou comme attachment_ids directement
-  if (Array.isArray(data.attachment_ids) && data.attachment_ids.length > 0) {
-    return String(data.attachment_ids[0]);
-  }
-
-  return null;
-}
-
-// =====================================================================
-// ACTION: Rapprocher une transaction à une commande
-// =====================================================================
+import type {
+  MatchResult,
+  SalesOrder,
+  BankTransaction,
+} from './bank-matching-helpers';
+import {
+  generateInvoiceNumber,
+  extractFirstAttachmentId,
+} from './bank-matching-helpers';
 
 export async function matchTransactionToOrder(
   bankTransactionId: string,
@@ -459,43 +378,4 @@ export async function matchTransactionToMultipleOrders(
   }
 }
 
-// =====================================================================
-// ACTION: Ignorer une transaction
-// =====================================================================
-
-export async function ignoreTransaction(
-  bankTransactionId: string,
-  reason?: string
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const supabase = await createServerClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return { success: false, error: 'Non authentifié' };
-    }
-
-    const { error } = await supabase
-      .from('bank_transactions')
-      .update({
-        matching_status: 'ignored',
-        match_reason: reason ?? 'Ignoré manuellement',
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', bankTransactionId);
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    return { success: true };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Erreur inconnue',
-    };
-  }
-}
+export { ignoreTransaction } from './bank-matching-ignore';
