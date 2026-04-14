@@ -24,6 +24,14 @@ export interface CreateOrderModalProps {
   onClose: () => void;
 }
 
+export interface CartTotals {
+  totalHt: number;
+  totalTtc: number;
+  totalMargin: number;
+  totalTva: number;
+  tvaDetails: { rate: number; amount: number }[];
+}
+
 export interface CartItem {
   selectionItemId: string;
   productId: string;
