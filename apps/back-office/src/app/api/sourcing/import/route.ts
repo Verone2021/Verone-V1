@@ -171,56 +171,35 @@ export async function POST(request: NextRequest) {
       let existingSupplier: { id: string; trade_name: string | null } | null =
         null;
 
-      // Helper : vérifier que le nom matche (éviter les faux positifs)
-      const nameMatches = (
-        dbName: string | null,
-        inputName: string
-      ): boolean => {
-        if (!dbName) return false;
-        const a = dbName.toLowerCase().trim();
-        const b = inputName.toLowerCase().trim();
-        // Match exact ou l'un contient l'autre
-        return a === b || a.includes(b) || b.includes(a);
-      };
+      // Recherche fournisseur existant — PAR NOM EXACT uniquement
+      // L'URL boutique Alibaba est peu fiable (faux positifs fréquents)
 
-      // 1. Par URL boutique Alibaba + vérification du nom
-      if (input.supplier.alibaba_store_url) {
-        const { data } = await supabase
-          .from('organisations')
-          .select('id, trade_name, legal_name')
-          .eq('alibaba_store_url', input.supplier.alibaba_store_url)
-          .limit(1)
-          .maybeSingle();
-        // Vérifier que le nom correspond — sinon c'est un faux positif
+      // 1. Par domaine du website (ex: opjet.com → organisation avec website opjet.com)
+      //    Fiable car le domaine du SITE SOURCE identifie le fournisseur
+      try {
+        const sourceHost = new URL(input.source_url).hostname.replace(
+          'www.',
+          ''
+        );
+        // Ne pas matcher alibaba.com (c'est une marketplace, pas un fournisseur)
         if (
-          data &&
-          (nameMatches(data.trade_name, input.supplier.name) ||
-            nameMatches(data.legal_name, input.supplier.name))
+          !sourceHost.includes('alibaba.com') &&
+          !sourceHost.includes('1688.com') &&
+          !sourceHost.includes('zentrada.com')
         ) {
-          existingSupplier = data;
-        }
-      }
-
-      // 2. Par domaine du website (ex: opjet.com → organisation avec website opjet.com)
-      if (!existingSupplier) {
-        try {
-          const sourceDomain = new URL(input.source_url).hostname.replace(
-            'www.',
-            ''
-          );
           const { data } = await supabase
             .from('organisations')
             .select('id, trade_name')
-            .ilike('website', `%${sourceDomain}%`)
+            .ilike('website', `%${sourceHost}%`)
             .limit(1)
             .maybeSingle();
           existingSupplier = data;
-        } catch (_e) {
-          // URL invalide — ignorer
         }
+      } catch (_e) {
+        // URL invalide — ignorer
       }
 
-      // 3. Par nom exact (insensible à la casse)
+      // 2. Par nom exact (insensible à la casse)
       if (!existingSupplier) {
         const { data } = await supabase
           .from('organisations')
