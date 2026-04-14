@@ -13,264 +13,28 @@ import {
   CardTitle,
   Input,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Separator,
   Textarea,
   OrganisationNameDisplay,
 } from '@verone/ui';
-import {
-  ArrowLeft,
-  Copy,
-  Loader2,
-  Plus,
-  Save,
-  Trash2,
-  AlertTriangle,
-} from 'lucide-react';
+import { ArrowLeft, Loader2, Save, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
-// =====================================================================
-// TYPES
-// =====================================================================
-
-type DocumentType = 'invoice' | 'quote' | 'credit_note';
-
-interface QontoClient {
-  id: string;
-  name: string;
-  email?: string;
-  billing_address?: {
-    street_address?: string;
-    city?: string;
-    zip_code?: string;
-    country_code?: string;
-  };
-}
-
-interface QontoInvoiceItem {
-  title: string;
-  description?: string;
-  quantity: string;
-  unit?: string;
-  unit_price: { value: string; currency: string };
-  vat_rate: string;
-}
-
-interface QontoDocument {
-  id: string;
-  status: string;
-  currency: string;
-  issue_date: string;
-  client_id: string;
-  client?: QontoClient;
-  items?: QontoInvoiceItem[];
-  // Invoice specific
-  invoice_number?: string;
-  payment_deadline?: string;
-  // Quote specific
-  quote_number?: string;
-  expiry_date?: string;
-  // Credit note specific
-  credit_note_number?: string;
-  reason?: string;
-  // Header/footer
-  header?: string;
-  footer?: string;
-  terms_and_conditions?: string;
-}
-
-interface IAddress {
-  street: string;
-  city: string;
-  zip_code: string;
-  country: string;
-}
-
-const emptyAddress: IAddress = {
-  street: '',
-  city: '',
-  zip_code: '',
-  country: '',
-};
-
-// API Response types
-interface QontoApiResponse {
-  success: boolean;
-  invoice?: QontoDocument;
-  quote?: QontoDocument;
-  credit_note?: QontoDocument;
-  creditNote?: QontoDocument;
-  localData?: {
-    billing_address?: IAddress | null;
-    shipping_address?: IAddress | null;
-    partner_legal_name?: string | null;
-    partner_trade_name?: string | null;
-    sales_order_id?: string | null;
-    order_number?: string | null;
-  } | null;
-  error?: string;
-}
-
-interface IEditableItem {
-  id: string;
-  title: string;
-  description: string;
-  quantity: string;
-  unit: string;
-  unitPrice: string;
-  vatRate: string;
-}
-
-// =====================================================================
-// HELPERS
-// =====================================================================
-
-function generateId(): string {
-  return Math.random().toString(36).substring(2, 9);
-}
-
-function getDocumentTypeLabel(type: DocumentType): string {
-  const labels: Record<DocumentType, string> = {
-    invoice: 'Facture',
-    quote: 'Devis',
-    credit_note: 'Avoir',
-  };
-  return labels[type] ?? type;
-}
-
-function getDocumentNumber(doc: QontoDocument, type: DocumentType): string {
-  switch (type) {
-    case 'invoice':
-      return doc.invoice_number ?? doc.id;
-    case 'quote':
-      return doc.quote_number ?? doc.id;
-    case 'credit_note':
-      return doc.credit_note_number ?? doc.id;
-    default:
-      return doc.id;
-  }
-}
-
-function getApiEndpoint(type: DocumentType, id: string): string {
-  switch (type) {
-    case 'invoice':
-      return `/api/qonto/invoices/${id}`;
-    case 'quote':
-      return `/api/qonto/quotes/${id}`;
-    case 'credit_note':
-      return `/api/qonto/credit-notes/${id}`;
-    default:
-      return `/api/qonto/invoices/${id}`;
-  }
-}
-
-// =====================================================================
-// COMPOSANTS
-// =====================================================================
-
-interface IItemRowProps {
-  item: IEditableItem;
-  onChange: (id: string, field: keyof IEditableItem, value: string) => void;
-  onRemove: (id: string) => void;
-  canRemove: boolean;
-  readOnly?: boolean;
-}
-
-function ItemRow({
-  item,
-  onChange,
-  onRemove,
-  canRemove,
-  readOnly,
-}: IItemRowProps) {
-  return (
-    <div className="grid grid-cols-12 gap-2 items-start p-3 bg-slate-50 rounded-lg">
-      {/* Title & Description */}
-      <div className="col-span-4 space-y-1">
-        <Input
-          placeholder="Titre *"
-          value={item.title}
-          onChange={e => onChange(item.id, 'title', e.target.value)}
-          disabled={readOnly}
-        />
-        <Input
-          placeholder="Description (optionnel)"
-          value={item.description}
-          onChange={e => onChange(item.id, 'description', e.target.value)}
-          className="text-sm"
-          disabled={readOnly}
-        />
-      </div>
-
-      {/* Quantity */}
-      <div className="col-span-2">
-        <Input
-          type="number"
-          step="0.01"
-          min="0"
-          placeholder="Qté"
-          value={item.quantity}
-          onChange={e => onChange(item.id, 'quantity', e.target.value)}
-          disabled={readOnly}
-        />
-      </div>
-
-      {/* Unit Price */}
-      <div className="col-span-2">
-        <Input
-          type="number"
-          step="0.01"
-          min="0"
-          placeholder="Prix HT"
-          value={item.unitPrice}
-          onChange={e => onChange(item.id, 'unitPrice', e.target.value)}
-        />
-      </div>
-
-      {/* VAT Rate */}
-      <div className="col-span-2">
-        <Select
-          value={item.vatRate}
-          onValueChange={value => onChange(item.id, 'vatRate', value)}
-          disabled={readOnly}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="TVA" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="0">0%</SelectItem>
-            <SelectItem value="0.055">5.5%</SelectItem>
-            <SelectItem value="0.10">10%</SelectItem>
-            <SelectItem value="0.20">20%</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Actions */}
-      <div className="col-span-2 flex justify-end">
-        {!readOnly && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onRemove(item.id)}
-            disabled={!canRemove}
-            className="text-red-500 hover:text-red-700"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// =====================================================================
-// PAGE PRINCIPALE
-// =====================================================================
+import type {
+  DocumentType,
+  IAddress,
+  IEditableItem,
+  QontoDocument,
+  QontoApiResponse,
+} from './types';
+import { emptyAddress } from './types';
+import {
+  generateId,
+  getDocumentTypeLabel,
+  getDocumentNumber,
+  getApiEndpoint,
+} from './helpers';
+import { AddressSection } from './AddressSection';
+import { ItemsSection } from './ItemsSection';
 
 interface IPageProps {
   params: Promise<{ id: string }>;
@@ -288,7 +52,6 @@ export default function EditDraftPage({ params }: IPageProps) {
   const [document, setDocument] = useState<QontoDocument | null>(null);
   const [documentType, setDocumentType] = useState<DocumentType>('invoice');
 
-  // Editable fields
   const [items, setItems] = useState<IEditableItem[]>([]);
   const [issueDate, setIssueDate] = useState('');
   const [header, setHeader] = useState('');
@@ -310,68 +73,54 @@ export default function EditDraftPage({ params }: IPageProps) {
   );
   const [isLinkedToOrder, setIsLinkedToOrder] = useState(false);
 
-  // Load document
   useEffect(() => {
     async function loadDocument() {
       setLoading(true);
       setError(null);
-
-      // Determine type from param or try to detect
       const typesToTry: DocumentType[] = typeParam
         ? [typeParam]
         : ['invoice', 'quote', 'credit_note'];
-
       for (const type of typesToTry) {
         try {
           const endpoint = getApiEndpoint(type, id);
           const response = await fetch(endpoint);
           const data = (await response.json()) as QontoApiResponse;
-
           if (response.ok && data.success) {
             const doc =
               data.invoice ?? data.quote ?? data.credit_note ?? data.creditNote;
-
             if (doc) {
-              // Check if draft
               if (doc.status !== 'draft') {
                 setError(
-                  `Ce ${getDocumentTypeLabel(type).toLowerCase()} n'est pas un brouillon et ne peut pas être modifié.`
+                  `Ce ${getDocumentTypeLabel(type).toLowerCase()} n'est pas un brouillon et ne peut pas etre modifie.`
                 );
                 setLoading(false);
                 return;
               }
-
               setDocument(doc);
               setDocumentType(type);
-
-              // Initialize form fields
-              if (doc.items && doc.items.length > 0) {
-                setItems(
-                  doc.items.map(item => ({
-                    id: generateId(),
-                    title: item.title ?? '',
-                    description: item.description ?? '',
-                    quantity: item.quantity ?? '1',
-                    unit: item.unit ?? 'unit',
-                    unitPrice: item.unit_price?.value ?? '0',
-                    vatRate: item.vat_rate ?? '0.20',
-                  }))
-                );
-              } else {
-                // Add one empty item
-                setItems([
-                  {
-                    id: generateId(),
-                    title: '',
-                    description: '',
-                    quantity: '1',
-                    unit: 'unit',
-                    unitPrice: '0',
-                    vatRate: '0.20',
-                  },
-                ]);
-              }
-
+              setItems(
+                doc.items && doc.items.length > 0
+                  ? doc.items.map(item => ({
+                      id: generateId(),
+                      title: item.title ?? '',
+                      description: item.description ?? '',
+                      quantity: item.quantity ?? '1',
+                      unit: item.unit ?? 'unit',
+                      unitPrice: item.unit_price?.value ?? '0',
+                      vatRate: item.vat_rate ?? '0.20',
+                    }))
+                  : [
+                      {
+                        id: generateId(),
+                        title: '',
+                        description: '',
+                        quantity: '1',
+                        unit: 'unit',
+                        unitPrice: '0',
+                        vatRate: '0.20',
+                      },
+                    ]
+              );
               setIssueDate(doc.issue_date ?? '');
               setHeader(doc.header ?? '');
               setFooter(doc.footer ?? '');
@@ -379,8 +128,6 @@ export default function EditDraftPage({ params }: IPageProps) {
               setDueDate(doc.payment_deadline ?? '');
               setExpiryDate(doc.expiry_date ?? '');
               setReason(doc.reason ?? '');
-
-              // Initialize addresses: priority local DB, fallback Qonto client address
               if (data.localData?.billing_address) {
                 setBillingAddress({
                   street: data.localData.billing_address.street ?? '',
@@ -404,40 +151,33 @@ export default function EditDraftPage({ params }: IPageProps) {
                   country: data.localData.shipping_address.country ?? '',
                 });
               }
-
               if (data.localData?.partner_legal_name) {
                 setPartnerLegalName(data.localData.partner_legal_name);
                 setPartnerTradeName(data.localData.partner_trade_name ?? null);
               }
-
               if (data.localData?.sales_order_id) {
                 setIsLinkedToOrder(true);
                 setLinkedOrderNumber(data.localData.order_number ?? null);
               }
-
               setLoading(false);
               return;
             }
           }
-        } catch (error: unknown) {
-          // Try next type (error logged if all fail)
+        } catch (err: unknown) {
           console.error(
             `[FacturesEdit] Failed to load ${type}:`,
-            error instanceof Error ? error.message : 'Unknown error'
+            err instanceof Error ? err.message : 'Unknown error'
           );
         }
       }
-
-      setError('Document non trouvé');
+      setError('Document non trouve');
       setLoading(false);
     }
-
-    void loadDocument().catch(error => {
-      console.error('[FacturesEdit] loadDocument failed:', error);
+    void loadDocument().catch(err => {
+      console.error('[FacturesEdit] loadDocument failed:', err);
     });
   }, [id, typeParam]);
 
-  // Item handlers
   const handleItemChange = useCallback(
     (itemId: string, field: keyof IEditableItem, value: string) => {
       setItems(prev =>
@@ -468,24 +208,18 @@ export default function EditDraftPage({ params }: IPageProps) {
     setItems(prev => prev.filter(item => item.id !== itemId));
   }, []);
 
-  // Save handler
   const handleSave = async () => {
-    // Validate
     const validItems = items.filter(item => item.title.trim());
     if (validItems.length === 0) {
       toast.error('Veuillez ajouter au moins une ligne avec un titre');
       return;
     }
-
     setSaving(true);
-
     try {
       const endpoint = getApiEndpoint(documentType, id);
-
       const body: Record<string, unknown> = {
         items: validItems.map(item => ({
           title: item.title,
-
           description: item.description ?? undefined,
           quantity: item.quantity,
           unit: item.unit,
@@ -496,19 +230,16 @@ export default function EditDraftPage({ params }: IPageProps) {
           vatRate: item.vatRate,
         })),
       };
-
-      // Type-specific fields
       if (documentType === 'invoice') {
         if (issueDate) body.issueDate = issueDate;
         if (header) body.header = header;
         if (footer) body.footer = footer;
         if (termsAndConditions) body.termsAndConditions = termsAndConditions;
         if (dueDate) body.dueDate = dueDate;
-        // Addresses (local only)
-        const hasBilling = billingAddress.street || billingAddress.city;
-        const hasShipping = shippingAddress.street || shippingAddress.city;
-        if (hasBilling) body.billing_address = billingAddress;
-        if (hasShipping) body.shipping_address = shippingAddress;
+        if (billingAddress.street || billingAddress.city)
+          body.billing_address = billingAddress;
+        if (shippingAddress.street || shippingAddress.city)
+          body.shipping_address = shippingAddress;
       } else if (documentType === 'quote') {
         if (header) body.header = header;
         if (footer) body.footer = footer;
@@ -517,20 +248,15 @@ export default function EditDraftPage({ params }: IPageProps) {
       } else if (documentType === 'credit_note') {
         if (reason) body.reason = reason;
       }
-
       const response = await fetch(endpoint, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-
       const data = (await response.json()) as QontoApiResponse;
-
-      if (!response.ok || !data.success) {
+      if (!response.ok || !data.success)
         throw new Error(data.error ?? 'Erreur lors de la sauvegarde');
-      }
-
-      toast.success('Modifications enregistrées');
+      toast.success('Modifications enregistrees');
       router.push(`/factures/${id}?type=${documentType}`);
     } catch (err) {
       toast.error(
@@ -541,45 +267,14 @@ export default function EditDraftPage({ params }: IPageProps) {
     }
   };
 
-  // Calculate totals
-  const calculateTotals = () => {
-    let subtotal = 0;
-    let totalVat = 0;
-
-    items.forEach(item => {
-      const qty = parseFloat(item.quantity) || 0;
-      const price = parseFloat(item.unitPrice) || 0;
-      const vatRate = parseFloat(item.vatRate) || 0;
-
-      const itemTotal = qty * price;
-      const itemVat = itemTotal * vatRate;
-
-      subtotal += itemTotal;
-      totalVat += itemVat;
-    });
-
-    return {
-      subtotal,
-      totalVat,
-      total: subtotal + totalVat,
-    };
-  };
-
-  const totals = calculateTotals();
-
-  // =====================================================================
-  // RENDER
-  // =====================================================================
-
-  if (loading) {
+  if (loading)
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
-  }
 
-  if (error) {
+  if (error)
     return (
       <div className="container max-w-4xl mx-auto py-8 px-4">
         <Card className="border-amber-200 bg-amber-50">
@@ -598,13 +293,11 @@ export default function EditDraftPage({ params }: IPageProps) {
         </Card>
       </div>
     );
-  }
 
   if (!document) return null;
 
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4">
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={() => router.back()}>
@@ -626,8 +319,8 @@ export default function EditDraftPage({ params }: IPageProps) {
           </Button>
           <Button
             onClick={() => {
-              void handleSave().catch(error => {
-                console.error('[FacturesEdit] handleSave failed:', error);
+              void handleSave().catch(err => {
+                console.error('[FacturesEdit] handleSave failed:', err);
               });
             }}
             disabled={saving}
@@ -642,12 +335,11 @@ export default function EditDraftPage({ params }: IPageProps) {
         </div>
       </div>
 
-      {/* Client Info (read-only) */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Client</CardTitle>
           <CardDescription>
-            Le client ne peut pas être modifié après création
+            Le client ne peut pas etre modifie apres creation
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -667,7 +359,6 @@ export default function EditDraftPage({ params }: IPageProps) {
         </CardContent>
       </Card>
 
-      {/* Addresses (invoices only) */}
       {documentType === 'invoice' && (
         <Card className="mb-6">
           <CardHeader>
@@ -677,213 +368,53 @@ export default function EditDraftPage({ params }: IPageProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Billing address */}
-              <div className="space-y-3">
-                <h4 className="font-medium text-sm">Adresse de facturation</h4>
-                <div className="space-y-2">
-                  <Input
-                    placeholder="Rue"
-                    value={billingAddress.street}
-                    onChange={e =>
-                      setBillingAddress(prev => ({
-                        ...prev,
-                        street: e.target.value,
-                      }))
-                    }
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      placeholder="Code postal"
-                      value={billingAddress.zip_code}
-                      onChange={e =>
-                        setBillingAddress(prev => ({
-                          ...prev,
-                          zip_code: e.target.value,
-                        }))
-                      }
-                    />
-                    <Input
-                      placeholder="Ville"
-                      value={billingAddress.city}
-                      onChange={e =>
-                        setBillingAddress(prev => ({
-                          ...prev,
-                          city: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                  <Input
-                    placeholder="Pays"
-                    value={billingAddress.country}
-                    onChange={e =>
-                      setBillingAddress(prev => ({
-                        ...prev,
-                        country: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-
-              {/* Shipping address */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium text-sm">Adresse de livraison</h4>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => setShippingAddress({ ...billingAddress })}
-                  >
-                    <Copy className="h-3 w-3 mr-1" />
-                    Copier facturation
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  <Input
-                    placeholder="Rue"
-                    value={shippingAddress.street}
-                    onChange={e =>
-                      setShippingAddress(prev => ({
-                        ...prev,
-                        street: e.target.value,
-                      }))
-                    }
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      placeholder="Code postal"
-                      value={shippingAddress.zip_code}
-                      onChange={e =>
-                        setShippingAddress(prev => ({
-                          ...prev,
-                          zip_code: e.target.value,
-                        }))
-                      }
-                    />
-                    <Input
-                      placeholder="Ville"
-                      value={shippingAddress.city}
-                      onChange={e =>
-                        setShippingAddress(prev => ({
-                          ...prev,
-                          city: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                  <Input
-                    placeholder="Pays"
-                    value={shippingAddress.country}
-                    onChange={e =>
-                      setShippingAddress(prev => ({
-                        ...prev,
-                        country: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-            </div>
+            <AddressSection
+              billingAddress={billingAddress}
+              shippingAddress={shippingAddress}
+              onBillingChange={update =>
+                setBillingAddress(prev => ({ ...prev, ...update }))
+              }
+              onShippingChange={update =>
+                setShippingAddress(prev => ({ ...prev, ...update }))
+              }
+              onCopyBillingToShipping={() =>
+                setShippingAddress({ ...billingAddress })
+              }
+            />
           </CardContent>
         </Card>
       )}
 
-      {/* Items */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Lignes</CardTitle>
           <CardDescription>
             {isLinkedToOrder
-              ? `Facture liée à la commande ${linkedOrderNumber ?? ''} — seuls les prix sont modifiables`
+              ? `Facture liee a la commande ${linkedOrderNumber ?? ''} — seuls les prix sont modifiables`
               : 'Ajoutez ou modifiez les lignes du document'}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {isLinkedToOrder && (
-            <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
-              <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-              <span>
-                Facture liée à une commande — seuls les prix HT sont
-                modifiables. Les modifications de prix seront synchronisées vers
-                la commande.
-              </span>
-            </div>
-          )}
-
-          {/* Header row */}
-          <div className="grid grid-cols-12 gap-2 px-3 text-sm font-medium text-muted-foreground">
-            <div className="col-span-4">Désignation</div>
-            <div className="col-span-2">Quantité</div>
-            <div className="col-span-2">Prix HT</div>
-            <div className="col-span-2">TVA</div>
-            <div className="col-span-2" />
-          </div>
-
-          {/* Items */}
-          {items.map(item => (
-            <ItemRow
-              key={item.id}
-              item={item}
-              onChange={handleItemChange}
-              onRemove={handleRemoveItem}
-              canRemove={items.length > 1}
-              readOnly={isLinkedToOrder}
-            />
-          ))}
-
-          {/* Add button */}
-          {!isLinkedToOrder && (
-            <Button
-              variant="outline"
-              onClick={handleAddItem}
-              className="w-full mt-2"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter une ligne
-            </Button>
-          )}
-
-          <Separator className="my-4" />
-
-          {/* Totals */}
-          <div className="space-y-2 text-right">
-            <div className="flex justify-end gap-8">
-              <span className="text-muted-foreground">Sous-total HT</span>
-              <span className="font-medium w-24">
-                {totals.subtotal.toFixed(2)} €
-              </span>
-            </div>
-            <div className="flex justify-end gap-8">
-              <span className="text-muted-foreground">TVA</span>
-              <span className="font-medium w-24">
-                {totals.totalVat.toFixed(2)} €
-              </span>
-            </div>
-            <div className="flex justify-end gap-8 text-lg">
-              <span className="font-medium">Total TTC</span>
-              <span className="font-bold w-24">
-                {totals.total.toFixed(2)} €
-              </span>
-            </div>
-          </div>
+        <CardContent>
+          <ItemsSection
+            items={items}
+            isLinkedToOrder={isLinkedToOrder}
+            linkedOrderNumber={linkedOrderNumber}
+            onItemChange={handleItemChange}
+            onAddItem={handleAddItem}
+            onRemoveItem={handleRemoveItem}
+          />
         </CardContent>
       </Card>
 
-      {/* Type-specific fields */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Informations complémentaires</CardTitle>
+          <CardTitle>Informations complementaires</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Invoice specific */}
           {documentType === 'invoice' && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="issueDate">Date d&apos;émission</Label>
+                <Label htmlFor="issueDate">Date d&apos;emission</Label>
                 <Input
                   id="issueDate"
                   type="date"
@@ -892,7 +423,7 @@ export default function EditDraftPage({ params }: IPageProps) {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="dueDate">Date d&apos;échéance</Label>
+                <Label htmlFor="dueDate">Date d&apos;echeance</Label>
                 <Input
                   id="dueDate"
                   type="date"
@@ -902,11 +433,9 @@ export default function EditDraftPage({ params }: IPageProps) {
               </div>
             </>
           )}
-
-          {/* Quote specific */}
           {documentType === 'quote' && (
             <div className="space-y-2">
-              <Label htmlFor="expiryDate">Date de validité</Label>
+              <Label htmlFor="expiryDate">Date de validite</Label>
               <Input
                 id="expiryDate"
                 type="date"
@@ -915,8 +444,6 @@ export default function EditDraftPage({ params }: IPageProps) {
               />
             </div>
           )}
-
-          {/* Credit note specific */}
           {documentType === 'credit_note' && (
             <div className="space-y-2">
               <Label htmlFor="reason">Motif de l&apos;avoir</Label>
@@ -929,21 +456,18 @@ export default function EditDraftPage({ params }: IPageProps) {
               />
             </div>
           )}
-
-          {/* Header/footer for invoices and quotes */}
           {documentType !== 'credit_note' && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="header">En-tête (optionnel)</Label>
+                <Label htmlFor="header">En-tete (optionnel)</Label>
                 <Textarea
                   id="header"
-                  placeholder="Texte d'en-tête..."
+                  placeholder="Texte d'en-tete..."
                   value={header}
                   onChange={e => setHeader(e.target.value)}
                   rows={2}
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="footer">Pied de page (optionnel)</Label>
                 <Textarea
@@ -954,12 +478,11 @@ export default function EditDraftPage({ params }: IPageProps) {
                   rows={2}
                 />
               </div>
-
               <div className="space-y-2">
-                <Label htmlFor="terms">Conditions générales (optionnel)</Label>
+                <Label htmlFor="terms">Conditions generales (optionnel)</Label>
                 <Textarea
                   id="terms"
-                  placeholder="Conditions générales..."
+                  placeholder="Conditions generales..."
                   value={termsAndConditions}
                   onChange={e => setTermsAndConditions(e.target.value)}
                   rows={3}
