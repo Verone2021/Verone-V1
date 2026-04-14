@@ -58,6 +58,118 @@ export interface TestMetrics {
   progressPercent: number;
 }
 
+// ============================================================================
+// Pure computation helpers (extracted from useSectionLocking)
+// ============================================================================
+
+export interface SectionLockStatus {
+  status: LockStatus;
+  canLock: boolean;
+  canUnlock: boolean;
+  blockedReason?: string;
+  completionRate: number;
+  config: SectionLockConfig;
+}
+
+export interface DeploymentPhaseStats {
+  total: number;
+  locked: number;
+  percentage: number;
+  sections: string[];
+}
+
+const DEFAULT_SECTION_CONFIG: Omit<SectionLockConfig, 'sectionId'> = {
+  completionThreshold: 100,
+  requiresValidation: false,
+  blockedBy: [],
+  phase: 'development',
+  criticalSection: false,
+  rollbackAllowed: true,
+};
+
+export function computeSectionLockStatus(
+  section: TestSection,
+  lockConfigs: Record<string, SectionLockConfig>,
+  allSections: TestSection[],
+  getSectionMetrics: (sectionId: string) => TestMetrics,
+  pendingValidations: Set<string>,
+  strictMode: boolean
+): SectionLockStatus {
+  const config = lockConfigs[section.id] ?? {
+    sectionId: section.id,
+    ...DEFAULT_SECTION_CONFIG,
+  };
+
+  const metrics = getSectionMetrics(section.id);
+  const completionRate = metrics.progressPercent;
+
+  const blockedByUnsatisfied = config.blockedBy.filter(depId => {
+    const depSection = allSections.find(s => s.id === depId);
+    return !depSection?.isLocked;
+  });
+
+  let status: LockStatus = 'unlocked';
+  let canLock = false;
+  let canUnlock = false;
+  let blockedReason: string | undefined;
+
+  if (section.isLocked) {
+    status = 'locked';
+    canUnlock = !strictMode && config.rollbackAllowed;
+  } else if (completionRate >= config.completionThreshold) {
+    if (blockedByUnsatisfied.length === 0) {
+      if (config.requiresValidation && pendingValidations.has(section.id)) {
+        status = 'pending_lock';
+      } else {
+        canLock = true;
+      }
+    } else {
+      blockedReason = `Bloqué par: ${blockedByUnsatisfied.join(', ')}`;
+    }
+  } else {
+    blockedReason = `Completion requise: ${config.completionThreshold}% (actuel: ${completionRate}%)`;
+  }
+
+  return { status, canLock, canUnlock, blockedReason, completionRate, config };
+}
+
+export function computeDeploymentProgress(
+  sections: TestSection[],
+  lockConfigs: Record<string, SectionLockConfig>
+): Record<DeploymentPhase, DeploymentPhaseStats> {
+  const progress: Record<DeploymentPhase, DeploymentPhaseStats> = {
+    development: { total: 0, locked: 0, percentage: 0, sections: [] },
+    staging: { total: 0, locked: 0, percentage: 0, sections: [] },
+    pre_production: { total: 0, locked: 0, percentage: 0, sections: [] },
+    production: { total: 0, locked: 0, percentage: 0, sections: [] },
+  };
+
+  sections.forEach(section => {
+    const config = lockConfigs[section.id];
+    if (config) {
+      progress[config.phase].total++;
+      progress[config.phase].sections.push(section.id);
+      if (section.isLocked) {
+        progress[config.phase].locked++;
+      }
+    }
+  });
+
+  (
+    [
+      'development',
+      'staging',
+      'pre_production',
+      'production',
+    ] as DeploymentPhase[]
+  ).forEach(phase => {
+    const p = progress[phase];
+    p.percentage = p.total > 0 ? Math.round((p.locked / p.total) * 100) : 0;
+  });
+
+  return progress;
+}
+
 // Configuration par défaut des sections avec phases de déploiement
 export const DEFAULT_LOCK_CONFIG: Record<string, SectionLockConfig> = {
   // Phase 1: Core Business (Foundation)

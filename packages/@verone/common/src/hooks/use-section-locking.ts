@@ -16,6 +16,8 @@ export type {
 
 import {
   DEFAULT_LOCK_CONFIG,
+  computeSectionLockStatus,
+  computeDeploymentProgress,
   type LockStatus,
   type DeploymentPhase,
   type SectionLockConfig,
@@ -57,77 +59,21 @@ export function useSectionLocking(
     };
   };
 
-  // Calculer le statut de lock pour chaque section
   const sectionLockStatuses = useMemo(() => {
     const statuses: Record<
       string,
-      {
-        status: LockStatus;
-        canLock: boolean;
-        canUnlock: boolean;
-        blockedReason?: string;
-        completionRate: number;
-        config: SectionLockConfig;
-      }
+      ReturnType<typeof computeSectionLockStatus>
     > = {};
-
     sections.forEach(section => {
-      const config = lockConfigs[section.id] ?? {
-        sectionId: section.id,
-        completionThreshold: 100,
-        requiresValidation: false,
-        blockedBy: [],
-        phase: 'development',
-        criticalSection: false,
-        rollbackAllowed: true,
-      };
-
-      const metrics = getSectionMetrics(section.id);
-      const completionRate = metrics.progressPercent;
-
-      const blockedByUnsatisfied = config.blockedBy.filter(depId => {
-        const depSection = sections.find(s => s.id === depId);
-        return !depSection?.isLocked;
-      });
-
-      let status: LockStatus = 'unlocked';
-      let canLock = false;
-      let canUnlock = false;
-      let blockedReason: string | undefined;
-
-      if (section.isLocked) {
-        status = 'locked';
-        canUnlock = !strictMode && config.rollbackAllowed;
-      } else {
-        if (completionRate >= config.completionThreshold) {
-          if (blockedByUnsatisfied.length === 0) {
-            if (
-              config.requiresValidation &&
-              pendingValidations.has(section.id)
-            ) {
-              status = 'pending_lock';
-              canLock = false;
-            } else {
-              canLock = true;
-            }
-          } else {
-            blockedReason = `Bloqué par: ${blockedByUnsatisfied.join(', ')}`;
-          }
-        } else {
-          blockedReason = `Completion requise: ${config.completionThreshold}% (actuel: ${completionRate}%)`;
-        }
-      }
-
-      statuses[section.id] = {
-        status,
-        canLock,
-        canUnlock,
-        blockedReason,
-        completionRate,
-        config,
-      };
+      statuses[section.id] = computeSectionLockStatus(
+        section,
+        lockConfigs,
+        sections,
+        getSectionMetrics,
+        pendingValidations,
+        strictMode
+      );
     });
-
     return statuses;
   }, [
     sections,
@@ -205,7 +151,6 @@ export function useSectionLocking(
         validationRequired
       ) {
         setPendingValidations(prev => new Set([...prev, sectionId]));
-
         await logLockEvent({
           sectionId,
           eventType: 'validation_required',
@@ -213,7 +158,6 @@ export function useSectionLocking(
           reason: reason ?? 'Validation required before lock',
           triggeredBy: 'system',
         });
-
         return false;
       }
 
@@ -336,7 +280,6 @@ export function useSectionLocking(
           newSet.delete(sectionId);
           return newSet;
         });
-
         await logLockEvent({
           sectionId,
           eventType: 'validation_required',
@@ -344,64 +287,31 @@ export function useSectionLocking(
           reason: reason ?? 'Validation rejected',
           triggeredBy: 'user',
         });
-
         return false;
       }
     },
     [pendingValidations, lockSection, logLockEvent, sectionLockStatuses]
   );
 
-  // Auto-lock des sections éligibles
   useEffect(() => {
     if (!enableAutoLock) return;
-
     const eligibleSections = getEligibleForAutoLock();
     eligibleSections.forEach(sectionId => {
       void lockSection(sectionId, false, 'Auto-lock triggered');
     });
   }, [enableAutoLock, getEligibleForAutoLock, lockSection]);
 
-  // Calculer la progression de déploiement par phase
-  const deploymentProgress = useMemo(() => {
-    const phases = [
-      'development',
-      'staging',
-      'pre_production',
-      'production',
-    ] as const;
-    const progress: Record<
-      DeploymentPhase,
-      {
-        total: number;
-        locked: number;
-        percentage: number;
-        sections: string[];
-      }
-    > = {
-      development: { total: 0, locked: 0, percentage: 0, sections: [] },
-      staging: { total: 0, locked: 0, percentage: 0, sections: [] },
-      pre_production: { total: 0, locked: 0, percentage: 0, sections: [] },
-      production: { total: 0, locked: 0, percentage: 0, sections: [] },
-    };
+  const deploymentProgress = useMemo(
+    () => computeDeploymentProgress(sections, lockConfigs),
+    [sections, lockConfigs]
+  );
 
-    sections.forEach(section => {
-      const config = lockConfigs[section.id];
-      if (config) {
-        progress[config.phase].total++;
-        progress[config.phase].sections.push(section.id);
-        if (section.isLocked) {
-          progress[config.phase].locked++;
-        }
-      }
-    });
-
-    phases.forEach(phase => {
-      const p = progress[phase];
-      p.percentage = p.total > 0 ? Math.round((p.locked / p.total) * 100) : 0;
-    });
-
-    return progress;
-  }, [sections, lockConfigs]);
+  const phaseOrder: DeploymentPhase[] = [
+    'development',
+    'staging',
+    'pre_production',
+    'production',
+  ];
 
   return {
     lockConfigs,
@@ -418,32 +328,21 @@ export function useSectionLocking(
 
     getEligibleForAutoLock,
     canDeployPhase: (phase: DeploymentPhase) => {
-      const phaseOrder: DeploymentPhase[] = [
-        'development',
-        'staging',
-        'pre_production',
-        'production',
-      ];
       const currentIndex = phaseOrder.indexOf(currentPhase);
       const targetIndex = phaseOrder.indexOf(phase);
       return targetIndex <= currentIndex + 1;
     },
-
     getPhaseReadiness: (phase: DeploymentPhase) => deploymentProgress[phase],
-
-    getCriticalSectionsStatus: () => {
-      return sections
+    getCriticalSectionsStatus: () =>
+      sections
         .filter(section => lockConfigs[section.id]?.criticalSection)
         .map(section => ({
           sectionId: section.id,
           isLocked: section.isLocked,
           completionRate: sectionLockStatuses[section.id]?.completionRate ?? 0,
           canLock: sectionLockStatuses[section.id]?.canLock ?? false,
-        }));
-    },
-
+        })),
     updatePhase: (newPhase: DeploymentPhase) => setCurrentPhase(newPhase),
-
     exportLockingReport: () => ({
       timestamp: new Date().toISOString(),
       currentPhase,
