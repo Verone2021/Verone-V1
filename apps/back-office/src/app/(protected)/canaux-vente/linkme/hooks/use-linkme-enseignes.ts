@@ -5,265 +5,27 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
-import type { Database } from '@verone/types';
 
-// Types Supabase (reserved for future use)
-type _Enseigne = Database['public']['Tables']['enseignes']['Row'];
-type _Organisation = Database['public']['Tables']['organisations']['Row'];
-type _LinkMeAffiliate =
-  Database['public']['Tables']['linkme_affiliates']['Row'];
+import type {
+  EnseigneWithStats,
+  CreateEnseigneInput,
+  UpdateEnseigneInput,
+  EnseigneOrganisation,
+} from './linkme-enseigne-types';
 
-/**
- * Interface Enseigne avec statistiques
- */
-export interface EnseigneWithStats {
-  id: string;
-  name: string;
-  description: string | null;
-  logo_url: string | null;
-  city?: string | null;
-  member_count: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  created_by: string | null;
-  // Stats calculées
-  organisations_count: number;
-  affiliates_count: number;
-  selections_count: number;
-  orders_count: number;
-  total_ca_ht: number;
-  total_commissions: number;
-}
+export type {
+  EnseigneWithStats,
+  CreateEnseigneInput,
+  UpdateEnseigneInput,
+  EnseigneOrganisation,
+};
 
-/**
- * Interface pour création enseigne
- */
-export interface CreateEnseigneInput {
-  name: string;
-  description?: string | null;
-  logo_url?: string | null;
-  is_active?: boolean;
-}
+import {
+  fetchEnseignesWithStats,
+  fetchEnseigneById,
+  fetchEnseigneOrganisations,
+} from './linkme-enseigne-queries';
 
-/**
- * Interface pour mise à jour enseigne
- */
-export interface UpdateEnseigneInput {
-  name?: string;
-  description?: string | null;
-  logo_url?: string | null;
-  is_active?: boolean;
-}
-
-/**
- * Fetch toutes les enseignes avec statistiques
- * OPTIMISÉ: Utilise Promise.all pour requêtes parallèles (4 au lieu de 5 séquentielles)
- */
-async function fetchEnseignesWithStats(): Promise<EnseigneWithStats[]> {
-  const supabase = createClient();
-
-  // Fetch enseignes d'abord (nécessaire pour avoir les IDs)
-  const { data: enseignes, error } = await supabase
-    .from('enseignes')
-    .select(
-      'id, name, description, logo_url, member_count, is_active, created_at, updated_at, created_by'
-    )
-    .order('name');
-
-  if (error) {
-    console.error('Erreur fetch enseignes:', error);
-    throw error;
-  }
-
-  if (!enseignes || enseignes.length === 0) {
-    return [];
-  }
-
-  const enseigneIds = enseignes.map(e => e.id);
-
-  // OPTIMISATION: Exécuter les 3 requêtes de stats EN PARALLÈLE
-  const [orgsResult, affiliatesResult, selectionsResult] = await Promise.all([
-    // 1. Organisations par enseigne
-    supabase
-      .from('organisations')
-      .select('enseigne_id')
-      .in('enseigne_id', enseigneIds),
-    // 2. Affiliates par enseigne (avec ID pour les sélections)
-    supabase
-      .from('linkme_affiliates')
-      .select('id, enseigne_id')
-      .in('enseigne_id', enseigneIds),
-    // 3. Toutes les sélections (on filtrera côté client)
-    supabase.from('linkme_selections').select('affiliate_id'),
-  ]);
-
-  // Compter organisations par enseigne
-  const orgsCountMap = new Map<string, number>();
-  (orgsResult.data ?? []).forEach(o => {
-    if (o.enseigne_id)
-      orgsCountMap.set(
-        o.enseigne_id,
-        (orgsCountMap.get(o.enseigne_id) ?? 0) + 1
-      );
-  });
-
-  // Compter affiliates par enseigne + créer map affiliate->enseigne
-  const affiliatesCountMap = new Map<string, number>();
-  const affiliateToEnseigneMap = new Map<string, string>();
-  (affiliatesResult.data ?? []).forEach(a => {
-    if (a.enseigne_id) {
-      affiliatesCountMap.set(
-        a.enseigne_id,
-        (affiliatesCountMap.get(a.enseigne_id) ?? 0) + 1
-      );
-      affiliateToEnseigneMap.set(a.id, a.enseigne_id);
-    }
-  });
-
-  // Compter sélections par enseigne (via affiliate->enseigne mapping)
-  const selectionsCountMap = new Map<string, number>();
-  (selectionsResult.data ?? []).forEach(s => {
-    const enseigneId = affiliateToEnseigneMap.get(s.affiliate_id);
-    if (enseigneId) {
-      selectionsCountMap.set(
-        enseigneId,
-        (selectionsCountMap.get(enseigneId) ?? 0) + 1
-      );
-    }
-  });
-
-  // Mapper les résultats
-  return enseignes.map(enseigne => ({
-    id: enseigne.id,
-    name: enseigne.name,
-    description: enseigne.description,
-    logo_url: enseigne.logo_url,
-    member_count: enseigne.member_count ?? 0,
-    is_active: enseigne.is_active ?? true,
-    created_at: enseigne.created_at,
-    updated_at: enseigne.updated_at,
-    created_by: enseigne.created_by,
-    // Stats
-    organisations_count: orgsCountMap.get(enseigne.id) ?? 0,
-    affiliates_count: affiliatesCountMap.get(enseigne.id) ?? 0,
-    selections_count: selectionsCountMap.get(enseigne.id) ?? 0,
-    orders_count: 0,
-    total_ca_ht: 0,
-    total_commissions: 0,
-  }));
-}
-
-/**
- * Fetch une enseigne par ID avec statistiques détaillées
- * OPTIMISÉ: Requêtes parallèles avec Promise.all
- */
-async function fetchEnseigneById(
-  enseigneId: string
-): Promise<EnseigneWithStats | null> {
-  const supabase = createClient();
-
-  const { data: enseigne, error } = await supabase
-    .from('enseignes')
-    .select(
-      'id, name, description, logo_url, member_count, is_active, created_at, updated_at, created_by'
-    )
-    .eq('id', enseigneId)
-    .single();
-
-  if (error) {
-    console.error('Erreur fetch enseigne:', error);
-    throw error;
-  }
-
-  if (!enseigne) return null;
-
-  // OPTIMISATION: Requêtes parallèles pour les counts
-  const [orgsResult, affiliatesResult] = await Promise.all([
-    supabase
-      .from('organisations')
-      .select('id', { count: 'exact', head: true })
-      .eq('enseigne_id', enseigneId),
-    supabase
-      .from('linkme_affiliates')
-      .select('id')
-      .eq('enseigne_id', enseigneId),
-  ]);
-
-  const affiliateIds = (affiliatesResult.data ?? []).map(a => a.id);
-
-  const { count: selectionsCount } =
-    affiliateIds.length > 0
-      ? await supabase
-          .from('linkme_selections')
-          .select('id', { count: 'exact', head: true })
-          .in('affiliate_id', affiliateIds)
-      : { count: 0 };
-
-  return {
-    id: enseigne.id,
-    name: enseigne.name,
-    description: enseigne.description,
-    logo_url: enseigne.logo_url,
-    member_count: enseigne.member_count ?? 0,
-    is_active: enseigne.is_active ?? true,
-    created_at: enseigne.created_at,
-    updated_at: enseigne.updated_at,
-    created_by: enseigne.created_by,
-    organisations_count: orgsResult.count ?? 0,
-    affiliates_count: affiliatesResult.data?.length ?? 0,
-    selections_count: selectionsCount ?? 0,
-    orders_count: 0,
-    total_ca_ht: 0,
-    total_commissions: 0,
-  };
-}
-
-/**
- * Fetch organisations d'une enseigne
- */
-export interface EnseigneOrganisation {
-  id: string;
-  name: string;
-  is_enseigne_parent: boolean;
-  is_active: boolean;
-  logo_url: string | null;
-  created_at: string | null;
-}
-
-async function fetchEnseigneOrganisations(
-  enseigneId: string
-): Promise<EnseigneOrganisation[]> {
-  const supabase = createClient();
-
-  const { data, error } = await supabase
-    .from('organisations')
-    .select('id, legal_name, trade_name')
-    .eq('enseigne_id', enseigneId)
-    .order('legal_name');
-
-  if (error) {
-    console.error('Erreur fetch organisations enseigne:', error);
-    throw error;
-  }
-
-  return (data ?? []).map(org => ({
-    id: org.id,
-    name: org.trade_name ?? org.legal_name,
-    is_enseigne_parent: false,
-    is_active: true,
-    logo_url: null,
-    created_at: null,
-  }));
-}
-
-// ============================================
-// HOOKS REACT-QUERY
-// ============================================
-
-/**
- * Hook: récupère toutes les enseignes avec stats
- */
 export function useLinkMeEnseignes() {
   return useQuery({
     queryKey: ['linkme-enseignes'],
@@ -273,9 +35,6 @@ export function useLinkMeEnseignes() {
   });
 }
 
-/**
- * Hook: récupère une enseigne par ID
- */
 export function useLinkMeEnseigne(enseigneId: string | null) {
   return useQuery({
     queryKey: ['linkme-enseigne', enseigneId],
@@ -285,9 +44,6 @@ export function useLinkMeEnseigne(enseigneId: string | null) {
   });
 }
 
-/**
- * Hook: récupère les organisations d'une enseigne
- */
 export function useLinkMeEnseigneOrganisations(enseigneId: string | null) {
   return useQuery({
     queryKey: ['linkme-enseigne-organisations', enseigneId],
@@ -297,12 +53,8 @@ export function useLinkMeEnseigneOrganisations(enseigneId: string | null) {
   });
 }
 
-/**
- * Hook: créer une nouvelle enseigne
- */
 export function useCreateEnseigne() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (input: CreateEnseigneInput) => {
       const supabase = createClient();
@@ -319,7 +71,6 @@ export function useCreateEnseigne() {
           'id, name, description, logo_url, member_count, is_active, created_at, updated_at, created_by'
         )
         .single();
-
       if (error) throw error;
       return data;
     },
@@ -329,12 +80,8 @@ export function useCreateEnseigne() {
   });
 }
 
-/**
- * Hook: mettre à jour une enseigne
- */
 export function useUpdateEnseigne() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({
       enseigneId,
@@ -346,16 +93,12 @@ export function useUpdateEnseigne() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from('enseignes')
-        .update({
-          ...input,
-          updated_at: new Date().toISOString(),
-        })
+        .update({ ...input, updated_at: new Date().toISOString() })
         .eq('id', enseigneId)
         .select(
           'id, name, description, logo_url, member_count, is_active, created_at, updated_at, created_by'
         )
         .single();
-
       if (error) throw error;
       return data;
     },
@@ -368,40 +111,25 @@ export function useUpdateEnseigne() {
   });
 }
 
-/**
- * Hook: supprimer une enseigne
- * PROTECTION: Verifie d'abord si des utilisateurs sont lies via user_app_roles
- */
 export function useDeleteEnseigne() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (enseigneId: string) => {
       const supabase = createClient();
-
-      // PROTECTION: Verifier si des utilisateurs sont lies a cette enseigne
       const { count: linkedUsersCount, error: checkError } = await supabase
         .from('user_app_roles')
         .select('*', { count: 'exact', head: true })
         .eq('enseigne_id', enseigneId)
         .eq('is_active', true);
-
-      if (checkError) {
-        console.warn('Erreur verification users lies:', checkError);
-        // Continue si erreur de verification (graceful)
-      } else if (linkedUsersCount && linkedUsersCount > 0) {
+      if (!checkError && linkedUsersCount && linkedUsersCount > 0) {
         throw new Error(
-          `Impossible de supprimer cette enseigne : ${linkedUsersCount} utilisateur(s) y sont rattaches. ` +
-            `Veuillez d'abord archiver l'enseigne (is_active = false) ou retirer les utilisateurs.`
+          `Impossible de supprimer cette enseigne : ${linkedUsersCount} utilisateur(s) y sont rattaches.`
         );
       }
-
-      // Pas d'utilisateurs lies, on peut supprimer
       const { error } = await supabase
         .from('enseignes')
         .delete()
         .eq('id', enseigneId);
-
       if (error) throw error;
     },
     onSuccess: async () => {
@@ -410,12 +138,8 @@ export function useDeleteEnseigne() {
   });
 }
 
-/**
- * Hook: toggle activation enseigne
- */
 export function useToggleEnseigneActive() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({
       enseigneId,
@@ -427,39 +151,29 @@ export function useToggleEnseigneActive() {
       const supabase = createClient();
       const { error } = await supabase
         .from('enseignes')
-        .update({
-          is_active: isActive,
-          updated_at: new Date().toISOString(),
-        })
+        .update({ is_active: isActive, updated_at: new Date().toISOString() })
         .eq('id', enseigneId);
-
       if (error) throw error;
     },
     onMutate: async ({ enseigneId, isActive }) => {
       await queryClient.cancelQueries({ queryKey: ['linkme-enseignes'] });
-
       const previousData = queryClient.getQueryData<EnseigneWithStats[]>([
         'linkme-enseignes',
       ]);
-
       if (previousData) {
         queryClient.setQueryData<EnseigneWithStats[]>(
           ['linkme-enseignes'],
           old =>
-            old?.map(enseigne =>
-              enseigne.id === enseigneId
-                ? { ...enseigne, is_active: isActive }
-                : enseigne
+            old?.map(e =>
+              e.id === enseigneId ? { ...e, is_active: isActive } : e
             ) ?? []
         );
       }
-
       return { previousData };
     },
     onError: (_err, _variables, context) => {
-      if (context?.previousData) {
+      if (context?.previousData)
         queryClient.setQueryData(['linkme-enseignes'], context.previousData);
-      }
     },
     onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: ['linkme-enseignes'] });
@@ -467,36 +181,28 @@ export function useToggleEnseigneActive() {
   });
 }
 
-/**
- * Hook: statistiques globales enseignes
- */
 export function useLinkMeEnseignesStats() {
   return useQuery({
     queryKey: ['linkme-enseignes-stats'],
     queryFn: async () => {
       const enseignes = await fetchEnseignesWithStats();
-
       const active = enseignes.filter(e => e.is_active).length;
-      const totalOrgs = enseignes.reduce(
-        (sum, e) => sum + e.organisations_count,
-        0
-      );
-      const totalAffiliates = enseignes.reduce(
-        (sum, e) => sum + e.affiliates_count,
-        0
-      );
-      const totalSelections = enseignes.reduce(
-        (sum, e) => sum + e.selections_count,
-        0
-      );
-
       return {
         total: enseignes.length,
         active,
         inactive: enseignes.length - active,
-        totalOrganisations: totalOrgs,
-        totalAffiliates,
-        totalSelections,
+        totalOrganisations: enseignes.reduce(
+          (sum, e) => sum + e.organisations_count,
+          0
+        ),
+        totalAffiliates: enseignes.reduce(
+          (sum, e) => sum + e.affiliates_count,
+          0
+        ),
+        totalSelections: enseignes.reduce(
+          (sum, e) => sum + e.selections_count,
+          0
+        ),
       };
     },
     staleTime: 60000,
