@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 import { toast } from 'sonner';
 
@@ -53,7 +53,7 @@ export function useFacturesFetch(): FacturesFetchState {
   const [quoteToDelete, setQuoteToDelete] = useState<QontoQuote | null>(null);
   const [deletingQuote, setDeletingQuote] = useState(false);
 
-  const fetchInvoicesAsync = async (): Promise<void> => {
+  const fetchInvoicesAsync = useCallback(async (): Promise<void> => {
     setLoadingInvoices(true);
     setErrorInvoices(null);
     try {
@@ -67,9 +67,9 @@ export function useFacturesFetch(): FacturesFetchState {
     } finally {
       setLoadingInvoices(false);
     }
-  };
+  }, []);
 
-  const fetchQontoQuotesAsync = async (): Promise<void> => {
+  const fetchQontoQuotesAsync = useCallback(async (): Promise<void> => {
     setLoadingQuotes(true);
     setErrorQuotes(null);
     try {
@@ -83,9 +83,9 @@ export function useFacturesFetch(): FacturesFetchState {
     } finally {
       setLoadingQuotes(false);
     }
-  };
+  }, []);
 
-  const fetchCreditNotesAsync = async (): Promise<void> => {
+  const fetchCreditNotesAsync = useCallback(async (): Promise<void> => {
     setLoadingCreditNotes(true);
     setErrorCreditNotes(null);
     try {
@@ -101,7 +101,7 @@ export function useFacturesFetch(): FacturesFetchState {
     } finally {
       setLoadingCreditNotes(false);
     }
-  };
+  }, []);
 
   const handleDeleteQuote = (): void => {
     if (!quoteToDelete) return;
