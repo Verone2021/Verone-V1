@@ -201,7 +201,8 @@ export function OrganisationProductsSection({
                   <div className="flex-1 min-w-0">
                     <Link
                       href={detailUrl}
-                      className="text-sm font-medium text-black hover:underline line-clamp-1"
+                      className="text-sm font-medium text-black hover:underline block truncate max-w-[400px]"
+                      title={product.name}
                     >
                       {product.name}
                     </Link>
