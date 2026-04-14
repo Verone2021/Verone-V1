@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 'use client';
 
 import { Save } from 'lucide-react';
@@ -22,12 +21,24 @@ interface TechnicalSectionProps {
   onSave: () => void;
 }
 
+function getDimensionValue(
+  dimensions: Record<string, unknown>,
+  key: string
+): string | number {
+  const value = dimensions[key];
+  if (typeof value === 'string' || typeof value === 'number') return value;
+  return '';
+}
+
 export function TechnicalSection({
   formData,
   setFormData,
   onSave,
 }: TechnicalSectionProps) {
-  const handleChange = (field: keyof WizardFormData, value: any) => {
+  const handleChange = <K extends keyof WizardFormData>(
+    field: K,
+    value: WizardFormData[K]
+  ) => {
     setFormData({ ...formData, [field]: value });
   };
 
@@ -72,7 +83,7 @@ export function TechnicalSection({
                 step="0.1"
                 min="0"
                 placeholder="0"
-                value={formData.dimensions?.length ?? ''}
+                value={getDimensionValue(formData.dimensions, 'length')}
                 onChange={e => handleDimensionChange('length', e.target.value)}
               />
             </div>
@@ -86,7 +97,7 @@ export function TechnicalSection({
                 step="0.1"
                 min="0"
                 placeholder="0"
-                value={formData.dimensions?.width ?? ''}
+                value={getDimensionValue(formData.dimensions, 'width')}
                 onChange={e => handleDimensionChange('width', e.target.value)}
               />
             </div>
@@ -100,7 +111,7 @@ export function TechnicalSection({
                 step="0.1"
                 min="0"
                 placeholder="0"
-                value={formData.dimensions?.height ?? ''}
+                value={getDimensionValue(formData.dimensions, 'height')}
                 onChange={e => handleDimensionChange('height', e.target.value)}
               />
             </div>
