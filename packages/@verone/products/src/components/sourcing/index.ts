@@ -6,4 +6,7 @@ export {
   SourcingCommunications,
   SourcingUrls,
   SourcingPriceHistory,
+  SourcingCandidateSuppliers,
+  SourcingStageGuide,
+  getSectionsForStatus,
 } from './notebook';

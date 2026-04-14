@@ -12,6 +12,7 @@ export type {
   SourcingPriceEntry,
   SourcingCandidateSupplier,
 } from './use-sourcing-notebook';
+export { useSupplierSearch } from './use-supplier-search';
 
 import type { SourcingFilters } from './types';
 import { useSourcingFetch } from './use-sourcing-fetch';
