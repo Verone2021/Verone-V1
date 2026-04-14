@@ -3,17 +3,9 @@
 /**
  * OrganisationSelectorModal - Modal deux colonnes pour gestion enseignes
  *
- * Design moderne avec layout 2 colonnes (dual-pane selector pattern)
+ * Layout 2 colonnes (dual-pane selector pattern):
  * - Colonne gauche: Organisations disponibles avec recherche
  * - Colonne droite: Organisations sélectionnées avec société mère
- *
- * Features:
- * - Recherche simple avec debounce
- * - Désignation société mère (1 seule par enseigne)
- * - Micro-interactions fluides
- * - Design System V2 colors
- *
- * @module OrganisationSelectorModal
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -29,50 +21,22 @@ import {
 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { Badge } from '@verone/ui';
-import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
-import {
-  Building2,
-  Search,
-  Plus,
-  X,
-  Star,
-  Loader2,
-  Users,
-  MapPin,
-  Check,
-} from 'lucide-react';
+import { Search, Star, Loader2, Users, Check } from 'lucide-react';
 
 import type { EnseigneOrganisation, Enseigne } from '../../hooks/use-enseignes';
-import { OrganisationLogo } from '../display/OrganisationLogo';
+import {
+  OrganisationSkeleton,
+  AvailableOrganisationItem,
+  SelectedOrganisationItem,
+  AvailableEmptyState,
+  type OrganisationListItem,
+  type SelectedOrganisation,
+} from './OrganisationSelectorItems';
 
 // ============================================================================
 // TYPES
 // ============================================================================
-
-interface OrganisationListItem {
-  id: string;
-  legal_name: string;
-  trade_name: string | null;
-  is_active: boolean | null;
-  city: string | null;
-  country: string | null;
-  enseigne_id: string | null;
-  is_enseigne_parent: boolean;
-  type: string;
-  logo_url: string | null;
-}
-
-interface SelectedOrganisation {
-  id: string;
-  legal_name: string;
-  trade_name: string | null;
-  is_active: boolean | null;
-  city: string | null;
-  country: string | null;
-  is_enseigne_parent: boolean;
-  logo_url: string | null;
-}
 
 interface OrganisationSelectorModalProps {
   open: boolean;
@@ -87,196 +51,9 @@ interface OrganisationSelectorModalProps {
 }
 
 // ============================================================================
-// COMPOSANTS INTERNES
-// ============================================================================
-
-/**
- * Skeleton pour la liste d'organisations
- */
-function OrganisationSkeleton() {
-  return (
-    <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200 animate-pulse">
-      <div className="flex items-center space-x-3">
-        <div className="w-10 h-10 bg-gray-200 rounded-lg" />
-        <div className="space-y-2">
-          <div className="w-32 h-4 bg-gray-200 rounded" />
-          <div className="w-20 h-3 bg-gray-200 rounded" />
-        </div>
-      </div>
-      <div className="w-8 h-8 bg-gray-200 rounded" />
-    </div>
-  );
-}
-
-/**
- * Item organisation disponible (colonne gauche)
- */
-function AvailableOrganisationItem({
-  organisation,
-  onAdd,
-  loading,
-}: {
-  organisation: OrganisationListItem;
-  onAdd: () => void;
-  loading: boolean;
-}) {
-  const displayName = organisation.trade_name ?? organisation.legal_name;
-
-  return (
-    <div
-      className={cn(
-        'flex items-center justify-between p-3 rounded-lg border border-gray-200',
-        'hover:border-gray-300 hover:bg-gray-50 transition-all duration-200',
-        'group cursor-pointer'
-      )}
-      onClick={onAdd}
-    >
-      <div className="flex items-center gap-3 min-w-0">
-        <OrganisationLogo
-          logoUrl={organisation.logo_url}
-          organisationName={organisation.legal_name}
-          size="sm"
-          fallback="initials"
-          className="flex-shrink-0"
-        />
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-gray-900 truncate">
-            {displayName}
-          </p>
-          {organisation.city && (
-            <p className="text-xs text-gray-500 flex items-center">
-              <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
-              <span className="truncate">
-                {organisation.city}
-                {organisation.country && `, ${organisation.country}`}
-              </span>
-            </p>
-          )}
-        </div>
-      </div>
-
-      <ButtonV2
-        variant="ghost"
-        size="sm"
-        disabled={loading}
-        className="opacity-0 group-hover:opacity-100 transition-opacity"
-        onClick={e => {
-          e.stopPropagation();
-          onAdd();
-        }}
-      >
-        {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Plus className="h-4 w-4" />
-        )}
-      </ButtonV2>
-    </div>
-  );
-}
-
-/**
- * Item organisation sélectionnée (colonne droite)
- */
-function SelectedOrganisationItem({
-  organisation,
-  isParent,
-  onRemove,
-  onSetParent,
-  canSetParent,
-  loading,
-}: {
-  organisation: SelectedOrganisation;
-  isParent: boolean;
-  onRemove: () => void;
-  onSetParent: () => void;
-  canSetParent: boolean;
-  loading: boolean;
-}) {
-  const displayName = organisation.trade_name ?? organisation.legal_name;
-
-  return (
-    <div
-      className={cn(
-        'flex items-center justify-between p-3 rounded-lg border transition-all duration-200',
-        isParent
-          ? 'bg-amber-50 border-amber-200 shadow-sm'
-          : 'bg-white border-gray-200 hover:border-gray-300'
-      )}
-    >
-      <div className="flex items-center gap-3 min-w-0">
-        <OrganisationLogo
-          logoUrl={organisation.logo_url}
-          organisationName={organisation.legal_name}
-          size="sm"
-          fallback="initials"
-          className="flex-shrink-0"
-        />
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-medium text-gray-900 truncate">
-              {displayName}
-            </p>
-            {isParent && (
-              <Badge variant="warning" className="text-xs flex-shrink-0">
-                Mère
-              </Badge>
-            )}
-          </div>
-          {organisation.city && (
-            <p className="text-xs text-gray-500 flex items-center">
-              <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
-              <span className="truncate">
-                {organisation.city}
-                {organisation.country && `, ${organisation.country}`}
-              </span>
-            </p>
-          )}
-        </div>
-      </div>
-
-      <div className="flex items-center space-x-1 flex-shrink-0">
-        {/* Bouton pour définir comme société mère */}
-        {!isParent && canSetParent && (
-          <ButtonV2
-            variant="ghost"
-            size="sm"
-            onClick={onSetParent}
-            disabled={loading}
-            className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-            title="Définir comme société mère"
-          >
-            <Star className="h-4 w-4" />
-          </ButtonV2>
-        )}
-
-        {/* Bouton supprimer */}
-        <ButtonV2
-          variant="ghost"
-          size="sm"
-          onClick={onRemove}
-          disabled={loading}
-          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-        >
-          {loading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <X className="h-4 w-4" />
-          )}
-        </ButtonV2>
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
 // COMPOSANT PRINCIPAL
 // ============================================================================
 
-/**
- * Modal pour gérer les organisations d'une enseigne
- * Layout deux colonnes: disponibles | sélectionnées
- */
 export function OrganisationSelectorModal({
   open,
   onOpenChange,
@@ -285,7 +62,6 @@ export function OrganisationSelectorModal({
   onSave,
   onSuccess,
 }: OrganisationSelectorModalProps) {
-  // États locaux
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [availableOrganisations, setAvailableOrganisations] = useState<
@@ -303,7 +79,7 @@ export function OrganisationSelectorModal({
 
   const supabase = createClient();
 
-  // Debounce de la recherche (300ms)
+  // Debounce 300ms
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
@@ -311,7 +87,7 @@ export function OrganisationSelectorModal({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Initialiser les organisations sélectionnées depuis currentOrganisations
+  // Initialiser les organisations sélectionnées
   useEffect(() => {
     if (open && currentOrganisations) {
       const selected: SelectedOrganisation[] = currentOrganisations.map(
@@ -328,10 +104,8 @@ export function OrganisationSelectorModal({
       );
       setSelectedOrganisations(selected);
 
-      // Trouver la société mère
       const parent = currentOrganisations.find(org => org.is_enseigne_parent);
       setParentId(parent?.id ?? null);
-
       setHasChanges(false);
     }
   }, [open, currentOrganisations]);
@@ -345,8 +119,6 @@ export function OrganisationSelectorModal({
       setError(null);
 
       try {
-        // Filtrer uniquement les organisations clientes (type = 'customer')
-        // Les fournisseurs et autres types ne peuvent pas être membres d'une enseigne
         let query = supabase
           .from('organisations')
           .select(
@@ -370,15 +142,13 @@ export function OrganisationSelectorModal({
           return;
         }
 
-        // Double vérification côté client : ne garder que les customers
-        // (car le .or() peut annuler les filtres précédents)
         const filteredData: OrganisationListItem[] = (
           (data as OrganisationListItem[]) ?? []
         )
           .filter(org => org.type === 'customer')
           .map(org => ({
             ...org,
-            type: org.type ?? 'customer', // Garantir que type est non-null
+            type: org.type ?? 'customer',
           }));
         setAvailableOrganisations(filteredData);
       } catch (err) {
@@ -402,13 +172,11 @@ export function OrganisationSelectorModal({
     [selectedOrganisations]
   );
 
-  // Filtrer les organisations disponibles (exclure celles déjà sélectionnées)
   const filteredAvailable = useMemo(
     () => availableOrganisations.filter(org => !selectedIds.has(org.id)),
     [availableOrganisations, selectedIds]
   );
 
-  // Ajouter une organisation à la sélection
   const handleAdd = useCallback((org: OrganisationListItem) => {
     setSelectedOrganisations(prev => [
       ...prev,
@@ -426,26 +194,20 @@ export function OrganisationSelectorModal({
     setHasChanges(true);
   }, []);
 
-  // Retirer une organisation de la sélection
   const handleRemove = useCallback(
     (orgId: string) => {
       setSelectedOrganisations(prev => prev.filter(org => org.id !== orgId));
-      // Si c'était la société mère, reset
-      if (parentId === orgId) {
-        setParentId(null);
-      }
+      if (parentId === orgId) setParentId(null);
       setHasChanges(true);
     },
     [parentId]
   );
 
-  // Définir comme société mère
   const handleSetParent = useCallback((orgId: string) => {
     setParentId(orgId);
     setHasChanges(true);
   }, []);
 
-  // Sauvegarder les changements
   const handleSave = async () => {
     setSaving(true);
     setError(null);
@@ -467,7 +229,6 @@ export function OrganisationSelectorModal({
     }
   };
 
-  // Reset et fermer
   const handleClose = () => {
     setSearchQuery('');
     setError(null);
@@ -479,7 +240,6 @@ export function OrganisationSelectorModal({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col p-0">
-        {/* Header */}
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
           <DialogTitle className="flex items-center text-lg">
             <Users className="h-5 w-5 mr-2" />
@@ -491,16 +251,14 @@ export function OrganisationSelectorModal({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Erreur */}
         {error && (
           <div className="mx-6 mt-4 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
             {error}
           </div>
         )}
 
-        {/* Corps - Deux colonnes */}
         <div className="flex-1 grid grid-cols-2 gap-0 min-h-0">
-          {/* Colonne Gauche - Organisations Disponibles */}
+          {/* Colonne Gauche - Disponibles */}
           <div className="border-r flex flex-col min-h-0">
             <div className="px-4 py-3 border-b bg-gray-50 flex-shrink-0">
               <h3 className="text-sm font-semibold text-gray-900 mb-2">
@@ -526,14 +284,7 @@ export function OrganisationSelectorModal({
                     <OrganisationSkeleton />
                   </>
                 ) : filteredAvailable.length === 0 ? (
-                  <div className="py-12 text-center">
-                    <Building2 className="h-10 w-10 mx-auto text-gray-300 mb-3" />
-                    <p className="text-sm text-gray-500">
-                      {debouncedSearch
-                        ? 'Aucune organisation trouvée'
-                        : 'Toutes les organisations sont assignées'}
-                    </p>
-                  </div>
+                  <AvailableEmptyState hasSearch={!!debouncedSearch} />
                 ) : (
                   filteredAvailable.map(org => (
                     <AvailableOrganisationItem
@@ -552,7 +303,7 @@ export function OrganisationSelectorModal({
             </div>
           </div>
 
-          {/* Colonne Droite - Organisations Sélectionnées */}
+          {/* Colonne Droite - Sélectionnées */}
           <div className="flex flex-col min-h-0">
             <div className="px-4 py-3 border-b bg-gray-50 flex-shrink-0">
               <h3 className="text-sm font-semibold text-gray-900">
@@ -576,7 +327,6 @@ export function OrganisationSelectorModal({
                     </p>
                   </div>
                 ) : (
-                  // Afficher société mère en premier si elle existe
                   [...selectedOrganisations]
                     .sort((a, b) => {
                       if (a.id === parentId) return -1;
@@ -611,7 +361,6 @@ export function OrganisationSelectorModal({
           </div>
         </div>
 
-        {/* Footer */}
         <DialogFooter className="px-6 py-4 border-t bg-gray-50">
           <div className="flex items-center justify-between w-full">
             <div className="text-xs text-gray-500">
