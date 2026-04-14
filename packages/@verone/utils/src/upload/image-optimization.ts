@@ -1,140 +1,33 @@
 /**
- * 🖼️ SYSTÈME OPTIMISATION IMAGES SUPABASE - Vérone 2025
+ * Système Optimisation Images Supabase - Vérone 2025
  * Optimisation WebP, compression, redimensionnement adaptatif
- * Intégration MCP pour monitoring et automation
  */
 
 import { gdprAnalytics } from '../analytics/gdpr-analytics';
 
-export interface ImageOptimizationConfig {
-  // Formats de sortie supportés
-  outputFormats: ('webp' | 'jpeg' | 'png')[];
+export type {
+  ImageOptimizationConfig,
+  OptimizedImageResult,
+  OptimizedVariant,
+  ImagePerformanceMetrics,
+  ChunkedUploadProgress,
+} from './image-types';
 
-  // Qualité par format
-  quality: {
-    webp: number;
-    jpeg: number;
-    png: number;
-  };
+export {
+  DEFAULT_IMAGE_OPTIMIZATION_CONFIG,
+  CONTEXT_CONFIGS,
+} from './image-types';
 
-  // Tailles de redimensionnement
-  sizes: {
-    thumbnail: { width: number; height: number };
-    medium: { width: number; height: number };
-    large: { width: number; height: number };
-    original: { maxWidth: number; maxHeight: number };
-  };
-
-  // Compression avancée
-  compression: {
-    enabled: boolean;
-    aggressive: boolean; // Mode aggressive pour réduire taille
-    preserveMetadata: boolean;
-  };
-
-  // Chunked upload configuration
-  chunkedUpload: {
-    enabled: boolean;
-    chunkSizeMB: number;
-    maxConcurrentChunks: number;
-  };
-
-  // Performance monitoring
-  monitoring: {
-    enabled: boolean;
-    trackConversion: boolean;
-    trackUploadSpeed: boolean;
-  };
-}
-
-export interface OptimizedImageResult {
-  original: {
-    file: File;
-    size: number;
-    dimensions: { width: number; height: number };
-    format: string;
-  };
-  optimized: {
-    files: OptimizedVariant[];
-    totalSizeSaved: number;
-    compressionRatio: number;
-    processingTime: number;
-  };
-  metadata: {
-    processedAt: Date;
-    optimizationApplied: string[];
-    performanceMetrics: ImagePerformanceMetrics;
-  };
-}
-
-export interface OptimizedVariant {
-  size: 'thumbnail' | 'medium' | 'large' | 'original';
-  format: 'webp' | 'jpeg' | 'png';
-  file: File;
-  dimensions: { width: number; height: number };
-  fileSize: number;
-  quality: number;
-  url?: string; // URL Supabase après upload
-}
-
-export interface ImagePerformanceMetrics {
-  originalSize: number;
-  optimizedSize: number;
-  compressionRatio: number;
-  processingTimeMs: number;
-  uploadSpeedKbps: number;
-  conversionSuccess: boolean;
-  errorDetails?: string;
-}
-
-export interface ChunkedUploadProgress {
-  chunksUploaded: number;
-  totalChunks: number;
-  bytesUploaded: number;
-  totalBytes: number;
-  uploadSpeedKbps: number;
-  estimatedTimeRemaining: number;
-  currentChunk: number;
-}
-
-// Configuration par défaut optimisée pour Vérone
-export const DEFAULT_IMAGE_OPTIMIZATION_CONFIG: ImageOptimizationConfig = {
-  outputFormats: ['webp', 'jpeg'],
-
-  quality: {
-    webp: 85, // Excellent compromis qualité/taille
-    jpeg: 90, // Haute qualité pour produits déco
-    png: 95, // Qualité maximale pour logos/transparence
-  },
-
-  sizes: {
-    thumbnail: { width: 300, height: 300 },
-    medium: { width: 800, height: 800 },
-    large: { width: 1200, height: 1200 },
-    original: { maxWidth: 2048, maxHeight: 2048 },
-  },
-
-  compression: {
-    enabled: true,
-    aggressive: false, // Privilégier qualité pour les visuels produits
-    preserveMetadata: true,
-  },
-
-  chunkedUpload: {
-    enabled: true,
-    chunkSizeMB: 2, // Chunks de 2MB pour performance optimale
-    maxConcurrentChunks: 3,
-  },
-
-  monitoring: {
-    enabled: true,
-    trackConversion: true,
-    trackUploadSpeed: true,
-  },
-};
+import {
+  DEFAULT_IMAGE_OPTIMIZATION_CONFIG,
+  CONTEXT_CONFIGS,
+  type ImageOptimizationConfig,
+  type OptimizedImageResult,
+  type OptimizedVariant,
+} from './image-types';
 
 /**
- * 🎨 Classe principale d'optimisation d'images
+ * Classe principale d'optimisation d'images
  */
 export class ImageOptimizer {
   private config: ImageOptimizationConfig;
@@ -146,9 +39,6 @@ export class ImageOptimizer {
     this.initializeCanvas();
   }
 
-  /**
-   * 🖼️ Initialisation du canvas pour traitement
-   */
   private initializeCanvas(): void {
     if (typeof window !== 'undefined') {
       this.canvas = document.createElement('canvas');
@@ -156,9 +46,6 @@ export class ImageOptimizer {
     }
   }
 
-  /**
-   * 📊 Obtenir dimensions d'une image
-   */
   private async getImageDimensions(
     file: File
   ): Promise<{ width: number; height: number }> {
@@ -183,9 +70,6 @@ export class ImageOptimizer {
     });
   }
 
-  /**
-   * 🔄 Redimensionner image avec préservation ratio
-   */
   private calculateResizedDimensions(
     originalWidth: number,
     originalHeight: number,
@@ -194,7 +78,6 @@ export class ImageOptimizer {
   ): { width: number; height: number } {
     const aspectRatio = originalWidth / originalHeight;
 
-    // Calculer dimensions en respectant le ratio
     let newWidth = targetWidth;
     let newHeight = targetHeight;
 
@@ -204,7 +87,6 @@ export class ImageOptimizer {
       newHeight = newWidth / aspectRatio;
     }
 
-    // S'assurer de ne jamais dépasser les dimensions originales
     if (newWidth > originalWidth || newHeight > originalHeight) {
       return { width: originalWidth, height: originalHeight };
     }
@@ -215,9 +97,6 @@ export class ImageOptimizer {
     };
   }
 
-  /**
-   * 🎯 Optimiser une image vers format spécifique
-   */
   private async optimizeToFormat(
     file: File,
     targetSize: { width: number; height: number },
@@ -233,16 +112,13 @@ export class ImageOptimizer {
 
       img.onload = () => {
         try {
-          // Configurer canvas aux dimensions cibles
           this.canvas!.width = targetSize.width;
           this.canvas!.height = targetSize.height;
 
-          // Dessiner image redimensionnée avec antialiasing
           this.ctx!.imageSmoothingEnabled = true;
           this.ctx!.imageSmoothingQuality = 'high';
           this.ctx!.drawImage(img, 0, 0, targetSize.width, targetSize.height);
 
-          // Convertir vers format ciblé
           const mimeType =
             format === 'webp'
               ? 'image/webp'
@@ -257,7 +133,6 @@ export class ImageOptimizer {
                 return;
               }
 
-              // Créer nouveau fichier optimisé
               const optimizedFile = new File(
                 [blob],
                 `${file.name.split('.')[0]}_optimized.${format}`,
@@ -285,32 +160,20 @@ export class ImageOptimizer {
     });
   }
 
-  /**
-   * 🚀 Optimisation principale avec toutes les variantes
-   */
   async optimizeImage(file: File): Promise<OptimizedImageResult> {
     const startTime = performance.now();
 
     try {
-      // Vérifier si c'est une image
       if (!file.type.startsWith('image/')) {
         throw new Error("Le fichier n'est pas une image valide");
       }
 
-      // Analyser l'image originale
       const originalDimensions = await this.getImageDimensions(file);
       const originalSize = file.size;
-
-      console.warn(`🎨 Optimisation image: ${file.name}`);
-      console.warn(
-        `📏 Dimensions originales: ${originalDimensions.width}x${originalDimensions.height}`
-      );
-      console.warn(`📊 Taille originale: ${Math.round(originalSize / 1024)}KB`);
 
       const optimizedVariants: OptimizedVariant[] = [];
       let totalOptimizedSize = 0;
 
-      // Générer toutes les variantes pour chaque taille
       for (const [sizeName, targetDimensions] of Object.entries(
         this.config.sizes
       )) {
@@ -321,11 +184,9 @@ export class ImageOptimizer {
           (targetDimensions as { width: number; height: number }).height
         );
 
-        // Générer variantes pour chaque format
         for (const format of this.config.outputFormats) {
           try {
             const quality = this.config.quality[format];
-
             const optimizedFile = await this.optimizeToFormat(
               file,
               resizedDimensions,
@@ -344,12 +205,8 @@ export class ImageOptimizer {
 
             optimizedVariants.push(variant);
             totalOptimizedSize += optimizedFile.size;
-
-            console.warn(
-              `✅ Variante ${sizeName}-${format}: ${Math.round(optimizedFile.size / 1024)}KB`
-            );
           } catch (error) {
-            console.warn(`⚠️ Échec optimisation ${sizeName}-${format}:`, error);
+            console.warn(`Echec optimisation ${sizeName}-${format}:`, error);
           }
         }
       }
@@ -383,13 +240,12 @@ export class ImageOptimizer {
             optimizedSize: totalOptimizedSize,
             compressionRatio,
             processingTimeMs: processingTime,
-            uploadSpeedKbps: 0, // Sera mis à jour pendant l'upload
+            uploadSpeedKbps: 0,
             conversionSuccess: true,
           },
         },
       };
 
-      // Analytics si GDPR consent
       if (this.config.monitoring.trackConversion) {
         gdprAnalytics.trackBusinessMetric(
           'image_optimization_completed',
@@ -403,23 +259,14 @@ export class ImageOptimizer {
         );
       }
 
-      console.warn(
-        `🎉 Optimisation terminée: ${Math.round(compressionRatio)}% de compression`
-      );
-
       return result;
     } catch (error) {
-      console.error('🚨 Erreur critique optimisation image:', error);
-
       throw new Error(
         `Erreur optimisation image: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
       );
     }
   }
 
-  /**
-   * 📦 Détecter si chunked upload nécessaire
-   */
   shouldUseChunkedUpload(fileSize: number): boolean {
     return (
       this.config.chunkedUpload.enabled &&
@@ -427,9 +274,6 @@ export class ImageOptimizer {
     );
   }
 
-  /**
-   * 🔪 Diviser fichier en chunks
-   */
   createFileChunks(file: File): Blob[] {
     const chunkSize = this.config.chunkedUpload.chunkSizeMB * 1024 * 1024;
     const chunks: Blob[] = [];
@@ -442,9 +286,6 @@ export class ImageOptimizer {
     return chunks;
   }
 
-  /**
-   * 📈 Calculer vitesse upload en temps réel
-   */
   calculateUploadSpeed(bytesUploaded: number, startTime: number): number {
     const elapsedSeconds = (performance.now() - startTime) / 1000;
     return elapsedSeconds > 0 ? bytesUploaded / 1024 / elapsedSeconds : 0;
@@ -452,59 +293,18 @@ export class ImageOptimizer {
 }
 
 /**
- * 🏭 Factory pour créer optimiseur selon contexte
+ * Factory pour créer optimiseur selon contexte
  */
 export function createImageOptimizer(
   context: 'product' | 'consultation' | 'avatar'
 ): ImageOptimizer {
-  const configs = {
-    product: {
-      // Configuration optimisée pour photos produits
-      quality: { webp: 90, jpeg: 95, png: 98 },
-      sizes: {
-        thumbnail: { width: 400, height: 400 },
-        medium: { width: 1000, height: 1000 },
-        large: { width: 1600, height: 1600 },
-        original: { maxWidth: 2560, maxHeight: 2560 },
-      },
-      compression: { enabled: true, aggressive: false, preserveMetadata: true },
-    },
-
-    consultation: {
-      // Configuration pour images consultation client
-      quality: { webp: 85, jpeg: 90, png: 95 },
-      sizes: {
-        thumbnail: { width: 300, height: 200 },
-        medium: { width: 800, height: 600 },
-        large: { width: 1200, height: 900 },
-        original: { maxWidth: 1920, maxHeight: 1440 },
-      },
-      compression: { enabled: true, aggressive: true, preserveMetadata: false },
-    },
-
-    avatar: {
-      // Configuration pour avatars utilisateur
-      quality: { webp: 80, jpeg: 85, png: 90 },
-      sizes: {
-        thumbnail: { width: 64, height: 64 },
-        medium: { width: 128, height: 128 },
-        large: { width: 256, height: 256 },
-        original: { maxWidth: 512, maxHeight: 512 },
-      },
-      compression: { enabled: true, aggressive: true, preserveMetadata: false },
-    },
-  };
-
-  return new ImageOptimizer(configs[context]);
+  return new ImageOptimizer(CONTEXT_CONFIGS[context]);
 }
 
 /**
- * 🔧 Utilitaires d'optimisation d'images
+ * Utilitaires d'optimisation d'images
  */
 export const ImageOptimizationUtils = {
-  /**
-   * Vérifier support WebP
-   */
   checkWebPSupport(): Promise<boolean> {
     return new Promise(resolve => {
       const webP = new Image();
@@ -514,9 +314,6 @@ export const ImageOptimizationUtils = {
     });
   },
 
-  /**
-   * Calculer dimensions optimales
-   */
   calculateOptimalDimensions(
     originalWidth: number,
     originalHeight: number,
@@ -543,9 +340,6 @@ export const ImageOptimizationUtils = {
     };
   },
 
-  /**
-   * Estimer taille fichier après compression
-   */
   estimateCompressedSize(
     originalSize: number,
     quality: number,
