@@ -1,6 +1,6 @@
 /**
  * Server Actions: Conversions de formulaires
- * Convertit une soumission de formulaire vers une entité métier
+ * Convertit une soumission de formulaire vers une entite metier
  */
 
 'use server';
@@ -11,31 +11,25 @@ import { createClient } from '@verone/utils/supabase/server';
 
 import type { Database } from '@verone/types';
 
-/**
- * Type helpers for form_submissions table
- */
+import {
+  addSystemMessage,
+  applyConversion,
+  fetchSubmissionData,
+} from './actions-helpers';
+
 type FormSubmissionUpdate =
   Database['public']['Tables']['form_submissions']['Update'];
-
-/**
- * Type helpers for form_submission_messages table
- */
 type FormSubmissionMessageInsert =
   Database['public']['Tables']['form_submission_messages']['Insert'];
-
-/**
- * Type for form_submissions row
- */
 type FormSubmissionRow =
   Database['public']['Tables']['form_submissions']['Row'];
 
 /**
- * Marquer une soumission comme résolue
+ * Marquer une soumission comme resolue
  */
 export async function markAsResolved(submissionId: string) {
   try {
     const supabase = createClient();
-
     const updateData: FormSubmissionUpdate = {
       status: 'resolved',
       updated_at: new Date().toISOString(),
@@ -48,16 +42,7 @@ export async function markAsResolved(submissionId: string) {
 
     if (error) throw error;
 
-    // Add system message
-    const messageData: FormSubmissionMessageInsert = {
-      form_submission_id: submissionId,
-      author_type: 'system',
-      message_type: 'system',
-      message_body: 'Soumission marquée comme résolue',
-      created_at: new Date().toISOString(),
-    };
-
-    await supabase.from('form_submission_messages').insert(messageData);
+    await addSystemMessage(submissionId, 'Soumission marquee comme resolue');
 
     revalidatePath(`/prises-contact/${submissionId}`);
     revalidatePath('/prises-contact');
@@ -73,7 +58,7 @@ export async function markAsResolved(submissionId: string) {
 }
 
 /**
- * Marquer une soumission comme fermée
+ * Marquer une soumission comme fermee
  */
 export async function markAsClosed(
   submissionId: string,
@@ -81,7 +66,6 @@ export async function markAsClosed(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = createClient();
-
     const updateData: FormSubmissionUpdate = {
       status: 'closed',
       updated_at: new Date().toISOString(),
@@ -94,20 +78,10 @@ export async function markAsClosed(
 
     if (error) throw error;
 
-    // Add system message
     const message = reason
-      ? `Soumission fermée: ${reason}`
-      : 'Soumission fermée';
-
-    const messageData: FormSubmissionMessageInsert = {
-      form_submission_id: submissionId,
-      author_type: 'system',
-      message_type: 'system',
-      message_body: message,
-      created_at: new Date().toISOString(),
-    };
-
-    await supabase.from('form_submission_messages').insert(messageData);
+      ? `Soumission fermee: ${reason}`
+      : 'Soumission fermee';
+    await addSystemMessage(submissionId, message);
 
     revalidatePath(`/prises-contact/${submissionId}`);
     revalidatePath('/prises-contact');
@@ -124,67 +98,22 @@ export async function markAsClosed(
 
 /**
  * Convertir vers une commande (sales_order)
- * Note: Placeholder - nécessite intégration complète avec le système de commandes
  */
 export async function convertToOrder(
   submissionId: string,
-  _orderData: {
-    customer_id?: string;
-    notes?: string;
-  }
+  _orderData: { customer_id?: string; notes?: string }
 ): Promise<{ success: boolean; orderId?: string; error?: string }> {
   try {
-    const supabase = createClient();
-
-    // Fetch submission data
-    const { data: _submission, error: fetchError } = await supabase
-      .from('form_submissions')
-      .select(
-        'id, first_name, last_name, email, phone, status, form_type, message, subject, metadata, created_at'
-      )
-      .eq('id', submissionId)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    // TODO: Create actual sales_order
-    // For now, just mark as converted and add a placeholder
+    await fetchSubmissionData(submissionId);
     const placeholderOrderId = `ORDER-PLACEHOLDER-${Date.now()}`;
-
-    // Update submission with conversion data
-    const updateData: FormSubmissionUpdate = {
-      converted_to_type: 'order',
-      converted_to_id: placeholderOrderId,
-      converted_at: new Date().toISOString(),
-      status: 'closed',
-      updated_at: new Date().toISOString(),
-    };
-
-    const { error: updateError } = await supabase
-      .from('form_submissions')
-      .update(updateData)
-      .eq('id', submissionId);
-
-    if (updateError) throw updateError;
-
-    // Add system message
-    const messageData: FormSubmissionMessageInsert = {
-      form_submission_id: submissionId,
-      author_type: 'system',
-      message_type: 'system',
-      message_body: `Converti en commande ${placeholderOrderId}`,
-      created_at: new Date().toISOString(),
-    };
-
-    await supabase.from('form_submission_messages').insert(messageData);
-
-    revalidatePath(`/prises-contact/${submissionId}`);
-    revalidatePath('/prises-contact');
-
-    return {
-      success: true,
-      orderId: placeholderOrderId,
-    };
+    const result = await applyConversion(
+      submissionId,
+      'order',
+      placeholderOrderId,
+      `Converti en commande ${placeholderOrderId}`
+    );
+    if (!result.success) return result;
+    return { success: true, orderId: placeholderOrderId };
   } catch (error) {
     console.error('Error converting to order:', error);
     return {
@@ -196,70 +125,25 @@ export async function convertToOrder(
 
 /**
  * Convertir vers une consultation
- * Note: Placeholder - nécessite intégration avec le système de consultations
  */
 export async function convertToConsultation(
   submissionId: string,
-  consultationData: {
-    scheduled_date?: string;
-    notes?: string;
-  }
+  consultationData: { scheduled_date?: string; notes?: string }
 ): Promise<{ success: boolean; consultationId?: string; error?: string }> {
   try {
-    const supabase = createClient();
-
-    // Fetch submission data
-    const { data: _submission, error: fetchError } = await supabase
-      .from('form_submissions')
-      .select(
-        'id, first_name, last_name, email, phone, status, form_type, message, subject, metadata, created_at'
-      )
-      .eq('id', submissionId)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    // TODO: Create actual consultation record
+    await fetchSubmissionData(submissionId);
     const placeholderConsultationId = `CONSULT-PLACEHOLDER-${Date.now()}`;
-
-    // Update submission with conversion data
-    const updateData: FormSubmissionUpdate = {
-      converted_to_type: 'consultation',
-      converted_to_id: placeholderConsultationId,
-      converted_at: new Date().toISOString(),
-      status: 'closed',
-      updated_at: new Date().toISOString(),
-    };
-
-    const { error: updateError } = await supabase
-      .from('form_submissions')
-      .update(updateData)
-      .eq('id', submissionId);
-
-    if (updateError) throw updateError;
-
-    // Add system message
     const message = consultationData.scheduled_date
-      ? `Converti en consultation ${placeholderConsultationId} - Programmée le ${consultationData.scheduled_date}`
+      ? `Converti en consultation ${placeholderConsultationId} - Programmee le ${consultationData.scheduled_date}`
       : `Converti en consultation ${placeholderConsultationId}`;
-
-    const messageData: FormSubmissionMessageInsert = {
-      form_submission_id: submissionId,
-      author_type: 'system',
-      message_type: 'system',
-      message_body: message,
-      created_at: new Date().toISOString(),
-    };
-
-    await supabase.from('form_submission_messages').insert(messageData);
-
-    revalidatePath(`/prises-contact/${submissionId}`);
-    revalidatePath('/prises-contact');
-
-    return {
-      success: true,
-      consultationId: placeholderConsultationId,
-    };
+    const result = await applyConversion(
+      submissionId,
+      'consultation',
+      placeholderConsultationId,
+      message
+    );
+    if (!result.success) return result;
+    return { success: true, consultationId: placeholderConsultationId };
   } catch (error) {
     console.error('Error converting to consultation:', error);
     return {
@@ -271,7 +155,6 @@ export async function convertToConsultation(
 
 /**
  * Convertir vers un sourcing produit
- * Note: Placeholder - nécessite intégration avec le système de sourcing
  */
 export async function convertToSourcing(
   submissionId: string,
@@ -282,56 +165,16 @@ export async function convertToSourcing(
   }
 ): Promise<{ success: boolean; productId?: string; error?: string }> {
   try {
-    const supabase = createClient();
-
-    // Fetch submission data
-    const { data: _submission, error: fetchError } = await supabase
-      .from('form_submissions')
-      .select(
-        'id, first_name, last_name, email, phone, status, form_type, message, subject, metadata, created_at'
-      )
-      .eq('id', submissionId)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    // TODO: Create actual product with assigned client
+    await fetchSubmissionData(submissionId);
     const placeholderProductId = `PRODUCT-SOURCING-${Date.now()}`;
-
-    // Update submission with conversion data
-    const updateData: FormSubmissionUpdate = {
-      converted_to_type: 'sourcing',
-      converted_to_id: placeholderProductId,
-      converted_at: new Date().toISOString(),
-      status: 'closed',
-      updated_at: new Date().toISOString(),
-    };
-
-    const { error: updateError } = await supabase
-      .from('form_submissions')
-      .update(updateData)
-      .eq('id', submissionId);
-
-    if (updateError) throw updateError;
-
-    // Add system message
-    const messageData: FormSubmissionMessageInsert = {
-      form_submission_id: submissionId,
-      author_type: 'system',
-      message_type: 'system',
-      message_body: `Converti en sourcing produit ${placeholderProductId} pour ${sourcingData.client_type} ${sourcingData.client_id}`,
-      created_at: new Date().toISOString(),
-    };
-
-    await supabase.from('form_submission_messages').insert(messageData);
-
-    revalidatePath(`/prises-contact/${submissionId}`);
-    revalidatePath('/prises-contact');
-
-    return {
-      success: true,
-      productId: placeholderProductId,
-    };
+    const result = await applyConversion(
+      submissionId,
+      'sourcing',
+      placeholderProductId,
+      `Converti en sourcing produit ${placeholderProductId} pour ${sourcingData.client_type} ${sourcingData.client_id}`
+    );
+    if (!result.success) return result;
+    return { success: true, productId: placeholderProductId };
   } catch (error) {
     console.error('Error converting to sourcing:', error);
     return {
@@ -343,68 +186,25 @@ export async function convertToSourcing(
 
 /**
  * Convertir vers un contact CRM
- * Note: Placeholder - nécessite intégration avec le système CRM
  */
 export async function convertToContact(
   submissionId: string
 ): Promise<{ success: boolean; contactId?: string; error?: string }> {
   try {
-    const supabase = createClient();
-
-    // Fetch submission data
-    const { data: submission, error: fetchError } = await supabase
-      .from('form_submissions')
-      .select(
-        'id, first_name, last_name, email, phone, status, form_type, message, subject, metadata, created_at'
-      )
-      .eq('id', submissionId)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    // TODO: Create actual contact in CRM
+    const submission = await fetchSubmissionData(submissionId);
     const placeholderContactId = `CONTACT-${Date.now()}`;
-
-    // Update submission with conversion data
-    const updateData: FormSubmissionUpdate = {
-      converted_to_type: 'contact',
-      converted_to_id: placeholderContactId,
-      converted_at: new Date().toISOString(),
-      status: 'closed',
-      updated_at: new Date().toISOString(),
-    };
-
-    const { error: updateError } = await supabase
-      .from('form_submissions')
-      .update(updateData)
-      .eq('id', submissionId);
-
-    if (updateError) throw updateError;
-
-    // Type guard for submission data
     const submissionRow = submission as FormSubmissionRow | null;
     const firstName = submissionRow?.first_name ?? 'Unknown';
     const lastName = submissionRow?.last_name ?? '';
     const email = submissionRow?.email ?? '';
-
-    // Add system message
-    const messageData: FormSubmissionMessageInsert = {
-      form_submission_id: submissionId,
-      author_type: 'system',
-      message_type: 'system',
-      message_body: `Contact CRM créé: ${placeholderContactId} - ${firstName} ${lastName} (${email})`,
-      created_at: new Date().toISOString(),
-    };
-
-    await supabase.from('form_submission_messages').insert(messageData);
-
-    revalidatePath(`/prises-contact/${submissionId}`);
-    revalidatePath('/prises-contact');
-
-    return {
-      success: true,
-      contactId: placeholderContactId,
-    };
+    const result = await applyConversion(
+      submissionId,
+      'contact',
+      placeholderContactId,
+      `Contact CRM cree: ${placeholderContactId} - ${firstName} ${lastName} (${email})`
+    );
+    if (!result.success) return result;
+    return { success: true, contactId: placeholderContactId };
   } catch (error) {
     console.error('Error converting to contact:', error);
     return {
@@ -416,71 +216,25 @@ export async function convertToContact(
 
 /**
  * Convertir vers un lead
- * Note: Placeholder - nécessite intégration avec le système de leads
  */
 export async function convertToLead(
   submissionId: string,
-  leadData: {
-    source?: string;
-    score?: number;
-    notes?: string;
-  }
+  leadData: { source?: string; score?: number; notes?: string }
 ): Promise<{ success: boolean; leadId?: string; error?: string }> {
   try {
-    const supabase = createClient();
-
-    // Fetch submission data
-    const { data: _submission, error: fetchError } = await supabase
-      .from('form_submissions')
-      .select(
-        'id, first_name, last_name, email, phone, status, form_type, message, subject, metadata, created_at'
-      )
-      .eq('id', submissionId)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    // TODO: Create actual lead record
+    await fetchSubmissionData(submissionId);
     const placeholderLeadId = `LEAD-${Date.now()}`;
-
-    // Update submission with conversion data
-    const updateData: FormSubmissionUpdate = {
-      converted_to_type: 'lead',
-      converted_to_id: placeholderLeadId,
-      converted_at: new Date().toISOString(),
-      status: 'closed',
-      updated_at: new Date().toISOString(),
-    };
-
-    const { error: updateError } = await supabase
-      .from('form_submissions')
-      .update(updateData)
-      .eq('id', submissionId);
-
-    if (updateError) throw updateError;
-
-    // Add system message
     const message = leadData.score
-      ? `Lead créé: ${placeholderLeadId} - Score: ${leadData.score}/100`
-      : `Lead créé: ${placeholderLeadId}`;
-
-    const messageData: FormSubmissionMessageInsert = {
-      form_submission_id: submissionId,
-      author_type: 'system',
-      message_type: 'system',
-      message_body: message,
-      created_at: new Date().toISOString(),
-    };
-
-    await supabase.from('form_submission_messages').insert(messageData);
-
-    revalidatePath(`/prises-contact/${submissionId}`);
-    revalidatePath('/prises-contact');
-
-    return {
-      success: true,
-      leadId: placeholderLeadId,
-    };
+      ? `Lead cree: ${placeholderLeadId} - Score: ${leadData.score}/100`
+      : `Lead cree: ${placeholderLeadId}`;
+    const result = await applyConversion(
+      submissionId,
+      'lead',
+      placeholderLeadId,
+      message
+    );
+    if (!result.success) return result;
+    return { success: true, leadId: placeholderLeadId };
   } catch (error) {
     console.error('Error converting to lead:', error);
     return {
@@ -491,7 +245,7 @@ export async function convertToLead(
 }
 
 /**
- * Ajouter une réponse/message à une soumission
+ * Ajouter une reponse/message a une soumission
  */
 export async function addMessage(
   submissionId: string,
@@ -501,7 +255,6 @@ export async function addMessage(
   try {
     const supabase = createClient();
 
-    // Add message
     const messageData: FormSubmissionMessageInsert = {
       form_submission_id: submissionId,
       author_type: messageType === 'customer' ? 'customer' : 'staff',
@@ -516,7 +269,6 @@ export async function addMessage(
 
     if (error) throw error;
 
-    // Update submission updated_at
     const updateData: FormSubmissionUpdate = {
       updated_at: new Date().toISOString(),
     };

@@ -1,102 +1,50 @@
 /**
- * 🎯 VÉRONE - Page Détail Catégorie
- *
- * Affiche toutes les sous-catégories d'une catégorie spécifique
- * Permet la navigation vers les produits et la gestion CRUD
+ * Page Detail Categorie
+ * Affiche toutes les sous-categories d'une categorie specifique
  */
 
 'use client';
 
-import { useEffect, useState } from 'react';
-
 import { useParams, useRouter } from 'next/navigation';
 
-import { useFamilies } from '@verone/categories';
-import { useCategories } from '@verone/categories';
-import {
-  useSubcategories,
-  type SubcategoryWithDetails,
-} from '@verone/categories';
 import { Badge } from '@verone/ui';
 import { ButtonUnified } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
 import { VéroneCard } from '@verone/ui';
-import type { Database } from '@verone/utils/supabase/types';
 import { ArrowLeft, Plus, Edit, FolderOpen, Package, Tag } from 'lucide-react';
 
 import { FamilyCrudForm } from '@/components/forms/family-crud-form';
 import { SubcategoryForm } from '@/components/forms/subcategory-form';
 
-type Family = Database['public']['Tables']['families']['Row'];
-type Category = Database['public']['Tables']['categories']['Row'];
-
-interface CategoryFormData {
-  name: string;
-  description?: string;
-  is_active: boolean;
-  display_order?: number;
-  image_url?: string;
-}
-
-interface SubcategoryFormData extends CategoryFormData {
-  category_id?: string;
-  slug?: string;
-}
+import { useCategoryDetail } from './use-category-detail';
 
 export default function CategoryDetailPage() {
   const params = useParams();
   const router = useRouter();
   const categoryId = params.categoryId as string;
 
-  const { families, loading: familiesLoading } = useFamilies();
   const {
+    category,
+    family,
+    families,
     allCategories,
-    loading: categoriesLoading,
-    updateCategory,
-  } = useCategories();
-  const {
-    subcategories,
-    loading: subcategoriesLoading,
-    createSubcategory,
-    updateSubcategory,
-    deleteSubcategory,
-  } = useSubcategories();
-
-  const [category, setCategory] = useState<Category | null>(null);
-  const [family, setFamily] = useState<Family | null>(null);
-  const [categorySubcategories, setCategorySubcategories] = useState<
-    SubcategoryWithDetails[]
-  >([]);
-
-  // État des dialogues
-  const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false);
-  const [isNewSubcategoryOpen, setIsNewSubcategoryOpen] = useState(false);
-  const [editingSubcategory, setEditingSubcategory] =
-    useState<SubcategoryWithDetails | null>(null);
-  const [isEditSubcategoryOpen, setIsEditSubcategoryOpen] = useState(false);
-
-  useEffect(() => {
-    if (allCategories && categoryId) {
-      const foundCategory = allCategories.find(c => c.id === categoryId);
-      setCategory(foundCategory ?? null);
-    }
-  }, [allCategories, categoryId]);
-
-  useEffect(() => {
-    if (families && category?.family_id) {
-      const foundFamily = families.find(f => f.id === category.family_id);
-      setFamily(foundFamily ?? null);
-    }
-  }, [families, category]);
-
-  useEffect(() => {
-    if (subcategories && categoryId) {
-      const subs = subcategories.filter(sub => sub.category_id === categoryId);
-      setCategorySubcategories(subs);
-    }
-  }, [subcategories, categoryId]);
-
-  const loading = familiesLoading || categoriesLoading || subcategoriesLoading;
+    categorySubcategories,
+    loading,
+    isEditCategoryOpen,
+    setIsEditCategoryOpen,
+    isNewSubcategoryOpen,
+    setIsNewSubcategoryOpen,
+    editingSubcategory,
+    setEditingSubcategory,
+    isEditSubcategoryOpen,
+    setIsEditSubcategoryOpen,
+    handleBackToFamily,
+    handleSubmitCategory,
+    handleSubmitNewSubcategory,
+    handleEditSubcategory,
+    handleSubmitEditSubcategory,
+    handleDeleteSubcategory,
+  } = useCategoryDetail(categoryId);
 
   if (loading) {
     return (
@@ -124,7 +72,7 @@ export default function CategoryDetailPage() {
       <div className="min-h-screen bg-white p-6">
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-2xl font-bold text-black mb-4">
-            Catégorie non trouvée
+            Categorie non trouvee
           </h1>
           <ButtonUnified
             onClick={() => router.push('/produits/catalogue/categories')}
@@ -143,102 +91,6 @@ export default function CategoryDetailPage() {
     router.push(`/catalogue/subcategories/${subcategoryId}`);
   };
 
-  const handleBackToFamily = () => {
-    if (family) {
-      router.push(`/catalogue/families/${family.id}`);
-    } else {
-      router.push('/produits/catalogue/categories');
-    }
-  };
-
-  // Gestionnaires CRUD pour catégorie
-  const handleEditCategory = () => {
-    setIsEditCategoryOpen(true);
-  };
-
-  const handleSubmitCategory = async (formData: CategoryFormData) => {
-    try {
-      await updateCategory(categoryId, {
-        name: formData.name,
-        description: formData.description,
-        is_active: formData.is_active,
-        display_order: formData.display_order,
-        image_url: formData.image_url,
-      });
-      setIsEditCategoryOpen(false);
-    } catch (error) {
-      console.error('Erreur lors de la modification de la catégorie:', error);
-    }
-  };
-
-  // Gestionnaires CRUD pour sous-catégories
-  const handleNewSubcategory = () => {
-    setIsNewSubcategoryOpen(true);
-  };
-
-  const handleSubmitNewSubcategory = async (formData: SubcategoryFormData) => {
-    try {
-      await createSubcategory({
-        name: formData.name,
-        slug: formData.slug ?? formData.name.toLowerCase().replace(/\s+/g, '-'),
-        description: formData.description,
-        category_id: categoryId,
-        is_active: formData.is_active,
-        display_order: formData.display_order,
-        image_url: formData.image_url,
-      });
-      setIsNewSubcategoryOpen(false);
-    } catch (error) {
-      console.error('Erreur lors de la création de la sous-catégorie:', error);
-    }
-  };
-
-  const handleEditSubcategory = (subcategory: SubcategoryWithDetails) => {
-    setEditingSubcategory(subcategory);
-    setIsEditSubcategoryOpen(true);
-  };
-
-  const handleSubmitEditSubcategory = async (formData: SubcategoryFormData) => {
-    if (!editingSubcategory) return;
-
-    try {
-      await updateSubcategory(editingSubcategory.id, {
-        name: formData.name,
-        description: formData.description,
-        is_active: formData.is_active,
-        display_order: formData.display_order,
-        image_url: formData.image_url,
-      });
-      setIsEditSubcategoryOpen(false);
-      setEditingSubcategory(null);
-    } catch (error) {
-      console.error(
-        'Erreur lors de la modification de la sous-catégorie:',
-        error
-      );
-    }
-  };
-
-  const handleDeleteSubcategory = async (
-    subcategoryId: string,
-    subcategoryName: string
-  ) => {
-    if (
-      confirm(
-        `Êtes-vous sûr de vouloir supprimer la sous-catégorie "${subcategoryName}" ? Cette action est irréversible.`
-      )
-    ) {
-      try {
-        await deleteSubcategory(subcategoryId);
-      } catch (error) {
-        console.error(
-          'Erreur lors de la suppression de la sous-catégorie:',
-          error
-        );
-      }
-    }
-  };
-
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-6xl mx-auto">
@@ -255,7 +107,6 @@ export default function CategoryDetailPage() {
               Retour
             </ButtonUnified>
             <div>
-              {/* Breadcrumb */}
               <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
                 <span
                   className="hover:text-black cursor-pointer"
@@ -281,7 +132,7 @@ export default function CategoryDetailPage() {
               </div>
               <h1 className="text-3xl font-bold text-black">{category.name}</h1>
               <p className="text-gray-600 mt-1">
-                {categorySubcategories.length} sous-catégorie
+                {categorySubcategories.length} sous-categorie
                 {categorySubcategories.length !== 1 ? 's' : ''}
               </p>
             </div>
@@ -291,7 +142,7 @@ export default function CategoryDetailPage() {
             <ButtonUnified
               variant="outline"
               size="sm"
-              onClick={handleEditCategory}
+              onClick={() => setIsEditCategoryOpen(true)}
               icon={Edit}
               iconPosition="left"
             >
@@ -300,11 +151,11 @@ export default function CategoryDetailPage() {
             <ButtonUnified
               variant="outline"
               size="sm"
-              onClick={handleNewSubcategory}
+              onClick={() => setIsNewSubcategoryOpen(true)}
               icon={Plus}
               iconPosition="left"
             >
-              Nouvelle sous-catégorie
+              Nouvelle sous-categorie
             </ButtonUnified>
           </div>
         </div>
@@ -328,12 +179,11 @@ export default function CategoryDetailPage() {
                   <p className="text-2xl font-bold text-black">
                     {categorySubcategories.length}
                   </p>
-                  <p className="text-gray-600">Sous-catégories</p>
+                  <p className="text-gray-600">Sous-categories</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center space-x-3">
@@ -350,7 +200,6 @@ export default function CategoryDetailPage() {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center space-x-3">
@@ -359,12 +208,11 @@ export default function CategoryDetailPage() {
                   <p className="text-lg font-bold text-black">
                     Niveau {category.level ?? 1}
                   </p>
-                  <p className="text-gray-600">Hiérarchie</p>
+                  <p className="text-gray-600">Hierarchie</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center space-x-3">
@@ -379,23 +227,23 @@ export default function CategoryDetailPage() {
           </Card>
         </div>
 
-        {/* Sous-catégories */}
+        {/* Sous-categories */}
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-black">Sous-catégories</h2>
+          <h2 className="text-xl font-semibold text-black">Sous-categories</h2>
 
           {categorySubcategories.length === 0 ? (
             <Card>
               <CardContent className="pt-6 text-center">
                 <p className="text-gray-500 mb-4">
-                  Aucune sous-catégorie dans cette catégorie
+                  Aucune sous-categorie dans cette categorie
                 </p>
                 <ButtonUnified
                   variant="outline"
-                  onClick={handleNewSubcategory}
+                  onClick={() => setIsNewSubcategoryOpen(true)}
                   icon={Plus}
                   iconPosition="left"
                 >
-                  Créer la première sous-catégorie
+                  Creer la premiere sous-categorie
                 </ButtonUnified>
               </CardContent>
             </Card>
@@ -433,7 +281,6 @@ export default function CategoryDetailPage() {
       </div>
 
       {/* Dialogs CRUD */}
-      {/* Modification catégorie */}
       <FamilyCrudForm
         isOpen={isEditCategoryOpen}
         onClose={() => setIsEditCategoryOpen(false)}
@@ -456,7 +303,6 @@ export default function CategoryDetailPage() {
         onSubmit={handleSubmitCategory}
       />
 
-      {/* Nouvelle sous-catégorie */}
       <SubcategoryForm
         isOpen={isNewSubcategoryOpen}
         onClose={() => setIsNewSubcategoryOpen(false)}
@@ -469,7 +315,6 @@ export default function CategoryDetailPage() {
           })) ?? []
         }
         onSubmit={subcategory => {
-          // Adapter la réponse pour le hook useSubcategories
           void handleSubmitNewSubcategory({
             name: subcategory.name,
             description: subcategory.description,
@@ -486,7 +331,6 @@ export default function CategoryDetailPage() {
         }}
       />
 
-      {/* Modification sous-catégorie */}
       <SubcategoryForm
         isOpen={isEditSubcategoryOpen}
         onClose={() => {
@@ -516,7 +360,6 @@ export default function CategoryDetailPage() {
           })) ?? []
         }
         onSubmit={subcategory => {
-          // Adapter la réponse pour le hook useSubcategories
           void handleSubmitEditSubcategory({
             name: subcategory.name,
             description: subcategory.description,

@@ -19,7 +19,6 @@ import {
 } from './use-linkme-selections';
 import type { ContactsAddressesData } from '../components/contacts';
 import {
-  buildCartItemFromSelection,
   computeCartTotals,
   buildOrderInput,
   type CustomerType,
@@ -27,6 +26,7 @@ import {
   type CartItem,
 } from './create-order-form-helpers';
 import { useNewCustomerForm } from './use-new-customer-form';
+import { buildCartHandlers } from './use-linkme-cart-handlers';
 
 export type { CustomerType, AffiliateSelection, CartItem };
 
@@ -45,7 +45,6 @@ export function useCreateLinkMeOrderForm({
 }: UseCreateLinkMeOrderFormProps) {
   const createOrder = useCreateLinkMeOrder();
 
-  // Type d'affilié sélectionné
   const [affiliateType, setAffiliateType] = useState<AffiliateType | null>(
     null
   );
@@ -53,38 +52,28 @@ export function useCreateLinkMeOrderForm({
     preselectedAffiliateId ?? ''
   );
   const [selectedSelectionId, setSelectedSelectionId] = useState<string>('');
-
-  // Client
   const [customerType, setCustomerType] =
     useState<CustomerType>('organization');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
-
   const [cart, setCart] = useState<CartItem[]>([]);
   const [shippingCostHt, setShippingCostHt] = useState<number>(0);
   const [handlingCostHt, setHandlingCostHt] = useState<number>(0);
   const [insuranceCostHt, setInsuranceCostHt] = useState<number>(0);
   const [fraisTaxRate, setFraisTaxRate] = useState<number>(0.2);
-
-  // Recherche produits
   const [productSearchQuery, setProductSearchQuery] = useState('');
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<
     string | undefined
   >(undefined);
-
-  // Recherche clients et formulaire création
   const [searchQuery, setSearchQuery] = useState('');
   const [orderDate, setOrderDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
   const [internalNotes, setInternalNotes] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
-
-  // Preview sélection
   const [previewSelectionId, setPreviewSelectionId] = useState<string | null>(
     null
   );
 
-  // Formulaire nouveau client
   const {
     newCustomerName,
     setNewCustomerName,
@@ -107,7 +96,6 @@ export function useCreateLinkMeOrderForm({
     resetNewCustomerForm,
   } = useNewCustomerForm();
 
-  // Contacts & Addresses
   const [contactsAddressesData, setContactsAddressesData] =
     useState<ContactsAddressesData>({
       billingContact: null,
@@ -118,7 +106,7 @@ export function useCreateLinkMeOrderForm({
       deliverySameAsBillingAddress: false,
     });
 
-  // ---- Hooks data ----
+  // ---- Data hooks ----
   const { data: affiliates, isLoading: affiliatesLoading } =
     useLinkMeAffiliates(affiliateType ?? undefined);
   const { data: selections, isLoading: selectionsLoading } =
@@ -128,9 +116,10 @@ export function useCreateLinkMeOrderForm({
   const { data: previewSelection, isLoading: previewLoading } =
     useLinkMeSelection(previewSelectionId);
 
-  const selectedAffiliate = useMemo(() => {
-    return affiliates?.find(a => a.id === selectedAffiliateId);
-  }, [affiliates, selectedAffiliateId]);
+  const selectedAffiliate = useMemo(
+    () => affiliates?.find(a => a.id === selectedAffiliateId),
+    [affiliates, selectedAffiliateId]
+  );
 
   const customers = useLinkMeAffiliateCustomers(
     selectedAffiliate
@@ -230,8 +219,7 @@ export function useCreateLinkMeOrderForm({
 
   const filteredSelectionItems = useMemo(() => {
     if (!selectionDetails?.items) return [];
-
-    return selectionDetails.items.filter(item => {
+    return selectionDetails.items.filter((item: SelectionItem) => {
       const matchesSearch =
         productSearchQuery.trim() === '' ||
         (item.product?.name
@@ -242,11 +230,9 @@ export function useCreateLinkMeOrderForm({
           ?.toLowerCase()
           .includes(productSearchQuery.toLowerCase()) ??
           false);
-
       const matchesCategory =
         !selectedSubcategoryId ||
         item.product?.subcategory_id === selectedSubcategoryId;
-
       return matchesSearch && matchesCategory;
     });
   }, [selectionDetails?.items, productSearchQuery, selectedSubcategoryId]);
@@ -263,7 +249,10 @@ export function useCreateLinkMeOrderForm({
     [cart, shippingCostHt, handlingCostHt, insuranceCostHt, fraisTaxRate]
   );
 
-  // Handlers
+  // ---- Cart handlers (extracted) ----
+  const cartHandlers = buildCartHandlers(setCart);
+
+  // ---- Customer create handler ----
   const handleCreateCustomer = async () => {
     const hasEnseigne = !!selectedAffiliate?.enseigne_id;
     const hasOrganisation = !!selectedAffiliate?.organisation_id;
@@ -311,78 +300,8 @@ export function useCreateLinkMeOrderForm({
       setShowCreateForm(false);
       resetNewCustomerForm();
     } catch (error) {
-      console.error('Erreur création client:', error);
+      console.error('Erreur creation client:', error);
     }
-  };
-
-  const addProductFromSelection = (item: SelectionItem) => {
-    const existing = cart.find(c => c.product_id === item.product_id);
-    if (existing) {
-      setCart(prev =>
-        prev.map(c =>
-          c.product_id === item.product_id
-            ? { ...c, quantity: c.quantity + 1 }
-            : c
-        )
-      );
-      return;
-    }
-    setCart(prev => [...prev, buildCartItemFromSelection(item)]);
-  };
-
-  const updateQuantity = (itemId: string, delta: number) => {
-    setCart(
-      prev =>
-        prev
-          .map(item => {
-            if (item.id === itemId) {
-              const q = Math.max(0, item.quantity + delta);
-              return q === 0 ? null : { ...item, quantity: q };
-            }
-            return item;
-          })
-          .filter(Boolean) as CartItem[]
-    );
-  };
-  const updateUnitPrice = (itemId: string, newPrice: number) => {
-    if (newPrice < 0 || isNaN(newPrice)) return;
-    setCart(prev =>
-      prev.map(item =>
-        item.id === itemId
-          ? { ...item, unit_price_ht: Math.round(newPrice * 100) / 100 }
-          : item
-      )
-    );
-  };
-  const updateRetrocessionRate = (itemId: string, newRatePercent: number) => {
-    if (newRatePercent < 0 || newRatePercent > 100 || isNaN(newRatePercent))
-      return;
-    const newRate = newRatePercent / 100;
-    setCart(prev =>
-      prev.map(item =>
-        item.id === itemId ? { ...item, retrocession_rate: newRate } : item
-      )
-    );
-  };
-  const updateCommissionRate = (itemId: string, newRatePercent: number) => {
-    if (newRatePercent < 0 || newRatePercent > 100 || isNaN(newRatePercent))
-      return;
-    const newRate = newRatePercent / 100;
-    setCart(prev =>
-      prev.map(item =>
-        item.id === itemId
-          ? {
-              ...item,
-              affiliate_commission_rate: newRate,
-              retrocession_rate: newRate,
-            }
-          : item
-      )
-    );
-  };
-
-  const removeFromCart = (itemId: string) => {
-    setCart(prev => prev.filter(item => item.id !== itemId));
   };
 
   const canSubmit =
@@ -412,7 +331,7 @@ export function useCreateLinkMeOrderForm({
       await createOrder.mutateAsync(input);
       onClose();
     } catch (error) {
-      console.error('Erreur création commande:', error);
+      console.error('Erreur creation commande:', error);
     }
   };
 
@@ -490,12 +409,7 @@ export function useCreateLinkMeOrderForm({
     cartTotals,
     // Handlers
     handleCreateCustomer,
-    addProductFromSelection,
-    updateQuantity,
-    updateUnitPrice,
-    updateRetrocessionRate,
-    updateCommissionRate,
-    removeFromCart,
+    ...cartHandlers,
     canSubmit,
     handleSubmit,
     createOrder,
