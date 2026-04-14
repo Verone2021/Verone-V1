@@ -28,43 +28,13 @@ import {
   EMPTY_CONTACTS_ADDRESSES_DATA,
   roundMoney,
 } from './types';
-
-/**
- * Transforme les données contacts/adresses du formulaire en format DB linkme_details
- */
-function buildLinkMeDetails(data: ContactsAddressesData) {
-  const deliveryContact = data.deliverySameAsBillingContact
-    ? data.billingContact
-    : data.deliveryContact;
-  const deliveryAddr = data.deliverySameAsBillingAddress
-    ? data.billingAddress
-    : data.deliveryAddress;
-
-  const hasAnyData =
-    deliveryContact ??
-    deliveryAddr ??
-    data.billingContact ??
-    data.billingAddress;
-
-  if (!hasAnyData) return null;
-
-  return {
-    requester_phone: data.billingContact?.phone ?? null,
-    delivery_contact_name: deliveryContact
-      ? `${deliveryContact.firstName} ${deliveryContact.lastName}`.trim()
-      : null,
-    delivery_contact_email: deliveryContact?.email ?? null,
-    delivery_contact_phone: deliveryContact?.phone ?? null,
-    delivery_address: deliveryAddr?.customAddress?.addressLine1 ?? null,
-    delivery_postal_code: deliveryAddr?.customAddress?.postalCode ?? null,
-    delivery_city: deliveryAddr?.customAddress?.city ?? null,
-    billing_name: data.billingContact
-      ? `${data.billingContact.firstName} ${data.billingContact.lastName}`.trim()
-      : null,
-    billing_email: data.billingContact?.email ?? null,
-    billing_phone: data.billingContact?.phone ?? null,
-  };
-}
+import {
+  buildLinkMeDetails,
+  addProductToCart,
+  updateCartQuantity,
+  updateCartUnitPrice,
+  updateCartRetrocessionRate,
+} from './cart-utils';
 
 export function useCreateLinkMeOrderForm(
   isOpen: boolean,
@@ -376,82 +346,31 @@ export function useCreateLinkMeOrderForm(
   }, [cart, shippingCostHt, handlingCostHt, insuranceCostHt, fraisTaxRate]);
 
   // Ajouter produit au panier
-  const addProductFromSelection = (item: SelectionItem) => {
-    const existing = cart.find(c => c.product_id === item.product_id);
-    if (existing) {
-      setCart(
-        cart.map(c =>
-          c.product_id === item.product_id
-            ? { ...c, quantity: c.quantity + 1 }
-            : c
-        )
-      );
-      return;
-    }
-
-    const marginRate = item.margin_rate / 100;
-    const sellingPrice = roundMoney(
-      item.selling_price_ht ?? item.base_price_ht * (1 + item.margin_rate / 100)
-    );
-    const retrocessionRate = marginRate;
-
-    const newItem: CartItem = {
-      id: `${item.product_id}-${Date.now()}`,
-      product_id: item.product_id,
-      product_name: item.product?.name ?? 'Produit inconnu',
-      sku: item.product?.sku ?? '',
-      quantity: 1,
-      unit_price_ht: sellingPrice,
-      tax_rate: 0.2,
-      base_price_ht: item.base_price_ht,
-      retrocession_rate: retrocessionRate,
-      linkme_selection_item_id: item.id,
-    };
-    setCart([...cart, newItem]);
+  const addProductFromSelection = (item: SelectionItem): void => {
+    setCart(prev => addProductToCart(prev, item));
   };
 
   // Modifier quantité
-  const updateQuantity = (itemId: string, delta: number) => {
-    setCart(
-      cart
-        .map(item => {
-          if (item.id === itemId) {
-            const newQty = Math.max(0, item.quantity + delta);
-            return newQty === 0 ? null : { ...item, quantity: newQty };
-          }
-          return item;
-        })
-        .filter(Boolean) as CartItem[]
-    );
+  const updateQuantity = (itemId: string, delta: number): void => {
+    setCart(prev => updateCartQuantity(prev, itemId, delta));
   };
 
   // Supprimer du panier
-  const removeFromCart = (itemId: string) => {
+  const removeFromCart = (itemId: string): void => {
     setCart(cart.filter(item => item.id !== itemId));
   };
 
   // Modifier prix de vente HT
-  const updateUnitPrice = (itemId: string, newPrice: number) => {
-    if (newPrice < 0 || isNaN(newPrice)) return;
-    setCart(prev =>
-      prev.map(item =>
-        item.id === itemId
-          ? { ...item, unit_price_ht: Math.round(newPrice * 100) / 100 }
-          : item
-      )
-    );
+  const updateUnitPrice = (itemId: string, newPrice: number): void => {
+    setCart(prev => updateCartUnitPrice(prev, itemId, newPrice));
   };
 
   // Modifier taux de commission
-  const updateRetrocessionRate = (itemId: string, newRatePercent: number) => {
-    if (newRatePercent < 0 || newRatePercent > 100 || isNaN(newRatePercent))
-      return;
-    const newRate = newRatePercent / 100;
-    setCart(prev =>
-      prev.map(item =>
-        item.id === itemId ? { ...item, retrocession_rate: newRate } : item
-      )
-    );
+  const updateRetrocessionRate = (
+    itemId: string,
+    newRatePercent: number
+  ): void => {
+    setCart(prev => updateCartRetrocessionRate(prev, itemId, newRatePercent));
   };
 
   // Validation formulaire
@@ -545,7 +464,6 @@ export function useCreateLinkMeOrderForm(
   };
 
   return {
-    // State
     affiliateType,
     setAffiliateType,
     selectedAffiliateId,
@@ -605,7 +523,6 @@ export function useCreateLinkMeOrderForm(
     setNewOrgCity,
     contactsAddressesData,
     setContactsAddressesData,
-    // Derived data
     affiliates,
     affiliatesLoading,
     selections,
@@ -622,11 +539,9 @@ export function useCreateLinkMeOrderForm(
     filteredSelectionItems,
     cartTotals,
     canSubmit,
-    // Mutations
     createOrder,
     createOrganisation,
     createIndividualCustomer,
-    // Handlers
     handleCreateCustomer,
     handleSubmit,
     addProductFromSelection,
