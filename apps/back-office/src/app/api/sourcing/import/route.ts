@@ -387,31 +387,14 @@ export async function POST(request: NextRequest) {
         .slice(0, 10);
 
       if (validImages.length > 0) {
-        // product_images — pour l'affichage catalogue
-        const productImageRows = validImages.map((url, i) => ({
-          product_id: productId,
-          public_url: url,
-          storage_path: `external/${input.source_platform}/${sku}-${i}`,
-          display_order: i,
-          is_primary: i === 0,
-          image_type: (i === 0 ? 'primary' : 'gallery') as
-            | 'primary'
-            | 'gallery',
-          alt_text: `${input.name} - Photo ${i + 1}`,
-        }));
+        // NOTE: On n'insère PAS dans product_images car le trigger
+        // generate_product_image_url() écrase public_url avec une URL
+        // Supabase Storage basée sur storage_path. Les images externes
+        // (URLs Alibaba/OpJet) sont stockées dans sourcing_photos uniquement.
+        // Quand le produit passe en catalogue, les images seront uploadées
+        // dans Supabase Storage via le workflow standard.
 
-        const { error: imgError } = await supabase
-          .from('product_images')
-          .insert(productImageRows);
-
-        if (imgError) {
-          console.error(
-            '[API sourcing/import] Product images insert failed:',
-            imgError
-          );
-        }
-
-        // sourcing_photos — pour le suivi sourcing
+        // sourcing_photos — stockage des images externes pour le sourcing
         const sourcingPhotoRows = validImages.map((url, i) => ({
           product_id: productId,
           public_url: url,
@@ -463,7 +446,7 @@ export async function POST(request: NextRequest) {
 
     // Compter les images et URLs insérées
     const { count: imageCount } = await supabase
-      .from('product_images')
+      .from('sourcing_photos')
       .select('id', { count: 'exact', head: true })
       .eq('product_id', productId);
 

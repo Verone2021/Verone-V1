@@ -278,12 +278,34 @@ export default function SourcingProductDetailPage() {
         {/* Guide contextuel de l'etape en cours */}
         <SourcingStageGuide currentStatus={currentStatus} />
 
+        {/* Photos sourcing (images externes importees) */}
+        {notebook.photos.length > 0 && images.length === 0 && (
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">
+              Photos sourcing ({notebook.photos.length})
+            </h3>
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {notebook.photos.map(photo => (
+                <img
+                  key={photo.id}
+                  src={photo.public_url ?? ''}
+                  alt={photo.caption ?? 'Photo sourcing'}
+                  className="h-32 w-32 object-cover rounded-lg border border-gray-200 shrink-0"
+                  onError={e => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Fiche produit - Editable inline */}
         <SourcingProductEditCard
           product={
             product as ComponentProps<typeof SourcingProductEditCard>['product']
           }
-          primaryImage={primaryImage}
+          primaryImage={primaryImage || notebook.photos[0]?.public_url || null}
           images={images}
           imagesLoading={imagesLoading}
           onProductUpdate={async updates => {

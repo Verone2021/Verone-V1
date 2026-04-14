@@ -68,6 +68,17 @@ export interface SourcingCandidateSupplier {
 // Hook
 // ============================================================
 
+export interface SourcingPhoto {
+  id: string;
+  product_id: string;
+  public_url: string | null;
+  storage_path: string;
+  photo_type: string;
+  caption: string | null;
+  sort_order: number;
+  created_at: string;
+}
+
 export function useSourcingNotebook(productId: string | null) {
   const [urls, setUrls] = useState<SourcingUrl[]>([]);
   const [communications, setCommunications] = useState<SourcingCommunication[]>(
@@ -75,6 +86,7 @@ export function useSourcingNotebook(productId: string | null) {
   );
   const [priceHistory, setPriceHistory] = useState<SourcingPriceEntry[]>([]);
   const [candidates, setCandidates] = useState<SourcingCandidateSupplier[]>([]);
+  const [photos, setPhotos] = useState<SourcingPhoto[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchAll = useCallback(async () => {
@@ -82,34 +94,42 @@ export function useSourcingNotebook(productId: string | null) {
     setLoading(true);
     const supabase = createClient();
 
-    const [urlsRes, commsRes, pricesRes, candidatesRes] = await Promise.all([
-      supabase
-        .from('sourcing_urls')
-        .select('id, product_id, url, platform, label, created_at')
-        .eq('product_id', productId)
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('sourcing_communications')
-        .select(
-          'id, product_id, supplier_id, channel, direction, summary, contact_name, attachments, next_action, follow_up_date, is_resolved, communicated_at, logged_by, created_at'
-        )
-        .eq('product_id', productId)
-        .order('communicated_at', { ascending: false }),
-      supabase
-        .from('sourcing_price_history')
-        .select(
-          'id, product_id, supplier_id, price, currency, quantity, proposed_by, notes, negotiated_at'
-        )
-        .eq('product_id', productId)
-        .order('negotiated_at', { ascending: false }),
-      supabase
-        .from('sourcing_candidate_suppliers')
-        .select(
-          'id, product_id, supplier_id, status, response_date, quoted_price, quoted_moq, quoted_lead_days, notes, created_at, supplier:organisations(id, trade_name, legal_name, preferred_comm_channel)'
-        )
-        .eq('product_id', productId)
-        .order('created_at', { ascending: false }),
-    ]);
+    const [urlsRes, commsRes, pricesRes, candidatesRes, photosRes] =
+      await Promise.all([
+        supabase
+          .from('sourcing_urls')
+          .select('id, product_id, url, platform, label, created_at')
+          .eq('product_id', productId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('sourcing_communications')
+          .select(
+            'id, product_id, supplier_id, channel, direction, summary, contact_name, attachments, next_action, follow_up_date, is_resolved, communicated_at, logged_by, created_at'
+          )
+          .eq('product_id', productId)
+          .order('communicated_at', { ascending: false }),
+        supabase
+          .from('sourcing_price_history')
+          .select(
+            'id, product_id, supplier_id, price, currency, quantity, proposed_by, notes, negotiated_at'
+          )
+          .eq('product_id', productId)
+          .order('negotiated_at', { ascending: false }),
+        supabase
+          .from('sourcing_candidate_suppliers')
+          .select(
+            'id, product_id, supplier_id, status, response_date, quoted_price, quoted_moq, quoted_lead_days, notes, created_at, supplier:organisations(id, trade_name, legal_name, preferred_comm_channel)'
+          )
+          .eq('product_id', productId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('sourcing_photos')
+          .select(
+            'id, product_id, public_url, storage_path, photo_type, caption, sort_order, created_at'
+          )
+          .eq('product_id', productId)
+          .order('sort_order', { ascending: true }),
+      ]);
 
     if (urlsRes.data) setUrls(urlsRes.data as SourcingUrl[]);
     if (commsRes.data)
@@ -117,6 +137,7 @@ export function useSourcingNotebook(productId: string | null) {
     if (pricesRes.data) setPriceHistory(pricesRes.data as SourcingPriceEntry[]);
     if (candidatesRes.data)
       setCandidates(candidatesRes.data as SourcingCandidateSupplier[]);
+    if (photosRes.data) setPhotos(photosRes.data as SourcingPhoto[]);
 
     setLoading(false);
   }, [productId]);
@@ -270,6 +291,7 @@ export function useSourcingNotebook(productId: string | null) {
     communications,
     priceHistory,
     candidates,
+    photos,
     loading,
     refetch: fetchAll,
     // Mutations
