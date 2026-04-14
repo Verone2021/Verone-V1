@@ -9,6 +9,8 @@
  */
 
 import type { LinkMeOrderDetails } from '../hooks/use-linkme-order-actions';
+import type { RequestInfoTemplate } from './order-request-templates';
+import { REQUEST_INFO_TEMPLATES } from './order-request-templates';
 
 // ============================================
 // TYPES
@@ -94,150 +96,14 @@ ${sections.join('\n\n')}
 Merci de nous transmettre ces informations dans les meilleurs délais.`;
 }
 
-// ============================================
-// TEMPLATES DE DEMANDE DE COMPLÉMENTS
-// ============================================
-
-export interface RequestInfoTemplate {
-  id: string;
-  category: MissingFieldCategory;
-  label: string;
-  description: string;
-  /** Génère le message avec les champs manquants détectés */
-  getMessage: (missingFields: MissingField[]) => string;
-}
-
-export const REQUEST_INFO_TEMPLATES: RequestInfoTemplate[] = [
-  {
-    id: 'responsable_info',
-    category: 'responsable',
-    label: 'Informations responsable',
-    description: 'Demander les informations du contact responsable',
-    getMessage: fields => {
-      const fieldsList = fields
-        .filter(f => f.category === 'responsable')
-        .map(f => `  - ${f.label}`)
-        .join('\n');
-      return `Bonjour,
-
-Pour traiter votre commande, nous avons besoin des informations suivantes concernant le responsable :
-
-${fieldsList || '  - Nom, email et téléphone du responsable'}
-
-Merci de nous transmettre ces informations dans les meilleurs délais.`;
-    },
-  },
-  {
-    id: 'billing_info',
-    category: 'billing',
-    label: 'Informations facturation',
-    description: 'Demander les informations de facturation',
-    getMessage: fields => {
-      const fieldsList = fields
-        .filter(f => f.category === 'billing')
-        .map(f => `  - ${f.label}`)
-        .join('\n');
-      return `Bonjour,
-
-Pour établir la facture de votre commande, nous avons besoin des informations suivantes :
-
-${fieldsList || '  - Contact et coordonnées de facturation'}
-
-Merci de nous transmettre ces informations dans les meilleurs délais.`;
-    },
-  },
-  {
-    id: 'delivery_info',
-    category: 'delivery',
-    label: 'Informations livraison',
-    description: 'Demander les informations de livraison',
-    getMessage: fields => {
-      const fieldsList = fields
-        .filter(f => f.category === 'delivery')
-        .map(f => `  - ${f.label}`)
-        .join('\n');
-      return `Bonjour,
-
-Pour organiser la livraison de votre commande, nous avons besoin des informations suivantes :
-
-${fieldsList || '  - Adresse de livraison et contact sur place'}
-
-Merci de nous transmettre ces informations dans les meilleurs délais.`;
-    },
-  },
-  {
-    id: 'organisation_info',
-    category: 'organisation',
-    label: 'Informations entreprise',
-    description: "Demander les informations légales de l'entreprise",
-    getMessage: fields => {
-      const fieldsList = fields
-        .filter(f => f.category === 'organisation')
-        .map(f => `  - ${f.label}`)
-        .join('\n');
-      return `Bonjour,
-
-Pour finaliser le dossier de votre commande, nous avons besoin des informations suivantes concernant votre entreprise :
-
-${fieldsList || '  - SIRET ou N° TVA intracommunautaire'}
-
-Merci de nous transmettre ces informations dans les meilleurs délais.`;
-    },
-  },
-  {
-    id: 'custom',
-    category: 'custom',
-    label: 'Message personnalisé',
-    description: 'Rédiger un message libre',
-    getMessage: () => '',
-  },
-];
-
-// ============================================
-// RAISONS DE REFUS PRÉDÉFINIES
-// ============================================
-
-export interface RejectReasonTemplate {
-  id: string;
-  label: string;
-  message: string;
-}
-
-export const REJECT_REASON_TEMPLATES: RejectReasonTemplate[] = [
-  {
-    id: 'incomplete_info',
-    label: 'Informations incomplètes',
-    message:
-      "Votre commande ne peut pas être validée car les informations fournies sont incomplètes. Nous vous avons précédemment demandé des compléments qui n'ont pas été transmis dans le délai imparti.",
-  },
-  {
-    id: 'invalid_franchise',
-    label: 'Franchise non éligible',
-    message:
-      "Votre commande ne peut pas être validée car la franchise concernée ne remplit pas les conditions d'éligibilité requises pour ce programme.",
-  },
-  {
-    id: 'product_unavailable',
-    label: 'Produits indisponibles',
-    message:
-      'Un ou plusieurs produits de votre commande ne sont plus disponibles. Nous vous invitons à passer une nouvelle commande avec les produits actuellement en catalogue.',
-  },
-  {
-    id: 'duplicate_order',
-    label: 'Commande en doublon',
-    message:
-      "Votre commande fait doublon avec une commande déjà en cours de traitement. Si vous pensez qu'il s'agit d'une erreur, veuillez nous contacter.",
-  },
-  {
-    id: 'custom',
-    label: 'Raison personnalisée',
-    message: '',
-  },
-];
-
-// ============================================
-// ANALYSE DES CHAMPS MANQUANTS
-// ============================================
+export type {
+  RequestInfoTemplate,
+  RejectReasonTemplate,
+} from './order-request-templates';
+export {
+  REQUEST_INFO_TEMPLATES,
+  REJECT_REASON_TEMPLATES,
+} from './order-request-templates';
 
 export interface GetOrderMissingFieldsOptions {
   details: LinkMeOrderDetails | null;
