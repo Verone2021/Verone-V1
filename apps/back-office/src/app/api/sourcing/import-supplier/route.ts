@@ -113,18 +113,29 @@ export async function POST(request: NextRequest) {
     : null;
 
   try {
-    // Échapper les wildcards SQL
-    const escapedName = input.name.replace(/[%_]/g, '\\$&');
+    // Chercher par URL Alibaba d'abord (identifiant unique), puis par nom exact
+    let existing: { id: string; trade_name: string | null } | null = null;
 
-    // Chercher si le fournisseur existe déjà
-    const { data: existing } = await supabase
-      .from('organisations')
-      .select('id, trade_name')
-      .or(`trade_name.ilike.%${escapedName}%,legal_name.ilike.%${escapedName}%`)
-      .eq('type', 'supplier')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    if (input.alibaba_store_url) {
+      const { data } = await supabase
+        .from('organisations')
+        .select('id, trade_name')
+        .eq('alibaba_store_url', input.alibaba_store_url)
+        .limit(1)
+        .maybeSingle();
+      existing = data;
+    }
+
+    if (!existing) {
+      const { data } = await supabase
+        .from('organisations')
+        .select('id, trade_name')
+        .or(`trade_name.eq.${input.name},legal_name.eq.${input.name}`)
+        .eq('type', 'supplier')
+        .limit(1)
+        .maybeSingle();
+      existing = data;
+    }
 
     if (existing) {
       // Mettre à jour les champs manquants

@@ -166,19 +166,34 @@ export async function POST(request: NextRequest) {
     // STEP 1 : Créer ou trouver le fournisseur
     // ================================================================
     if (input.supplier) {
-      // Échapper les wildcards SQL pour .ilike()
-      const escapedName = input.supplier.name.replace(/[%_]/g, '\\$&');
+      // Chercher d'abord par URL Alibaba (identifiant unique fiable)
+      // Puis par nom exact, puis par nom approximatif
+      let existingSupplier: { id: string; trade_name: string | null } | null =
+        null;
 
-      const { data: existingSupplier } = await supabase
-        .from('organisations')
-        .select('id, trade_name')
-        .or(
-          `trade_name.ilike.%${escapedName}%,legal_name.ilike.%${escapedName}%`
-        )
-        .eq('type', 'supplier')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      if (input.supplier.alibaba_store_url) {
+        const { data } = await supabase
+          .from('organisations')
+          .select('id, trade_name')
+          .eq('alibaba_store_url', input.supplier.alibaba_store_url)
+          .limit(1)
+          .maybeSingle();
+        existingSupplier = data;
+      }
+
+      if (!existingSupplier) {
+        // Chercher par nom exact
+        const { data } = await supabase
+          .from('organisations')
+          .select('id, trade_name')
+          .or(
+            `trade_name.eq.${input.supplier.name},legal_name.eq.${input.supplier.name}`
+          )
+          .eq('type', 'supplier')
+          .limit(1)
+          .maybeSingle();
+        existingSupplier = data;
+      }
 
       if (existingSupplier) {
         supplierId = existingSupplier.id;
