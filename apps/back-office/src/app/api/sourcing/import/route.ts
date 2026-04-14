@@ -82,8 +82,8 @@ const ImportProductSchema = z.object({
   material: z.string().nullish(),
   color: z.string().nullish(),
   style: z.string().nullish(),
-  moq: z.number().nullish(),
-  lead_days: z.number().nullish(),
+  moq: z.number().int().nullish(),
+  lead_days: z.number().int().nullish(),
 
   // Fournisseur
   supplier: z
@@ -170,15 +170,34 @@ export async function POST(request: NextRequest) {
       let existingSupplier: { id: string; trade_name: string | null } | null =
         null;
 
-      // 1. Par URL boutique Alibaba (identifiant unique)
+      // Helper : vérifier que le nom matche (éviter les faux positifs)
+      const nameMatches = (
+        dbName: string | null,
+        inputName: string
+      ): boolean => {
+        if (!dbName) return false;
+        const a = dbName.toLowerCase().trim();
+        const b = inputName.toLowerCase().trim();
+        // Match exact ou l'un contient l'autre
+        return a === b || a.includes(b) || b.includes(a);
+      };
+
+      // 1. Par URL boutique Alibaba + vérification du nom
       if (input.supplier.alibaba_store_url) {
         const { data } = await supabase
           .from('organisations')
-          .select('id, trade_name')
+          .select('id, trade_name, legal_name')
           .eq('alibaba_store_url', input.supplier.alibaba_store_url)
           .limit(1)
           .maybeSingle();
-        existingSupplier = data;
+        // Vérifier que le nom correspond — sinon c'est un faux positif
+        if (
+          data &&
+          (nameMatches(data.trade_name, input.supplier.name) ||
+            nameMatches(data.legal_name, input.supplier.name))
+        ) {
+          existingSupplier = data;
+        }
       }
 
       // 2. Par domaine du website (ex: opjet.com → organisation avec website opjet.com)
