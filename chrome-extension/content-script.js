@@ -31,22 +31,27 @@ function extractAlibabaProduct() {
     ? h1.textContent.trim()
     : document.title.split(' - ')[0].trim();
 
-  // Images produit (haute resolution)
+  // Images produit — filtrer les vraies photos (ratio carre ou portrait, pas les banners)
   const imgs = document.querySelectorAll('img[src*="alicdn"]');
   const uniqueUrls = new Set();
   imgs.forEach(img => {
     const src = img.src || img.getAttribute('data-src');
-    if (
-      src &&
-      src.includes('alicdn') &&
-      !src.includes('icon') &&
-      !src.includes('logo') &&
-      !src.includes('svg')
-    ) {
-      // Convertir en haute resolution
-      const hiRes = src.replace(/_\d+x\d+/, '').replace(/\.\d+x\d+\./, '.');
-      uniqueUrls.add(hiRes);
-    }
+    if (!src || !src.includes('alicdn')) return;
+    // Exclure icones, logos, SVG, petites images
+    if (src.includes('icon') || src.includes('logo') || src.includes('svg'))
+      return;
+    if (src.includes('-tps-') && !src.includes('kf/')) return; // Exclure les images template Alibaba
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    if (w < 200 || h < 200) return;
+    // Exclure les banners (ratio > 2:1 = trop large pour etre une photo produit)
+    const ratio = w / h;
+    if (ratio > 2 || ratio < 0.3) return;
+    // Exclure les images du header/footer Alibaba
+    if (src.includes('imgextra') && (w > 1200 || h < 300)) return;
+    // Garder uniquement les photos produit (kf/ = hosted product images sur alicdn)
+    const hiRes = src.replace(/_\d+x\d+/, '').replace(/\.\d+x\d+\./, '.');
+    uniqueUrls.add(hiRes);
   });
   data.images = Array.from(uniqueUrls).slice(0, 10);
 
@@ -136,12 +141,29 @@ function extractAlibabaSupplier() {
     }
   }
 
-  // Pays
-  const countryMatch = text.match(
-    /(?:Pays|Country|region)\s*[:/]\s*([^\n,]+)/i
-  );
-  if (countryMatch) {
-    supplier.country = countryMatch[1].trim();
+  // Pays — chercher "Pays / région" ou des provinces chinoises connues
+  const countryPatterns = [
+    text.match(
+      /(?:Pays\s*\/\s*r[eé]gion|Country\s*\/\s*Region)\s*\n?\s*([^\n]+)/i
+    ),
+    text.match(
+      /(?:Guangdong|Zhejiang|Fujian|Shanghai|Jiangsu),?\s*(China|Chine|CN)/i
+    ),
+  ];
+  for (const m of countryPatterns) {
+    if (m) {
+      const val = m[1] ? m[1].trim() : m[0].trim();
+      // Ignorer si c'est une phrase du titre (faux positif)
+      if (val.length < 50 && !val.includes('pour') && !val.includes('for')) {
+        supplier.country = val;
+        break;
+      }
+    }
+  }
+  // Fallback : si "CN" apparait dans les infos fournisseur
+  if (!supplier.country) {
+    const cnMatch = text.match(/\b(CN)\b/);
+    if (cnMatch) supplier.country = 'China';
   }
 
   // Taux de reponse
