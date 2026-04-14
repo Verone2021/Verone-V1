@@ -13,7 +13,9 @@ import type { Contact as BaseContact } from '@verone/types';
 import logger from '@verone/utils/logger';
 import { createClient } from '@verone/utils/supabase/client';
 
-// Contact étendu avec jointures organisation + enseigne (retourné par les queries)
+import { useContactsMutations } from './use-contacts-mutations';
+
+// Contact étendu avec jointures organisation + enseigne
 export interface Contact extends BaseContact {
   organisation?: {
     id: string;
@@ -41,7 +43,6 @@ export interface CreateContactData {
   is_primary_contact?: boolean;
   is_billing_contact?: boolean;
   is_technical_contact?: boolean;
-
   preferred_communication_method?: 'email' | 'phone' | 'both';
   accepts_marketing?: boolean;
   accepts_notifications?: boolean;
@@ -62,13 +63,13 @@ export interface UpdateContactData {
   is_primary_contact?: boolean;
   is_billing_contact?: boolean;
   is_technical_contact?: boolean;
-
   preferred_communication_method?: 'email' | 'phone' | 'both';
   accepts_marketing?: boolean;
   accepts_notifications?: boolean;
   language_preference?: string;
   notes?: string;
   is_active?: boolean;
+  last_contact_date?: string;
 }
 
 interface ContactFilters {
@@ -76,10 +77,23 @@ interface ContactFilters {
   is_primary_contact?: boolean;
   is_billing_contact?: boolean;
   is_technical_contact?: boolean;
-
   is_active?: boolean;
   search?: string;
 }
+
+const CONTACT_SELECT = `
+  *,
+  organisation:organisations (
+    id,
+    legal_name,
+    type,
+    customer_type
+  ),
+  enseigne:enseignes (
+    id,
+    name
+  )
+`;
 
 export function useContacts() {
   const [loading, setLoading] = useState(false);
@@ -88,33 +102,17 @@ export function useContacts() {
   const { toast } = useToast();
   const supabase = createClient();
 
-  // Récupérer tous les contacts avec filtres
   const fetchContacts = useCallback(
     async (filters?: ContactFilters) => {
       setLoading(true);
       try {
         let query = supabase
           .from('contacts')
-          .select(
-            `
-          *,
-          organisation:organisations (
-            id,
-            legal_name,
-            type,
-            customer_type
-          ),
-          enseigne:enseignes (
-            id,
-            name
-          )
-`
-          )
+          .select(CONTACT_SELECT)
           .order('organisation_id', { ascending: true })
           .order('is_primary_contact', { ascending: false })
           .order('last_name', { ascending: true });
 
-        // Appliquer les filtres
         if (filters?.organisation_id) {
           query = query.eq('organisation_id', filters.organisation_id);
         }
@@ -166,28 +164,13 @@ export function useContacts() {
     [supabase, toast]
   );
 
-  // Récupérer un contact spécifique
   const fetchContact = useCallback(
     async (contactId: string) => {
       setLoading(true);
       try {
         const { data, error } = await supabase
           .from('contacts')
-          .select(
-            `
-          *,
-          organisation:organisations (
-            id,
-            legal_name,
-            type,
-            customer_type
-          ),
-          enseigne:enseignes (
-            id,
-            name
-          )
-`
-          )
+          .select(CONTACT_SELECT)
           .eq('id', contactId)
           .single();
 
@@ -218,7 +201,6 @@ export function useContacts() {
     [supabase, toast]
   );
 
-  // Récupérer les contacts d'une organisation
   const fetchOrganisationContacts = useCallback(
     async (organisationId: string) => {
       return fetchContacts({
@@ -229,33 +211,18 @@ export function useContacts() {
     [fetchContacts]
   );
 
-  // Récupérer le contact principal d'une organisation
   const fetchPrimaryContact = useCallback(
     async (organisationId: string) => {
       try {
         const { data, error } = await supabase
           .from('contacts')
-          .select(
-            `
-          *,
-          organisation:organisations (
-            id,
-            legal_name,
-            type,
-            customer_type
-          ),
-          enseigne:enseignes (
-            id,
-            name
-          )
-`
-          )
+          .select(CONTACT_SELECT)
           .eq('organisation_id', organisationId)
           .eq('is_primary_contact', true)
           .eq('is_active', true)
           .single();
 
-        if (error && error.code !== 'PGRST116') throw error; // PGRST116 = pas de résultat
+        if (error && error.code !== 'PGRST116') throw error;
 
         return data ?? null;
       } catch (error) {
@@ -274,271 +241,10 @@ export function useContacts() {
     [supabase]
   );
 
-  // Créer un nouveau contact
-  const createContact = useCallback(
-    async (data: CreateContactData) => {
-      setLoading(true);
-      try {
-        const user = await supabase.auth.getUser();
-
-        // Nettoyer les champs vides en les convertissant en null pour respecter les contraintes DB
-        const cleanData = {
-          ...data,
-          phone: data.phone?.trim() ? data.phone.trim() : null,
-          mobile: data.mobile?.trim() ? data.mobile.trim() : null,
-          secondary_email: data.secondary_email?.trim()
-            ? data.secondary_email.trim()
-            : null,
-          direct_line: data.direct_line?.trim()
-            ? data.direct_line.trim()
-            : null,
-          title: data.title?.trim() ? data.title.trim() : null,
-          department: data.department?.trim() ? data.department.trim() : null,
-          notes: data.notes?.trim() ? data.notes.trim() : null,
-        };
-
-        const insertData = {
-          ...cleanData,
-          created_by: user.data.user?.id,
-        };
-
-        logger.info('Création contact en cours', {
-          operation: 'create_contact',
-          resource: 'contacts',
-          userId: user.data.user?.id,
-          organisationId: data.organisation_id,
-        });
-
-        const { data: contact, error } = await supabase
-          .from('contacts')
-          .insert(insertData)
-          .select(
-            `
-          *,
-          organisation:organisations (
-            id,
-            legal_name,
-            type,
-            customer_type
-          ),
-          enseigne:enseignes (
-            id,
-            name
-          )
-`
-          )
-          .single();
-
-        if (error) {
-          logger.error(
-            'Erreur Supabase création contact',
-            new Error(error.message),
-            {
-              operation: 'create_contact',
-              resource: 'contacts',
-              errorCode: error.code,
-              organisationId: data.organisation_id,
-            }
-          );
-          throw error;
-        }
-
-        logger.info('Contact créé avec succès', {
-          operation: 'create_contact_success',
-          resource: 'contacts',
-          contactId: contact.id,
-          organisationId: data.organisation_id,
-        });
-
-        toast({
-          title: 'Succès',
-          description: `Contact ${data.first_name} ${data.last_name} créé avec succès`,
-        });
-
-        await fetchContacts();
-        return contact;
-      } catch (error: unknown) {
-        const err = error as {
-          code?: string;
-          details?: string;
-          hint?: string;
-          message?: string;
-        };
-        logger.error(
-          'Erreur création contact',
-          error instanceof Error ? error : new Error(String(error)),
-          {
-            operation: 'create_contact_failed',
-            resource: 'contacts',
-            errorCode: err.code,
-            errorDetails: err.details,
-            errorHint: err.hint,
-            organisationId: data.organisation_id,
-          }
-        );
-
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : 'Impossible de créer le contact';
-        toast({
-          title: 'Erreur',
-          description: errorMessage,
-          variant: 'destructive',
-        });
-        throw error;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [supabase, toast, fetchContacts]
-  );
-
-  // Mettre à jour un contact
-  const updateContact = useCallback(
-    async (contactId: string, data: UpdateContactData) => {
-      setLoading(true);
-      try {
-        const { data: contact, error } = await supabase
-          .from('contacts')
-          .update(data)
-          .eq('id', contactId)
-          .select(
-            `
-          *,
-          organisation:organisations (
-            id,
-            legal_name,
-            type,
-            customer_type
-          ),
-          enseigne:enseignes (
-            id,
-            name
-          )
-`
-          )
-          .single();
-
-        if (error) throw error;
-
-        toast({
-          title: 'Succès',
-          description: 'Contact mis à jour avec succès',
-        });
-
-        await fetchContacts();
-        if (currentContact?.id === contactId) {
-          setCurrentContact(contact as Contact);
-        }
-        return contact as Contact;
-      } catch (error: unknown) {
-        logger.error(
-          'Erreur mise à jour contact',
-          error instanceof Error ? error : new Error(String(error)),
-          {
-            operation: 'update_contact',
-            resource: 'contacts',
-            contactId,
-          }
-        );
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : 'Impossible de mettre à jour le contact';
-        toast({
-          title: 'Erreur',
-          description: errorMessage,
-          variant: 'destructive',
-        });
-        throw error;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [supabase, toast, fetchContacts, currentContact]
-  );
-
-  // Désactiver un contact (soft delete)
-  const deactivateContact = useCallback(
-    async (contactId: string) => {
-      return updateContact(contactId, { is_active: false });
-    },
-    [updateContact]
-  );
-
-  // Réactiver un contact
-  const activateContact = useCallback(
-    async (contactId: string) => {
-      return updateContact(contactId, { is_active: true });
-    },
-    [updateContact]
-  );
-
-  // Définir comme contact principal
-  const setPrimaryContact = useCallback(
-    async (contactId: string) => {
-      return updateContact(contactId, { is_primary_contact: true });
-    },
-    [updateContact]
-  );
-
-  // Mettre à jour la date de dernier contact
-  const updateLastContactDate = useCallback(
-    async (contactId: string) => {
-      return updateContact(contactId, {
-        last_contact_date: new Date().toISOString(),
-      } as UpdateContactData);
-    },
-    [updateContact]
-  );
-
-  // Supprimer définitivement un contact (à utiliser avec précaution)
-  const deleteContact = useCallback(
-    async (contactId: string) => {
-      setLoading(true);
-      try {
-        const { error } = await supabase
-          .from('contacts')
-          .delete()
-          .eq('id', contactId);
-
-        if (error) throw error;
-
-        toast({
-          title: 'Succès',
-          description: 'Contact supprimé définitivement',
-        });
-
-        await fetchContacts();
-        if (currentContact?.id === contactId) {
-          setCurrentContact(null);
-        }
-      } catch (error: unknown) {
-        logger.error(
-          'Erreur suppression contact',
-          error instanceof Error ? error : new Error(String(error)),
-          {
-            operation: 'delete_contact',
-            resource: 'contacts',
-            contactId,
-          }
-        );
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : 'Impossible de supprimer le contact';
-        toast({
-          title: 'Erreur',
-          description: errorMessage,
-          variant: 'destructive',
-        });
-        throw error;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [supabase, toast, fetchContacts, currentContact]
+  const mutations = useContactsMutations(
+    fetchContacts,
+    currentContact?.id ?? null,
+    setCurrentContact
   );
 
   // Utilitaires
@@ -559,24 +265,28 @@ export function useContacts() {
     return rolesStr.length > 0 ? rolesStr : 'Aucun rôle';
   }, []);
 
+  const isLoading = loading || mutations.loading;
+
   return {
     // État
-    loading,
+    loading: isLoading,
     contacts,
     currentContact,
 
-    // Actions principales
+    // Queries
     fetchContacts,
     fetchContact,
     fetchOrganisationContacts,
     fetchPrimaryContact,
-    createContact,
-    updateContact,
-    deactivateContact,
-    activateContact,
-    setPrimaryContact,
-    updateLastContactDate,
-    deleteContact,
+
+    // Mutations (destructured explicitly to avoid loading collision)
+    createContact: mutations.createContact,
+    updateContact: mutations.updateContact,
+    deactivateContact: mutations.deactivateContact,
+    activateContact: mutations.activateContact,
+    setPrimaryContact: mutations.setPrimaryContact,
+    updateLastContactDate: mutations.updateLastContactDate,
+    deleteContact: mutations.deleteContact,
 
     // Utilitaires
     getContactFullName,

@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 import { useAuthUser } from '@/hooks/use-auth-user';
 import { trackMetaAddToCart } from '@/components/analytics/MetaPixel';
@@ -119,18 +119,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Sync to Supabase (anonymous via session_id)
   // Untyped Supabase client for shopping_carts (table not yet in generated types)
-  const getSupabase = useCallback(() => {
-    return createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      }
-    );
-  }, []);
+  // Use the SSR browser client so the correct JWT (anon or authenticated)
+  // is sent automatically — prevents 401 when user_id is non-null in the body
+  const getSupabase = useCallback(() => createBrowserSupabaseClient(), []);
 
   const syncToSupabase = useCallback(
     async (updatedItems: CartItem[]) => {

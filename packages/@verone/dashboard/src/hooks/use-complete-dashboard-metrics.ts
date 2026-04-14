@@ -5,14 +5,14 @@
  * @updated 2026-01-12 - Intégration complète des KPIs (Finance, Orders, Stock, LinkMe)
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import { useTreasuryStats } from '@verone/finance/hooks';
 import { useOrganisations } from '@verone/organisations/hooks';
-import { createClient } from '@verone/utils/supabase/client';
 
 import { useStockOrdersMetrics } from '@verone/dashboard/hooks/metrics/use-stock-orders-metrics';
 
+import { useDashboardAdditionalData } from './use-dashboard-additional-data';
 import { useRealDashboardMetrics } from './use-real-dashboard-metrics';
 
 // ============================================================================
@@ -109,7 +109,6 @@ export interface CompleteDashboardMetrics {
 // ============================================================================
 
 export function useCompleteDashboardMetrics() {
-  // Phase 1 - Données réelles
   const {
     metrics: catalogueMetrics,
     isLoading: catalogueLoading,
@@ -118,11 +117,9 @@ export function useCompleteDashboardMetrics() {
 
   const { organisations, loading: organisationsLoading } = useOrganisations();
 
-  // Phase 2 - Données réelles Stock/Commandes/Sourcing
   const { metrics: stockOrdersMetrics, isLoading: stockOrdersLoading } =
     useStockOrdersMetrics();
 
-  // Treasury - Données Qonto + Supabase
   const {
     stats: treasuryStats,
     bankBalance,
@@ -130,288 +127,21 @@ export function useCompleteDashboardMetrics() {
     loading: treasuryLoading,
   } = useTreasuryStats();
 
-  // États internes pour les données qui nécessitent un fetch explicite
-  const [orderMetrics, setOrderMetrics] = useState({
-    pending: 0,
-    processing: 0,
-    completed: 0,
-    cancelled: 0,
-    trend: 0,
-    dayRevenue: 0,
-    monthRevenue: 0,
-    averageOrderValue: 0,
-  });
-  const [linkmeMetrics, setLinkmeMetrics] = useState({
-    revenue: 0,
-    commissions: 0,
-    ordersCount: 0,
-    activeAffiliates: 0,
-    trend: 0,
-    averageMargin: 0,
-    conversionRate: 0,
-  });
-  const [stockMetrics, setStockMetrics] = useState({
-    inStock: 0,
-    outOfStock: 0,
-    lowStock: 0,
-    critical: 0,
-  });
-  const [salesOrdersCount, setSalesOrdersCount] = useState<number>(0);
-  const [stockAlertsFromRPC, setStockAlertsFromRPC] = useState<number>(0);
-  const [dataLoading, setDataLoading] = useState(true);
+  const {
+    orderMetrics,
+    linkmeMetrics,
+    stockMetrics,
+    salesOrdersCount,
+    stockAlertsFromRPC,
+    dataLoading,
+    fetchAdditionalData,
+  } = useDashboardAdditionalData();
 
-  const supabase = createClient();
-
-  // Fetch des données additionnelles - OPTIMISÉ avec Promise.all()
-  const fetchAdditionalData = useCallback(async () => {
-    try {
-      setDataLoading(true);
-
-      // Vérifier authentification
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        setDataLoading(false);
-        return;
-      }
-
-      // ========================================
-      // Dates de référence
-      // ========================================
-      const now = new Date();
-      const startOfToday = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate()
-      );
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const startOfPrevMonth = new Date(
-        now.getFullYear(),
-        now.getMonth() - 1,
-        1
-      );
-
-      // ========================================
-      // OPTIMISATION: Toutes les requêtes en parallèle
-      // RPC + 7 requêtes parallèles (au lieu de séquentielles)
-      // ========================================
-      const [
-        { data: stockAlertsCount },
-        { data: monthOrders },
-        { data: allInvoices }, // Fusionnée: récupère mois + mois précédent
-        { data: products },
-        { data: allLinkmeCommissions }, // Table linkme_commissions sans filtre temporel
-        { data: _pendingPayments },
-        { data: affiliates },
-        { data: selections },
-      ] = await Promise.all([
-        // 0. Appel RPC pour les alertes stock (source de vérité) - INCLUS dans Promise.all
-        supabase.rpc('get_stock_alerts_count'),
-
-        // 1. Commandes du mois (pour stats de statut)
-        supabase
-          .from('sales_orders')
-          .select('id, status, total_ht, created_at')
-          .gte('created_at', startOfMonth.toISOString()),
-
-        // 2. Factures (mois precedent + mois en cours) via financial_documents
-        // Table invoices dropped in migration 20260321190000, replaced by financial_documents
-        supabase
-          .from('financial_documents')
-          .select('total_ht, status, created_at')
-          .eq('document_type', 'customer_invoice')
-          .gte('created_at', startOfPrevMonth.toISOString())
-          .neq('status', 'cancelled'),
-
-        // 3. Produits pour stock (fix: archived_at au lieu de archived)
-        supabase
-          .from('products')
-          .select('id, stock_real, min_stock')
-          .is('archived_at', null),
-
-        // 4. Commissions LinkMe - SANS filtre temporel pour avoir le total
-        supabase
-          .from('linkme_commissions')
-          .select('id, order_amount_ht, affiliate_commission_ttc, created_at'),
-
-        // 5. Paiements en attente
-        supabase
-          .from('linkme_payment_requests')
-          .select('total_amount_ttc')
-          .in('status', ['pending', 'invoice_received']),
-
-        // 6. Affiliés actifs
-        supabase
-          .from('linkme_affiliates')
-          .select('id, status')
-          .eq('status', 'active'),
-
-        // 7. Sélections du mois
-        supabase
-          .from('linkme_selections')
-          .select('id')
-          .gte('created_at', startOfMonth.toISOString()),
-      ]);
-
-      setStockAlertsFromRPC(stockAlertsCount ?? 0);
-
-      // ========================================
-      // Filtrage client-side des factures (rapide)
-      // ========================================
-      const monthInvoices = (allInvoices ?? []).filter(
-        i => new Date(i.created_at) >= startOfMonth
-      );
-      const prevMonthInvoices = (allInvoices ?? []).filter(
-        i =>
-          new Date(i.created_at) >= startOfPrevMonth &&
-          new Date(i.created_at) < startOfMonth
-      );
-      const todayInvoices = (allInvoices ?? []).filter(
-        i => new Date(i.created_at) >= startOfToday
-      );
-
-      // ========================================
-      // Commissions LinkMe - PAS de filtre temporel
-      // (source de vérité: table linkme_commissions)
-      // ========================================
-
-      // ========================================
-      // Orders Metrics
-      // ========================================
-      const pending =
-        monthOrders?.filter(o => ['draft', 'validated'].includes(o.status))
-          .length ?? 0;
-      const processing =
-        monthOrders?.filter(o => o.status === 'partially_shipped').length ?? 0;
-      const completed =
-        monthOrders?.filter(o => ['shipped', 'delivered'].includes(o.status))
-          .length ?? 0;
-      const cancelled =
-        monthOrders?.filter(o => o.status === 'cancelled').length ?? 0;
-
-      // CA du mois = somme des factures (pas des commandes)
-      const monthRevenue = monthInvoices.reduce(
-        (sum, i) => sum + parseFloat(String(i.total_ht ?? 0)),
-        0
-      );
-
-      const prevMonthRevenue = prevMonthInvoices.reduce(
-        (sum, i) => sum + parseFloat(String(i.total_ht ?? 0)),
-        0
-      );
-
-      const dayRevenue = todayInvoices.reduce(
-        (sum, i) => sum + parseFloat(String(i.total_ht ?? 0)),
-        0
-      );
-
-      // AOV = Total HT commandes / nombre de commandes non annulées
-      const validMonthOrders = (monthOrders ?? []).filter(
-        o => o.status !== 'cancelled'
-      );
-      const totalOrdersRevenue = validMonthOrders.reduce(
-        (sum, o) => sum + parseFloat(String(o.total_ht ?? 0)),
-        0
-      );
-      const averageOrderValue =
-        validMonthOrders.length > 0
-          ? totalOrdersRevenue / validMonthOrders.length
-          : 0;
-
-      let orderTrend = 0;
-      if (prevMonthRevenue > 0) {
-        orderTrend =
-          ((monthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100;
-      } else if (monthRevenue > 0) {
-        orderTrend = 100;
-      }
-
-      setSalesOrdersCount(monthOrders?.length ?? 0);
-      setOrderMetrics({
-        pending,
-        processing,
-        completed,
-        cancelled,
-        trend: Math.round(orderTrend * 10) / 10,
-        dayRevenue: Math.round(dayRevenue * 100) / 100,
-        monthRevenue: Math.round(monthRevenue * 100) / 100,
-        averageOrderValue: Math.round(averageOrderValue * 100) / 100,
-      });
-
-      // ========================================
-      // Stock Metrics
-      // ========================================
-      let inStock = 0;
-      let outOfStock = 0;
-      let lowStock = 0;
-      let critical = 0;
-
-      (products ?? []).forEach(p => {
-        const stockQty = p.stock_real ?? 0;
-        const threshold = p.min_stock ?? 5;
-
-        if (stockQty === 0) {
-          outOfStock++;
-        } else if (stockQty <= 2) {
-          critical++;
-        } else if (stockQty <= threshold) {
-          lowStock++;
-        } else {
-          inStock++;
-        }
-      });
-
-      setStockMetrics({ inStock, outOfStock, lowStock, critical });
-
-      // ========================================
-      // LinkMe Metrics - Source: table linkme_commissions
-      // ========================================
-      // Total des commissions = somme de affiliate_commission_ttc (TOUTES les commissions)
-      const linkmeCommissions = (allLinkmeCommissions ?? []).reduce(
-        (sum, c) => sum + parseFloat(String(c.affiliate_commission_ttc ?? 0)),
-        0
-      );
-
-      // CA LinkMe = somme des order_amount_ht
-      const linkmeRevenue = (allLinkmeCommissions ?? []).reduce(
-        (sum, c) => sum + parseFloat(String(c.order_amount_ht ?? 0)),
-        0
-      );
-
-      // Calcul du taux de marge moyen
-      const avgMargin =
-        linkmeRevenue > 0 ? (linkmeCommissions / linkmeRevenue) * 100 : 0;
-
-      // Taux de conversion (commandes / sélections)
-      const selectionsCount = selections?.length ?? 0;
-      const commissionsCount = (allLinkmeCommissions ?? []).length;
-      const conversionRate =
-        selectionsCount > 0 ? (commissionsCount / selectionsCount) * 100 : 0;
-
-      setLinkmeMetrics({
-        revenue: linkmeRevenue,
-        commissions: linkmeCommissions,
-        ordersCount: commissionsCount,
-        activeAffiliates: affiliates?.length ?? 0,
-        trend: 0, // Pas de trend sans filtre temporel
-        averageMargin: Math.round(avgMargin * 10) / 10,
-        conversionRate: Math.round(conversionRate * 10) / 10,
-      });
-    } catch (err) {
-      console.error('Error fetching additional dashboard data:', err);
-    } finally {
-      setDataLoading(false);
-    }
-  }, [supabase]);
-
-  // Charger les données au montage
   useEffect(() => {
     void fetchAdditionalData();
   }, [fetchAdditionalData]);
 
-  // Calcul statistiques organisations (excluant particuliers)
+  // Organisations stats (excluant particuliers)
   const organisationsOnly = organisations.filter(
     o =>
       o.type !== 'customer' ||
@@ -429,15 +159,14 @@ export function useCompleteDashboardMetrics() {
     partners: organisations.filter(o => o.type === 'partner').length,
   };
 
-  // Phase 2 - Données réelles depuis Supabase
   const stocksData = {
     totalValue: stockOrdersMetrics?.stock_value ?? 0,
-    lowStockItems: stockAlertsFromRPC, // Source de vérité: RPC get_stock_alerts_count()
+    lowStockItems: stockAlertsFromRPC,
     recentMovements: 0,
     inStock: stockMetrics.inStock,
     outOfStock: stockMetrics.outOfStock,
     critical: stockMetrics.critical,
-    trend: 0, // Pas de trend disponible pour stocks (données statiques)
+    trend: 0,
   };
 
   const ordersData = {
@@ -454,36 +183,6 @@ export function useCompleteDashboardMetrics() {
     trend: orderMetrics.trend,
   };
 
-  const sourcingData = {
-    productsToSource: stockOrdersMetrics?.products_to_source ?? 0,
-    samplesWaiting: 0,
-  };
-
-  // Treasury data
-  const treasuryData = {
-    balance: bankBalance ?? 0,
-    accountsReceivable: treasuryStats?.total_invoiced_ar ?? 0,
-    accountsPayable: treasuryStats?.total_invoiced_ap ?? 0,
-    unpaidInvoices:
-      (treasuryStats?.unpaid_count_ar ?? 0) +
-      (treasuryStats?.unpaid_count_ap ?? 0),
-    burnRate: treasuryMetrics?.burnRate ?? 0,
-    runwayMonths: treasuryMetrics?.runwayMonths ?? 0,
-    cashFlowNet: treasuryMetrics?.cashFlowNet ?? 0,
-    trend: treasuryMetrics?.cashFlowVariation ?? 0,
-  };
-
-  // LinkMe data
-  const linkmeData = {
-    totalCommissions: linkmeMetrics.commissions,
-    ordersCount: linkmeMetrics.ordersCount,
-    activeAffiliates: linkmeMetrics.activeAffiliates,
-    conversionRate: linkmeMetrics.conversionRate,
-    averageMargin: linkmeMetrics.averageMargin,
-    revenue: linkmeMetrics.revenue,
-    trend: linkmeMetrics.trend,
-  };
-
   const metrics: CompleteDashboardMetrics = {
     catalogue: {
       totalProducts: catalogueMetrics?.products.total ?? 0,
@@ -496,10 +195,31 @@ export function useCompleteDashboardMetrics() {
     organisations: organisationsStats,
     stocks: stocksData,
     orders: ordersData,
-    sourcing: sourcingData,
-    treasury: treasuryData,
-    linkme: linkmeData,
-    // Compatibilité avec sections de détail du dashboard
+    sourcing: {
+      productsToSource: stockOrdersMetrics?.products_to_source ?? 0,
+      samplesWaiting: 0,
+    },
+    treasury: {
+      balance: bankBalance ?? 0,
+      accountsReceivable: treasuryStats?.total_invoiced_ar ?? 0,
+      accountsPayable: treasuryStats?.total_invoiced_ap ?? 0,
+      unpaidInvoices:
+        (treasuryStats?.unpaid_count_ar ?? 0) +
+        (treasuryStats?.unpaid_count_ap ?? 0),
+      burnRate: treasuryMetrics?.burnRate ?? 0,
+      runwayMonths: treasuryMetrics?.runwayMonths ?? 0,
+      cashFlowNet: treasuryMetrics?.cashFlowNet ?? 0,
+      trend: treasuryMetrics?.cashFlowVariation ?? 0,
+    },
+    linkme: {
+      totalCommissions: linkmeMetrics.commissions,
+      ordersCount: linkmeMetrics.ordersCount,
+      activeAffiliates: linkmeMetrics.activeAffiliates,
+      conversionRate: linkmeMetrics.conversionRate,
+      averageMargin: linkmeMetrics.averageMargin,
+      revenue: linkmeMetrics.revenue,
+      trend: linkmeMetrics.trend,
+    },
     collections: {
       total: catalogueMetrics?.collections.total ?? 0,
       active: catalogueMetrics?.collections.active ?? 0,
@@ -518,12 +238,11 @@ export function useCompleteDashboardMetrics() {
     stockOrdersLoading ||
     treasuryLoading ||
     dataLoading;
-  const error = catalogueError;
 
   return {
     metrics,
-    isLoading: isLoading,
-    error,
+    isLoading,
+    error: catalogueError,
     refresh: fetchAdditionalData,
   };
 }

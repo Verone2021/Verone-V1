@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
-import { Plus, Trash2, Search } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
-import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import {
@@ -14,18 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@verone/ui';
-import { Input } from '@verone/ui';
-import { Label } from '@verone/ui';
-import { Switch } from '@verone/ui';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@verone/ui';
-import { Textarea } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
 import {
   useCreatePriceListItem,
@@ -35,6 +22,12 @@ import {
 } from '@verone/finance/hooks';
 import { useProducts } from '@verone/products/hooks';
 
+import { PriceTierForm, type TierForm } from './PriceTierForm';
+import {
+  PriceProductSelector,
+  type SelectedProduct,
+} from './PriceProductSelector';
+
 interface PriceListItemFormModalProps {
   open: boolean;
   onClose: () => void;
@@ -42,24 +35,17 @@ interface PriceListItemFormModalProps {
   itemId?: string | null;
 }
 
-interface TierForm {
-  min_quantity: number;
-  max_quantity: number | null;
-  price_ht: number;
-  discount_rate: number;
-  margin_rate: number;
-  valid_from: string;
-  valid_until: string;
-  is_active: boolean;
-  notes: string;
-}
-
-interface SelectedProduct {
-  id: string;
-  name: string;
-  sku: string;
-  price_ht: number;
-}
+const DEFAULT_TIER: TierForm = {
+  min_quantity: 1,
+  max_quantity: null,
+  price_ht: 0,
+  discount_rate: 0,
+  margin_rate: 0,
+  valid_from: '',
+  valid_until: '',
+  is_active: true,
+  notes: '',
+};
 
 export function PriceListItemFormModal({
   open,
@@ -69,28 +55,12 @@ export function PriceListItemFormModal({
 }: PriceListItemFormModalProps) {
   const isEditMode = !!itemId;
 
-  // Product selection state
   const [productSearchTerm, setProductSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] =
     useState<SelectedProduct | null>(null);
   const [showProductSearch, setShowProductSearch] = useState(!isEditMode);
+  const [tiers, setTiers] = useState<TierForm[]>([DEFAULT_TIER]);
 
-  // Tiers configuration state
-  const [tiers, setTiers] = useState<TierForm[]>([
-    {
-      min_quantity: 1,
-      max_quantity: null,
-      price_ht: 0,
-      discount_rate: 0,
-      margin_rate: 0,
-      valid_from: '',
-      valid_until: '',
-      is_active: true,
-      notes: '',
-    },
-  ]);
-
-  // Hooks
   const { products } = useProducts({
     search: productSearchTerm,
   }) as unknown as {
@@ -104,6 +74,7 @@ export function PriceListItemFormModal({
     useUpdatePriceListItem();
 
   const isLoading = isCreating || isUpdating;
+  const currency = (priceList as unknown as { currency?: string })?.currency;
 
   // Load existing item in edit mode
   useEffect(() => {
@@ -118,7 +89,7 @@ export function PriceListItemFormModal({
             min_quantity: item.min_quantity,
             max_quantity: item.max_quantity,
             price_ht: (item as unknown as { price_ht: number }).price_ht,
-            discount_rate: (item.discount_rate ?? 0) * 100, // Convert to percentage
+            discount_rate: (item.discount_rate ?? 0) * 100,
             margin_rate: (item.margin_rate ?? 0) * 100,
             valid_from: item.valid_from ?? '',
             valid_until: item.valid_until ?? '',
@@ -134,17 +105,10 @@ export function PriceListItemFormModal({
   const handleSelectProduct = (product: SelectedProduct) => {
     setSelectedProduct(product);
     setShowProductSearch(false);
-    // Initialize first tier with product's base price
-    setTiers([
-      {
-        ...tiers[0],
-        price_ht: product.price_ht ?? 0,
-      },
-    ]);
+    setTiers([{ ...DEFAULT_TIER, price_ht: product.price_ht ?? 0 }]);
   };
 
   const handleAddTier = () => {
-    // Add new tier with next logical min_quantity
     const lastTier = tiers[tiers.length - 1];
     const nextMinQty = lastTier.max_quantity
       ? lastTier.max_quantity + 1
@@ -155,7 +119,7 @@ export function PriceListItemFormModal({
       {
         min_quantity: nextMinQty,
         max_quantity: null,
-        price_ht: lastTier.price_ht * 0.95, // Suggest 5% discount
+        price_ht: lastTier.price_ht * 0.95,
         discount_rate: 0,
         margin_rate: 0,
         valid_from: lastTier.valid_from,
@@ -178,11 +142,15 @@ export function PriceListItemFormModal({
     value: TierForm[keyof TierForm]
   ) => {
     const newTiers = [...tiers];
-    newTiers[index] = {
-      ...newTiers[index],
-      [field]: value,
-    };
+    newTiers[index] = { ...newTiers[index], [field]: value };
     setTiers(newTiers);
+  };
+
+  const resetForm = () => {
+    setSelectedProduct(null);
+    setProductSearchTerm('');
+    setShowProductSearch(true);
+    setTiers([DEFAULT_TIER]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -193,7 +161,6 @@ export function PriceListItemFormModal({
       return;
     }
 
-    // Validate tiers
     for (const tier of tiers) {
       if (tier.min_quantity < 1) {
         alert('La quantité minimum doit être au moins 1');
@@ -209,13 +176,11 @@ export function PriceListItemFormModal({
       }
     }
 
-    // Sort tiers by min_quantity
     const sortedTiers = [...tiers].sort(
       (a, b) => a.min_quantity - b.min_quantity
     );
 
     if (isEditMode && itemId) {
-      // Update existing item (only one tier in edit mode)
       const tier = sortedTiers[0];
       updateItem(
         {
@@ -243,7 +208,6 @@ export function PriceListItemFormModal({
         }
       );
     } else {
-      // Create multiple items (one per tier)
       let successCount = 0;
       const totalTiers = sortedTiers.length;
 
@@ -260,8 +224,7 @@ export function PriceListItemFormModal({
               max_quantity: tier.max_quantity ?? undefined,
               margin_rate:
                 tier.margin_rate > 0 ? tier.margin_rate / 100 : undefined,
-              currency: (priceList as unknown as { currency?: string })
-                ?.currency,
+              currency,
               valid_from: tier.valid_from ?? undefined,
               valid_until: tier.valid_until ?? undefined,
               is_active: tier.is_active,
@@ -286,25 +249,6 @@ export function PriceListItemFormModal({
     }
   };
 
-  const resetForm = () => {
-    setSelectedProduct(null);
-    setProductSearchTerm('');
-    setShowProductSearch(true);
-    setTiers([
-      {
-        min_quantity: 1,
-        max_quantity: null,
-        price_ht: 0,
-        discount_rate: 0,
-        margin_rate: 0,
-        valid_from: '',
-        valid_until: '',
-        is_active: true,
-        notes: '',
-      },
-    ]);
-  };
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
@@ -324,67 +268,12 @@ export function PriceListItemFormModal({
         <form onSubmit={e => void handleSubmit(e)} className="space-y-6">
           {/* Product Selection */}
           {showProductSearch && !isEditMode && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  1. Sélectionner le Produit
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      placeholder="Rechercher par nom ou SKU..."
-                      value={productSearchTerm}
-                      onChange={e => setProductSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-
-                  {products && products.length > 0 && (
-                    <div className="max-h-64 overflow-y-auto border rounded-lg">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Produit</TableHead>
-                            <TableHead>SKU</TableHead>
-                            <TableHead>Prix Catalogue</TableHead>
-                            <TableHead />
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {products.map((product: SelectedProduct) => (
-                            <TableRow key={product.id}>
-                              <TableCell className="font-medium">
-                                {product.name}
-                              </TableCell>
-                              <TableCell>
-                                <span className="font-mono text-sm">
-                                  {product.sku}
-                                </span>
-                              </TableCell>
-                              <TableCell>
-                                {formatCurrency(product.price_ht)}
-                              </TableCell>
-                              <TableCell>
-                                <ButtonV2
-                                  type="button"
-                                  size="sm"
-                                  onClick={() => handleSelectProduct(product)}
-                                >
-                                  Sélectionner
-                                </ButtonV2>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <PriceProductSelector
+              searchTerm={productSearchTerm}
+              onSearchChange={setProductSearchTerm}
+              products={products}
+              onSelect={handleSelectProduct}
+            />
           )}
 
           {/* Selected Product Info */}
@@ -450,201 +339,16 @@ export function PriceListItemFormModal({
               <CardContent>
                 <div className="space-y-4">
                   {tiers.map((tier, index) => (
-                    <div
+                    <PriceTierForm
                       key={index}
-                      className="p-4 border rounded-lg space-y-4"
-                    >
-                      <div className="flex items-center justify-between">
-                        <Badge variant="secondary">Palier {index + 1}</Badge>
-                        {!isEditMode && tiers.length > 1 && (
-                          <ButtonV2
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRemoveTier(index)}
-                            className="text-red-600 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </ButtonV2>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        {/* Quantités */}
-                        <div className="space-y-2">
-                          <Label htmlFor={`min_qty_${index}`}>
-                            Quantité Minimum{' '}
-                            <span className="text-red-600">*</span>
-                          </Label>
-                          <Input
-                            id={`min_qty_${index}`}
-                            type="number"
-                            min="1"
-                            value={tier.min_quantity}
-                            onChange={e =>
-                              handleTierChange(
-                                index,
-                                'min_quantity',
-                                parseInt(e.target.value) || 1
-                              )
-                            }
-                            required
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor={`max_qty_${index}`}>
-                            Quantité Maximum
-                          </Label>
-                          <Input
-                            id={`max_qty_${index}`}
-                            type="number"
-                            min={tier.min_quantity}
-                            value={tier.max_quantity ?? ''}
-                            onChange={e =>
-                              handleTierChange(
-                                index,
-                                'max_quantity',
-                                e.target.value ? parseInt(e.target.value) : null
-                              )
-                            }
-                            placeholder="∞ (illimité)"
-                          />
-                        </div>
-
-                        {/* Prix et Remises */}
-                        <div className="space-y-2">
-                          <Label htmlFor={`price_${index}`}>
-                            Prix HT (
-                            {
-                              (priceList as unknown as { currency?: string })
-                                ?.currency
-                            }
-                            ) <span className="text-red-600">*</span>
-                          </Label>
-                          <Input
-                            id={`price_${index}`}
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={tier.price_ht}
-                            onChange={e =>
-                              handleTierChange(
-                                index,
-                                'price_ht',
-                                parseFloat(e.target.value) || 0
-                              )
-                            }
-                            required
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor={`discount_${index}`}>
-                            Remise (%)
-                          </Label>
-                          <Input
-                            id={`discount_${index}`}
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            max="100"
-                            value={tier.discount_rate}
-                            onChange={e =>
-                              handleTierChange(
-                                index,
-                                'discount_rate',
-                                parseFloat(e.target.value) || 0
-                              )
-                            }
-                            placeholder="0"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor={`margin_${index}`}>Marge (%)</Label>
-                          <Input
-                            id={`margin_${index}`}
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            max="100"
-                            value={tier.margin_rate}
-                            onChange={e =>
-                              handleTierChange(
-                                index,
-                                'margin_rate',
-                                parseFloat(e.target.value) || 0
-                              )
-                            }
-                            placeholder="0"
-                          />
-                        </div>
-
-                        {/* Validité */}
-                        <div className="space-y-2">
-                          <Label htmlFor={`valid_from_${index}`}>
-                            Date Début Validité
-                          </Label>
-                          <Input
-                            id={`valid_from_${index}`}
-                            type="date"
-                            value={tier.valid_from}
-                            onChange={e =>
-                              handleTierChange(
-                                index,
-                                'valid_from',
-                                e.target.value
-                              )
-                            }
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor={`valid_until_${index}`}>
-                            Date Fin Validité
-                          </Label>
-                          <Input
-                            id={`valid_until_${index}`}
-                            type="date"
-                            value={tier.valid_until}
-                            onChange={e =>
-                              handleTierChange(
-                                index,
-                                'valid_until',
-                                e.target.value
-                              )
-                            }
-                          />
-                        </div>
-                      </div>
-
-                      {/* Notes */}
-                      <div className="space-y-2">
-                        <Label htmlFor={`notes_${index}`}>Notes</Label>
-                        <Textarea
-                          id={`notes_${index}`}
-                          value={tier.notes}
-                          onChange={e =>
-                            handleTierChange(index, 'notes', e.target.value)
-                          }
-                          placeholder="Notes optionnelles sur ce palier"
-                          rows={2}
-                        />
-                      </div>
-
-                      {/* Active toggle */}
-                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <Label htmlFor={`active_${index}`}>Palier actif</Label>
-                        <Switch
-                          id={`active_${index}`}
-                          checked={tier.is_active}
-                          onCheckedChange={checked =>
-                            handleTierChange(index, 'is_active', checked)
-                          }
-                        />
-                      </div>
-                    </div>
+                      tier={tier}
+                      index={index}
+                      currency={currency}
+                      isEditMode={isEditMode}
+                      tiersCount={tiers.length}
+                      onChange={handleTierChange}
+                      onRemove={handleRemoveTier}
+                    />
                   ))}
                 </div>
               </CardContent>

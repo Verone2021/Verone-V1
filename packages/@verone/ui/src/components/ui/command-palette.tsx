@@ -1,8 +1,8 @@
 'use client';
 
 /**
- * 🎛️ COMMAND PALETTE - Vérone Back Office
- * Interface Cmd+K style révolutionnaire avec AI-powered search
+ * COMMAND PALETTE - Vérone Back Office
+ * Interface Cmd+K style avec AI-powered search
  * Design System: Noir/Blanc strict, animations subtiles
  */
 
@@ -15,248 +15,29 @@ import React, {
 } from 'react';
 
 import { cn } from '@verone/utils';
-import {
-  Search,
-  Zap,
-  Settings,
-  Database,
-  Brain,
-  Activity,
-  Download,
-  RefreshCw,
-  Code,
-  Users,
-  Moon,
-  Keyboard,
-  HelpCircle,
-  Clock,
-  Star,
-  Bookmark,
-  Globe,
-  Shield,
-  Gauge,
-} from 'lucide-react';
+import { Search } from 'lucide-react';
 
-import { Badge } from './badge';
 import { Button } from './button';
 import {
   CommandDialog,
   CommandEmpty,
   CommandGroup,
   CommandInput,
-  CommandItem,
   CommandList,
   CommandSeparator,
-  CommandShortcut,
 } from './command';
+import { CommandPaletteItem } from './CommandPaletteItem';
+import { defaultCommands, categoryIcons } from './command-palette.defaults';
+import {
+  type CommandAction,
+  type CommandPaletteProps,
+  categoryLabels,
+} from './command-palette.types';
 
-// Types pour les commandes
-export interface CommandAction {
-  id: string;
-  title: string;
-  description?: string;
-  icon?: React.ReactNode;
-  shortcut?: string[];
-  category:
-    | 'navigation'
-    | 'actions'
-    | 'tools'
-    | 'system'
-    | 'recent'
-    | 'favorites';
-  keywords: string[];
-  handler: () => void | Promise<void>;
-  requiresConfirmation?: boolean;
-  premium?: boolean;
-}
-
-interface CommandPaletteProps {
-  className?: string;
-  commands?: CommandAction[];
-  onCommandExecute?: (command: CommandAction) => void;
-  placeholder?: string;
-  maxResults?: number;
-}
-
-// Commandes par défaut Vérone
-const defaultCommands: CommandAction[] = [
-  // Navigation
-  {
-    id: 'nav-dashboard',
-    title: 'Ouvrir Dashboard',
-    description: 'Accéder au tableau de bord principal',
-    icon: <Activity className="w-4 h-4" />,
-    shortcut: ['g', 'd'],
-    category: 'navigation',
-    keywords: ['dashboard', 'accueil', 'tableau', 'bord'],
-    handler: () => {
-      window.location.href = '/dashboard';
-    },
-  },
-  {
-    id: 'nav-catalogue',
-    title: 'Aller au Catalogue',
-    description: 'Gérer les produits et collections',
-    icon: <Database className="w-4 h-4" />,
-    shortcut: ['g', 'c'],
-    category: 'navigation',
-    keywords: ['catalogue', 'produits', 'collections'],
-    handler: () => {
-      window.location.href = '/catalogue';
-    },
-  },
-  {
-    id: 'nav-consultations',
-    title: 'Consultations Clients',
-    description: 'Voir les consultations en cours',
-    icon: <Users className="w-4 h-4" />,
-    shortcut: ['g', 'o'],
-    category: 'navigation',
-    keywords: ['consultations', 'clients', 'projets'],
-    handler: () => {
-      window.location.href = '/consultations';
-    },
-  },
-  {
-    id: 'nav-stocks',
-    title: 'Gestion des Stocks',
-    description: 'Inventaire et mouvements',
-    icon: <Database className="w-4 h-4" />,
-    shortcut: ['g', 's'],
-    category: 'navigation',
-    keywords: ['stocks', 'inventaire', 'mouvements'],
-    handler: () => {
-      window.location.href = '/stocks';
-    },
-  },
-
-  // Actions principales
-  {
-    id: 'action-force-sync',
-    title: 'Force Sync + AI Check',
-    description: 'Analyser tous les systèmes avec IA',
-    icon: <Zap className="w-4 h-4" />,
-    shortcut: ['shift', 'ctrl', 's'],
-    category: 'actions',
-    keywords: ['sync', 'analyse', 'erreurs', 'ia', 'diagnostic'],
-    handler: async () => {
-      const event = new CustomEvent('force-sync-ai-check');
-      window.dispatchEvent(event);
-    },
-  },
-  {
-    id: 'action-generate-report',
-    title: 'Générer Rapport',
-    description: 'Créer rapport complet des erreurs',
-    icon: <Download className="w-4 h-4" />,
-    shortcut: ['ctrl', 'r'],
-    category: 'actions',
-    keywords: ['rapport', 'export', 'télécharger', 'erreurs'],
-    handler: async () => {
-      const event = new CustomEvent('generate-error-report');
-      window.dispatchEvent(event);
-    },
-  },
-  {
-    id: 'action-clear-errors',
-    title: 'Clear All Errors',
-    description: 'Effacer toutes les erreurs détectées',
-    icon: <RefreshCw className="w-4 h-4" />,
-    shortcut: ['ctrl', 'shift', 'x'],
-    category: 'actions',
-    keywords: ['clear', 'effacer', 'reset', 'erreurs'],
-    requiresConfirmation: true,
-    handler: async () => {
-      const event = new CustomEvent('clear-all-errors');
-      window.dispatchEvent(event);
-    },
-  },
-
-  // Outils
-  {
-    id: 'tool-ai-insights',
-    title: 'AI Insights Panel',
-    description: 'Ouvrir les insights IA avancés',
-    icon: <Brain className="w-4 h-4" />,
-    shortcut: ['ctrl', 'i'],
-    category: 'tools',
-    keywords: ['ia', 'intelligence', 'insights', 'analyse', 'prédictions'],
-    handler: () => {
-      const event = new CustomEvent('open-ai-insights');
-      window.dispatchEvent(event);
-    },
-  },
-  {
-    id: 'tool-performance-monitor',
-    title: 'Performance Monitor',
-    description: 'Surveiller les performances système',
-    icon: <Gauge className="w-4 h-4" />,
-    shortcut: ['ctrl', 'p'],
-    category: 'tools',
-    keywords: ['performance', 'monitoring', 'vitesse', 'optimisation'],
-    handler: () => {
-      const event = new CustomEvent('open-performance-monitor');
-      window.dispatchEvent(event);
-    },
-  },
-  {
-    id: 'tool-console-check',
-    title: 'Browser Console Check',
-    description: 'Vérifier les erreurs console',
-    icon: <Code className="w-4 h-4" />,
-    shortcut: ['ctrl', 'shift', 'c'],
-    category: 'tools',
-    keywords: ['console', 'browser', 'javascript', 'erreurs'],
-    handler: () => {
-      // Ouvrir les DevTools ou déclencher un check console
-      const event = new CustomEvent('browser-console-check');
-      window.dispatchEvent(event);
-    },
-  },
-
-  // Système
-  {
-    id: 'system-dark-mode',
-    title: 'Toggle Dark Mode',
-    description: 'Basculer entre thème clair et sombre',
-    icon: <Moon className="w-4 h-4" />,
-    shortcut: ['ctrl', 'd'],
-    category: 'system',
-    keywords: ['dark', 'mode', 'thème', 'sombre', 'clair'],
-    handler: () => {
-      const event = new CustomEvent('toggle-dark-mode');
-      window.dispatchEvent(event);
-    },
-  },
-  {
-    id: 'system-shortcuts',
-    title: 'Keyboard Shortcuts',
-    description: 'Voir tous les raccourcis clavier',
-    icon: <Keyboard className="w-4 h-4" />,
-    shortcut: ['?'],
-    category: 'system',
-    keywords: ['raccourcis', 'clavier', 'shortcuts', 'aide'],
-    handler: () => {
-      const event = new CustomEvent('show-shortcuts');
-      window.dispatchEvent(event);
-    },
-  },
-  {
-    id: 'system-help',
-    title: 'Help & Support',
-    description: 'Documentation et support',
-    icon: <HelpCircle className="w-4 h-4" />,
-    shortcut: ['f1'],
-    category: 'system',
-    keywords: ['aide', 'help', 'support', 'documentation'],
-    handler: () => {
-      window.open('/help', '_blank');
-    },
-  },
-];
+export type { CommandAction, CommandPaletteProps };
 
 /**
- * 🎛️ COMMAND PALETTE PRINCIPAL
+ * COMMAND PALETTE PRINCIPAL
  */
 export function CommandPalette({
   className,
@@ -277,7 +58,6 @@ export function CommandPalette({
   useEffect(() => {
     setMounted(true);
 
-    // Charger les commandes récentes et favorites depuis localStorage
     const savedRecent = localStorage.getItem('verone-recent-commands');
     const savedFavorites = localStorage.getItem('verone-favorite-commands');
 
@@ -295,7 +75,6 @@ export function CommandPalette({
   const executeCommand = useCallback(
     async (command: CommandAction) => {
       try {
-        // Ajouter aux commandes récentes
         const updatedRecent = [
           command.id,
           ...recentCommands.filter(id => id !== command.id),
@@ -306,7 +85,6 @@ export function CommandPalette({
           JSON.stringify(updatedRecent)
         );
 
-        // Confirmation si nécessaire
         if (command.requiresConfirmation) {
           const confirmed = confirm(
             `Êtes-vous sûr de vouloir exécuter "${command.title}" ?`
@@ -314,14 +92,11 @@ export function CommandPalette({
           if (!confirmed) return;
         }
 
-        // Fermer la palette
         setOpen(false);
         setSearch('');
 
-        // Exécuter la commande
         await command.handler();
 
-        // Callback externe
         if (onCommandExecute) {
           onCommandExecute(command);
         }
@@ -332,26 +107,37 @@ export function CommandPalette({
     [recentCommands, onCommandExecute]
   );
 
+  // Vérifier si un raccourci correspond
+  const isShortcutMatch = useCallback(
+    (e: KeyboardEvent, shortcut: string[]): boolean => {
+      const pressedKeys: string[] = [];
+      if (e.ctrlKey) pressedKeys.push('ctrl');
+      if (e.metaKey) pressedKeys.push('cmd', 'meta');
+      if (e.shiftKey) pressedKeys.push('shift');
+      if (e.altKey) pressedKeys.push('alt');
+      pressedKeys.push(e.key.toLowerCase());
+      return shortcut.every(key => pressedKeys.includes(key.toLowerCase()));
+    },
+    []
+  );
+
   // Gestion des raccourcis clavier globaux
   useEffect(() => {
     if (!mounted) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd+K ou Ctrl+K pour ouvrir la palette
       if ((e.metaKey || e.ctrlKey) && e.key === 'k' && !e.shiftKey) {
         e.preventDefault();
         setOpen(true);
         return;
       }
 
-      // Escape pour fermer
       if (e.key === 'Escape' && open) {
         e.preventDefault();
         setOpen(false);
         return;
       }
 
-      // Vérifier les raccourcis de commandes
       commands.forEach(command => {
         if (command.shortcut && isShortcutMatch(e, command.shortcut)) {
           e.preventDefault();
@@ -362,24 +148,11 @@ export function CommandPalette({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [mounted, open, commands, executeCommand]);
-
-  // Vérifier si un raccourci correspond
-  const isShortcutMatch = (e: KeyboardEvent, shortcut: string[]): boolean => {
-    const pressedKeys: string[] = [];
-    if (e.ctrlKey) pressedKeys.push('ctrl');
-    if (e.metaKey) pressedKeys.push('cmd', 'meta');
-    if (e.shiftKey) pressedKeys.push('shift');
-    if (e.altKey) pressedKeys.push('alt');
-    pressedKeys.push(e.key.toLowerCase());
-
-    return shortcut.every(key => pressedKeys.includes(key.toLowerCase()));
-  };
+  }, [mounted, open, commands, executeCommand, isShortcutMatch]);
 
   // Filtrer et trier les commandes selon la recherche
   const filteredCommands = useMemo(() => {
     if (!search) {
-      // Sans recherche, montrer les favoris et récents en premier
       const recentCmds = commands.filter(cmd =>
         recentCommands.includes(cmd.id)
       );
@@ -388,7 +161,7 @@ export function CommandPalette({
         .filter(
           cmd => !recentCommands.includes(cmd.id) && !favorites.includes(cmd.id)
         )
-        .slice(0, 6); // Limiter les autres commandes
+        .slice(0, 6);
 
       return [...favoriteCmds, ...recentCmds, ...otherCmds].slice(
         0,
@@ -407,25 +180,21 @@ export function CommandPalette({
           )
       )
       .sort((a, b) => {
-        // Prioriser les matches exacts dans le titre
-        const aExactMatch = a.title.toLowerCase() === query;
-        const bExactMatch = b.title.toLowerCase() === query;
-        if (aExactMatch && !bExactMatch) return -1;
-        if (!aExactMatch && bExactMatch) return 1;
+        const aExact = a.title.toLowerCase() === query;
+        const bExact = b.title.toLowerCase() === query;
+        if (aExact && !bExact) return -1;
+        if (!aExact && bExact) return 1;
 
-        // Prioriser les matches au début du titre
-        const aStartsWithQuery = a.title.toLowerCase().startsWith(query);
-        const bStartsWithQuery = b.title.toLowerCase().startsWith(query);
-        if (aStartsWithQuery && !bStartsWithQuery) return -1;
-        if (!aStartsWithQuery && bStartsWithQuery) return 1;
+        const aStarts = a.title.toLowerCase().startsWith(query);
+        const bStarts = b.title.toLowerCase().startsWith(query);
+        if (aStarts && !bStarts) return -1;
+        if (!aStarts && bStarts) return 1;
 
-        // Prioriser les favoris
-        const aIsFavorite = favorites.includes(a.id);
-        const bIsFavorite = favorites.includes(b.id);
-        if (aIsFavorite && !bIsFavorite) return -1;
-        if (!aIsFavorite && bIsFavorite) return 1;
+        const aFav = favorites.includes(a.id);
+        const bFav = favorites.includes(b.id);
+        if (aFav && !bFav) return -1;
+        if (!aFav && bFav) return 1;
 
-        // Tri alphabétique
         return a.title.localeCompare(b.title);
       })
       .slice(0, maxResults);
@@ -434,13 +203,11 @@ export function CommandPalette({
   // Grouper les commandes par catégorie
   const groupedCommands = useMemo(() => {
     const groups: Record<string, CommandAction[]> = {};
-
     filteredCommands.forEach(command => {
       const category = command.category;
       if (!groups[category]) groups[category] = [];
       groups[category].push(command);
     });
-
     return groups;
   }, [filteredCommands]);
 
@@ -488,30 +255,12 @@ export function CommandPalette({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open, filteredCommands, selectedIndex, executeCommand]);
 
-  // Reset de l'index sélectionné quand la recherche change
+  // Reset index sélectionné quand la recherche change
   useEffect(() => {
     setSelectedIndex(0);
   }, [search]);
 
   if (!mounted) return null;
-
-  const categoryLabels = {
-    navigation: 'Navigation',
-    actions: 'Actions',
-    tools: 'Outils',
-    system: 'Système',
-    recent: 'Récents',
-    favorites: 'Favoris',
-  };
-
-  const categoryIcons = {
-    navigation: <Globe className="w-3 h-3" />,
-    actions: <Zap className="w-3 h-3" />,
-    tools: <Settings className="w-3 h-3" />,
-    system: <Shield className="w-3 h-3" />,
-    recent: <Clock className="w-3 h-3" />,
-    favorites: <Star className="w-3 h-3" />,
-  };
 
   return (
     <>
@@ -556,7 +305,7 @@ export function CommandPalette({
           </CommandEmpty>
 
           {Object.entries(groupedCommands).map(
-            ([category, commands], groupIndex) => (
+            ([category, cmds], groupIndex) => (
               <React.Fragment key={category}>
                 {groupIndex > 0 && <CommandSeparator />}
 
@@ -568,73 +317,17 @@ export function CommandPalette({
                     </div>
                   }
                 >
-                  {commands.map(command => {
+                  {cmds.map(command => {
                     const globalIndex = filteredCommands.indexOf(command);
-                    const isSelected = globalIndex === selectedIndex;
-                    const isFavorite = favorites.includes(command.id);
-
                     return (
-                      <CommandItem
+                      <CommandPaletteItem
                         key={command.id}
-                        value={command.id}
+                        command={command}
+                        isSelected={globalIndex === selectedIndex}
+                        isFavorite={favorites.includes(command.id)}
                         onSelect={() => void executeCommand(command)}
-                        className={cn(
-                          'flex items-center justify-between',
-                          'data-[selected=true]:bg-black data-[selected=true]:text-white',
-                          isSelected && 'bg-black text-white'
-                        )}
-                      >
-                        <div className="flex items-center gap-3 flex-1">
-                          <div className="flex items-center justify-center w-8 h-8 rounded border">
-                            {command.icon}
-                          </div>
-
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">
-                                {command.title}
-                              </span>
-                              {command.premium && (
-                                <Badge variant="outline" className="text-xs">
-                                  Pro
-                                </Badge>
-                              )}
-                              {isFavorite && (
-                                <Star className="w-3 h-3 fill-current" />
-                              )}
-                            </div>
-                            {command.description && (
-                              <p className="text-xs text-muted-foreground">
-                                {command.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {command.shortcut && (
-                            <CommandShortcut className="text-xs">
-                              {command.shortcut.join(' + ')}
-                            </CommandShortcut>
-                          )}
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="w-6 h-6 p-0 opacity-50 hover:opacity-100"
-                            onClick={e => {
-                              e.stopPropagation();
-                              toggleFavorite(command.id);
-                            }}
-                          >
-                            {isFavorite ? (
-                              <Star className="w-3 h-3 fill-current" />
-                            ) : (
-                              <Bookmark className="w-3 h-3" />
-                            )}
-                          </Button>
-                        </div>
-                      </CommandItem>
+                        onToggleFavorite={toggleFavorite}
+                      />
                     );
                   })}
                 </CommandGroup>
@@ -677,7 +370,7 @@ export function CommandPalette({
 }
 
 /**
- * 🎯 HOOK POUR INTÉGRER COMMAND PALETTE
+ * HOOK POUR INTÉGRER COMMAND PALETTE
  */
 export function useCommandPalette() {
   const [isOpen, setIsOpen] = useState(false);
