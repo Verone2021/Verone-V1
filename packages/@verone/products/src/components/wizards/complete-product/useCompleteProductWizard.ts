@@ -121,7 +121,7 @@ export function useCompleteProductWizard({
       if (typeof value === 'string') return value.trim() !== '';
       if (Array.isArray(value)) return value.length > 0;
       if (typeof value === 'object' && value !== null)
-        return Object.keys(value).length > 0;
+        return Object.keys(value as Record<string, unknown>).length > 0;
       return value !== null && value !== undefined;
     });
 
