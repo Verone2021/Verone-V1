@@ -122,13 +122,27 @@ function handleData(data) {
   // Champs produit editables
   fieldsContainer.innerHTML = '';
   addField('name', 'Nom du produit', data.name, 'text', true);
-  addField('reference', 'Reference / SKU', data.reference || '', 'text', true);
+  addField(
+    'supplier_reference',
+    'Reference fournisseur',
+    data.reference || '',
+    'text',
+    !!data.reference
+  );
+  addField('brand', 'Marque', data.brand || '', 'text', !!data.brand);
   addField(
     'cost_price',
-    "Prix d'achat (EUR)",
+    "Prix d'achat HT (EUR)",
     data.cost_price ? String(data.cost_price) : '',
     'number',
     true
+  );
+  addField(
+    'eco_tax',
+    'Eco-taxe (EUR)',
+    data.eco_tax ? String(data.eco_tax) : '',
+    'number',
+    !!data.eco_tax
   );
   addField(
     'description',
@@ -137,16 +151,59 @@ function handleData(data) {
     'textarea',
     true
   );
+  addField(
+    'technical_description',
+    'Description technique',
+    data.technical_description || '',
+    'textarea',
+    false
+  );
 
-  // Dimensions (si extraites du titre ou specs)
+  // Dimensions (si extraites du titre, specs ou donnees)
   const dimMatch = (data.name || '').match(/D(\d+).*H(\d+)/i);
-  if (dimMatch) {
-    addField('diameter', 'Diametre (cm)', dimMatch[1], 'number', true);
-    addField('height', 'Hauteur (cm)', dimMatch[2], 'number', true);
-  } else {
-    addField('diameter', 'Diametre (cm)', '', 'number', false);
-    addField('height', 'Hauteur (cm)', '', 'number', false);
-  }
+  const dimL = data.length || '';
+  const dimW = data.width || (dimMatch ? dimMatch[1] : '');
+  const dimH = data.height || (dimMatch ? dimMatch[2] : '');
+  addField(
+    'dim_length',
+    'Longueur (cm)',
+    dimL ? String(dimL) : '',
+    'number',
+    !!dimL
+  );
+  addField(
+    'dim_width',
+    'Largeur / Diametre (cm)',
+    dimW ? String(dimW) : '',
+    'number',
+    !!dimW
+  );
+  addField(
+    'dim_height',
+    'Hauteur (cm)',
+    dimH ? String(dimH) : '',
+    'number',
+    !!dimH
+  );
+  addField(
+    'weight',
+    'Poids (kg)',
+    data.weight ? String(data.weight) : '',
+    'number',
+    !!data.weight
+  );
+
+  // Materiau / Style / Couleur
+  addField(
+    'material',
+    'Materiau',
+    data.material || '',
+    'text',
+    !!data.material
+  );
+  addField('color', 'Couleur', data.color || '', 'text', !!data.color);
+  addField('style', 'Style', data.style || '', 'text', !!data.style);
+  addField('condition', 'Etat', data.condition || 'Neuf', 'text', true);
 
   addField(
     'moq',
@@ -401,10 +458,22 @@ async function doImport() {
     const body = {
       name: getCheckedVal('name', ''),
       description: getCheckedVal('description', undefined),
+      technical_description: getCheckedVal('technical_description', undefined),
+      supplier_reference: getCheckedVal('supplier_reference', undefined),
+      brand: getCheckedVal('brand', undefined),
       source_url: extractedData.source_url,
       source_platform: extractedData.source_platform || 'other',
       images: selectedImages.length > 0 ? selectedImages : undefined,
       cost_price: getCheckedVal('cost_price', undefined, parseFloat),
+      eco_tax: getCheckedVal('eco_tax', undefined, parseFloat),
+      weight: getCheckedVal('weight', undefined, parseFloat),
+      dim_length: getCheckedVal('dim_length', undefined, parseFloat),
+      dim_width: getCheckedVal('dim_width', undefined, parseFloat),
+      dim_height: getCheckedVal('dim_height', undefined, parseFloat),
+      material: getCheckedVal('material', undefined),
+      color: getCheckedVal('color', undefined),
+      style: getCheckedVal('style', undefined),
+      condition: getCheckedVal('condition', undefined),
       moq: getCheckedVal('moq', undefined, parseInt),
       lead_days: getCheckedVal('lead_days', undefined, parseInt),
     };

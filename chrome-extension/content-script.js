@@ -345,6 +345,44 @@ function extractGenericProduct() {
 
   data.images = data.images.slice(0, 12);
 
+  // Poids
+  const weightMatch = text.match(
+    /(?:Poids|Weight)[:\s]*(\d+[.,]?\d*)\s*(?:kg|g)/i
+  );
+  if (weightMatch) {
+    let w = parseFloat(weightMatch[1].replace(',', '.'));
+    if (text.match(/(?:Poids|Weight)[:\s]*\d+[.,]?\d*\s*g\b/i)) w = w / 1000;
+    data.weight = w;
+  }
+
+  // Materiau
+  const matMatch = text.match(/(?:Mat[eé]riau|Material)[:\s]*([^\n,]+)/i);
+  if (matMatch) data.material = matMatch[1].trim();
+
+  // Couleur
+  const colorMatch = text.match(/(?:Couleur|Color|Colour)[:\s]*([^\n,]+)/i);
+  if (colorMatch) data.color = colorMatch[1].trim();
+
+  // Eco-taxe / DEEE
+  const ecoMatch = text.match(
+    /(?:Eco-part|DEEE|Eco.taxe)[:\s]*\+?\s*(\d+[.,]\d+)\s*€/i
+  );
+  if (ecoMatch) data.eco_tax = parseFloat(ecoMatch[1].replace(',', '.'));
+
+  // Dimensions depuis le texte (pas le titre)
+  const heightMatch = text.match(
+    /(?:Hauteur|Height)\s*(?:\(cm\))?[:\s]*(\d+)/i
+  );
+  if (heightMatch) data.height = heightMatch[1];
+  const widthMatch = text.match(
+    /(?:Largeur|Width|Diam[eè]tre|Diameter)\s*(?:\(cm\))?[:\s]*(\d+)/i
+  );
+  if (widthMatch) data.width = widthMatch[1];
+  const lengthMatch = text.match(
+    /(?:Longueur|Length|Profondeur|Depth)\s*(?:\(cm\))?[:\s]*(\d+)/i
+  );
+  if (lengthMatch) data.length = lengthMatch[1];
+
   // Fournisseur depuis le nom du site
   if (ogSiteName && ogSiteName.content) {
     data.supplier = { name: ogSiteName.content.trim() };

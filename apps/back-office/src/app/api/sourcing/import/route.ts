@@ -17,13 +17,25 @@ const ImportProductSchema = z.object({
   // Produit
   name: z.string().min(1, 'Nom du produit requis'),
   description: z.string().optional(),
+  technical_description: z.string().optional(),
+  supplier_reference: z.string().optional(),
+  brand: z.string().optional(),
   source_url: z.string().url('URL invalide'),
   source_platform: z
     .enum(['alibaba', 'zentrada', 'faire', 'ankorstore', 'other'])
     .default('alibaba'),
   images: z.array(z.string().url()).optional(),
   cost_price: z.number().optional(),
+  eco_tax: z.number().optional(),
   target_price: z.number().optional(),
+  weight: z.number().optional(),
+  dim_length: z.number().optional(),
+  dim_width: z.number().optional(),
+  dim_height: z.number().optional(),
+  material: z.string().optional(),
+  color: z.string().optional(),
+  style: z.string().optional(),
+  condition: z.string().optional(),
   moq: z.number().optional(),
   lead_days: z.number().optional(),
   price_tiers: z.array(PriceTierSchema).optional(),
@@ -153,20 +165,39 @@ export async function POST(request: NextRequest) {
     const skuTimestamp = Date.now().toString(36).toUpperCase();
     const sku = `${skuPrefix}-${skuTimestamp}`;
 
+    // Construire les dimensions en jsonb si fournies
+    const dimensions =
+      input.dim_length || input.dim_width || input.dim_height
+        ? {
+            length: input.dim_length ?? null,
+            width: input.dim_width ?? null,
+            height: input.dim_height ?? null,
+          }
+        : null;
+
     const { data: product, error: productError } = await supabase
       .from('products')
       .insert({
         name: input.name,
         sku,
         description: input.description ?? null,
+        technical_description: input.technical_description ?? null,
+        supplier_reference: input.supplier_reference ?? null,
+        brand: input.brand ?? null,
         product_status: 'draft' as const,
         sourcing_status: 'supplier_search',
         sourcing_priority: 'medium',
         cost_price: input.cost_price ?? null,
+        eco_tax_default: input.eco_tax ?? null,
         target_price: input.target_price ?? null,
+        weight: input.weight ?? null,
+        dimensions,
+        style: input.style ?? null,
+        condition: input.condition ?? 'Neuf',
         supplier_id: supplierId,
         supplier_moq: input.moq ?? null,
         supplier_page_url: input.source_url,
+        sourcing_channel: input.source_platform,
       })
       .select('id, name')
       .single();
