@@ -558,8 +558,58 @@ async function doImport() {
 
     if (!res.ok) throw new Error(result.error || 'Erreur serveur');
 
-    setStatus('success', 'Produit "' + result.product_name + '" importe !');
+    // Afficher le résumé de ce qui a été importé
+    setStatus('success', 'Import termine avec succes !');
     btnImport.textContent = 'Importe !';
+
+    // Construire le résumé
+    const summary = document.createElement('div');
+    summary.style.cssText =
+      'background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-top:10px;font-size:12px;';
+
+    // Section Produit
+    const p = result.product;
+    let html =
+      '<div style="font-weight:700;margin-bottom:6px;font-size:13px;">Produit cree</div>';
+    html +=
+      '<div style="display:grid;grid-template-columns:auto 1fr;gap:2px 8px;">';
+    html += row('Nom', p.name);
+    html += row('SKU', p.sku);
+    if (p.cost_price) html += row('Prix achat', p.cost_price + ' EUR');
+    if (p.brand) html += row('Marque', p.brand);
+    if (p.supplier_reference)
+      html += row('Ref fournisseur', p.supplier_reference);
+    html += row('Statut', 'Recherche fournisseur');
+    html += row('Photos', p.images_count + ' image(s)');
+    html += '</div>';
+
+    // Section Fournisseur
+    if (result.supplier) {
+      const s = result.supplier;
+      html +=
+        '<div style="font-weight:700;margin:10px 0 6px;font-size:13px;border-top:1px solid #e5e7eb;padding-top:10px;">';
+      html += s.created ? 'Fournisseur cree' : 'Fournisseur existant retrouve';
+      html += '</div>';
+      html +=
+        '<div style="display:grid;grid-template-columns:auto 1fr;gap:2px 8px;">';
+      html += row('Nom', s.name);
+      if (s.country) html += row('Pays', s.country);
+      html += row('Statut', s.created ? 'Nouveau' : 'Deja en base');
+      html += '</div>';
+    } else {
+      html +=
+        '<div style="color:#6b7280;margin-top:8px;font-size:11px;">Aucun fournisseur importe</div>';
+    }
+
+    summary.innerHTML = html;
+
+    // Remplacer le contenu des champs par le résumé
+    fieldsContainer.innerHTML = '';
+    fieldsContainer.appendChild(summary);
+    imagesContainer.style.display = 'none';
+    supplierSection.style.display = 'none';
+
+    // Lien vers la fiche
     resultLink.href = baseUrl + result.redirect_url;
     resultLink.textContent = 'Ouvrir la fiche sourcing';
     successLink.style.display = 'block';
@@ -606,6 +656,16 @@ function showPageType(label, bg, color) {
   pageTypeEl.style.background = bg;
   pageTypeEl.style.color = color;
   pageTypeEl.style.border = '1px solid ' + color + '33';
+}
+
+function row(label, value) {
+  return (
+    '<span style="color:#6b7280;font-size:11px;">' +
+    label +
+    '</span><span style="color:#111;font-weight:500;">' +
+    (value || '—') +
+    '</span>'
+  );
 }
 
 function addBadge(text, color) {

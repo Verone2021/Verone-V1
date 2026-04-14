@@ -161,6 +161,7 @@ export async function POST(request: NextRequest) {
     }
 
     let supplierId: string | null = null;
+    let supplierIsNew = false;
 
     // ================================================================
     // STEP 1 : Créer ou trouver le fournisseur
@@ -313,6 +314,7 @@ export async function POST(request: NextRequest) {
         }
 
         supplierId = newSupplier.id;
+        supplierIsNew = true;
       }
     }
 
@@ -480,12 +482,46 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Compter les images et URLs insérées
+    const { count: imageCount } = await supabase
+      .from('product_images')
+      .select('id', { count: 'exact', head: true })
+      .eq('product_id', productId);
+
+    // Récupérer le nom du fournisseur créé/retrouvé
+    let supplierName: string | null = null;
+    if (supplierId) {
+      const { data: supplierData } = await supabase
+        .from('organisations')
+        .select('trade_name')
+        .eq('id', supplierId)
+        .single();
+      if (supplierData) {
+        supplierName = supplierData.trade_name;
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      product_id: productId,
-      product_name: product.name,
-      supplier_id: supplierId,
       redirect_url: `/produits/sourcing/produits/${productId}`,
+      product: {
+        id: productId,
+        name: product.name,
+        sku,
+        cost_price: input.cost_price ?? null,
+        brand: input.brand ?? null,
+        supplier_reference: input.supplier_reference ?? null,
+        sourcing_status: 'supplier_search',
+        images_count: imageCount ?? 0,
+      },
+      supplier: supplierId
+        ? {
+            id: supplierId,
+            name: supplierName,
+            created: supplierIsNew,
+            country: input.supplier?.country ?? null,
+          }
+        : null,
     });
   } catch (error) {
     console.error('[API sourcing/import] Unexpected error:', error);
