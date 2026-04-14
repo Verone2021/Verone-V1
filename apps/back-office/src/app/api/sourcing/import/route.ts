@@ -166,11 +166,11 @@ export async function POST(request: NextRequest) {
     // STEP 1 : Créer ou trouver le fournisseur
     // ================================================================
     if (input.supplier) {
-      // Chercher d'abord par URL Alibaba (identifiant unique fiable)
-      // Puis par nom exact, puis par nom approximatif
+      // Chercher le fournisseur existant par 3 méthodes (du plus fiable au moins fiable)
       let existingSupplier: { id: string; trade_name: string | null } | null =
         null;
 
+      // 1. Par URL boutique Alibaba (identifiant unique)
       if (input.supplier.alibaba_store_url) {
         const { data } = await supabase
           .from('organisations')
@@ -181,13 +181,32 @@ export async function POST(request: NextRequest) {
         existingSupplier = data;
       }
 
+      // 2. Par domaine du website (ex: opjet.com → organisation avec website opjet.com)
       if (!existingSupplier) {
-        // Chercher par nom exact
+        try {
+          const sourceDomain = new URL(input.source_url).hostname.replace(
+            'www.',
+            ''
+          );
+          const { data } = await supabase
+            .from('organisations')
+            .select('id, trade_name')
+            .ilike('website', `%${sourceDomain}%`)
+            .limit(1)
+            .maybeSingle();
+          existingSupplier = data;
+        } catch (_e) {
+          // URL invalide — ignorer
+        }
+      }
+
+      // 3. Par nom exact (insensible à la casse)
+      if (!existingSupplier) {
         const { data } = await supabase
           .from('organisations')
           .select('id, trade_name')
           .or(
-            `trade_name.eq.${input.supplier.name},legal_name.eq.${input.supplier.name}`
+            `trade_name.ilike.${input.supplier.name},legal_name.ilike.${input.supplier.name}`
           )
           .eq('type', 'supplier')
           .limit(1)
