@@ -1,8 +1,19 @@
 'use client';
 
+import { useState } from 'react';
+
 import { SupplierSelector } from '@verone/organisations/components/suppliers';
+import { SupplierFormModal } from '@verone/organisations/components/forms';
 import { ButtonV2 } from '@verone/ui';
-import { AlertCircle, Building, Edit, Globe, Save, X } from 'lucide-react';
+import {
+  AlertCircle,
+  Building,
+  Edit,
+  Globe,
+  Plus,
+  Save,
+  X,
+} from 'lucide-react';
 
 import type { SourcingProduct, SupplierSectionData } from './types';
 
@@ -31,6 +42,8 @@ export function SourcingProductSupplierSection({
   onUpdateData,
   onSave,
 }: SourcingProductSupplierSectionProps) {
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
   if (isEditing) {
     return (
       <div className="space-y-4">
@@ -72,6 +85,25 @@ export function SourcingProductSupplierSection({
           label="Sélectionner un fournisseur"
           placeholder="Rechercher un fournisseur..."
           required={false}
+        />
+
+        <ButtonV2
+          variant="outline"
+          size="sm"
+          onClick={() => setShowCreateModal(true)}
+          className="w-full mt-2"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Nouveau fournisseur
+        </ButtonV2>
+
+        <SupplierFormModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={newSupplier => {
+            onUpdateData({ supplier_id: newSupplier.id });
+            setShowCreateModal(false);
+          }}
         />
 
         {error && (
