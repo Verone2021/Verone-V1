@@ -1,18 +1,14 @@
-/* eslint-disable max-lines */
 'use client';
 
 /**
  * Compte de Resultat — Style Indy (tableau formel)
- *
- * Format simple : libelle | montant N | montant N-1
- * Pas de badges colores, design epure.
  */
 
 import { useState, useMemo } from 'react';
 
 import Link from 'next/link';
 
-import { useBankReconciliation, type BankTransaction } from '@verone/finance';
+import { useBankReconciliation } from '@verone/finance';
 import {
   Card,
   CardContent,
@@ -27,18 +23,11 @@ import {
 import { Money } from '@verone/ui-business';
 import { ArrowLeft, Info } from 'lucide-react';
 
-// =====================================================================
-// TYPES
-// =====================================================================
-
-type TransactionWithExtras = BankTransaction & {
-  category_pcg?: string;
-  ignore_reason?: string;
-};
-
-// =====================================================================
-// PAGE
-// =====================================================================
+import {
+  PCG_STRUCTURE,
+  computeForYear,
+  computeTotals,
+} from './compte-resultat-helpers';
 
 export default function CompteResultatPage() {
   const currentYear = new Date().getFullYear();
@@ -47,187 +36,46 @@ export default function CompteResultatPage() {
   const { creditTransactions, debitTransactions, loading, error } =
     useBankReconciliation();
 
-  // Structure légale PCG art. 832-2 — 3 niveaux obligatoires
-  const pcgStructure = {
-    produitsExploitation: [
-      { code: '70', label: 'Ventes de produits/services' },
-      { code: '74', label: 'Subventions' },
-      { code: '75', label: 'Autres produits de gestion' },
-    ],
-    chargesExploitation: [
-      { code: '60', label: 'Achats (marchandises, matieres)' },
-      { code: '61', label: 'Services exterieurs' },
-      { code: '62', label: 'Autres services exterieurs' },
-      { code: '63', label: 'Impots et taxes' },
-      { code: '64', label: 'Charges de personnel' },
-      { code: '65', label: 'Autres charges de gestion' },
-      { code: '68', label: 'Dotations aux amortissements' },
-    ],
-    produitsFinanciers: [{ code: '76', label: 'Produits financiers' }],
-    chargesFinancieres: [{ code: '66', label: 'Charges financieres' }],
-    produitsExceptionnels: [{ code: '77', label: 'Produits exceptionnels' }],
-    chargesExceptionnelles: [{ code: '67', label: 'Charges exceptionnelles' }],
-    impots: [{ code: '69', label: 'Impot sur les benefices (IS)' }],
-  };
-
-  const allProduits = [
-    ...pcgStructure.produitsExploitation,
-    ...pcgStructure.produitsFinanciers,
-    ...pcgStructure.produitsExceptionnels,
-  ];
-  const allCharges = [
-    ...pcgStructure.chargesExploitation,
-    ...pcgStructure.chargesFinancieres,
-    ...pcgStructure.chargesExceptionnelles,
-    ...pcgStructure.impots,
-  ];
-
-  const computeForYear = (year: string) => {
-    const filterByYear = (txs: BankTransaction[]) =>
-      year === 'all'
-        ? txs
-        : txs.filter(tx => {
-            const date = tx.settled_at ?? tx.emitted_at;
-            return date?.startsWith(year);
-          });
-
-    const credits = filterByYear(creditTransactions);
-    const debits = filterByYear(debitTransactions);
-
-    const produitsClasses: Record<string, number> = {};
-    allProduits.forEach(p => (produitsClasses[p.code] = 0));
-    credits.forEach(tx => {
-      const pcgCode = tx.category_pcg;
-      if (pcgCode) {
-        const classCode = pcgCode.substring(0, 2);
-        if (produitsClasses[classCode] !== undefined) {
-          produitsClasses[classCode] += Math.abs(tx.amount);
-        }
-      }
-    });
-
-    const chargesClasses: Record<string, number> = {};
-    allCharges.forEach(c => (chargesClasses[c.code] = 0));
-    (debits as TransactionWithExtras[]).forEach(tx => {
-      const pcgCode =
-        tx.category_pcg || tx.ignore_reason?.match(/PCG (\d+)/)?.[1];
-      if (pcgCode) {
-        const classCode = pcgCode.substring(0, 2);
-        if (chargesClasses[classCode] !== undefined) {
-          chargesClasses[classCode] += Math.abs(tx.amount);
-        }
-      }
-    });
-
-    return { produitsClasses, chargesClasses };
-  };
-
   const yearN = selectedYear === 'all' ? String(currentYear) : selectedYear;
   const yearN1 = String(Number(yearN) - 1);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const dataN = useMemo(
-    () => computeForYear(yearN),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    () => computeForYear(yearN, creditTransactions, debitTransactions),
     [creditTransactions, debitTransactions, yearN]
   );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const dataN1 = useMemo(
-    () => computeForYear(yearN1),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    () => computeForYear(yearN1, creditTransactions, debitTransactions),
     [creditTransactions, debitTransactions, yearN1]
   );
 
-  const sumGroup = (
-    items: { code: string }[],
-    data: {
-      produitsClasses: Record<string, number>;
-      chargesClasses: Record<string, number>;
-    },
-    type: 'produits' | 'charges'
-  ) =>
-    items.reduce(
-      (sum, item) =>
-        sum +
-        ((type === 'produits'
-          ? data.produitsClasses[item.code]
-          : data.chargesClasses[item.code]) ?? 0),
-      0
-    );
-
-  // Exploitation
-  const prodExplN = sumGroup(
-    pcgStructure.produitsExploitation,
-    dataN,
-    'produits'
-  );
-  const prodExplN1 = sumGroup(
-    pcgStructure.produitsExploitation,
-    dataN1,
-    'produits'
-  );
-  const charExplN = sumGroup(
-    pcgStructure.chargesExploitation,
-    dataN,
-    'charges'
-  );
-  const charExplN1 = sumGroup(
-    pcgStructure.chargesExploitation,
-    dataN1,
-    'charges'
-  );
-  const resExplN = prodExplN - charExplN;
-  const resExplN1 = prodExplN1 - charExplN1;
-
-  // Financier
-  const prodFinN = sumGroup(pcgStructure.produitsFinanciers, dataN, 'produits');
-  const prodFinN1 = sumGroup(
-    pcgStructure.produitsFinanciers,
-    dataN1,
-    'produits'
-  );
-  const charFinN = sumGroup(pcgStructure.chargesFinancieres, dataN, 'charges');
-  const charFinN1 = sumGroup(
-    pcgStructure.chargesFinancieres,
-    dataN1,
-    'charges'
-  );
-  const resFinN = prodFinN - charFinN;
-  const resFinN1 = prodFinN1 - charFinN1;
-
-  // Courant
-  const resCourantN = resExplN + resFinN;
-  const resCourantN1 = resExplN1 + resFinN1;
-
-  // Exceptionnel
-  const prodExcN = sumGroup(
-    pcgStructure.produitsExceptionnels,
-    dataN,
-    'produits'
-  );
-  const prodExcN1 = sumGroup(
-    pcgStructure.produitsExceptionnels,
-    dataN1,
-    'produits'
-  );
-  const charExcN = sumGroup(
-    pcgStructure.chargesExceptionnelles,
-    dataN,
-    'charges'
-  );
-  const charExcN1 = sumGroup(
-    pcgStructure.chargesExceptionnelles,
-    dataN1,
-    'charges'
-  );
-  const resExcN = prodExcN - charExcN;
-  const resExcN1 = prodExcN1 - charExcN1;
-
-  // IS
-  const isN = sumGroup(pcgStructure.impots, dataN, 'charges');
-  const isN1 = sumGroup(pcgStructure.impots, dataN1, 'charges');
-
-  // Résultat net
-  const resultatN = resCourantN + resExcN - isN;
-  const resultatN1 = resCourantN1 + resExcN1 - isN1;
+  const {
+    prodExplN,
+    prodExplN1,
+    charExplN,
+    charExplN1,
+    resExplN,
+    resExplN1,
+    prodFinN,
+    prodFinN1,
+    charFinN,
+    charFinN1,
+    resFinN,
+    resFinN1,
+    resCourantN,
+    resCourantN1,
+    prodExcN,
+    prodExcN1,
+    charExcN,
+    charExcN1,
+    resExcN,
+    resExcN1,
+    isN,
+    isN1,
+    resultatN,
+    resultatN1,
+  } = computeTotals(dataN, dataN1);
 
   const years = Array.from(
     { length: currentYear - 2022 },
@@ -327,7 +175,7 @@ export default function CompteResultatPage() {
           <div className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b bg-gray-50/50 font-semibold text-sm">
             <div className="col-span-12">PRODUITS D&apos;EXPLOITATION</div>
           </div>
-          {pcgStructure.produitsExploitation.map(p => {
+          {PCG_STRUCTURE.produitsExploitation.map(p => {
             const amountN = dataN.produitsClasses[p.code] ?? 0;
             const amountN1 = dataN1.produitsClasses[p.code] ?? 0;
             if (amountN === 0 && amountN1 === 0) return null;
@@ -355,7 +203,7 @@ export default function CompteResultatPage() {
           <div className="grid grid-cols-12 gap-2 px-5 py-2.5 border-b bg-gray-50/50 font-semibold text-sm">
             <div className="col-span-12">CHARGES D&apos;EXPLOITATION</div>
           </div>
-          {pcgStructure.chargesExploitation.map(c => {
+          {PCG_STRUCTURE.chargesExploitation.map(c => {
             const amountN = dataN.chargesClasses[c.code] ?? 0;
             const amountN1 = dataN1.chargesClasses[c.code] ?? 0;
             if (amountN === 0 && amountN1 === 0) return null;
@@ -399,7 +247,7 @@ export default function CompteResultatPage() {
           {/* ========== II. RESULTAT FINANCIER ========== */}
           {(prodFinN > 0 || prodFinN1 > 0 || charFinN > 0 || charFinN1 > 0) && (
             <>
-              {pcgStructure.produitsFinanciers.map(p => {
+              {PCG_STRUCTURE.produitsFinanciers.map(p => {
                 const amountN = dataN.produitsClasses[p.code] ?? 0;
                 const amountN1 = dataN1.produitsClasses[p.code] ?? 0;
                 if (amountN === 0 && amountN1 === 0) return null;
@@ -423,7 +271,7 @@ export default function CompteResultatPage() {
                   </div>
                 );
               })}
-              {pcgStructure.chargesFinancieres.map(c => {
+              {PCG_STRUCTURE.chargesFinancieres.map(c => {
                 const amountN = dataN.chargesClasses[c.code] ?? 0;
                 const amountN1 = dataN1.chargesClasses[c.code] ?? 0;
                 if (amountN === 0 && amountN1 === 0) return null;
@@ -489,7 +337,7 @@ export default function CompteResultatPage() {
           {/* ========== III. RESULTAT EXCEPTIONNEL ========== */}
           {(prodExcN > 0 || prodExcN1 > 0 || charExcN > 0 || charExcN1 > 0) && (
             <>
-              {pcgStructure.produitsExceptionnels.map(p => {
+              {PCG_STRUCTURE.produitsExceptionnels.map(p => {
                 const amountN = dataN.produitsClasses[p.code] ?? 0;
                 const amountN1 = dataN1.produitsClasses[p.code] ?? 0;
                 return (
@@ -512,7 +360,7 @@ export default function CompteResultatPage() {
                   </div>
                 );
               })}
-              {pcgStructure.chargesExceptionnelles.map(c => {
+              {PCG_STRUCTURE.chargesExceptionnelles.map(c => {
                 const amountN = dataN.chargesClasses[c.code] ?? 0;
                 const amountN1 = dataN1.chargesClasses[c.code] ?? 0;
                 return (

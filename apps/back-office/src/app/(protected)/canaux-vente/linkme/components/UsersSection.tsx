@@ -15,12 +15,7 @@ import {
   type LinkMeUser,
   type LinkMeRole,
 } from '../hooks/use-linkme-users';
-import {
-  RoleBadge,
-  StatusBadge,
-  StatCard,
-  UserRow,
-} from './UsersSectionComponents';
+import { StatCard, UserRow } from './UsersSectionComponents';
 
 /**
  * Section Utilisateurs LinkMe

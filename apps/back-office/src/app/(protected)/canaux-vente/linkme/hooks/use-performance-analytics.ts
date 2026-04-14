@@ -21,8 +21,6 @@ import type {
   PerformanceFilters,
   PerformanceData,
   TopProduct,
-  AffiliateListItem,
-  SelectionListItem,
 } from './performance-analytics-types';
 
 export function usePerformanceAnalytics(filters: PerformanceFilters) {

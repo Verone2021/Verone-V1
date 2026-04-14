@@ -14,7 +14,7 @@ import {
   UserX,
 } from 'lucide-react';
 
-import { RoleBadge, StatusBadge, StatCard, AccountRow } from './components';
+import { StatCard, AccountRow } from './components';
 
 import { LinkMeDeleteUserDialog } from '../components/LinkMeDeleteUserDialog';
 import { LinkMeResetPasswordDialog } from '../components/LinkMeResetPasswordDialog';
