@@ -27,18 +27,24 @@ export function useSupplierSearch() {
       return;
     }
 
-    debounceRef.current = setTimeout(async () => {
+    debounceRef.current = setTimeout(() => {
       setLoading(true);
       const supabase = createClient();
-      const { data } = await supabase
+      void supabase
         .from('organisations')
         .select('id, trade_name, legal_name')
         .or(`trade_name.ilike.%${q}%,legal_name.ilike.%${q}%`)
         .eq('is_supplier', true)
-        .limit(10);
-
-      setResults((data as SupplierResult[]) ?? []);
-      setLoading(false);
+        .limit(10)
+        .then(({ data }) => {
+          setResults((data as SupplierResult[]) ?? []);
+        })
+        .catch((err: unknown) => {
+          console.error('[useSupplierSearch] Search failed:', err);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     }, 300);
   }, []);
 
