@@ -55,12 +55,26 @@ export async function POST(request: NextRequest) {
   const input = parsed.data;
 
   try {
+    // country doit etre un code ISO 2 lettres (varchar(2))
+    const countryCode = input.country
+      ? input.country.length === 2
+        ? input.country.toUpperCase()
+        : input.country.toLowerCase().includes('chin')
+          ? 'CN'
+          : input.country.substring(0, 2).toUpperCase()
+      : null;
+
+    // supplier_reliability_score est un integer (1-5)
+    const reliabilityScore = input.supplier_score
+      ? Math.round(input.supplier_score)
+      : null;
+
     // Verifier si le fournisseur existe deja
     const { data: existing } = await supabase
       .from('organisations')
       .select('id, trade_name')
       .or(`trade_name.ilike.%${input.name}%,legal_name.ilike.%${input.name}%`)
-      .eq('is_supplier', true)
+      .eq('type', 'supplier')
       .limit(1)
       .maybeSingle();
 
@@ -70,10 +84,11 @@ export async function POST(request: NextRequest) {
         .from('organisations')
         .update({
           alibaba_store_url: input.alibaba_store_url ?? undefined,
-          supplier_reliability_score: input.supplier_score ?? undefined,
+          supplier_reliability_score: reliabilityScore ?? undefined,
           supplier_specialties: input.specialties ?? undefined,
           preferred_comm_channel: 'alibaba',
-          country: input.country ?? undefined,
+          country: countryCode ?? undefined,
+          certification_labels: input.certifications ?? undefined,
         })
         .eq('id', existing.id);
 
@@ -92,15 +107,15 @@ export async function POST(request: NextRequest) {
       .insert({
         trade_name: input.name,
         legal_name: input.name,
-        is_supplier: true,
-        is_customer: false,
-        country: input.country ?? null,
+        type: 'supplier' as const,
+        country: countryCode,
         city: input.city ?? null,
         address_line1: input.address ?? null,
         alibaba_store_url: input.alibaba_store_url ?? null,
-        supplier_reliability_score: input.supplier_score ?? null,
+        supplier_reliability_score: reliabilityScore,
         supplier_specialties: input.specialties ?? null,
         preferred_comm_channel: 'alibaba',
+        certification_labels: input.certifications ?? null,
       })
       .select('id, trade_name')
       .single();

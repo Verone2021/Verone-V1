@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
         .or(
           `trade_name.ilike.%${input.supplier.name}%,legal_name.ilike.%${input.supplier.name}%`
         )
-        .eq('is_supplier', true)
+        .eq('type', 'supplier')
         .limit(1)
         .maybeSingle();
 
@@ -126,20 +126,34 @@ export async function POST(request: NextRequest) {
         }
       } else {
         // Creer le fournisseur
+        // country doit etre un code ISO 2 lettres (varchar(2))
+        const countryCode = input.supplier.country
+          ? input.supplier.country.length === 2
+            ? input.supplier.country.toUpperCase()
+            : input.supplier.country.toLowerCase().includes('chin')
+              ? 'CN'
+              : input.supplier.country.substring(0, 2).toUpperCase()
+          : null;
+
+        // supplier_reliability_score est un integer (1-5), pas un decimal
+        const reliabilityScore = input.supplier.supplier_score
+          ? Math.round(input.supplier.supplier_score)
+          : null;
+
         const { data: newSupplier, error: supplierError } = await supabase
           .from('organisations')
           .insert({
             trade_name: input.supplier.name,
             legal_name: input.supplier.name,
-            is_supplier: true,
-            is_customer: false,
-            country: input.supplier.country ?? null,
+            type: 'supplier' as const,
+            country: countryCode,
             city: input.supplier.city ?? null,
             address_line1: input.supplier.address ?? null,
             alibaba_store_url: input.supplier.alibaba_store_url ?? null,
-            supplier_reliability_score: input.supplier.supplier_score ?? null,
+            supplier_reliability_score: reliabilityScore,
             supplier_specialties: input.supplier.specialties ?? null,
             preferred_comm_channel: 'alibaba',
+            certification_labels: input.supplier.certifications ?? null,
           })
           .select('id')
           .single();
