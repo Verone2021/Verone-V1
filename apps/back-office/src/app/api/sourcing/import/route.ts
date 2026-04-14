@@ -125,23 +125,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Non autorise' }, { status: 401 });
   }
 
-  // --- Vérifier rôle staff back-office ---
-  const { data: roleData } = await supabase
-    .from('user_app_roles')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('app', 'back-office')
-    .eq('is_active', true)
-    .limit(1)
-    .maybeSingle();
-
-  if (!roleData) {
-    return NextResponse.json(
-      { error: 'Acces reserve au staff back-office' },
-      { status: 403 }
-    );
-  }
-
   // --- Validation Zod ---
   const body: unknown = await request.json();
   const parsed = ImportProductSchema.safeParse(body);
