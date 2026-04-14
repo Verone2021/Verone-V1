@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
-import { useProducts } from '../../../hooks/use-products';
+import { useProducts, type Product } from '../../../hooks/use-products';
 
-import { WizardFormData, DEFAULT_FORM_DATA, WIZARD_SECTIONS } from './types';
+import type { WizardFormData } from './types';
+import { DEFAULT_FORM_DATA, WIZARD_SECTIONS } from './types';
 
 interface UseCompleteProductWizardOptions {
   editMode?: boolean;
@@ -202,7 +203,7 @@ export function useCompleteProductWizard({
         status: 'coming_soon' as const,
       };
 
-      let result;
+      let result: Product | null;
       if (draftIdState) {
         result = await updateProduct(draftIdState, productData);
       } else {
