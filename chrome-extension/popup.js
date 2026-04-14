@@ -34,13 +34,8 @@ const productLink = document.getElementById('product-link');
 // Init
 // ============================================================
 
-chrome.storage.local.get(['backofficeUrl'], result => {
-  backofficeUrl.value = result.backofficeUrl || 'http://localhost:3000';
-});
-
-backofficeUrl.addEventListener('change', () => {
-  chrome.storage.local.set({ backofficeUrl: backofficeUrl.value });
-});
+// URL de production — pas configurable par l'utilisateur
+backofficeUrl.value = 'https://verone-backoffice.vercel.app';
 
 // Refresh buttons
 document
