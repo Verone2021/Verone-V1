@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 380px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 13px;
+      color: #1a1a1a;
+      background: #fafafa;
+    }
+    .header {
+      background: #000;
+      color: #fff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header h1 { font-size: 14px; font-weight: 600; }
+    .header .badge {
+      font-size: 10px;
+      background: #22c55e;
+      padding: 2px 6px;
+      border-radius: 9999px;
+    }
+    .content { padding: 16px; }
+    .status {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status.detecting { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .status.ready { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .status.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .status.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .status.unsupported { background: #fefce8; color: #854d0e; border: 1px solid #fef08a; }
+
+    .product-preview {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .product-preview .name { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+    .product-preview .meta { font-size: 11px; color: #6b7280; }
+    .product-preview .meta span { margin-right: 12px; }
+    .product-preview .images {
+      display: flex;
+      gap: 4px;
+      margin-top: 8px;
+      overflow-x: auto;
+    }
+    .product-preview .images img {
+      width: 48px;
+      height: 48px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid #e5e7eb;
+    }
+    .supplier-preview {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .supplier-preview .name { font-weight: 600; font-size: 12px; margin-bottom: 4px; }
+    .supplier-preview .badges { display: flex; gap: 4px; flex-wrap: wrap; }
+    .supplier-preview .badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #f3f4f6;
+      color: #374151;
+    }
+    .supplier-preview .badge.green { background: #dcfce7; color: #166534; }
+    .supplier-preview .badge.blue { background: #dbeafe; color: #1d4ed8; }
+
+    .config {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .config label { font-size: 11px; color: #6b7280; display: block; margin-bottom: 4px; }
+    .config input {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .config .hint { font-size: 10px; color: #9ca3af; margin-top: 4px; }
+
+    .actions { display: flex; gap: 8px; }
+    .btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn.primary { background: #000; color: #fff; }
+    .btn.primary:hover:not(:disabled) { background: #333; }
+    .btn.secondary { background: #f3f4f6; color: #374151; }
+    .btn.secondary:hover:not(:disabled) { background: #e5e7eb; }
+
+    .link { color: #2563eb; text-decoration: none; font-size: 12px; }
+    .link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Verone Sourcing</h1>
+    <span class="badge">Import</span>
+  </div>
+
+  <div class="content">
+    <!-- Status -->
+    <div id="status" class="status detecting">
+      Analyse de la page en cours...
+    </div>
+
+    <!-- Product preview -->
+    <div id="product-preview" class="product-preview" style="display:none">
+      <div class="name" id="product-name"></div>
+      <div class="meta">
+        <span id="product-price"></span>
+        <span id="product-moq"></span>
+        <span id="product-lead"></span>
+      </div>
+      <div class="images" id="product-images"></div>
+    </div>
+
+    <!-- Supplier preview -->
+    <div id="supplier-preview" class="supplier-preview" style="display:none">
+      <div class="name" id="supplier-name"></div>
+      <div class="badges" id="supplier-badges"></div>
+    </div>
+
+    <!-- Config -->
+    <div class="config">
+      <label>URL du Back-Office Verone</label>
+      <input type="text" id="backoffice-url" placeholder="http://localhost:3000" />
+      <div class="hint">L'URL de votre instance Verone Back-Office</div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn secondary" id="btn-refresh">Reanalyser</button>
+      <button class="btn primary" id="btn-import" disabled>Importer dans Verone</button>
+    </div>
+
+    <!-- Success link -->
+    <div id="success-link" style="display:none; margin-top:12px; text-align:center;">
+      <a class="link" id="product-link" href="#" target="_blank">
+        Ouvrir la fiche sourcing
+      </a>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

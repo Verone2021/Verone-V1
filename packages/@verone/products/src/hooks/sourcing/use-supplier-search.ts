@@ -30,12 +30,14 @@ export function useSupplierSearch() {
     debounceRef.current = setTimeout(() => {
       setLoading(true);
       const supabase = createClient();
-      void supabase
-        .from('organisations')
-        .select('id, trade_name, legal_name')
-        .or(`trade_name.ilike.%${q}%,legal_name.ilike.%${q}%`)
-        .eq('is_supplier', true)
-        .limit(10)
+      void Promise.resolve(
+        supabase
+          .from('organisations')
+          .select('id, trade_name, legal_name')
+          .or(`trade_name.ilike.%${q}%,legal_name.ilike.%${q}%`)
+          .eq('is_supplier', true)
+          .limit(10)
+      )
         .then(({ data }) => {
           setResults((data as SupplierResult[]) ?? []);
         })
