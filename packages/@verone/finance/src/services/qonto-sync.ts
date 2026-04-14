@@ -10,7 +10,6 @@
 
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 
-import type { QontoTransaction } from '@verone/integrations/qonto';
 import { QontoClient } from '@verone/integrations/qonto';
 import { createAdminClient } from '@verone/utils/supabase/server';
 

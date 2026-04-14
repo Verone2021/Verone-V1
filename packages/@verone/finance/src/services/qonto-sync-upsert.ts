@@ -2,8 +2,6 @@
  * Logique d'upsert des transactions Qonto en base de données
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type { QontoTransaction } from '@verone/integrations/qonto';
@@ -71,8 +69,10 @@ export async function upsertQontoTransaction(
   const transactionData = buildTransactionData(tx, bankAccountId);
 
   if (existing) {
-    const existingDate = new Date(existing.updated_at);
-    const txDate = new Date(tx.updated_at || tx.emitted_at);
+    const existingDate = new Date(existing.updated_at as string);
+    const txUpdatedAt =
+      (tx.updated_at as string | undefined) ?? tx.emitted_at ?? '';
+    const txDate = new Date(txUpdatedAt);
 
     if (txDate <= existingDate) {
       return 'skipped';
