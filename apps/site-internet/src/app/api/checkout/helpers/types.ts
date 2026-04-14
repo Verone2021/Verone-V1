@@ -52,6 +52,8 @@ export interface ShippingConfig {
   shipping_info_message?: string;
 }
 
+export type DiscountInput = z.infer<typeof DiscountSchema>;
+
 export interface ValidatedDiscount {
   discount_id: string;
   code: string | null;

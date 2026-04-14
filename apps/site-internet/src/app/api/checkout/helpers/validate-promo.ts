@@ -1,14 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
-import { z } from 'zod';
 
-import type { DiscountSchema, ValidatedDiscount } from './types';
+import type { DiscountInput, ValidatedDiscount } from './types';
 
 /**
  * Server-side promo validation — never trust the frontend discount_amount.
  * Revalidates the code against DB and recalculates the discount.
  */
 export async function validatePromoServerSide(
-  discount: z.infer<typeof DiscountSchema>,
+  discount: DiscountInput,
   subtotalTtc: number,
   supabaseUrl: string,
   supabaseServiceKey: string
