@@ -542,6 +542,20 @@ async function doImport() {
       body: JSON.stringify(body),
     });
     const result = await res.json();
+
+    // Doublon détecté
+    if (res.status === 409) {
+      setStatus(
+        'error',
+        'Ce produit a deja ete importe : "' + result.existing_product_name + '"'
+      );
+      btnImport.textContent = 'Deja importe';
+      resultLink.href = baseUrl + result.redirect_url;
+      resultLink.textContent = 'Ouvrir la fiche existante';
+      successLink.style.display = 'block';
+      return;
+    }
+
     if (!res.ok) throw new Error(result.error || 'Erreur serveur');
 
     setStatus('success', 'Produit "' + result.product_name + '" importe !');

@@ -156,6 +156,20 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Construire les notes avec les infos Alibaba
+    const supplierNotes: string[] = [];
+    if (input.trade_assurance) supplierNotes.push('Trade Assurance');
+    if (input.verified) supplierNotes.push('Fournisseur verifie');
+    if (input.year_established)
+      supplierNotes.push(`Cree en ${input.year_established}`);
+    if (input.employees) supplierNotes.push(`Employes: ${input.employees}`);
+    if (input.response_rate)
+      supplierNotes.push(`Taux reponse: ${input.response_rate}`);
+    if (input.response_time)
+      supplierNotes.push(`Temps reponse: ${input.response_time}`);
+    if (input.delivery_terms)
+      supplierNotes.push(`Incoterms: ${input.delivery_terms}`);
+
     // Créer le fournisseur
     const { data: newSupplier, error } = await supabase
       .from('organisations')
@@ -168,9 +182,11 @@ export async function POST(request: NextRequest) {
         address_line1: input.address ?? null,
         alibaba_store_url: input.alibaba_store_url ?? null,
         supplier_reliability_score: reliabilityScore,
+        rating: input.supplier_score ?? null,
         supplier_specialties: input.specialties ?? null,
         preferred_comm_channel: 'alibaba',
         certification_labels: input.certifications ?? null,
+        notes: supplierNotes.length > 0 ? supplierNotes.join(' | ') : null,
       })
       .select('id, trade_name')
       .single();

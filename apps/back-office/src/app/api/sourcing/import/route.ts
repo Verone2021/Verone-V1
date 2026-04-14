@@ -138,6 +138,28 @@ export async function POST(request: NextRequest) {
   const input = parsed.data;
 
   try {
+    // ================================================================
+    // STEP 0 : Anti-doublon par URL source
+    // ================================================================
+    const { data: existingProduct } = await supabase
+      .from('products')
+      .select('id, name')
+      .eq('supplier_page_url', input.source_url)
+      .limit(1)
+      .maybeSingle();
+
+    if (existingProduct) {
+      return NextResponse.json(
+        {
+          error: 'Produit deja importe',
+          existing_product_id: existingProduct.id,
+          existing_product_name: existingProduct.name,
+          redirect_url: `/produits/sourcing/produits/${existingProduct.id}`,
+        },
+        { status: 409 }
+      );
+    }
+
     let supplierId: string | null = null;
 
     // ================================================================
@@ -185,6 +207,22 @@ export async function POST(request: NextRequest) {
         // Créer le fournisseur
         const countryCode = toCountryCode(input.supplier.country);
 
+        // Construire les notes avec les infos Alibaba non stockables en colonnes
+        const supplierNotes: string[] = [];
+        if (input.supplier.trade_assurance)
+          supplierNotes.push('Trade Assurance');
+        if (input.supplier.verified) supplierNotes.push('Fournisseur verifie');
+        if (input.supplier.year_established)
+          supplierNotes.push(`Cree en ${input.supplier.year_established}`);
+        if (input.supplier.employees)
+          supplierNotes.push(`Employes: ${input.supplier.employees}`);
+        if (input.supplier.response_rate)
+          supplierNotes.push(`Taux reponse: ${input.supplier.response_rate}`);
+        if (input.supplier.response_time)
+          supplierNotes.push(`Temps reponse: ${input.supplier.response_time}`);
+        if (input.supplier.delivery_terms)
+          supplierNotes.push(`Incoterms: ${input.supplier.delivery_terms}`);
+
         const { data: newSupplier, error: supplierError } = await supabase
           .from('organisations')
           .insert({
@@ -198,9 +236,11 @@ export async function POST(request: NextRequest) {
             supplier_reliability_score: input.supplier.supplier_score
               ? Math.round(input.supplier.supplier_score)
               : null,
+            rating: input.supplier.supplier_score ?? null,
             supplier_specialties: input.supplier.specialties ?? null,
             preferred_comm_channel: 'alibaba',
             certification_labels: input.supplier.certifications ?? null,
+            notes: supplierNotes.length > 0 ? supplierNotes.join(' | ') : null,
           })
           .select('id')
           .single();
