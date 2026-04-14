@@ -18,7 +18,6 @@ import {
   DEFAULT_LOCK_CONFIG,
   computeSectionLockStatus,
   computeDeploymentProgress,
-  type LockStatus,
   type DeploymentPhase,
   type SectionLockConfig,
   type LockEvent,
