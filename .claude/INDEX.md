@@ -39,7 +39,6 @@
 ## Guides
 
 - `.claude/guides/cross-app-protection.md` — Protection cross-app (isolation BO/LinkMe)
-- `.claude/guides/expert-workflow.md` — Workflow expert bonnes pratiques
 - `.claude/guides/typescript-errors-debugging.md` — Debug erreurs TypeScript
 
 ## Templates
@@ -66,7 +65,7 @@
 ## Credentials et config
 
 - `.claude/test-credentials.md` — Playwright (BO, LinkMe, Site) — LOCAL ONLY
-- `.claude/settings.json` — Permissions + hooks (13 PreToolUse, 2 PostToolUse)
+- `.claude/settings.json` — Permissions + hooks (14 PreToolUse, 2 PostToolUse)
 
 ## Commandes Slash
 

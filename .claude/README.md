@@ -6,7 +6,7 @@
 
 ```
 .claude/
-├── settings.json          # Permissions + hooks (13 PreToolUse, 2 PostToolUse)
+├── settings.json          # Permissions + hooks (14 PreToolUse, 2 PostToolUse)
 ├── INDEX.md               # Sommaire centralise
 ├── agents/                # 6 agents (dev, reviewer, verify, ops, writer, market)
 ├── commands/              # 5 commands (search, review, pr, status, README)

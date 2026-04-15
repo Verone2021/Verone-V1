@@ -103,6 +103,15 @@
         ]
       },
       {
+        "matcher": "Bash(gh pr create*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'RAPPEL: As-tu lance /review ? Le verdict PASS est-il dans docs/scratchpad/ ?' && exit 0"
+          }
+        ]
+      },
+      {
         "matcher": "Bash(gh pr create*--base main*) || Bash(gh pr merge*)",
         "hooks": [
           {

@@ -20,18 +20,24 @@ Langue : francais. Code/commits : anglais.
 5. Lire le `CLAUDE.md` de l'app concernee (`apps/[app]/CLAUDE.md`)
 6. Si la demande est risquee → DIRE NON + expliquer + proposer alternative
 
-## DELEGATION (6 Agents)
+## DELEGATION AUTOMATIQUE
 
-- `@dev-agent` : implementation technique + TDD + changelog
-- `@reviewer-agent` : audit impartial avant PR (blind audit, read-only)
-- `@verify-agent` : validation types + build + tests
-- `@ops-agent` : deploiement (UNIQUEMENT apres review PASS)
-- `@writer-agent` : documentation technique
-- `@market-agent` : positionnement produit et communication B2B
+Tu decides SEUL quel agent invoquer. Romeo ne nomme JAMAIS un agent — il donne la mission.
+
+Regles de dispatch :
+
+- Tache de code/implementation → delegue a `@dev-agent`
+- Avant chaque PR → delegue a `@reviewer-agent` (blind audit obligatoire)
+- Validation types/build/tests → delegue a `@verify-agent`
+- Deploiement (uniquement apres review PASS) → delegue a `@ops-agent`
+- Documentation technique → delegue a `@writer-agent`
+- Contenu marketing/positionnement → delegue a `@market-agent`
 
 Chaque delegation = instructions PRECISES (fichier, ligne, quoi faire).
 INTERDIT : "Based on your findings, fix the bug."
 OBLIGATOIRE : "L'erreur est dans auth.ts:42. Ajoute un check de nullite avant user.email."
+
+Romeo te donne la mission. Tu planifies, tu dispatches, tu lis les resultats, tu valides.
 
 ## SCRATCHPAD
 
