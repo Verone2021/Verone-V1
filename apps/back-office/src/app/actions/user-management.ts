@@ -13,8 +13,6 @@ import type {
   UpdateUserProfileData,
 } from './user-management-types';
 
-export type { CreateUserData, ActionResult, UpdateUserProfileData };
-
 /**
  * Vérifier que l'utilisateur actuel est un owner
  */
