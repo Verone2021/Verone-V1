@@ -35,6 +35,7 @@ export interface ClientConsultation {
   archived_by?: string;
   deleted_at?: string;
   deleted_by?: string;
+  tva_rate?: number;
   // Relations (optionnelles, pour joins)
   enseigne?: { id: string; name: string };
   organisation?: { id: string; legal_name: string; trade_name?: string };
