@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
-// @ts-nocheck - Hooks consultations non migrés
-
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-misused-promises, @typescript-eslint/prefer-nullish-coalescing */
+// TODO: Remove eslint-disable when useConsultations/useConsultationItems hooks are properly typed
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -30,6 +29,13 @@ import { Search, Link, ArrowRight, Plus } from 'lucide-react';
 import { ConsultationOverviewStats } from './consultation-manager/ConsultationOverviewStats';
 import { ProductConsultationView } from './consultation-manager/ProductConsultationView';
 import { ConsultationProductsView } from './consultation-manager/ConsultationProductsView';
+
+interface EligibleProduct {
+  id: string;
+  name?: string;
+  sku?: string;
+  supplier_name?: string;
+}
 
 interface ProductConsultationManagerProps {
   productId?: string;
@@ -65,24 +71,38 @@ export function ProductConsultationManager({
   const [clientFilter, setClientFilter] = useState<string>('all');
 
   useEffect(() => {
-    fetchConsultations();
-    fetchEligibleProducts();
+    void fetchConsultations().catch((err: unknown) => {
+      console.error(
+        '[ProductConsultationManager] fetchConsultations failed:',
+        err
+      );
+    });
+    void fetchEligibleProducts().catch((err: unknown) => {
+      console.error(
+        '[ProductConsultationManager] fetchEligibleProducts failed:',
+        err
+      );
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable async functions
   }, []);
 
   const filteredConsultations = consultations.filter(consultation => {
     const matchesSearch =
-      consultation.organisation_name
+      (consultation.organisation?.legal_name ?? '')
         .toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
-      consultation.descriptif.toLowerCase().includes(searchTerm.toLowerCase());
+      (consultation.descriptif ?? '')
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
     const matchesStatus =
       statusFilter === 'all' || consultation.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const filteredProducts = eligibleProducts.filter(
+  const typedProducts = eligibleProducts as EligibleProduct[];
+  const filteredProducts = typedProducts.filter(
     product =>
-      product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ??
       product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -187,7 +207,8 @@ export function ProductConsultationManager({
                     <SelectItem key={consultation.id} value={consultation.id}>
                       <div className="flex flex-col">
                         <span className="font-medium">
-                          {consultation.organisation_name}
+                          {consultation.organisation?.legal_name ??
+                            'Sans organisation'}
                         </span>
                         <span className="text-xs text-gray-500">
                           {consultation.descriptif.substring(0, 50)}...
