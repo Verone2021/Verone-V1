@@ -61,7 +61,7 @@ export const useCatalogue = () => {
       setState(prev => ({
         ...prev,
         categories: categoriesResult,
-        products: productsResult.products,
+        products: productsResult.products as Product[],
         total: productsResult.total,
         loading: false,
       }));
@@ -73,6 +73,7 @@ export const useCatalogue = () => {
         loading: false,
       }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadCategories and loadProducts are stable async functions
   }, [filters]);
 
   useEffect(() => {
