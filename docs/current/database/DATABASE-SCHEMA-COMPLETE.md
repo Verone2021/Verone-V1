@@ -1,6 +1,6 @@
 # Database Schema Complete — Index
 
-_Generated: 2026-04-13 17:08 — 141 tables_
+_Generated: 2026-04-15 03:34 — 141 tables_
 
 | Table                               | Domaine                     | Colonnes |
 | ----------------------------------- | --------------------------- | -------- |
@@ -20,7 +20,7 @@ _Generated: 2026-04-13 17:08 — 141 tables_
 | channel_pricing                     | Autres                      | 35       |
 | channel_pricing_history             | Autres                      | 16       |
 | channel_product_metadata            | Autres                      | 14       |
-| client_consultations                | Commandes & Consultations   | 25       |
+| client_consultations                | Commandes & Consultations   | 26       |
 | cms_pages                           | Autres                      | 9        |
 | collection_images                   | Produits & Catalogue        | 15       |
 | collection_products                 | Produits & Catalogue        | 6        |
@@ -28,7 +28,7 @@ _Generated: 2026-04-13 17:08 — 141 tables_
 | collections                         | Produits & Catalogue        | 33       |
 | consultation_emails                 | Commandes & Consultations   | 12       |
 | consultation_images                 | Commandes & Consultations   | 15       |
-| consultation_products               | Commandes & Consultations   | 11       |
+| consultation_products               | Commandes & Consultations   | 15       |
 | contacts                            | Organisations & Contacts    | 30       |
 | counterparty_bank_accounts          | Organisations & Contacts    | 10       |
 | customer_addresses                  | Organisations & Contacts    | 13       |

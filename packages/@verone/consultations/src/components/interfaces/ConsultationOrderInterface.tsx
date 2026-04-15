@@ -29,6 +29,9 @@ import {
   X,
   Sparkles,
   ExternalLink,
+  ThumbsUp,
+  ThumbsDown,
+  ShoppingCart,
 } from 'lucide-react';
 
 import type { ConsultationItem } from '@verone/consultations/hooks';
@@ -37,11 +40,13 @@ import { useConsultationItems } from '@verone/consultations/hooks';
 interface ConsultationOrderInterfaceProps {
   consultationId: string;
   onItemsChanged?: () => void;
+  onCreatePurchaseOrder?: (acceptedItems: ConsultationItem[]) => void;
 }
 
 export function ConsultationOrderInterface({
   consultationId,
   onItemsChanged,
+  onCreatePurchaseOrder,
 }: ConsultationOrderInterfaceProps) {
   const {
     consultationItems,
@@ -65,6 +70,9 @@ export function ConsultationOrderInterface({
   const [editQuantity, setEditQuantity] = useState(1);
   const [editPrice, setEditPrice] = useState('');
   const [editNotes, setEditNotes] = useState('');
+  const [editShippingCost, setEditShippingCost] = useState('');
+  const [editCostPriceOverride, setEditCostPriceOverride] = useState('');
+  const [editIsSample, setEditIsSample] = useState(false);
 
   // Gérer le changement d'items — ne dépend PAS de onItemsChanged pour éviter les boucles
   const itemsCount = consultationItems.length;
@@ -85,6 +93,9 @@ export function ConsultationOrderInterface({
     setEditQuantity(item.quantity);
     setEditPrice(item.unit_price?.toString() ?? '');
     setEditNotes(item.notes ?? '');
+    setEditShippingCost(item.shipping_cost?.toString() ?? '0');
+    setEditCostPriceOverride(item.cost_price_override?.toString() ?? '');
+    setEditIsSample(item.is_sample ?? false);
   };
 
   // Sauvegarder l'édition d'un item
@@ -93,6 +104,11 @@ export function ConsultationOrderInterface({
       quantity: editQuantity,
       unit_price: editPrice ? parseFloat(editPrice) : undefined,
       notes: editNotes || undefined,
+      shipping_cost: editShippingCost ? parseFloat(editShippingCost) : 0,
+      cost_price_override: editCostPriceOverride
+        ? parseFloat(editCostPriceOverride)
+        : undefined,
+      is_sample: editIsSample,
     });
 
     if (success) {
@@ -115,6 +131,15 @@ export function ConsultationOrderInterface({
       await removeItem(itemId);
     }
   };
+
+  // Changer le statut d'une ligne (accepter/refuser)
+  const changeLineStatus = async (itemId: string, status: string) => {
+    await updateItem(itemId, { status });
+  };
+
+  // Compter les lignes acceptées
+  const acceptedItems = consultationItems.filter(i => i.status === 'approved');
+  const hasAcceptedItems = acceptedItems.length > 0;
 
   // Changer la quantité rapidement
   const changeQuantity = async (itemId: string, delta: number) => {
@@ -148,6 +173,45 @@ export function ConsultationOrderInterface({
 
   const total = calculateTotal();
   const totalItems = getTotalItemsCount();
+
+  // Margin calculations
+  const getItemCostPrice = (item: ConsultationItem): number =>
+    item.cost_price_override ?? item.product?.cost_price ?? 0;
+
+  const getItemCostTotal = (item: ConsultationItem): number => {
+    if (item.is_free || item.is_sample)
+      return getItemCostPrice(item) * item.quantity;
+    return (getItemCostPrice(item) + item.shipping_cost) * item.quantity;
+  };
+
+  const getItemMargin = (item: ConsultationItem): number => {
+    if (item.is_free || item.is_sample)
+      return -(getItemCostPrice(item) * item.quantity);
+    const costPerUnit = getItemCostPrice(item) + item.shipping_cost;
+    return ((item.unit_price ?? 0) - costPerUnit) * item.quantity;
+  };
+
+  const getItemMarginPercent = (item: ConsultationItem): number => {
+    const costPerUnit = getItemCostPrice(item) + item.shipping_cost;
+    if (costPerUnit === 0 || item.is_free || item.is_sample) return 0;
+    return (((item.unit_price ?? 0) - costPerUnit) / costPerUnit) * 100;
+  };
+
+  const totalCost = consultationItems.reduce(
+    (sum, item) => sum + getItemCostTotal(item),
+    0
+  );
+  const totalShipping = consultationItems.reduce(
+    (sum, item) =>
+      item.is_sample ? sum : sum + item.shipping_cost * item.quantity,
+    0
+  );
+  const totalMargin = consultationItems.reduce(
+    (sum, item) => sum + getItemMargin(item),
+    0
+  );
+  const totalMarginPercent =
+    totalCost > 0 ? (totalMargin / totalCost) * 100 : 0;
 
   return (
     <div className="space-y-6">
@@ -204,22 +268,35 @@ export function ConsultationOrderInterface({
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="border-b bg-gray-50">
-                  <tr className="text-left">
-                    <th className="p-4 font-medium">Produit</th>
-                    <th className="p-4 font-medium text-center">Quantité</th>
-                    <th className="p-4 font-medium text-right">
-                      Prix unitaire
-                    </th>
-                    <th className="p-4 font-medium text-center">Gratuit</th>
-                    <th className="p-4 font-medium text-right">Total</th>
-                    <th className="p-4 font-medium text-center">Actions</th>
+                  <tr className="text-left text-xs uppercase text-gray-500 tracking-wider">
+                    <th className="p-3 font-medium">Produit</th>
+                    <th className="p-3 font-medium text-center">Qté</th>
+                    <th className="p-3 font-medium text-right">Prix achat</th>
+                    <th className="p-3 font-medium text-right">Transport</th>
+                    <th className="p-3 font-medium text-right">Prix vente</th>
+                    <th className="p-3 font-medium text-center">Gratuit</th>
+                    <th className="p-3 font-medium text-right">Marge</th>
+                    <th className="p-3 font-medium text-right">Total</th>
+                    <th className="p-3 font-medium text-center">Statut</th>
+                    <th className="p-3 font-medium text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {consultationItems.map(item => (
-                    <tr key={item.id} className="border-b hover:bg-gray-50">
+                    <tr
+                      key={item.id}
+                      className={`border-b hover:bg-gray-50 ${
+                        item.status === 'approved'
+                          ? 'bg-green-50/30 border-l-4 border-l-green-400'
+                          : item.status === 'rejected'
+                            ? 'bg-red-50/30 border-l-4 border-l-red-300 opacity-60'
+                            : item.status === 'ordered'
+                              ? 'bg-blue-50/30 border-l-4 border-l-blue-400'
+                              : ''
+                      }`}
+                    >
                       {/* Produit */}
-                      <td className="p-4">
+                      <td className="p-3">
                         <div className="flex items-center gap-3">
                           {item.product?.image_url ? (
                             /* eslint-disable-next-line @next/next/no-img-element */
@@ -293,8 +370,65 @@ export function ConsultationOrderInterface({
                         )}
                       </td>
 
-                      {/* Prix unitaire */}
-                      <td className="p-4 text-right">
+                      {/* Prix achat */}
+                      <td className="p-3 text-right">
+                        {editingItem === item.id ? (
+                          <div className="relative inline-block">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={editCostPriceOverride}
+                              onChange={e =>
+                                setEditCostPriceOverride(e.target.value)
+                              }
+                              placeholder={
+                                item.product?.cost_price?.toFixed(2) ?? '0'
+                              }
+                              className="w-24 pr-6 text-sm"
+                            />
+                            <Euro className="absolute right-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-600">
+                            {getItemCostPrice(item).toFixed(2)}€
+                            {item.cost_price_override != null && (
+                              <span className="block text-[10px] text-orange-500">
+                                modifié
+                              </span>
+                            )}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Transport */}
+                      <td className="p-3 text-right">
+                        {editingItem === item.id ? (
+                          <div className="relative inline-block">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={editShippingCost}
+                              onChange={e =>
+                                setEditShippingCost(e.target.value)
+                              }
+                              className="w-20 pr-6 text-sm"
+                              disabled={editIsSample}
+                            />
+                            <Euro className="absolute right-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+                          </div>
+                        ) : item.is_sample ? (
+                          <span className="text-xs text-gray-400">—</span>
+                        ) : (
+                          <span className="text-sm text-gray-600">
+                            {item.shipping_cost > 0
+                              ? `${item.shipping_cost.toFixed(2)}€`
+                              : '—'}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Prix vente (anciennement Prix unitaire) */}
+                      <td className="p-3 text-right">
                         {editingItem === item.id ? (
                           <div className="relative inline-block">
                             <Input
@@ -320,17 +454,78 @@ export function ConsultationOrderInterface({
                         )}
                       </td>
 
-                      {/* Gratuit */}
-                      <td className="p-4 text-center">
-                        <Checkbox
-                          checked={item.is_free}
-                          onCheckedChange={() => void toggleFreeItem(item.id)}
-                          disabled={editingItem === item.id}
-                        />
+                      {/* Gratuit / Échantillon */}
+                      <td className="p-3 text-center">
+                        {editingItem === item.id ? (
+                          <label className="flex items-center gap-1 text-xs justify-center cursor-pointer">
+                            <Checkbox
+                              checked={editIsSample}
+                              onCheckedChange={checked =>
+                                setEditIsSample(checked === true)
+                              }
+                            />
+                            <span>Échant.</span>
+                          </label>
+                        ) : (
+                          <div className="space-y-1">
+                            <Checkbox
+                              checked={item.is_free}
+                              onCheckedChange={() =>
+                                void toggleFreeItem(item.id)
+                              }
+                            />
+                            {item.is_sample && (
+                              <Badge variant="outline" className="text-[10px]">
+                                Échant.
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Marge */}
+                      <td className="p-3 text-right">
+                        {item.is_free || item.is_sample ? (
+                          <Badge
+                            variant="outline"
+                            className="text-red-600 border-red-200 text-xs"
+                          >
+                            -
+                            {(getItemCostPrice(item) * item.quantity).toFixed(
+                              2
+                            )}
+                            €
+                          </Badge>
+                        ) : (
+                          <div className="text-sm">
+                            <span
+                              className={
+                                getItemMargin(item) >= 0
+                                  ? 'text-green-700 font-medium'
+                                  : 'text-red-600 font-medium'
+                              }
+                            >
+                              {getItemMargin(item).toFixed(2)}€
+                            </span>
+                            <br />
+                            <Badge
+                              variant={
+                                getItemMarginPercent(item) >= 30
+                                  ? 'success'
+                                  : getItemMarginPercent(item) >= 0
+                                    ? 'warning'
+                                    : 'danger'
+                              }
+                              className="text-xs"
+                            >
+                              {getItemMarginPercent(item).toFixed(1)}%
+                            </Badge>
+                          </div>
+                        )}
                       </td>
 
                       {/* Total */}
-                      <td className="p-4 text-right">
+                      <td className="p-3 text-right">
                         <span className="font-medium">
                           {item.is_free ? (
                             <Badge
@@ -345,8 +540,56 @@ export function ConsultationOrderInterface({
                         </span>
                       </td>
 
+                      {/* Statut ligne */}
+                      <td className="p-3 text-center">
+                        {item.status === 'approved' ? (
+                          <Badge variant="success" className="text-xs">
+                            Accepté
+                          </Badge>
+                        ) : item.status === 'rejected' ? (
+                          <Badge variant="danger" className="text-xs">
+                            Refusé
+                          </Badge>
+                        ) : item.status === 'ordered' ? (
+                          <Badge variant="info" className="text-xs">
+                            Commandé
+                          </Badge>
+                        ) : (
+                          <div className="flex items-center justify-center gap-1">
+                            <ButtonV2
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                void changeLineStatus(
+                                  item.id,
+                                  'approved'
+                                ).catch(console.error)
+                              }
+                              className="text-green-600 hover:bg-green-50 border-green-200"
+                              title="Accepter"
+                            >
+                              <ThumbsUp className="h-3 w-3" />
+                            </ButtonV2>
+                            <ButtonV2
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                void changeLineStatus(
+                                  item.id,
+                                  'rejected'
+                                ).catch(console.error)
+                              }
+                              className="text-red-600 hover:bg-red-50 border-red-200"
+                              title="Refuser"
+                            >
+                              <ThumbsDown className="h-3 w-3" />
+                            </ButtonV2>
+                          </div>
+                        )}
+                      </td>
+
                       {/* Actions */}
-                      <td className="p-4 text-center">
+                      <td className="p-3 text-center">
                         {editingItem === item.id ? (
                           <div className="flex items-center justify-center space-x-1">
                             <ButtonV2
@@ -397,26 +640,94 @@ export function ConsultationOrderInterface({
           )}
         </CardContent>
 
-        {/* Footer avec total */}
+        {/* Footer KPI marges */}
         {consultationItems.length > 0 && (
-          <div className="border-t bg-gray-50 p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center text-sm text-gray-600">
-                  <Calculator className="h-4 w-4 mr-1" />
+          <div className="border-t p-4 space-y-3">
+            <div className="grid grid-cols-5 gap-3">
+              <div className="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-400">
+                <p className="text-xs text-blue-600 uppercase tracking-wider">
+                  Chiffre d&apos;affaires
+                </p>
+                <p className="text-lg font-bold text-blue-900">
+                  {total.toFixed(2)}€
+                </p>
+              </div>
+              <div className="bg-red-50 rounded-lg p-3 border-l-4 border-red-400">
+                <p className="text-xs text-red-600 uppercase tracking-wider">
+                  Coût total
+                </p>
+                <p className="text-lg font-bold text-red-900">
+                  {totalCost.toFixed(2)}€
+                </p>
+              </div>
+              <div className="bg-orange-50 rounded-lg p-3 border-l-4 border-orange-400">
+                <p className="text-xs text-orange-600 uppercase tracking-wider">
+                  Transport
+                </p>
+                <p className="text-lg font-bold text-orange-900">
+                  {totalShipping.toFixed(2)}€
+                </p>
+              </div>
+              <div className="bg-green-50 rounded-lg p-3 border-l-4 border-green-400">
+                <p className="text-xs text-green-600 uppercase tracking-wider">
+                  Bénéfice
+                </p>
+                <p
+                  className={`text-lg font-bold ${totalMargin >= 0 ? 'text-green-900' : 'text-red-900'}`}
+                >
+                  {totalMargin.toFixed(2)}€
+                </p>
+              </div>
+              <div className="bg-purple-50 rounded-lg p-3 border-l-4 border-purple-400">
+                <p className="text-xs text-purple-600 uppercase tracking-wider">
+                  Taux de marge
+                </p>
+                <p
+                  className={`text-lg font-bold ${totalMarginPercent >= 30 ? 'text-green-900' : totalMarginPercent >= 0 ? 'text-orange-900' : 'text-red-900'}`}
+                >
+                  {totalMarginPercent.toFixed(1)}%
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-sm text-gray-500">
+              <div className="flex items-center gap-3">
+                <Calculator className="h-4 w-4" />
+                <span>
                   {totalItems} article{totalItems > 1 ? 's' : ''}
-                </div>
-                <div className="text-sm text-gray-600">
-                  {consultationItems.filter(i => i.is_free).length} gratuit
-                  {consultationItems.filter(i => i.is_free).length > 1
+                </span>
+                <span>•</span>
+                <span>
+                  {acceptedItems.length} accepté
+                  {acceptedItems.length > 1 ? 's' : ''}
+                </span>
+                <span>•</span>
+                <span>
+                  {
+                    consultationItems.filter(i => i.status === 'rejected')
+                      .length
+                  }{' '}
+                  refusé
+                  {consultationItems.filter(i => i.status === 'rejected')
+                    .length > 1
                     ? 's'
                     : ''}
-                </div>
+                </span>
+                <span>•</span>
+                <span>
+                  {consultationItems.filter(i => i.status === 'pending').length}{' '}
+                  en attente
+                </span>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-600">Total HT</p>
-                <p className="text-2xl font-bold">{total.toFixed(2)}€</p>
-              </div>
+              {hasAcceptedItems && onCreatePurchaseOrder && (
+                <ButtonV2
+                  onClick={() => onCreatePurchaseOrder(acceptedItems)}
+                  className="bg-black hover:bg-gray-800 text-white"
+                >
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Commander ({acceptedItems.length} produit
+                  {acceptedItems.length > 1 ? 's' : ''})
+                </ButtonV2>
+              )}
             </div>
           </div>
         )}

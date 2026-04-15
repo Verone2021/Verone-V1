@@ -11,9 +11,13 @@ import { debounce } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import { Plus } from 'lucide-react';
 
+import { SourcingCardView } from './SourcingCardView';
 import { SourcingFilters } from './SourcingFilters';
+import { SourcingKanbanView } from './SourcingKanbanView';
 import { SourcingKpiCards } from './SourcingKpiCards';
 import { SourcingProductList } from './SourcingProductList';
+import type { SourcingViewMode } from './SourcingViewToggle';
+import { SourcingViewToggle } from './SourcingViewToggle';
 
 export default function SourcingPage() {
   const router = useRouter();
@@ -26,6 +30,7 @@ export default function SourcingPage() {
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [sortBy, setSortBy] = useState<string>('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [viewMode, setViewMode] = useState<SourcingViewMode>('list');
   const [isQuickSourcingModalOpen, setIsQuickSourcingModalOpen] =
     useState(false);
   const [completedThisMonth, setCompletedThisMonth] = useState(0);
@@ -187,13 +192,16 @@ export default function SourcingPage() {
             Gestion des produits à sourcer et validation catalogue
           </p>
         </div>
-        <ButtonV2
-          variant="primary"
-          icon={Plus}
-          onClick={() => setIsQuickSourcingModalOpen(true)}
-        >
-          Nouveau Sourcing
-        </ButtonV2>
+        <div className="flex items-center gap-3">
+          <SourcingViewToggle view={viewMode} onViewChange={setViewMode} />
+          <ButtonV2
+            variant="primary"
+            icon={Plus}
+            onClick={() => setIsQuickSourcingModalOpen(true)}
+          >
+            Nouveau Sourcing
+          </ButtonV2>
+        </div>
       </div>
 
       <SourcingKpiCards stats={stats} loading={loading} />
@@ -216,29 +224,45 @@ export default function SourcingPage() {
         onPriorityChange={setPriorityFilter}
       />
 
-      <SourcingProductList
-        products={filteredAndSortedProducts}
-        sortBy={sortBy}
-        sortDir={sortDir}
-        onSort={col => {
-          if (sortBy === col) {
-            setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
-          } else {
-            setSortBy(col);
-            setSortDir('desc');
+      {viewMode === 'list' && (
+        <SourcingProductList
+          products={filteredAndSortedProducts}
+          sortBy={sortBy}
+          sortDir={sortDir}
+          onSort={col => {
+            if (sortBy === col) {
+              setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+            } else {
+              setSortBy(col);
+              setSortDir('desc');
+            }
+          }}
+          loading={loading}
+          error={error}
+          onView={id => router.push(`/produits/sourcing/produits/${id}`)}
+          onViewSupplier={supplierId =>
+            router.push(`/organisations/${supplierId}`)
           }
-        }}
-        loading={loading}
-        error={error}
-        onView={id => router.push(`/produits/sourcing/produits/${id}`)}
-        onViewSupplier={supplierId =>
-          router.push(`/organisations/${supplierId}`)
-        }
-        onEdit={id => router.push(`/produits/sourcing/produits/${id}`)}
-        onValidate={handleValidate}
-        onArchive={handleArchive}
-        onDelete={handleDelete}
-      />
+          onEdit={id => router.push(`/produits/sourcing/produits/${id}`)}
+          onValidate={handleValidate}
+          onArchive={handleArchive}
+          onDelete={handleDelete}
+        />
+      )}
+
+      {viewMode === 'kanban' && (
+        <SourcingKanbanView
+          products={filteredAndSortedProducts}
+          onView={id => router.push(`/produits/sourcing/produits/${id}`)}
+        />
+      )}
+
+      {viewMode === 'card' && (
+        <SourcingCardView
+          products={filteredAndSortedProducts}
+          onView={id => router.push(`/produits/sourcing/produits/${id}`)}
+        />
+      )}
 
       <QuickSourcingModal
         open={isQuickSourcingModalOpen}

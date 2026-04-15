@@ -1,19 +1,33 @@
 'use client';
 
+import { useState } from 'react';
+
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 
 import { ConsultationOrderInterface } from '@verone/consultations';
 import { ConsultationTimeline } from '@verone/consultations';
+import { ConsultationMarginReportPdf } from '@verone/consultations/pdf-templates';
 import { ButtonUnified } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
+
+const PdfPreviewModal = dynamic(
+  () =>
+    import('@verone/finance').then(mod => ({ default: mod.PdfPreviewModal })),
+  { ssr: false }
+);
+
+import type { ConsultationItem } from '@verone/consultations';
+import { QuickPurchaseOrderModal } from '@verone/orders';
 
 import { ConsultationHeader } from './ConsultationHeader';
 import { ConsultationInfoCard } from './ConsultationInfoCard';
 import { ConsultationLinkedOrders } from './ConsultationLinkedOrders';
 import { ConsultationLinkedQuotes } from './ConsultationLinkedQuotes';
 import { ConsultationModals } from './ConsultationModals';
+import { ConsultationOrderDialog } from './ConsultationOrderDialog';
 import { ConsultationToolbar } from './ConsultationToolbar';
 import { getClientName } from './helpers';
 import { useConsultationDetail } from './use-consultation-detail';
@@ -24,6 +38,12 @@ export default function ConsultationDetailPage() {
   const consultationId = params.consultationId as string;
 
   const detail = useConsultationDetail(consultationId);
+  const [showMarginReport, setShowMarginReport] = useState(false);
+  const [showOrderDialog, setShowOrderDialog] = useState(false);
+  const [pendingOrderItems, setPendingOrderItems] = useState<
+    ConsultationItem[]
+  >([]);
+  const [quickPOQueue, setQuickPOQueue] = useState<string[]>([]);
 
   if (detail.loading) {
     return (
@@ -115,6 +135,7 @@ export default function ConsultationDetailPage() {
             onDelete={() => detail.setShowDeleteModal(true)}
             onEmail={detail.handleOpenEmail}
             onPdf={detail.handleOpenPdf}
+            onMarginReport={() => setShowMarginReport(true)}
             onCreateQuote={detail.handleOpenQuoteModal}
             onCreateOrder={() => {
               void detail.handleCreateOrder().catch(error => {
@@ -128,37 +149,100 @@ export default function ConsultationDetailPage() {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="w-full px-2 py-1 space-y-1">
-        <ConsultationInfoCard
-          consultation={detail.consultation}
-          consultationId={consultationId}
-          clientName={clientName}
-        />
+      {/* Content — 2 colonnes */}
+      <div className="w-full px-4 py-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          {/* Colonne gauche — Produits & Marges */}
+          <div className="lg:col-span-8 space-y-4">
+            <ConsultationOrderInterface
+              consultationId={consultationId}
+              onItemsChanged={detail.handleItemsChanged}
+              onCreatePurchaseOrder={items => {
+                setPendingOrderItems(items);
+                setShowOrderDialog(true);
+              }}
+            />
+          </div>
 
-        {/* Produits consultation */}
-        <ConsultationOrderInterface
-          consultationId={consultationId}
-          onItemsChanged={detail.handleItemsChanged}
-        />
-
-        {/* Devis + Commandes + Timeline */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-1">
-          <ConsultationLinkedQuotes
-            linkedQuotes={detail.linkedQuotes}
-            quotesLoading={detail.quotesLoading}
-            onDeleteQuote={detail.handleDeleteQuote}
-          />
-          <ConsultationLinkedOrders
-            linkedSalesOrders={detail.linkedSalesOrders}
-            salesOrdersLoading={detail.salesOrdersLoading}
-          />
-          <ConsultationTimeline
-            events={detail.historyEvents}
-            loading={detail.historyLoading}
-          />
+          {/* Colonne droite — Client + Devis + Commandes + Timeline */}
+          <div className="lg:col-span-4 space-y-4">
+            <ConsultationInfoCard
+              consultation={detail.consultation}
+              consultationId={consultationId}
+              clientName={clientName}
+            />
+            <ConsultationLinkedQuotes
+              linkedQuotes={detail.linkedQuotes}
+              quotesLoading={detail.quotesLoading}
+              onDeleteQuote={detail.handleDeleteQuote}
+            />
+            <ConsultationLinkedOrders
+              linkedSalesOrders={detail.linkedSalesOrders}
+              salesOrdersLoading={detail.salesOrdersLoading}
+            />
+            <ConsultationTimeline
+              events={detail.historyEvents}
+              loading={detail.historyLoading}
+            />
+          </div>
         </div>
       </div>
+
+      {/* Modal PO rapide pré-rempli — itère sur toute la queue */}
+      {quickPOQueue.length > 0 && quickPOQueue[0] && (
+        <QuickPurchaseOrderModal
+          open={quickPOQueue.length > 0}
+          onClose={() => {
+            setQuickPOQueue([]);
+          }}
+          productId={quickPOQueue[0]}
+          onSuccess={() => {
+            setQuickPOQueue(prev => prev.slice(1));
+            void detail.fetchHistory().catch(console.error);
+          }}
+        />
+      )}
+
+      {/* Dialog choix type commande */}
+      <ConsultationOrderDialog
+        open={showOrderDialog}
+        onClose={() => setShowOrderDialog(false)}
+        acceptedItems={pendingOrderItems}
+        creatingSO={detail.creatingOrder}
+        onCreateSalesOrder={() => {
+          setShowOrderDialog(false);
+          void detail.handleCreateOrder().catch(error => {
+            console.error('[ConsultationDetailPage] Create SO failed:', error);
+          });
+        }}
+        onCreatePurchaseOrder={supplierGroups => {
+          setShowOrderDialog(false);
+          // Collecter TOUS les product_ids des items acceptés (un par groupe fournisseur)
+          const productIds = supplierGroups.flatMap(group =>
+            group.items.map(item => item.product_id)
+          );
+          if (productIds.length > 0) {
+            setQuickPOQueue(productIds);
+          }
+        }}
+      />
+
+      {/* Modal rapport marges PDF */}
+      {showMarginReport && detail.consultation && (
+        <PdfPreviewModal
+          isOpen={showMarginReport}
+          onClose={() => setShowMarginReport(false)}
+          title="Rapport Interne — Marges"
+          filename={`rapport-marges-${clientName.replace(/\s+/g, '-').toLowerCase()}.pdf`}
+          document={
+            <ConsultationMarginReportPdf
+              consultation={detail.consultation}
+              items={detail.consultationItems}
+              clientName={clientName}
+            />
+          }
+        />
+      )}
 
       <ConsultationModals
         consultation={detail.consultation}

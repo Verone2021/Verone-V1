@@ -25,6 +25,7 @@ export interface ClientConsultation {
   archived_by?: string;
   deleted_at?: string;
   deleted_by?: string;
+  tva_rate?: number;
   // Relations (optionnelles, pour joins)
   enseigne?: { id: string; name: string };
   organisation?: { id: string; legal_name: string; trade_name?: string };
@@ -59,16 +60,25 @@ export interface ConsultationItem {
   quantity: number;
   unit_price?: number;
   is_free: boolean;
+  is_sample: boolean;
   notes?: string;
   created_at: string;
   created_by?: string;
+  shipping_cost: number;
+  shipping_cost_currency: string;
+  cost_price_override?: number;
+  status: string;
   product?: {
     id: string;
     name: string;
     sku: string;
     requires_sample: boolean;
+    supplier_id?: string;
     supplier_name?: string;
     cost_price?: number;
+    stock_real?: number;
+    stock_forecasted_in?: number;
+    stock_forecasted_out?: number;
     image_url?: string | null;
   };
 }
@@ -84,6 +94,7 @@ export interface CreateConsultationData {
   priority_level?: number;
   source_channel?: 'website' | 'email' | 'phone' | 'other';
   estimated_response_date?: string;
+  notes_internes?: string;
   /** Images uploadées (max 5) — insertion dans consultation_images */
   images?: Array<{
     publicUrl: string;
@@ -118,7 +129,12 @@ export interface UpdateConsultationItemData {
   quantity?: number;
   unit_price?: number;
   is_free?: boolean;
+  is_sample?: boolean;
   notes?: string;
+  shipping_cost?: number;
+  shipping_cost_currency?: string;
+  cost_price_override?: number;
+  status?: string;
 }
 
 export interface ConsultationFilters {

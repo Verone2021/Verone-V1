@@ -1,6 +1,6 @@
 # Domaine Stock & Stockage — Schema Base de Donnees
 
-_Generated: 2026-04-13 17:08_
+_Generated: 2026-04-15 03:34_
 
 **Tables : 9**
 
@@ -63,8 +63,8 @@ _Generated: 2026-04-13 17:08_
 
 **RLS :** 4 policies
 
-- `backoffice_full_access_affiliate_storage_allocations` : ALL — authenticated
 - `Admin manage storage` : ALL — public
+- `backoffice_full_access_affiliate_storage_allocations` : ALL — authenticated
 - `Affiliate view own storage` : SELECT — public
 - `Admin view all storage` : SELECT — public
 

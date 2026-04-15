@@ -1597,41 +1597,53 @@ export type Database = {
       consultation_products: {
         Row: {
           consultation_id: string;
+          cost_price_override: number | null;
           created_at: string | null;
           created_by: string | null;
           id: string;
           is_free: boolean | null;
           is_primary_proposal: boolean | null;
+          is_sample: boolean | null;
           notes: string | null;
           product_id: string;
           proposed_price: number | null;
           quantity: number;
+          shipping_cost: number | null;
+          shipping_cost_currency: string | null;
           status: string | null;
         };
         Insert: {
           consultation_id: string;
+          cost_price_override?: number | null;
           created_at?: string | null;
           created_by?: string | null;
           id?: string;
           is_free?: boolean | null;
           is_primary_proposal?: boolean | null;
+          is_sample?: boolean | null;
           notes?: string | null;
           product_id: string;
           proposed_price?: number | null;
           quantity?: number;
+          shipping_cost?: number | null;
+          shipping_cost_currency?: string | null;
           status?: string | null;
         };
         Update: {
           consultation_id?: string;
+          cost_price_override?: number | null;
           created_at?: string | null;
           created_by?: string | null;
           id?: string;
           is_free?: boolean | null;
           is_primary_proposal?: boolean | null;
+          is_sample?: boolean | null;
           notes?: string | null;
           product_id?: string;
           proposed_price?: number | null;
           quantity?: number;
+          shipping_cost?: number | null;
+          shipping_cost_currency?: string | null;
           status?: string | null;
         };
         Relationships: [

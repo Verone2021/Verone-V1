@@ -14,20 +14,28 @@ import {
 } from '@verone/ui';
 import { FileText, Clock, Link, ExternalLink, AlertCircle } from 'lucide-react';
 
-interface ConsultationItem {
+interface LinkedConsultationDisplay {
   id: string;
   consultation_id: string;
+  quantity?: number;
+  proposed_price?: number | null;
+  created_at?: string;
   consultation?: {
-    enseigne?: { name: string };
-    organisation?: { trade_name: string | null; legal_name: string | null };
+    id?: string;
+    enseigne?: { name: string } | null;
+    organisation?: {
+      trade_name: string | null;
+      legal_name: string | null;
+    } | null;
     descriptif?: string;
     status?: string;
+    priority_level?: number;
     created_at?: string;
   };
 }
 
 interface SourcingConsultationsSectionProps {
-  linkedConsultations: ConsultationItem[];
+  linkedConsultations: LinkedConsultationDisplay[];
   consultationsLoading: boolean;
   assignedClientId: string | null;
   productId: string;

@@ -1,32 +1,604 @@
 'use client';
 
-// Re-exports
-export { useConsultations } from './use-consultations-list';
-export { useConsultationItems } from './use-consultation-items';
-export type {
-  ClientConsultation,
-  ConsultationProduct,
-  ConsultationItem,
-  CreateConsultationData,
-  AssignProductData,
-  CreateConsultationItemData,
-  UpdateConsultationItemData,
-  ConsultationFilters,
-} from './consultations-types';
+import { useState, useEffect, useCallback } from 'react';
+
+import { useToast } from '@verone/common/hooks';
+import { createClient } from '@verone/utils/supabase/client';
+
+const supabase = createClient();
+
+// Types pour les consultations
+export interface ClientConsultation {
+  id: string;
+  enseigne_id?: string;
+  organisation_id?: string;
+  client_email: string;
+  client_phone?: string;
+  descriptif: string;
+  image_url?: string;
+  tarif_maximum?: number;
+  status: 'en_attente' | 'en_cours' | 'terminee' | 'annulee';
+  assigned_to?: string;
+  notes_internes?: string;
+  priority_level: number;
+  source_channel: 'website' | 'email' | 'phone' | 'other';
+  estimated_response_date?: string;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+  responded_at?: string;
+  responded_by?: string;
+  // Lifecycle columns (ajoutées 2025-10-20)
+  validated_at?: string;
+  validated_by?: string;
+  archived_at?: string;
+  archived_by?: string;
+  deleted_at?: string;
+  deleted_by?: string;
+  tva_rate?: number;
+  // Relations (optionnelles, pour joins)
+  enseigne?: { id: string; name: string };
+  organisation?: { id: string; legal_name: string; trade_name?: string };
+}
+
+// Interface existante maintenue pour rétrocompatibilité
+export interface ConsultationProduct {
+  id: string;
+  consultation_id: string;
+  product_id: string;
+  proposed_price?: number;
+  notes?: string;
+  is_primary_proposal: boolean;
+  quantity: number;
+  is_free: boolean;
+  created_at: string;
+  created_by?: string;
+  // Relations
+  product?: {
+    id: string;
+    name: string;
+    sku: string;
+    requires_sample: boolean;
+    supplier_name?: string;
+  };
+}
+
+// Nouvelle interface simplifiée pour le workflow type commande
+export interface ConsultationItem {
+  id: string;
+  consultation_id: string;
+  product_id: string;
+  quantity: number;
+  unit_price?: number;
+  is_free: boolean;
+  is_sample: boolean;
+  notes?: string;
+  created_at: string;
+  created_by?: string;
+  shipping_cost: number;
+  shipping_cost_currency: string;
+  cost_price_override?: number;
+  status: string;
+  // Relations
+  product?: {
+    id: string;
+    name: string;
+    sku: string;
+    requires_sample: boolean;
+    supplier_id?: string;
+    supplier_name?: string;
+    cost_price?: number;
+    stock_real?: number;
+    stock_forecasted_in?: number;
+    stock_forecasted_out?: number;
+    image_url?: string | null;
+  };
+}
+
+export interface CreateConsultationData {
+  enseigne_id?: string;
+  organisation_id?: string;
+  client_email: string;
+  client_phone?: string;
+  descriptif: string;
+  image_url?: string;
+  tarif_maximum?: number;
+  priority_level?: number;
+  source_channel?: 'website' | 'email' | 'phone' | 'other';
+  estimated_response_date?: string;
+  notes_internes?: string;
+  /** Images uploadées (max 5) — insertion dans consultation_images */
+  images?: Array<{
+    publicUrl: string;
+    storagePath: string;
+    fileName: string;
+    fileSize: number;
+  }>;
+}
+
+// Interface existante maintenue pour rétrocompatibilité
+export interface AssignProductData {
+  consultation_id: string;
+  product_id: string;
+  proposed_price?: number;
+  notes?: string;
+  is_primary_proposal?: boolean;
+  quantity?: number;
+  is_free?: boolean;
+}
+
+// Nouvelles interfaces simplifiées pour le workflow type commande
+export interface CreateConsultationItemData {
+  consultation_id: string;
+  product_id: string;
+  quantity: number;
+  unit_price?: number;
+  is_free?: boolean;
+  notes?: string;
+}
+
+export interface UpdateConsultationItemData {
+  quantity?: number;
+  unit_price?: number;
+  is_free?: boolean;
+  is_sample?: boolean;
+  notes?: string;
+  shipping_cost?: number;
+  shipping_cost_currency?: string;
+  cost_price_override?: number;
+  status?: string;
+}
+
+export interface ConsultationFilters {
+  status?: string;
+  assigned_to?: string;
+  priority_level?: number | 'all';
+  search_client?: string;
+  source_channel?: string;
+  date_range?: {
+    start: string;
+    end: string;
+  };
+}
+
+export function useConsultations() {
+  const [consultations, setConsultations] = useState<ClientConsultation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  // Charger toutes les consultations
+  const fetchConsultations = useCallback(
+    async (filters?: ConsultationFilters) => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        let query = supabase
+          .from('client_consultations')
+          .select(
+            '*, enseigne:enseignes(id, name), organisation:organisations(id, legal_name, trade_name)'
+          )
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false });
+
+        // Appliquer les filtres
+        if (filters?.status && filters.status !== 'all') {
+          query = query.eq('status', filters.status);
+        }
+        if (filters?.assigned_to) {
+          query = query.eq('assigned_to', filters.assigned_to);
+        }
+        if (filters?.priority_level && filters.priority_level !== 'all') {
+          query = query.eq('priority_level', filters.priority_level);
+        }
+        // Note: search_client is handled client-side after fetch
+        // because organisation_name is not a column — it comes from joined tables
+        if (filters?.source_channel && filters.source_channel !== 'all') {
+          query = query.eq('source_channel', filters.source_channel);
+        }
+        if (filters?.date_range) {
+          query = query
+            .gte('created_at', filters.date_range.start)
+            .lte('created_at', filters.date_range.end);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+
+        setConsultations((data ?? []) as ClientConsultation[]);
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : 'Erreur lors du chargement des consultations';
+        setError(message);
+        console.error('Erreur fetchConsultations:', err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  // Créer une nouvelle consultation
+  const createConsultation = async (
+    data: CreateConsultationData
+  ): Promise<ClientConsultation | null> => {
+    try {
+      setError(null);
+
+      const { data: newConsultation, error } = await supabase
+        .from('client_consultations')
+        .insert([
+          {
+            enseigne_id: data.enseigne_id ?? null,
+            organisation_id: data.organisation_id ?? null,
+            client_email: data.client_email,
+            client_phone: data.client_phone,
+            descriptif: data.descriptif,
+            image_url: data.image_url,
+            tarif_maximum: data.tarif_maximum,
+            priority_level: data.priority_level ?? 2,
+            source_channel: data.source_channel ?? 'website',
+            estimated_response_date: data.estimated_response_date,
+          },
+        ])
+        .select(
+          'id, enseigne_id, organisation_id, client_email, client_phone, descriptif, image_url, tarif_maximum, status, assigned_to, notes_internes, priority_level, source_channel, estimated_response_date, created_at, updated_at, created_by, responded_at, responded_by, validated_at, validated_by, archived_at, archived_by, deleted_at, deleted_by'
+        )
+        .single();
+
+      if (error) throw error;
+
+      // Ajouter à la liste locale
+      setConsultations(prev => [
+        newConsultation as ClientConsultation,
+        ...prev,
+      ]);
+
+      toast({
+        title: 'Consultation créée',
+        description: 'La consultation a été créée avec succès',
+      });
+
+      return newConsultation as ClientConsultation;
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Erreur lors de la création de la consultation';
+      setError(message);
+      toast({
+        title: 'Erreur',
+        description: message,
+        variant: 'destructive',
+      });
+      return null;
+    }
+  };
+
+  // Mettre à jour une consultation
+  const updateConsultation = async (
+    id: string,
+    updates: Partial<ClientConsultation>
+  ): Promise<boolean> => {
+    try {
+      setError(null);
+
+      const { error } = await supabase
+        .from('client_consultations')
+        .update(updates)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Mettre à jour la liste locale
+      setConsultations(prev =>
+        prev.map(consultation =>
+          consultation.id === id
+            ? { ...consultation, ...updates }
+            : consultation
+        )
+      );
+
+      toast({
+        title: 'Consultation mise à jour',
+        description: 'Les modifications ont été enregistrées',
+      });
+
+      return true;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Erreur lors de la mise à jour';
+      setError(message);
+      toast({
+        title: 'Erreur',
+        description: message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  // Assigner une consultation à un utilisateur
+  const assignConsultation = async (
+    consultationId: string,
+    userId: string
+  ): Promise<boolean> => {
+    return updateConsultation(consultationId, {
+      assigned_to: userId,
+      status: 'en_cours',
+    });
+  };
+
+  // Changer le statut d'une consultation
+  const updateStatus = async (
+    consultationId: string,
+    status: ClientConsultation['status']
+  ): Promise<boolean> => {
+    const updates: Partial<ClientConsultation> = { status };
+
+    // Si terminée, marquer la date de réponse
+    if (status === 'terminee') {
+      updates.responded_at = new Date().toISOString();
+    }
+
+    return updateConsultation(consultationId, updates);
+  };
+
+  // Valider une consultation (utilisée Phase 2 pour pricing)
+  const validateConsultation = async (
+    consultationId: string
+  ): Promise<boolean> => {
+    try {
+      setError(null);
+
+      const { error } = await supabase
+        .from('client_consultations')
+        .update({
+          validated_at: new Date().toISOString(),
+          status: 'terminee',
+        })
+        .eq('id', consultationId);
+
+      if (error) throw error;
+
+      // Mettre à jour la liste locale
+      setConsultations(prev =>
+        prev.map(consultation =>
+          consultation.id === consultationId
+            ? {
+                ...consultation,
+                validated_at: new Date().toISOString(),
+                status: 'terminee' as const,
+              }
+            : consultation
+        )
+      );
+
+      toast({
+        title: 'Consultation validée',
+        description: 'La consultation a été marquée comme validée',
+      });
+
+      return true;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Erreur lors de la validation';
+      setError(message);
+      toast({
+        title: 'Erreur',
+        description: message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  // Archiver une consultation
+  const archiveConsultation = async (
+    consultationId: string
+  ): Promise<boolean> => {
+    try {
+      setError(null);
+
+      const { error } = await supabase
+        .from('client_consultations')
+        .update({
+          archived_at: new Date().toISOString(),
+        } as Partial<ClientConsultation>)
+        .eq('id', consultationId);
+
+      if (error) throw error;
+
+      // Mettre à jour la liste locale
+      setConsultations(prev =>
+        prev.map(consultation =>
+          consultation.id === consultationId
+            ? { ...consultation, archived_at: new Date().toISOString() }
+            : consultation
+        )
+      );
+
+      toast({
+        title: 'Consultation archivée',
+        description: 'La consultation a été archivée',
+      });
+
+      return true;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erreur lors de l'archivage";
+      setError(message);
+      toast({
+        title: 'Erreur',
+        description: message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  // Désarchiver une consultation
+  const unarchiveConsultation = async (
+    consultationId: string
+  ): Promise<boolean> => {
+    try {
+      setError(null);
+
+      const { error } = await supabase
+        .from('client_consultations')
+        .update({ archived_at: null } as unknown as Partial<ClientConsultation>)
+        .eq('id', consultationId);
+
+      if (error) throw error;
+
+      // Mettre à jour la liste locale
+      setConsultations(prev =>
+        prev.map(consultation =>
+          consultation.id === consultationId
+            ? { ...consultation, archived_at: undefined }
+            : consultation
+        )
+      );
+
+      toast({
+        title: 'Consultation désarchivée',
+        description: 'La consultation a été désarchivée',
+      });
+
+      return true;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Erreur lors du désarchivage';
+      setError(message);
+      toast({
+        title: 'Erreur',
+        description: message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  // Supprimer une consultation + cascade: hard delete devis liés (Qonto + DB locale)
+  // La confirmation doit être gérée par le composant appelant
+  const deleteConsultation = async (
+    consultationId: string
+  ): Promise<boolean> => {
+    try {
+      setError(null);
+
+      // 1. Fetch linked devis from local DB
+      const { data: linkedDevis } = await supabase
+        .from('financial_documents')
+        .select('id, qonto_invoice_id, document_number')
+        .eq('consultation_id', consultationId)
+        .eq('document_type', 'customer_quote');
+
+      // 2. Hard delete each devis from Qonto + local DB
+      if (linkedDevis && linkedDevis.length > 0) {
+        for (const devis of linkedDevis) {
+          // Delete from Qonto API first
+          if (devis.qonto_invoice_id) {
+            try {
+              await fetch(`/api/qonto/quotes/${devis.qonto_invoice_id}`, {
+                method: 'DELETE',
+              });
+            } catch (qontoErr) {
+              console.warn(
+                `[deleteConsultation] Qonto delete failed for ${devis.document_number}:`,
+                qontoErr
+              );
+              // Continue even if Qonto delete fails
+            }
+          }
+
+          // Hard delete items from local DB
+          await supabase
+            .from('financial_document_items')
+            .delete()
+            .eq('document_id', devis.id);
+
+          // Hard delete devis from local DB
+          await supabase
+            .from('financial_documents')
+            .delete()
+            .eq('id', devis.id);
+        }
+
+        console.warn(
+          `[deleteConsultation] Deleted ${linkedDevis.length} devis for consultation ${consultationId}`
+        );
+      }
+
+      // 3. Soft delete the consultation itself
+      const { error } = await supabase
+        .from('client_consultations')
+        .update({
+          deleted_at: new Date().toISOString(),
+        } as Partial<ClientConsultation>)
+        .eq('id', consultationId);
+
+      if (error) throw error;
+
+      // Retirer de la liste locale
+      setConsultations(prev =>
+        prev.filter(consultation => consultation.id !== consultationId)
+      );
+
+      const devisCount = linkedDevis?.length ?? 0;
+      toast({
+        title: 'Consultation supprimée',
+        description:
+          devisCount > 0
+            ? `La consultation et ${devisCount} devis lié(s) ont été supprimés`
+            : 'La consultation a été supprimée',
+      });
+
+      return true;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Erreur lors de la suppression';
+      setError(message);
+      toast({
+        title: 'Erreur',
+        description: message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  return {
+    // État
+    consultations,
+    loading,
+    error,
+
+    // Actions
+    fetchConsultations,
+    createConsultation,
+    updateConsultation,
+    assignConsultation,
+    updateStatus,
+    validateConsultation,
+    archiveConsultation,
+    unarchiveConsultation,
+    deleteConsultation,
+  };
+}
 
 // Hook DÉPRÉCIÉ - utilisez useConsultationItems à la place
-// Conservé pour rétrocompatibilité
-import type {
-  AssignProductData,
-  ConsultationProduct,
-} from './consultations-types';
-import { useConsultationItems } from './use-consultation-items';
-
+// Conservé temporairement pour rétrocompatibilité
 export function useConsultationProducts(consultationId?: string) {
   console.warn(
     'useConsultationProducts est déprécié. Utilisez useConsultationItems à la place.'
   );
 
+  // Redirection vers le nouveau hook
   const {
     consultationItems,
     eligibleProducts,
@@ -37,13 +609,14 @@ export function useConsultationProducts(consultationId?: string) {
     updateItem,
   } = useConsultationItems(consultationId);
 
+  // Adapter l'interface pour rétrocompatibilité
   const consultationProducts = consultationItems.map(item => ({
     id: item.id,
     consultation_id: item.consultation_id,
     product_id: item.product_id,
     proposed_price: item.unit_price,
     notes: item.notes,
-    is_primary_proposal: false,
+    is_primary_proposal: false, // Plus utilisé
     quantity: item.quantity,
     is_free: item.is_free,
     created_at: item.created_at,
@@ -56,8 +629,8 @@ export function useConsultationProducts(consultationId?: string) {
     eligibleProducts,
     loading,
     error,
-    fetchConsultationProducts: (_id: string) => {}, // Noop
-    fetchEligibleProducts: () => {}, // Noop
+    fetchConsultationProducts: (_id: string) => {}, // Noop - le nouveau hook gère automatiquement
+    fetchEligibleProducts: () => {}, // Noop - le nouveau hook gère automatiquement
     assignProduct: async (data: AssignProductData) => {
       return addItem({
         consultation_id: data.consultation_id,
@@ -80,5 +653,384 @@ export function useConsultationProducts(consultationId?: string) {
         notes: updates.notes,
       });
     },
+  };
+}
+
+// Nouveau hook simplifié pour le workflow type commande
+export function useConsultationItems(consultationId?: string) {
+  const [consultationItems, setConsultationItems] = useState<
+    ConsultationItem[]
+  >([]);
+  const [eligibleProducts, setEligibleProducts] = useState<unknown[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  // Charger les items de la consultation
+  const fetchConsultationItems = useCallback(async (id: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error } = await supabase
+        .from('consultation_products')
+        .select(
+          `
+          id,
+          consultation_id,
+          product_id,
+          quantity,
+          proposed_price,
+          is_free,
+          is_sample,
+          notes,
+          created_at,
+          created_by,
+          status,
+          shipping_cost,
+          shipping_cost_currency,
+          cost_price_override,
+          product:products(
+            id,
+            name,
+            sku,
+            requires_sample,
+            cost_price,
+            stock_real,
+            stock_forecasted_in,
+            stock_forecasted_out,
+            supplier:organisations!products_supplier_id_fkey(id, legal_name, trade_name),
+            product_images(public_url, is_primary)
+          )
+        `
+        )
+        .eq('consultation_id', id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform to ConsultationItem format
+      const items = (data ?? []).map(item => {
+        const productData = item.product as unknown as {
+          id: string;
+          name: string;
+          sku: string;
+          requires_sample: boolean;
+          cost_price?: number;
+          stock_real?: number;
+          stock_forecasted_in?: number;
+          stock_forecasted_out?: number;
+          supplier?: {
+            id: string;
+            legal_name: string;
+            trade_name: string | null;
+          } | null;
+          product_images?: Array<{
+            is_primary: boolean;
+            public_url: string;
+          }>;
+        } | null;
+
+        return {
+          id: item.id,
+          consultation_id: item.consultation_id,
+          product_id: item.product_id,
+          quantity: item.quantity ?? 1,
+          unit_price: item.proposed_price ?? productData?.cost_price,
+          is_free: item.is_free ?? false,
+          is_sample: item.is_sample ?? false,
+          notes: item.notes ?? undefined,
+          created_at: item.created_at,
+          created_by: item.created_by,
+          status: item.status ?? 'pending',
+          shipping_cost: item.shipping_cost ?? 0,
+          shipping_cost_currency: item.shipping_cost_currency ?? 'EUR',
+          cost_price_override: item.cost_price_override ?? undefined,
+          product: productData
+            ? {
+                id: productData.id,
+                name: productData.name,
+                sku: productData.sku,
+                requires_sample: productData.requires_sample,
+                supplier_id: productData.supplier?.id ?? undefined,
+                supplier_name:
+                  productData.supplier?.trade_name ??
+                  productData.supplier?.legal_name ??
+                  undefined,
+                cost_price: productData.cost_price,
+                stock_real: productData.stock_real ?? 0,
+                stock_forecasted_in: productData.stock_forecasted_in ?? 0,
+                stock_forecasted_out: productData.stock_forecasted_out ?? 0,
+                image_url:
+                  productData.product_images?.find(img => img.is_primary)
+                    ?.public_url ??
+                  productData.product_images?.[0]?.public_url ??
+                  null,
+              }
+            : undefined,
+        };
+      });
+
+      setConsultationItems(items as ConsultationItem[]);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Erreur lors du chargement des items';
+      setError(message);
+      console.error('Erreur fetchConsultationItems:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Charger les produits éligibles
+  const fetchEligibleProducts = useCallback(
+    async (targetConsultationId?: string) => {
+      try {
+        setError(null);
+
+        const { data, error } = await supabase.rpc(
+          'get_consultation_eligible_products',
+          {
+            target_consultation_id: targetConsultationId ?? undefined,
+          }
+        );
+
+        if (error) throw error;
+
+        setEligibleProducts(data ?? []);
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : 'Erreur lors du chargement des produits éligibles';
+        setError(message);
+        console.error('Erreur fetchEligibleProducts:', err);
+      }
+    },
+    []
+  );
+
+  // Ajouter un item à la consultation
+  const addItem = async (
+    data: CreateConsultationItemData
+  ): Promise<boolean> => {
+    try {
+      setError(null);
+
+      const response = await fetch('/api/consultations/associations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          consultation_id: data.consultation_id,
+          product_id: data.product_id,
+          proposed_price: data.unit_price,
+          quantity: data.quantity,
+          is_free: data.is_free,
+          notes: data.notes,
+          is_primary_proposal: false, // Plus utilisé dans le nouveau workflow
+        }),
+      });
+
+      const result: unknown = await response.json();
+
+      if (!response.ok) {
+        const errorMessage =
+          result != null &&
+          typeof result === 'object' &&
+          'error' in result &&
+          typeof (result as { error: unknown }).error === 'string'
+            ? (result as { error: string }).error
+            : "Erreur lors de l'ajout de l'item";
+        throw new Error(errorMessage);
+      }
+
+      // Recharger les items
+      if (consultationId) {
+        await fetchConsultationItems(consultationId);
+      }
+
+      toast({
+        title: 'Item ajouté',
+        description: 'Le produit a été ajouté à la consultation',
+      });
+
+      return true;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erreur lors de l'ajout de l'item";
+      setError(message);
+      toast({
+        title: 'Erreur',
+        description: message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  // Mettre à jour un item
+  const updateItem = async (
+    itemId: string,
+    updates: UpdateConsultationItemData
+  ): Promise<boolean> => {
+    try {
+      setError(null);
+
+      const updateData: Record<string, unknown> = {};
+      if (updates.quantity !== undefined)
+        updateData.quantity = updates.quantity;
+      if (updates.unit_price !== undefined)
+        updateData.proposed_price = updates.unit_price;
+      if (updates.is_free !== undefined) updateData.is_free = updates.is_free;
+      if (updates.notes !== undefined) updateData.notes = updates.notes;
+      if (updates.shipping_cost !== undefined)
+        updateData.shipping_cost = updates.shipping_cost;
+      if (updates.shipping_cost_currency !== undefined)
+        updateData.shipping_cost_currency = updates.shipping_cost_currency;
+      if (updates.cost_price_override !== undefined)
+        updateData.cost_price_override = updates.cost_price_override;
+      if (updates.is_sample !== undefined)
+        updateData.is_sample = updates.is_sample;
+      if (updates.status !== undefined) updateData.status = updates.status;
+
+      const { error } = await supabase
+        .from('consultation_products')
+        .update(updateData)
+        .eq('id', itemId);
+
+      if (error) throw error;
+
+      // Mettre à jour la liste locale
+      setConsultationItems(prev =>
+        prev.map(item =>
+          item.id === itemId
+            ? {
+                ...item,
+                quantity: updates.quantity ?? item.quantity,
+                unit_price: updates.unit_price ?? item.unit_price,
+                is_free: updates.is_free ?? item.is_free,
+                is_sample: updates.is_sample ?? item.is_sample,
+                notes: updates.notes ?? item.notes,
+                shipping_cost: updates.shipping_cost ?? item.shipping_cost,
+                shipping_cost_currency:
+                  updates.shipping_cost_currency ?? item.shipping_cost_currency,
+                cost_price_override:
+                  updates.cost_price_override ?? item.cost_price_override,
+                status: updates.status ?? item.status,
+              }
+            : item
+        )
+      );
+
+      toast({
+        title: 'Item mis à jour',
+        description: 'Les modifications ont été enregistrées',
+      });
+
+      return true;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Erreur lors de la mise à jour';
+      setError(message);
+      toast({
+        title: 'Erreur',
+        description: message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  // Supprimer un item
+  const removeItem = async (itemId: string): Promise<boolean> => {
+    try {
+      setError(null);
+
+      const { error } = await supabase
+        .from('consultation_products')
+        .delete()
+        .eq('id', itemId);
+
+      if (error) throw error;
+
+      // Mettre à jour la liste locale
+      setConsultationItems(prev => prev.filter(item => item.id !== itemId));
+
+      toast({
+        title: 'Item supprimé',
+        description: 'Le produit a été retiré de la consultation',
+      });
+
+      return true;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Erreur lors de la suppression';
+      setError(message);
+      toast({
+        title: 'Erreur',
+        description: message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  // Basculer l'état gratuit d'un item
+  const toggleFreeItem = async (itemId: string): Promise<boolean> => {
+    const item = consultationItems.find(i => i.id === itemId);
+    if (!item) return false;
+
+    return updateItem(itemId, { is_free: !item.is_free });
+  };
+
+  // Calculer le total de la consultation
+  const calculateTotal = () => {
+    return consultationItems.reduce((total, item) => {
+      if (item.is_free) return total;
+      const price = item.unit_price ?? 0;
+      return total + price * item.quantity;
+    }, 0);
+  };
+
+  // Calculer le nombre total d'items
+  const getTotalItemsCount = () => {
+    return consultationItems.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  // Charger les items au changement de consultation
+  useEffect(() => {
+    if (consultationId) {
+      void fetchConsultationItems(consultationId);
+      void fetchEligibleProducts(consultationId);
+    }
+  }, [consultationId, fetchConsultationItems, fetchEligibleProducts]);
+
+  return {
+    // État
+    consultationItems,
+    eligibleProducts,
+    loading,
+    error,
+
+    // Actions
+    fetchConsultationItems,
+    fetchEligibleProducts,
+    addItem,
+    updateItem,
+    removeItem,
+    toggleFreeItem,
+
+    // Utilitaires
+    calculateTotal,
+    getTotalItemsCount,
+
+    // Alias pour rétrocompatibilité (anciens noms de propriétés)
+    consultationProducts: consultationItems,
+    assignProduct: addItem,
+    removeProduct: removeItem,
   };
 }

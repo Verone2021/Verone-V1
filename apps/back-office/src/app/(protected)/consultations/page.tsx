@@ -19,7 +19,6 @@ import {
   CardTitle,
 } from '@verone/ui';
 import { Input } from '@verone/ui';
-import { Label } from '@verone/ui';
 import {
   Select,
   SelectContent,
@@ -33,7 +32,6 @@ import {
   ArrowLeft,
   Plus,
   Search,
-  Filter,
   CheckCircle,
   Clock,
   AlertCircle,
@@ -179,91 +177,67 @@ export default function ConsultationsPage() {
           </Card>
         </div>
 
-        {/* Filtres */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Filter className="h-5 w-5 mr-2" />
-              Filtres et recherche
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="search">Recherche</Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="search"
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    placeholder="Organisation, email, description..."
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Statut</Label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tous les statuts</SelectItem>
-                    <SelectItem value="en_attente">En attente</SelectItem>
-                    <SelectItem value="en_cours">En cours</SelectItem>
-                    <SelectItem value="terminee">Terminée</SelectItem>
-                    <SelectItem value="annulee">Annulée</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Priorité</Label>
-                <Select
-                  value={priorityFilter}
-                  onValueChange={setPriorityFilter}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Toutes les priorités</SelectItem>
-                    <SelectItem value="5">Très urgent (5)</SelectItem>
-                    <SelectItem value="4">Urgent (4)</SelectItem>
-                    <SelectItem value="3">Normal+ (3)</SelectItem>
-                    <SelectItem value="2">Normal (2)</SelectItem>
-                    <SelectItem value="1">Faible (1)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex flex-col justify-end space-y-2">
-                <ButtonUnified
-                  variant="outline"
+        {/* Filtres compacts */}
+        <div className="bg-white border border-gray-200 rounded-xl px-3 py-2.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative w-[200px]">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+              <Input
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                placeholder="Rechercher..."
+                className="pl-8 h-8 text-xs"
+              />
+            </div>
+            <div className="h-5 w-px bg-gray-200" />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-auto min-w-[110px] h-8 text-xs gap-1">
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Statut</SelectItem>
+                <SelectItem value="en_attente">En attente</SelectItem>
+                <SelectItem value="en_cours">En cours</SelectItem>
+                <SelectItem value="terminee">Terminée</SelectItem>
+                <SelectItem value="annulee">Annulée</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+              <SelectTrigger className="w-auto min-w-[100px] h-8 text-xs gap-1">
+                <SelectValue placeholder="Priorité" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Priorité</SelectItem>
+                <SelectItem value="5">Très urgent</SelectItem>
+                <SelectItem value="4">Urgent</SelectItem>
+                <SelectItem value="3">Normal+</SelectItem>
+                <SelectItem value="2">Normal</SelectItem>
+                <SelectItem value="1">Faible</SelectItem>
+              </SelectContent>
+            </Select>
+            <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+              <Switch
+                checked={showArchived}
+                onCheckedChange={setShowArchived}
+                className="scale-75"
+              />
+              Archivées
+            </label>
+            {(statusFilter !== 'all' ||
+              priorityFilter !== 'all' ||
+              searchTerm) && (
+              <>
+                <div className="h-5 w-px bg-gray-200" />
+                <button
                   onClick={handleResetFilters}
-                  className="w-full"
+                  className="text-xs text-gray-500 hover:text-black px-2 py-1 rounded hover:bg-gray-100"
                 >
                   Réinitialiser
-                </ButtonUnified>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="show-archived"
-                    checked={showArchived}
-                    onCheckedChange={setShowArchived}
-                  />
-                  <Label
-                    htmlFor="show-archived"
-                    className="text-sm cursor-pointer"
-                  >
-                    Inclure les archivées
-                  </Label>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
 
         {/* Liste des consultations */}
         <Card>
@@ -272,47 +246,66 @@ export default function ConsultationsPage() {
               Liste des consultations ({filteredConsultations.length})
             </CardTitle>
             <CardDescription>
-              Cliquez sur la photo pour voir toutes les images, ou sur "Voir
-              détails" pour gérer les produits
+              Cliquez sur la photo pour voir toutes les images, ou sur
+              l&apos;icône oeil pour gérer les produits
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             {filteredConsultations.length === 0 ? (
-              <div className="text-center py-8">
+              <div className="text-center py-8 px-4">
                 <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500">
                   Aucune consultation ne correspond à vos critères
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {filteredConsultations.map(consultation => (
-                  <ConsultationRow
-                    key={consultation.id}
-                    consultation={consultation}
-                    onOpenPhotoModal={handleOpenPhotoModal}
-                    onViewDetails={() =>
-                      handleNavigateToDetail(consultation.id)
-                    }
-                    onArchive={() => {
-                      void handleArchive(consultation.id).catch(error => {
-                        console.error(
-                          '[ConsultationsPage] Archive failed:',
-                          error
-                        );
-                      });
-                    }}
-                    onUnarchive={() => {
-                      void handleUnarchive(consultation.id).catch(error => {
-                        console.error(
-                          '[ConsultationsPage] Unarchive failed:',
-                          error
-                        );
-                      });
-                    }}
-                    onDelete={() => handleRequestDelete(consultation.id)}
-                  />
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-left text-xs uppercase text-gray-500 tracking-wider border-b bg-gray-50/80">
+                      <th className="p-3 font-medium">Photo</th>
+                      <th className="p-3 font-medium">Client</th>
+                      <th className="p-3 font-medium">Email</th>
+                      <th className="p-3 font-medium">Statut</th>
+                      <th className="p-3 font-medium">Priorité</th>
+                      <th className="p-3 font-medium">Date</th>
+                      <th className="p-3 font-medium text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredConsultations.map(consultation => (
+                      <ConsultationRow
+                        key={consultation.id}
+                        consultation={consultation}
+                        onOpenPhotoModal={handleOpenPhotoModal}
+                        onViewDetails={() =>
+                          handleNavigateToDetail(consultation.id)
+                        }
+                        onArchive={() => {
+                          void handleArchive(consultation.id).catch(error => {
+                            console.error(
+                              '[ConsultationsPage] Archive failed:',
+                              error
+                            );
+                          });
+                        }}
+                        onUnarchive={() => {
+                          void handleUnarchive(consultation.id).catch(error => {
+                            console.error(
+                              '[ConsultationsPage] Unarchive failed:',
+                              error
+                            );
+                          });
+                        }}
+                        onDelete={() => handleRequestDelete(consultation.id)}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+                <div className="border-t bg-gray-50/50 px-4 py-2 text-xs text-gray-500">
+                  {filteredConsultations.length} consultation
+                  {filteredConsultations.length > 1 ? 's' : ''}
+                </div>
               </div>
             )}
           </CardContent>

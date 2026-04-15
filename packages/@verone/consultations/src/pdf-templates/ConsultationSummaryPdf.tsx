@@ -444,11 +444,48 @@ export function ConsultationSummaryPdf({
               );
             })}
 
-            {/* Total bar */}
+            {/* Total bar with TVA */}
             <View style={s.totalBar}>
               <Text style={s.totalLabel}>Total HT</Text>
               <Text style={s.totalValue}>{formatCurrency(totalHT, 2)}</Text>
             </View>
+            {consultation.tva_rate != null &&
+              Number(consultation.tva_rate) > 0 && (
+                <>
+                  <View
+                    style={[
+                      s.totalBar,
+                      { backgroundColor: '#fafafa', borderTopWidth: 0 },
+                    ]}
+                  >
+                    <Text style={[s.totalLabel, { fontFamily: 'Helvetica' }]}>
+                      TVA ({String(consultation.tva_rate)}%)
+                    </Text>
+                    <Text style={[s.totalValue, { fontFamily: 'Helvetica' }]}>
+                      {formatCurrency(
+                        (totalHT * Number(consultation.tva_rate)) / 100,
+                        2
+                      )}
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      s.totalBar,
+                      { backgroundColor: '#000', paddingVertical: 6 },
+                    ]}
+                  >
+                    <Text style={[s.totalLabel, { color: '#fff' }]}>
+                      Total TTC
+                    </Text>
+                    <Text style={[s.totalValue, { color: '#fff' }]}>
+                      {formatCurrency(
+                        totalHT * (1 + Number(consultation.tva_rate) / 100),
+                        2
+                      )}
+                    </Text>
+                  </View>
+                </>
+              )}
           </View>
         )}
 

@@ -39,6 +39,7 @@ interface ConsultationToolbarProps {
   onDelete: () => void;
   onEmail: () => void;
   onPdf: () => void;
+  onMarginReport?: () => void;
   onCreateQuote: () => void;
   onCreateOrder: () => void;
 }
@@ -57,6 +58,7 @@ export function ConsultationToolbar({
   onDelete,
   onEmail,
   onPdf,
+  onMarginReport,
   onCreateQuote,
   onCreateOrder,
 }: ConsultationToolbarProps) {
@@ -188,6 +190,14 @@ export function ConsultationToolbar({
         <FileText className="h-3 w-3 mr-2" />
         {pdfLoading ? 'Chargement...' : 'Résumé PDF'}
       </ButtonUnified>
+
+      {/* Rapport marges (interne) */}
+      {onMarginReport && consultationItemsCount > 0 && (
+        <ButtonUnified variant="outline" size="sm" onClick={onMarginReport}>
+          <FileText className="h-3 w-3 mr-2" />
+          Rapport marges
+        </ButtonUnified>
+      )}
 
       {/* Creer un devis */}
       <ButtonUnified

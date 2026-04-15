@@ -19,6 +19,7 @@ interface CreateConsultationData {
   priority_level?: number;
   source_channel?: 'website' | 'email' | 'phone' | 'other';
   estimated_response_date?: string;
+  notes_internes?: string;
   /** Images uploadées (max 5) — insertion dans consultation_images */
   images?: Array<{
     publicUrl: string;
@@ -57,6 +58,7 @@ function buildConsultationInsertData(
     priority_level: data.priority_level ?? 2,
     source_channel: data.source_channel ?? 'website',
     estimated_response_date: data.estimated_response_date,
+    notes_internes: data.notes_internes ?? null,
     status: 'en_attente' as const,
     created_by: userId,
   };
