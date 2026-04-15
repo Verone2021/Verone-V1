@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-misused-promises, @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable @typescript-eslint/no-misused-promises */
 // TODO: Remove eslint-disable when useConsultations/useConsultationItems hooks are properly typed
 'use client';
 
