@@ -3,21 +3,24 @@
 import Image from 'next/image';
 
 import type { SourcingProduct } from '@verone/products';
-import { ButtonV2, IconButton } from '@verone/ui';
-import { colors } from '@verone/ui/design-system';
+import { Badge } from '@verone/ui';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@verone/ui';
+import { ButtonV2 } from '@verone/ui';
 import {
   Archive,
   Building,
-  Calendar,
   CheckCircle,
   Edit,
-  Euro,
-  ExternalLink,
   Eye,
-  ImageIcon,
+  MoreHorizontal,
   Package,
   Trash2,
-  User,
 } from 'lucide-react';
 
 import {
@@ -48,193 +51,137 @@ export function SourcingProductRow({
   onDelete,
 }: SourcingProductRowProps) {
   const imageUrl = getPrimaryImage(product);
+  const canValidate = product.supplier_id && product.product_status === 'draft';
+  const supplierName =
+    product.supplier?.trade_name ??
+    product.supplier?.legal_name ??
+    product.supplier?.name;
 
   return (
-    <div
-      className="rounded-lg p-4 hover:bg-gray-50 transition-colors"
-      style={{ border: `1px solid ${colors.border.DEFAULT}` }}
-    >
-      <div className="flex items-start gap-4">
-        {/* Image produit */}
-        <div
-          className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden"
-          style={{
-            backgroundColor: colors.background.subtle,
-            border: `1px solid ${colors.border.DEFAULT}`,
-          }}
-        >
-          {imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt={product.name}
-              width={64}
-              height={64}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <ImageIcon
-                className="h-6 w-6"
-                style={{ color: colors.text.muted }}
+    <tr className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+      {/* Photo + Nom */}
+      <td className="p-3">
+        <div className="flex items-center gap-3">
+          <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+            {imageUrl ? (
+              <Image
+                src={imageUrl}
+                alt={product.name}
+                width={40}
+                height={40}
+                className="w-full h-full object-cover"
               />
-            </div>
-          )}
-        </div>
-
-        {/* Infos produit */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center space-x-3 mb-2">
-            <h3
-              className="font-semibold truncate"
-              style={{ color: colors.text.DEFAULT }}
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <Package className="h-4 w-4 text-gray-300" />
+              </div>
+            )}
+          </div>
+          <div className="min-w-0">
+            <button
+              onClick={onView}
+              className="text-sm font-medium text-gray-900 hover:text-blue-600 hover:underline truncate block max-w-[250px] text-left"
             >
               {product.name}
-            </h3>
-            {getStatusBadge(product.product_status)}
-            {getSourcingTypeBadge(
-              product.sourcing_type,
-              product.requires_sample
-            )}
+            </button>
+            <p className="text-xs text-gray-400 font-mono">{product.sku}</p>
           </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-            <div className="flex items-center space-x-2">
-              <Package
-                className="h-4 w-4"
-                style={{ color: colors.text.muted }}
-              />
-              <span style={{ color: colors.text.subtle }}>
-                SKU: {product.sku}
-              </span>
-            </div>
-
-            {product.cost_price != null && (
-              <div className="flex items-center space-x-2">
-                <Euro
-                  className="h-4 w-4"
-                  style={{ color: colors.text.muted }}
-                />
-                <span style={{ color: colors.text.subtle }}>
-                  {formatPrice(product.cost_price)}
-                </span>
-              </div>
-            )}
-
-            {product.supplier && (
-              <div className="flex items-center space-x-2">
-                <Building
-                  className="h-4 w-4"
-                  style={{ color: colors.text.muted }}
-                />
-                <span
-                  className="truncate"
-                  style={{ color: colors.text.subtle }}
-                >
-                  {product.supplier.name}
-                </span>
-              </div>
-            )}
-
-            {product.supplier_page_url && (
-              <div className="flex items-center space-x-2">
-                <a
-                  href={product.supplier_page_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center hover:underline"
-                  style={{ color: colors.primary[600] }}
-                  onClick={e => e.stopPropagation()}
-                >
-                  <ExternalLink className="h-4 w-4 mr-1" />
-                  <span className="text-sm">Site fournisseur</span>
-                </a>
-              </div>
-            )}
-
-            <div className="flex items-center space-x-2">
-              <Calendar
-                className="h-4 w-4"
-                style={{ color: colors.text.muted }}
-              />
-              <span style={{ color: colors.text.subtle }}>
-                {formatDate(product.created_at)}
-              </span>
-            </div>
-          </div>
-
-          {product.assigned_client && (
-            <div
-              className="mt-2 p-2 rounded text-sm"
-              style={{ backgroundColor: colors.primary[50] }}
-            >
-              <div className="flex items-center space-x-2">
-                <User
-                  className="h-4 w-4"
-                  style={{ color: colors.primary[600] }}
-                />
-                <span style={{ color: colors.primary[600] }}>
-                  <strong>Client:</strong> {product.assigned_client.name}
-                </span>
-              </div>
-            </div>
-          )}
         </div>
+      </td>
 
-        {/* Actions */}
-        <div className="flex items-center gap-1.5">
-          <ButtonV2 variant="outline" size="sm" icon={Eye} onClick={onView}>
-            Voir
+      {/* Fournisseur */}
+      <td className="p-3">
+        {supplierName ? (
+          <button
+            onClick={onViewSupplier}
+            className="text-sm text-gray-600 hover:text-blue-600 hover:underline truncate block max-w-[150px]"
+          >
+            {supplierName}
+          </button>
+        ) : (
+          <span className="text-xs text-gray-400">—</span>
+        )}
+      </td>
+
+      {/* Prix */}
+      <td className="p-3 text-right">
+        {product.cost_price != null ? (
+          <span className="text-sm font-medium">
+            {formatPrice(product.cost_price)}
+          </span>
+        ) : (
+          <span className="text-xs text-gray-400">—</span>
+        )}
+      </td>
+
+      {/* Statut */}
+      <td className="p-3 text-center">
+        {getStatusBadge(product.product_status)}
+      </td>
+
+      {/* Type */}
+      <td className="p-3 text-center">
+        {getSourcingTypeBadge(product.sourcing_type, product.requires_sample)}
+      </td>
+
+      {/* Date */}
+      <td className="p-3 text-right">
+        <span className="text-xs text-gray-500">
+          {formatDate(product.created_at)}
+        </span>
+      </td>
+
+      {/* Actions */}
+      <td className="p-3 text-right">
+        <div className="flex items-center justify-end gap-1">
+          <ButtonV2 variant="outline" size="sm" onClick={onView}>
+            <Eye className="h-3 w-3" />
           </ButtonV2>
 
-          {onViewSupplier && (
-            <IconButton
+          {canValidate && (
+            <ButtonV2
               variant="outline"
               size="sm"
-              icon={Building}
-              label="Voir le fournisseur"
-              onClick={onViewSupplier}
-            />
-          )}
-
-          <IconButton
-            variant="outline"
-            size="sm"
-            icon={Edit}
-            label="Modifier le produit"
-            onClick={onEdit}
-          />
-
-          {product.supplier_id && product.product_status === 'draft' && (
-            <IconButton
-              variant="success"
-              size="sm"
-              icon={CheckCircle}
-              label="Valider et ajouter au catalogue"
               onClick={onValidate}
-            />
+              className="text-green-600 border-green-200 hover:bg-green-50"
+            >
+              <CheckCircle className="h-3 w-3" />
+            </ButtonV2>
           )}
 
-          {!product.archived_at && (
-            <IconButton
-              variant="outline"
-              size="sm"
-              icon={Archive}
-              label="Archiver le produit"
-              onClick={onArchive}
-            />
-          )}
-
-          {product.archived_at && (
-            <IconButton
-              variant="danger"
-              size="sm"
-              icon={Trash2}
-              label="Supprimer définitivement"
-              onClick={onDelete}
-            />
-          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <ButtonV2 variant="outline" size="sm">
+                <MoreHorizontal className="h-3 w-3" />
+              </ButtonV2>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onEdit}>
+                <Edit className="h-4 w-4 mr-2" />
+                Modifier
+              </DropdownMenuItem>
+              {onViewSupplier && (
+                <DropdownMenuItem onClick={onViewSupplier}>
+                  <Building className="h-4 w-4 mr-2" />
+                  Voir fournisseur
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              {!product.archived_at ? (
+                <DropdownMenuItem onClick={onArchive}>
+                  <Archive className="h-4 w-4 mr-2" />
+                  Archiver
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={onDelete} className="text-red-600">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Supprimer
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-      </div>
-    </div>
+      </td>
+    </tr>
   );
 }
