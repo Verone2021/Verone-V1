@@ -7,11 +7,7 @@ import {
   createAdminClient,
 } from '@verone/utils/supabase/server';
 
-import type {
-  CreateUserData,
-  ActionResult,
-  UpdateUserProfileData,
-} from './user-management-types';
+import type { CreateUserData, ActionResult } from './user-management-types';
 
 /**
  * Vérifier que l'utilisateur actuel est un owner
