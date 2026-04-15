@@ -226,7 +226,9 @@ export function AddVariantGroupModal({
               </ButtonV2>
               <ButtonV2
                 onClick={() => {
-                  void handleConfirm().catch(() => undefined);
+                  void handleConfirm().catch((error: unknown) => {
+                    console.error('[AddVariantGroup] Confirm failed:', error);
+                  });
                 }}
                 disabled={isSubmitting || !priceHt || parseFloat(priceHt) <= 0}
               >

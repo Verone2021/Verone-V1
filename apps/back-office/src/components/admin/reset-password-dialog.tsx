@@ -24,7 +24,7 @@ import { RoleBadge, type UserRole } from '@verone/ui';
 import { Key, X, Eye, EyeOff } from 'lucide-react';
 
 import type { UserWithProfile } from '@/app/(protected)/admin/users/page';
-import { resetUserPassword } from '@/app/actions/user-management';
+import { resetUserPassword } from '@/app/actions/user-management-update';
 
 interface ResetPasswordDialogProps {
   open: boolean;

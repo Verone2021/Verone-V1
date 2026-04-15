@@ -173,9 +173,11 @@ export function ConsultationMarginReportPdf({
               {consultation.priority_level ?? 2}/5
             </Text>
           </View>
+          {/* eslint-disable jsx-a11y/alt-text -- @react-pdf/renderer Image component does not accept alt prop */}
           {VERONE_LOGO_BASE64 && (
             <Image src={VERONE_LOGO_BASE64} style={s.logo} />
           )}
+          {/* eslint-enable jsx-a11y/alt-text */}
         </View>
 
         {/* KPIs */}

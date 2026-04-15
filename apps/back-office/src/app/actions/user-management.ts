@@ -7,13 +7,7 @@ import {
   createAdminClient,
 } from '@verone/utils/supabase/server';
 
-import type {
-  CreateUserData,
-  ActionResult,
-  UpdateUserProfileData,
-} from './user-management-types';
-
-export type { CreateUserData, ActionResult, UpdateUserProfileData };
+import type { CreateUserData, ActionResult } from './user-management-types';
 
 /**
  * Vérifier que l'utilisateur actuel est un owner
@@ -393,4 +387,4 @@ export async function updateUserRole(
 }
 
 // resetUserPassword and updateUserProfile are in user-management-update.ts
-export { resetUserPassword, updateUserProfile } from './user-management-update';
+// Import directly from './user-management-update' (re-export forbidden in "use server" files)

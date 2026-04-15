@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import {
   useAllOrganisationsWithApproval,
@@ -89,7 +90,10 @@ export function useOrganisationsTab() {
     void approveOrg
       .mutateAsync({ organisationId: org.id })
       .then(() => doRefetch())
-      .catch(() => alert("Erreur lors de l'approbation"));
+      .catch((error: unknown) => {
+        console.error('[Approbations] Approve org failed:', error);
+        toast.error("Erreur lors de l'approbation");
+      });
   };
 
   const handleRejectClick = (org: PendingOrganisation) => {
@@ -110,7 +114,10 @@ export function useOrganisationsTab() {
         state.setSelectedOrg(null);
         doRefetch();
       })
-      .catch(() => alert('Erreur lors du rejet'));
+      .catch((error: unknown) => {
+        console.error('[Approbations] Reject org failed:', error);
+        toast.error('Erreur lors du rejet');
+      });
   };
 
   const handleDeleteOrg = () => {

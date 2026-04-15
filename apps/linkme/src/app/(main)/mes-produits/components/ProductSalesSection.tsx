@@ -334,7 +334,9 @@ export function ProductSalesSection({
           .reduce((sum, s) => sum + s.quantity, 0)
           .toLocaleString('fr-FR')}{' '}
         unite
-        {sortedSales.reduce((sum, s) => sum + s.quantity, 0) > 1 ? 's' : ''}{' '}
+        {sortedSales.reduce((sum, s) => sum + s.quantity, 0) > 1
+          ? 's'
+          : ''}{' '}
         vendue
         {sortedSales.reduce((sum, s) => sum + s.quantity, 0) > 1 ? 's' : ''} ·
         Commission LinkMe : {formatCurrency(totalCommission)} ({commissionRate}

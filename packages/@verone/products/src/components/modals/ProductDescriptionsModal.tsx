@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 
 import {
   FileText,
-  Save,
   Eye,
   Plus,
   X,

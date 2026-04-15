@@ -28,16 +28,8 @@ import {
   Package,
 } from 'lucide-react';
 
-import type { SelectionItem } from '@verone/orders/hooks/linkme/use-linkme-selections';
-
 import { LinkMeCartTable } from './LinkMeCartTable';
-import type {
-  LinkMeAffiliate,
-  LinkMeSelection,
-  LinkMeSelectionDetail,
-  LinkMeWorkflowProps,
-  PreviewSelection,
-} from './linkme-workflow-types';
+import type { LinkMeWorkflowProps } from './linkme-workflow-types';
 
 export type { LinkMeWorkflowProps } from './linkme-workflow-types';
 

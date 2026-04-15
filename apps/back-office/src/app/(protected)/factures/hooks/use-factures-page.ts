@@ -126,7 +126,7 @@ export function useFacturesPage(): FacturesPageState {
 
   useEffect(() => {
     void fetchInvoicesAsync();
-  }, []);
+  }, [fetchInvoicesAsync]);
 
   useEffect(() => {
     if (activeTab === 'factures' && invoices.length === 0)
@@ -135,7 +135,15 @@ export function useFacturesPage(): FacturesPageState {
       void fetchQontoQuotesAsync();
     else if (activeTab === 'avoirs' && creditNotes.length === 0)
       void fetchCreditNotesAsync();
-  }, [activeTab, invoices.length, qontoQuotes.length, creditNotes.length]);
+  }, [
+    activeTab,
+    invoices.length,
+    qontoQuotes.length,
+    creditNotes.length,
+    fetchInvoicesAsync,
+    fetchQontoQuotesAsync,
+    fetchCreditNotesAsync,
+  ]);
 
   const transactionForUpload: TransactionForUpload | null = useMemo(() => {
     if (!selectedMissingTx) return null;

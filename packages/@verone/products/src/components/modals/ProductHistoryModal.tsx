@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
-import { History, RefreshCw, Filter, Badge as BadgeIcon } from 'lucide-react';
+import { History, RefreshCw, Badge as BadgeIcon } from 'lucide-react';
 
 import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
 import {
   Dialog,
   DialogContent,
@@ -33,7 +32,7 @@ interface ProductHistoryModalProduct {
 }
 
 interface ProductHistoryModalProps {
-  product: ProductHistoryModalProduct;
+  product: ProductHistoryModalProduct | null;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -59,6 +58,7 @@ export function ProductHistoryModal({
   }, [isOpen, product]);
 
   const loadHistory = async () => {
+    if (!product) return;
     setLoading(true);
     try {
       const history = await getProductHistory(product.id);

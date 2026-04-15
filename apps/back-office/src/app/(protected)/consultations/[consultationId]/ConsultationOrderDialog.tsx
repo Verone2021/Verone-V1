@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 
 import type { ConsultationItem } from '@verone/consultations';
 import { Badge } from '@verone/ui';
-import { ButtonUnified } from '@verone/ui';
 import {
   Dialog,
   DialogContent,

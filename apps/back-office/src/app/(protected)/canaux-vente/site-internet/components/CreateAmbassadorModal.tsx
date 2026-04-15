@@ -85,8 +85,8 @@ export function CreateAmbassadorModal({
           siret: '',
         });
       })
-      .catch(() => {
-        // Handled by mutation onError
+      .catch((error: unknown) => {
+        console.error('[CreateAmbassador] Mutation failed:', error);
       });
   };
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { Badge } from '@verone/ui';
@@ -12,10 +11,20 @@ import {
 } from '@verone/ui';
 import { Unlink } from 'lucide-react';
 
+interface ConsultationProductItem {
+  id: string;
+  product?: {
+    name: string;
+    sku: string;
+  };
+  proposed_price?: number;
+  is_primary_proposal?: boolean;
+}
+
 interface ConsultationProductsViewProps {
   consultationId: string;
-  consultationProducts: any[];
-  eligibleProducts: any[];
+  consultationProducts: ConsultationProductItem[];
+  eligibleProducts: unknown[];
   onCreateLink: () => void;
   onRemoveLink: (id: string) => void;
 }
@@ -31,15 +40,15 @@ export function ConsultationProductsView({
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Produits associés à cette consultation</CardTitle>
+          <CardTitle>Produits associes a cette consultation</CardTitle>
           <CardDescription>
-            Gérer les produits proposés pour cette consultation client
+            Gerer les produits proposes pour cette consultation client
           </CardDescription>
         </CardHeader>
         <CardContent>
           {consultationProducts.length === 0 ? (
             <div className="text-center text-gray-500 py-8">
-              Aucun produit associé à cette consultation
+              Aucun produit associe a cette consultation
             </div>
           ) : (
             <div className="space-y-4">
@@ -53,7 +62,7 @@ export function ConsultationProductsView({
                     <p className="text-sm text-gray-500">{cp.product?.sku}</p>
                     {cp.proposed_price && (
                       <p className="text-sm font-medium text-green-600">
-                        {cp.proposed_price}€ HT
+                        {cp.proposed_price}&euro; HT
                       </p>
                     )}
                   </div>

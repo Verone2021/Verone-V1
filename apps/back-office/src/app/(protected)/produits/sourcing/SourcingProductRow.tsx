@@ -3,7 +3,6 @@
 import Image from 'next/image';
 
 import type { SourcingProduct } from '@verone/products';
-import { Badge } from '@verone/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,

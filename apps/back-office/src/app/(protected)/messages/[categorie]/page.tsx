@@ -68,7 +68,9 @@ export default function CategoryPage() {
 
   const handleConfirmTreat = useCallback(() => {
     if (!treatTarget) return;
-    void markAsRead(treatTarget.id).catch(() => {});
+    void markAsRead(treatTarget.id).catch((error: unknown) => {
+      console.error('[Messages] markAsRead failed:', error);
+    });
     setTreatTarget(null);
   }, [treatTarget, markAsRead]);
 
