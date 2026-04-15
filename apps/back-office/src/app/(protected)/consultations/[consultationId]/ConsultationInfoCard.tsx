@@ -3,7 +3,9 @@
 import type { ClientConsultation } from '@verone/consultations';
 import { ConsultationImageGallery } from '@verone/consultations';
 import { Card, CardContent } from '@verone/ui';
+import { createClient } from '@verone/utils/supabase/client';
 import { Mail, Phone, Building, User, Calendar, Package } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 interface ConsultationInfoCardProps {
   consultation: ClientConsultation;
@@ -16,6 +18,25 @@ export function ConsultationInfoCard({
   consultationId,
   clientName,
 }: ConsultationInfoCardProps) {
+  const [assignedUserName, setAssignedUserName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!consultation.assigned_to) return;
+    const supabase = createClient();
+    void supabase
+      .from('user_profiles')
+      .select('first_name, last_name')
+      .eq('user_id', consultation.assigned_to)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setAssignedUserName(
+            `${data.first_name ?? ''} ${data.last_name ?? ''}`.trim()
+          );
+        }
+      });
+  }, [consultation.assigned_to]);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-1">
       {/* Photos gallery */}
@@ -108,7 +129,9 @@ export function ConsultationInfoCard({
                     <p className="text-xs text-gray-600">Assignée à</p>
                     <div className="flex items-center">
                       <User className="h-3 w-3 text-gray-400 mr-2" />
-                      <p className="font-medium">{consultation.assigned_to}</p>
+                      <p className="font-medium">
+                        {assignedUserName ?? consultation.assigned_to}
+                      </p>
                     </div>
                   </div>
                 )}

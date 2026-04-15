@@ -43,8 +43,7 @@ export default function ConsultationDetailPage() {
   const [pendingOrderItems, setPendingOrderItems] = useState<
     ConsultationItem[]
   >([]);
-  const [showQuickPO, setShowQuickPO] = useState(false);
-  const [quickPOProductId, setQuickPOProductId] = useState<string>('');
+  const [quickPOQueue, setQuickPOQueue] = useState<string[]>([]);
 
   if (detail.loading) {
     return (
@@ -189,18 +188,16 @@ export default function ConsultationDetailPage() {
         </div>
       </div>
 
-      {/* Modal PO rapide pré-rempli */}
-      {showQuickPO && quickPOProductId && (
+      {/* Modal PO rapide pré-rempli — itère sur toute la queue */}
+      {quickPOQueue.length > 0 && quickPOQueue[0] && (
         <QuickPurchaseOrderModal
-          open={showQuickPO}
+          open={quickPOQueue.length > 0}
           onClose={() => {
-            setShowQuickPO(false);
-            setQuickPOProductId('');
+            setQuickPOQueue([]);
           }}
-          productId={quickPOProductId}
+          productId={quickPOQueue[0]}
           onSuccess={() => {
-            setShowQuickPO(false);
-            setQuickPOProductId('');
+            setQuickPOQueue(prev => prev.slice(1));
             void detail.fetchHistory().catch(console.error);
           }}
         />
@@ -220,11 +217,12 @@ export default function ConsultationDetailPage() {
         }}
         onCreatePurchaseOrder={supplierGroups => {
           setShowOrderDialog(false);
-          // Ouvrir QuickPurchaseOrderModal avec le premier produit accepté
-          const firstItem = supplierGroups[0]?.items[0];
-          if (firstItem) {
-            setQuickPOProductId(firstItem.product_id);
-            setShowQuickPO(true);
+          // Collecter TOUS les product_ids des items acceptés (un par groupe fournisseur)
+          const productIds = supplierGroups.flatMap(group =>
+            group.items.map(item => item.product_id)
+          );
+          if (productIds.length > 0) {
+            setQuickPOQueue(productIds);
           }
         }}
       />

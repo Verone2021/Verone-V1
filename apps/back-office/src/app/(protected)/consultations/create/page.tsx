@@ -437,6 +437,19 @@ export default function CreateConsultationPage() {
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="notes_internes">Notes internes</Label>
+                  <Textarea
+                    id="notes_internes"
+                    value={formData.notes_internes ?? ''}
+                    onChange={e =>
+                      handleInputChange('notes_internes', e.target.value)
+                    }
+                    placeholder="Notes visibles uniquement par l'équipe..."
+                    rows={3}
+                  />
+                </div>
+
                 <div className="flex justify-between pt-4 border-t">
                   <ButtonUnified variant="outline" onClick={goBack}>
                     <ArrowLeft className="h-4 w-4 mr-2" />

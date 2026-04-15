@@ -246,47 +246,66 @@ export default function ConsultationsPage() {
               Liste des consultations ({filteredConsultations.length})
             </CardTitle>
             <CardDescription>
-              Cliquez sur la photo pour voir toutes les images, ou sur "Voir
-              détails" pour gérer les produits
+              Cliquez sur la photo pour voir toutes les images, ou sur
+              l&apos;icône oeil pour gérer les produits
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             {filteredConsultations.length === 0 ? (
-              <div className="text-center py-8">
+              <div className="text-center py-8 px-4">
                 <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500">
                   Aucune consultation ne correspond à vos critères
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {filteredConsultations.map(consultation => (
-                  <ConsultationRow
-                    key={consultation.id}
-                    consultation={consultation}
-                    onOpenPhotoModal={handleOpenPhotoModal}
-                    onViewDetails={() =>
-                      handleNavigateToDetail(consultation.id)
-                    }
-                    onArchive={() => {
-                      void handleArchive(consultation.id).catch(error => {
-                        console.error(
-                          '[ConsultationsPage] Archive failed:',
-                          error
-                        );
-                      });
-                    }}
-                    onUnarchive={() => {
-                      void handleUnarchive(consultation.id).catch(error => {
-                        console.error(
-                          '[ConsultationsPage] Unarchive failed:',
-                          error
-                        );
-                      });
-                    }}
-                    onDelete={() => handleRequestDelete(consultation.id)}
-                  />
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-left text-xs uppercase text-gray-500 tracking-wider border-b bg-gray-50/80">
+                      <th className="p-3 font-medium">Photo</th>
+                      <th className="p-3 font-medium">Client</th>
+                      <th className="p-3 font-medium">Email</th>
+                      <th className="p-3 font-medium">Statut</th>
+                      <th className="p-3 font-medium">Priorité</th>
+                      <th className="p-3 font-medium">Date</th>
+                      <th className="p-3 font-medium text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredConsultations.map(consultation => (
+                      <ConsultationRow
+                        key={consultation.id}
+                        consultation={consultation}
+                        onOpenPhotoModal={handleOpenPhotoModal}
+                        onViewDetails={() =>
+                          handleNavigateToDetail(consultation.id)
+                        }
+                        onArchive={() => {
+                          void handleArchive(consultation.id).catch(error => {
+                            console.error(
+                              '[ConsultationsPage] Archive failed:',
+                              error
+                            );
+                          });
+                        }}
+                        onUnarchive={() => {
+                          void handleUnarchive(consultation.id).catch(error => {
+                            console.error(
+                              '[ConsultationsPage] Unarchive failed:',
+                              error
+                            );
+                          });
+                        }}
+                        onDelete={() => handleRequestDelete(consultation.id)}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+                <div className="border-t bg-gray-50/50 px-4 py-2 text-xs text-gray-500">
+                  {filteredConsultations.length} consultation
+                  {filteredConsultations.length > 1 ? 's' : ''}
+                </div>
               </div>
             )}
           </CardContent>

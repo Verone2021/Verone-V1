@@ -106,6 +106,7 @@ export interface CreateConsultationData {
   priority_level?: number;
   source_channel?: 'website' | 'email' | 'phone' | 'other';
   estimated_response_date?: string;
+  notes_internes?: string;
   /** Images uploadées (max 5) — insertion dans consultation_images */
   images?: Array<{
     publicUrl: string;

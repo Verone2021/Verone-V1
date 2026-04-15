@@ -34,6 +34,7 @@ export interface ConsultationFormData {
   priority_level: number;
   source_channel: 'website' | 'email' | 'phone' | 'other';
   estimated_response_date?: string;
+  notes_internes?: string;
 }
 
 export function useCreateConsultation() {
@@ -253,6 +254,10 @@ export function useCreateConsultation() {
 
       if (formData.estimated_response_date) {
         dataToSubmit.estimated_response_date = formData.estimated_response_date;
+      }
+
+      if (formData.notes_internes?.trim()) {
+        dataToSubmit.notes_internes = formData.notes_internes.trim();
       }
 
       const result = await createConsultationAction(dataToSubmit, user.id);
