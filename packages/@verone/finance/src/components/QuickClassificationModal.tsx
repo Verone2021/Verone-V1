@@ -21,9 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@verone/ui/components/ui/dialog';
-import { createClient } from '@verone/utils/supabase/client';
 import { Check, Loader2, Receipt, Zap } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { useMatchingRules } from '../hooks/use-matching-rules';
 import { type PcgThemeId as _PcgThemeId } from '../lib/pcg-themes';
@@ -49,6 +47,7 @@ import { SelectedCategoryDisplay } from './quick-classification/SelectedCategory
 import { CategorySearchPanel } from './quick-classification/CategorySearchPanel';
 import { VatSection } from './quick-classification/VatSection';
 import { RuleCreationSection } from './quick-classification/RuleCreationSection';
+import { useQuickClassificationSubmit } from './quick-classification/use-quick-classification-submit';
 
 export interface QuickClassificationModalProps {
   open: boolean;
@@ -103,29 +102,26 @@ export function QuickClassificationModal({
   currentVatSource,
   currentVatBreakdown,
   hasReconciliationVAT = false,
-}: QuickClassificationModalProps) {
-  // Hooks
+}: QuickClassificationModalProps): React.ReactNode {
   const {
     rules,
     create: createMatchingRule,
     update: updateMatchingRule,
   } = useMatchingRules();
 
-  // Mode modification: masquer la section creation de regle
+  const { isSubmitting, handleSubmit } = useQuickClassificationSubmit();
+
   const isModificationMode = Boolean(existingRuleId ?? currentCategory);
 
-  // State - Categorie
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedCategoryInfo, setSelectedCategoryInfo] =
     useState<PcgCategory | null>(null);
 
-  // Info de la categorie actuelle (pour affichage comparaison)
   const currentCategoryInfo = useMemo(() => {
     if (!currentCategory) return null;
     return ALL_PCG_CATEGORIES.find(c => c.code === currentCategory) ?? null;
   }, [currentCategory]);
 
-  // Categories populaires selon le type de transaction
   const popularCategories = useMemo(
     () =>
       transactionSide === 'credit'
@@ -134,7 +130,6 @@ export function QuickClassificationModal({
     [transactionSide]
   );
 
-  // Categories PCG suggerees pour la recherche selon le side
   const suggestedCategories = useMemo(
     () =>
       transactionSide === 'credit'
@@ -143,10 +138,8 @@ export function QuickClassificationModal({
     [transactionSide]
   );
 
-  // Libelles pour l'UI selon le type de transaction
   const isIncome = transactionSide === 'credit';
 
-  // Initialiser TVA avec les donnees existantes (Qonto OCR ou manuel)
   const initialVatRate =
     currentVatRate !== null &&
     currentVatRate !== undefined &&
@@ -155,20 +148,16 @@ export function QuickClassificationModal({
       : 20;
   const [tvaRate, setTvaRate] = useState<TvaRate>(initialVatRate);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [createRule, setCreateRule] = useState(true);
 
-  // State - Regle existante (pour eviter les doublons)
   const [existingRuleForLabel, setExistingRuleForLabel] = useState<{
     id: string;
     default_category: string | null;
     organisation_id: string | null;
   } | null>(null);
 
-  // State - Appliquer aux transactions existantes (si confirmApply fourni)
   const [applyToExisting, setApplyToExisting] = useState(true);
 
-  // State - Ventilation TVA multi-taux
   const hasVatBreakdown = currentVatBreakdown && currentVatBreakdown.length > 0;
   const [isVentilationMode, setIsVentilationMode] = useState(
     hasVatBreakdown ?? false
@@ -189,7 +178,6 @@ export function QuickClassificationModal({
         ]
   );
 
-  // Calculs TVA
   const htAmount = useMemo(
     () => calculateHT(Math.abs(amount), tvaRate),
     [amount, tvaRate]
@@ -199,7 +187,6 @@ export function QuickClassificationModal({
     [amount, tvaRate]
   );
 
-  // Calculs ventilation TVA
   const ventilationTotals = useMemo(() => {
     const totalHT = vatLines.reduce(
       (sum, line) => sum + (line.amount_ht || 0),
@@ -219,18 +206,16 @@ export function QuickClassificationModal({
       0
     );
     const targetTTC = Math.abs(amount);
-    const isValid = Math.abs(totalTTC - targetTTC) < 0.02; // Tolerance 2 centimes
+    const isValid = Math.abs(totalTTC - targetTTC) < 0.02;
     return { totalHT, totalVAT, totalTTC, targetTTC, isValid };
   }, [vatLines, amount]);
 
-  // Format currency
   const formatAmount = (amt: number) =>
     new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'EUR',
     }).format(amt);
 
-  // Reset on open
   useEffect(() => {
     if (open) {
       setSelectedCategory(null);
@@ -239,7 +224,6 @@ export function QuickClassificationModal({
       setSearchQuery('');
       setCreateRule(true);
       setExistingRuleForLabel(null);
-      // Reset ventilation
       setIsVentilationMode(false);
       setVatLines([
         { id: '1', description: '', amount_ht: 0, tva_rate: 10 },
@@ -248,54 +232,45 @@ export function QuickClassificationModal({
     }
   }, [open]);
 
-  // Detecter les regles existantes pour ce label
   useEffect(() => {
     if (!open || !label || rules.length === 0) return;
-
-    // Chercher regle existante avec le label exact (insensible a la casse)
     const found = rules.find(
       r =>
         r.match_type === 'label_contains' &&
         r.match_value.toLowerCase() === label.toLowerCase()
     );
-
-    if (found) {
-      setExistingRuleForLabel({
-        id: found.id,
-        default_category: found.default_category,
-        organisation_id: found.organisation_id,
-      });
-    } else {
-      setExistingRuleForLabel(null);
-    }
+    setExistingRuleForLabel(
+      found
+        ? {
+            id: found.id,
+            default_category: found.default_category,
+            organisation_id: found.organisation_id,
+          }
+        : null
+    );
   }, [open, label, rules]);
 
-  // Recherche dans les categories PCG - priorise les categories du bon side
   const searchResults = useMemo(() => {
     if (!searchQuery || searchQuery.length < 2) return [];
-
     const query = searchQuery.toLowerCase();
     const matchFilter = (cat: PcgCategory) =>
       cat.label.toLowerCase().includes(query) ||
       cat.code.includes(query) ||
       cat.description?.toLowerCase().includes(query);
-
-    // D'abord chercher dans les categories suggerees pour ce side
     const suggestedMatches = suggestedCategories.filter(matchFilter);
-    // Puis dans toutes les categories si besoin
     const allMatches = ALL_PCG_CATEGORIES.filter(matchFilter);
-    // Dedupliquer et prioriser les suggerees
     const seenCodes = new Set(suggestedMatches.map(c => c.code));
-    const otherMatches = allMatches.filter(c => !seenCodes.has(c.code));
-
-    return [...suggestedMatches, ...otherMatches].slice(0, 12);
+    return [
+      ...suggestedMatches,
+      ...allMatches.filter(c => !seenCodes.has(c.code)),
+    ].slice(0, 12);
   }, [searchQuery, suggestedCategories]);
 
-  // Selectionner une categorie
   const handleSelectCategory = useCallback((code: string) => {
     setSelectedCategory(code);
-    const info = ALL_PCG_CATEGORIES.find(c => c.code === code);
-    setSelectedCategoryInfo(info ?? null);
+    setSelectedCategoryInfo(
+      ALL_PCG_CATEGORIES.find(c => c.code === code) ?? null
+    );
     setSearchQuery('');
   }, []);
 
@@ -304,165 +279,31 @@ export function QuickClassificationModal({
     setSelectedCategoryInfo(null);
   }, []);
 
-  // Soumettre
-  const handleSubmit = async () => {
+  const onSubmit = (): void => {
     if (!selectedCategory) return;
-
-    setIsSubmitting(true);
-    try {
-      const supabase = createClient();
-
-      // 1. Mettre a jour la transaction
-      if (transactionId) {
-        // Si TVA auto depuis rapprochement, ne modifier que la categorie
-        // Sinon, preparer les donnees selon le mode (simple ou ventile)
-        const updateData: Record<string, unknown> = hasReconciliationVAT
-          ? {
-              category_pcg: selectedCategory,
-              matching_status: 'manual_matched',
-            }
-          : isVentilationMode
-            ? {
-                category_pcg: selectedCategory,
-                vat_rate: null, // NULL quand ventile
-                vat_breakdown: vatLines
-                  .filter(l => l.amount_ht > 0)
-                  .map(l => ({
-                    description: l.description || `Ligne ${l.tva_rate}%`,
-                    amount_ht: l.amount_ht,
-                    tva_rate: l.tva_rate,
-                    tva_amount: calculateVAT(
-                      calculateTTC(l.amount_ht, l.tva_rate),
-                      l.tva_rate
-                    ),
-                  })),
-                amount_ht: ventilationTotals.totalHT,
-                amount_vat: ventilationTotals.totalVAT,
-                matching_status: 'manual_matched',
-              }
-            : {
-                category_pcg: selectedCategory,
-                vat_rate: tvaRate,
-                vat_breakdown: null, // NULL quand taux unique
-                amount_ht: htAmount,
-                amount_vat: vatAmount,
-                matching_status: 'manual_matched',
-              };
-
-        const { error: updateError } = await supabase
-          .from('bank_transactions')
-          .update(updateData)
-          .eq('id', transactionId);
-
-        // Gestion d'erreur avec feedback utilisateur
-        if (updateError) {
-          console.error(
-            '[QuickClassificationModal] Update failed:',
-            updateError
-          );
-          toast.error(`Erreur: ${updateError.message}`);
-          setIsSubmitting(false);
-          return; // Ne pas fermer le modal si erreur
-        }
-      }
-
-      // 2. Mode modification: mettre a jour la regle existante si la categorie a change
-      if (existingRuleId && selectedCategory !== currentCategory) {
-        await updateMatchingRule(existingRuleId, {
-          default_category: selectedCategory,
-          default_vat_rate: isVentilationMode ? null : tvaRate,
-        });
-      }
-      // 3. Mode creation: creer ou mettre a jour la regle automatique (categorie + TVA)
-      // Note: L'organisation est geree via OrganisationLinkingModal (page Regles -> "Lier")
-      else if (!isModificationMode && createRule && label) {
-        let ruleIdForApply: string | null = null;
-        const ruleVatRate = isVentilationMode ? null : tvaRate;
-
-        if (existingRuleForLabel) {
-          // UPDATE regle existante avec categorie + TVA
-          await updateMatchingRule(existingRuleForLabel.id, {
-            default_category: selectedCategory,
-            default_vat_rate: ruleVatRate,
-          });
-          ruleIdForApply = existingRuleForLabel.id;
-        } else {
-          // CREATE nouvelle regle (categorie + TVA)
-          const newRule = await createMatchingRule({
-            match_type: 'label_contains',
-            match_value: label,
-            display_label: label,
-            organisation_id: null,
-            counterparty_type: null,
-            default_category: selectedCategory,
-            default_vat_rate: ruleVatRate,
-            default_role_type: 'supplier',
-            priority: 100,
-          });
-          ruleIdForApply = newRule?.id ?? null;
-        }
-
-        // 4. Appliquer aux transactions existantes si demande
-        if (applyToExisting && confirmApply && ruleIdForApply) {
-          await confirmApply(ruleIdForApply, [label]);
-        }
-      }
-      // 4. Mode sans regle: classifier directement toutes les transactions avec ce label
-      // Utilise quand l'utilisateur decoche "Creer une regle automatique"
-      else if (!isModificationMode && !createRule && label && !transactionId) {
-        // Mise a jour directe de toutes les transactions avec ce label
-        const updateData: Record<string, unknown> = isVentilationMode
-          ? {
-              category_pcg: selectedCategory,
-              vat_rate: null,
-              vat_breakdown: vatLines
-                .filter(l => l.amount_ht > 0)
-                .map(l => ({
-                  description: l.description || `Ligne ${l.tva_rate}%`,
-                  amount_ht: l.amount_ht,
-                  tva_rate: l.tva_rate,
-                  tva_amount: calculateVAT(
-                    calculateTTC(l.amount_ht, l.tva_rate),
-                    l.tva_rate
-                  ),
-                })),
-              matching_status: 'manual_matched',
-            }
-          : {
-              category_pcg: selectedCategory,
-              vat_rate: tvaRate,
-              vat_breakdown: null,
-              matching_status: 'manual_matched',
-            };
-
-        // Mettre a jour toutes les transactions avec ce label (insensible a la casse)
-        const { error: bulkUpdateError } = await supabase
-          .from('bank_transactions')
-          .update(updateData)
-          .ilike('label', label);
-
-        if (bulkUpdateError) {
-          console.error(
-            '[QuickClassificationModal] Bulk update failed:',
-            bulkUpdateError
-          );
-          toast.error(`Erreur: ${bulkUpdateError.message}`);
-          setIsSubmitting(false);
-          return;
-        }
-
-        toast.success(
-          `Transactions classifiees avec la categorie ${selectedCategory}`
-        );
-      }
-
-      onSuccess?.();
-      onOpenChange(false);
-    } catch (err) {
-      console.error('[QuickClassificationModal] Submit error:', err);
-    } finally {
-      setIsSubmitting(false);
-    }
+    void handleSubmit({
+      transactionId,
+      existingRuleId,
+      currentCategory,
+      isModificationMode,
+      label,
+      selectedCategory,
+      tvaRate,
+      isVentilationMode,
+      vatLines,
+      ventilationTotals,
+      htAmount,
+      vatAmount,
+      createRule,
+      applyToExisting,
+      hasReconciliationVAT,
+      confirmApply,
+      existingRuleForLabel,
+      updateMatchingRule: (id, data) => updateMatchingRule(id, data),
+      createMatchingRule: data => createMatchingRule(data),
+      onSuccess,
+      onClose: () => onOpenChange(false),
+    });
   };
 
   return (
@@ -471,7 +312,6 @@ export function QuickClassificationModal({
         className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0"
         data-testid="modal-classify-pcg"
       >
-        {/* Header */}
         <DialogHeader
           className={cn(
             'px-6 py-4 border-b bg-gradient-to-r',
@@ -519,7 +359,6 @@ export function QuickClassificationModal({
           </div>
         </DialogHeader>
 
-        {/* Body */}
         <div className="flex-1 overflow-y-auto p-6">
           <SelectedCategoryDisplay
             selectedCategory={selectedCategory}
@@ -529,7 +368,6 @@ export function QuickClassificationModal({
             onClear={handleClearCategory}
           />
 
-          {/* Recherche */}
           {!selectedCategory && (
             <CategorySearchPanel
               searchQuery={searchQuery}
@@ -542,7 +380,6 @@ export function QuickClassificationModal({
             />
           )}
 
-          {/* TVA - affiche apres selection de categorie */}
           {selectedCategory && (
             <div className="space-y-5">
               {hasReconciliationVAT ? (
@@ -575,7 +412,6 @@ export function QuickClassificationModal({
                 />
               )}
 
-              {/* Creer regle automatique - MASQUE en mode modification */}
               {!isModificationMode && (
                 <RuleCreationSection
                   label={label}
@@ -591,7 +427,6 @@ export function QuickClassificationModal({
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-between gap-4 border-t bg-slate-50 px-6 py-4">
           <Button
             variant="ghost"
@@ -601,7 +436,7 @@ export function QuickClassificationModal({
             Annuler
           </Button>
           <Button
-            onClick={() => void handleSubmit()}
+            onClick={onSubmit}
             disabled={!selectedCategory || isSubmitting}
             className="min-w-[160px] gap-2 h-12 text-base"
             size="lg"

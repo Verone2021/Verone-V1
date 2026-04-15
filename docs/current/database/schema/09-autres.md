@@ -1,8 +1,8 @@
 # Domaine Autres — Schema Base de Donnees
 
-_Generated: 2026-04-12 23:28_
+_Generated: 2026-04-15 03:34_
 
-**Tables : 45**
+**Tables : 50**
 
 | Table                                                                       | Colonnes | FK  | RLS | Triggers |
 | --------------------------------------------------------------------------- | -------- | --- | --- | -------- |
@@ -36,6 +36,11 @@ _Generated: 2026-04-12 23:28_
 | [promotion_usages](#promotion-usages)                                       | 6        | 3   | 2   | 0        |
 | [sales_channels](#sales-channels)                                           | 22       | 0   | 2   | 1        |
 | [site_ambassadors](#site-ambassadors)                                       | 26       | 0   | 3   | 1        |
+| [sourcing_candidate_suppliers](#sourcing-candidate-suppliers)               | 11       | 2   | 1   | 1        |
+| [sourcing_communications](#sourcing-communications)                         | 15       | 2   | 1   | 1        |
+| [sourcing_photos](#sourcing-photos)                                         | 9        | 1   | 1   | 0        |
+| [sourcing_price_history](#sourcing-price-history)                           | 9        | 2   | 1   | 0        |
+| [sourcing_urls](#sourcing-urls)                                             | 6        | 1   | 1   | 0        |
 | [stock_alerts_unified_view](#stock-alerts-unified-view)                     | 23       | 0   | 0   | 0        |
 | [stock_alerts_view](#stock-alerts-view)                                     | 8        | 0   | 0   | 0        |
 | [sync_runs](#sync-runs)                                                     | 27       | 0   | 1   | 0        |
@@ -1047,6 +1052,142 @@ _Generated: 2026-04-12 23:28_
 **Triggers :** 1
 
 - `trg_set_updated_at_site_ambassadors` : BEFORE UPDATE
+
+---
+
+## sourcing_candidate_suppliers
+
+| Colonne          | Type        | Nullable | Default            |
+| ---------------- | ----------- | -------- | ------------------ |
+| id               | uuid        | NO       | gen_random_uuid()  |
+| product_id       | uuid        | NO       |                    |
+| supplier_id      | uuid        | NO       |                    |
+| status           | text        | YES      | 'identified'::text |
+| response_date    | timestamptz | YES      |                    |
+| quoted_price     | numeric     | YES      |                    |
+| quoted_moq       | integer     | YES      |                    |
+| quoted_lead_days | integer     | YES      |                    |
+| notes            | text        | YES      |                    |
+| created_at       | timestamptz | YES      | now()              |
+| updated_at       | timestamptz | YES      | now()              |
+
+**Relations :**
+
+- `product_id` → `products.id`
+- `supplier_id` → `organisations.id`
+
+**RLS :** 1 policy
+
+- `staff_full_access_sourcing_candidates` : ALL — authenticated
+
+**Triggers :** 1
+
+- `trigger_sourcing_candidates_updated_at` : BEFORE UPDATE
+
+---
+
+## sourcing_communications
+
+| Colonne         | Type        | Nullable | Default           |
+| --------------- | ----------- | -------- | ----------------- |
+| id              | uuid        | NO       | gen_random_uuid() |
+| product_id      | uuid        | NO       |                   |
+| supplier_id     | uuid        | YES      |                   |
+| channel         | text        | NO       |                   |
+| direction       | text        | NO       |                   |
+| summary         | text        | NO       |                   |
+| contact_name    | text        | YES      |                   |
+| attachments     | jsonb       | YES      | '[]'::jsonb       |
+| next_action     | text        | YES      |                   |
+| follow_up_date  | date        | YES      |                   |
+| is_resolved     | boolean     | YES      | false             |
+| communicated_at | timestamptz | NO       | now()             |
+| logged_by       | uuid        | YES      |                   |
+| created_at      | timestamptz | YES      | now()             |
+| updated_at      | timestamptz | YES      | now()             |
+
+**Relations :**
+
+- `product_id` → `products.id`
+- `supplier_id` → `organisations.id`
+
+**RLS :** 1 policy
+
+- `staff_full_access_sourcing_comms` : ALL — authenticated
+
+**Triggers :** 1
+
+- `trigger_sourcing_comms_updated_at` : BEFORE UPDATE
+
+---
+
+## sourcing_photos
+
+| Colonne      | Type        | Nullable | Default           |
+| ------------ | ----------- | -------- | ----------------- |
+| id           | uuid        | NO       | gen_random_uuid() |
+| product_id   | uuid        | NO       |                   |
+| storage_path | text        | NO       |                   |
+| public_url   | text        | YES      |                   |
+| photo_type   | text        | NO       |                   |
+| caption      | text        | YES      |                   |
+| sort_order   | integer     | YES      | 0                 |
+| created_by   | uuid        | YES      |                   |
+| created_at   | timestamptz | YES      | now()             |
+
+**Relations :**
+
+- `product_id` → `products.id`
+
+**RLS :** 1 policy
+
+- `staff_full_access_sourcing_photos` : ALL — authenticated
+
+---
+
+## sourcing_price_history
+
+| Colonne       | Type        | Nullable | Default           |
+| ------------- | ----------- | -------- | ----------------- |
+| id            | uuid        | NO       | gen_random_uuid() |
+| product_id    | uuid        | NO       |                   |
+| supplier_id   | uuid        | YES      |                   |
+| price         | numeric     | NO       |                   |
+| currency      | text        | YES      | 'USD'::text       |
+| quantity      | integer     | YES      |                   |
+| proposed_by   | text        | YES      |                   |
+| notes         | text        | YES      |                   |
+| negotiated_at | timestamptz | YES      | now()             |
+
+**Relations :**
+
+- `product_id` → `products.id`
+- `supplier_id` → `organisations.id`
+
+**RLS :** 1 policy
+
+- `staff_full_access_sourcing_prices` : ALL — authenticated
+
+---
+
+## sourcing_urls
+
+| Colonne    | Type        | Nullable | Default           |
+| ---------- | ----------- | -------- | ----------------- |
+| id         | uuid        | NO       | gen_random_uuid() |
+| product_id | uuid        | NO       |                   |
+| url        | text        | NO       |                   |
+| platform   | text        | YES      |                   |
+| label      | text        | YES      |                   |
+| created_at | timestamptz | YES      | now()             |
+
+**Relations :**
+
+- `product_id` → `products.id`
+
+**RLS :** 1 policy
+
+- `staff_full_access_sourcing_urls` : ALL — authenticated
 
 ---
 

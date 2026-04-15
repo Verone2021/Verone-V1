@@ -3,12 +3,9 @@
 /**
  * Page Organisations LinkMe
  *
- * Gestion des organisations de l'enseigne avec vue cartes paginée
- * CRUD complet : Voir, Modifier, Archiver
- * Pagination pour performances (18 cartes par page)
- *
  * @module OrganisationsPage
  * @since 2026-01-10
+ * @updated 2026-04-14 - Refactoring: extraction OrganisationsPagination
  */
 
 import { useEffect, useState, useMemo, Suspense } from 'react';
@@ -17,15 +14,7 @@ import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { ConfirmDialog } from '@verone/ui';
-import {
-  Building2,
-  Loader2,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Store,
-  Users,
-} from 'lucide-react';
+import { Building2, Loader2, Search, Store, Users } from 'lucide-react';
 
 import { CustomerOrganisationFormModal } from '@verone/organisations';
 
@@ -45,8 +34,8 @@ import {
 } from '../../../lib/hooks/use-enseigne-organisations';
 import { useOrganisationStats } from '../../../lib/hooks/use-organisation-stats';
 import { useUserAffiliate } from '../../../lib/hooks/use-user-selection';
+import { OrganisationsPagination } from './components/OrganisationsPagination';
 
-// Import dynamique de la carte (SSR désactivé)
 const MapLibreMapView = dynamic(
   () =>
     import('@/components/shared/MapLibreMapView').then(m => m.MapLibreMapView),
@@ -60,10 +49,7 @@ const MapLibreMapView = dynamic(
   }
 );
 
-// Configuration pagination
-const ITEMS_PER_PAGE = 18; // 3 colonnes x 6 lignes
-
-// Rôles autorisés à voir cette page
+const ITEMS_PER_PAGE = 18;
 const ALLOWED_ROLES = [
   'enseigne_admin',
   'organisation_admin',
@@ -76,19 +62,13 @@ function OrganisationsPageContent(): JSX.Element | null {
   const { user, linkMeRole, initializing } = useAuth();
   const { data: affiliate, isLoading: affiliateLoading } = useUserAffiliate();
 
-  // Données
   const { data: organisations, isLoading: orgsLoading } =
     useEnseigneOrganisations(affiliate?.id ?? null);
-
-  // Stats (CA, commissions) - utilise enseigne_id via affiliate
   const enseigneId = affiliate?.enseigne_id ?? null;
   const { data: statsMap } = useOrganisationStats(enseigneId);
-
-  // Mutation archivage
   const { mutate: archiveOrg, isPending: isArchiving } =
     useArchiveOrganisation();
 
-  // États locaux
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState<
@@ -104,29 +84,21 @@ function OrganisationsPageContent(): JSX.Element | null {
   );
   const [highlightedOrgId, setHighlightedOrgId] = useState<string | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
-
-  // State pour detail sheet depuis la carte (mode view)
   const [mapDetailSheetOrgId, setMapDetailSheetOrgId] = useState<string | null>(
     null
   );
-
-  // Quick edit modals
   const [shippingAddressModalOrg, setShippingAddressModalOrg] =
     useState<EnseigneOrganisation | null>(null);
   const [ownershipTypeModalOrg, setOwnershipTypeModalOrg] =
     useState<EnseigneOrganisation | null>(null);
 
-  // Gérer le paramètre ?highlight=org-id pour ouvrir automatiquement le DetailSheet
   useEffect(() => {
     const highlightParam = searchParams?.get('highlight');
     if (highlightParam && organisations) {
-      // Vérifier que l'organisation existe
       const orgExists = organisations.some(org => org.id === highlightParam);
       if (orgExists) {
         setDetailSheetOrgId(highlightParam);
         setHighlightedOrgId(highlightParam);
-
-        // Nettoyer l'URL après ouverture (sans recharger la page)
         const newUrl =
           window.location.pathname +
           window.location.search
@@ -137,23 +109,15 @@ function OrganisationsPageContent(): JSX.Element | null {
             ? window.location.pathname
             : newUrl
         );
-
-        // Retirer le highlight visuel après 3 secondes
-        setTimeout(() => {
-          setHighlightedOrgId(null);
-        }, 3000);
+        setTimeout(() => setHighlightedOrgId(null), 3000);
       }
     }
   }, [searchParams, organisations, router]);
 
-  // Rediriger si non connecté
   useEffect(() => {
-    if (!initializing && !user) {
-      router.push('/login');
-    }
+    if (!initializing && !user) router.push('/login');
   }, [user, initializing, router]);
 
-  // Rediriger si rôle non autorisé
   useEffect(() => {
     if (
       !initializing &&
@@ -164,12 +128,8 @@ function OrganisationsPageContent(): JSX.Element | null {
     }
   }, [linkMeRole, initializing, router]);
 
-  // Reset page quand la recherche ou le tab change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, activeTab]);
+  useEffect(() => setCurrentPage(1), [searchTerm, activeTab]);
 
-  // Stats par onglet
   const tabStats = useMemo(() => {
     if (!organisations)
       return { all: 0, succursale: 0, franchise: 0, incomplete: 0 };
@@ -183,21 +143,16 @@ function OrganisationsPageContent(): JSX.Element | null {
     };
   }, [organisations]);
 
-  // Filtrer les organisations par recherche ET par onglet
   const filteredOrgs = useMemo(() => {
     if (!organisations) return [];
-
-    // Filtre par onglet
     let filtered = organisations;
-    if (activeTab === 'succursale') {
+    if (activeTab === 'succursale')
       filtered = organisations.filter(o => o.ownership_type === 'succursale');
-    } else if (activeTab === 'franchise') {
+    else if (activeTab === 'franchise')
       filtered = organisations.filter(o => o.ownership_type === 'franchise');
-    } else if (activeTab === 'incomplete') {
+    else if (activeTab === 'incomplete')
       filtered = organisations.filter(o => !o.ownership_type);
-    }
 
-    // Filtre par recherche
     const searchLower = searchTerm.toLowerCase();
     return filtered.filter(
       org =>
@@ -208,43 +163,36 @@ function OrganisationsPageContent(): JSX.Element | null {
     );
   }, [organisations, searchTerm, activeTab]);
 
-  // Pagination
   const totalPages = Math.ceil(filteredOrgs.length / ITEMS_PER_PAGE);
   const paginatedOrgs = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredOrgs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredOrgs, currentPage]);
 
-  // Handlers
-  const handleEdit = (org: EnseigneOrganisation): void => {
+  const handleEdit = (org: EnseigneOrganisation) => {
     setDetailSheetTab('infos');
     setDetailSheetOrgId(org.id);
   };
-
-  const handleAddContact = (org: EnseigneOrganisation): void => {
+  const handleAddContact = (org: EnseigneOrganisation) => {
     setDetailSheetTab('contacts');
     setDetailSheetOrgId(org.id);
   };
-
-  const handleArchiveClick = (org: EnseigneOrganisation): void => {
+  const handleArchiveClick = (org: EnseigneOrganisation) => {
     setOrgToArchive(org);
     setArchiveDialogOpen(true);
   };
-
-  const handleArchiveConfirm = (): void => {
+  const handleArchiveConfirm = () => {
     if (orgToArchive) {
       archiveOrg(orgToArchive.id);
       setArchiveDialogOpen(false);
       setOrgToArchive(null);
     }
   };
-
-  const goToPage = (page: number): void => {
+  const goToPage = (page: number) => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Afficher loader pendant chargement
   if (initializing) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -253,10 +201,8 @@ function OrganisationsPageContent(): JSX.Element | null {
     );
   }
 
-  // Si pas d'utilisateur ou rôle non autorisé
-  if (!user || (linkMeRole && !ALLOWED_ROLES.includes(linkMeRole.role))) {
+  if (!user || (linkMeRole && !ALLOWED_ROLES.includes(linkMeRole.role)))
     return null;
-  }
 
   const isLoading = affiliateLoading || orgsLoading;
 
@@ -285,8 +231,6 @@ function OrganisationsPageContent(): JSX.Element | null {
                 )}
               </p>
             </div>
-
-            {/* Barre d'actions */}
             <OrganisationActionsBar
               onNewOrganisation={() => setCreateModalOpen(true)}
               disabled={isLoading}
@@ -294,14 +238,12 @@ function OrganisationsPageContent(): JSX.Element | null {
           </div>
         </div>
 
-        {/* Onglets de filtrage par type */}
         <OrganisationFilterTabs
           activeTab={activeTab}
           onTabChange={setActiveTab}
           stats={tabStats}
         />
 
-        {/* Barre de recherche + info pagination */}
         <div className="flex items-center justify-between gap-4 mb-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -320,11 +262,9 @@ function OrganisationsPageContent(): JSX.Element | null {
           )}
         </div>
 
-        {/* Contenu principal : Carte ou Grille */}
+        {/* Contenu: Carte ou Grille */}
         {activeTab === 'map' ? (
-          /* Vue Carte */
           <>
-            {/* KPI Cards pour la carte */}
             {organisations && organisations.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="bg-white rounded-lg shadow p-4 flex items-center gap-4">
@@ -349,16 +289,6 @@ function OrganisationsPageContent(): JSX.Element | null {
                         ).length
                       }
                     </p>
-                    <p className="text-xs text-gray-400">
-                      {Math.round(
-                        (organisations.filter(
-                          o => o.ownership_type === 'succursale'
-                        ).length /
-                          organisations.length) *
-                          100
-                      )}
-                      %
-                    </p>
                   </div>
                 </div>
                 <div className="bg-white rounded-lg shadow p-4 flex items-center gap-4">
@@ -374,22 +304,10 @@ function OrganisationsPageContent(): JSX.Element | null {
                         ).length
                       }
                     </p>
-                    <p className="text-xs text-gray-400">
-                      {Math.round(
-                        (organisations.filter(
-                          o => o.ownership_type === 'franchise'
-                        ).length /
-                          organisations.length) *
-                          100
-                      )}
-                      %
-                    </p>
                   </div>
                 </div>
               </div>
             )}
-
-            {/* Carte */}
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               {isLoading ? (
                 <div className="h-[500px] flex items-center justify-center">
@@ -413,8 +331,6 @@ function OrganisationsPageContent(): JSX.Element | null {
                 </div>
               )}
             </div>
-
-            {/* Légende */}
             {organisations && organisations.length > 0 && (
               <div className="mt-4 flex items-center justify-center gap-6 text-sm text-gray-500">
                 <div className="flex items-center gap-2">
@@ -435,7 +351,6 @@ function OrganisationsPageContent(): JSX.Element | null {
             )}
           </>
         ) : (
-          /* Grille de cartes */
           <>
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
@@ -482,86 +397,15 @@ function OrganisationsPageContent(): JSX.Element | null {
           </>
         )}
 
-        {/* Pagination - cachée en mode carte */}
-        {totalPages > 1 && activeTab !== 'map' && (
-          <div className="flex items-center justify-center gap-2 mt-6">
-            <button
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Précédent
-            </button>
-
-            <div className="flex items-center gap-1">
-              {/* Première page */}
-              {currentPage > 2 && (
-                <>
-                  <button
-                    onClick={() => goToPage(1)}
-                    className="w-8 h-8 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    1
-                  </button>
-                  {currentPage > 3 && (
-                    <span className="px-1 text-gray-400">...</span>
-                  )}
-                </>
-              )}
-
-              {/* Pages autour de la page courante */}
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(
-                  page =>
-                    page >= currentPage - 1 &&
-                    page <= currentPage + 1 &&
-                    page >= 1 &&
-                    page <= totalPages
-                )
-                .map(page => (
-                  <button
-                    key={page}
-                    onClick={() => goToPage(page)}
-                    className={`w-8 h-8 text-sm font-medium rounded-lg transition-colors ${
-                      page === currentPage
-                        ? 'bg-linkme-turquoise text-white'
-                        : 'text-gray-600 bg-white border border-gray-200 hover:bg-gray-50'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-
-              {/* Dernière page */}
-              {currentPage < totalPages - 1 && (
-                <>
-                  {currentPage < totalPages - 2 && (
-                    <span className="px-1 text-gray-400">...</span>
-                  )}
-                  <button
-                    onClick={() => goToPage(totalPages)}
-                    className="w-8 h-8 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    {totalPages}
-                  </button>
-                </>
-              )}
-            </div>
-
-            <button
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Suivant
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
+        {activeTab !== 'map' && (
+          <OrganisationsPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={goToPage}
+          />
         )}
       </div>
 
-      {/* Sheet de détail (mode edit) - depuis la liste - gère l'édition inline */}
       <OrganisationDetailSheet
         organisationId={detailSheetOrgId}
         open={!!detailSheetOrgId}
@@ -569,8 +413,6 @@ function OrganisationsPageContent(): JSX.Element | null {
         mode="edit"
         defaultTab={detailSheetTab}
       />
-
-      {/* Sheet de détail (mode view) - depuis la carte */}
       <OrganisationDetailSheet
         organisationId={mapDetailSheetOrgId}
         open={!!mapDetailSheetOrgId}
@@ -578,7 +420,6 @@ function OrganisationsPageContent(): JSX.Element | null {
         mode="view"
       />
 
-      {/* Dialog de confirmation d'archivage */}
       <ConfirmDialog
         open={archiveDialogOpen}
         onOpenChange={setArchiveDialogOpen}
@@ -591,7 +432,6 @@ function OrganisationsPageContent(): JSX.Element | null {
         loading={isArchiving}
       />
 
-      {/* Quick Edit Modals */}
       <QuickEditShippingAddressModal
         organisationId={shippingAddressModalOrg?.id ?? ''}
         organisationName={
@@ -614,7 +454,6 @@ function OrganisationsPageContent(): JSX.Element | null {
         onClose={() => setOwnershipTypeModalOrg(null)}
       />
 
-      {/* Create Organisation Modal */}
       <CustomerOrganisationFormModal
         enseigneId={enseigneId}
         sourceType="linkme"

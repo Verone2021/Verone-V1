@@ -3,181 +3,29 @@ import { useState, useCallback } from 'react';
 import { createClient } from '@verone/utils/supabase/client';
 import { useToast } from '@verone/common/hooks';
 
-// =============================================
-// STOCK ANALYTICS - MÉTRIQUES AVANCÉES ERP
-// Phase 3.4: Stock Analytics Page
-// @since 2025-11-02
-// =============================================
+export type {
+  ABCClass,
+  XYZClass,
+  ProductAnalytics,
+  AnalyticsSummary,
+  AnalyticsClassData,
+  AnalyticsReport,
+  StockAnalyticsRaw,
+} from './use-stock-analytics.types';
 
-// ================== TYPES RPC ==================
+export { ABC_CLASSES, XYZ_CLASSES } from './use-stock-analytics.types';
 
-/** Résultat brut de la fonction RPC get_stock_analytics */
-interface StockAnalyticsRaw {
-  product_id: string;
-  product_name: string;
-  sku: string;
-  product_image_url?: string | null; // URL image principale produit
-  stock_current: number;
-  stock_minimum: number;
-  cost_price: number;
-  out_30d: number;
-  out_90d: number;
-  out_365d: number;
-  in_30d: number;
-  in_90d: number;
-  in_365d: number;
-  adu: number; // Average Daily Usage
-  turnover_rate: number; // Taux de rotation
-  coverage_days: number; // Couverture stock (jours)
-  days_inactive: number | null; // Jours depuis dernière sortie
-  movement_history: Array<{ date: string; qty: number; type: string }>;
-  last_exit_date: string | null;
-  last_entry_date: string | null;
-}
-
-// ================== CLASSIFICATIONS ==================
-
-/** Classification ABC (Pareto 80/15/5 sur valeur) */
-export type ABCClass = 'A' | 'B' | 'C';
-
-/** Classification XYZ (Variabilité demande) */
-export type XYZClass = 'X' | 'Y' | 'Z';
-
-export const ABC_CLASSES = [
-  {
-    id: 'A' as const,
-    label: 'Classe A',
-    description: '80% de la valeur',
-    threshold: 0.8,
-    color: 'bg-green-100',
-    textColor: 'text-green-800',
-    priority: 'Critique',
-  },
-  {
-    id: 'B' as const,
-    label: 'Classe B',
-    description: '15% de la valeur',
-    threshold: 0.95,
-    color: 'bg-blue-100',
-    textColor: 'text-blue-800',
-    priority: 'Important',
-  },
-  {
-    id: 'C' as const,
-    label: 'Classe C',
-    description: '5% de la valeur',
-    threshold: 1.0,
-    color: 'bg-gray-100',
-    textColor: 'text-gray-800',
-    priority: 'Faible',
-  },
-] as const;
-
-export const XYZ_CLASSES = [
-  {
-    id: 'X' as const,
-    label: 'Classe X',
-    description: 'Demande stable (CV < 0.5)',
-    threshold: 0.5,
-    color: 'bg-emerald-100',
-    textColor: 'text-emerald-800',
-    priority: 'Prévisible',
-  },
-  {
-    id: 'Y' as const,
-    label: 'Classe Y',
-    description: 'Demande fluctuante (0.5 ≤ CV < 1.0)',
-    threshold: 1.0,
-    color: 'bg-amber-100',
-    textColor: 'text-amber-800',
-    priority: 'Modéré',
-  },
-  {
-    id: 'Z' as const,
-    label: 'Classe Z',
-    description: 'Demande irrégulière (CV ≥ 1.0)',
-    threshold: Infinity,
-    color: 'bg-red-100',
-    textColor: 'text-red-800',
-    priority: 'Imprévisible',
-  },
-] as const;
-
-// ================== PRODUCT ENRICHI ==================
-
-/** Produit avec analytics complètes (RPC + ABC + XYZ) */
-export interface ProductAnalytics extends StockAnalyticsRaw {
-  // Valeur stock
-  stock_value: number;
-  cumulative_value: number;
-  cumulative_value_percentage: number;
-
-  // Classification ABC
-  abc_class: ABCClass;
-  abc_rank: number;
-
-  // Classification XYZ
-  xyz_class: XYZClass;
-  xyz_cv: number; // Coefficient de variation
-  xyz_stddev: number; // Écart-type
-  xyz_mean: number; // Moyenne
-
-  // Classification combinée
-  combined_class: string; // Ex: "AX", "BY", "CZ"
-}
-
-// ================== SUMMARY DATA ==================
-
-export interface AnalyticsSummary {
-  total_products: number;
-  total_quantity: number;
-  total_value: number;
-
-  // ABC Distribution
-  abc_a_count: number;
-  abc_b_count: number;
-  abc_c_count: number;
-  abc_a_value_percentage: number;
-  abc_b_value_percentage: number;
-  abc_c_value_percentage: number;
-
-  // XYZ Distribution
-  xyz_x_count: number;
-  xyz_y_count: number;
-  xyz_z_count: number;
-
-  // Métriques globales
-  average_adu: number;
-  average_turnover_rate: number;
-  average_coverage_days: number;
-  products_below_minimum: number;
-  products_inactive_30d: number;
-}
-
-export interface AnalyticsClassData {
-  class_id: string;
-  label: string;
-  description: string;
-  count: number;
-  quantity: number;
-  value: number;
-  percentage: number;
-  color: string;
-  textColor: string;
-  priority: string;
-}
-
-export interface AnalyticsReport {
-  summary: AnalyticsSummary;
-  products: ProductAnalytics[];
-  abc_classes: AnalyticsClassData[];
-  xyz_classes: AnalyticsClassData[];
-  combined_matrix: Record<string, ProductAnalytics[]>; // Ex: { "AX": [...], "BY": [...] }
-  top_20_high_value: ProductAnalytics[];
-  top_20_low_turnover: ProductAnalytics[];
-  top_20_high_adu: ProductAnalytics[];
-  generated_at: string;
-}
+import {
+  ABC_CLASSES,
+  XYZ_CLASSES,
+  calculateCoefficientOfVariation,
+  type ABCClass,
+  type XYZClass,
+  type StockAnalyticsRaw,
+  type ProductAnalytics,
+  type AnalyticsClassData,
+  type AnalyticsReport,
+} from './use-stock-analytics.types';
 
 // ================== HOOK ==================
 
@@ -187,28 +35,6 @@ export function useStockAnalytics() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const supabase = createClient();
-
-  /**
-   * Calcule le coefficient de variation (écart-type / moyenne)
-   * Utilisé pour la classification XYZ
-   */
-  const calculateCoefficientOfVariation = (
-    values: number[]
-  ): { cv: number; mean: number; stddev: number } => {
-    if (values.length === 0) return { cv: 0, mean: 0, stddev: 0 };
-
-    const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
-
-    if (mean === 0) return { cv: 0, mean: 0, stddev: 0 };
-
-    const variance =
-      values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
-      values.length;
-    const stddev = Math.sqrt(variance);
-    const cv = stddev / mean;
-
-    return { cv, mean, stddev };
-  };
 
   /**
    * Génère le rapport analytics complet
@@ -222,11 +48,7 @@ export function useStockAnalytics() {
       setError(null);
 
       try {
-        // ============================================
         // ÉTAPE 1: Appel RPC get_stock_analytics
-        // ============================================
-        // RPC function not yet in generated Supabase types - using unknown cast
-
         const { data, error: rpcError } = await (
           supabase as unknown as {
             rpc: (
@@ -241,7 +63,6 @@ export function useStockAnalytics() {
 
         if (rpcError) throw rpcError;
 
-        // Cast manuel du résultat (types Supabase non générés pour cette RPC)
         const rawProducts = (data ?? []) as unknown as StockAnalyticsRaw[];
 
         if (!rawProducts || rawProducts.length === 0) {
@@ -254,9 +75,7 @@ export function useStockAnalytics() {
           return null;
         }
 
-        // ============================================
         // ÉTAPE 2: Calcul Valeurs + Tri Décroissant
-        // ============================================
         const productsWithValue = rawProducts
           .map(product => ({
             ...product,
@@ -280,9 +99,7 @@ export function useStockAnalytics() {
           return null;
         }
 
-        // ============================================
         // ÉTAPE 3: Classification ABC (Pareto)
-        // ============================================
         let cumulativeValue = 0;
         const productsWithABC = productsWithValue.map((product, index) => {
           cumulativeValue += product.stock_value;
@@ -291,9 +108,9 @@ export function useStockAnalytics() {
 
           let abcClass: ABCClass = 'C';
           if (cumulativeRatio <= ABC_CLASSES[0].threshold) {
-            abcClass = 'A'; // 0-80%
+            abcClass = 'A';
           } else if (cumulativeRatio <= ABC_CLASSES[1].threshold) {
-            abcClass = 'B'; // 80-95%
+            abcClass = 'B';
           }
 
           return {
@@ -305,30 +122,24 @@ export function useStockAnalytics() {
           };
         });
 
-        // ============================================
         // ÉTAPE 4: Classification XYZ (Variabilité)
-        // ============================================
         const productsWithXYZ: ProductAnalytics[] = productsWithABC.map(
           product => {
-            // Variabilité basée sur sorties mensuelles (out_30d, out_90d, out_365d)
-            // Normalisation: out_90d/3 et out_365d/12 pour avoir sorties mensuelles comparables
             const monthlySales = [
-              product.out_30d, // 1 mois
-              product.out_90d / 3, // 3 mois → moyenne mensuelle
-              product.out_365d / 12, // 12 mois → moyenne mensuelle
-            ].filter(val => val > 0); // Ignorer les zéros (pas de données)
+              product.out_30d,
+              product.out_90d / 3,
+              product.out_365d / 12,
+            ].filter(val => val > 0);
 
             const { cv, mean, stddev } =
               calculateCoefficientOfVariation(monthlySales);
 
             let xyzClass: XYZClass = 'Z';
             if (cv < XYZ_CLASSES[0].threshold) {
-              xyzClass = 'X'; // CV < 0.5
+              xyzClass = 'X';
             } else if (cv < XYZ_CLASSES[1].threshold) {
-              xyzClass = 'Y'; // 0.5 ≤ CV < 1.0
+              xyzClass = 'Y';
             }
-
-            const combinedClass = `${product.abc_class}${xyzClass}`;
 
             return {
               ...product,
@@ -336,14 +147,12 @@ export function useStockAnalytics() {
               xyz_cv: cv,
               xyz_stddev: stddev,
               xyz_mean: mean,
-              combined_class: combinedClass,
+              combined_class: `${product.abc_class}${xyzClass}`,
             };
           }
         );
 
-        // ============================================
         // ÉTAPE 5: Calculs Statistiques Globaux
-        // ============================================
         const totalProducts = productsWithXYZ.length;
         const totalQuantity = productsWithXYZ.reduce(
           (sum, p) => sum + p.stock_current,
@@ -353,7 +162,6 @@ export function useStockAnalytics() {
         const abcA = productsWithXYZ.filter(p => p.abc_class === 'A');
         const abcB = productsWithXYZ.filter(p => p.abc_class === 'B');
         const abcC = productsWithXYZ.filter(p => p.abc_class === 'C');
-
         const xyzX = productsWithXYZ.filter(p => p.xyz_class === 'X');
         const xyzY = productsWithXYZ.filter(p => p.xyz_class === 'Y');
         const xyzZ = productsWithXYZ.filter(p => p.xyz_class === 'Z');
@@ -375,62 +183,46 @@ export function useStockAnalytics() {
           p => p.days_inactive !== null && p.days_inactive > 30
         ).length;
 
-        // ============================================
         // ÉTAPE 6: Métriques par Classe
-        // ============================================
-        const abcClassStats: AnalyticsClassData[] = ABC_CLASSES.map(cls => {
-          const products = productsWithXYZ.filter(p => p.abc_class === cls.id);
-          const classValue = products.reduce(
-            (sum, p) => sum + p.stock_value,
-            0
-          );
-          const classQuantity = products.reduce(
-            (sum, p) => sum + p.stock_current,
-            0
-          );
+        const makeClassStats = (
+          classes: typeof ABC_CLASSES | typeof XYZ_CLASSES,
+          filterFn: (p: ProductAnalytics, id: string) => boolean
+        ): AnalyticsClassData[] =>
+          [...classes].map(cls => {
+            const products = productsWithXYZ.filter(p => filterFn(p, cls.id));
+            const classValue = products.reduce(
+              (sum, p) => sum + p.stock_value,
+              0
+            );
+            const classQuantity = products.reduce(
+              (sum, p) => sum + p.stock_current,
+              0
+            );
 
-          return {
-            class_id: cls.id,
-            label: cls.label,
-            description: cls.description,
-            count: products.length,
-            quantity: classQuantity,
-            value: classValue,
-            percentage: totalValue > 0 ? (classValue / totalValue) * 100 : 0,
-            color: cls.color,
-            textColor: cls.textColor,
-            priority: cls.priority,
-          };
-        });
+            return {
+              class_id: cls.id,
+              label: cls.label,
+              description: cls.description,
+              count: products.length,
+              quantity: classQuantity,
+              value: classValue,
+              percentage: totalValue > 0 ? (classValue / totalValue) * 100 : 0,
+              color: cls.color,
+              textColor: cls.textColor,
+              priority: cls.priority,
+            };
+          });
 
-        const xyzClassStats: AnalyticsClassData[] = XYZ_CLASSES.map(cls => {
-          const products = productsWithXYZ.filter(p => p.xyz_class === cls.id);
-          const classValue = products.reduce(
-            (sum, p) => sum + p.stock_value,
-            0
-          );
-          const classQuantity = products.reduce(
-            (sum, p) => sum + p.stock_current,
-            0
-          );
+        const abcClassStats = makeClassStats(
+          ABC_CLASSES,
+          (p, id) => p.abc_class === id
+        );
+        const xyzClassStats = makeClassStats(
+          XYZ_CLASSES,
+          (p, id) => p.xyz_class === id
+        );
 
-          return {
-            class_id: cls.id,
-            label: cls.label,
-            description: cls.description,
-            count: products.length,
-            quantity: classQuantity,
-            value: classValue,
-            percentage: totalValue > 0 ? (classValue / totalValue) * 100 : 0,
-            color: cls.color,
-            textColor: cls.textColor,
-            priority: cls.priority,
-          };
-        });
-
-        // ============================================
         // ÉTAPE 7: Matrice Combinée (9 cases)
-        // ============================================
         const combinedMatrix: Record<string, ProductAnalytics[]> = {};
         for (const abcCls of ['A', 'B', 'C']) {
           for (const xyzCls of ['X', 'Y', 'Z']) {
@@ -441,9 +233,7 @@ export function useStockAnalytics() {
           }
         }
 
-        // ============================================
         // ÉTAPE 8: TOP 20 Insights
-        // ============================================
         const top20HighValue = [...productsWithXYZ].slice(0, 20);
         const top20LowTurnover = [...productsWithXYZ]
           .filter(p => p.turnover_rate > 0)
@@ -453,9 +243,7 @@ export function useStockAnalytics() {
           .sort((a, b) => b.adu - a.adu)
           .slice(0, 20);
 
-        // ============================================
         // ÉTAPE 9: Construction Rapport Final
-        // ============================================
         const reportData: AnalyticsReport = {
           summary: {
             total_products: totalProducts,

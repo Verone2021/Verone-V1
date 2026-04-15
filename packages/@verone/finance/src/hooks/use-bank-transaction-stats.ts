@@ -18,89 +18,22 @@ import { useState, useEffect, useCallback } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
-// =====================================================================
-// TYPES
-// =====================================================================
-
-export interface BankTransactionStats {
-  // Totaux
-  totalCredit: number; // Entrées (tous crédits bancaires)
-  totalDebit: number; // Sorties
-  netBalance: number; // Solde net
-  transactionCount: number;
-
-  // CA comptable (uniquement classe 7 = ventes réelles)
-  revenue: number; // CA = crédits catégorisés en classe 7 (70x)
-  uncategorizedCredit: number; // Crédits non catégorisés (à traiter)
-
-  // Comparaison mois précédent
-  creditVariation: number; // % variation entrées
-  debitVariation: number; // % variation sorties
-
-  // Période (null si "Tout" sélectionné)
-  periodStart: string | null;
-  periodEnd: string | null;
-}
-
-export interface MonthlyEvolution {
-  month: string; // YYYY-MM
-  monthLabel: string; // "Jan", "Fév", etc.
-  credit: number; // Entrées
-  debit: number; // Sorties
-  balance: number; // Net
-  // Index signature for Recharts compatibility
-  [key: string]: string | number;
-}
-
-export interface OrganisationBreakdown {
-  organisationId: string | null;
-  organisationName: string;
-  totalAmount: number;
-  transactionCount: number;
-  percentage: number;
-  category: string | null; // default_category de la règle
-  // Index signature for Recharts compatibility
-  [key: string]: string | number | null;
-}
-
-export interface CategoryBreakdown {
-  code: string; // Code PCG (ex: "627")
-  label: string; // Libellé (ex: "Services bancaires")
-  parentCode: string; // Classe parente (ex: "62")
-  totalAmount: number;
-  transactionCount: number;
-  percentage: number;
-  // Index signature for Recharts compatibility
-  [key: string]: string | number;
-}
-
-export interface RecentTransaction {
-  id: string;
-  label: string;
-  amount: number;
-  side: 'credit' | 'debit';
-  settledAt: string | null;
-  counterpartyName: string | null;
-  matchedOrganisation: string | null;
-  category: string | null;
-}
-
-// =====================================================================
-// OPTIONS
-// =====================================================================
-
-export interface BankTransactionStatsOptions {
-  /** Nombre de mois à récupérer (par défaut 12) - ignoré si startDate/endDate fournis */
-  months?: number;
-  /** Date de début optionnelle */
-  startDate?: Date | null;
-  /** Date de fin optionnelle */
-  endDate?: Date | null;
-}
-
-// =====================================================================
-// HOOK
-// =====================================================================
+export type {
+  BankTransactionStats,
+  MonthlyEvolution,
+  OrganisationBreakdown,
+  CategoryBreakdown,
+  RecentTransaction,
+  BankTransactionStatsOptions,
+} from './bank-transaction-stats-types';
+import type {
+  BankTransactionStats,
+  MonthlyEvolution,
+  OrganisationBreakdown,
+  CategoryBreakdown,
+  RecentTransaction,
+  BankTransactionStatsOptions,
+} from './bank-transaction-stats-types';
 
 export function useBankTransactionStats(
   options: BankTransactionStatsOptions = {}

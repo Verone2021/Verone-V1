@@ -1,15 +1,15 @@
 # Domaine Commandes & Consultations — Schema Base de Donnees
 
-_Generated: 2026-04-12 23:28_
+_Generated: 2026-04-15 03:34_
 
 **Tables : 17**
 
 | Table                                                     | Colonnes | FK  | RLS | Triggers |
 | --------------------------------------------------------- | -------- | --- | --- | -------- |
-| [client_consultations](#client-consultations)             | 25       | 2   | 3   | 1        |
+| [client_consultations](#client-consultations)             | 26       | 2   | 3   | 1        |
 | [consultation_emails](#consultation-emails)               | 12       | 1   | 1   | 0        |
 | [consultation_images](#consultation-images)               | 15       | 1   | 5   | 2        |
-| [consultation_products](#consultation-products)           | 11       | 2   | 1   | 0        |
+| [consultation_products](#consultation-products)           | 15       | 2   | 1   | 0        |
 | [order_discounts](#order-discounts)                       | 24       | 0   | 2   | 1        |
 | [order_payments](#order-payments)                         | 10       | 2   | 1   | 0        |
 | [purchase_order_items](#purchase-order-items)             | 21       | 4   | 2   | 10       |
@@ -20,7 +20,7 @@ _Generated: 2026-04-12 23:28_
 | [sales_order_linkme_details](#sales-order-linkme-details) | 51       | 1   | 6   | 3        |
 | [sales_order_shipments](#sales-order-shipments)           | 20       | 2   | 1   | 3        |
 | [sales_orders](#sales-orders)                             | 73       | 10  | 7   | 23       |
-| [sample_order_items](#sample-order-items)                 | 12       | 1   | 1   | 0        |
+| [sample_order_items](#sample-order-items)                 | 13       | 2   | 1   | 0        |
 | [sample_orders](#sample-orders)                           | 17       | 1   | 1   | 0        |
 | [shopping_carts](#shopping-carts)                         | 11       | 2   | 9   | 1        |
 
@@ -53,6 +53,7 @@ _Generated: 2026-04-12 23:28_
 | deleted_by              | uuid        | YES      |                    |
 | enseigne_id             | uuid        | YES      |                    |
 | organisation_id         | uuid        | YES      |                    |
+| tva_rate                | numeric     | YES      | 20                 |
 
 **Relations :**
 
@@ -139,19 +140,23 @@ _Generated: 2026-04-12 23:28_
 
 ## consultation_products
 
-| Colonne             | Type        | Nullable | Default           |
-| ------------------- | ----------- | -------- | ----------------- |
-| id                  | uuid        | NO       | gen_random_uuid() |
-| consultation_id     | uuid        | NO       |                   |
-| product_id          | uuid        | NO       |                   |
-| proposed_price      | numeric     | YES      |                   |
-| notes               | text        | YES      |                   |
-| is_primary_proposal | boolean     | YES      | false             |
-| created_at          | timestamptz | YES      | now()             |
-| created_by          | uuid        | YES      |                   |
-| status              | text        | YES      | 'pending'::text   |
-| quantity            | integer     | NO       | 1                 |
-| is_free             | boolean     | YES      | false             |
+| Colonne                | Type        | Nullable | Default           |
+| ---------------------- | ----------- | -------- | ----------------- |
+| id                     | uuid        | NO       | gen_random_uuid() |
+| consultation_id        | uuid        | NO       |                   |
+| product_id             | uuid        | NO       |                   |
+| proposed_price         | numeric     | YES      |                   |
+| notes                  | text        | YES      |                   |
+| is_primary_proposal    | boolean     | YES      | false             |
+| created_at             | timestamptz | YES      | now()             |
+| created_by             | uuid        | YES      |                   |
+| status                 | text        | YES      | 'pending'::text   |
+| quantity               | integer     | NO       | 1                 |
+| is_free                | boolean     | YES      | false             |
+| shipping_cost          | numeric     | YES      | 0                 |
+| shipping_cost_currency | text        | YES      | 'EUR'::text       |
+| cost_price_override    | numeric     | YES      |                   |
+| is_sample              | boolean     | YES      | false             |
 
 **Relations :**
 
@@ -462,8 +467,8 @@ _Generated: 2026-04-12 23:28_
 
 **RLS :** 6 policies
 
-- `staff_delete_sales_order_items` : DELETE — authenticated
 - `linkme_users_delete_own_order_items` : DELETE — authenticated
+- `staff_delete_sales_order_items` : DELETE — authenticated
 - `Public can create sales_order_items` : INSERT — anon,authenticated
 - `staff_select_sales_order_items` : SELECT — authenticated
 - `affiliates_select_own_order_items` : SELECT — authenticated
@@ -542,12 +547,12 @@ _Generated: 2026-04-12 23:28_
 
 **RLS :** 6 policies
 
-- `affiliates_can_insert_own_linkme_details` : INSERT — authenticated
 - `staff_can_insert_linkme_details` : INSERT — authenticated
+- `affiliates_can_insert_own_linkme_details` : INSERT — authenticated
 - `staff_select_sales_order_linkme_details` : SELECT — authenticated
 - `affiliates_select_own_order_linkme_details` : SELECT — authenticated
-- `staff_can_update_linkme_details` : UPDATE — authenticated
 - `linkme_users_update_own_linkme_details` : UPDATE — authenticated
+- `staff_can_update_linkme_details` : UPDATE — authenticated
 
 **Triggers :** 3
 
@@ -693,12 +698,12 @@ _Generated: 2026-04-12 23:28_
 **RLS :** 7 policies
 
 - `staff_delete_sales_orders` : DELETE — authenticated
-- `LinkMe users can create sales_orders` : INSERT — authenticated
 - `Public can create sales_orders` : INSERT — anon,authenticated
+- `LinkMe users can create sales_orders` : INSERT — authenticated
 - `affiliates_select_own_orders` : SELECT — authenticated
 - `staff_select_sales_orders` : SELECT — authenticated
-- `staff_update_sales_orders` : UPDATE — authenticated
 - `linkme_users_update_own_draft_orders` : UPDATE — authenticated
+- `staff_update_sales_orders` : UPDATE — authenticated
 
 **Triggers :** 23
 
@@ -744,9 +749,11 @@ _Generated: 2026-04-12 23:28_
 | validation_notes   | text        | YES      |                   |
 | created_at         | timestamptz | YES      | now()             |
 | updated_at         | timestamptz | YES      | now()             |
+| product_id         | uuid        | YES      |                   |
 
 **Relations :**
 
+- `product_id` → `products.id`
 - `sample_order_id` → `sample_orders.id`
 
 **RLS :** 1 policy
@@ -813,8 +820,8 @@ _Generated: 2026-04-12 23:28_
 - `staff_full_access_shopping_carts` : ALL — authenticated
 - `anon_cart_delete` : DELETE — anon
 - `users_own_cart_delete` : DELETE — authenticated
-- `users_own_cart_insert` : INSERT — authenticated
 - `anon_cart_insert` : INSERT — anon
+- `users_own_cart_insert` : INSERT — authenticated
 - `anon_cart_select` : SELECT — anon
 - `users_own_cart_select` : SELECT — authenticated
 - `users_own_cart_update` : UPDATE — authenticated

@@ -1995,41 +1995,53 @@ export type Database = {
       consultation_products: {
         Row: {
           consultation_id: string;
+          cost_price_override: number | null;
           created_at: string | null;
           created_by: string | null;
           id: string;
           is_free: boolean | null;
           is_primary_proposal: boolean | null;
+          is_sample: boolean | null;
           notes: string | null;
           product_id: string;
           proposed_price: number | null;
           quantity: number;
+          shipping_cost: number | null;
+          shipping_cost_currency: string | null;
           status: string | null;
         };
         Insert: {
           consultation_id: string;
+          cost_price_override?: number | null;
           created_at?: string | null;
           created_by?: string | null;
           id?: string;
           is_free?: boolean | null;
           is_primary_proposal?: boolean | null;
+          is_sample?: boolean | null;
           notes?: string | null;
           product_id: string;
           proposed_price?: number | null;
           quantity?: number;
+          shipping_cost?: number | null;
+          shipping_cost_currency?: string | null;
           status?: string | null;
         };
         Update: {
           consultation_id?: string;
+          cost_price_override?: number | null;
           created_at?: string | null;
           created_by?: string | null;
           id?: string;
           is_free?: boolean | null;
           is_primary_proposal?: boolean | null;
+          is_sample?: boolean | null;
           notes?: string | null;
           product_id?: string;
           proposed_price?: number | null;
           quantity?: number;
+          shipping_cost?: number | null;
+          shipping_cost_currency?: string | null;
           status?: string | null;
         };
         Relationships: [
@@ -5382,6 +5394,7 @@ export type Database = {
           abby_customer_id: string | null;
           address_line1: string | null;
           address_line2: string | null;
+          alibaba_store_url: string | null;
           approval_status: string | null;
           approved_at: string | null;
           approved_by: string | null;
@@ -5394,6 +5407,7 @@ export type Database = {
           billing_region: string | null;
           certification_labels: string[] | null;
           city: string | null;
+          communication_language: string | null;
           country: string | null;
           created_at: string | null;
           created_by: string | null;
@@ -5430,6 +5444,7 @@ export type Database = {
             | null;
           phone: string | null;
           postal_code: string | null;
+          preferred_comm_channel: string | null;
           preferred_supplier: boolean | null;
           prepayment_required: boolean | null;
           rating: number | null;
@@ -5449,19 +5464,25 @@ export type Database = {
           source_type:
             | Database['public']['Enums']['customer_source_type']
             | null;
+          supplier_reliability_score: number | null;
           supplier_segment:
             | Database['public']['Enums']['supplier_segment_type']
             | null;
+          supplier_specialties: string[] | null;
+          supplier_timezone: string | null;
           trade_name: string | null;
           type: Database['public']['Enums']['organisation_type'] | null;
           updated_at: string | null;
           vat_number: string | null;
           website: string | null;
+          wechat_id: string | null;
+          whatsapp_number: string | null;
         };
         Insert: {
           abby_customer_id?: string | null;
           address_line1?: string | null;
           address_line2?: string | null;
+          alibaba_store_url?: string | null;
           approval_status?: string | null;
           approved_at?: string | null;
           approved_by?: string | null;
@@ -5474,6 +5495,7 @@ export type Database = {
           billing_region?: string | null;
           certification_labels?: string[] | null;
           city?: string | null;
+          communication_language?: string | null;
           country?: string | null;
           created_at?: string | null;
           created_by?: string | null;
@@ -5510,6 +5532,7 @@ export type Database = {
             | null;
           phone?: string | null;
           postal_code?: string | null;
+          preferred_comm_channel?: string | null;
           preferred_supplier?: boolean | null;
           prepayment_required?: boolean | null;
           rating?: number | null;
@@ -5529,19 +5552,25 @@ export type Database = {
           source_type?:
             | Database['public']['Enums']['customer_source_type']
             | null;
+          supplier_reliability_score?: number | null;
           supplier_segment?:
             | Database['public']['Enums']['supplier_segment_type']
             | null;
+          supplier_specialties?: string[] | null;
+          supplier_timezone?: string | null;
           trade_name?: string | null;
           type?: Database['public']['Enums']['organisation_type'] | null;
           updated_at?: string | null;
           vat_number?: string | null;
           website?: string | null;
+          wechat_id?: string | null;
+          whatsapp_number?: string | null;
         };
         Update: {
           abby_customer_id?: string | null;
           address_line1?: string | null;
           address_line2?: string | null;
+          alibaba_store_url?: string | null;
           approval_status?: string | null;
           approved_at?: string | null;
           approved_by?: string | null;
@@ -5554,6 +5583,7 @@ export type Database = {
           billing_region?: string | null;
           certification_labels?: string[] | null;
           city?: string | null;
+          communication_language?: string | null;
           country?: string | null;
           created_at?: string | null;
           created_by?: string | null;
@@ -5590,6 +5620,7 @@ export type Database = {
             | null;
           phone?: string | null;
           postal_code?: string | null;
+          preferred_comm_channel?: string | null;
           preferred_supplier?: boolean | null;
           prepayment_required?: boolean | null;
           rating?: number | null;
@@ -5609,14 +5640,19 @@ export type Database = {
           source_type?:
             | Database['public']['Enums']['customer_source_type']
             | null;
+          supplier_reliability_score?: number | null;
           supplier_segment?:
             | Database['public']['Enums']['supplier_segment_type']
             | null;
+          supplier_specialties?: string[] | null;
+          supplier_timezone?: string | null;
           trade_name?: string | null;
           type?: Database['public']['Enums']['organisation_type'] | null;
           updated_at?: string | null;
           vat_number?: string | null;
           website?: string | null;
+          wechat_id?: string | null;
+          whatsapp_number?: string | null;
         };
         Relationships: [
           {
@@ -6552,6 +6588,7 @@ export type Database = {
           completion_percentage: number | null;
           completion_status: string | null;
           condition: string | null;
+          consultation_id: string | null;
           cost_net_avg: number | null;
           cost_net_last: number | null;
           cost_net_max: number | null;
@@ -6594,6 +6631,10 @@ export type Database = {
           sku: string;
           slug: string | null;
           sourcing_channel: string | null;
+          sourcing_notes: string | null;
+          sourcing_priority: string | null;
+          sourcing_status: string | null;
+          sourcing_tags: string[] | null;
           sourcing_type: string | null;
           stock_forecasted_in: number | null;
           stock_forecasted_out: number | null;
@@ -6609,6 +6650,7 @@ export type Database = {
           supplier_page_url: string | null;
           supplier_reference: string | null;
           target_margin_percentage: number | null;
+          target_price: number | null;
           technical_description: string | null;
           unpublication_date: string | null;
           updated_at: string | null;
@@ -6637,6 +6679,7 @@ export type Database = {
           completion_percentage?: number | null;
           completion_status?: string | null;
           condition?: string | null;
+          consultation_id?: string | null;
           cost_net_avg?: number | null;
           cost_net_last?: number | null;
           cost_net_max?: number | null;
@@ -6679,6 +6722,10 @@ export type Database = {
           sku: string;
           slug?: string | null;
           sourcing_channel?: string | null;
+          sourcing_notes?: string | null;
+          sourcing_priority?: string | null;
+          sourcing_status?: string | null;
+          sourcing_tags?: string[] | null;
           sourcing_type?: string | null;
           stock_forecasted_in?: number | null;
           stock_forecasted_out?: number | null;
@@ -6694,6 +6741,7 @@ export type Database = {
           supplier_page_url?: string | null;
           supplier_reference?: string | null;
           target_margin_percentage?: number | null;
+          target_price?: number | null;
           technical_description?: string | null;
           unpublication_date?: string | null;
           updated_at?: string | null;
@@ -6722,6 +6770,7 @@ export type Database = {
           completion_percentage?: number | null;
           completion_status?: string | null;
           condition?: string | null;
+          consultation_id?: string | null;
           cost_net_avg?: number | null;
           cost_net_last?: number | null;
           cost_net_max?: number | null;
@@ -6764,6 +6813,10 @@ export type Database = {
           sku?: string;
           slug?: string | null;
           sourcing_channel?: string | null;
+          sourcing_notes?: string | null;
+          sourcing_priority?: string | null;
+          sourcing_status?: string | null;
+          sourcing_tags?: string[] | null;
           sourcing_type?: string | null;
           stock_forecasted_in?: number | null;
           stock_forecasted_out?: number | null;
@@ -6779,6 +6832,7 @@ export type Database = {
           supplier_page_url?: string | null;
           supplier_reference?: string | null;
           target_margin_percentage?: number | null;
+          target_price?: number | null;
           technical_description?: string | null;
           unpublication_date?: string | null;
           updated_at?: string | null;
@@ -6808,6 +6862,13 @@ export type Database = {
             columns: ['assigned_client_id'];
             isOneToOne: false;
             referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'products_consultation_id_fkey';
+            columns: ['consultation_id'];
+            isOneToOne: false;
+            referencedRelation: 'client_consultations';
             referencedColumns: ['id'];
           },
           {
@@ -8361,6 +8422,7 @@ export type Database = {
           estimated_cost: number | null;
           id: string;
           item_status: string;
+          product_id: string | null;
           quantity: number | null;
           sample_description: string;
           sample_order_id: string;
@@ -8375,6 +8437,7 @@ export type Database = {
           estimated_cost?: number | null;
           id?: string;
           item_status?: string;
+          product_id?: string | null;
           quantity?: number | null;
           sample_description: string;
           sample_order_id: string;
@@ -8389,6 +8452,7 @@ export type Database = {
           estimated_cost?: number | null;
           id?: string;
           item_status?: string;
+          product_id?: string | null;
           quantity?: number | null;
           sample_description?: string;
           sample_order_id?: string;
@@ -8397,6 +8461,34 @@ export type Database = {
           validation_notes?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: 'sample_order_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sample_order_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sample_order_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sample_order_items_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
           {
             foreignKeyName: 'sample_order_items_sample_order_id_fkey';
             columns: ['sample_order_id'];
@@ -8737,6 +8829,381 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'v_linkme_users';
             referencedColumns: ['user_id'];
+          },
+        ];
+      };
+      sourcing_candidate_suppliers: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          notes: string | null;
+          product_id: string;
+          quoted_lead_days: number | null;
+          quoted_moq: number | null;
+          quoted_price: number | null;
+          response_date: string | null;
+          status: string | null;
+          supplier_id: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          notes?: string | null;
+          product_id: string;
+          quoted_lead_days?: number | null;
+          quoted_moq?: number | null;
+          quoted_price?: number | null;
+          response_date?: string | null;
+          status?: string | null;
+          supplier_id: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          notes?: string | null;
+          product_id?: string;
+          quoted_lead_days?: number | null;
+          quoted_moq?: number | null;
+          quoted_price?: number | null;
+          response_date?: string | null;
+          status?: string | null;
+          supplier_id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'sourcing_candidate_suppliers_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sourcing_candidate_suppliers_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sourcing_candidate_suppliers_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sourcing_candidate_suppliers_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sourcing_candidate_suppliers_supplier_id_fkey';
+            columns: ['supplier_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      sourcing_communications: {
+        Row: {
+          attachments: Json | null;
+          channel: string;
+          communicated_at: string;
+          contact_name: string | null;
+          created_at: string | null;
+          direction: string;
+          follow_up_date: string | null;
+          id: string;
+          is_resolved: boolean | null;
+          logged_by: string | null;
+          next_action: string | null;
+          product_id: string;
+          summary: string;
+          supplier_id: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          attachments?: Json | null;
+          channel: string;
+          communicated_at?: string;
+          contact_name?: string | null;
+          created_at?: string | null;
+          direction: string;
+          follow_up_date?: string | null;
+          id?: string;
+          is_resolved?: boolean | null;
+          logged_by?: string | null;
+          next_action?: string | null;
+          product_id: string;
+          summary: string;
+          supplier_id?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          attachments?: Json | null;
+          channel?: string;
+          communicated_at?: string;
+          contact_name?: string | null;
+          created_at?: string | null;
+          direction?: string;
+          follow_up_date?: string | null;
+          id?: string;
+          is_resolved?: boolean | null;
+          logged_by?: string | null;
+          next_action?: string | null;
+          product_id?: string;
+          summary?: string;
+          supplier_id?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'sourcing_communications_logged_by_fkey';
+            columns: ['logged_by'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+          {
+            foreignKeyName: 'sourcing_communications_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sourcing_communications_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sourcing_communications_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sourcing_communications_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sourcing_communications_supplier_id_fkey';
+            columns: ['supplier_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      sourcing_photos: {
+        Row: {
+          caption: string | null;
+          created_at: string | null;
+          created_by: string | null;
+          id: string;
+          photo_type: string;
+          product_id: string;
+          public_url: string | null;
+          sort_order: number | null;
+          storage_path: string;
+        };
+        Insert: {
+          caption?: string | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          id?: string;
+          photo_type: string;
+          product_id: string;
+          public_url?: string | null;
+          sort_order?: number | null;
+          storage_path: string;
+        };
+        Update: {
+          caption?: string | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          id?: string;
+          photo_type?: string;
+          product_id?: string;
+          public_url?: string | null;
+          sort_order?: number | null;
+          storage_path?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'sourcing_photos_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'v_linkme_users';
+            referencedColumns: ['user_id'];
+          },
+          {
+            foreignKeyName: 'sourcing_photos_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sourcing_photos_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sourcing_photos_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sourcing_photos_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+        ];
+      };
+      sourcing_price_history: {
+        Row: {
+          currency: string | null;
+          id: string;
+          negotiated_at: string | null;
+          notes: string | null;
+          price: number;
+          product_id: string;
+          proposed_by: string | null;
+          quantity: number | null;
+          supplier_id: string | null;
+        };
+        Insert: {
+          currency?: string | null;
+          id?: string;
+          negotiated_at?: string | null;
+          notes?: string | null;
+          price: number;
+          product_id: string;
+          proposed_by?: string | null;
+          quantity?: number | null;
+          supplier_id?: string | null;
+        };
+        Update: {
+          currency?: string | null;
+          id?: string;
+          negotiated_at?: string | null;
+          notes?: string | null;
+          price?: number;
+          product_id?: string;
+          proposed_by?: string | null;
+          quantity?: number | null;
+          supplier_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'sourcing_price_history_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sourcing_price_history_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sourcing_price_history_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sourcing_price_history_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sourcing_price_history_supplier_id_fkey';
+            columns: ['supplier_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      sourcing_urls: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          label: string | null;
+          platform: string | null;
+          product_id: string;
+          url: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          label?: string | null;
+          platform?: string | null;
+          product_id: string;
+          url: string;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          label?: string | null;
+          platform?: string | null;
+          product_id?: string;
+          url?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'sourcing_urls_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sourcing_urls_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sourcing_urls_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sourcing_urls_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
           },
         ];
       };
@@ -12983,9 +13450,13 @@ export type Database = {
           description: string;
           error_message: string;
           id: string;
+          image_count: number;
           impressions: number;
+          is_channel_active: boolean;
           meta_product_id: string;
           meta_status: string;
+          meta_status_checked_at: string;
+          meta_status_detail: Json;
           primary_image_url: string;
           product_id: string;
           product_name: string;
@@ -13008,6 +13479,22 @@ export type Database = {
           total_conversions: number;
           total_impressions: number;
           total_products: number;
+        }[];
+      };
+      get_meta_eligible_products: {
+        Args: never;
+        Returns: {
+          cost_price: number;
+          id: string;
+          image_count: number;
+          is_published_online: boolean;
+          name: string;
+          primary_image_url: string;
+          site_price_ht: number;
+          sku: string;
+          slug: string;
+          stock_quantity: number;
+          stock_status: string;
         }[];
       };
       get_meta_sync_records_for_status_update: {
@@ -13269,6 +13756,7 @@ export type Database = {
           assembly_price: number;
           brand: string;
           color: string;
+          cost_price: number;
           delivery_delay_weeks_max: number;
           delivery_delay_weeks_min: number;
           description: string;
@@ -14119,6 +14607,18 @@ export type Database = {
           error: string;
           success: boolean;
         }[];
+      };
+      update_meta_commerce_metadata: {
+        Args: {
+          p_custom_description?: string;
+          p_custom_title?: string;
+          p_product_id: string;
+        };
+        Returns: undefined;
+      };
+      update_meta_commerce_price: {
+        Args: { p_custom_price_ht: number; p_product_id: string };
+        Returns: undefined;
       };
       update_meta_sync_status: {
         Args: {

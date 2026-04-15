@@ -11,9 +11,13 @@ import { debounce } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import { Plus } from 'lucide-react';
 
+import { SourcingCardView } from './SourcingCardView';
 import { SourcingFilters } from './SourcingFilters';
+import { SourcingKanbanView } from './SourcingKanbanView';
 import { SourcingKpiCards } from './SourcingKpiCards';
 import { SourcingProductList } from './SourcingProductList';
+import type { SourcingViewMode } from './SourcingViewToggle';
+import { SourcingViewToggle } from './SourcingViewToggle';
 
 export default function SourcingPage() {
   const router = useRouter();
@@ -22,6 +26,11 @@ export default function SourcingPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sourcingTypeFilter, setSourcingTypeFilter] = useState('all');
   const [supplierFilter, setSupplierFilter] = useState<string | null>(null);
+  const [pipelineFilter, setPipelineFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [sortBy, setSortBy] = useState<string>('created_at');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [viewMode, setViewMode] = useState<SourcingViewMode>('list');
   const [isQuickSourcingModalOpen, setIsQuickSourcingModalOpen] =
     useState(false);
   const [completedThisMonth, setCompletedThisMonth] = useState(0);
@@ -88,6 +97,52 @@ export default function SourcingPage() {
     });
   }, []);
 
+  // Client-side filtering for pipeline + priority + sorting
+  const filteredAndSortedProducts = useMemo(() => {
+    let filtered = [...(sourcingProducts ?? [])];
+
+    // Pipeline filter
+    if (pipelineFilter !== 'all') {
+      filtered = filtered.filter(p => p.sourcing_status === pipelineFilter);
+    }
+
+    // Priority filter
+    if (priorityFilter !== 'all') {
+      filtered = filtered.filter(p => p.sourcing_priority === priorityFilter);
+    }
+
+    // Sorting
+    filtered.sort((a, b) => {
+      const dir = sortDir === 'asc' ? 1 : -1;
+      switch (sortBy) {
+        case 'name':
+          return dir * a.name.localeCompare(b.name);
+        case 'cost_price':
+          return dir * ((a.cost_price ?? 0) - (b.cost_price ?? 0));
+        case 'supplier':
+          return (
+            dir *
+            (
+              a.supplier?.trade_name ??
+              a.supplier?.legal_name ??
+              ''
+            ).localeCompare(
+              b.supplier?.trade_name ?? b.supplier?.legal_name ?? ''
+            )
+          );
+        case 'created_at':
+        default:
+          return (
+            dir *
+            (new Date(a.created_at).getTime() -
+              new Date(b.created_at).getTime())
+          );
+      }
+    });
+
+    return filtered;
+  }, [sourcingProducts, pipelineFilter, priorityFilter, sortBy, sortDir]);
+
   const stats = {
     totalDrafts:
       sourcingProducts?.filter(p => p.product_status === 'draft').length ?? 0,
@@ -137,13 +192,16 @@ export default function SourcingPage() {
             Gestion des produits à sourcer et validation catalogue
           </p>
         </div>
-        <ButtonV2
-          variant="primary"
-          icon={Plus}
-          onClick={() => setIsQuickSourcingModalOpen(true)}
-        >
-          Nouveau Sourcing
-        </ButtonV2>
+        <div className="flex items-center gap-3">
+          <SourcingViewToggle view={viewMode} onViewChange={setViewMode} />
+          <ButtonV2
+            variant="primary"
+            icon={Plus}
+            onClick={() => setIsQuickSourcingModalOpen(true)}
+          >
+            Nouveau Sourcing
+          </ButtonV2>
+        </div>
       </div>
 
       <SourcingKpiCards stats={stats} loading={loading} />
@@ -160,21 +218,51 @@ export default function SourcingPage() {
         onSourcingTypeChange={setSourcingTypeFilter}
         supplierFilter={supplierFilter}
         onSupplierChange={setSupplierFilter}
+        pipelineFilter={pipelineFilter}
+        onPipelineChange={setPipelineFilter}
+        priorityFilter={priorityFilter}
+        onPriorityChange={setPriorityFilter}
       />
 
-      <SourcingProductList
-        products={sourcingProducts}
-        loading={loading}
-        error={error}
-        onView={id => router.push(`/produits/sourcing/produits/${id}`)}
-        onViewSupplier={supplierId =>
-          router.push(`/organisations/${supplierId}`)
-        }
-        onEdit={id => router.push(`/produits/sourcing/produits/${id}`)}
-        onValidate={handleValidate}
-        onArchive={handleArchive}
-        onDelete={handleDelete}
-      />
+      {viewMode === 'list' && (
+        <SourcingProductList
+          products={filteredAndSortedProducts}
+          sortBy={sortBy}
+          sortDir={sortDir}
+          onSort={col => {
+            if (sortBy === col) {
+              setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+            } else {
+              setSortBy(col);
+              setSortDir('desc');
+            }
+          }}
+          loading={loading}
+          error={error}
+          onView={id => router.push(`/produits/sourcing/produits/${id}`)}
+          onViewSupplier={supplierId =>
+            router.push(`/organisations/${supplierId}`)
+          }
+          onEdit={id => router.push(`/produits/sourcing/produits/${id}`)}
+          onValidate={handleValidate}
+          onArchive={handleArchive}
+          onDelete={handleDelete}
+        />
+      )}
+
+      {viewMode === 'kanban' && (
+        <SourcingKanbanView
+          products={filteredAndSortedProducts}
+          onView={id => router.push(`/produits/sourcing/produits/${id}`)}
+        />
+      )}
+
+      {viewMode === 'card' && (
+        <SourcingCardView
+          products={filteredAndSortedProducts}
+          onView={id => router.push(`/produits/sourcing/produits/${id}`)}
+        />
+      )}
 
       <QuickSourcingModal
         open={isQuickSourcingModalOpen}

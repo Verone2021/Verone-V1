@@ -35,6 +35,7 @@ export interface ClientConsultation {
   archived_by?: string;
   deleted_at?: string;
   deleted_by?: string;
+  tva_rate?: number;
   // Relations (optionnelles, pour joins)
   enseigne?: { id: string; name: string };
   organisation?: { id: string; legal_name: string; trade_name?: string };
@@ -70,17 +71,26 @@ export interface ConsultationItem {
   quantity: number;
   unit_price?: number;
   is_free: boolean;
+  is_sample: boolean;
   notes?: string;
   created_at: string;
   created_by?: string;
+  shipping_cost: number;
+  shipping_cost_currency: string;
+  cost_price_override?: number;
+  status: string;
   // Relations
   product?: {
     id: string;
     name: string;
     sku: string;
     requires_sample: boolean;
+    supplier_id?: string;
     supplier_name?: string;
     cost_price?: number;
+    stock_real?: number;
+    stock_forecasted_in?: number;
+    stock_forecasted_out?: number;
     image_url?: string | null;
   };
 }
@@ -96,6 +106,7 @@ export interface CreateConsultationData {
   priority_level?: number;
   source_channel?: 'website' | 'email' | 'phone' | 'other';
   estimated_response_date?: string;
+  notes_internes?: string;
   /** Images uploadées (max 5) — insertion dans consultation_images */
   images?: Array<{
     publicUrl: string;
@@ -130,7 +141,12 @@ export interface UpdateConsultationItemData {
   quantity?: number;
   unit_price?: number;
   is_free?: boolean;
+  is_sample?: boolean;
   notes?: string;
+  shipping_cost?: number;
+  shipping_cost_currency?: string;
+  cost_price_override?: number;
+  status?: string;
 }
 
 export interface ConsultationFilters {
@@ -666,15 +682,24 @@ export function useConsultationItems(consultationId?: string) {
           quantity,
           proposed_price,
           is_free,
+          is_sample,
           notes,
           created_at,
           created_by,
+          status,
+          shipping_cost,
+          shipping_cost_currency,
+          cost_price_override,
           product:products(
             id,
             name,
             sku,
             requires_sample,
             cost_price,
+            stock_real,
+            stock_forecasted_in,
+            stock_forecasted_out,
+            supplier:organisations!products_supplier_id_fkey(id, legal_name, trade_name),
             product_images(public_url, is_primary)
           )
         `
@@ -685,44 +710,66 @@ export function useConsultationItems(consultationId?: string) {
       if (error) throw error;
 
       // Transform to ConsultationItem format
-      const items = (data ?? []).map(item => ({
-        id: item.id,
-        consultation_id: item.consultation_id,
-        product_id: item.product_id,
-        quantity: item.quantity ?? 1,
-        unit_price: item.proposed_price ?? item.product?.cost_price,
-        is_free: item.is_free ?? false,
-        notes: item.notes ?? undefined,
-        created_at: item.created_at,
-        created_by: item.created_by,
-        product: item.product
-          ? {
-              id: item.product.id,
-              name: item.product.name,
-              sku: item.product.sku,
-              requires_sample: item.product.requires_sample,
-              supplier_name: undefined, // Temporairement désactivé
-              cost_price: item.product.cost_price,
-              image_url:
-                (
-                  item.product as unknown as {
-                    product_images?: Array<{
-                      is_primary: boolean;
-                      public_url: string;
-                    }>;
-                  }
-                ).product_images?.find(
-                  (img: { is_primary: boolean }) => img.is_primary
-                )?.public_url ??
-                (
-                  item.product as unknown as {
-                    product_images?: Array<{ public_url: string }>;
-                  }
-                ).product_images?.[0]?.public_url ??
-                null,
-            }
-          : undefined,
-      }));
+      const items = (data ?? []).map(item => {
+        const productData = item.product as unknown as {
+          id: string;
+          name: string;
+          sku: string;
+          requires_sample: boolean;
+          cost_price?: number;
+          stock_real?: number;
+          stock_forecasted_in?: number;
+          stock_forecasted_out?: number;
+          supplier?: {
+            id: string;
+            legal_name: string;
+            trade_name: string | null;
+          } | null;
+          product_images?: Array<{
+            is_primary: boolean;
+            public_url: string;
+          }>;
+        } | null;
+
+        return {
+          id: item.id,
+          consultation_id: item.consultation_id,
+          product_id: item.product_id,
+          quantity: item.quantity ?? 1,
+          unit_price: item.proposed_price ?? productData?.cost_price,
+          is_free: item.is_free ?? false,
+          is_sample: item.is_sample ?? false,
+          notes: item.notes ?? undefined,
+          created_at: item.created_at,
+          created_by: item.created_by,
+          status: item.status ?? 'pending',
+          shipping_cost: item.shipping_cost ?? 0,
+          shipping_cost_currency: item.shipping_cost_currency ?? 'EUR',
+          cost_price_override: item.cost_price_override ?? undefined,
+          product: productData
+            ? {
+                id: productData.id,
+                name: productData.name,
+                sku: productData.sku,
+                requires_sample: productData.requires_sample,
+                supplier_id: productData.supplier?.id ?? undefined,
+                supplier_name:
+                  productData.supplier?.trade_name ??
+                  productData.supplier?.legal_name ??
+                  undefined,
+                cost_price: productData.cost_price,
+                stock_real: productData.stock_real ?? 0,
+                stock_forecasted_in: productData.stock_forecasted_in ?? 0,
+                stock_forecasted_out: productData.stock_forecasted_out ?? 0,
+                image_url:
+                  productData.product_images?.find(img => img.is_primary)
+                    ?.public_url ??
+                  productData.product_images?.[0]?.public_url ??
+                  null,
+              }
+            : undefined,
+        };
+      });
 
       setConsultationItems(items as ConsultationItem[]);
     } catch (err) {
@@ -840,6 +887,15 @@ export function useConsultationItems(consultationId?: string) {
         updateData.proposed_price = updates.unit_price;
       if (updates.is_free !== undefined) updateData.is_free = updates.is_free;
       if (updates.notes !== undefined) updateData.notes = updates.notes;
+      if (updates.shipping_cost !== undefined)
+        updateData.shipping_cost = updates.shipping_cost;
+      if (updates.shipping_cost_currency !== undefined)
+        updateData.shipping_cost_currency = updates.shipping_cost_currency;
+      if (updates.cost_price_override !== undefined)
+        updateData.cost_price_override = updates.cost_price_override;
+      if (updates.is_sample !== undefined)
+        updateData.is_sample = updates.is_sample;
+      if (updates.status !== undefined) updateData.status = updates.status;
 
       const { error } = await supabase
         .from('consultation_products')
@@ -857,7 +913,14 @@ export function useConsultationItems(consultationId?: string) {
                 quantity: updates.quantity ?? item.quantity,
                 unit_price: updates.unit_price ?? item.unit_price,
                 is_free: updates.is_free ?? item.is_free,
+                is_sample: updates.is_sample ?? item.is_sample,
                 notes: updates.notes ?? item.notes,
+                shipping_cost: updates.shipping_cost ?? item.shipping_cost,
+                shipping_cost_currency:
+                  updates.shipping_cost_currency ?? item.shipping_cost_currency,
+                cost_price_override:
+                  updates.cost_price_override ?? item.cost_price_override,
+                status: updates.status ?? item.status,
               }
             : item
         )

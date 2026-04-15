@@ -1,6 +1,6 @@
 # Domaine Organisations & Contacts — Schema Base de Donnees
 
-_Generated: 2026-04-12 23:28_
+_Generated: 2026-04-15 03:34_
 
 **Tables : 8**
 
@@ -13,7 +13,7 @@ _Generated: 2026-04-12 23:28_
 | [enseignes](#enseignes)                                   | 11       | 0   | 2   | 4        |
 | [individual_customers](#individual-customers)             | 35       | 3   | 4   | 1        |
 | [organisation_families](#organisation-families)           | 4        | 2   | 1   | 0        |
-| [organisations](#organisations)                           | 70       | 3   | 5   | 10       |
+| [organisations](#organisations)                           | 78       | 3   | 5   | 10       |
 
 ## addresses
 
@@ -355,6 +355,14 @@ _Generated: 2026-04-12 23:28_
 | longitude                      | numeric                          | YES      |                                  |
 | default_vat_rate               | numeric                          | YES      | 0.20                             |
 | kbis_url                       | text                             | YES      |                                  |
+| preferred_comm_channel         | text                             | YES      |                                  |
+| wechat_id                      | text                             | YES      |                                  |
+| whatsapp_number                | text                             | YES      |                                  |
+| alibaba_store_url              | text                             | YES      |                                  |
+| supplier_specialties           | text[]                           | YES      |                                  |
+| supplier_reliability_score     | integer                          | YES      |                                  |
+| communication_language         | text                             | YES      | 'fr'::text                       |
+| supplier_timezone              | text                             | YES      |                                  |
 
 **Relations :**
 
@@ -366,8 +374,8 @@ _Generated: 2026-04-12 23:28_
 
 - `organisations_modify_staff` : ALL — authenticated
 - `linkme_users_insert_organisations` : INSERT — authenticated
-- `organisations_select_all` : SELECT — authenticated
 - `organisations_anon_read_published_enseigne` : SELECT — anon
+- `organisations_select_all` : SELECT — authenticated
 - `linkme_users_update_organisations` : UPDATE — authenticated
 
 **Triggers :** 10

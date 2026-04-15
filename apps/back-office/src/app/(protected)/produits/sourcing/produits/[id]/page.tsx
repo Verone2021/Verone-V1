@@ -8,13 +8,21 @@ import { useParams } from 'next/navigation';
 
 import { useToast } from '@verone/common';
 import { useProductConsultations } from '@verone/consultations/hooks';
-import { ConsultationSuggestions } from '@verone/consultations/components/suggestions';
 import {
   ProductPhotosModal,
   SourcingProductEditCard,
   useSourcingProducts,
   useProductImages,
+  SourcingPipelineBar,
+  SourcingCommunications,
+  SourcingUrls,
+  SourcingPriceHistory,
+  SourcingCandidateSuppliers,
+  SourcingStageGuide,
+  getSectionsForStatus,
 } from '@verone/products';
+import { useSourcingNotebook } from '@verone/products';
+import { useSupplierSearch } from '@verone/products';
 import { Alert, AlertDescription, Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -30,11 +38,9 @@ import {
   Package,
   AlertCircle,
   Building2,
-  FileText,
-  Clock,
-  Link,
-  ExternalLink,
 } from 'lucide-react';
+
+import { SourcingConsultationsSection } from './SourcingConsultationsSection';
 
 export default function SourcingProductDetailPage() {
   const router = useRouter();
@@ -53,7 +59,13 @@ export default function SourcingProductDetailPage() {
   const productId = params.id as string;
   const product = products.find(p => p.id === productId);
 
-  // Hook pour les consultations liées au produit
+  // Hook pour le carnet de sourcing
+  const notebook = useSourcingNotebook(productId);
+
+  // Hook pour la recherche de fournisseurs candidats
+  const supplierSearch = useSupplierSearch();
+
+  // Hook pour les consultations liees au produit
   const {
     linkedConsultations,
     loading: consultationsLoading,
@@ -71,17 +83,21 @@ export default function SourcingProductDetailPage() {
     autoFetch: true,
   });
 
+  // Sections visibles selon le statut courant
+  const currentStatus = product?.sourcing_status ?? 'need_identified';
+  const visibleSections = getSectionsForStatus(currentStatus);
+
   const handleOrderSample = async () => {
     try {
       await orderSample(productId);
       toast({
-        title: 'Échantillon commandé',
-        description: "La demande d'échantillon a été enregistrée avec succès",
+        title: 'Echantillon commande',
+        description: "La demande d'echantillon a ete enregistree avec succes",
       });
     } catch (_error) {
       toast({
         title: 'Erreur',
-        description: "Impossible de commander l'échantillon",
+        description: "Impossible de commander l'echantillon",
         variant: 'destructive',
       });
     }
@@ -107,8 +123,8 @@ export default function SourcingProductDetailPage() {
       }
 
       toast({
-        title: 'Produit associé',
-        description: 'Le produit a été associé à la consultation',
+        title: 'Produit associe',
+        description: 'Le produit a ete associe a la consultation',
       });
       await refetchConsultations();
     } catch (error) {
@@ -127,8 +143,8 @@ export default function SourcingProductDetailPage() {
     try {
       await validateSourcing(productId);
       toast({
-        title: 'Sourcing validé',
-        description: 'Le produit a été validé et ajouté au catalogue',
+        title: 'Sourcing valide',
+        description: 'Le produit a ete valide et ajoute au catalogue',
       });
       router.push('/catalogue');
     } catch (error) {
@@ -161,10 +177,10 @@ export default function SourcingProductDetailPage() {
           <CardContent className="text-center p-6">
             <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-black mb-2">
-              Produit sourcing non trouvé
+              Produit sourcing non trouve
             </h3>
             <p className="text-gray-600 mb-4">
-              Ce produit n'existe pas ou n'est plus en mode sourcing.
+              Ce produit n&apos;existe pas ou n&apos;est plus en mode sourcing.
             </p>
             <ButtonV2
               onClick={() => router.push('/produits/sourcing')}
@@ -183,7 +199,7 @@ export default function SourcingProductDetailPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-6">
+        <div className="w-full px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <ButtonV2
@@ -197,9 +213,8 @@ export default function SourcingProductDetailPage() {
               <div>
                 <div className="flex items-center gap-3">
                   <h1 className="text-3xl font-bold text-black">
-                    Détail Sourcing
+                    Detail Sourcing
                   </h1>
-                  {/* Badge Sourcing */}
                   {product.assigned_client ? (
                     <Badge
                       variant="customer"
@@ -228,7 +243,42 @@ export default function SourcingProductDetailPage() {
       </div>
 
       <div className="w-full px-4 py-8 space-y-6">
-        {/* Product Info Card - Éditable inline */}
+        {/* Pipeline Status */}
+        <Card className="border-black">
+          <CardContent className="pt-4 pb-3">
+            <SourcingPipelineBar
+              currentStatus={currentStatus}
+              onStatusChange={status => {
+                void notebook
+                  .updateSourcingPipeline({ sourcing_status: status })
+                  .then(() => refetch())
+                  .catch(err => {
+                    console.error(
+                      '[SourcingDetail] Pipeline update failed:',
+                      err
+                    );
+                  });
+              }}
+              priority={product.sourcing_priority ?? 'medium'}
+              onPriorityChange={priority => {
+                void notebook
+                  .updateSourcingPipeline({ sourcing_priority: priority })
+                  .then(() => refetch())
+                  .catch(err => {
+                    console.error(
+                      '[SourcingDetail] Priority update failed:',
+                      err
+                    );
+                  });
+              }}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Guide contextuel de l'etape en cours */}
+        <SourcingStageGuide currentStatus={currentStatus} />
+
+        {/* Fiche produit - Editable inline */}
         <SourcingProductEditCard
           product={
             product as ComponentProps<typeof SourcingProductEditCard>['product']
@@ -240,14 +290,14 @@ export default function SourcingProductDetailPage() {
             try {
               await updateSourcingProduct(productId, updates);
               toast({
-                title: 'Produit mis à jour',
-                description: 'Les modifications ont été sauvegardées',
+                title: 'Produit mis a jour',
+                description: 'Les modifications ont ete sauvegardees',
               });
               await refetch();
             } catch (_error) {
               toast({
                 title: 'Erreur',
-                description: 'Impossible de mettre à jour le produit',
+                description: 'Impossible de mettre a jour le produit',
                 variant: 'destructive',
               });
             }
@@ -255,220 +305,165 @@ export default function SourcingProductDetailPage() {
           onOpenPhotosModal={() => setIsPhotosModalOpen(true)}
         />
 
-        {/* Validation Actions */}
-        <Card className="border-black">
-          <CardHeader>
-            <CardTitle className="flex items-center text-black">
-              <CheckCircle className="h-5 w-5 mr-2" />
-              Actions de validation
-            </CardTitle>
-            <CardDescription>
-              Choisissez la prochaine étape selon le workflow de validation
-              sourcing
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Commander échantillon */}
-              <Card className="border-gray-200 h-full">
-                <CardContent className="p-6 flex flex-col justify-between h-full">
-                  <div>
-                    <div className="flex items-center mb-3">
-                      <Package className="h-6 w-6 text-black mr-2" />
-                      <h4 className="font-semibold text-black">
-                        Demander un échantillon
-                      </h4>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Marquer ce produit comme nécessitant un échantillon et
-                      créer une demande de commande.
-                    </p>
-                  </div>
-                  <ButtonV2
-                    onClick={() => {
-                      void handleOrderSample().catch(error => {
-                        console.error(
-                          '[SourcingDetail] handleOrderSample failed:',
-                          error
-                        );
-                      });
-                    }}
-                    disabled={!product.supplier_id}
-                    className="w-full bg-gray-800 hover:bg-gray-900 text-white disabled:bg-gray-300 disabled:cursor-not-allowed disabled:text-gray-500"
-                  >
-                    <Package className="h-4 w-4 mr-2" />
-                    {product.supplier_id
-                      ? 'Commander échantillon'
-                      : 'Fournisseur requis'}
-                  </ButtonV2>
-                </CardContent>
-              </Card>
+        {/* Fournisseurs candidats — visible a partir de "Recherche fournisseur" */}
+        {visibleSections.showCandidates && (
+          <SourcingCandidateSuppliers
+            candidates={notebook.candidates}
+            onAdd={notebook.addCandidateSupplier}
+            onUpdateStatus={notebook.updateCandidateStatus}
+            supplierSearch={supplierSearch}
+          />
+        )}
 
-              {/* Valider vers catalogue */}
-              <Card className="border-green-200 h-full">
-                <CardContent className="p-6 flex flex-col justify-between h-full">
-                  <div>
-                    <div className="flex items-center mb-3">
-                      <CheckCircle className="h-6 w-6 text-green-600 mr-2" />
-                      <h4 className="font-semibold text-black">
-                        Valider le sourcing
-                      </h4>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Valider ce produit sourcing et l'ajouter au catalogue
-                      principal.
-                    </p>
-                  </div>
-                  <ButtonV2
-                    onClick={() => {
-                      void handleValidateSourcing().catch(error => {
-                        console.error(
-                          '[SourcingDetail] handleValidateSourcing failed:',
-                          error
-                        );
-                      });
-                    }}
-                    disabled={!product.supplier_id}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    {product.supplier_id
-                      ? 'Valider et ajouter au catalogue'
-                      : 'Fournisseur requis'}
-                  </ButtonV2>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Warning si pas de fournisseur */}
-            {!product.supplier_id && (
-              <Alert className="mt-4 border-red-200 bg-red-50">
-                <AlertCircle className="h-4 w-4 text-red-600" />
-                <AlertDescription className="text-red-800">
-                  <strong>Fournisseur obligatoire :</strong> Vous devez lier un
-                  fournisseur à ce produit avant de pouvoir le valider vers le
-                  catalogue.
-                </AlertDescription>
-              </Alert>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Consultations liées */}
-        <Card className="border-blue-200">
-          <CardHeader>
-            <CardTitle className="flex items-center text-black">
-              <FileText className="h-5 w-5 mr-2" />
-              Consultations
-              {linkedConsultations.length > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  {linkedConsultations.length}
-                </Badge>
-              )}
-            </CardTitle>
-            <CardDescription>
-              Consultations liées à ce produit sourcing
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Consultations déjà liées */}
-            {consultationsLoading ? (
-              <div className="text-center py-4">
-                <p className="text-sm text-gray-500">Chargement...</p>
-              </div>
-            ) : linkedConsultations.length > 0 ? (
-              <div className="space-y-3">
-                {linkedConsultations.map(item => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Link className="h-4 w-4 text-blue-600" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {item.consultation?.enseigne?.name ??
-                            item.consultation?.organisation?.trade_name ??
-                            item.consultation?.organisation?.legal_name ??
-                            'Consultation'}
-                        </p>
-                        <p className="text-xs text-gray-500 line-clamp-1">
-                          {item.consultation?.descriptif}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge
-                            variant="outline"
-                            className={
-                              item.consultation?.status === 'en_cours'
-                                ? 'border-blue-300 text-blue-600'
-                                : item.consultation?.status === 'terminee'
-                                  ? 'border-green-300 text-green-600'
-                                  : 'border-gray-300 text-gray-600'
-                            }
-                          >
-                            {item.consultation?.status?.replace('_', ' ')}
-                          </Badge>
-                          <span className="text-xs text-gray-400 flex items-center">
-                            <Clock className="h-3 w-3 mr-1" />
-                            {new Date(
-                              item.consultation?.created_at || ''
-                            ).toLocaleDateString('fr-FR')}
-                          </span>
-                        </div>
+        {/* Actions de validation — visible a partir de "Echantillon demande" */}
+        {visibleSections.showValidation && (
+          <Card className="border-black">
+            <CardHeader>
+              <CardTitle className="flex items-center text-black">
+                <CheckCircle className="h-5 w-5 mr-2" />
+                Actions de validation
+              </CardTitle>
+              <CardDescription>
+                Choisissez la prochaine etape selon le workflow de validation
+                sourcing
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Commander echantillon */}
+                <Card className="border-gray-200 h-full">
+                  <CardContent className="p-6 flex flex-col justify-between h-full">
+                    <div>
+                      <div className="flex items-center mb-3">
+                        <Package className="h-6 w-6 text-black mr-2" />
+                        <h4 className="font-semibold text-black">
+                          Demander un echantillon
+                        </h4>
                       </div>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Marquer ce produit comme necessitant un echantillon et
+                        creer une demande de commande.
+                      </p>
                     </div>
                     <ButtonV2
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        router.push(`/consultations/${item.consultation_id}`)
-                      }
+                      onClick={() => {
+                        void handleOrderSample().catch(error => {
+                          console.error(
+                            '[SourcingDetail] handleOrderSample failed:',
+                            error
+                          );
+                        });
+                      }}
+                      disabled={!product.supplier_id}
+                      className="w-full bg-gray-800 hover:bg-gray-900 text-white disabled:bg-gray-300 disabled:cursor-not-allowed disabled:text-gray-500"
                     >
-                      <ExternalLink className="h-3 w-3 mr-1" />
-                      Voir
+                      <Package className="h-4 w-4 mr-2" />
+                      {product.supplier_id
+                        ? 'Commander echantillon'
+                        : 'Fournisseur requis'}
                     </ButtonV2>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500 text-center py-2">
-                Aucune consultation liée
-              </p>
-            )}
+                  </CardContent>
+                </Card>
 
-            {/* Suggestions pour associer */}
-            {product.assigned_client_id && (
-              <div className="pt-2 border-t border-gray-200">
-                <ConsultationSuggestions
-                  clientId={product.assigned_client_id}
-                  _productId={productId}
-                  onLinkToConsultation={consultationId => {
-                    void handleLinkToConsultation(consultationId).catch(
-                      error => {
-                        console.error(
-                          '[SourcingDetail] Link consultation failed:',
-                          error
-                        );
-                      }
-                    );
-                  }}
-                  className="bg-blue-50 border-blue-200"
-                />
+                {/* Valider vers catalogue */}
+                <Card className="border-green-200 h-full">
+                  <CardContent className="p-6 flex flex-col justify-between h-full">
+                    <div>
+                      <div className="flex items-center mb-3">
+                        <CheckCircle className="h-6 w-6 text-green-600 mr-2" />
+                        <h4 className="font-semibold text-black">
+                          Valider le sourcing
+                        </h4>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Valider ce produit sourcing et l&apos;ajouter au
+                        catalogue principal.
+                      </p>
+                    </div>
+                    <ButtonV2
+                      onClick={() => {
+                        void handleValidateSourcing().catch(error => {
+                          console.error(
+                            '[SourcingDetail] handleValidateSourcing failed:',
+                            error
+                          );
+                        });
+                      }}
+                      disabled={!product.supplier_id}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      {product.supplier_id
+                        ? 'Valider et ajouter au catalogue'
+                        : 'Fournisseur requis'}
+                    </ButtonV2>
+                  </CardContent>
+                </Card>
               </div>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* Workflow Info */}
-        <Alert className="border-blue-200 bg-blue-50">
-          <AlertCircle className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800">
-            <strong>Workflow sourcing :</strong> Les produits en sourcing
-            doivent être validés avant d'apparaître dans le catalogue. Si un
-            échantillon est requis, utilisez d'abord l'action "Demander un
-            échantillon" avant la validation finale.
-          </AlertDescription>
-        </Alert>
+              {/* Warning si pas de fournisseur */}
+              {!product.supplier_id && (
+                <Alert className="mt-4 border-red-200 bg-red-50">
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                  <AlertDescription className="text-red-800">
+                    <strong>Fournisseur obligatoire :</strong> Vous devez lier
+                    un fournisseur a ce produit avant de pouvoir le valider vers
+                    le catalogue.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Carnet de sourcing — sections conditionnelles */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Colonne gauche : Communications */}
+          {visibleSections.showCommunications && (
+            <SourcingCommunications
+              communications={notebook.communications}
+              onAdd={notebook.addCommunication}
+              onResolve={notebook.resolveCommunication}
+            />
+          )}
+
+          {/* Colonne droite : URLs + Historique prix */}
+          <div className="space-y-4">
+            {visibleSections.showUrls && (
+              <SourcingUrls
+                urls={notebook.urls}
+                onAdd={notebook.addUrl}
+                onRemove={notebook.removeUrl}
+              />
+            )}
+            {visibleSections.showPriceHistory && (
+              <SourcingPriceHistory
+                priceHistory={notebook.priceHistory}
+                onAdd={notebook.addPriceEntry}
+                currentCostPrice={product.cost_price}
+                targetPrice={product.target_price}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Consultations liees */}
+        {visibleSections.showConsultations && (
+          <SourcingConsultationsSection
+            linkedConsultations={linkedConsultations}
+            consultationsLoading={consultationsLoading}
+            assignedClientId={product.assigned_client_id}
+            productId={productId}
+            onLinkToConsultation={consultationId => {
+              void handleLinkToConsultation(consultationId).catch(error => {
+                console.error(
+                  '[SourcingDetail] Link consultation failed:',
+                  error
+                );
+              });
+            }}
+          />
+        )}
       </div>
 
       {/* Modal de gestion des photos */}

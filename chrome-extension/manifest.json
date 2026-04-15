@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Verone Sourcing Import",
+  "version": "1.0.1",
+  "description": "Importer des produits depuis Alibaba et autres fournisseurs dans Verone Back-Office",
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": [
+    "https://*.alibaba.com/*",
+    "https://*.1688.com/*",
+    "https://*.aliexpress.com/*",
+    "https://verone-backoffice.vercel.app/*",
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-script.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

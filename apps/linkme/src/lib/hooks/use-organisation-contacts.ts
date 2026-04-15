@@ -1,23 +1,25 @@
+'use client';
+
 /**
  * Hook: use-organisation-contacts
  * Gestion des contacts d'une organisation
- * =======================================
- * - Fetch des contacts avec leurs rôles
- * - Mise à jour des contacts (propriétaire, facturation)
- * - Création de nouveaux contacts
+ *
+ * @module use-organisation-contacts
+ * @since 2025-xx-xx
+ * @updated 2026-04-14 - Refactoring: extraction mutations
  */
 
-'use client';
-
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
-import { toast } from 'sonner';
 
-/** Convert empty string to null (for DB constraints that reject "") */
-function emptyToNull(value: string | undefined | null): string | null {
-  if (!value) return null;
-  return value;
-}
+// Re-exports des mutations pour compatibilité imports existants
+export {
+  useUpdateOrganisationContacts,
+  useCreateOrganisationContacts,
+  useUpdateContact,
+  useDeleteContact,
+  useCreateContact,
+} from './use-organisation-contacts-mutations';
 
 // ============================================
 // TYPES
@@ -36,8 +38,7 @@ export interface OrganisationContact {
   isCommercialContact: boolean;
   isTechnicalContact: boolean;
   isDeliveryOnly: boolean;
-  isUser: boolean; // Contact lié à un utilisateur (auto-sync/backfill)
-  // IDs pour filtrage UI (Phase 8.1 - franchises)
+  isUser: boolean;
   organisationId: string | null;
   enseigneId: string | null;
 }
@@ -53,21 +54,51 @@ export interface ContactFormData {
 export interface UpdateContactsInput {
   organisationId: string;
   primaryContact: ContactFormData;
-  billingContact: ContactFormData | null; // null = same as primary
+  billingContact: ContactFormData | null;
+}
+
+export interface UpdateContactInput {
+  contactId: string;
+  organisationId: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  title?: string;
+  department?: string;
+  phone?: string;
+  mobile?: string;
+  secondary_email?: string;
+  direct_line?: string;
+  is_primary_contact: boolean;
+  is_billing_contact: boolean;
+  is_delivery_only?: boolean;
+  notes?: string;
+}
+
+export interface CreateContactInput {
+  organisationId: string;
+  enseigneId?: string | null;
+  first_name: string;
+  last_name: string;
+  email: string;
+  title?: string;
+  department?: string;
+  phone?: string;
+  mobile?: string;
+  secondary_email?: string;
+  direct_line?: string;
+  is_primary_contact: boolean;
+  is_billing_contact: boolean;
+  is_delivery_only?: boolean;
+  notes?: string;
 }
 
 // ============================================
-// HOOKS
+// QUERY HOOK
 // ============================================
 
 /**
  * Hook pour récupérer les contacts d'une organisation
- * Retourne les contacts avec leurs rôles identifiés
- *
- * @param organisationId - ID de l'organisation
- * @param enseigneId - ID de l'enseigne (optionnel) - pour chercher aussi les contacts liés à l'enseigne
- * @param ownershipType - Type de propriété de l'organisation ('propre' | 'succursale' | 'franchise' | null)
- * @param includeEnseigneContacts - true pour inclure contacts enseigne (pour succursales uniquement)
  */
 export function useOrganisationContacts(
   organisationId: string | null,
@@ -88,44 +119,25 @@ export function useOrganisationContacts(
 
       const supabase = createClient();
 
-      // Construire la requête de base
       let query = supabase
         .from('contacts')
         .select(
-          `
-          id,
-          first_name,
-          last_name,
-          email,
-          phone,
-          mobile,
-          title,
-          is_primary_contact,
-          is_billing_contact,
-          is_commercial_contact,
-          is_technical_contact,
-          is_delivery_only,
-          notes,
-          organisation_id,
-          enseigne_id
-        `
+          `id, first_name, last_name, email, phone, mobile, title,
+          is_primary_contact, is_billing_contact, is_commercial_contact,
+          is_technical_contact, is_delivery_only, notes, organisation_id, enseigne_id`
         )
         .eq('is_active', true);
 
-      // Filtrer selon ownership_type et mode d'affichage
       if (
         ownershipType === 'franchise' &&
         includeEnseigneContacts &&
         enseigneId &&
         organisationId
       ) {
-        // FRANCHISE + Bouton cliqué : Contacts restaurant + contacts enseigne
-        // Note: Le filtrage billing/delivery sera fait côté UI (contacts enseigne = responsable commande uniquement)
         query = query.or(
           `organisation_id.eq.${organisationId},enseigne_id.eq.${enseigneId}`
         );
       } else if (ownershipType === 'franchise' && organisationId) {
-        // FRANCHISE (défaut) : Seulement contacts restaurant
         query = query.eq('organisation_id', organisationId);
       } else if (
         ownershipType === 'succursale' &&
@@ -133,7 +145,6 @@ export function useOrganisationContacts(
         enseigneId &&
         organisationId
       ) {
-        // SUCCURSALE + Bouton cliqué : Contacts enseigne uniquement
         query = query.or(
           `enseigne_id.eq.${enseigneId},and(organisation_id.eq.${organisationId},enseigne_id.eq.${enseigneId})`
         );
@@ -142,15 +153,12 @@ export function useOrganisationContacts(
         enseigneId &&
         organisationId
       ) {
-        // SUCCURSALE (défaut) : Contacts restaurant + partagés enseigne/restaurant
         query = query.or(
           `organisation_id.eq.${organisationId},and(organisation_id.eq.${organisationId},enseigne_id.eq.${enseigneId})`
         );
       } else if (organisationId) {
-        // Fallback : seulement contacts organisation
         query = query.eq('organisation_id', organisationId);
       } else if (enseigneId) {
-        // Fallback : contacts enseigne uniquement
         query = query.eq('enseigne_id', enseigneId);
       }
 
@@ -176,39 +184,31 @@ export function useOrganisationContacts(
         isCommercialContact: c.is_commercial_contact ?? false,
         isTechnicalContact: c.is_technical_contact ?? false,
         isDeliveryOnly: c.is_delivery_only ?? false,
-        // Détecter si c'est un utilisateur (créé par auto-sync ou backfill)
         isUser:
           (c.notes?.includes('auto-sync') ?? false) ||
           (c.notes?.includes('backfill') ?? false),
-        // IDs pour filtrage UI (Phase 8.1 - franchises)
         organisationId: c.organisation_id,
         enseigneId: c.enseigne_id,
       }));
 
-      // Identifier les contacts clés
       const primaryContact = contacts.find(c => c.isPrimaryContact) ?? null;
       const billingContact = contacts.find(c => c.isBillingContact) ?? null;
       const otherContacts = contacts.filter(
         c => !c.isPrimaryContact && !c.isBillingContact
       );
 
-      // Vérifier si les contacts sont complets
       const isPrimaryComplete = !!(
         primaryContact?.firstName &&
         primaryContact?.lastName &&
         primaryContact?.email
       );
-
       const isBillingComplete = !!(
         billingContact?.firstName &&
         billingContact?.lastName &&
         billingContact?.email
       );
-
-      // Si pas de billing distinct, le primary fait office de billing
       const hasBilling = !!billingContact || isPrimaryComplete;
 
-      // Grouper contacts par appartenance (utiliser data brut avant mapping)
       const restaurantContacts = (data || []).filter(
         c => c.organisation_id === organisationId
       );
@@ -221,7 +221,7 @@ export function useOrganisationContacts(
 
       return {
         contacts,
-        allContacts: contacts, // Alias pour compatibilité avec sélection contacts existants (LM-ORD-009)
+        allContacts: contacts,
         restaurantContacts,
         enseigneContacts,
         sharedContacts,
@@ -236,389 +236,6 @@ export function useOrganisationContacts(
       };
     },
     enabled: !!organisationId || !!enseigneId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-  });
-}
-
-/**
- * Hook pour mettre à jour ou créer les contacts d'une organisation
- * Gère la création/mise à jour du contact propriétaire et facturation
- */
-export function useUpdateOrganisationContacts() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: UpdateContactsInput) => {
-      const supabase = createClient();
-      const { organisationId, primaryContact, billingContact } = input;
-
-      // 1. Chercher le contact primaire existant
-      const { data: existingContacts } = await supabase
-        .from('contacts')
-        .select('id, is_primary_contact, is_billing_contact')
-        .eq('organisation_id', organisationId)
-        .eq('is_active', true);
-
-      const existingPrimary = existingContacts?.find(c => c.is_primary_contact);
-      const existingBilling = existingContacts?.find(
-        c => c.is_billing_contact && !c.is_primary_contact
-      );
-
-      // 2. Upsert le contact propriétaire
-      if (existingPrimary) {
-        // Mise à jour
-        const { error: updateError } = await supabase
-          .from('contacts')
-          .update({
-            first_name: primaryContact.firstName,
-            last_name: primaryContact.lastName,
-            email: primaryContact.email,
-            phone: primaryContact.phone ?? null,
-            title: primaryContact.title ?? null,
-            is_billing_contact: billingContact === null, // Si pas de billing distinct, primary = billing
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', existingPrimary.id);
-
-        if (updateError) throw updateError;
-      } else {
-        // Création
-        const { error: insertError } = await supabase.from('contacts').insert({
-          organisation_id: organisationId,
-          first_name: primaryContact.firstName,
-          last_name: primaryContact.lastName,
-          email: primaryContact.email,
-          phone: primaryContact.phone ?? null,
-          title: primaryContact.title ?? null,
-          is_primary_contact: true,
-          is_billing_contact: billingContact === null, // Si pas de billing distinct
-          is_active: true,
-        });
-
-        if (insertError) throw insertError;
-      }
-
-      // 3. Gérer le contact facturation si différent du propriétaire
-      if (billingContact !== null) {
-        if (existingBilling) {
-          // Mise à jour du contact facturation existant
-          const { error: updateError } = await supabase
-            .from('contacts')
-            .update({
-              first_name: billingContact.firstName,
-              last_name: billingContact.lastName,
-              email: billingContact.email,
-              phone: billingContact.phone ?? null,
-              title: billingContact.title ?? null,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', existingBilling.id);
-
-          if (updateError) throw updateError;
-        } else {
-          // Création du contact facturation
-          const { error: insertError } = await supabase
-            .from('contacts')
-            .insert({
-              organisation_id: organisationId,
-              first_name: billingContact.firstName,
-              last_name: billingContact.lastName,
-              email: billingContact.email,
-              phone: billingContact.phone ?? null,
-              title: billingContact.title ?? null,
-              is_primary_contact: false,
-              is_billing_contact: true,
-              is_active: true,
-            });
-
-          if (insertError) throw insertError;
-        }
-
-        // Retirer le flag billing du primary s'il l'avait
-        if (existingPrimary) {
-          await supabase
-            .from('contacts')
-            .update({ is_billing_contact: false })
-            .eq('id', existingPrimary.id);
-        }
-      } else {
-        // Billing = Primary, supprimer l'ancien billing s'il existait
-        if (existingBilling) {
-          await supabase
-            .from('contacts')
-            .update({ is_billing_contact: false, is_active: false })
-            .eq('id', existingBilling.id);
-        }
-      }
-
-      return { success: true };
-    },
-    onSuccess: async (_, variables) => {
-      await queryClient.invalidateQueries({
-        queryKey: ['organisation-contacts', variables.organisationId],
-      });
-      toast.success('Contacts mis à jour');
-    },
-    onError: (error: Error) => {
-      console.error('Erreur mise à jour contacts:', error);
-      toast.error('Erreur', {
-        description:
-          error.message || 'Impossible de mettre à jour les contacts',
-      });
-    },
-  });
-}
-
-/**
- * Hook pour créer des contacts lors de la création d'une organisation
- * Utilisé lors de l'approbation d'une commande avec nouveau restaurant
- */
-export function useCreateOrganisationContacts() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: {
-      organisationId: string;
-      primaryContact: ContactFormData;
-      billingContact: ContactFormData | null;
-      enseigneId?: string | null;
-      ownershipType?: 'propre' | 'succursale' | 'franchise' | null;
-    }) => {
-      const supabase = createClient();
-      const {
-        organisationId,
-        primaryContact,
-        billingContact,
-        enseigneId,
-        ownershipType,
-      } = input;
-
-      // Pour succursales, les contacts sont aussi liés à l'enseigne
-      const contactEnseigneId =
-        ownershipType === 'succursale' ? enseigneId : null;
-
-      // Créer le contact propriétaire
-      const { error: primaryError } = await supabase.from('contacts').insert({
-        organisation_id: organisationId,
-        enseigne_id: contactEnseigneId ?? null,
-        first_name: primaryContact.firstName,
-        last_name: primaryContact.lastName,
-        email: primaryContact.email,
-        phone: primaryContact.phone || null,
-        title: primaryContact.title ?? 'Propriétaire',
-        is_primary_contact: true,
-        is_billing_contact: billingContact === null,
-        is_active: true,
-      });
-
-      if (primaryError) throw primaryError;
-
-      // Créer le contact facturation si différent
-      if (billingContact !== null) {
-        const { error: billingError } = await supabase.from('contacts').insert({
-          organisation_id: organisationId,
-          enseigne_id: contactEnseigneId ?? null,
-          first_name: billingContact.firstName,
-          last_name: billingContact.lastName,
-          email: billingContact.email,
-          phone: billingContact.phone || null,
-          title: billingContact.title ?? 'Responsable facturation',
-          is_primary_contact: false,
-          is_billing_contact: true,
-          is_active: true,
-        });
-
-        if (billingError) throw billingError;
-      }
-
-      return { success: true };
-    },
-    onSuccess: async (_, variables) => {
-      await queryClient.invalidateQueries({
-        queryKey: ['organisation-contacts', variables.organisationId],
-      });
-    },
-    onError: (error: Error) => {
-      console.error('Erreur création contacts:', error);
-      throw error;
-    },
-  });
-}
-
-// ============================================
-// HOOKS - Update & Delete contact
-// ============================================
-
-export interface UpdateContactInput {
-  contactId: string;
-  organisationId: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  title?: string;
-  department?: string;
-  phone?: string;
-  mobile?: string;
-  secondary_email?: string;
-  direct_line?: string;
-  is_primary_contact: boolean;
-  is_billing_contact: boolean;
-  is_delivery_only?: boolean;
-  notes?: string;
-}
-
-/**
- * Hook pour mettre à jour un contact existant
- */
-export function useUpdateContact() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: UpdateContactInput) => {
-      const supabase = createClient();
-
-      const { error } = await supabase
-        .from('contacts')
-        .update({
-          first_name: input.first_name,
-          last_name: input.last_name,
-          email: input.email,
-          title: emptyToNull(input.title),
-          department: emptyToNull(input.department),
-          phone: emptyToNull(input.phone),
-          mobile: emptyToNull(input.mobile),
-          secondary_email: emptyToNull(input.secondary_email),
-          direct_line: emptyToNull(input.direct_line),
-          is_primary_contact: input.is_primary_contact,
-          is_billing_contact: input.is_billing_contact,
-          is_delivery_only: input.is_delivery_only ?? false,
-
-          notes: emptyToNull(input.notes),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', input.contactId);
-
-      if (error) throw error;
-      return { success: true };
-    },
-    onSuccess: async (_, variables) => {
-      await queryClient.invalidateQueries({
-        queryKey: ['organisation-contacts', variables.organisationId],
-      });
-      toast.success('Contact mis à jour');
-    },
-    onError: (error: Error) => {
-      console.error('Erreur mise à jour contact:', error);
-      toast.error('Erreur', {
-        description: error.message || 'Impossible de mettre à jour le contact',
-      });
-    },
-  });
-}
-
-/**
- * Hook pour supprimer un contact (soft-delete: is_active = false)
- */
-export function useDeleteContact() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: {
-      contactId: string;
-      organisationId: string;
-    }) => {
-      const supabase = createClient();
-
-      const { error } = await supabase
-        .from('contacts')
-        .update({ is_active: false, updated_at: new Date().toISOString() })
-        .eq('id', input.contactId);
-
-      if (error) throw error;
-      return { success: true };
-    },
-    onSuccess: async (_, variables) => {
-      await queryClient.invalidateQueries({
-        queryKey: ['organisation-contacts', variables.organisationId],
-      });
-      toast.success('Contact supprimé');
-    },
-    onError: (error: Error) => {
-      console.error('Erreur suppression contact:', error);
-      toast.error('Erreur', {
-        description: error.message || 'Impossible de supprimer le contact',
-      });
-    },
-  });
-}
-
-// ============================================
-// TYPES - Création contact complet
-// ============================================
-
-export interface CreateContactInput {
-  organisationId: string;
-  enseigneId?: string | null;
-  first_name: string;
-  last_name: string;
-  email: string;
-  title?: string;
-  department?: string;
-  phone?: string;
-  mobile?: string;
-  secondary_email?: string;
-  direct_line?: string;
-  is_primary_contact: boolean;
-  is_billing_contact: boolean;
-  is_delivery_only?: boolean;
-  notes?: string;
-}
-
-/**
- * Hook pour créer un contact dans une organisation
- * Champs LinkMe : identité, coordonnées, rôles (principal/facturation), notes
- */
-export function useCreateContact() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: CreateContactInput) => {
-      const supabase = createClient();
-
-      const { error } = await supabase.from('contacts').insert({
-        organisation_id: input.organisationId,
-        enseigne_id: emptyToNull(input.enseigneId),
-        first_name: input.first_name,
-        last_name: input.last_name,
-        email: input.email,
-        title: emptyToNull(input.title),
-        department: emptyToNull(input.department),
-        phone: emptyToNull(input.phone),
-        mobile: emptyToNull(input.mobile),
-        secondary_email: emptyToNull(input.secondary_email),
-        direct_line: emptyToNull(input.direct_line),
-        is_primary_contact: input.is_primary_contact,
-        is_billing_contact: input.is_billing_contact,
-        is_delivery_only: input.is_delivery_only ?? false,
-        is_commercial_contact: !(input.is_delivery_only ?? false),
-        notes: emptyToNull(input.notes),
-        is_active: true,
-      });
-
-      if (error) throw error;
-      return { success: true };
-    },
-    onSuccess: async (_, variables) => {
-      await queryClient.invalidateQueries({
-        queryKey: ['organisation-contacts', variables.organisationId],
-      });
-      toast.success('Contact créé avec succès');
-    },
-    onError: (error: Error) => {
-      console.error('Erreur création contact:', error);
-      toast.error('Erreur', {
-        description: error.message || 'Impossible de créer le contact',
-      });
-    },
+    staleTime: 2 * 60 * 1000,
   });
 }

@@ -1,10 +1,3 @@
-/**
- * 🔧 Server Actions - Gestion des Utilisateurs
- *
- * Actions serveur pour la création et gestion des utilisateurs
- * dans l'interface d'administration Vérone.
- */
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -13,27 +6,14 @@ import {
   createServerClient,
   createAdminClient,
 } from '@verone/utils/supabase/server';
-// import { validateProfileForm, sanitizeProfileData } from '@verone/utils/validation/profile-validation'
 
-export interface CreateUserData {
-  email: string;
-  password: string;
-  role: 'owner' | 'admin' | 'catalog_manager' | 'sales' | 'partner_manager';
-  firstName: string;
-  lastName: string;
-  phone: string;
-  jobTitle: string;
-}
+import type {
+  CreateUserData,
+  ActionResult,
+  UpdateUserProfileData,
+} from './user-management-types';
 
-export interface ActionResult {
-  success: boolean;
-  error?: string;
-  data?: {
-    user_id?: string;
-    email?: string;
-    role?: string;
-  };
-}
+export type { CreateUserData, ActionResult, UpdateUserProfileData };
 
 /**
  * Vérifier que l'utilisateur actuel est un owner
@@ -412,177 +392,5 @@ export async function updateUserRole(
   }
 }
 
-/**
- * Réinitialiser le mot de passe d'un utilisateur
- */
-export async function resetUserPassword(
-  userId: string,
-  newPassword: string
-): Promise<ActionResult> {
-  try {
-    // Vérifier les permissions
-    const accessCheck = await verifyOwnerAccess();
-    if (!accessCheck.success) {
-      return accessCheck;
-    }
-
-    const adminClient = createAdminClient();
-
-    // Mettre à jour le mot de passe via l'API Admin
-    const { error } = await adminClient.auth.admin.updateUserById(userId, {
-      password: newPassword,
-    });
-
-    if (error) {
-      console.error('Erreur réinitialisation mot de passe:', error);
-      return {
-        success: false,
-        error: 'Erreur lors de la réinitialisation du mot de passe',
-      };
-    }
-
-    return { success: true };
-  } catch (error) {
-    console.error('Erreur resetUserPassword:', error);
-    return {
-      success: false,
-      error: "Une erreur inattendue s'est produite lors de la réinitialisation",
-    };
-  }
-}
-
-export interface UpdateUserProfileData {
-  first_name?: string;
-  last_name?: string;
-  job_title?: string;
-  role?: string;
-}
-
-/**
- * Mettre à jour le profil complet d'un utilisateur
- */
-export async function updateUserProfile(
-  userId: string,
-  updateData: UpdateUserProfileData
-): Promise<ActionResult> {
-  try {
-    // Vérifier les permissions
-    const accessCheck = await verifyOwnerAccess();
-    if (!accessCheck.success) {
-      return accessCheck;
-    }
-
-    const supabase = await createServerClient();
-    const adminClient = createAdminClient();
-
-    // Vérifier que l'utilisateur existe
-    const { data: existingProfile } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-
-    if (!existingProfile) {
-      return {
-        success: false,
-        error: 'Profil utilisateur non trouvé',
-      };
-    }
-
-    // Préparer les mises à jour
-    const profileUpdates: {
-      updated_at: string;
-      first_name?: string | null;
-      last_name?: string | null;
-      job_title?: string | null;
-    } = {
-      updated_at: new Date().toISOString(),
-    };
-
-    // Update role in user_app_roles instead of user_profiles
-    if (updateData.role) {
-      const { error: roleError } = await supabase
-        .from('user_app_roles')
-        .update({ role: updateData.role })
-        .eq('user_id', userId)
-        .eq('app', 'back-office');
-
-      if (roleError) {
-        return {
-          success: false,
-          error: 'Erreur lors de la mise à jour du rôle',
-        };
-      }
-    }
-
-    // ✅ Support des nouveaux champs (migration 20251030_001)
-    if (updateData.first_name !== undefined) {
-      profileUpdates.first_name = updateData.first_name?.trim() ?? null;
-    }
-
-    if (updateData.last_name !== undefined) {
-      profileUpdates.last_name = updateData.last_name?.trim() ?? null;
-    }
-
-    if (updateData.job_title !== undefined) {
-      profileUpdates.job_title = updateData.job_title?.trim() ?? null;
-    }
-
-    // Mettre à jour le profil
-    if (Object.keys(profileUpdates).length > 1) {
-      // Plus que juste updated_at
-      const { error: updateError } = await supabase
-        .from('user_profiles')
-        .update(profileUpdates)
-        .eq('user_id', userId);
-
-      if (updateError) {
-        console.error('Erreur mise à jour profil:', updateError);
-        return {
-          success: false,
-          error: 'Erreur lors de la mise à jour du profil',
-        };
-      }
-    }
-
-    // Mettre à jour les métadonnées utilisateur
-    if (updateData.first_name ?? updateData.last_name) {
-      const displayName = [updateData.first_name, updateData.last_name]
-        .filter(Boolean)
-        .join(' ')
-        .trim();
-
-      if (displayName) {
-        const { error: metadataError } =
-          await adminClient.auth.admin.updateUserById(userId, {
-            user_metadata: {
-              name: displayName,
-              first_name: updateData.first_name ?? '',
-              last_name: updateData.last_name ?? '',
-              job_title: updateData.job_title ?? '',
-            },
-          });
-
-        if (metadataError) {
-          console.error('Erreur mise à jour métadonnées:', metadataError);
-          // Ne pas faire échouer complètement pour une erreur de métadonnées
-        }
-      }
-    }
-
-    // Revalider la page
-    revalidatePath('/admin/users');
-
-    return { success: true };
-  } catch (error: unknown) {
-    console.error('Erreur updateUserProfile:', error);
-    const errorMessage =
-      error instanceof Error
-        ? error.message
-        : "Une erreur inattendue s'est produite";
-    return {
-      success: false,
-      error: errorMessage,
-    };
-  }
-}
+// resetUserPassword and updateUserProfile are in user-management-update.ts
+export { resetUserPassword, updateUserProfile } from './user-management-update';

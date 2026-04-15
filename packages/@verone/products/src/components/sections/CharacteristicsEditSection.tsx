@@ -1,15 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 'use client';
 
 import { useState } from 'react';
 
-import { Save, X, Package, Plus, Home, Edit } from 'lucide-react';
+import { Edit, Package, Home } from 'lucide-react';
 
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
-import { Input } from '@verone/ui';
-import { Label } from '@verone/ui';
-// import { RoomMultiSelect } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
   useInlineEdit,
@@ -17,6 +14,8 @@ import {
 } from '@verone/common/hooks/use-inline-edit';
 import type { RoomType } from '@verone/types';
 import { getRoomLabel } from '@verone/types';
+
+import { CharacteristicsEditForm } from './CharacteristicsEditForm';
 
 interface Product {
   id: string;
@@ -32,11 +31,8 @@ interface CharacteristicsEditSectionProps {
   className?: string;
 }
 
-// Helper function pour formater les dimensions avec les unités
 const formatDimension = (value: string): string => {
   if (!value) return value;
-
-  // Si la valeur contient déjà une unité, la retourner telle quelle
   if (
     value.includes('cm') ||
     value.includes('mm') ||
@@ -46,13 +42,9 @@ const formatDimension = (value: string): string => {
   ) {
     return value;
   }
-
-  // Pour le poids, on assume des kg si c'est un nombre seul
   if (value.toLowerCase().includes('poids')) {
     return value.includes('kg') ? value : `${value} kg`;
   }
-
-  // Sinon, ajouter 'cm' par défaut pour les dimensions
   return `${value} cm`;
 };
 
@@ -82,7 +74,7 @@ export function CharacteristicsEditSection({
       onUpdate(updatedData);
     },
     onError: error => {
-      console.error('❌ Erreur mise à jour caractéristiques:', error);
+      console.error('Erreur mise à jour caractéristiques:', error);
     },
   });
 
@@ -91,34 +83,22 @@ export function CharacteristicsEditSection({
   const error = getError(section);
 
   const handleStartEdit = () => {
-    const currentCharacteristics = product.variant_attributes ?? {};
-    const currentDimensions = product.dimensions ?? {};
-    const currentRooms = (product.suitable_rooms ?? []) as RoomType[];
     startEdit(section, {
-      variant_attributes: currentCharacteristics,
-      dimensions: currentDimensions,
-      suitable_rooms: currentRooms,
+      variant_attributes: product.variant_attributes ?? {},
+      dimensions: product.dimensions ?? {},
+      suitable_rooms: (product.suitable_rooms ?? []) as RoomType[],
     });
   };
 
   const handleSave = async () => {
-    const success = await saveChanges(section);
-    if (success) {
-      console.warn('✅ Caractéristiques mises à jour avec succès');
-    }
-  };
-
-  const handleCancel = () => {
-    cancelEdit(section);
+    await saveChanges(section);
   };
 
   const addVariantAttribute = () => {
     if (newAttributeKey.trim() && newAttributeValue.trim()) {
       const variants = { ...(editData?.variant_attributes ?? {}) };
       variants[newAttributeKey.trim()] = newAttributeValue.trim();
-      updateEditedData(section, {
-        variant_attributes: variants,
-      });
+      updateEditedData(section, { variant_attributes: variants });
       setNewAttributeKey('');
       setNewAttributeValue('');
     }
@@ -127,18 +107,14 @@ export function CharacteristicsEditSection({
   const removeVariantAttribute = (key: string) => {
     const variants = { ...(editData?.variant_attributes ?? {}) };
     delete variants[key];
-    updateEditedData(section, {
-      variant_attributes: variants,
-    });
+    updateEditedData(section, { variant_attributes: variants });
   };
 
   const addDimension = () => {
     if (newDimensionKey.trim() && newDimensionValue.trim()) {
       const dimensions = { ...(editData?.dimensions ?? {}) };
       dimensions[newDimensionKey.trim()] = newDimensionValue.trim();
-      updateEditedData(section, {
-        dimensions: dimensions,
-      });
+      updateEditedData(section, { dimensions });
       setNewDimensionKey('');
       setNewDimensionValue('');
     }
@@ -147,300 +123,48 @@ export function CharacteristicsEditSection({
   const removeDimension = (key: string) => {
     const dimensions = { ...(editData?.dimensions ?? {}) };
     delete dimensions[key];
-    updateEditedData(section, {
-      dimensions: dimensions,
-    });
-  };
-
-  const handleRoomsChange = (rooms: RoomType[]) => {
-    updateEditedData(section, {
-      suitable_rooms: rooms,
-    });
+    updateEditedData(section, { dimensions });
   };
 
   if (isEditing(section)) {
     return (
       <div className={cn('bg-white border border-black p-4', className)}>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-black flex items-center">
-            <Package className="h-5 w-5 mr-2" />
-            Caractéristiques
-          </h3>
-          <div className="flex space-x-2">
-            <ButtonV2
-              variant="outline"
-              size="sm"
-              onClick={handleCancel}
-              disabled={isSaving(section)}
-            >
-              <X className="h-3 w-3 mr-1" />
-              Annuler
-            </ButtonV2>
-            <ButtonV2
-              variant="secondary"
-              size="sm"
-              onClick={handleSave}
-              disabled={!hasChanges(section) || isSaving(section)}
-            >
-              <Save className="h-3 w-3 mr-1" />
-              {isSaving(section) ? 'Sauvegarde...' : 'Sauvegarder'}
-            </ButtonV2>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          {/* Liste des attributs existants */}
-          {Object.keys(editData?.variant_attributes ?? {}).length > 0 && (
-            <div className="space-y-2">
-              <Label>Attributs définis :</Label>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(editData?.variant_attributes ?? {}).map(
-                  ([key, value]) => (
-                    <Badge
-                      key={key}
-                      variant="secondary"
-                      className="flex items-center gap-1"
-                    >
-                      <span className="font-medium">{key}:</span>
-                      <span>{value as string}</span>
-                      <ButtonV2
-                        variant="ghost"
-                        size="sm"
-                        className="h-auto p-0 ml-1"
-                        onClick={() => removeVariantAttribute(key)}
-                      >
-                        <X className="h-3 w-3" />
-                      </ButtonV2>
-                    </Badge>
-                  )
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Ajouter un nouvel attribut */}
-          <div className="space-y-2">
-            <Label>Ajouter un attribut :</Label>
-            <div className="flex gap-2">
-              <Input
-                value={newAttributeKey}
-                onChange={e => setNewAttributeKey(e.target.value)}
-                placeholder="Nom de l'attribut (ex: Couleur)"
-                className="flex-1 border-gray-300 focus:border-black focus:ring-black"
-              />
-              <Input
-                value={newAttributeValue}
-                onChange={e => setNewAttributeValue(e.target.value)}
-                placeholder="Valeur (ex: Rouge)"
-                className="flex-1 border-gray-300 focus:border-black focus:ring-black"
-                onKeyPress={e => e.key === 'Enter' && addVariantAttribute()}
-              />
-              <ButtonV2
-                type="button"
-                variant="outline"
-                onClick={addVariantAttribute}
-                disabled={!newAttributeKey.trim() || !newAttributeValue.trim()}
-              >
-                <Plus className="h-4 w-4" />
-              </ButtonV2>
-            </div>
-          </div>
-
-          {/* Suggestions d'attributs courants */}
-          <div className="space-y-2">
-            <Label className="text-sm text-gray-600">
-              Attributs suggérés :
-            </Label>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { key: 'Couleur', placeholder: 'Blanc, Noir, Rouge...' },
-                { key: 'Matériau', placeholder: 'Bois, Métal, Tissu...' },
-                { key: 'Finition', placeholder: 'Mat, Brillant, Satiné...' },
-                { key: 'Style', placeholder: 'Moderne, Classique, Vintage...' },
-                { key: 'Taille', placeholder: 'S, M, L, XL...' },
-              ].map(({ key, placeholder }) => (
-                <ButtonV2
-                  key={key}
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => {
-                    setNewAttributeKey(key);
-                    setNewAttributeValue('');
-                  }}
-                >
-                  + {key}
-                </ButtonV2>
-              ))}
-            </div>
-          </div>
-
-          {/* Separator */}
-          <div className="border-t border-gray-200 my-6" />
-
-          {/* Section Dimensions */}
-          <div className="space-y-4">
-            <h4 className="text-base font-medium text-black flex items-center">
-              <Package className="h-4 w-4 mr-2" />
-              Dimensions
-            </h4>
-
-            {/* Liste des dimensions existantes */}
-            {Object.keys(editData?.dimensions ?? {}).length > 0 && (
-              <div className="space-y-2">
-                <Label>Dimensions définies :</Label>
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(editData?.dimensions ?? {}).map(
-                    ([key, value]) => (
-                      <Badge
-                        key={key}
-                        variant="secondary"
-                        className="flex items-center gap-1"
-                      >
-                        <span className="font-medium">{key}:</span>
-                        <span>{value as string}</span>
-                        <ButtonV2
-                          variant="ghost"
-                          size="sm"
-                          className="h-auto p-0 ml-1"
-                          onClick={() => removeDimension(key)}
-                        >
-                          <X className="h-3 w-3" />
-                        </ButtonV2>
-                      </Badge>
-                    )
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Ajouter une nouvelle dimension */}
-            <div className="space-y-2">
-              <Label>Ajouter une dimension :</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={newDimensionKey}
-                  onChange={e => setNewDimensionKey(e.target.value)}
-                  placeholder="Type (ex: Longueur)"
-                  className="flex-1 border-gray-300 focus:border-black focus:ring-black"
-                />
-                <div className="flex-1 relative">
-                  <Input
-                    value={newDimensionValue}
-                    onChange={e => setNewDimensionValue(e.target.value)}
-                    placeholder={
-                      newDimensionKey.toLowerCase().includes('poids')
-                        ? '2.5'
-                        : '120'
-                    }
-                    className="border-gray-300 focus:border-black focus:ring-black pr-12"
-                    onKeyPress={e => e.key === 'Enter' && addDimension()}
-                  />
-                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
-                    {newDimensionKey.toLowerCase().includes('poids')
-                      ? 'kg'
-                      : 'cm'}
-                  </span>
-                </div>
-                <ButtonV2
-                  type="button"
-                  variant="outline"
-                  onClick={addDimension}
-                  disabled={
-                    !newDimensionKey.trim() || !newDimensionValue.trim()
-                  }
-                >
-                  <Plus className="h-4 w-4" />
-                </ButtonV2>
-              </div>
-              <div className="text-xs text-gray-500">
-                Les unités (cm, kg) sont ajoutées automatiquement à l'affichage
-              </div>
-            </div>
-
-            {/* Suggestions de dimensions courantes */}
-            <div className="space-y-2">
-              <Label className="text-sm text-gray-600">
-                Dimensions suggérées :
-              </Label>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  'Longueur',
-                  'Largeur',
-                  'Hauteur',
-                  'Profondeur',
-                  'Diamètre',
-                  'Épaisseur',
-                  'Poids',
-                ].map(dimension => (
-                  <ButtonV2
-                    key={dimension}
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => {
-                      setNewDimensionKey(dimension);
-                      setNewDimensionValue('');
-                    }}
-                  >
-                    + {dimension}
-                  </ButtonV2>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Separator */}
-          <div className="border-t border-gray-200 my-6" />
-
-          {/* Section Pièces d'utilisation */}
-          <div className="space-y-4">
-            <h4 className="text-base font-medium text-black flex items-center">
-              <Home className="h-4 w-4 mr-2" />
-              Pièces d'utilisation
-            </h4>
-
-            <div className="space-y-2">
-              <Label>
-                Sélectionner les pièces où ce produit peut être utilisé :
-              </Label>
-              {/* <RoomMultiSelect
-                value={editData?.suitable_rooms ?? []}
-                onChange={handleRoomsChange}
-                placeholder="Choisir les pièces..."
-                className="w-full"
-              /> */}
-              <div className="text-xs text-gray-500">
-                Cette information aide les clients à trouver le produit selon
-                leur besoin par pièce.
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Message d'erreur */}
-        {error && (
-          <div className="mt-4 text-sm text-red-600 bg-red-50 p-2 rounded">
-            ❌ {error}
-          </div>
-        )}
+        <CharacteristicsEditForm
+          editData={editData}
+          newAttributeKey={newAttributeKey}
+          newAttributeValue={newAttributeValue}
+          newDimensionKey={newDimensionKey}
+          newDimensionValue={newDimensionValue}
+          isSaving={isSaving(section)}
+          hasChanges={hasChanges(section)}
+          error={error}
+          onNewAttributeKeyChange={setNewAttributeKey}
+          onNewAttributeValueChange={setNewAttributeValue}
+          onNewDimensionKeyChange={setNewDimensionKey}
+          onNewDimensionValueChange={setNewDimensionValue}
+          onAddAttribute={addVariantAttribute}
+          onRemoveAttribute={removeVariantAttribute}
+          onAddDimension={addDimension}
+          onRemoveDimension={removeDimension}
+          onSave={() => {
+            void handleSave().catch(() => undefined);
+          }}
+          onCancel={() => cancelEdit(section)}
+        />
       </div>
     );
   }
 
-  // Mode affichage
   const characteristics = product.variant_attributes ?? {};
   const dimensions = product.dimensions ?? {};
   const rooms = (product.suitable_rooms ?? []) as RoomType[];
-
   const hasCharacteristics = Object.values(characteristics).some(
-    value => value && value.toString().trim() !== ''
+    v => v && v.toString().trim() !== ''
   );
   const hasDimensions = Object.values(dimensions).some(
-    value => value && value.toString().trim() !== ''
+    v => v && v.toString().trim() !== ''
   );
   const hasRooms = rooms.length > 0;
-
   const hasAnyData = hasCharacteristics || hasDimensions || hasRooms;
 
   return (
@@ -458,7 +182,6 @@ export function CharacteristicsEditSection({
 
       {hasAnyData ? (
         <div className="space-y-6">
-          {/* Section Caractéristiques */}
           {hasCharacteristics && (
             <div className="space-y-3">
               <h4 className="text-base font-medium text-black flex items-center">
@@ -486,7 +209,6 @@ export function CharacteristicsEditSection({
             </div>
           )}
 
-          {/* Section Dimensions */}
           {hasDimensions && (
             <div className="space-y-3">
               <h4 className="text-base font-medium text-black flex items-center">
@@ -514,7 +236,6 @@ export function CharacteristicsEditSection({
             </div>
           )}
 
-          {/* Section Pièces d'utilisation */}
           {hasRooms && (
             <div className="space-y-3">
               <h4 className="text-base font-medium text-black flex items-center">

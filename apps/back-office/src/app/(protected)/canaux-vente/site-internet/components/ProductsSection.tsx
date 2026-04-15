@@ -1,65 +1,26 @@
-/**
- * Composant: ProductsSection
- * Gestion complète produits site internet (add/edit/delete + variantes)
- */
-
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
 
-import Link from 'next/link';
-
 import { useToast } from '@verone/common/hooks';
 import { useDebounce } from '@verone/hooks';
-import { ProductThumbnail } from '@verone/products';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@verone/ui';
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import { ConfirmDialog } from '@verone/ui';
-import { ErrorStateCard } from '@verone/ui';
-import { Input } from '@verone/ui';
-import {
+  ErrorStateCard,
+  Input,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  ButtonV2,
 } from '@verone/ui';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@verone/ui';
-import { Switch } from '@verone/ui';
-import {
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  Eye,
-  FileText,
-  Package,
-  AlertCircle,
-  CheckCircle,
-  Loader2,
-} from 'lucide-react';
+import { Plus, Search, Loader2 } from 'lucide-react';
 
-import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
-
-import { AddVariantGroupModal } from './AddVariantGroupModal';
-import { EditSiteInternetProductModal } from './EditSiteInternetProductModal';
-import { ProductPreviewModal } from './ProductPreviewModal';
-
-// Hooks
 import {
   useSiteInternetProducts,
   useToggleProductPublication,
@@ -68,10 +29,9 @@ import {
   useAddVariantGroupToSiteInternet,
 } from '../hooks/use-site-internet-products';
 import type { SiteInternetProduct } from '../types';
+import { ProductsTable } from './ProductsTable';
+import { ProductsModals } from './ProductsModals';
 
-/**
- * Section Produits Principale
- */
 export function ProductsSection() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
@@ -90,7 +50,6 @@ export function ProductsSection() {
   const [addProductsOpen, setAddProductsOpen] = useState(false);
   const [addVariantGroupOpen, setAddVariantGroupOpen] = useState(false);
 
-  // Hooks
   const {
     data: products = [],
     isLoading,
@@ -103,25 +62,21 @@ export function ProductsSection() {
   const addProducts = useAddProductsToSiteInternet();
   const addVariantGroup = useAddVariantGroupToSiteInternet();
 
-  // Filtrage produits (memoized avec debounce)
   const filteredProducts = useMemo(
     () =>
       products.filter(product => {
         const matchesSearch =
           product.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
           product.sku.toLowerCase().includes(debouncedSearch.toLowerCase());
-
         const matchesStatus =
           statusFilter === 'all' ||
           (statusFilter === 'published' && product.is_published) ||
           (statusFilter === 'draft' && !product.is_published);
-
         return matchesSearch && matchesStatus;
       }),
     [products, debouncedSearch, statusFilter]
   );
 
-  // Handlers (memoized)
   const handleTogglePublish = useCallback(
     async (productId: string, isPublished: boolean) => {
       try {
@@ -130,10 +85,10 @@ export function ProductsSection() {
           isPublished: !isPublished,
         });
         toast({
-          title: isPublished ? 'Produit dépublié' : 'Produit publié',
-          description: `Le produit a été ${isPublished ? 'retiré du' : 'ajouté au'} site internet.`,
+          title: isPublished ? 'Produit depublie' : 'Produit publie',
+          description: `Le produit a ete ${isPublished ? 'retire du' : 'ajoute au'} site internet.`,
         });
-      } catch (_error) {
+      } catch {
         toast({
           title: 'Erreur',
           description: 'Impossible de modifier le statut du produit.',
@@ -144,24 +99,19 @@ export function ProductsSection() {
     [togglePublication, toast]
   );
 
-  const handleRemove = useCallback(
-    (productId: string) => {
-      setProductToRemove(productId);
-      setConfirmDialogOpen(true);
-    },
-    [setProductToRemove, setConfirmDialogOpen]
-  );
-
+  const handleRemove = useCallback((productId: string) => {
+    setProductToRemove(productId);
+    setConfirmDialogOpen(true);
+  }, []);
   const confirmRemove = useCallback(async () => {
     if (!productToRemove) return;
-
     try {
       await removeProduct.mutateAsync(productToRemove);
       toast({
-        title: 'Produit retiré',
-        description: 'Le produit a été retiré du site internet.',
+        title: 'Produit retire',
+        description: 'Le produit a ete retire du site internet.',
       });
-    } catch (_error) {
+    } catch {
       toast({
         title: 'Erreur',
         description: 'Impossible de retirer le produit.',
@@ -170,7 +120,7 @@ export function ProductsSection() {
     }
   }, [productToRemove, removeProduct, toast]);
 
-  if (isLoading) {
+  if (isLoading)
     return (
       <Card>
         <CardContent className="pt-6">
@@ -180,30 +130,26 @@ export function ProductsSection() {
         </CardContent>
       </Card>
     );
-  }
-
-  if (isError) {
+  if (isError)
     return (
       <ErrorStateCard
         title="Erreur de chargement"
         message={
           error instanceof Error
             ? error.message
-            : 'Impossible de charger les produits. Veuillez réessayer.'
+            : 'Impossible de charger les produits.'
         }
         variant="destructive"
         onRetry={() => {
-          void refetch().catch(error => {
-            console.error('[ProductsSection] refetch failed:', error);
+          void refetch().catch(err => {
+            console.error('[ProductsSection] refetch failed:', err);
           });
         }}
       />
     );
-  }
 
   return (
     <div className="space-y-6">
-      {/* Header Actions */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -211,7 +157,7 @@ export function ProductsSection() {
               <CardTitle>Produits Site Internet</CardTitle>
               <CardDescription>
                 {filteredProducts.length} produits (
-                {products.filter(p => p.is_published).length} publiés)
+                {products.filter(p => p.is_published).length} publies)
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -229,7 +175,6 @@ export function ProductsSection() {
           </div>
         </CardHeader>
         <CardContent>
-          {/* Filtres */}
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -251,7 +196,7 @@ export function ProductsSection() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous les produits</SelectItem>
-                <SelectItem value="published">Publiés</SelectItem>
+                <SelectItem value="published">Publies</SelectItem>
                 <SelectItem value="draft">Brouillons</SelectItem>
               </SelectContent>
             </Select>
@@ -259,232 +204,64 @@ export function ProductsSection() {
         </CardContent>
       </Card>
 
-      {/* Table Produits */}
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[80px]">Image</TableHead>
-                <TableHead>Produit</TableHead>
-                <TableHead>SKU</TableHead>
-                <TableHead>Variantes</TableHead>
-                <TableHead>Prix</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Éligibilité</TableHead>
-                <TableHead>Publié</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredProducts.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="h-24 text-center">
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                      <Package className="h-8 w-8 opacity-50" />
-                      <p>Aucun produit trouvé</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredProducts.map(product => (
-                  <TableRow key={product.product_id}>
-                    {/* Image */}
-                    <TableCell>
-                      <ProductThumbnail
-                        src={product.primary_image_url}
-                        alt={product.name}
-                        size="sm"
-                      />
-                    </TableCell>
-
-                    {/* Nom */}
-                    <TableCell className="font-medium">
-                      {product.name}
-                    </TableCell>
-
-                    {/* SKU */}
-                    <TableCell className="text-sm text-muted-foreground">
-                      {product.sku}
-                    </TableCell>
-
-                    {/* Variantes */}
-                    <TableCell>
-                      {product.has_variants ? (
-                        <Badge variant="outline">
-                          {product.variants_count} variantes
-                        </Badge>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-
-                    {/* Prix */}
-                    <TableCell>
-                      <div className="text-sm">
-                        <div className="font-medium">
-                          {product.price_ttc.toFixed(2)} € TTC
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {product.price_source === 'channel_pricing'
-                            ? 'Prix canal'
-                            : 'Prix base'}
-                        </div>
-                      </div>
-                    </TableCell>
-
-                    {/* Statut */}
-                    <TableCell>
-                      <Badge
-                        variant={
-                          product.status === 'active' ? 'default' : 'secondary'
-                        }
-                      >
-                        {product.status}
-                      </Badge>
-                    </TableCell>
-
-                    {/* Éligibilité */}
-                    <TableCell>
-                      {product.is_eligible ? (
-                        <div className="flex items-center gap-2 text-green-600">
-                          <CheckCircle className="h-4 w-4" />
-                          <span className="text-sm">Éligible</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 text-orange-600">
-                          <AlertCircle className="h-4 w-4" />
-                          <span className="text-sm">Non éligible</span>
-                        </div>
-                      )}
-                    </TableCell>
-
-                    {/* Toggle Publication */}
-                    <TableCell>
-                      <Switch
-                        checked={product.is_published}
-                        onCheckedChange={() => {
-                          void handleTogglePublish(
-                            product.product_id,
-                            product.is_published
-                          ).catch(error => {
-                            console.error(
-                              '[ProductsSection] handleTogglePublish failed:',
-                              error
-                            );
-                          });
-                        }}
-                        disabled={togglePublication.isPending}
-                      />
-                    </TableCell>
-
-                    {/* Actions */}
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          href={`/canaux-vente/site-internet/produits/${product.product_id}`}
-                        >
-                          <ButtonV2
-                            variant="ghost"
-                            size="sm"
-                            title="Voir détails"
-                          >
-                            <FileText className="h-4 w-4" />
-                          </ButtonV2>
-                        </Link>
-                        <ButtonV2
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedProduct(product);
-                            setEditModalOpen(true);
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </ButtonV2>
-                        <ButtonV2
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setPreviewProduct(product);
-                            setPreviewModalOpen(true);
-                          }}
-                          title="Prévisualiser le produit"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </ButtonV2>
-                        <ButtonV2
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemove(product.product_id)}
-                          disabled={removeProduct.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </ButtonV2>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          <ProductsTable
+            products={filteredProducts}
+            isPendingToggle={togglePublication.isPending}
+            isPendingRemove={removeProduct.isPending}
+            onTogglePublish={(id, isPublished) => {
+              void handleTogglePublish(id, isPublished).catch(err => {
+                console.error(
+                  '[ProductsSection] handleTogglePublish failed:',
+                  err
+                );
+              });
+            }}
+            onEdit={product => {
+              setSelectedProduct(product);
+              setEditModalOpen(true);
+            }}
+            onPreview={product => {
+              setPreviewProduct(product);
+              setPreviewModalOpen(true);
+            }}
+            onRemove={handleRemove}
+          />
         </CardContent>
       </Card>
 
-      {/* Confirm Dialog */}
-      <ConfirmDialog
-        open={confirmDialogOpen}
-        onOpenChange={setConfirmDialogOpen}
-        title="Retirer ce produit ?"
-        description="Êtes-vous sûr de vouloir retirer ce produit du site internet ? Cette action ne supprimera pas le produit de votre catalogue, elle le retirera seulement du site."
-        variant="destructive"
-        confirmText="Retirer"
-        cancelText="Annuler"
-        onConfirm={confirmRemove}
-      />
-
-      {/* Modal édition produit */}
-      {selectedProduct && (
-        <EditSiteInternetProductModal
-          isOpen={editModalOpen}
-          onClose={() => {
-            setEditModalOpen(false);
-            setSelectedProduct(null);
-          }}
-          product={selectedProduct}
-          onSuccess={() => {
-            void refetch().catch(error => {
-              console.error(
-                '[ProductsSection] refetch (onSuccess) failed:',
-                error
-              );
-            });
-            toast({
-              title: 'Produit mis à jour',
-              description: 'Les modifications ont été enregistrées avec succès',
-            });
-          }}
-        />
-      )}
-
-      {/* Modal prévisualisation produit */}
-      <ProductPreviewModal
-        product={previewProduct}
-        isOpen={previewModalOpen}
-        onClose={() => {
+      <ProductsModals
+        confirmDialogOpen={confirmDialogOpen}
+        setConfirmDialogOpen={setConfirmDialogOpen}
+        confirmRemove={confirmRemove}
+        selectedProduct={selectedProduct}
+        editModalOpen={editModalOpen}
+        onCloseEditModal={() => {
+          setEditModalOpen(false);
+          setSelectedProduct(null);
+        }}
+        onEditSuccess={() => {
+          void refetch().catch(err => {
+            console.error('[ProductsSection] refetch failed:', err);
+          });
+          toast({
+            title: 'Produit mis a jour',
+            description: 'Les modifications ont ete enregistrees avec succes',
+          });
+        }}
+        previewProduct={previewProduct}
+        previewModalOpen={previewModalOpen}
+        onClosePreviewModal={() => {
           setPreviewModalOpen(false);
           setPreviewProduct(null);
         }}
-      />
-
-      {/* Modal ajout groupe variantes */}
-      <AddVariantGroupModal
-        open={addVariantGroupOpen}
-        onClose={() => setAddVariantGroupOpen(false)}
-        onConfirm={async (variantGroupId, customPriceHt) => {
+        addVariantGroupOpen={addVariantGroupOpen}
+        onCloseVariantGroup={() => setAddVariantGroupOpen(false)}
+        onConfirmVariantGroup={async (variantGroupId, customPriceHt) => {
           const count = await addVariantGroup.mutateAsync({
             variantGroupId,
-            customPriceHt,
+            customPriceHt: customPriceHt,
           });
           toast({
             title: 'Groupe ajoute',
@@ -492,25 +269,17 @@ export function ProductsSection() {
           });
         }}
         existingProductIds={products.map(p => p.product_id)}
-      />
-
-      {/* Modal ajout produits au canal */}
-      <UniversalProductSelectorV2
-        open={addProductsOpen}
-        onClose={() => setAddProductsOpen(false)}
-        onSelect={async selected => {
+        addProductsOpen={addProductsOpen}
+        onCloseAddProducts={() => setAddProductsOpen(false)}
+        onSelectProducts={async selected => {
           await addProducts.mutateAsync(selected.map(p => p.id));
           setAddProductsOpen(false);
           toast({
-            title: 'Produits ajoutés',
-            description: `${String(selected.length)} produit(s) ajouté(s) au site internet`,
+            title: 'Produits ajoutes',
+            description: `${String(selected.length)} produit(s) ajoute(s) au site internet`,
           });
         }}
-        mode="multi"
-        title="Ajouter des produits au site internet"
-        description="Sélectionnez les produits du catalogue à publier sur le site"
         excludeProductIds={products.map(p => p.product_id)}
-        showImages
       />
     </div>
   );

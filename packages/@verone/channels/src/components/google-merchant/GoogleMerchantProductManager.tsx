@@ -36,92 +36,15 @@ import {
 import { cn } from '@verone/utils';
 import { ProductThumbnail } from '@verone/products/components/images/ProductThumbnail';
 
-/**
- * Produit éligible pour Google Merchant
- */
-export interface EligibleProduct {
-  id: string;
-  sku: string;
-  name: string;
-  primary_image_url?: string | null;
-  cost_price?: number;
-  family_name?: string | null;
-  category_name?: string | null;
-  stock_status: 'in_stock' | 'out_of_stock' | 'coming_soon';
-  product_status: 'draft' | 'active' | 'preorder' | 'discontinued';
-}
-
-/**
- * Métadonnées produit (structure conservée pour compatibilité)
- */
-interface CustomMetadata {
-  custom_price_ht?: number;
-}
-
-/**
- * Props pour GoogleMerchantProductManager
- */
-export interface GoogleMerchantProductManagerProps {
-  /** Produits éligibles (eligible_for_sale = true) */
-  products: EligibleProduct[];
-  /** Callback pour ajouter produits sélectionnés */
-  onAddProducts: (
-    productIds: string[],
-    customData: Record<string, CustomMetadata>,
-    onProgress?: (progress: { synced: number; total: number }) => void
-  ) => Promise<{
-    success: boolean;
-    synced: number;
-    failed: number;
-    error?: string;
-  }>;
-  /** État de chargement initial */
-  isLoading?: boolean;
-}
-
-/**
- * Composant: GoogleMerchantProductManager
- *
- * Gestionnaire principal pour ajouter des produits à Google Merchant.
- * Features:
- * - Liste produits éligibles (grille responsive)
- * - Filtres sidebar (famille, catégorie, statut, recherche)
- * - Pour chaque produit:
- *   - ProductThumbnail + badge éligibilité
- *   - Nom + SKU
- *   - Prix HT base (label gris)
- *   - Input prix custom HT (optionnel, inline)
- *   - Input titre custom (optionnel, max 150 chars)
- *   - Textarea description custom (optionnel, collapse)
- *   - Preview TTC calculé dynamique (HT × 1.20)
- *   - Checkbox sélection
- * - Footer sticky:
- *   - Compteur sélection
- *   - Total TTC estimé
- *   - Bouton "Ajouter X produits"
- * - Modal confirmation:
- *   - Résumé tableau
- *   - Preview métadonnées custom
- *   - Bouton confirmer
- * - Progress modal:
- *   - Progress bar 0-100%
- *   - Statut temps réel
- *   - Success feedback
- *
- * Design System V2:
- * - Grille 3 cols desktop, 1 mobile
- * - Spacing 16px
- * - Cards hover effect
- * - Badges colorés selon statut
- * - Inputs inline discrets
- *
- * @example
- * <GoogleMerchantProductManager
- *   products={eligibleProducts}
- *   onAddProducts={handleAddProducts}
- *   isLoading={productsLoading}
- * />
- */
+export type {
+  EligibleProduct,
+  GoogleMerchantProductManagerProps,
+} from './google-merchant-types';
+import type {
+  EligibleProduct,
+  CustomMetadata,
+  GoogleMerchantProductManagerProps,
+} from './google-merchant-types';
 export function GoogleMerchantProductManager({
   products,
   onAddProducts,

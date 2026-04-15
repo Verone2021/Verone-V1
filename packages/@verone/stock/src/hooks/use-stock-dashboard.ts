@@ -12,83 +12,20 @@ import { useStockUI } from '.';
 // @since 2025-10-31
 // =============================================
 
-interface StockOverview {
-  total_value: number; // Valeur totale stock (quantity × cost_price)
-  products_in_stock: number; // Produits avec stock > 0
-  products_out_of_stock: number; // Produits en rupture (stock ≤ 0)
-  products_below_min: number; // Produits sous seuil minimum
-  total_products: number; // Total produits non archivés
-  total_quantity: number; // Quantité totale toutes références
-  total_forecasted_in: number; // Total entrées prévisionnelles (commandes fournisseurs)
-  total_forecasted_out: number; // Total sorties prévisionnelles (commandes clients)
-  total_available: number; // Stock disponible (réel - prévisionnel sortant)
-  // ✅ NOUVEAUX KPIS Phase 3.7 - Inspirés ERP (ClicData, EazyStock)
-  po_total_ht: number; // Valeur HT commandes fournisseurs en cours
-  so_total_ht: number; // Valeur HT commandes clients en cours
-  po_count: number; // Nombre de PO en cours
-  so_count: number; // Nombre de SO en cours
-}
-
-interface MovementsSummary {
-  last_7_days: {
-    entries: { count: number; quantity: number };
-    exits: { count: number; quantity: number };
-    adjustments: { count: number; quantity: number };
-  };
-  today: {
-    entries: number;
-    exits: number;
-    adjustments: number;
-  };
-  total_movements: number;
-}
-
-interface LowStockProduct {
-  id: string;
-  name: string;
-  sku: string;
-  stock_quantity: number;
-  min_stock: number;
-  cost_price: number;
-  stock_forecasted_out: number;
-  product_image_url?: string | null; // ✅ NOUVEAU - URL image principale produit
-}
-
-interface RecentMovement {
-  id: string;
-  product_id: string;
-  product_name: string;
-  product_sku: string;
-  movement_type: 'IN' | 'OUT' | 'ADJUST' | 'TRANSFER';
-  quantity_change: number;
-  quantity_before: number;
-  quantity_after: number;
-  reason_code: string;
-  notes: string | null;
-  performed_at: string;
-  performer_name: string | null;
-  channel_id: string | null;
-}
-
-interface ForecastedOrder {
-  id: string;
-  order_number: string;
-  order_type: 'purchase' | 'sales';
-  client_name?: string;
-  supplier_name?: string;
-  total_quantity: number;
-  expected_date: string;
-  status: string;
-}
-
-export interface StockDashboardMetrics {
-  overview: StockOverview;
-  movements: MovementsSummary;
-  low_stock_products: LowStockProduct[];
-  recent_movements: RecentMovement[];
-  incoming_orders: ForecastedOrder[]; // TOP 5 commandes fournisseurs
-  outgoing_orders: ForecastedOrder[]; // TOP 5 commandes clients
-}
+export type {
+  StockOverview,
+  MovementsSummary,
+  ForecastedOrder,
+  StockDashboardMetrics,
+} from './stock-dashboard-types';
+import type {
+  StockOverview,
+  MovementsSummary,
+  LowStockProduct,
+  RecentMovement,
+  ForecastedOrder,
+  StockDashboardMetrics,
+} from './stock-dashboard-types';
 
 export function useStockDashboard() {
   const [metrics, setMetrics] = useState<StockDashboardMetrics | null>(null);

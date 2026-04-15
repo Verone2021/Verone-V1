@@ -1,13 +1,8 @@
 /**
- * 🔖 SubcategoryForm - Formulaire pour sous-catégories
- *
- * Formulaire séparé pour la gestion des sous-catégories (niveau 2)
- * CORRECTION: Utilise la table subcategories avec category_id
+ * SubcategoryForm - Formulaire pour sous-categories
  */
 
 'use client';
-
-import Image from 'next/image';
 
 import { useState, useEffect } from 'react';
 
@@ -29,48 +24,17 @@ import {
   SelectValue,
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
-import { Upload, X, Save, Loader2 } from 'lucide-react';
+import { Save, Loader2 } from 'lucide-react';
 
 import { useToast } from '@verone/common';
 import { createClient } from '@verone/utils/supabase/client';
 
-interface CategoryWithFamily {
-  id: string;
-  name: string;
-  family_name: string;
-}
-
-interface Subcategory {
-  id: string;
-  category_id: string; // ID de la catégorie parent
-  name: string;
-  slug: string;
-  description?: string;
-  image_url?: string;
-  display_order: number;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
-}
-
-interface SubcategoryFormData {
-  parent_id: string; // ID de la catégorie parent (mappé depuis category_id)
-  family_id: string; // Récupéré automatiquement depuis la catégorie parent
-  name: string;
-  description: string;
-  image_url?: string;
-  display_order: number;
-  is_active: boolean;
-}
-
-interface SubcategoryFormProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (subcategory: Subcategory) => void;
-  initialData?: Subcategory | null;
-  mode: 'create' | 'edit';
-  categories: CategoryWithFamily[]; // Liste des catégories pour sélection parent
-}
+import { SubcategoryImageUpload } from './subcategory-image-upload';
+import type {
+  SubcategoryFormProps,
+  SubcategoryFormData,
+  Subcategory,
+} from './subcategory-form-types';
 
 export function SubcategoryForm({
   isOpen,
@@ -84,10 +48,9 @@ export function SubcategoryForm({
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  // État du formulaire - CORRECTION: utiliser category_id au lieu de parent_id
   const [formData, setFormData] = useState<SubcategoryFormData>({
-    parent_id: initialData?.category_id ?? '', // Support mapping category_id -> parent_id
-    family_id: '', // Sera récupéré depuis la catégorie
+    parent_id: initialData?.category_id ?? '',
+    family_id: '',
     name: initialData?.name ?? '',
     description: initialData?.description ?? '',
     image_url: initialData?.image_url ?? '',
@@ -95,12 +58,11 @@ export function SubcategoryForm({
     is_active: initialData?.is_active ?? true,
   });
 
-  // Reset form when modal opens/closes or initialData changes
   useEffect(() => {
     if (isOpen) {
       setFormData({
         parent_id: initialData?.category_id ?? '',
-        family_id: '', // Sera récupéré automatiquement
+        family_id: '',
         name: initialData?.name ?? '',
         description: initialData?.description ?? '',
         image_url: initialData?.image_url ?? '',
@@ -110,11 +72,8 @@ export function SubcategoryForm({
     }
   }, [isOpen, initialData]);
 
-  // Mise à jour automatique du family_id quand on change de catégorie parent
   const handleCategoryChange = async (categoryId: string) => {
     setFormData(prev => ({ ...prev, parent_id: categoryId }));
-
-    // Récupérer le family_id de la catégorie sélectionnée
     try {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -124,19 +83,14 @@ export function SubcategoryForm({
         .single();
 
       if (error) throw error;
-
-      setFormData(prev => ({
-        ...prev,
-        family_id: data.family_id ?? '',
-      }));
+      setFormData(prev => ({ ...prev, family_id: data.family_id ?? '' }));
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : JSON.stringify(error);
-      console.error('Erreur récupération family_id catégorie:', message);
+      console.error('Erreur recuperation family_id categorie:', message);
     }
   };
 
-  // Génération du slug automatique
   const generateSlug = (name: string): string => {
     return name
       .toLowerCase()
@@ -148,58 +102,13 @@ export function SubcategoryForm({
       .replace(/^-+|-+$/g, '');
   };
 
-  // Upload d'image vers Supabase Storage
-  const handleImageUpload = async (file: File) => {
-    setUploadingImage(true);
-    try {
-      const supabase = createClient();
-      const fileExt = file.name.split('.').pop();
-      const fileName = `subcategory-${Date.now()}.${fileExt}`;
-      const filePath = `subcategory-images/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('family-images')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('family-images').getPublicUrl(filePath);
-
-      setFormData(prev => ({ ...prev, image_url: publicUrl }));
-
-      toast({
-        title: '✅ Image téléchargée',
-        description: "L'image a été uploadée avec succès",
-      });
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : JSON.stringify(error);
-      console.error('Erreur upload image sous-catégorie:', message);
-      toast({
-        title: '❌ Erreur upload',
-        description: "Impossible de télécharger l'image",
-        variant: 'destructive',
-      });
-    } finally {
-      setUploadingImage(false);
-    }
-  };
-
-  // Suppression d'image
-  const handleRemoveImage = () => {
-    setFormData(prev => ({ ...prev, image_url: '' }));
-  };
-
-  // Soumission du formulaire - CORRECTION: utiliser table subcategories
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.name.trim()) {
       toast({
-        title: '❌ Nom requis',
-        description: 'Le nom de la sous-catégorie est obligatoire',
+        title: 'Nom requis',
+        description: 'Le nom de la sous-categorie est obligatoire',
         variant: 'destructive',
       });
       return;
@@ -207,8 +116,8 @@ export function SubcategoryForm({
 
     if (!formData.parent_id) {
       toast({
-        title: '❌ Catégorie requise',
-        description: 'Vous devez sélectionner une catégorie parent',
+        title: 'Categorie requise',
+        description: 'Vous devez selectionner une categorie parent',
         variant: 'destructive',
       });
       return;
@@ -219,24 +128,22 @@ export function SubcategoryForm({
     try {
       const supabase = createClient();
       const slug = generateSlug(formData.name);
-
       let result;
 
       if (mode === 'create') {
-        // CORRECTION: Utiliser la table subcategories avec category_id
-        const subcategoryData = {
-          category_id: formData.parent_id,
-          name: formData.name,
-          slug,
-          description: formData.description,
-          image_url: formData.image_url,
-          display_order: formData.display_order,
-          is_active: formData.is_active,
-        };
-
         const { data, error } = await supabase
           .from('subcategories')
-          .insert([subcategoryData])
+          .insert([
+            {
+              category_id: formData.parent_id,
+              name: formData.name,
+              slug,
+              description: formData.description,
+              image_url: formData.image_url,
+              display_order: formData.display_order,
+              is_active: formData.is_active,
+            },
+          ])
           .select()
           .single();
 
@@ -244,24 +151,21 @@ export function SubcategoryForm({
         result = data;
 
         toast({
-          title: '✅ Sous-catégorie créée',
-          description: `La sous-catégorie "${formData.name}" a été créée`,
+          title: 'Sous-categorie creee',
+          description: `La sous-categorie "${formData.name}" a ete creee`,
         });
       } else {
-        // CORRECTION: Mettre à jour dans la table subcategories
-        const updateData = {
-          name: formData.name,
-          description: formData.description,
-          image_url: formData.image_url,
-          display_order: formData.display_order,
-          is_active: formData.is_active,
-          slug,
-          updated_at: new Date().toISOString(),
-        };
-
         const { data, error } = await supabase
           .from('subcategories')
-          .update(updateData)
+          .update({
+            name: formData.name,
+            description: formData.description,
+            image_url: formData.image_url,
+            display_order: formData.display_order,
+            is_active: formData.is_active,
+            slug,
+            updated_at: new Date().toISOString(),
+          })
           .eq('id', initialData!.id)
           .select()
           .single();
@@ -270,19 +174,14 @@ export function SubcategoryForm({
         result = data;
 
         toast({
-          title: '✅ Sous-catégorie modifiée',
-          description: `La sous-catégorie "${formData.name}" a été mise à jour`,
+          title: 'Sous-categorie modifiee',
+          description: `La sous-categorie "${formData.name}" a ete mise a jour`,
         });
       }
 
       onSubmit(result as Subcategory);
       onClose();
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : JSON.stringify(error);
-      console.error('Erreur soumission formulaire sous-catégorie:', message);
-
-      // Gestion spécifique des erreurs de contrainte unique
       let errorMessage = 'Une erreur est survenue';
       if (
         error &&
@@ -291,13 +190,13 @@ export function SubcategoryForm({
         error.code === '23505'
       ) {
         errorMessage =
-          'Une sous-catégorie avec ce nom existe déjà dans cette catégorie. Veuillez choisir un nom différent.';
+          'Une sous-categorie avec ce nom existe deja dans cette categorie.';
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
 
       toast({
-        title: '❌ Erreur',
+        title: 'Erreur',
         description: errorMessage,
         variant: 'destructive',
       });
@@ -308,8 +207,8 @@ export function SubcategoryForm({
 
   const title =
     mode === 'create'
-      ? 'Nouvelle sous-catégorie'
-      : 'Modifier la sous-catégorie';
+      ? 'Nouvelle sous-categorie'
+      : 'Modifier la sous-categorie';
   const selectedCategory = categories.find(c => c.id === formData.parent_id);
 
   return (
@@ -319,8 +218,8 @@ export function SubcategoryForm({
           <DialogTitle className="text-black">{title}</DialogTitle>
           <DialogDescription>
             {mode === 'create'
-              ? 'Créer une nouvelle sous-catégorie dans une catégorie existante'
-              : 'Modifier les informations de cette sous-catégorie'}
+              ? 'Creer une nouvelle sous-categorie dans une categorie existante'
+              : 'Modifier les informations de cette sous-categorie'}
           </DialogDescription>
         </DialogHeader>
 
@@ -332,9 +231,9 @@ export function SubcategoryForm({
           }}
           className="space-y-6"
         >
-          {/* Catégorie parent */}
+          {/* Categorie parent */}
           <div className="space-y-2">
-            <Label className="text-black">Catégorie parent*</Label>
+            <Label className="text-black">Categorie parent*</Label>
             {(mode === 'edit' ||
               (mode === 'create' && initialData?.category_id)) &&
             selectedCategory ? (
@@ -346,8 +245,7 @@ export function SubcategoryForm({
                   Famille: {selectedCategory.family_name}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  La catégorie parent ne peut pas être modifiée pour préserver
-                  la cohérence de l'arborescence.
+                  La categorie parent ne peut pas etre modifiee.
                 </p>
               </div>
             ) : (
@@ -364,7 +262,7 @@ export function SubcategoryForm({
                 required
               >
                 <SelectTrigger className="border-gray-300 focus:border-black">
-                  <SelectValue placeholder="Sélectionnez une catégorie..." />
+                  <SelectValue placeholder="Selectionnez une categorie..." />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map(category => (
@@ -385,7 +283,7 @@ export function SubcategoryForm({
           {/* Nom */}
           <div className="space-y-2">
             <Label htmlFor="name" className="text-black">
-              Nom de la sous-catégorie*
+              Nom de la sous-categorie*
             </Label>
             <Input
               id="name"
@@ -402,7 +300,7 @@ export function SubcategoryForm({
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description" className="text-black">
-              Description de la sous-catégorie
+              Description de la sous-categorie
             </Label>
             <Textarea
               id="description"
@@ -410,76 +308,24 @@ export function SubcategoryForm({
               onChange={e =>
                 setFormData(prev => ({ ...prev, description: e.target.value }))
               }
-              placeholder="Description de cette sous-catégorie"
+              placeholder="Description de cette sous-categorie"
               className="border-gray-300 focus:border-black resize-none"
               rows={3}
             />
           </div>
 
           {/* Image */}
-          <div className="space-y-2">
-            <Label className="text-black">Image de la sous-catégorie</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-              {formData.image_url ? (
-                <div className="relative">
-                  <Image
-                    src={formData.image_url}
-                    alt="Preview"
-                    className="w-full h-32 object-cover rounded-lg"
-                    width={400}
-                    height={128}
-                  />
-                  <ButtonV2
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={handleRemoveImage}
-                  >
-                    <X className="h-4 w-4" />
-                  </ButtonV2>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                  <div className="mt-4">
-                    <Label htmlFor="imageUpload" className="cursor-pointer">
-                      <span className="mt-2 block text-sm font-medium text-gray-900">
-                        Cliquez ou glissez une image
-                      </span>
-                      <span className="mt-1 block text-xs text-gray-500">
-                        JPG, PNG, WebP (max 5MB)
-                      </span>
-                    </Label>
-                    <input
-                      id="imageUpload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={e => {
-                        const file = e.target.files?.[0];
-                        if (file && file.size <= 5 * 1024 * 1024) {
-                          void handleImageUpload(file).catch(error => {
-                            console.error(
-                              '[SubcategoryForm] handleImageUpload failed:',
-                              error
-                            );
-                          });
-                        } else {
-                          toast({
-                            title: '❌ Fichier trop volumineux',
-                            description: "L'image doit faire moins de 5MB",
-                            variant: 'destructive',
-                          });
-                        }
-                      }}
-                      disabled={uploadingImage}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          <SubcategoryImageUpload
+            imageUrl={formData.image_url}
+            uploadingImage={uploadingImage}
+            setUploadingImage={setUploadingImage}
+            onImageChange={url =>
+              setFormData(prev => ({ ...prev, image_url: url }))
+            }
+            onImageRemove={() =>
+              setFormData(prev => ({ ...prev, image_url: '' }))
+            }
+          />
 
           {/* Ordre d'affichage */}
           <div className="space-y-2">
@@ -543,7 +389,7 @@ export function SubcategoryForm({
               ) : (
                 <Save className="h-4 w-4 mr-2" />
               )}
-              {mode === 'create' ? 'Créer' : 'Modifier'}
+              {mode === 'create' ? 'Creer' : 'Modifier'}
             </ButtonV2>
           </div>
         </form>
