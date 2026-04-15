@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
-import { History, RefreshCw, Filter, Badge as BadgeIcon } from 'lucide-react';
+import { History, RefreshCw, Badge as BadgeIcon } from 'lucide-react';
 
 import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
 import {
   Dialog,
   DialogContent,
