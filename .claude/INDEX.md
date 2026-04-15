@@ -40,18 +40,17 @@ Tout agent ou commande doit commencer par consulter cet index.
 
 | Agent                  | App           | Fichier                                  | Quand l'utiliser                                                               |
 | ---------------------- | ------------- | ---------------------------------------- | ------------------------------------------------------------------------------ |
-| `linkme-expert`        | LinkMe        | `.claude/agents/linkme-expert.md`        | Commandes affilies, commissions, selections, formulaires, organisations, roles |
-| `back-office-expert`   | Back-Office   | `.claude/agents/back-office-expert.md`   | Produits, stock, commandes, factures, finance Qonto, expeditions               |
-| `site-internet-expert` | Site-Internet | `.claude/agents/site-internet-expert.md` | E-commerce, catalogue, checkout, panier, SEO                                   |
 
 ### Agents transversaux
 
 | Agent                | Role               | Fichier                                | Quand l'utiliser                             |
 | -------------------- | ------------------ | -------------------------------------- | -------------------------------------------- |
-| `code-reviewer`      | QA avant PR        | `.claude/agents/code-reviewer.md`      | Audit qualite TypeScript, async, RLS         |
-| `database-architect` | Expert DB Supabase | `.claude/agents/database-architect.md` | Tables, migrations, triggers, RLS            |
-| `frontend-architect` | Expert UI/UX       | `.claude/agents/frontend-architect.md` | Next.js 15, composants, patterns generiques  |
-| `perf-optimizer`     | Performance        | `.claude/agents/perf-optimizer.md`     | Dead code, overfetch, bundle, DB bottlenecks |
+| `.claude/agents/dev-agent.md` | Dev Agent |
+| `.claude/agents/market-agent.md` | Market Agent |
+| `.claude/agents/ops-agent.md` | Ops Agent |
+| `.claude/agents/reviewer-agent.md` | Reviewer Agent |
+| `.claude/agents/verify-agent.md` | Verify Agent |
+| `.claude/agents/writer-agent.md` | Writer Agent |
 
 ---
 
