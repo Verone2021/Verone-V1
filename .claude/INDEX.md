@@ -87,6 +87,11 @@ Tout agent ou commande doit commencer par consulter cet index.
 | `.claude/rules/dev/stock-triggers-protected.md` | Triggers stock IMMUABLES — JAMAIS modifier                     |
 | `.claude/rules/database/post-migration.md`      | Mise a jour doc DB apres chaque migration                      |
 | `.claude/rules/dev/playwright-large-pages.md`   | Mode screenshot only (vision) — ZERO snapshot                  |
+| `.claude/rules/code-standards.md` | Code Standards |
+| `.claude/rules/database.md` | Database |
+| `.claude/rules/playwright.md` | Playwright |
+| `.claude/rules/stock-triggers-protected.md` | Stock Triggers Protected |
+| `.claude/rules/workflow.md` | Workflow |
 
 ---
 
