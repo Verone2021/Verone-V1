@@ -19,17 +19,12 @@ Tout agent ou commande doit commencer par consulter cet index.
 | Commande        | Description                                                                 | Fichier                                                   |
 | --------------- | --------------------------------------------------------------------------- | --------------------------------------------------------- |
 | `/search`       | Exploration exhaustive codebase + DB + RLS (remplace /explore et /research) | `.claude/commands/search.md`                              |
-| `/implement`    | Feature implementation (search → plan → code → verify)                      | `.claude/commands/implement.md`                           |
-| `/plan`         | Transformer observations en checklist dans ACTIVE.md                        | `.claude/commands/plan.md`                                |
-| `/db`           | Operations Supabase rapides                                                 | `.claude/commands/db.md`                                  |
 | `/pr`           | Push + PR (**sur ordre Romeo uniquement**)                                  | `.claude/commands/pr.md`                                  |
 | `/review`       | Audit code complet avec rapport                                             | `.claude/commands/review.md`                              |
 |                 | — Reference: performance rules                                              | `.claude/commands/review-references/performance-rules.md` |
 |                 | — Reference: security rules                                                 | `.claude/commands/review-references/security-rules.md`    |
 |                 | — Reference: size thresholds                                                | `.claude/commands/review-references/size-thresholds.md`   |
 |                 | — Reference: typescript rules                                               | `.claude/commands/review-references/typescript-rules.md`  |
-| `/fix-warnings` | ESLint auto-fix                                                             | `.claude/commands/fix-warnings.md`                        |
-| `/teach`        | Mode pedagogique (expliquer avant implementer)                              | `.claude/commands/teach.md`                               |
 | `/status`       | Resume rapide (branche, taches, fichiers non commites)                      | `.claude/commands/status.md`                              |
 
 ---
