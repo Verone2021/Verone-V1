@@ -1434,6 +1434,7 @@ export type Database = {
           source_channel: string | null;
           status: string | null;
           tarif_maximum: number | null;
+          tva_rate: number | null;
           updated_at: string | null;
           validated_at: string | null;
           validated_by: string | null;
@@ -1461,6 +1462,7 @@ export type Database = {
           source_channel?: string | null;
           status?: string | null;
           tarif_maximum?: number | null;
+          tva_rate?: number | null;
           updated_at?: string | null;
           validated_at?: string | null;
           validated_by?: string | null;
@@ -1488,6 +1490,7 @@ export type Database = {
           source_channel?: string | null;
           status?: string | null;
           tarif_maximum?: number | null;
+          tva_rate?: number | null;
           updated_at?: string | null;
           validated_at?: string | null;
           validated_by?: string | null;
@@ -7222,13 +7225,6 @@ export type Database = {
           fees_vat_rate: number | null;
           id: string;
           insurance_cost_ht: number | null;
-          manual_payment_by: string | null;
-          manual_payment_date: string | null;
-          manual_payment_note: string | null;
-          manual_payment_reference: string | null;
-          manual_payment_type:
-            | Database['public']['Enums']['manual_payment_type']
-            | null;
           notes: string | null;
           order_date: string | null;
           paid_amount: number | null;
@@ -7267,13 +7263,6 @@ export type Database = {
           fees_vat_rate?: number | null;
           id?: string;
           insurance_cost_ht?: number | null;
-          manual_payment_by?: string | null;
-          manual_payment_date?: string | null;
-          manual_payment_note?: string | null;
-          manual_payment_reference?: string | null;
-          manual_payment_type?:
-            | Database['public']['Enums']['manual_payment_type']
-            | null;
           notes?: string | null;
           order_date?: string | null;
           paid_amount?: number | null;
@@ -7312,13 +7301,6 @@ export type Database = {
           fees_vat_rate?: number | null;
           id?: string;
           insurance_cost_ht?: number | null;
-          manual_payment_by?: string | null;
-          manual_payment_date?: string | null;
-          manual_payment_note?: string | null;
-          manual_payment_reference?: string | null;
-          manual_payment_type?:
-            | Database['public']['Enums']['manual_payment_type']
-            | null;
           notes?: string | null;
           order_date?: string | null;
           paid_amount?: number | null;
@@ -7348,13 +7330,6 @@ export type Database = {
           {
             foreignKeyName: 'purchase_orders_created_by_fkey';
             columns: ['created_by'];
-            isOneToOne: false;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
-          },
-          {
-            foreignKeyName: 'purchase_orders_manual_payment_by_fkey';
-            columns: ['manual_payment_by'];
             isOneToOne: false;
             referencedRelation: 'v_linkme_users';
             referencedColumns: ['user_id'];
@@ -8074,13 +8049,6 @@ export type Database = {
           is_shopping_center_delivery: boolean;
           linkme_display_number: string | null;
           linkme_selection_id: string | null;
-          manual_payment_by: string | null;
-          manual_payment_date: string | null;
-          manual_payment_note: string | null;
-          manual_payment_reference: string | null;
-          manual_payment_type:
-            | Database['public']['Enums']['manual_payment_type']
-            | null;
           notes: string | null;
           order_date: string | null;
           order_number: string;
@@ -8153,13 +8121,6 @@ export type Database = {
           is_shopping_center_delivery?: boolean;
           linkme_display_number?: string | null;
           linkme_selection_id?: string | null;
-          manual_payment_by?: string | null;
-          manual_payment_date?: string | null;
-          manual_payment_note?: string | null;
-          manual_payment_reference?: string | null;
-          manual_payment_type?:
-            | Database['public']['Enums']['manual_payment_type']
-            | null;
           notes?: string | null;
           order_date?: string | null;
           order_number: string;
@@ -8232,13 +8193,6 @@ export type Database = {
           is_shopping_center_delivery?: boolean;
           linkme_display_number?: string | null;
           linkme_selection_id?: string | null;
-          manual_payment_by?: string | null;
-          manual_payment_date?: string | null;
-          manual_payment_note?: string | null;
-          manual_payment_reference?: string | null;
-          manual_payment_type?:
-            | Database['public']['Enums']['manual_payment_type']
-            | null;
           notes?: string | null;
           order_date?: string | null;
           order_number?: string;
@@ -8383,13 +8337,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'linkme_selections';
             referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'sales_orders_manual_payment_by_fkey';
-            columns: ['manual_payment_by'];
-            isOneToOne: false;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
           },
           {
             foreignKeyName: 'sales_orders_responsable_contact_id_fkey';
@@ -10734,13 +10681,6 @@ export type Database = {
           invoiced_at: string | null;
           is_shopping_center_delivery: boolean | null;
           linkme_selection_id: string | null;
-          manual_payment_by: string | null;
-          manual_payment_date: string | null;
-          manual_payment_note: string | null;
-          manual_payment_reference: string | null;
-          manual_payment_type:
-            | Database['public']['Enums']['manual_payment_type']
-            | null;
           notes: string | null;
           order_date: string | null;
           order_number: string | null;
@@ -10860,13 +10800,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'linkme_selections';
             referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'sales_orders_manual_payment_by_fkey';
-            columns: ['manual_payment_by'];
-            isOneToOne: false;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
           },
           {
             foreignKeyName: 'sales_orders_responsable_contact_id_fkey';
@@ -12688,13 +12621,6 @@ export type Database = {
           fees_vat_rate: number | null;
           id: string;
           insurance_cost_ht: number | null;
-          manual_payment_by: string | null;
-          manual_payment_date: string | null;
-          manual_payment_note: string | null;
-          manual_payment_reference: string | null;
-          manual_payment_type:
-            | Database['public']['Enums']['manual_payment_type']
-            | null;
           notes: string | null;
           order_date: string | null;
           paid_amount: number | null;

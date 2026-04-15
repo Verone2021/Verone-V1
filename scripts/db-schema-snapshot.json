@@ -687,46 +687,6 @@
       },
       {
         "table_name": "affiliate_pending_orders",
-        "column_name": "manual_payment_type",
-        "data_type": "USER-DEFINED",
-        "udt_name": "manual_payment_type",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "affiliate_pending_orders",
-        "column_name": "manual_payment_date",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "affiliate_pending_orders",
-        "column_name": "manual_payment_reference",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "affiliate_pending_orders",
-        "column_name": "manual_payment_note",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "affiliate_pending_orders",
-        "column_name": "manual_payment_by",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "affiliate_pending_orders",
         "column_name": "fees_vat_rate",
         "data_type": "numeric",
         "udt_name": "numeric",
@@ -13283,46 +13243,6 @@
       },
       {
         "table_name": "purchase_orders",
-        "column_name": "manual_payment_type",
-        "data_type": "USER-DEFINED",
-        "udt_name": "manual_payment_type",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "purchase_orders",
-        "column_name": "manual_payment_date",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "purchase_orders",
-        "column_name": "manual_payment_reference",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "purchase_orders",
-        "column_name": "manual_payment_note",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "purchase_orders",
-        "column_name": "manual_payment_by",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "purchase_orders",
         "column_name": "fees_vat_rate",
         "data_type": "numeric",
         "udt_name": "numeric",
@@ -14716,46 +14636,6 @@
         "udt_name": "varchar",
         "is_nullable": "YES",
         "column_default": "'pending'::character varying"
-      },
-      {
-        "table_name": "sales_orders",
-        "column_name": "manual_payment_type",
-        "data_type": "USER-DEFINED",
-        "udt_name": "manual_payment_type",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "sales_orders",
-        "column_name": "manual_payment_date",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "sales_orders",
-        "column_name": "manual_payment_reference",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "sales_orders",
-        "column_name": "manual_payment_note",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "sales_orders",
-        "column_name": "manual_payment_by",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "YES",
-        "column_default": null
       },
       {
         "table_name": "sales_orders",
@@ -17954,6 +17834,192 @@
         "udt_name": "text",
         "is_nullable": "YES",
         "column_default": "'back-office'::text"
+      }
+    ],
+    "v_all_payments": [
+      {
+        "table_name": "v_all_payments",
+        "column_name": "payment_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "payment_source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "order_type",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "order_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "order_number",
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "order_total_ttc",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "order_payment_status",
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "partner_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "partner_name",
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "payment_date",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "payment_type",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "reference",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "bank_transaction_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "bank_transaction_label",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "bank_settled_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "bank_counterparty_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "document_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "document_number",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "document_type",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_all_payments",
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
       }
     ],
     "v_expenses_with_details": [
@@ -24015,12 +24081,6 @@
       "action_timing": "AFTER"
     },
     {
-      "trigger_name": "trg_purchase_order_manual_payment",
-      "event_manipulation": "UPDATE",
-      "event_object_table": "purchase_orders",
-      "action_timing": "BEFORE"
-    },
-    {
       "trigger_name": "trg_recalculate_po_payment_on_total_change",
       "event_manipulation": "UPDATE",
       "event_object_table": "purchase_orders",
@@ -24037,12 +24097,6 @@
       "event_manipulation": "UPDATE",
       "event_object_table": "purchase_orders",
       "action_timing": "AFTER"
-    },
-    {
-      "trigger_name": "trg_update_purchase_order_manual_payment",
-      "event_manipulation": "UPDATE",
-      "event_object_table": "purchase_orders",
-      "action_timing": "BEFORE"
     },
     {
       "trigger_name": "trig_po_charges_recalc",
@@ -25507,12 +25561,6 @@
       "event_manipulation": "UPDATE",
       "event_object_table": "sales_orders",
       "action_timing": "AFTER"
-    },
-    {
-      "trigger_name": "trg_update_sales_order_manual_payment",
-      "event_manipulation": "UPDATE",
-      "event_object_table": "sales_orders",
-      "action_timing": "BEFORE"
     },
     {
       "trigger_name": "trig_so_charges_recalc",
