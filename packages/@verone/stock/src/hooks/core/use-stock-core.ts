@@ -38,6 +38,7 @@ export type {
   UseStockCoreReturn,
 } from './stock-core-types';
 import type {
+  MovementType,
   StockMovement,
   StockItem,
   CreateMovementParams,
