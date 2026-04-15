@@ -387,4 +387,4 @@ export async function updateUserRole(
 }
 
 // resetUserPassword and updateUserProfile are in user-management-update.ts
-export { resetUserPassword, updateUserProfile } from './user-management-update';
+// Import directly from './user-management-update' (re-export forbidden in "use server" files)
