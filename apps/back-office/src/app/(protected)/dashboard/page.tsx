@@ -86,8 +86,8 @@ export default function DashboardPage() {
       .then((bal: { totalBalance?: number }) => {
         setQontoBalance(bal.totalBalance ?? null);
       })
-      .catch(() => {
-        // Silencieux
+      .catch((error: unknown) => {
+        console.error('[Dashboard] Qonto balance fetch failed:', error);
       });
   }, []);
 

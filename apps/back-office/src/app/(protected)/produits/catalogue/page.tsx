@@ -269,7 +269,7 @@ export default function CataloguePage() {
                   page: ctx.incompletePage,
                 })
                 .then(result => {
-                  ctx.setIncompleteProducts(result.products as Product[]);
+                  ctx.setIncompleteProducts(result.products);
                   ctx.setIncompleteTotal(result.total);
                 })
                 .catch(err => {

@@ -17,7 +17,6 @@ export type {
   StockMovementStats,
 } from './stock-movements-types';
 import type {
-  MovementType,
   StockReasonCode,
   StockMovement,
   CreateStockMovementData,

@@ -417,7 +417,7 @@ export function SelectionCatalogDialog({
                     ) : (
                       <button
                         key={item}
-                        onClick={() => setCurrentPage(item as number)}
+                        onClick={() => setCurrentPage(item)}
                         className={`flex h-7 min-w-[28px] items-center justify-center rounded-md text-xs font-medium transition-colors ${currentPage === item ? 'bg-linkme-turquoise text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
                       >
                         {item}

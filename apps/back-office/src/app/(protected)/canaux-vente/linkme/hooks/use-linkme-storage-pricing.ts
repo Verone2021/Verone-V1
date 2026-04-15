@@ -89,15 +89,13 @@ export function useCreatePricingTier() {
       label: string;
     }): Promise<void> => {
       const supabase = createClient();
-      const { error } = await supabase
-        .from('storage_pricing_tiers')
-        .insert({
-          min_volume_m3,
-          max_volume_m3,
-          price_per_m3,
-          label,
-          is_active: true,
-        });
+      const { error } = await supabase.from('storage_pricing_tiers').insert({
+        min_volume_m3,
+        max_volume_m3,
+        price_per_m3,
+        label,
+        is_active: true,
+      });
       if (error) {
         console.warn('Error creating pricing tier:', error.message);
         throw error;

@@ -425,9 +425,7 @@ export async function POST(request: NextRequest) {
               storage_path: storagePath,
               display_order: i,
               is_primary: i === 0,
-              image_type: (i === 0 ? 'primary' : 'gallery') as
-                | 'primary'
-                | 'gallery',
+              image_type: i === 0 ? 'primary' : 'gallery',
               alt_text: `${input.name} - Photo ${i + 1}`,
               format: ext,
             });

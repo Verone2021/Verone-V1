@@ -1,13 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { Users, Package, Link, CheckCircle } from 'lucide-react';
 import { Card, CardContent } from '@verone/ui';
 
+interface ConsultationLike {
+  status: string;
+}
+
 interface ConsultationOverviewStatsProps {
-  consultations: any[];
-  eligibleProducts: any[];
-  consultationProducts: any[];
+  consultations: ConsultationLike[];
+  eligibleProducts: unknown[];
+  consultationProducts: unknown[];
 }
 
 export function ConsultationOverviewStats({
@@ -18,7 +21,7 @@ export function ConsultationOverviewStats({
   const conversionRate =
     consultations.length > 0
       ? Math.round(
-          (consultations.filter((c: any) => c.status === 'terminee').length /
+          (consultations.filter(c => c.status === 'terminee').length /
             consultations.length) *
             100
         )
@@ -32,34 +35,29 @@ export function ConsultationOverviewStats({
             <div>
               <p className="text-sm text-gray-600">Consultations actives</p>
               <p className="text-2xl font-bold">
-                {
-                  consultations.filter((c: any) => c.status === 'en_cours')
-                    .length
-                }
+                {consultations.filter(c => c.status === 'en_cours').length}
               </p>
             </div>
             <Users className="h-8 w-8 text-blue-600" />
           </div>
         </CardContent>
       </Card>
-
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Produits sourcing</p>
+              <p className="text-sm text-gray-600">Produits eligibles</p>
               <p className="text-2xl font-bold">{eligibleProducts.length}</p>
             </div>
             <Package className="h-8 w-8 text-green-600" />
           </div>
         </CardContent>
       </Card>
-
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Associations actives</p>
+              <p className="text-sm text-gray-600">Produits associes</p>
               <p className="text-2xl font-bold">
                 {consultationProducts.length}
               </p>
@@ -68,15 +66,14 @@ export function ConsultationOverviewStats({
           </div>
         </CardContent>
       </Card>
-
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Taux de conversion</p>
+              <p className="text-sm text-gray-600">Taux conversion</p>
               <p className="text-2xl font-bold">{conversionRate}%</p>
             </div>
-            <CheckCircle className="h-8 w-8 text-black" />
+            <CheckCircle className="h-8 w-8 text-amber-600" />
           </div>
         </CardContent>
       </Card>

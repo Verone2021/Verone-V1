@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 'use client';
 
 import { useState } from 'react';
@@ -20,8 +19,8 @@ import { CharacteristicsEditForm } from './CharacteristicsEditForm';
 interface Product {
   id: string;
   name: string;
-  variant_attributes?: Record<string, any>;
-  dimensions?: Record<string, any>;
+  variant_attributes?: Record<string, unknown>;
+  dimensions?: Record<string, unknown>;
   suitable_rooms?: string[];
 }
 
@@ -159,10 +158,10 @@ export function CharacteristicsEditSection({
   const dimensions = product.dimensions ?? {};
   const rooms = (product.suitable_rooms ?? []) as RoomType[];
   const hasCharacteristics = Object.values(characteristics).some(
-    v => v && v.toString().trim() !== ''
+    v => v && String(v).trim() !== ''
   );
   const hasDimensions = Object.values(dimensions).some(
-    v => v && v.toString().trim() !== ''
+    v => v && String(v).trim() !== ''
   );
   const hasRooms = rooms.length > 0;
   const hasAnyData = hasCharacteristics || hasDimensions || hasRooms;
@@ -189,21 +188,17 @@ export function CharacteristicsEditSection({
                 Caractéristiques
               </h4>
               <div className="space-y-3">
-                {Object.entries(characteristics).map(
-                  ([key, value]) =>
-                    value && (
-                      <div
-                        key={key}
-                        className="flex justify-between items-start"
-                      >
-                        <div className="text-sm font-medium text-gray-600 min-w-[120px]">
-                          {key}:
-                        </div>
-                        <div className="text-gray-900 text-sm text-right flex-1">
-                          {value as string}
-                        </div>
+                {Object.entries(characteristics).map(([key, value]) =>
+                  value ? (
+                    <div key={key} className="flex justify-between items-start">
+                      <div className="text-sm font-medium text-gray-600 min-w-[120px]">
+                        {key}:
                       </div>
-                    )
+                      <div className="text-gray-900 text-sm text-right flex-1">
+                        {String(value)}
+                      </div>
+                    </div>
+                  ) : null
                 )}
               </div>
             </div>
@@ -216,21 +211,17 @@ export function CharacteristicsEditSection({
                 Dimensions
               </h4>
               <div className="space-y-3">
-                {Object.entries(dimensions).map(
-                  ([key, value]) =>
-                    value && (
-                      <div
-                        key={key}
-                        className="flex justify-between items-start"
-                      >
-                        <div className="text-sm font-medium text-gray-600 min-w-[120px]">
-                          {key}:
-                        </div>
-                        <div className="text-gray-900 text-sm text-right flex-1">
-                          {formatDimension(value as string)}
-                        </div>
+                {Object.entries(dimensions).map(([key, value]) =>
+                  value ? (
+                    <div key={key} className="flex justify-between items-start">
+                      <div className="text-sm font-medium text-gray-600 min-w-[120px]">
+                        {key}:
                       </div>
-                    )
+                      <div className="text-gray-900 text-sm text-right flex-1">
+                        {formatDimension(String(value))}
+                      </div>
+                    </div>
+                  ) : null
                 )}
               </div>
             </div>

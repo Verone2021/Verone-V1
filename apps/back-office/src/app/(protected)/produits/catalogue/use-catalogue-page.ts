@@ -283,7 +283,7 @@ export function useCataloguePage() {
           ...(filtersRef.current as unknown as Filters),
           page: tabs.incompletePage,
         });
-        tabs.setIncompleteProducts(result.products as Product[]);
+        tabs.setIncompleteProducts(result.products);
         tabs.setIncompleteTotal(result.total);
       } catch (err) {
         console.error('[Catalogue] Refresh incompletes failed:', err);
@@ -309,7 +309,7 @@ export function useCataloguePage() {
           const result = await loadArchivedProductsRef.current(
             filtersRef.current
           );
-          tabs.setArchivedProducts(result.products as Product[]);
+          tabs.setArchivedProducts(result.products);
         }
       } else {
         await archiveProduct(product.id);
@@ -323,7 +323,7 @@ export function useCataloguePage() {
           const result = await loadArchivedProductsRef.current(
             filtersRef.current
           );
-          tabs.setArchivedProducts(result.products as Product[]);
+          tabs.setArchivedProducts(result.products);
         }
         toast.success('Produit archivé', {
           description: `${product.name ?? 'Ce produit'} a été archivé.`,
