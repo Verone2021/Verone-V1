@@ -1,6 +1,6 @@
 # Domaine Commandes & Consultations — Schema Base de Donnees
 
-_Generated: 2026-04-15 03:34_
+_Generated: 2026-04-16 00:15_
 
 **Tables : 17**
 
@@ -14,12 +14,12 @@ _Generated: 2026-04-15 03:34_
 | [order_payments](#order-payments)                         | 10       | 2   | 1   | 0        |
 | [purchase_order_items](#purchase-order-items)             | 21       | 4   | 2   | 10       |
 | [purchase_order_receptions](#purchase-order-receptions)   | 14       | 3   | 2   | 4        |
-| [purchase_orders](#purchase-orders)                       | 39       | 1   | 4   | 19       |
+| [purchase_orders](#purchase-orders)                       | 34       | 1   | 4   | 17       |
 | [sales_order_events](#sales-order-events)                 | 6        | 1   | 2   | 1        |
 | [sales_order_items](#sales-order-items)                   | 22       | 3   | 6   | 6        |
 | [sales_order_linkme_details](#sales-order-linkme-details) | 51       | 1   | 6   | 3        |
 | [sales_order_shipments](#sales-order-shipments)           | 20       | 2   | 1   | 3        |
-| [sales_orders](#sales-orders)                             | 73       | 10  | 7   | 23       |
+| [sales_orders](#sales-orders)                             | 68       | 10  | 7   | 22       |
 | [sample_order_items](#sample-order-items)                 | 13       | 2   | 1   | 0        |
 | [sample_orders](#sample-orders)                           | 17       | 1   | 1   | 0        |
 | [shopping_carts](#shopping-carts)                         | 11       | 2   | 9   | 1        |
@@ -329,47 +329,42 @@ _Generated: 2026-04-15 03:34_
 
 ## purchase_orders
 
-| Colonne                  | Type                       | Nullable | Default                        |
-| ------------------------ | -------------------------- | -------- | ------------------------------ |
-| id                       | uuid                       | NO       | uuid_generate_v4()             |
-| po_number                | varchar                    | NO       |                                |
-| supplier_id              | uuid                       | NO       |                                |
-| currency                 | varchar                    | NO       | 'EUR'::character varying       |
-| tax_rate                 | numeric                    | NO       | 0.2000                         |
-| total_ht                 | numeric                    | NO       | 0                              |
-| total_ttc                | numeric                    | NO       | 0                              |
-| expected_delivery_date   | date                       | YES      |                                |
-| delivery_address         | jsonb                      | YES      |                                |
-| payment_terms            | varchar                    | YES      |                                |
-| notes                    | text                       | YES      |                                |
-| created_by               | uuid                       | NO       |                                |
-| validated_by             | uuid                       | YES      |                                |
-| sent_by                  | uuid                       | YES      |                                |
-| received_by              | uuid                       | YES      |                                |
-| validated_at             | timestamptz                | YES      |                                |
-| sent_at                  | timestamptz                | YES      |                                |
-| received_at              | timestamptz                | YES      |                                |
-| cancelled_at             | timestamptz                | YES      |                                |
-| created_at               | timestamptz                | NO       | now()                          |
-| updated_at               | timestamptz                | NO       | now()                          |
-| eco_tax_total            | numeric                    | NO       | 0                              |
-| eco_tax_vat_rate         | numeric                    | YES      | NULL::numeric                  |
-| status                   | enum:purchase_order_status | NO       | 'draft'::purchase_order_status |
-| payment_terms_type       | enum:payment_terms_type    | YES      |                                |
-| payment_terms_notes      | text                       | YES      |                                |
-| shipping_cost_ht         | numeric                    | YES      | 0                              |
-| customs_cost_ht          | numeric                    | YES      | 0                              |
-| insurance_cost_ht        | numeric                    | YES      | 0                              |
-| payment_status_v2        | varchar                    | YES      | 'pending'::character varying   |
-| manual_payment_type      | enum:manual_payment_type   | YES      |                                |
-| manual_payment_date      | timestamptz                | YES      |                                |
-| manual_payment_reference | text                       | YES      |                                |
-| manual_payment_note      | text                       | YES      |                                |
-| manual_payment_by        | uuid                       | YES      |                                |
-| fees_vat_rate            | numeric                    | YES      | 0.20                           |
-| order_date               | date                       | YES      |                                |
-| paid_amount              | numeric                    | YES      | 0                              |
-| paid_at                  | timestamptz                | YES      |                                |
+| Colonne                | Type                       | Nullable | Default                        |
+| ---------------------- | -------------------------- | -------- | ------------------------------ |
+| id                     | uuid                       | NO       | uuid_generate_v4()             |
+| po_number              | varchar                    | NO       |                                |
+| supplier_id            | uuid                       | NO       |                                |
+| currency               | varchar                    | NO       | 'EUR'::character varying       |
+| tax_rate               | numeric                    | NO       | 0.2000                         |
+| total_ht               | numeric                    | NO       | 0                              |
+| total_ttc              | numeric                    | NO       | 0                              |
+| expected_delivery_date | date                       | YES      |                                |
+| delivery_address       | jsonb                      | YES      |                                |
+| payment_terms          | varchar                    | YES      |                                |
+| notes                  | text                       | YES      |                                |
+| created_by             | uuid                       | NO       |                                |
+| validated_by           | uuid                       | YES      |                                |
+| sent_by                | uuid                       | YES      |                                |
+| received_by            | uuid                       | YES      |                                |
+| validated_at           | timestamptz                | YES      |                                |
+| sent_at                | timestamptz                | YES      |                                |
+| received_at            | timestamptz                | YES      |                                |
+| cancelled_at           | timestamptz                | YES      |                                |
+| created_at             | timestamptz                | NO       | now()                          |
+| updated_at             | timestamptz                | NO       | now()                          |
+| eco_tax_total          | numeric                    | NO       | 0                              |
+| eco_tax_vat_rate       | numeric                    | YES      | NULL::numeric                  |
+| status                 | enum:purchase_order_status | NO       | 'draft'::purchase_order_status |
+| payment_terms_type     | enum:payment_terms_type    | YES      |                                |
+| payment_terms_notes    | text                       | YES      |                                |
+| shipping_cost_ht       | numeric                    | YES      | 0                              |
+| customs_cost_ht        | numeric                    | YES      | 0                              |
+| insurance_cost_ht      | numeric                    | YES      | 0                              |
+| payment_status_v2      | varchar                    | YES      | 'pending'::character varying   |
+| fees_vat_rate          | numeric                    | YES      | 0.20                           |
+| order_date             | date                       | YES      |                                |
+| paid_amount            | numeric                    | YES      | 0                              |
+| paid_at                | timestamptz                | YES      |                                |
 
 **Relations :**
 
@@ -382,16 +377,14 @@ _Generated: 2026-04-15 03:34_
 - `Utilisateurs peuvent voir leurs commandes fournisseurs` : SELECT — public
 - `Utilisateurs peuvent modifier leurs commandes fournisseurs` : UPDATE — public
 
-**Triggers :** 19
+**Triggers :** 17
 
 - `audit_purchase_orders` : AFTER INSERT
 - `purchase_orders_updated_at` : BEFORE UPDATE
 - `trg_po_validation_forecasted_stock` : AFTER UPDATE
-- `trg_purchase_order_manual_payment` : BEFORE UPDATE
 - `trg_recalculate_po_payment_on_total_change` : BEFORE UPDATE
 - `trg_stock_alert_tracking_rollback_on_po_cancel` : AFTER UPDATE
 - `trg_update_pmp_on_po_received` : AFTER UPDATE
-- `trg_update_purchase_order_manual_payment` : BEFORE UPDATE
 - `trig_po_charges_recalc` : BEFORE UPDATE
 - `trigger_handle_po_deletion` : BEFORE DELETE
 - `trigger_po_created_notification` : AFTER INSERT
@@ -606,81 +599,76 @@ _Generated: 2026-04-15 03:34_
 
 ## sales_orders
 
-| Colonne                     | Type                     | Nullable | Default                      |
-| --------------------------- | ------------------------ | -------- | ---------------------------- |
-| id                          | uuid                     | NO       | uuid_generate_v4()           |
-| order_number                | varchar                  | NO       |                              |
-| customer_id                 | uuid                     | YES      |                              |
-| currency                    | varchar                  | NO       | 'EUR'::character varying     |
-| tax_rate                    | numeric                  | NO       | 0.2000                       |
-| total_ht                    | numeric                  | NO       | 0                            |
-| total_ttc                   | numeric                  | NO       | 0                            |
-| expected_delivery_date      | date                     | YES      |                              |
-| shipping_address            | jsonb                    | YES      |                              |
-| billing_address             | jsonb                    | YES      |                              |
-| payment_terms               | varchar                  | YES      |                              |
-| notes                       | text                     | YES      |                              |
-| created_by                  | uuid                     | YES      |                              |
-| confirmed_by                | uuid                     | YES      |                              |
-| shipped_by                  | uuid                     | YES      |                              |
-| delivered_by                | uuid                     | YES      |                              |
-| confirmed_at                | timestamptz              | YES      |                              |
-| shipped_at                  | timestamptz              | YES      |                              |
-| delivered_at                | timestamptz              | YES      |                              |
-| cancelled_at                | timestamptz              | YES      |                              |
-| created_at                  | timestamptz              | NO       | now()                        |
-| updated_at                  | timestamptz              | NO       | now()                        |
-| paid_amount                 | numeric                  | YES      | 0                            |
-| paid_at                     | timestamptz              | YES      |                              |
-| warehouse_exit_at           | timestamptz              | YES      |                              |
-| warehouse_exit_by           | uuid                     | YES      |                              |
-| ready_for_shipment          | boolean                  | YES      | false                        |
-| cancellation_reason         | text                     | YES      |                              |
-| customer_type               | text                     | NO       |                              |
-| channel_id                  | uuid                     | YES      |                              |
-| applied_discount_codes      | text[]                   | YES      |                              |
-| total_discount_amount       | numeric                  | YES      | 0                            |
-| cancelled_by                | uuid                     | YES      |                              |
-| eco_tax_total               | numeric                  | NO       | 0                            |
-| eco_tax_vat_rate            | numeric                  | YES      | NULL::numeric                |
-| closed_at                   | timestamptz              | YES      |                              |
-| closed_by                   | uuid                     | YES      |                              |
-| payment_terms_type          | enum:payment_terms_type  | YES      |                              |
-| payment_terms_notes         | text                     | YES      |                              |
-| shipping_cost_ht            | numeric                  | YES      | 0                            |
-| insurance_cost_ht           | numeric                  | YES      | 0                            |
-| handling_cost_ht            | numeric                  | YES      | 0                            |
-| affiliate_total_ht          | numeric                  | YES      | NULL::numeric                |
-| affiliate_total_ttc         | numeric                  | YES      | NULL::numeric                |
-| linkme_selection_id         | uuid                     | YES      |                              |
-| created_by_affiliate_id     | uuid                     | YES      |                              |
-| pending_admin_validation    | boolean                  | YES      | false                        |
-| payment_status_v2           | varchar                  | YES      | 'pending'::character varying |
-| manual_payment_type         | enum:manual_payment_type | YES      |                              |
-| manual_payment_date         | timestamptz              | YES      |                              |
-| manual_payment_reference    | text                     | YES      |                              |
-| manual_payment_note         | text                     | YES      |                              |
-| manual_payment_by           | uuid                     | YES      |                              |
-| fees_vat_rate               | numeric                  | YES      | 0.20                         |
-| responsable_contact_id      | uuid                     | YES      |                              |
-| billing_contact_id          | uuid                     | YES      |                              |
-| delivery_contact_id         | uuid                     | YES      |                              |
-| invoiced_at                 | timestamptz              | YES      |                              |
-| order_date                  | date                     | YES      |                              |
-| status                      | enum:sales_order_status  | NO       | 'draft'::sales_order_status  |
-| is_shopping_center_delivery | boolean                  | NO       | false                        |
-| accepts_semi_truck          | boolean                  | NO       | true                         |
-| individual_customer_id      | uuid                     | YES      |                              |
-| linkme_display_number       | text                     | YES      |                              |
-| consultation_id             | uuid                     | YES      |                              |
-| quote_qonto_id              | text                     | YES      |                              |
-| quote_number                | text                     | YES      |                              |
-| stripe_session_id           | text                     | YES      |                              |
-| stripe_payment_intent_id    | text                     | YES      |                              |
-| stripe_invoice_id           | text                     | YES      |                              |
-| applied_discount_id         | uuid                     | YES      |                              |
-| applied_discount_code       | varchar                  | YES      |                              |
-| applied_discount_amount     | numeric                  | YES      | 0                            |
+| Colonne                     | Type                    | Nullable | Default                      |
+| --------------------------- | ----------------------- | -------- | ---------------------------- |
+| id                          | uuid                    | NO       | uuid_generate_v4()           |
+| order_number                | varchar                 | NO       |                              |
+| customer_id                 | uuid                    | YES      |                              |
+| currency                    | varchar                 | NO       | 'EUR'::character varying     |
+| tax_rate                    | numeric                 | NO       | 0.2000                       |
+| total_ht                    | numeric                 | NO       | 0                            |
+| total_ttc                   | numeric                 | NO       | 0                            |
+| expected_delivery_date      | date                    | YES      |                              |
+| shipping_address            | jsonb                   | YES      |                              |
+| billing_address             | jsonb                   | YES      |                              |
+| payment_terms               | varchar                 | YES      |                              |
+| notes                       | text                    | YES      |                              |
+| created_by                  | uuid                    | YES      |                              |
+| confirmed_by                | uuid                    | YES      |                              |
+| shipped_by                  | uuid                    | YES      |                              |
+| delivered_by                | uuid                    | YES      |                              |
+| confirmed_at                | timestamptz             | YES      |                              |
+| shipped_at                  | timestamptz             | YES      |                              |
+| delivered_at                | timestamptz             | YES      |                              |
+| cancelled_at                | timestamptz             | YES      |                              |
+| created_at                  | timestamptz             | NO       | now()                        |
+| updated_at                  | timestamptz             | NO       | now()                        |
+| paid_amount                 | numeric                 | YES      | 0                            |
+| paid_at                     | timestamptz             | YES      |                              |
+| warehouse_exit_at           | timestamptz             | YES      |                              |
+| warehouse_exit_by           | uuid                    | YES      |                              |
+| ready_for_shipment          | boolean                 | YES      | false                        |
+| cancellation_reason         | text                    | YES      |                              |
+| customer_type               | text                    | NO       |                              |
+| channel_id                  | uuid                    | YES      |                              |
+| applied_discount_codes      | text[]                  | YES      |                              |
+| total_discount_amount       | numeric                 | YES      | 0                            |
+| cancelled_by                | uuid                    | YES      |                              |
+| eco_tax_total               | numeric                 | NO       | 0                            |
+| eco_tax_vat_rate            | numeric                 | YES      | NULL::numeric                |
+| closed_at                   | timestamptz             | YES      |                              |
+| closed_by                   | uuid                    | YES      |                              |
+| payment_terms_type          | enum:payment_terms_type | YES      |                              |
+| payment_terms_notes         | text                    | YES      |                              |
+| shipping_cost_ht            | numeric                 | YES      | 0                            |
+| insurance_cost_ht           | numeric                 | YES      | 0                            |
+| handling_cost_ht            | numeric                 | YES      | 0                            |
+| affiliate_total_ht          | numeric                 | YES      | NULL::numeric                |
+| affiliate_total_ttc         | numeric                 | YES      | NULL::numeric                |
+| linkme_selection_id         | uuid                    | YES      |                              |
+| created_by_affiliate_id     | uuid                    | YES      |                              |
+| pending_admin_validation    | boolean                 | YES      | false                        |
+| payment_status_v2           | varchar                 | YES      | 'pending'::character varying |
+| fees_vat_rate               | numeric                 | YES      | 0.20                         |
+| responsable_contact_id      | uuid                    | YES      |                              |
+| billing_contact_id          | uuid                    | YES      |                              |
+| delivery_contact_id         | uuid                    | YES      |                              |
+| invoiced_at                 | timestamptz             | YES      |                              |
+| order_date                  | date                    | YES      |                              |
+| status                      | enum:sales_order_status | NO       | 'draft'::sales_order_status  |
+| is_shopping_center_delivery | boolean                 | NO       | false                        |
+| accepts_semi_truck          | boolean                 | NO       | true                         |
+| individual_customer_id      | uuid                    | YES      |                              |
+| linkme_display_number       | text                    | YES      |                              |
+| consultation_id             | uuid                    | YES      |                              |
+| quote_qonto_id              | text                    | YES      |                              |
+| quote_number                | text                    | YES      |                              |
+| stripe_session_id           | text                    | YES      |                              |
+| stripe_payment_intent_id    | text                    | YES      |                              |
+| stripe_invoice_id           | text                    | YES      |                              |
+| applied_discount_id         | uuid                    | YES      |                              |
+| applied_discount_code       | varchar                 | YES      |                              |
+| applied_discount_amount     | numeric                 | YES      | 0                            |
 
 **Relations :**
 
@@ -705,7 +693,7 @@ _Generated: 2026-04-15 03:34_
 - `linkme_users_update_own_draft_orders` : UPDATE — authenticated
 - `staff_update_sales_orders` : UPDATE — authenticated
 
-**Triggers :** 23
+**Triggers :** 22
 
 - `audit_sales_orders` : AFTER INSERT
 - `sales_order_status_change_trigger` : AFTER UPDATE
@@ -719,7 +707,6 @@ _Generated: 2026-04-15 03:34_
 - `trg_recalculate_so_payment_on_total_change` : BEFORE UPDATE
 - `trg_so_devalidation_forecasted_stock` : AFTER UPDATE
 - `trg_sync_commission_on_payment` : AFTER UPDATE
-- `trg_update_sales_order_manual_payment` : BEFORE UPDATE
 - `trig_so_charges_recalc` : BEFORE UPDATE
 - `trigger_order_cancelled_notification` : AFTER UPDATE
 - `trigger_order_confirmed_notification` : AFTER UPDATE
