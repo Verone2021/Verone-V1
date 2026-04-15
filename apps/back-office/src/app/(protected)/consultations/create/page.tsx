@@ -69,7 +69,7 @@ export default function CreateConsultationPage() {
 
   // Validation par étape
   const canGoToStep2 =
-    (formData.enseigne_id || formData.organisation_id) &&
+    Boolean(formData.enseigne_id ?? formData.organisation_id) &&
     formData.client_email.includes('@');
 
   const canGoToStep3 = canGoToStep2 && formData.descriptif.trim().length >= 3;
