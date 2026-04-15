@@ -16,6 +16,14 @@ export async function POST(request: NextRequest) {
   const body = (await request.json()) as { format?: string; status?: string };
   const format = body.format ?? 'xlsx';
 
+  const validStatuses = [
+    'active',
+    'draft',
+    'preorder',
+    'discontinued',
+  ] as const;
+  type ProductStatus = (typeof validStatuses)[number];
+
   // Fetch products with relations
   let query = supabase
     .from('products')
@@ -33,8 +41,12 @@ export async function POST(request: NextRequest) {
     .is('archived_at', null)
     .order('name', { ascending: true });
 
-  if (body.status && body.status !== 'all') {
-    query = query.eq('product_status', body.status);
+  if (
+    body.status &&
+    body.status !== 'all' &&
+    validStatuses.includes(body.status as ProductStatus)
+  ) {
+    query = query.eq('product_status', body.status as ProductStatus);
   }
 
   const { data: products, error } = await query;
@@ -125,7 +137,9 @@ export async function POST(request: NextRequest) {
       published: p.is_published_online ? 'Oui' : 'Non',
       description: p.description ?? '',
       meta_description: p.meta_description ?? '',
-      created_at: new Date(p.created_at).toLocaleDateString('fr-FR'),
+      created_at: p.created_at
+        ? new Date(p.created_at).toLocaleDateString('fr-FR')
+        : '',
     };
   });
 
@@ -264,7 +278,7 @@ export async function POST(request: NextRequest) {
 
   const buffer = await workbook.xlsx.writeBuffer();
 
-  return new NextResponse(buffer as Buffer, {
+  return new NextResponse(new Uint8Array(buffer), {
     headers: {
       'Content-Type':
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { Building2, Clock, Filter, CheckCircle, XCircle } from 'lucide-react';
 
@@ -88,8 +89,9 @@ export default function OrganisationsPage() {
           );
         });
       })
-      .catch(() => {
-        alert("Erreur lors de l'approbation");
+      .catch((error: unknown) => {
+        console.error('[OrganisationsPage] Approve failed:', error);
+        toast.error("Erreur lors de l'approbation");
       });
   };
 
@@ -116,8 +118,9 @@ export default function OrganisationsPage() {
           );
         });
       })
-      .catch(() => {
-        alert('Erreur lors du rejet');
+      .catch((error: unknown) => {
+        console.error('[OrganisationsPage] Reject failed:', error);
+        toast.error('Erreur lors du rejet');
       });
   };
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import {
   useAllLinkMeOrders,
@@ -63,8 +64,9 @@ function useRejectState({ refetch }: UseRejectStateOptions) {
           console.error('[Approbations] Refetch failed:', err);
         });
       })
-      .catch(() => {
-        alert('Erreur lors du rejet');
+      .catch((error: unknown) => {
+        console.error('[Approbations] Reject order failed:', error);
+        toast.error('Erreur lors du rejet');
       });
   };
 
@@ -117,8 +119,9 @@ export function useCommandesTabState() {
           console.error('[Approbations] Refetch failed:', err);
         });
       })
-      .catch(() => {
-        alert("Erreur lors de l'approbation");
+      .catch((error: unknown) => {
+        console.error('[Approbations] Approve order failed:', error);
+        toast.error("Erreur lors de l'approbation");
       });
   };
 

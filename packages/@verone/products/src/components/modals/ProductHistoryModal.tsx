@@ -33,7 +33,7 @@ interface ProductHistoryModalProduct {
 }
 
 interface ProductHistoryModalProps {
-  product: ProductHistoryModalProduct;
+  product: ProductHistoryModalProduct | null;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -59,6 +59,7 @@ export function ProductHistoryModal({
   }, [isOpen, product]);
 
   const loadHistory = async () => {
+    if (!product) return;
     setLoading(true);
     try {
       const history = await getProductHistory(product.id);

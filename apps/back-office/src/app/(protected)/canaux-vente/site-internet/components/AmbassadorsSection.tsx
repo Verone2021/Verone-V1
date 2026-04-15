@@ -255,8 +255,8 @@ export function AmbassadorsSection() {
   };
 
   const handleCreateAuth = (id: string) => {
-    void createAuth.mutateAsync(id).catch(() => {
-      // Handled by mutation onError
+    void createAuth.mutateAsync(id).catch((error: unknown) => {
+      console.error('[Ambassadors] createAuth failed:', error);
     });
   };
 

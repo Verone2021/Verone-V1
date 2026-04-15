@@ -266,7 +266,9 @@ export function CmsPagesSection() {
                           published: checked,
                           slug: page.slug,
                         })
-                        .catch(() => undefined);
+                        .catch((error: unknown) => {
+                          console.error('[CmsPages] Mutation failed:', error);
+                        });
                     }}
                   />
                   <div>
@@ -306,7 +308,12 @@ export function CmsPagesSection() {
                             onClick={() => {
                               void deleteMutation
                                 .mutateAsync(page.id)
-                                .catch(() => undefined);
+                                .catch((error: unknown) => {
+                                  console.error(
+                                    '[CmsPages] Mutation failed:',
+                                    error
+                                  );
+                                });
                             }}
                           >
                             Supprimer
@@ -327,7 +334,9 @@ export function CmsPagesSection() {
           form={form}
           onFormChange={setForm}
           onSave={() => {
-            void saveMutation.mutateAsync().catch(() => undefined);
+            void saveMutation.mutateAsync().catch((error: unknown) => {
+              console.error('[CmsPages] Mutation failed:', error);
+            });
           }}
           isSaving={saveMutation.isPending}
           isCreating={isCreating}
