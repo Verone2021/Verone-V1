@@ -1,13 +1,13 @@
 # Schema Base de Donnees Verone — Sommaire
 
-_Generated: 2026-04-15 03:34_
+_Generated: 2026-04-16 00:15_
 
 | Metrique     | Valeur |
 | ------------ | ------ |
-| Tables       | 141    |
+| Tables       | 142    |
 | Foreign Keys | 187    |
 | RLS Policies | 326    |
-| Triggers     | 299    |
+| Triggers     | 296    |
 | Enums        | 45     |
 
 ## Index des Domaines
@@ -22,7 +22,7 @@ _Generated: 2026-04-15 03:34_
 | 06  | LinkMe & Affiliation        | 10     | [06-linkme.md](06-linkme.md)               |
 | 07  | Notifications & Formulaires | 9      | [07-notifications.md](07-notifications.md) |
 | 08  | Utilisateurs & Securite     | 8      | [08-utilisateurs.md](08-utilisateurs.md)   |
-| 09  | Autres                      | 50     | [09-autres.md](09-autres.md)               |
+| 09  | Autres                      | 51     | [09-autres.md](09-autres.md)               |
 
 ## Enums
 

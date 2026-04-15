@@ -10,7 +10,6 @@ Tout agent ou commande doit commencer par consulter cet index.
 ## Taches en cours
 
 - **`.claude/work/ACTIVE.md`** — Sprints, taches, bugs en cours. LIRE EN PREMIER.
-- **`.claude/work/MEGA-PLAN-REFONTE.md`** — Plan de refonte infrastructure (7 phases).
 - **`.claude/work/plan-canaux-de-vente.md`** — Plan developpement canaux de vente (site-internet, LinkMe).
 
 ---

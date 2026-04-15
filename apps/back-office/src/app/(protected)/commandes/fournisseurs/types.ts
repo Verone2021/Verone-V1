@@ -18,7 +18,6 @@ export type PurchaseOrderExtended = PurchaseOrder & {
     | 'overpaid'
     | 'failed'
     | null;
-  manual_payment_type?: string | null;
   is_matched?: boolean | null;
   matched_transaction_label?: string | null;
   matched_transaction_amount?: number | null;

@@ -1,12 +1,12 @@
 # Database Schema Complete — Index
 
-_Generated: 2026-04-15 03:34 — 141 tables_
+_Generated: 2026-04-16 00:15 — 142 tables_
 
 | Table                               | Domaine                     | Colonnes |
 | ----------------------------------- | --------------------------- | -------- |
 | addresses                           | Organisations & Contacts    | 27       |
 | affiliate_archive_requests          | Stock & Stockage            | 10       |
-| affiliate_pending_orders            | Autres                      | 66       |
+| affiliate_pending_orders            | Autres                      | 61       |
 | affiliate_storage_allocations       | Stock & Stockage            | 8        |
 | affiliate_storage_requests          | Stock & Stockage            | 14       |
 | ambassador_attributions             | Autres                      | 14       |
@@ -96,13 +96,13 @@ _Generated: 2026-04-15 03:34 — 141 tables_
 | promotion_usages                    | Autres                      | 6        |
 | purchase_order_items                | Commandes & Consultations   | 21       |
 | purchase_order_receptions           | Commandes & Consultations   | 14       |
-| purchase_orders                     | Commandes & Consultations   | 39       |
+| purchase_orders                     | Commandes & Consultations   | 34       |
 | sales_channels                      | Autres                      | 22       |
 | sales_order_events                  | Commandes & Consultations   | 6        |
 | sales_order_items                   | Commandes & Consultations   | 22       |
 | sales_order_linkme_details          | Commandes & Consultations   | 51       |
 | sales_order_shipments               | Commandes & Consultations   | 20       |
-| sales_orders                        | Commandes & Consultations   | 73       |
+| sales_orders                        | Commandes & Consultations   | 68       |
 | sample_order_items                  | Commandes & Consultations   | 13       |
 | sample_orders                       | Commandes & Consultations   | 17       |
 | shopping_carts                      | Commandes & Consultations   | 11       |
@@ -130,6 +130,7 @@ _Generated: 2026-04-15 03:34 — 141 tables_
 | user_notification_preferences       | Notifications & Formulaires | 13       |
 | user_profiles                       | Utilisateurs & Securite     | 17       |
 | user_sessions                       | Utilisateurs & Securite     | 16       |
+| v_all_payments                      | Autres                      | 23       |
 | v_expenses_with_details             | Autres                      | 37       |
 | v_library_documents                 | Autres                      | 13       |
 | v_library_missing_documents         | Autres                      | 12       |

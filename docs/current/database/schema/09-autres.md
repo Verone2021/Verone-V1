@@ -1,12 +1,12 @@
 # Domaine Autres — Schema Base de Donnees
 
-_Generated: 2026-04-15 03:34_
+_Generated: 2026-04-16 00:15_
 
-**Tables : 50**
+**Tables : 51**
 
 | Table                                                                       | Colonnes | FK  | RLS | Triggers |
 | --------------------------------------------------------------------------- | -------- | --- | --- | -------- |
-| [affiliate_pending_orders](#affiliate-pending-orders)                       | 66       | 0   | 0   | 0        |
+| [affiliate_pending_orders](#affiliate-pending-orders)                       | 61       | 0   | 0   | 0        |
 | [ambassador_attributions](#ambassador-attributions)                         | 14       | 3   | 2   | 2        |
 | [ambassador_codes](#ambassador-codes)                                       | 8        | 2   | 2   | 0        |
 | [channel_price_lists](#channel-price-lists)                                 | 17       | 2   | 2   | 2        |
@@ -44,6 +44,7 @@ _Generated: 2026-04-15 03:34_
 | [stock_alerts_unified_view](#stock-alerts-unified-view)                     | 23       | 0   | 0   | 0        |
 | [stock_alerts_view](#stock-alerts-view)                                     | 8        | 0   | 0   | 0        |
 | [sync_runs](#sync-runs)                                                     | 27       | 0   | 1   | 0        |
+| [v_all_payments](#v-all-payments)                                           | 23       | 0   | 0   | 0        |
 | [v_expenses_with_details](#v-expenses-with-details)                         | 37       | 0   | 0   | 0        |
 | [v_library_documents](#v-library-documents)                                 | 13       | 0   | 0   | 0        |
 | [v_library_missing_documents](#v-library-missing-documents)                 | 12       | 0   | 0   | 0        |
@@ -59,74 +60,69 @@ _Generated: 2026-04-15 03:34_
 
 ## affiliate_pending_orders
 
-| Colonne                     | Type                     | Nullable | Default |
-| --------------------------- | ------------------------ | -------- | ------- |
-| id                          | uuid                     | YES      |         |
-| order_number                | varchar                  | YES      |         |
-| customer_id                 | uuid                     | YES      |         |
-| currency                    | varchar                  | YES      |         |
-| tax_rate                    | numeric                  | YES      |         |
-| total_ht                    | numeric                  | YES      |         |
-| total_ttc                   | numeric                  | YES      |         |
-| expected_delivery_date      | date                     | YES      |         |
-| shipping_address            | jsonb                    | YES      |         |
-| billing_address             | jsonb                    | YES      |         |
-| payment_terms               | varchar                  | YES      |         |
-| notes                       | text                     | YES      |         |
-| created_by                  | uuid                     | YES      |         |
-| confirmed_by                | uuid                     | YES      |         |
-| shipped_by                  | uuid                     | YES      |         |
-| delivered_by                | uuid                     | YES      |         |
-| confirmed_at                | timestamptz              | YES      |         |
-| shipped_at                  | timestamptz              | YES      |         |
-| delivered_at                | timestamptz              | YES      |         |
-| cancelled_at                | timestamptz              | YES      |         |
-| created_at                  | timestamptz              | YES      |         |
-| updated_at                  | timestamptz              | YES      |         |
-| paid_amount                 | numeric                  | YES      |         |
-| paid_at                     | timestamptz              | YES      |         |
-| warehouse_exit_at           | timestamptz              | YES      |         |
-| warehouse_exit_by           | uuid                     | YES      |         |
-| ready_for_shipment          | boolean                  | YES      |         |
-| cancellation_reason         | text                     | YES      |         |
-| customer_type               | text                     | YES      |         |
-| channel_id                  | uuid                     | YES      |         |
-| applied_discount_codes      | text[]                   | YES      |         |
-| total_discount_amount       | numeric                  | YES      |         |
-| cancelled_by                | uuid                     | YES      |         |
-| eco_tax_total               | numeric                  | YES      |         |
-| eco_tax_vat_rate            | numeric                  | YES      |         |
-| closed_at                   | timestamptz              | YES      |         |
-| closed_by                   | uuid                     | YES      |         |
-| payment_terms_type          | enum:payment_terms_type  | YES      |         |
-| payment_terms_notes         | text                     | YES      |         |
-| shipping_cost_ht            | numeric                  | YES      |         |
-| insurance_cost_ht           | numeric                  | YES      |         |
-| handling_cost_ht            | numeric                  | YES      |         |
-| affiliate_total_ht          | numeric                  | YES      |         |
-| affiliate_total_ttc         | numeric                  | YES      |         |
-| linkme_selection_id         | uuid                     | YES      |         |
-| created_by_affiliate_id     | uuid                     | YES      |         |
-| pending_admin_validation    | boolean                  | YES      |         |
-| payment_status_v2           | varchar                  | YES      |         |
-| manual_payment_type         | enum:manual_payment_type | YES      |         |
-| manual_payment_date         | timestamptz              | YES      |         |
-| manual_payment_reference    | text                     | YES      |         |
-| manual_payment_note         | text                     | YES      |         |
-| manual_payment_by           | uuid                     | YES      |         |
-| fees_vat_rate               | numeric                  | YES      |         |
-| responsable_contact_id      | uuid                     | YES      |         |
-| billing_contact_id          | uuid                     | YES      |         |
-| delivery_contact_id         | uuid                     | YES      |         |
-| invoiced_at                 | timestamptz              | YES      |         |
-| order_date                  | date                     | YES      |         |
-| status                      | enum:sales_order_status  | YES      |         |
-| is_shopping_center_delivery | boolean                  | YES      |         |
-| accepts_semi_truck          | boolean                  | YES      |         |
-| affiliate_name              | text                     | YES      |         |
-| affiliate_email             | text                     | YES      |         |
-| affiliate_type              | text                     | YES      |         |
-| selection_name              | text                     | YES      |         |
+| Colonne                     | Type                    | Nullable | Default |
+| --------------------------- | ----------------------- | -------- | ------- |
+| id                          | uuid                    | YES      |         |
+| order_number                | varchar                 | YES      |         |
+| customer_id                 | uuid                    | YES      |         |
+| currency                    | varchar                 | YES      |         |
+| tax_rate                    | numeric                 | YES      |         |
+| total_ht                    | numeric                 | YES      |         |
+| total_ttc                   | numeric                 | YES      |         |
+| expected_delivery_date      | date                    | YES      |         |
+| shipping_address            | jsonb                   | YES      |         |
+| billing_address             | jsonb                   | YES      |         |
+| payment_terms               | varchar                 | YES      |         |
+| notes                       | text                    | YES      |         |
+| created_by                  | uuid                    | YES      |         |
+| confirmed_by                | uuid                    | YES      |         |
+| shipped_by                  | uuid                    | YES      |         |
+| delivered_by                | uuid                    | YES      |         |
+| confirmed_at                | timestamptz             | YES      |         |
+| shipped_at                  | timestamptz             | YES      |         |
+| delivered_at                | timestamptz             | YES      |         |
+| cancelled_at                | timestamptz             | YES      |         |
+| created_at                  | timestamptz             | YES      |         |
+| updated_at                  | timestamptz             | YES      |         |
+| paid_amount                 | numeric                 | YES      |         |
+| paid_at                     | timestamptz             | YES      |         |
+| warehouse_exit_at           | timestamptz             | YES      |         |
+| warehouse_exit_by           | uuid                    | YES      |         |
+| ready_for_shipment          | boolean                 | YES      |         |
+| cancellation_reason         | text                    | YES      |         |
+| customer_type               | text                    | YES      |         |
+| channel_id                  | uuid                    | YES      |         |
+| applied_discount_codes      | text[]                  | YES      |         |
+| total_discount_amount       | numeric                 | YES      |         |
+| cancelled_by                | uuid                    | YES      |         |
+| eco_tax_total               | numeric                 | YES      |         |
+| eco_tax_vat_rate            | numeric                 | YES      |         |
+| closed_at                   | timestamptz             | YES      |         |
+| closed_by                   | uuid                    | YES      |         |
+| payment_terms_type          | enum:payment_terms_type | YES      |         |
+| payment_terms_notes         | text                    | YES      |         |
+| shipping_cost_ht            | numeric                 | YES      |         |
+| insurance_cost_ht           | numeric                 | YES      |         |
+| handling_cost_ht            | numeric                 | YES      |         |
+| affiliate_total_ht          | numeric                 | YES      |         |
+| affiliate_total_ttc         | numeric                 | YES      |         |
+| linkme_selection_id         | uuid                    | YES      |         |
+| created_by_affiliate_id     | uuid                    | YES      |         |
+| pending_admin_validation    | boolean                 | YES      |         |
+| payment_status_v2           | varchar                 | YES      |         |
+| fees_vat_rate               | numeric                 | YES      |         |
+| responsable_contact_id      | uuid                    | YES      |         |
+| billing_contact_id          | uuid                    | YES      |         |
+| delivery_contact_id         | uuid                    | YES      |         |
+| invoiced_at                 | timestamptz             | YES      |         |
+| order_date                  | date                    | YES      |         |
+| status                      | enum:sales_order_status | YES      |         |
+| is_shopping_center_delivery | boolean                 | YES      |         |
+| accepts_semi_truck          | boolean                 | YES      |         |
+| affiliate_name              | text                    | YES      |         |
+| affiliate_email             | text                    | YES      |         |
+| affiliate_type              | text                    | YES      |         |
+| selection_name              | text                    | YES      |         |
 
 ---
 
@@ -1271,6 +1267,36 @@ _Generated: 2026-04-15 03:34_
 **RLS :** 1 policy
 
 - `backoffice_full_access_sync_runs` : ALL — authenticated
+
+---
+
+## v_all_payments
+
+| Colonne                | Type        | Nullable | Default |
+| ---------------------- | ----------- | -------- | ------- |
+| payment_id             | uuid        | YES      |         |
+| payment_source         | text        | YES      |         |
+| order_type             | text        | YES      |         |
+| order_id               | uuid        | YES      |         |
+| order_number           | varchar     | YES      |         |
+| order_total_ttc        | numeric     | YES      |         |
+| order_payment_status   | varchar     | YES      |         |
+| partner_id             | uuid        | YES      |         |
+| partner_name           | varchar     | YES      |         |
+| amount                 | numeric     | YES      |         |
+| payment_date           | timestamptz | YES      |         |
+| payment_type           | text        | YES      |         |
+| reference              | text        | YES      |         |
+| note                   | text        | YES      |         |
+| bank_transaction_id    | uuid        | YES      |         |
+| bank_transaction_label | text        | YES      |         |
+| bank_settled_at        | timestamptz | YES      |         |
+| bank_counterparty_name | text        | YES      |         |
+| document_id            | uuid        | YES      |         |
+| document_number        | text        | YES      |         |
+| document_type          | text        | YES      |         |
+| created_by             | uuid        | YES      |         |
+| created_at             | timestamptz | YES      |         |
 
 ---
 

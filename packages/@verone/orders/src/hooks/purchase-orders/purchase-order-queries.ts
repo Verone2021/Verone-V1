@@ -162,7 +162,7 @@ export async function fetchOrders(
   const { data, error } = await query;
   if (error) throw error;
 
-  // Cast needed: Supabase types might be stale (payment_status_v2, manual_payment_*)
+  // Cast needed: Supabase types might be stale (payment_status_v2)
   const ordersData = (data ?? []) as Array<Record<string, unknown>>;
 
   // 🆕 Récupérer les transactions liées (rapprochement bancaire)

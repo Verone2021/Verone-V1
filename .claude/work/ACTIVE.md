@@ -365,5 +365,5 @@ L'unification est DEJA faite via `recalculate_order_paid_amount()` (SUM order_pa
 Pas besoin de nouvelle table.
 
 **Phase 1 (FAIT 2026-04-09)** : Drop ancienne `mark_payment_received(3 args)` + retrait double-ecritures legacy + nettoyage types.
-**Phase 2 (TODO)** : Drop colonnes `manual_payment_*` de sales_orders/purchase_orders (quand confirme safe).
-**Phase 3 (TODO, optionnel)** : Vue SQL `v_all_payments` pour UI historique paiements unifie.
+**Phase 2 (FAIT 2026-04-16)** : Drop 10 colonnes `manual_payment_*` (5 SO + 5 PO), 3 triggers, 3 fonctions obsoletes, rewrite 5 fonctions actives, migration 8 avoirs orphelins. ENUM conserve pour `order_payments`.
+**Phase 3 (FAIT 2026-04-16)** : Vue SQL `v_all_payments` creee (UNION order_payments + transaction_document_links). 126 paiements visibles. GRANT authenticated.
