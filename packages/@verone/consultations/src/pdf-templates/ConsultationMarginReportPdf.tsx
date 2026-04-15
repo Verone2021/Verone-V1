@@ -174,7 +174,7 @@ export function ConsultationMarginReportPdf({
             </Text>
           </View>
           {VERONE_LOGO_BASE64 && (
-            <Image src={VERONE_LOGO_BASE64} style={s.logo} />
+            <Image src={VERONE_LOGO_BASE64} style={s.logo} alt="" />
           )}
         </View>
 

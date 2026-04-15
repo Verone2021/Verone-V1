@@ -74,7 +74,11 @@ export function useConsultationItems(consultationId?: string) {
           stock_real?: number;
           stock_forecasted_in?: number;
           stock_forecasted_out?: number;
-          supplier?: { id: string; legal_name: string; trade_name: string | null } | null;
+          supplier?: {
+            id: string;
+            legal_name: string;
+            trade_name: string | null;
+          } | null;
           product_images?: Array<{ is_primary: boolean; public_url: string }>;
         } | null;
 
@@ -100,13 +104,17 @@ export function useConsultationItems(consultationId?: string) {
                 sku: productData.sku,
                 requires_sample: productData.requires_sample,
                 supplier_id: productData.supplier?.id ?? undefined,
-                supplier_name: productData.supplier?.trade_name ?? productData.supplier?.legal_name ?? undefined,
+                supplier_name:
+                  productData.supplier?.trade_name ??
+                  productData.supplier?.legal_name ??
+                  undefined,
                 cost_price: productData.cost_price,
                 stock_real: productData.stock_real ?? 0,
                 stock_forecasted_in: productData.stock_forecasted_in ?? 0,
                 stock_forecasted_out: productData.stock_forecasted_out ?? 0,
                 image_url:
-                  productData.product_images?.find(img => img.is_primary)?.public_url ??
+                  productData.product_images?.find(img => img.is_primary)
+                    ?.public_url ??
                   productData.product_images?.[0]?.public_url ??
                   null,
               }
@@ -246,8 +254,10 @@ export function useConsultationItems(consultationId?: string) {
                 is_sample: updates.is_sample ?? item.is_sample,
                 notes: updates.notes ?? item.notes,
                 shipping_cost: updates.shipping_cost ?? item.shipping_cost,
-                shipping_cost_currency: updates.shipping_cost_currency ?? item.shipping_cost_currency,
-                cost_price_override: updates.cost_price_override ?? item.cost_price_override,
+                shipping_cost_currency:
+                  updates.shipping_cost_currency ?? item.shipping_cost_currency,
+                cost_price_override:
+                  updates.cost_price_override ?? item.cost_price_override,
                 status: updates.status ?? item.status,
               }
             : item
