@@ -94,3 +94,11 @@ Apres merge staging → main, tester avec Playwright :
 | Finance     | `/finance/transactions` | Transactions chargees    |
 
 `browser_console_messages(level: "error")` → 0 erreur toleree.
+
+### Tests E2E obligatoires
+
+Tout sprint touchant a un workflow critique (voir `docs/current/WORKFLOWS-CRITIQUES.md`)
+doit ajouter ou mettre a jour le test E2E correspondant.
+
+Workflows critiques : Expedition, Chaine commerciale, Produits, LinkMe, Stock multi-mouvements.
+Checklist des pages : `docs/current/TESTS-CHECKLIST-PAGES.md`
