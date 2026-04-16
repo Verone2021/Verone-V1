@@ -23044,19 +23044,19 @@
     },
     {
       "tablename": "sales_order_items",
-      "policyname": "linkme_users_delete_own_order_items",
-      "permissive": "PERMISSIVE",
-      "roles": "{authenticated}",
-      "cmd": "DELETE",
-      "qual": "(EXISTS ( SELECT 1\n   FROM ((sales_orders so\n     JOIN user_app_roles uar ON (((uar.user_id = ( SELECT auth.uid() AS uid)) AND (uar.app = 'linkme'::ap"
-    },
-    {
-      "tablename": "sales_order_items",
       "policyname": "staff_delete_sales_order_items",
       "permissive": "PERMISSIVE",
       "roles": "{authenticated}",
       "cmd": "DELETE",
       "qual": "is_backoffice_user()"
+    },
+    {
+      "tablename": "sales_order_items",
+      "policyname": "linkme_users_delete_own_order_items",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM ((sales_orders so\n     JOIN user_app_roles uar ON (((uar.user_id = ( SELECT auth.uid() AS uid)) AND (uar.app = 'linkme'::ap"
     },
     {
       "tablename": "sales_order_items",
@@ -23092,14 +23092,6 @@
     },
     {
       "tablename": "sales_order_linkme_details",
-      "policyname": "staff_can_insert_linkme_details",
-      "permissive": "PERMISSIVE",
-      "roles": "{authenticated}",
-      "cmd": "INSERT",
-      "qual": null
-    },
-    {
-      "tablename": "sales_order_linkme_details",
       "policyname": "affiliates_can_insert_own_linkme_details",
       "permissive": "PERMISSIVE",
       "roles": "{authenticated}",
@@ -23108,11 +23100,11 @@
     },
     {
       "tablename": "sales_order_linkme_details",
-      "policyname": "staff_select_sales_order_linkme_details",
+      "policyname": "staff_can_insert_linkme_details",
       "permissive": "PERMISSIVE",
       "roles": "{authenticated}",
-      "cmd": "SELECT",
-      "qual": "is_backoffice_user()"
+      "cmd": "INSERT",
+      "qual": null
     },
     {
       "tablename": "sales_order_linkme_details",
@@ -23124,11 +23116,11 @@
     },
     {
       "tablename": "sales_order_linkme_details",
-      "policyname": "linkme_users_update_own_linkme_details",
+      "policyname": "staff_select_sales_order_linkme_details",
       "permissive": "PERMISSIVE",
       "roles": "{authenticated}",
-      "cmd": "UPDATE",
-      "qual": "(EXISTS ( SELECT 1\n   FROM ((sales_orders so\n     JOIN user_app_roles uar ON (((uar.user_id = ( SELECT auth.uid() AS uid)) AND (uar.app = 'linkme'::ap"
+      "cmd": "SELECT",
+      "qual": "is_backoffice_user()"
     },
     {
       "tablename": "sales_order_linkme_details",
@@ -23137,6 +23129,14 @@
       "roles": "{authenticated}",
       "cmd": "UPDATE",
       "qual": "is_backoffice_user()"
+    },
+    {
+      "tablename": "sales_order_linkme_details",
+      "policyname": "linkme_users_update_own_linkme_details",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM ((sales_orders so\n     JOIN user_app_roles uar ON (((uar.user_id = ( SELECT auth.uid() AS uid)) AND (uar.app = 'linkme'::ap"
     },
     {
       "tablename": "sales_order_shipments",
@@ -23172,19 +23172,19 @@
     },
     {
       "tablename": "sales_orders",
-      "policyname": "affiliates_select_own_orders",
-      "permissive": "PERMISSIVE",
-      "roles": "{authenticated}",
-      "cmd": "SELECT",
-      "qual": "((NOT is_backoffice_user()) AND is_own_linkme_order(id, created_by_affiliate_id, linkme_selection_id))"
-    },
-    {
-      "tablename": "sales_orders",
       "policyname": "staff_select_sales_orders",
       "permissive": "PERMISSIVE",
       "roles": "{authenticated}",
       "cmd": "SELECT",
       "qual": "is_backoffice_user()"
+    },
+    {
+      "tablename": "sales_orders",
+      "policyname": "affiliates_select_own_orders",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "((NOT is_backoffice_user()) AND is_own_linkme_order(id, created_by_affiliate_id, linkme_selection_id))"
     },
     {
       "tablename": "sales_orders",
@@ -23228,14 +23228,6 @@
     },
     {
       "tablename": "shopping_carts",
-      "policyname": "anon_cart_delete",
-      "permissive": "PERMISSIVE",
-      "roles": "{anon}",
-      "cmd": "DELETE",
-      "qual": "((session_id IS NOT NULL) AND (user_id IS NULL))"
-    },
-    {
-      "tablename": "shopping_carts",
       "policyname": "users_own_cart_delete",
       "permissive": "PERMISSIVE",
       "roles": "{authenticated}",
@@ -23244,17 +23236,25 @@
     },
     {
       "tablename": "shopping_carts",
-      "policyname": "anon_cart_insert",
+      "policyname": "anon_cart_delete",
       "permissive": "PERMISSIVE",
       "roles": "{anon}",
-      "cmd": "INSERT",
-      "qual": null
+      "cmd": "DELETE",
+      "qual": "((session_id IS NOT NULL) AND (user_id IS NULL))"
     },
     {
       "tablename": "shopping_carts",
       "policyname": "users_own_cart_insert",
       "permissive": "PERMISSIVE",
       "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null
+    },
+    {
+      "tablename": "shopping_carts",
+      "policyname": "anon_cart_insert",
+      "permissive": "PERMISSIVE",
+      "roles": "{anon}",
       "cmd": "INSERT",
       "qual": null
     },
@@ -23676,14 +23676,6 @@
     },
     {
       "tablename": "user_app_roles",
-      "policyname": "privileged_view_all_roles",
-      "permissive": "PERMISSIVE",
-      "roles": "{authenticated}",
-      "cmd": "SELECT",
-      "qual": "is_back_office_privileged()"
-    },
-    {
-      "tablename": "user_app_roles",
       "policyname": "Users can view their own roles",
       "permissive": "PERMISSIVE",
       "roles": "{authenticated}",
@@ -23697,6 +23689,14 @@
       "roles": "{public}",
       "cmd": "SELECT",
       "qual": "is_enseigne_admin_for(enseigne_id)"
+    },
+    {
+      "tablename": "user_app_roles",
+      "policyname": "privileged_view_all_roles",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "is_back_office_privileged()"
     },
     {
       "tablename": "user_app_roles",
@@ -23724,19 +23724,19 @@
     },
     {
       "tablename": "user_profiles",
-      "policyname": "users_own_user_profiles",
-      "permissive": "PERMISSIVE",
-      "roles": "{authenticated}",
-      "cmd": "ALL",
-      "qual": "(user_id = ( SELECT auth.uid() AS uid))"
-    },
-    {
-      "tablename": "user_profiles",
       "policyname": "backoffice_full_access_user_profiles",
       "permissive": "PERMISSIVE",
       "roles": "{authenticated}",
       "cmd": "ALL",
       "qual": "( SELECT is_backoffice_user() AS is_backoffice_user)"
+    },
+    {
+      "tablename": "user_profiles",
+      "policyname": "users_own_user_profiles",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "ALL",
+      "qual": "(user_id = ( SELECT auth.uid() AS uid))"
     },
     {
       "tablename": "user_sessions",
@@ -25071,6 +25071,12 @@
       "action_timing": "BEFORE"
     },
     {
+      "trigger_name": "trigger_before_update_reception",
+      "event_manipulation": "UPDATE",
+      "event_object_table": "purchase_order_receptions",
+      "action_timing": "BEFORE"
+    },
+    {
       "trigger_name": "trigger_reception_update_stock",
       "event_manipulation": "INSERT",
       "event_object_table": "purchase_order_receptions",
@@ -25102,24 +25108,6 @@
     },
     {
       "trigger_name": "recalculate_purchase_order_totals_trigger",
-      "event_manipulation": "UPDATE",
-      "event_object_table": "purchase_order_items",
-      "action_timing": "AFTER"
-    },
-    {
-      "trigger_name": "trig_recalc_po_totals",
-      "event_manipulation": "INSERT",
-      "event_object_table": "purchase_order_items",
-      "action_timing": "AFTER"
-    },
-    {
-      "trigger_name": "trig_recalc_po_totals",
-      "event_manipulation": "DELETE",
-      "event_object_table": "purchase_order_items",
-      "action_timing": "AFTER"
-    },
-    {
-      "trigger_name": "trig_recalc_po_totals",
       "event_manipulation": "UPDATE",
       "event_object_table": "purchase_order_items",
       "action_timing": "AFTER"
@@ -25182,6 +25170,18 @@
       "trigger_name": "trigger_storage_pricing_updated_at",
       "event_manipulation": "UPDATE",
       "event_object_table": "storage_pricing_tiers",
+      "action_timing": "BEFORE"
+    },
+    {
+      "trigger_name": "trigger_before_delete_shipment",
+      "event_manipulation": "DELETE",
+      "event_object_table": "sales_order_shipments",
+      "action_timing": "BEFORE"
+    },
+    {
+      "trigger_name": "trigger_before_update_shipment",
+      "event_manipulation": "UPDATE",
+      "event_object_table": "sales_order_shipments",
       "action_timing": "BEFORE"
     },
     {
@@ -25607,6 +25607,12 @@
     {
       "trigger_name": "trigger_so_delayed_notification",
       "event_manipulation": "UPDATE",
+      "event_object_table": "sales_orders",
+      "action_timing": "AFTER"
+    },
+    {
+      "trigger_name": "trigger_so_insert_validated_forecast",
+      "event_manipulation": "INSERT",
       "event_object_table": "sales_orders",
       "action_timing": "AFTER"
     },
