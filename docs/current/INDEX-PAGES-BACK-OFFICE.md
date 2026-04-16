@@ -1,9 +1,9 @@
 # Index Master - Pages Back Office Verone
 
-**Total pages** : 165
-**Total modules** : 22
-**Derniere mise a jour** : 2026-03-14
-**Genere par** : Audit code vs index (3 agents paralleles)
+**Total pages** : 147
+**Total modules** : 18
+**Derniere mise a jour** : 2026-04-16
+**Genere par** : Resync code vs index (find page.tsx)
 
 ---
 
@@ -11,17 +11,18 @@
 
 | Type              | Count   | Pourcentage |
 | ----------------- | ------- | ----------- |
-| **List**          | 52      | 31.5%       |
-| **Detail**        | 36      | 21.8%       |
-| **Hub/Dashboard** | 18      | 10.9%       |
-| **Analytics**     | 16      | 9.7%        |
-| **Settings**      | 12      | 7.3%        |
-| **Form**          | 10      | 6.1%        |
-| **Public**        | 9       | 5.5%        |
-| **Special**       | 8       | 4.8%        |
-| **Messaging**     | 3       | 1.8%        |
-| **Admin**         | 1       | 0.6%        |
-| **Total**         | **165** | 100%        |
+| **List**          | 44      | 29.9%       |
+| **Detail**        | 34      | 23.1%       |
+| **Hub/Dashboard** | 16      | 10.9%       |
+| **Analytics**     | 16      | 10.9%       |
+| **Settings**      | 11      | 7.5%        |
+| **Form**          | 9       | 6.1%        |
+| **Admin**         | 4       | 2.7%        |
+| **Special**       | 4       | 2.7%        |
+| **Messaging**     | 3       | 2.0%        |
+| **Public**        | 4       | 2.7%        |
+| **Other**         | 2       | 1.4%        |
+| **Total**         | **147** | 100%        |
 
 ---
 
@@ -35,32 +36,32 @@
 
 ---
 
-### 2. PRODUITS (19 pages)
+### 2. PRODUITS (18 pages)
 
-| Route                                               | Type      | Description             |
-| --------------------------------------------------- | --------- | ----------------------- |
-| `/produits`                                         | Hub       | 4 KPIs + navigation     |
-| `/produits/sourcing`                                | List      | Sourcing fournisseurs   |
-| `/produits/sourcing/produits/create`                | Form      | Creer produit sourcing  |
-| `/produits/sourcing/produits/[id]`                  | Detail    | Detail produit sourcing |
-| `/produits/sourcing/echantillons`                   | List      | Echantillons sourcing   |
-| `/produits/catalogue`                               | List      | Catalogue complet       |
-| `/produits/catalogue/nouveau`                       | Form      | Creer produit catalogue |
-| `/produits/catalogue/[productId]`                   | Detail    | Detail produit          |
-| `/produits/catalogue/archived`                      | List      | Produits archives       |
-| `/produits/catalogue/stocks`                        | Analytics | Etat stocks par produit |
-| `/produits/catalogue/categories`                    | List      | Categories              |
-| `/produits/catalogue/categories/[categoryId]`       | Detail    | Detail categorie        |
-| `/produits/catalogue/subcategories/[subcategoryId]` | Detail    | Detail sous-categorie   |
-| `/produits/catalogue/collections`                   | List      | Collections             |
-| `/produits/catalogue/collections/[collectionId]`    | Detail    | Detail collection       |
-| `/produits/catalogue/families/[familyId]`           | Detail    | Detail famille          |
-| `/produits/catalogue/variantes`                     | List      | Groupes variantes       |
-| `/produits/catalogue/variantes/[groupId]`           | Detail    | Detail groupe variante  |
+| Route                                               | Type   | Description             |
+| --------------------------------------------------- | ------ | ----------------------- |
+| `/produits`                                         | Hub    | 4 KPIs + navigation     |
+| `/produits/affilies`                                | List   | Produits affilies       |
+| `/produits/sourcing`                                | List   | Sourcing fournisseurs   |
+| `/produits/sourcing/produits/create`                | Form   | Creer produit sourcing  |
+| `/produits/sourcing/produits/[id]`                  | Detail | Detail produit sourcing |
+| `/produits/sourcing/echantillons`                   | List   | Echantillons sourcing   |
+| `/produits/catalogue`                               | List   | Catalogue complet       |
+| `/produits/catalogue/nouveau`                       | Form   | Creer produit catalogue |
+| `/produits/catalogue/[productId]`                   | Detail | Detail produit          |
+| `/produits/catalogue/archived`                      | List   | Produits archives       |
+| `/produits/catalogue/categories`                    | List   | Categories              |
+| `/produits/catalogue/categories/[categoryId]`       | Detail | Detail categorie        |
+| `/produits/catalogue/subcategories/[subcategoryId]` | Detail | Detail sous-categorie   |
+| `/produits/catalogue/collections`                   | List   | Collections             |
+| `/produits/catalogue/collections/[collectionId]`    | Detail | Detail collection       |
+| `/produits/catalogue/families/[familyId]`           | Detail | Detail famille          |
+| `/produits/catalogue/variantes`                     | List   | Groupes variantes       |
+| `/produits/catalogue/variantes/[groupId]`           | Detail | Detail groupe variante  |
 
 ---
 
-### 3. STOCKS (14 pages)
+### 3. STOCKS (13 pages)
 
 | Route                        | Type      | Description                               |
 | ---------------------------- | --------- | ----------------------------------------- |
@@ -68,7 +69,6 @@
 | `/stocks/inventaire`         | List      | Inventaire complet                        |
 | `/stocks/mouvements`         | List      | Historique mouvements                     |
 | `/stocks/alertes`            | List      | Alertes stock (rupture, critique, faible) |
-| `/stocks/produits`           | List      | Produits par localisation                 |
 | `/stocks/stockage`           | Detail    | Map stockage                              |
 | `/stocks/entrees`            | List      | Entrees stock                             |
 | `/stocks/receptions`         | List      | Receptions fournisseurs                   |
@@ -81,11 +81,10 @@
 
 ---
 
-### 4. COMMANDES (3 pages)
+### 4. COMMANDES (2 pages)
 
 | Route                     | Type | Description                     |
 | ------------------------- | ---- | ------------------------------- |
-| `/commandes`              | Hub  | Hub commandes                   |
 | `/commandes/clients`      | List | Commandes clients (ventes)      |
 | `/commandes/fournisseurs` | List | Commandes fournisseurs (achats) |
 
@@ -111,13 +110,14 @@
 
 ---
 
-### 6. LINKME / CANAUX DE VENTE (41 pages)
+### 6. CANAUX DE VENTE (39 pages)
 
 | Route                                                                    | Type      | Description               |
 | ------------------------------------------------------------------------ | --------- | ------------------------- |
 | `/canaux-vente`                                                          | Hub       | Hub canaux de vente       |
 | `/canaux-vente/prix-clients`                                             | Settings  | Prix personnalises        |
 | `/canaux-vente/google-merchant`                                          | Settings  | Integration GMC           |
+| `/canaux-vente/meta`                                                     | Settings  | Integration Meta Commerce |
 | `/canaux-vente/site-internet`                                            | Settings  | Site e-commerce           |
 | `/canaux-vente/site-internet/produits/[id]`                              | Detail    | Detail produit site       |
 | `/canaux-vente/linkme`                                                   | Hub       | Hub LinkMe                |
@@ -156,7 +156,7 @@
 
 ---
 
-### 7. FINANCE (27 pages)
+### 7. FINANCE (28 pages)
 
 | Route                                | Type      | Description              |
 | ------------------------------------ | --------- | ------------------------ |
@@ -167,6 +167,8 @@
 | `/finance/transactions`              | List      | Transactions bancaires   |
 | `/finance/justificatifs`             | List      | Justificatifs            |
 | `/finance/livres`                    | Analytics | Livres comptables        |
+| `/finance/echeancier`                | List      | Echeancier paiements     |
+| `/finance/immobilisations`           | List      | Immobilisations          |
 | `/finance/admin/reset`               | Admin     | Reinitialisation         |
 | `/finance/admin/cloture`             | Admin     | Cloture exercice         |
 | `/finance/annexe`                    | List      | Documents annexes        |
@@ -212,7 +214,7 @@
 
 ---
 
-### 10. PARAMETRES (9 pages)
+### 10. PARAMETRES (8 pages)
 
 | Route                               | Type     | Description          |
 | ----------------------------------- | -------- | -------------------- |
@@ -220,11 +222,10 @@
 | `/parametres/emails`                | List     | Templates email      |
 | `/parametres/emails/[slug]/edit`    | Form     | Editer template      |
 | `/parametres/emails/[slug]/preview` | Settings | Preview template     |
+| `/parametres/notifications`         | Settings | Config notifications |
 | `/parametres/webhooks`              | List     | Webhooks             |
 | `/parametres/webhooks/new`          | Form     | Creer webhook        |
 | `/parametres/webhooks/[id]/edit`    | Form     | Editer webhook       |
-| `/parametres/notifications`         | Settings | Config notifications |
-| `/parametres/[...autres]`           | Settings | Autres parametres    |
 
 ---
 
@@ -238,25 +239,16 @@
 
 ---
 
-### 12. ORGANISATION (3 pages)
+### 12. MESSAGERIE (2 pages)
 
-| Route                    | Type | Description              |
-| ------------------------ | ---- | ------------------------ |
-| `/organisation`          | Hub  | Parametres organisation  |
-| `/organisation/all`      | List | Toutes les organisations |
-| `/organisation/contacts` | List | Contacts organisation    |
-
----
-
-### 13. MESSAGERIE (1 page)
-
-| Route       | Type      | Description        |
-| ----------- | --------- | ------------------ |
-| `/messages` | Messaging | Messagerie globale |
+| Route                   | Type      | Description            |
+| ----------------------- | --------- | ---------------------- |
+| `/messages`             | Messaging | Messagerie globale     |
+| `/messages/[categorie]` | Messaging | Messages par categorie |
 
 ---
 
-### 14. NOTIFICATIONS (1 page)
+### 13. NOTIFICATIONS (1 page)
 
 | Route            | Type | Description          |
 | ---------------- | ---- | -------------------- |
@@ -264,7 +256,7 @@
 
 ---
 
-### 15. PROFILE (1 page)
+### 14. PROFILE (1 page)
 
 | Route      | Type     | Description        |
 | ---------- | -------- | ------------------ |
@@ -272,64 +264,40 @@
 
 ---
 
-### 16. LIVRAISONS (2 pages)
+### 15. PRISES DE CONTACT (1 page)
 
-| Route              | Type   | Description      |
-| ------------------ | ------ | ---------------- |
-| `/livraisons`      | List   | Livraisons       |
-| `/livraisons/[id]` | Detail | Detail livraison |
-
----
-
-### 17. PRISES DE CONTACT (2 pages)
-
-| Route                  | Type   | Description     |
-| ---------------------- | ------ | --------------- |
-| `/prises-contact`      | List   | Leads/prospects |
-| `/prises-contact/[id]` | Detail | Detail lead     |
+| Route                  | Type   | Description |
+| ---------------------- | ------ | ----------- |
+| `/prises-contact/[id]` | Detail | Detail lead |
 
 ---
 
-### 18. AVOIRS (2 pages)
+### 16. DEVIS (2 pages)
 
-| Route          | Type   | Description  |
-| -------------- | ------ | ------------ |
-| `/avoirs`      | List   | Avoirs       |
-| `/avoirs/[id]` | Detail | Detail avoir |
-
----
-
-### 19. DEVIS (2 pages)
-
-| Route            | Type   | Description                                       |
-| ---------------- | ------ | ------------------------------------------------- |
-| `/devis`         | List   | Devis (redirect → /factures?tab=devis)            |
-| `/devis/nouveau` | Form   | Creation devis (choix: depuis commande ou vierge) |
-| `/devis/[id]`    | Detail | Detail devis                                      |
+| Route            | Type | Description                                       |
+| ---------------- | ---- | ------------------------------------------------- |
+| `/devis`         | List | Devis (redirect vers /factures?tab=devis)         |
+| `/devis/nouveau` | Form | Creation devis (choix: depuis commande ou vierge) |
 
 ---
 
-### 20. VENTES (1 page)
+### 17. ACHATS & VENTES (2 pages)
 
 | Route     | Type      | Description      |
 | --------- | --------- | ---------------- |
+| `/achats` | Hub       | Hub achats       |
 | `/ventes` | Dashboard | Dashboard ventes |
 
 ---
 
-### 21. PAGES PUBLIQUES (9 pages)
+### 18. PAGES SYSTEME (4 pages)
 
-| Route                                   | Type   | Description           |
-| --------------------------------------- | ------ | --------------------- |
-| `/`                                     | Public | Redirection login     |
-| `/login`                                | Public | Authentification      |
-| `/demo-stock-ui`                        | Demo   | UI stocks             |
-| `/demo-universal-selector`              | Demo   | Selecteur universel   |
-| `/test-purchase-order`                  | Test   | Commandes fournisseur |
-| `/test-components/button-unified`       | Test   | Button unifie         |
-| `/test-client-enseigne-selector`        | Test   | Selecteur client      |
-| `/test-client-enseigne-selector-simple` | Test   | Selecteur simplifie   |
-| `/module-inactive`                      | Info   | Module desactive      |
+| Route              | Type   | Description        |
+| ------------------ | ------ | ------------------ |
+| `/`                | Public | Redirection login  |
+| `/login`           | Public | Authentification   |
+| `/module-inactive` | Info   | Module desactive   |
+| `/unauthorized`    | Info   | Acces non autorise |
 
 ---
 
@@ -350,27 +318,24 @@ Les routes `/admin/**` requierent `owner`. Les routes `/finance/admin/**` requie
 ## Distribution par Module
 
 ```
-canaux-vente/linkme:    41 pages (24.8%)
-finance:                27 pages (16.4%)
-produits:               19 pages (11.5%)
-stocks:                 14 pages (8.5%)
-contacts-organisations: 13 pages (7.9%)
-parametres:              9 pages (5.5%)
-factures:                5 pages (3.0%)
-commandes:               3 pages (1.8%)
-admin:                   3 pages (1.8%)
-consultations:           3 pages (1.8%)
-organisation:            3 pages (1.8%)
-livraisons:              2 pages (1.2%)
-prises-contact:          2 pages (1.2%)
-avoirs:                  2 pages (1.2%)
-devis:                   2 pages (1.2%)
-dashboard:               1 page  (0.6%)
-notifications:           1 page  (0.6%)
-profile:                 1 page  (0.6%)
-messages:                1 page  (0.6%)
-ventes:                  1 page  (0.6%)
-public/test:             9 pages (5.5%)
+canaux-vente:           39 pages (26.5%)
+finance:                28 pages (19.0%)
+produits:               18 pages (12.2%)
+contacts-organisations: 13 pages (8.8%)
+stocks:                 13 pages (8.8%)
+parametres:              8 pages (5.4%)
+factures:                6 pages (4.1%)
+admin:                   3 pages (2.0%)
+consultations:           3 pages (2.0%)
+commandes:               2 pages (1.4%)
+devis:                   2 pages (1.4%)
+messagerie:              2 pages (1.4%)
+achats-ventes:           2 pages (1.4%)
+dashboard:               1 page  (0.7%)
+notifications:           1 page  (0.7%)
+profile:                 1 page  (0.7%)
+prises-contact:          1 page  (0.7%)
+systeme:                 4 pages (2.7%)
 ```
 
 ---
@@ -387,6 +352,7 @@ public/test:             9 pages (5.5%)
                                 -> /produits/catalogue/[productId]
                                 -> /produits/catalogue/categories
                                 -> /produits/catalogue/variantes
+          -> /produits/affilies
 ```
 
 ### Workflow Stock
@@ -402,8 +368,8 @@ public/test:             9 pages (5.5%)
 ### Workflow Commandes
 
 ```
-/commandes -> /commandes/clients
-           -> /commandes/fournisseurs
+/commandes/clients
+/commandes/fournisseurs
 ```
 
 ### Workflow Finance
@@ -414,6 +380,8 @@ public/test:             9 pages (5.5%)
          -> /finance/rapprochement
          -> /finance/tresorerie
          -> /finance/tva
+         -> /finance/echeancier
+         -> /finance/immobilisations
          -> /finance/documents -> /finance/documents/achats
                                -> /finance/documents/recettes
                                -> /finance/documents/bilan
@@ -433,4 +401,4 @@ public/test:             9 pages (5.5%)
 
 ---
 
-**Derniere mise a jour** : 2026-03-14 par Claude (audit code vs index)
+**Derniere mise a jour** : 2026-04-16 par Claude (resync find page.tsx)
