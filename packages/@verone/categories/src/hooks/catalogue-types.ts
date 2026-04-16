@@ -56,6 +56,11 @@ export interface Product {
   cost_net_last?: number | null;
   cost_net_min?: number | null;
   cost_net_max?: number | null;
+  margin_percentage?: number | null;
+  completion_percentage?: number | null;
+  completion_status?: string | null;
+  target_margin_percentage?: number | null;
+  target_price?: number | null;
 }
 
 export interface Category {
@@ -82,6 +87,9 @@ export interface CatalogueFilters {
   statuses?: string[];
   suppliers?: string[];
   missingFields?: string[];
+  stockLevels?: string[];
+  conditions?: string[];
+  completionLevels?: string[];
   priceMin?: number;
   priceMax?: number;
   limit?: number;

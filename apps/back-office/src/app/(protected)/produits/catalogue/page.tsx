@@ -136,7 +136,13 @@ export default function CataloguePage() {
                   }}
                 />
               ) : (
-                <CatalogueListView products={currentProducts} />
+                <CatalogueListView
+                  products={currentProducts}
+                  activeTab={ctx.activeTab}
+                  getPrimaryImage={ctx.getPrimaryImage}
+                  getIncompletePrimaryImage={ctx.getIncompletePrimaryImage}
+                  onQuickEdit={ctx.handleQuickEdit}
+                />
               )}
 
               <CatalogueEmptyState

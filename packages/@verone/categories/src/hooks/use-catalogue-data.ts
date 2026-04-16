@@ -58,6 +58,8 @@ const PRODUCT_SELECT = `
   id, sku, name, slug,
   cost_price, cost_price_count, product_type, stock_real,
   cost_net_avg, cost_net_last, cost_net_min, cost_net_max,
+  margin_percentage, completion_percentage, completion_status,
+  target_margin_percentage, target_price,
   stock_status, product_status, condition,
   subcategory_id, supplier_id, brand,
   has_images, dimensions, weight,
@@ -108,6 +110,34 @@ export async function loadProducts(
 
   if (filters.suppliers && filters.suppliers.length > 0) {
     query = query.in('supplier_id', filters.suppliers);
+  }
+
+  if (filters.conditions && filters.conditions.length > 0) {
+    query = query.in('condition', filters.conditions);
+  }
+
+  if (filters.stockLevels && filters.stockLevels.length > 0) {
+    const parts: string[] = [];
+    if (filters.stockLevels.includes('in_stock'))
+      parts.push('stock_real.gt.10');
+    if (filters.stockLevels.includes('low_stock'))
+      parts.push('and(stock_real.gt.0,stock_real.lte.10)');
+    if (filters.stockLevels.includes('out_of_stock'))
+      parts.push('stock_real.eq.0,stock_real.is.null');
+    if (parts.length > 0) query = query.or(parts.join(','));
+  }
+
+  if (filters.completionLevels && filters.completionLevels.length > 0) {
+    const parts: string[] = [];
+    if (filters.completionLevels.includes('high'))
+      parts.push('completion_percentage.gt.80');
+    if (filters.completionLevels.includes('medium'))
+      parts.push(
+        'and(completion_percentage.gte.50,completion_percentage.lte.80)'
+      );
+    if (filters.completionLevels.includes('low'))
+      parts.push('completion_percentage.lt.50,completion_percentage.is.null');
+    if (parts.length > 0) query = query.or(parts.join(','));
   }
 
   const limit = filters.limit ?? defaultLimit;
