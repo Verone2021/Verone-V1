@@ -40,6 +40,8 @@ export interface RightColumnProps {
   // Status
   isUpdatingStatus: boolean;
   onStatusChange: (newStatus: string) => void;
+  // Shipment modal
+  onOpenShipmentModal: () => void;
   // Contact dialog
   onOpenContactDialog: (role: 'responsable' | 'billing' | 'delivery') => void;
   // History
@@ -60,6 +62,7 @@ export function RightColumn({
   details,
   isUpdatingStatus,
   onStatusChange,
+  onOpenShipmentModal,
   onOpenContactDialog,
   historyEvents,
   historyLoading,
@@ -131,13 +134,9 @@ export function RightColumn({
             )}
             {order.status === 'validated' && (
               <>
-                <Button
-                  className="w-full gap-2"
-                  disabled={isUpdatingStatus}
-                  onClick={() => onStatusChange('shipped')}
-                >
+                <Button className="w-full gap-2" onClick={onOpenShipmentModal}>
                   <Truck className="h-4 w-4" />
-                  {isUpdatingStatus ? 'En cours...' : 'Marquer expédiée'}
+                  Expédier
                 </Button>
                 <Button
                   variant="outline"
