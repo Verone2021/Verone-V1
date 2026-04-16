@@ -7,7 +7,6 @@ import type { ShipmentItem } from '@verone/types';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card } from '@verone/ui';
-import { IconButton } from '@verone/ui';
 import { Input } from '@verone/ui';
 import {
   Table,
@@ -252,14 +251,25 @@ export function StepStock({
                         />
                       </Link>
                       <div>
-                        <Link
-                          href={`/produits/catalogue/${item.product_id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-medium text-sm hover:text-verone-primary hover:underline"
-                        >
-                          {item.product_name}
-                        </Link>
+                        <div className="flex items-center gap-1.5">
+                          <Link
+                            href={`/produits/catalogue/${item.product_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-sm hover:text-verone-primary hover:underline"
+                          >
+                            {item.product_name}
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => onOpenAdjustment(item)}
+                            aria-label="Ajuster le stock"
+                            title="Ajuster le stock"
+                            className="text-gray-400 hover:text-verone-primary transition-colors"
+                          >
+                            <Settings className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                         <p className="text-xs text-muted-foreground">
                           {item.product_sku}
                         </p>
@@ -294,24 +304,15 @@ export function StepStock({
                     </span>
                   </TableCell>
                   <TableCell className="text-center">
-                    <div className="flex items-center justify-center gap-1.5">
-                      <span
-                        className={
-                          item.stock_available < item.quantity_remaining
-                            ? 'text-red-600 font-bold'
-                            : 'text-emerald-600 font-medium'
-                        }
-                      >
-                        {item.stock_available}
-                      </span>
-                      <IconButton
-                        icon={Settings}
-                        variant="outline"
-                        size="sm"
-                        label="Ajuster le stock"
-                        onClick={() => onOpenAdjustment(item)}
-                      />
-                    </div>
+                    <span
+                      className={
+                        item.stock_available < item.quantity_remaining
+                          ? 'text-red-600 font-bold'
+                          : 'text-emerald-600 font-medium'
+                      }
+                    >
+                      {item.stock_available}
+                    </span>
                   </TableCell>
                   <TableCell className="text-center">
                     <Input
@@ -325,7 +326,7 @@ export function StepStock({
                           e.target.value
                         )
                       }
-                      className="w-16 h-8 text-center mx-auto border-indigo-200 focus:border-indigo-500"
+                      className="w-20 h-8 text-center mx-auto border-indigo-200 focus:border-indigo-500"
                     />
                   </TableCell>
                 </TableRow>
