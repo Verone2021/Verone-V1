@@ -34,6 +34,7 @@ export function SalesOrderShipmentModal({
   const [enrichedOrder, setEnrichedOrder] =
     useState<SalesOrderForShipment | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (open && order?.id) {
@@ -43,11 +44,15 @@ export function SalesOrderShipmentModal({
         setLoading(false);
       });
     }
-  }, [open, order?.id, loadSalesOrderForShipment]);
+  }, [open, order?.id, refreshKey, loadSalesOrderForShipment]);
 
   const handleSuccess = () => {
     onSuccess?.();
     onClose();
+  };
+
+  const handleRefetch = () => {
+    setRefreshKey(k => k + 1);
   };
 
   return (
@@ -77,6 +82,7 @@ export function SalesOrderShipmentModal({
             salesOrder={enrichedOrder}
             onSuccess={handleSuccess}
             onCancel={onClose}
+            onRefetch={handleRefetch}
           />
         ) : (
           <div className="text-center py-8 text-red-600">
