@@ -54,6 +54,7 @@
 - `docs/current/database/schema/` — Schema DB par domaine (SOURCE DE VERITE)
 - `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md` — Composants et hooks
 - `docs/current/DEPENDANCES-PACKAGES.md` — Dependances inter-packages
+- `docs/current/WORKFLOWS-CRITIQUES.md` — 5 workflows critiques + mapping tests E2E
 - `apps/back-office/CLAUDE.md` — Regles specifiques back-office
 - `apps/linkme/CLAUDE.md` — Regles specifiques LinkMe
 - `apps/site-internet/CLAUDE.md` — Regles specifiques site-internet

@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import { AlertCircle, FileEdit } from 'lucide-react';
 
 import {
@@ -18,6 +20,7 @@ import {
   QuoteCreateFromOrderModal,
   type IOrderForDocument,
 } from '@verone/finance/components';
+import { SalesOrderShipmentModal } from '@verone/orders';
 
 import type { NewContactFormData } from '../../../components/contacts/NewContactForm';
 
@@ -29,6 +32,8 @@ import { EditDialogs } from './components/EditDialogs';
 import { OrderHeader } from './components/OrderHeader';
 
 export default function LinkMeOrderDetailsPage() {
+  const [showShipmentModal, setShowShipmentModal] = useState(false);
+
   const {
     order,
     setOrder,
@@ -243,6 +248,7 @@ export default function LinkMeOrderDetailsPage() {
           onStatusChange={(newStatus: string) => {
             void handleStatusChange(newStatus).catch(err => console.error(err));
           }}
+          onOpenShipmentModal={() => setShowShipmentModal(true)}
           onOpenContactDialog={handleOpenContactDialog}
           historyEvents={historyEvents}
           historyLoading={historyLoading}
@@ -299,6 +305,19 @@ export default function LinkMeOrderDetailsPage() {
           order={orderForDocument}
           open={showQuoteModal}
           onOpenChange={setShowQuoteModal}
+        />
+      )}
+
+      {(order.status === 'validated' ||
+        order.status === 'partially_shipped') && (
+        <SalesOrderShipmentModal
+          order={{ id: order.id, order_number: order.order_number }}
+          open={showShipmentModal}
+          onClose={() => setShowShipmentModal(false)}
+          onSuccess={() => {
+            setShowShipmentModal(false);
+            window.location.reload();
+          }}
         />
       )}
 
