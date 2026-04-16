@@ -11,66 +11,19 @@ import type { QuickEditField } from '@verone/products';
 import { Badge } from '@verone/ui';
 import { cn } from '@verone/utils';
 import type { Database } from '@verone/types';
-import { Package, ArrowUpDown, ArrowUp, ArrowDown, Pencil } from 'lucide-react';
+import { Package, Pencil } from 'lucide-react';
+
+import {
+  type SortField,
+  type SortDir,
+  STATUS_CONFIG,
+  formatDimensions,
+  completionColor,
+  stockColor,
+  SortableHeader,
+} from './catalogue-list-helpers';
 
 type ProductImage = Database['public']['Tables']['product_images']['Row'];
-
-type SortField =
-  | 'name'
-  | 'supplier'
-  | 'subcategory'
-  | 'weight'
-  | 'stock_real'
-  | 'cost_price'
-  | 'margin_percentage'
-  | 'completion_percentage'
-  | 'product_status';
-
-type SortDir = 'asc' | 'desc';
-
-const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  active: {
-    label: 'Actif',
-    className: 'bg-green-100 text-green-800 border-green-300',
-  },
-  preorder: {
-    label: 'Precommande',
-    className: 'bg-blue-100 text-blue-800 border-blue-300',
-  },
-  discontinued: {
-    label: 'Arrete',
-    className: 'bg-gray-100 text-gray-800 border-gray-300',
-  },
-  draft: {
-    label: 'Brouillon',
-    className: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-  },
-};
-
-function formatDimensions(
-  dims: Record<string, unknown> | undefined | null
-): string {
-  if (!dims) return '-';
-  const l = dims.length_cm ?? dims.length;
-  const w = dims.width_cm ?? dims.width;
-  const h = dims.height_cm ?? dims.height;
-  if (l == null && w == null && h == null) return '-';
-  return `${l ?? '?'} x ${w ?? '?'} x ${h ?? '?'}`;
-}
-
-function completionColor(pct: number | null | undefined): string {
-  if (pct == null) return 'text-gray-400';
-  if (pct >= 80) return 'text-green-600';
-  if (pct >= 50) return 'text-orange-600';
-  return 'text-red-600';
-}
-
-function stockColor(stock: number | null | undefined): string {
-  if (stock == null) return 'text-gray-400';
-  if (stock > 10) return 'text-green-600';
-  if (stock > 0) return 'text-orange-600';
-  return 'text-red-600';
-}
 
 interface ProductRowProps {
   product: Product;
@@ -111,7 +64,6 @@ const ProductRow = memo(function ProductRow({
       className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
       onClick={() => onRowClick(product.id)}
     >
-      {/* Photo */}
       <td className="py-2 px-2 w-12">
         <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-50 flex items-center justify-center">
           {primaryImage?.public_url && !imageLoading ? (
@@ -128,7 +80,6 @@ const ProductRow = memo(function ProductRow({
         </div>
       </td>
 
-      {/* Nom + SKU */}
       <td className="py-2 px-2 min-w-[180px]">
         <div className="font-medium text-sm text-black truncate max-w-[220px]">
           {product.name}
@@ -136,7 +87,6 @@ const ProductRow = memo(function ProductRow({
         <div className="text-[10px] text-gray-500 font-mono">{product.sku}</div>
       </td>
 
-      {/* Fournisseur */}
       <td className="py-2 px-2">
         <div className="flex items-center gap-1">
           <span className="text-sm text-gray-700 truncate max-w-[120px]">
@@ -155,7 +105,6 @@ const ProductRow = memo(function ProductRow({
         </div>
       </td>
 
-      {/* Sous-categorie */}
       <td className="py-2 px-2">
         <div className="flex items-center gap-1">
           <span className="text-sm text-gray-700 truncate max-w-[100px]">
@@ -174,7 +123,6 @@ const ProductRow = memo(function ProductRow({
         </div>
       </td>
 
-      {/* Poids */}
       <td className="py-2 px-2 text-right">
         <div className="flex items-center justify-end gap-1">
           <span className="text-sm text-gray-700">
@@ -193,13 +141,10 @@ const ProductRow = memo(function ProductRow({
         </div>
       </td>
 
-      {/* Dimensions */}
       <td className="py-2 px-2 text-center">
         <div className="flex items-center justify-center gap-1">
           <span className="text-xs text-gray-600">
-            {formatDimensions(
-              product.dimensions as Record<string, unknown> | undefined
-            )}
+            {formatDimensions(product.dimensions)}
           </span>
           {product.dimensions == null && onQuickEdit && (
             <button
@@ -214,7 +159,6 @@ const ProductRow = memo(function ProductRow({
         </div>
       </td>
 
-      {/* Stock */}
       <td className="py-2 px-2 text-right">
         <span
           className={cn(
@@ -226,7 +170,6 @@ const ProductRow = memo(function ProductRow({
         </span>
       </td>
 
-      {/* Prix HT */}
       <td className="py-2 px-2 text-right">
         <div className="flex items-center justify-end gap-1">
           <span className="text-sm font-semibold text-black">
@@ -247,7 +190,6 @@ const ProductRow = memo(function ProductRow({
         </div>
       </td>
 
-      {/* Marge % */}
       <td className="py-2 px-2 text-right">
         <span
           className={cn(
@@ -268,7 +210,6 @@ const ProductRow = memo(function ProductRow({
         </span>
       </td>
 
-      {/* Completude */}
       <td className="py-2 px-2 text-center">
         <div className="flex items-center justify-center gap-1">
           <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
@@ -295,7 +236,6 @@ const ProductRow = memo(function ProductRow({
         </div>
       </td>
 
-      {/* Statut */}
       <td className="py-2 px-2">
         <Badge
           className={cn(
@@ -309,48 +249,6 @@ const ProductRow = memo(function ProductRow({
     </tr>
   );
 });
-
-interface SortableHeaderProps {
-  label: string;
-  field: SortField;
-  currentSort: SortField;
-  currentDir: SortDir;
-  onSort: (field: SortField) => void;
-  className?: string;
-}
-
-function SortableHeader({
-  label,
-  field,
-  currentSort,
-  currentDir,
-  onSort,
-  className,
-}: SortableHeaderProps) {
-  const isActive = currentSort === field;
-  return (
-    <th
-      className={cn(
-        'py-2 px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-black select-none',
-        className
-      )}
-      onClick={() => onSort(field)}
-    >
-      <div className="flex items-center gap-1">
-        {label}
-        {isActive ? (
-          currentDir === 'asc' ? (
-            <ArrowUp className="h-3 w-3" />
-          ) : (
-            <ArrowDown className="h-3 w-3" />
-          )
-        ) : (
-          <ArrowUpDown className="h-3 w-3 opacity-30" />
-        )}
-      </div>
-    </th>
-  );
-}
 
 interface CatalogueListViewProps {
   products: Product[];
