@@ -1,6 +1,6 @@
 # Back-Office — Documentation App
 
-_Generated: 2026-04-16 02:23_
+_Generated: 2026-04-16 15:23_
 
 ## Pages (147)
 
@@ -279,7 +279,7 @@ _Generated: 2026-04-16 02:23_
 | `/api/transactions/update-vat` | POST |
 | `/api/webhooks/packlink` | POST |
 
-## Components in app (345)
+## Components in app (346)
 
 | Fichier |
 |---------|
@@ -316,6 +316,7 @@ _Generated: 2026-04-16 02:23_
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/components/RestaurantSection.tsx` |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/components/StatusActionsCard.tsx` |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/components/TotalsSection.tsx` |
+| `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/AddProductToOrderModal.tsx` |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/ContactSelectionDialog.tsx` |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/EditBillingDialog.tsx` |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/EditDeliveryAddressDialog.tsx` |
