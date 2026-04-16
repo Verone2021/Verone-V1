@@ -139,7 +139,7 @@
         ]
       },
       {
-        "matcher": "Edit(**/use-create-linkme-order-form*) || Edit(**/use-new-customer-form*) || Edit(**/CreateLinkMeOrderModal*) || Edit(**/create-order-form-helpers*) || Edit(**/use-linkme-cart-handlers*)",
+        "matcher": "Edit(**/use-create-linkme-order-form*) || Edit(**/use-new-customer-form*) || Edit(**/CreateLinkMeOrderModal*) || Edit(**/create-order-form-helpers*) || Edit(**/use-linkme-cart-handlers*) || Edit(**/InvoiceCreateServiceModal*) || Edit(**/qonto*)",
         "hooks": [
           {
             "type": "command",
