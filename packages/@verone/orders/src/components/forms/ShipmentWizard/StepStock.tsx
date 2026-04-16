@@ -1,10 +1,13 @@
 'use client';
 
+import Link from 'next/link';
+
 import { ProductThumbnail } from '@verone/products';
 import type { ShipmentItem } from '@verone/types';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Card } from '@verone/ui';
+import { IconButton } from '@verone/ui';
 import { Input } from '@verone/ui';
 import {
   Table,
@@ -15,7 +18,13 @@ import {
   TableRow,
 } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
-import { Package, AlertTriangle, ArrowRight, ChevronDown } from 'lucide-react';
+import {
+  Package,
+  AlertTriangle,
+  ArrowRight,
+  ChevronDown,
+  Settings,
+} from 'lucide-react';
 
 import type { PreviousShipmentGroup } from './types';
 
@@ -27,6 +36,7 @@ interface StepStockProps {
   setShowPreviousShipments: (v: boolean) => void;
   handleQuantityChange: (itemId: string, value: string) => void;
   handleShipAll: () => void;
+  onOpenAdjustment: (item: ShipmentItem) => void;
   onNext: () => void;
   onCancel: () => void;
 }
@@ -39,6 +49,7 @@ export function StepStock({
   setShowPreviousShipments,
   handleQuantityChange,
   handleShipAll,
+  onOpenAdjustment,
   onNext,
   onCancel,
 }: StepStockProps) {
@@ -228,15 +239,27 @@ export function StepStock({
                 >
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <ProductThumbnail
-                        src={item.primary_image_url}
-                        alt={item.product_name}
-                        size="sm"
-                      />
+                      <Link
+                        href={`/produits/catalogue/${item.product_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Ouvrir la fiche produit ${item.product_name}`}
+                      >
+                        <ProductThumbnail
+                          src={item.primary_image_url}
+                          alt={item.product_name}
+                          size="sm"
+                        />
+                      </Link>
                       <div>
-                        <p className="font-medium text-sm">
+                        <Link
+                          href={`/produits/catalogue/${item.product_id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-sm hover:text-verone-primary hover:underline"
+                        >
                           {item.product_name}
-                        </p>
+                        </Link>
                         <p className="text-xs text-muted-foreground">
                           {item.product_sku}
                         </p>
@@ -271,15 +294,24 @@ export function StepStock({
                     </span>
                   </TableCell>
                   <TableCell className="text-center">
-                    <span
-                      className={
-                        item.stock_available < item.quantity_remaining
-                          ? 'text-red-600 font-bold'
-                          : 'text-emerald-600 font-medium'
-                      }
-                    >
-                      {item.stock_available}
-                    </span>
+                    <div className="flex items-center justify-center gap-1.5">
+                      <span
+                        className={
+                          item.stock_available < item.quantity_remaining
+                            ? 'text-red-600 font-bold'
+                            : 'text-emerald-600 font-medium'
+                        }
+                      >
+                        {item.stock_available}
+                      </span>
+                      <IconButton
+                        icon={Settings}
+                        variant="outline"
+                        size="sm"
+                        label="Ajuster le stock"
+                        onClick={() => onOpenAdjustment(item)}
+                      />
+                    </div>
                   </TableCell>
                   <TableCell className="text-center">
                     <Input
