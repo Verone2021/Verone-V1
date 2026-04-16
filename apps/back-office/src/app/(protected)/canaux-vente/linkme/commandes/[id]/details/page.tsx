@@ -22,6 +22,7 @@ import {
 import type { NewContactFormData } from '../../../components/contacts/NewContactForm';
 
 import { useOrderDetailsPage } from './hooks';
+import { AddProductToOrderModal } from './components/AddProductToOrderModal';
 import { LeftColumn } from './components/LeftColumn';
 import { RightColumn } from './components/RightColumn';
 import { EditDialogs } from './components/EditDialogs';
@@ -39,6 +40,12 @@ export default function LinkMeOrderDetailsPage() {
     isUpdatingStatus,
     editedQuantities,
     setEditedQuantities,
+    editedPrices,
+    setEditedPrices,
+    editedMargins,
+    setEditedMargins,
+    showAddProductModal,
+    setShowAddProductModal,
     isSavingItems,
     hasItemChanges,
     editingStep,
@@ -63,6 +70,8 @@ export default function LinkMeOrderDetailsPage() {
     createContactBO,
     handleStatusChange,
     handleSaveItems,
+    handleDeleteItem,
+    handleAddItems,
     openEditDialog,
     handleSaveEdit,
     handleConfirmContact,
@@ -196,11 +205,19 @@ export default function LinkMeOrderDetailsPage() {
           fusedContacts={fusedContacts}
           editedQuantities={editedQuantities}
           setEditedQuantities={setEditedQuantities}
+          editedPrices={editedPrices}
+          setEditedPrices={setEditedPrices}
+          editedMargins={editedMargins}
+          setEditedMargins={setEditedMargins}
           hasItemChanges={hasItemChanges}
           isSavingItems={isSavingItems}
           onSaveItems={() => {
             void handleSaveItems().catch(err => console.error(err));
           }}
+          onDeleteItem={(itemId: string) => {
+            void handleDeleteItem(itemId).catch(err => console.error(err));
+          }}
+          onOpenAddProduct={() => setShowAddProductModal(true)}
           onOpenEditDialog={openEditDialog}
           onOpenContactDialog={handleOpenContactDialog}
           deliveryAddressMatchesOrg={deliveryAddressMatchesOrg}
@@ -261,6 +278,21 @@ export default function LinkMeOrderDetailsPage() {
         }}
         createContactPending={createContactBO.isPending}
       />
+
+      {showAddProductModal && (
+        <AddProductToOrderModal
+          isOpen={showAddProductModal}
+          onClose={() => setShowAddProductModal(false)}
+          selectionId={order.linkme_selection_id}
+          affiliateId={order.created_by_affiliate_id}
+          existingProductIds={order.items.map(i => i.product_id)}
+          onAddItems={items => {
+            void handleAddItems(items).catch(err =>
+              console.error('[LinkMeOrderDetails] Add items failed:', err)
+            );
+          }}
+        />
+      )}
 
       {orderForDocument && (
         <QuoteCreateFromOrderModal

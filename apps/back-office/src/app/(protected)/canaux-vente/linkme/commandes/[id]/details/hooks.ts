@@ -37,6 +37,11 @@ export function useOrderDetailsPage() {
     Record<string, number>
   >({});
   const [isSavingItems, setIsSavingItems] = useState(false);
+  const [editedPrices, setEditedPrices] = useState<Record<string, number>>({});
+  const [editedMargins, setEditedMargins] = useState<Record<string, number>>(
+    {}
+  );
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
 
   const [editingStep, setEditingStep] = useState<
     'responsable' | 'billing' | 'delivery_address' | 'delivery_options' | null
@@ -83,10 +88,6 @@ export function useOrderDetailsPage() {
     }
   }, [orderId, fetchOrder]);
 
-  // ============================================
-  // HANDLERS
-  // ============================================
-
   const handleStatusChange = async (newStatus: string) => {
     setIsUpdatingStatus(true);
     try {
@@ -101,12 +102,12 @@ export function useOrderDetailsPage() {
         user.id
       );
       if (!result.success) throw new Error(result.error ?? 'Update failed');
-      void fetchOrder().catch(err => {
+      void fetchOrder().catch(err =>
         console.error(
           '[LinkMeOrderDetails] Refetch after status change failed:',
           err
-        );
-      });
+        )
+      );
     } catch (err) {
       console.error('[LinkMeOrderDetails] Status change failed:', err);
     } finally {
@@ -118,20 +119,38 @@ export function useOrderDetailsPage() {
     setIsSavingItems(true);
     try {
       const supabase = createClient();
-      for (const [itemId, quantity] of Object.entries(editedQuantities)) {
+      // Collect all item IDs that have any changes
+      const allChangedIds = new Set([
+        ...Object.keys(editedQuantities),
+        ...Object.keys(editedPrices),
+        ...Object.keys(editedMargins),
+      ]);
+      for (const itemId of allChangedIds) {
         const item = order!.items.find(i => i.id === itemId);
         if (!item) continue;
-        const total_ht = quantity * item.unit_price_ht;
-        // retrocession_rate comes from enrichedItems (linkme_order_items_enriched view)
         const enriched = enrichedItems.find(e => e.id === itemId);
-        const retrocession_rate = enriched?.retrocession_rate ?? 0;
+        const quantity = editedQuantities[itemId] ?? item.quantity;
+        const unit_price_ht = editedPrices[itemId] ?? item.unit_price_ht;
+        const retrocession_rate =
+          editedMargins[itemId] !== undefined
+            ? editedMargins[itemId] / 100
+            : (enriched?.retrocession_rate ?? 0);
+        const total_ht = quantity * unit_price_ht;
         const retrocession_amount = total_ht * retrocession_rate;
         await supabase
           .from('sales_order_items')
-          .update({ quantity, total_ht, retrocession_amount })
+          .update({
+            quantity,
+            unit_price_ht,
+            total_ht,
+            retrocession_rate,
+            retrocession_amount,
+          })
           .eq('id', itemId);
       }
       setEditedQuantities({});
+      setEditedPrices({});
+      setEditedMargins({});
       void fetchOrder().catch(err => {
         console.error(
           '[LinkMeOrderDetails] Refetch after save items failed:',
@@ -143,6 +162,70 @@ export function useOrderDetailsPage() {
     } finally {
       setIsSavingItems(false);
     }
+  };
+
+  const handleDeleteItem = async (itemId: string) => {
+    const supabase = createClient();
+    const { error: deleteError } = await supabase
+      .from('sales_order_items')
+      .delete()
+      .eq('id', itemId);
+    if (deleteError) {
+      console.error('[LinkMeOrderDetails] Delete item failed:', deleteError);
+      return;
+    }
+    const cleanState = (prev: Record<string, number>) => {
+      const next = { ...prev };
+      delete next[itemId];
+      return next;
+    };
+    setEditedQuantities(cleanState);
+    setEditedPrices(cleanState);
+    setEditedMargins(cleanState);
+    void fetchOrder().catch(err => {
+      console.error(
+        '[LinkMeOrderDetails] Refetch after delete item failed:',
+        err
+      );
+    });
+  };
+
+  type NewItemInput = {
+    product_id: string;
+    quantity: number;
+    unit_price_ht: number;
+    base_price_ht: number;
+    retrocession_rate: number;
+    linkme_selection_item_id?: string;
+  };
+  const handleAddItems = async (newItems: NewItemInput[]) => {
+    if (!order) return;
+    const supabase = createClient();
+    const inserts = newItems.map(item => ({
+      sales_order_id: order.id,
+      product_id: item.product_id,
+      quantity: item.quantity,
+      unit_price_ht: item.unit_price_ht,
+      total_ht: item.quantity * item.unit_price_ht,
+      tax_rate: order.tax_rate ?? 0.2,
+      retrocession_rate: item.retrocession_rate,
+      retrocession_amount:
+        item.quantity * item.unit_price_ht * item.retrocession_rate,
+      base_price_ht_locked: item.base_price_ht,
+      selling_price_ht_locked: item.unit_price_ht,
+      linkme_selection_item_id: item.linkme_selection_item_id ?? null,
+    }));
+    const { error: insertError } = await supabase
+      .from('sales_order_items')
+      .insert(inserts);
+    if (insertError) {
+      console.error('[LinkMeOrderDetails] Add items failed:', insertError);
+      return;
+    }
+    setShowAddProductModal(false);
+    void fetchOrder().catch(err =>
+      console.error('[LinkMeOrderDetails] Refetch after add items failed:', err)
+    );
   };
 
   const openEditDialog = (
@@ -332,10 +415,6 @@ export function useOrderDetailsPage() {
     setContactDialogFor(role);
   };
 
-  // ============================================
-  // COMPUTED VALUES
-  // ============================================
-
   const locked = order ? isOrderLocked(order.status) : false;
 
   const fusedContacts: FusedContactGroup[] = (() => {
@@ -396,8 +475,17 @@ export function useOrderDetailsPage() {
     isUpdatingStatus,
     editedQuantities,
     setEditedQuantities,
+    editedPrices,
+    setEditedPrices,
+    editedMargins,
+    setEditedMargins,
+    showAddProductModal,
+    setShowAddProductModal,
     isSavingItems,
-    hasItemChanges: Object.keys(editedQuantities).length > 0,
+    hasItemChanges:
+      Object.keys(editedQuantities).length > 0 ||
+      Object.keys(editedPrices).length > 0 ||
+      Object.keys(editedMargins).length > 0,
     editingStep,
     setEditingStep,
     editForm,
@@ -421,6 +509,8 @@ export function useOrderDetailsPage() {
     orderId,
     handleStatusChange,
     handleSaveItems,
+    handleDeleteItem,
+    handleAddItems,
     openEditDialog,
     handleSaveEdit,
     handleConfirmContact,
