@@ -35,12 +35,9 @@ if [ -n "$STAGED_FILES" ]; then
   echo "$STAGED_FILES" | xargs git add
 fi
 
-# 5. Auto-update .claude/INDEX.md if .claude/ files are staged (< 0.5s)
-CLAUDE_FILES=$(git diff --staged --name-only --diff-filter=ACM | grep -E '^\.claude/.*\.md$' || true)
-if [ -n "$CLAUDE_FILES" ]; then
-  python3 scripts/generate-docs.py --index 2>/dev/null
-  git diff --name-only .claude/INDEX.md | grep -q . && git add .claude/INDEX.md
-fi
+# 5. Auto-update docs based on staged files (--auto detects what changed)
+python3 scripts/generate-docs.py --auto 2>/dev/null
+git diff --name-only docs/ .claude/INDEX.md 2>/dev/null | xargs -r git add
 
 # 6. ESLint sur fichiers modifiés (lint-staged, ~2-5s)
 npx lint-staged

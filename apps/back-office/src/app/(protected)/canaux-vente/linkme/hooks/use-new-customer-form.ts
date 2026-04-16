@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 export interface NewCustomerFormState {
   newCustomerName: string;
@@ -37,7 +37,7 @@ export function useNewCustomerForm(): NewCustomerFormState {
   const [newOrgPostalCode, setNewOrgPostalCode] = useState('');
   const [newOrgCity, setNewOrgCity] = useState('');
 
-  const resetNewCustomerForm = () => {
+  const resetNewCustomerForm = useCallback(() => {
     setNewCustomerName('');
     setNewCustomerFirstName('');
     setNewCustomerLastName('');
@@ -47,7 +47,7 @@ export function useNewCustomerForm(): NewCustomerFormState {
     setNewOrgAddress('');
     setNewOrgPostalCode('');
     setNewOrgCity('');
-  };
+  }, []);
 
   return {
     newCustomerName,

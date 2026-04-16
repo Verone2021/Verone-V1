@@ -564,7 +564,7 @@ export async function middleware(request: NextRequest) {
 
 ## Support
 
-**Questions** : Voir `.claude/rules/database/rls-patterns.md` pour patterns existants.
+**Questions** : Voir `.claude/rules/database.md` pour patterns RLS existants.
 
 **Debugging** :
 
