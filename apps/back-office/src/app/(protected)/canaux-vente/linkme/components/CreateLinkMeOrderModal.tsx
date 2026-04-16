@@ -1,3 +1,10 @@
+/**
+ * @protected — NE PAS MODIFIER SANS APPROBATION ROMEO
+ *
+ * Modal de creation de commande LinkMe (orchestrateur).
+ * Chaque section est un sous-composant dans create-order/.
+ * La logique metier est dans useCreateLinkMeOrderForm.
+ */
 'use client';
 
 import { ShoppingCart, X, AlertCircle, Check, Loader2 } from 'lucide-react';

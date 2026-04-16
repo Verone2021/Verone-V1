@@ -39,6 +39,43 @@ globs: apps/**/*.tsx, apps/**/*.ts, packages/**/*.tsx, packages/**/*.ts
 - `createServerClient` de `@supabase/ssr` pour auth
 - `revalidatePath` apres mutation
 
+## USEEFFECT — PIEGE #1 PRODUCTION
+
+**JAMAIS ajouter une fonction aux deps d'un `useEffect` pour faire taire ESLint sans verifier sa stabilite.**
+
+Avant d'ajouter une dep a `useEffect` :
+
+1. Est-ce un setter de `useState` ? → OK (stable par garantie React)
+2. Est-ce une fonction wrappee dans `useCallback` ? → OK
+3. Est-ce une ref `.current` ? → OK
+4. **Sinon → wrapper avec `useCallback` AVANT de l'ajouter aux deps**
+
+```typescript
+// INTERDIT — fonction recreee a chaque render = boucle infinie
+const reset = () => {
+  setState('');
+};
+useEffect(() => {
+  if (open) reset();
+}, [open, reset]); // ← CRASH
+
+// OBLIGATOIRE — stabiliser AVANT
+const reset = useCallback(() => {
+  setState('');
+}, []);
+useEffect(() => {
+  if (open) reset();
+}, [open, reset]); // ← OK
+```
+
+**Contexte** : Le 16 avril 2026, un agent a ajoute `resetNewCustomerForm` aux deps d'un `useEffect` sans `useCallback`. Resultat : boucle infinie de resets, impossible de creer une commande LinkMe pendant 48h en production.
+
+## FICHIERS PROTEGES — NE PAS MODIFIER SANS APPROBATION
+
+Les fichiers marques `@protected` dans leur en-tete sont valides et testes en production.
+Toute modification necessite l'approbation explicite de Romeo.
+Voir aussi : `stock-triggers-protected.md` pour les triggers DB.
+
 ## PATTERNS (pieges reels)
 
 ### Promesses Flottantes

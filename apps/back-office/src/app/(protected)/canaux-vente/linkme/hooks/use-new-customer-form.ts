@@ -1,3 +1,12 @@
+/**
+ * @protected — NE PAS MODIFIER SANS APPROBATION ROMEO
+ *
+ * Ce hook fournit le formulaire de creation client dans le flow commande LinkMe.
+ * resetNewCustomerForm DOIT rester dans useCallback (reference stable).
+ * Sans useCallback → boucle infinie de resets dans use-create-linkme-order-form.
+ *
+ * Incident : 16 avril 2026 — commit fbf2a71db — 48h de casse en production.
+ */
 'use client';
 
 import { useState, useCallback } from 'react';

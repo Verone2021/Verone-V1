@@ -139,6 +139,15 @@
         ]
       },
       {
+        "matcher": "Edit(**/use-create-linkme-order-form*) || Edit(**/use-new-customer-form*) || Edit(**/CreateLinkMeOrderModal*) || Edit(**/create-order-form-helpers*) || Edit(**/use-linkme-cart-handlers*) || Edit(**/InvoiceCreateServiceModal*) || Edit(**/qonto*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'FICHIER @protected — Ce fichier est valide et teste en production.\n\nAvant de modifier :\n1. As-tu lu le commentaire @protected en tete du fichier ?\n2. Les deps de useEffect sont-elles toutes STABLES (useState setter ou useCallback) ?\n3. Incident du 16 avril 2026 : resetNewCustomerForm sans useCallback = 48h de casse.\n\nModification autorisee UNIQUEMENT avec approbation Romeo.' && exit 0"
+          }
+        ]
+      },
+      {
         "matcher": "Edit(*middleware*)",
         "hooks": [
           {

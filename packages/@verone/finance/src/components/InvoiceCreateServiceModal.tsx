@@ -1,3 +1,14 @@
+/**
+ * @protected — NE PAS MODIFIER SANS APPROBATION ROMEO
+ * @qonto — Ce modal est connecte a l'API Qonto (creation factures).
+ *
+ * INTERDIT de refactorer, decomposer ou extraire des sous-composants.
+ * Ce fichier est la version originale validee en production.
+ * Il pre-remplit les adresses facturation/livraison depuis la commande.
+ *
+ * Incident : 16 avril 2026 — un agent a refactorise ce fichier de 562→246 lignes,
+ * cassant le pre-remplissage des adresses dans le flow de creation de facture.
+ */
 'use client';
 
 import { useCallback, useState } from 'react';
@@ -13,6 +24,15 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -20,14 +40,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@verone/ui';
-import { Briefcase, Loader2, Send } from 'lucide-react';
-
 import {
-  InvoiceServiceItemsSection,
-  type IServiceItem,
-} from './InvoiceCreateServiceModal/InvoiceServiceItemsSection';
-import { InvoiceServiceOptionsSection } from './InvoiceCreateServiceModal/InvoiceServiceOptionsSection';
-import { InvoiceServiceSuccessView } from './InvoiceCreateServiceModal/InvoiceServiceSuccessView';
+  Calendar,
+  CheckCircle2,
+  ExternalLink,
+  Info,
+  Loader2,
+  Plus,
+  Send,
+  Trash2,
+  Briefcase,
+} from 'lucide-react';
+
+interface IServiceItem {
+  id: string;
+  title: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  vatRate: number;
+}
 
 interface IInvoiceCreateServiceModalProps {
   open: boolean;
@@ -37,7 +69,7 @@ interface IInvoiceCreateServiceModalProps {
 
 type CreateStatus = 'idle' | 'creating' | 'success' | 'error';
 
-interface ICreatedInvoice {
+interface CreatedInvoice {
   id: string;
   invoice_number: string;
   pdf_url?: string;
@@ -49,28 +81,18 @@ interface ICreatedInvoice {
 interface IServiceInvoiceApiResponse {
   success: boolean;
   error?: string;
-  invoice: ICreatedInvoice;
+  invoice: CreatedInvoice;
 }
 
 function formatAmount(amount: number, currency = 'EUR'): string {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(
-    amount
-  );
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency,
+  }).format(amount);
 }
 
 function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
-}
-
-function createDefaultItem(): IServiceItem {
-  return {
-    id: generateId(),
-    title: '',
-    description: '',
-    quantity: 1,
-    unitPrice: 0,
-    vatRate: 0.2,
-  };
 }
 
 export function InvoiceCreateServiceModal({
@@ -80,15 +102,34 @@ export function InvoiceCreateServiceModal({
 }: IInvoiceCreateServiceModalProps): React.ReactNode {
   const { toast } = useToast();
   const [status, setStatus] = useState<CreateStatus>('idle');
-  const [createdInvoice, setCreatedInvoice] = useState<ICreatedInvoice | null>(
+  // SUPPRIMÉ: autoFinalize - JAMAIS de finalisation automatique
+  // Les factures sont TOUJOURS créées en brouillon
+  const [createdInvoice, setCreatedInvoice] = useState<CreatedInvoice | null>(
     null
   );
+
+  // Client selection - using CustomerSelector
   const [selectedCustomer, setSelectedCustomer] =
     useState<UnifiedCustomer | null>(null);
-  const [items, setItems] = useState<IServiceItem[]>([createDefaultItem()]);
-  const [paymentTerms, setPaymentTerms] = useState('net_30');
-  const [reference, setReference] = useState('');
-  const [issueDate, setIssueDate] = useState(
+
+  // Service items
+  const [items, setItems] = useState<IServiceItem[]>([
+    {
+      id: generateId(),
+      title: '',
+      description: '',
+      quantity: 1,
+      unitPrice: 0,
+      vatRate: 0.2,
+    },
+  ]);
+
+  // Payment terms
+  const [paymentTerms, setPaymentTerms] = useState<string>('net_30');
+  const [reference, setReference] = useState<string>('');
+
+  // Date de facture (défaut: aujourd'hui)
+  const [issueDate, setIssueDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
 
@@ -96,7 +137,16 @@ export function InvoiceCreateServiceModal({
     setStatus('idle');
     setCreatedInvoice(null);
     setSelectedCustomer(null);
-    setItems([createDefaultItem()]);
+    setItems([
+      {
+        id: generateId(),
+        title: '',
+        description: '',
+        quantity: 1,
+        unitPrice: 0,
+        vatRate: 0.2,
+      },
+    ]);
     setPaymentTerms('net_30');
     setReference('');
     setIssueDate(new Date().toISOString().split('T')[0]);
@@ -107,10 +157,26 @@ export function InvoiceCreateServiceModal({
     onOpenChange(false);
   }, [onOpenChange, resetState]);
 
-  const handleAddItem = (): void => setItems([...items, createDefaultItem()]);
-  const handleRemoveItem = (id: string): void => {
-    if (items.length > 1) setItems(items.filter(item => item.id !== id));
+  const handleAddItem = (): void => {
+    setItems([
+      ...items,
+      {
+        id: generateId(),
+        title: '',
+        description: '',
+        quantity: 1,
+        unitPrice: 0,
+        vatRate: 0.2,
+      },
+    ]);
   };
+
+  const handleRemoveItem = (id: string): void => {
+    if (items.length > 1) {
+      setItems(items.filter(item => item.id !== id));
+    }
+  };
+
   const handleItemChange = (
     id: string,
     field: keyof IServiceItem,
@@ -130,11 +196,19 @@ export function InvoiceCreateServiceModal({
       (sum, item) => sum + item.quantity * item.unitPrice * item.vatRate,
       0
     );
-    return { totalHT, totalVAT, totalTTC: totalHT + totalVAT };
+    const totalTTC = totalHT + totalVAT;
+    return { totalHT, totalVAT, totalTTC };
+  };
+
+  const handleCreateClick = (): void => {
+    // Toujours créer en brouillon - pas de confirmation nécessaire
+    void handleCreateInvoice();
   };
 
   const handleCreateInvoice = async (): Promise<void> => {
     if (!selectedCustomer) return;
+
+    // Validate items
     const validItems = items.filter(
       item => item.title.trim() && item.unitPrice > 0
     );
@@ -148,11 +222,14 @@ export function InvoiceCreateServiceModal({
     }
 
     setStatus('creating');
+
     try {
+      // Map customer type for API
       const clientType =
         selectedCustomer.type === 'professional'
           ? 'organization'
           : 'individual';
+
       const response = await fetch('/api/qonto/invoices/service', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -169,14 +246,18 @@ export function InvoiceCreateServiceModal({
           paymentTerms,
           reference: reference || undefined,
           issueDate,
+          // FORCÉ: autoFinalize = false - TOUJOURS brouillon
           autoFinalize: false,
         }),
       });
 
       const data = (await response.json()) as IServiceInvoiceApiResponse;
-      if (!response.ok || !data.success)
-        throw new Error(data.error ?? 'Failed to create invoice');
 
+      if (!response.ok || !data.success) {
+        throw new Error(data.error ?? 'Failed to create invoice');
+      }
+
+      // Fallback: calculate total locally (API may not return total_amount for drafts)
       const localTotalTTC = validItems.reduce(
         (sum, item) =>
           sum + item.quantity * item.unitPrice * (1 + item.vatRate),
@@ -227,12 +308,46 @@ export function InvoiceCreateServiceModal({
         </DialogHeader>
 
         {status === 'success' && createdInvoice ? (
-          <InvoiceServiceSuccessView
-            createdInvoice={createdInvoice}
-            formatAmount={formatAmount}
-          />
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4">
+              <CheckCircle2 className="h-6 w-6 text-green-600" />
+              <div>
+                <p className="font-medium text-green-800">
+                  Facture créée avec succès
+                </p>
+                <p className="text-sm text-green-600">
+                  N° {createdInvoice.invoice_number} -{' '}
+                  {formatAmount(createdInvoice.total_amount)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
+              <Info className="h-4 w-4 shrink-0" />
+              <span>
+                Facture créée en brouillon. Finalisez-la sur Qonto pour générer
+                le PDF.
+              </span>
+            </div>
+
+            {createdInvoice.public_url && (
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" asChild>
+                  <a
+                    href={createdInvoice.public_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Voir sur Qonto
+                  </a>
+                </Button>
+              </div>
+            )}
+          </div>
         ) : (
           <div className="space-y-4">
+            {/* Client selection - using CustomerSelector component */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Client</CardTitle>
@@ -246,23 +361,163 @@ export function InvoiceCreateServiceModal({
               </CardContent>
             </Card>
 
-            <InvoiceServiceItemsSection
-              items={items}
-              onAddItem={handleAddItem}
-              onRemoveItem={handleRemoveItem}
-              onItemChange={handleItemChange}
-              disabled={status === 'creating'}
-            />
+            {/* Service items */}
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm">Prestations</CardTitle>
+                  <Button variant="outline" size="sm" onClick={handleAddItem}>
+                    <Plus className="mr-1 h-4 w-4" />
+                    Ajouter
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {items.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="space-y-2 rounded-lg border p-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">
+                        Prestation {index + 1}
+                      </span>
+                      {items.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveItem(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="grid gap-2">
+                      <Input
+                        placeholder="Titre de la prestation"
+                        value={item.title}
+                        onChange={e =>
+                          handleItemChange(item.id, 'title', e.target.value)
+                        }
+                      />
+                      <Input
+                        placeholder="Description (optionnel)"
+                        value={item.description}
+                        onChange={e =>
+                          handleItemChange(
+                            item.id,
+                            'description',
+                            e.target.value
+                          )
+                        }
+                      />
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <Label className="text-xs">Quantité</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={item.quantity}
+                            onChange={e =>
+                              handleItemChange(
+                                item.id,
+                                'quantity',
+                                Number(e.target.value)
+                              )
+                            }
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Prix HT (€)</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            step={0.01}
+                            value={item.unitPrice}
+                            onChange={e =>
+                              handleItemChange(
+                                item.id,
+                                'unitPrice',
+                                Number(e.target.value)
+                              )
+                            }
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">TVA</Label>
+                          <Select
+                            value={String(item.vatRate)}
+                            onValueChange={v =>
+                              handleItemChange(item.id, 'vatRate', Number(v))
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="0">0%</SelectItem>
+                              <SelectItem value="0.055">5.5%</SelectItem>
+                              <SelectItem value="0.1">10%</SelectItem>
+                              <SelectItem value="0.2">20%</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
 
-            <InvoiceServiceOptionsSection
-              issueDate={issueDate}
-              paymentTerms={paymentTerms}
-              reference={reference}
-              onIssueDateChange={setIssueDate}
-              onPaymentTermsChange={setPaymentTerms}
-              onReferenceChange={setReference}
-            />
+            {/* Date + Options */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Date et options
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Date de facture *</Label>
+                  <Input
+                    type="date"
+                    value={issueDate}
+                    onChange={e => setIssueDate(e.target.value)}
+                    className="h-8"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Conditions de paiement</Label>
+                    <Select
+                      value={paymentTerms}
+                      onValueChange={setPaymentTerms}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="immediate">Immédiat</SelectItem>
+                        <SelectItem value="net_15">15 jours</SelectItem>
+                        <SelectItem value="net_30">30 jours</SelectItem>
+                        <SelectItem value="net_60">60 jours</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Référence (optionnel)</Label>
+                    <Input
+                      placeholder="Ex: Contrat 2026-001"
+                      value={reference}
+                      onChange={e => setReference(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
+            {/* Totaux */}
             <div className="flex justify-end">
               <div className="w-48 space-y-1 text-sm">
                 <div className="flex justify-between">
@@ -279,6 +534,8 @@ export function InvoiceCreateServiceModal({
                 </div>
               </div>
             </div>
+
+            {/* SUPPRIMÉ: Checkbox autoFinalize - Les factures sont TOUJOURS créées en brouillon */}
           </div>
         )}
 
@@ -291,7 +548,7 @@ export function InvoiceCreateServiceModal({
                 Annuler
               </Button>
               <Button
-                onClick={() => void handleCreateInvoice()}
+                onClick={handleCreateClick}
                 disabled={status === 'creating' || !isValid}
               >
                 {status === 'creating' ? (
@@ -310,6 +567,7 @@ export function InvoiceCreateServiceModal({
           )}
         </DialogFooter>
       </DialogContent>
+      {/* SUPPRIMÉ: AlertDialog de confirmation - Plus de finalisation automatique */}
     </Dialog>
   );
 }
