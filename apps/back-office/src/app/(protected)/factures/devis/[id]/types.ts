@@ -21,7 +21,23 @@ export interface QontoQuoteDetail {
     name: string;
     type?: string;
     email?: string;
-    address?: {
+    /** Champ plat retourne par Qonto — string brut (ex: "100, Avenue Willy Brandt") */
+    address?: string;
+    /** Champs plats complementaires retournes au meme niveau que address */
+    city?: string;
+    zip_code?: string;
+    country_code?: string;
+    tax_identification_number?: string;
+    vat_number?: string;
+    /** Adresse de facturation structuree (prioritaire sur les champs plats) */
+    billing_address?: {
+      street_address?: string;
+      city?: string;
+      zip_code?: string;
+      country_code?: string;
+    };
+    /** Adresse de livraison structuree (affichee uniquement si differente de billing) */
+    delivery_address?: {
       street_address?: string;
       city?: string;
       zip_code?: string;

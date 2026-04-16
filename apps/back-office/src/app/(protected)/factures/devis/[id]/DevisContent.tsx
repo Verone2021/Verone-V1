@@ -55,22 +55,75 @@ export function DevisContent({ quote }: DevisContentProps) {
                   <p className="font-medium">{quote.client.email}</p>
                 </div>
               )}
-              {quote.client?.address?.city && (
+              {(quote.client?.tax_identification_number ??
+                quote.client?.vat_number) && (
                 <div>
-                  <p className="text-sm text-muted-foreground">Adresse</p>
-                  <p className="text-sm">
-                    {[
-                      quote.client.address.street_address,
-                      [quote.client.address.zip_code, quote.client.address.city]
-                        .filter(Boolean)
-                        .join(' '),
-                      quote.client.address.country_code,
-                    ]
-                      .filter(Boolean)
-                      .join(', ')}
+                  <p className="text-sm text-muted-foreground">
+                    {quote.client?.tax_identification_number
+                      ? 'SIRET'
+                      : 'N° TVA'}
+                  </p>
+                  <p className="font-medium">
+                    {quote.client?.tax_identification_number ??
+                      quote.client?.vat_number}
                   </p>
                 </div>
               )}
+              {(() => {
+                const b = quote.client?.billing_address;
+                const billingLine = b
+                  ? [
+                      b.street_address,
+                      [b.zip_code, b.city].filter(Boolean).join(' '),
+                      b.country_code,
+                    ]
+                      .filter(Boolean)
+                      .join(', ')
+                  : [
+                      quote.client?.address,
+                      [quote.client?.zip_code, quote.client?.city]
+                        .filter(Boolean)
+                        .join(' '),
+                      quote.client?.country_code,
+                    ]
+                      .filter(Boolean)
+                      .join(', ');
+
+                const d = quote.client?.delivery_address;
+                const deliveryLine = d
+                  ? [
+                      d.street_address,
+                      [d.zip_code, d.city].filter(Boolean).join(' '),
+                      d.country_code,
+                    ]
+                      .filter(Boolean)
+                      .join(', ')
+                  : '';
+
+                const hasDifferentDelivery =
+                  deliveryLine.length > 0 && deliveryLine !== billingLine;
+
+                return (
+                  <>
+                    {billingLine && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          Adresse de facturation
+                        </p>
+                        <p className="text-sm">{billingLine}</p>
+                      </div>
+                    )}
+                    {hasDifferentDelivery && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          Adresse de livraison
+                        </p>
+                        <p className="text-sm">{deliveryLine}</p>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
               {quote.purchase_order_number && (
                 <div>
                   <p className="text-sm text-muted-foreground">N° commande</p>
