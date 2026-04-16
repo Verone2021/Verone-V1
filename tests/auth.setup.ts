@@ -19,8 +19,8 @@ setup('authenticate', async ({ page }) => {
   // Remplir le formulaire de login avec sélecteurs robustes
   await page
     .getByRole('textbox', { name: /email/i })
-    .fill('romeo.dossantos.rds+verone@gmail.com');
-  await page.getByRole('textbox', { name: /mot de passe/i }).fill('Test1234!');
+    .fill('veronebyromeo@gmail.com');
+  await page.getByRole('textbox', { name: /mot de passe/i }).fill('Abc123456');
 
   // Cliquer sur le bouton de connexion
   await page.getByRole('button', { name: /se connecter/i }).click();
