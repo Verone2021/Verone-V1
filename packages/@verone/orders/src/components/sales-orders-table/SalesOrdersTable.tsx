@@ -13,6 +13,8 @@
 
 import React from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { useActiveEnseignes } from '@verone/organisations';
 import { ButtonUnified } from '@verone/ui';
 import { Plus } from 'lucide-react';
@@ -34,6 +36,7 @@ import { useSalesOrdersSort } from './hooks/use-sales-orders-sort';
 import { useSalesOrdersStats } from './hooks/use-sales-orders-stats';
 
 import { useSalesOrdersSuccessHandlers } from './hooks/use-sales-orders-success-handlers';
+import { LINKME_CHANNEL_ID } from './sales-orders-constants';
 import type { SalesOrdersTableProps } from './types';
 
 export type { SalesOrdersTableProps } from './types';
@@ -64,6 +67,7 @@ export function SalesOrdersTable({
   sortableColumns,
   onViewOrder,
 }: SalesOrdersTableProps) {
+  const router = useRouter();
   const {
     loading: hookLoading,
     orders: fetchedOrders,
@@ -229,9 +233,23 @@ export function SalesOrdersTable({
         allowShip={allowShip}
         allowCancel={allowCancel}
         allowDelete={allowDelete}
-        onView={order =>
-          onViewOrder ? onViewOrder(order) : modals.openOrderDetail(order)
-        }
+        onView={order => {
+          // Commandes LinkMe → toujours page de détail dédiée
+          if (
+            !onViewOrder &&
+            (order.channel_id === LINKME_CHANNEL_ID ||
+              order.created_by_affiliate_id ||
+              order.linkme_selection_id)
+          ) {
+            router.push(`/canaux-vente/linkme/commandes/${order.id}/details`);
+            return;
+          }
+          if (onViewOrder) {
+            onViewOrder(order);
+          } else {
+            modals.openOrderDetail(order);
+          }
+        }}
         onEdit={modals.openEditOrder}
         onValidate={orderId => {
           void actions

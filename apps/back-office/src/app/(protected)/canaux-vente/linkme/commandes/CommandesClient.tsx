@@ -28,7 +28,6 @@ import { AlertCircle, CheckCircle2, Circle } from 'lucide-react';
 import { updateSalesOrderStatus } from '@/app/actions/sales-orders';
 
 import { CreateLinkMeOrderModal } from '../components/CreateLinkMeOrderModal';
-import { EditLinkMeOrderModal } from '../components/EditLinkMeOrderModal';
 import { PendingOrderCards } from '../components/PendingOrderCards';
 import { usePendingOrdersCount } from '../hooks/use-linkme-order-actions';
 
@@ -162,7 +161,6 @@ export default function CommandesClient() {
           allowShip
           allowCancel
           allowDelete
-          allowEdit
           enablePagination
           defaultItemsPerPage={10}
           additionalColumns={additionalColumns}
@@ -171,16 +169,6 @@ export default function CommandesClient() {
           renderCreateModal={({ open, onClose, onSuccess }) => (
             <CreateLinkMeOrderModal
               isOpen={open}
-              onClose={() => {
-                onClose();
-                onSuccess();
-              }}
-            />
-          )}
-          renderEditModal={({ orderId, open, onClose, onSuccess }) => (
-            <EditLinkMeOrderModal
-              isOpen={open}
-              orderId={orderId}
               onClose={() => {
                 onClose();
                 onSuccess();

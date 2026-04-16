@@ -30,9 +30,19 @@ export interface LeftColumnProps {
   setEditedQuantities: React.Dispatch<
     React.SetStateAction<Record<string, number>>
   >;
+  editedPrices: Record<string, number>;
+  setEditedPrices: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  editedMargins: Record<string, number>;
+  setEditedMargins: React.Dispatch<
+    React.SetStateAction<Record<string, number>>
+  >;
   hasItemChanges: boolean;
   isSavingItems: boolean;
   onSaveItems: () => void;
+  // Delete item
+  onDeleteItem: (itemId: string) => void;
+  // Add product
+  onOpenAddProduct: () => void;
   // Edit dialogs
   onOpenEditDialog: (
     step: 'responsable' | 'billing' | 'delivery_address' | 'delivery_options'
@@ -64,9 +74,15 @@ export function LeftColumn({
   fusedContacts,
   editedQuantities,
   setEditedQuantities,
+  editedPrices,
+  setEditedPrices,
+  editedMargins,
+  setEditedMargins,
   hasItemChanges,
   isSavingItems,
   onSaveItems,
+  onDeleteItem,
+  onOpenAddProduct,
   onOpenEditDialog,
   onOpenContactDialog,
   deliveryAddressMatchesOrg,
@@ -88,9 +104,15 @@ export function LeftColumn({
         enrichedItems={enrichedItems}
         editedQuantities={editedQuantities}
         setEditedQuantities={setEditedQuantities}
+        editedPrices={editedPrices}
+        setEditedPrices={setEditedPrices}
+        editedMargins={editedMargins}
+        setEditedMargins={setEditedMargins}
         hasItemChanges={hasItemChanges}
         isSavingItems={isSavingItems}
         onSaveItems={onSaveItems}
+        onDeleteItem={onDeleteItem}
+        onOpenAddProduct={onOpenAddProduct}
       />
 
       <FeesSection
