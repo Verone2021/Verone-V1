@@ -18,7 +18,7 @@ import {
   TableRow,
 } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
-import { Package, Save } from 'lucide-react';
+import { Package, Plus, Save, Trash2 } from 'lucide-react';
 
 import type { EnrichedOrderItem, OrderWithDetails } from '../types';
 
@@ -29,9 +29,17 @@ interface OrderItemsTableProps {
   setEditedQuantities: React.Dispatch<
     React.SetStateAction<Record<string, number>>
   >;
+  editedPrices: Record<string, number>;
+  setEditedPrices: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  editedMargins: Record<string, number>;
+  setEditedMargins: React.Dispatch<
+    React.SetStateAction<Record<string, number>>
+  >;
   hasItemChanges: boolean;
   isSavingItems: boolean;
   onSaveItems: () => void;
+  onDeleteItem: (itemId: string) => void;
+  onOpenAddProduct: () => void;
 }
 
 export function OrderItemsTable({
@@ -39,10 +47,18 @@ export function OrderItemsTable({
   enrichedItems,
   editedQuantities,
   setEditedQuantities,
+  editedPrices,
+  setEditedPrices,
+  editedMargins,
+  setEditedMargins,
   hasItemChanges,
   isSavingItems,
   onSaveItems,
+  onDeleteItem,
+  onOpenAddProduct,
 }: OrderItemsTableProps) {
+  const isEditable = order.status === 'draft' || order.status === 'validated';
+
   return (
     <Card>
       <CardHeader className="pb-2 pt-4 px-4">
@@ -54,6 +70,17 @@ export function OrderItemsTable({
               ({order.items.length})
             </span>
           </div>
+          {isEditable && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1"
+              onClick={onOpenAddProduct}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Ajouter
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -83,9 +110,10 @@ export function OrderItemsTable({
                   <TableHead className="text-right">
                     Commission &euro;
                   </TableHead>
-                  <TableHead className="text-right">Prix client HT</TableHead>
+                  <TableHead className="text-right">Prix vente HT</TableHead>
                   <TableHead className="text-center">Qté</TableHead>
                   <TableHead className="text-right">Total HT</TableHead>
+                  {isEditable && <TableHead className="text-center w-10" />}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -156,21 +184,44 @@ export function OrderItemsTable({
                           </div>
                         </div>
                       </TableCell>
-                      {/* Prix Verone HT (base_price from selection) */}
+                      {/* Prix Verone HT (base_price — read-only) */}
                       <TableCell className="text-right">
                         {formatCurrency(
                           item.base_price_ht || item.unit_price_ht
                         )}
                       </TableCell>
-                      {/* Commission % */}
+                      {/* Commission/Marge % — editable (indépendant du prix) */}
                       <TableCell className="text-center">
-                        <span
-                          className={
-                            isRevendeur ? 'text-orange-500' : 'text-teal-600'
-                          }
-                        >
-                          {`${displayCommissionPct}%`}
-                        </span>
+                        {isEditable ? (
+                          <Input
+                            type="number"
+                            min={0}
+                            max={100}
+                            step={0.5}
+                            className="w-[72px] h-8 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            value={
+                              editedMargins[item.id] ??
+                              parseFloat(displayCommissionPct)
+                            }
+                            onChange={e => {
+                              const val = parseFloat(e.target.value);
+                              if (!isNaN(val) && val >= 0 && val <= 100) {
+                                setEditedMargins(prev => ({
+                                  ...prev,
+                                  [item.id]: val,
+                                }));
+                              }
+                            }}
+                          />
+                        ) : (
+                          <span
+                            className={
+                              isRevendeur ? 'text-orange-500' : 'text-teal-600'
+                            }
+                          >
+                            {`${displayCommissionPct}%`}
+                          </span>
+                        )}
                       </TableCell>
                       {/* Commission EUR (per unit) */}
                       <TableCell className="text-right">
@@ -182,18 +233,36 @@ export function OrderItemsTable({
                           {formatCurrency(commissionPerUnit)}
                         </span>
                       </TableCell>
-                      {/* Prix client HT (includes commission) */}
+                      {/* Prix vente HT — editable (indépendant de la marge, comme CartSection) */}
                       <TableCell className="text-right font-medium">
-                        {formatCurrency(item.unit_price_ht)}
+                        {isEditable ? (
+                          <Input
+                            type="number"
+                            min={0}
+                            step={0.01}
+                            className="w-[110px] h-8 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            value={editedPrices[item.id] ?? item.unit_price_ht}
+                            onChange={e => {
+                              const val = parseFloat(e.target.value);
+                              if (!isNaN(val) && val >= 0) {
+                                setEditedPrices(prev => ({
+                                  ...prev,
+                                  [item.id]: Math.round(val * 100) / 100,
+                                }));
+                              }
+                            }}
+                          />
+                        ) : (
+                          formatCurrency(item.unit_price_ht)
+                        )}
                       </TableCell>
                       {/* Quantité */}
                       <TableCell className="text-center">
-                        {order.status === 'draft' ||
-                        order.status === 'validated' ? (
+                        {isEditable ? (
                           <Input
                             type="number"
                             min={1}
-                            className="w-20 h-8 text-center mx-auto"
+                            className="w-[72px] h-8 text-center mx-auto [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             value={editedQuantities[item.id] ?? item.quantity}
                             onChange={e => {
                               const val = parseInt(e.target.value, 10);
@@ -213,6 +282,18 @@ export function OrderItemsTable({
                       <TableCell className="text-right font-medium">
                         {formatCurrency(item.total_ht)}
                       </TableCell>
+                      {/* Supprimer — seulement si éditable */}
+                      {isEditable && (
+                        <TableCell className="text-center w-10">
+                          <button
+                            onClick={() => onDeleteItem(item.id)}
+                            className="p-1 hover:bg-red-100 rounded text-gray-400 hover:text-red-600 transition-colors"
+                            title="Supprimer l'article"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   );
                 })}
