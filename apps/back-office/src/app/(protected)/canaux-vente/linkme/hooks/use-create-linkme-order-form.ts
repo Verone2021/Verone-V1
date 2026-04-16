@@ -1,3 +1,15 @@
+/**
+ * @protected — NE PAS MODIFIER SANS APPROBATION ROMEO
+ *
+ * Hook principal du flow de creation commande LinkMe.
+ * Orchestre : affilie → selection → client → panier → soumission.
+ *
+ * ATTENTION aux useEffect de cascade (reset) :
+ * - Toutes les deps doivent etre des references STABLES (useState setters, useCallback)
+ * - JAMAIS ajouter une fonction non-memoizee aux deps
+ *
+ * Incident : 16 avril 2026 — resetNewCustomerForm instable → boucle infinie.
+ */
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
