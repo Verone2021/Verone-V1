@@ -3,7 +3,7 @@
 **Derniere mise a jour** : 2026-04-17
 **23 packages** dans `packages/@verone/`
 
-**531 composants, 11 hooks**
+**532 composants, 11 hooks**
 ---
 
 ## @verone/categories
@@ -317,6 +317,7 @@
 | `ProductSelectionSection` | Component | `src/components/modals/CreateLinkMeOrderModal/ProductSelectionSection.tsx` |
 | `SelectionListSection` | Component | `src/components/modals/CreateLinkMeOrderModal/SelectionListSection.tsx` |
 | `SelectionPreviewDialog` | Component | `src/components/modals/CreateLinkMeOrderModal/SelectionPreviewDialog.tsx` |
+| `EditShipmentModal` | Modal | `src/components/modals/EditShipmentModal.tsx` |
 | `OrderDetailModal` | Modal | `src/components/modals/OrderDetailModal.tsx` |
 | `OrderDocumentsList` | Component | `src/components/modals/OrderDocumentsList.tsx` |
 | `OrderPdfPreviewDialog` | Component | `src/components/modals/OrderPdfPreviewDialog.tsx` |
