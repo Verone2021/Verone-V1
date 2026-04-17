@@ -3,17 +3,13 @@
 # Validation format commit: [APP-DOMAIN-NNN] type: message
 # Exemples:
 #   [LM-ORD-009] feat: refonte workflow order form
-#   [BO-UI-001] feat: responsive data table component
 #   [NO-TASK] chore: update dependencies
 
 commit_msg_file=$1
 commit_msg=$(cat "$commit_msg_file")
 
 # Regex: [APP-DOMAIN-NNN] ou [NO-TASK]
-# APP : 2-4 lettres (BO, LM, SI, WEB)
-# DOMAIN : 2-10 lettres (UI, ORD, DASH, STOCK, RAPPROCHEMENT, etc.)
-# NNN : 3 chiffres
-pattern="^\[(([A-Z]{2,4}-[A-Z]{2,10}-[0-9]{3})|NO-TASK|INFRA)\] (feat|fix|chore|docs|refactor|test|style|perf):"
+pattern="^\[(([A-Z]{2,4}-[A-Z]{3,10}-[0-9]{3})|NO-TASK)\] (feat|fix|chore|docs|refactor|test|style|perf):"
 
 if ! echo "$commit_msg" | grep -qE "$pattern"; then
   echo "❌ Commit message invalide"
@@ -22,7 +18,6 @@ if ! echo "$commit_msg" | grep -qE "$pattern"; then
   echo ""
   echo "Exemples valides:"
   echo "  [LM-ORD-009] feat: refonte workflow order form"
-  echo "  [BO-UI-001] feat: responsive data table"
   echo "  [BO-DASH-001] fix: cache invalidation"
   echo "  [NO-TASK] chore: update dependencies"
   echo ""
