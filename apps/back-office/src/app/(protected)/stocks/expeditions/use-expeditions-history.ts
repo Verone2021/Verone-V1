@@ -62,6 +62,15 @@ export function useHistoryOrders({
     setShipmentHistory([]);
   }, []);
 
+  /**
+   * Rafraîchit l'historique du shipment sélectionné (après édition par ex.)
+   */
+  const handleRefreshHistory = useCallback(async () => {
+    if (!selectedOrder) return;
+    const history = await loadShipmentHistory(selectedOrder.id);
+    setShipmentHistory((history ?? []) as ShipmentHistoryItem[]);
+  }, [selectedOrder, loadShipmentHistory]);
+
   return {
     historyOrders,
     selectedOrder,
@@ -69,5 +78,6 @@ export function useHistoryOrders({
     showHistoryModal,
     handleViewHistory,
     handleCloseHistoryModal,
+    handleRefreshHistory,
   };
 }

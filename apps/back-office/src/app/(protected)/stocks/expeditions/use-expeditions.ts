@@ -55,6 +55,7 @@ export interface UseExpeditionsReturn {
   handleShipmentSuccess: () => void;
   handleViewHistory: (order: SalesOrder) => Promise<void>;
   handleCloseHistoryModal: () => void;
+  handleRefreshHistory: () => Promise<void>;
   handleCancelPacklinkShipment: (shipmentId: string) => Promise<void>;
 }
 
@@ -126,6 +127,7 @@ export function useExpeditions(): UseExpeditionsReturn {
     handleShipmentSuccess,
     handleViewHistory: history.handleViewHistory,
     handleCloseHistoryModal: history.handleCloseHistoryModal,
+    handleRefreshHistory: history.handleRefreshHistory,
     handleCancelPacklinkShipment,
   });
 }

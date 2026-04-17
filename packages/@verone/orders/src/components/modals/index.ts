@@ -26,3 +26,4 @@ export {
   type OrderContact,
   type SendOrderDocumentsModalProps,
 } from './SendOrderDocumentsModal';
+export { EditShipmentModal } from './EditShipmentModal';

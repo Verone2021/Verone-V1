@@ -30,11 +30,18 @@ export interface ShipmentStats {
 }
 
 export interface ShipmentHistoryItem {
+  /** ID du shipment (sales_order_shipments.id) — requis pour l'édition */
+  id?: string;
+  /** Alias de id, depuis ShipmentHistory.shipment_id */
+  shipment_id?: string;
+  /** Méthode de livraison — 'manual' = édition possible */
+  delivery_method?: string;
   shipped_at?: string;
   tracking_number?: string;
   tracking_url?: string;
   carrier_name?: string;
   service_name?: string;
+  shipping_cost?: number;
   cost_paid_eur?: number;
   cost_charged_eur?: number;
   shipped_by_name?: string;
