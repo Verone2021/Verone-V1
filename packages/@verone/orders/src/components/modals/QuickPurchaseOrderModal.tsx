@@ -323,6 +323,16 @@ export function QuickPurchaseOrderModal({
                     }}
                     disabled={isSubmitting}
                   />
+                  {shortageQuantity !== undefined && shortageQuantity > 0 && (
+                    <p className="text-xs text-gray-600">
+                      💡 Il manque{' '}
+                      <strong className="text-orange-600">
+                        {shortageQuantity}
+                      </strong>{' '}
+                      unité{shortageQuantity > 1 ? 's' : ''} pour atteindre le
+                      seuil minimum.
+                    </p>
+                  )}
                 </div>
 
                 {/* Prix unitaire HT */}
