@@ -161,3 +161,8 @@ INVENTAIRE_*.md
 
 # Accidental personal files
 Untitled
+
+# Fichiers d'export ponctuels (ne doivent jamais etre a la racine)
+/export-claude-config-*.md
+/diagnostic-*.md
+/AUDIT_*.md

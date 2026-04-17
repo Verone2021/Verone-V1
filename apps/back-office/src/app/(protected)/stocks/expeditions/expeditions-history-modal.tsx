@@ -1,5 +1,8 @@
 'use client';
 
+import { useState } from 'react';
+
+import { EditShipmentModal } from '@verone/orders/components/modals';
 import { ProductThumbnail } from '@verone/products';
 import { Badge, ButtonV2 } from '@verone/ui';
 import {
@@ -18,7 +21,7 @@ import {
   TableRow,
 } from '@verone/ui';
 import { formatCurrency, formatDate } from '@verone/utils';
-import { Truck } from 'lucide-react';
+import { Pencil, Truck } from 'lucide-react';
 
 import type { SalesOrder, ShipmentHistoryItem } from './expeditions-types';
 
@@ -47,8 +50,8 @@ function ShipmentItemsTable({ shipment }: { shipment: ShipmentHistoryItem }) {
             <TableCell className="font-mono text-sm">
               {item.product_sku}
             </TableCell>
-            <TableCell className="text-right font-medium text-green-600">
-              +{item.quantity_shipped}
+            <TableCell className="text-right font-medium text-red-600">
+              -{item.quantity_shipped}
             </TableCell>
           </TableRow>
         ))}
@@ -75,76 +78,124 @@ function ShipmentCostsInfo({ shipment }: { shipment: ShipmentHistoryItem }) {
   );
 }
 
+interface ShipmentDetailCardProps {
+  shipment: ShipmentHistoryItem;
+  index: number;
+  onEditSuccess: () => void;
+}
+
 function ShipmentDetailCard({
   shipment,
   index,
-}: {
-  shipment: ShipmentHistoryItem;
-  index: number;
-}) {
+  onEditSuccess,
+}: ShipmentDetailCardProps) {
+  const [editOpen, setEditOpen] = useState(false);
+
+  const shipmentId = shipment.shipment_id ?? shipment.id;
+  const isManual = shipment.delivery_method === 'manual';
+
   return (
-    <Card className="border-l-4 border-verone-success">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-lg">Expédition #{index + 1}</CardTitle>
-            <CardDescription>
-              {shipment.shipped_at
-                ? `Expédiée le ${formatDate(shipment.shipped_at)}`
-                : 'Date non disponible'}
-            </CardDescription>
+    <>
+      <Card className="border-l-4 border-verone-success">
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-lg">
+                  Expédition #{index + 1}
+                </CardTitle>
+                {isManual && shipmentId && (
+                  <ButtonV2
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditOpen(true)}
+                    title="Modifier cette expédition"
+                    className="h-7 w-7 p-0"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </ButtonV2>
+                )}
+              </div>
+              <CardDescription>
+                {shipment.shipped_at
+                  ? `Expédiée le ${formatDate(shipment.shipped_at)}`
+                  : 'Date non disponible'}
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              {shipment.shipped_by_name && (
+                <Badge variant="outline">Par: {shipment.shipped_by_name}</Badge>
+              )}
+              {shipment.tracking_number && (
+                <Badge variant="outline">
+                  Suivi: {shipment.tracking_number}
+                </Badge>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            {shipment.shipped_by_name && (
-              <Badge variant="outline">Par: {shipment.shipped_by_name}</Badge>
-            )}
-            {shipment.tracking_number && (
-              <Badge variant="outline">Suivi: {shipment.tracking_number}</Badge>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {shipment.notes && (
-          <div className="mb-4 p-3 bg-gray-50 rounded">
-            <p className="text-sm font-medium text-gray-700">Notes:</p>
-            <p className="text-sm text-gray-600">{shipment.notes}</p>
-          </div>
-        )}
-        {shipment.carrier_name && (
-          <div className="mb-4 p-3 bg-gray-50 rounded">
-            <p className="text-sm font-medium text-gray-700">
-              Transporteur: {shipment.carrier_name}
-            </p>
-            {shipment.service_name && (
-              <p className="text-sm text-gray-600">
-                Service: {shipment.service_name}
+        </CardHeader>
+        <CardContent>
+          {shipment.notes && (
+            <div className="mb-4 p-3 bg-gray-50 rounded">
+              <p className="text-sm font-medium text-gray-700">Notes:</p>
+              <p className="text-sm text-gray-600">{shipment.notes}</p>
+            </div>
+          )}
+          {shipment.carrier_name && (
+            <div className="mb-4 p-3 bg-gray-50 rounded">
+              <p className="text-sm font-medium text-gray-700">
+                Transporteur: {shipment.carrier_name}
               </p>
-            )}
-            {shipment.tracking_url && (
-              <a
-                href={shipment.tracking_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-verone-primary hover:underline"
-              >
-                Suivre le colis →
-              </a>
-            )}
+              {shipment.service_name && (
+                <p className="text-sm text-gray-600">
+                  Service: {shipment.service_name}
+                </p>
+              )}
+              {shipment.tracking_url && (
+                <a
+                  href={shipment.tracking_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-verone-primary hover:underline"
+                >
+                  Suivre le colis →
+                </a>
+              )}
+            </div>
+          )}
+          <ShipmentItemsTable shipment={shipment} />
+          <div className="mt-4 pt-4 border-t">
+            <p className="text-sm font-medium text-gray-700">
+              Total expédié:{' '}
+              <span className="text-verone-success font-bold">
+                {shipment.total_quantity ?? 0} unités
+              </span>
+            </p>
           </div>
-        )}
-        <ShipmentItemsTable shipment={shipment} />
-        <div className="mt-4 pt-4 border-t">
-          <p className="text-sm font-medium text-gray-700">
-            Total expédié:{' '}
-            <span className="text-verone-success font-bold">
-              {shipment.total_quantity ?? 0} unités
-            </span>
-          </p>
-        </div>
-        <ShipmentCostsInfo shipment={shipment} />
-      </CardContent>
-    </Card>
+          <ShipmentCostsInfo shipment={shipment} />
+        </CardContent>
+      </Card>
+
+      {isManual && shipmentId && (
+        <EditShipmentModal
+          shipment={{
+            id: shipmentId,
+            delivery_method: shipment.delivery_method ?? null,
+            carrier_name: shipment.carrier_name ?? null,
+            tracking_number: shipment.tracking_number ?? null,
+            tracking_url: shipment.tracking_url ?? null,
+            shipping_cost: shipment.shipping_cost ?? null,
+            notes: shipment.notes ?? null,
+          }}
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          onSuccess={() => {
+            setEditOpen(false);
+            onEditSuccess();
+          }}
+        />
+      )}
+    </>
   );
 }
 
@@ -153,6 +204,7 @@ interface HistoryDetailModalProps {
   showHistoryModal: boolean;
   shipmentHistory: ShipmentHistoryItem[];
   onClose: () => void;
+  onEditSuccess?: () => void;
 }
 
 export function HistoryDetailModal({
@@ -160,6 +212,7 @@ export function HistoryDetailModal({
   showHistoryModal,
   shipmentHistory,
   onClose,
+  onEditSuccess,
 }: HistoryDetailModalProps) {
   if (!selectedOrder || !showHistoryModal) return null;
   return (
@@ -192,9 +245,10 @@ export function HistoryDetailModal({
               {shipmentHistory.map(
                 (shipment: ShipmentHistoryItem, index: number) => (
                   <ShipmentDetailCard
-                    key={index}
+                    key={shipment.shipment_id ?? index}
                     shipment={shipment}
                     index={index}
+                    onEditSuccess={onEditSuccess ?? onClose}
                   />
                 )
               )}

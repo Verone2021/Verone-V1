@@ -113,6 +113,11 @@ export default function ExpeditionsPage() {
         showHistoryModal={exp.showHistoryModal}
         shipmentHistory={exp.shipmentHistory}
         onClose={exp.handleCloseHistoryModal}
+        onEditSuccess={() => {
+          void exp.handleRefreshHistory().catch((err: unknown) => {
+            console.error('[ExpeditionsPage] Refresh history failed:', err);
+          });
+        }}
       />
     </div>
   );

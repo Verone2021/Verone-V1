@@ -16,7 +16,10 @@ import {
   TableHeader,
   TableRow,
 } from '@verone/ui';
-import { QuoteStatusBadge } from '@verone/finance/components';
+import {
+  DocumentSourceBadge,
+  QuoteStatusBadge,
+} from '@verone/finance/components';
 import {
   Download,
   Eye,
@@ -110,6 +113,11 @@ export function DevisTab({
                 <TableRow key={quote.id}>
                   <TableCell>
                     <div className="font-mono">{quote.quote_number}</div>
+                    <div className="mt-1">
+                      <DocumentSourceBadge
+                        hasOrderLink={!!quote.order_number}
+                      />
+                    </div>
                     {(quote.order_number ?? quote.purchase_order_number) && (
                       <div className="text-[11px] text-muted-foreground mt-0.5">
                         {quote.order_number ?? quote.purchase_order_number}

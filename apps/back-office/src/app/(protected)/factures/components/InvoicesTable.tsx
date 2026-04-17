@@ -28,6 +28,11 @@ import {
   Trash2,
 } from 'lucide-react';
 
+import {
+  DocumentDiscordanceBadge,
+  DocumentSourceBadge,
+} from '@verone/finance/components';
+
 import type { Invoice } from './types';
 import { formatAmount, formatDate } from './types';
 import { InvoiceStatusBadge } from './StatusBadges';
@@ -86,7 +91,7 @@ export function InvoicesTable({
   }
 
   return (
-    <Table className="w-auto">
+    <Table className="w-full">
       <TableHeader>
         <TableRow>
           <TableHead>N° Facture</TableHead>
@@ -104,6 +109,9 @@ export function InvoicesTable({
           <TableRow key={invoice.id}>
             <TableCell>
               <div className="font-mono text-xs">{invoice.number}</div>
+              <div className="mt-1">
+                <DocumentSourceBadge hasOrderLink={!!invoice.sales_order_id} />
+              </div>
               {invoice.sales_order_id && invoice.order_number && (
                 <button
                   onClick={() => onOpenOrder?.(invoice.sales_order_id!)}
@@ -187,10 +195,18 @@ export function InvoicesTable({
               )}
             </TableCell>
             <TableCell className="text-right font-medium">
-              {formatAmount(
-                parseFloat(invoice.total_amount.value),
-                invoice.total_amount.currency
-              )}
+              <div className="flex items-center justify-end gap-2">
+                <DocumentDiscordanceBadge
+                  localTotalTtcEuros={invoice.local_total_ttc}
+                  qontoTotalCents={invoice.total_amount_cents}
+                />
+                <span>
+                  {formatAmount(
+                    parseFloat(invoice.total_amount.value),
+                    invoice.total_amount.currency
+                  )}
+                </span>
+              </div>
             </TableCell>
             <TableCell>
               <div className="flex gap-0.5">

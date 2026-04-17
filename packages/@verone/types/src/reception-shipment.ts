@@ -353,6 +353,12 @@ export interface ShipmentHistory {
   /** Total quantité */
   total_quantity: number;
 
+  /** Méthode de livraison (manual, packlink, pickup, hand_delivery) */
+  delivery_method?: string;
+
+  /** Coût transport Vérone paie au transporteur (€ HT) */
+  shipping_cost?: number;
+
   /** Coût */
   cost_paid_eur?: number;
   cost_charged_eur?: number;

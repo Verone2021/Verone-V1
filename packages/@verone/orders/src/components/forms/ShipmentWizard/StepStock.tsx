@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 import { ProductThumbnail } from '@verone/products';
 import type { ShipmentItem } from '@verone/types';
 import { Badge } from '@verone/ui';
@@ -15,7 +17,13 @@ import {
   TableRow,
 } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
-import { Package, AlertTriangle, ArrowRight, ChevronDown } from 'lucide-react';
+import {
+  Package,
+  AlertTriangle,
+  ArrowRight,
+  ChevronDown,
+  Settings,
+} from 'lucide-react';
 
 import type { PreviousShipmentGroup } from './types';
 
@@ -27,6 +35,7 @@ interface StepStockProps {
   setShowPreviousShipments: (v: boolean) => void;
   handleQuantityChange: (itemId: string, value: string) => void;
   handleShipAll: () => void;
+  onOpenAdjustment: (item: ShipmentItem) => void;
   onNext: () => void;
   onCancel: () => void;
 }
@@ -39,6 +48,7 @@ export function StepStock({
   setShowPreviousShipments,
   handleQuantityChange,
   handleShipAll,
+  onOpenAdjustment,
   onNext,
   onCancel,
 }: StepStockProps) {
@@ -228,15 +238,38 @@ export function StepStock({
                 >
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <ProductThumbnail
-                        src={item.primary_image_url}
-                        alt={item.product_name}
-                        size="sm"
-                      />
+                      <Link
+                        href={`/produits/catalogue/${item.product_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Ouvrir la fiche produit ${item.product_name}`}
+                      >
+                        <ProductThumbnail
+                          src={item.primary_image_url}
+                          alt={item.product_name}
+                          size="sm"
+                        />
+                      </Link>
                       <div>
-                        <p className="font-medium text-sm">
-                          {item.product_name}
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <Link
+                            href={`/produits/catalogue/${item.product_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-sm hover:text-verone-primary hover:underline"
+                          >
+                            {item.product_name}
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => onOpenAdjustment(item)}
+                            aria-label="Ajuster le stock"
+                            title="Ajuster le stock"
+                            className="text-gray-400 hover:text-verone-primary transition-colors"
+                          >
+                            <Settings className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                         <p className="text-xs text-muted-foreground">
                           {item.product_sku}
                         </p>
@@ -293,7 +326,7 @@ export function StepStock({
                           e.target.value
                         )
                       }
-                      className="w-16 h-8 text-center mx-auto border-indigo-200 focus:border-indigo-500"
+                      className="w-20 h-8 text-center mx-auto border-indigo-200 focus:border-indigo-500"
                     />
                   </TableCell>
                 </TableRow>

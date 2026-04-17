@@ -8,6 +8,12 @@ import { Card, CardContent } from '@verone/ui';
 import { AlertTriangle, XCircle, Package, ExternalLink } from 'lucide-react';
 
 // Type définition pour StockAlert
+export type StockAlertType =
+  | 'low_stock'
+  | 'low_stock_forecast'
+  | 'out_of_stock'
+  | 'no_stock_but_ordered';
+
 export interface StockAlert {
   id: string;
   product_id: string;
@@ -18,7 +24,7 @@ export interface StockAlert {
   stock_forecasted_out: number;
   min_stock: number;
   shortage_quantity: number;
-  alert_type: 'low_stock' | 'out_of_stock' | 'no_stock_but_ordered';
+  alert_type: StockAlertType;
   severity: 'info' | 'warning' | 'critical';
 
   // Tracking commandes brouillon
@@ -37,10 +43,20 @@ export interface StockAlert {
 
 interface StockAlertCardProps {
   alert: StockAlert;
+  /**
+   * Types d'alertes supplémentaires actives pour le MÊME produit.
+   * Permet d'afficher plusieurs badges quand un produit a low_stock + out_of_stock simultanément.
+   * @since 2026-04-20 (BO-STOCK-007 A4)
+   */
+  additionalAlertTypes?: StockAlertType[];
   onActionClick?: (alert: StockAlert) => void;
 }
 
-export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
+export function StockAlertCard({
+  alert,
+  additionalAlertTypes = [],
+  onActionClick,
+}: StockAlertCardProps) {
   // Hook pour récupérer l'image principale du produit
   const { primaryImage, loading: imageLoading } = useProductImages({
     productId: alert.product_id,
@@ -59,44 +75,67 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
   };
 
   const getSeverityColor = () => {
-    // ✅ CALCUL STOCK PRÉVISIONNEL (basé sur PO VALIDÉES uniquement)
-    // stock_forecasted_in = quantité des PO validées (en transit)
-    const stock_previsionnel_valide =
+    // ✅ CALCUL STOCK PRÉVISIONNEL
+    // Formule : stock_real + stock_forecasted_in - stock_forecasted_out
+    const stock_previsionnel =
       alert.stock_real +
       (alert.stock_forecasted_in ?? 0) -
       (alert.stock_forecasted_out ?? 0);
 
-    // ✅ WORKFLOW : ROUGE → ORANGE (brouillon) → VERT (validé suffisant) → DISPARAÎT
+    // ✅ WORKFLOW : ROUGE → ORANGE (brouillon) → VERT (validé ET suffisant) → DISPARAÎT
 
     // PRIORITÉ 1 : Si PO brouillon existe → ORANGE (en attente de validation)
-    // Un brouillon indique qu'une action est en cours mais pas encore confirmée
     if (alert.is_in_draft) {
       return 'border-orange-500 !bg-orange-50';
     }
 
-    // PRIORITÉ 2 : Si PO validée couvre le besoin → VERT
-    // Le seuil est atteint avec les commandes validées en transit
-    if (
-      stock_previsionnel_valide >= alert.min_stock &&
-      stock_previsionnel_valide >= 0
-    ) {
+    // PRIORITÉ 2 : VERT si commande VALIDÉE ET stock prévisionnel suffisant
+    // Restauration de la logique du commit 3afbb41ed (7 déc 2025), cassée par 9bde76c00 (8 déc)
+    if (alert.validated && stock_previsionnel >= alert.min_stock) {
       return 'border-green-600 !bg-green-50';
     }
 
-    // PRIORITÉ 3 : Sinon → ROUGE (besoin non couvert, aucune commande suffisante)
-    return 'border-red-600 !bg-red-50';
+    // PRIORITÉ 3 : ROUGE si stock prévisionnel insuffisant ou pas encore validé
+    if (stock_previsionnel < alert.min_stock || !alert.validated) {
+      return 'border-red-600 !bg-red-50';
+    }
+
+    // Fallback : couleur selon sévérité (cas par défaut normalement pas atteint)
+    switch (alert.severity) {
+      case 'critical':
+        return 'border-red-600 !bg-red-50';
+      case 'warning':
+        return 'border-orange-600 !bg-orange-50';
+      default:
+        return 'border-blue-600 !bg-blue-50';
+    }
   };
 
-  const getAlertTypeLabel = () => {
-    switch (alert.alert_type) {
+  const getAlertTypeLabel = (type: StockAlertType = alert.alert_type) => {
+    switch (type) {
       case 'low_stock':
         return 'Stock Faible';
+      case 'low_stock_forecast':
+        return 'Stock minimum anticipé';
       case 'out_of_stock':
         return 'Rupture de Stock';
       case 'no_stock_but_ordered':
         return 'Commandé Sans Stock';
       default:
         return 'Alerte';
+    }
+  };
+
+  const getBadgeClass = (type: StockAlertType) => {
+    switch (type) {
+      case 'out_of_stock':
+        return 'border-red-500 bg-red-50 text-red-700';
+      case 'low_stock':
+        return 'border-orange-500 bg-orange-50 text-orange-700';
+      case 'low_stock_forecast':
+        return 'border-amber-500 bg-amber-50 text-amber-700';
+      default:
+        return 'border-blue-500 bg-blue-50 text-blue-700';
     }
   };
 
@@ -141,15 +180,27 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
           <div className="flex-1 min-w-0 space-y-1">
             {/* Header: SKU (LEFT) + Icône + Type + Buttons (RIGHT) */}
             <div className="flex items-center justify-between gap-3">
-              {/* LEFT: SKU + Icône + Type */}
-              <div className="flex items-center gap-2">
+              {/* LEFT: SKU + Icône + Type(s) */}
+              <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant="outline" className="text-xs">
                   {alert.sku}
                 </Badge>
                 {getSeverityIcon()}
-                <span className="font-medium text-sm">
+                <Badge
+                  variant="outline"
+                  className={`text-xs ${getBadgeClass(alert.alert_type)}`}
+                >
                   {getAlertTypeLabel()}
-                </span>
+                </Badge>
+                {additionalAlertTypes.map(type => (
+                  <Badge
+                    key={type}
+                    variant="outline"
+                    className={`text-xs ${getBadgeClass(type)}`}
+                  >
+                    {getAlertTypeLabel(type)}
+                  </Badge>
+                ))}
               </div>
 
               {/* RIGHT: Action Buttons */}
@@ -176,7 +227,9 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
                         : 'Commander Fournisseur'}
                 </Button>
                 {alert.draft_order_id ? (
-                  <Link href={`/commandes/fournisseurs`}>
+                  <Link
+                    href={`/commandes/fournisseurs?id=${alert.draft_order_id}`}
+                  >
                     <Button size="sm" variant="outline" className="text-xs">
                       Voir Commande
                     </Button>

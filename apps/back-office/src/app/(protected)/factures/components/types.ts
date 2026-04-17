@@ -118,6 +118,7 @@ export interface Invoice {
   sales_order_id?: string | null;
   order_number?: string | null;
   local_amount_paid?: number | null;
+  local_total_ttc?: number | null;
   partner_id?: string | null;
   partner_legal_name?: string | null;
   partner_trade_name?: string | null;

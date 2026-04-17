@@ -78,3 +78,12 @@
 | `.claude/commands/review-references/typescript-rules.md`  | Typescript Rules  |
 
 ---
+
+## Regles
+
+| Fichier | Contenu |
+| ------- | ------- |
+| `.claude/rules/finance.md` | Finance |
+
+---
+

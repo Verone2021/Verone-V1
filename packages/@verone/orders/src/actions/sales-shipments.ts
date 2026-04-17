@@ -205,3 +205,101 @@ export async function validateSalesShipment(
     };
   }
 }
+
+// Schéma de validation pour l'édition d'un shipment manuel
+const updateShipmentSchema = z.object({
+  shipment_id: z.string().uuid(),
+  carrier_name: z.string().optional(),
+  tracking_number: z.string().optional(),
+  tracking_url: z.string().url().optional().or(z.literal('')),
+  shipping_cost: z.number().min(0).optional(),
+  notes: z.string().optional(),
+});
+
+type UpdateShipmentPayload = z.infer<typeof updateShipmentSchema>;
+
+/**
+ * Server Action: Éditer un shipment manuel existant
+ *
+ * Seuls les shipments avec delivery_method = 'manual' peuvent être édités.
+ * Les champs modifiables : carrier_name, tracking_number, tracking_url, shipping_cost, notes.
+ * Les champs non-modifiables : quantity_shipped, delivery_method, shipped_at, shipped_by, colonnes packlink_*.
+ *
+ * @param payload UpdateShipmentPayload
+ * @returns Promise<{ success: boolean; error?: string }>
+ */
+export async function updateSalesShipment(
+  payload: UpdateShipmentPayload
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // 1. Validation Zod
+    const validatedData = updateShipmentSchema.parse(payload);
+
+    // 2. Create Supabase client
+    const supabase = await createServerClient();
+
+    // 3. Récupérer le shipment existant
+    const { data: shipment, error: fetchError } = await supabase
+      .from('sales_order_shipments')
+      .select('id, delivery_method, sales_order_id')
+      .eq('id', validatedData.shipment_id)
+      .single();
+
+    if (fetchError || !shipment) {
+      return { success: false, error: 'Expédition introuvable' };
+    }
+
+    // 4. Guard : uniquement pour les expéditions manuelles
+    if (shipment.delivery_method !== 'manual') {
+      return {
+        success: false,
+        error: 'Edition impossible : uniquement pour expeditions manuelles',
+      };
+    }
+
+    // 5. UPDATE des champs éditables
+    const { error: updateError } = await supabase
+      .from('sales_order_shipments')
+      .update({
+        carrier_name: validatedData.carrier_name ?? null,
+        tracking_number: validatedData.tracking_number ?? null,
+        tracking_url:
+          validatedData.tracking_url !== undefined &&
+          validatedData.tracking_url !== ''
+            ? validatedData.tracking_url
+            : null,
+        shipping_cost: validatedData.shipping_cost ?? null,
+        notes: validatedData.notes ?? null,
+      })
+      .eq('id', validatedData.shipment_id);
+
+    if (updateError) {
+      console.error('Erreur mise à jour expédition:', updateError);
+      return {
+        success: false,
+        error: `Erreur mise à jour: ${updateError.message}`,
+      };
+    }
+
+    // 6. Revalidate cache Next.js
+    revalidatePath('/stocks/expeditions');
+    revalidatePath('/commandes/clients');
+    revalidatePath(`/commandes/clients/${shipment.sales_order_id}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error('Erreur édition expédition:', error);
+
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        error: `Données invalides: ${error.issues.map(e => e.message).join(', ')}`,
+      };
+    }
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Erreur serveur inconnue',
+    };
+  }
+}

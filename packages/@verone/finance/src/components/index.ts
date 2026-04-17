@@ -24,6 +24,8 @@ export * from './tables/EditableQuoteItemRow'; // Ligne éditable devis (catalog
 
 // Composants UI
 export * from './QuoteStatusBadge'; // Badge statut devis réutilisable
+export * from './DocumentSourceBadge'; // Badge Commande vs Service (BO-FIN-010)
+export * from './DocumentDiscordanceBadge'; // Badge discordance total DB vs Qonto (BO-FIN-011)
 export * from './SupplierCell';
 export * from './OrganisationTransactionsSection';
 export * from './TransactionDetailDialog';

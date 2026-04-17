@@ -210,7 +210,8 @@ export function useShipmentDetail() {
           .from('sales_order_shipments')
           .select(
             `
-            id, shipped_at, tracking_number, notes, quantity_shipped, product_id, shipped_by,
+            id, shipped_at, tracking_number, tracking_url, notes, quantity_shipped, product_id, shipped_by,
+            delivery_method, carrier_name, carrier_service, shipping_cost,
             products:product_id (name, sku, product_images!left(public_url, is_primary))
           `
           )
@@ -265,11 +266,15 @@ export function useShipmentDetail() {
               grouped.set(key, {
                 shipment_id: s.id,
                 shipped_at: s.shipped_at,
-                carrier_name: 'Manuel',
+                carrier_name: s.carrier_name ?? 'Manuel',
+                service_name: s.carrier_service ?? undefined,
+                tracking_number: s.tracking_number ?? undefined,
+                tracking_url: s.tracking_url ?? undefined,
+                delivery_method: s.delivery_method ?? undefined,
+                shipping_cost: s.shipping_cost ?? undefined,
                 items: [],
                 total_quantity: 0,
                 delivery_status: 'delivered',
-                tracking_number: s.tracking_number ?? undefined,
                 shipped_by_name: s.shipped_by
                   ? (profilesMap.get(s.shipped_by) ?? undefined)
                   : undefined,

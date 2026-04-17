@@ -288,6 +288,116 @@ CREATE TABLE ambassador_attributions (
 
 # A FAIRE — Taches restantes
 
+## PRIORITE HAUTE — Domaine Finance (audit 2026-04-16)
+
+Regles metier de reference : `.claude/rules/finance.md` (R1 a R7).
+Audit cause racine : `docs/scratchpad/audit-arrondi-totaux-2026-04-16.md`.
+
+### [BO-FIN-009] Alignement arrondi DB <-> Qonto + verrouillages devis/facture
+
+**Objectif** : appliquer R1 (zero discordance) + R2/R3/R5/R6 (verrouillages metier).
+**Impact** : 134/160 commandes (84%) + 7 proformas actuelles touchees par le bug d'arrondi.
+**Risque** : eleve — backfill `tva_amount` peut impacter exports TVA historiques.
+
+**Prerequis OBLIGATOIRE** : audit consommateurs `tva_amount` dans `docs/scratchpad/audit-consommateurs-tva-amount.md`. Identifier :
+- Rapports TVA qui lisent `tva_amount`
+- Exports comptables, dashboards finance
+- Vues SQL dependant de `tva_amount`
+Sans cet audit, Phase 1 interdite.
+
+**6 phases, ordre strict** :
+- [ ] Phase 1 (prio absolue) : round-per-line strict dans trigger DB `recalc_sales_order_on_charges_change` + code applicatif (route from-order + service). Recalcul correct de `total_ht` (items + frais) et `tva_amount` (vraie TVA).
+- [ ] Phase 3 (prio apres P1) : verrouillage par statut commande (R6). Exempts : `notes`, `expected_delivery_date`, champs tracking (packlink, shipping_*), contacts (billing/delivery/responsable).
+- [ ] Phase 2 : readonly prix items dans modals devis/facture lies (R2). `QuoteItemsTable.tsx`, `InvoiceItemsSection.tsx`. Exception : `customLines` restent editables.
+- [ ] Phase 5 : route POST `/api/qonto/quotes` refuse `standalone` sauf `kind='service'` (R5). Ajout flag explicite dans le body.
+- [ ] Phase 4 : modal regeneration (R3). Si commande a 1 devis + 1 facture draft -> regenerer LES DEUX en cascade.
+- [ ] Phase 6 : badge alerte discordance — peut etre fait en parallele via BO-FIN-011 (filet de securite).
+
+### [BO-FIN-010] Badges differenciation devis/facture : Commande vs Service
+
+**Objectif** : distinguer visuellement les documents lies a une commande (`sales_order_id NOT NULL`) des documents libres / service (`sales_order_id IS NULL`).
+
+**Implementation** (1h effort, pas de modif DB/API) :
+- [ ] Creer `packages/@verone/finance/src/components/DocumentSourceBadge.tsx` (1 prop `sales_order_id: string | null`)
+- [ ] Badge "Commande" bleu (`bg-blue-100 text-blue-700`, icone `ShoppingBag`)
+- [ ] Badge "Service" ambre (`bg-amber-100 text-amber-700`, icone `Briefcase`)
+- [ ] Integration 4 emplacements :
+  - `apps/back-office/src/app/(protected)/factures/components/DevisTab.tsx`
+  - `apps/back-office/src/app/(protected)/factures/components/InvoicesTable.tsx`
+  - `apps/back-office/src/app/(protected)/factures/devis/[id]/DevisContent.tsx`
+  - `apps/back-office/src/app/(protected)/factures/[id]/DocumentDetailHeader.tsx`
+- [ ] Screenshots Playwright avant/apres + type-check
+
+**Independant de BO-FIN-009**. Feature branch dediee `feat/BO-FIN-010-badges`.
+
+### [BO-FIN-011] Badge alerte discordance total local vs Qonto
+
+**Objectif** : filet de securite visuel en attendant Phase 1 de BO-FIN-009.
+
+**Implementation** :
+- [ ] Pastille orange `⚠ ecart X cents` si `|total_ttc_local - total_ttc_qonto| > 0.01`
+- [ ] Enrichir le fetch factures pour ramener `total_ttc` Qonto en parallele
+- [ ] Afficher dans `InvoicesTable.tsx` et `SalesOrderTableRow.tsx`
+
+**Peut etre implemente AVANT BO-FIN-009** (standalone). Si BO-FIN-009 Phase 1 est deployee correctement, ce badge ne se declenchera plus (nominal zero ecart).
+
+---
+
+## PRIORITE URGENTE — Issues detectees post-BO-FIN-009 Phase 1 (audit 2026-04-18)
+
+Regle cible : `.claude/rules/finance.md` R1 (zero discordance DB <-> Qonto).
+
+### [BO-FIN-017] Regenerer proforma F-2026-017-PROFORMA corrompue — RESOLU (2026-04-17)
+
+**Resolution** : proforma soft-deleted par Romeo le 2026-04-17 20:24 UTC.
+`SELECT deleted_at FROM financial_documents WHERE document_number = 'F-2026-017-PROFORMA'` : `2026-04-17 20:24:15.218+00` ✓
+
+Contexte historique (conserve pour trace) : la proforma `F-2026-017-PROFORMA` (id `18627a85`) liee a SO-2026-00124 avait 0 items locaux pour un total de 283.92 EUR alors que la SO avait 12 items pour 3639.40 EUR. Enregistrement corrompu pre-BO-FIN-014.
+
+**Statut** : dossier clos. Aucun suivi Qonto necessaire (proforma non finalisee, status draft, soft-deleted propre).
+
+### [BO-FIN-018] Fix formule avgVat multi-taux dans saveQuoteToLocalDb
+
+**Contexte** : audit tva_amount a identifie `apps/back-office/src/app/api/qonto/quotes/route.context.ts` fonction `saveQuoteToLocalDb` (lignes 281-354) avec formule `avgVat = sum(vatRate) / items.length` puis `tva = totalHt * avgVat`. Sans ROUND.
+
+**Probleme** : sur panier mixte (ex: item 5.5% + item 20%), la moyenne des taux ne correspond PAS a la TVA reelle ponderee. Viole potentiellement la contrainte `check_totals_coherent` DB (`abs(total_ttc - (total_ht + tva_amount)) < 0.01`).
+
+**Action** :
+- [ ] Reecrire le calcul : somme par ligne des `ROUND(line_ht * vatRate, 2)` puis SUM.
+- [ ] Migration test : verifier qu'aucun devis en DB ne viole actuellement la contrainte.
+- [ ] Backfill devis drafts si delta detecte.
+
+**Priorite** : MOYENNE (bug latent, pas encore declenche en production avec paniers multi-taux).
+
+### [BO-FIN-019] Fix reference tva_amount dans fonction DB create_purchase_order — RESOLU (2026-04-18)
+
+**Resolution** : fonction droppee via migration `20260425_bo_fin_019_drop_create_purchase_order.sql`.
+
+**Verifications pre-drop** :
+- `pg_stat_user_functions WHERE funcname = 'create_purchase_order'` : aucune entree (0 calls)
+- Grep applicatif apps/ + packages/ : **0 reference** (hors types auto-generes supabase.ts)
+- 24 PO creees sur 90 derniers jours via d'autres chemins (UI directe) — la fonction n'etait pas le chemin actif
+
+Dead code confirme, drop applique. La colonne `purchase_orders.tva_amount` n'existant pas, toute invocation aurait declenche une erreur SQL.
+
+**Statut** : dossier clos.
+
+### [BO-FIN-020] Documenter procedure rollback Phase 1
+
+**Contexte** : la migration `20260423_bo_fin_009_phase1_round_per_line.sql` a modifie 18 SO de maniere irreversible (le backfill UPDATE ne peut pas etre rollback automatiquement). Le rollback fonctionnel necessite :
+1. `CREATE OR REPLACE FUNCTION` avec ancienne formule round-per-total.
+2. `UPDATE sales_orders SET total_ttc = ancien_total` — mais les anciens totaux ne sont plus en DB.
+
+**Action** :
+- [ ] Ajouter dans `docs/current/database/triggers-finance-reference.md` (ou creer) une section "Rollback BO-FIN-009 Phase 1".
+- [ ] Documenter qu'aucun rollback automatique n'est possible sur les 18 SO backfillees.
+- [ ] Preciser que l'impact est minimal (delta -0.01 a +0.02 EUR max 2 centimes).
+- [ ] Option : snapshot des 18 anciens totaux dans un fichier scratchpad historique.
+
+**Priorite** : BASSE (documentation, pas de bug actif).
+
+---
+
 ## SPRINT BO-ORG — Corrections formulaires organisation (9 avril 2026)
 
 ### Contexte

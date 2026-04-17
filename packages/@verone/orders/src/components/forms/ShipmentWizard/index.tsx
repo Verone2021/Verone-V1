@@ -12,6 +12,11 @@
  * Etape 7 : Success + lien Packlink PRO
  */
 
+import { useState } from 'react';
+
+import { InventoryAdjustmentModal } from '@verone/stock';
+import type { ShipmentItem } from '@verone/types';
+
 import type { ShipmentWizardProps } from './types';
 import { useShipmentWizard } from './useShipmentWizard';
 import { StepStepper } from './StepStepper';
@@ -23,12 +28,29 @@ import { StepDropoffs } from './StepDropoffs';
 import { StepPayment } from './StepPayment';
 import { StepSuccess } from './StepSuccess';
 
+interface ShipmentWizardExtendedProps extends ShipmentWizardProps {
+  onRefetch?: () => void;
+}
+
 export function ShipmentWizard({
   salesOrder,
   onSuccess,
   onCancel,
-}: ShipmentWizardProps) {
+  onRefetch,
+}: ShipmentWizardExtendedProps) {
   const state = useShipmentWizard(salesOrder, onSuccess);
+  const [adjustmentItem, setAdjustmentItem] = useState<ShipmentItem | null>(
+    null
+  );
+
+  const adjustmentProduct = adjustmentItem
+    ? {
+        id: adjustmentItem.product_id,
+        name: adjustmentItem.product_name,
+        sku: adjustmentItem.product_sku,
+        stock_quantity: adjustmentItem.stock_available,
+      }
+    : null;
 
   const addr = (salesOrder.shipping_address ?? null) as Record<
     string,
@@ -54,6 +76,7 @@ export function ShipmentWizard({
           setShowPreviousShipments={state.setShowPreviousShipments}
           handleQuantityChange={state.handleQuantityChange}
           handleShipAll={state.handleShipAll}
+          onOpenAdjustment={item => setAdjustmentItem(item)}
           onNext={() => state.setStep(2)}
           onCancel={onCancel}
         />
@@ -200,6 +223,16 @@ export function ShipmentWizard({
           onClose={onSuccess}
         />
       )}
+
+      <InventoryAdjustmentModal
+        isOpen={adjustmentItem !== null}
+        onClose={() => setAdjustmentItem(null)}
+        onSuccess={() => {
+          setAdjustmentItem(null);
+          onRefetch?.();
+        }}
+        product={adjustmentProduct}
+      />
     </div>
   );
 }

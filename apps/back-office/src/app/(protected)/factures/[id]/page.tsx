@@ -135,6 +135,7 @@ export default function DocumentDetailPage({
         isPaid={detail.isPaid}
         isCancelled={detail.isCancelled}
         isOverdue={detail.isOverdue}
+        salesOrderId={detail.orderLink?.sales_order_id ?? null}
         actionLoading={detail.actionLoading}
         onDownloadPdf={detail.handleDownloadPdf}
         onSendEmail={() => detail.setShowEmailModal(true)}
