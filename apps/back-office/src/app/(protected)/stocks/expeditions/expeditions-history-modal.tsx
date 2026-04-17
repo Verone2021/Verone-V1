@@ -47,8 +47,8 @@ function ShipmentItemsTable({ shipment }: { shipment: ShipmentHistoryItem }) {
             <TableCell className="font-mono text-sm">
               {item.product_sku}
             </TableCell>
-            <TableCell className="text-right font-medium text-green-600">
-              +{item.quantity_shipped}
+            <TableCell className="text-right font-medium text-red-600">
+              -{item.quantity_shipped}
             </TableCell>
           </TableRow>
         ))}
