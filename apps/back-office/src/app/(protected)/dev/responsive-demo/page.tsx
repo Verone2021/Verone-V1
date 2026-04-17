@@ -318,7 +318,7 @@ export default function ResponsiveDemoPage() {
           columns={invoiceColumns}
           data={INVOICES}
           rowKey={row => row.id}
-          actions={row => (
+          actions={_row => (
             <div className="flex gap-1 justify-end">
               <button className="text-xs text-primary hover:underline">
                 Voir
@@ -343,7 +343,7 @@ export default function ResponsiveDemoPage() {
           columns={orderColumns}
           data={ORDERS}
           rowKey={row => row.id}
-          actions={row => (
+          actions={_row => (
             <div className="flex gap-1 justify-end">
               <button className="text-xs text-primary hover:underline">
                 Ouvrir
@@ -376,7 +376,7 @@ export default function ResponsiveDemoPage() {
           columns={productColumns}
           data={[]}
           rowKey={row => row.id}
-          loading={true}
+          loading
           skeletonRows={4}
           density="compact"
         />
