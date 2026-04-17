@@ -69,13 +69,17 @@ export function useStockAlertesPage() {
           ? 'Rupture de stock'
           : alert.alert_type === 'low_stock'
             ? 'Stock faible'
-            : 'Stock commandé sans disponibilité',
+            : alert.alert_type === 'low_stock_forecast'
+              ? 'Stock minimum anticipé'
+              : 'Stock commandé sans disponibilité',
       message:
         alert.alert_type === 'out_of_stock'
           ? `${alert.product_name} est en rupture de stock`
           : alert.alert_type === 'low_stock'
             ? `${alert.product_name} approche du seuil minimum (${alert.stock_real}/${alert.min_stock})`
-            : `${alert.product_name} : commandes clients sans stock (${alert.stock_forecasted_out} unités)`,
+            : alert.alert_type === 'low_stock_forecast'
+              ? `${alert.product_name} : le prévisionnel va tomber sous le seuil (${alert.shortage_quantity} manquants apres SO en attente)`
+              : `${alert.product_name} : commandes clients sans stock (${alert.stock_forecasted_out} unités)`,
       productId: alert.product_id,
       productName: alert.product_name,
       productSku: alert.sku,

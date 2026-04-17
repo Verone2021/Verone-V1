@@ -3,7 +3,7 @@
 **Derniere mise a jour** : 2026-04-17
 **23 packages** dans `packages/@verone/`
 
-**530 composants, 11 hooks**
+**531 composants, 11 hooks**
 ---
 
 ## @verone/categories
@@ -566,6 +566,7 @@
 | `StockStatusBadge` | Component | `src/components/badges/StockStatusBadge.tsx` |
 | `StockStatusCompact` | Component | `src/components/badges/StockStatusCompact.tsx` |
 | `StockAlertCard` | Component | `src/components/cards/StockAlertCard.tsx` |
+| `StockAlertsBanner` | Component | `src/components/cards/StockAlertsBanner.tsx` |
 | `StockMovementsChart` | Component | `src/components/charts/StockMovementsChart.tsx` |
 | `MovementsFilters` | Component | `src/components/filters/MovementsFilters.tsx` |
 | `AdjustmentFileUpload` | Component | `src/components/modals/AdjustmentFileUpload.tsx` |

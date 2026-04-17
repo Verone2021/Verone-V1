@@ -1,6 +1,6 @@
 # Domaine Commandes & Consultations — Schema Base de Donnees
 
-_Generated: 2026-04-17 05:03_
+_Generated: 2026-04-17 05:18_
 
 **Tables : 17**
 
@@ -432,8 +432,8 @@ _Generated: 2026-04-17 05:03_
 - `linkme_selection_item_id` → `linkme_selection_items.id`
 
 **RLS :** 6 policies
-- `linkme_users_delete_own_order_items` : DELETE — authenticated
 - `staff_delete_sales_order_items` : DELETE — authenticated
+- `linkme_users_delete_own_order_items` : DELETE — authenticated
 - `Public can create sales_order_items` : INSERT — anon,authenticated
 - `staff_select_sales_order_items` : SELECT — authenticated
 - `affiliates_select_own_order_items` : SELECT — authenticated
@@ -509,12 +509,12 @@ _Generated: 2026-04-17 05:03_
 - `sales_order_id` → `sales_orders.id`
 
 **RLS :** 6 policies
-- `staff_can_insert_linkme_details` : INSERT — authenticated
 - `affiliates_can_insert_own_linkme_details` : INSERT — authenticated
-- `staff_select_sales_order_linkme_details` : SELECT — authenticated
+- `staff_can_insert_linkme_details` : INSERT — authenticated
 - `affiliates_select_own_order_linkme_details` : SELECT — authenticated
-- `linkme_users_update_own_linkme_details` : UPDATE — authenticated
+- `staff_select_sales_order_linkme_details` : SELECT — authenticated
 - `staff_can_update_linkme_details` : UPDATE — authenticated
+- `linkme_users_update_own_linkme_details` : UPDATE — authenticated
 
 **Triggers :** 3
 - `set_updated_at_sales_order_linkme_details` : BEFORE UPDATE
@@ -653,8 +653,8 @@ _Generated: 2026-04-17 05:03_
 - `staff_delete_sales_orders` : DELETE — authenticated
 - `Public can create sales_orders` : INSERT — anon,authenticated
 - `LinkMe users can create sales_orders` : INSERT — authenticated
-- `affiliates_select_own_orders` : SELECT — authenticated
 - `staff_select_sales_orders` : SELECT — authenticated
+- `affiliates_select_own_orders` : SELECT — authenticated
 - `linkme_users_update_own_draft_orders` : UPDATE — authenticated
 - `staff_update_sales_orders` : UPDATE — authenticated
 
@@ -764,10 +764,10 @@ _Generated: 2026-04-17 05:03_
 
 **RLS :** 9 policies
 - `staff_full_access_shopping_carts` : ALL — authenticated
-- `anon_cart_delete` : DELETE — anon
 - `users_own_cart_delete` : DELETE — authenticated
-- `anon_cart_insert` : INSERT — anon
+- `anon_cart_delete` : DELETE — anon
 - `users_own_cart_insert` : INSERT — authenticated
+- `anon_cart_insert` : INSERT — anon
 - `anon_cart_select` : SELECT — anon
 - `users_own_cart_select` : SELECT — authenticated
 - `users_own_cart_update` : UPDATE — authenticated

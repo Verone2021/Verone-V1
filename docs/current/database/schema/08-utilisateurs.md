@@ -1,6 +1,6 @@
 # Domaine Utilisateurs & Securite — Schema Base de Donnees
 
-_Generated: 2026-04-17 05:03_
+_Generated: 2026-04-17 05:18_
 
 **Tables : 8**
 
@@ -119,9 +119,9 @@ _Generated: 2026-04-17 05:03_
 - `owner_delete_roles` : DELETE — authenticated
 - `Enseigne admins can insert roles for their enseigne` : INSERT — public
 - `owner_insert_roles` : INSERT — authenticated
-- `privileged_view_all_roles` : SELECT — authenticated
 - `Users can view their own roles` : SELECT — authenticated
 - `Enseigne admins can view their enseigne roles` : SELECT — public
+- `privileged_view_all_roles` : SELECT — authenticated
 - `owner_update_roles` : UPDATE — authenticated
 
 **Triggers :** 4
@@ -160,8 +160,8 @@ _Generated: 2026-04-17 05:03_
 - `parent_user_id` → `user_profiles.user_id`
 
 **RLS :** 2 policies
-- `users_own_user_profiles` : ALL — authenticated
 - `backoffice_full_access_user_profiles` : ALL — authenticated
+- `users_own_user_profiles` : ALL — authenticated
 
 **Triggers :** 4
 - `audit_user_profiles` : AFTER INSERT
