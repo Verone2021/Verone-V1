@@ -97,6 +97,7 @@ export async function GET(request: NextRequest): Promise<
       order_number: string | null;
       local_status: string | null;
       local_amount_paid: number | null;
+      local_total_ttc: number | null;
       partner_id: string | null;
       partner_legal_name: string | null;
       partner_trade_name: string | null;
@@ -109,7 +110,7 @@ export async function GET(request: NextRequest): Promise<
       const { data: localDocs } = await supabase
         .from('financial_documents')
         .select(
-          'id, qonto_invoice_id, deleted_at, sales_order_id, status, amount_paid, partner_id, sales_orders!financial_documents_sales_order_id_fkey(order_number), organisations!financial_documents_partner_id_fkey(legal_name, trade_name)'
+          'id, qonto_invoice_id, deleted_at, sales_order_id, status, amount_paid, partner_id, total_ttc, sales_orders!financial_documents_sales_order_id_fkey(order_number), organisations!financial_documents_partner_id_fkey(legal_name, trade_name)'
         )
         .in('qonto_invoice_id', qontoInvoiceIds);
 
@@ -123,6 +124,7 @@ export async function GET(request: NextRequest): Promise<
           sales_order_id?: string | null;
           status?: string | null;
           amount_paid?: number | null;
+          total_ttc?: number | null;
           partner_id?: string | null;
           sales_orders?: { order_number: string | null } | null;
           organisations?: {
@@ -144,6 +146,10 @@ export async function GET(request: NextRequest): Promise<
                 local_amount_paid: doc.amount_paid
                   ? parseFloat(String(doc.amount_paid))
                   : null,
+                local_total_ttc:
+                  doc.total_ttc != null
+                    ? parseFloat(String(doc.total_ttc))
+                    : null,
                 partner_id: doc.partner_id ?? null,
                 partner_legal_name: doc.organisations?.legal_name ?? null,
                 partner_trade_name: doc.organisations?.trade_name ?? null,
@@ -178,6 +184,7 @@ export async function GET(request: NextRequest): Promise<
           sales_order_id: localData?.sales_order_id ?? null,
           order_number: localData?.order_number ?? null,
           local_amount_paid: localData?.local_amount_paid ?? null,
+          local_total_ttc: localData?.local_total_ttc ?? null,
           partner_id: localData?.partner_id ?? null,
           partner_legal_name: localData?.partner_legal_name ?? null,
           partner_trade_name: localData?.partner_trade_name ?? null,

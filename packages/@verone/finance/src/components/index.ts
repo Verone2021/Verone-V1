@@ -24,6 +24,7 @@ export * from './tables/EditableQuoteItemRow'; // Ligne éditable devis (catalog
 
 // Composants UI
 export * from './QuoteStatusBadge'; // Badge statut devis réutilisable
+export * from './DocumentDiscordanceBadge'; // Badge discordance total DB vs Qonto
 export * from './SupplierCell';
 export * from './OrganisationTransactionsSection';
 export * from './TransactionDetailDialog';

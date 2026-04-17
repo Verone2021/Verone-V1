@@ -3,7 +3,7 @@
 **Derniere mise a jour** : 2026-04-17
 **23 packages** dans `packages/@verone/`
 
-**532 composants, 11 hooks**
+**533 composants, 11 hooks**
 ---
 
 ## @verone/categories
@@ -113,6 +113,7 @@
 | `ApplyExistingWizard` | Component | `src/components/ApplyExistingWizard.tsx` |
 | `CategoryCardGrid` | Component | `src/components/CategoryCardGrid.tsx` |
 | `CreditNoteCreateModal` | Modal | `src/components/CreditNoteCreateModal.tsx` |
+| `DocumentDiscordanceBadge` | Component | `src/components/DocumentDiscordanceBadge.tsx` |
 | `DocumentEmailHistory` | Component | `src/components/DocumentEmailHistory.tsx` |
 | `HierarchicalCategorySelector` | Component | `src/components/HierarchicalCategorySelector.tsx` |
 | `InvoiceClientSection` | Component | `src/components/InvoiceCreateFromOrderModal/InvoiceClientSection.tsx` |
