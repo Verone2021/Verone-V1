@@ -45,33 +45,37 @@ export function StockAlertsBanner({
       try {
         const { data, error } = await supabase
           .from('stock_alerts_unified_view')
-          .select('*')
+          .select(
+            'id, product_id, product_name, sku, stock_real, stock_forecasted_in, stock_forecasted_out, min_stock, shortage_quantity, alert_type, severity, is_in_draft, quantity_in_draft, draft_order_id, draft_order_number, validated, validated_at'
+          )
           .eq('product_id', productId)
-          .neq('alert_type', 'none');
+          .neq('alert_type', 'none')
+          .limit(10);
 
         if (error) throw error;
         if (cancelled) return;
 
         const mapped: StockAlert[] = (data ?? []).map(
-          (a: Record<string, unknown>) => ({
-            id: String(a.id ?? ''),
-            product_id: String(a.product_id ?? ''),
-            product_name: String(a.product_name ?? ''),
-            sku: String(a.sku ?? ''),
-            stock_real: Number(a.stock_real ?? 0),
-            stock_forecasted_in: Number(a.stock_forecasted_in ?? 0),
-            stock_forecasted_out: Number(a.stock_forecasted_out ?? 0),
-            min_stock: Number(a.min_stock ?? 0),
-            shortage_quantity: Number(a.shortage_quantity ?? 0),
-            alert_type: (a.alert_type as StockAlertType) ?? 'low_stock',
+          (a): StockAlert => ({
+            id: a.id ?? '',
+            product_id: a.product_id ?? '',
+            product_name: a.product_name ?? '',
+            sku: a.sku ?? '',
+            stock_real: a.stock_real ?? 0,
+            stock_forecasted_in: a.stock_forecasted_in ?? 0,
+            stock_forecasted_out: a.stock_forecasted_out ?? 0,
+            min_stock: a.min_stock ?? 0,
+            shortage_quantity: a.shortage_quantity ?? 0,
+            alert_type: (a.alert_type as StockAlertType | null) ?? 'low_stock',
             severity:
-              (a.severity as 'info' | 'warning' | 'critical') ?? 'warning',
-            is_in_draft: Boolean(a.is_in_draft),
-            quantity_in_draft: a.quantity_in_draft as number | null,
-            draft_order_id: a.draft_order_id as string | null,
-            draft_order_number: a.draft_order_number as string | null,
-            validated: Boolean(a.validated),
-            validated_at: a.validated_at as string | null,
+              (a.severity as 'info' | 'warning' | 'critical' | null) ??
+              'warning',
+            is_in_draft: a.is_in_draft ?? false,
+            quantity_in_draft: a.quantity_in_draft,
+            draft_order_id: a.draft_order_id,
+            draft_order_number: a.draft_order_number,
+            validated: a.validated ?? false,
+            validated_at: a.validated_at,
           })
         );
 
