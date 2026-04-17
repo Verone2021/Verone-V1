@@ -91,7 +91,7 @@ export function InvoicesTable({
   }
 
   return (
-    <Table className="w-full">
+    <Table className="w-auto">
       <TableHeader>
         <TableRow>
           <TableHead>N° Facture</TableHead>

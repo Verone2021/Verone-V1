@@ -71,7 +71,7 @@ export function FournisseursTable({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <Table className="w-full [&_th]:px-2.5 [&_td]:px-2.5">
+            <Table className="w-auto [&_th]:px-2.5 [&_td]:px-2.5">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-10" />
