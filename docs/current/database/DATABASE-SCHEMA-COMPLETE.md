@@ -1,6 +1,6 @@
 # Database Schema Complete — Index
 
-_Generated: 2026-04-17 22:31 — 142 tables_
+_Generated: 2026-04-17 23:01 — 142 tables_
 
 | Table | Domaine | Colonnes |
 |-------|---------|----------|
