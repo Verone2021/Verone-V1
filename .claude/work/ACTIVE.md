@@ -12,14 +12,6 @@
 
 # FAIT — En attente de merge
 
-## Session 2026-04-17 — Stock triggers + UX expeditions
-
-- **[BO-SHIP-001]** Stock adjustment from shipment modal — PR #621, merge fait
-- **[BO-SHIP-002]** Polish stock adjust icon + widen qty input — PR #622, merge fait
-- **[BO-STOCK-001]** Fix shipment trigger RLS silent failure + legacy backfill — PR #623, merge fait
-- **[BO-STOCK-002]** Harden stock triggers + fix SO direct-validated forecast — PR #624, merge fait
-- **[BO-STOCK-003]** Fix display shipment quantity as negative — PR #625, merge fait
-
 ## [SI-AMB-001] Systeme Ambassadeurs Site-Internet — PR #583
 
 **Branche** : `feat/SI-AMB-001-systeme-ambassadeurs`
@@ -131,10 +123,7 @@
 
 # EN COURS
 
-**[BO-STOCK-004] Tests pilotes par Romeo (en cours)**
-Protocole de tests complet scenario 9 etapes dans
-`docs/scratchpad/protocole-smoke-tests-stock-complet.md`.
-Romeo pilote l'UI, agent verifie la DB a chaque etape.
+Aucune tache en cours. Prochaine session : choisir un sprint dans la roadmap ci-dessus.
 
 ---
 
@@ -299,66 +288,58 @@ CREATE TABLE ambassador_attributions (
 
 # A FAIRE — Taches restantes
 
-## SPRINT STOCK / SHIPMENT / FINANCE — Priorite HAUTE (avril 2026)
+## PRIORITE HAUTE — Domaine Finance (audit 2026-04-16)
 
-### [BO-STOCK-004] Tests complets + cleanup post-hardening (HAUTE, 1 jour)
+Regles metier de reference : `.claude/rules/finance.md` (R1 a R7).
+Audit cause racine : `docs/scratchpad/audit-arrondi-totaux-2026-04-16.md`.
 
-- Scenario complet UI teste par Romeo avec agent en observation DB
-- Cycle : min_stock -> SO draft -> validated -> alerte rouge -> PO draft
-  -> alerte orange -> PO validated -> alerte verte -> reception partielle
-  -> reception complete -> alerte disparue -> expedition SO -> rollback
-- Fix anomalie A1 audit : trigger DELETE shipment rebascule en
-  `partially_shipped` si items restants
-- Restauration 20+ docs supprimees dans commits `f48d059bd` (14 mars) et
-  `2abd93328` (27 mars)
-- Mise a jour des 3 docs de reference avec etat post-fix :
-  - `docs/current/database/triggers-stock-reference.md`
-  - `docs/current/modules/stock-module-reference.md`
-  - `docs/current/serena/stock-orders-logic.md`
-- Tests E2E Playwright cas risques (devalidation SO, annulation PO, changement qty)
+### [BO-FIN-009] Alignement arrondi DB <-> Qonto + verrouillages devis/facture
 
-### [BO-SHIP-003] Edition shipment manuelle + PO reception manuelle (HAUTE)
+**Objectif** : appliquer R1 (zero discordance) + R2/R3/R5/R6 (verrouillages metier).
+**Impact** : 134/160 commandes (84%) + 7 proformas actuelles touchees par le bug d'arrondi.
+**Risque** : eleve — backfill `tva_amount` peut impacter exports TVA historiques.
 
-- Page `/stocks/expeditions/[id]/edit` OU modal `EditShipmentModal`
-- Edition posteriori : `carrier_name`, `tracking_number`, `tracking_url`,
-  `shipping_cost_ht`, `notes`
-- Uniquement si `delivery_method = 'manual'` (Packlink auto via webhook)
-- Meme UX cote PO : edition supplier, tracking, cout achat Verone
-  sur receptions deja validees
-- Critique pour calcul marge reelle (prix vente - prix achat - frais
-  achat - frais expedition)
+**Prerequis OBLIGATOIRE** : audit consommateurs `tva_amount` dans `docs/scratchpad/audit-consommateurs-tva-amount.md`. Identifier :
+- Rapports TVA qui lisent `tva_amount`
+- Exports comptables, dashboards finance
+- Vues SQL dependant de `tva_amount`
+Sans cet audit, Phase 1 interdite.
 
-### [BO-FIN-009] Alignement arrondi DB<->Qonto + verrouillages devis/facture (HAUTE)
+**6 phases, ordre strict** :
+- [ ] Phase 1 (prio absolue) : round-per-line strict dans trigger DB `recalc_sales_order_on_charges_change` + code applicatif (route from-order + service). Recalcul correct de `total_ht` (items + frais) et `tva_amount` (vraie TVA).
+- [ ] Phase 3 (prio apres P1) : verrouillage par statut commande (R6). Exempts : `notes`, `expected_delivery_date`, champs tracking (packlink, shipping_*), contacts (billing/delivery/responsable).
+- [ ] Phase 2 : readonly prix items dans modals devis/facture lies (R2). `QuoteItemsTable.tsx`, `InvoiceItemsSection.tsx`. Exception : `customLines` restent editables.
+- [ ] Phase 5 : route POST `/api/qonto/quotes` refuse `standalone` sauf `kind='service'` (R5). Ajout flag explicite dans le body.
+- [ ] Phase 4 : modal regeneration (R3). Si commande a 1 devis + 1 facture draft -> regenerer LES DEUX en cascade.
+- [ ] Phase 6 : badge alerte discordance — peut etre fait en parallele via BO-FIN-011 (filet de securite).
 
-- **Prerequis OBLIGATOIRE** : audit consommateurs `tva_amount` avant Phase 1
-  (creer `docs/scratchpad/audit-consommateurs-tva-amount.md`)
-- 6 phases dans l'ordre : 1, 3, 2, 5, 4, 6
-- **Phase 1** : round-per-line strict + recalcul `total_ht` + `tva_amount` vrai
-- **Phase 2** : readonly prix items dans modals devis/facture lies
-- **Phase 3** : verrouillage par statut commande (R6). Exempts : notes,
-  `expected_delivery_date`, tracking, contacts
-- **Phase 4** : modal regeneration. Commande modifiee + 1 devis + 1 facture
-  -> regenerer les deux
-- **Phase 5** : route `POST /api/qonto/quotes` refuse standalone sauf `kind='service'`
-- **Phase 6** : badge alerte discordance (peut etre fait via BO-FIN-011 en parallele)
-- **Impact** : 134/160 commandes DB + 7 proformas actuelles
-- Voir `docs/scratchpad/audit-arrondi-totaux-2026-04-16.md` (dans la
-  branche BO-FIN-005 non pushee, sera dispo apres son merge)
+### [BO-FIN-010] Badges differenciation devis/facture : Commande vs Service
 
-### [BO-FIN-010] Badges differenciation devis/facture : Commande vs Service (MOYENNE, 1h)
+**Objectif** : distinguer visuellement les documents lies a une commande (`sales_order_id NOT NULL`) des documents libres / service (`sales_order_id IS NULL`).
 
-- Composant `packages/@verone/finance/src/components/DocumentSourceBadge.tsx`
-- 4 emplacements : `DevisTab`, `InvoicesTable`, `DevisContent`, `DocumentDetailHeader`
-- Badge "Commande" bleu ShoppingBag (`sales_order_id NOT NULL`)
-- Badge "Service" ambre Briefcase (`sales_order_id NULL`)
-- Lecture seule, pas de modif DB
-- Independant de BO-FIN-009
+**Implementation** (1h effort, pas de modif DB/API) :
+- [ ] Creer `packages/@verone/finance/src/components/DocumentSourceBadge.tsx` (1 prop `sales_order_id: string | null`)
+- [ ] Badge "Commande" bleu (`bg-blue-100 text-blue-700`, icone `ShoppingBag`)
+- [ ] Badge "Service" ambre (`bg-amber-100 text-amber-700`, icone `Briefcase`)
+- [ ] Integration 4 emplacements :
+  - `apps/back-office/src/app/(protected)/factures/components/DevisTab.tsx`
+  - `apps/back-office/src/app/(protected)/factures/components/InvoicesTable.tsx`
+  - `apps/back-office/src/app/(protected)/factures/devis/[id]/DevisContent.tsx`
+  - `apps/back-office/src/app/(protected)/factures/[id]/DocumentDetailHeader.tsx`
+- [ ] Screenshots Playwright avant/apres + type-check
 
-### [BO-FIN-011] Badge alerte discordance total DB vs Qonto (MOYENNE, 2h)
+**Independant de BO-FIN-009**. Feature branch dediee `feat/BO-FIN-010-badges`.
 
-- Pastille orange sur facture/devis si `|total_ttc_DB - total_ttc_Qonto| > 0.01`
-- Filet de securite en attendant Phase 1 de BO-FIN-009
-- Peut etre fait AVANT BO-FIN-009 (standalone)
+### [BO-FIN-011] Badge alerte discordance total local vs Qonto
+
+**Objectif** : filet de securite visuel en attendant Phase 1 de BO-FIN-009.
+
+**Implementation** :
+- [ ] Pastille orange `⚠ ecart X cents` si `|total_ttc_local - total_ttc_qonto| > 0.01`
+- [ ] Enrichir le fetch factures pour ramener `total_ttc` Qonto en parallele
+- [ ] Afficher dans `InvoicesTable.tsx` et `SalesOrderTableRow.tsx`
+
+**Peut etre implemente AVANT BO-FIN-009** (standalone). Si BO-FIN-009 Phase 1 est deployee correctement, ce badge ne se declenchera plus (nominal zero ecart).
 
 ---
 

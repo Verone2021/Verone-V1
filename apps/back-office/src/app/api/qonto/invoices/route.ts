@@ -315,10 +315,13 @@ export async function POST(request: NextRequest): Promise<
     // Utilise createAdminClient pour bypasser RLS (API route sans contexte user)
     const supabase = createAdminClient();
 
-    // Guard anti-doublon : vérifier si une facture active existe déjà pour cette commande
+    // Guard anti-doublon : une seule facture active par commande.
+    // - Si une proforma DRAFT existe : on la supprime (Qonto + soft-delete local) puis on continue
+    //   (règle métier : re-générer une proforma écrase l'ancienne)
+    // - Si une facture FINALISÉE ou PAYÉE existe : on refuse 409 (protection comptable)
     const { data: existingInvoices, error: checkError } = await supabase
       .from('financial_documents')
-      .select('id, document_number, status')
+      .select('id, document_number, status, qonto_invoice_id')
       .eq('sales_order_id', salesOrderId)
       .eq('document_type', 'customer_invoice')
       .is('deleted_at', null)
@@ -328,15 +331,49 @@ export async function POST(request: NextRequest): Promise<
       console.error('[API Qonto Invoices] Duplicate check failed:', checkError);
       // Continue anyway - Qonto will be the fallback guard
     } else if (existingInvoices && existingInvoices.length > 0) {
-      const existing = existingInvoices[0];
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Une facture existe déjà pour cette commande : ${existing.document_number ?? existing.id}. Annulez-la d'abord si vous souhaitez en créer une nouvelle.`,
-          existingInvoiceId: existing.id,
-        },
-        { status: 409 }
-      );
+      const finalized = existingInvoices.find(inv => inv.status !== 'draft');
+      if (finalized) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Une facture finalisée existe déjà pour cette commande : ${finalized.document_number ?? finalized.id}. Impossible de la remplacer.`,
+            existingInvoiceId: finalized.id,
+          },
+          { status: 409 }
+        );
+      }
+      const qontoClientForDelete = getQontoClient();
+      for (const existing of existingInvoices) {
+        if (existing.qonto_invoice_id) {
+          try {
+            await qontoClientForDelete.deleteClientInvoice(
+              existing.qonto_invoice_id
+            );
+          } catch (err) {
+            console.warn(
+              `[API Qonto Invoices] Qonto delete failed for ${existing.qonto_invoice_id} (non-blocking):`,
+              err
+            );
+          }
+        }
+        const { error: softDeleteError } = await supabase
+          .from('financial_documents')
+          .update({ deleted_at: new Date().toISOString() })
+          .eq('id', existing.id);
+        if (softDeleteError) {
+          console.error(
+            `[API Qonto Invoices] Soft-delete failed for ${existing.id}:`,
+            softDeleteError
+          );
+          return NextResponse.json(
+            {
+              success: false,
+              error: `Impossible de supprimer la proforma existante (${existing.document_number ?? existing.id}). Veuillez reessayer.`,
+            },
+            { status: 500 }
+          );
+        }
+      }
     }
 
     // Récupérer la commande avec ses lignes (sans jointures polymorphiques)
@@ -758,7 +795,7 @@ export async function POST(request: NextRequest): Promise<
             ? (finalizedInvoice.invoice_number ??
               ((finalizedInvoice as unknown as Record<string, unknown>)
                 .number as string))
-            : `PROFORMA-${(customerName ?? 'CLIENT').split(' ').pop()?.toUpperCase() ?? 'CLIENT'}-${issueDate.slice(0, 4)}-${issueDate.slice(5, 7)}`,
+            : `PROFORMA-${typedOrder.order_number}`,
           partner_id: partnerId,
           partner_type: 'customer',
           document_date: issueDate,
