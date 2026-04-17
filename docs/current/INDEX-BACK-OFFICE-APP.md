@@ -1,8 +1,8 @@
 # Back-Office — Documentation App
 
-_Generated: 2026-04-17 15:27_
+_Generated: 2026-04-17 16:20_
 
-## Pages (147)
+## Pages (148)
 
 | Route | Fichier |
 |-------|---------|
@@ -68,6 +68,7 @@ _Generated: 2026-04-17 15:27_
 | `/contacts-organisations/suppliers/[supplierId]` | page.tsx |
 | `/contacts-organisations/suppliers` | page.tsx |
 | `/dashboard` | page.tsx |
+| `/dev/responsive-demo` | page.tsx |
 | `/devis/nouveau` | page.tsx |
 | `/devis` | page.tsx |
 | `/factures/[id]/edit` | page.tsx |
