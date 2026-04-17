@@ -11,7 +11,10 @@ import { NextResponse } from 'next/server';
 import { QontoClient } from '@verone/integrations/qonto';
 import type { CreateClientInvoiceParams } from '@verone/integrations/qonto';
 import type { Database } from '@verone/types';
-import { createAdminClient } from '@verone/utils/supabase/server';
+import {
+  createAdminClient,
+  createServerClient,
+} from '@verone/utils/supabase/server';
 
 type Organisation = Database['public']['Tables']['organisations']['Row'];
 type IndividualCustomer =
@@ -100,6 +103,22 @@ export async function POST(request: NextRequest): Promise<
         { status: 400 }
       );
     }
+
+    // Récupérer l'utilisateur authentifié (requis pour financial_documents.created_by FK → auth.users)
+    const supabaseAuth = await createServerClient();
+    const {
+      data: { user: authUser },
+    } = await supabaseAuth.auth.getUser();
+    if (!authUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Authentification requise pour créer une facture de service',
+        },
+        { status: 401 }
+      );
+    }
+    const currentUserId = authUser.id;
 
     // Récupérer le client depuis Supabase
     const supabase = createAdminClient();
@@ -326,8 +345,6 @@ export async function POST(request: NextRequest): Promise<
 
     // INSERT dans financial_documents — uniquement pour les organisations (partner_id FK NOT NULL)
     if (clientType === 'organization') {
-      const systemUserId = '00000000-0000-0000-0000-000000000000'; // system user (même pattern que route standard)
-
       // Calculer les totaux depuis les items
       const totalHt = items.reduce(
         (sum, item) => sum + item.unitPrice * item.quantity,
@@ -358,7 +375,7 @@ export async function POST(request: NextRequest): Promise<
           qonto_pdf_url: finalizedInvoice.pdf_url ?? null,
           qonto_public_url: finalizedInvoice.public_url ?? null,
           invoice_source: 'crm',
-          created_by: systemUserId,
+          created_by: currentUserId,
           customer_type: clientType,
         };
 
