@@ -347,18 +347,14 @@ Sans cet audit, Phase 1 interdite.
 
 Regle cible : `.claude/rules/finance.md` R1 (zero discordance DB <-> Qonto).
 
-### [BO-FIN-017] Regenerer proforma F-2026-017-PROFORMA corrompue (URGENT)
+### [BO-FIN-017] Regenerer proforma F-2026-017-PROFORMA corrompue — RESOLU (2026-04-17)
 
-**Contexte** : audit post-Phase 1 (2026-04-18) a identifie la proforma `F-2026-017-PROFORMA` (id `18627a85-9e65-4388-b0b7-16e5118efd8c`) liee a la commande `SO-2026-00124` (id `b4e87439-df2b-43c2-9b5a-eadd93a87839`). Ecart 3355.48 EUR (SO = 3639.40 EUR, PROFORMA = 283.92 EUR).
+**Resolution** : proforma soft-deleted par Romeo le 2026-04-17 20:24 UTC.
+`SELECT deleted_at FROM financial_documents WHERE document_number = 'F-2026-017-PROFORMA'` : `2026-04-17 20:24:15.218+00` ✓
 
-**Diagnostic** : `financial_document_items` est VIDE pour cette proforma alors que la SO a 12 items. Creation locale pre-BO-FIN-014 avec format ancien `F-2026-017-PROFORMA` (au lieu de `PROFORMA-${order_number}`). Enregistrement local corrompu.
+Contexte historique (conserve pour trace) : la proforma `F-2026-017-PROFORMA` (id `18627a85`) liee a SO-2026-00124 avait 0 items locaux pour un total de 283.92 EUR alors que la SO avait 12 items pour 3639.40 EUR. Enregistrement corrompu pre-BO-FIN-014.
 
-**Action** :
-- [ ] Verifier cote Qonto (via `qonto_invoice_id = 019cd35e-339c-7339-a462-8b6bd1f2faeb`) ce que contient reellement la proforma.
-- [ ] Si Qonto a les 12 items : supprimer local + re-sync depuis Qonto.
-- [ ] Si Qonto est aussi orphelin : supprimer Qonto + soft-delete local + regenerer via POST `/api/qonto/invoices` (route corrigee BO-FIN-014).
-
-**Violation R1 active** : 1 seul cas. Non bloquant business (status draft), mais a traiter avant finalisation.
+**Statut** : dossier clos. Aucun suivi Qonto necessaire (proforma non finalisee, status draft, soft-deleted propre).
 
 ### [BO-FIN-018] Fix formule avgVat multi-taux dans saveQuoteToLocalDb
 
@@ -373,18 +369,18 @@ Regle cible : `.claude/rules/finance.md` R1 (zero discordance DB <-> Qonto).
 
 **Priorite** : MOYENNE (bug latent, pas encore declenche en production avec paniers multi-taux).
 
-### [BO-FIN-019] Fix reference tva_amount dans fonction DB create_purchase_order
+### [BO-FIN-019] Fix reference tva_amount dans fonction DB create_purchase_order — RESOLU (2026-04-18)
 
-**Contexte** : audit tva_amount a identifie la fonction PL/pgSQL `create_purchase_order` qui INSERT avec `tva_amount` dans `purchase_orders` (colonne INEXISTANTE). Verifie en DB : `information_schema.columns WHERE table_name='purchase_orders'` ne contient pas `tva_amount`.
+**Resolution** : fonction droppee via migration `20260425_bo_fin_019_drop_create_purchase_order.sql`.
 
-**Diagnostic** : bug latent. 24 PO crees recemment, tous via UI applicative (pas via cette fonction). La fonction n'est pas le chemin actif.
+**Verifications pre-drop** :
+- `pg_stat_user_functions WHERE funcname = 'create_purchase_order'` : aucune entree (0 calls)
+- Grep applicatif apps/ + packages/ : **0 reference** (hors types auto-generes supabase.ts)
+- 24 PO creees sur 90 derniers jours via d'autres chemins (UI directe) — la fonction n'etait pas le chemin actif
 
-**Action** :
-- [ ] Confirmer que la fonction n'est PAS appelee (grep en code + pg_stat_user_functions).
-- [ ] Si dead code : DROP FUNCTION create_purchase_order (migration).
-- [ ] Si appelee : fix = retirer la reference tva_amount (la colonne n'existe pas).
+Dead code confirme, drop applique. La colonne `purchase_orders.tva_amount` n'existant pas, toute invocation aurait declenche une erreur SQL.
 
-**Priorite** : BASSE (dead code probable). A nettoyer.
+**Statut** : dossier clos.
 
 ### [BO-FIN-020] Documenter procedure rollback Phase 1
 
@@ -399,26 +395,6 @@ Regle cible : `.claude/rules/finance.md` R1 (zero discordance DB <-> Qonto).
 - [ ] Option : snapshot des 18 anciens totaux dans un fichier scratchpad historique.
 
 **Priorite** : BASSE (documentation, pas de bug actif).
-
-### [BO-FIN-021] Aligner persist-financial-document.ts sur round-per-line (Phase 2 applicative)
-
-**Contexte** : monitoring post-Phase 1 a identifie 4 SO avec ecart 1 centime entre `sales_orders.total_ttc` (maintenant round-per-line apres Phase 1) et `financial_documents.total_ttc` (calcul applicatif somme-de-floats).
-
-SO concernees :
-- `SO-2026-00153 / PROFORMA-SO-2026-00153` : delta +0.01
-- `SO-2026-00154 / PROFORMA-SO-2026-00154` : delta +0.01
-- `SO-2026-00119 / F-2026-017` : delta -0.01
-- `SO-2026-00151 / PROFORMA-SO-2026-00151` : delta -0.01
-
-**Cause** : `apps/back-office/src/app/api/qonto/invoices/_lib/persist-financial-document.ts` calcule `totalTtc = sum(lineHt) + sum(lineVat)` sans arrondi par ligne. Qonto fait round-per-line. Delta 1 centime persiste.
-
-**Action** :
-- [ ] Modifier le calcul pour : `totalTtc = sum(Math.round((lineHt + lineVat) * 100) / 100)`
-- [ ] Adapter aussi `totalHt` et `tvaAmount` pour preserver la contrainte `check_totals_coherent`.
-- [ ] Backfill les 4 proformas draft concernees.
-- [ ] Verifier impact sur `persist-financial-document.ts` pour le service route (`service/route.ts`).
-
-**Priorite** : MOYENNE (bug latent 1 centime, violation R1 stricte).
 
 ---
 

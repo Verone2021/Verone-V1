@@ -1,6 +1,6 @@
 # Domaine Produits & Catalogue — Schema Base de Donnees
 
-_Generated: 2026-04-17 22:31_
+_Generated: 2026-04-17 23:01_
 
 **Tables : 17**
 
