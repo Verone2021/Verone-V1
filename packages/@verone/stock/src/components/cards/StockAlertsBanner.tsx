@@ -2,8 +2,6 @@
 
 import { useEffect, useState, useMemo } from 'react';
 
-import type { Database } from '@verone/types';
-
 import { createClient } from '@verone/utils/supabase/client';
 
 import {
@@ -11,9 +9,6 @@ import {
   type StockAlert,
   type StockAlertType,
 } from './StockAlertCard';
-
-type StockAlertBannerRow =
-  Database['public']['Views']['stock_alerts_unified_view']['Row'];
 
 interface StockAlertsBannerProps {
   productId: string;
