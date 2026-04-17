@@ -145,8 +145,3 @@ export * from './clickable-cell';
 export * from './status-dot';
 export * from './animated-tabs';
 export * from './animated-number';
-
-// ========================================
-// RESPONSIVE DATA TABLE
-// ========================================
-export * from './responsive-data-table';
