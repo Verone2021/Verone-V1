@@ -62,6 +62,30 @@ const STICKY_TD =
 // Component
 // ---------------------------------------------------------------------------
 
+/**
+ * Table responsive avec largeurs px fixes, breakpoints Tailwind pour
+ * cacher des colonnes, actions sticky à droite et density compact/normal.
+ *
+ * Utilise des widths en pixels (jamais de pourcentages) et des classes
+ * Tailwind statiques pour garantir l'extraction JIT.
+ *
+ * @example
+ * const columns: ResponsiveColumn<Invoice>[] = [
+ *   { id: 'number', header: 'N°', width: 110, cell: (inv) => inv.number },
+ *   { id: 'client', header: 'Client', minWidth: 180, cell: (inv) => inv.client.name },
+ *   { id: 'date', header: 'Date', width: 90, hideBelow: 'xl', cell: (inv) => formatDate(inv.issue_date) },
+ *   { id: 'amount', header: 'Montant', width: 110, align: 'right', cell: (inv) => formatAmount(inv.total) },
+ * ];
+ *
+ * <ResponsiveDataTable
+ *   columns={columns}
+ *   data={invoices}
+ *   rowKey={(inv) => inv.id}
+ *   actions={(inv) => <InvoiceActionButtons invoice={inv} />}
+ * />
+ *
+ * @since 2026-04-18 (BO-UI-001)
+ */
 export function ResponsiveDataTable<T>(
   props: ResponsiveDataTableProps<T>
 ): React.ReactElement {
@@ -82,6 +106,11 @@ export function ResponsiveDataTable<T>(
   const totalCols = columns.length + (actions !== undefined ? 1 : 0);
   const densityHead = DENSITY_HEAD_CLASS[density];
   const densityCell = DENSITY_CELL_CLASS[density];
+
+  // Colonnes avec tooltipWhenHidden défini (pour afficher les données cachées au survol)
+  const tooltipCols = columns.filter(
+    col => col.hideBelow !== undefined && col.tooltipWhenHidden !== undefined
+  );
 
   return (
     <Table className={cn('w-auto', className)}>
@@ -137,42 +166,49 @@ export function ResponsiveDataTable<T>(
           </TableRow>
         ) : (
           <>
-            {data.map(row => (
-              <TableRow
-                key={rowKey(row)}
-                className={cn(onRowClick ? 'cursor-pointer' : '')}
-                onClick={onRowClick ? () => onRowClick(row) : undefined}
-              >
-                {columns.map(col => {
-                  const hideClass = col.hideBelow
-                    ? HIDE_BELOW[col.hideBelow]
-                    : '';
-                  const alignClass = col.align
-                    ? ALIGN_CLASS[col.align]
-                    : ALIGN_CLASS.left;
-                  return (
+            {data.map(row => {
+              const tooltip = tooltipCols
+                .map(col => col.tooltipWhenHidden!(row))
+                .filter(Boolean)
+                .join('\n');
+              return (
+                <TableRow
+                  key={rowKey(row)}
+                  className={cn(onRowClick ? 'cursor-pointer' : '')}
+                  onClick={onRowClick ? () => onRowClick(row) : undefined}
+                  title={tooltip || undefined}
+                >
+                  {columns.map(col => {
+                    const hideClass = col.hideBelow
+                      ? HIDE_BELOW[col.hideBelow]
+                      : '';
+                    const alignClass = col.align
+                      ? ALIGN_CLASS[col.align]
+                      : ALIGN_CLASS.left;
+                    return (
+                      <TableCell
+                        key={col.id}
+                        className={cn(hideClass, alignClass, densityCell)}
+                        style={{
+                          width: col.width,
+                          minWidth: col.minWidth ?? col.width,
+                        }}
+                      >
+                        {col.cell(row)}
+                      </TableCell>
+                    );
+                  })}
+                  {actions !== undefined && (
                     <TableCell
-                      key={col.id}
-                      className={cn(hideClass, alignClass, densityCell)}
-                      style={{
-                        width: col.width,
-                        minWidth: col.minWidth ?? col.width,
-                      }}
+                      className={cn(STICKY_TD, densityCell, 'text-right')}
+                      style={{ width: actionsWidth, minWidth: actionsWidth }}
                     >
-                      {col.cell(row)}
+                      {actions(row)}
                     </TableCell>
-                  );
-                })}
-                {actions !== undefined && (
-                  <TableCell
-                    className={cn(STICKY_TD, densityCell, 'text-right')}
-                    style={{ width: actionsWidth, minWidth: actionsWidth }}
-                  >
-                    {actions(row)}
-                  </TableCell>
-                )}
-              </TableRow>
-            ))}
+                  )}
+                </TableRow>
+              );
+            })}
           </>
         )}
       </TableBody>

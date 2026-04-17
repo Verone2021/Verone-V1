@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import {
   Badge,
@@ -326,7 +327,10 @@ export function InvoicesTable({
   onOpenOrg,
   onDelete,
 }: InvoicesTableProps) {
-  const columns = buildColumns(onOpenOrder, onOpenOrg, onRapprochement);
+  const columns = useMemo(
+    () => buildColumns(onOpenOrder, onOpenOrg, onRapprochement),
+    [onOpenOrder, onOpenOrg, onRapprochement]
+  );
 
   const emptyState = (
     <div className="text-center py-4 text-muted-foreground">
