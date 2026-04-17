@@ -4,6 +4,7 @@ import Link from 'next/link';
 
 import { Badge, Button } from '@verone/ui';
 import { StatusPill, qontoInvoiceStatusConfig } from '@verone/ui-business';
+import { DocumentSourceBadge } from '@verone/finance/components';
 import {
   ArrowLeft,
   FileText,
@@ -38,6 +39,7 @@ interface DocumentDetailHeaderProps {
   isPaid: boolean;
   isCancelled: boolean;
   isOverdue: string | boolean | null | undefined;
+  salesOrderId?: string | null;
   actionLoading: string | null;
   onDownloadPdf: () => void;
   onSendEmail: () => void;
@@ -62,6 +64,7 @@ export function DocumentDetailHeader({
   isPaid,
   isCancelled,
   isOverdue,
+  salesOrderId,
   actionLoading,
   onDownloadPdf,
   onSendEmail,
@@ -92,6 +95,9 @@ export function DocumentDetailHeader({
               config={qontoInvoiceStatusConfig}
               size="md"
             />
+            {documentType === 'invoice' && (
+              <DocumentSourceBadge hasOrderLink={!!salesOrderId} />
+            )}
             {isOverdue && (
               <Badge variant="destructive" className="gap-1">
                 <Clock className="h-3 w-3" />

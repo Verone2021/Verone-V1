@@ -3,7 +3,7 @@
 **Derniere mise a jour** : 2026-04-17
 **23 packages** dans `packages/@verone/`
 
-**533 composants, 11 hooks**
+**534 composants, 11 hooks**
 ---
 
 ## @verone/categories
@@ -115,6 +115,7 @@
 | `CreditNoteCreateModal` | Modal | `src/components/CreditNoteCreateModal.tsx` |
 | `DocumentDiscordanceBadge` | Component | `src/components/DocumentDiscordanceBadge.tsx` |
 | `DocumentEmailHistory` | Component | `src/components/DocumentEmailHistory.tsx` |
+| `DocumentSourceBadge` | Component | `src/components/DocumentSourceBadge.tsx` |
 | `HierarchicalCategorySelector` | Component | `src/components/HierarchicalCategorySelector.tsx` |
 | `InvoiceClientSection` | Component | `src/components/InvoiceCreateFromOrderModal/InvoiceClientSection.tsx` |
 | `InvoiceCustomLinesSection` | Component | `src/components/InvoiceCreateFromOrderModal/InvoiceCustomLinesSection.tsx` |
