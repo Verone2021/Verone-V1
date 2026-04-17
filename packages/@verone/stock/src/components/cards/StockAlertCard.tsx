@@ -59,32 +59,40 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
   };
 
   const getSeverityColor = () => {
-    // ✅ CALCUL STOCK PRÉVISIONNEL (basé sur PO VALIDÉES uniquement)
-    // stock_forecasted_in = quantité des PO validées (en transit)
-    const stock_previsionnel_valide =
+    // ✅ CALCUL STOCK PRÉVISIONNEL
+    // Formule : stock_real + stock_forecasted_in - stock_forecasted_out
+    const stock_previsionnel =
       alert.stock_real +
       (alert.stock_forecasted_in ?? 0) -
       (alert.stock_forecasted_out ?? 0);
 
-    // ✅ WORKFLOW : ROUGE → ORANGE (brouillon) → VERT (validé suffisant) → DISPARAÎT
+    // ✅ WORKFLOW : ROUGE → ORANGE (brouillon) → VERT (validé ET suffisant) → DISPARAÎT
 
     // PRIORITÉ 1 : Si PO brouillon existe → ORANGE (en attente de validation)
-    // Un brouillon indique qu'une action est en cours mais pas encore confirmée
     if (alert.is_in_draft) {
       return 'border-orange-500 !bg-orange-50';
     }
 
-    // PRIORITÉ 2 : Si PO validée couvre le besoin → VERT
-    // Le seuil est atteint avec les commandes validées en transit
-    if (
-      stock_previsionnel_valide >= alert.min_stock &&
-      stock_previsionnel_valide >= 0
-    ) {
+    // PRIORITÉ 2 : VERT si commande VALIDÉE ET stock prévisionnel suffisant
+    // Restauration de la logique du commit 3afbb41ed (7 déc 2025), cassée par 9bde76c00 (8 déc)
+    if (alert.validated && stock_previsionnel >= alert.min_stock) {
       return 'border-green-600 !bg-green-50';
     }
 
-    // PRIORITÉ 3 : Sinon → ROUGE (besoin non couvert, aucune commande suffisante)
-    return 'border-red-600 !bg-red-50';
+    // PRIORITÉ 3 : ROUGE si stock prévisionnel insuffisant ou pas encore validé
+    if (stock_previsionnel < alert.min_stock || !alert.validated) {
+      return 'border-red-600 !bg-red-50';
+    }
+
+    // Fallback : couleur selon sévérité (cas par défaut normalement pas atteint)
+    switch (alert.severity) {
+      case 'critical':
+        return 'border-red-600 !bg-red-50';
+      case 'warning':
+        return 'border-orange-600 !bg-orange-50';
+      default:
+        return 'border-blue-600 !bg-blue-50';
+    }
   };
 
   const getAlertTypeLabel = () => {
@@ -176,7 +184,9 @@ export function StockAlertCard({ alert, onActionClick }: StockAlertCardProps) {
                         : 'Commander Fournisseur'}
                 </Button>
                 {alert.draft_order_id ? (
-                  <Link href={`/commandes/fournisseurs`}>
+                  <Link
+                    href={`/commandes/fournisseurs?id=${alert.draft_order_id}`}
+                  >
                     <Button size="sm" variant="outline" className="text-xs">
                       Voir Commande
                     </Button>
