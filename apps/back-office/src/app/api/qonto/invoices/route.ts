@@ -13,45 +13,19 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { QontoClient } from '@verone/integrations/qonto';
 import type { CreateClientInvoiceParams } from '@verone/integrations/qonto';
-import type { Database, Json } from '@verone/types';
 import { withRateLimit, RATE_LIMIT_PRESETS } from '@verone/utils/security';
-import {
-  createAdminClient,
-  createServerClient,
-} from '@verone/utils/supabase/server';
+import { createAdminClient } from '@verone/utils/supabase/server';
 
-type SalesOrder = Database['public']['Tables']['sales_orders']['Row'];
-type Organisation = Database['public']['Tables']['organisations']['Row'];
-type IndividualCustomer =
-  Database['public']['Tables']['individual_customers']['Row'];
-
-// Interface pour la commande avec items (relations polymorphiques gérées manuellement)
-interface ISalesOrderWithItems extends SalesOrder {
-  sales_order_items: Array<{
-    id: string;
-    quantity: number;
-    unit_price_ht: number;
-    tax_rate: number | null;
-    notes: string | null;
-    products: { id: string; name: string; sku: string | null } | null;
-  }>;
-}
-
-// Interface enrichie avec customer (après fetch manuel)
-interface ISalesOrderWithCustomer extends ISalesOrderWithItems {
-  customer: Organisation | IndividualCustomer | null;
-}
-
-function getQontoClient(): QontoClient {
-  return new QontoClient({
-    authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') ?? 'oauth',
-    organizationId: process.env.QONTO_ORGANIZATION_ID,
-    apiKey: process.env.QONTO_API_KEY,
-    accessToken: process.env.QONTO_ACCESS_TOKEN,
-  });
-}
+import { getQontoClient } from './_lib/qonto-client';
+import { enrichInvoicesList } from './_lib/enrich-invoices-list';
+import { checkAndCleanExistingInvoices } from './_lib/duplicate-guard';
+import { fetchOrderWithCustomer } from './_lib/fetch-order-with-customer';
+import { resolveQontoClient } from './_lib/resolve-qonto-client';
+import { buildInvoiceItems } from './_lib/build-invoice-items';
+import { computeDueDate } from './_lib/compute-due-date';
+import { persistFinancialDocument } from './_lib/persist-financial-document';
+import type { IPostRequestBody } from './_lib/types';
 
 /**
  * GET /api/qonto/invoices
@@ -82,115 +56,8 @@ export async function GET(request: NextRequest): Promise<
       status ? { status } : undefined
     );
 
-    // Enrichir avec les données locales de financial_documents
     const supabase = createAdminClient();
-    const qontoInvoiceIds = result.client_invoices.map(
-      (inv: { id: string }) => inv.id
-    );
-
-    // Type pour les données locales enrichies
-    interface ILocalDocData {
-      local_pdf_path: string | null;
-      local_document_id: string;
-      deleted_at: string | null;
-      sales_order_id: string | null;
-      order_number: string | null;
-      local_status: string | null;
-      local_amount_paid: number | null;
-      local_total_ttc: number | null;
-      partner_id: string | null;
-      partner_legal_name: string | null;
-      partner_trade_name: string | null;
-    }
-
-    let localDataMap: Record<string, ILocalDocData> = {};
-
-    if (qontoInvoiceIds.length > 0) {
-      // Note: local_pdf_path sera disponible après migration 20260122_005
-      const { data: localDocs } = await supabase
-        .from('financial_documents')
-        .select(
-          'id, qonto_invoice_id, deleted_at, sales_order_id, status, amount_paid, partner_id, total_ttc, sales_orders!financial_documents_sales_order_id_fkey(order_number), organisations!financial_documents_partner_id_fkey(legal_name, trade_name)'
-        )
-        .in('qonto_invoice_id', qontoInvoiceIds);
-
-      if (localDocs) {
-        // Cast pour accéder aux colonnes (certaines ajoutées par migration)
-        type DocWithExtras = {
-          id: string;
-          qonto_invoice_id: string | null;
-          local_pdf_path?: string | null;
-          deleted_at: string | null;
-          sales_order_id?: string | null;
-          status?: string | null;
-          amount_paid?: number | null;
-          total_ttc?: number | null;
-          partner_id?: string | null;
-          sales_orders?: { order_number: string | null } | null;
-          organisations?: {
-            legal_name: string | null;
-            trade_name: string | null;
-          } | null;
-        };
-
-        localDataMap = (localDocs as DocWithExtras[]).reduce(
-          (acc, doc) => {
-            if (doc.qonto_invoice_id) {
-              acc[doc.qonto_invoice_id] = {
-                local_pdf_path: doc.local_pdf_path ?? null,
-                local_document_id: doc.id,
-                deleted_at: doc.deleted_at,
-                sales_order_id: doc.sales_order_id ?? null,
-                order_number: doc.sales_orders?.order_number ?? null,
-                local_status: doc.status ?? null,
-                local_amount_paid: doc.amount_paid
-                  ? parseFloat(String(doc.amount_paid))
-                  : null,
-                local_total_ttc:
-                  doc.total_ttc != null
-                    ? parseFloat(String(doc.total_ttc))
-                    : null,
-                partner_id: doc.partner_id ?? null,
-                partner_legal_name: doc.organisations?.legal_name ?? null,
-                partner_trade_name: doc.organisations?.trade_name ?? null,
-              };
-            }
-            return acc;
-          },
-          {} as Record<string, ILocalDocData>
-        );
-      }
-    }
-
-    // Fusionner les données
-    const enrichedInvoices = result.client_invoices.map(
-      (invoice: { id: string; status: string }) => {
-        const localData = localDataMap[invoice.id];
-        // Si le rapprochement local a marqué la facture comme payée, utiliser ce statut
-        const localStatus = localData?.local_status;
-        const effectiveStatus =
-          localStatus === 'paid' || localStatus === 'partially_paid'
-            ? localStatus
-            : invoice.status;
-
-        return {
-          ...invoice,
-          status: effectiveStatus,
-          // Données locales
-          local_pdf_path: localData?.local_pdf_path ?? null,
-          local_document_id: localData?.local_document_id ?? null,
-          has_local_pdf: !!localData?.local_pdf_path,
-          deleted_at: localData?.deleted_at ?? null,
-          sales_order_id: localData?.sales_order_id ?? null,
-          order_number: localData?.order_number ?? null,
-          local_amount_paid: localData?.local_amount_paid ?? null,
-          local_total_ttc: localData?.local_total_ttc ?? null,
-          partner_id: localData?.partner_id ?? null,
-          partner_legal_name: localData?.partner_legal_name ?? null,
-          partner_trade_name: localData?.partner_trade_name ?? null,
-        };
-      }
-    );
+    const enrichedInvoices = await enrichInvoicesList(result, supabase);
 
     return NextResponse.json({
       success: true,
@@ -208,49 +75,6 @@ export async function GET(request: NextRequest): Promise<
       { status: 500 }
     );
   }
-}
-
-/**
- * Interface pour les frais de service
- */
-interface IFeesData {
-  shipping_cost_ht?: number;
-  handling_cost_ht?: number;
-  insurance_cost_ht?: number;
-  fees_vat_rate?: number;
-}
-
-/**
- * Interface pour les lignes personnalisées
- */
-interface ICustomLine {
-  title: string;
-  description?: string;
-  quantity: number;
-  unit_price_ht: number;
-  vat_rate: number;
-}
-
-/**
- * Interface pour les adresses envoyées depuis le modal
- */
-interface IAddressData {
-  address_line1?: string;
-  address_line2?: string;
-  postal_code: string;
-  city: string;
-  country?: string;
-}
-
-interface _IPostRequestBody {
-  salesOrderId: string;
-  autoFinalize?: boolean;
-  issueDate?: string;
-  label?: string;
-  billingAddress?: IAddressData;
-  shippingAddress?: IAddressData;
-  fees?: IFeesData;
-  customLines?: ICustomLine[];
 }
 
 /**
@@ -282,16 +106,7 @@ export async function POST(request: NextRequest): Promise<
 
   try {
     // Parse request body (simple validation, no DOMPurify to avoid ERR_REQUIRE_ESM)
-    const body = (await request.json()) as {
-      salesOrderId: string;
-      autoFinalize?: boolean;
-      issueDate?: string;
-      label?: string;
-      billingAddress?: IAddressData;
-      shippingAddress?: IAddressData;
-      fees?: IFeesData;
-      customLines?: ICustomLine[];
-    };
+    const body = (await request.json()) as IPostRequestBody;
 
     const {
       salesOrderId,
@@ -315,251 +130,48 @@ export async function POST(request: NextRequest): Promise<
     // Utilise createAdminClient pour bypasser RLS (API route sans contexte user)
     const supabase = createAdminClient();
 
-    // Guard anti-doublon : une seule facture active par commande.
-    // - Si une proforma DRAFT existe : on la supprime (Qonto + soft-delete local) puis on continue
-    //   (règle métier : re-générer une proforma écrase l'ancienne)
-    // - Si une facture FINALISÉE ou PAYÉE existe : on refuse 409 (protection comptable)
-    const { data: existingInvoices, error: checkError } = await supabase
-      .from('financial_documents')
-      .select('id, document_number, status, qonto_invoice_id')
-      .eq('sales_order_id', salesOrderId)
-      .eq('document_type', 'customer_invoice')
-      .is('deleted_at', null)
-      .not('status', 'eq', 'cancelled');
+    const qontoClientForDelete = getQontoClient();
 
-    if (checkError) {
-      console.error('[API Qonto Invoices] Duplicate check failed:', checkError);
-      // Continue anyway - Qonto will be the fallback guard
-    } else if (existingInvoices && existingInvoices.length > 0) {
-      const finalized = existingInvoices.find(inv => inv.status !== 'draft');
-      if (finalized) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: `Une facture finalisée existe déjà pour cette commande : ${finalized.document_number ?? finalized.id}. Impossible de la remplacer.`,
-            existingInvoiceId: finalized.id,
-          },
-          { status: 409 }
-        );
-      }
-      const qontoClientForDelete = getQontoClient();
-      for (const existing of existingInvoices) {
-        if (existing.qonto_invoice_id) {
-          try {
-            await qontoClientForDelete.deleteClientInvoice(
-              existing.qonto_invoice_id
-            );
-          } catch (err) {
-            console.warn(
-              `[API Qonto Invoices] Qonto delete failed for ${existing.qonto_invoice_id} (non-blocking):`,
-              err
-            );
-          }
-        }
-        const { error: softDeleteError } = await supabase
-          .from('financial_documents')
-          .update({ deleted_at: new Date().toISOString() })
-          .eq('id', existing.id);
-        if (softDeleteError) {
-          console.error(
-            `[API Qonto Invoices] Soft-delete failed for ${existing.id}:`,
-            softDeleteError
-          );
-          return NextResponse.json(
-            {
-              success: false,
-              error: `Impossible de supprimer la proforma existante (${existing.document_number ?? existing.id}). Veuillez reessayer.`,
-            },
-            { status: 500 }
-          );
-        }
-      }
-    }
+    // Guard anti-doublon
+    const { conflict } = await checkAndCleanExistingInvoices(
+      supabase,
+      qontoClientForDelete,
+      salesOrderId
+    );
+    if (conflict)
+      return conflict as NextResponse<{
+        success: boolean;
+        error?: string;
+      }>;
 
-    // Récupérer la commande avec ses lignes (sans jointures polymorphiques)
-    const { data: order, error: orderError } = await supabase
-      .from('sales_orders')
-      .select(
-        `
-        *,
-        sales_order_items (
-          *,
-          products:product_id (id, name, sku)
-        )
-      `
-      )
-      .eq('id', salesOrderId)
-      .single();
-
-    if (orderError || !order) {
-      console.error('[API Qonto Invoices] Order fetch error:', orderError);
+    // Fetch order + customer
+    const { order: typedOrder, error: orderError } =
+      await fetchOrderWithCustomer(supabase, salesOrderId);
+    if (orderError)
+      return orderError as NextResponse<{
+        success: boolean;
+        error?: string;
+      }>;
+    if (!typedOrder) {
       return NextResponse.json(
         { success: false, error: 'Order not found' },
         { status: 404 }
       );
     }
 
-    // Cast to typed order
-    const orderWithItems = order as ISalesOrderWithItems;
-
-    // Fetch manuel du customer selon customer_type (pattern polymorphique)
-    let customer: Organisation | IndividualCustomer | null = null;
-
-    if (orderWithItems.customer_id && orderWithItems.customer_type) {
-      if (orderWithItems.customer_type === 'organization') {
-        const { data: org } = await supabase
-          .from('organisations')
-          .select('*')
-          .eq('id', orderWithItems.customer_id)
-          .single();
-        customer = org;
-      } else if (
-        orderWithItems.customer_type === 'individual' &&
-        orderWithItems.individual_customer_id
-      ) {
-        const { data: indiv } = await supabase
-          .from('individual_customers')
-          .select('*')
-          .eq('id', orderWithItems.individual_customer_id)
-          .single();
-        customer = indiv;
-      }
-    }
-
-    const typedOrder: ISalesOrderWithCustomer = {
-      ...orderWithItems,
-      customer,
-    };
-
     const qontoClient = getQontoClient();
 
-    // Récupérer ou créer le client Qonto
-    let qontoClientId: string;
-
-    // Extraire email et nom selon le type de customer
-    let customerEmail: string | null = null;
-    let customerName = 'Client';
-
-    // Tax identification number (SIRET/TVA) for Qonto client creation
-    let vatNumber: string | undefined;
-
-    if (typedOrder.customer_type === 'organization' && typedOrder.customer) {
-      const org = typedOrder.customer as Organisation;
-      customerEmail = org.email ?? null;
-      // Legal name first (raison sociale obligatoire sur factures)
-      const legalName = org.legal_name ?? org.trade_name ?? 'Client';
-      const tradeName = org.trade_name;
-      // Concatenate if trade_name is different from legal_name
-      customerName =
-        tradeName && tradeName !== legalName
-          ? `${legalName} (${tradeName})`
-          : legalName;
-      // Priority: vat_number (TVA intra-communautaire), then siret
-      vatNumber = org.vat_number ?? org.siret ?? undefined;
-    } else if (
-      typedOrder.customer_type === 'individual' &&
-      typedOrder.customer
-    ) {
-      const indiv = typedOrder.customer as IndividualCustomer;
-      customerEmail = indiv.email ?? null;
-      customerName =
-        `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim() || 'Client';
-    }
-
-    // Validate: organisations MUST have a tax identification number for invoicing
-    if (typedOrder.customer_type === 'organization' && !vatNumber) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Le SIRET ou numéro de TVA de l'organisation est requis pour créer une facture. Veuillez le renseigner dans la fiche organisation.",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Résoudre l'adresse de facturation :
-    // Priorité 1: adresse envoyée depuis le modal (body)
-    // Priorité 2: billing_address JSONB de la commande en DB
-    const dbBillingAddress = typedOrder.billing_address as Record<
-      string,
-      string
-    > | null;
-
-    const city = bodyBillingAddress?.city ?? dbBillingAddress?.city;
-    const zipCode =
-      bodyBillingAddress?.postal_code ?? dbBillingAddress?.postal_code;
-
-    if (!city || !zipCode) {
-      console.warn(
-        '[API Qonto Invoices] Missing billing address for order:',
-        salesOrderId
-      );
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            'Adresse de facturation incomplète. Ville et code postal requis.',
-          details: {
-            hasCity: !!city,
-            hasZipCode: !!zipCode,
-            bodyBillingAddress,
-            dbBillingAddress,
-          },
-        },
-        { status: 400 }
-      );
-    }
-
-    const streetAddress =
-      bodyBillingAddress?.address_line1 ??
-      dbBillingAddress?.street ??
-      dbBillingAddress?.address ??
-      dbBillingAddress?.address_line1 ??
-      '';
-    const countryCode =
-      bodyBillingAddress?.country ?? dbBillingAddress?.country ?? 'FR';
-
-    const qontoAddress = {
-      streetAddress,
-      city,
-      zipCode,
-      countryCode,
-    };
-
-    // Mapper customer_type vers type Qonto
-    const qontoClientType =
-      typedOrder.customer_type === 'organization' ? 'company' : 'individual';
-
-    // Trouver ou créer le client Qonto
-    // Stratégie : chercher par email SI disponible, sinon par nom
-    let existingClient = customerEmail
-      ? await qontoClient.findClientByEmail(customerEmail)
-      : null;
-
-    existingClient ??= await qontoClient.findClientByName(customerName);
-
-    if (existingClient) {
-      // Client existant - mettre à jour son adresse
-      await qontoClient.updateClient(existingClient.id, {
-        name: customerName ?? existingClient.name,
-        type: qontoClientType,
-        address: qontoAddress,
-        vatNumber,
-      });
-      qontoClientId = existingClient.id;
-    } else {
-      // Créer un nouveau client (email optionnel)
-      const newClient = await qontoClient.createClient({
-        name: customerName ?? 'Client',
-        type: qontoClientType,
-        email: customerEmail ?? undefined,
-        currency: 'EUR',
-        address: qontoAddress,
-        vatNumber,
-      });
-      qontoClientId = newClient.id;
-    }
+    // Resolve Qonto client
+    const { qontoClientId, error: clientError } = await resolveQontoClient(
+      qontoClient,
+      typedOrder,
+      bodyBillingAddress
+    );
+    if (clientError)
+      return clientError as NextResponse<{
+        success: boolean;
+        error?: string;
+      }>;
 
     // Récupérer l'IBAN Qonto pour les méthodes de paiement
     const bankAccounts = await qontoClient.getBankAccounts();
@@ -571,155 +183,12 @@ export async function POST(request: NextRequest): Promise<
       );
     }
 
-    // Mapper les lignes de commande vers items facture
-    // Et préparer les données pour l'INSERT dans financial_document_items
-    interface IInvoiceItem {
-      title: string;
-      description?: string;
-      quantity: string;
-      unit: string;
-      unitPrice: { value: string; currency: string };
-      vatRate: string;
-      // Pour stockage local
-      product_id?: string;
-      unit_price_ht: number;
-      quantity_num: number;
-      vat_rate_num: number;
-    }
+    // Build items
+    const items = buildInvoiceItems(typedOrder, fees, customLines);
 
-    const items: IInvoiceItem[] = (typedOrder.sales_order_items ?? []).map(
-      item => ({
-        title: item.products?.name ?? 'Article',
-
-        description: item.notes ?? undefined,
-        quantity: String(item.quantity ?? 1),
-        unit: 'pièce',
-        unitPrice: {
-          value: String(item.unit_price_ht ?? 0),
-          currency: 'EUR',
-        },
-        vatRate: String(item.tax_rate ?? 0.2), // tax_rate est déjà en decimal (0.2 = 20%)
-        // Pour stockage local
-        product_id: item.products?.id,
-        unit_price_ht: item.unit_price_ht ?? 0,
-        quantity_num: item.quantity ?? 1,
-        vat_rate_num: item.tax_rate ?? 0.2,
-      })
-    );
-
-    // Déterminer la TVA des frais (priorité: body > commande > défaut 20%)
-    const feesVatRate = fees?.fees_vat_rate ?? typedOrder.fees_vat_rate ?? 0.2;
-
-    // Ajouter les frais de livraison
-    const shippingCost =
-      fees?.shipping_cost_ht ?? typedOrder.shipping_cost_ht ?? 0;
-    if (shippingCost > 0) {
-      items.push({
-        title: 'Frais de livraison',
-        description: undefined,
-        quantity: '1',
-        unit: 'forfait',
-        unitPrice: {
-          value: String(shippingCost),
-          currency: 'EUR',
-        },
-        vatRate: String(feesVatRate),
-        unit_price_ht: shippingCost,
-        quantity_num: 1,
-        vat_rate_num: feesVatRate,
-      });
-    }
-
-    // Ajouter les frais de manutention
-    const handlingCost =
-      fees?.handling_cost_ht ?? typedOrder.handling_cost_ht ?? 0;
-    if (handlingCost > 0) {
-      items.push({
-        title: 'Frais de manutention',
-        description: undefined,
-        quantity: '1',
-        unit: 'forfait',
-        unitPrice: {
-          value: String(handlingCost),
-          currency: 'EUR',
-        },
-        vatRate: String(feesVatRate),
-        unit_price_ht: handlingCost,
-        quantity_num: 1,
-        vat_rate_num: feesVatRate,
-      });
-    }
-
-    // Ajouter les frais d'assurance
-    const insuranceCost =
-      fees?.insurance_cost_ht ?? typedOrder.insurance_cost_ht ?? 0;
-    if (insuranceCost > 0) {
-      items.push({
-        title: "Frais d'assurance",
-        description: undefined,
-        quantity: '1',
-        unit: 'forfait',
-        unitPrice: {
-          value: String(insuranceCost),
-          currency: 'EUR',
-        },
-        vatRate: String(feesVatRate),
-        unit_price_ht: insuranceCost,
-        quantity_num: 1,
-        vat_rate_num: feesVatRate,
-      });
-    }
-
-    // Ajouter les lignes personnalisées (custom lines)
-    if (customLines && customLines.length > 0) {
-      for (const line of customLines) {
-        items.push({
-          title: line.title,
-          description: line.description,
-          quantity: String(line.quantity),
-          unit: 'pièce',
-          unitPrice: {
-            value: String(line.unit_price_ht),
-            currency: 'EUR',
-          },
-          vatRate: String(line.vat_rate),
-          unit_price_ht: line.unit_price_ht,
-          quantity_num: line.quantity,
-          vat_rate_num: line.vat_rate,
-        });
-      }
-    }
-
-    // Utiliser la date du body ou la date du jour
+    // Compute dates
     const issueDate = customIssueDate ?? new Date().toISOString().split('T')[0];
-    const issueDateMs = new Date(issueDate).getTime();
-
-    // Calculer la date d'échéance selon les termes de paiement
-    let dueDate: string;
-    switch (typedOrder.payment_terms) {
-      case 'immediate':
-        dueDate = issueDate;
-        break;
-      case 'net_15':
-        dueDate = new Date(issueDateMs + 15 * 24 * 60 * 60 * 1000)
-          .toISOString()
-          .split('T')[0];
-        break;
-      case 'net_30':
-        dueDate = new Date(issueDateMs + 30 * 24 * 60 * 60 * 1000)
-          .toISOString()
-          .split('T')[0];
-        break;
-      case 'net_60':
-        dueDate = new Date(issueDateMs + 60 * 24 * 60 * 60 * 1000)
-          .toISOString()
-          .split('T')[0];
-        break;
-      default:
-        dueDate = new Date(issueDateMs + 30 * 24 * 60 * 60 * 1000)
-          .toISOString()
-          .split('T')[0];
-    }
+    const dueDate = computeDueDate(typedOrder.payment_terms, issueDate);
 
     // Créer la facture
     const invoiceParams: CreateClientInvoiceParams = {
@@ -756,145 +225,36 @@ export async function POST(request: NextRequest): Promise<
       finalizedInvoice = await qontoClient.finalizeClientInvoice(invoice.id);
     }
 
+    // Computed fees values for persist ctx
+    const feesVatRate = fees?.fees_vat_rate ?? typedOrder.fees_vat_rate ?? 0.2;
+    const shippingCost =
+      fees?.shipping_cost_ht ?? typedOrder.shipping_cost_ht ?? 0;
+    const handlingCost =
+      fees?.handling_cost_ht ?? typedOrder.handling_cost_ht ?? 0;
+    const insuranceCost =
+      fees?.insurance_cost_ht ?? typedOrder.insurance_cost_ht ?? 0;
+
     // ========================================
     // STOCKAGE LOCAL DANS FINANCIAL_DOCUMENTS
     // ========================================
-
-    // Calculer les totaux
-    let totalHt = 0;
-    let totalVat = 0;
-    for (const item of items) {
-      const lineHt = (item.unit_price_ht ?? 0) * (item.quantity_num ?? 1);
-      const lineVat = lineHt * (item.vat_rate_num ?? 0.2);
-      totalHt += lineHt;
-      totalVat += lineVat;
-    }
-    const totalTtc = totalHt + totalVat;
-
-    // Déterminer le partner_id (organisation uniquement pour l'instant)
-    let partnerId: string | null = null;
-    if (typedOrder.customer_type === 'organization' && typedOrder.customer_id) {
-      partnerId = typedOrder.customer_id;
-    }
-
-    // Récupérer l'utilisateur connecté
-    const supabaseAuth = await createServerClient();
-    const {
-      data: { user: authUser },
-    } = await supabaseAuth.auth.getUser();
-    const currentUserId = authUser?.id ?? null;
-
-    // INSERT dans financial_documents (avec données sync de la commande)
-    let localDocumentId: string | null = null;
-    if (partnerId) {
-      const insertPayload: Database['public']['Tables']['financial_documents']['Insert'] =
-        {
-          document_type: 'customer_invoice',
-          document_direction: 'inbound',
-          document_number: autoFinalize
-            ? (finalizedInvoice.invoice_number ??
-              ((finalizedInvoice as unknown as Record<string, unknown>)
-                .number as string))
-            : `PROFORMA-${typedOrder.order_number}`,
-          partner_id: partnerId,
-          partner_type: 'customer',
-          document_date: issueDate,
-          due_date: dueDate,
-          total_ht: totalHt,
-          total_ttc: totalTtc,
-          tva_amount: totalVat,
-          amount_paid: 0,
-          status: autoFinalize ? 'sent' : 'draft',
-          sales_order_id: salesOrderId,
-          qonto_invoice_id: finalizedInvoice.id,
-          qonto_pdf_url: finalizedInvoice.pdf_url ?? null,
-          qonto_public_url: finalizedInvoice.public_url ?? null,
-          synchronized_at: new Date().toISOString(),
-          created_by: currentUserId!,
-          // Données synchronisées : body (édité par l'utilisateur) > commande DB
-          billing_address: (bodyBillingAddress ??
-            typedOrder.billing_address) as Json,
-          shipping_address: (bodyShippingAddress ??
-            typedOrder.shipping_address) as Json,
-          shipping_cost_ht: shippingCost,
-          handling_cost_ht: handlingCost,
-          insurance_cost_ht: insuranceCost,
-          fees_vat_rate: feesVatRate,
-          billing_contact_id: typedOrder.billing_contact_id ?? null,
-          delivery_contact_id: typedOrder.delivery_contact_id ?? null,
-          responsable_contact_id: typedOrder.responsable_contact_id ?? null,
-        };
-      const { data: insertedDoc, error: insertDocError } = await supabase
-        .from('financial_documents')
-        .insert(insertPayload)
-        .select('id')
-        .single();
-
-      if (insertDocError) {
-        console.error(
-          '[API Qonto Invoices] Failed to insert financial_document:',
-          JSON.stringify(insertDocError)
-        );
-        // TEMPORAIRE: retourner l'erreur pour diagnostic
-        return NextResponse.json(
-          {
-            success: false,
-            error: `Erreur creation document local: ${insertDocError.message ?? insertDocError.code ?? JSON.stringify(insertDocError)}`,
-            invoice: {
-              id: finalizedInvoice.id,
-              invoice_number: finalizedInvoice.invoice_number,
-            },
-          },
-          { status: 500 }
-        );
-      } else if (insertedDoc) {
-        localDocumentId = insertedDoc.id;
-
-        // INSERT dans financial_document_items
-        // Note: Cette table existe dans la DB mais peut ne pas être dans les types générés
-        const documentItems = items.map((item, index) => ({
-          document_id: localDocumentId,
-          product_id: item.product_id ?? null,
-          description:
-            item.title + (item.description ? ` - ${item.description}` : ''),
-          quantity: item.quantity_num ?? 1,
-          unit_price_ht: item.unit_price_ht ?? 0,
-          total_ht: (item.unit_price_ht ?? 0) * (item.quantity_num ?? 1),
-          tva_rate: (item.vat_rate_num ?? 0.2) * 100, // Stocké en % (20.00)
-          tva_amount:
-            (item.unit_price_ht ?? 0) *
-            (item.quantity_num ?? 1) *
-            (item.vat_rate_num ?? 0.2),
-          total_ttc:
-            (item.unit_price_ht ?? 0) *
-            (item.quantity_num ?? 1) *
-            (1 + (item.vat_rate_num ?? 0.2)),
-          sort_order: index,
-        }));
-
-        // Table financial_document_items existe dans la DB mais pas dans les types générés
-        const { error: insertItemsError } = await (
-          supabase as unknown as {
-            from: (table: string) => {
-              insert: (data: unknown[]) => Promise<{ error: unknown }>;
-            };
-          }
-        )
-          .from('financial_document_items')
-          .insert(documentItems);
-
-        if (insertItemsError) {
-          console.error(
-            '[API Qonto Invoices] Failed to insert document items:',
-            insertItemsError
-          );
-        }
-      }
-    } else {
-      console.warn(
-        '[API Qonto Invoices] Skipping local storage - no organisation partner_id (individual customer)'
-      );
-    }
+    const { localDocumentId, error: persistError } =
+      await persistFinancialDocument(supabase, {
+        order: typedOrder,
+        items,
+        issueDate,
+        dueDate,
+        autoFinalize,
+        salesOrderId,
+        bodyBillingAddress,
+        bodyShippingAddress,
+        fees: { shippingCost, handlingCost, insuranceCost, feesVatRate },
+        finalizedInvoice,
+      });
+    if (persistError)
+      return persistError as NextResponse<{
+        success: boolean;
+        error?: string;
+      }>;
 
     return NextResponse.json({
       success: true,
