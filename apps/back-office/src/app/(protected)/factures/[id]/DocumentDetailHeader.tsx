@@ -95,7 +95,9 @@ export function DocumentDetailHeader({
               config={qontoInvoiceStatusConfig}
               size="md"
             />
-            <DocumentSourceBadge hasOrderLink={!!salesOrderId} />
+            {documentType === 'invoice' && (
+              <DocumentSourceBadge hasOrderLink={!!salesOrderId} />
+            )}
             {isOverdue && (
               <Badge variant="destructive" className="gap-1">
                 <Clock className="h-3 w-3" />

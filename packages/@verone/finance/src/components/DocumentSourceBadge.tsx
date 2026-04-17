@@ -1,6 +1,6 @@
 'use client';
 
-import { Badge } from '@verone/ui';
+import { Badge, cn } from '@verone/ui';
 import { ShoppingBag, Briefcase } from 'lucide-react';
 
 interface DocumentSourceBadgeProps {
@@ -27,7 +27,7 @@ export function DocumentSourceBadge({
     return (
       <Badge
         variant="outline"
-        className={`bg-blue-50 text-blue-700 border-blue-200 ${className ?? ''}`}
+        className={cn('bg-blue-50 text-blue-700 border-blue-200', className)}
       >
         <ShoppingBag className="h-3 w-3 mr-1" />
         Commande
@@ -37,7 +37,7 @@ export function DocumentSourceBadge({
   return (
     <Badge
       variant="outline"
-      className={`bg-amber-50 text-amber-700 border-amber-200 ${className ?? ''}`}
+      className={cn('bg-amber-50 text-amber-700 border-amber-200', className)}
     >
       <Briefcase className="h-3 w-3 mr-1" />
       Service
