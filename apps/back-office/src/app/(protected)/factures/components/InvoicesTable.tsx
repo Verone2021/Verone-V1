@@ -28,7 +28,10 @@ import {
   Trash2,
 } from 'lucide-react';
 
-import { DocumentSourceBadge } from '@verone/finance/components';
+import {
+  DocumentDiscordanceBadge,
+  DocumentSourceBadge,
+} from '@verone/finance/components';
 
 import type { Invoice } from './types';
 import { formatAmount, formatDate } from './types';
@@ -192,10 +195,18 @@ export function InvoicesTable({
               )}
             </TableCell>
             <TableCell className="text-right font-medium">
-              {formatAmount(
-                parseFloat(invoice.total_amount.value),
-                invoice.total_amount.currency
-              )}
+              <div className="flex items-center justify-end gap-2">
+                <DocumentDiscordanceBadge
+                  localTotalTtcEuros={invoice.local_total_ttc}
+                  qontoTotalCents={invoice.total_amount_cents}
+                />
+                <span>
+                  {formatAmount(
+                    parseFloat(invoice.total_amount.value),
+                    invoice.total_amount.currency
+                  )}
+                </span>
+              </div>
             </TableCell>
             <TableCell>
               <div className="flex gap-0.5">
