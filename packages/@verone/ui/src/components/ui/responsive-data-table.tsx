@@ -113,7 +113,7 @@ export function ResponsiveDataTable<T>(
   );
 
   return (
-    <Table className={cn('w-auto', className)}>
+    <Table className={cn('w-full', className)}>
       <TableHeader>
         <TableRow>
           {columns.map(col => {
