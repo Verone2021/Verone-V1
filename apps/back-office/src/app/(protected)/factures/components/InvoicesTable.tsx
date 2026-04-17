@@ -28,6 +28,8 @@ import {
   Trash2,
 } from 'lucide-react';
 
+import { DocumentSourceBadge } from '@verone/finance/components';
+
 import type { Invoice } from './types';
 import { formatAmount, formatDate } from './types';
 import { InvoiceStatusBadge } from './StatusBadges';
@@ -104,6 +106,9 @@ export function InvoicesTable({
           <TableRow key={invoice.id}>
             <TableCell>
               <div className="font-mono text-xs">{invoice.number}</div>
+              <div className="mt-1">
+                <DocumentSourceBadge hasOrderLink={!!invoice.sales_order_id} />
+              </div>
               {invoice.sales_order_id && invoice.order_number && (
                 <button
                   onClick={() => onOpenOrder?.(invoice.sales_order_id!)}
