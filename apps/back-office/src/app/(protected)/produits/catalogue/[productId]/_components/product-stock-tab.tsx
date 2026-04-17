@@ -5,6 +5,7 @@ import { History } from 'lucide-react';
 
 import { Button } from '@verone/ui';
 import { StockDisplay, StockEditSection } from '@verone/stock';
+import { StockAlertsBanner } from '@verone/stock/components/cards';
 import { ProductStockHistoryModal } from '@verone/products';
 
 import type { Product, ProductRow } from './types';
@@ -22,6 +23,9 @@ export function ProductStockTab({
 
   return (
     <div className="space-y-6">
+      {/* A2 : Banniere d'alertes stock actives pour ce produit */}
+      <StockAlertsBanner productId={product.id} />
+
       {/* Stock display with details */}
       <section className="bg-white rounded-lg border border-neutral-200 p-5">
         <StockDisplay

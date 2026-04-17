@@ -29,6 +29,7 @@ import { createClient } from '@verone/utils/supabase/client';
 // Types d'alertes stock
 export type StockAlertType =
   | 'low_stock'
+  | 'low_stock_forecast'
   | 'out_of_stock'
   | 'no_stock_but_ordered';
 
@@ -168,13 +169,18 @@ export function useStockAlerts() {
     void fetchAlerts();
   }, [fetchAlerts]);
 
-  // ✅ Alertes actives = low_stock OU out_of_stock
+  // ✅ Alertes actives = low_stock OU low_stock_forecast OU out_of_stock
   // - low_stock : stock_real < min_stock (nécessite min_stock > 0)
+  // - low_stock_forecast : stock_real OK mais previsionnel < min_stock (BO-STOCK-007 A8)
   // - out_of_stock : stock_previsionnel < 0 (INDÉPENDANT de min_stock)
   const activeAlerts = alerts.filter(a => {
     const stockPrevisionnel =
       a.stock_real + a.stock_forecasted_in - a.stock_forecasted_out;
-    return a.stock_real < a.min_stock || stockPrevisionnel < 0;
+    return (
+      a.stock_real < a.min_stock ||
+      stockPrevisionnel < 0 ||
+      a.alert_type === 'low_stock_forecast'
+    );
   });
 
   return {
