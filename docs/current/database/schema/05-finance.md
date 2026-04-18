@@ -1,6 +1,6 @@
 # Domaine Finance & Comptabilite — Schema Base de Donnees
 
-_Generated: 2026-04-16 06:43_
+_Generated: 2026-04-18 23:03_
 
 **Tables : 13**
 
@@ -400,8 +400,8 @@ _Generated: 2026-04-16 06:43_
 
 **RLS :** 2 policies
 
-- `mcp_queue_authenticated_all` : ALL — authenticated
 - `backoffice_full_access_mcp_resolution_queue` : ALL — authenticated
+- `mcp_queue_authenticated_all` : ALL — authenticated
 
 **Triggers :** 1
 

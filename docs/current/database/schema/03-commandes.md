@@ -1,6 +1,6 @@
 # Domaine Commandes & Consultations — Schema Base de Donnees
 
-_Generated: 2026-04-16 06:43_
+_Generated: 2026-04-18 23:03_
 
 **Tables : 17**
 
@@ -12,14 +12,14 @@ _Generated: 2026-04-16 06:43_
 | [consultation_products](#consultation-products)           | 15       | 2   | 1   | 0        |
 | [order_discounts](#order-discounts)                       | 24       | 0   | 2   | 1        |
 | [order_payments](#order-payments)                         | 10       | 2   | 1   | 0        |
-| [purchase_order_items](#purchase-order-items)             | 21       | 4   | 2   | 10       |
-| [purchase_order_receptions](#purchase-order-receptions)   | 14       | 3   | 2   | 4        |
+| [purchase_order_items](#purchase-order-items)             | 21       | 4   | 2   | 9        |
+| [purchase_order_receptions](#purchase-order-receptions)   | 14       | 3   | 2   | 5        |
 | [purchase_orders](#purchase-orders)                       | 34       | 1   | 4   | 17       |
 | [sales_order_events](#sales-order-events)                 | 6        | 1   | 2   | 1        |
-| [sales_order_items](#sales-order-items)                   | 22       | 3   | 6   | 6        |
+| [sales_order_items](#sales-order-items)                   | 22       | 3   | 7   | 6        |
 | [sales_order_linkme_details](#sales-order-linkme-details) | 51       | 1   | 6   | 3        |
-| [sales_order_shipments](#sales-order-shipments)           | 20       | 2   | 1   | 3        |
-| [sales_orders](#sales-orders)                             | 68       | 10  | 7   | 22       |
+| [sales_order_shipments](#sales-order-shipments)           | 20       | 2   | 1   | 5        |
+| [sales_orders](#sales-orders)                             | 68       | 10  | 7   | 23       |
 | [sample_order_items](#sample-order-items)                 | 13       | 2   | 1   | 0        |
 | [sample_orders](#sample-orders)                           | 17       | 1   | 1   | 0        |
 | [shopping_carts](#shopping-carts)                         | 11       | 2   | 9   | 1        |
@@ -273,11 +273,10 @@ _Generated: 2026-04-16 06:43_
 - `staff_manage_purchase_order_items` : ALL — authenticated
 - `Utilisateurs peuvent voir les items de leurs commandes fourniss` : SELECT — public
 
-**Triggers :** 10
+**Triggers :** 9
 
 - `purchase_order_items_updated_at` : BEFORE UPDATE
 - `recalculate_purchase_order_totals_trigger` : AFTER INSERT
-- `trig_recalc_po_totals` : AFTER INSERT
 - `trigger_allocate_po_fees` : BEFORE INSERT
 - `trigger_check_sample_archive` : BEFORE UPDATE
 - `trigger_handle_po_item_quantity_change_confirmed` : AFTER UPDATE
@@ -318,10 +317,11 @@ _Generated: 2026-04-16 06:43_
 - `backoffice_full_access_purchase_order_receptions` : ALL — authenticated
 - `Users can view all purchase receptions` : SELECT — public
 
-**Triggers :** 4
+**Triggers :** 5
 
 - `reception_validation_trigger` : AFTER UPDATE
 - `trigger_before_delete_reception` : BEFORE DELETE
+- `trigger_before_update_reception` : BEFORE UPDATE
 - `trigger_reception_update_stock` : AFTER INSERT
 - `trigger_stock_on_affiliate_reception` : BEFORE UPDATE
 
@@ -458,13 +458,14 @@ _Generated: 2026-04-16 06:43_
 - `product_id` → `products.id`
 - `linkme_selection_item_id` → `linkme_selection_items.id`
 
-**RLS :** 6 policies
+**RLS :** 7 policies
 
 - `linkme_users_delete_own_order_items` : DELETE — authenticated
 - `staff_delete_sales_order_items` : DELETE — authenticated
 - `Public can create sales_order_items` : INSERT — anon,authenticated
 - `staff_select_sales_order_items` : SELECT — authenticated
 - `affiliates_select_own_order_items` : SELECT — authenticated
+- `staff_update_sales_order_items` : UPDATE — authenticated
 - `linkme_users_update_own_order_items` : UPDATE — authenticated
 
 **Triggers :** 6
@@ -542,10 +543,10 @@ _Generated: 2026-04-16 06:43_
 
 - `staff_can_insert_linkme_details` : INSERT — authenticated
 - `affiliates_can_insert_own_linkme_details` : INSERT — authenticated
-- `staff_select_sales_order_linkme_details` : SELECT — authenticated
 - `affiliates_select_own_order_linkme_details` : SELECT — authenticated
-- `linkme_users_update_own_linkme_details` : UPDATE — authenticated
+- `staff_select_sales_order_linkme_details` : SELECT — authenticated
 - `staff_can_update_linkme_details` : UPDATE — authenticated
+- `linkme_users_update_own_linkme_details` : UPDATE — authenticated
 
 **Triggers :** 3
 
@@ -589,8 +590,10 @@ _Generated: 2026-04-16 06:43_
 
 - `backoffice_full_access_sales_order_shipments` : ALL — authenticated
 
-**Triggers :** 3
+**Triggers :** 5
 
+- `trigger_before_delete_shipment` : BEFORE DELETE
+- `trigger_before_update_shipment` : BEFORE UPDATE
 - `trigger_notify_shipment_created` : AFTER INSERT
 - `trigger_packlink_confirm_stock` : AFTER UPDATE
 - `trigger_shipment_update_stock` : AFTER INSERT
@@ -693,7 +696,7 @@ _Generated: 2026-04-16 06:43_
 - `linkme_users_update_own_draft_orders` : UPDATE — authenticated
 - `staff_update_sales_orders` : UPDATE — authenticated
 
-**Triggers :** 22
+**Triggers :** 23
 
 - `audit_sales_orders` : AFTER INSERT
 - `sales_order_status_change_trigger` : AFTER UPDATE
@@ -715,6 +718,7 @@ _Generated: 2026-04-16 06:43_
 - `trigger_prevent_so_direct_cancellation` : BEFORE UPDATE
 - `trigger_so_cancellation_rollback` : AFTER UPDATE
 - `trigger_so_delayed_notification` : AFTER UPDATE
+- `trigger_so_insert_validated_forecast` : AFTER INSERT
 - `trigger_so_partial_shipped_notification` : AFTER UPDATE
 - `trigger_so_update_forecasted_out` : AFTER UPDATE
 
@@ -809,8 +813,8 @@ _Generated: 2026-04-16 06:43_
 - `users_own_cart_delete` : DELETE — authenticated
 - `anon_cart_insert` : INSERT — anon
 - `users_own_cart_insert` : INSERT — authenticated
-- `anon_cart_select` : SELECT — anon
 - `users_own_cart_select` : SELECT — authenticated
+- `anon_cart_select` : SELECT — anon
 - `users_own_cart_update` : UPDATE — authenticated
 - `anon_cart_update` : UPDATE — anon
 

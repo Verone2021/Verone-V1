@@ -262,6 +262,13 @@ export async function markQuotesSuperseded(
   }
 }
 
+interface ISaveLocalDbAddress {
+  address_line1?: string;
+  postal_code?: string;
+  city?: string;
+  country?: string;
+}
+
 interface ISaveLocalDbParams {
   supabase: SupabaseClient;
   userId: string;
@@ -276,6 +283,7 @@ interface ISaveLocalDbParams {
   customerId: string | undefined;
   standaloneCustomerId: string | undefined;
   fees: IFeesData | undefined;
+  shippingAddress?: ISaveLocalDbAddress;
 }
 
 export async function saveQuoteToLocalDb(
@@ -295,6 +303,7 @@ export async function saveQuoteToLocalDb(
     customerId,
     standaloneCustomerId,
     fees,
+    shippingAddress,
   } = params;
 
   const totalHt = items.reduce(
@@ -334,6 +343,7 @@ export async function saveQuoteToLocalDb(
     handling_cost_ht: fees?.handling_cost_ht ?? 0,
     insurance_cost_ht: fees?.insurance_cost_ht ?? 0,
     fees_vat_rate: fees?.fees_vat_rate ?? 0.2,
+    shipping_address: shippingAddress ?? null,
   };
 
   const { data: doc, error } = await supabase

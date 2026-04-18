@@ -1,6 +1,6 @@
 # Domaine Stock & Stockage — Schema Base de Donnees
 
-_Generated: 2026-04-16 06:43_
+_Generated: 2026-04-18 23:03_
 
 **Tables : 9**
 
@@ -202,8 +202,8 @@ _Generated: 2026-04-16 06:43_
 
 **RLS :** 5 policies
 
-- `users_own_stock_movements` : ALL — authenticated
 - `backoffice_full_access_stock_movements` : ALL — authenticated
+- `users_own_stock_movements` : ALL — authenticated
 - `system_triggers_can_insert_stock_movements` : INSERT — public
 - `authenticated_users_can_view_stock_movements` : SELECT — authenticated
 - `Utilisateurs peuvent consulter les mouvements de stock` : SELECT — public

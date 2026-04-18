@@ -23,6 +23,8 @@ import { QuoteCustomLinesSection } from './QuoteCustomLinesSection';
 import { QuoteFeesSection } from './QuoteFeesSection';
 import { QuoteFinalizeWarning } from './QuoteFinalizeWarning';
 import { QuoteItemsTable } from './QuoteItemsTable';
+import { QuoteShippingSection } from './QuoteShippingSection';
+import type { IShippingAddressResolved } from './QuoteShippingSection';
 import { QuoteSuccessView } from './QuoteSuccessView';
 import { QuoteTotalsSection } from './QuoteTotalsSection';
 import type {
@@ -54,12 +56,15 @@ export function QuoteCreateFromOrderModal({
     insuranceCostHt: order?.insurance_cost_ht ?? 0,
     feesVatRate: order?.fees_vat_rate ?? 0.2,
   });
+  const [shippingAddress, setShippingAddress] =
+    useState<IShippingAddressResolved | null>(null);
 
   const resetState = useCallback((): void => {
     setStatus('idle');
     setExpiryDays(30);
     setCreatedQuote(null);
     setShowFinalizeWarning(false);
+    setShippingAddress(null);
   }, []);
 
   const handleClose = useCallback((): void => {
@@ -151,6 +156,7 @@ export function QuoteCreateFromOrderModal({
             userId: currentUserId,
             expiryDays,
             billingAddress: resolvedBillingAddress,
+            shippingAddress: shippingAddress ?? undefined,
             fees: feesPayload,
             customLines: allCustomLines,
           };
@@ -325,6 +331,14 @@ export function QuoteCreateFromOrderModal({
           ) : (
             <div className="space-y-4">
               <QuoteClientCard order={order} customerName={customerName} />
+              {!isConsultation && (
+                <QuoteShippingSection
+                  enseigneId={order.organisations?.enseigne_id}
+                  defaultOrgId={order.customer_id}
+                  disabled={status === 'creating'}
+                  onShippingAddressChange={setShippingAddress}
+                />
+              )}
               <QuoteItemsTable order={order} />
               <QuoteFeesSection fees={fees} onFeesChange={setFees} />
               <QuoteCustomLinesSection

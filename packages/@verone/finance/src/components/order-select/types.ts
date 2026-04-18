@@ -42,6 +42,7 @@ export interface IOrderForDocument {
     has_different_shipping_address?: boolean | null;
     siret?: string | null;
     vat_number?: string | null;
+    enseigne_id?: string | null;
   } | null;
   individual_customers?: {
     first_name?: string | null;

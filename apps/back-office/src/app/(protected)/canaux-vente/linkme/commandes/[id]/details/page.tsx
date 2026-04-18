@@ -167,13 +167,14 @@ export default function LinkMeOrderDetailsPage() {
                 shipping_postal_code: order.organisation.shipping_postal_code,
                 siret: order.organisation.siret,
                 vat_number: order.organisation.vat_number,
+                enseigne_id: order.organisation.enseigne_id,
               }
             : null,
           sales_order_items: order.items.map(item => ({
             id: item.id,
             quantity: item.quantity,
             unit_price_ht: item.unit_price_ht,
-            tax_rate: order.tax_rate ?? 0.2,
+            tax_rate: item.tax_rate ?? order.tax_rate ?? 0.2,
             products: item.product ? { name: item.product.name } : null,
           })),
         }
