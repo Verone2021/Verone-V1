@@ -2,16 +2,21 @@
 
 ## Taches en cours
 
-- `.claude/work/ACTIVE.md` — Sprints et taches actives
-- `.claude/work/plan-canaux-de-vente.md` — Plan canaux de vente
+Voir section Work ci-dessous.
 
-## Rules (5 fichiers, auto-discovered)
+## Commands (5 fichiers)
+
+Voir section Commands ci-dessous.
+
+## Rules (7 fichiers, auto-discovered)
 
 - `.claude/rules/database.md` — Migrations, RLS patterns, post-migration
 - `.claude/rules/workflow.md` — Git, builds, serveurs, contexte, deploiement
 - `.claude/rules/code-standards.md` — TypeScript, async, composants, API, logout
 - `.claude/rules/playwright.md` — Mode vision, screenshots, workflow
 - `.claude/rules/stock-triggers-protected.md` — Triggers stock IMMUABLES
+- `.claude/rules/finance.md` — Regles metier devis / factures / proformas (R1 a R7)
+- `.claude/rules/responsive.md` — Breakpoints + 5 techniques responsive obligatoires
 
 ## Agents (6 fichiers)
 
@@ -21,14 +26,6 @@
 - `.claude/agents/ops-agent.md` — Deploiement apres review PASS
 - `.claude/agents/writer-agent.md` — Documentation technique
 - `.claude/agents/market-agent.md` — Positionnement produit, communication
-
-## Commands (5 fichiers)
-
-- `.claude/commands/search.md` — Exploration DB + code + RLS
-- `.claude/commands/review.md` — Audit qualite code avec rapport
-- `.claude/commands/pr.md` — Push + PR vers staging
-- `.claude/commands/status.md` — Resume rapide projet
-- `.claude/commands/review-references/` — 4 fichiers reference (perf, securite, taille, TS)
 
 ## Skills (3 fichiers)
 
@@ -40,10 +37,6 @@
 
 - `.claude/guides/cross-app-protection.md` — Protection cross-app (isolation BO/LinkMe)
 - `.claude/guides/typescript-errors-debugging.md` — Debug erreurs TypeScript
-
-## Templates
-
-- `.claude/templates/component.tsx` — Template composant React
 
 ## Scratchpad
 
@@ -68,26 +61,29 @@
 - `.claude/test-credentials.md` — Playwright (BO, LinkMe, Site) — LOCAL ONLY
 - `.claude/settings.json` — Permissions + hooks (14 PreToolUse, 2 PostToolUse)
 
-## Commandes Slash
+## Work (entry points sprint courant)
 
-| Fichier                                                   | Contenu                    |
-| --------------------------------------------------------- | -------------------------- |
-| `.claude/commands/review-references/performance-rules.md` | Performance Rules          |
-| `.claude/commands/review-references/security-rules.md`    | Security Rules             |
-| `.claude/commands/review-references/size-thresholds.md`   | Size Thresholds            |
-| `.claude/commands/review-references/typescript-rules.md`  | Typescript Rules           |
-| `.claude/templates/sprint-responsive-template.md`         | Sprint Responsive Template |
-| `.claude/work/AGENT-ENTRY-POINT.md` | Agent Entry Point |
-| `.claude/work/NEXT-SPRINTS.md` | Next Sprints |
-| `.claude/work/PROMPTS-TO-COPY.md` | Prompts To Copy |
+- `.claude/work/ACTIVE.md` — Sprints et taches actives
+- `.claude/work/AGENT-ENTRY-POINT.md` — Point d'entree agent (sprint responsive)
+- `.claude/work/NEXT-SPRINTS.md` — Plan detaille des sprints a venir
+- `.claude/work/PROMPTS-TO-COPY.md` — Prompts pretes a coller pour enchainer les blocs
+- `.claude/work/plan-canaux-de-vente.md` — Plan canaux de vente
 
----
+## Commands (5 fichiers + references)
 
-## Regles
+- `.claude/commands/search.md` — Exploration DB + code + RLS
+- `.claude/commands/review.md` — Audit qualite code avec rapport
+- `.claude/commands/pr.md` — Push + PR vers staging
+- `.claude/commands/status.md` — Resume rapide projet
+- `.claude/commands/README.md` — Guide de travail agent
+- `.claude/commands/review-references/performance-rules.md` — Reference performance
+- `.claude/commands/review-references/security-rules.md` — Reference securite
+- `.claude/commands/review-references/size-thresholds.md` — Seuils de taille
+- `.claude/commands/review-references/typescript-rules.md` — Regles TypeScript
 
-| Fichier                       | Contenu    |
-| ----------------------------- | ---------- |
-| `.claude/rules/finance.md`    | Finance    |
-| `.claude/rules/responsive.md` | Responsive |
+## Templates
+
+- `.claude/templates/component.tsx` — Template composant React
+- `.claude/templates/sprint-responsive-template.md` — Template de sprint responsive
 
 ---
