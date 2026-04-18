@@ -31,14 +31,15 @@ Règles stables lues automatiquement par l'agent.
 
 ---
 
-## Agents (6 fichiers — 2 à supprimer)
+## Agents (7 fichiers)
 
 - `.claude/agents/dev-agent.md` — Code + TDD + changelog (**actif**)
 - `.claude/agents/reviewer-agent.md` — Code reviewer impartial read-only (**actif**)
 - `.claude/agents/verify-agent.md` — Type-check + build + tests (**actif**)
 - `.claude/agents/ops-agent.md` — Push, PR, merge après review PASS (**actif**)
-- `.claude/agents/writer-agent.md` — Documentation technique _(⚠️ 0 utilisation, suppression prévue — `DECISIONS.md` ADR-005)_
-- `.claude/agents/market-agent.md` — Positionnement produit _(⚠️ 0 utilisation, suppression prévue — `DECISIONS.md` ADR-005)_
+- `.claude/agents/perf-optimizer.md` — Audit perf, dead code, bundle, overfetch (**restauré 2026-04-19**, mémoire dans `.claude/agent-memory/perf-optimizer/`)
+- `.claude/agents/writer-agent.md` — Documentation technique _(⚠️ 0 utilisation, suppression à valider — `DECISIONS.md` ADR-005)_
+- `.claude/agents/market-agent.md` — Positionnement produit _(⚠️ 0 utilisation, suppression à valider — `DECISIONS.md` ADR-005)_
 
 ---
 
@@ -63,11 +64,13 @@ Un playbook est référencé depuis le YAML d'une tâche : `playbook: migrate-pa
 
 ---
 
-## Commands (6 fichiers + références)
+## Commands (8 fichiers + références)
 
 Commandes slash disponibles dans Claude Code.
 
-- `.claude/commands/fix-warnings.md` — Workflow 6 phases pour corriger warnings ESLint (Discovery → TypeScript Validation)
+- `.claude/commands/fix-warnings.md` — Workflow 6 phases pour corriger warnings ESLint (restauré 2026-04-18)
+- `.claude/commands/db.md` — Opérations Supabase rapides (query/logs/migrations/advisors/schema/types/rls-test/stats) (**restauré 2026-04-19**)
+- `.claude/commands/teach.md` — Mode pédagogique : explique concept avant d'implémenter (**restauré 2026-04-19**)
 - `.claude/commands/search.md` — Exploration DB + code + RLS
 - `.claude/commands/review.md` — Audit qualité code avec rapport
 - `.claude/commands/pr.md` — Push + PR vers staging

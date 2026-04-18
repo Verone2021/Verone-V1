@@ -18,14 +18,15 @@ Dis simplement ce que tu veux faire. Claude lit ACTIVE.md et choisit le bon work
 
 ## Les agents
 
-| Agent            | Role                          | Quand                          |
-| ---------------- | ----------------------------- | ------------------------------ |
-| `dev-agent`      | Code, TDD, changelog          | Feature, bug fix, refactoring  |
-| `reviewer-agent` | Audit qualite read-only       | Avant PR, apres implementation |
-| `verify-agent`   | Type-check, build, tests      | Validation avant deploy        |
-| `ops-agent`      | PR, push, deploy              | Apres review PASS              |
-| `writer-agent`   | Documentation technique       | Docs, rapports, guides         |
-| `market-agent`   | Positionnement, communication | Contenu marketing, pitchs      |
+| Agent            | Role                          | Quand                           |
+| ---------------- | ----------------------------- | ------------------------------- |
+| `dev-agent`      | Code, TDD, changelog          | Feature, bug fix, refactoring   |
+| `reviewer-agent` | Audit qualite read-only       | Avant PR, apres implementation  |
+| `verify-agent`   | Type-check, build, tests      | Validation avant deploy         |
+| `ops-agent`      | PR, push, deploy              | Apres review PASS               |
+| `perf-optimizer` | Audit perf, dead code, bundle | Audit periodique, perf degradee |
+| `writer-agent`   | Documentation technique       | Docs, rapports, guides          |
+| `market-agent`   | Positionnement, communication | Contenu marketing, pitchs       |
 
 ## Commandes disponibles
 
@@ -36,6 +37,8 @@ Dis simplement ce que tu veux faire. Claude lit ACTIVE.md et choisit le bon work
 | `/pr`               | Commit + push + PR staging                      |
 | `/status`           | Resume etat projet                              |
 | `/fix-warnings`     | Workflow 6 phases pour corriger warnings ESLint |
+| `/db <op>`          | Operations Supabase rapides (query, logs, RLS)  |
+| `/teach <concept>`  | Mode pedagogique : explique avant d'implementer |
 
 ## Skills disponibles
 
