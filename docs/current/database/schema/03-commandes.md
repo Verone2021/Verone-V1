@@ -1,6 +1,6 @@
 # Domaine Commandes & Consultations — Schema Base de Donnees
 
-_Generated: 2026-04-18 23:03_
+_Generated: 2026-04-19 01:20_
 
 **Tables : 17**
 
@@ -693,8 +693,8 @@ _Generated: 2026-04-18 23:03_
 - `LinkMe users can create sales_orders` : INSERT — authenticated
 - `affiliates_select_own_orders` : SELECT — authenticated
 - `staff_select_sales_orders` : SELECT — authenticated
-- `linkme_users_update_own_draft_orders` : UPDATE — authenticated
 - `staff_update_sales_orders` : UPDATE — authenticated
+- `linkme_users_update_own_draft_orders` : UPDATE — authenticated
 
 **Triggers :** 23
 
@@ -811,12 +811,12 @@ _Generated: 2026-04-18 23:03_
 - `staff_full_access_shopping_carts` : ALL — authenticated
 - `anon_cart_delete` : DELETE — anon
 - `users_own_cart_delete` : DELETE — authenticated
-- `anon_cart_insert` : INSERT — anon
 - `users_own_cart_insert` : INSERT — authenticated
-- `users_own_cart_select` : SELECT — authenticated
+- `anon_cart_insert` : INSERT — anon
 - `anon_cart_select` : SELECT — anon
-- `users_own_cart_update` : UPDATE — authenticated
+- `users_own_cart_select` : SELECT — authenticated
 - `anon_cart_update` : UPDATE — anon
+- `users_own_cart_update` : UPDATE — authenticated
 
 **Triggers :** 1
 

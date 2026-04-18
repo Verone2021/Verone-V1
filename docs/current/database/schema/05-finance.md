@@ -1,6 +1,6 @@
 # Domaine Finance & Comptabilite — Schema Base de Donnees
 
-_Generated: 2026-04-18 23:03_
+_Generated: 2026-04-19 01:20_
 
 **Tables : 13**
 
@@ -10,7 +10,7 @@ _Generated: 2026-04-18 23:03_
 | [bank_transactions_enrichment_audit](#bank-transactions-enrichment-audit) | 10       | 1   | 3   | 0        |
 | [finance_settings](#finance-settings)                                     | 4        | 0   | 3   | 0        |
 | [financial_document_items](#financial-document-items)                     | 18       | 3   | 1   | 0        |
-| [financial_documents](#financial-documents)                               | 64       | 12  | 2   | 3        |
+| [financial_documents](#financial-documents)                               | 65       | 12  | 2   | 3        |
 | [fiscal_obligations_done](#fiscal-obligations-done)                       | 5        | 0   | 1   | 0        |
 | [fixed_asset_depreciations](#fixed-asset-depreciations)                   | 8        | 1   | 1   | 0        |
 | [fixed_assets](#fixed-assets)                                             | 20       | 0   | 1   | 1        |
@@ -237,6 +237,7 @@ _Generated: 2026-04-18 23:03_
 | linkme_selection_id      | uuid                    | YES      |                          |
 | linkme_affiliate_id      | uuid                    | YES      |                          |
 | consultation_id          | uuid                    | YES      |                          |
+| revision_number          | integer                 | NO       | 1                        |
 
 **Relations :**
 

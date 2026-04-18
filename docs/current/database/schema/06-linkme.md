@@ -1,6 +1,6 @@
 # Domaine LinkMe & Affiliation — Schema Base de Donnees
 
-_Generated: 2026-04-18 23:03_
+_Generated: 2026-04-19 01:20_
 
 **Tables : 10**
 
@@ -55,8 +55,8 @@ _Generated: 2026-04-18 23:03_
 
 **RLS :** 3 policies
 
-- `linkme_affiliates_staff_all` : ALL — authenticated
 - `linkme_affiliates_own` : ALL — public
+- `linkme_affiliates_staff_all` : ALL — authenticated
 - `linkme_affiliates_public_read` : SELECT — public
 
 **Triggers :** 1
