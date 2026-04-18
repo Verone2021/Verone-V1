@@ -251,7 +251,7 @@ export function PriceListItemFormModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-6xl md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>
             {isEditMode
@@ -265,107 +265,117 @@ export function PriceListItemFormModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={e => void handleSubmit(e)} className="space-y-6">
-          {/* Product Selection */}
-          {showProductSearch && !isEditMode && (
-            <PriceProductSelector
-              searchTerm={productSearchTerm}
-              onSearchChange={setProductSearchTerm}
-              products={products}
-              onSelect={handleSelectProduct}
-            />
-          )}
+        <form
+          onSubmit={e => void handleSubmit(e)}
+          className="flex flex-col flex-1 overflow-hidden"
+        >
+          <div className="flex-1 overflow-y-auto space-y-6">
+            {/* Product Selection */}
+            {showProductSearch && !isEditMode && (
+              <PriceProductSelector
+                searchTerm={productSearchTerm}
+                onSearchChange={setProductSearchTerm}
+                products={products}
+                onSelect={handleSelectProduct}
+              />
+            )}
 
-          {/* Selected Product Info */}
-          {selectedProduct && (
-            <Card className="bg-blue-50 border-blue-200">
-              <CardContent className="pt-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-lg">
-                      {selectedProduct.name}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      SKU:{' '}
-                      <span className="font-mono">{selectedProduct.sku}</span> •
-                      Prix catalogue:{' '}
-                      <span className="font-medium">
-                        {formatCurrency(selectedProduct.price_ht)}
-                      </span>
-                    </p>
+            {/* Selected Product Info */}
+            {selectedProduct && (
+              <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-lg">
+                        {selectedProduct.name}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        SKU:{' '}
+                        <span className="font-mono">{selectedProduct.sku}</span>{' '}
+                        • Prix catalogue:{' '}
+                        <span className="font-medium">
+                          {formatCurrency(selectedProduct.price_ht)}
+                        </span>
+                      </p>
+                    </div>
+                    {!isEditMode && (
+                      <ButtonV2
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedProduct(null);
+                          setShowProductSearch(true);
+                        }}
+                      >
+                        Changer
+                      </ButtonV2>
+                    )}
                   </div>
-                  {!isEditMode && (
-                    <ButtonV2
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedProduct(null);
-                        setShowProductSearch(true);
-                      }}
-                    >
-                      Changer
-                    </ButtonV2>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                </CardContent>
+              </Card>
+            )}
 
-          {/* Tiers Configuration */}
-          {selectedProduct && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">
-                    {isEditMode
-                      ? 'Paramètres du Palier'
-                      : '2. Configurer les Paliers de Prix'}
-                  </CardTitle>
-                  {!isEditMode && (
-                    <ButtonV2
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleAddTier}
-                      className="gap-2"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Ajouter Palier
-                    </ButtonV2>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {tiers.map((tier, index) => (
-                    <PriceTierForm
-                      key={index}
-                      tier={tier}
-                      index={index}
-                      currency={currency}
-                      isEditMode={isEditMode}
-                      tiersCount={tiers.length}
-                      onChange={handleTierChange}
-                      onRemove={handleRemoveTier}
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+            {/* Tiers Configuration */}
+            {selectedProduct && (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">
+                      {isEditMode
+                        ? 'Paramètres du Palier'
+                        : '2. Configurer les Paliers de Prix'}
+                    </CardTitle>
+                    {!isEditMode && (
+                      <ButtonV2
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddTier}
+                        className="gap-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Ajouter Palier
+                      </ButtonV2>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {tiers.map((tier, index) => (
+                      <PriceTierForm
+                        key={index}
+                        tier={tier}
+                        index={index}
+                        currency={currency}
+                        isEditMode={isEditMode}
+                        tiersCount={tiers.length}
+                        onChange={handleTierChange}
+                        onRemove={handleRemoveTier}
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-4 pt-4">
+          <div className="flex flex-col gap-2 md:flex-row md:justify-end pt-4 border-t">
             <ButtonV2
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isLoading}
+              className="w-full md:w-auto"
             >
               Annuler
             </ButtonV2>
-            <ButtonV2 type="submit" disabled={isLoading ?? !selectedProduct}>
+            <ButtonV2
+              type="submit"
+              disabled={isLoading ?? !selectedProduct}
+              className="w-full md:w-auto"
+            >
               {isLoading
                 ? 'Enregistrement...'
                 : isEditMode

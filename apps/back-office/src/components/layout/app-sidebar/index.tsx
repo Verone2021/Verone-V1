@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 
+import { useSidebar } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { featureFlags } from '@verone/utils/feature-flags';
 import {
@@ -17,7 +18,10 @@ import { SidebarLogo } from './SidebarLogo';
 import { SidebarFooter } from './SidebarFooter';
 
 function SidebarContent() {
-  // Hover expansion UX 2026 (Linear pattern)
+  // Mobile drawer state (via SidebarProvider from @verone/ui)
+  const { isMobile, openMobile, setOpenMobile } = useSidebar();
+
+  // Hover expansion UX 2026 (Linear pattern) — desktop only
   const { isExpanded, onMouseEnter, onMouseLeave, onFocus } =
     useHoverExpand(150);
 
@@ -159,26 +163,30 @@ function SidebarContent() {
     getModuleName,
   };
 
-  return (
+  // On mobile, force expanded mode inside the drawer
+  const effectiveExpanded = isMobile ? true : isExpanded;
+
+  const sidebarContent = (
     <aside
       className={cn(
-        'flex h-screen flex-col border-r border-black bg-white',
+        'flex h-full flex-col border-r border-black bg-white',
         'transition-all duration-300 ease-smooth-out',
-        isExpanded ? 'w-60' : 'w-16'
+        // Desktop: shrink/expand on hover. Mobile: always full width in drawer.
+        isMobile ? 'w-64' : isExpanded ? 'w-60' : 'w-16'
       )}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      onFocus={onFocus}
+      onMouseEnter={isMobile ? undefined : onMouseEnter}
+      onMouseLeave={isMobile ? undefined : onMouseLeave}
+      onFocus={isMobile ? undefined : onFocus}
       role="complementary"
       aria-label="Navigation principale"
     >
-      <SidebarLogo isExpanded={isExpanded} />
+      <SidebarLogo isExpanded={effectiveExpanded} />
 
       {/* Navigation principale */}
       <nav className="flex-1 p-4 overflow-y-auto" role="navigation">
         <ul className="space-y-2" role="menubar">
           {navItems.map(item =>
-            isExpanded ? (
+            effectiveExpanded ? (
               <SidebarNavItemExpanded
                 key={item.title}
                 item={item}
@@ -195,61 +203,38 @@ function SidebarContent() {
         </ul>
       </nav>
 
-      <SidebarFooter isExpanded={isExpanded} />
-
-      <style jsx>{`
-        /* Animations UX 2026 - GPU accelerated */
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateX(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
-        /* Badge pulse pour urgence visuelle */
-        @keyframes pulse-urgent {
-          0%,
-          100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 0.85;
-            transform: scale(1.05);
-          }
-        }
-
-        /* Hover micro-interaction (translateX + shadow) */
-        .nav-item:hover {
-          box-shadow: -2px 0 0 0 rgba(0, 0, 0, 0.1);
-        }
-
-        /* Badge urgent animation */
-        .badge-urgent {
-          animation: pulse-urgent 2s ease-in-out infinite;
-        }
-
-        /* Respect prefers-reduced-motion (WCAG 2.1) */
-        @media (prefers-reduced-motion: reduce) {
-          * {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-          }
-        }
-
-        /* GPU acceleration pour sidebar width transition */
-        aside {
-          will-change: width;
-          transform: translateZ(0);
-        }
-      `}</style>
+      <SidebarFooter isExpanded={effectiveExpanded} />
     </aside>
   );
+
+  // Mobile: drawer overlay (hidden by default, slides in when openMobile=true)
+  if (isMobile) {
+    return (
+      <>
+        {/* Backdrop */}
+        {openMobile && (
+          <div
+            className="fixed inset-0 z-40 bg-black/50"
+            aria-hidden="true"
+            onClick={() => setOpenMobile(false)}
+          />
+        )}
+        {/* Drawer */}
+        <div
+          className={cn(
+            'fixed inset-y-0 left-0 z-50 h-screen',
+            'transition-transform duration-300 ease-smooth-out',
+            openMobile ? 'translate-x-0' : '-translate-x-full'
+          )}
+        >
+          {sidebarContent}
+        </div>
+      </>
+    );
+  }
+
+  // Desktop: sidebar toujours visible dans le flux normal
+  return <div className="h-screen flex-shrink-0">{sidebarContent}</div>;
 }
 
 export function AppSidebar({ className: _className }: { className?: string }) {

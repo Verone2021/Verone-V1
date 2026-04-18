@@ -103,7 +103,7 @@ export function EditShipmentModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-lg md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Modifier l&apos;expédition</DialogTitle>
           <DialogDescription>
@@ -120,7 +120,7 @@ export function EditShipmentModal({
             </AlertDescription>
           </Alert>
         ) : (
-          <div className="space-y-4">
+          <div className="flex-1 overflow-y-auto space-y-4">
             <div className="space-y-1">
               <Label htmlFor="carrier-name">Transporteur</Label>
               <Input
@@ -182,11 +182,20 @@ export function EditShipmentModal({
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
-              <ButtonV2 variant="ghost" onClick={onClose} disabled={updating}>
+            <div className="flex flex-col gap-2 pt-2 md:flex-row md:justify-end">
+              <ButtonV2
+                variant="ghost"
+                onClick={onClose}
+                disabled={updating}
+                className="w-full md:w-auto"
+              >
                 Annuler
               </ButtonV2>
-              <ButtonV2 onClick={handleSave} disabled={updating}>
+              <ButtonV2
+                onClick={handleSave}
+                disabled={updating}
+                className="w-full md:w-auto"
+              >
                 {updating ? 'Sauvegarde...' : 'Sauvegarder'}
               </ButtonV2>
             </div>

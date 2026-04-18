@@ -144,7 +144,7 @@ export function LinkMeOrderDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-5xl md:max-h-[90vh] overflow-y-auto">
         {/* HEADER */}
         <DialogHeader className="pb-4 border-b">
           <div className="flex items-center justify-between">

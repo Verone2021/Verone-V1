@@ -28,7 +28,7 @@ export function EnseigneDeleteModal({
 }: EnseigneDeleteModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-[400px] md:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Supprimer l'enseigne</DialogTitle>
           <DialogDescription>
@@ -38,11 +38,16 @@ export function EnseigneDeleteModal({
           </DialogDescription>
         </DialogHeader>
 
-        <DialogFooter>
-          <ButtonV2 variant="ghost" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="flex-col gap-2 md:flex-row">
+          <ButtonV2
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+            className="w-full md:w-auto"
+          >
             Annuler
           </ButtonV2>
           <ButtonV2
+            className="w-full md:w-auto"
             variant="destructive"
             onClick={handleDelete}
             disabled={isSubmitting}

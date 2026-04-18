@@ -121,7 +121,7 @@ export function OrderDetailModal({
     <>
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent
-          className="max-w-7xl max-h-[90vh] overflow-y-auto"
+          className="h-screen md:h-auto max-w-full md:max-w-7xl md:max-h-[90vh] flex flex-col overflow-hidden"
           hideCloseButton
         >
           <DialogHeader>
@@ -146,7 +146,7 @@ export function OrderDetailModal({
             </div>
           </DialogHeader>
 
-          <div className="flex flex-col lg:flex-row gap-4 mt-3">
+          <div className="flex-1 overflow-y-auto flex flex-col lg:flex-row gap-4 mt-3">
             {/* COLONNE PRINCIPALE (70%) - Produits */}
             <div className="flex-1 order-2 lg:order-1">
               <OrderProductsCard

@@ -98,7 +98,7 @@ export function ProductHistoryModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[85vh]">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-6xl md:max-h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader className="border-b border-gray-200 pb-3">
           <DialogTitle className="text-xl font-bold text-black flex items-center gap-3">
             <History className="h-5 w-5" />
@@ -126,10 +126,7 @@ export function ProductHistoryModal({
           />
         )}
 
-        <div
-          className="overflow-y-auto pr-2"
-          style={{ maxHeight: 'calc(85vh - 350px)' }}
-        >
+        <div className="flex-1 overflow-y-auto pr-2">
           {loading ? (
             <div className="flex justify-center py-12">
               <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />

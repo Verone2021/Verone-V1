@@ -183,8 +183,8 @@ export function AddProductToOrderModal({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
 
-      <div className="relative min-h-screen flex items-center justify-center p-4">
-        <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+      <div className="relative min-h-screen flex items-end md:items-center justify-center md:p-4">
+        <div className="relative bg-white rounded-t-xl md:rounded-xl shadow-2xl w-full md:max-w-2xl h-full md:h-auto md:max-h-[85vh] flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
             <div className="flex items-center gap-3">
@@ -454,14 +454,18 @@ export function AddProductToOrderModal({
                 </p>
               )}
             </div>
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={onClose}>
+            <div className="flex flex-col gap-2 md:flex-row">
+              <Button
+                variant="outline"
+                onClick={onClose}
+                className="w-full md:w-auto"
+              >
                 Annuler
               </Button>
               <Button
                 onClick={handleConfirm}
                 disabled={cart.length === 0}
-                className="gap-2"
+                className="w-full md:w-auto gap-2"
               >
                 <Check className="h-4 w-4" />
                 Ajouter {cart.length > 0 ? `(${cart.length})` : ''}

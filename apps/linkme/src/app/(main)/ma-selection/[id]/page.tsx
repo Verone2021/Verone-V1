@@ -262,52 +262,56 @@ export default function SelectionDetailPage(): React.JSX.Element | null {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsConfigOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 text-linkme-marine rounded-xl font-medium hover:bg-gray-50 transition-all text-sm"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border border-gray-200 text-linkme-marine rounded-xl font-medium hover:bg-gray-50 transition-all text-sm"
             >
               <Settings className="h-4 w-4" />
-              Personnaliser
+              <span className="hidden sm:inline">Personnaliser</span>
             </button>
             <ShareSelectionButton selection={selection} />
           </div>
         </div>
 
         {/* Titre + badges */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-linkme-turquoise/10 flex items-center justify-center flex-shrink-0">
-            <Package className="h-7 w-7 text-linkme-turquoise" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-xl font-bold text-linkme-marine truncate">
-                {selection.name}
-              </h1>
-              <span
-                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
-                  isPublished
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-gray-100 text-gray-600'
-                }`}
-              >
-                {isPublished ? (
-                  <>
-                    <Globe className="h-3 w-3" /> En ligne
-                  </>
-                ) : (
-                  <>
-                    <Lock className="h-3 w-3" /> Non publiée
-                  </>
-                )}
-              </span>
-              <span className="text-xs text-gray-500">
-                {totalItems} produit{totalItems > 1 ? 's' : ''}
-              </span>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+          <div className="flex items-center gap-4 flex-1 min-w-0">
+            <div className="w-14 h-14 rounded-2xl bg-linkme-turquoise/10 flex items-center justify-center flex-shrink-0">
+              <Package className="h-7 w-7 text-linkme-turquoise" />
             </div>
-            <p className="text-linkme-marine/60 text-sm mt-0.5">Mes produits</p>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-xl font-bold text-linkme-marine truncate">
+                  {selection.name}
+                </h1>
+                <span
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
+                    isPublished
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  {isPublished ? (
+                    <>
+                      <Globe className="h-3 w-3" /> En ligne
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="h-3 w-3" /> Non publiée
+                    </>
+                  )}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {totalItems} produit{totalItems > 1 ? 's' : ''}
+                </span>
+              </div>
+              <p className="text-linkme-marine/60 text-sm mt-0.5">
+                Mes produits
+              </p>
+            </div>
           </div>
 
           <Link
             href={`/catalogue?selection=${selection.id}`}
-            className="flex items-center gap-2 px-4 py-2.5 bg-linkme-turquoise text-white rounded-xl font-semibold hover:bg-linkme-turquoise/90 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] text-sm flex-shrink-0"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-linkme-turquoise text-white rounded-xl font-semibold hover:bg-linkme-turquoise/90 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] text-sm flex-shrink-0"
           >
             <Plus className="h-4 w-4" />
             Ajouter des produits

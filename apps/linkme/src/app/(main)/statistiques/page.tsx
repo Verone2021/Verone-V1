@@ -228,8 +228,11 @@ function StatistiquesContent(): JSX.Element {
         )}
 
         {/* Onglets */}
-        <div className="border-b border-gray-200">
-          <nav className="flex gap-1" aria-label="Onglets statistiques">
+        <div className="border-b border-gray-200 overflow-x-auto">
+          <nav
+            className="flex gap-1 min-w-max"
+            aria-label="Onglets statistiques"
+          >
             {tabs.map(tab => {
               const isActive = activeTab === tab.id;
               const Icon = tab.icon;

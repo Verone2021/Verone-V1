@@ -123,7 +123,7 @@ export function AddVariantGroupModal({
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-lg md:max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Layers className="h-5 w-5" />
@@ -215,16 +215,18 @@ export function AddVariantGroupModal({
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="flex-col gap-2 md:flex-row">
           {selectedGroup ? (
             <>
               <ButtonV2
                 variant="outline"
                 onClick={() => setSelectedGroup(null)}
+                className="w-full md:w-auto"
               >
                 Retour
               </ButtonV2>
               <ButtonV2
+                className="w-full md:w-auto"
                 onClick={() => {
                   void handleConfirm().catch((error: unknown) => {
                     console.error('[AddVariantGroup] Confirm failed:', error);
@@ -238,7 +240,11 @@ export function AddVariantGroupModal({
               </ButtonV2>
             </>
           ) : (
-            <ButtonV2 variant="outline" onClick={onClose}>
+            <ButtonV2
+              variant="outline"
+              onClick={onClose}
+              className="w-full md:w-auto"
+            >
               Fermer
             </ButtonV2>
           )}

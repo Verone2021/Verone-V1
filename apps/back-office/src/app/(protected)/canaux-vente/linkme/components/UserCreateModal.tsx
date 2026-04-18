@@ -105,8 +105,8 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative min-h-screen flex items-center justify-center p-4">
-        <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+      <div className="relative min-h-screen flex items-end md:items-center justify-center md:p-4">
+        <div className="relative bg-white rounded-t-xl md:rounded-xl shadow-2xl w-full md:max-w-lg h-full md:h-auto md:max-h-[90vh] flex flex-col">
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-green-100 rounded-lg">
@@ -174,11 +174,11 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
             )}
           </form>
 
-          <div className="flex gap-3 px-6 py-4 border-t border-gray-200 flex-shrink-0">
+          <div className="flex flex-col gap-2 md:flex-row px-6 py-4 border-t border-gray-200 flex-shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className="w-full md:flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
             >
               Annuler
             </button>
@@ -186,7 +186,7 @@ export function UserCreateModal({ isOpen, onClose }: UserCreateModalProps) {
               type="submit"
               form="create-user-form"
               disabled={createUser.isPending}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
+              className="w-full md:flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
             >
               {createUser.isPending ? (
                 <>

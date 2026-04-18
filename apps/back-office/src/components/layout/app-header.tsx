@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { NotificationsDropdown } from '@verone/notifications';
-import { Button } from '@verone/ui';
+import { Button, useSidebar } from '@verone/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +16,7 @@ import {
 import { cn } from '@verone/utils';
 import { getUserSafe } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
-import { User, LogOut, Settings, Users, Activity } from 'lucide-react';
+import { User, LogOut, Settings, Users, Activity, Menu } from 'lucide-react';
 
 function UserMenu({
   userRole,
@@ -80,6 +80,7 @@ interface AppHeaderProps {
 
 export function AppHeader({ className }: AppHeaderProps) {
   const [userRole, setUserRole] = useState<string | null>(null);
+  const { toggleSidebar, isMobile } = useSidebar();
 
   // Récupérer le rôle de l'utilisateur au chargement
   useEffect(() => {
@@ -129,10 +130,26 @@ export function AppHeader({ className }: AppHeaderProps) {
   return (
     <header
       className={cn(
-        'flex h-16 items-center justify-end border-b border-black bg-white px-6',
+        'flex h-16 items-center border-b border-black bg-white px-4 md:px-6',
         className
       )}
     >
+      {/* Bouton hamburger — mobile uniquement (< md) */}
+      {isMobile && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-11 w-11 md:hidden mr-2 flex-shrink-0"
+          onClick={toggleSidebar}
+          aria-label="Ouvrir le menu"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+      )}
+
+      {/* Spacer pour pousser les actions à droite */}
+      <div className="flex-1" />
+
       {/* Actions utilisateur */}
       <div className="flex items-center space-x-2">
         {/* Date */}

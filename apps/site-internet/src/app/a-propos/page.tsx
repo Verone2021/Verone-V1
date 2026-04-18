@@ -9,9 +9,9 @@ export const metadata: Metadata = {
 
 export default function AProposPage() {
   return (
-    <div className="max-w-4xl mx-auto px-6 lg:px-8 py-16">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
       <div className="text-center mb-16">
-        <h1 className="font-playfair text-4xl md:text-5xl font-bold text-verone-black mb-4">
+        <h1 className="font-playfair text-3xl sm:text-4xl md:text-5xl font-bold text-verone-black mb-4">
           À propos de Vérone
         </h1>
         <p className="text-verone-gray-500 max-w-2xl mx-auto leading-relaxed">
@@ -92,7 +92,7 @@ export default function AProposPage() {
         </section>
 
         {/* Promise */}
-        <section className="bg-verone-gray-50 p-8">
+        <section className="bg-verone-gray-50 p-4 md:p-8">
           <h2 className="font-playfair text-2xl font-bold text-verone-black mb-4">
             Notre promesse
           </h2>

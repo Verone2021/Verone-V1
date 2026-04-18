@@ -40,7 +40,7 @@ export function EnseigneDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px]">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-2xl md:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             {enseigne?.logo_url && (
@@ -164,8 +164,9 @@ export function EnseigneDetailModal({
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="flex-col gap-2 md:flex-row">
           <ButtonV2
+            className="w-full md:w-auto"
             variant={enseigne?.is_active ? 'secondary' : 'default'}
             onClick={() => {
               if (enseigne) {

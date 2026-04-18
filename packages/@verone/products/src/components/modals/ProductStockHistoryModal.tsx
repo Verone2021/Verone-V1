@@ -214,7 +214,7 @@ export function ProductStockHistoryModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-4xl md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <History className="h-5 w-5" />
@@ -237,7 +237,7 @@ export function ProductStockHistoryModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto space-y-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="flex items-center gap-2 text-gray-500">
@@ -268,7 +268,7 @@ export function ProductStockHistoryModal({
                 </div>
               </div>
 
-              <div className="border rounded-lg overflow-hidden">
+              <div className="border rounded-lg overflow-hidden overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -340,8 +340,12 @@ export function ProductStockHistoryModal({
             </div>
           )}
 
-          <div className="flex justify-end pt-4 border-t">
-            <ButtonV2 variant="outline" onClick={onClose}>
+          <div className="flex flex-col gap-2 md:flex-row md:justify-end pt-4 border-t">
+            <ButtonV2
+              variant="outline"
+              onClick={onClose}
+              className="w-full md:w-auto"
+            >
               Fermer
             </ButtonV2>
           </div>

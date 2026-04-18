@@ -170,7 +170,7 @@ export function ProductCharacteristicsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-4xl md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="pb-4 border-b">
           <DialogTitle className="flex items-center gap-3">
             <Settings className="h-6 w-6 text-black" />
@@ -289,15 +289,20 @@ export function ProductCharacteristicsModal({
           />
         </div>
 
-        <div className="border-t pt-4 bg-gray-50 -mx-6 -mb-6 px-6 pb-6 mt-6">
-          <div className="flex items-center justify-between">
+        <div className="border-t pt-4 mt-6">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div className="text-sm text-gray-600">
               {Object.keys(variantAttributes).length +
                 Object.keys(customAttributes).length}{' '}
               attribut(s) défini(s)
             </div>
-            <div className="flex gap-2">
-              <ButtonV2 variant="outline" onClick={onClose} disabled={saving}>
+            <div className="flex flex-col gap-2 md:flex-row">
+              <ButtonV2
+                variant="outline"
+                onClick={onClose}
+                disabled={saving}
+                className="w-full md:w-auto"
+              >
                 Annuler
               </ButtonV2>
               <ButtonV2
@@ -305,7 +310,7 @@ export function ProductCharacteristicsModal({
                   void handleSave().catch(() => undefined);
                 }}
                 disabled={saving}
-                className="bg-black hover:bg-gray-800 text-white"
+                className="w-full md:w-auto bg-black hover:bg-gray-800 text-white"
               >
                 {saving ? (
                   <>Sauvegarde...</>
