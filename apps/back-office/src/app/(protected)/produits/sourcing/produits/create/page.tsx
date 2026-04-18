@@ -74,7 +74,7 @@ export default function NewSourcingPage() {
         </div>
       </div>
 
-      <div className="w-full px-4 py-8 max-w-6xl">
+      <div className="w-full px-4 py-8">
         {!showForm ? (
           // ÉTAPE 1 - Présentation du Sourcing Rapide
           <div className="space-y-8">

@@ -79,7 +79,7 @@ export default function NouveauProduitPage() {
         </div>
       </div>
 
-      <div className="w-full px-4 py-8 max-w-6xl">
+      <div className="w-full px-4 py-8">
         {!showForm ? (
           // ÉTAPE 1 - Présentation du Produit Complet
           <div className="space-y-8">
@@ -188,7 +188,7 @@ export default function NouveauProduitPage() {
           </div>
         ) : (
           // ÉTAPE 2 - Wizard Produit Complet
-          <div className="max-w-6xl mx-auto">
+          <div className="w-full">
             <CompleteProductWizard
               onSuccess={handleSuccess}
               onCancel={handleBack}
