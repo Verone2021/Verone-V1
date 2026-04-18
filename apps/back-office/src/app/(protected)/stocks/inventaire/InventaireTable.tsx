@@ -4,16 +4,17 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import type { useStockInventory } from '@verone/stock';
-import { Card, CardContent } from '@verone/ui';
+import { Card, CardContent, ResponsiveDataView } from '@verone/ui';
 import { IconButton } from '@verone/ui';
 import {
   Package,
-  RefreshCw,
   TrendingUp,
   TrendingDown,
   History,
   Settings,
 } from 'lucide-react';
+
+import { InventaireMobileCard } from './InventaireMobileCard';
 
 type InventoryItem = ReturnType<typeof useStockInventory>['inventory'][number];
 type InventoryStats = ReturnType<typeof useStockInventory>['stats'];
@@ -51,55 +52,66 @@ export function InventaireTable({
           </h2>
         </div>
         <CardContent className="p-0">
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
-            </div>
-          ) : filteredInventory.length === 0 ? (
-            <div className="text-center py-12">
-              <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">
-                {showOnlyWithStock
-                  ? 'Aucun produit avec stock > 0'
-                  : 'Aucun mouvement de stock trouvé'}
-              </p>
-              <p className="text-sm text-gray-400 mt-2">
-                {showOnlyWithStock
-                  ? 'Décochez le filtre pour voir tous les produits'
-                  : 'Les produits apparaîtront après leur première entrée ou sortie'}
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+          <ResponsiveDataView<InventoryItem>
+            data={filteredInventory}
+            loading={loading}
+            skeletonCount={3}
+            breakpoint="lg"
+            className="p-3 lg:p-0"
+            emptyMessage={
+              <div className="text-center py-12">
+                <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">
+                  {showOnlyWithStock
+                    ? 'Aucun produit avec stock > 0'
+                    : 'Aucun mouvement de stock trouvé'}
+                </p>
+                <p className="text-sm text-gray-400 mt-2">
+                  {showOnlyWithStock
+                    ? 'Décochez le filtre pour voir tous les produits'
+                    : 'Les produits apparaîtront après leur première entrée ou sortie'}
+                </p>
+              </div>
+            }
+            renderCard={item => (
+              <InventaireMobileCard
+                key={item.id}
+                item={item}
+                onOpenHistory={onOpenHistory}
+                onOpenAdjustment={onOpenAdjustment}
+              />
+            )}
+            renderTable={() => (
+              <div className="overflow-x-auto">
+                <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     <th className="text-center py-2 px-3 font-medium text-gray-900 text-xs w-16" />
                     <th className="text-left py-2 px-3 font-medium text-gray-900 text-xs">
                       Produit
                     </th>
-                    <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">
+                    <th className="hidden lg:table-cell text-right py-2 px-3 font-medium text-gray-900 text-xs">
                       Entrées
                     </th>
-                    <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">
+                    <th className="hidden lg:table-cell text-right py-2 px-3 font-medium text-gray-900 text-xs">
                       Sorties
                     </th>
-                    <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">
+                    <th className="hidden lg:table-cell text-right py-2 px-3 font-medium text-gray-900 text-xs">
                       Ajust.
                     </th>
                     <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">
                       Stock
                     </th>
-                    <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">
+                    <th className="hidden xl:table-cell text-right py-2 px-3 font-medium text-gray-900 text-xs">
                       Prév. Entrant
                     </th>
-                    <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">
+                    <th className="hidden xl:table-cell text-right py-2 px-3 font-medium text-gray-900 text-xs">
                       Prév. Sortant
                     </th>
                     <th className="text-right py-2 px-3 font-medium text-gray-900 text-xs">
                       Prév. Total
                     </th>
-                    <th className="text-left py-2 px-3 font-medium text-gray-900 text-xs">
+                    <th className="hidden 2xl:table-cell text-left py-2 px-3 font-medium text-gray-900 text-xs">
                       Dernière MAJ
                     </th>
                     <th className="text-center py-2 px-3 font-medium text-gray-900 text-xs">
@@ -137,7 +149,7 @@ export function InventaireTable({
                           {item.name}
                         </Link>
                       </td>
-                      <td className="py-2 px-3 text-right">
+                      <td className="hidden lg:table-cell py-2 px-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <TrendingUp className="h-4 w-4 text-black" />
                           <span className="font-medium text-black text-sm">
@@ -145,7 +157,7 @@ export function InventaireTable({
                           </span>
                         </div>
                       </td>
-                      <td className="py-2 px-3 text-right">
+                      <td className="hidden lg:table-cell py-2 px-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <TrendingDown className="h-4 w-4 text-gray-600" />
                           <span className="font-medium text-gray-700 text-sm">
@@ -153,7 +165,7 @@ export function InventaireTable({
                           </span>
                         </div>
                       </td>
-                      <td className="py-2 px-3 text-right">
+                      <td className="hidden lg:table-cell py-2 px-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           {item.total_adjustments !== 0 ? (
                             <>
@@ -177,7 +189,7 @@ export function InventaireTable({
                           {item.stock_real}
                         </span>
                       </td>
-                      <td className="py-2 px-3 text-right">
+                      <td className="hidden xl:table-cell py-2 px-3 text-right">
                         {item.stock_forecasted_in > 0 ? (
                           <span className="flex items-center justify-end gap-1 text-green-600">
                             <TrendingUp className="h-3 w-3" />
@@ -189,7 +201,7 @@ export function InventaireTable({
                           <span className="text-gray-400 text-xs">-</span>
                         )}
                       </td>
-                      <td className="py-2 px-3 text-right">
+                      <td className="hidden xl:table-cell py-2 px-3 text-right">
                         {item.stock_forecasted_out > 0 ? (
                           <span className="flex items-center justify-end gap-1 text-orange-600">
                             <TrendingDown className="h-3 w-3" />
@@ -208,7 +220,7 @@ export function InventaireTable({
                             item.stock_forecasted_out}
                         </span>
                       </td>
-                      <td className="py-2 px-3">
+                      <td className="hidden 2xl:table-cell py-2 px-3">
                         <span className="text-xs text-gray-600">
                           {item.last_movement_at
                             ? new Date(item.last_movement_at).toLocaleString(
@@ -251,8 +263,9 @@ export function InventaireTable({
                   ))}
                 </tbody>
               </table>
-            </div>
-          )}
+              </div>
+            )}
+          />
         </CardContent>
       </Card>
 
