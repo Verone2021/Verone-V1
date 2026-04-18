@@ -70,14 +70,14 @@ export function ProductsTable({
             <TableHeader>
               <TableRow className="bg-gray-50">
                 <TableHead className="w-[300px]">Produit</TableHead>
-                <TableHead className="text-right">
+                <TableHead className="hidden lg:table-cell text-right">
                   Prix d&apos;achat HT
                 </TableHead>
-                <TableHead className="text-right">Prix public TTC</TableHead>
-                <TableHead className="text-right">Prix public HT</TableHead>
+                <TableHead className="hidden xl:table-cell text-right">Prix public TTC</TableHead>
+                <TableHead className="hidden xl:table-cell text-right">Prix public HT</TableHead>
                 <TableHead className="text-right">Prix de vente HT</TableHead>
-                <TableHead className="text-right">Buffer %</TableHead>
-                <TableHead className="text-right">Commission %</TableHead>
+                <TableHead className="hidden 2xl:table-cell text-right">Buffer %</TableHead>
+                <TableHead className="hidden 2xl:table-cell text-right">Commission %</TableHead>
                 <TableHead className="text-right">Marge</TableHead>
                 <TableHead className="w-[50px]" />
               </TableRow>
@@ -113,7 +113,7 @@ export function ProductsTable({
                       </div>
                     </TableCell>
 
-                    <TableCell className="text-right">
+                    <TableCell className="hidden lg:table-cell text-right">
                       <EditableCell
                         value={product.product_price_ht}
                         onChange={() => {}}
@@ -122,7 +122,7 @@ export function ProductsTable({
                       />
                     </TableCell>
 
-                    <TableCell className="text-right">
+                    <TableCell className="hidden xl:table-cell text-right">
                       <EditableCell
                         value={getEffectiveTtcValue(product)}
                         onChange={ttcValue =>
@@ -135,7 +135,7 @@ export function ProductsTable({
                       />
                     </TableCell>
 
-                    <TableCell className="text-right">
+                    <TableCell className="hidden xl:table-cell text-right">
                       <EditableCell
                         value={getEffectiveValue(product, 'public_price_ht')}
                         onChange={htValue =>
@@ -161,7 +161,7 @@ export function ProductsTable({
                       />
                     </TableCell>
 
-                    <TableCell className="text-right">
+                    <TableCell className="hidden 2xl:table-cell text-right">
                       <EditableCell
                         value={getEffectiveValue(product, 'buffer_rate')}
                         onChange={v =>
@@ -176,7 +176,7 @@ export function ProductsTable({
                       />
                     </TableCell>
 
-                    <TableCell className="text-right">
+                    <TableCell className="hidden 2xl:table-cell text-right">
                       <EditableCell
                         value={getEffectiveValue(
                           product,
