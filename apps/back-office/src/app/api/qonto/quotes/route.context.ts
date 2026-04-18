@@ -270,6 +270,80 @@ interface ISaveLocalDbAddress {
   country?: string;
 }
 
+// ---------------------------------------------------------------------------
+// Org address update helpers
+// ---------------------------------------------------------------------------
+
+interface IOrgAddressUpdate {
+  supabase: SupabaseClient;
+  orgId: string;
+  billingAddress?: ISaveLocalDbAddress;
+  shippingAddress?: ISaveLocalDbAddress;
+  updateOrgBilling?: boolean;
+  updateOrgShipping?: boolean;
+}
+
+/**
+ * Persiste les nouvelles adresses dans la table organisations.
+ * Non-bloquant : les erreurs sont loggées mais ne font pas échouer la route.
+ * Le devis Qonto doit être créé EN PREMIER (appel avant persistQuoteResults).
+ */
+export async function updateOrganisationAddresses(
+  params: IOrgAddressUpdate
+): Promise<void> {
+  const {
+    supabase,
+    orgId,
+    billingAddress,
+    shippingAddress,
+    updateOrgBilling,
+    updateOrgShipping,
+  } = params;
+
+  type OrgUpdate = Database['public']['Tables']['organisations']['Update'];
+  const update: OrgUpdate = {};
+
+  if (updateOrgBilling && billingAddress?.city) {
+    update.billing_address_line1 = billingAddress.address_line1 ?? null;
+    update.billing_postal_code = billingAddress.postal_code ?? null;
+    update.billing_city = billingAddress.city;
+    update.billing_country = billingAddress.country ?? 'FR';
+  }
+
+  if (updateOrgShipping && shippingAddress?.city) {
+    update.shipping_address_line1 = shippingAddress.address_line1 ?? null;
+    update.shipping_postal_code = shippingAddress.postal_code ?? null;
+    update.shipping_city = shippingAddress.city;
+    update.shipping_country = shippingAddress.country ?? 'FR';
+    update.has_different_shipping_address = true;
+  }
+
+  if (Object.keys(update).length === 0) return;
+
+  try {
+    const { error } = await supabase
+      .from('organisations')
+      .update(update as Record<string, unknown>)
+      .eq('id', orgId);
+
+    if (error) {
+      console.error(
+        '[API Qonto Quotes] Failed to update org addresses (non-blocking):',
+        error
+      );
+    } else {
+      console.warn(
+        `[API Qonto Quotes] Updated org ${orgId} addresses (billing=${updateOrgBilling}, shipping=${updateOrgShipping})`
+      );
+    }
+  } catch (e) {
+    console.error(
+      '[API Qonto Quotes] Exception updating org addresses (non-blocking):',
+      e
+    );
+  }
+}
+
 interface ISaveLocalDbParams {
   supabase: SupabaseClient;
   userId: string;

@@ -18,6 +18,8 @@ import {
 import { FileEdit, Loader2 } from 'lucide-react';
 
 import type { ICustomLine } from '../OrderSelectModal';
+import { BillingAddressEditor } from './BillingAddressEditor';
+import type { IBillingAddressResolved } from './BillingAddressEditor';
 import { QuoteClientCard } from './QuoteClientCard';
 import { QuoteCustomLinesSection } from './QuoteCustomLinesSection';
 import { QuoteFeesSection } from './QuoteFeesSection';
@@ -36,6 +38,33 @@ import type {
 } from './types';
 import { resolveCustomerName } from './quote-utils';
 import { useQuoteSiretGuard } from './useQuoteSiretGuard';
+
+// ---------------------------------------------------------------------------
+// Helper — resoudre l adresse de facturation initiale depuis la commande/org
+// ---------------------------------------------------------------------------
+
+function resolveInitialBillingAddress(
+  order: NonNullable<IQuoteCreateFromOrderModalProps['order']>
+): IBillingAddressResolved | null {
+  const billingAddr = order.billing_address;
+  const org = order.organisations;
+  const line1 =
+    billingAddr?.address_line1 ??
+    org?.billing_address_line1 ??
+    org?.address_line1;
+  const postal =
+    billingAddr?.postal_code ?? org?.billing_postal_code ?? org?.postal_code;
+  const city = billingAddr?.city ?? org?.billing_city ?? org?.city;
+  const country =
+    billingAddr?.country ?? org?.billing_country ?? org?.country ?? 'FR';
+  if (!city) return null;
+  return {
+    address_line1: line1 ?? '',
+    postal_code: postal ?? '',
+    city,
+    country,
+  };
+}
 
 export function QuoteCreateFromOrderModal({
   order,
@@ -61,6 +90,11 @@ export function QuoteCreateFromOrderModal({
   const [shippingAddress, setShippingAddress] =
     useState<IShippingAddressResolved | null>(null);
 
+  // Adresse facturation overridee (null = adresse initiale de l org)
+  const [billingAddressOverride, setBillingAddressOverride] =
+    useState<IBillingAddressResolved | null>(null);
+  const [updateOrgBilling, setUpdateOrgBilling] = useState(false);
+
   const {
     isMissingSiret,
     siretInput,
@@ -76,6 +110,8 @@ export function QuoteCreateFromOrderModal({
     setCreatedQuote(null);
     setShowFinalizeWarning(false);
     setShippingAddress(null);
+    setBillingAddressOverride(null);
+    setUpdateOrgBilling(false);
     resetSiretGuard();
   }, [resetSiretGuard]);
 
@@ -168,6 +204,7 @@ export function QuoteCreateFromOrderModal({
             userId: currentUserId,
             expiryDays,
             billingAddress: resolvedBillingAddress,
+            updateOrgBilling: updateOrgBilling || undefined,
             shippingAddress: shippingAddress
               ? {
                   address_line1: shippingAddress.address_line1,
