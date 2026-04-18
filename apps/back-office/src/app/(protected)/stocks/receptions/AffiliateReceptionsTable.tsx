@@ -61,8 +61,8 @@ export function AffiliateReceptionsTable({
                 <TableRow>
                   <TableHead>Produit</TableHead>
                   <TableHead>Affilié</TableHead>
-                  <TableHead>Enseigne</TableHead>
-                  <TableHead>Quantité attendue</TableHead>
+                  <TableHead className="hidden lg:table-cell">Enseigne</TableHead>
+                  <TableHead className="hidden lg:table-cell">Quantité attendue</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -88,8 +88,8 @@ export function AffiliateReceptionsTable({
                       </div>
                     </TableCell>
                     <TableCell>{reception.affiliate_name}</TableCell>
-                    <TableCell>{reception.enseigne_name}</TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell className="hidden lg:table-cell">{reception.enseigne_name}</TableCell>
+                    <TableCell className="hidden lg:table-cell font-medium">
                       {reception.quantity_expected} unité(s)
                     </TableCell>
                     <TableCell>

@@ -69,8 +69,8 @@ export function SupplierHistoryTable({
                   <TableHead>N° Commande</TableHead>
                   <TableHead>Fournisseur</TableHead>
                   <TableHead>Statut</TableHead>
-                  <TableHead>Date réception</TableHead>
-                  <TableHead>Quantité totale</TableHead>
+                  <TableHead className="hidden lg:table-cell">Date réception</TableHead>
+                  <TableHead className="hidden lg:table-cell">Quantité totale</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -125,12 +125,12 @@ export function SupplierHistoryTable({
                             </Badge>
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           {order.received_at
                             ? formatDate(order.received_at)
                             : '-'}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           {totalReceived}/{totalOrdered} unité(s)
                         </TableCell>
                         <TableCell>
