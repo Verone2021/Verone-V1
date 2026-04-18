@@ -160,7 +160,7 @@ export function OrganisationDetailModal({
           )}
 
           {/* Stats financières */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="bg-blue-50 rounded-lg p-3 text-center">
               <Euro className="h-5 w-5 text-blue-600 mx-auto mb-1" />
               <p className="text-xs text-blue-600 font-medium mb-1">CA HT</p>

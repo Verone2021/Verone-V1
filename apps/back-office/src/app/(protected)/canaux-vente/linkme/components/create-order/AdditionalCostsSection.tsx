@@ -41,7 +41,7 @@ export function AdditionalCostsSection({
       <label className="block text-sm font-medium text-gray-700">
         Frais additionnels (HT)
       </label>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {costFields.map(field => (
           <div key={field.label}>
             <label className="block text-xs text-gray-500 mb-1">

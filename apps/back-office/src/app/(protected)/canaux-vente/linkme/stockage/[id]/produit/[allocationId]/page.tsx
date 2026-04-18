@@ -248,7 +248,7 @@ export default function StorageProductDetailPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div>
               <p className="text-xs text-gray-500 mb-1">Quantite</p>
               {editingQty ? (

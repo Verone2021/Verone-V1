@@ -75,7 +75,7 @@ export function EditOrderItemsList({
               </div>
 
               {/* Ligne 2: Prix / Marge (editable si draft) */}
-              <div className="mt-2 grid grid-cols-4 gap-2 items-end">
+              <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 items-end">
                 {/* Prix base HT (lecture seule) */}
                 <div>
                   <label className="block text-[10px] text-gray-400 mb-0.5">
