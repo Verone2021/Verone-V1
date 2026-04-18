@@ -310,17 +310,19 @@ export async function saveQuoteToLocalDb(
   type FinancialDocumentInsert =
     Database['public']['Tables']['financial_documents']['Insert'];
 
-  const totalHt = items.reduce(
-    (s, i) =>
-      s + (parseFloat(i.quantity) || 0) * (parseFloat(i.unitPrice.value) || 0),
-    0
-  );
-  const avgVat =
-    items.length > 0
-      ? items.reduce((s, i) => s + (parseFloat(i.vatRate) || 0.2), 0) /
-        items.length
-      : 0.2;
-  const tva = totalHt * avgVat;
+  // Calcul ligne par ligne — round-per-line (aligné R1 finance.md + migration round_per_line)
+  // JAMAIS avgVat (sum/count) : divergence garantie avec multi-taux TVA
+  let totalHt = 0;
+  let tva = 0;
+  for (const item of items) {
+    const qty = parseFloat(item.quantity) || 0;
+    const unit = parseFloat(item.unitPrice.value) || 0;
+    const vatRate = parseFloat(item.vatRate) || 0.2;
+    const lineHt = qty * unit;
+    const lineTva = Math.round(lineHt * vatRate * 100) / 100;
+    totalHt += lineHt;
+    tva += lineTva;
+  }
   const localDocNumber = generateLocalDocNumber();
 
   const payload: FinancialDocumentInsert = {
