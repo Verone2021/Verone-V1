@@ -27,7 +27,7 @@ Règles stables lues automatiquement par l'agent.
 - `.claude/rules/stock-triggers-protected.md` — Triggers stock IMMUABLES
 - `.claude/rules/workflow.md` — Git, PR, merge, 1 PR = 1 bloc cohérent
 
-**Note** : sous-dossier `.claude/rules/domain/` prévu pour `finance.md`, `stock-triggers-protected.md`, `responsive.md` — déplacement après merge PR A (voir `DECISIONS.md` ADR-004).
+_Note : sous-dossier `.claude/rules/domain/` envisagé dans ADR-004 mais non appliqué (faux positif du check-integrity). Toutes les règles restent à plat dans `.claude/rules/`._
 
 ---
 
