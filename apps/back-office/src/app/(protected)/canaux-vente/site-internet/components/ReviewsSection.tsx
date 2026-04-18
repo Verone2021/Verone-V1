@@ -311,7 +311,9 @@ function ReviewsTableBody({
           <TableHead className="hidden lg:table-cell">Date</TableHead>
           <TableHead>Auteur</TableHead>
           <TableHead className="hidden lg:table-cell">Note</TableHead>
-          <TableHead className="hidden xl:table-cell">Titre / Commentaire</TableHead>
+          <TableHead className="hidden xl:table-cell">
+            Titre / Commentaire
+          </TableHead>
           <TableHead>Statut</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
@@ -323,7 +325,9 @@ function ReviewsTableBody({
               {new Date(review.created_at).toLocaleDateString('fr-FR')}
             </TableCell>
             <TableCell className="font-medium">{review.author_name}</TableCell>
-            <TableCell className="hidden lg:table-cell">{renderStars(review.rating)}</TableCell>
+            <TableCell className="hidden lg:table-cell">
+              {renderStars(review.rating)}
+            </TableCell>
             <TableCell className="hidden xl:table-cell max-w-xs">
               {review.title && (
                 <p className="font-medium text-sm">{review.title}</p>

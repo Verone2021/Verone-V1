@@ -228,7 +228,9 @@ export function PromoTable({
                 <TableHead className="hidden lg:table-cell">Nom</TableHead>
                 <TableHead>Réduction</TableHead>
                 <TableHead className="hidden lg:table-cell">Validité</TableHead>
-                <TableHead className="hidden xl:table-cell">Utilisations</TableHead>
+                <TableHead className="hidden xl:table-cell">
+                  Utilisations
+                </TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>

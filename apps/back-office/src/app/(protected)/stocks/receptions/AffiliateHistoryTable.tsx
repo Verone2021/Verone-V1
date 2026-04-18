@@ -61,10 +61,16 @@ export function AffiliateHistoryTable({
                 <TableRow>
                   <TableHead>Produit</TableHead>
                   <TableHead>Affilié</TableHead>
-                  <TableHead className="hidden lg:table-cell">Enseigne</TableHead>
-                  <TableHead className="hidden lg:table-cell">Quantité reçue</TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    Enseigne
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    Quantité reçue
+                  </TableHead>
                   <TableHead>Statut</TableHead>
-                  <TableHead className="hidden xl:table-cell">Date réception</TableHead>
+                  <TableHead className="hidden xl:table-cell">
+                    Date réception
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -88,7 +94,9 @@ export function AffiliateHistoryTable({
                       </div>
                     </TableCell>
                     <TableCell>{reception.affiliate_name}</TableCell>
-                    <TableCell className="hidden lg:table-cell">{reception.enseigne_name}</TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      {reception.enseigne_name}
+                    </TableCell>
                     <TableCell className="hidden lg:table-cell font-medium">
                       {reception.quantity_received ?? 0} /{' '}
                       {reception.quantity_expected} unité(s)

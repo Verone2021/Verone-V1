@@ -71,8 +71,12 @@ export function SupplierOrdersTable({
                   <TableHead>N° Commande</TableHead>
                   <TableHead>Fournisseur</TableHead>
                   <TableHead>Statut</TableHead>
-                  <TableHead className="hidden lg:table-cell">Date livraison</TableHead>
-                  <TableHead className="hidden xl:table-cell">Progression</TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    Date livraison
+                  </TableHead>
+                  <TableHead className="hidden xl:table-cell">
+                    Progression
+                  </TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>

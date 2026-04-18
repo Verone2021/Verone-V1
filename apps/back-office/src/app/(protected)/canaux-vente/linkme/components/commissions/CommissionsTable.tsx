@@ -70,7 +70,9 @@ export function CommissionsTable({
           <TableHead className="hidden lg:table-cell">Date</TableHead>
           <TableHead>Affilié</TableHead>
           <TableHead className="hidden xl:table-cell">Commande</TableHead>
-          <TableHead className="hidden lg:table-cell text-right">Montant HT</TableHead>
+          <TableHead className="hidden lg:table-cell text-right">
+            Montant HT
+          </TableHead>
           <TableHead className="text-right">Commission</TableHead>
           <TableHead>Statut</TableHead>
           <TableHead className="text-right">Actions</TableHead>

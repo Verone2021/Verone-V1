@@ -84,7 +84,9 @@ export function AffiliateTableRow({
       <TableCell className="hidden lg:table-cell">
         <Badge variant="outline">{typeInfo.label}</Badge>
       </TableCell>
-      <TableCell className="hidden xl:table-cell font-mono text-sm">/{affiliate.slug}</TableCell>
+      <TableCell className="hidden xl:table-cell font-mono text-sm">
+        /{affiliate.slug}
+      </TableCell>
       <TableCell>
         <Badge variant={statusInfo.variant}>
           <statusInfo.icon className="h-3 w-3 mr-1" />

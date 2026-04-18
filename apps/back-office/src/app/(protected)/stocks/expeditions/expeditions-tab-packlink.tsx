@@ -184,11 +184,19 @@ export function PacklinkTab({ packlinkShipments, onCancel }: PacklinkTabProps) {
                   <TableRow>
                     <TableHead>Commande</TableHead>
                     <TableHead>Client</TableHead>
-                    <TableHead className="hidden lg:table-cell">Articles</TableHead>
-                    <TableHead className="hidden lg:table-cell">Transporteur</TableHead>
-                    <TableHead className="hidden xl:table-cell">Coût transport</TableHead>
+                    <TableHead className="hidden lg:table-cell">
+                      Articles
+                    </TableHead>
+                    <TableHead className="hidden lg:table-cell">
+                      Transporteur
+                    </TableHead>
+                    <TableHead className="hidden xl:table-cell">
+                      Coût transport
+                    </TableHead>
                     <TableHead>Statut transport</TableHead>
-                    <TableHead className="hidden 2xl:table-cell">Suivi</TableHead>
+                    <TableHead className="hidden 2xl:table-cell">
+                      Suivi
+                    </TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>

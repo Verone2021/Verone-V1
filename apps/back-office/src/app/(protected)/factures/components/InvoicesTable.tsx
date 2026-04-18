@@ -144,7 +144,7 @@ export function InvoicesTable({
       loading={loading}
       emptyMessage={<InvoiceEmptyState />}
       breakpoint="md"
-      renderCard={(invoice) => (
+      renderCard={invoice => (
         <InvoiceMobileCard
           invoice={invoice}
           isDraft={isDraft}
@@ -160,7 +160,7 @@ export function InvoicesTable({
           onDelete={onDelete}
         />
       )}
-      renderTable={(items) => (
+      renderTable={items => (
         /* T5 : overflow-x-auto + largeurs explicites, zero w-auto */
         <div className="w-full overflow-x-auto">
           <Table>
@@ -209,9 +209,7 @@ export function InvoicesTable({
                       </div>
                       {invoice.sales_order_id && invoice.order_number && (
                         <button
-                          onClick={() =>
-                            onOpenOrder?.(invoice.sales_order_id!)
-                          }
+                          onClick={() => onOpenOrder?.(invoice.sales_order_id!)}
                           className="text-[11px] text-muted-foreground hover:text-primary hover:underline mt-0.5 block"
                         >
                           {invoice.order_number}
@@ -246,9 +244,7 @@ export function InvoicesTable({
                     {/* Echeance — T2 hidden xl */}
                     <TableCell className="hidden xl:table-cell">
                       <span
-                        className={
-                          isOverdue ? 'text-red-600 font-medium' : ''
-                        }
+                        className={isOverdue ? 'text-red-600 font-medium' : ''}
                       >
                         {formatDate(invoice.due_date)}
                       </span>

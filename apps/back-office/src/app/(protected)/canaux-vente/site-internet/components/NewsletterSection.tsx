@@ -92,7 +92,9 @@ export function NewsletterSection() {
                 <TableRow>
                   <TableHead>Email</TableHead>
                   <TableHead className="hidden lg:table-cell">Source</TableHead>
-                  <TableHead className="hidden lg:table-cell">Inscrit le</TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    Inscrit le
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

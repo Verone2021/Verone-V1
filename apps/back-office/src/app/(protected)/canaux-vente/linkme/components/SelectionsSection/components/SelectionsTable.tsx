@@ -84,7 +84,9 @@ export function SelectionsTable({
                 </div>
               </div>
             </TableCell>
-            <TableCell className="hidden lg:table-cell">{selection.affiliate?.display_name ?? 'N/A'}</TableCell>
+            <TableCell className="hidden lg:table-cell">
+              {selection.affiliate?.display_name ?? 'N/A'}
+            </TableCell>
             <TableCell className="hidden lg:table-cell">
               <div className="flex items-center gap-1">
                 <Package className="h-4 w-4 text-muted-foreground" />

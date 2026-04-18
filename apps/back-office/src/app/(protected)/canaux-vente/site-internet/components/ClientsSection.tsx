@@ -154,8 +154,12 @@ export function ClientsSection() {
                   <TableRow>
                     <TableHead>Client</TableHead>
                     <TableHead>Contact</TableHead>
-                    <TableHead className="hidden lg:table-cell">Localisation</TableHead>
-                    <TableHead className="hidden xl:table-cell">Inscrit le</TableHead>
+                    <TableHead className="hidden lg:table-cell">
+                      Localisation
+                    </TableHead>
+                    <TableHead className="hidden xl:table-cell">
+                      Inscrit le
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

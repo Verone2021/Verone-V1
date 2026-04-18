@@ -102,7 +102,9 @@ export function DevisTab({
                 <TableHead>N° Devis</TableHead>
                 <TableHead>Client</TableHead>
                 <TableHead className="hidden lg:table-cell">Date</TableHead>
-                <TableHead className="hidden xl:table-cell">Expiration</TableHead>
+                <TableHead className="hidden xl:table-cell">
+                  Expiration
+                </TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead className="text-right">Montant</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -125,7 +127,9 @@ export function DevisTab({
                     )}
                   </TableCell>
                   <TableCell>{quote.client?.name ?? '-'}</TableCell>
-                  <TableCell className="hidden lg:table-cell">{formatDate(quote.issue_date)}</TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {formatDate(quote.issue_date)}
+                  </TableCell>
                   <TableCell className="hidden xl:table-cell">
                     {quote.expiry_date ? formatDate(quote.expiry_date) : '-'}
                   </TableCell>

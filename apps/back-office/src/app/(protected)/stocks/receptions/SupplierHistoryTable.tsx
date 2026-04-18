@@ -69,8 +69,12 @@ export function SupplierHistoryTable({
                   <TableHead>N° Commande</TableHead>
                   <TableHead>Fournisseur</TableHead>
                   <TableHead>Statut</TableHead>
-                  <TableHead className="hidden lg:table-cell">Date réception</TableHead>
-                  <TableHead className="hidden lg:table-cell">Quantité totale</TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    Date réception
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    Quantité totale
+                  </TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>

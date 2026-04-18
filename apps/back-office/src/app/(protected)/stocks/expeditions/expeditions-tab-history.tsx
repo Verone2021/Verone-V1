@@ -152,7 +152,9 @@ function HistoryRow({
         <TableCell className="hidden lg:table-cell">
           {order.delivered_at ? formatDate(order.delivered_at) : '-'}
         </TableCell>
-        <TableCell className="hidden xl:table-cell">{totalItems} unité(s)</TableCell>
+        <TableCell className="hidden xl:table-cell">
+          {totalItems} unité(s)
+        </TableCell>
         <TableCell>
           <ButtonV2
             variant="outline"
@@ -281,9 +283,15 @@ function HistoryOrdersTable({
             <TableHead>N° Commande</TableHead>
             <TableHead>Client</TableHead>
             <TableHead>Statut</TableHead>
-            <TableHead className="hidden lg:table-cell">Date expédition</TableHead>
-            <TableHead className="hidden lg:table-cell">Date livraison</TableHead>
-            <TableHead className="hidden xl:table-cell">Quantité totale</TableHead>
+            <TableHead className="hidden lg:table-cell">
+              Date expédition
+            </TableHead>
+            <TableHead className="hidden lg:table-cell">
+              Date livraison
+            </TableHead>
+            <TableHead className="hidden xl:table-cell">
+              Quantité totale
+            </TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>

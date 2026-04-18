@@ -9,7 +9,13 @@
  * HOOKS : aucun hook interne — composant pur basé sur props.
  */
 
-import { Badge, Card, CardContent, CardFooter, OrganisationNameDisplay } from '@verone/ui';
+import {
+  Badge,
+  Card,
+  CardContent,
+  CardFooter,
+  OrganisationNameDisplay,
+} from '@verone/ui';
 import {
   Banknote,
   CheckCircle,

@@ -165,11 +165,5 @@ export function InvoiceActions({
     }
   }
 
-  return (
-    <ResponsiveActionMenu
-      actions={actions}
-      breakpoint="lg"
-      align="end"
-    />
-  );
+  return <ResponsiveActionMenu actions={actions} breakpoint="lg" align="end" />;
 }
