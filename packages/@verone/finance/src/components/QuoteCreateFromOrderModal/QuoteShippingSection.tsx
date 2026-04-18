@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import {
   Button,
@@ -14,7 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
+import { AddressAutocomplete } from '@verone/ui';
+import type { AddressResult } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
+import { Checkbox } from '@verone/ui';
 import { MapPin, Truck } from 'lucide-react';
 
 interface IShippingOrg {
@@ -35,11 +38,16 @@ export interface IShippingAddressResolved {
   postal_code: string;
   city: string;
   country: string;
+  saveToOrg?: boolean;
 }
+
+type ShippingMode = 'same' | 'other_org' | 'new';
 
 interface QuoteShippingSectionProps {
   enseigneId: string | null | undefined;
   defaultOrgId: string | null | undefined;
+  /** Trade name of the default organisation, used in save checkbox label */
+  orgName?: string | null;
   disabled?: boolean;
   onShippingAddressChange: (addr: IShippingAddressResolved | null) => void;
 }
@@ -65,13 +73,20 @@ function resolveOrgAddress(org: IShippingOrg): IShippingAddressResolved | null {
 export function QuoteShippingSection({
   enseigneId,
   defaultOrgId,
+  orgName,
   disabled = false,
   onShippingAddressChange,
 }: QuoteShippingSectionProps): React.ReactNode {
+  const [mode, setMode] = useState<ShippingMode>('same');
   const [orgs, setOrgs] = useState<IShippingOrg[]>([]);
-  const [selectedOrgId, setSelectedOrgId] = useState<string>('__same__');
+  const [selectedOrgId, setSelectedOrgId] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [newAddressInput, setNewAddressInput] = useState('');
+  const [newAddressResolved, setNewAddressResolved] =
+    useState<IShippingAddressResolved | null>(null);
+  const [saveToOrg, setSaveToOrg] = useState(false);
 
+  // Load enseigne orgs for "other_org" mode
   useEffect(() => {
     if (!enseigneId) return;
     setLoading(true);
@@ -110,26 +125,61 @@ export function QuoteShippingSection({
     void fetchOrgs();
   }, [enseigneId]);
 
-  const handleOrgSelect = (orgId: string) => {
-    setSelectedOrgId(orgId);
-    if (orgId === '__same__') {
-      onShippingAddressChange(null);
-      return;
+  // Notify parent when mode/selection changes
+  const notify = useCallback(
+    (addr: IShippingAddressResolved | null) => {
+      onShippingAddressChange(addr);
+    },
+    [onShippingAddressChange]
+  );
+
+  const handleModeChange = (newMode: ShippingMode) => {
+    setMode(newMode);
+    setSelectedOrgId('');
+    setNewAddressInput('');
+    setNewAddressResolved(null);
+    setSaveToOrg(false);
+
+    if (newMode === 'same') {
+      notify(null);
     }
-    const org = orgs.find(o => o.id === orgId);
-    if (!org) return;
-    const addr = resolveOrgAddress(org);
-    onShippingAddressChange(addr);
   };
 
-  // If no enseigne_id, no other orgs to pick from
-  if (!enseigneId) return null;
+  const handleOrgSelect = (orgId: string) => {
+    setSelectedOrgId(orgId);
+    const org = orgs.find(o => o.id === orgId);
+    if (!org) {
+      notify(null);
+      return;
+    }
+    const addr = resolveOrgAddress(org);
+    notify(addr);
+  };
 
-  const selectedOrg =
-    selectedOrgId !== '__same__'
-      ? orgs.find(o => o.id === selectedOrgId)
-      : null;
-  const resolvedAddr = selectedOrg ? resolveOrgAddress(selectedOrg) : null;
+  const handleAddressSelect = (result: AddressResult) => {
+    const resolved: IShippingAddressResolved = {
+      address_line1: result.streetAddress,
+      postal_code: result.postalCode,
+      city: result.city,
+      country: result.countryCode ?? 'FR',
+      saveToOrg: false,
+    };
+    setNewAddressResolved(resolved);
+    setSaveToOrg(false);
+    notify({ ...resolved, saveToOrg: false });
+  };
+
+  const handleSaveToOrgChange = (checked: boolean) => {
+    setSaveToOrg(checked);
+    if (newAddressResolved) {
+      notify({ ...newAddressResolved, saveToOrg: checked });
+    }
+  };
+
+  const otherOrgs = orgs.filter(o => o.id !== defaultOrgId);
+  const selectedOrg = orgs.find(o => o.id === selectedOrgId);
+  const resolvedOtherAddr = selectedOrg ? resolveOrgAddress(selectedOrg) : null;
+  const displayOrgName = orgName ?? 'cette organisation';
 
   return (
     <Card>
@@ -140,55 +190,124 @@ export function QuoteShippingSection({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
+        {/* Mode selector */}
         <Select
-          value={selectedOrgId}
-          onValueChange={handleOrgSelect}
-          disabled={disabled || loading}
+          value={mode}
+          onValueChange={v => handleModeChange(v as ShippingMode)}
+          disabled={disabled}
         >
           <SelectTrigger className="h-8 text-sm">
-            <SelectValue placeholder="Sélectionner une organisation..." />
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__same__">
+            <SelectItem value="same">
               Même adresse que la facturation
             </SelectItem>
-            {orgs
-              .filter(o => o.id !== defaultOrgId)
-              .map(o => (
-                <SelectItem key={o.id} value={o.id}>
-                  {o.name}
-                  {o.city ? ` — ${o.city}` : ''}
-                </SelectItem>
-              ))}
+            {enseigneId && otherOrgs.length > 0 && (
+              <SelectItem value="other_org">
+                Autre adresse enregistrée
+              </SelectItem>
+            )}
+            <SelectItem value="new">Nouvelle adresse</SelectItem>
           </SelectContent>
         </Select>
 
-        {resolvedAddr && (
-          <div className="flex items-start gap-2 text-xs text-muted-foreground">
-            <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
-            <div>
-              <p>{resolvedAddr.address_line1}</p>
-              <p>
-                {[resolvedAddr.postal_code, resolvedAddr.city]
-                  .filter(Boolean)
-                  .join(' ')}
-              </p>
-            </div>
+        {/* Other org sub-selector */}
+        {mode === 'other_org' && (
+          <div className="space-y-2">
+            <Select
+              value={selectedOrgId}
+              onValueChange={handleOrgSelect}
+              disabled={disabled || loading}
+            >
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue placeholder="Choisir une organisation..." />
+              </SelectTrigger>
+              <SelectContent>
+                {otherOrgs.map(o => (
+                  <SelectItem key={o.id} value={o.id}>
+                    {o.name}
+                    {o.city ? ` — ${o.city}` : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {resolvedOtherAddr && (
+              <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p>{resolvedOtherAddr.address_line1}</p>
+                  <p>
+                    {[resolvedOtherAddr.postal_code, resolvedOtherAddr.city]
+                      .filter(Boolean)
+                      .join(' ')}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {selectedOrgId && !resolvedOtherAddr && !loading && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 text-xs text-muted-foreground"
+                onClick={() => {
+                  setSelectedOrgId('');
+                  notify(null);
+                }}
+              >
+                Organisation sans adresse — revenir à la facturation
+              </Button>
+            )}
           </div>
         )}
 
-        {selectedOrgId !== '__same__' && !resolvedAddr && !loading && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 text-xs text-muted-foreground"
-            onClick={() => {
-              setSelectedOrgId('__same__');
-              onShippingAddressChange(null);
-            }}
-          >
-            Organisation sans adresse — revenir à la facturation
-          </Button>
+        {/* New address with autocomplete */}
+        {mode === 'new' && (
+          <div className="space-y-3">
+            <AddressAutocomplete
+              value={newAddressInput}
+              onChange={setNewAddressInput}
+              onSelect={handleAddressSelect}
+              placeholder="Rechercher une adresse..."
+              disabled={disabled}
+              id="quote-shipping-address"
+            />
+
+            {newAddressResolved && (
+              <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0 text-green-500" />
+                <div>
+                  <p>{newAddressResolved.address_line1}</p>
+                  <p>
+                    {[newAddressResolved.postal_code, newAddressResolved.city]
+                      .filter(Boolean)
+                      .join(' ')}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 pt-1">
+              <Checkbox
+                id="save-shipping-to-org"
+                checked={saveToOrg}
+                onCheckedChange={checked =>
+                  handleSaveToOrgChange(checked === true)
+                }
+                disabled={disabled || !newAddressResolved}
+              />
+              <label
+                htmlFor="save-shipping-to-org"
+                className="text-xs text-muted-foreground cursor-pointer leading-snug"
+              >
+                Sauvegarder cette adresse comme adresse de livraison de{' '}
+                <span className="font-medium">{displayOrgName}</span> pour les
+                prochains devis
+              </label>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
