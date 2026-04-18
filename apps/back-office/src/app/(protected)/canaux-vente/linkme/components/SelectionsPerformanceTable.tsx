@@ -33,21 +33,21 @@ function SelectionRow({ selection }: { selection: SelectionPerformance }) {
           </span>
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className="hidden lg:table-cell">
         <Badge variant="outline" className="font-normal">
           {selection.affiliateName}
         </Badge>
       </TableCell>
-      <TableCell className="text-center">
+      <TableCell className="hidden lg:table-cell text-center">
         <span className="text-gray-600">{selection.productsCount}</span>
       </TableCell>
-      <TableCell className="text-center">
+      <TableCell className="hidden xl:table-cell text-center">
         <div className="flex items-center justify-center gap-1 text-gray-600">
           <Eye className="h-3.5 w-3.5" />
           <span>{selection.views}</span>
         </div>
       </TableCell>
-      <TableCell className="text-center">
+      <TableCell className="hidden xl:table-cell text-center">
         <span className="font-medium">{selection.orders}</span>
       </TableCell>
       <TableCell className="text-right">
@@ -60,7 +60,7 @@ function SelectionRow({ selection }: { selection: SelectionPerformance }) {
           }).format(selection.revenue)}
         </span>
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="hidden 2xl:table-cell text-right">
         <Badge
           variant="outline"
           className={
@@ -116,12 +116,12 @@ export function SelectionsPerformanceTable({
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead className="font-medium">Sélection</TableHead>
-            <TableHead className="font-medium">Affilié</TableHead>
-            <TableHead className="font-medium text-center">Produits</TableHead>
-            <TableHead className="font-medium text-center">Vues</TableHead>
-            <TableHead className="font-medium text-center">Commandes</TableHead>
+            <TableHead className="hidden lg:table-cell font-medium">Affilié</TableHead>
+            <TableHead className="hidden lg:table-cell font-medium text-center">Produits</TableHead>
+            <TableHead className="hidden xl:table-cell font-medium text-center">Vues</TableHead>
+            <TableHead className="hidden xl:table-cell font-medium text-center">Commandes</TableHead>
             <TableHead className="font-medium text-right">CA HT</TableHead>
-            <TableHead className="font-medium text-right">Conv.</TableHead>
+            <TableHead className="hidden 2xl:table-cell font-medium text-right">Conv.</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
