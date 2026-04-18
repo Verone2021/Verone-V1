@@ -68,7 +68,7 @@ export function useFetchOrder(orderId: string) {
             completed_at, cancelled_at, cancelled_reason
           ),
           sales_order_items (
-            id, product_id, quantity, unit_price_ht, total_ht,
+            id, product_id, quantity, unit_price_ht, total_ht, tax_rate,
             products ( name, sku )
           )
         `
@@ -214,6 +214,7 @@ export function useFetchOrder(orderId: string) {
             quantity: item.quantity,
             unit_price_ht: item.unit_price_ht,
             total_ht: item.total_ht,
+            tax_rate: item.tax_rate ?? null,
             product: item.products,
           })
         ),

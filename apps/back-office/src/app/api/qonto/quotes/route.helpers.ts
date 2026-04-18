@@ -47,6 +47,13 @@ export interface IStandaloneCustomer {
   customerType: 'organization' | 'individual';
 }
 
+export interface IDocumentAddress {
+  address_line1?: string;
+  postal_code?: string;
+  city?: string;
+  country?: string;
+}
+
 export interface IPostRequestBody {
   salesOrderId?: string;
   consultationId?: string;
@@ -55,12 +62,8 @@ export interface IPostRequestBody {
   customer?: IStandaloneCustomer;
   customerEmail?: string;
   expiryDays?: number;
-  billingAddress?: {
-    address_line1?: string;
-    postal_code?: string;
-    city?: string;
-    country?: string;
-  };
+  billingAddress?: IDocumentAddress;
+  shippingAddress?: IDocumentAddress;
   fees?: IFeesData;
   customLines?: ICustomLine[];
 }

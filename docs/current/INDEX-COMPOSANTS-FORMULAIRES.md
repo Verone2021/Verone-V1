@@ -3,7 +3,7 @@
 **Derniere mise a jour** : 2026-04-18
 **23 packages** dans `packages/@verone/`
 
-## **534 composants, 11 hooks**
+## **535 composants, 11 hooks**
 
 ## @verone/categories
 
@@ -144,6 +144,7 @@
 | `QuoteFeesSection`                  | Component | `src/components/QuoteCreateFromOrderModal/QuoteFeesSection.tsx`                 |
 | `QuoteFinalizeWarning`              | Component | `src/components/QuoteCreateFromOrderModal/QuoteFinalizeWarning.tsx`             |
 | `QuoteItemsTable`                   | Component | `src/components/QuoteCreateFromOrderModal/QuoteItemsTable.tsx`                  |
+| `QuoteShippingSection`              | Component | `src/components/QuoteCreateFromOrderModal/QuoteShippingSection.tsx`             |
 | `QuoteSuccessView`                  | Component | `src/components/QuoteCreateFromOrderModal/QuoteSuccessView.tsx`                 |
 | `QuoteTotalsSection`                | Component | `src/components/QuoteCreateFromOrderModal/QuoteTotalsSection.tsx`               |
 | `QuoteCustomerCard`                 | Component | `src/components/QuoteFormModal/QuoteCustomerCard.tsx`                           |

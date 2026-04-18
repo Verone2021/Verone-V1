@@ -1,13 +1,13 @@
 # Schema Base de Donnees Verone — Sommaire
 
-_Generated: 2026-04-16 06:43_
+_Generated: 2026-04-18 23:03_
 
 | Metrique     | Valeur |
 | ------------ | ------ |
 | Tables       | 142    |
 | Foreign Keys | 187    |
-| RLS Policies | 326    |
-| Triggers     | 296    |
+| RLS Policies | 327    |
+| Triggers     | 297    |
 | Enums        | 45     |
 
 ## Index des Domaines
