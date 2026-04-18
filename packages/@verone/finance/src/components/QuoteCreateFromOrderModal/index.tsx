@@ -25,6 +25,7 @@ import { QuoteFinalizeWarning } from './QuoteFinalizeWarning';
 import { QuoteItemsTable } from './QuoteItemsTable';
 import { QuoteShippingSection } from './QuoteShippingSection';
 import type { IShippingAddressResolved } from './QuoteShippingSection';
+import { QuoteSiretGuardBanner } from './QuoteSiretGuardBanner';
 import { QuoteSuccessView } from './QuoteSuccessView';
 import { QuoteTotalsSection } from './QuoteTotalsSection';
 import type {
@@ -34,6 +35,7 @@ import type {
   IQuoteFeesState,
 } from './types';
 import { resolveCustomerName } from './quote-utils';
+import { useQuoteSiretGuard } from './useQuoteSiretGuard';
 
 export function QuoteCreateFromOrderModal({
   order,
@@ -59,13 +61,23 @@ export function QuoteCreateFromOrderModal({
   const [shippingAddress, setShippingAddress] =
     useState<IShippingAddressResolved | null>(null);
 
+  const {
+    isMissingSiret,
+    siretInput,
+    setSiretInput,
+    savingSiret,
+    handleSaveSiret,
+    reset: resetSiretGuard,
+  } = useQuoteSiretGuard(order);
+
   const resetState = useCallback((): void => {
     setStatus('idle');
     setExpiryDays(30);
     setCreatedQuote(null);
     setShowFinalizeWarning(false);
     setShippingAddress(null);
-  }, []);
+    resetSiretGuard();
+  }, [resetSiretGuard]);
 
   const handleClose = useCallback((): void => {
     resetState();
@@ -156,7 +168,15 @@ export function QuoteCreateFromOrderModal({
             userId: currentUserId,
             expiryDays,
             billingAddress: resolvedBillingAddress,
-            shippingAddress: shippingAddress ?? undefined,
+            shippingAddress: shippingAddress
+              ? {
+                  address_line1: shippingAddress.address_line1,
+                  postal_code: shippingAddress.postal_code,
+                  city: shippingAddress.city,
+                  country: shippingAddress.country,
+                }
+              : undefined,
+            updateOrgShipping: shippingAddress?.saveToOrg === true,
             fees: feesPayload,
             customLines: allCustomLines,
           };
@@ -170,11 +190,13 @@ export function QuoteCreateFromOrderModal({
       const data = (await response.json()) as {
         success?: boolean;
         error?: string;
+        message?: string;
         quote?: ICreatedQuote;
       };
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error ?? 'Failed to create quote');
+        // Use detailed message from backend when available
+        throw new Error(data.message ?? data.error ?? 'Failed to create quote');
       }
 
       setCreatedQuote(data.quote ?? null);
@@ -304,6 +326,8 @@ export function QuoteCreateFromOrderModal({
   if (!order) return null;
 
   const customerName = resolveCustomerName(order);
+  const orgDisplayName =
+    order.organisations?.trade_name ?? order.organisations?.name ?? null;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -335,6 +359,7 @@ export function QuoteCreateFromOrderModal({
                 <QuoteShippingSection
                   enseigneId={order.organisations?.enseigne_id}
                   defaultOrgId={order.customer_id}
+                  orgName={orgDisplayName}
                   disabled={status === 'creating'}
                   onShippingAddressChange={setShippingAddress}
                 />
@@ -370,38 +395,48 @@ export function QuoteCreateFromOrderModal({
           )}
         </div>
 
-        <DialogFooter className="flex-col gap-2 md:flex-row">
+        <DialogFooter className="flex-shrink-0 border-t pt-4 mt-4">
           {status === 'success' ? (
             <Button className="w-full md:w-auto" onClick={handleClose}>
               Fermer
             </Button>
           ) : (
-            <>
-              <Button
-                variant="outline"
-                className="w-full md:w-auto"
-                onClick={handleClose}
-              >
-                Annuler
-              </Button>
-              <Button
-                className="w-full md:w-auto"
-                onClick={() => void handleCreateQuote()}
-                disabled={status === 'creating'}
-              >
-                {status === 'creating' ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Création...
-                  </>
-                ) : (
-                  <>
-                    <FileEdit className="mr-2 h-4 w-4" />
-                    Créer le devis (brouillon)
-                  </>
-                )}
-              </Button>
-            </>
+            <div className="flex flex-col gap-3 w-full">
+              {isMissingSiret && (
+                <QuoteSiretGuardBanner
+                  siretInput={siretInput}
+                  setSiretInput={setSiretInput}
+                  savingSiret={savingSiret}
+                  onSaveSiret={() => void handleSaveSiret()}
+                />
+              )}
+              <div className="flex flex-col gap-2 md:flex-row md:justify-end">
+                <Button
+                  variant="outline"
+                  className="w-full md:w-auto"
+                  onClick={handleClose}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  className="w-full md:w-auto"
+                  onClick={() => void handleCreateQuote()}
+                  disabled={status === 'creating' || isMissingSiret}
+                >
+                  {status === 'creating' ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Création...
+                    </>
+                  ) : (
+                    <>
+                      <FileEdit className="mr-2 h-4 w-4" />
+                      Créer le devis (brouillon)
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           )}
         </DialogFooter>
       </DialogContent>
