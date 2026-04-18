@@ -43,14 +43,11 @@ _Agents supprimés (0 usage en 3 mois — voir `DECISIONS.md` ADR-009)_ : `write
 
 ---
 
-## Playbooks (recettes réutilisables)
+## Playbooks (1 fichier — leçons spécifiques Verone)
 
-- `.claude/playbooks/migrate-page-responsive.md` — Migration responsive (pattern pilote v2 validé)
-- `.claude/playbooks/fix-bug.md` — Correction de bug : reproduire + fix + test runtime
-- `.claude/playbooks/review-and-merge.md` — Workflow PR prête → mergée
-- `.claude/playbooks/handle-ci-failure.md` — CI rouge : diagnostic + fix + re-push
+- `.claude/playbooks/migrate-page-responsive.md` — Migration responsive (pattern pilote v2, capture le fix du bug "Rendered more hooks" du pilote v1 FAIL)
 
-Référencés depuis `.claude/rules/workflow.md` (section Playbooks). Une tâche dans `ACTIVE.md` peut pointer vers une recette via `playbook: <nom>`.
+Les playbooks génériques (fix-bug, review-and-merge, handle-ci-failure) ont été supprimés en `[INFRA-DOC-006]` (voir `DECISIONS.md` ADR-011) car ils dupliquaient les capacités natives de Claude Code.
 
 ---
 

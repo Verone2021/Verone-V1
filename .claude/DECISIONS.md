@@ -206,6 +206,26 @@ Justifications :
 
 ---
 
+## ADR-011 — 2026-04-19 — Suppression playbooks génériques (garder migrate-page-responsive seul)
+
+**Contexte** : 4 playbooks créés en Phase 2 (commit `74bd7b42e`) — `migrate-page-responsive`, `fix-bug`, `review-and-merge`, `handle-ci-failure`. Audit révèle :
+
+- `fix-bug.md`, `review-and-merge.md`, `handle-ci-failure.md` : génériques, dupliquent les capacités natives de Claude Code (workflow git, debug, CI). N'apportent aucune valeur Verone-spécifique.
+- `migrate-page-responsive.md` : capture la **leçon réelle** du pilote v1 FAIL (commit `fc9af2806`) → bug "Rendered more hooks", revert, fix v2 (commit `51bced9e5`). Valeur unique non-déductible.
+
+**Décision** : supprimer les 3 playbooks génériques + leur `README.md`. Garder uniquement `migrate-page-responsive.md`.
+
+**Conséquence** :
+
+- 4 fichiers en moins (`.claude/playbooks/` passe de 5 fichiers à 1).
+- `INDEX.md` section Playbooks réduite à 1 ligne.
+- `rules/workflow.md` section Playbooks réduite à 1 ligne (référence migrate-page-responsive uniquement, redirige vers `code-standards.md` + `playwright.md` pour les autres cas).
+- Les workflows git/debug/CI = capacités natives Claude Code + règles dans `rules/workflow.md` + `rules/code-standards.md`.
+
+**Référence** : PR `[INFRA-DOC-006]` #654 (amendée). Annule en partie ADR-009 sur l'inventaire des playbooks à garder.
+
+---
+
 ## Contrat pour futurs ADRs
 
 Chaque nouvelle décision structurelle ajoute une entrée ici avec :
@@ -234,3 +254,4 @@ Les ADRs ne se modifient pas rétroactivement. Si une décision est renversée, 
 - ADR-008 : Acceptation T2-only sur 15 composants secondaires (2026-04-19)
 - ADR-009 : Cleanup Phase 2 orpheline + suppression agents morts (2026-04-19)
 - ADR-010 : Restauration 4 fichiers config supprimés le 15 avril (2026-04-19)
+- ADR-011 : Suppression playbooks génériques (garder migrate-page-responsive seul) (2026-04-19)

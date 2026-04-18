@@ -205,18 +205,11 @@ SANS creer de PR entre chaque.
 
 ---
 
-## Playbooks (recettes reutilisables)
+## Playbooks (1 recette specifique Verone)
 
-Pour les workflows recurrents, consulter `.claude/playbooks/` :
+Pour la migration responsive uniquement, consulter `.claude/playbooks/migrate-page-responsive.md` qui capture le fix du bug "Rendered more hooks" du pilote v1 FAIL.
 
-| Recette                      | Quand l'appliquer                                             |
-| ---------------------------- | ------------------------------------------------------------- |
-| `migrate-page-responsive.md` | Migration responsive d'une page (liste/detail/form/dashboard) |
-| `fix-bug.md`                 | Correction de bug : reproduction + fix + test runtime         |
-| `review-and-merge.md`        | PR prete -> review -> CI -> merge                             |
-| `handle-ci-failure.md`       | CI rouge : diagnostic + fix + re-push                         |
-
-Les playbooks sont des recettes courtes (~150 lignes) qui evitent de repeter les memes etapes a chaque sprint.
+Les autres playbooks ont ete supprimes (voir `DECISIONS.md` ADR-011) car ils dupliquaient les capacites natives de Claude Code (workflow git, debug, CI). Pour ces cas, utiliser les regles de cette page + `.claude/rules/code-standards.md` + `.claude/rules/playwright.md`.
 
 ---
 
