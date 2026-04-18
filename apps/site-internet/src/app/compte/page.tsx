@@ -131,7 +131,7 @@ export default async function ComptePage() {
     'w-full px-4 py-3 border border-verone-gray-300 rounded-lg focus:ring-2 focus:ring-verone-black focus:border-transparent outline-none transition-all text-sm';
 
   return (
-    <div className="max-w-6xl mx-auto px-6 lg:px-8 py-12">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       <h1 className="text-3xl font-playfair font-bold text-verone-black mb-8">
         Mon Compte
       </h1>
@@ -292,7 +292,7 @@ export default async function ComptePage() {
                   return (
                     <div
                       key={order.id}
-                      className="flex items-center justify-between border border-verone-gray-100 rounded-lg p-4"
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border border-verone-gray-100 rounded-lg p-4"
                     >
                       <div>
                         <p className="text-sm font-medium text-verone-black">
@@ -331,7 +331,7 @@ export default async function ComptePage() {
                         )}
                       </div>
                       <span
-                        className={`text-xs font-medium px-2.5 py-1 rounded-full ${status.color}`}
+                        className={`self-start sm:self-center text-xs font-medium px-2.5 py-1 rounded-full ${status.color}`}
                       >
                         {status.label}
                       </span>

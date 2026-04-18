@@ -45,7 +45,7 @@ export default function FavorisPage() {
   // Redirect to login if not authenticated
   if (!userLoading && !user) {
     return (
-      <div className="max-w-6xl mx-auto px-6 lg:px-8 py-24 text-center">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center">
         <Heart className="h-12 w-12 text-verone-gray-300 mx-auto mb-4" />
         <h1 className="font-playfair text-2xl font-bold text-verone-black mb-3">
           Connectez-vous pour voir vos favoris
@@ -65,7 +65,7 @@ export default function FavorisPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-verone-gray-500">
         <ol className="flex items-center gap-2">
@@ -92,7 +92,7 @@ export default function FavorisPage() {
       </h1>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
           {[1, 2, 3].map(i => (
             <div key={i} className="animate-pulse">
               <div className="bg-verone-gray-200 h-80" />
@@ -104,7 +104,7 @@ export default function FavorisPage() {
           ))}
         </div>
       ) : products.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
           {products.map((p, index) => (
             <CardProductLuxury
               key={p.product_id}
