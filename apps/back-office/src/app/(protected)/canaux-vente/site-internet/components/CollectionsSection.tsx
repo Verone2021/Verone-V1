@@ -233,11 +233,13 @@ export function CollectionsSection() {
               <TableRow>
                 <TableHead className="w-[80px]">Image</TableHead>
                 <TableHead>Nom</TableHead>
-                <TableHead>Slug</TableHead>
-                <TableHead>Produits</TableHead>
-                <TableHead>Visibilité</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Ordre</TableHead>
+                <TableHead className="hidden lg:table-cell">Slug</TableHead>
+                <TableHead className="hidden lg:table-cell">Produits</TableHead>
+                <TableHead className="hidden xl:table-cell">
+                  Visibilité
+                </TableHead>
+                <TableHead className="hidden xl:table-cell">Statut</TableHead>
+                <TableHead className="hidden 2xl:table-cell">Ordre</TableHead>
                 <TableHead>Visible Site</TableHead>
                 <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
@@ -294,19 +296,19 @@ export function CollectionsSection() {
                       </TableCell>
 
                       {/* Slug */}
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">
                         {collection.slug ?? '—'}
                       </TableCell>
 
                       {/* Produits */}
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         <Badge variant="outline">
                           {collection.product_count} produits
                         </Badge>
                       </TableCell>
 
                       {/* Visibilité globale */}
-                      <TableCell>
+                      <TableCell className="hidden xl:table-cell">
                         <Badge
                           variant={
                             collection.visibility === 'public'
@@ -319,7 +321,7 @@ export function CollectionsSection() {
                       </TableCell>
 
                       {/* Statut actif */}
-                      <TableCell>
+                      <TableCell className="hidden xl:table-cell">
                         {collection.is_active ? (
                           <div className="flex items-center gap-2 text-green-600">
                             <Eye className="h-4 w-4" />
@@ -334,7 +336,7 @@ export function CollectionsSection() {
                       </TableCell>
 
                       {/* Ordre */}
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="text-sm text-muted-foreground hidden 2xl:table-cell">
                         {collection.display_order}
                       </TableCell>
 

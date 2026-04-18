@@ -70,14 +70,20 @@ export function ProductsTable({
             <TableHeader>
               <TableRow className="bg-gray-50">
                 <TableHead className="w-[300px]">Produit</TableHead>
-                <TableHead className="text-right">
+                <TableHead className="text-right hidden lg:table-cell">
                   Prix d&apos;achat HT
                 </TableHead>
                 <TableHead className="text-right">Prix public TTC</TableHead>
-                <TableHead className="text-right">Prix public HT</TableHead>
+                <TableHead className="text-right hidden xl:table-cell">
+                  Prix public HT
+                </TableHead>
                 <TableHead className="text-right">Prix de vente HT</TableHead>
-                <TableHead className="text-right">Buffer %</TableHead>
-                <TableHead className="text-right">Commission %</TableHead>
+                <TableHead className="text-right hidden xl:table-cell">
+                  Buffer %
+                </TableHead>
+                <TableHead className="text-right hidden 2xl:table-cell">
+                  Commission %
+                </TableHead>
                 <TableHead className="text-right">Marge</TableHead>
                 <TableHead className="w-[50px]" />
               </TableRow>
@@ -113,7 +119,7 @@ export function ProductsTable({
                       </div>
                     </TableCell>
 
-                    <TableCell className="text-right">
+                    <TableCell className="text-right hidden lg:table-cell">
                       <EditableCell
                         value={product.product_price_ht}
                         onChange={() => {}}
@@ -135,7 +141,7 @@ export function ProductsTable({
                       />
                     </TableCell>
 
-                    <TableCell className="text-right">
+                    <TableCell className="text-right hidden xl:table-cell">
                       <EditableCell
                         value={getEffectiveValue(product, 'public_price_ht')}
                         onChange={htValue =>
@@ -161,7 +167,7 @@ export function ProductsTable({
                       />
                     </TableCell>
 
-                    <TableCell className="text-right">
+                    <TableCell className="text-right hidden xl:table-cell">
                       <EditableCell
                         value={getEffectiveValue(product, 'buffer_rate')}
                         onChange={v =>
@@ -176,7 +182,7 @@ export function ProductsTable({
                       />
                     </TableCell>
 
-                    <TableCell className="text-right">
+                    <TableCell className="text-right hidden 2xl:table-cell">
                       <EditableCell
                         value={getEffectiveValue(
                           product,

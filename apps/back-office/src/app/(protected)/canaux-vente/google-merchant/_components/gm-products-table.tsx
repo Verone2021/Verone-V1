@@ -92,11 +92,19 @@ export function GmProductsTable({ products, loading }: GmProductsTableProps) {
             <TableRow>
               <TableHead className="w-[50px]">Image</TableHead>
               <TableHead>Produit</TableHead>
-              <TableHead className="w-[100px]">SKU</TableHead>
+              <TableHead className="w-[100px] hidden lg:table-cell">
+                SKU
+              </TableHead>
               <TableHead className="w-[120px]">Statut Google</TableHead>
-              <TableHead className="w-[100px]">Impressions</TableHead>
-              <TableHead className="w-[80px]">Clics</TableHead>
-              <TableHead className="w-[120px]">Derniere sync</TableHead>
+              <TableHead className="w-[100px] hidden lg:table-cell">
+                Impressions
+              </TableHead>
+              <TableHead className="w-[80px] hidden xl:table-cell">
+                Clics
+              </TableHead>
+              <TableHead className="w-[120px] hidden xl:table-cell">
+                Derniere sync
+              </TableHead>
               <TableHead className="w-[100px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -142,15 +150,19 @@ export function GmProductsTable({ products, loading }: GmProductsTableProps) {
                   <TableCell>
                     <p className="font-medium">{p.product_name}</p>
                   </TableCell>
-                  <TableCell className="font-mono text-sm">{p.sku}</TableCell>
+                  <TableCell className="font-mono text-sm hidden lg:table-cell">
+                    {p.sku}
+                  </TableCell>
                   <TableCell>
                     <StatusBadge status={p.google_status} />
                   </TableCell>
-                  <TableCell className="text-sm">
+                  <TableCell className="text-sm hidden lg:table-cell">
                     {p.impressions.toLocaleString('fr-FR')}
                   </TableCell>
-                  <TableCell className="text-sm">{p.clicks}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-sm hidden xl:table-cell">
+                    {p.clicks}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground hidden xl:table-cell">
                     {p.synced_at ? formatRelativeDate(p.synced_at) : '-'}
                   </TableCell>
                   <TableCell className="text-right">
