@@ -192,7 +192,7 @@ export default function ProductPage({
 
   // ===== PRODUCT PAGE LAYOUT =====
   return (
-    <div className="container max-w-7xl mx-auto px-4 py-8">
+    <div className="container max-w-7xl mx-auto px-4 py-8 pb-28 lg:pb-8">
       {/* JSON-LD Product Schema */}
       <JsonLdProduct
         name={product.name}

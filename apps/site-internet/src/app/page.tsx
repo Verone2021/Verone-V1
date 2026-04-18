@@ -66,7 +66,7 @@ export default function HomePage() {
       {products && products.length > 0 && <CategoryTiles products={products} />}
 
       {/* 3. Produits vedettes — "Nos trouvailles" */}
-      <section className="max-w-7xl mx-auto px-6 lg:px-8 py-24">
+      <section className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-12 md:py-24">
         <div className="text-center mb-12">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
             Pièces sélectionnées
@@ -129,8 +129,8 @@ export default function HomePage() {
       </section>
 
       {/* 4. Valeurs / Reassurance — fond noir, 4 colonnes avec icônes */}
-      <section className="bg-verone-black py-24">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+      <section className="bg-verone-black py-12 md:py-24">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           <div className="text-center mb-16">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400 mb-3">
               Notre philosophie
@@ -160,8 +160,8 @@ export default function HomePage() {
 
       {/* 6. Collections */}
       {featuredCollections && featuredCollections.length > 0 && (
-        <section className="py-24">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <section className="py-12 md:py-24">
+          <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
             <div className="text-center mb-12">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
                 Thématiques
