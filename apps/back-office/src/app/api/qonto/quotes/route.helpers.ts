@@ -3,6 +3,7 @@
  * Ces fonctions sont pures (pas d'effets de bord) et réutilisables.
  */
 
+import { z } from 'zod';
 import type { Database } from '@verone/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { QontoClient } from '@verone/integrations/qonto';
@@ -27,46 +28,57 @@ export type ISalesOrderWithItems =
     }>;
   };
 
-export interface IFeesData {
-  shipping_cost_ht?: number;
-  handling_cost_ht?: number;
-  insurance_cost_ht?: number;
-  fees_vat_rate?: number;
-}
+// ---------------------------------------------------------------------------
+// Zod schemas — validation des inputs POST
+// ---------------------------------------------------------------------------
 
-export interface ICustomLine {
-  title: string;
-  description?: string;
-  quantity: number;
-  unit_price_ht: number;
-  vat_rate: number;
-}
+export const DocumentAddressSchema = z.object({
+  address_line1: z.string().optional(),
+  address_line2: z.string().optional(),
+  postal_code: z.string().optional(),
+  city: z.string().optional(),
+  country: z.string().optional(),
+});
 
-export interface IStandaloneCustomer {
-  customerId: string;
-  customerType: 'organization' | 'individual';
-}
+export const FeesDataSchema = z.object({
+  shipping_cost_ht: z.number().optional(),
+  handling_cost_ht: z.number().optional(),
+  insurance_cost_ht: z.number().optional(),
+  fees_vat_rate: z.number().optional(),
+});
 
-export interface IDocumentAddress {
-  address_line1?: string;
-  postal_code?: string;
-  city?: string;
-  country?: string;
-}
+export const CustomLineSchema = z.object({
+  title: z.string(),
+  description: z.string().optional(),
+  quantity: z.number(),
+  unit_price_ht: z.number(),
+  vat_rate: z.number(),
+});
 
-export interface IPostRequestBody {
-  salesOrderId?: string;
-  consultationId?: string;
-  userId?: string;
-  supersededQuoteIds?: string[];
-  customer?: IStandaloneCustomer;
-  customerEmail?: string;
-  expiryDays?: number;
-  billingAddress?: IDocumentAddress;
-  shippingAddress?: IDocumentAddress;
-  fees?: IFeesData;
-  customLines?: ICustomLine[];
-}
+export const StandaloneCustomerSchema = z.object({
+  customerId: z.string().uuid(),
+  customerType: z.enum(['organization', 'individual']),
+});
+
+export const PostRequestBodySchema = z.object({
+  salesOrderId: z.string().uuid().optional(),
+  consultationId: z.string().uuid().optional(),
+  userId: z.string().uuid().optional(),
+  supersededQuoteIds: z.array(z.string().uuid()).optional(),
+  customer: StandaloneCustomerSchema.optional(),
+  customerEmail: z.string().email().optional(),
+  expiryDays: z.number().int().positive().optional(),
+  billingAddress: DocumentAddressSchema.optional(),
+  shippingAddress: DocumentAddressSchema.optional(),
+  fees: FeesDataSchema.optional(),
+  customLines: z.array(CustomLineSchema).optional(),
+});
+
+export type IDocumentAddress = z.infer<typeof DocumentAddressSchema>;
+export type IFeesData = z.infer<typeof FeesDataSchema>;
+export type ICustomLine = z.infer<typeof CustomLineSchema>;
+export type IStandaloneCustomer = z.infer<typeof StandaloneCustomerSchema>;
+export type IPostRequestBody = z.infer<typeof PostRequestBodySchema>;
 
 export interface IQontoQuoteRaw {
   id: string;

@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { QontoClient } from '@verone/integrations/qonto';
+import type { Database, Json } from '@verone/types';
 
 import {
   fetchCustomerFromSupabase,
@@ -306,6 +307,9 @@ export async function saveQuoteToLocalDb(
     shippingAddress,
   } = params;
 
+  type FinancialDocumentInsert =
+    Database['public']['Tables']['financial_documents']['Insert'];
+
   const totalHt = items.reduce(
     (s, i) =>
       s + (parseFloat(i.quantity) || 0) * (parseFloat(i.unitPrice.value) || 0),
@@ -319,7 +323,7 @@ export async function saveQuoteToLocalDb(
   const tva = totalHt * avgVat;
   const localDocNumber = generateLocalDocNumber();
 
-  const payload = {
+  const payload: FinancialDocumentInsert = {
     document_type: 'customer_quote',
     document_direction: 'inbound',
     partner_id: standaloneCustomerId ?? customerId ?? userId,
@@ -343,12 +347,12 @@ export async function saveQuoteToLocalDb(
     handling_cost_ht: fees?.handling_cost_ht ?? 0,
     insurance_cost_ht: fees?.insurance_cost_ht ?? 0,
     fees_vat_rate: fees?.fees_vat_rate ?? 0.2,
-    shipping_address: shippingAddress ?? null,
+    shipping_address: (shippingAddress ?? null) as Json | null,
   };
 
   const { data: doc, error } = await supabase
     .from('financial_documents')
-    .insert([payload] as never)
+    .insert([payload])
     .select('id')
     .single();
 
