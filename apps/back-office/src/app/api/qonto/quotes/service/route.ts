@@ -13,6 +13,9 @@ import type { CreateClientQuoteParams } from '@verone/integrations/qonto';
 import type { Database } from '@verone/types';
 import { createAdminClient } from '@verone/utils/supabase/server';
 
+import { ServicePostRequestBodySchema } from '../route.schemas';
+import type { IServiceItem, IServicePostRequestBody } from '../route.schemas';
+
 type Organisation = Database['public']['Tables']['organisations']['Row'];
 type IndividualCustomer =
   Database['public']['Tables']['individual_customers']['Row'];
@@ -24,23 +27,6 @@ function getQontoClient(): QontoClient {
     apiKey: process.env.QONTO_API_KEY,
     accessToken: process.env.QONTO_ACCESS_TOKEN,
   });
-}
-
-interface IServiceItem {
-  title: string;
-  description?: string;
-  quantity: number;
-  unitPrice: number;
-  vatRate: number;
-}
-
-interface IPostRequestBody {
-  clientId: string;
-  clientType: 'organization' | 'individual';
-  items: IServiceItem[];
-  validityDays?: number;
-  reference?: string;
-  autoFinalize?: boolean;
 }
 
 type CustomerData = {
@@ -190,41 +176,14 @@ async function findOrCreateQontoClient(
   return newClient.id;
 }
 
-/** Validate request body, returns error response if invalid */
-function validateRequest(body: IPostRequestBody): NextResponse | null {
-  if (!body.clientId) {
-    return NextResponse.json(
-      { success: false, error: 'clientId is required' },
-      { status: 400 }
-    );
-  }
-  if (
-    !body.clientType ||
-    !['organization', 'individual'].includes(body.clientType)
-  ) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'clientType must be organization or individual',
-      },
-      { status: 400 }
-    );
-  }
-  if (!body.items || body.items.length === 0) {
-    return NextResponse.json(
-      { success: false, error: 'At least one item is required' },
-      { status: 400 }
-    );
-  }
-  return null;
-}
+// validateRequest est remplacé par ServicePostRequestBodySchema.safeParse dans le handler POST.
 
 /** Build Qonto quote params from items and dates */
 function buildQuoteParams(
   qontoClientId: string,
   items: IServiceItem[],
   validityDays: number,
-  reference?: string
+  reference: string | undefined
 ): CreateClientQuoteParams {
   const quoteItems = items.map(item => ({
     title: item.title,
@@ -275,9 +234,19 @@ function formatError(error: unknown): NextResponse {
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as IPostRequestBody;
-    const validationError = validateRequest(body);
-    if (validationError) return validationError;
+    const rawBody: unknown = await request.json();
+    const parsed = ServicePostRequestBodySchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid request body',
+          details: parsed.error.flatten(),
+        },
+        { status: 400 }
+      );
+    }
+    const body: IServicePostRequestBody = parsed.data;
 
     const {
       clientId,

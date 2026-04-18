@@ -7,6 +7,25 @@ import type { Database } from '@verone/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { QontoClient } from '@verone/integrations/qonto';
 
+// Import local pour usage dans ce fichier
+import type { IFeesData, ICustomLine, IPostRequestBody } from './route.schemas';
+
+// Re-export schemas et types depuis le fichier dédié (source unique de vérité)
+export {
+  DocumentAddressSchema,
+  FeesDataSchema,
+  CustomLineSchema,
+  StandaloneCustomerSchema,
+  PostRequestBodySchema,
+} from './route.schemas';
+export type {
+  IDocumentAddress,
+  IFeesData,
+  ICustomLine,
+  IStandaloneCustomer,
+  IPostRequestBody,
+} from './route.schemas';
+
 export type Organisation = Database['public']['Tables']['organisations']['Row'];
 export type IndividualCustomer =
   Database['public']['Tables']['individual_customers']['Row'];
@@ -26,47 +45,6 @@ export type ISalesOrderWithItems =
       products: { id: string; name: string; sku: string | null } | null;
     }>;
   };
-
-export interface IFeesData {
-  shipping_cost_ht?: number;
-  handling_cost_ht?: number;
-  insurance_cost_ht?: number;
-  fees_vat_rate?: number;
-}
-
-export interface ICustomLine {
-  title: string;
-  description?: string;
-  quantity: number;
-  unit_price_ht: number;
-  vat_rate: number;
-}
-
-export interface IStandaloneCustomer {
-  customerId: string;
-  customerType: 'organization' | 'individual';
-}
-
-export interface IDocumentAddress {
-  address_line1?: string;
-  postal_code?: string;
-  city?: string;
-  country?: string;
-}
-
-export interface IPostRequestBody {
-  salesOrderId?: string;
-  consultationId?: string;
-  userId?: string;
-  supersededQuoteIds?: string[];
-  customer?: IStandaloneCustomer;
-  customerEmail?: string;
-  expiryDays?: number;
-  billingAddress?: IDocumentAddress;
-  shippingAddress?: IDocumentAddress;
-  fees?: IFeesData;
-  customLines?: ICustomLine[];
-}
 
 export interface IQontoQuoteRaw {
   id: string;

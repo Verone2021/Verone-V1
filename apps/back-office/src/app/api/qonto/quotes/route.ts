@@ -20,6 +20,7 @@ import {
   buildQuoteItems,
   computeQuoteDates,
   resolveQontoClient,
+  PostRequestBodySchema,
 } from './route.helpers';
 import type {
   IPostRequestBody,
@@ -209,10 +210,6 @@ async function buildAndCreateQontoQuote(
 // POST helpers — persistence
 // ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// POST helpers — persistence
-// ---------------------------------------------------------------------------
-
 async function persistQuoteResults(
   supabase: Supabase,
   ctx: IRequestContext,
@@ -313,7 +310,19 @@ export async function POST(request: NextRequest): Promise<
   }>
 > {
   try {
-    const body = (await request.json()) as IPostRequestBody;
+    const rawBody: unknown = await request.json();
+    const parsed = PostRequestBodySchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid request body',
+          details: parsed.error.flatten(),
+        },
+        { status: 400 }
+      );
+    }
+    const body: IPostRequestBody = parsed.data;
     const validationError = validatePostBody(body);
     if (validationError) return validationError;
 
