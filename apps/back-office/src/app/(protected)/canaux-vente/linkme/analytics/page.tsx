@@ -145,7 +145,7 @@ function CommissionStatusCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* En attente */}
           <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg">
             <Clock className="h-5 w-5 text-amber-600 shrink-0" />
@@ -276,7 +276,7 @@ export default function LinkMeAnalyticsPage() {
         )}
 
         {/* KPIs Row */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <KpiCard
             title="Affiliés actifs"
             value={formatNumber(data?.activeAffiliates ?? 0)}
