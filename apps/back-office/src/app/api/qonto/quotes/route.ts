@@ -179,6 +179,11 @@ async function buildAndCreateQontoQuote(
   );
   const { issueDate, expiryDate } = computeQuoteDates(body.expiryDays ?? 30);
 
+  const shippingFooter =
+    body.shippingAddress?.city && body.shippingAddress?.address_line1
+      ? `Adresse de livraison : ${body.shippingAddress.address_line1}, ${body.shippingAddress.postal_code ?? ''} ${body.shippingAddress.city}${body.shippingAddress.country && body.shippingAddress.country !== 'FR' ? `, ${body.shippingAddress.country}` : ''}`
+      : undefined;
+
   const quoteParams: CreateClientQuoteParams = {
     clientId: qontoClientId,
     currency: 'EUR',
@@ -186,6 +191,7 @@ async function buildAndCreateQontoQuote(
     expiryDate,
     purchaseOrderNumber: ctx.orderNumber,
     items,
+    ...(shippingFooter ? { footer: shippingFooter } : {}),
   };
 
   const rawQuote = await qontoClient.createClientQuote(quoteParams);
@@ -253,6 +259,7 @@ async function persistQuoteResults(
       customerId,
       standaloneCustomerId: body.customer?.customerId,
       fees: body.fees,
+      shippingAddress: body.shippingAddress,
     });
   } catch (e) {
     console.error('[API Qonto Quotes] DB save error (non-blocking):', e);
