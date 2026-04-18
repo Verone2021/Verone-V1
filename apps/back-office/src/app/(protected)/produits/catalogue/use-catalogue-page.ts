@@ -74,6 +74,11 @@ export function useCataloguePage() {
       statuses: searchParams.get('statuses')?.split(',').filter(Boolean) ?? [],
       missingFields:
         searchParams.get('missing')?.split(',').filter(Boolean) ?? [],
+      stockLevels: searchParams.get('stock')?.split(',').filter(Boolean) ?? [],
+      conditions:
+        searchParams.get('condition')?.split(',').filter(Boolean) ?? [],
+      completionLevels:
+        searchParams.get('completion')?.split(',').filter(Boolean) ?? [],
     }),
     [searchParams]
   );
@@ -123,6 +128,12 @@ export function useCataloguePage() {
         params.set('statuses', newFilters.statuses.join(','));
       if (newFilters.missingFields.length)
         params.set('missing', newFilters.missingFields.join(','));
+      if (newFilters.stockLevels.length)
+        params.set('stock', newFilters.stockLevels.join(','));
+      if (newFilters.conditions.length)
+        params.set('condition', newFilters.conditions.join(','));
+      if (newFilters.completionLevels.length)
+        params.set('completion', newFilters.completionLevels.join(','));
 
       const qs = params.toString();
       router.replace(qs ? `?${qs}` : '/produits/catalogue', { scroll: false });
@@ -142,6 +153,9 @@ export function useCataloguePage() {
         suppliers: newFilters.suppliers,
         statuses: newFilters.statuses,
         missingFields: newFilters.missingFields,
+        stockLevels: newFilters.stockLevels,
+        conditions: newFilters.conditions,
+        completionLevels: newFilters.completionLevels,
         page: 1,
       });
       syncFiltersToUrl(newFilters, tab ?? tabs.activeTab);
@@ -166,7 +180,10 @@ export function useCataloguePage() {
         urlFilters.subcategories.length > 0 ||
         urlFilters.suppliers.length > 0 ||
         urlFilters.statuses.length > 0 ||
-        urlFilters.missingFields.length > 0;
+        urlFilters.missingFields.length > 0 ||
+        urlFilters.stockLevels.length > 0 ||
+        urlFilters.conditions.length > 0 ||
+        urlFilters.completionLevels.length > 0;
 
       if (hasUrlFilters) {
         setCatalogueFilters({
@@ -177,6 +194,9 @@ export function useCataloguePage() {
           suppliers: urlFilters.suppliers,
           statuses: urlFilters.statuses,
           missingFields: urlFilters.missingFields,
+          stockLevels: urlFilters.stockLevels,
+          conditions: urlFilters.conditions,
+          completionLevels: urlFilters.completionLevels,
         });
       }
     }
@@ -235,6 +255,9 @@ export function useCataloguePage() {
       suppliers: [],
       statuses: [],
       missingFields: [],
+      stockLevels: [],
+      conditions: [],
+      completionLevels: [],
     };
     applyFilters(emptyFilters);
   };
@@ -246,7 +269,10 @@ export function useCataloguePage() {
     filters.subcategories.length > 0 ||
     filters.suppliers.length > 0 ||
     filters.statuses.length > 0 ||
-    filters.missingFields.length > 0;
+    filters.missingFields.length > 0 ||
+    filters.stockLevels.length > 0 ||
+    filters.conditions.length > 0 ||
+    filters.completionLevels.length > 0;
 
   const searchItems = useMemo(() => {
     return products.map(product => ({
@@ -272,6 +298,9 @@ export function useCataloguePage() {
       suppliers: newFilterState.suppliers,
       statuses: newFilterState.statuses,
       missingFields: filters.missingFields,
+      stockLevels: newFilterState.stockLevels,
+      conditions: newFilterState.conditions,
+      completionLevels: newFilterState.completionLevels,
     };
     applyFilters(newFilters);
   };

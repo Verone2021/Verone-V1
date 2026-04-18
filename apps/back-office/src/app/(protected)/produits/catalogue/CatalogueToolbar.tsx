@@ -66,6 +66,9 @@ export function CatalogueToolbar({
           subcategories: filters.subcategories,
           suppliers: filters.suppliers,
           statuses: filters.statuses,
+          stockLevels: filters.stockLevels,
+          conditions: filters.conditions,
+          completionLevels: filters.completionLevels,
         }}
         onFiltersChange={onFiltersChange}
         className="flex-1"
