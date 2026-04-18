@@ -145,3 +145,23 @@ export * from './clickable-cell';
 export * from './status-dot';
 export * from './animated-tabs';
 export * from './animated-number';
+
+// ========================================
+// RESPONSIVE COMPONENTS (Sprint BO-UI-RESP-001)
+// ========================================
+// Composants responsive standards Verone.
+// Utiliser ces composants pour TOUTES les nouvelles pages.
+// Voir CLAUDE.md section STANDARDS RESPONSIVE.
+export {
+  ResponsiveActionMenu,
+  type ResponsiveAction,
+  type ResponsiveActionMenuProps,
+} from './responsive-action-menu';
+export {
+  ResponsiveDataView,
+  type ResponsiveDataViewProps,
+} from './responsive-data-view';
+export {
+  ResponsiveToolbar,
+  type ResponsiveToolbarProps,
+} from './responsive-toolbar';

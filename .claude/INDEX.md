@@ -70,20 +70,24 @@
 
 ## Commandes Slash
 
-| Fichier                                                   | Contenu           |
-| --------------------------------------------------------- | ----------------- |
-| `.claude/commands/review-references/performance-rules.md` | Performance Rules |
-| `.claude/commands/review-references/security-rules.md`    | Security Rules    |
-| `.claude/commands/review-references/size-thresholds.md`   | Size Thresholds   |
-| `.claude/commands/review-references/typescript-rules.md`  | Typescript Rules  |
+| Fichier                                                   | Contenu                    |
+| --------------------------------------------------------- | -------------------------- |
+| `.claude/commands/review-references/performance-rules.md` | Performance Rules          |
+| `.claude/commands/review-references/security-rules.md`    | Security Rules             |
+| `.claude/commands/review-references/size-thresholds.md`   | Size Thresholds            |
+| `.claude/commands/review-references/typescript-rules.md`  | Typescript Rules           |
+| `.claude/templates/sprint-responsive-template.md`         | Sprint Responsive Template |
+| `.claude/work/AGENT-ENTRY-POINT.md` | Agent Entry Point |
+| `.claude/work/NEXT-SPRINTS.md` | Next Sprints |
+| `.claude/work/PROMPTS-TO-COPY.md` | Prompts To Copy |
 
 ---
 
 ## Regles
 
-| Fichier | Contenu |
-| ------- | ------- |
-| `.claude/rules/finance.md` | Finance |
+| Fichier                       | Contenu    |
+| ----------------------------- | ---------- |
+| `.claude/rules/finance.md`    | Finance    |
+| `.claude/rules/responsive.md` | Responsive |
 
 ---
-

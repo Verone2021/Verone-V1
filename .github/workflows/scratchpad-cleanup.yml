@@ -1,0 +1,58 @@
+name: Scratchpad Cleanup
+
+# Filet de securite : lance tous les dimanches a 3h du matin UTC
+# meme si les hooks post-merge locaux ont ete oublies ou sautes.
+
+on:
+  schedule:
+    - cron: '0 3 * * 0' # Tous les dimanches 3h UTC
+  workflow_dispatch: # Declenchable manuellement via l'UI GitHub
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout staging
+        uses: actions/checkout@v4
+        with:
+          ref: staging
+          fetch-depth: 0
+
+      - name: Set up Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Run scratchpad cleanup
+        run: |
+          export CLAUDE_PROJECT_DIR="${GITHUB_WORKSPACE}"
+          bash .claude/scripts/cleanup-scratchpad.sh
+
+      - name: Check for changes
+        id: check
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create cleanup PR
+        if: steps.check.outputs.has_changes == 'true'
+        run: |
+          BRANCH="chore/scratchpad-cleanup-$(date +%Y%m%d)"
+          git checkout -b "$BRANCH"
+          git add -A
+          git commit -m "[NO-TASK] chore: auto-archive scratchpad (weekly cleanup)"
+          git push origin "$BRANCH"
+          gh pr create \
+            --base staging \
+            --head "$BRANCH" \
+            --title "[NO-TASK] chore: auto-archive scratchpad (weekly cleanup)" \
+            --body "Nettoyage hebdomadaire automatique du scratchpad.\n\nVoir .claude/scripts/cleanup-scratchpad.sh pour les regles."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

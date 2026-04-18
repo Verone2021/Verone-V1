@@ -1,59 +1,89 @@
-# LinkMe - Plateforme B2B Affilies
+# LinkMe — Instructions Agent
 
-Canal de vente **linkme** (PAS "affilie"). Plateforme B2B ou les affilies (enseignes/organisations) passent des commandes depuis les selections Verone.
+**Application** : Plateforme affiliation commerciale (port 3002)
+**Public** : Affilies, partenaires, enseignes partenaires
+**Stack** : Next.js 15, React 18, TypeScript, Tailwind, Supabase
 
-## CRITICAL : Index a consulter AVANT toute modification
+---
 
-- Pages, routes, formulaires LinkMe : @docs/current/INDEX-LINKME-COMPLET.md
-- Index auto-genere (pages, API, composants) : @docs/current/INDEX-LINKME-APP.md
-- Composants et hooks partages : @docs/current/INDEX-COMPOSANTS-FORMULAIRES.md
+## AVANT TOUTE TACHE
 
-## Source de Verite Unique
+1. Lire `/CLAUDE.md` (racine, regles globales + STANDARDS RESPONSIVE)
+2. Lire `.claude/rules/responsive.md` si modif UI
+3. Lire les CLAUDE.md des packages utilises (`packages/@verone/*/CLAUDE.md`)
 
-**TOUJOURS lire en premier** : `docs/current/linkme/GUIDE-COMPLET-LINKME.md`
+---
 
-## Documentation par Tache
+## CONTEXTE METIER
 
-| Tache                | Lire AVANT                                                |
-| -------------------- | --------------------------------------------------------- |
-| Guide complet        | `docs/current/linkme/GUIDE-COMPLET-LINKME.md`             |
-| Commissions          | `docs/current/linkme/commission-reference.md`             |
-| Commandes affilies   | `docs/current/linkme/GUIDE-COMPLET-LINKME.md`             |
-| Auth/Roles           | `docs/current/linkme/GUIDE-COMPLET-LINKME.md`             |
-| Selections publiques | `docs/current/linkme/GUIDE-COMPLET-LINKME.md`             |
-| Prix/Corrections     | `docs/current/linkme/commission-reference.md`             |
-| RLS affilies         | `.claude/rules/database/rls-patterns.md` (section LinkMe) |
-| Formulaires commande | `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md`            |
-| Facture verification | `docs/current/finance/invoicing-system-reference.md`      |
+LinkMe = plateforme d'affiliation. Les affilies (restaurants, hotels,
+concept-stores) creent des selections curatees de produits Verone et
+touchent une commission sur les ventes generees.
 
-## Regles Specifiques LinkMe
+### Roles utilisateurs
 
-1. **Isolation RLS stricte** : Chaque affilie voit UNIQUEMENT ses donnees via `enseigne_id` XOR `organisation_id`
-2. **2 types commissions** : commission Verone (marge) + commission affilie. Details dans `docs/current/linkme/commission-reference.md`
-3. **TOUJOURS verifier `linkme_affiliates`** : Table centrale de liaison affilie ↔ enseigne/organisation
-4. **Canal = `linkme`** : JAMAIS "affilie", "affiliate", ou autre variante
-5. **Prefix commandes** : Les commandes LinkMe ont un prefix specifique par affilie
+- `enseigne_admin` : gere une enseigne (ex: Pokawa HQ)
+- `organisation_admin` : gere une organisation (ex: restaurant individuel)
+- `client` : affilie simple qui consulte ses stats
 
-## Build Filtre
+### Fonctionnalites principales
+
+- Dashboard affilie avec KPIs (ventes, commissions, clics)
+- Catalogue Verone avec ajout a selection
+- Creation de selections (drag & drop, visibilite)
+- Historique commandes liees a l'affilie
+- Demandes de paiement de commissions
+- Statistiques performance (Tremor charts)
+
+---
+
+## RESPONSIVE (CRITIQUE pour LinkMe)
+
+**LinkMe est utilise majoritairement sur MOBILE par les affilies.**
+
+Les affilies sont souvent des restaurateurs sur le terrain, ils utilisent
+leur iPhone/Android en priorite, pas un PC.
+
+Patterns UI dominants :
+
+- **Pattern A** : listes commandes, selections, commissions
+- **Pattern C** : page detail commande / selection
+- **Pattern D** : dashboard avec KPI cards
+- **Pattern E** : modal creation selection (drag & drop produits)
+
+**SPECIFICITES MOBILE LINKME** :
+
+- Bouton "Ajouter a ma selection" TOUJOURS visible (action metier critique)
+- Drag & drop remplace par "+/- quantite" sur mobile (drag = pas mobile)
+- QR code telechargeable en plein ecran sur mobile
+- Stats en cards empilees verticalement sur mobile
+
+Utiliser OBLIGATOIREMENT :
+
+- `ResponsiveDataView` pour toutes les listes
+- `ResponsiveActionMenu` pour 3+ actions
+- `ResponsiveToolbar` pour headers
+
+Tests Playwright OBLIGATOIRES a 375px (iPhone standard).
+
+---
+
+## INTERDICTIONS SPECIFIQUES LINKME
+
+- JAMAIS exposer des donnees staff/admin back-office a un affilie
+- JAMAIS modifier les policies RLS sans audit (sensibles)
+- JAMAIS creer de modal qui occupe plus de 90% de l'ecran mobile sans bouton "X" accessible
+- Formulaires -> toujours dans `packages/@verone/` partages avec back-office
+
+---
+
+## COMMANDES
 
 ```bash
-pnpm --filter @verone/linkme build
 pnpm --filter @verone/linkme type-check
+pnpm --filter @verone/linkme build
+pnpm --filter @verone/linkme lint
 ```
 
-## Port
-
-`localhost:3002`
-
-## Roles Affilies
-
-- `enseigne_admin` : Admin d'une enseigne (voit toutes les orgs de son enseigne)
-- `org_independante` : Organisation independante (voit uniquement sa propre org)
-- Table : `user_app_roles` (app='linkme')
-
-## Documentation Projet
-
-- `docs/current/linkme/GUIDE-COMPLET-LINKME.md` — Guide complet LinkMe
-- `docs/current/linkme/commission-reference.md` — Regles de commission
-- `docs/current/database/schema/` — Schema DB par domaine
-- `.claude/rules/database/rls-patterns.md` — Patterns RLS (section LinkMe)
+Format commit : `[LM-DOMAIN-NNN] type: description`
+Exemples : `[LM-ORD-009]`, `[LM-UI-RESP-001]`, `[LM-COMM-005]`
