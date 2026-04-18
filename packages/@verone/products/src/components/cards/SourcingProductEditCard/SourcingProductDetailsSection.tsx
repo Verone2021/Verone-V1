@@ -72,7 +72,7 @@ export function SourcingProductDetailsSection({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <Label htmlFor="brand" className="text-xs text-gray-600">
               Marque
@@ -206,7 +206,7 @@ export function SourcingProductDetailsSection({
         </ButtonV2>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {product.brand && (
           <div className="flex items-center text-sm text-gray-600">
             <Tag className="h-4 w-4 mr-2 text-gray-400" />

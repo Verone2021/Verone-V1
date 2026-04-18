@@ -216,7 +216,7 @@ export function AddAssetDialog({
               placeholder="Ex: MacBook Pro 16 pouces"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Categorie</Label>
               <Select
@@ -263,7 +263,7 @@ export function AddAssetDialog({
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Date d&apos;acquisition *</Label>
               <Input
@@ -290,7 +290,7 @@ export function AddAssetDialog({
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Fournisseur</Label>
               <Input
@@ -312,7 +312,7 @@ export function AddAssetDialog({
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Mode amortissement</Label>
               <Select

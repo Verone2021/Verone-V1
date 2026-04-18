@@ -57,7 +57,7 @@ export function ProductEditManagementColumn({
           </ButtonV2>
         </div>
         <div className="space-y-2">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
               <Label className="text-[9px] text-gray-600">Statut</Label>
               <Select
@@ -103,7 +103,7 @@ export function ProductEditManagementColumn({
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
               <Label className="text-[9px] text-gray-600">Quantité stock</Label>
               <Input
@@ -158,7 +158,7 @@ export function ProductEditManagementColumn({
               placeholder="0.00"
             />
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
               <Label className="text-[9px] text-gray-600">Prix vente HT</Label>
               <Input
@@ -188,7 +188,7 @@ export function ProductEditManagementColumn({
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
               <Label className="text-[9px] text-gray-600">Marge %</Label>
               <Input
@@ -258,7 +258,7 @@ export function ProductEditManagementColumn({
               className="h-6 bg-gray-50 text-[10px]"
             />
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
               <Label className="text-[9px] text-gray-600">Marque</Label>
               <Input
@@ -335,7 +335,7 @@ export function ProductEditManagementColumn({
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
               <Label className="text-[9px] text-gray-600">Poids</Label>
               <Input

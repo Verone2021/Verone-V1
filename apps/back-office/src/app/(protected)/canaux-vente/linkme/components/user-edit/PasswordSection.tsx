@@ -36,7 +36,7 @@ export function PasswordSection({
       <p className="text-xs text-gray-500">
         Laissez vide pour ne pas modifier le mot de passe.
       </p>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Nouveau mot de passe

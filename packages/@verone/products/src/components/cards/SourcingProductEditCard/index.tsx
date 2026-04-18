@@ -196,7 +196,7 @@ export function SourcingProductEditCard({
   return (
     <Card className={cn('border-black', className)}>
       <CardHeader className="pb-4">
-        <div className="flex items-start gap-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
           <SourcingProductImageBlock
             product={product}
             primaryImage={primaryImage}
