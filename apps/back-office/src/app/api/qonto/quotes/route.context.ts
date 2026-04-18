@@ -350,7 +350,7 @@ export async function saveQuoteToLocalDb(
     shipping_address: (shippingAddress ?? null) as Json | null,
   };
 
-  const { data: doc, error } = await supabase
+  const { data: rawDoc, error } = await supabase
     .from('financial_documents')
     .insert([payload])
     .select('id')
@@ -360,7 +360,8 @@ export async function saveQuoteToLocalDb(
     console.error('[API Qonto Quotes] Failed to save to local DB:', error);
     return null;
   }
-  const docId = (doc as { id?: string } | null)?.id ?? null;
+  const doc: { id: string } | null = rawDoc as { id: string } | null;
+  const docId: string | null = doc?.id ?? null;
   console.warn(
     `[API Qonto Quotes] Saved to local DB: ${docId} (${localDocNumber})`
   );
