@@ -67,10 +67,10 @@ export function CommissionsTable({
               onCheckedChange={onToggleSelectAll}
             />
           </TableHead>
-          <TableHead>Date</TableHead>
+          <TableHead className="hidden lg:table-cell">Date</TableHead>
           <TableHead>Affilié</TableHead>
-          <TableHead>Commande</TableHead>
-          <TableHead className="text-right">Montant HT</TableHead>
+          <TableHead className="hidden xl:table-cell">Commande</TableHead>
+          <TableHead className="hidden lg:table-cell text-right">Montant HT</TableHead>
           <TableHead className="text-right">Commission</TableHead>
           <TableHead>Statut</TableHead>
           <TableHead className="text-right">Actions</TableHead>
@@ -95,7 +95,7 @@ export function CommissionsTable({
                   disabled={!canSelect}
                 />
               </TableCell>
-              <TableCell>
+              <TableCell className="hidden lg:table-cell">
                 {commission.created_at
                   ? new Date(commission.created_at).toLocaleDateString('fr-FR')
                   : '-'}
@@ -103,10 +103,10 @@ export function CommissionsTable({
               <TableCell>
                 {commission.affiliate?.display_name ?? 'N/A'}
               </TableCell>
-              <TableCell className="font-mono text-sm">
+              <TableCell className="hidden xl:table-cell font-mono text-sm">
                 #{(commission.order_id ?? '').slice(0, 8)}
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell className="hidden lg:table-cell text-right">
                 {commission.order_amount_ht.toLocaleString('fr-FR', {
                   minimumFractionDigits: 2,
                 })}{' '}
