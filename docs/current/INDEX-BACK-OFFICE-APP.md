@@ -1,6 +1,6 @@
 # Back-Office — Documentation App
 
-_Generated: 2026-04-18 08:47_
+_Generated: 2026-04-16 06:43_
 
 ## Pages (147)
 
@@ -279,7 +279,7 @@ _Generated: 2026-04-18 08:47_
 | `/api/transactions/update-vat`                  | POST               |
 | `/api/webhooks/packlink`                        | POST               |
 
-## Components in app (348)
+## Components in app (346)
 
 | Fichier                                                                                                                         |
 | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -545,8 +545,6 @@ _Generated: 2026-04-18 08:47_
 | `src/app/(protected)/factures/components/DevisTab.tsx`                                                                          |
 | `src/app/(protected)/factures/components/FacturesModals.tsx`                                                                    |
 | `src/app/(protected)/factures/components/FacturesTab.tsx`                                                                       |
-| `src/app/(protected)/factures/components/InvoiceActions.tsx`                                                                    |
-| `src/app/(protected)/factures/components/InvoiceMobileCard.tsx`                                                                 |
 | `src/app/(protected)/factures/components/InvoicesTable.tsx`                                                                     |
 | `src/app/(protected)/factures/components/MissingInvoicesTable.tsx`                                                              |
 | `src/app/(protected)/factures/components/StatusBadges.tsx`                                                                      |
