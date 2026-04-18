@@ -18,7 +18,7 @@ Sommaire unique de la config agent. Si tu cherches où est une règle, un agent,
 
 Règles stables lues automatiquement par l'agent.
 
-- `.claude/rules/autonomy-boundaries.md` — Quand l'agent agit seul vs attend Romeo *(NOUVEAU Phase 2)*
+- `.claude/rules/autonomy-boundaries.md` — Quand l'agent agit seul vs attend Romeo _(NOUVEAU Phase 2)_
 - `.claude/rules/code-standards.md` — TypeScript, async, composants, API, logout
 - `.claude/rules/database.md` — Migrations, RLS patterns, post-migration
 - `.claude/rules/finance.md` — Règles métier devis / factures / proformas (R1 à R7)
@@ -37,28 +37,23 @@ Règles stables lues automatiquement par l'agent.
 - `.claude/agents/reviewer-agent.md` — Code reviewer impartial read-only (**actif**)
 - `.claude/agents/verify-agent.md` — Type-check + build + tests (**actif**)
 - `.claude/agents/ops-agent.md` — Push, PR, merge après review PASS (**actif**)
-- `.claude/agents/writer-agent.md` — Documentation technique *(⚠️ 0 utilisation, suppression prévue — `DECISIONS.md` ADR-005)*
-- `.claude/agents/market-agent.md` — Positionnement produit *(⚠️ 0 utilisation, suppression prévue — `DECISIONS.md` ADR-005)*
+- `.claude/agents/writer-agent.md` — Documentation technique _(⚠️ 0 utilisation, suppression prévue — `DECISIONS.md` ADR-005)_
+- `.claude/agents/market-agent.md` — Positionnement produit _(⚠️ 0 utilisation, suppression prévue — `DECISIONS.md` ADR-005)_
 
 ---
 
-## Queue (workflow tâches) — *NOUVEAU Phase 2*
+## Queue (workflow tâches) — _NOUVEAU Phase 2_
 
 Système de gestion de tâches machine-lisible avec YAML frontmatter.
 
-- `.claude/queue/README.md` — Documentation + conventions
 - `.claude/queue/TEMPLATE.md` — Modèle pour nouvelle tâche
-- `.claude/queue/*.md` — Tâches TODO (1 fichier par tâche)
-- `.claude/done/README.md` — Archive tâches fermées
-- `.claude/done/*.md` — Tâches mergées
 
 Statuts : `todo | in-progress | blocked | done`.
 
 ---
 
-## Playbooks (recettes réutilisables) — *NOUVEAU Phase 2*
+## Playbooks (recettes réutilisables) — _NOUVEAU Phase 2_
 
-- `.claude/playbooks/README.md` — Principe et conventions
 - `.claude/playbooks/migrate-page-responsive.md` — Migration responsive (pattern pilote v2 validé)
 - `.claude/playbooks/fix-bug.md` — Correction de bug : reproduire + fix + test runtime
 - `.claude/playbooks/review-and-merge.md` — Workflow PR prête → mergée
@@ -68,15 +63,15 @@ Un playbook est référencé depuis le YAML d'une tâche : `playbook: migrate-pa
 
 ---
 
-## Commands (5 fichiers + références)
+## Commands (6 fichiers + références)
 
 Commandes slash disponibles dans Claude Code.
 
+- `.claude/commands/fix-warnings.md` — Workflow 6 phases pour corriger warnings ESLint (Discovery → TypeScript Validation)
 - `.claude/commands/search.md` — Exploration DB + code + RLS
 - `.claude/commands/review.md` — Audit qualité code avec rapport
 - `.claude/commands/pr.md` — Push + PR vers staging
 - `.claude/commands/status.md` — Résumé rapide projet
-- `.claude/commands/README.md` — Guide de travail agent
 - `.claude/commands/review-references/performance-rules.md` — Référence performance
 - `.claude/commands/review-references/security-rules.md` — Référence sécurité
 - `.claude/commands/review-references/size-thresholds.md` — Seuils de taille
@@ -109,7 +104,7 @@ Commandes slash disponibles dans Claude Code.
 ## Scripts (8 fichiers)
 
 - `.claude/scripts/auto-sync-with-main.sh` — Bloque commit si branche en retard sur staging
-- `.claude/scripts/check-open-prs.sh` — Liste PRs ouvertes + conflits + oublis *(créé Phase 1)*
+- `.claude/scripts/check-open-prs.sh` — Liste PRs ouvertes + conflits + oublis _(créé Phase 1)_
 - `.claude/scripts/check-responsive-violations.sh` — Audit anti-patterns responsive
 - `.claude/scripts/clarify-before-code.sh` — Hook UserPromptSubmit checklist
 - `.claude/scripts/cleanup-active-tasks.sh` — Détecte tâches terminées dans ACTIVE.md
@@ -119,7 +114,8 @@ Commandes slash disponibles dans Claude Code.
 - `.claude/scripts/validate-playwright-screenshot.sh` — Validation screenshots
 
 **Scripts racine** :
-- `scripts/check-config-integrity.sh` — Vérifie intégrité config + ADR *(NOUVEAU Phase 2)*
+
+- `scripts/check-config-integrity.sh` — Vérifie intégrité config + ADR _(NOUVEAU Phase 2)_
 
 ---
 
@@ -132,7 +128,7 @@ Commandes slash disponibles dans Claude Code.
 
 ## Décisions structurelles
 
-- `.claude/DECISIONS.md` — Architecture Decision Records *(NOUVEAU Phase 2)*
+- `.claude/DECISIONS.md` — Architecture Decision Records _(NOUVEAU Phase 2)_
   - ADR-001 : Suppression agents « expert »
   - ADR-002 : Workflow 1 PR = 1 bloc
   - ADR-003 : Restructuration en 3 phases
@@ -162,6 +158,7 @@ Consolidation en 1 seul `SPRINT-CURRENT.md` prévue après merge PR A (voir ADR-
 - `docs/scratchpad/` — Plans, rapports, verdicts inter-agents (versionnés)
 
 Rapports récents clés :
+
 - `audit-config-agent-2026-04-19.md` — Audit brutal config
 - `plan-restructuration-config.md` — Plan 3 phases
 - `automation-roadmap.md` — Intégrations externes
@@ -205,3 +202,12 @@ Rapports récents clés :
 - **Phase 3 — Automation** 🔲 (après merge PR A : auto-review CI, auto-advance-queue, MCP GitHub, commandes slash `/next-task` `/ship`)
 
 Voir `docs/scratchpad/automation-roadmap.md`.
+
+## Autres
+
+| Fichier                                         | Contenu                      |
+| ----------------------------------------------- | ---------------------------- |
+| `.claude/queue/BO-UI-RESP-DETAILS.md`           | Bo Ui Resp Details           |
+| `.claude/queue/BO-UI-RESP-LISTS-T1-CATCH-UP.md` | Bo Ui Resp Lists T1 Catch Up |
+
+---
