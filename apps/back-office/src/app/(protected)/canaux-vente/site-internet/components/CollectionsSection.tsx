@@ -233,12 +233,12 @@ export function CollectionsSection() {
               <TableRow>
                 <TableHead className="w-[80px]">Image</TableHead>
                 <TableHead>Nom</TableHead>
-                <TableHead>Slug</TableHead>
-                <TableHead>Produits</TableHead>
-                <TableHead>Visibilité</TableHead>
+                <TableHead className="hidden lg:table-cell">Slug</TableHead>
+                <TableHead className="hidden lg:table-cell">Produits</TableHead>
+                <TableHead className="hidden xl:table-cell">Visibilité</TableHead>
                 <TableHead>Statut</TableHead>
-                <TableHead>Ordre</TableHead>
-                <TableHead>Visible Site</TableHead>
+                <TableHead className="hidden 2xl:table-cell">Ordre</TableHead>
+                <TableHead className="hidden xl:table-cell">Visible Site</TableHead>
                 <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -294,19 +294,19 @@ export function CollectionsSection() {
                       </TableCell>
 
                       {/* Slug */}
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                         {collection.slug ?? '—'}
                       </TableCell>
 
                       {/* Produits */}
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         <Badge variant="outline">
                           {collection.product_count} produits
                         </Badge>
                       </TableCell>
 
                       {/* Visibilité globale */}
-                      <TableCell>
+                      <TableCell className="hidden xl:table-cell">
                         <Badge
                           variant={
                             collection.visibility === 'public'
@@ -334,12 +334,12 @@ export function CollectionsSection() {
                       </TableCell>
 
                       {/* Ordre */}
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="hidden 2xl:table-cell text-sm text-muted-foreground">
                         {collection.display_order}
                       </TableCell>
 
                       {/* Toggle Visible Site */}
-                      <TableCell>
+                      <TableCell className="hidden xl:table-cell">
                         <Switch
                           checked={isVisible}
                           onCheckedChange={() => {
