@@ -12,8 +12,6 @@
 
   body {
     @apply bg-background text-foreground;
-    /* Protection desktop: largeur minimale avec scroll horizontal si viewport < 1200px */
-    min-width: 1200px;
   }
   :root {
     /* Sidebar Vérone - Design System Noir & Blanc */

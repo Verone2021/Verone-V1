@@ -1,6 +1,6 @@
 # Back-Office — Documentation App
 
-_Generated: 2026-04-18 17:18_
+_Generated: 2026-04-18 21:12_
 
 ## Pages (147)
 
