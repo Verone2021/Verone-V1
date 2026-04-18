@@ -2,14 +2,14 @@
 
 import { useMemo } from 'react';
 
-import type { PurchaseOrder, PurchaseOrderStatus } from '@verone/orders';
+import type { PurchaseOrderStatus } from '@verone/orders';
 import type { PurchaseAdvancedFilters } from '@verone/orders';
 import { getOrganisationDisplayName } from '@verone/utils/utils/organisation-helpers';
 
 import type { SortColumn, SortDirection, PurchaseOrderExtended } from './types';
 
 interface UseFournisseursFiltersParams {
-  orders: PurchaseOrder[];
+  orders: PurchaseOrderExtended[];
   activeTab: PurchaseOrderStatus | 'all';
   searchTerm: string;
   advancedFilters: PurchaseAdvancedFilters;
@@ -116,8 +116,7 @@ export function useFournisseursFilters({
         return false;
 
       if (advancedFilters.matching !== 'all') {
-        const extended = order as PurchaseOrderExtended;
-        const isMatched = extended.is_matched === true;
+        const isMatched = order.is_matched === true;
         if (advancedFilters.matching === 'matched' && !isMatched) return false;
         if (advancedFilters.matching === 'unmatched' && isMatched) return false;
       }
