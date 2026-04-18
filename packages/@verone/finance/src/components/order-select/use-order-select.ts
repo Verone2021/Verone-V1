@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
@@ -22,7 +22,7 @@ export function useOrderSelect(
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [loadingOrder, setLoadingOrder] = useState(false);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
