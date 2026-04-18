@@ -74,7 +74,7 @@ export default function ProductDetailPage({ params }: PageProps) {
   const channelId = config.id;
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
+    <div className="w-full px-6 py-8">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-gray-600 mb-6">
         <Link
