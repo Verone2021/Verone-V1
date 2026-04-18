@@ -10,7 +10,7 @@ Sommaire unique de la config agent. Si tu cherches où est une règle, un agent,
 
 1. `CLAUDE.md` (racine) — identité, workflow, interdictions
 2. `.claude/rules/autonomy-boundaries.md` — feu vert / orange / rouge par action
-3. `.claude/work/ACTIVE.md` (gitignored, local) OU `.claude/queue/` (versionné) — quoi faire ensuite
+3. `.claude/work/ACTIVE.md` (gitignored, local) — file de tâches active (source unique)
 
 ---
 
@@ -31,36 +31,26 @@ Règles stables lues automatiquement par l'agent.
 
 ---
 
-## Agents (7 fichiers)
+## Agents (5 fichiers)
 
 - `.claude/agents/dev-agent.md` — Code + TDD + changelog (**actif**)
 - `.claude/agents/reviewer-agent.md` — Code reviewer impartial read-only (**actif**)
 - `.claude/agents/verify-agent.md` — Type-check + build + tests (**actif**)
 - `.claude/agents/ops-agent.md` — Push, PR, merge après review PASS (**actif**)
 - `.claude/agents/perf-optimizer.md` — Audit perf, dead code, bundle, overfetch (**restauré 2026-04-19**, mémoire dans `.claude/agent-memory/perf-optimizer/`)
-- `.claude/agents/writer-agent.md` — Documentation technique _(⚠️ 0 utilisation, suppression à valider — `DECISIONS.md` ADR-005)_
-- `.claude/agents/market-agent.md` — Positionnement produit _(⚠️ 0 utilisation, suppression à valider — `DECISIONS.md` ADR-005)_
+
+_Agents supprimés (0 usage en 3 mois — voir `DECISIONS.md` ADR-009)_ : `writer-agent`, `market-agent`.\_
 
 ---
 
-## Queue (workflow tâches) — _NOUVEAU Phase 2_
-
-Système de gestion de tâches machine-lisible avec YAML frontmatter.
-
-- `.claude/queue/TEMPLATE.md` — Modèle pour nouvelle tâche
-
-Statuts : `todo | in-progress | blocked | done`.
-
----
-
-## Playbooks (recettes réutilisables) — _NOUVEAU Phase 2_
+## Playbooks (recettes réutilisables)
 
 - `.claude/playbooks/migrate-page-responsive.md` — Migration responsive (pattern pilote v2 validé)
 - `.claude/playbooks/fix-bug.md` — Correction de bug : reproduire + fix + test runtime
 - `.claude/playbooks/review-and-merge.md` — Workflow PR prête → mergée
 - `.claude/playbooks/handle-ci-failure.md` — CI rouge : diagnostic + fix + re-push
 
-Un playbook est référencé depuis le YAML d'une tâche : `playbook: migrate-page-responsive`.
+Référencés depuis `.claude/rules/workflow.md` (section Playbooks). Une tâche dans `ACTIVE.md` peut pointer vers une recette via `playbook: <nom>`.
 
 ---
 
@@ -201,16 +191,10 @@ Rapports récents clés :
 ## Roadmap restructuration
 
 - **Phase 1 — Nettoyage** ✅ (chemins corrigés, script check-open-prs créé, INDEX cohérent, README daté)
-- **Phase 2 — Restructuration** ✅ (cet état : queue, playbooks, DECISIONS, autonomy-boundaries, check-config-integrity)
-- **Phase 3 — Automation** 🔲 (après merge PR A : auto-review CI, auto-advance-queue, MCP GitHub, commandes slash `/next-task` `/ship`)
+- **Phase 2 — Restructuration** ⚠️ partielle (DECISIONS + autonomy-boundaries + playbooks + check-config-integrity gardés ; queue/done supprimés en `[INFRA-DOC-006]` car jamais utilisés — ACTIVE.md reste la source unique)
+- **Phase 3 — Automation** 🚫 abandonnée (dépendait de queue/, devenue caduque)
+- **CLAUDE.md v2** 🔲 (PR `[INFRA-DOC-007]` : passage 250 → 120 lignes via pointeurs vers `rules/`)
 
-Voir `docs/scratchpad/automation-roadmap.md`.
-
-## Autres
-
-| Fichier                                         | Contenu                      |
-| ----------------------------------------------- | ---------------------------- |
-| `.claude/queue/BO-UI-RESP-DETAILS.md`           | Bo Ui Resp Details           |
-| `.claude/queue/BO-UI-RESP-LISTS-T1-CATCH-UP.md` | Bo Ui Resp Lists T1 Catch Up |
+Voir `docs/scratchpad/automation-roadmap.md` (historique uniquement).
 
 ---

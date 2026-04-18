@@ -25,8 +25,6 @@ Dis simplement ce que tu veux faire. Claude lit ACTIVE.md et choisit le bon work
 | `verify-agent`   | Type-check, build, tests      | Validation avant deploy         |
 | `ops-agent`      | PR, push, deploy              | Apres review PASS               |
 | `perf-optimizer` | Audit perf, dead code, bundle | Audit periodique, perf degradee |
-| `writer-agent`   | Documentation technique       | Docs, rapports, guides          |
-| `market-agent`   | Positionnement, communication | Contenu marketing, pitchs       |
 
 ## Commandes disponibles
 
