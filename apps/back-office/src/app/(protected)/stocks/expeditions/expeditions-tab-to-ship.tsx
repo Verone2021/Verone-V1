@@ -6,6 +6,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  ResponsiveDataView,
 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import {
@@ -18,6 +19,8 @@ import {
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@verone/ui';
 import { TabsContent } from '@verone/ui';
 import { Filter, Search, Package } from 'lucide-react';
+
+import { ToShipMobileCard } from './expeditions-to-ship-mobile-card';
 
 import { OrderRow } from './expeditions-order-row';
 import type { SalesOrder } from './expeditions-types';
@@ -101,6 +104,23 @@ function ToShipFilters({
   );
 }
 
+const ToShipEmptyState = (
+  <div className="text-center py-8">
+    <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+    <p className="text-gray-500">Aucune commande à expédier</p>
+  </div>
+);
+
+interface ToShipTableContentProps {
+  orders: SalesOrder[];
+  loading: boolean;
+  error: string | null;
+  expandedRows: Set<string>;
+  packlinkPendingOrders: Set<string>;
+  onToggleRow: (id: string) => void;
+  onShip: (order: SalesOrder) => void;
+}
+
 function ToShipTableContent({
   orders,
   loading,
@@ -109,64 +129,57 @@ function ToShipTableContent({
   packlinkPendingOrders,
   onToggleRow,
   onShip,
-}: Pick<
-  ToShipTabProps,
-  | 'orders'
-  | 'loading'
-  | 'error'
-  | 'expandedRows'
-  | 'packlinkPendingOrders'
-  | 'onToggleRow'
-  | 'onShip'
->) {
-  if (loading) {
-    return (
-      <div className="flex justify-center py-8">
-        <div className="text-gray-500">Chargement...</div>
-      </div>
-    );
-  }
+}: ToShipTableContentProps) {
   if (error) {
     return <div className="text-center py-8 text-red-600">Erreur: {error}</div>;
   }
-  if (orders.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        <p className="text-gray-500">Aucune commande à expédier</p>
-      </div>
-    );
-  }
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-8" />
-            <TableHead>N° Commande</TableHead>
-            <TableHead>Client</TableHead>
-            <TableHead>Statut</TableHead>
-            <TableHead className="hidden lg:table-cell">
-              Date livraison
-            </TableHead>
-            <TableHead className="hidden xl:table-cell">Progression</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {orders.map((order: SalesOrder) => (
-            <OrderRow
-              key={order.id}
-              order={order}
-              isExpanded={expandedRows.has(order.id)}
-              isPacklinkPending={packlinkPendingOrders.has(order.id)}
-              onToggle={onToggleRow}
-              onShip={onShip}
-            />
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+    <ResponsiveDataView<SalesOrder>
+      data={orders}
+      loading={loading}
+      emptyMessage={ToShipEmptyState}
+      renderTable={items => (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-8" />
+              <TableHead>N° Commande</TableHead>
+              <TableHead>Client</TableHead>
+              <TableHead>Statut</TableHead>
+              <TableHead className="hidden lg:table-cell">
+                Date livraison
+              </TableHead>
+              <TableHead className="hidden xl:table-cell">
+                Progression
+              </TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items.map((order: SalesOrder) => (
+              <OrderRow
+                key={order.id}
+                order={order}
+                isExpanded={expandedRows.has(order.id)}
+                isPacklinkPending={packlinkPendingOrders.has(order.id)}
+                onToggle={onToggleRow}
+                onShip={onShip}
+              />
+            ))}
+          </TableBody>
+        </Table>
+      )}
+      renderCard={(order: SalesOrder) => (
+        <ToShipMobileCard
+          key={order.id}
+          order={order}
+          isExpanded={expandedRows.has(order.id)}
+          isPacklinkPending={packlinkPendingOrders.has(order.id)}
+          onToggle={onToggleRow}
+          onShip={onShip}
+        />
+      )}
+    />
   );
 }
 
