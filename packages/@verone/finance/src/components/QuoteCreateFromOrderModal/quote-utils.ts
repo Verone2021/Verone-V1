@@ -7,6 +7,7 @@ export function formatAmount(amount: number, currency = 'EUR'): string {
 
 export function resolveCustomerName(order: {
   organisations?: {
+    name?: string | null;
     legal_name?: string | null;
     trade_name?: string | null;
   } | null;
@@ -17,11 +18,13 @@ export function resolveCustomerName(order: {
 }): string {
   const legalName = order.organisations?.legal_name;
   const tradeName = order.organisations?.trade_name;
+  const displayName = order.organisations?.name;
   if (legalName) {
     return tradeName && tradeName !== legalName
       ? `${legalName} (${tradeName})`
       : legalName;
   }
+  if (displayName) return displayName;
   return (
     `${order.individual_customers?.first_name ?? ''} ${order.individual_customers?.last_name ?? ''}`.trim() ||
     'Client'
