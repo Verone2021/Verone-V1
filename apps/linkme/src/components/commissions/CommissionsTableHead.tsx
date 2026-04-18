@@ -46,7 +46,7 @@ export function CommissionsTableHead({
           </th>
         )}
         <th
-          className="px-3 py-2 text-left text-xs font-medium text-gray-500 cursor-pointer select-none hover:text-gray-700 transition-colors"
+          className="px-3 py-2 text-left text-xs font-medium text-gray-500 cursor-pointer select-none hover:text-gray-700 transition-colors hidden sm:table-cell"
           onClick={() => onSort('date')}
         >
           <span className="inline-flex items-center gap-1">
@@ -63,16 +63,16 @@ export function CommissionsTableHead({
             <SortIcon field="order" />
           </span>
         </th>
-        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 hidden md:table-cell">
           Client
         </th>
-        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 hidden lg:table-cell">
           CA HT
         </th>
-        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 hidden lg:table-cell">
           CA TTC
         </th>
-        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 hidden sm:table-cell">
           Remuneration HT
         </th>
         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
