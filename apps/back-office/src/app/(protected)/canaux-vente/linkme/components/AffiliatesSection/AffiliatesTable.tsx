@@ -56,9 +56,9 @@ export function AffiliatesTable({
       <TableHeader>
         <TableRow>
           <TableHead>Affilié</TableHead>
-          <TableHead>Entité liée</TableHead>
-          <TableHead>Type</TableHead>
-          <TableHead>Slug</TableHead>
+          <TableHead className="hidden lg:table-cell">Entité liée</TableHead>
+          <TableHead className="hidden lg:table-cell">Type</TableHead>
+          <TableHead className="hidden xl:table-cell">Slug</TableHead>
           <TableHead>Statut</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>

@@ -61,10 +61,10 @@ export function SelectionsTable({
       <TableHeader>
         <TableRow>
           <TableHead>Sélection</TableHead>
-          <TableHead>Affilié</TableHead>
-          <TableHead>Produits</TableHead>
-          <TableHead>Vues</TableHead>
-          <TableHead>Commandes</TableHead>
+          <TableHead className="hidden lg:table-cell">Affilié</TableHead>
+          <TableHead className="hidden lg:table-cell">Produits</TableHead>
+          <TableHead className="hidden xl:table-cell">Vues</TableHead>
+          <TableHead className="hidden xl:table-cell">Commandes</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -84,20 +84,22 @@ export function SelectionsTable({
                 </div>
               </div>
             </TableCell>
-            <TableCell>{selection.affiliate?.display_name ?? 'N/A'}</TableCell>
-            <TableCell>
+            <TableCell className="hidden lg:table-cell">
+              {selection.affiliate?.display_name ?? 'N/A'}
+            </TableCell>
+            <TableCell className="hidden lg:table-cell">
               <div className="flex items-center gap-1">
                 <Package className="h-4 w-4 text-muted-foreground" />
                 {selection.products_count}
               </div>
             </TableCell>
-            <TableCell>
+            <TableCell className="hidden xl:table-cell">
               <div className="flex items-center gap-1">
                 <Eye className="h-4 w-4 text-muted-foreground" />
                 {selection.views_count}
               </div>
             </TableCell>
-            <TableCell>
+            <TableCell className="hidden xl:table-cell">
               <div className="flex items-center gap-1">
                 <ShoppingBag className="h-4 w-4 text-muted-foreground" />
                 {selection.orders_count}

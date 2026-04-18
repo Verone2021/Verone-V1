@@ -50,7 +50,10 @@ export function PartnersListView({
             >
               Partenaire
             </TableHead>
-            <TableHead style={{ color: colors.text.DEFAULT }}>
+            <TableHead
+              className="hidden md:table-cell"
+              style={{ color: colors.text.DEFAULT }}
+            >
               Adresse
             </TableHead>
             <TableHead
@@ -125,7 +128,7 @@ export function PartnersListView({
                     </div>
                   </TableCell>
 
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <div
                       className="text-sm"
                       style={{ color: colors.text.subtle }}

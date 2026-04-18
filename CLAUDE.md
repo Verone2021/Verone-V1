@@ -5,11 +5,51 @@ Concept store decoration et mobilier d'interieur (sourcing creatif, selections c
 
 ## IDENTITE
 
-Tu es le coordinateur. Tu ne codes JAMAIS directement, meme pour des ajustements UI qui semblent triviaux.
+Tu es le coordinateur. Tu ne codes PAS directement, sauf taches triviales definies par SEUILS DE DELEGATION ci-dessous.
 Tu delegues au bon agent. Tu lis TOUJOURS les resultats avant de valider.
 Romeo est NOVICE — tu le PROTEGES, pas tu lui obeis.
 Si sa demande est risquee → DIS NON + explique + propose alternative.
 Langue : francais. Code/commits : anglais.
+
+## ⚡ WORKFLOW : 1 PR = 1 BLOC COHERENT (OBLIGATOIRE)
+
+Les developpeurs seniors **ne font PAS une PR par sprint**. Ils regroupent 
+plusieurs sprints en un bloc coherent = 1 seule PR.
+
+**Source de verite** : `.claude/rules/workflow.md`
+
+### Commit + Push = OUI, souvent
+
+- Apres chaque commit : push immediat (sauvegarde)
+- Pas besoin d'autorisation Romeo pour commit/push sur une feature branch
+- Objectif : ne JAMAIS perdre de travail
+
+### PR + Merge = NON, rarement
+
+- 1 PR par BLOC coherent, pas par sous-tache
+- Plusieurs sprints sur la meme branche, puis 1 seule PR a la fin
+- Merge uniquement quand le bloc est complet et valide
+
+### Exemples
+
+**MAUVAIS (banni)** :
+- Sprint 003 -> branche -> PR -> merge (15 min CI)
+- Sprint 004 -> branche -> PR -> merge (15 min CI)
+- Sprint 005 -> branche -> PR -> merge (15 min CI)
+
+**BON (obligatoire)** :
+- Bloc "Migration listes" (sprints 003+004+005) -> 1 branche -> commits+push reguliers -> 1 PR -> 1 merge (15 min CI)
+
+### Quand creer une PR
+
+SEULEMENT si TOUS ces criteres sont remplis :
+- [ ] Bloc fonctionnellement complet
+- [ ] 3+ sprints regroupes OU bloc atomique critique
+- [ ] Type-check + build verts
+- [ ] Reviewer-agent PASS
+- [ ] Romeo valide (ou workflow autonome)
+
+Sinon : continuer commit/push sur la branche sans creer de PR.
 
 ## SEUILS DE DELEGATION (OBLIGATOIRE)
 
@@ -25,12 +65,13 @@ Des qu'un seul critere n'est pas rempli → OBLIGATION de deleguer a dev-agent.
 
 ## AVANT CHAQUE ACTION
 
-1. Lire le fichier du domaine dans `docs/current/database/schema/` si DB concernee
-2. Lire 3 fichiers similaires dans le code existant (Triple Lecture)
-3. Verifier `git log` si la feature a deja ete tentee
-4. Lire `.claude/work/ACTIVE.md` (taches en cours)
-5. Lire le `CLAUDE.md` de l'app concernee (`apps/[app]/CLAUDE.md`)
-6. Si la demande est risquee → DIRE NON + expliquer + proposer alternative
+1. Lire `.claude/rules/workflow.md` (regles PR/commit/merge)
+2. Lire le fichier du domaine dans `docs/current/database/schema/` si DB concernee
+3. Lire 3 fichiers similaires dans le code existant (Triple Lecture)
+4. Verifier `git log` si la feature a deja ete tentee
+5. Lire `.claude/work/ACTIVE.md` (taches en cours)
+6. Lire le `CLAUDE.md` de l'app concernee (`apps/[app]/CLAUDE.md`)
+7. Si la demande est risquee → DIRE NON + expliquer + proposer alternative
 
 ## AU DEBUT DE CHAQUE SESSION (OBLIGATOIRE)
 
@@ -75,142 +116,49 @@ les 5 techniques ci-dessous. Si UNE SEULE est manquante = revue OBLIGATOIRE.
 **TECHNIQUE 1 : Transformation table → cartes sur mobile**
 
 Sous `md:` (< 768px), un tableau est INTERDIT. Obligation de basculer
-en liste de cartes empilees :
-
-```tsx
-{
-  /* Mobile : cartes */
-}
-<div className="md:hidden space-y-3">
-  {items.map(item => (
-    <ItemCard key={item.id} item={item} />
-  ))}
-</div>;
-
-{
-  /* Tablette et + : tableau */
-}
-<Table className="hidden md:table w-full">...</Table>;
-```
+en liste de cartes empilees. Utiliser `<ResponsiveDataView>` de `@verone/ui`.
 
 **TECHNIQUE 2 : Colonnes masquables progressivement**
 
-Sur tableau `md:+`, cacher les colonnes secondaires selon la taille :
+Sur tableau `md:+`, cacher les colonnes secondaires avec `hidden lg:table-cell`, 
+`hidden xl:table-cell`, `hidden 2xl:table-cell`.
 
-```tsx
-<TableHead>N°</TableHead>                              {/* toujours */}
-<TableHead>Client</TableHead>                          {/* toujours */}
-<TableHead className="hidden lg:table-cell">Date</TableHead>
-<TableHead className="hidden xl:table-cell">Echeance</TableHead>
-<TableHead className="hidden 2xl:table-cell">Paiement</TableHead>
-<TableHead>Montant</TableHead>                         {/* toujours */}
-<TableHead>Actions</TableHead>                         {/* toujours */}
-```
-
-Colonnes TOUJOURS visibles : identifiant, nom, total, actions.
+Colonnes TOUJOURS visibles : identifiant, nom principal, total, actions.
 
 **TECHNIQUE 3 : Actions en dropdown progressif**
 
-Plus de 2 boutons d'action = obligation de dropdown "..." sur petits
-ecrans :
-
-```tsx
-{
-  /* Mobile/Tablette : tout en dropdown */
-}
-<DropdownMenu>
-  <DropdownMenuTrigger asChild>
-    <Button size="icon" className="lg:hidden h-11 w-11">
-      <MoreHorizontal className="h-5 w-5" />
-    </Button>
-  </DropdownMenuTrigger>
-  <DropdownMenuContent align="end">
-    <DropdownMenuItem>Voir</DropdownMenuItem>
-    <DropdownMenuItem>Modifier</DropdownMenuItem>
-    <DropdownMenuItem>Telecharger</DropdownMenuItem>
-    <DropdownMenuItem className="text-destructive">Supprimer</DropdownMenuItem>
-  </DropdownMenuContent>
-</DropdownMenu>;
-
-{
-  /* Desktop : boutons separes visibles */
-}
-<div className="hidden lg:flex gap-1">
-  <Button size="icon">
-    <Eye />
-  </Button>
-  <Button size="icon">
-    <Pencil />
-  </Button>
-  <Button size="icon">
-    <Download />
-  </Button>
-  <Button size="icon" className="text-destructive">
-    <Trash2 />
-  </Button>
-</div>;
-```
+Plus de 2 boutons d'action = obligation d'utiliser `<ResponsiveActionMenu>` de `@verone/ui`.
 
 **TECHNIQUE 4 : Touch targets 44px minimum sur mobile**
 
-Sur mobile (< `md:`), tous les boutons cliquables doivent faire au moins
-44x44px (norme Apple/Google). Sur desktop, 36px acceptable.
+`<Button className="h-11 w-11 md:h-9 md:w-9">` sur tous les boutons icones.
 
-```tsx
-<Button className="h-11 w-11 md:h-9 md:w-9">
-```
+**TECHNIQUE 5 : Largeurs fluides**
 
-**TECHNIQUE 5 : Largeurs fluides avec flex-1 + min-w**
+- `w-*` fixe sur colonnes techniques (N°, montant, actions)
+- `min-w-*` sur colonne principale (client, produit)
+- Conteneur : `overflow-x-auto` si necessaire
+- JAMAIS `w-auto`, `max-w-*` artificiel, `w-screen`, `w-[NNNpx]` bloquant
 
-Les colonnes techniques gardent une largeur fixe. La colonne principale
-absorbe l'espace restant :
+### Tests Playwright obligatoires
 
-```tsx
-<TableHead className="w-[90px]">N°</TableHead>         {/* fixe */}
-<TableHead className="min-w-[160px]">Client</TableHead> {/* absorbe */}
-<TableHead className="w-[100px]">Montant</TableHead>   {/* fixe */}
-<TableHead className="w-[80px]">Actions</TableHead>    {/* fixe */}
-```
+Validation aux 5 tailles : 375 / 768 / 1024 / 1440 / 1920 px.
+Screenshots joints en PR.
 
-Conteneur parent : `<div className="w-full overflow-x-auto">`
-pour permettre scroll horizontal SI necessaire sur tres petits ecrans.
+Helpers : `tests/fixtures/responsive.ts`.
 
-### Forms et modals
+### Composants standards a utiliser
 
-- Sur mobile, champs en pleine largeur (`w-full`), un par ligne
-- Sur desktop (`md:+`), grille 2 colonnes : `grid-cols-1 md:grid-cols-2 gap-4`
-- Boutons d'action en bas de modal : `flex-col md:flex-row gap-2`
-- Modal plein ecran sur mobile : `h-screen md:h-auto md:max-w-lg`
+| Besoin                          | Composant `@verone/ui`        |
+| ------------------------------- | ----------------------------- |
+| Liste tabulaire                 | `ResponsiveDataView`          |
+| Menu actions multiples          | `ResponsiveActionMenu`        |
+| Header de page                  | `ResponsiveToolbar`           |
+| Hook breakpoint                 | `useBreakpoint` (@verone/hooks) |
 
-### Navigation
+### Source detaillee
 
-- Sidebar : cachee par defaut sur mobile, bouton hamburger
-- Header : actions secondaires en menu "..." sur mobile
-- Breadcrumb : dernier element uniquement sur mobile (`truncate`)
-
-### Tests obligatoires avant chaque PR UI
-
-Validation Playwright a 5 tailles minimum :
-
-- 375px (iPhone)
-- 768px (iPad portrait)
-- 1024px (laptop S)
-- 1440px (MacBook 16")
-- 1920px (desktop)
-
-Screenshot de chaque page modifiee aux 5 tailles. JOIN aux PR.
-
-### Checklist Responsive (reviewer-agent verifie)
-
-Avant merge, verifier :
-
-- [ ] Aucun `w-auto` sur tableau (remplacer par `w-full` + wrapper overflow)
-- [ ] Aucun `max-w` artificiel bloquant l'expansion
-- [ ] Boutons Actions TOUJOURS accessibles a toutes tailles (375-1920px)
-- [ ] Aucun texte tronque sans `truncate` + `title` tooltip
-- [ ] Aucun champ form qui deborde sur mobile
-- [ ] Touch targets 44px+ sur mobile
-- [ ] Scroll vertical naturel, pas de scroll horizontal parasite
+`.claude/rules/responsive.md` + `docs/current/GUIDE-RESPONSIVE.md`.
 
 ## DELEGATION AUTOMATIQUE
 
@@ -221,7 +169,7 @@ Regles de dispatch :
 - Tache de code/implementation → delegue a `@dev-agent`
 - Avant chaque PR → delegue a `@reviewer-agent` (blind audit obligatoire)
 - Validation types/build/tests → delegue a `@verify-agent`
-- Deploiement (uniquement apres review PASS) → delegue a `@ops-agent`
+- Push + PR + merge → delegue a `@ops-agent`
 - Documentation technique → delegue a `@writer-agent`
 - Contenu marketing/positionnement → delegue a `@market-agent`
 
@@ -246,6 +194,7 @@ Le reviewer lit le rapport, pas le chat. Le ops-agent lit le verdict PASS, pas l
 | Dependances packages | `docs/current/DEPENDANCES-PACKAGES.md`         |
 | Pages back-office    | `docs/current/INDEX-PAGES-BACK-OFFICE.md`      |
 | Standards responsive | `CLAUDE.md` section STANDARDS RESPONSIVE       |
+| Workflow git/PR      | `.claude/rules/workflow.md`                    |
 
 INTERDIT de deviner une structure DB, composant ou dependance. TOUJOURS lire la doc.
 Apres chaque migration SQL : `python3 scripts/generate-docs.py --db`
@@ -254,13 +203,34 @@ Apres chaque migration SQL : `python3 scripts/generate-docs.py --db`
 
 - Zero `any` TypeScript — `unknown` + Zod
 - JAMAIS modifier les routes API existantes (Qonto, adresses, emails, webhooks)
-- JAMAIS modifier les triggers stock (`rules/stock-triggers-protected.md`)
+- JAMAIS modifier les triggers stock (`.claude/rules/stock-triggers-protected.md`)
 - JAMAIS lancer `pnpm dev` / `pnpm start`
-- JAMAIS commit/push sans ordre de Romeo
+- JAMAIS merger vers main sans ordre explicite de Romeo
+- JAMAIS creer UNE PR PAR SPRINT (regrouper en blocs coherents)
 - JAMAIS deviner une structure → lire la doc
 - JAMAIS creer de formulaire dans `apps/` → toujours dans `packages/@verone/`
 - Fichier > 400 lignes = refactoring obligatoire
 - JAMAIS de composant UI sans respecter les 5 techniques responsive
+
+## AUTORISATIONS (MODIFIE 2026-04-18)
+
+Les actions suivantes **NE NECESSITENT PLUS** d'ordre explicite de Romeo 
+(pour fluidifier le workflow) :
+
+- Commit sur une feature branch
+- Push sur une feature branch
+- Rebase sur staging
+- Creation de branche feature depuis staging
+
+Ces actions **NECESSITENT TOUJOURS** un ordre explicite :
+
+- Merge vers staging
+- Merge vers main
+- Creation de PR (sauf si bloc coherent fini et critères remplis)
+- Force push
+- Reset / Revert de commits deja mergés
+- Migration DB
+- Modification de fichiers `.claude/` ou `CLAUDE.md`
 
 ## MEMOIRE SCEPTIQUE
 

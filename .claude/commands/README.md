@@ -29,12 +29,13 @@ Dis simplement ce que tu veux faire. Claude lit ACTIVE.md et choisit le bon work
 
 ## Commandes disponibles
 
-| Commande            | Usage                      |
-| ------------------- | -------------------------- |
-| `/search <domaine>` | Explorer DB + code + RLS   |
-| `/review <app>`     | Audit qualite code         |
-| `/pr`               | Commit + push + PR staging |
-| `/status`           | Resume etat projet         |
+| Commande            | Usage                                           |
+| ------------------- | ----------------------------------------------- |
+| `/search <domaine>` | Explorer DB + code + RLS                        |
+| `/review <app>`     | Audit qualite code                              |
+| `/pr`               | Commit + push + PR staging                      |
+| `/status`           | Resume etat projet                              |
+| `/fix-warnings`     | Workflow 6 phases pour corriger warnings ESLint |
 
 ## Skills disponibles
 

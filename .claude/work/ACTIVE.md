@@ -12,84 +12,57 @@
 
 # ⭐ PRIORITE IMMEDIATE — Sprints Responsive (2026-04-18)
 
-**Infrastructure responsive posee manuellement par Romeo la nuit du 18/04.**
-Voir `docs/current/RESPONSIVE-SETUP-RECAP.md` pour la liste complete.
+**Infrastructure responsive senior posee manuellement par Romeo la nuit du 18/04.**
+Voir `docs/current/RESPONSIVE-SETUP-RECAP.md`.
 
-### [BO-UI-RESP-001] Infrastructure responsive + validation build
+### [BO-UI-RESP-001] Infrastructure responsive ✅ FAIT
 
-**Priorite** : URGENT (premier sprint a faire)
-**Status** : infrastructure creee en local, a committer + tester + merger
-**Branche** : a creer `feat/BO-UI-RESP-001-infrastructure`
+**Status** : MERGED PR #649 (2026-04-18)
+**Commit** : `694766f49`
 
-**Fichiers ajoutes** :
-- `CLAUDE.md` (racine) + section STANDARDS RESPONSIVE
-- `.claude/rules/responsive.md`
-- `apps/back-office/CLAUDE.md` (nouveau)
-- `apps/linkme/CLAUDE.md` (nouveau)
-- `apps/site-internet/CLAUDE.md` (nouveau)
-- `docs/current/GUIDE-RESPONSIVE.md`
-- `docs/current/RESPONSIVE-SETUP-RECAP.md`
-- `.claude/templates/sprint-responsive-template.md`
-- `.claude/scripts/check-responsive-violations.sh`
-- `.claude/agents/reviewer-agent.md` (mis a jour, Axe 4)
-- `.claude/agents/dev-agent.md` (mis a jour)
-- `packages/@verone/hooks/src/use-breakpoint.ts` (hook)
-- `packages/@verone/hooks/src/index.ts` (exports)
-- `packages/@verone/ui/src/components/ui/responsive-action-menu.tsx`
-- `packages/@verone/ui/src/components/ui/responsive-data-view.tsx`
-- `packages/@verone/ui/src/components/ui/responsive-toolbar.tsx`
-- `packages/@verone/ui/src/components/ui/index.ts` (exports)
-- `tests/fixtures/responsive.ts`
+### [BO-UI-RESP-002] Audit global responsive ✅ FAIT
 
-**Actions agent** :
-- [ ] `pnpm install` (si besoin)
-- [ ] `pnpm --filter @verone/hooks build` PASS
-- [ ] `pnpm --filter @verone/ui build` PASS
-- [ ] `pnpm --filter @verone/back-office type-check` PASS
-- [ ] `pnpm --filter @verone/linkme type-check` PASS
-- [ ] `pnpm --filter @verone/site-internet type-check` PASS
-- [ ] `chmod +x .claude/scripts/check-responsive-violations.sh`
-- [ ] Commit + PR staging + merge squash
-- [ ] ZERO modification de page existante dans ce sprint
+**Status** : MERGED PR #650 (2026-04-18)
+**Commit** : `374fa1b9b`
+**Livrable** : `docs/scratchpad/audit-responsive-global-2026-04-19.md` (196 pages auditees)
 
-### [BO-UI-RESP-002] Audit global responsive des 3 apps
+### [BO-UI-RESP-LISTS] Migration responsive Patterns A + B (87 pages)
 
-**Priorite** : HAUTE (apres merge de 001)
-**Status** : a planifier
+**Priorite** : EN COURS
+**Branche** : `feat/responsive-lists`
+**Scope** : 87 pages (64 Pattern A + 23 Pattern B)
 
-**Mission** : audit exhaustif des 147+ pages (back-office) + LinkMe + site-internet.
+**Commits prevus (push apres chaque, PR UNIQUE a la fin)** :
+- Commit 1 : Pattern A critique BO (35 pages P1 : factures, finance, stocks, commandes)
+- Commit 2 : Pattern A secondaire BO (15 pages P2 : produits/contacts)
+- Commit 3 : Pattern B filtres BO (19 pages : catalogues + recherches)
+- Commit 4 : Patterns A+B linkme (13 pages)
 
-**Livrable** : `docs/scratchpad/audit-responsive-global-2026-04-19.md` avec :
-- Classification de chaque page par pattern (A/B/C/D/E/F)
-- Colonnes a masquer par breakpoint
-- Actions a mettre en dropdown
-- Effort estime (S/M/L)
-- Priorite (1-3)
-- Plan de decoupage en sprints 003-009
+**Composants obligatoires** :
+- `ResponsiveDataView` (@verone/ui) pour listes
+- `ResponsiveActionMenu` (@verone/ui) pour actions CRUD
+- `ResponsiveToolbar` (@verone/ui) pour headers
+- Classes `hidden lg:/xl:/2xl:table-cell` pour colonnes masquables
 
-**INTERDICTIONS** : zero code modifie. Audit + plan uniquement.
+**Tests** : Playwright 5 tailles (375/768/1024/1440/1920) sur echantillon 10 pages.
 
-### [BO-UI-RESP-003] a [BO-UI-RESP-009] Migration progressive
+### [BO-UI-RESP-DETAILS] Migration responsive Patterns C + D (73 pages) — ensuite
 
-Sprints de migration par pattern, 1 sprint = 1 PR = 5-15 pages similaires.
+**Priorite** : a lancer apres merge LISTS
+**Branche** : `feat/responsive-details`
+**Scope** : 73 pages (35 Pattern C + 38 Pattern D)
 
-**Planning prevu apres audit** :
-- 003 : Pattern A pages critiques (factures, commandes, stocks)
-- 004 : Pattern A pages secondaires
-- 005 : Pattern B (listes + filtres)
-- 006 : Pattern C (pages detail)
-- 007 : Pattern D (dashboards)
-- 008 : Pattern E + F (modals + forms)
-- 009 : Couverture LinkMe + site-internet
+### [BO-UI-RESP-FORMS-APPS] Migration responsive Patterns E + F + apps (36 pages) — ensuite
 
-Chaque sprint :
-- Copie `.claude/templates/sprint-responsive-template.md`
-- Applique les 3 composants standards (ResponsiveDataView, ResponsiveActionMenu, ResponsiveToolbar)
-- Tests Playwright 5 tailles obligatoires
-- Screenshots joints en PR
-- Reviewer-agent verifie les 5 techniques (Axe 4)
+**Priorite** : a lancer apres merge DETAILS
+**Branche** : `feat/responsive-forms-apps`
+**Scope** : 36 pages (10 E + 19 F + 17 site-internet + 7 wizard linkme)
 
-Estimation totale : 8-10 jours de travail pour migration complete.
+---
+
+**Plan revise** (suite a `.claude/rules/workflow.md`) : 7 sprints regroupes en **3 PRs thematiques**. Gain : overhead CI/review divise par 2.5.
+
+Estimation totale migration : 8-10 jours.
 
 ---
 

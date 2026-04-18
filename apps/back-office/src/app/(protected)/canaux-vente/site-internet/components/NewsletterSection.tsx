@@ -91,18 +91,20 @@ export function NewsletterSection() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Email</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Inscrit le</TableHead>
+                  <TableHead className="hidden lg:table-cell">Source</TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    Inscrit le
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {subscribers.map(sub => (
                   <TableRow key={sub.id}>
                     <TableCell className="font-medium">{sub.email}</TableCell>
-                    <TableCell className="text-sm text-gray-500">
+                    <TableCell className="hidden lg:table-cell text-sm text-gray-500">
                       {sub.source ?? 'site-internet'}
                     </TableCell>
-                    <TableCell className="text-sm text-gray-500">
+                    <TableCell className="hidden lg:table-cell text-sm text-gray-500">
                       {sub.subscribed_at
                         ? format(new Date(sub.subscribed_at), 'dd MMM yyyy', {
                             locale: fr,

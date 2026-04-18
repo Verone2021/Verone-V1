@@ -100,7 +100,7 @@ function PromoTableRow({
           )}
         </div>
       </TableCell>
-      <TableCell>{promo.name}</TableCell>
+      <TableCell className="hidden lg:table-cell">{promo.name}</TableCell>
       <TableCell>
         <div className="flex items-center gap-1">
           {promo.discount_type === 'free_shipping' ? (
@@ -121,11 +121,11 @@ function PromoTableRow({
           )}
         </div>
       </TableCell>
-      <TableCell className="text-sm text-muted-foreground">
+      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
         {new Date(promo.valid_from).toLocaleDateString('fr-FR')} →{' '}
         {new Date(promo.valid_until).toLocaleDateString('fr-FR')}
       </TableCell>
-      <TableCell>
+      <TableCell className="hidden xl:table-cell">
         {promo.current_uses}
         {promo.max_uses_total ? ` / ${promo.max_uses_total}` : ''}
       </TableCell>
@@ -225,10 +225,12 @@ export function PromoTable({
             <TableHeader>
               <TableRow>
                 <TableHead>Code</TableHead>
-                <TableHead>Nom</TableHead>
+                <TableHead className="hidden lg:table-cell">Nom</TableHead>
                 <TableHead>Réduction</TableHead>
-                <TableHead>Validité</TableHead>
-                <TableHead>Utilisations</TableHead>
+                <TableHead className="hidden lg:table-cell">Validité</TableHead>
+                <TableHead className="hidden xl:table-cell">
+                  Utilisations
+                </TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>

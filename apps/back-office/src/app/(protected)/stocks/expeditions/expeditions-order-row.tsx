@@ -223,12 +223,12 @@ function OrderMainRow({
               : 'Partielle'}
         </Badge>
       </TableCell>
-      <TableCell>
+      <TableCell className="hidden lg:table-cell">
         {order.expected_delivery_date
           ? formatDate(order.expected_delivery_date)
           : 'Non définie'}
       </TableCell>
-      <TableCell>
+      <TableCell className="hidden xl:table-cell">
         <ProgressCell
           percent={progressPercent}
           isPacklinkPending={isPacklinkPending}

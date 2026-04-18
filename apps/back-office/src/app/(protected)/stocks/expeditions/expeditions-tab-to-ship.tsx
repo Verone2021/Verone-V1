@@ -146,8 +146,10 @@ function ToShipTableContent({
             <TableHead>N° Commande</TableHead>
             <TableHead>Client</TableHead>
             <TableHead>Statut</TableHead>
-            <TableHead>Date livraison</TableHead>
-            <TableHead>Progression</TableHead>
+            <TableHead className="hidden lg:table-cell">
+              Date livraison
+            </TableHead>
+            <TableHead className="hidden xl:table-cell">Progression</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>

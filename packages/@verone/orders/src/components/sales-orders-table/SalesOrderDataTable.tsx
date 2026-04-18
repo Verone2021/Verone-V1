@@ -134,7 +134,7 @@ export function SalesOrderDataTable({
         ) : (
           <div className="overflow-x-auto -mx-6">
             <div className="px-6">
-              <Table className="w-auto [&_th]:px-2.5 [&_td]:px-2.5">
+              <Table className="w-full [&_th]:px-2.5 [&_td]:px-2.5">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10" />
@@ -165,18 +165,18 @@ export function SalesOrderDataTable({
                       <TableHead>Client</TableHead>
                     )}
                     <TableHead className="whitespace-nowrap">Statut</TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="hidden xl:table-cell whitespace-nowrap">
                       Paiement
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="hidden 2xl:table-cell whitespace-nowrap">
                       Expedition
                     </TableHead>
-                    <TableHead className="whitespace-nowrap text-center">
+                    <TableHead className="hidden lg:table-cell whitespace-nowrap text-center">
                       Art.
                     </TableHead>
                     {sortableColumns?.date !== false ? (
                       <TableHead
-                        className="cursor-pointer hover:bg-gray-50 whitespace-nowrap"
+                        className="hidden lg:table-cell cursor-pointer hover:bg-gray-50 whitespace-nowrap"
                         onClick={() => onSort('date')}
                       >
                         <span className="inline-flex items-center gap-1">
@@ -184,12 +184,14 @@ export function SalesOrderDataTable({
                         </span>
                       </TableHead>
                     ) : (
-                      <TableHead className="whitespace-nowrap">
+                      <TableHead className="hidden lg:table-cell whitespace-nowrap">
                         Date commande
                       </TableHead>
                     )}
                     {showChannelColumn && (
-                      <TableHead className="whitespace-nowrap">Canal</TableHead>
+                      <TableHead className="hidden xl:table-cell whitespace-nowrap">
+                        Canal
+                      </TableHead>
                     )}
                     {additionalColumns.map(col => (
                       <TableHead key={col.key}>{col.header}</TableHead>

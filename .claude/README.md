@@ -1,6 +1,6 @@
 # Configuration Claude Code — Verone Back Office
 
-**Version** : 15.0.0 | **Date** : 2026-04-15
+**Derniere mise a jour** : 2026-04-19
 
 ## Architecture
 
@@ -9,12 +9,12 @@
 ├── settings.json          # Permissions + hooks (14 PreToolUse, 2 PostToolUse)
 ├── INDEX.md               # Sommaire centralise
 ├── agents/                # 6 agents (dev, reviewer, verify, ops, writer, market)
-├── commands/              # 5 commands (search, review, pr, status, README)
+├── commands/              # 5 commands (search, review, pr, status) + README
 ├── skills/                # 3 skills (oneshot, new-component, schema-sync)
-├── rules/                 # 5 rules (database, workflow, code-standards, playwright, stock-triggers)
-├── scripts/               # 6 scripts hooks actifs
-├── hooks/                 # 2 hook scripts
-├── work/ACTIVE.md         # Taches en cours
+├── rules/                 # 7 rules (database, workflow, code-standards, playwright, stock-triggers, finance, responsive)
+├── scripts/               # 8 scripts (sync, checks, cleanup, validate)
+├── hooks/                 # 2 hooks scripts
+├── work/                  # Sprints, entry points, prompts a enchainer
 └── test-credentials.md    # Credentials Playwright (local only)
 ```
 

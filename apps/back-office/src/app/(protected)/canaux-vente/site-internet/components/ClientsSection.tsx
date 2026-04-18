@@ -154,8 +154,12 @@ export function ClientsSection() {
                   <TableRow>
                     <TableHead>Client</TableHead>
                     <TableHead>Contact</TableHead>
-                    <TableHead>Localisation</TableHead>
-                    <TableHead>Inscrit le</TableHead>
+                    <TableHead className="hidden lg:table-cell">
+                      Localisation
+                    </TableHead>
+                    <TableHead className="hidden xl:table-cell">
+                      Inscrit le
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -184,7 +188,7 @@ export function ClientsSection() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         {(customer.city ?? customer.postal_code) && (
                           <div className="flex items-center gap-1.5 text-sm text-gray-600">
                             <MapPin className="h-3.5 w-3.5" />
@@ -194,7 +198,7 @@ export function ClientsSection() {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="text-sm text-gray-500">
+                      <TableCell className="hidden xl:table-cell text-sm text-gray-500">
                         {customer.created_at
                           ? format(
                               new Date(customer.created_at),

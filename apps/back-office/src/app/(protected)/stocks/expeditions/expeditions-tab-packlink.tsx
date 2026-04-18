@@ -91,7 +91,7 @@ function PacklinkShipmentRow({ shipment, onCancel }: PacklinkShipmentRowProps) {
         {shipment.order_number}
       </TableCell>
       <TableCell>{shipment.customer_name}</TableCell>
-      <TableCell>
+      <TableCell className="hidden lg:table-cell">
         <div className="space-y-0.5">
           {shipment.items.map((item, idx) => (
             <div key={idx} className="text-sm">
@@ -103,7 +103,7 @@ function PacklinkShipmentRow({ shipment, onCancel }: PacklinkShipmentRowProps) {
           ))}
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className="hidden lg:table-cell">
         <div>
           <p className="font-medium text-sm">{shipment.carrier_name ?? '-'}</p>
           {shipment.carrier_service && (
@@ -113,7 +113,7 @@ function PacklinkShipmentRow({ shipment, onCancel }: PacklinkShipmentRowProps) {
           )}
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className="hidden xl:table-cell">
         {shipment.shipping_cost != null
           ? formatCurrency(shipment.shipping_cost)
           : '-'}
@@ -125,7 +125,7 @@ function PacklinkShipmentRow({ shipment, onCancel }: PacklinkShipmentRowProps) {
           {getPacklinkStatusLabel(shipment.packlink_status)}
         </Badge>
       </TableCell>
-      <TableCell>
+      <TableCell className="hidden 2xl:table-cell">
         {shipment.tracking_number ? (
           <div>
             {shipment.tracking_url ? (
@@ -184,11 +184,19 @@ export function PacklinkTab({ packlinkShipments, onCancel }: PacklinkTabProps) {
                   <TableRow>
                     <TableHead>Commande</TableHead>
                     <TableHead>Client</TableHead>
-                    <TableHead>Articles</TableHead>
-                    <TableHead>Transporteur</TableHead>
-                    <TableHead>Coût transport</TableHead>
+                    <TableHead className="hidden lg:table-cell">
+                      Articles
+                    </TableHead>
+                    <TableHead className="hidden lg:table-cell">
+                      Transporteur
+                    </TableHead>
+                    <TableHead className="hidden xl:table-cell">
+                      Coût transport
+                    </TableHead>
                     <TableHead>Statut transport</TableHead>
-                    <TableHead>Suivi</TableHead>
+                    <TableHead className="hidden 2xl:table-cell">
+                      Suivi
+                    </TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
