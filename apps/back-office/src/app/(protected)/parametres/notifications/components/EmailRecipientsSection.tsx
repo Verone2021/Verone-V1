@@ -38,7 +38,7 @@ export function EmailRecipientsSection({
       </div>
 
       <div className="px-6 py-4 border-b border-gray-100">
-        <form onSubmit={onAddEmail} className="flex gap-3">
+        <form onSubmit={onAddEmail} className="flex flex-col sm:flex-row gap-3">
           <input
             type="email"
             value={newEmail}
@@ -53,6 +53,7 @@ export function EmailRecipientsSection({
             icon={Plus}
             iconPosition="left"
             disabled={saving}
+            className="w-full sm:w-auto"
           >
             Ajouter
           </ButtonUnified>
@@ -87,7 +88,7 @@ export function EmailRecipientsSection({
               <button
                 onClick={() => onRemoveEmail(email)}
                 disabled={saving}
-                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                className="p-2 md:p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors h-11 w-11 md:h-9 md:w-9 flex items-center justify-center"
               >
                 <Trash2 className="h-4 w-4" />
               </button>

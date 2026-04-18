@@ -20,8 +20,8 @@ export default function NouvelleCommandePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header avec breadcrumb */}
-      <div className="bg-white border-b px-6 py-4">
-        <div className="flex items-center justify-between">
+      <div className="bg-white border-b px-4 sm:px-6 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             {/* Breadcrumb */}
             <nav className="flex items-center gap-2 text-sm text-gray-500 mb-2">
@@ -37,10 +37,10 @@ export default function NouvelleCommandePage() {
               </span>
             </nav>
 
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
               Créer une nouvelle commande
             </h1>
-            <p className="text-gray-500 mt-1">
+            <p className="text-gray-500 mt-1 text-sm">
               Suivez les étapes pour créer votre commande
             </p>
           </div>
@@ -48,7 +48,7 @@ export default function NouvelleCommandePage() {
           {/* Bouton retour */}
           <Link
             href="/commandes"
-            className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors text-sm self-start sm:self-auto"
           >
             <ArrowLeft className="h-4 w-4" />
             Retour aux commandes

@@ -58,7 +58,7 @@ export function PricingConfigModal({
         if (!isOpen) onClose();
       }}
     >
-      <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-lg md:max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Configurer les prix LinkMe</DialogTitle>
           <p className="text-sm text-muted-foreground">
@@ -80,7 +80,7 @@ export function PricingConfigModal({
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label htmlFor={`price-${product.id}`}>
                       Prix de vente HT *
@@ -145,11 +145,16 @@ export function PricingConfigModal({
           ))}
         </div>
 
-        <div className="flex justify-end gap-2 pt-2">
-          <ButtonV2 variant="outline" onClick={onCancel}>
+        <div className="flex flex-col gap-2 md:flex-row md:justify-end pt-2">
+          <ButtonV2
+            variant="outline"
+            onClick={onCancel}
+            className="w-full md:w-auto"
+          >
             Annuler
           </ButtonV2>
           <ButtonV2
+            className="w-full md:w-auto"
             disabled={!allPricesValid || addProductsMutation.isPending}
             onClick={() => {
               void onConfirm().catch((error: unknown) => {

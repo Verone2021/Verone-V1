@@ -71,8 +71,12 @@ export function SupplierOrdersTable({
                   <TableHead>N° Commande</TableHead>
                   <TableHead>Fournisseur</TableHead>
                   <TableHead>Statut</TableHead>
-                  <TableHead>Date livraison</TableHead>
-                  <TableHead>Progression</TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    Date livraison
+                  </TableHead>
+                  <TableHead className="hidden xl:table-cell">
+                    Progression
+                  </TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -161,12 +165,12 @@ export function SupplierOrdersTable({
                               : 'Partielle'}
                           </Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           {order.expected_delivery_date
                             ? formatDate(order.expected_delivery_date)
                             : 'Non définie'}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden xl:table-cell">
                           <div className="flex items-center gap-2">
                             <div className="flex-1 bg-gray-200 rounded-full h-2">
                               <div

@@ -177,7 +177,7 @@ export function ShippingConfigCard({
             />
           </div>
           {form.standard_enabled && (
-            <div className="grid grid-cols-2 gap-4 pl-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-1">
               <div className="col-span-2 space-y-2">
                 <Label htmlFor="standard-label">Libellé</Label>
                 <Input
@@ -259,7 +259,7 @@ export function ShippingConfigCard({
             />
           </div>
           {form.express_enabled && (
-            <div className="grid grid-cols-2 gap-4 pl-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-1">
               <div className="col-span-2 space-y-2">
                 <Label htmlFor="express-label">Libellé</Label>
                 <Input
@@ -344,7 +344,7 @@ export function ShippingConfigCard({
             />
           </div>
           {form.free_shipping_enabled && (
-            <div className="grid grid-cols-2 gap-4 pl-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-1">
               <div className="space-y-2">
                 <Label htmlFor="free-threshold">Seuil (euros)</Label>
                 <Input

@@ -195,7 +195,7 @@ export function PaymentRecordModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-[500px] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Enregistrer un paiement</DialogTitle>
           <DialogDescription>
@@ -203,120 +203,125 @@ export function PaymentRecordModal({
           </DialogDescription>
         </DialogHeader>
 
-        {status === 'success' ? (
-          <div className="flex flex-col items-center justify-center py-8 gap-4">
-            <CheckCircle2 className="h-16 w-16 text-green-500" />
-            <p className="text-lg font-medium">Paiement enregistré</p>
-          </div>
-        ) : (
-          <div className="space-y-4 py-4">
-            {/* Amount */}
-            <div className="space-y-2">
-              <Label htmlFor="amount">Montant</Label>
-              <div className="relative">
+        <div className="flex-1 overflow-y-auto">
+          {status === 'success' ? (
+            <div className="flex flex-col items-center justify-center py-8 gap-4">
+              <CheckCircle2 className="h-16 w-16 text-green-500" />
+              <p className="text-lg font-medium">Paiement enregistré</p>
+            </div>
+          ) : (
+            <div className="space-y-4 py-4">
+              {/* Amount */}
+              <div className="space-y-2">
+                <Label htmlFor="amount">Montant</Label>
+                <div className="relative">
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max={totalAmount}
+                    value={amount}
+                    onChange={e => setAmount(e.target.value)}
+                    className="pr-12"
+                    disabled={status === 'recording'}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                    {currency}
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Total facture : {formatAmount(totalAmount, currency)}
+                </p>
+                {isPartialPayment && (
+                  <p className="text-sm text-amber-600">
+                    Paiement partiel - Reste à payer :{' '}
+                    {formatAmount(remainingAmount, currency)}
+                  </p>
+                )}
+              </div>
+
+              {/* Payment Date */}
+              <div className="space-y-2">
+                <Label htmlFor="payment-date">Date du paiement</Label>
                 <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max={totalAmount}
-                  value={amount}
-                  onChange={e => setAmount(e.target.value)}
-                  className="pr-12"
+                  id="payment-date"
+                  type="date"
+                  value={paymentDate}
+                  onChange={e => setPaymentDate(e.target.value)}
                   disabled={status === 'recording'}
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                  {currency}
-                </span>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Total facture : {formatAmount(totalAmount, currency)}
-              </p>
-              {isPartialPayment && (
-                <p className="text-sm text-amber-600">
-                  Paiement partiel - Reste à payer :{' '}
-                  {formatAmount(remainingAmount, currency)}
-                </p>
-              )}
-            </div>
 
-            {/* Payment Date */}
-            <div className="space-y-2">
-              <Label htmlFor="payment-date">Date du paiement</Label>
-              <Input
-                id="payment-date"
-                type="date"
-                value={paymentDate}
-                onChange={e => setPaymentDate(e.target.value)}
-                disabled={status === 'recording'}
-              />
-            </div>
+              {/* Payment Method */}
+              <div className="space-y-2">
+                <Label htmlFor="payment-method">Méthode de paiement</Label>
+                <Select
+                  value={paymentMethod}
+                  onValueChange={value =>
+                    setPaymentMethod(value as PaymentMethod)
+                  }
+                  disabled={status === 'recording'}
+                >
+                  <SelectTrigger id="payment-method">
+                    <SelectValue placeholder="Sélectionner une méthode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_METHODS.map(method => (
+                      <SelectItem key={method.value} value={method.value}>
+                        {method.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Payment Method */}
-            <div className="space-y-2">
-              <Label htmlFor="payment-method">Méthode de paiement</Label>
-              <Select
-                value={paymentMethod}
-                onValueChange={value =>
-                  setPaymentMethod(value as PaymentMethod)
-                }
-                disabled={status === 'recording'}
-              >
-                <SelectTrigger id="payment-method">
-                  <SelectValue placeholder="Sélectionner une méthode" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PAYMENT_METHODS.map(method => (
-                    <SelectItem key={method.value} value={method.value}>
-                      {method.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              {/* Reference (optional) */}
+              <div className="space-y-2">
+                <Label htmlFor="reference">
+                  Référence{' '}
+                  <span className="text-muted-foreground">(optionnel)</span>
+                </Label>
+                <Input
+                  id="reference"
+                  placeholder="N° de chèque, référence virement..."
+                  value={reference}
+                  onChange={e => setReference(e.target.value)}
+                  disabled={status === 'recording'}
+                />
+              </div>
 
-            {/* Reference (optional) */}
-            <div className="space-y-2">
-              <Label htmlFor="reference">
-                Référence{' '}
-                <span className="text-muted-foreground">(optionnel)</span>
-              </Label>
-              <Input
-                id="reference"
-                placeholder="N° de chèque, référence virement..."
-                value={reference}
-                onChange={e => setReference(e.target.value)}
-                disabled={status === 'recording'}
-              />
+              {/* Notes (optional) */}
+              <div className="space-y-2">
+                <Label htmlFor="notes">
+                  Notes{' '}
+                  <span className="text-muted-foreground">(optionnel)</span>
+                </Label>
+                <Input
+                  id="notes"
+                  placeholder="Notes internes..."
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                  disabled={status === 'recording'}
+                />
+              </div>
             </div>
+          )}
+        </div>
 
-            {/* Notes (optional) */}
-            <div className="space-y-2">
-              <Label htmlFor="notes">
-                Notes <span className="text-muted-foreground">(optionnel)</span>
-              </Label>
-              <Input
-                id="notes"
-                placeholder="Notes internes..."
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-                disabled={status === 'recording'}
-              />
-            </div>
-          </div>
-        )}
-
-        <DialogFooter>
+        <DialogFooter className="flex-col gap-2 md:flex-row">
           {status !== 'success' && (
             <>
               <Button
                 variant="outline"
+                className="w-full md:w-auto"
                 onClick={handleClose}
                 disabled={status === 'recording'}
               >
                 Annuler
               </Button>
               <Button
+                className="w-full md:w-auto"
                 onClick={() => void handleRecordPayment()}
                 disabled={status === 'recording'}
               >

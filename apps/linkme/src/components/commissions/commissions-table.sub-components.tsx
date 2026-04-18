@@ -122,20 +122,22 @@ export function CommissionRow({
             )}
           </td>
         )}
-        <td className="px-3 py-2.5 text-xs text-gray-600">{date}</td>
+        <td className="px-3 py-2.5 text-xs text-gray-600 hidden sm:table-cell">
+          {date}
+        </td>
         <td className="px-3 py-2.5 text-xs font-medium text-gray-900">
           #{commission.orderNumber}
         </td>
-        <td className="px-3 py-2.5 text-xs text-gray-600 max-w-[150px] truncate">
+        <td className="px-3 py-2.5 text-xs text-gray-600 max-w-[150px] truncate hidden md:table-cell">
           {commission.customerName ?? commission.selectionName}
         </td>
-        <td className="px-3 py-2.5 text-xs text-gray-600">
+        <td className="px-3 py-2.5 text-xs text-gray-600 hidden lg:table-cell">
           {formatCurrency(commission.orderAmountHT)}
         </td>
-        <td className="px-3 py-2.5 text-xs text-gray-600">
+        <td className="px-3 py-2.5 text-xs text-gray-600 hidden lg:table-cell">
           {formatCurrency(commission.orderAmountTTC)}
         </td>
-        <td className="px-3 py-2.5 text-xs text-gray-600">
+        <td className="px-3 py-2.5 text-xs text-gray-600 hidden sm:table-cell">
           {formatCurrency(commission.totalPayoutHT)}
         </td>
         <td className="px-3 py-2.5 text-xs font-semibold text-emerald-600">
@@ -176,8 +178,18 @@ export function SkeletonRow({
           <div className="h-4 w-4 bg-gray-200 rounded" />
         </td>
       )}
-      {[16, 20, 24, 16, 16, 14, 14].map((w, i) => (
-        <td key={i} className="px-3 py-2.5">
+      {(
+        [
+          { w: 16, cls: 'hidden sm:table-cell' },
+          { w: 20, cls: '' },
+          { w: 24, cls: 'hidden md:table-cell' },
+          { w: 16, cls: 'hidden lg:table-cell' },
+          { w: 16, cls: 'hidden lg:table-cell' },
+          { w: 14, cls: 'hidden sm:table-cell' },
+          { w: 14, cls: '' },
+        ] as { w: number; cls: string }[]
+      ).map(({ w, cls }, i) => (
+        <td key={i} className={`px-3 py-2.5 ${cls}`}>
           <div className={`h-3 bg-gray-200 rounded w-${w}`} />
         </td>
       ))}

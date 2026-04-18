@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Post-merge hook : nettoyage automatique apres merge reussi
+# S'execute apres un git pull ou git merge qui integre des changements distants.
+
+# Verifier qu'on est bien sur staging ou une branche principale (pas sur feature)
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+if [ "$BRANCH" = "staging" ] || [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then
+  CLAUDE_PROJECT_DIR="$(git rev-parse --show-toplevel)"
+  export CLAUDE_PROJECT_DIR
+  
+  if [ -f "$CLAUDE_PROJECT_DIR/.claude/scripts/cleanup-scratchpad.sh" ]; then
+    bash "$CLAUDE_PROJECT_DIR/.claude/scripts/cleanup-scratchpad.sh"
+  fi
+fi

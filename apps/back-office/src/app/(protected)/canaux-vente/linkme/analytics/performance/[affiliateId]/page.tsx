@@ -303,7 +303,7 @@ export default function AffiliatePerformancePage() {
         )}
 
         {/* KPIs */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
             title="Panier moyen"
             value={formatCurrency(data?.averageBasket ?? 0)}
@@ -339,7 +339,7 @@ export default function AffiliatePerformancePage() {
         </div>
 
         {/* Two columns: Top Products + Selections */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Top Products */}
           <Card>
             <CardHeader className="pb-2">

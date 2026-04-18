@@ -232,7 +232,7 @@ export function EditProductVariantModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-3xl md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl font-light">
             <Save className="h-5 w-5 text-blue-600" />
@@ -243,216 +243,223 @@ export function EditProductVariantModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 pt-4">
-          {/* Erreurs de validation */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="flex items-start">
-                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 mr-2 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-red-800">{error}</p>
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col flex-1 overflow-hidden"
+        >
+          <div className="flex-1 overflow-y-auto space-y-6 pt-4">
+            {/* Erreurs de validation */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-start">
+                  <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 mr-2 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-red-800">{error}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Section 1: Informations Héritées du Groupe (Read-Only) */}
-          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-3">
-            <h3 className="text-sm font-semibold text-gray-900 flex items-center">
-              ℹ️ Informations Héritées du Groupe
-              <span className="ml-2 text-xs font-normal text-gray-600">
-                (Non Modifiables)
-              </span>
-            </h3>
-
-            <div className="grid grid-cols-1 gap-2 text-sm">
-              <div className="flex justify-between items-start">
-                <span className="text-gray-600">📦 Nom :</span>
-                <span className="font-medium text-gray-900 text-right">
-                  {previewProductName}
+            {/* Section 1: Informations Héritées du Groupe (Read-Only) */}
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-3">
+              <h3 className="text-sm font-semibold text-gray-900 flex items-center">
+                ℹ️ Informations Héritées du Groupe
+                <span className="ml-2 text-xs font-normal text-gray-600">
+                  (Non Modifiables)
                 </span>
-              </div>
+              </h3>
 
-              <div className="flex justify-between items-start">
-                <span className="text-gray-600">🏷️ SKU :</span>
-                <span className="font-mono text-xs text-gray-700">
-                  {product.sku}
-                </span>
-              </div>
+              <div className="grid grid-cols-1 gap-2 text-sm">
+                <div className="flex justify-between items-start">
+                  <span className="text-gray-600">📦 Nom :</span>
+                  <span className="font-medium text-gray-900 text-right">
+                    {previewProductName}
+                  </span>
+                </div>
 
-              {variantGroup.common_dimensions?.length &&
-                variantGroup.common_dimensions?.width &&
-                variantGroup.common_dimensions?.height && (
+                <div className="flex justify-between items-start">
+                  <span className="text-gray-600">🏷️ SKU :</span>
+                  <span className="font-mono text-xs text-gray-700">
+                    {product.sku}
+                  </span>
+                </div>
+
+                {variantGroup.common_dimensions?.length &&
+                  variantGroup.common_dimensions?.width &&
+                  variantGroup.common_dimensions?.height && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">📐 Dimensions :</span>
+                      <span className="text-gray-900">
+                        {variantGroup.common_dimensions.length} ×{' '}
+                        {variantGroup.common_dimensions.width} ×{' '}
+                        {variantGroup.common_dimensions.height}{' '}
+                        {variantGroup.common_dimensions.unit ?? 'cm'}
+                      </span>
+                    </div>
+                  )}
+
+                {variantGroup.style && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">📐 Dimensions :</span>
+                    <span className="text-gray-600">🎨 Style :</span>
                     <span className="text-gray-900">
-                      {variantGroup.common_dimensions.length} ×{' '}
-                      {variantGroup.common_dimensions.width} ×{' '}
-                      {variantGroup.common_dimensions.height}{' '}
-                      {variantGroup.common_dimensions.unit ?? 'cm'}
+                      {formatStyle(variantGroup.style)}
                     </span>
                   </div>
                 )}
 
-              {variantGroup.style && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">🎨 Style :</span>
-                  <span className="text-gray-900">
-                    {formatStyle(variantGroup.style)}
-                  </span>
-                </div>
-              )}
+                {variantGroup.suitable_rooms &&
+                  variantGroup.suitable_rooms.length > 0 && (
+                    <div className="flex justify-between items-start">
+                      <span className="text-gray-600">🏠 Pièces :</span>
+                      <span className="text-gray-900 text-right">
+                        {variantGroup.suitable_rooms.join(', ')}
+                      </span>
+                    </div>
+                  )}
 
-              {variantGroup.suitable_rooms &&
-                variantGroup.suitable_rooms.length > 0 && (
+                {variantGroup.has_common_supplier && variantGroup.supplier && (
                   <div className="flex justify-between items-start">
-                    <span className="text-gray-600">🏠 Pièces :</span>
-                    <span className="text-gray-900 text-right">
-                      {variantGroup.suitable_rooms.join(', ')}
-                    </span>
-                  </div>
-                )}
-
-              {variantGroup.has_common_supplier && variantGroup.supplier && (
-                <div className="flex justify-between items-start">
-                  <span className="text-gray-600">🏢 Fournisseur :</span>
-                  <span className="text-gray-900 text-right font-medium">
-                    {variantGroup.supplier.name}
-                  </span>
-                </div>
-              )}
-
-              {variantGroup.has_common_weight && variantGroup.common_weight && (
-                <div className="flex justify-between items-start">
-                  <span className="text-gray-600">⚖️ Poids :</span>
-                  <span className="text-gray-900 text-right font-medium">
-                    {variantGroup.common_weight} kg
-                  </span>
-                </div>
-              )}
-
-              {variantGroup.has_common_cost_price &&
-                variantGroup.common_cost_price && (
-                  <div className="flex justify-between items-start">
-                    <span className="text-gray-600">💰 Prix d'achat :</span>
+                    <span className="text-gray-600">🏢 Fournisseur :</span>
                     <span className="text-gray-900 text-right font-medium">
-                      {variantGroup.common_cost_price} €
+                      {variantGroup.supplier.name}
                     </span>
                   </div>
                 )}
-            </div>
 
-            <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
-              💡 Pour modifier ces attributs, éditez le groupe depuis le bouton
-              "Modifier les informations"
-            </p>
-          </div>
+                {variantGroup.has_common_weight &&
+                  variantGroup.common_weight && (
+                    <div className="flex justify-between items-start">
+                      <span className="text-gray-600">⚖️ Poids :</span>
+                      <span className="text-gray-900 text-right font-medium">
+                        {variantGroup.common_weight} kg
+                      </span>
+                    </div>
+                  )}
 
-          {/* Section 2: Attributs Modifiables du Produit */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-gray-900">
-              ✏️ Attributs Spécifiques à ce Produit
-            </h3>
+                {variantGroup.has_common_cost_price &&
+                  variantGroup.common_cost_price && (
+                    <div className="flex justify-between items-start">
+                      <span className="text-gray-600">💰 Prix d'achat :</span>
+                      <span className="text-gray-900 text-right font-medium">
+                        {variantGroup.common_cost_price} €
+                      </span>
+                    </div>
+                  )}
+              </div>
 
-            {/* Attribut de variante - SELECT au lieu d'INPUT */}
-            <div className="space-y-2">
-              <Label htmlFor="variant_value" className="text-sm font-medium">
-                {variantType === 'color' ? '🎨' : '🧵'} {variantTypeLabel}
-                <span className="text-red-500 ml-1">*</span>
-              </Label>
-              <Input
-                id="variant_value"
-                type="text"
-                value={variantValue}
-                onChange={e => setVariantValue(e.target.value)}
-                placeholder={`ex: ${variantType === 'color' ? 'Noir, Blanc Cassé, Gris Anthracite' : 'Chêne Massif, Métal Laqué, Tissu Velours'}`}
-                required
-                className="w-full"
-              />
-              <p className="text-xs text-purple-600">
-                ✨ Vous pouvez créer une nouvelle{' '}
-                {variantTypeLabel.toLowerCase()} en tapant directement
-              </p>
-              <p className="text-xs text-gray-600">
-                ⚠️ Changer cette valeur met à jour automatiquement le nom du
-                produit
+              <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
+                💡 Pour modifier ces attributs, éditez le groupe depuis le
+                bouton "Modifier les informations"
               </p>
             </div>
 
-            {/* Prix coûtant - Éditable SEULEMENT si pas géré par le groupe */}
-            {!variantGroup.has_common_cost_price && (
+            {/* Section 2: Attributs Modifiables du Produit */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-900">
+                ✏️ Attributs Spécifiques à ce Produit
+              </h3>
+
+              {/* Attribut de variante - SELECT au lieu d'INPUT */}
               <div className="space-y-2">
-                <Label htmlFor="cost_price" className="text-sm font-medium">
-                  💰 Prix Coûtant (€) <span className="text-red-500">*</span>
+                <Label htmlFor="variant_value" className="text-sm font-medium">
+                  {variantType === 'color' ? '🎨' : '🧵'} {variantTypeLabel}
+                  <span className="text-red-500 ml-1">*</span>
                 </Label>
                 <Input
-                  id="cost_price"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  value={costPrice}
-                  onChange={e => setCostPrice(parseFloat(e.target.value))}
-                  className="text-sm w-32"
+                  id="variant_value"
+                  type="text"
+                  value={variantValue}
+                  onChange={e => setVariantValue(e.target.value)}
+                  placeholder={`ex: ${variantType === 'color' ? 'Noir, Blanc Cassé, Gris Anthracite' : 'Chêne Massif, Métal Laqué, Tissu Velours'}`}
                   required
+                  className="w-full"
                 />
-              </div>
-            )}
-
-            {/* Poids - Éditable SEULEMENT si pas géré par le groupe */}
-            {!variantGroup.has_common_weight && (
-              <div className="space-y-2">
-                <Label htmlFor="weight" className="text-sm font-medium">
-                  ⚖️ Poids (kg){' '}
-                  <span className="text-gray-500">(optionnel)</span>
-                </Label>
-                <Input
-                  id="weight"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={weight ?? ''}
-                  onChange={e =>
-                    setWeight(
-                      e.target.value ? parseFloat(e.target.value) : null
-                    )
-                  }
-                  placeholder="Ex: 2.5"
-                  className="text-sm w-32"
-                />
+                <p className="text-xs text-purple-600">
+                  ✨ Vous pouvez créer une nouvelle{' '}
+                  {variantTypeLabel.toLowerCase()} en tapant directement
+                </p>
                 <p className="text-xs text-gray-600">
-                  Peut varier selon le matériau/couleur (ex: bois vs plastique)
+                  ⚠️ Changer cette valeur met à jour automatiquement le nom du
+                  produit
                 </p>
               </div>
-            )}
 
-            {/* Fournisseur - Éditable SEULEMENT si pas géré par le groupe */}
-            {!variantGroup.has_common_supplier && (
-              <div className="space-y-2">
-                <Label htmlFor="supplier" className="text-sm font-medium">
-                  🏢 Fournisseur{' '}
-                  <span className="text-gray-500">(optionnel)</span>
-                </Label>
-                <SupplierSelector
-                  selectedSupplierId={supplierId}
-                  onSupplierChange={setSupplierId}
-                  required={false}
-                />
-                <p className="text-xs text-gray-600">
-                  Peut varier selon la couleur/matériau (ex: différents
-                  fournisseurs)
-                </p>
-              </div>
-            )}
+              {/* Prix coûtant - Éditable SEULEMENT si pas géré par le groupe */}
+              {!variantGroup.has_common_cost_price && (
+                <div className="space-y-2">
+                  <Label htmlFor="cost_price" className="text-sm font-medium">
+                    💰 Prix Coûtant (€) <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="cost_price"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    value={costPrice}
+                    onChange={e => setCostPrice(parseFloat(e.target.value))}
+                    className="text-sm w-32"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Poids - Éditable SEULEMENT si pas géré par le groupe */}
+              {!variantGroup.has_common_weight && (
+                <div className="space-y-2">
+                  <Label htmlFor="weight" className="text-sm font-medium">
+                    ⚖️ Poids (kg){' '}
+                    <span className="text-gray-500">(optionnel)</span>
+                  </Label>
+                  <Input
+                    id="weight"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={weight ?? ''}
+                    onChange={e =>
+                      setWeight(
+                        e.target.value ? parseFloat(e.target.value) : null
+                      )
+                    }
+                    placeholder="Ex: 2.5"
+                    className="text-sm w-32"
+                  />
+                  <p className="text-xs text-gray-600">
+                    Peut varier selon le matériau/couleur (ex: bois vs
+                    plastique)
+                  </p>
+                </div>
+              )}
+
+              {/* Fournisseur - Éditable SEULEMENT si pas géré par le groupe */}
+              {!variantGroup.has_common_supplier && (
+                <div className="space-y-2">
+                  <Label htmlFor="supplier" className="text-sm font-medium">
+                    🏢 Fournisseur{' '}
+                    <span className="text-gray-500">(optionnel)</span>
+                  </Label>
+                  <SupplierSelector
+                    selectedSupplierId={supplierId}
+                    onSupplierChange={setSupplierId}
+                    required={false}
+                  />
+                  <p className="text-xs text-gray-600">
+                    Peut varier selon la couleur/matériau (ex: différents
+                    fournisseurs)
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Actions */}
-          <DialogFooter className="gap-2">
+          <DialogFooter className="flex-col gap-2 md:flex-row">
             <ButtonV2
               type="button"
               variant="outline"
               onClick={handleCancel}
               disabled={isSubmitting}
-              className="flex items-center"
+              className="w-full md:w-auto flex items-center"
             >
               <X className="w-4 h-4 mr-2" />
               Annuler
@@ -460,7 +467,7 @@ export function EditProductVariantModal({
             <ButtonV2
               type="submit"
               disabled={isSubmitting}
-              className="bg-black text-white hover:bg-gray-800 flex items-center"
+              className="w-full md:w-auto bg-black text-white hover:bg-gray-800 flex items-center"
             >
               {isSubmitting ? (
                 <>

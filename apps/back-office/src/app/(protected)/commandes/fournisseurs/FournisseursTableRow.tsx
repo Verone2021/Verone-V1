@@ -91,7 +91,7 @@ export function FournisseursTableRow({
           </div>
         </TableCell>
         {/* Colonne Paiement */}
-        <TableCell>
+        <TableCell className="hidden xl:table-cell">
           {(order as PurchaseOrderExtended).payment_status_v2 === 'overpaid' ? (
             <Badge className="text-xs bg-red-100 text-red-800">Surpaye</Badge>
           ) : (order as PurchaseOrderExtended).payment_status_v2 === 'paid' ? (
@@ -108,18 +108,18 @@ export function FournisseursTableRow({
           )}
         </TableCell>
         {/* Colonne Articles */}
-        <TableCell className="text-center whitespace-nowrap">
+        <TableCell className="hidden lg:table-cell text-center whitespace-nowrap">
           <span className="text-xs font-medium">{items.length}</span>
           <span className="text-muted-foreground text-[10px] ml-0.5">ref.</span>
         </TableCell>
-        <TableCell className="whitespace-nowrap">
+        <TableCell className="hidden lg:table-cell whitespace-nowrap">
           <span className="text-xs">
             {order.order_date
               ? formatDate(order.order_date)
               : formatDate(order.created_at)}
           </span>
         </TableCell>
-        <TableCell className="whitespace-nowrap">
+        <TableCell className="hidden 2xl:table-cell whitespace-nowrap">
           <span className="text-xs">
             {['received', 'partially_received'].includes(order.status) &&
             order.received_at ? (

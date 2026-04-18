@@ -77,7 +77,7 @@ export default function ProductDetailPage() {
         onImageClick={() => setShowPhotosModal(true)}
       />
 
-      <div className="max-w-[1800px] mx-auto px-4">
+      <div className="w-full px-4">
         <TabsNavigation
           tabs={tabs}
           defaultTab="general"

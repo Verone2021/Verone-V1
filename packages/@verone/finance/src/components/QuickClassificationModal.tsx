@@ -309,7 +309,7 @@ export function QuickClassificationModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0"
+        className="h-screen md:h-auto max-w-full md:max-w-4xl md:max-h-[90vh] overflow-hidden flex flex-col p-0"
         data-testid="modal-classify-pcg"
       >
         <DialogHeader

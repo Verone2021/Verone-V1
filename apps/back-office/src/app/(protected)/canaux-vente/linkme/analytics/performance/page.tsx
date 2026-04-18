@@ -295,7 +295,7 @@ export default function PerformancePage() {
         )}
 
         {/* KPIs */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <KpiCard
             title="Panier moyen"
             value={formatCurrency(data?.averageBasket ?? 0)}

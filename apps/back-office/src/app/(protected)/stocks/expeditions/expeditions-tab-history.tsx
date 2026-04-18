@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { ProductThumbnail } from '@verone/products';
-import { Badge, ButtonV2 } from '@verone/ui';
+import { Badge, ButtonV2, ResponsiveDataView } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -38,6 +38,7 @@ import {
   Eye,
 } from 'lucide-react';
 
+import { HistoryMobileCard } from './expeditions-history-mobile-card';
 import type {
   SalesOrder,
   SalesOrderItem,
@@ -146,13 +147,15 @@ function HistoryRow({
             {order.status === 'shipped' ? 'Expédiée' : 'Livrée'}
           </Badge>
         </TableCell>
-        <TableCell>
+        <TableCell className="hidden lg:table-cell">
           {order.shipped_at ? formatDate(order.shipped_at) : '-'}
         </TableCell>
-        <TableCell>
+        <TableCell className="hidden lg:table-cell">
           {order.delivered_at ? formatDate(order.delivered_at) : '-'}
         </TableCell>
-        <TableCell>{totalItems} unité(s)</TableCell>
+        <TableCell className="hidden xl:table-cell">
+          {totalItems} unité(s)
+        </TableCell>
         <TableCell>
           <ButtonV2
             variant="outline"
@@ -244,6 +247,13 @@ interface HistoryTableProps {
   onViewHistory: (order: SalesOrder) => void;
 }
 
+const HistoryEmptyState = (
+  <div className="text-center py-8">
+    <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+    <p className="text-gray-500">Aucune expédition dans l&apos;historique</p>
+  </div>
+);
+
 function HistoryOrdersTable({
   historyOrders,
   loading,
@@ -252,54 +262,57 @@ function HistoryOrdersTable({
   onToggleRow,
   onViewHistory,
 }: HistoryTableProps) {
-  if (loading) {
-    return (
-      <div className="flex justify-center py-8">
-        <div className="text-gray-500">Chargement...</div>
-      </div>
-    );
-  }
   if (error) {
     return <div className="text-center py-8 text-red-600">Erreur: {error}</div>;
   }
-  if (historyOrders.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        <p className="text-gray-500">
-          Aucune expédition dans l&apos;historique
-        </p>
-      </div>
-    );
-  }
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-8" />
-            <TableHead>N° Commande</TableHead>
-            <TableHead>Client</TableHead>
-            <TableHead>Statut</TableHead>
-            <TableHead>Date expédition</TableHead>
-            <TableHead>Date livraison</TableHead>
-            <TableHead>Quantité totale</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {historyOrders.map((order: SalesOrder) => (
-            <HistoryRow
-              key={order.id}
-              order={order}
-              isExpanded={expandedHistoryRows.has(order.id)}
-              onToggle={onToggleRow}
-              onViewHistory={onViewHistory}
-            />
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+    <ResponsiveDataView<SalesOrder>
+      data={historyOrders}
+      loading={loading}
+      emptyMessage={HistoryEmptyState}
+      renderTable={items => (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-8" />
+              <TableHead>N° Commande</TableHead>
+              <TableHead>Client</TableHead>
+              <TableHead>Statut</TableHead>
+              <TableHead className="hidden lg:table-cell">
+                Date expédition
+              </TableHead>
+              <TableHead className="hidden lg:table-cell">
+                Date livraison
+              </TableHead>
+              <TableHead className="hidden xl:table-cell">
+                Quantité totale
+              </TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items.map((order: SalesOrder) => (
+              <HistoryRow
+                key={order.id}
+                order={order}
+                isExpanded={expandedHistoryRows.has(order.id)}
+                onToggle={onToggleRow}
+                onViewHistory={onViewHistory}
+              />
+            ))}
+          </TableBody>
+        </Table>
+      )}
+      renderCard={(order: SalesOrder) => (
+        <HistoryMobileCard
+          key={order.id}
+          order={order}
+          isExpanded={expandedHistoryRows.has(order.id)}
+          onToggle={onToggleRow}
+          onViewHistory={onViewHistory}
+        />
+      )}
+    />
   );
 }
 

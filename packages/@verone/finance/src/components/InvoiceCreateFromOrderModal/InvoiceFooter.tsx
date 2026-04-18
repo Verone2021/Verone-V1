@@ -67,11 +67,16 @@ export function InvoiceFooter({
               </div>
             </div>
           )}
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose}>
+          <div className="flex flex-col gap-2 md:flex-row md:justify-end">
+            <Button
+              variant="outline"
+              className="w-full md:w-auto"
+              onClick={onClose}
+            >
               Annuler
             </Button>
             <Button
+              className="w-full md:w-auto"
               onClick={onCreateInvoice}
               disabled={status === 'creating' || isMissingSiret}
             >

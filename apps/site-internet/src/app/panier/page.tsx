@@ -15,7 +15,7 @@ export default function PanierPage() {
 
   if (items.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-16 text-center">
+      <div className="max-w-4xl mx-auto px-4 md:px-6 py-16 text-center">
         <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-verone-gray-100 mb-6">
           <ShoppingCart className="h-10 w-10 text-verone-gray-400" />
         </div>
@@ -35,7 +35,7 @@ export default function PanierPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-8">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-playfair font-bold">
           Mon Panier ({itemCount})
@@ -110,10 +110,10 @@ export default function PanierPage() {
                         );
                       });
                     }}
-                    className="h-8 w-8 flex items-center justify-center border border-verone-gray-300 rounded hover:bg-verone-gray-50 transition-colors"
+                    className="h-11 w-11 md:h-8 md:w-8 flex items-center justify-center border border-verone-gray-300 rounded hover:bg-verone-gray-50 transition-colors"
                     aria-label="Diminuer la quantité"
                   >
-                    <Minus className="h-3 w-3" />
+                    <Minus className="h-4 w-4 md:h-3 md:w-3" />
                   </button>
                   <span className="w-8 text-center font-medium">
                     {item.quantity}
@@ -130,10 +130,10 @@ export default function PanierPage() {
                         );
                       });
                     }}
-                    className="h-8 w-8 flex items-center justify-center border border-verone-gray-300 rounded hover:bg-verone-gray-50 transition-colors"
+                    className="h-11 w-11 md:h-8 md:w-8 flex items-center justify-center border border-verone-gray-300 rounded hover:bg-verone-gray-50 transition-colors"
                     aria-label="Augmenter la quantité"
                   >
-                    <Plus className="h-3 w-3" />
+                    <Plus className="h-4 w-4 md:h-3 md:w-3" />
                   </button>
                 </div>
               </div>
@@ -166,7 +166,7 @@ export default function PanierPage() {
                       console.error('[PanierPage] removeItem failed:', error);
                     });
                   }}
-                  className="text-verone-gray-400 hover:text-red-600 transition-colors self-end"
+                  className="h-11 w-11 md:h-auto md:w-auto flex items-center justify-center text-verone-gray-400 hover:text-red-600 transition-colors self-end"
                   aria-label="Supprimer"
                 >
                   <Trash2 className="h-4 w-4" />

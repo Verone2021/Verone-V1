@@ -53,13 +53,13 @@ export function EnseigneListView({
               Enseigne
             </TableHead>
             <TableHead
-              className="text-center"
+              className="hidden md:table-cell text-center"
               style={{ color: colors.text.DEFAULT }}
             >
               Organisations
             </TableHead>
             <TableHead
-              className="text-center"
+              className="hidden md:table-cell text-center"
               style={{ color: colors.text.DEFAULT }}
             >
               Statut
@@ -124,10 +124,10 @@ export function EnseigneListView({
                     <span className="font-medium">{enseigne.name}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-center">
+                <TableCell className="hidden md:table-cell text-center">
                   <span className="font-medium">{enseigne.member_count}</span>
                 </TableCell>
-                <TableCell className="text-center">
+                <TableCell className="hidden md:table-cell text-center">
                   <Badge variant={enseigne.is_active ? 'default' : 'secondary'}>
                     {enseigne.is_active ? 'Active' : 'Archivée'}
                   </Badge>

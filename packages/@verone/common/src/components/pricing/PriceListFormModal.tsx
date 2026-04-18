@@ -140,7 +140,7 @@ export function PriceListFormModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-2xl md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>
             {isEditMode
@@ -154,169 +154,181 @@ export function PriceListFormModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Informations de base */}
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col flex-1 overflow-hidden"
+        >
+          <div className="flex-1 overflow-y-auto space-y-6">
+            {/* Informations de base */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="code">
+                    Code <span className="text-red-600">*</span>
+                  </Label>
+                  <Input
+                    id="code"
+                    value={code}
+                    onChange={e => setCode(e.target.value.toUpperCase())}
+                    placeholder="PL-2025-001"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="listType">
+                    Type de liste <span className="text-red-600">*</span>
+                  </Label>
+                  <Select
+                    value={listType}
+                    onValueChange={value => setListType(value as PriceListType)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="base">Base Catalogue</SelectItem>
+                      <SelectItem value="customer_group">
+                        Groupe Client
+                      </SelectItem>
+                      <SelectItem value="channel">Canal de Vente</SelectItem>
+                      <SelectItem value="promotional">
+                        Promotionnelle
+                      </SelectItem>
+                      <SelectItem value="contract">Contrat Client</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="code">
-                  Code <span className="text-red-600">*</span>
+                <Label htmlFor="name">
+                  Nom <span className="text-red-600">*</span>
                 </Label>
                 <Input
-                  id="code"
-                  value={code}
-                  onChange={e => setCode(e.target.value.toUpperCase())}
-                  placeholder="PL-2025-001"
+                  id="name"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="Prix Wholesale 2025"
                   required
                   disabled={isLoading}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="listType">
-                  Type de liste <span className="text-red-600">*</span>
-                </Label>
-                <Select
-                  value={listType}
-                  onValueChange={value => setListType(value as PriceListType)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="base">Base Catalogue</SelectItem>
-                    <SelectItem value="customer_group">
-                      Groupe Client
-                    </SelectItem>
-                    <SelectItem value="channel">Canal de Vente</SelectItem>
-                    <SelectItem value="promotional">Promotionnelle</SelectItem>
-                    <SelectItem value="contract">Contrat Client</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="name">
-                Nom <span className="text-red-600">*</span>
-              </Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Prix Wholesale 2025"
-                required
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                placeholder="Description optionnelle de la liste de prix"
-                disabled={isLoading}
-                rows={3}
-              />
-            </div>
-          </div>
-
-          {/* Paramètres */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-sm">Paramètres</h3>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="priority">
-                  Priorité <span className="text-red-600">*</span>
-                </Label>
-                <Input
-                  id="priority"
-                  type="number"
-                  min="1"
-                  max="1000"
-                  value={priority}
-                  onChange={e => setPriority(parseInt(e.target.value) || 100)}
-                  required
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  placeholder="Description optionnelle de la liste de prix"
                   disabled={isLoading}
-                />
-                <p className="text-xs text-gray-500">
-                  Plus le nombre est petit, plus la priorité est élevée (ex: 50
-                  = priorité haute)
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="currency">
-                  Devise <span className="text-red-600">*</span>
-                </Label>
-                <Select value={currency} onValueChange={setCurrency}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="EUR">EUR (€)</SelectItem>
-                    <SelectItem value="USD">USD ($)</SelectItem>
-                    <SelectItem value="GBP">GBP (£)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="validFrom">Date début validité</Label>
-                <Input
-                  id="validFrom"
-                  type="date"
-                  value={validFrom}
-                  onChange={e => setValidFrom(e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="validUntil">Date fin validité</Label>
-                <Input
-                  id="validUntil"
-                  type="date"
-                  value={validUntil}
-                  onChange={e => setValidUntil(e.target.value)}
-                  disabled={isLoading}
+                  rows={3}
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="space-y-0.5">
-                <Label htmlFor="isActive">Liste active</Label>
-                <p className="text-sm text-gray-500">
-                  Les listes inactives ne sont pas utilisées dans les calculs de
-                  prix
-                </p>
+            {/* Paramètres */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-sm">Paramètres</h3>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="priority">
+                    Priorité <span className="text-red-600">*</span>
+                  </Label>
+                  <Input
+                    id="priority"
+                    type="number"
+                    min="1"
+                    max="1000"
+                    value={priority}
+                    onChange={e => setPriority(parseInt(e.target.value) || 100)}
+                    required
+                    disabled={isLoading}
+                  />
+                  <p className="text-xs text-gray-500">
+                    Plus le nombre est petit, plus la priorité est élevée (ex:
+                    50 = priorité haute)
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="currency">
+                    Devise <span className="text-red-600">*</span>
+                  </Label>
+                  <Select value={currency} onValueChange={setCurrency}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="EUR">EUR (€)</SelectItem>
+                      <SelectItem value="USD">USD ($)</SelectItem>
+                      <SelectItem value="GBP">GBP (£)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <Switch
-                id="isActive"
-                checked={isActive}
-                onCheckedChange={setIsActive}
-                disabled={isLoading}
-              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="validFrom">Date début validité</Label>
+                  <Input
+                    id="validFrom"
+                    type="date"
+                    value={validFrom}
+                    onChange={e => setValidFrom(e.target.value)}
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="validUntil">Date fin validité</Label>
+                  <Input
+                    id="validUntil"
+                    type="date"
+                    value={validUntil}
+                    onChange={e => setValidUntil(e.target.value)}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-0.5">
+                  <Label htmlFor="isActive">Liste active</Label>
+                  <p className="text-sm text-gray-500">
+                    Les listes inactives ne sont pas utilisées dans les calculs
+                    de prix
+                  </p>
+                </div>
+                <Switch
+                  id="isActive"
+                  checked={isActive}
+                  onCheckedChange={setIsActive}
+                  disabled={isLoading}
+                />
+              </div>
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-4 pt-4">
+          <div className="flex flex-col gap-2 md:flex-row md:justify-end pt-4 border-t">
             <ButtonV2
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isLoading}
+              className="w-full md:w-auto"
             >
               Annuler
             </ButtonV2>
-            <ButtonV2 type="submit" disabled={isLoading}>
+            <ButtonV2
+              type="submit"
+              disabled={isLoading}
+              className="w-full md:w-auto"
+            >
               {isLoading
                 ? 'Enregistrement...'
                 : isEditMode

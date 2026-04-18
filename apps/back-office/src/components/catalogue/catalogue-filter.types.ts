@@ -31,6 +31,9 @@ export interface FilterState {
   subcategories: string[];
   suppliers: string[];
   statuses: string[];
+  stockLevels: string[];
+  conditions: string[];
+  completionLevels: string[];
 }
 
 export interface CatalogueFilterPanelProps {

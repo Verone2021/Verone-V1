@@ -146,7 +146,7 @@ export function ProductImageViewerModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] p-0 bg-white border border-black [&>button]:hidden">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-6xl md:max-h-[90vh] p-0 bg-white border border-black [&>button]:hidden flex flex-col overflow-hidden">
         <VisuallyHidden>
           <DialogTitle>Visualiseur d'images - {productName}</DialogTitle>
           <DialogDescription>

@@ -308,10 +308,12 @@ function ReviewsTableBody({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Date</TableHead>
+          <TableHead className="hidden lg:table-cell">Date</TableHead>
           <TableHead>Auteur</TableHead>
-          <TableHead>Note</TableHead>
-          <TableHead>Titre / Commentaire</TableHead>
+          <TableHead className="hidden lg:table-cell">Note</TableHead>
+          <TableHead className="hidden xl:table-cell">
+            Titre / Commentaire
+          </TableHead>
           <TableHead>Statut</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
@@ -319,12 +321,14 @@ function ReviewsTableBody({
       <TableBody>
         {filteredReviews.map(review => (
           <TableRow key={review.id}>
-            <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+            <TableCell className="hidden lg:table-cell text-sm text-muted-foreground whitespace-nowrap">
               {new Date(review.created_at).toLocaleDateString('fr-FR')}
             </TableCell>
             <TableCell className="font-medium">{review.author_name}</TableCell>
-            <TableCell>{renderStars(review.rating)}</TableCell>
-            <TableCell className="max-w-xs">
+            <TableCell className="hidden lg:table-cell">
+              {renderStars(review.rating)}
+            </TableCell>
+            <TableCell className="hidden xl:table-cell max-w-xs">
               {review.title && (
                 <p className="font-medium text-sm">{review.title}</p>
               )}

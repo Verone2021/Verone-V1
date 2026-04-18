@@ -114,10 +114,10 @@ export default function CataloguePage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
+    <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12">
       {/* Header */}
       <div className="mb-12">
-        <h1 className="font-playfair text-5xl font-bold text-verone-black mb-4">
+        <h1 className="font-playfair text-3xl md:text-5xl font-bold text-verone-black mb-4">
           Notre Sélection
         </h1>
         <p className="text-lg text-verone-gray-600">

@@ -1,6 +1,6 @@
 'use client';
 
-import { Badge, ButtonV2 } from '@verone/ui';
+import { Badge, ButtonV2, ResponsiveDataView } from '@verone/ui';
 import {
   Card,
   CardContent,
@@ -20,6 +20,7 @@ import { TabsContent } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
 import { Truck } from 'lucide-react';
 
+import { PacklinkMobileCard } from './expeditions-packlink-mobile-card';
 import type { PacklinkShipment } from './expeditions-types';
 
 function getPacklinkStatusBadgeVariant(
@@ -91,7 +92,7 @@ function PacklinkShipmentRow({ shipment, onCancel }: PacklinkShipmentRowProps) {
         {shipment.order_number}
       </TableCell>
       <TableCell>{shipment.customer_name}</TableCell>
-      <TableCell>
+      <TableCell className="hidden lg:table-cell">
         <div className="space-y-0.5">
           {shipment.items.map((item, idx) => (
             <div key={idx} className="text-sm">
@@ -103,7 +104,7 @@ function PacklinkShipmentRow({ shipment, onCancel }: PacklinkShipmentRowProps) {
           ))}
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className="hidden lg:table-cell">
         <div>
           <p className="font-medium text-sm">{shipment.carrier_name ?? '-'}</p>
           {shipment.carrier_service && (
@@ -113,7 +114,7 @@ function PacklinkShipmentRow({ shipment, onCancel }: PacklinkShipmentRowProps) {
           )}
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className="hidden xl:table-cell">
         {shipment.shipping_cost != null
           ? formatCurrency(shipment.shipping_cost)
           : '-'}
@@ -125,7 +126,7 @@ function PacklinkShipmentRow({ shipment, onCancel }: PacklinkShipmentRowProps) {
           {getPacklinkStatusLabel(shipment.packlink_status)}
         </Badge>
       </TableCell>
-      <TableCell>
+      <TableCell className="hidden 2xl:table-cell">
         {shipment.tracking_number ? (
           <div>
             {shipment.tracking_url ? (
@@ -159,6 +160,12 @@ interface PacklinkTabProps {
   onCancel: (shipmentId: string) => void;
 }
 
+const PacklinkEmptyState = (
+  <p className="text-muted-foreground text-center py-8">
+    Aucune expédition Packlink en cours
+  </p>
+);
+
 export function PacklinkTab({ packlinkShipments, onCancel }: PacklinkTabProps) {
   return (
     <TabsContent value="packlink" className="space-y-4 mt-6">
@@ -173,37 +180,52 @@ export function PacklinkTab({ packlinkShipments, onCancel }: PacklinkTabProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {packlinkShipments.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">
-              Aucune expédition Packlink en cours
-            </p>
-          ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Commande</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Articles</TableHead>
-                    <TableHead>Transporteur</TableHead>
-                    <TableHead>Coût transport</TableHead>
-                    <TableHead>Statut transport</TableHead>
-                    <TableHead>Suivi</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {packlinkShipments.map(shipment => (
-                    <PacklinkShipmentRow
-                      key={shipment.packlink_shipment_id}
-                      shipment={shipment}
-                      onCancel={onCancel}
-                    />
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+          <ResponsiveDataView<PacklinkShipment>
+            data={packlinkShipments}
+            emptyMessage={PacklinkEmptyState}
+            renderTable={items => (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Commande</TableHead>
+                      <TableHead>Client</TableHead>
+                      <TableHead className="hidden lg:table-cell">
+                        Articles
+                      </TableHead>
+                      <TableHead className="hidden lg:table-cell">
+                        Transporteur
+                      </TableHead>
+                      <TableHead className="hidden xl:table-cell">
+                        Coût transport
+                      </TableHead>
+                      <TableHead>Statut transport</TableHead>
+                      <TableHead className="hidden 2xl:table-cell">
+                        Suivi
+                      </TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {items.map(shipment => (
+                      <PacklinkShipmentRow
+                        key={shipment.packlink_shipment_id}
+                        shipment={shipment}
+                        onCancel={onCancel}
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+            renderCard={(shipment: PacklinkShipment) => (
+              <PacklinkMobileCard
+                key={shipment.packlink_shipment_id}
+                shipment={shipment}
+                onCancel={onCancel}
+              />
+            )}
+          />
         </CardContent>
       </Card>
     </TabsContent>

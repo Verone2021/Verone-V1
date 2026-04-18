@@ -57,7 +57,7 @@ export function SalesOrderShipmentModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-6xl md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
             Expédier Commande Client
@@ -71,24 +71,26 @@ export function SalesOrderShipmentModal({
           )}
         </DialogHeader>
 
-        {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="text-muted-foreground">
-              Chargement des données...
+        <div className="flex-1 overflow-y-auto">
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="text-muted-foreground">
+                Chargement des données...
+              </div>
             </div>
-          </div>
-        ) : enrichedOrder ? (
-          <ShipmentWizard
-            salesOrder={enrichedOrder}
-            onSuccess={handleSuccess}
-            onCancel={onClose}
-            onRefetch={handleRefetch}
-          />
-        ) : (
-          <div className="text-center py-8 text-red-600">
-            Erreur lors du chargement de la commande
-          </div>
-        )}
+          ) : enrichedOrder ? (
+            <ShipmentWizard
+              salesOrder={enrichedOrder}
+              onSuccess={handleSuccess}
+              onCancel={onClose}
+              onRefetch={handleRefetch}
+            />
+          ) : (
+            <div className="text-center py-8 text-red-600">
+              Erreur lors du chargement de la commande
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

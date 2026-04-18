@@ -79,7 +79,7 @@ export default function EnseigneDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto p-6">
+        <div className="w-full p-6">
           <div className="animate-pulse space-y-6">
             <div className="h-24 bg-white rounded-lg border" />
             <div className="grid grid-cols-4 gap-4">
@@ -98,7 +98,7 @@ export default function EnseigneDetailPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto p-6">
+        <div className="w-full p-6">
           <Card>
             <CardContent className="p-8">
               <div className="text-center text-red-600">
@@ -122,7 +122,7 @@ export default function EnseigneDetailPage() {
   if (!enseigne) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto p-6">
+        <div className="w-full p-6">
           <Card>
             <CardContent className="p-8">
               <div className="text-center text-gray-500">
@@ -154,7 +154,7 @@ export default function EnseigneDetailPage() {
       />
 
       {/* Contenu principal */}
-      <div className="container mx-auto px-6 pt-4 space-y-4">
+      <div className="w-full px-6 pt-4 space-y-4">
         {/* Section Canaux de Vente */}
         <EnseigneChannelsBanner channels={enseigneChannels} />
 

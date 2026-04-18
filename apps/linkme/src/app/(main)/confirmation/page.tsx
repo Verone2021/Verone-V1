@@ -15,7 +15,7 @@ function ConfirmationContent() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
       <div className="max-w-2xl w-full">
         {/* Success Card */}
-        <div className="bg-white rounded-lg border shadow-sm p-8 text-center">
+        <div className="bg-white rounded-lg border shadow-sm p-5 sm:p-8 text-center">
           {/* Success Icon */}
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="h-12 w-12 text-green-600" />

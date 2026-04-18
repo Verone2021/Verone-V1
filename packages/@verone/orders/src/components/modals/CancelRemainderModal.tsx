@@ -75,7 +75,7 @@ export function CancelRemainderModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-lg md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <XCircle className="h-5 w-5 text-orange-500" />
@@ -87,7 +87,7 @@ export function CancelRemainderModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="flex-1 overflow-y-auto space-y-4 py-4">
           {/* Résumé des items avec reliquat */}
           <div className="flex items-start gap-3 p-4 bg-orange-50 border border-orange-200 rounded-md">
             <Package className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
@@ -159,8 +159,13 @@ export function CancelRemainderModal({
           </div>
         </div>
 
-        <DialogFooter>
-          <ButtonV2 variant="outline" onClick={onClose} disabled={cancelling}>
+        <DialogFooter className="flex-col gap-2 md:flex-row">
+          <ButtonV2
+            variant="outline"
+            onClick={onClose}
+            disabled={cancelling}
+            className="w-full md:w-auto"
+          >
             Annuler
           </ButtonV2>
           <ButtonV2
@@ -169,6 +174,7 @@ export function CancelRemainderModal({
               void handleConfirm();
             }}
             loading={cancelling}
+            className="w-full md:w-auto"
           >
             <XCircle className="h-4 w-4 mr-2" />
             Confirmer l'annulation

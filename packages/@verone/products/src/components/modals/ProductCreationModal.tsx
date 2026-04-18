@@ -199,7 +199,7 @@ export function ProductCreationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-lg md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
@@ -207,170 +207,181 @@ export function ProductCreationModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Nom du produit */}
-          <div className="space-y-2">
-            <Label htmlFor="name">
-              Nom du produit <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={e => {
-                setName(e.target.value);
-                setErrors(prev => ({ ...prev, name: '' }));
-              }}
-              onBlur={generateSku}
-              placeholder="Nom du produit..."
-              className={errors.name ? 'border-red-500' : ''}
-              required
-            />
-            {errors.name && (
-              <p className="text-sm text-red-600 flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3" />
-                {errors.name}
-              </p>
-            )}
-          </div>
-
-          {/* SKU */}
-          <div className="space-y-2">
-            <Label htmlFor="sku">
-              SKU (Code produit) <span className="text-red-500">*</span>
-            </Label>
-            <div className="flex gap-2">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col flex-1 overflow-hidden"
+        >
+          <div className="flex-1 overflow-y-auto space-y-4 px-1">
+            {/* Nom du produit */}
+            <div className="space-y-2">
+              <Label htmlFor="name">
+                Nom du produit <span className="text-red-500">*</span>
+              </Label>
               <Input
-                id="sku"
-                value={sku}
+                id="name"
+                value={name}
                 onChange={e => {
-                  setSku(e.target.value.toUpperCase());
-                  setErrors(prev => ({ ...prev, sku: '' }));
+                  setName(e.target.value);
+                  setErrors(prev => ({ ...prev, name: '' }));
                 }}
-                placeholder={
-                  subcategoryName
-                    ? `${getSubcategoryPrefix(subcategoryName)}-0001`
-                    : 'SKU-PRODUIT'
-                }
-                className={`font-mono ${errors.sku ? 'border-red-500' : ''}`}
+                onBlur={generateSku}
+                placeholder="Nom du produit..."
+                className={errors.name ? 'border-red-500' : ''}
                 required
               />
-              <ButtonV2
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={generateSku}
-                disabled={isGeneratingSKU || (!name && !subcategoryName)}
-                title={
-                  subcategoryName
-                    ? `Générer SKU pour ${subcategoryName}`
-                    : 'Entrez un nom de produit'
-                }
-              >
-                {isGeneratingSKU ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  'Auto'
-                )}
-              </ButtonV2>
+              {errors.name && (
+                <p className="text-sm text-red-600 flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  {errors.name}
+                </p>
+              )}
             </div>
-            <p className="text-xs text-gray-500">
-              {subcategoryName
-                ? `Format: ${getSubcategoryPrefix(subcategoryName)}-0000 (ex: ${getSubcategoryPrefix(subcategoryName)}-0001)`
-                : 'Format recommandé: XXX-0000 (3 lettres sous-catégorie + 4 chiffres)'}
-            </p>
-            {errors.sku && (
-              <p className="text-sm text-red-600 flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3" />
-                {errors.sku}
-              </p>
-            )}
-          </div>
 
-          {/* Prix HT */}
-          <div className="space-y-2">
-            <Label htmlFor="priceHt">
-              Prix HT <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative">
+            {/* SKU */}
+            <div className="space-y-2">
+              <Label htmlFor="sku">
+                SKU (Code produit) <span className="text-red-500">*</span>
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="sku"
+                  value={sku}
+                  onChange={e => {
+                    setSku(e.target.value.toUpperCase());
+                    setErrors(prev => ({ ...prev, sku: '' }));
+                  }}
+                  placeholder={
+                    subcategoryName
+                      ? `${getSubcategoryPrefix(subcategoryName)}-0001`
+                      : 'SKU-PRODUIT'
+                  }
+                  className={`font-mono ${errors.sku ? 'border-red-500' : ''}`}
+                  required
+                />
+                <ButtonV2
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={generateSku}
+                  disabled={isGeneratingSKU || (!name && !subcategoryName)}
+                  title={
+                    subcategoryName
+                      ? `Générer SKU pour ${subcategoryName}`
+                      : 'Entrez un nom de produit'
+                  }
+                >
+                  {isGeneratingSKU ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    'Auto'
+                  )}
+                </ButtonV2>
+              </div>
+              <p className="text-xs text-gray-500">
+                {subcategoryName
+                  ? `Format: ${getSubcategoryPrefix(subcategoryName)}-0000 (ex: ${getSubcategoryPrefix(subcategoryName)}-0001)`
+                  : 'Format recommandé: XXX-0000 (3 lettres sous-catégorie + 4 chiffres)'}
+              </p>
+              {errors.sku && (
+                <p className="text-sm text-red-600 flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  {errors.sku}
+                </p>
+              )}
+            </div>
+
+            {/* Prix HT */}
+            <div className="space-y-2">
+              <Label htmlFor="priceHt">
+                Prix HT <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <Input
+                  id="priceHt"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={priceHt}
+                  onChange={e => {
+                    setPriceHt(e.target.value);
+                    setErrors(prev => ({ ...prev, priceHt: '' }));
+                  }}
+                  placeholder="0.00"
+                  className={`pr-8 ${errors.priceHt ? 'border-red-500' : ''}`}
+                  required
+                />
+                <span className="absolute right-3 top-2.5 text-sm text-gray-500">
+                  €
+                </span>
+              </div>
+              {priceHt && (
+                <p className="text-sm text-gray-600">
+                  Prix TTC: {formatPrice(parseFloat(priceHt) * 1.2)}
+                </p>
+              )}
+              {errors.priceHt && (
+                <p className="text-sm text-red-600 flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  {errors.priceHt}
+                </p>
+              )}
+            </div>
+
+            {/* Description courte */}
+            <div className="space-y-2">
+              <Label htmlFor="description">
+                Description courte (optionnel)
+              </Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="Description rapide du produit..."
+                rows={2}
+              />
+            </div>
+
+            {/* Seuil de stock */}
+            <div className="space-y-2">
+              <Label htmlFor="minStockLevel">Seuil de stock minimum</Label>
               <Input
-                id="priceHt"
+                id="minStockLevel"
                 type="number"
-                step="0.01"
                 min="0"
-                value={priceHt}
+                value={minStockLevel}
                 onChange={e => {
-                  setPriceHt(e.target.value);
-                  setErrors(prev => ({ ...prev, priceHt: '' }));
+                  setMinStockLevel(e.target.value);
+                  setErrors(prev => ({ ...prev, minStockLevel: '' }));
                 }}
-                placeholder="0.00"
-                className={`pr-8 ${errors.priceHt ? 'border-red-500' : ''}`}
-                required
+                className={errors.minStockLevel ? 'border-red-500' : ''}
               />
-              <span className="absolute right-3 top-2.5 text-sm text-gray-500">
-                €
-              </span>
+              <p className="text-xs text-gray-500">
+                Alerte lorsque le stock descend sous ce seuil
+              </p>
+              {errors.minStockLevel && (
+                <p className="text-sm text-red-600 flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  {errors.minStockLevel}
+                </p>
+              )}
             </div>
-            {priceHt && (
-              <p className="text-sm text-gray-600">
-                Prix TTC: {formatPrice(parseFloat(priceHt) * 1.2)}
-              </p>
-            )}
-            {errors.priceHt && (
-              <p className="text-sm text-red-600 flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3" />
-                {errors.priceHt}
-              </p>
-            )}
-          </div>
-
-          {/* Description courte */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description courte (optionnel)</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              placeholder="Description rapide du produit..."
-              rows={2}
-            />
-          </div>
-
-          {/* Seuil de stock */}
-          <div className="space-y-2">
-            <Label htmlFor="minStockLevel">Seuil de stock minimum</Label>
-            <Input
-              id="minStockLevel"
-              type="number"
-              min="0"
-              value={minStockLevel}
-              onChange={e => {
-                setMinStockLevel(e.target.value);
-                setErrors(prev => ({ ...prev, minStockLevel: '' }));
-              }}
-              className={errors.minStockLevel ? 'border-red-500' : ''}
-            />
-            <p className="text-xs text-gray-500">
-              Alerte lorsque le stock descend sous ce seuil
-            </p>
-            {errors.minStockLevel && (
-              <p className="text-sm text-red-600 flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3" />
-                {errors.minStockLevel}
-              </p>
-            )}
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col gap-2 md:flex-row pt-4 border-t mt-4">
             <ButtonV2
               type="button"
               variant="outline"
               onClick={handleClose}
-              className="flex-1"
+              className="w-full md:w-auto"
             >
               Annuler
             </ButtonV2>
-            <ButtonV2 type="submit" disabled={loading} className="flex-1">
+            <ButtonV2
+              type="submit"
+              disabled={loading}
+              className="w-full md:w-auto"
+            >
               {loading ? (
                 <RefreshCw className="h-4 w-4 animate-spin mr-2" />
               ) : (

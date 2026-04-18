@@ -54,7 +54,7 @@ export function PageHeader({
   };
 
   return (
-    <div className="bg-white border-b border-slate-200 px-6 py-4">
+    <div className="bg-white border-b border-slate-200 px-4 py-3 md:px-6 md:py-4">
       <div className="flex items-center gap-3">
         {/* Bouton Retour inline à gauche */}
         {showBackButton && (

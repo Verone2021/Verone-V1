@@ -56,12 +56,12 @@ export function MarkAsPaidModal({
   if (!isOpen || !request) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={handleClose}
       />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+      <div className="relative bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full md:max-w-md max-h-screen md:max-h-[90vh] overflow-y-auto p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Marquer comme payé
         </h3>
@@ -98,10 +98,10 @@ export function MarkAsPaidModal({
           />
         </div>
 
-        <div className="flex justify-end gap-3">
+        <div className="flex flex-col gap-2 md:flex-row md:justify-end">
           <button
             onClick={handleClose}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+            className="w-full md:w-auto px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
           >
             Annuler
           </button>
@@ -112,7 +112,7 @@ export function MarkAsPaidModal({
               });
             }}
             disabled={markAsPaid.isPending}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+            className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
           >
             {markAsPaid.isPending ? (
               <>

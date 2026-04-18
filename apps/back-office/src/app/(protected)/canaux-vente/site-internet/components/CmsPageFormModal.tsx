@@ -67,7 +67,7 @@ export function CmsPageFormModal({
 }: Props) {
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-2xl md:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isCreating ? 'Nouvelle page' : `Modifier : ${editingPage?.title}`}
@@ -75,7 +75,7 @@ export function CmsPageFormModal({
         </DialogHeader>
         <div className="space-y-4 py-4">
           {isCreating && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label>Titre</Label>
                 <Input
@@ -120,7 +120,7 @@ export function CmsPageFormModal({
               className="font-mono text-sm"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Meta Title (SEO)</Label>
               <Input
@@ -164,11 +164,19 @@ export function CmsPageFormModal({
             </Label>
           </div>
         </div>
-        <DialogFooter>
-          <ButtonV2 variant="outline" onClick={onClose}>
+        <DialogFooter className="flex-col gap-2 md:flex-row">
+          <ButtonV2
+            variant="outline"
+            onClick={onClose}
+            className="w-full md:w-auto"
+          >
             Annuler
           </ButtonV2>
-          <ButtonV2 onClick={onSave} disabled={isSaving || !form.title}>
+          <ButtonV2
+            onClick={onSave}
+            disabled={isSaving || !form.title}
+            className="w-full md:w-auto"
+          >
             {isSaving
               ? 'Enregistrement...'
               : isCreating

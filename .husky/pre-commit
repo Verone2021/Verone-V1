@@ -23,7 +23,7 @@ if ls supabase/migrations/*.sql 1> /dev/null 2>&1; then
     grep -E "user_profiles\.(app|role)|raw_user_meta_data.*role" || true)
 
   if [ -n "$OBSOLETE" ]; then
-    echo "❌ Pattern RLS obsolète détecté. Voir .claude/rules/database/rls-patterns.md"
+    echo "❌ Pattern RLS obsolète détecté. Voir .claude/rules/database.md"
     exit 1
   fi
 fi

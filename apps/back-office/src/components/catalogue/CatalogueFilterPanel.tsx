@@ -13,6 +13,7 @@ import { cn } from '@verone/utils';
 import { Filter, RotateCcw } from 'lucide-react';
 
 import { CatalogueActiveFilterBadges } from './CatalogueActiveFilterBadges';
+import { CatalogueExtraFilters } from './CatalogueExtraFilters';
 import { CatalogueHierarchyFilter } from './CatalogueHierarchyFilter';
 import { CatalogueStatusFilter } from './CatalogueStatusFilter';
 import { CatalogueSupplierFilter } from './CatalogueSupplierFilter';
@@ -48,6 +49,9 @@ export function CatalogueFilterPanel({
     handleSubcategoryToggle,
     handleSupplierToggle,
     handleStatusToggle,
+    handleStockToggle,
+    handleConditionToggle,
+    handleCompletionToggle,
     handleClearAll,
     toggleFamilyExpand,
     toggleCategoryExpand,
@@ -98,6 +102,15 @@ export function CatalogueFilterPanel({
           statusCounts={statusCounts}
           selectedStatuses={filters.statuses}
           onStatusToggle={handleStatusToggle}
+        />
+
+        <CatalogueExtraFilters
+          stockLevels={filters.stockLevels}
+          conditions={filters.conditions}
+          completionLevels={filters.completionLevels}
+          onStockToggle={handleStockToggle}
+          onConditionToggle={handleConditionToggle}
+          onCompletionToggle={handleCompletionToggle}
         />
 
         {activeFilterCount > 0 && (

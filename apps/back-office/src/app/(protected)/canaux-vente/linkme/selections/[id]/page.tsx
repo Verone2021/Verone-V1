@@ -14,7 +14,7 @@ import { useSelectionDetail } from './use-selection-detail';
 
 function SelectionLoadingSkeleton() {
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="w-full py-6 space-y-6">
       <Skeleton className="h-8 w-64" />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Skeleton className="h-64 col-span-2" />
@@ -27,7 +27,7 @@ function SelectionLoadingSkeleton() {
 
 function SelectionErrorCard({ onBack }: { onBack: () => void }) {
   return (
-    <div className="container mx-auto py-6">
+    <div className="w-full py-6">
       <Card className="border-destructive">
         <CardContent className="pt-6">
           <p className="text-destructive">
@@ -221,7 +221,7 @@ export default function SelectionDetailPage({
   } = state;
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="w-full py-6 space-y-6">
       <SelectionPageHeader
         selection={selection}
         formData={formData}

@@ -248,7 +248,7 @@ export function ChannelTabs() {
 
   return (
     <div className="border-b border-neutral-200 bg-white">
-      <div className="container mx-auto px-6">
+      <div className="container mx-auto px-4 md:px-6">
         {/* Breadcrumbs + Back Button */}
         <div className="flex items-center gap-2 py-2 text-sm text-neutral-600">
           <Link

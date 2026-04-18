@@ -292,7 +292,7 @@ export function InvoiceCreateServiceModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-3xl md:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Briefcase className="h-5 w-5" />
@@ -539,17 +539,24 @@ export function InvoiceCreateServiceModal({
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="flex-col gap-2 md:flex-row">
           {status === 'success' ? (
-            <Button onClick={handleClose}>Fermer</Button>
+            <Button onClick={handleClose} className="w-full md:w-auto">
+              Fermer
+            </Button>
           ) : (
             <>
-              <Button variant="outline" onClick={handleClose}>
+              <Button
+                variant="outline"
+                onClick={handleClose}
+                className="w-full md:w-auto"
+              >
                 Annuler
               </Button>
               <Button
                 onClick={handleCreateClick}
                 disabled={status === 'creating' || !isValid}
+                className="w-full md:w-auto"
               >
                 {status === 'creating' ? (
                   <>

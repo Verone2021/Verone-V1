@@ -182,7 +182,7 @@ export function ProductEditMainColumn({
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
               <Label className="text-[9px] text-gray-600">
                 Référence fournisseur

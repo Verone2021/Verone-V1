@@ -26,4 +26,7 @@ export interface Filters {
   suppliers: string[];
   statuses: string[];
   missingFields: string[];
+  stockLevels: string[];
+  conditions: string[];
+  completionLevels: string[];
 }

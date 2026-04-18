@@ -163,7 +163,7 @@ export function ConsultationModals({
 
       {/* Modal de confirmation de suppression */}
       <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="h-screen md:h-auto max-w-full md:max-w-md md:max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600">
               <AlertTriangle className="h-5 w-5" />
@@ -217,15 +217,17 @@ export function ConsultationModals({
               </div>
             )}
           </div>
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 flex-col md:flex-row">
             <ButtonUnified
               variant="outline"
               onClick={() => setShowDeleteModal(false)}
               disabled={deleting}
+              className="w-full md:w-auto"
             >
               Annuler
             </ButtonUnified>
             <ButtonUnified
+              className="w-full md:w-auto"
               variant="destructive"
               disabled={deleting}
               onClick={() => {

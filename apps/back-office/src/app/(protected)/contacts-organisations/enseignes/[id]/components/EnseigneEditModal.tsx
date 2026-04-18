@@ -59,7 +59,7 @@ export function EnseigneEditModal({
 }: EnseigneEditModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-lg md:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Modifier l'enseigne</DialogTitle>
           <DialogDescription>
@@ -135,11 +135,16 @@ export function EnseigneEditModal({
           </div>
         </div>
 
-        <DialogFooter>
-          <ButtonV2 variant="ghost" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="flex-col gap-2 md:flex-row">
+          <ButtonV2
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+            className="w-full md:w-auto"
+          >
             Annuler
           </ButtonV2>
           <ButtonV2
+            className="w-full md:w-auto"
             onClick={handleSubmitEdit}
             disabled={!formData.name.trim() || isSubmitting}
           >

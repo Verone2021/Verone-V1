@@ -156,7 +156,7 @@ export function ProductPhotosModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-5xl md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="pb-4 border-b">
           <DialogTitle className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center">
@@ -271,8 +271,8 @@ export function ProductPhotosModal({
           )}
         </div>
 
-        <div className="border-t pt-4 bg-gray-50 -mx-6 -mb-6 px-6 pb-5 mt-4">
-          <div className="flex items-center justify-between">
+        <div className="border-t pt-4 mt-4">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4 text-sm text-gray-600">
               <span className="font-medium">
                 {images.length} photo{images.length > 1 ? 's' : ''}
@@ -289,7 +289,11 @@ export function ProductPhotosModal({
                 </Badge>
               )}
             </div>
-            <ButtonV2 onClick={onClose} variant="outline">
+            <ButtonV2
+              onClick={onClose}
+              variant="outline"
+              className="w-full md:w-auto"
+            >
               Fermer
             </ButtonV2>
           </div>

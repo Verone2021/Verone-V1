@@ -36,7 +36,7 @@ export function VariantGroupDimensionsSection({
         <Label className="text-xs font-medium text-gray-700">
           📐 Dimensions
         </Label>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <Input
             type="number"
             placeholder="Longueur"

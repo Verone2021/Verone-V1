@@ -1,12 +1,13 @@
 # Site-Internet — Documentation App
 
-_Generated: 2026-04-12 16:31_
+_Generated: 2026-04-18 17:18_
 
-## Pages (24)
+## Pages (25)
 
 | Route                           | Fichier  |
 | ------------------------------- | -------- |
 | `/a-propos`                     | page.tsx |
+| `/ambassadeur`                  | page.tsx |
 | `/auth/forgot-password`         | page.tsx |
 | `/auth/login`                   | page.tsx |
 | `/auth/register`                | page.tsx |
@@ -31,7 +32,7 @@ _Generated: 2026-04-12 16:31_
 | `/produit/[id]`                 | page.tsx |
 | `/retours`                      | page.tsx |
 
-## API Routes (20)
+## API Routes (21)
 
 | Endpoint                               | Methods |
 | -------------------------------------- | ------- |
@@ -40,6 +41,7 @@ _Generated: 2026-04-12 16:31_
 | `/api/contact`                         | POST    |
 | `/api/cron/abandoned-cart-check`       | GET     |
 | `/api/cron/review-request-check`       | GET     |
+| `/api/cron/validate-ambassador-primes` | GET     |
 | `/api/cron/win-back-check`             | GET     |
 | `/api/emails/abandoned-cart`           | POST    |
 | `/api/emails/admin-order-notification` | POST    |
@@ -56,10 +58,13 @@ _Generated: 2026-04-12 16:31_
 | `/api/shipping-config`                 | GET     |
 | `/api/webhooks/stripe`                 | POST    |
 
-## Components in app (31)
+## Components in app (35)
 
 | Fichier                                                 |
 | ------------------------------------------------------- |
+| `src/app/checkout/components/CheckoutOrderSummary.tsx`  |
+| `src/app/checkout/components/CheckoutShippingForm.tsx`  |
+| `src/app/checkout/components/CheckoutStepper.tsx`       |
 | `src/app/produit/[id]/components/ProductAccordions.tsx` |
 | `src/app/produit/[id]/components/ProductCrossSell.tsx`  |
 | `src/app/produit/[id]/components/ProductGallery.tsx`    |
@@ -69,6 +74,7 @@ _Generated: 2026-04-12 16:31_
 | `src/components/NewsletterSignup.tsx`                   |
 | `src/components/SearchOverlay.tsx`                      |
 | `src/components/analytics/GoogleAnalytics.tsx`          |
+| `src/components/analytics/MetaPixel.tsx`                |
 | `src/components/catalogue/CatalogueMobileFilters.tsx`   |
 | `src/components/catalogue/CatalogueSidebar.tsx`         |
 | `src/components/cms/CmsPageContent.tsx`                 |

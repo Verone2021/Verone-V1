@@ -4,9 +4,16 @@
  * Compatible shadcn/ui patterns
  */
 
-// Media Queries
+// Media Queries & Breakpoints
 export { useMediaQuery } from './use-media-query';
 export { useMobile } from './use-mobile';
+export {
+  useBreakpoint,
+  useBreakpointUp,
+  useBreakpointDown,
+  BREAKPOINTS,
+} from './use-breakpoint';
+export type { BreakpointKey, BreakpointState } from './use-breakpoint';
 
 // Utilities
 export { useDebounce } from './use-debounce';

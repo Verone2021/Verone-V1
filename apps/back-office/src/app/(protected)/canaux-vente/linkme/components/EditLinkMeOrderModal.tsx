@@ -53,8 +53,8 @@ export function EditLinkMeOrderModal({
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative min-h-screen flex items-center justify-center p-4">
-        <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+      <div className="relative min-h-screen flex items-end md:items-center justify-center md:p-4">
+        <div className="relative bg-white rounded-t-xl md:rounded-xl shadow-2xl w-full md:max-w-3xl h-full md:h-auto md:max-h-[90vh] flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
             <div className="flex items-center gap-3">
@@ -153,7 +153,7 @@ export function EditLinkMeOrderModal({
                   <label className="block text-sm font-medium text-gray-700">
                     Frais additionnels
                   </label>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {/* Livraison */}
                     <div>
                       <label className="block text-xs text-gray-500 mb-1">

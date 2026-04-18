@@ -157,8 +157,8 @@ export function VariantCreationModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-0 md:p-4">
+      <div className="bg-white rounded-none md:rounded-lg w-full h-screen md:h-auto md:max-w-2xl md:max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
           <h2 className="text-lg font-medium flex items-center">
             <Copy className="h-5 w-5 mr-2" />
@@ -334,14 +334,19 @@ export function VariantCreationModal({
         </div>
 
         {/* Actions */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 flex justify-end space-x-2">
-          <ButtonV2 variant="outline" onClick={onClose} disabled={isCreating}>
+        <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 flex flex-col gap-2 md:flex-row md:justify-end md:space-x-2">
+          <ButtonV2
+            variant="outline"
+            onClick={onClose}
+            disabled={isCreating}
+            className="w-full md:w-auto"
+          >
             Annuler
           </ButtonV2>
           <ButtonV2
             onClick={handleCreateVariant}
             disabled={isCreating || (!color && !material)}
-            className="bg-black hover:bg-gray-800"
+            className="bg-black hover:bg-gray-800 w-full md:w-auto"
           >
             <Save className="h-4 w-4 mr-2" />
             {isCreating ? 'Création...' : 'Créer la Variante'}

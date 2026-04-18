@@ -78,7 +78,7 @@ export function EditEnseigneModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-lg md:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Modifier l'enseigne</DialogTitle>
           <DialogDescription>
@@ -111,11 +111,16 @@ export function EditEnseigneModal({
             />
           </div>
         </div>
-        <DialogFooter>
-          <ButtonV2 variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="flex-col gap-2 md:flex-row">
+          <ButtonV2
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="w-full md:w-auto"
+          >
             Annuler
           </ButtonV2>
           <ButtonV2
+            className="w-full md:w-auto"
             onClick={() => {
               void handleUpdate().catch(error => {
                 console.error(

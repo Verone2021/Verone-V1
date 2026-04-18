@@ -218,7 +218,7 @@ export default function CataloguePage() {
                                 e.stopPropagation();
                                 updateQuantity(item.id, -1);
                               }}
-                              className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
+                              className="p-2.5 md:p-1.5 hover:bg-gray-200 rounded-md transition-colors"
                             >
                               <Minus className="h-4 w-4" />
                             </button>
@@ -230,7 +230,7 @@ export default function CataloguePage() {
                                 e.stopPropagation();
                                 updateQuantity(item.id, 1);
                               }}
-                              className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
+                              className="p-2.5 md:p-1.5 hover:bg-gray-200 rounded-md transition-colors"
                             >
                               <Plus className="h-4 w-4" />
                             </button>
@@ -241,7 +241,7 @@ export default function CataloguePage() {
                               e.stopPropagation();
                               addToCart(item);
                             }}
-                            className="flex items-center gap-1 text-white py-1.5 px-2.5 rounded-lg text-xs transition-colors hover:opacity-90"
+                            className="flex items-center gap-1 text-white py-2 px-3 md:py-1.5 md:px-2.5 rounded-lg text-xs transition-colors hover:opacity-90 min-h-[44px] md:min-h-0"
                             style={{
                               backgroundColor: branding.primary_color,
                             }}

@@ -179,7 +179,7 @@ export function GlobeItemsSection() {
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-4 pb-4 text-center">
             <Package className="h-5 w-5 text-blue-500 mx-auto mb-1" />

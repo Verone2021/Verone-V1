@@ -130,7 +130,7 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto px-6 lg:px-8 py-12 text-center">
+      <div className="max-w-4xl mx-auto px-4 md:px-6 lg:px-8 py-12 text-center">
         <ShoppingCart className="h-12 w-12 text-verone-gray-300 mx-auto mb-4" />
         <h1 className="text-2xl font-playfair font-bold text-verone-black mb-2">
           Votre panier est vide
@@ -236,10 +236,10 @@ export default function CheckoutPage() {
     'w-full px-4 py-3 border border-verone-gray-300 rounded-lg focus:ring-2 focus:ring-verone-black focus:border-transparent outline-none transition-all text-sm';
 
   return (
-    <div className="max-w-6xl mx-auto px-6 lg:px-8 py-12">
+    <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12">
       {/* Progress bar */}
-      <div className="mb-10">
-        <div className="flex items-center justify-between max-w-lg mx-auto">
+      <div className="mb-10 overflow-x-auto">
+        <div className="flex items-center justify-between max-w-lg mx-auto min-w-[280px]">
           {CHECKOUT_STEPS.map((step, i) => {
             const isActive = i === 1;
             const Icon = step.icon;
@@ -313,7 +313,7 @@ export default function CheckoutPage() {
                 Adresse de livraison
               </h2>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label
                       htmlFor="firstName"
@@ -395,7 +395,7 @@ export default function CheckoutPage() {
                     className={inputClass}
                   />
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label
                       htmlFor="postalCode"
@@ -487,7 +487,7 @@ export default function CheckoutPage() {
                       className={inputClass}
                     />
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <label
                         htmlFor="billingPostalCode"

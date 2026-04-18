@@ -82,7 +82,7 @@ export function SourcingProductModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-3xl md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-2xl flex items-center gap-2">
@@ -95,7 +95,7 @@ export function SourcingProductModal({
           </div>
         </DialogHeader>
 
-        <div className="mt-4">
+        <div className="flex-1 overflow-y-auto mt-4">
           <SourcingQuickForm
             showHeader={false}
             onSuccess={(productId: string) => {

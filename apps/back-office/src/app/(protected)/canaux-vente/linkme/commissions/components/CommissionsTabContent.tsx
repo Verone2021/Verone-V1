@@ -8,18 +8,15 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Table,
-  TableBody,
 } from '@verone/ui';
-import { Wallet, Banknote, CheckCircle } from 'lucide-react';
+import { Banknote, CheckCircle } from 'lucide-react';
 
 import { TABS_CONFIG } from '../constants';
 import type { TabType } from '../types';
 import type { CommissionsPageState } from '../hooks/use-commissions-page';
 import { CommissionsFilters } from './CommissionsFilters';
 import { CommissionsPagination } from './CommissionsPagination';
-import { CommissionsTableHeader } from './CommissionsTableHeader';
-import { CommissionsTableRow } from './CommissionsTableRow';
+import { CommissionsResponsiveTable } from './CommissionsResponsiveTable';
 
 interface CommissionsTabContentProps {
   tab: TabType;
@@ -119,39 +116,20 @@ export function CommissionsTabContent({
           onReset={state.resetFilters}
         />
 
-        {tabCommissions.length === 0 ? (
-          <div className="text-center py-12">
-            <Wallet className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">Aucune commission</h3>
-            <p className="text-muted-foreground">{config.description}</p>
-          </div>
-        ) : (
-          <Table>
-            <CommissionsTableHeader
-              showCheckboxes={showCheckboxes}
-              tabCommissions={tabCommissions}
-              selectedIds={state.selectedIds}
-              toggleSelectAll={state.toggleSelectAll}
-              sortColumn={state.sortColumn}
-              sortDirection={state.sortDirection}
-              onSort={state.handleSort}
-            />
-            <TableBody>
-              {tabCommissions.map(commission => (
-                <CommissionsTableRow
-                  key={commission.id}
-                  commission={commission}
-                  showCheckboxes={showCheckboxes}
-                  selectedIds={state.selectedIds}
-                  expandedId={state.expandedId}
-                  colCount={colCount}
-                  onToggleSelect={state.toggleSelect}
-                  onToggleExpand={state.setExpandedId}
-                />
-              ))}
-            </TableBody>
-          </Table>
-        )}
+        <CommissionsResponsiveTable
+          tabCommissions={tabCommissions}
+          showCheckboxes={showCheckboxes}
+          selectedIds={state.selectedIds}
+          expandedId={state.expandedId}
+          colCount={colCount}
+          sortColumn={state.sortColumn}
+          sortDirection={state.sortDirection}
+          toggleSelect={state.toggleSelect}
+          setExpandedId={state.setExpandedId}
+          toggleSelectAll={state.toggleSelectAll}
+          handleSort={state.handleSort}
+          emptyDescription={config.description}
+        />
 
         {allTabCommissions.length > 0 && (
           <CommissionsPagination

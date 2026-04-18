@@ -380,7 +380,7 @@ function CatalogueContent(): JSX.Element | null {
         </div>
 
         {/* Grille Produits - Design spacieux */}
-        <div className="flex-1 overflow-y-auto px-12 py-12 bg-white">
+        <div className="flex-1 overflow-y-auto px-4 py-6 md:px-12 md:py-12 bg-white">
           {filteredProducts.length === 0 ? (
             <div className="text-center py-16">
               <Package className="h-16 w-16 text-gray-200 mx-auto mb-4" />

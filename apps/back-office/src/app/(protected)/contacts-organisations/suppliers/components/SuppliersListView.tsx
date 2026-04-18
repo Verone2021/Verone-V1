@@ -52,11 +52,14 @@ export function SuppliersListView({
             >
               Fournisseur
             </TableHead>
-            <TableHead style={{ color: colors.text.DEFAULT }}>
+            <TableHead
+              className="hidden md:table-cell"
+              style={{ color: colors.text.DEFAULT }}
+            >
               Adresse
             </TableHead>
             <TableHead
-              className="w-[120px] text-center"
+              className="hidden lg:table-cell w-[120px] text-center"
               style={{ color: colors.text.DEFAULT }}
             >
               Produits
@@ -138,7 +141,7 @@ export function SuppliersListView({
                   </TableCell>
 
                   {/* Adresse complète */}
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <div
                       className="text-sm"
                       style={{ color: colors.text.subtle }}
@@ -161,7 +164,7 @@ export function SuppliersListView({
                   </TableCell>
 
                   {/* Compteur Produits */}
-                  <TableCell className="text-center">
+                  <TableCell className="hidden lg:table-cell text-center">
                     {supplier._count?.products !== undefined && (
                       <div
                         className="flex items-center justify-center gap-1.5 text-sm"

@@ -120,9 +120,9 @@ export default function CartPage() {
                             updateQuantity(item.id, item.quantity - 1)
                           }
                           disabled={item.quantity <= 1}
-                          className="p-1.5 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-2.5 md:p-1.5 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <Minus className="h-3 w-3" />
+                          <Minus className="h-4 w-4 md:h-3 md:w-3" />
                         </button>
                         <span className="w-10 text-center font-medium text-sm">
                           {item.quantity}
@@ -131,16 +131,16 @@ export default function CartPage() {
                           onClick={() =>
                             updateQuantity(item.id, item.quantity + 1)
                           }
-                          className="p-1.5 hover:bg-gray-100"
+                          className="p-2.5 md:p-1.5 hover:bg-gray-100"
                         >
-                          <Plus className="h-3 w-3" />
+                          <Plus className="h-4 w-4 md:h-3 md:w-3" />
                         </button>
                       </div>
                       <button
                         onClick={() => removeItem(item.id)}
-                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-2.5 md:p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-4 w-4 md:h-3 md:w-3" />
                       </button>
                     </div>
                   </div>

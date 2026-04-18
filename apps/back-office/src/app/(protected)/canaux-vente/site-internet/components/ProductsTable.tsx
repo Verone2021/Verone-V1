@@ -51,11 +51,11 @@ export function ProductsTable({
         <TableRow>
           <TableHead className="w-[80px]">Image</TableHead>
           <TableHead>Produit</TableHead>
-          <TableHead>SKU</TableHead>
-          <TableHead>Variantes</TableHead>
+          <TableHead className="hidden lg:table-cell">SKU</TableHead>
+          <TableHead className="hidden lg:table-cell">Variantes</TableHead>
           <TableHead>Prix</TableHead>
-          <TableHead>Statut</TableHead>
-          <TableHead>Eligibilite</TableHead>
+          <TableHead className="hidden xl:table-cell">Statut</TableHead>
+          <TableHead className="hidden xl:table-cell">Eligibilite</TableHead>
           <TableHead>Publie</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
@@ -81,10 +81,10 @@ export function ProductsTable({
                 />
               </TableCell>
               <TableCell className="font-medium">{product.name}</TableCell>
-              <TableCell className="text-sm text-muted-foreground">
+              <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">
                 {product.sku}
               </TableCell>
-              <TableCell>
+              <TableCell className="hidden lg:table-cell">
                 {product.has_variants ? (
                   <Badge variant="outline">
                     {product.variants_count} variantes
@@ -105,7 +105,7 @@ export function ProductsTable({
                   </div>
                 </div>
               </TableCell>
-              <TableCell>
+              <TableCell className="hidden xl:table-cell">
                 <Badge
                   variant={
                     product.status === 'active' ? 'default' : 'secondary'
@@ -114,7 +114,7 @@ export function ProductsTable({
                   {product.status}
                 </Badge>
               </TableCell>
-              <TableCell>
+              <TableCell className="hidden xl:table-cell">
                 {product.is_eligible ? (
                   <div className="flex items-center gap-2 text-green-600">
                     <CheckCircle className="h-4 w-4" />

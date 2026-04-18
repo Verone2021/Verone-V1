@@ -327,7 +327,7 @@ export default function AmbassadorDashboardPage() {
               {codes.map(code => (
                 <div
                   key={code.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-gray-50 rounded-lg"
                 >
                   <div>
                     <code className="text-2xl font-bold font-mono tracking-wider">
@@ -340,7 +340,7 @@ export default function AmbassadorDashboardPage() {
                       {profile.commission_rate}% de prime pour vous
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 shrink-0">
                     <button
                       type="button"
                       onClick={() => {

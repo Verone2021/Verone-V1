@@ -153,6 +153,27 @@ export function useCatalogueFilterPanel({
     onFiltersChange({ ...filters, statuses: newStatuses });
   };
 
+  const handleStockToggle = (level: string) => {
+    const newStockLevels = filters.stockLevels.includes(level)
+      ? filters.stockLevels.filter(l => l !== level)
+      : [...filters.stockLevels, level];
+    onFiltersChange({ ...filters, stockLevels: newStockLevels });
+  };
+
+  const handleConditionToggle = (condition: string) => {
+    const newConditions = filters.conditions.includes(condition)
+      ? filters.conditions.filter(c => c !== condition)
+      : [...filters.conditions, condition];
+    onFiltersChange({ ...filters, conditions: newConditions });
+  };
+
+  const handleCompletionToggle = (level: string) => {
+    const newCompletionLevels = filters.completionLevels.includes(level)
+      ? filters.completionLevels.filter(l => l !== level)
+      : [...filters.completionLevels, level];
+    onFiltersChange({ ...filters, completionLevels: newCompletionLevels });
+  };
+
   const handleClearAll = () => {
     onFiltersChange({
       search: filters.search,
@@ -161,6 +182,9 @@ export function useCatalogueFilterPanel({
       subcategories: [],
       suppliers: [],
       statuses: [],
+      stockLevels: [],
+      conditions: [],
+      completionLevels: [],
     });
   };
 
@@ -188,7 +212,12 @@ export function useCatalogueFilterPanel({
     filters.subcategories.length;
 
   const activeFilterCount =
-    categoryFilterCount + filters.suppliers.length + filters.statuses.length;
+    categoryFilterCount +
+    filters.suppliers.length +
+    filters.statuses.length +
+    filters.stockLevels.length +
+    filters.conditions.length +
+    filters.completionLevels.length;
 
   return {
     expandedFamilies,
@@ -204,6 +233,9 @@ export function useCatalogueFilterPanel({
     handleSubcategoryToggle,
     handleSupplierToggle,
     handleStatusToggle,
+    handleStockToggle,
+    handleConditionToggle,
+    handleCompletionToggle,
     handleClearAll,
     toggleFamilyExpand,
     toggleCategoryExpand,

@@ -90,8 +90,8 @@ export async function CmsPageContent({ slug }: { slug: string }) {
   const html = markdownToHtml(page.content);
 
   return (
-    <div className="max-w-4xl mx-auto px-6 lg:px-8 py-16">
-      <h1 className="font-playfair text-4xl font-bold text-verone-black mb-12">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
+      <h1 className="font-playfair text-3xl md:text-4xl font-bold text-verone-black mb-8 md:mb-12">
         {page.title}
       </h1>
       <div

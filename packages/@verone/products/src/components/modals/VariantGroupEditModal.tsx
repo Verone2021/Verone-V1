@@ -200,7 +200,7 @@ export function VariantGroupEditModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-2xl md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Modifier le groupe de variantes</DialogTitle>
           <DialogDescription>
@@ -213,134 +213,137 @@ export function VariantGroupEditModal({
           onSubmit={e => {
             void handleSubmit(e).catch(console.error);
           }}
-          className="space-y-6"
+          className="flex flex-col flex-1 overflow-hidden"
         >
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="name" className="text-sm font-medium">
-                Nom du groupe *
-              </Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Ex: Chaise Design Scandinave"
-                className="mt-1"
-                required
-              />
-              <p className="text-xs text-gray-600 mt-1">
-                Ce nom sera la base pour tous les produits du groupe
-              </p>
+          <div className="flex-1 overflow-y-auto space-y-6">
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="name" className="text-sm font-medium">
+                  Nom du groupe *
+                </Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="Ex: Chaise Design Scandinave"
+                  className="mt-1"
+                  required
+                />
+                <p className="text-xs text-gray-600 mt-1">
+                  Ce nom sera la base pour tous les produits du groupe
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="base_sku" className="text-sm font-medium">
+                  SKU de base *
+                </Label>
+                <Input
+                  id="base_sku"
+                  value={baseSku}
+                  onChange={e => setBaseSku(e.target.value)}
+                  placeholder="Ex: CHAISE-DESIGN-SCANDI"
+                  className="mt-1 font-mono text-sm"
+                  required
+                />
+                <p className="text-xs text-gray-600 mt-1">
+                  Pattern:{' '}
+                  {baseSku ? `${baseSku}-[VARIANTE]` : 'BASE_SKU-[VARIANTE]'}
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="variant_type" className="text-sm font-medium">
+                  Type de variante *
+                </Label>
+                <select
+                  id="variant_type"
+                  value={variantType}
+                  onChange={e =>
+                    setVariantType(e.target.value as 'color' | 'material')
+                  }
+                  className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-black focus:border-black"
+                  required
+                >
+                  <option value="color">🎨 Couleur</option>
+                  <option value="material">🧵 Matériau</option>
+                </select>
+                <p className="text-xs text-gray-600 mt-1">
+                  Définit l'attribut principal qui différencie les produits du
+                  groupe
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="subcategory" className="text-sm font-medium">
+                  Sous-catégorie *
+                </Label>
+                <select
+                  id="subcategory"
+                  value={subcategoryId}
+                  onChange={e => setSubcategoryId(e.target.value)}
+                  className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-black focus:border-black"
+                  required
+                  disabled={subcategoriesLoading}
+                >
+                  <option value="">Sélectionner une sous-catégorie</option>
+                  {subcategories?.map(sub => (
+                    <option key={sub.id} value={sub.id}>
+                      {sub.category?.name} → {sub.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-600 mt-1">
+                  Tous les produits du groupe partageront cette sous-catégorie
+                </p>
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="base_sku" className="text-sm font-medium">
-                SKU de base *
-              </Label>
-              <Input
-                id="base_sku"
-                value={baseSku}
-                onChange={e => setBaseSku(e.target.value)}
-                placeholder="Ex: CHAISE-DESIGN-SCANDI"
-                className="mt-1 font-mono text-sm"
-                required
-              />
-              <p className="text-xs text-gray-600 mt-1">
-                Pattern:{' '}
-                {baseSku ? `${baseSku}-[VARIANTE]` : 'BASE_SKU-[VARIANTE]'}
-              </p>
-            </div>
+            <VariantGroupDimensionsSection
+              dimensionsLength={dimensionsLength}
+              setDimensionsLength={setDimensionsLength}
+              dimensionsWidth={dimensionsWidth}
+              setDimensionsWidth={setDimensionsWidth}
+              dimensionsHeight={dimensionsHeight}
+              setDimensionsHeight={setDimensionsHeight}
+              dimensionsUnit={dimensionsUnit}
+              setDimensionsUnit={setDimensionsUnit}
+            />
 
-            <div>
-              <Label htmlFor="variant_type" className="text-sm font-medium">
-                Type de variante *
-              </Label>
-              <select
-                id="variant_type"
-                value={variantType}
-                onChange={e =>
-                  setVariantType(e.target.value as 'color' | 'material')
-                }
-                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-black focus:border-black"
-                required
-              >
-                <option value="color">🎨 Couleur</option>
-                <option value="material">🧵 Matériau</option>
-              </select>
-              <p className="text-xs text-gray-600 mt-1">
-                Définit l'attribut principal qui différencie les produits du
-                groupe
-              </p>
-            </div>
+            <VariantGroupCommonPropsSection
+              hasCommonWeight={hasCommonWeight}
+              setHasCommonWeight={setHasCommonWeight}
+              commonWeight={commonWeight}
+              setCommonWeight={setCommonWeight}
+              hasCommonCostPrice={hasCommonCostPrice}
+              setHasCommonCostPrice={setHasCommonCostPrice}
+              commonCostPrice={commonCostPrice}
+              setCommonCostPrice={setCommonCostPrice}
+              commonEcoTax={commonEcoTax}
+              setCommonEcoTax={setCommonEcoTax}
+            />
 
-            <div>
-              <Label htmlFor="subcategory" className="text-sm font-medium">
-                Sous-catégorie *
-              </Label>
-              <select
-                id="subcategory"
-                value={subcategoryId}
-                onChange={e => setSubcategoryId(e.target.value)}
-                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-black focus:border-black"
-                required
-                disabled={subcategoriesLoading}
-              >
-                <option value="">Sélectionner une sous-catégorie</option>
-                {subcategories?.map(sub => (
-                  <option key={sub.id} value={sub.id}>
-                    {sub.category?.name} → {sub.name}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-gray-600 mt-1">
-                Tous les produits du groupe partageront cette sous-catégorie
-              </p>
-            </div>
+            <VariantGroupStyleSupplierSection
+              style={style}
+              setStyle={setStyle}
+              suitableRooms={suitableRooms}
+              setSuitableRooms={setSuitableRooms}
+              hasCommonSupplier={hasCommonSupplier}
+              setHasCommonSupplier={setHasCommonSupplier}
+              supplierId={supplierId}
+              setSupplierId={setSupplierId}
+              suppliers={suppliers}
+              suppliersLoading={suppliersLoading}
+            />
           </div>
 
-          <VariantGroupDimensionsSection
-            dimensionsLength={dimensionsLength}
-            setDimensionsLength={setDimensionsLength}
-            dimensionsWidth={dimensionsWidth}
-            setDimensionsWidth={setDimensionsWidth}
-            dimensionsHeight={dimensionsHeight}
-            setDimensionsHeight={setDimensionsHeight}
-            dimensionsUnit={dimensionsUnit}
-            setDimensionsUnit={setDimensionsUnit}
-          />
-
-          <VariantGroupCommonPropsSection
-            hasCommonWeight={hasCommonWeight}
-            setHasCommonWeight={setHasCommonWeight}
-            commonWeight={commonWeight}
-            setCommonWeight={setCommonWeight}
-            hasCommonCostPrice={hasCommonCostPrice}
-            setHasCommonCostPrice={setHasCommonCostPrice}
-            commonCostPrice={commonCostPrice}
-            setCommonCostPrice={setCommonCostPrice}
-            commonEcoTax={commonEcoTax}
-            setCommonEcoTax={setCommonEcoTax}
-          />
-
-          <VariantGroupStyleSupplierSection
-            style={style}
-            setStyle={setStyle}
-            suitableRooms={suitableRooms}
-            setSuitableRooms={setSuitableRooms}
-            hasCommonSupplier={hasCommonSupplier}
-            setHasCommonSupplier={setHasCommonSupplier}
-            supplierId={supplierId}
-            setSupplierId={setSupplierId}
-            suppliers={suppliers}
-            suppliersLoading={suppliersLoading}
-          />
-
-          <DialogFooter>
+          <DialogFooter className="flex-col gap-2 md:flex-row">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
+              className="w-full md:w-auto"
             >
               Annuler
             </Button>
@@ -352,7 +355,7 @@ export function VariantGroupEditModal({
                 !subcategoryId ||
                 isSubmitting
               }
-              className="bg-black text-white hover:bg-gray-800"
+              className="w-full md:w-auto bg-black text-white hover:bg-gray-800"
             >
               {isSubmitting
                 ? 'Modification...'

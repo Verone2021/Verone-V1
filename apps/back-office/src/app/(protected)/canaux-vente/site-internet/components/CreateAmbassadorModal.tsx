@@ -98,7 +98,7 @@ export function CreateAmbassadorModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-lg md:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nouvel ambassadeur</DialogTitle>
           <DialogDescription>
@@ -108,7 +108,7 @@ export function CreateAmbassadorModal({
 
         <div className="space-y-4 py-4">
           {/* Identite */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <Label htmlFor="first_name">Prenom *</Label>
               <Input
@@ -151,7 +151,7 @@ export function CreateAmbassadorModal({
           </div>
 
           {/* Taux */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <Label htmlFor="discount_rate">Reduction client (%)</Label>
               <Input
@@ -240,7 +240,7 @@ export function CreateAmbassadorModal({
                   placeholder="FR76 ..."
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="bic">BIC</Label>
                   <Input
@@ -283,11 +283,16 @@ export function CreateAmbassadorModal({
           </div>
         </div>
 
-        <DialogFooter>
-          <ButtonV2 variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="flex-col gap-2 md:flex-row">
+          <ButtonV2
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="w-full md:w-auto"
+          >
             Annuler
           </ButtonV2>
           <ButtonV2
+            className="w-full md:w-auto"
             onClick={handleSubmit}
             disabled={!isValid || createMutation.isPending}
           >

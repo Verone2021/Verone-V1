@@ -129,8 +129,8 @@ function StockageContent(): JSX.Element | null {
         )}
 
         {/* Onglets */}
-        <div className="border-b border-gray-200">
-          <nav className="flex gap-1" aria-label="Onglets stockage">
+        <div className="border-b border-gray-200 overflow-x-auto">
+          <nav className="flex gap-1 min-w-max" aria-label="Onglets stockage">
             {TABS.map(tab => {
               const isActive = activeTab === tab.id;
               const Icon = tab.icon;

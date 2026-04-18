@@ -59,9 +59,9 @@ export default function CommandesPage(): JSX.Element {
 
       <div
         data-tour="orders-header"
-        className="bg-gradient-to-b from-white to-gray-50/50 border-b px-6 py-4"
+        className="bg-gradient-to-b from-white to-gray-50/50 border-b px-4 sm:px-6 py-4"
       >
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-[#183559]">
@@ -76,7 +76,7 @@ export default function CommandesPage(): JSX.Element {
           <Link
             href="/commandes/nouvelle"
             data-tour="orders-create"
-            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#5DBEBB] to-[#4AA8A5] text-white rounded-xl hover:from-[#4DA9A6] hover:to-[#3D9895] shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+            className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 bg-gradient-to-r from-[#5DBEBB] to-[#4AA8A5] text-white rounded-xl hover:from-[#4DA9A6] hover:to-[#3D9895] shadow-md hover:shadow-lg transition-all duration-200 font-medium w-full sm:w-auto"
           >
             <Plus className="h-5 w-5" />
             Nouvelle commande
@@ -84,7 +84,7 @@ export default function CommandesPage(): JSX.Element {
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         <CommandesKPIs
           monthlyKPIs={monthlyKPIs}
           commissionStats={commissionStats}

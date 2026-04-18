@@ -186,7 +186,7 @@ export function SalesOrderTableRow({
             )}
           </div>
         </TableCell>
-        <TableCell>
+        <TableCell className="hidden xl:table-cell">
           <div className="flex items-center gap-2">
             {order.payment_status_v2 === 'overpaid' ? (
               <Badge className="text-xs bg-red-100 text-red-800">Surpaye</Badge>
@@ -205,7 +205,7 @@ export function SalesOrderTableRow({
             )}
           </div>
         </TableCell>
-        <TableCell className="whitespace-nowrap">
+        <TableCell className="hidden 2xl:table-cell whitespace-nowrap">
           {order.status === 'shipped' ? (
             <Badge className="text-[10px] bg-green-100 text-green-800">
               Expediee
@@ -230,11 +230,11 @@ export function SalesOrderTableRow({
             <span className="text-muted-foreground text-[10px]">—</span>
           )}
         </TableCell>
-        <TableCell className="text-center whitespace-nowrap">
+        <TableCell className="hidden lg:table-cell text-center whitespace-nowrap">
           <span className="text-xs font-medium">{items.length}</span>
           <span className="text-muted-foreground text-[10px] ml-0.5">ref.</span>
         </TableCell>
-        <TableCell className="whitespace-nowrap">
+        <TableCell className="hidden lg:table-cell whitespace-nowrap">
           <span className="text-xs">
             {order.order_date
               ? formatDate(order.order_date)
@@ -242,7 +242,7 @@ export function SalesOrderTableRow({
           </span>
         </TableCell>
         {showChannelColumn && (
-          <TableCell className="whitespace-nowrap">
+          <TableCell className="hidden xl:table-cell whitespace-nowrap">
             {order.sales_channel?.name ? (
               <Badge
                 variant="outline"

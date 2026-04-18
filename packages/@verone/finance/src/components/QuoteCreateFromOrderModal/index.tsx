@@ -301,7 +301,7 @@ export function QuoteCreateFromOrderModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-2xl md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileEdit className="h-5 w-5" />
@@ -314,55 +314,64 @@ export function QuoteCreateFromOrderModal({
           </DialogDescription>
         </DialogHeader>
 
-        {status === 'success' && createdQuote ? (
-          <QuoteSuccessView
-            createdQuote={createdQuote}
-            onDownloadPdf={() => void handleDownloadPdf()}
-            onFinalize={() => setShowFinalizeWarning(true)}
-            onConvertToInvoice={() => void handleConvertToInvoice()}
-          />
-        ) : (
-          <div className="space-y-4">
-            <QuoteClientCard order={order} customerName={customerName} />
-            <QuoteItemsTable order={order} />
-            <QuoteFeesSection fees={fees} onFeesChange={setFees} />
-            <QuoteCustomLinesSection
-              customLines={customLines}
-              onCustomLinesChange={setCustomLines}
+        <div className="flex-1 overflow-y-auto pr-1">
+          {status === 'success' && createdQuote ? (
+            <QuoteSuccessView
+              createdQuote={createdQuote}
+              onDownloadPdf={() => void handleDownloadPdf()}
+              onFinalize={() => setShowFinalizeWarning(true)}
+              onConvertToInvoice={() => void handleConvertToInvoice()}
             />
-            <QuoteTotalsSection
-              order={order}
-              fees={fees}
-              customLines={customLines}
-            />
-
-            <div className="space-y-2">
-              <Label htmlFor="expiryDays">Validité du devis (jours)</Label>
-              <Input
-                id="expiryDays"
-                type="number"
-                min={1}
-                max={365}
-                value={expiryDays}
-                onChange={e => setExpiryDays(Number(e.target.value))}
-                className="w-32"
+          ) : (
+            <div className="space-y-4">
+              <QuoteClientCard order={order} customerName={customerName} />
+              <QuoteItemsTable order={order} />
+              <QuoteFeesSection fees={fees} onFeesChange={setFees} />
+              <QuoteCustomLinesSection
+                customLines={customLines}
+                onCustomLinesChange={setCustomLines}
               />
-              <p className="text-xs text-muted-foreground">
-                Le devis expirera dans {expiryDays} jours
-              </p>
-            </div>
-          </div>
-        )}
+              <QuoteTotalsSection
+                order={order}
+                fees={fees}
+                customLines={customLines}
+              />
 
-        <DialogFooter>
+              <div className="space-y-2">
+                <Label htmlFor="expiryDays">Validité du devis (jours)</Label>
+                <Input
+                  id="expiryDays"
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={expiryDays}
+                  onChange={e => setExpiryDays(Number(e.target.value))}
+                  className="w-32"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Le devis expirera dans {expiryDays} jours
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="flex-col gap-2 md:flex-row">
           {status === 'success' ? (
-            <Button onClick={handleClose}>Fermer</Button>
+            <Button className="w-full md:w-auto" onClick={handleClose}>
+              Fermer
+            </Button>
           ) : (
             <>
-              <Button variant="outline" onClick={handleClose}>
+              <Button
+                variant="outline"
+                className="w-full md:w-auto"
+                onClick={handleClose}
+              >
                 Annuler
               </Button>
               <Button
+                className="w-full md:w-auto"
                 onClick={() => void handleCreateQuote()}
                 disabled={status === 'creating'}
               >
