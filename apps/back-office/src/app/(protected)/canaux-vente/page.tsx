@@ -169,7 +169,7 @@ export default function CanauxVentePage() {
 
   return (
     <div className="min-h-screen bg-gray-50/50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+      <div className="w-full px-4 sm:px-6 py-6 space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

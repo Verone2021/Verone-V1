@@ -50,7 +50,7 @@ export default function StockPrevisionnelPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-white p-6 sm:p-8">
-        <div className="max-w-7xl mx-auto space-y-6">
+        <div className="w-full space-y-6">
           {/* Skeleton loading */}
           <div className="h-32 bg-gray-200 rounded-lg animate-pulse" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -70,7 +70,7 @@ export default function StockPrevisionnelPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-white p-6 sm:p-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full">
           <Card className="border-red-300 bg-red-50">
             <CardHeader>
               <CardTitle className="text-red-700 flex items-center gap-2">
@@ -124,7 +124,7 @@ export default function StockPrevisionnelPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto p-6 sm:p-8 space-y-8">
+      <div className="w-full p-6 sm:p-8 space-y-8">
         {/* Header avec Navigation */}
         <div className="flex items-center justify-between">
           <div className="space-y-1">
