@@ -33,21 +33,21 @@ function SelectionRow({ selection }: { selection: SelectionPerformance }) {
           </span>
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className="hidden lg:table-cell">
         <Badge variant="outline" className="font-normal">
           {selection.affiliateName}
         </Badge>
       </TableCell>
-      <TableCell className="text-center">
+      <TableCell className="text-center hidden xl:table-cell">
         <span className="text-gray-600">{selection.productsCount}</span>
       </TableCell>
-      <TableCell className="text-center">
+      <TableCell className="text-center hidden xl:table-cell">
         <div className="flex items-center justify-center gap-1 text-gray-600">
           <Eye className="h-3.5 w-3.5" />
           <span>{selection.views}</span>
         </div>
       </TableCell>
-      <TableCell className="text-center">
+      <TableCell className="text-center hidden lg:table-cell">
         <span className="font-medium">{selection.orders}</span>
       </TableCell>
       <TableCell className="text-right">
@@ -116,10 +116,18 @@ export function SelectionsPerformanceTable({
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead className="font-medium">Sélection</TableHead>
-            <TableHead className="font-medium">Affilié</TableHead>
-            <TableHead className="font-medium text-center">Produits</TableHead>
-            <TableHead className="font-medium text-center">Vues</TableHead>
-            <TableHead className="font-medium text-center">Commandes</TableHead>
+            <TableHead className="font-medium hidden lg:table-cell">
+              Affilié
+            </TableHead>
+            <TableHead className="font-medium text-center hidden xl:table-cell">
+              Produits
+            </TableHead>
+            <TableHead className="font-medium text-center hidden xl:table-cell">
+              Vues
+            </TableHead>
+            <TableHead className="font-medium text-center hidden lg:table-cell">
+              Commandes
+            </TableHead>
             <TableHead className="font-medium text-right">CA HT</TableHead>
             <TableHead className="font-medium text-right">Conv.</TableHead>
           </TableRow>

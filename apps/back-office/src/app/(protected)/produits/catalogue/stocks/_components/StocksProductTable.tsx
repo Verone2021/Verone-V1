@@ -45,10 +45,10 @@ export function StocksProductTable({
           <TableHeader>
             <TableRow>
               <TableHead>Produit</TableHead>
-              <TableHead>SKU</TableHead>
+              <TableHead className="hidden lg:table-cell">SKU</TableHead>
               <TableHead>Stock</TableHead>
-              <TableHead>Prévisions</TableHead>
-              <TableHead>Disponible</TableHead>
+              <TableHead className="hidden xl:table-cell">Prévisions</TableHead>
+              <TableHead className="hidden xl:table-cell">Disponible</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -97,7 +97,7 @@ export function StocksProductTable({
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="font-mono text-sm">
+                  <TableCell className="font-mono text-sm hidden lg:table-cell">
                     {product.sku}
                   </TableCell>
                   <TableCell>
@@ -107,7 +107,7 @@ export function StocksProductTable({
                       size="sm"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden xl:table-cell">
                     <div className="flex items-center gap-2 text-sm">
                       {product.stock_forecasted_in > 0 && (
                         <span className="flex items-center gap-1 text-green-600">
@@ -127,7 +127,7 @@ export function StocksProductTable({
                         )}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden xl:table-cell">
                     <Badge
                       variant={
                         product.stock_available <= 5 ? 'destructive' : 'default'

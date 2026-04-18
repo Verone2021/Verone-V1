@@ -185,11 +185,19 @@ export function MetaProductsTable({
               <TableRow>
                 <TableHead className="w-[50px]">Image</TableHead>
                 <TableHead>Produit</TableHead>
-                <TableHead className="w-[100px]">SKU</TableHead>
-                <TableHead className="w-[100px]">Prix Meta</TableHead>
+                <TableHead className="w-[100px] hidden lg:table-cell">
+                  SKU
+                </TableHead>
+                <TableHead className="w-[100px] hidden lg:table-cell">
+                  Prix Meta
+                </TableHead>
                 <TableHead className="w-[120px]">Statut Meta</TableHead>
-                <TableHead className="w-[100px]">Derniere verif.</TableHead>
-                <TableHead className="w-[100px]">Sync</TableHead>
+                <TableHead className="w-[100px] hidden xl:table-cell">
+                  Derniere verif.
+                </TableHead>
+                <TableHead className="w-[100px] hidden 2xl:table-cell">
+                  Sync
+                </TableHead>
                 <TableHead className="w-[120px] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -269,10 +277,10 @@ export function MetaProductsTable({
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="font-mono text-sm">
+                      <TableCell className="font-mono text-sm hidden lg:table-cell">
                         {p.sku}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         {formatPrice(p.custom_price_ht, p.cost_price)}
                       </TableCell>
                       <TableCell>
@@ -282,10 +290,10 @@ export function MetaProductsTable({
                           statusDetail={p.meta_status_detail}
                         />
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
+                      <TableCell className="text-xs text-muted-foreground hidden xl:table-cell">
                         {formatRelativeDate(p.meta_status_checked_at)}
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
+                      <TableCell className="text-xs text-muted-foreground hidden 2xl:table-cell">
                         {p.synced_at ? formatRelativeDate(p.synced_at) : '-'}
                       </TableCell>
                       <TableCell className="text-right">

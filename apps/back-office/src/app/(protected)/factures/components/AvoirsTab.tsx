@@ -95,10 +95,12 @@ export function AvoirsTab({
             <TableHeader>
               <TableRow>
                 <TableHead>N° Avoir</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Facture liee</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Statut</TableHead>
+                <TableHead className="hidden lg:table-cell">Client</TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  Facture liee
+                </TableHead>
+                <TableHead className="hidden xl:table-cell">Date</TableHead>
+                <TableHead className="hidden xl:table-cell">Statut</TableHead>
                 <TableHead className="text-right">Montant</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -109,8 +111,10 @@ export function AvoirsTab({
                   <TableCell className="font-mono">
                     {creditNote.credit_note_number}
                   </TableCell>
-                  <TableCell>{creditNote.client?.name ?? '-'}</TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {creditNote.client?.name ?? '-'}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     {creditNote.invoice_id ? (
                       <Link
                         href={`/factures/${creditNote.invoice_id}?type=invoice`}
@@ -123,8 +127,10 @@ export function AvoirsTab({
                       <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
-                  <TableCell>{formatDate(creditNote.issue_date)}</TableCell>
-                  <TableCell>
+                  <TableCell className="hidden xl:table-cell">
+                    {formatDate(creditNote.issue_date)}
+                  </TableCell>
+                  <TableCell className="hidden xl:table-cell">
                     <CreditNoteStatusBadge status={creditNote.status} />
                   </TableCell>
                   <TableCell className="text-right font-medium text-destructive">
