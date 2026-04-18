@@ -49,7 +49,7 @@ export default function CategoryDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-white p-6">
-        <div className="max-w-6xl mx-auto">
+        <div className="w-full">
           <div className="flex items-center space-x-4 mb-6">
             <div className="w-8 h-8 bg-gray-200 rounded animate-pulse" />
             <div className="h-8 w-64 bg-gray-200 rounded animate-pulse" />

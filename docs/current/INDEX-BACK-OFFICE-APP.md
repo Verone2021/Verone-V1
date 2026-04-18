@@ -1,6 +1,6 @@
 # Back-Office — Documentation App
 
-_Generated: 2026-04-18 08:36_
+_Generated: 2026-04-18 08:47_
 
 ## Pages (147)
 
@@ -279,7 +279,7 @@ _Generated: 2026-04-18 08:36_
 | `/api/transactions/update-vat`                  | POST               |
 | `/api/webhooks/packlink`                        | POST               |
 
-## Components in app (346)
+## Components in app (348)
 
 | Fichier                                                                                                                         |
 | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -334,12 +334,10 @@ _Generated: 2026-04-18 08:36_
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/left-column/OrganisationCard.tsx`                    |
 | `src/app/(protected)/canaux-vente/linkme/commissions/components/CommissionDetailContent.tsx`                                    |
 | `src/app/(protected)/canaux-vente/linkme/commissions/components/CommissionDetailSheet.tsx`                                      |
-| `src/app/(protected)/canaux-vente/linkme/commissions/components/CommissionMobileCard.tsx`                                       |
 | `src/app/(protected)/canaux-vente/linkme/commissions/components/CommissionsFilters.tsx`                                         |
 | `src/app/(protected)/canaux-vente/linkme/commissions/components/CommissionsHeader.tsx`                                          |
 | `src/app/(protected)/canaux-vente/linkme/commissions/components/CommissionsKpiCards.tsx`                                        |
 | `src/app/(protected)/canaux-vente/linkme/commissions/components/CommissionsPagination.tsx`                                      |
-| `src/app/(protected)/canaux-vente/linkme/commissions/components/CommissionsResponsiveTable.tsx`                                 |
 | `src/app/(protected)/canaux-vente/linkme/commissions/components/CommissionsTabContent.tsx`                                      |
 | `src/app/(protected)/canaux-vente/linkme/commissions/components/CommissionsTableHeader.tsx`                                     |
 | `src/app/(protected)/canaux-vente/linkme/commissions/components/CommissionsTableRow.tsx`                                        |
@@ -350,6 +348,7 @@ _Generated: 2026-04-18 08:36_
 | `src/app/(protected)/canaux-vente/linkme/components/AffiliatesSection/AffiliatesTable.tsx`                                      |
 | `src/app/(protected)/canaux-vente/linkme/components/AffiliatesSection/EntityPicker.tsx`                                         |
 | `src/app/(protected)/canaux-vente/linkme/components/AnalyticsDateFilter.tsx`                                                    |
+| `src/app/(protected)/canaux-vente/linkme/components/CommissionsSection.tsx`                                                     |
 | `src/app/(protected)/canaux-vente/linkme/components/CommissionsStatusCard.tsx`                                                  |
 | `src/app/(protected)/canaux-vente/linkme/components/ConfigurationSection.tsx`                                                   |
 | `src/app/(protected)/canaux-vente/linkme/components/CreateLinkMeOrderModal.tsx`                                                 |
@@ -402,6 +401,9 @@ _Generated: 2026-04-18 08:36_
 | `src/app/(protected)/canaux-vente/linkme/components/UsersSectionComponents.tsx`                                                 |
 | `src/app/(protected)/canaux-vente/linkme/components/charts/LinkMeRevenueChart.tsx`                                              |
 | `src/app/(protected)/canaux-vente/linkme/components/charts/TopAffiliatesChart.tsx`                                              |
+| `src/app/(protected)/canaux-vente/linkme/components/commissions/CommissionsFilters.tsx`                                         |
+| `src/app/(protected)/canaux-vente/linkme/components/commissions/CommissionsSummary.tsx`                                         |
+| `src/app/(protected)/canaux-vente/linkme/components/commissions/CommissionsTable.tsx`                                           |
 | `src/app/(protected)/canaux-vente/linkme/components/contacts/BillingAddressSection.tsx`                                         |
 | `src/app/(protected)/canaux-vente/linkme/components/contacts/BillingContactSection.tsx`                                         |
 | `src/app/(protected)/canaux-vente/linkme/components/contacts/ContactCardBO.tsx`                                                 |

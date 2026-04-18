@@ -60,7 +60,7 @@ export default function OrganisationRedirectPage() {
   // État de chargement
   if (loading || redirecting) {
     return (
-      <div className="container mx-auto p-4">
+      <div className="w-full p-4">
         <Card>
           <CardContent className="p-8 text-center">
             <Loader2 className="h-12 w-12 text-blue-600 mx-auto mb-4 animate-spin" />
@@ -78,7 +78,7 @@ export default function OrganisationRedirectPage() {
 
   // Organisation non trouvée
   return (
-    <div className="container mx-auto p-4">
+    <div className="w-full p-4">
       <Card>
         <CardContent className="p-8 text-center">
           <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
