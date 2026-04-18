@@ -381,7 +381,6 @@ const items: Database['public']['Tables']['financial_document_lines']['Insert'][
 
 - **Types Supabase générés** : `packages/@verone/types/src/supabase.ts`
 - **Workflow fix-warnings** : `.claude/commands/fix-warnings.md` (Phase 6)
-- **Workflow expert** : `.claude/guides/expert-workflow.md`
 
 ---
 
