@@ -389,62 +389,64 @@ export default function NotificationsPage() {
           </div>
 
           {/* Filters */}
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Tabs */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setActiveTab('all')}
-                className={cn(
-                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                  activeTab === 'all'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                )}
-              >
-                Toutes ({notifications.length})
-              </button>
+          <div className="flex flex-col gap-3">
+            {/* Tabs — scrollable horizontalement sur mobile */}
+            <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="flex items-center gap-2 min-w-max">
+                <button
+                  onClick={() => setActiveTab('all')}
+                  className={cn(
+                    'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
+                    activeTab === 'all'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  )}
+                >
+                  Toutes ({notifications.length})
+                </button>
 
-              <button
-                onClick={() => setActiveTab('unread')}
-                className={cn(
-                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                  activeTab === 'unread'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                )}
-              >
-                Non lues ({unreadCount})
-              </button>
+                <button
+                  onClick={() => setActiveTab('unread')}
+                  className={cn(
+                    'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
+                    activeTab === 'unread'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  )}
+                >
+                  Non lues ({unreadCount})
+                </button>
 
-              <button
-                onClick={() => setActiveTab('urgent')}
-                className={cn(
-                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                  activeTab === 'urgent'
-                    ? 'bg-red-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                )}
-              >
-                <AlertCircle className="inline h-3.5 w-3.5 mr-1" />
-                Urgent ({urgentCount})
-              </button>
+                <button
+                  onClick={() => setActiveTab('urgent')}
+                  className={cn(
+                    'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
+                    activeTab === 'urgent'
+                      ? 'bg-red-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  )}
+                >
+                  <AlertCircle className="inline h-3.5 w-3.5 mr-1" />
+                  Urgent ({urgentCount})
+                </button>
 
-              <button
-                onClick={() => setActiveTab('actionable')}
-                className={cn(
-                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                  activeTab === 'actionable'
-                    ? 'bg-amber-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                )}
-              >
-                <AlertTriangle className="inline h-3.5 w-3.5 mr-1" />
-                Actions ({actionableCount})
-              </button>
+                <button
+                  onClick={() => setActiveTab('actionable')}
+                  className={cn(
+                    'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
+                    activeTab === 'actionable'
+                      ? 'bg-amber-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  )}
+                >
+                  <AlertTriangle className="inline h-3.5 w-3.5 mr-1" />
+                  Actions ({actionableCount})
+                </button>
+              </div>
             </div>
 
             {/* Search */}
-            <div className="flex-1 min-w-[200px] max-w-sm">
+            <div className="w-full max-w-sm">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
