@@ -96,8 +96,8 @@ export function AvoirsTab({
               <TableRow>
                 <TableHead>N° Avoir</TableHead>
                 <TableHead>Client</TableHead>
-                <TableHead>Facture liee</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead className="hidden lg:table-cell">Facture liee</TableHead>
+                <TableHead className="hidden lg:table-cell">Date</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead className="text-right">Montant</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -110,7 +110,7 @@ export function AvoirsTab({
                     {creditNote.credit_note_number}
                   </TableCell>
                   <TableCell>{creditNote.client?.name ?? '-'}</TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     {creditNote.invoice_id ? (
                       <Link
                         href={`/factures/${creditNote.invoice_id}?type=invoice`}
@@ -123,7 +123,7 @@ export function AvoirsTab({
                       <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
-                  <TableCell>{formatDate(creditNote.issue_date)}</TableCell>
+                  <TableCell className="hidden lg:table-cell">{formatDate(creditNote.issue_date)}</TableCell>
                   <TableCell>
                     <CreditNoteStatusBadge status={creditNote.status} />
                   </TableCell>
