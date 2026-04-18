@@ -56,7 +56,7 @@ export function AffiliateCreateModal({
 }: AffiliateCreateModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-2xl md:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nouvel Affilié</DialogTitle>
           <DialogDescription>
@@ -202,11 +202,16 @@ export function AffiliateCreateModal({
             </>
           )}
         </div>
-        <DialogFooter>
-          <ButtonV2 variant="outline" onClick={onCancel}>
+        <DialogFooter className="flex-col gap-2 md:flex-row">
+          <ButtonV2
+            variant="outline"
+            onClick={onCancel}
+            className="w-full md:w-auto"
+          >
             Annuler
           </ButtonV2>
           <ButtonV2
+            className="w-full md:w-auto"
             onClick={() => {
               void onCreate().catch(error => {
                 console.error('[Affiliates] Create failed:', error);

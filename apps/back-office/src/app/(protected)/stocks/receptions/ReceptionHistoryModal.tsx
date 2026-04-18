@@ -42,8 +42,8 @@ export function ReceptionHistoryModal({
   onClose,
 }: ReceptionHistoryModalProps) {
   return (
-    <Card className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <Card className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50 md:p-4">
+      <div className="bg-white rounded-t-lg md:rounded-lg shadow-xl w-full md:max-w-4xl max-h-screen md:max-h-[90vh] overflow-y-auto">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Détails réception - {selectedOrder.po_number}</CardTitle>

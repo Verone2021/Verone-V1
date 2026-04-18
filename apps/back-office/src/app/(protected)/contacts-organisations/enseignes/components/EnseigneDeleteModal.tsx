@@ -28,7 +28,7 @@ export function EnseigneDeleteModal({
 }: EnseigneDeleteModalProps) {
   return (
     <Dialog open={!!enseigne} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-[450px]">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-[450px] md:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-destructive" />
@@ -71,11 +71,16 @@ export function EnseigneDeleteModal({
           </div>
         )}
 
-        <DialogFooter className="mt-4">
-          <ButtonV2 variant="ghost" onClick={onClose}>
+        <DialogFooter className="mt-4 flex-col gap-2 md:flex-row">
+          <ButtonV2
+            variant="ghost"
+            onClick={onClose}
+            className="w-full md:w-auto"
+          >
             Annuler
           </ButtonV2>
           <ButtonV2
+            className="w-full md:w-auto"
             variant="destructive"
             onClick={() => {
               void Promise.resolve(onConfirm()).catch(error => {

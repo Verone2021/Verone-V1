@@ -68,7 +68,7 @@ export function CreateSelectionModal({
 }: CreateSelectionModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-3xl md:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Créer une sélection</DialogTitle>
           <DialogDescription>
@@ -220,11 +220,16 @@ export function CreateSelectionModal({
           </div>
         )}
 
-        <DialogFooter>
-          <ButtonV2 variant="outline" onClick={onCancel}>
+        <DialogFooter className="flex-col gap-2 md:flex-row">
+          <ButtonV2
+            variant="outline"
+            onClick={onCancel}
+            className="w-full md:w-auto"
+          >
             Annuler
           </ButtonV2>
           <ButtonV2
+            className="w-full md:w-auto"
             onClick={() => {
               void onSubmit().catch(error => {
                 console.error(

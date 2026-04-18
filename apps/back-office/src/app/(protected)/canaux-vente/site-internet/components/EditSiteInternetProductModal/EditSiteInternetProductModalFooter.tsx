@@ -30,11 +30,20 @@ export function EditSiteInternetProductModalFooter({
             </span>
           )}
         </div>
-        <div className="flex gap-2">
-          <ButtonV2 variant="outline" onClick={onClose} type="button">
+        <div className="flex flex-col gap-2 md:flex-row">
+          <ButtonV2
+            variant="outline"
+            onClick={onClose}
+            type="button"
+            className="w-full md:w-auto"
+          >
             Annuler
           </ButtonV2>
-          <ButtonV2 type="submit" disabled={isPending}>
+          <ButtonV2
+            type="submit"
+            disabled={isPending}
+            className="w-full md:w-auto"
+          >
             {isPending ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

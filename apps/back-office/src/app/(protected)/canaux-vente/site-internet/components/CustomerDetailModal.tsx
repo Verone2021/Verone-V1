@@ -41,7 +41,7 @@ export function CustomerDetailModal({ customer, open, onClose }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-2xl md:max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg">{fullName}</DialogTitle>
         </DialogHeader>

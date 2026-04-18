@@ -44,7 +44,7 @@ export function EnseigneCreateEditModal({
 }: EnseigneCreateEditModalProps) {
   return (
     <Dialog open={open} onOpenChange={open => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-lg md:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {editingEnseigne ? "Modifier l'enseigne" : 'Nouvelle enseigne'}
@@ -137,11 +137,16 @@ export function EnseigneCreateEditModal({
           </div>
         </div>
 
-        <DialogFooter>
-          <ButtonV2 variant="ghost" onClick={onClose}>
+        <DialogFooter className="flex-col gap-2 md:flex-row">
+          <ButtonV2
+            variant="ghost"
+            onClick={onClose}
+            className="w-full md:w-auto"
+          >
             Annuler
           </ButtonV2>
           <ButtonV2
+            className="w-full md:w-auto"
             variant="primary"
             onClick={() => {
               void Promise.resolve(onSubmit()).catch(error => {

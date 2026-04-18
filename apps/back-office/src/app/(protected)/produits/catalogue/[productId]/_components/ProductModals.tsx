@@ -101,7 +101,7 @@ export function ProductModals({
       />
 
       <Dialog open={isCategorizeModalOpen} onOpenChange={onCloseCategorize}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="h-screen md:h-auto max-w-full md:max-w-md md:max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center">
               <Tag className="h-4 w-4 mr-2" />
@@ -134,8 +134,12 @@ export function ProductModals({
             />
           </div>
 
-          <DialogFooter>
-            <ButtonUnified variant="outline" onClick={onCloseCategorize}>
+          <DialogFooter className="flex-col gap-2 md:flex-row">
+            <ButtonUnified
+              variant="outline"
+              onClick={onCloseCategorize}
+              className="w-full md:w-auto"
+            >
               Annuler
             </ButtonUnified>
           </DialogFooter>
