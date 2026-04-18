@@ -211,7 +211,7 @@ function OrganisationsPageContent(): JSX.Element | null {
       <div className="max-w-6xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                 <Building2 className="h-6 w-6 text-linkme-turquoise" />
