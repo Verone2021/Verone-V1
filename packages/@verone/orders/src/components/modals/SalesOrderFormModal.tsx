@@ -222,7 +222,7 @@ export function SalesOrderFormModal({
           </ButtonV2>
         </DialogTrigger>
       )}
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-6xl md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>
             {mode === 'edit'
@@ -244,129 +244,131 @@ export function SalesOrderFormModal({
           </DialogDescription>
         </DialogHeader>
 
-        {/* STEP 1: Channel selection (create mode only) */}
-        {mode === 'create' && wizardStep === 'channel-selection' && (
-          <ChannelSelector
-            onChannelSelect={handleChannelSelect}
-            onLinkMeClick={onLinkMeClick}
-            onClose={() => setOpen(false)}
-          />
-        )}
+        <div className="flex-1 overflow-y-auto">
+          {/* STEP 1: Channel selection (create mode only) */}
+          {mode === 'create' && wizardStep === 'channel-selection' && (
+            <ChannelSelector
+              onChannelSelect={handleChannelSelect}
+              onLinkMeClick={onLinkMeClick}
+              onClose={() => setOpen(false)}
+            />
+          )}
 
-        {/* STEP 2: Form (shown if mode=edit OR channel selected) */}
-        {(mode === 'edit' || wizardStep === 'form') && (
-          <>
-            {loadingOrder && (
-              <div className="flex justify-center py-8">
-                <div className="text-gray-500">
-                  Chargement de la commande...
+          {/* STEP 2: Form (shown if mode=edit OR channel selected) */}
+          {(mode === 'edit' || wizardStep === 'form') && (
+            <>
+              {loadingOrder && (
+                <div className="flex justify-center py-8">
+                  <div className="text-gray-500">
+                    Chargement de la commande...
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {mode === 'create' && (
-              <div className="mb-4">
-                <ButtonV2
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleBackToChannelSelection(setWizardStep)}
-                  className="text-gray-600"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Changer le type de commande
-                </ButtonV2>
-              </div>
-            )}
+              {mode === 'create' && (
+                <div className="mb-4">
+                  <ButtonV2
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleBackToChannelSelection(setWizardStep)}
+                    className="text-gray-600"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Changer le type de commande
+                  </ButtonV2>
+                </div>
+              )}
 
-            {/* LINKME WORKFLOW */}
-            {selectedSalesChannel === 'linkme' && mode === 'create' && (
-              <LinkMeWorkflow
-                affiliateType={linkme.linkmeAffiliateType}
-                onAffiliateTypeChange={linkme.setLinkmeAffiliateType}
-                affiliateId={linkme.linkmeAffiliateId}
-                onAffiliateIdChange={linkme.setLinkmeAffiliateId}
-                affiliates={linkme.linkmeAffiliates}
-                loadingAffiliates={linkme.loadingAffiliates}
-                selectionId={linkme.linkmeSelectionId}
-                onSelectionIdChange={linkme.setLinkmeSelectionId}
-                selections={linkme.linkmeSelections}
-                loadingSelections={linkme.loadingSelections}
-                selectionDetail={linkme.linkmeSelectionDetail}
-                loadingSelectionDetail={linkme.loadingSelectionDetail}
-                cart={linkme.linkmeCart}
-                cartTotals={linkme.linkmeCartTotals}
-                onAddProduct={linkme.addLinkMeProduct}
-                onUpdateQuantity={linkme.updateLinkMeQuantity}
-                onRemoveItem={linkme.removeLinkMeItem}
-                onClearCart={() => linkme.setLinkmeCart([])}
-                notes={notes}
-                onNotesChange={setNotes}
-                loading={loading}
-                canSubmit={
-                  !loading &&
-                  !!selectedCustomer &&
-                  linkme.linkmeCart.length > 0 &&
-                  !!linkme.linkmeSelectionDetail?.affiliate_id
-                }
-                onSubmit={() => {
-                  void linkme.handleLinkMeSubmit().catch(console.error);
-                }}
-                onCancel={() => setOpen(false)}
-                previewSelection={linkme.previewSelection}
-                previewLoading={linkme.previewLoading}
-              />
-            )}
+              {/* LINKME WORKFLOW */}
+              {selectedSalesChannel === 'linkme' && mode === 'create' && (
+                <LinkMeWorkflow
+                  affiliateType={linkme.linkmeAffiliateType}
+                  onAffiliateTypeChange={linkme.setLinkmeAffiliateType}
+                  affiliateId={linkme.linkmeAffiliateId}
+                  onAffiliateIdChange={linkme.setLinkmeAffiliateId}
+                  affiliates={linkme.linkmeAffiliates}
+                  loadingAffiliates={linkme.loadingAffiliates}
+                  selectionId={linkme.linkmeSelectionId}
+                  onSelectionIdChange={linkme.setLinkmeSelectionId}
+                  selections={linkme.linkmeSelections}
+                  loadingSelections={linkme.loadingSelections}
+                  selectionDetail={linkme.linkmeSelectionDetail}
+                  loadingSelectionDetail={linkme.loadingSelectionDetail}
+                  cart={linkme.linkmeCart}
+                  cartTotals={linkme.linkmeCartTotals}
+                  onAddProduct={linkme.addLinkMeProduct}
+                  onUpdateQuantity={linkme.updateLinkMeQuantity}
+                  onRemoveItem={linkme.removeLinkMeItem}
+                  onClearCart={() => linkme.setLinkmeCart([])}
+                  notes={notes}
+                  onNotesChange={setNotes}
+                  loading={loading}
+                  canSubmit={
+                    !loading &&
+                    !!selectedCustomer &&
+                    linkme.linkmeCart.length > 0 &&
+                    !!linkme.linkmeSelectionDetail?.affiliate_id
+                  }
+                  onSubmit={() => {
+                    void linkme.handleLinkMeSubmit().catch(console.error);
+                  }}
+                  onCancel={() => setOpen(false)}
+                  previewSelection={linkme.previewSelection}
+                  previewLoading={linkme.previewLoading}
+                />
+              )}
 
-            {/* STANDARD FORM (Manual + Site Internet + edit mode) */}
-            {(selectedSalesChannel !== 'linkme' || mode === 'edit') && (
-              <StandardOrderForm
-                mode={mode}
-                loading={loading}
-                loadingOrder={loadingOrder}
-                selectedCustomer={selectedCustomer}
-                onCustomerChange={handleCustomerChange}
-                orderDate={orderDate}
-                onOrderDateChange={setOrderDate}
-                expectedDeliveryDate={expectedDeliveryDate}
-                onExpectedDeliveryDateChange={setExpectedDeliveryDate}
-                paymentTermsType={paymentTermsType}
-                onPaymentTermsTypeChange={setPaymentTermsType}
-                paymentTermsNotes={paymentTermsNotes}
-                onPaymentTermsNotesChange={setPaymentTermsNotes}
-                shippingAddress={shippingAddress}
-                onShippingAddressChange={setShippingAddress}
-                billingAddress={billingAddress}
-                onBillingAddressChange={setBillingAddress}
-                notes={notes}
-                onNotesChange={setNotes}
-                ecoTaxVatRate={ecoTaxVatRate}
-                onEcoTaxVatRateChange={setEcoTaxVatRate}
-                shippingCostHt={shippingCostHt}
-                onShippingCostHtChange={setShippingCostHt}
-                insuranceCostHt={insuranceCostHt}
-                onInsuranceCostHtChange={setInsuranceCostHt}
-                handlingCostHt={handlingCostHt}
-                onHandlingCostHtChange={setHandlingCostHt}
-                items={items}
-                isPriceEditable={isPriceEditable}
-                onUpdateItem={handleUpdateItem}
-                onRemoveItem={removeItem}
-                showProductSelector={showProductSelector}
-                onShowProductSelectorChange={setShowProductSelector}
-                onProductsSelect={handleProductsSelect}
-                excludeProductIds={excludeProductIds}
-                totalHTProducts={totalHTProducts}
-                totalCharges={totalCharges}
-                totalTVA={totalTVA}
-                totalTTC={totalTTC}
-                stockWarnings={stockWarnings}
-                onSubmit={handleSubmit}
-                onCancel={() => setOpen(false)}
-              />
-            )}
-          </>
-        )}
+              {/* STANDARD FORM (Manual + Site Internet + edit mode) */}
+              {(selectedSalesChannel !== 'linkme' || mode === 'edit') && (
+                <StandardOrderForm
+                  mode={mode}
+                  loading={loading}
+                  loadingOrder={loadingOrder}
+                  selectedCustomer={selectedCustomer}
+                  onCustomerChange={handleCustomerChange}
+                  orderDate={orderDate}
+                  onOrderDateChange={setOrderDate}
+                  expectedDeliveryDate={expectedDeliveryDate}
+                  onExpectedDeliveryDateChange={setExpectedDeliveryDate}
+                  paymentTermsType={paymentTermsType}
+                  onPaymentTermsTypeChange={setPaymentTermsType}
+                  paymentTermsNotes={paymentTermsNotes}
+                  onPaymentTermsNotesChange={setPaymentTermsNotes}
+                  shippingAddress={shippingAddress}
+                  onShippingAddressChange={setShippingAddress}
+                  billingAddress={billingAddress}
+                  onBillingAddressChange={setBillingAddress}
+                  notes={notes}
+                  onNotesChange={setNotes}
+                  ecoTaxVatRate={ecoTaxVatRate}
+                  onEcoTaxVatRateChange={setEcoTaxVatRate}
+                  shippingCostHt={shippingCostHt}
+                  onShippingCostHtChange={setShippingCostHt}
+                  insuranceCostHt={insuranceCostHt}
+                  onInsuranceCostHtChange={setInsuranceCostHt}
+                  handlingCostHt={handlingCostHt}
+                  onHandlingCostHtChange={setHandlingCostHt}
+                  items={items}
+                  isPriceEditable={isPriceEditable}
+                  onUpdateItem={handleUpdateItem}
+                  onRemoveItem={removeItem}
+                  showProductSelector={showProductSelector}
+                  onShowProductSelectorChange={setShowProductSelector}
+                  onProductsSelect={handleProductsSelect}
+                  excludeProductIds={excludeProductIds}
+                  totalHTProducts={totalHTProducts}
+                  totalCharges={totalCharges}
+                  totalTVA={totalTVA}
+                  totalTTC={totalTTC}
+                  stockWarnings={stockWarnings}
+                  onSubmit={handleSubmit}
+                  onCancel={() => setOpen(false)}
+                />
+              )}
+            </>
+          )}
+        </div>
       </DialogContent>
 
       <OrderConfirmationDialog

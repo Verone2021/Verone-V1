@@ -74,7 +74,7 @@ export function CloseOrderModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-md md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-orange-500" />
@@ -86,7 +86,7 @@ export function CloseOrderModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="flex-1 overflow-y-auto space-y-4 py-4">
           {/* Avertissement unités restantes */}
           <div className="flex items-start gap-3 p-4 bg-orange-50 border border-orange-200 rounded-md">
             <Package className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
@@ -122,8 +122,13 @@ export function CloseOrderModal({
           </div>
         </div>
 
-        <DialogFooter>
-          <ButtonV2 variant="outline" onClick={onClose} disabled={loading}>
+        <DialogFooter className="flex-col gap-2 md:flex-row">
+          <ButtonV2
+            variant="outline"
+            onClick={onClose}
+            disabled={loading}
+            className="w-full md:w-auto"
+          >
             Annuler
           </ButtonV2>
           <ButtonV2
@@ -132,6 +137,7 @@ export function CloseOrderModal({
               void handleConfirm();
             }}
             loading={loading}
+            className="w-full md:w-auto"
           >
             <AlertTriangle className="h-4 w-4 mr-2" />
             Clôturer la commande

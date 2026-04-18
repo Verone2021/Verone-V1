@@ -90,7 +90,7 @@ export function SendOrderDocumentsModal({
           if (!sending) onClose();
         }}
       >
-        <DialogContent className="sm:max-w-[560px]">
+        <DialogContent className="h-screen md:h-auto max-w-full md:max-w-[560px] md:max-h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Mail className="h-5 w-5" />
@@ -98,7 +98,7 @@ export function SendOrderDocumentsModal({
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
+          <div className="flex-1 overflow-y-auto space-y-4 py-2">
             <div className="space-y-1.5">
               <Label htmlFor="email-to">Destinataire</Label>
               {contacts.length > 1 ? (
@@ -165,11 +165,12 @@ export function SendOrderDocumentsModal({
             />
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col gap-2 md:flex-row">
             <ButtonUnified
               variant="outline"
               onClick={onClose}
               disabled={sending}
+              className="w-full md:w-auto"
             >
               Annuler
             </ButtonUnified>
@@ -182,6 +183,7 @@ export function SendOrderDocumentsModal({
               disabled={
                 sending || !to || !subject || !message || !allSelectedReady
               }
+              className="w-full md:w-auto"
             >
               {sending ? (
                 <>

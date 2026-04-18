@@ -211,7 +211,7 @@ export function AddProductToOrderModal({
   return (
     <>
       <Dialog open={open && !showProductSelector} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="h-screen md:h-auto max-w-full md:max-w-4xl md:max-h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>{getModalTitle()}</DialogTitle>
             <DialogDescription>
@@ -220,7 +220,7 @@ export function AddProductToOrderModal({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6">
+          <div className="flex-1 overflow-y-auto space-y-6">
             {/* SECTION 1 : Sélection Produit */}
             <div className="space-y-4">
               <Label>Produit *</Label>
@@ -280,7 +280,7 @@ export function AddProductToOrderModal({
                     Configuration de la ligne
                   </h3>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {/* Quantité avec +/- */}
                     <div>
                       <Label>Quantité *</Label>
@@ -462,8 +462,13 @@ export function AddProductToOrderModal({
             )}
           </div>
 
-          <DialogFooter>
-            <ButtonV2 variant="outline" onClick={onClose} disabled={isAdding}>
+          <DialogFooter className="flex-col gap-2 md:flex-row">
+            <ButtonV2
+              variant="outline"
+              onClick={onClose}
+              disabled={isAdding}
+              className="w-full md:w-auto"
+            >
               Annuler
             </ButtonV2>
             <ButtonV2
@@ -471,6 +476,7 @@ export function AddProductToOrderModal({
                 void handleAdd();
               }}
               disabled={!selectedProduct || isAdding}
+              className="w-full md:w-auto"
             >
               {isAdding ? (
                 'Ajout en cours...'

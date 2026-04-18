@@ -246,7 +246,7 @@ export function QuickPurchaseOrderModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-2xl md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Commander un produit</DialogTitle>
           <DialogDescription>
@@ -254,205 +254,212 @@ export function QuickPurchaseOrderModal({
           </DialogDescription>
         </DialogHeader>
 
-        {isLoadingData ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-          </div>
-        ) : error && !product ? (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : product ? (
-          <div className="space-y-6">
-            {/* Infos produit */}
-            <div className="flex gap-4">
-              <div className="relative w-20 h-20 flex-shrink-0 bg-gray-100 rounded-lg border overflow-hidden">
-                {product.primary_image_url ? (
-                  <Image
-                    src={product.primary_image_url}
-                    fill
-                    className="object-cover"
-                    alt={product.name}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package className="h-8 w-8 text-gray-400" />
-                  </div>
-                )}
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg">{product.name}</h3>
-                <p className="text-sm text-gray-600">SKU: {product.sku}</p>
-                {product.supplier && (
-                  <p className="text-sm text-gray-600">
-                    Fournisseur: {product.supplier.legal_name}
-                  </p>
-                )}
-              </div>
+        <div className="flex-1 overflow-y-auto">
+          {isLoadingData ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
             </div>
-
-            {/* Message contextuel draft */}
-            {draftOrderInfo.exists && (
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertDescription>
-                  Ce produit sera ajouté à la commande draft existante{' '}
-                  <strong>{draftOrderInfo.po_number}</strong> pour ce
-                  fournisseur.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {/* Formulaire */}
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                {/* Quantité */}
-                <div className="space-y-2">
-                  <Label htmlFor="quantity">
-                    Quantité <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    min="1"
-                    value={quantity}
-                    onChange={e => {
-                      setQuantity(Number(e.target.value));
-                      // Réinitialiser le flag si l'utilisateur modifie la quantité
-                      setHasConfirmedInsufficientQty(false);
-                    }}
-                    disabled={isSubmitting}
-                  />
-                  {shortageQuantity !== undefined && shortageQuantity > 0 && (
-                    <p className="text-xs text-gray-600">
-                      💡 Il manque{' '}
-                      <strong className="text-orange-600">
-                        {shortageQuantity}
-                      </strong>{' '}
-                      unité{shortageQuantity > 1 ? 's' : ''} pour atteindre le
-                      seuil minimum.
+          ) : error && !product ? (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : product ? (
+            <div className="space-y-6">
+              {/* Infos produit */}
+              <div className="flex gap-4">
+                <div className="relative w-20 h-20 flex-shrink-0 bg-gray-100 rounded-lg border overflow-hidden">
+                  {product.primary_image_url ? (
+                    <Image
+                      src={product.primary_image_url}
+                      fill
+                      className="object-cover"
+                      alt={product.name}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package className="h-8 w-8 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg">{product.name}</h3>
+                  <p className="text-sm text-gray-600">SKU: {product.sku}</p>
+                  {product.supplier && (
+                    <p className="text-sm text-gray-600">
+                      Fournisseur: {product.supplier.legal_name}
                     </p>
                   )}
                 </div>
+              </div>
 
-                {/* Prix unitaire HT */}
+              {/* Message contextuel draft */}
+              {draftOrderInfo.exists && (
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    Ce produit sera ajouté à la commande draft existante{' '}
+                    <strong>{draftOrderInfo.po_number}</strong> pour ce
+                    fournisseur.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Formulaire */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {/* Quantité */}
+                  <div className="space-y-2">
+                    <Label htmlFor="quantity">
+                      Quantité <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="quantity"
+                      type="number"
+                      min="1"
+                      value={quantity}
+                      onChange={e => {
+                        setQuantity(Number(e.target.value));
+                        // Réinitialiser le flag si l'utilisateur modifie la quantité
+                        setHasConfirmedInsufficientQty(false);
+                      }}
+                      disabled={isSubmitting}
+                    />
+                    {shortageQuantity !== undefined && shortageQuantity > 0 && (
+                      <p className="text-xs text-gray-600">
+                        💡 Il manque{' '}
+                        <strong className="text-orange-600">
+                          {shortageQuantity}
+                        </strong>{' '}
+                        unité{shortageQuantity > 1 ? 's' : ''} pour atteindre le
+                        seuil minimum.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Prix unitaire HT */}
+                  <div className="space-y-2">
+                    <Label htmlFor="unitPrice">
+                      Prix unitaire HT <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="unitPrice"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={unitPrice}
+                      onChange={e => setUnitPrice(Number(e.target.value))}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                </div>
+
+                {/* Taxe éco-responsable (facultatif) */}
                 <div className="space-y-2">
-                  <Label htmlFor="unitPrice">
-                    Prix unitaire HT <span className="text-red-500">*</span>
+                  <Label htmlFor="ecoTax">
+                    Taxe éco-responsable{' '}
+                    <span className="text-gray-500 text-xs font-normal">
+                      (facultatif)
+                    </span>
                   </Label>
                   <Input
-                    id="unitPrice"
+                    id="ecoTax"
                     type="number"
                     min="0"
                     step="0.01"
-                    value={unitPrice}
-                    onChange={e => setUnitPrice(Number(e.target.value))}
+                    value={ecoTax}
+                    onChange={e => setEcoTax(Number(e.target.value))}
                     disabled={isSubmitting}
+                    placeholder="0.00"
                   />
+                  <p className="text-xs text-gray-500">
+                    💡 Montant ajouté au prix d'achat fournisseur
+                  </p>
                 </div>
-              </div>
 
-              {/* Taxe éco-responsable (facultatif) */}
-              <div className="space-y-2">
-                <Label htmlFor="ecoTax">
-                  Taxe éco-responsable{' '}
-                  <span className="text-gray-500 text-xs font-normal">
-                    (facultatif)
-                  </span>
-                </Label>
-                <Input
-                  id="ecoTax"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={ecoTax}
-                  onChange={e => setEcoTax(Number(e.target.value))}
-                  disabled={isSubmitting}
-                  placeholder="0.00"
-                />
-                <p className="text-xs text-gray-500">
-                  💡 Montant ajouté au prix d'achat fournisseur
-                </p>
-              </div>
-
-              {/* Aperçu calcul */}
-              <Card className="bg-gray-50 border-gray-200">
-                <CardContent className="p-4">
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Quantité</span>
-                      <span className="font-medium">{quantity}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Prix unitaire HT</span>
-                      <span className="font-medium">
-                        {formatCurrency(unitPrice)}
-                      </span>
-                    </div>
-                    {ecoTax > 0 && (
-                      <div className="flex justify-between text-xs text-orange-600">
-                        <span>+ Taxe éco-responsable unitaire</span>
-                        <span>{formatCurrency(ecoTax)}</span>
+                {/* Aperçu calcul */}
+                <Card className="bg-gray-50 border-gray-200">
+                  <CardContent className="p-4">
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Quantité</span>
+                        <span className="font-medium">{quantity}</span>
                       </div>
-                    )}
-                    <Separator />
-                    <div className="flex justify-between">
-                      <span>Sous-total HT</span>
-                      <span>{formatCurrency(subtotal)}</span>
-                    </div>
-                    {ecoTaxTotal > 0 && (
-                      <div className="flex justify-between text-orange-600">
-                        <span>Éco-taxe totale</span>
-                        <span>{formatCurrency(ecoTaxTotal)}</span>
+                      <div className="flex justify-between">
+                        <span>Prix unitaire HT</span>
+                        <span className="font-medium">
+                          {formatCurrency(unitPrice)}
+                        </span>
                       </div>
-                    )}
-                    <Separator />
-                    <div className="flex justify-between font-semibold">
-                      <span>Total HT</span>
-                      <span>{formatCurrency(lineTotal)}</span>
+                      {ecoTax > 0 && (
+                        <div className="flex justify-between text-xs text-orange-600">
+                          <span>+ Taxe éco-responsable unitaire</span>
+                          <span>{formatCurrency(ecoTax)}</span>
+                        </div>
+                      )}
+                      <Separator />
+                      <div className="flex justify-between">
+                        <span>Sous-total HT</span>
+                        <span>{formatCurrency(subtotal)}</span>
+                      </div>
+                      {ecoTaxTotal > 0 && (
+                        <div className="flex justify-between text-orange-600">
+                          <span>Éco-taxe totale</span>
+                          <span>{formatCurrency(ecoTaxTotal)}</span>
+                        </div>
+                      )}
+                      <Separator />
+                      <div className="flex justify-between font-semibold">
+                        <span>Total HT</span>
+                        <span>{formatCurrency(lineTotal)}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>TVA 20%</span>
+                        <span>{formatCurrency(lineTotal * 0.2)}</span>
+                      </div>
+                      <Separator />
+                      <div className="flex justify-between font-bold text-lg">
+                        <span>Total TTC</span>
+                        <span>{formatCurrency(totalTTC)}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-gray-600">
-                      <span>TVA 20%</span>
-                      <span>{formatCurrency(lineTotal * 0.2)}</span>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between font-bold text-lg">
-                      <span>Total TTC</span>
-                      <span>{formatCurrency(totalTTC)}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
-              {/* Info: quantité < manque requis (le modal de confirmation s'ouvrira au clic) */}
-              {shortageQuantity &&
-                shortageQuantity > 0 &&
-                quantity < shortageQuantity && (
-                  <Alert className="border-blue-500 bg-blue-50">
-                    <Info className="h-4 w-4 text-blue-600" />
-                    <AlertDescription className="text-blue-700">
-                      <strong>Information :</strong> La quantité actuelle (
-                      {quantity}) est inférieure au seuil minimum (
-                      {shortageQuantity}).
-                      <br />
-                      Une confirmation vous sera demandée avant la création de
-                      la commande.
-                    </AlertDescription>
+                {/* Info: quantité < manque requis (le modal de confirmation s'ouvrira au clic) */}
+                {shortageQuantity &&
+                  shortageQuantity > 0 &&
+                  quantity < shortageQuantity && (
+                    <Alert className="border-blue-500 bg-blue-50">
+                      <Info className="h-4 w-4 text-blue-600" />
+                      <AlertDescription className="text-blue-700">
+                        <strong>Information :</strong> La quantité actuelle (
+                        {quantity}) est inférieure au seuil minimum (
+                        {shortageQuantity}).
+                        <br />
+                        Une confirmation vous sera demandée avant la création de
+                        la commande.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                {/* Message erreur */}
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
                   </Alert>
                 )}
-
-              {/* Message erreur */}
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+              </div>
             </div>
-          </div>
-        ) : null}
+          ) : null}
+        </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+        <DialogFooter className="flex-col gap-2 md:flex-row">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="w-full md:w-auto"
+          >
             Annuler
           </Button>
           <Button
@@ -460,6 +467,7 @@ export function QuickPurchaseOrderModal({
               void handleSubmit();
             }}
             disabled={isLoadingData || isSubmitting || !product}
+            className="w-full md:w-auto"
           >
             {isSubmitting ? (
               <>
