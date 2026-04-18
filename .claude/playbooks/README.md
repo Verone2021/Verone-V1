@@ -2,22 +2,22 @@
 
 Un playbook = une procédure standardisée pour un type de tâche récurrente.
 
-**Principe** : une tâche dans `.claude/queue/` référence un playbook via `playbook: <nom>` dans son YAML. L'agent lit la recette, l'applique, puis rapporte.
+**Principe** : une tâche dans `.claude/work/ACTIVE.md` peut référencer un playbook via `playbook: <nom>`. L'agent lit la recette, l'applique, puis rapporte.
 
 ## Playbooks disponibles
 
-| Nom | Quand l'utiliser |
-|-----|------------------|
+| Nom                          | Quand l'utiliser                                                 |
+| ---------------------------- | ---------------------------------------------------------------- |
 | `migrate-page-responsive.md` | Migrer une page (liste, détail, form, dashboard) vers responsive |
-| `fix-bug.md` | Corriger un bug identifié, avec reproduction + fix + test |
-| `review-and-merge.md` | Workflow de review + CI + merge d'une PR prête |
-| `handle-ci-failure.md` | Diagnostiquer et corriger une CI rouge |
+| `fix-bug.md`                 | Corriger un bug identifié, avec reproduction + fix + test        |
+| `review-and-merge.md`        | Workflow de review + CI + merge d'une PR prête                   |
+| `handle-ci-failure.md`       | Diagnostiquer et corriger une CI rouge                           |
 
 ## Ajouter un playbook
 
 1. Créer un fichier `.md` dans ce dossier
 2. Respecter la structure : `## Quand utiliser` / `## Étapes` / `## Critères de succès` / `## Pièges courants`
-3. Référencer le playbook depuis les tâches concernées (`playbook: <nom>`)
+3. Référencer le playbook depuis les tâches concernées dans `ACTIVE.md` (`playbook: <nom>`)
 4. Ajouter une entrée dans le tableau ci-dessus
 5. Logger la création dans `DECISIONS.md` si ajout structurel
 

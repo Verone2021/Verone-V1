@@ -12,6 +12,7 @@ Workflow standard de l'étape « PR prête → mergée » par ops-agent, avec le
 - Romeo a validé explicitement
 
 **Ne pas utiliser pour** :
+
 - PR draft (pas encore prête)
 - PR intermédiaire par sprint (voir `.claude/rules/workflow.md` → 1 PR = 1 bloc cohérent)
 
@@ -64,22 +65,26 @@ npx playwright test
 ### 3. Lancer reviewer-agent (OBLIGATOIRE avant création PR)
 
 Invoquer `reviewer-agent` avec :
+
 - Référence au dernier `dev-report-*.md`
 - Consigne : scanner tous les axes (Clean Code + Sécurité + Performance + Responsive si UI)
 
 Attendre le verdict dans `docs/scratchpad/review-report-[date].md`.
 
 **Si FAIL** :
+
 - STOP, pas de PR
 - Logger les CRITICAL dans un nouveau dev-plan
 - Déléguer dev-agent pour corriger
 - Reboucler sur étape 3
 
 **Si PASS_WITH_WARNINGS** :
-- Lire chaque warning, décider si on fixe maintenant ou on crée une tâche queue
+
+- Lire chaque warning, décider si on fixe maintenant ou on crée une tâche dans ACTIVE.md
 - Continuer si les warnings sont documentés et acceptés par Romeo
 
 **Si PASS** :
+
 - Continuer étape 4
 
 ### 4. Créer la PR (DRAFT ou ready selon autonomy)
@@ -149,11 +154,9 @@ gh pr merge [PR-NUM] --squash --delete-branch
 git checkout staging
 git pull
 
-# 7.2 Mettre à jour la queue
-# Déplacer le fichier de tâche de .claude/queue/ vers .claude/done/
-# Éditer le YAML : status: done, merged_at: YYYY-MM-DD, pr_number: NNN
-mv .claude/queue/[TASK-ID].md .claude/done/
-# (éditer ensuite le frontmatter)
+# 7.2 Mettre à jour ACTIVE.md
+# Marquer la tâche comme [x] FAIT (ou la déplacer en section "Fait recent")
+# Mentionner le PR number et la date de merge
 
 # 7.3 Rapport deploy
 # Créer docs/scratchpad/deploy-report-[date]-[task-id].md
@@ -162,6 +165,7 @@ mv .claude/queue/[TASK-ID].md .claude/done/
 ### 8. Vérification Vercel (FEU VERT)
 
 Attendre ~2-3 minutes que Vercel déploie sur staging. Puis :
+
 - Ouvrir la preview URL
 - Valider rapidement les pages critiques (authentification, dashboard, pages migrées)
 - Si régression visible → hotfix immédiat ou revert (voir `handle-ci-failure.md`)
@@ -181,7 +185,7 @@ Si la PR modifiait `.claude/` (config, rules, agents, playbooks), vérifier que 
 - [ ] Validation Romeo
 - [ ] Merge squash
 - [ ] Branche supprimée
-- [ ] Tâche déplacée queue → done
+- [ ] Tâche marquée [x] FAIT dans ACTIVE.md
 - [ ] Vercel preview OK
 - [ ] DECISIONS.md à jour si applicable
 
@@ -203,4 +207,4 @@ Ne pas ignorer. Reviewer-agent peut manquer un cas. Re-déléguer avec un brief 
 
 ### « La PR est mergée mais Vercel casse en production »
 
-Hotfix immédiat. Voir `handle-ci-failure.md` pour rollback. Créer une tâche post-mortem dans `.claude/queue/` (`[INFRA-POSTMORTEM-NNN]`).
+Hotfix immédiat. Voir `handle-ci-failure.md` pour rollback. Ajouter une tâche post-mortem dans `.claude/work/ACTIVE.md` (`[INFRA-POSTMORTEM-NNN]`).
