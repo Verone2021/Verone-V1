@@ -68,7 +68,7 @@ export default function VariantGroupDetailPage({
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="w-full px-4 py-6">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-6" />
           <div className="space-y-4">
@@ -86,7 +86,7 @@ export default function VariantGroupDetailPage({
 
   if (error || !variantGroup) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="w-full px-4 py-6">
         <ButtonV2
           variant="ghost"
           onClick={() => router.back()}

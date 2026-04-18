@@ -161,7 +161,7 @@ export default function LinkMeProductDetailPage(): React.JSX.Element {
   // États loading
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6 space-y-6">
+      <div className="w-full p-6 space-y-6">
         <div className="flex items-center gap-4">
           <Skeleton className="h-10 w-10" />
           <Skeleton className="h-8 w-64" />
@@ -183,7 +183,7 @@ export default function LinkMeProductDetailPage(): React.JSX.Element {
   // État erreur
   if (error || !product) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="w-full p-6">
         <Button
           variant="ghost"
           onClick={() => router.push('/canaux-vente/linkme/catalogue')}
@@ -214,7 +214,7 @@ export default function LinkMeProductDetailPage(): React.JSX.Element {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="w-full p-6 space-y-6">
       {/* Header avec bouton retour */}
       <div className="flex items-center gap-4">
         <Button
@@ -282,7 +282,7 @@ export default function LinkMeProductDetailPage(): React.JSX.Element {
       )}
 
       {/* Section 2 : Layout deux colonnes */}
-      <div className="grid md:grid-cols-[3fr_2fr] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
         {/* Colonne gauche : Informations personnalisées */}
         <ProductInfoCard
           product={product}
