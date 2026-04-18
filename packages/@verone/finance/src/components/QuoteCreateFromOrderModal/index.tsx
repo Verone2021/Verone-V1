@@ -130,30 +130,33 @@ export function QuoteCreateFromOrderModal({
       const { data: userData } = await supabaseClient.auth.getUser();
       const currentUserId = userData.user?.id ?? null;
 
-      const resolvedBillingAddress = order.billing_address
-        ? {
-            address_line1: order.billing_address?.address_line1 ?? '',
-            postal_code: order.billing_address?.postal_code ?? '',
-            city: order.billing_address?.city ?? '',
-            country: order.billing_address?.country ?? 'FR',
-          }
-        : order.organisations
+      // Override utilisateur en priorite, sinon adresse initiale
+      const resolvedBillingAddress =
+        billingAddressOverride ??
+        (order.billing_address
           ? {
-              address_line1:
-                order.organisations.billing_address_line1 ??
-                order.organisations.address_line1 ??
-                '',
-              postal_code:
-                order.organisations.billing_postal_code ??
-                order.organisations.postal_code ??
-                '',
-              city:
-                order.organisations.billing_city ??
-                order.organisations.city ??
-                '',
-              country: order.organisations.billing_country ?? 'FR',
+              address_line1: order.billing_address?.address_line1 ?? '',
+              postal_code: order.billing_address?.postal_code ?? '',
+              city: order.billing_address?.city ?? '',
+              country: order.billing_address?.country ?? 'FR',
             }
-          : undefined;
+          : order.organisations
+            ? {
+                address_line1:
+                  order.organisations.billing_address_line1 ??
+                  order.organisations.address_line1 ??
+                  '',
+                postal_code:
+                  order.organisations.billing_postal_code ??
+                  order.organisations.postal_code ??
+                  '',
+                city:
+                  order.organisations.billing_city ??
+                  order.organisations.city ??
+                  '',
+                country: order.organisations.billing_country ?? 'FR',
+              }
+            : undefined);
 
       const allCustomLines = customLines.map(line => ({
         title: line.title,
@@ -363,8 +366,12 @@ export function QuoteCreateFromOrderModal({
   if (!order) return null;
 
   const customerName = resolveCustomerName(order);
+  const initialBillingAddress = resolveInitialBillingAddress(order);
   const orgDisplayName =
-    order.organisations?.trade_name ?? order.organisations?.name ?? null;
+    order.organisations?.trade_name ??
+    order.organisations?.legal_name ??
+    order.organisations?.name ??
+    null;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -393,13 +400,24 @@ export function QuoteCreateFromOrderModal({
             <div className="space-y-4">
               <QuoteClientCard order={order} customerName={customerName} />
               {!isConsultation && (
-                <QuoteShippingSection
-                  enseigneId={order.organisations?.enseigne_id}
-                  defaultOrgId={order.customer_id}
-                  orgName={orgDisplayName}
-                  disabled={status === 'creating'}
-                  onShippingAddressChange={setShippingAddress}
-                />
+                <>
+                  <BillingAddressEditor
+                    enseigneId={order.organisations?.enseigne_id}
+                    defaultOrgId={order.customer_id}
+                    initialBillingAddress={initialBillingAddress}
+                    orgName={orgDisplayName ?? undefined}
+                    disabled={status === 'creating'}
+                    onBillingAddressChange={setBillingAddressOverride}
+                    onUpdateOrgBillingChange={setUpdateOrgBilling}
+                  />
+                  <QuoteShippingSection
+                    enseigneId={order.organisations?.enseigne_id}
+                    defaultOrgId={order.customer_id}
+                    orgName={orgDisplayName}
+                    disabled={status === 'creating'}
+                    onShippingAddressChange={setShippingAddress}
+                  />
+                </>
               )}
               <QuoteItemsTable order={order} />
               <QuoteFeesSection fees={fees} onFeesChange={setFees} />
