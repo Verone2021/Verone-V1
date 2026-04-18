@@ -2,9 +2,18 @@
 
 import { useState } from 'react';
 
+import Link from 'next/link';
+
 import {
+  Button,
   Card,
   CardContent,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   Input,
   Select,
   SelectContent,
@@ -12,10 +21,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
+import { AddressAutocomplete } from '@verone/ui';
+import type { AddressResult } from '@verone/ui';
+import { useToast } from '@verone/common/hooks';
 import {
   AlertTriangle,
   Building2,
   Check,
+  ExternalLink,
+  Loader2,
   Mail,
   MapPin,
   Pencil,
@@ -40,10 +54,66 @@ export function OrganisationCard({
   details,
   onUpdateOrganisation,
 }: OrganisationCardProps) {
+  const { toast } = useToast();
   const org = order.organisation;
   const [editingOwnership, setEditingOwnership] = useState(false);
   const [editingOrgField, setEditingOrgField] = useState<'siret' | null>(null);
   const [editOrgValue, setEditOrgValue] = useState('');
+
+  // Shipping address edit modal
+  const [showShippingModal, setShowShippingModal] = useState(false);
+  const [shippingInput, setShippingInput] = useState('');
+  const [shippingResolved, setShippingResolved] = useState<{
+    address_line1: string;
+    postal_code: string;
+    city: string;
+    country: string;
+  } | null>(null);
+  const [savingShipping, setSavingShipping] = useState(false);
+
+  const isOrderDraft = order.status === 'draft';
+
+  const handleAddressSelect = (result: AddressResult) => {
+    setShippingResolved({
+      address_line1: result.streetAddress,
+      postal_code: result.postalCode,
+      city: result.city,
+      country: result.countryCode ?? 'FR',
+    });
+  };
+
+  const handleSaveShipping = async () => {
+    if (!org || !shippingResolved || !onUpdateOrganisation) return;
+
+    setSavingShipping(true);
+    try {
+      await onUpdateOrganisation(org.id, {
+        shipping_address_line1: shippingResolved.address_line1,
+        shipping_postal_code: shippingResolved.postal_code,
+        shipping_city: shippingResolved.city,
+        shipping_country: shippingResolved.country,
+        has_different_shipping_address: true,
+      });
+      toast({
+        title: 'Adresse de livraison mise à jour',
+        description: `${shippingResolved.address_line1}, ${shippingResolved.city}`,
+      });
+      setShowShippingModal(false);
+      setShippingInput('');
+      setShippingResolved(null);
+    } catch (err) {
+      toast({
+        title: 'Erreur',
+        description:
+          err instanceof Error
+            ? err.message
+            : "Impossible de sauvegarder l'adresse",
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingShipping(false);
+    }
+  };
 
   return (
     <Card>
@@ -52,10 +122,15 @@ export function OrganisationCard({
           <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
               <Building2 className="h-4 w-4 text-orange-600 flex-shrink-0" />
-              <span className="font-semibold text-gray-900">
+              {/* Lien cliquable vers la fiche organisation */}
+              <Link
+                href={`/contacts-organisations/customers/${org?.id}`}
+                className="font-semibold text-gray-900 hover:text-orange-600 hover:underline flex items-center gap-1"
+              >
                 {order.organisation.trade_name ?? order.organisation.legal_name}
-              </span>
-              {/* Badge ownership_type — complétable si vide, lecture seule si renseigné */}
+                <ExternalLink className="h-3 w-3 opacity-60" />
+              </Link>
+              {/* Badge ownership_type */}
               {org?.ownership_type ? (
                 <span
                   className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full ${
@@ -112,7 +187,7 @@ export function OrganisationCard({
                 </span>
               )}
             </div>
-            {/* Identifiants : SIRET / TVA — complétable si vide */}
+            {/* Identifiants : SIRET / TVA */}
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
               {(() => {
                 const isFrench =
@@ -235,10 +310,10 @@ export function OrganisationCard({
                 </span>
               )}
             </div>
-            {/* Adresse de livraison (si différente) */}
-            {order.organisation.has_different_shipping_address && (
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
-                {(order.organisation.shipping_address_line1 ??
+            {/* Adresse de livraison */}
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 items-center">
+              {order.organisation.has_different_shipping_address ? (
+                (order.organisation.shipping_address_line1 ??
                 order.organisation.shipping_postal_code) ? (
                   <span className="flex items-center gap-1">
                     <Truck className="h-3 w-3 text-blue-500" />
@@ -256,9 +331,30 @@ export function OrganisationCard({
                     <AlertTriangle className="h-3 w-3" />
                     Adresse livraison : Non renseignée
                   </span>
-                )}
-              </div>
-            )}
+                )
+              ) : (
+                <span className="flex items-center gap-1 text-gray-400">
+                  <Truck className="h-3 w-3" />
+                  Livraison : même que facturation
+                </span>
+              )}
+              {/* Bouton modifier adresse livraison — uniquement si commande draft */}
+              {isOrderDraft && onUpdateOrganisation && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShippingInput('');
+                    setShippingResolved(null);
+                    setShowShippingModal(true);
+                  }}
+                  className="ml-1 text-blue-500 hover:text-blue-700 flex items-center gap-0.5"
+                  title="Modifier l'adresse de livraison"
+                >
+                  <Pencil className="h-2.5 w-2.5" />
+                  <span className="text-xs">Modifier</span>
+                </button>
+              )}
+            </div>
             {/* Contact */}
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
               {order.organisation.email && (
@@ -282,6 +378,63 @@ export function OrganisationCard({
           <p className="text-gray-500 text-sm">Organisation non renseignée</p>
         )}
       </CardContent>
+
+      {/* Modal modifier adresse de livraison */}
+      <Dialog open={showShippingModal} onOpenChange={setShowShippingModal}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Truck className="h-5 w-5" />
+              Modifier l&apos;adresse de livraison
+            </DialogTitle>
+            <DialogDescription>
+              {org?.trade_name ?? org?.legal_name} — adresse de livraison
+              enregistrée pour les prochains devis
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-2">
+            <AddressAutocomplete
+              value={shippingInput}
+              onChange={setShippingInput}
+              onSelect={handleAddressSelect}
+              placeholder="Rechercher une adresse..."
+              id="org-shipping-autocomplete"
+            />
+            {shippingResolved && (
+              <div className="mt-2 flex items-start gap-2 text-xs text-muted-foreground">
+                <MapPin className="h-3 w-3 mt-0.5 text-green-500 flex-shrink-0" />
+                <div>
+                  <p>{shippingResolved.address_line1}</p>
+                  <p>
+                    {[shippingResolved.postal_code, shippingResolved.city]
+                      .filter(Boolean)
+                      .join(' ')}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowShippingModal(false)}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={() => void handleSaveShipping()}
+              disabled={savingShipping || !shippingResolved}
+            >
+              {savingShipping ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
