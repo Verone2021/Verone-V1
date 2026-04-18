@@ -105,7 +105,7 @@ export interface SalesOrder {
   // Relations jointes (polymorphiques selon customer_type)
   organisations?: {
     id: string;
-    name?: string; // ✅ AJOUTÉ - Nom d'affichage (calculé côté client)
+    name?: string; // Nom d'affichage (calculé côté client)
     legal_name: string;
     trade_name: string | null;
     email?: string;
@@ -115,8 +115,9 @@ export interface SalesOrder {
     address_line2?: string;
     postal_code?: string;
     city?: string;
+    country?: string | null;
     region?: string;
-    enseigne_id?: string | null; // 🆕 AJOUTÉ - Pour filtrer organisations indépendantes vs enseignes
+    enseigne_id?: string | null;
     siret?: string | null;
     vat_number?: string | null;
     billing_address_line1?: string | null;
@@ -124,6 +125,13 @@ export interface SalesOrder {
     billing_city?: string | null;
     billing_postal_code?: string | null;
     billing_country?: string | null;
+    // Shipping address (distinct from billing)
+    shipping_address_line1?: string | null;
+    shipping_address_line2?: string | null;
+    shipping_city?: string | null;
+    shipping_postal_code?: string | null;
+    shipping_country?: string | null;
+    has_different_shipping_address?: boolean | null;
   };
   individual_customers?: {
     id: string;
