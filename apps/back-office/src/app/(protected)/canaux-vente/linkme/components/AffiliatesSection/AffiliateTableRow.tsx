@@ -63,7 +63,7 @@ export function AffiliateTableRow({
           </div>
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className="hidden lg:table-cell">
         {linkedEntityName ? (
           <div className="flex items-center gap-2">
             <div
@@ -81,10 +81,10 @@ export function AffiliateTableRow({
           <span className="text-sm text-muted-foreground">-</span>
         )}
       </TableCell>
-      <TableCell>
+      <TableCell className="hidden lg:table-cell">
         <Badge variant="outline">{typeInfo.label}</Badge>
       </TableCell>
-      <TableCell className="font-mono text-sm">/{affiliate.slug}</TableCell>
+      <TableCell className="hidden xl:table-cell font-mono text-sm">/{affiliate.slug}</TableCell>
       <TableCell>
         <Badge variant={statusInfo.variant}>
           <statusInfo.icon className="h-3 w-3 mr-1" />
