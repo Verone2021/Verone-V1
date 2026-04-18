@@ -122,6 +122,38 @@ Checklist pré-commit : `wc -l < 400`, `grep w-auto = vide`, `type-check PASS`, 
 
 ---
 
+## ADR-008 — 2026-04-19 — Acceptation T2-only sur 15 composants secondaires
+
+**Contexte** : PR #651 migre 3 pages pilotes avec pattern complet 3-fichiers (factures, fournisseurs, inventaire) + 16 composants en « T2 hidden classes only » (colonnes masquables `hidden lg/xl/2xl:table-cell` sans MobileCard dédiée).
+
+Audit runtime à 375px (`docs/scratchpad/audit-t2-only-375px-2026-04-19.md`) révèle :
+- 🟢 4/19 OK (organisation listings avec viewMode grid natif = cards par défaut mobile)
+- 🟡 11/19 limite/non-testable (empty states, sections non accessibles)
+- 🔴 4/19 KO : expeditions (3 tabs) + CommissionsTable → 1-2 colonnes seulement visibles à 375px, tables inutilisables mobile
+
+T2-only viole formellement T1 de `.claude/rules/responsive.md` ("Sous md, tableau INTERDIT → obligation cartes empilées"). Dette technique explicite.
+
+**Décision** : merger PR #651 avec la dette documentée plutôt que bloquer le merge.
+
+Justifications :
+1. Les 3 pages pilotes full (factures, fournisseurs, inventaire) ont pattern complet validé runtime
+2. Les 4 organisation listings ont cards natives via viewMode grid (user mobile tombe sur la bonne UI par défaut)
+3. Les 4 🔴 concernent des tables admin office (expeditions = logistique staff, commissions = back-office affiliés), pas d'usage mobile terrain critique
+4. Bloquer le merge multiplie risque de conflits et retard sur autres sprints. Ticket catch-up incrémental préféré
+
+**Conséquence** :
+- PR #651 mergée telle quelle sur staging
+- Tâche `.claude/queue/BO-UI-RESP-LISTS-T1-CATCH-UP.md` créée (priority P2, estimated 2h)
+- Dette traquée explicitement dans queue, pas perdue dans backlog
+
+**Référence** :
+- Audit : `docs/scratchpad/audit-t2-only-375px-2026-04-19.md`
+- Screenshots : `.playwright-mcp/screenshots/audit-t2-*-375.png` (7 fichiers)
+- Tâche catch-up : `.claude/queue/BO-UI-RESP-LISTS-T1-CATCH-UP.md`
+- PR parente : #651
+
+---
+
 ## Contrat pour futurs ADRs
 
 Chaque nouvelle décision structurelle ajoute une entrée ici avec :
@@ -146,3 +178,4 @@ Les ADRs ne se modifient pas rétroactivement. Si une décision est renversée, 
 - ADR-005 : Suppression writer-agent + market-agent [DIFFÉRÉ] (2026-04-19)
 - ADR-006 : `.claude/work/` reste gitignored [DIFFÉRÉ] (2026-04-19)
 - ADR-007 : Pattern pilote v2 responsive validé (2026-04-19)
+- ADR-008 : Acceptation T2-only sur 15 composants secondaires (2026-04-19)
