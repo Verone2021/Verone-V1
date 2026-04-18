@@ -43,7 +43,7 @@ export function RapprochementFromOrderModal({
 }: RapprochementFromOrderModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-2xl md:max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-blue-600" />

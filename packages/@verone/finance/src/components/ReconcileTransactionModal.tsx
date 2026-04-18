@@ -205,7 +205,7 @@ export function ReconcileTransactionModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-[600px] md:max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Rapprochement bancaire</DialogTitle>
           <DialogDescription>
@@ -353,17 +353,19 @@ export function ReconcileTransactionModal({
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="flex-col gap-2 md:flex-row">
           {status !== 'success' && (
             <>
               <Button
                 variant="outline"
+                className="w-full md:w-auto"
                 onClick={handleClose}
                 disabled={status === 'reconciling'}
               >
                 Annuler
               </Button>
               <Button
+                className="w-full md:w-auto"
                 onClick={() => void handleReconcile()}
                 disabled={!selectedTransaction || status === 'reconciling'}
               >

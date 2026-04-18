@@ -24,7 +24,7 @@ export function QuoteFormModal({
 
   return (
     <Dialog open={open} onOpenChange={form.handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-4xl md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Devis de service</DialogTitle>
           <DialogDescription>
@@ -60,12 +60,18 @@ export function QuoteFormModal({
           totals={form.totals}
         />
 
-        <DialogFooter className="mt-6 flex-shrink-0">
-          <ButtonV2 type="button" variant="outline" onClick={form.handleClose}>
+        <DialogFooter className="mt-6 flex-shrink-0 flex-col gap-2 md:flex-row">
+          <ButtonV2
+            type="button"
+            variant="outline"
+            className="w-full md:w-auto"
+            onClick={form.handleClose}
+          >
             Annuler
           </ButtonV2>
           <ButtonV2
             type="button"
+            className="w-full md:w-auto"
             onClick={() => {
               void form.handleSubmit().catch((err: unknown) => {
                 console.error('[QuoteFormModal] submit error:', err);

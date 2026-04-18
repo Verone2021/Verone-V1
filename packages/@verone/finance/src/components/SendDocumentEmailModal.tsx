@@ -283,7 +283,7 @@ export function SendDocumentEmailModal({
           if (!sending) onClose();
         }}
       >
-        <DialogContent className="sm:max-w-[560px]">
+        <DialogContent className="h-screen md:h-auto max-w-full md:max-w-[560px] flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Mail className="h-5 w-5" />
@@ -291,7 +291,7 @@ export function SendDocumentEmailModal({
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
+          <div className="flex-1 overflow-y-auto space-y-4 py-2">
             {/* Recipients */}
             <RecipientSelector
               recipients={recipients}
@@ -385,15 +385,17 @@ export function SendDocumentEmailModal({
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col gap-2 md:flex-row">
             <ButtonUnified
               variant="outline"
+              className="w-full md:w-auto"
               onClick={onClose}
               disabled={sending}
             >
               Annuler
             </ButtonUnified>
             <ButtonUnified
+              className="w-full md:w-auto"
               onClick={() => {
                 void handleSend().catch(error => {
                   console.error('[SendDocumentEmail] Unhandled:', error);
