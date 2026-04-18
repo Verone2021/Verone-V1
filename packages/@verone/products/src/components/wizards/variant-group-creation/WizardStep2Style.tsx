@@ -102,7 +102,7 @@ export function WizardStep2Style({
       {/* Dimensions communes */}
       <div>
         <Label>Dimensions communes (optionnel)</Label>
-        <div className="grid grid-cols-4 gap-3 mt-2">
+        <div className="grid grid-cols-2 gap-3 mt-2 sm:grid-cols-4">
           <Input
             type="number"
             value={dimensionsLength}

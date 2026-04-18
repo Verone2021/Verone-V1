@@ -122,7 +122,7 @@ interface HeroFormFieldsProps {
 function HeroFormFields({ form, setForm }: HeroFormFieldsProps) {
   return (
     <>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label>Titre principal</Label>
           <Input
@@ -144,7 +144,7 @@ function HeroFormFields({ form, setForm }: HeroFormFieldsProps) {
           />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label>Texte CTA</Label>
           <Input
@@ -272,7 +272,7 @@ function ReassuranceEditor() {
         {items.map((item, index) => (
           <div
             key={index}
-            className="grid grid-cols-2 gap-4 p-3 border rounded"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 border rounded"
           >
             <div>
               <Label>Titre {index + 1}</Label>
@@ -370,7 +370,7 @@ function BannerFormFields({ form, setForm }: BannerFormFieldsProps) {
           placeholder="/promotions"
         />
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <BannerColorPicker
           label="Couleur fond"
           value={form.bg_color}

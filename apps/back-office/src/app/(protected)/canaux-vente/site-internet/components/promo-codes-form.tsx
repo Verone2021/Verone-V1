@@ -69,7 +69,7 @@ function PromoBasicFields({ form, setForm }: PromoFormSetterProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {!form.is_automatic && (
           <div>
             <Label>Code *</Label>
@@ -111,7 +111,7 @@ function PromoBasicFields({ form, setForm }: PromoFormSetterProps) {
 
 function PromoDiscountFields({ form, setForm }: PromoFormSetterProps) {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
         <Label>Type de reduction</Label>
         <Select
@@ -234,7 +234,7 @@ function PromoTargetingFields({
 
 function PromoAmountLimitsFields({ form, setForm }: PromoFormSetterProps) {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
         <Label>Montant min. commande (EUR)</Label>
         <Input
@@ -269,7 +269,7 @@ function PromoAmountLimitsFields({ form, setForm }: PromoFormSetterProps) {
 function PromoDatesAndUsageFields({ form, setForm }: PromoFormSetterProps) {
   return (
     <>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label>Valide du</Label>
           <Input
@@ -291,7 +291,7 @@ function PromoDatesAndUsageFields({ form, setForm }: PromoFormSetterProps) {
           />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label>Utilisations max. (total)</Label>
           <Input

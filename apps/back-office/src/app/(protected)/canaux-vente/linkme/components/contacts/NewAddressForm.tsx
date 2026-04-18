@@ -131,7 +131,7 @@ export function NewAddressForm({
             disabled={isSubmitting}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
           />
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <input
               type="text"
               value={siret}
@@ -173,7 +173,7 @@ export function NewAddressForm({
       />
 
       {/* Code postal + Ville */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         <input
           type="text"
           value={postalCode}

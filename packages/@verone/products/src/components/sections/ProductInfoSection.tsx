@@ -219,7 +219,7 @@ export const ProductInfoSection = React.memo(
         )}
 
         {/* Row 1: Nom + SKU */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <Label className="text-xs text-neutral-600 mb-1">
               Nom du produit
@@ -259,7 +259,7 @@ export const ProductInfoSection = React.memo(
         </div>
 
         {/* Row 2: Prix + Statut */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <Label className="text-xs text-neutral-600 mb-1">
               Prix d'achat HT

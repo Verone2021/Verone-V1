@@ -71,7 +71,7 @@ function SeveritySelector({ value, onChange }: SeveritySelectorProps) {
     },
   ];
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       {options.map(option => {
         const Icon = option.icon;
         return (
@@ -199,7 +199,7 @@ export function NotificationsTab() {
             >
               <div className="space-y-4">
                 <Label className="text-base font-semibold">Destinataires</Label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
                     {
                       type: 'all' as const,
@@ -324,7 +324,7 @@ export function NotificationsTab() {
                   </Label>
                 </div>
                 {includeAction && (
-                  <div className="grid grid-cols-2 gap-4 pl-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-6">
                     <div className="space-y-2">
                       <Label htmlFor="actionLabel">Libelle du bouton</Label>
                       <Input

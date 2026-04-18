@@ -58,7 +58,7 @@ export function RoleSection({
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Role *
         </label>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {roles.map(r => {
             const Icon =
               r === 'enseigne_admin'

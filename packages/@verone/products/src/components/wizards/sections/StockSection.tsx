@@ -114,7 +114,7 @@ export function StockSection({
         <div className="space-y-4">
           <h4 className="text-sm font-medium">Seuils d'alerte</h4>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="min_stock">Stock minimum</Label>
               <Input
