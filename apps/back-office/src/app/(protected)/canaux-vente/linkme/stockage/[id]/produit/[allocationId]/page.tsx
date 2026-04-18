@@ -185,7 +185,7 @@ export default function StorageProductDetailPage() {
     allocation.stock_quantity * (allocation.unit_volume_m3 ?? 0);
 
   return (
-    <div className="p-6 max-w-3xl">
+    <div className="p-6">
       {/* Back link */}
       <Link
         href={`/canaux-vente/linkme/stockage/${storageId}`}

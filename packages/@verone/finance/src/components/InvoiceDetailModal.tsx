@@ -367,7 +367,7 @@ export function InvoiceDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-4xl md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
@@ -389,42 +389,44 @@ export function InvoiceDetailModal({
           </DialogDescription>
         </DialogHeader>
 
-        {isLoading && (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-          </div>
-        )}
+        <div className="flex-1 overflow-y-auto pr-1">
+          {isLoading && (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            </div>
+          )}
 
-        {error && (
-          <div className="flex flex-col items-center justify-center py-12 text-destructive">
-            <AlertCircle className="h-8 w-8 mb-2" />
-            <p>Erreur lors du chargement de la facture</p>
-          </div>
-        )}
+          {error && (
+            <div className="flex flex-col items-center justify-center py-12 text-destructive">
+              <AlertCircle className="h-8 w-8 mb-2" />
+              <p>Erreur lors du chargement de la facture</p>
+            </div>
+          )}
 
-        {invoice && !isEditing && (
-          <div className="space-y-4">
-            <InvoiceInfoCard invoice={invoice} />
-            <InvoiceClientCard invoice={invoice} />
-            <InvoiceShippingCard invoice={invoice} />
-            <InvoiceItemsTable items={invoice.items} />
-            <InvoiceTotalsCard invoice={invoice} />
-            <InvoiceNotesCard invoice={invoice} />
-            <InvoiceRelatedDocs invoice={invoice} />
-          </div>
-        )}
+          {invoice && !isEditing && (
+            <div className="space-y-4">
+              <InvoiceInfoCard invoice={invoice} />
+              <InvoiceClientCard invoice={invoice} />
+              <InvoiceShippingCard invoice={invoice} />
+              <InvoiceItemsTable items={invoice.items} />
+              <InvoiceTotalsCard invoice={invoice} />
+              <InvoiceNotesCard invoice={invoice} />
+              <InvoiceRelatedDocs invoice={invoice} />
+            </div>
+          )}
 
-        {/* MODE EDITION */}
-        {invoice && isEditing && editState && editTotals && (
-          <InvoiceEditForm
-            invoice={invoice}
-            editState={editState}
-            onEditStateChange={setEditState}
-            editTotals={editTotals}
-          />
-        )}
+          {/* MODE EDITION */}
+          {invoice && isEditing && editState && editTotals && (
+            <InvoiceEditForm
+              invoice={invoice}
+              editState={editState}
+              onEditStateChange={setEditState}
+              editTotals={editTotals}
+            />
+          )}
+        </div>
 
-        <DialogFooter className="flex-wrap gap-2">
+        <DialogFooter className="flex-wrap gap-2 md:flex-row">
           {invoice && (
             <InvoiceFooterActions
               invoice={invoice}

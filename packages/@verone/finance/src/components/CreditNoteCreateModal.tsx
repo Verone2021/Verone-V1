@@ -86,7 +86,7 @@ export function CreditNoteCreateModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-lg flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileX className="h-5 w-5" />
@@ -98,7 +98,7 @@ export function CreditNoteCreateModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto space-y-4">
           {/* Info facture de reference */}
           <Card>
             <CardHeader className="pb-2">
@@ -145,11 +145,15 @@ export function CreditNoteCreateModal({
           </div>
         </div>
 
-        <DialogFooter className="flex-col gap-2 sm:flex-row">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="flex-col gap-2 md:flex-row">
+          <Button
+            variant="outline"
+            className="w-full md:w-auto"
+            onClick={() => onOpenChange(false)}
+          >
             Fermer
           </Button>
-          <Button asChild>
+          <Button className="w-full md:w-auto" asChild>
             <a
               href="https://app.qonto.com"
               target="_blank"

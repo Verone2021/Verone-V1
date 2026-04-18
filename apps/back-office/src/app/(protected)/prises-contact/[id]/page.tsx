@@ -1,6 +1,6 @@
 'use client';
 
-import { colors, spacing } from '@verone/ui/design-system';
+import { colors } from '@verone/ui/design-system';
 
 import { FormSubmissionMessages } from '@/components/form-submission-messages';
 
@@ -82,9 +82,7 @@ export default function SubmissionDetailPage({
         savePriority={savePriority}
       />
 
-      <div
-        style={{ maxWidth: '1200px', margin: '0 auto', padding: spacing[6] }}
-      >
+      <div className="w-full p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <ContactInfoCard submission={submission} />

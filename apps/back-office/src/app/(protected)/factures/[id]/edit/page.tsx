@@ -297,7 +297,7 @@ export default function EditDraftPage({ params }: IPageProps) {
   if (!document) return null;
 
   return (
-    <div className="container max-w-4xl mx-auto py-8 px-4">
+    <div className="w-full py-8 px-4">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={() => router.back()}>

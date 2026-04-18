@@ -1,9 +1,9 @@
 # Index Composants, Formulaires & Hooks — packages/@verone/
 
-**Derniere mise a jour** : 2026-04-16
+**Derniere mise a jour** : 2026-04-18
 **23 packages** dans `packages/@verone/`
 
-## **533 composants, 11 hooks**
+## **534 composants, 11 hooks**
 
 ## @verone/categories
 
@@ -112,7 +112,9 @@
 | `ApplyExistingWizard`               | Component | `src/components/ApplyExistingWizard.tsx`                                        |
 | `CategoryCardGrid`                  | Component | `src/components/CategoryCardGrid.tsx`                                           |
 | `CreditNoteCreateModal`             | Modal     | `src/components/CreditNoteCreateModal.tsx`                                      |
+| `DocumentDiscordanceBadge`          | Component | `src/components/DocumentDiscordanceBadge.tsx`                                   |
 | `DocumentEmailHistory`              | Component | `src/components/DocumentEmailHistory.tsx`                                       |
+| `DocumentSourceBadge`               | Component | `src/components/DocumentSourceBadge.tsx`                                        |
 | `HierarchicalCategorySelector`      | Component | `src/components/HierarchicalCategorySelector.tsx`                               |
 | `InvoiceClientSection`              | Component | `src/components/InvoiceCreateFromOrderModal/InvoiceClientSection.tsx`           |
 | `InvoiceCustomLinesSection`         | Component | `src/components/InvoiceCreateFromOrderModal/InvoiceCustomLinesSection.tsx`      |
@@ -123,9 +125,6 @@
 | `InvoiceSuccessView`                | Component | `src/components/InvoiceCreateFromOrderModal/InvoiceSuccessView.tsx`             |
 | `InvoiceTotalsSection`              | Component | `src/components/InvoiceCreateFromOrderModal/InvoiceTotalsSection.tsx`           |
 | `InvoiceCreateServiceModal`         | Modal     | `src/components/InvoiceCreateServiceModal.tsx`                                  |
-| `InvoiceServiceItemsSection`        | Component | `src/components/InvoiceCreateServiceModal/InvoiceServiceItemsSection.tsx`       |
-| `InvoiceServiceOptionsSection`      | Component | `src/components/InvoiceCreateServiceModal/InvoiceServiceOptionsSection.tsx`     |
-| `InvoiceServiceSuccessView`         | Component | `src/components/InvoiceCreateServiceModal/InvoiceServiceSuccessView.tsx`        |
 | `InvoiceDetailModal`                | Modal     | `src/components/InvoiceDetailModal.tsx`                                         |
 | `InvoiceUploadModal`                | Modal     | `src/components/InvoiceUploadModal.tsx`                                         |
 | `OrderSelectModal`                  | Modal     | `src/components/OrderSelectModal.tsx`                                           |
@@ -319,6 +318,7 @@
 | `ProductSelectionSection`           | Component | `src/components/modals/CreateLinkMeOrderModal/ProductSelectionSection.tsx`        |
 | `SelectionListSection`              | Component | `src/components/modals/CreateLinkMeOrderModal/SelectionListSection.tsx`           |
 | `SelectionPreviewDialog`            | Component | `src/components/modals/CreateLinkMeOrderModal/SelectionPreviewDialog.tsx`         |
+| `EditShipmentModal`                 | Modal     | `src/components/modals/EditShipmentModal.tsx`                                     |
 | `OrderDetailModal`                  | Modal     | `src/components/modals/OrderDetailModal.tsx`                                      |
 | `OrderDocumentsList`                | Component | `src/components/modals/OrderDocumentsList.tsx`                                    |
 | `OrderPdfPreviewDialog`             | Component | `src/components/modals/OrderPdfPreviewDialog.tsx`                                 |
@@ -568,6 +568,7 @@
 | `StockStatusBadge`          | Component | `src/components/badges/StockStatusBadge.tsx`          |
 | `StockStatusCompact`        | Component | `src/components/badges/StockStatusCompact.tsx`        |
 | `StockAlertCard`            | Component | `src/components/cards/StockAlertCard.tsx`             |
+| `StockAlertsBanner`         | Component | `src/components/cards/StockAlertsBanner.tsx`          |
 | `StockMovementsChart`       | Component | `src/components/charts/StockMovementsChart.tsx`       |
 | `MovementsFilters`          | Component | `src/components/filters/MovementsFilters.tsx`         |
 | `AdjustmentFileUpload`      | Component | `src/components/modals/AdjustmentFileUpload.tsx`      |

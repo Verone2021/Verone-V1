@@ -266,7 +266,7 @@ export default function ParametresPage(): React.JSX.Element {
   const hasChanges = localBranding !== null;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="px-4 py-6 sm:px-6 lg:px-8 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
         <Settings className="h-8 w-8 text-linkme-turquoise" />
