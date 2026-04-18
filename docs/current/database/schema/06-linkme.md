@@ -1,6 +1,6 @@
 # Domaine LinkMe & Affiliation — Schema Base de Donnees
 
-_Generated: 2026-04-16 06:43_
+_Generated: 2026-04-18 23:03_
 
 **Tables : 10**
 
@@ -320,8 +320,8 @@ _Generated: 2026-04-16 06:43_
 - `staff_manage_linkme_selection_items` : ALL — authenticated
 - `linkme_selection_items_affiliate_delete` : DELETE — authenticated
 - `linkme_selection_items_affiliate_insert` : INSERT — authenticated
-- `linkme_selection_items_affiliate_select` : SELECT — authenticated
 - `linkme_selection_items_public_read` : SELECT — anon,authenticated
+- `linkme_selection_items_affiliate_select` : SELECT — authenticated
 - `linkme_selection_items_affiliate_update` : UPDATE — authenticated
 
 **Triggers :** 4
@@ -360,8 +360,8 @@ _Generated: 2026-04-16 06:43_
 
 **RLS :** 3 policies
 
-- `staff_manage_linkme_selections` : ALL — authenticated
 - `linkme_selections_affiliate_own` : ALL — public
+- `staff_manage_linkme_selections` : ALL — authenticated
 - `linkme_selections_public_read` : SELECT — anon,authenticated
 
 **Triggers :** 1
