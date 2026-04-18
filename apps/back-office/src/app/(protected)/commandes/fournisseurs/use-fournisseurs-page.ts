@@ -17,7 +17,6 @@ import type {
   ShortageDetail,
   CancelRemainderItem,
   PurchaseOrderRow,
-  PurchaseOrderExtended,
 } from './types';
 import { useFournisseursActions } from './use-fournisseurs-actions';
 import { useFournisseursFilters } from './use-fournisseurs-filters';
@@ -165,13 +164,8 @@ export function useFournisseursPage() {
   // ----------------------------------------------------------------
   // Filtrage + KPIs (hook dédié)
   // ----------------------------------------------------------------
-  // Supabase retourne PurchaseOrder[], mais les champs extended (payment_status_v2,
-  // is_matched, etc.) sont injectes par la query JOIN. Le cast est safe car les
-  // champs sont optionnels dans PurchaseOrderExtended.
-  const ordersExtended = orders as PurchaseOrderExtended[];
-
   const { tabCounts, filteredOrders, filteredStats } = useFournisseursFilters({
-    orders: ordersExtended,
+    orders,
     activeTab,
     searchTerm,
     advancedFilters,
