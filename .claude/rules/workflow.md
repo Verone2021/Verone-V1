@@ -1,6 +1,6 @@
 # Regles Workflow Verone
 
-**Source de verite pour le workflow Git / PR / merge. Lecture obligatoire 
+**Source de verite pour le workflow Git / PR / merge. Lecture obligatoire
 par tous les agents avant toute action git.**
 
 ---
@@ -17,12 +17,13 @@ Sprint 1 -> branche -> commit -> push -> PR -> CI -> merge (15 min perdues)
 Sprint 2 -> branche -> commit -> push -> PR -> CI -> merge (15 min perdues)
 Sprint 3 -> branche -> commit -> push -> PR -> CI -> merge (15 min perdues)
 ```
+
 = 45 min en overhead CI/review/merge pour 3 sprints.
 
 ### BON workflow (obligatoire)
 
 ```
-Bloc (ex: Migration Responsive) -> 1 branche -> 
+Bloc (ex: Migration Responsive) -> 1 branche ->
   commit 1 + push (sauvegarde)
   commit 2 + push (sauvegarde)
   commit 3 + push (sauvegarde)
@@ -30,6 +31,7 @@ Bloc (ex: Migration Responsive) -> 1 branche ->
   commit N + push (sauvegarde)
   -> 1 PR quand le bloc est fini -> 1 CI -> 1 merge
 ```
+
 = 15 min de CI total, meme pour 10 sous-taches.
 
 ---
@@ -39,11 +41,13 @@ Bloc (ex: Migration Responsive) -> 1 branche ->
 ### Commits & Push
 
 **TOUJOURS** :
+
 - Commit apres chaque sous-tache terminee (bonne granularite pour rollback)
 - Push apres chaque commit (sauvegarde, pas de travail perdu)
 - Format commit : `[APP-DOMAIN-NNN] type: description`
 
 **JAMAIS** :
+
 - Commit "WIP" vague sans contenu clair
 - Push force (`--force`) sans autorisation Romeo
 - Commit sans Task ID (sauf `[NO-TASK]` pour chores)
@@ -62,7 +66,7 @@ Exemples de blocs coherents (= 1 PR chacun) :
 Exemples de ce qu'il NE faut PAS faire (1 PR par page) :
 
 - PR "migrer /factures"
-- PR "migrer /commandes/clients" 
+- PR "migrer /commandes/clients"
 - PR "migrer /commandes/fournisseurs"
 - PR "migrer /stocks/inventaire"
 - ...
@@ -90,11 +94,13 @@ Exemples de ce qu'il NE faut PAS faire (1 PR par page) :
 Au lieu de 7 PRs (003, 004, 005, 006, 007, 008, 009), creer 2-3 PRs :
 
 **Option A : 1 grosse PR**
+
 - 1 branche `feat/responsive-migration-global`
 - 7 commits (un par pattern)
 - 1 PR `[BO-UI-RESP-MIGRATION] Migration responsive complete (150+ pages)`
 
 **Option B : 2-3 PRs thematiques** (recommande pour reviews plus faciles)
+
 - PR 1 `[BO-UI-RESP-LISTS] Patterns A + B (listes CRUD et filtres)` = sprints 003, 004, 005
 - PR 2 `[BO-UI-RESP-DETAILS] Patterns C + D (detail et dashboards)` = sprints 006, 007
 - PR 3 `[BO-UI-RESP-FORMS] Patterns E + F (modals et forms)` = sprints 008
@@ -102,7 +108,7 @@ Au lieu de 7 PRs (003, 004, 005, 006, 007, 008, 009), creer 2-3 PRs :
 
 ### Point de controle
 
-Commit apres chaque pattern migre (sauvegarde intermediaire), push systematique, 
+Commit apres chaque pattern migre (sauvegarde intermediaire), push systematique,
 mais PR UNIQUEMENT quand plusieurs patterns sont fusibles en un bloc coherent.
 
 ---
@@ -194,8 +200,16 @@ Romeo veut AVANCER vite. Les agents doivent :
 - Rapport apres chaque commit important (pas apres chaque ligne)
 - Demander validation UNIQUEMENT quand la PR est prete a merger
 
-Si Romeo dit "continue", l'agent enchaine les sprints sur la meme branche 
+Si Romeo dit "continue", l'agent enchaine les sprints sur la meme branche
 SANS creer de PR entre chaque.
+
+---
+
+## Playbooks (1 recette specifique Verone)
+
+Pour la migration responsive uniquement, consulter `.claude/playbooks/migrate-page-responsive.md` qui capture le fix du bug "Rendered more hooks" du pilote v1 FAIL.
+
+Les autres playbooks ont ete supprimes (voir `DECISIONS.md` ADR-011) car ils dupliquaient les capacites natives de Claude Code (workflow git, debug, CI). Pour ces cas, utiliser les regles de cette page + `.claude/rules/code-standards.md` + `.claude/rules/playwright.md`.
 
 ---
 

@@ -11,6 +11,7 @@ Remplace les sections contradictoires de `CLAUDE.md` racine (« Tu ne codes JAMA
 **En cas d'ambiguïté → FEU ROUGE par défaut.** Mieux vaut une attente inutile qu'une casse silencieuse.
 
 Les 3 feux ne décrivent pas quand l'agent « a le droit » — ils décrivent **l'action conversationnelle** :
+
 - **FEU VERT** : l'agent fait, pas de demande à Romeo
 - **FEU ORANGE** : l'agent propose + attend une confirmation laconique (« ok » suffit)
 - **FEU ROUGE** : l'agent refuse jusqu'à ordre explicite de Romeo
@@ -29,8 +30,7 @@ Les 3 feux ne décrivent pas quand l'agent « a le droit » — ils décrivent *
 ### Écriture scratchpad
 
 - Créer/modifier des fichiers dans `docs/scratchpad/`
-- Créer/modifier les fichiers dans `.claude/work/` (local, gitignored)
-- Créer/modifier les fichiers dans `.claude/queue/` et `.claude/done/` (workflow tâche)
+- Créer/modifier les fichiers dans `.claude/work/` (local, gitignored, dont `ACTIVE.md` = vraie file de tâches)
 
 ### Git local
 
@@ -53,8 +53,8 @@ Les 3 feux ne décrivent pas quand l'agent « a le droit » — ils décrivent *
 
 ### Orchestration
 
-- Invoquer un sous-agent (`dev-agent`, `reviewer-agent`, `verify-agent`, `ops-agent`) avec un brief précis
-- Passer une tâche de `.claude/queue/` à `.claude/done/` après merge
+- Invoquer un sous-agent (`dev-agent`, `reviewer-agent`, `verify-agent`, `ops-agent`, `perf-optimizer`) avec un brief précis
+- Marquer une tâche `[x] FAIT` dans `.claude/work/ACTIVE.md` après merge
 - Consulter `.claude/playbooks/` et suivre la recette
 
 ### Communication
@@ -148,7 +148,7 @@ Si Romeo dit « ok » ou « vas-y », l'agent exécute immédiatement. Sinon il 
 
 Exemple : pendant la migration responsive de `/factures`, l'agent remarque qu'un autre fichier non prévu dans la tâche a aussi un `w-auto`.
 
-**Règle** : FEU ORANGE. Signaler dans le `dev-report` mais ne pas élargir le scope de la tâche courante. L'amélioration devient une nouvelle tâche dans `.claude/queue/`.
+**Règle** : FEU ORANGE. Signaler dans le `dev-report` mais ne pas élargir le scope de la tâche courante. L'amélioration devient une nouvelle entrée dans `.claude/work/ACTIVE.md`.
 
 ### « L'agent doit modifier un fichier .claude/ pour débloquer sa tâche »
 
@@ -171,6 +171,7 @@ Exemple : Romeo dit « force push sur staging ».
 ## Référence
 
 Ce fichier est référencé par :
+
 - `CLAUDE.md` racine (pointeur unique vers cette règle)
 - `.claude/agents/*.md` (section « TU NE FAIS PAS »)
 - `.claude/DECISIONS.md` (ADR-004 ajustement #3)

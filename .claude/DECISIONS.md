@@ -33,6 +33,7 @@
 ## ADR-003 — 2026-04-19 — Restructuration `.claude/` en 3 phases
 
 **Contexte** : audit brutal de la config agent (`docs/scratchpad/audit-config-agent-2026-04-19.md`) révèle :
+
 - 4 chemins cassés (corrigés en Phase 1, commit [INFRA-DOC-001] pending)
 - Règles responsive dupliquées à 7 endroits
 - Workflow Git dupliqué à 4 endroits
@@ -42,6 +43,7 @@
 - Pas de queue de tâches machine-lisible → agent ne peut pas enchaîner seul
 
 **Décision** : restructuration en 3 phases.
+
 - **Phase 1** (2-3 h) : nettoyage sans restructuration — chemins, contradictions, INDEX. **APPLIQUÉE** (commit pending).
 - **Phase 2** (4-6 h) : queue + playbooks + DECISIONS + autonomy-boundaries. **EN COURS** (cet ADR). Sans déplacement physique de fichiers tant que Claude Code est actif sur `feat/responsive-lists`.
 - **Phase 3** (9-12 h priorité haute) : automation — auto-review CI, auto-advance-queue, MCP GitHub, commandes slash `/next-task` + `/ship`.
@@ -64,6 +66,7 @@
 4. **Audit des 6 agents** → résultat dans `docs/scratchpad/audit-agents-2026-04-19.md`. writer-agent et market-agent à supprimer (0 rapport en 3 mois).
 
 **Conséquence** :
+
 - Structure `.claude/queue/ + .claude/done/` appliquée dans cette Phase 2.
 - Sous-dossier `.claude/rules/domain/` créé vide pour l'instant — déplacement physique des fichiers après merge PR A (éviter conflit avec Claude Code qui lit activement `.claude/rules/responsive.md`).
 - Script `scripts/check-config-integrity.sh` créé. Activation CI en Phase 3.
@@ -108,6 +111,7 @@
 **Décision** : formaliser le pattern v2 comme standard pour toute migration responsive de liste.
 
 Pattern en 3 fichiers :
+
 - `[Entity]Table.tsx` (~250 L) — orchestrateur `ResponsiveDataView`, zéro hook dans les callbacks `renderCard`/`renderTable`
 - `[Entity]MobileCard.tsx` (~200 L) — vrai composant React, toutes les props actions explicites
 - `[Entity]Actions.tsx` (~200 L) — `ResponsiveActionMenu` commun desktop+mobile
@@ -127,6 +131,7 @@ Checklist pré-commit : `wc -l < 400`, `grep w-auto = vide`, `type-check PASS`, 
 **Contexte** : PR #651 migre 3 pages pilotes avec pattern complet 3-fichiers (factures, fournisseurs, inventaire) + 16 composants en « T2 hidden classes only » (colonnes masquables `hidden lg/xl/2xl:table-cell` sans MobileCard dédiée).
 
 Audit runtime à 375px (`docs/scratchpad/audit-t2-only-375px-2026-04-19.md`) révèle :
+
 - 🟢 4/19 OK (organisation listings avec viewMode grid natif = cards par défaut mobile)
 - 🟡 11/19 limite/non-testable (empty states, sections non accessibles)
 - 🔴 4/19 KO : expeditions (3 tabs) + CommissionsTable → 1-2 colonnes seulement visibles à 375px, tables inutilisables mobile
@@ -136,17 +141,20 @@ T2-only viole formellement T1 de `.claude/rules/responsive.md` ("Sous md, tablea
 **Décision** : merger PR #651 avec la dette documentée plutôt que bloquer le merge.
 
 Justifications :
+
 1. Les 3 pages pilotes full (factures, fournisseurs, inventaire) ont pattern complet validé runtime
 2. Les 4 organisation listings ont cards natives via viewMode grid (user mobile tombe sur la bonne UI par défaut)
 3. Les 4 🔴 concernent des tables admin office (expeditions = logistique staff, commissions = back-office affiliés), pas d'usage mobile terrain critique
 4. Bloquer le merge multiplie risque de conflits et retard sur autres sprints. Ticket catch-up incrémental préféré
 
 **Conséquence** :
+
 - PR #651 mergée telle quelle sur staging
 - Tâche `.claude/queue/BO-UI-RESP-LISTS-T1-CATCH-UP.md` créée (priority P2, estimated 2h)
 - Dette traquée explicitement dans queue, pas perdue dans backlog
 
 **Référence** :
+
 - Audit : `docs/scratchpad/audit-t2-only-375px-2026-04-19.md`
 - Screenshots : `.playwright-mcp/screenshots/audit-t2-*-375.png` (7 fichiers)
 - Tâche catch-up : `.claude/queue/BO-UI-RESP-LISTS-T1-CATCH-UP.md`
@@ -154,9 +162,74 @@ Justifications :
 
 ---
 
+## ADR-009 — 2026-04-19 — Cleanup Phase 2 orpheline + suppression agents morts
+
+**Contexte** : audit en session Claude Code (`docs/scratchpad/audit-config-agent-2026-04-19.md` + analyse croisée claude.ai web) révèle que Phase 2 (commits `74bd7b42e` + `cd571e925`) a créé un système auto-référencé fermé :
+
+- `.claude/queue/` (4 fichiers) et `.claude/done/` (1 README) ne sont référencés que par `playbooks/`, `INDEX.md`, et eux-mêmes. **Zéro référence depuis le point d'entrée réel** (CLAUDE.md, ACTIVE.md, apps/\*/CLAUDE.md). Romeo continue d'utiliser `.claude/work/ACTIVE.md` comme source unique → la queue est inutilisée.
+- Phase 3 promise (auto-advance-queue, MCP GitHub, `/next-task`) dépendait de la queue → devient caduque.
+- `writer-agent.md` + `market-agent.md` : 0 utilisation en 3 mois (audit dans `audit-agents-2026-04-19.md`). Documenté comme « suppression à valider » dans ADR-005 [différé] depuis 2026-04-19 matin.
+
+**Décision** :
+
+1. **Supprimer** `.claude/queue/` + `.claude/done/` (orphelins prouvés).
+2. **Supprimer** `.claude/agents/writer-agent.md` + `.claude/agents/market-agent.md` (concrétise ADR-005).
+3. **Garder** les 4 playbooks (vrai contenu utile, ~22 KB de recettes) en les ré-ancrant sur `ACTIVE.md` au lieu de queue/done. Référencés depuis `.claude/rules/workflow.md` (nouvelle section Playbooks) pour qu'un agent les trouve réellement.
+4. **Garder** `autonomy-boundaries.md`, `DECISIONS.md`, `scripts/check-config-integrity.sh` (utilité confirmée).
+5. **Annuler Phase 3** (devenue caduque sans queue).
+
+**Conséquence** :
+
+- 7 fichiers supprimés (`queue/` 4 + `done/` 1 + 2 agents morts).
+- Workflow unifié autour de **ACTIVE.md + rules/ + agents/ + playbooks/**, fin de la duplication queue vs ACTIVE.
+- `INDEX.md`, `commands/README.md`, `playbooks/README.md`, `playbooks/review-and-merge.md`, `rules/autonomy-boundaries.md`, `rules/workflow.md` mis à jour.
+- 2 agents en moins → contexte plus léger pour le coordinateur.
+
+**Référence** : PR `[INFRA-DOC-006]`, branche `feat/INFRA-DOC-006-cleanup-phase2`. Annule en partie ADR-003 (Phase 3) et concrétise ADR-005.
+
+---
+
+## ADR-010 — 2026-04-19 — Restauration ciblée 4 fichiers config supprimés le 15 avril
+
+**Contexte** : grand nettoyage du 2026-04-15 (commits `3160c0f14`, `5fbf9af14`, `f10bf58c0`, `2171a4a7d`) a supprimé 50 fichiers `.claude/` (~6700 lignes). Audit session 2026-04-19 identifie 4 fichiers à restaurer car aucun équivalent dans la config consolidée actuelle.
+
+**Décision** : restaurer 4 fichiers ciblés, laisser les 46 autres supprimés (consolidés correctement).
+
+- `.claude/commands/db.md` (446 l) : slash `/db` pour ops Supabase rapides.
+- `.claude/commands/teach.md` (88 l) : slash `/teach` pour mode pédagogique (Romeo novice).
+- `.claude/agents/perf-optimizer.md` (386 l) : auditeur perf (zéro remplaçant aujourd'hui).
+- `.claude/agent-memory/perf-optimizer/MEMORY.md` (170 l) : mémoire accumulée perf.
+
+**Conséquence** : `perf-optimizer.md` corrigé pour pointer sur les fichiers consolidés actuels (3 chemins + 3 références à `database-architect` → `dev-agent`). INDEX.md et `commands/README.md` mis à jour.
+
+**Référence** : PR `[INFRA-DOC-005]` #653.
+
+---
+
+## ADR-011 — 2026-04-19 — Suppression playbooks génériques (garder migrate-page-responsive seul)
+
+**Contexte** : 4 playbooks créés en Phase 2 (commit `74bd7b42e`) — `migrate-page-responsive`, `fix-bug`, `review-and-merge`, `handle-ci-failure`. Audit révèle :
+
+- `fix-bug.md`, `review-and-merge.md`, `handle-ci-failure.md` : génériques, dupliquent les capacités natives de Claude Code (workflow git, debug, CI). N'apportent aucune valeur Verone-spécifique.
+- `migrate-page-responsive.md` : capture la **leçon réelle** du pilote v1 FAIL (commit `fc9af2806`) → bug "Rendered more hooks", revert, fix v2 (commit `51bced9e5`). Valeur unique non-déductible.
+
+**Décision** : supprimer les 3 playbooks génériques + leur `README.md`. Garder uniquement `migrate-page-responsive.md`.
+
+**Conséquence** :
+
+- 4 fichiers en moins (`.claude/playbooks/` passe de 5 fichiers à 1).
+- `INDEX.md` section Playbooks réduite à 1 ligne.
+- `rules/workflow.md` section Playbooks réduite à 1 ligne (référence migrate-page-responsive uniquement, redirige vers `code-standards.md` + `playwright.md` pour les autres cas).
+- Les workflows git/debug/CI = capacités natives Claude Code + règles dans `rules/workflow.md` + `rules/code-standards.md`.
+
+**Référence** : PR `[INFRA-DOC-006]` #654 (amendée). Annule en partie ADR-009 sur l'inventaire des playbooks à garder.
+
+---
+
 ## Contrat pour futurs ADRs
 
 Chaque nouvelle décision structurelle ajoute une entrée ici avec :
+
 - Numéro `ADR-NNN` (séquentiel, pas réutilisable)
 - Date au format ISO (`2026-MM-DD`)
 - Titre court (une ligne)
@@ -173,9 +246,12 @@ Les ADRs ne se modifient pas rétroactivement. Si une décision est renversée, 
 
 - ADR-001 : Suppression agents expert (2026-04-15)
 - ADR-002 : Workflow 1 PR = 1 bloc (2026-04-18)
-- ADR-003 : Restructuration `.claude/` en 3 phases (2026-04-19)
-- ADR-004 : 4 ajustements (queue 2 dossiers, rules/domain/, test CI, audit agents) (2026-04-19)
-- ADR-005 : Suppression writer-agent + market-agent [DIFFÉRÉ] (2026-04-19)
+- ADR-003 : Restructuration `.claude/` en 3 phases (2026-04-19) — _Phase 3 annulée par ADR-009_
+- ADR-004 : 4 ajustements (queue 2 dossiers, rules/domain/, test CI, audit agents) (2026-04-19) — _queue annulée par ADR-009_
+- ADR-005 : Suppression writer-agent + market-agent [DIFFÉRÉ] (2026-04-19) — _appliqué par ADR-009_
 - ADR-006 : `.claude/work/` reste gitignored [DIFFÉRÉ] (2026-04-19)
 - ADR-007 : Pattern pilote v2 responsive validé (2026-04-19)
 - ADR-008 : Acceptation T2-only sur 15 composants secondaires (2026-04-19)
+- ADR-009 : Cleanup Phase 2 orpheline + suppression agents morts (2026-04-19)
+- ADR-010 : Restauration 4 fichiers config supprimés le 15 avril (2026-04-19)
+- ADR-011 : Suppression playbooks génériques (garder migrate-page-responsive seul) (2026-04-19)
