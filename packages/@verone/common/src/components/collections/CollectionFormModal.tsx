@@ -176,7 +176,7 @@ export function CollectionFormModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-3xl md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>
             {mode === 'create'
@@ -189,39 +189,43 @@ export function CollectionFormModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={e => void handleSubmit(e)} className="space-y-6">
-          {/* Informations de base */}
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="name" className="text-sm font-medium">
-                Nom de la collection *
-              </Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Ex: Collection Scandinave Salon 2025"
-                className="mt-1"
-                required
-              />
-            </div>
+        <form
+          onSubmit={e => void handleSubmit(e)}
+          className="flex flex-col flex-1 overflow-hidden"
+        >
+          <div className="flex-1 overflow-y-auto space-y-6">
+            {/* Informations de base */}
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="name" className="text-sm font-medium">
+                  Nom de la collection *
+                </Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="Ex: Collection Scandinave Salon 2025"
+                  className="mt-1"
+                  required
+                />
+              </div>
 
-            <div>
-              <Label htmlFor="description" className="text-sm font-medium">
-                Description
-              </Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                placeholder="Décrivez l'ambiance et les caractéristiques de cette collection..."
-                rows={3}
-                className="mt-1"
-              />
-            </div>
+              <div>
+                <Label htmlFor="description" className="text-sm font-medium">
+                  Description
+                </Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  placeholder="Décrivez l'ambiance et les caractéristiques de cette collection..."
+                  rows={3}
+                  className="mt-1"
+                />
+              </div>
 
-            {/* Image de couverture - ALIGNÉE SUR LARGEUR FORMULAIRE */}
-            {/* TODO: Réactiver quand CollectionImageUpload sera dans @verone/common
+              {/* Image de couverture - ALIGNÉE SUR LARGEUR FORMULAIRE */}
+              {/* TODO: Réactiver quand CollectionImageUpload sera dans @verone/common
             <div>
               <Label className="text-sm font-medium">Image de couverture</Label>
               <div className="mt-2 w-full">
@@ -237,172 +241,174 @@ export function CollectionFormModal({
               </div>
             </div>
             */}
-          </div>
-
-          {/* Style - UNE SEULE FOIS */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Style décoratif</Label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {COLLECTION_STYLES.map(styleOption => (
-                <button
-                  key={styleOption.value}
-                  type="button"
-                  onClick={() =>
-                    setStyle(
-                      style === styleOption.value
-                        ? undefined
-                        : styleOption.value
-                    )
-                  }
-                  className={cn(
-                    'flex flex-col items-center gap-2 p-4 rounded-lg border-2 text-center transition-all',
-                    style === styleOption.value
-                      ? 'border-black bg-black text-white shadow-md'
-                      : 'border-gray-300 hover:border-gray-400 hover:shadow-sm'
-                  )}
-                >
-                  <div className="text-2xl mb-1">{styleOption.icon}</div>
-                  <div className="space-y-1">
-                    <div className="font-medium text-sm">
-                      {styleOption.label}
-                    </div>
-                    <div
-                      className={cn(
-                        'text-xs',
-                        style === styleOption.value
-                          ? 'text-gray-200'
-                          : 'text-gray-500'
-                      )}
-                    >
-                      {styleOption.description}
-                    </div>
-                  </div>
-                </button>
-              ))}
             </div>
-          </div>
 
-          {/* Pièces compatibles - IDENTIQUE À VARIANT GROUPS */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">
-              Pièces de la maison compatibles
-            </Label>
-            <p className="text-xs text-gray-600">
-              Sélectionnez les pièces où cette collection peut être utilisée
-            </p>
-            {/* <RoomMultiSelect
+            {/* Style - UNE SEULE FOIS */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Style décoratif</Label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {COLLECTION_STYLES.map(styleOption => (
+                  <button
+                    key={styleOption.value}
+                    type="button"
+                    onClick={() =>
+                      setStyle(
+                        style === styleOption.value
+                          ? undefined
+                          : styleOption.value
+                      )
+                    }
+                    className={cn(
+                      'flex flex-col items-center gap-2 p-4 rounded-lg border-2 text-center transition-all',
+                      style === styleOption.value
+                        ? 'border-black bg-black text-white shadow-md'
+                        : 'border-gray-300 hover:border-gray-400 hover:shadow-sm'
+                    )}
+                  >
+                    <div className="text-2xl mb-1">{styleOption.icon}</div>
+                    <div className="space-y-1">
+                      <div className="font-medium text-sm">
+                        {styleOption.label}
+                      </div>
+                      <div
+                        className={cn(
+                          'text-xs',
+                          style === styleOption.value
+                            ? 'text-gray-200'
+                            : 'text-gray-500'
+                        )}
+                      >
+                        {styleOption.description}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Pièces compatibles - IDENTIQUE À VARIANT GROUPS */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">
+                Pièces de la maison compatibles
+              </Label>
+              <p className="text-xs text-gray-600">
+                Sélectionnez les pièces où cette collection peut être utilisée
+              </p>
+              {/* <RoomMultiSelect
               value={suitableRooms}
               onChange={setSuitableRooms}
               placeholder="Sélectionner les pièces compatibles..."
               className="w-full"
             /> */}
-            {/* {suitableRooms.length > 0 && (
+              {/* {suitableRooms.length > 0 && (
               <p className="text-xs text-gray-600">
                 {suitableRooms.length} pièce
                 {suitableRooms.length > 1 ? 's' : ''} sélectionnée
                 {suitableRooms.length > 1 ? 's' : ''}
               </p>
             )} */}
-          </div>
-
-          {/* Tags personnalisés */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Tags personnalisés</Label>
-            <div className="flex gap-2">
-              <Input
-                value={newTag}
-                onChange={e => setNewTag(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddTag();
-                  }
-                }}
-                placeholder="Ex: Eco-responsable, Petit espace..."
-              />
-              <ButtonV2
-                type="button"
-                variant="outline"
-                onClick={handleAddTag}
-                disabled={!newTag.trim()}
-              >
-                <Plus className="h-4 w-4" />
-              </ButtonV2>
-            </div>
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {tags.map(tag => (
-                  <Badge key={tag} variant="outline" className="pl-2 pr-1">
-                    <Tag className="h-3 w-3 mr-1" />
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveTag(tag)}
-                      className="ml-1 hover:text-red-600"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Paramètres */}
-          <div className="space-y-3 pt-4 border-t">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-sm font-medium">Visibilité</Label>
-                <p className="text-xs text-gray-600">Publique ou privée</p>
-              </div>
-              <select
-                value={visibility}
-                onChange={e =>
-                  setVisibility(e.target.value as 'public' | 'private')
-                }
-                className="border border-gray-300 rounded px-3 py-2"
-              >
-                <option value="private">Privée</option>
-                <option value="public">Publique</option>
-              </select>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-sm font-medium">Statut</Label>
-                <p className="text-xs text-gray-600">Active ou inactive</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsActive(!isActive)}
-                className={cn(
-                  'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                  isActive ? 'bg-black' : 'bg-gray-300'
-                )}
-              >
-                <span
-                  className={cn(
-                    'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                    isActive ? 'translate-x-6' : 'translate-x-1'
-                  )}
+            {/* Tags personnalisés */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Tags personnalisés</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={newTag}
+                  onChange={e => setNewTag(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                  placeholder="Ex: Eco-responsable, Petit espace..."
                 />
-              </button>
+                <ButtonV2
+                  type="button"
+                  variant="outline"
+                  onClick={handleAddTag}
+                  disabled={!newTag.trim()}
+                >
+                  <Plus className="h-4 w-4" />
+                </ButtonV2>
+              </div>
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {tags.map(tag => (
+                    <Badge key={tag} variant="outline" className="pl-2 pr-1">
+                      <Tag className="h-3 w-3 mr-1" />
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTag(tag)}
+                        className="ml-1 hover:text-red-600"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Paramètres */}
+            <div className="space-y-3 pt-4 border-t">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Visibilité</Label>
+                  <p className="text-xs text-gray-600">Publique ou privée</p>
+                </div>
+                <select
+                  value={visibility}
+                  onChange={e =>
+                    setVisibility(e.target.value as 'public' | 'private')
+                  }
+                  className="border border-gray-300 rounded px-3 py-2"
+                >
+                  <option value="private">Privée</option>
+                  <option value="public">Publique</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Statut</Label>
+                  <p className="text-xs text-gray-600">Active ou inactive</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsActive(!isActive)}
+                  className={cn(
+                    'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                    isActive ? 'bg-black' : 'bg-gray-300'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                      isActive ? 'translate-x-6' : 'translate-x-1'
+                    )}
+                  />
+                </button>
+              </div>
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col gap-2 md:flex-row">
             <ButtonV2
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
+              className="w-full md:w-auto"
             >
               Annuler
             </ButtonV2>
             <ButtonV2
               type="submit"
               disabled={!name.trim() || isSubmitting}
-              className="bg-black text-white hover:bg-gray-800"
+              className="w-full md:w-auto bg-black text-white hover:bg-gray-800"
             >
               {isSubmitting
                 ? 'Enregistrement...'

@@ -147,7 +147,7 @@ export function VariantGroupCreateModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-2xl md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Créer un groupe de variantes</DialogTitle>
           <DialogDescription>
@@ -156,299 +156,311 @@ export function VariantGroupCreateModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="name" className="text-sm font-medium">
-                Nom du groupe *
-              </Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Ex: Chaise Design Scandinave"
-                className="mt-1"
-                required
-              />
-              <p className="text-xs text-gray-600 mt-1">
-                Ce nom sera la base pour tous les produits du groupe
-              </p>
-            </div>
-
-            <div>
-              <Label htmlFor="base_sku" className="text-sm font-medium">
-                SKU de base *
-              </Label>
-              <Input
-                id="base_sku"
-                value={baseSku}
-                onChange={e => setBaseSku(e.target.value)}
-                placeholder="Ex: CHAISE-DESIGN-SCANDI"
-                className="mt-1 font-mono text-sm"
-                required
-              />
-              <p className="text-xs text-gray-600 mt-1">
-                Généré automatiquement depuis le nom. Pattern:{' '}
-                {baseSku ? `${baseSku}-[VARIANTE]` : 'BASE_SKU-[VARIANTE]'}
-              </p>
-            </div>
-
-            <div>
-              <Label htmlFor="variant_type" className="text-sm font-medium">
-                Type de variante *
-              </Label>
-              <select
-                id="variant_type"
-                value={variantType}
-                onChange={e =>
-                  setVariantType(e.target.value as 'color' | 'material')
-                }
-                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-black focus:border-black"
-                required
-              >
-                <option value="color">🎨 Couleur</option>
-                <option value="material">🧵 Matériau</option>
-              </select>
-              <p className="text-xs text-gray-600 mt-1">
-                Définit l'attribut principal qui différencie les produits du
-                groupe
-              </p>
-            </div>
-
-            <div>
-              <Label htmlFor="subcategory" className="text-sm font-medium">
-                Sous-catégorie *
-              </Label>
-              <select
-                id="subcategory"
-                value={subcategoryId}
-                onChange={e => setSubcategoryId(e.target.value)}
-                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-black focus:border-black"
-                required
-                disabled={subcategoriesLoading}
-              >
-                <option value="">Sélectionner une sous-catégorie</option>
-                {subcategories?.map(sub => (
-                  <option key={sub.id} value={sub.id}>
-                    {sub.category?.name} → {sub.name}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-gray-600 mt-1">
-                Tous les produits du groupe partageront cette sous-catégorie
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-3 pt-4 border-t">
-            <Label className="text-sm font-medium">
-              Dimensions communes (optionnel)
-            </Label>
-            <p className="text-xs text-gray-600">
-              Si tous les produits du groupe ont les mêmes dimensions
-            </p>
-
-            <div className="grid grid-cols-4 gap-3">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col flex-1 overflow-hidden"
+        >
+          <div className="flex-1 overflow-y-auto space-y-6">
+            <div className="space-y-4">
               <div>
-                <Label htmlFor="length" className="text-xs">
-                  Longueur
+                <Label htmlFor="name" className="text-sm font-medium">
+                  Nom du groupe *
                 </Label>
                 <Input
-                  id="length"
-                  type="number"
-                  step="0.01"
-                  value={dimensionsLength ?? ''}
-                  onChange={e =>
-                    setDimensionsLength(
-                      e.target.value ? parseFloat(e.target.value) : undefined
-                    )
-                  }
-                  placeholder="0"
+                  id="name"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="Ex: Chaise Design Scandinave"
                   className="mt-1"
+                  required
                 />
+                <p className="text-xs text-gray-600 mt-1">
+                  Ce nom sera la base pour tous les produits du groupe
+                </p>
               </div>
 
               <div>
-                <Label htmlFor="width" className="text-xs">
-                  Largeur
+                <Label htmlFor="base_sku" className="text-sm font-medium">
+                  SKU de base *
                 </Label>
                 <Input
-                  id="width"
-                  type="number"
-                  step="0.01"
-                  value={dimensionsWidth ?? ''}
-                  onChange={e =>
-                    setDimensionsWidth(
-                      e.target.value ? parseFloat(e.target.value) : undefined
-                    )
-                  }
-                  placeholder="0"
-                  className="mt-1"
+                  id="base_sku"
+                  value={baseSku}
+                  onChange={e => setBaseSku(e.target.value)}
+                  placeholder="Ex: CHAISE-DESIGN-SCANDI"
+                  className="mt-1 font-mono text-sm"
+                  required
                 />
+                <p className="text-xs text-gray-600 mt-1">
+                  Généré automatiquement depuis le nom. Pattern:{' '}
+                  {baseSku ? `${baseSku}-[VARIANTE]` : 'BASE_SKU-[VARIANTE]'}
+                </p>
               </div>
 
               <div>
-                <Label htmlFor="height" className="text-xs">
-                  Hauteur
-                </Label>
-                <Input
-                  id="height"
-                  type="number"
-                  step="0.01"
-                  value={dimensionsHeight ?? ''}
-                  onChange={e =>
-                    setDimensionsHeight(
-                      e.target.value ? parseFloat(e.target.value) : undefined
-                    )
-                  }
-                  placeholder="0"
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="unit" className="text-xs">
-                  Unité
+                <Label htmlFor="variant_type" className="text-sm font-medium">
+                  Type de variante *
                 </Label>
                 <select
-                  id="unit"
-                  value={dimensionsUnit}
-                  onChange={e => setDimensionsUnit(e.target.value as any)}
-                  className="mt-1 w-full border border-gray-300 rounded-md px-2 py-2 text-sm"
+                  id="variant_type"
+                  value={variantType}
+                  onChange={e =>
+                    setVariantType(e.target.value as 'color' | 'material')
+                  }
+                  className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-black focus:border-black"
+                  required
                 >
-                  {DIMENSION_UNITS.map(unit => (
-                    <option key={unit.value} value={unit.value}>
-                      {unit.value}
+                  <option value="color">🎨 Couleur</option>
+                  <option value="material">🧵 Matériau</option>
+                </select>
+                <p className="text-xs text-gray-600 mt-1">
+                  Définit l'attribut principal qui différencie les produits du
+                  groupe
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="subcategory" className="text-sm font-medium">
+                  Sous-catégorie *
+                </Label>
+                <select
+                  id="subcategory"
+                  value={subcategoryId}
+                  onChange={e => setSubcategoryId(e.target.value)}
+                  className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-black focus:border-black"
+                  required
+                  disabled={subcategoriesLoading}
+                >
+                  <option value="">Sélectionner une sous-catégorie</option>
+                  {subcategories?.map(sub => (
+                    <option key={sub.id} value={sub.id}>
+                      {sub.category?.name} → {sub.name}
                     </option>
                   ))}
                 </select>
+                <p className="text-xs text-gray-600 mt-1">
+                  Tous les produits du groupe partageront cette sous-catégorie
+                </p>
               </div>
             </div>
-          </div>
 
-          <div className="space-y-4 pt-4 border-t">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="has-common-weight"
-                checked={hasCommonWeight}
-                onCheckedChange={checked => {
-                  setHasCommonWeight(checked as boolean);
-                  if (!checked) setCommonWeight(undefined);
-                }}
-              />
-              <Label
-                htmlFor="has-common-weight"
-                className="text-sm font-medium cursor-pointer"
-              >
-                ⚖️ Même poids pour tous les produits
+            <div className="space-y-3 pt-4 border-t">
+              <Label className="text-sm font-medium">
+                Dimensions communes (optionnel)
               </Label>
-            </div>
-            <p className="text-xs text-gray-600 ml-6">
-              Si cochée, tous les produits du groupe hériteront automatiquement
-              du poids saisi
-            </p>
+              <p className="text-xs text-gray-600">
+                Si tous les produits du groupe ont les mêmes dimensions
+              </p>
 
-            {hasCommonWeight && (
-              <div className="ml-6 space-y-2">
-                <Label htmlFor="common_weight" className="text-sm font-medium">
-                  Poids commun <span className="text-red-500">*</span>
-                </Label>
-                <div className="flex items-end space-x-2">
+              <div className="grid grid-cols-4 gap-3">
+                <div>
+                  <Label htmlFor="length" className="text-xs">
+                    Longueur
+                  </Label>
                   <Input
-                    id="common_weight"
+                    id="length"
                     type="number"
                     step="0.01"
-                    min="0"
-                    value={commonWeight ?? ''}
+                    value={dimensionsLength ?? ''}
                     onChange={e =>
-                      setCommonWeight(
+                      setDimensionsLength(
                         e.target.value ? parseFloat(e.target.value) : undefined
                       )
                     }
-                    placeholder="0.00"
-                    className="flex-1"
+                    placeholder="0"
+                    className="mt-1"
                   />
-                  <span className="text-sm text-gray-600 mb-2 min-w-[30px]">
-                    kg
-                  </span>
                 </div>
-                <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
-                  💡 Ce poids sera appliqué automatiquement à tous les produits
-                  du groupe et ne pourra pas être modifié individuellement
-                </p>
-              </div>
-            )}
-          </div>
 
-          <div className="space-y-4 pt-4 border-t">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="has-common-supplier"
-                checked={hasCommonSupplier}
-                onCheckedChange={checked => {
-                  setHasCommonSupplier(checked as boolean);
-                  if (!checked) setSupplierId(undefined);
-                }}
-              />
-              <Label
-                htmlFor="has-common-supplier"
-                className="text-sm font-medium cursor-pointer"
-              >
-                🏢 Même fournisseur pour tous les produits
-              </Label>
-            </div>
-            <p className="text-xs text-gray-600 ml-6">
-              Si cochée, tous les produits du groupe hériteront automatiquement
-              du fournisseur sélectionné
-            </p>
+                <div>
+                  <Label htmlFor="width" className="text-xs">
+                    Largeur
+                  </Label>
+                  <Input
+                    id="width"
+                    type="number"
+                    step="0.01"
+                    value={dimensionsWidth ?? ''}
+                    onChange={e =>
+                      setDimensionsWidth(
+                        e.target.value ? parseFloat(e.target.value) : undefined
+                      )
+                    }
+                    placeholder="0"
+                    className="mt-1"
+                  />
+                </div>
 
-            {hasCommonSupplier && (
-              <div className="ml-6 space-y-2">
-                <Label htmlFor="supplier" className="text-sm font-medium">
-                  Fournisseur commun <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={supplierId}
-                  onValueChange={setSupplierId}
-                  disabled={suppliersLoading}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Sélectionner un fournisseur" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {suppliers.map(supplier => (
-                      <SelectItem key={supplier.id} value={supplier.id}>
-                        {supplier.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {supplierId && (
-                  <Link
-                    href={`/contacts-organisations/suppliers/${supplierId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                <div>
+                  <Label htmlFor="height" className="text-xs">
+                    Hauteur
+                  </Label>
+                  <Input
+                    id="height"
+                    type="number"
+                    step="0.01"
+                    value={dimensionsHeight ?? ''}
+                    onChange={e =>
+                      setDimensionsHeight(
+                        e.target.value ? parseFloat(e.target.value) : undefined
+                      )
+                    }
+                    placeholder="0"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="unit" className="text-xs">
+                    Unité
+                  </Label>
+                  <select
+                    id="unit"
+                    value={dimensionsUnit}
+                    onChange={e => setDimensionsUnit(e.target.value as any)}
+                    className="mt-1 w-full border border-gray-300 rounded-md px-2 py-2 text-sm"
                   >
-                    <ExternalLink className="w-3 h-3" />
-                    Voir la fiche détail du fournisseur
-                  </Link>
-                )}
-                <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
-                  💡 Ce fournisseur sera appliqué automatiquement à tous les
-                  produits du groupe et ne pourra pas être modifié
-                  individuellement
-                </p>
+                    {DIMENSION_UNITS.map(unit => (
+                      <option key={unit.value} value={unit.value}>
+                        {unit.value}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-            )}
+            </div>
+
+            <div className="space-y-4 pt-4 border-t">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="has-common-weight"
+                  checked={hasCommonWeight}
+                  onCheckedChange={checked => {
+                    setHasCommonWeight(checked as boolean);
+                    if (!checked) setCommonWeight(undefined);
+                  }}
+                />
+                <Label
+                  htmlFor="has-common-weight"
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  ⚖️ Même poids pour tous les produits
+                </Label>
+              </div>
+              <p className="text-xs text-gray-600 ml-6">
+                Si cochée, tous les produits du groupe hériteront
+                automatiquement du poids saisi
+              </p>
+
+              {hasCommonWeight && (
+                <div className="ml-6 space-y-2">
+                  <Label
+                    htmlFor="common_weight"
+                    className="text-sm font-medium"
+                  >
+                    Poids commun <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="flex items-end space-x-2">
+                    <Input
+                      id="common_weight"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={commonWeight ?? ''}
+                      onChange={e =>
+                        setCommonWeight(
+                          e.target.value
+                            ? parseFloat(e.target.value)
+                            : undefined
+                        )
+                      }
+                      placeholder="0.00"
+                      className="flex-1"
+                    />
+                    <span className="text-sm text-gray-600 mb-2 min-w-[30px]">
+                      kg
+                    </span>
+                  </div>
+                  <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
+                    💡 Ce poids sera appliqué automatiquement à tous les
+                    produits du groupe et ne pourra pas être modifié
+                    individuellement
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4 pt-4 border-t">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="has-common-supplier"
+                  checked={hasCommonSupplier}
+                  onCheckedChange={checked => {
+                    setHasCommonSupplier(checked as boolean);
+                    if (!checked) setSupplierId(undefined);
+                  }}
+                />
+                <Label
+                  htmlFor="has-common-supplier"
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  🏢 Même fournisseur pour tous les produits
+                </Label>
+              </div>
+              <p className="text-xs text-gray-600 ml-6">
+                Si cochée, tous les produits du groupe hériteront
+                automatiquement du fournisseur sélectionné
+              </p>
+
+              {hasCommonSupplier && (
+                <div className="ml-6 space-y-2">
+                  <Label htmlFor="supplier" className="text-sm font-medium">
+                    Fournisseur commun <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={supplierId}
+                    onValueChange={setSupplierId}
+                    disabled={suppliersLoading}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Sélectionner un fournisseur" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {suppliers.map(supplier => (
+                        <SelectItem key={supplier.id} value={supplier.id}>
+                          {supplier.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {supplierId && (
+                    <Link
+                      href={`/contacts-organisations/suppliers/${supplierId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      Voir la fiche détail du fournisseur
+                    </Link>
+                  )}
+                  <p className="text-xs text-blue-700 bg-blue-50 p-2 rounded border border-blue-200">
+                    💡 Ce fournisseur sera appliqué automatiquement à tous les
+                    produits du groupe et ne pourra pas être modifié
+                    individuellement
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col gap-2 md:flex-row">
             <ButtonV2
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
+              className="w-full md:w-auto"
             >
               Annuler
             </ButtonV2>
@@ -460,7 +472,7 @@ export function VariantGroupCreateModal({
                 !subcategoryId ||
                 isSubmitting
               }
-              className="bg-black text-white hover:bg-gray-800"
+              className="w-full md:w-auto bg-black text-white hover:bg-gray-800"
             >
               {isSubmitting ? 'Création...' : 'Créer le groupe'}
             </ButtonV2>

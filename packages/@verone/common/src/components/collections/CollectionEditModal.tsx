@@ -71,15 +71,18 @@ export function CollectionEditModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-lg md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>
             {collection ? 'Modifier la collection' : 'Nouvelle collection'}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={e => void handleSubmit(e)}>
-          <div className="space-y-4 py-4">
+        <form
+          onSubmit={e => void handleSubmit(e)}
+          className="flex flex-col flex-1 overflow-hidden"
+        >
+          <div className="flex-1 overflow-y-auto space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nom de la collection</Label>
               <Input
@@ -183,19 +186,20 @@ export function CollectionEditModal({
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col gap-2 md:flex-row">
             <ButtonV2
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={loading}
+              className="w-full md:w-auto"
             >
               Annuler
             </ButtonV2>
             <ButtonV2
               type="submit"
               disabled={loading ?? !formData.name}
-              className="bg-black text-white hover:bg-gray-800"
+              className="w-full md:w-auto bg-black text-white hover:bg-gray-800"
             >
               {loading ? 'Enregistrement...' : 'Enregistrer'}
             </ButtonV2>

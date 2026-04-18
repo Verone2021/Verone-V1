@@ -169,7 +169,7 @@ export function ProductDescriptionsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-5xl md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="pb-4 border-b">
           <DialogTitle className="flex items-center gap-3">
             <FileText className="h-6 w-6 text-black" />

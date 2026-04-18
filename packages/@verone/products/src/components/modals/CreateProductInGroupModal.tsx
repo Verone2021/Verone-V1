@@ -115,7 +115,7 @@ export function CreateProductInGroupModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-lg md:max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl font-light">
             <Sparkles className="h-5 w-5 text-gray-700" />
@@ -129,111 +129,121 @@ export function CreateProductInGroupModal({
           </Badge>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 pt-4">
-          {/* Input variante */}
-          <div className="space-y-3">
-            {variantType === 'color' ? (
-              // Sélecteur de couleurs dynamique avec filtrage
-              <DynamicColorSelector
-                value={variantValue}
-                onChange={setVariantValue}
-                required
-                excludeColors={usedColors}
-                placeholder={`Rechercher ou créer une ${typeInfo.singular.toLowerCase()}...`}
-              />
-            ) : (
-              // Input classique pour autres types (material, size, pattern)
-              <>
-                <Label htmlFor="variant_value" className="text-sm font-medium">
-                  Valeur de la variante <span className="text-red-500">*</span>
-                </Label>
-                <p className="text-xs text-gray-600">
-                  Indiquez la {typeInfo.singular.toLowerCase()} de ce produit.
-                  Le nom sera généré automatiquement.
-                </p>
-                <Input
-                  id="variant_value"
-                  type="text"
-                  placeholder={`Ex: ${typeInfo.placeholder}`}
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col flex-1 overflow-hidden"
+        >
+          <div className="flex-1 overflow-y-auto space-y-6 pt-4">
+            {/* Input variante */}
+            <div className="space-y-3">
+              {variantType === 'color' ? (
+                // Sélecteur de couleurs dynamique avec filtrage
+                <DynamicColorSelector
                   value={variantValue}
-                  onChange={e => setVariantValue(e.target.value)}
-                  autoFocus
-                  className="text-base"
+                  onChange={setVariantValue}
+                  required
+                  excludeColors={usedColors}
+                  placeholder={`Rechercher ou créer une ${typeInfo.singular.toLowerCase()}...`}
                 />
-              </>
-            )}
-          </div>
-
-          {/* Message d'erreur anti-doublon */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-red-800">{error}</div>
+              ) : (
+                // Input classique pour autres types (material, size, pattern)
+                <>
+                  <Label
+                    htmlFor="variant_value"
+                    className="text-sm font-medium"
+                  >
+                    Valeur de la variante{' '}
+                    <span className="text-red-500">*</span>
+                  </Label>
+                  <p className="text-xs text-gray-600">
+                    Indiquez la {typeInfo.singular.toLowerCase()} de ce produit.
+                    Le nom sera généré automatiquement.
+                  </p>
+                  <Input
+                    id="variant_value"
+                    type="text"
+                    placeholder={`Ex: ${typeInfo.placeholder}`}
+                    value={variantValue}
+                    onChange={e => setVariantValue(e.target.value)}
+                    autoFocus
+                    className="text-base"
+                  />
+                </>
+              )}
             </div>
-          )}
 
-          {/* Prévisualisation */}
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
-            <Label className="text-xs font-medium text-blue-900">
-              ✨ Nom généré automatiquement
-            </Label>
-            <p className="font-medium text-blue-900">{previewName}</p>
-            <p className="text-xs text-blue-700">
-              Ce produit héritera automatiquement des dimensions et du poids
-              définis dans le groupe.
-            </p>
-          </div>
-
-          {/* Attributs communs */}
-          {(variantGroup.common_dimensions || variantGroup.common_weight) && (
-            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <Label className="text-xs font-medium text-gray-700 mb-2 block">
-                📦 Attributs hérités du groupe
-              </Label>
-              <div className="space-y-1 text-xs text-gray-600">
-                {variantGroup.common_dimensions && (
-                  <div>
-                    <span className="font-medium">Dimensions:</span>{' '}
-                    {variantGroup.common_dimensions.length ?? '-'} ×{' '}
-                    {variantGroup.common_dimensions.width ?? '-'} ×{' '}
-                    {variantGroup.common_dimensions.height ?? '-'}{' '}
-                    {variantGroup.common_dimensions.unit}
-                  </div>
-                )}
-                {variantGroup.common_weight && (
-                  <div>
-                    <span className="font-medium">Poids:</span>{' '}
-                    {variantGroup.common_weight} kg
-                  </div>
-                )}
+            {/* Message d'erreur anti-doublon */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-red-800">{error}</div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Info */}
-          <div className="p-3 bg-gray-50 border border-gray-300 rounded-lg">
-            <p className="text-xs text-gray-900">
-              ℹ️ Le produit sera créé en statut{' '}
-              <strong>prêt à commander</strong>. Vous pourrez compléter les
-              autres informations (prix, stock, images) directement dans sa
-              fiche produit.
-            </p>
+            {/* Prévisualisation */}
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
+              <Label className="text-xs font-medium text-blue-900">
+                ✨ Nom généré automatiquement
+              </Label>
+              <p className="font-medium text-blue-900">{previewName}</p>
+              <p className="text-xs text-blue-700">
+                Ce produit héritera automatiquement des dimensions et du poids
+                définis dans le groupe.
+              </p>
+            </div>
+
+            {/* Attributs communs */}
+            {(variantGroup.common_dimensions || variantGroup.common_weight) && (
+              <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <Label className="text-xs font-medium text-gray-700 mb-2 block">
+                  📦 Attributs hérités du groupe
+                </Label>
+                <div className="space-y-1 text-xs text-gray-600">
+                  {variantGroup.common_dimensions && (
+                    <div>
+                      <span className="font-medium">Dimensions:</span>{' '}
+                      {variantGroup.common_dimensions.length ?? '-'} ×{' '}
+                      {variantGroup.common_dimensions.width ?? '-'} ×{' '}
+                      {variantGroup.common_dimensions.height ?? '-'}{' '}
+                      {variantGroup.common_dimensions.unit}
+                    </div>
+                  )}
+                  {variantGroup.common_weight && (
+                    <div>
+                      <span className="font-medium">Poids:</span>{' '}
+                      {variantGroup.common_weight} kg
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Info */}
+            <div className="p-3 bg-gray-50 border border-gray-300 rounded-lg">
+              <p className="text-xs text-gray-900">
+                ℹ️ Le produit sera créé en statut{' '}
+                <strong>prêt à commander</strong>. Vous pourrez compléter les
+                autres informations (prix, stock, images) directement dans sa
+                fiche produit.
+              </p>
+            </div>
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end space-x-3 pt-4 border-t">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-end pt-4 border-t">
             <ButtonV2
               type="button"
               variant="outline"
               onClick={handleClose}
               disabled={loading}
+              className="w-full md:w-auto"
             >
               Annuler
             </ButtonV2>
             <ButtonV2
               type="submit"
               disabled={!variantValue.trim() || loading}
-              className="bg-black text-white hover:bg-gray-800"
+              className="w-full md:w-auto bg-black text-white hover:bg-gray-800"
             >
               {loading ? (
                 <>
