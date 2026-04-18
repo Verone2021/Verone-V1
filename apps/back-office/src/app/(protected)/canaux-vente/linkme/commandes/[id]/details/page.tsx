@@ -173,7 +173,7 @@ export default function LinkMeOrderDetailsPage() {
             id: item.id,
             quantity: item.quantity,
             unit_price_ht: item.unit_price_ht,
-            tax_rate: order.tax_rate ?? 0.2,
+            tax_rate: item.tax_rate ?? order.tax_rate ?? 0.2,
             products: item.product ? { name: item.product.name } : null,
           })),
         }
