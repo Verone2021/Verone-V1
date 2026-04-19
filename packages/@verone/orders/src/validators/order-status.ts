@@ -182,26 +182,39 @@ export function isFinalStatus(status: SalesOrderStatus): boolean {
 }
 
 /**
- * Vérifier si commande est verrouillée.
+ * Vérifier si commande est verrouillée globalement (post-expédition ou annulée).
  *
  * [BO-FIN-009 Phase 3 — R6 finance.md]
- * Règle absolue : seul `draft` autorise la modification. Tous les autres
- * statuts (pending_approval, validated, partially_shipped, shipped, delivered,
- * cancelled) sont verrouillés. Pour modifier une commande validée,
- * il faut la dévalider (`validated → draft`) puis revalider après modification.
+ * Une commande `validated` n'est **PAS** globalement verrouillée :
+ * - Items / prix / quantités / adresses / client : figés (trigger DB lock_prices
+ *   + guard côté hook `updateOrderWithItems`) → règle R6 stricte
+ * - Frais annexes (livraison, manutention, assurance, TVA frais) : **restent
+ *   éditables jusqu'à la facturation** → voir `canEditFees`
  *
- * Commande verrouillée = informations non modifiables (sauf paiement/factures/rapprochement
- * qui passent par leurs propres flows dédiés).
+ * `isOrderLocked = true` signifie UI totalement verrouillée (plus aucune édition possible).
+ * Ne retourne `true` que pour les statuts post-expédition et annulés.
  */
 export function isOrderLocked(status: SalesOrderStatus | string): boolean {
-  return [
-    'pending_approval',
-    'validated',
-    'partially_shipped',
-    'shipped',
-    'delivered',
-    'cancelled',
-  ].includes(status);
+  return ['shipped', 'partially_shipped', 'delivered', 'cancelled'].includes(
+    status
+  );
+}
+
+/**
+ * Vérifier si les frais annexes (shipping_cost_ht, handling_cost_ht,
+ * insurance_cost_ht, fees_vat_rate) peuvent être modifiés.
+ *
+ * [BO-FIN-009 Phase 3 — R6 finance.md — Exception frais]
+ * Les frais sont modifiables sur les commandes `draft` **et `validated`**
+ * car ils n'affectent ni les prix lockés, ni la commission LinkMe, ni le
+ * stock. Ils sont figés une fois la commande expédiée.
+ *
+ * Pour un verrouillage strict lors d'une facture finalisée liée,
+ * le composant parent doit combiner avec sa propre logique
+ * `hasActiveFinalizedInvoice`.
+ */
+export function canEditFees(status: SalesOrderStatus | string): boolean {
+  return status === 'draft' || status === 'validated';
 }
 
 /**

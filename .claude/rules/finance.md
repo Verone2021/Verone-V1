@@ -95,10 +95,19 @@ Portée : back-office (`@verone/finance`, routes `/api/qonto/*`, pages `/facture
 
 ## R6 — Verrouillage par statut commande
 
-**Règle absolue** :
+**Règle** :
 
 - **Commande status `draft`** : **entièrement modifiable** (articles, adresses, contacts, notes, frais, date livraison, client, tout).
-- **Commande status `validated` ou supérieur** (`partially_shipped`, `shipped`, `delivered`) : **AUCUN champ modifiable**. La commande est gelée. Devis/factures associés non modifiables non plus.
+- **Commande status `validated`** : **items / prix / quantités / adresses / client FIGÉS**. Les frais annexes (livraison, manutention, assurance, TVA frais) **restent éditables** jusqu'à l'émission d'une facture finalisée (voir exception frais ci-dessous).
+- **Commande status `partially_shipped`, `shipped`, `delivered`** : **tout figé**. Exception : prix d'achat d'expédition manuelle (dans la section expédition).
+- **Commande status `cancelled`** : historique uniquement.
+
+**Exception frais annexes** (`shipping_cost_ht`, `handling_cost_ht`, `insurance_cost_ht`, `fees_vat_rate`) :
+
+- Modifiables sur `draft` **et `validated`** (pas besoin de dévalider pour ajuster les frais)
+- Impact zéro sur prix lockés, commission LinkMe et stock prévisionnel
+- Figés dès qu'une facture liée est finalisée (`document_status = 'finalized'` ou `'paid'`) — à combiner avec `hasActiveFinalizedInvoice` au niveau du composant consommateur
+- Validator : `canEditFees(status)` dans `@verone/orders/validators/order-status` — retourne `true` pour `draft` et `validated`
 
 **Workflow obligatoire pour corriger une commande validée** :
 

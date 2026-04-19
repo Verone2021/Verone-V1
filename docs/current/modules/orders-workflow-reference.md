@@ -51,11 +51,14 @@ draft ──[validate]──> confirmed ──[ship partial]──> partially_sh
 
 ### Editability Rules
 
-**Règle absolue (BO-FIN-009 Phase 3 / R6 finance.md)** :
+**BO-FIN-009 Phase 3 / R6 finance.md** :
 
 - `draft`: **all fields editable** (items, addresses, contacts, notes, fees, delivery date, everything)
-- `confirmed`, `partially_shipped`, `shipped`, `delivered`: **fully locked — no field editable**. To modify, devalidate first (`confirmed → draft`), which triggers cascade rollback (stock forecast, prices locked, LinkMe commission, stock movements forecast), then edit, then re-validate.
+- `validated`: **items / prix / quantités / adresses / client LOCKED**. **Fees (shipping, handling, insurance, fees_vat_rate) remain editable** until a linked invoice is finalized. Use `canEditFees(status)` validator.
+- `partially_shipped`, `shipped`, `delivered`: **fully locked** (exception: manual shipment purchase price in expedition section)
 - `cancelled`: history only, no modifications
+
+**To modify items/prices on a validated order** : devalidate first (`validated → draft`), which triggers cascade rollback (stock forecast, prices locked, LinkMe commission, stock movements forecast), then edit, then re-validate.
 
 **Devalidation is blocked if**:
 
