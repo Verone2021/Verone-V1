@@ -14,10 +14,8 @@ import {
   type LinkMeOrderDetails,
 } from '../../../hooks/use-linkme-order-actions';
 import {
-  useOrganisationContactsBO,
-  useEnseigneContactsBO,
+  useContactsForOrder,
   useCreateContactBO,
-  type ContactBO,
 } from '../../../hooks/use-organisation-contacts-bo';
 import type { ContactRef, FusedContactGroup } from './components/types';
 import { useFetchOrder } from './use-fetch-order';
@@ -69,16 +67,10 @@ export function useOrderDetailsPage() {
     null;
   const isSuccursale = ownerType === 'succursale' || ownerType === 'propre';
 
-  const { data: enseigneContactsData } = useEnseigneContactsBO(
-    isSuccursale ? enseigneId : null
+  const { allContacts: availableContacts, enseigneName } = useContactsForOrder(
+    organisationId,
+    enseigneId
   );
-  const { data: orgContactsData } = useOrganisationContactsBO(
-    !isSuccursale ? organisationId : null
-  );
-  const availableContacts: ContactBO[] =
-    (isSuccursale
-      ? enseigneContactsData?.contacts
-      : orgContactsData?.contacts) ?? [];
 
   useEffect(() => {
     if (orderId) {
@@ -501,6 +493,11 @@ export function useOrderDetailsPage() {
     selectedContactId,
     setSelectedContactId,
     availableContacts,
+    orgLabel:
+      order?.organisation?.trade_name ??
+      order?.organisation?.legal_name ??
+      null,
+    enseigneLabel: enseigneName,
     locked,
     fusedContacts,
     deliveryAddressMatchesOrg,

@@ -12,6 +12,7 @@ import {
   DialogTitle,
   Input,
   Label,
+  Textarea,
 } from '@verone/ui';
 import { FileEdit, Loader2 } from 'lucide-react';
 
@@ -32,6 +33,8 @@ import type { IQuoteCreateFromOrderModalProps, IQuoteFeesState } from './types';
 import { resolveCustomerName } from './quote-utils';
 import { useQuoteCreateFromOrder } from './use-quote-create-from-order';
 import { useQuoteSiretGuard } from './useQuoteSiretGuard';
+import { useParentOrgForBilling } from '../../hooks/use-parent-org-for-billing';
+import type { IParentOrgSuggestion } from '../../hooks/use-parent-org-for-billing';
 
 // ---------------------------------------------------------------------------
 // Helper — resoudre l adresse de facturation initiale depuis la commande/org
@@ -70,6 +73,11 @@ export function QuoteCreateFromOrderModal({
   supersededQuoteIds,
 }: IQuoteCreateFromOrderModalProps): React.ReactNode {
   const [expiryDays, setExpiryDays] = useState(30);
+  const [issueDate, setIssueDate] = useState<string>(() =>
+    new Date().toISOString().slice(0, 10)
+  );
+  const [footerNote, setFooterNote] = useState<string>('');
+  const [itemComments, setItemComments] = useState<Record<string, string>>({});
   const [customLines, setCustomLines] = useState<ICustomLine[]>([]);
   const [fees, setFees] = useState<IQuoteFeesState>({
     shippingCostHt: order?.shipping_cost_ht ?? 0,
@@ -80,10 +88,11 @@ export function QuoteCreateFromOrderModal({
   const [shippingAddress, setShippingAddress] =
     useState<IShippingAddressResolved | null>(null);
 
-  // Adresse facturation overridee (null = adresse initiale de l org)
+  // Adresse facturation — uniquement définie en mode maison mère (via handleUseParentOrg)
   const [billingAddressOverride, setBillingAddressOverride] =
     useState<IBillingAddressResolved | null>(null);
-  const [updateOrgBilling, setUpdateOrgBilling] = useState(false);
+  // Org de facturation choisie (null = org commande par defaut)
+  const [billingOrgId, setBillingOrgId] = useState<string | null>(null);
 
   const {
     isMissingSiret,
@@ -92,13 +101,68 @@ export function QuoteCreateFromOrderModal({
     savingSiret,
     handleSaveSiret,
     reset: resetSiretGuard,
-  } = useQuoteSiretGuard(order);
+  } = useQuoteSiretGuard(order, billingOrgId);
+
+  // [BO-FIN-040] Auto-resolve maison mère si org commande sans SIRET
+  const { parentOrg } = useParentOrgForBilling(
+    order?.organisations?.enseigne_id ?? null,
+    order?.customer_id ?? null
+  );
+
+  const handleUseParentOrg = useCallback(
+    (parent: IParentOrgSuggestion): void => {
+      // Qonto exige un code ISO 2 lettres (ex: "FR"), pas un nom ("France")
+      const normalizeCountry = (raw: string | null | undefined): string => {
+        if (!raw) return 'FR';
+        const trimmed = raw.trim();
+        if (trimmed.length === 2) return trimmed.toUpperCase();
+        const map: Record<string, string> = {
+          france: 'FR',
+          belgique: 'BE',
+          belgium: 'BE',
+          luxembourg: 'LU',
+          suisse: 'CH',
+          switzerland: 'CH',
+        };
+        return map[trimmed.toLowerCase()] ?? 'FR';
+      };
+
+      setBillingOrgId(parent.id);
+      // Livraison = org commande originale
+      const org = order?.organisations;
+      const shippingLine1 = org?.address_line1;
+      const shippingCity = org?.city;
+      if (shippingLine1 && shippingCity) {
+        setShippingAddress({
+          address_line1: shippingLine1,
+          postal_code: org?.postal_code ?? '',
+          city: shippingCity,
+          country: normalizeCountry(org?.country),
+        });
+      }
+      // Facturation = maison mère
+      const billingLine1 = parent.billing_address_line1 ?? parent.address_line1;
+      const billingCity = parent.billing_city ?? parent.city;
+      if (billingLine1 && billingCity) {
+        setBillingAddressOverride({
+          address_line1: billingLine1,
+          postal_code: parent.billing_postal_code ?? parent.postal_code ?? '',
+          city: billingCity,
+          country: normalizeCountry(parent.billing_country ?? parent.country),
+        });
+      }
+    },
+    [order?.organisations]
+  );
 
   const resetFormState = useCallback((): void => {
     setExpiryDays(30);
+    setIssueDate(new Date().toISOString().slice(0, 10));
+    setFooterNote('');
+    setItemComments({});
     setShippingAddress(null);
     setBillingAddressOverride(null);
-    setUpdateOrgBilling(false);
+    setBillingOrgId(null);
     resetSiretGuard();
   }, [resetSiretGuard]);
 
@@ -125,8 +189,12 @@ export function QuoteCreateFromOrderModal({
     expiryDays,
     customLines,
     billingAddressOverride,
-    updateOrgBilling,
+    updateOrgBilling: false,
     shippingAddress,
+    billingOrgId,
+    issueDate,
+    footerNote,
+    itemComments,
     onSuccess,
     handleClose,
   });
@@ -134,12 +202,18 @@ export function QuoteCreateFromOrderModal({
   if (!order) return null;
 
   const customerName = resolveCustomerName(order);
-  const initialBillingAddress = resolveInitialBillingAddress(order);
+  // [BO-FIN-040] Affiche l'override si actif (mode maison mère) sinon adresse initiale
+  const initialBillingAddress =
+    billingAddressOverride ?? resolveInitialBillingAddress(order);
   const orgDisplayName =
     order.organisations?.trade_name ??
     order.organisations?.legal_name ??
     order.organisations?.name ??
     null;
+
+  // [BO-FIN-040] Mode maison mère actif = billingOrgId défini + différent de l'org commande
+  const isParentOrgMode =
+    billingOrgId !== null && billingOrgId !== order.customer_id;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -167,37 +241,88 @@ export function QuoteCreateFromOrderModal({
           ) : (
             <div className="space-y-4">
               <QuoteClientCard order={order} customerName={customerName} />
+              {isParentOrgMode && parentOrg && (
+                <div className="rounded-lg border border-green-300 bg-green-50 p-3 space-y-1">
+                  <p className="text-sm font-medium text-green-800">
+                    ✓ Mode maison mère activé
+                  </p>
+                  <p className="text-xs text-green-700">
+                    Facturation :{' '}
+                    <span className="font-semibold">
+                      {parentOrg.trade_name ?? parentOrg.legal_name}
+                    </span>{' '}
+                    (SIRET{' '}
+                    <span className="font-mono">
+                      {parentOrg.siret ?? parentOrg.vat_number}
+                    </span>
+                    ). Livraison :{' '}
+                    <span className="font-semibold">{orgDisplayName}</span>.
+                  </p>
+                  <p className="text-xs text-green-600 italic">
+                    La commande {order.order_number} reste sur {orgDisplayName}{' '}
+                    — rien ne change côté commande.
+                  </p>
+                </div>
+              )}
               {!isConsultation && (
                 <>
-                  <BillingAddressEditor
-                    enseigneId={order.organisations?.enseigne_id}
-                    defaultOrgId={order.customer_id}
-                    initialBillingAddress={initialBillingAddress}
-                    orgName={orgDisplayName ?? undefined}
-                    disabled={status === 'creating'}
-                    onBillingAddressChange={setBillingAddressOverride}
-                    onUpdateOrgBillingChange={setUpdateOrgBilling}
-                  />
-                  <QuoteShippingSection
-                    enseigneId={order.organisations?.enseigne_id}
-                    defaultOrgId={order.customer_id}
-                    orgName={orgDisplayName}
-                    disabled={status === 'creating'}
-                    onShippingAddressChange={setShippingAddress}
-                  />
+                  {!isParentOrgMode && (
+                    <>
+                      <BillingAddressEditor
+                        initialBillingAddress={initialBillingAddress}
+                      />
+                      <QuoteShippingSection
+                        order={order}
+                        disabled={status === 'creating'}
+                        onShippingAddressChange={setShippingAddress}
+                      />
+                    </>
+                  )}
                 </>
               )}
-              <QuoteItemsTable order={order} />
+              <QuoteItemsTable
+                order={order}
+                itemComments={itemComments}
+                onItemCommentsChange={setItemComments}
+              />
               <QuoteFeesSection fees={fees} onFeesChange={setFees} />
               <QuoteCustomLinesSection
                 customLines={customLines}
                 onCustomLinesChange={setCustomLines}
               />
+              <div className="space-y-2">
+                <Label htmlFor="footerNote">
+                  Commentaire pied de page (optionnel)
+                </Label>
+                <Textarea
+                  id="footerNote"
+                  value={footerNote}
+                  onChange={e => setFooterNote(e.target.value)}
+                  rows={3}
+                  placeholder="Mentions spéciales, conditions particulières..."
+                  maxLength={1000}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Apparaîtra en bas du devis Qonto
+                </p>
+              </div>
+
               <QuoteTotalsSection
                 order={order}
                 fees={fees}
                 customLines={customLines}
               />
+
+              <div className="space-y-2">
+                <Label htmlFor="issueDate">Date d&apos;émission</Label>
+                <Input
+                  id="issueDate"
+                  type="date"
+                  value={issueDate}
+                  onChange={e => setIssueDate(e.target.value)}
+                  className="w-44"
+                />
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="expiryDays">Validité du devis (jours)</Label>
@@ -231,6 +356,11 @@ export function QuoteCreateFromOrderModal({
                   setSiretInput={setSiretInput}
                   savingSiret={savingSiret}
                   onSaveSiret={() => void handleSaveSiret()}
+                  parentOrg={parentOrg}
+                  onUseParentOrg={
+                    parentOrg ? () => handleUseParentOrg(parentOrg) : undefined
+                  }
+                  currentOrgName={orgDisplayName}
                 />
               )}
               <div className="flex flex-col gap-2 md:flex-row md:justify-end">

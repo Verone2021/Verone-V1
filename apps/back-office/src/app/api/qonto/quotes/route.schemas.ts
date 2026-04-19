@@ -51,8 +51,21 @@ export const PostRequestBodySchema = z.object({
   updateOrgBilling: z.boolean().optional(),
   /** Si true : persiste shippingAddress dans organisations.shipping_* */
   updateOrgShipping: z.boolean().optional(),
+  /**
+   * ID de l'org choisie comme destinataire de facturation (Option B).
+   * Si présent et différent de l'org commande → cette org devient le client Qonto
+   * ET le partner_id du financial_document local.
+   */
+  billingOrgId: z.string().uuid().optional().nullable(),
   fees: FeesDataSchema.optional(),
   customLines: z.array(CustomLineSchema).optional(),
+  issueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  footerNote: z.string().max(1000).optional(),
+  /** itemComments : clé = sales_order_item.id (uuid), valeur = commentaire */
+  itemComments: z.record(z.string(), z.string().max(500)).optional(),
 });
 
 export type IDocumentAddress = z.infer<typeof DocumentAddressSchema>;

@@ -25,6 +25,7 @@ import {
 import { OrderTimeline } from '@verone/orders';
 import { PaymentSection } from '@/components/orders/PaymentSection';
 import { InvoicesSection } from '@/components/orders/InvoicesSection';
+import { QuotesSection } from '@/components/orders/QuotesSection';
 
 import type { OrderWithDetails, ContactRole, FusedContactGroup } from './types';
 
@@ -448,6 +449,9 @@ export function RightColumn({
           matchedTransactionId={order.matched_transaction_id}
         />
       )}
+
+      {/* DEVIS */}
+      <QuotesSection orderId={order.id} />
 
       {/* FACTURES */}
       <InvoicesSection orderId={order.id} />

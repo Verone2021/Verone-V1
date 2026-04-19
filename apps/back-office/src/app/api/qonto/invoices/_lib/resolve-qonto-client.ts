@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { QontoClient } from '@verone/integrations/qonto';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@verone/types';
 import type {
   ISalesOrderWithCustomer,
   Organisation,
@@ -10,7 +12,9 @@ import type {
 export async function resolveQontoClient(
   qontoClient: QontoClient,
   typedOrder: ISalesOrderWithCustomer,
-  bodyBillingAddress: IAddressData | undefined
+  bodyBillingAddress: IAddressData | undefined,
+  billingOrgId?: string,
+  supabase?: SupabaseClient<Database>
 ): Promise<{ qontoClientId: string; error: NextResponse | null }> {
   // Extraire email et nom selon le type de customer
   let customerEmail: string | null = null;
@@ -32,6 +36,52 @@ export async function resolveQontoClient(
         : legalName;
     // Priority: vat_number (TVA intra-communautaire), then siret
     vatNumber = org.vat_number ?? org.siret ?? undefined;
+
+    // Override : si une org de facturation différente est choisie, utiliser son TIN
+    const isDifferentBillingOrg =
+      billingOrgId && supabase && billingOrgId !== typedOrder.customer_id;
+
+    if (isDifferentBillingOrg) {
+      const { data: billingOrg } = await supabase
+        .from('organisations')
+        .select('legal_name, trade_name, email, siret, vat_number')
+        .eq('id', billingOrgId)
+        .single();
+
+      if (billingOrg) {
+        // Surcharger TIN avec celui de l'org de facturation
+        const billingVat =
+          billingOrg.vat_number ?? billingOrg.siret ?? undefined;
+        if (billingVat) {
+          vatNumber = billingVat;
+        } else {
+          // [BO-FIN-039 W3] Guard anti-discordance : si l'org de facturation choisie
+          // n'a pas de SIRET/VAT, refuser la facture plutôt que d'utiliser silencieusement
+          // le TIN de l'org commande avec le nom de l'org de facturation.
+          return {
+            qontoClientId: '',
+            error: NextResponse.json(
+              {
+                success: false,
+                error:
+                  "L'organisation de facturation choisie n'a pas de SIRET ni de numéro de TVA. Facturation interdite.",
+              },
+              { status: 400 }
+            ),
+          };
+        }
+
+        // Surcharger nom et email avec l'org de facturation
+        const billingLegal =
+          billingOrg.legal_name ?? billingOrg.trade_name ?? legalName;
+        const billingTrade = billingOrg.trade_name;
+        customerName =
+          billingTrade && billingTrade !== billingLegal
+            ? `${billingLegal} (${billingTrade})`
+            : billingLegal;
+        if (billingOrg.email) customerEmail = billingOrg.email;
+      }
+    }
   } else if (typedOrder.customer_type === 'individual' && typedOrder.customer) {
     const indiv = typedOrder.customer as IndividualCustomer;
     customerEmail = indiv.email ?? null;

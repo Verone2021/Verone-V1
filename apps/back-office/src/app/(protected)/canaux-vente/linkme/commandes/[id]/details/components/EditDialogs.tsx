@@ -43,6 +43,10 @@ export interface EditDialogsProps {
   onConfirmContact: () => void;
   onCreateAndSelectContact: (data: NewContactFormData) => Promise<void>;
   createContactPending: boolean;
+  /** Libellé de l'organisation (ex: "Pokawa Avignon") */
+  orgLabel?: string | null;
+  /** Libellé de l'enseigne mère (ex: "Pokawa SAS") */
+  enseigneLabel?: string | null;
 }
 
 export function EditDialogs({
@@ -61,6 +65,8 @@ export function EditDialogs({
   onConfirmContact,
   onCreateAndSelectContact,
   createContactPending,
+  orgLabel,
+  enseigneLabel,
 }: EditDialogsProps) {
   const sharedEditProps = {
     editForm,
@@ -82,6 +88,8 @@ export function EditDialogs({
         onCreateAndSelectContact={onCreateAndSelectContact}
         createContactPending={createContactPending}
         updateDetailsPending={updateDetailsPending}
+        orgLabel={orgLabel}
+        enseigneLabel={enseigneLabel}
       />
       <EditResponsableDialog
         open={editingStep === 'responsable'}

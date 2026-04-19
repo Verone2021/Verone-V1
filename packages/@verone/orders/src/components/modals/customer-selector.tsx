@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { useToast } from '@verone/common/hooks';
 import { CustomerOrganisationFormModal } from '@verone/organisations';
@@ -86,26 +86,15 @@ export function CustomerSelector({
   const { toast } = useToast();
 
   // Charger les clients selon le type sélectionné (et l'enseigne si fournie)
-  useEffect(() => {
-    void loadCustomers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customerType, enseigneId]);
-
-  const loadCustomers = async () => {
-    console.warn(
-      '🔍 [CustomerSelector] Début loadCustomers, type:',
-      customerType
-    );
+  // Retourne la liste fraîche pour auto-select post-création (évite stale closure)
+  const loadCustomers = useCallback(async (): Promise<UnifiedCustomer[]> => {
     try {
       setLoading(true);
-      console.warn('🔄 [CustomerSelector] Loading state = true');
       setError(null);
 
       const supabase = createClient();
 
       if (customerType === 'professional') {
-        // Charger les organisations professionnelles (B2B)
-        console.warn('🏢 [CustomerSelector] Chargement organisations B2B...');
         let orgQuery = supabase
           .from('organisations')
           .select(
@@ -137,7 +126,6 @@ export function CustomerSelector({
           .eq('type', 'customer')
           .eq('is_active', true);
 
-        // Filtrer par enseigne si fourni (devis LinkMe)
         if (enseigneId) {
           orgQuery = orgQuery.eq('enseigne_id', enseigneId);
         }
@@ -145,29 +133,17 @@ export function CustomerSelector({
         const { data: organisations, error: orgError } =
           await orgQuery.order('legal_name');
 
-        if (orgError) {
-          console.error(
-            '❌ [CustomerSelector] Erreur Supabase organisations:',
-            orgError
-          );
-          throw orgError;
-        }
+        if (orgError) throw orgError;
 
-        console.warn(
-          '✅ [CustomerSelector] Organisations chargées:',
-          organisations?.length ?? 0
-        );
+        const mapped = (organisations ?? []).map(org => ({
+          ...org,
+          name: getOrganisationCardName(org),
+          type: 'professional' as const,
+        })) as unknown as UnifiedCustomer[];
 
-        setCustomers(
-          (organisations ?? []).map(org => ({
-            ...org,
-            name: getOrganisationCardName(org),
-            type: 'professional' as const,
-          })) as unknown as UnifiedCustomer[]
-        );
+        setCustomers(mapped);
+        return mapped;
       } else {
-        // Charger les clients particuliers (B2C)
-        console.warn('👤 [CustomerSelector] Chargement clients B2C...');
         const { data: individuals, error: indError } = await supabase
           .from('individual_customers')
           .select(
@@ -195,50 +171,44 @@ export function CustomerSelector({
           .eq('is_active', true)
           .order('first_name');
 
-        if (indError) {
-          console.error(
-            '❌ [CustomerSelector] Erreur Supabase individual_customers:',
-            indError
-          );
-          throw indError;
-        }
+        if (indError) throw indError;
 
-        console.warn(
-          '✅ [CustomerSelector] Clients B2C chargés:',
-          individuals?.length ?? 0
-        );
+        const mapped = (individuals ?? []).map(ind => ({
+          id: ind.id,
+          name: `${ind.first_name} ${ind.last_name}`,
+          type: 'individual' as const,
+          address_line1: ind.address_line1,
+          address_line2: ind.address_line2,
+          city: ind.city,
+          postal_code: ind.postal_code,
+          region: ind.region,
+          country: ind.country,
+          billing_address_line1_individual:
+            ind.billing_address_line1_individual,
+          billing_address_line2_individual:
+            ind.billing_address_line2_individual,
+          billing_city_individual: ind.billing_city_individual,
+          billing_postal_code_individual: ind.billing_postal_code_individual,
+          billing_region_individual: ind.billing_region_individual,
+          billing_country_individual: ind.billing_country_individual,
+          has_different_billing_address: ind.has_different_billing_address,
+        })) as unknown as UnifiedCustomer[];
 
-        setCustomers(
-          (individuals ?? []).map(ind => ({
-            id: ind.id,
-            name: `${ind.first_name} ${ind.last_name}`,
-            type: 'individual' as const,
-            address_line1: ind.address_line1,
-            address_line2: ind.address_line2,
-            city: ind.city,
-            postal_code: ind.postal_code,
-            region: ind.region,
-            country: ind.country,
-            billing_address_line1_individual:
-              ind.billing_address_line1_individual,
-            billing_address_line2_individual:
-              ind.billing_address_line2_individual,
-            billing_city_individual: ind.billing_city_individual,
-            billing_postal_code_individual: ind.billing_postal_code_individual,
-            billing_region_individual: ind.billing_region_individual,
-            billing_country_individual: ind.billing_country_individual,
-            has_different_billing_address: ind.has_different_billing_address,
-          })) as unknown as UnifiedCustomer[]
-        );
+        setCustomers(mapped);
+        return mapped;
       }
     } catch (err) {
-      console.error('❌ [CustomerSelector] Exception dans loadCustomers:', err);
+      console.error('[CustomerSelector] loadCustomers error:', err);
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
+      return [];
     } finally {
-      console.warn('✔️ [CustomerSelector] Fin loadCustomers, loading = false');
       setLoading(false);
     }
-  };
+  }, [customerType, enseigneId]);
+
+  useEffect(() => {
+    void loadCustomers();
+  }, [loadCustomers]);
 
   const handleTypeChange = (newType: CustomerType) => {
     setCustomerType(newType);
@@ -263,25 +233,18 @@ export function CustomerSelector({
     organisationId: string,
     organisationName: string
   ) => {
-    // Rafraîchir la liste
-    await loadCustomers();
-
-    // Trouver et auto-sélectionner la nouvelle organisation
-    const newOrg = customers.find(c => c.id === organisationId);
-    if (newOrg) {
-      onCustomerChange(newOrg);
-    } else {
-      // Si pas encore dans la liste, créer l'objet manuellement
-      const customer: UnifiedCustomer = {
+    // Rafraîchir la liste et utiliser la valeur retournée (évite stale closure)
+    const freshList = await loadCustomers();
+    const newOrg = freshList.find(c => c.id === organisationId);
+    onCustomerChange(
+      newOrg ?? {
         id: organisationId,
         name: organisationName,
         type: 'professional',
-      };
-      onCustomerChange(customer);
-    }
-
+      }
+    );
     toast({
-      title: '✅ Client créé et sélectionné',
+      title: 'Client créé et sélectionné',
       description: `${organisationName} a été créé et sélectionné automatiquement.`,
     });
   };
@@ -291,25 +254,18 @@ export function CustomerSelector({
     customerId: string,
     customerName: string
   ) => {
-    // Rafraîchir la liste
-    await loadCustomers();
-
-    // Trouver et auto-sélectionner le nouveau client
-    const newCustomer = customers.find(c => c.id === customerId);
-    if (newCustomer) {
-      onCustomerChange(newCustomer);
-    } else {
-      // Si pas encore dans la liste, créer l'objet manuellement
-      const customer: UnifiedCustomer = {
+    // Rafraîchir la liste et utiliser la valeur retournée (évite stale closure)
+    const freshList = await loadCustomers();
+    const newCustomer = freshList.find(c => c.id === customerId);
+    onCustomerChange(
+      newCustomer ?? {
         id: customerId,
         name: customerName,
         type: 'individual',
-      };
-      onCustomerChange(customer);
-    }
-
+      }
+    );
     toast({
-      title: '✅ Client créé et sélectionné',
+      title: 'Client créé et sélectionné',
       description: `${customerName} a été créé et sélectionné automatiquement.`,
     });
   };

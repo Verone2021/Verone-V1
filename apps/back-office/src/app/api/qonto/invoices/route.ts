@@ -117,6 +117,7 @@ export async function POST(request: NextRequest): Promise<
       shippingAddress: bodyShippingAddress,
       fees,
       customLines,
+      billingOrgId,
     } = body;
 
     // Basic validation
@@ -161,11 +162,13 @@ export async function POST(request: NextRequest): Promise<
 
     const qontoClient = getQontoClient();
 
-    // Resolve Qonto client
+    // Resolve Qonto client (avec override org de facturation si fourni)
     const { qontoClientId, error: clientError } = await resolveQontoClient(
       qontoClient,
       typedOrder,
-      bodyBillingAddress
+      bodyBillingAddress,
+      billingOrgId,
+      supabase
     );
     if (clientError)
       return clientError as NextResponse<{
@@ -249,6 +252,7 @@ export async function POST(request: NextRequest): Promise<
         bodyShippingAddress,
         fees: { shippingCost, handlingCost, insuranceCost, feesVatRate },
         finalizedInvoice,
+        billingOrgId: billingOrgId ?? undefined,
       });
     if (persistError)
       return persistError as NextResponse<{

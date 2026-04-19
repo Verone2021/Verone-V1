@@ -11,6 +11,8 @@ import {
 } from '@verone/ui';
 import { FileText } from 'lucide-react';
 
+import { useQuoteSiretGuard } from '../QuoteCreateFromOrderModal/useQuoteSiretGuard';
+
 import type { IInvoiceListApiResponse } from './types';
 import type { IInvoiceCreateFromOrderModalProps } from './types';
 import { useInvoiceCreateState } from './useInvoiceCreateState';
@@ -33,30 +35,43 @@ export function InvoiceCreateFromOrderModal({
 }: IInvoiceCreateFromOrderModalProps): React.ReactNode {
   const state = useInvoiceCreateState(order);
 
-  const { handleClose, handleSaveSiret, handleCreateInvoice } =
-    useInvoiceActions({
-      order,
-      issueDate: state.issueDate,
-      invoiceLabel: state.invoiceLabel,
-      billingAddress: state.billingAddress,
-      hasDifferentShipping: state.hasDifferentShipping,
-      shippingAddress: state.shippingAddress,
-      shippingCostHt: state.shippingCostHt,
-      handlingCostHt: state.handlingCostHt,
-      insuranceCostHt: state.insuranceCostHt,
-      feesVatRate: state.feesVatRate,
-      customLines: state.customLines,
-      onOpenChange,
-      onSuccess,
-      setStatus: state.setStatus,
-      setCreatedInvoice: state.setCreatedInvoice,
-      setSiretInput: state.setSiretInput,
-      setSiretSaved: state.setSiretSaved,
-      setIssueDate: state.setIssueDate,
-      setInvoiceLabel: state.setInvoiceLabel,
-      setSavingSiret: state.setSavingSiret,
-      siretInput: state.siretInput,
-    });
+  // Guard SIRET dynamique — réagit à billingOrgId (même logique que devis)
+  const {
+    isMissingSiret,
+    siretInput,
+    setSiretInput,
+    savingSiret,
+    handleSaveSiret,
+    reset: resetSiretGuard,
+  } = useQuoteSiretGuard(order, state.billingOrgId);
+
+  const { handleClose, handleCreateInvoice } = useInvoiceActions({
+    order,
+    issueDate: state.issueDate,
+    invoiceLabel: state.invoiceLabel,
+    billingAddress: state.billingAddress,
+    hasDifferentShipping: state.hasDifferentShipping,
+    shippingAddress: state.shippingAddress,
+    shippingCostHt: state.shippingCostHt,
+    handlingCostHt: state.handlingCostHt,
+    insuranceCostHt: state.insuranceCostHt,
+    feesVatRate: state.feesVatRate,
+    customLines: state.customLines,
+    billingOrgId: state.billingOrgId,
+    onOpenChange: (isOpen: boolean) => {
+      if (!isOpen) resetSiretGuard();
+      onOpenChange(isOpen);
+    },
+    onSuccess,
+    setStatus: state.setStatus,
+    setCreatedInvoice: state.setCreatedInvoice,
+    setSiretInput: state.setSiretInput,
+    setSiretSaved: state.setSiretSaved,
+    setIssueDate: state.setIssueDate,
+    setInvoiceLabel: state.setInvoiceLabel,
+    setSavingSiret: state.setSavingSiret,
+    siretInput,
+  });
 
   // Récupérer le prochain numéro de facture au chargement (GET /api/qonto/invoices)
   useEffect(() => {
@@ -184,10 +199,10 @@ export function InvoiceCreateFromOrderModal({
 
         <InvoiceFooter
           status={state.status}
-          isMissingSiret={state.isMissingSiret}
-          siretInput={state.siretInput}
-          setSiretInput={state.setSiretInput}
-          savingSiret={state.savingSiret}
+          isMissingSiret={isMissingSiret}
+          siretInput={siretInput}
+          setSiretInput={setSiretInput}
+          savingSiret={savingSiret}
           onSaveSiret={() => {
             void handleSaveSiret();
           }}

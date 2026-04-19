@@ -2931,6 +2931,7 @@ export type Database = {
           amount_paid: number;
           billing_address: Json | null;
           billing_contact_id: string | null;
+          billing_org_id: string | null;
           channel_id: string | null;
           consultation_id: string | null;
           converted_to_invoice_id: string | null;
@@ -2970,6 +2971,7 @@ export type Database = {
           qonto_public_url: string | null;
           quote_status: string | null;
           responsable_contact_id: string | null;
+          revision_number: number;
           sales_order_id: string | null;
           sent_at: string | null;
           shipping_address: Json | null;
@@ -2997,6 +2999,7 @@ export type Database = {
           amount_paid?: number;
           billing_address?: Json | null;
           billing_contact_id?: string | null;
+          billing_org_id?: string | null;
           channel_id?: string | null;
           consultation_id?: string | null;
           converted_to_invoice_id?: string | null;
@@ -3036,6 +3039,7 @@ export type Database = {
           qonto_public_url?: string | null;
           quote_status?: string | null;
           responsable_contact_id?: string | null;
+          revision_number?: number;
           sales_order_id?: string | null;
           sent_at?: string | null;
           shipping_address?: Json | null;
@@ -3063,6 +3067,7 @@ export type Database = {
           amount_paid?: number;
           billing_address?: Json | null;
           billing_contact_id?: string | null;
+          billing_org_id?: string | null;
           channel_id?: string | null;
           consultation_id?: string | null;
           converted_to_invoice_id?: string | null;
@@ -3102,6 +3107,7 @@ export type Database = {
           qonto_public_url?: string | null;
           quote_status?: string | null;
           responsable_contact_id?: string | null;
+          revision_number?: number;
           sales_order_id?: string | null;
           sent_at?: string | null;
           shipping_address?: Json | null;
@@ -3127,6 +3133,13 @@ export type Database = {
             columns: ['billing_contact_id'];
             isOneToOne: false;
             referencedRelation: 'contacts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'financial_documents_billing_org_id_fkey';
+            columns: ['billing_org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
             referencedColumns: ['id'];
           },
           {
@@ -11498,6 +11511,34 @@ export type Database = {
           },
         ];
       };
+      v_all_payments: {
+        Row: {
+          amount: number | null;
+          bank_counterparty_name: string | null;
+          bank_settled_at: string | null;
+          bank_transaction_id: string | null;
+          bank_transaction_label: string | null;
+          created_at: string | null;
+          created_by: string | null;
+          document_id: string | null;
+          document_number: string | null;
+          document_type: string | null;
+          note: string | null;
+          order_id: string | null;
+          order_number: string | null;
+          order_payment_status: string | null;
+          order_total_ttc: number | null;
+          order_type: string | null;
+          partner_id: string | null;
+          partner_name: string | null;
+          payment_date: string | null;
+          payment_id: string | null;
+          payment_source: string | null;
+          payment_type: string | null;
+          reference: string | null;
+        };
+        Relationships: [];
+      };
       v_expenses_with_details: {
         Row: {
           amount: number | null;
@@ -12471,6 +12512,7 @@ export type Database = {
           amount_paid: number;
           billing_address: Json | null;
           billing_contact_id: string | null;
+          billing_org_id: string | null;
           channel_id: string | null;
           consultation_id: string | null;
           converted_to_invoice_id: string | null;
@@ -12510,6 +12552,7 @@ export type Database = {
           qonto_public_url: string | null;
           quote_status: string | null;
           responsable_contact_id: string | null;
+          revision_number: number;
           sales_order_id: string | null;
           sent_at: string | null;
           shipping_address: Json | null;
@@ -12601,58 +12644,6 @@ export type Database = {
         };
         Returns: Json;
       };
-      create_purchase_order: {
-        Args: {
-          p_delivery_address?: Json;
-          p_items: Json;
-          p_notes?: string;
-          p_supplier_id: string;
-        };
-        Returns: {
-          cancelled_at: string | null;
-          created_at: string;
-          created_by: string;
-          currency: string;
-          customs_cost_ht: number | null;
-          delivery_address: Json | null;
-          eco_tax_total: number;
-          eco_tax_vat_rate: number | null;
-          expected_delivery_date: string | null;
-          fees_vat_rate: number | null;
-          id: string;
-          insurance_cost_ht: number | null;
-          notes: string | null;
-          order_date: string | null;
-          paid_amount: number | null;
-          paid_at: string | null;
-          payment_status_v2: string | null;
-          payment_terms: string | null;
-          payment_terms_notes: string | null;
-          payment_terms_type:
-            | Database['public']['Enums']['payment_terms_type']
-            | null;
-          po_number: string;
-          received_at: string | null;
-          received_by: string | null;
-          sent_at: string | null;
-          sent_by: string | null;
-          shipping_cost_ht: number | null;
-          status: Database['public']['Enums']['purchase_order_status'];
-          supplier_id: string;
-          tax_rate: number;
-          total_ht: number;
-          total_ttc: number;
-          updated_at: string;
-          validated_at: string | null;
-          validated_by: string | null;
-        };
-        SetofOptions: {
-          from: '*';
-          to: 'purchase_orders';
-          isOneToOne: true;
-          isSetofReturn: false;
-        };
-      };
       create_purchase_order_forecast_movements: {
         Args: { p_performed_by?: string; p_purchase_order_id: string };
         Returns: undefined;
@@ -12704,6 +12695,7 @@ export type Database = {
           amount_paid: number;
           billing_address: Json | null;
           billing_contact_id: string | null;
+          billing_org_id: string | null;
           channel_id: string | null;
           consultation_id: string | null;
           converted_to_invoice_id: string | null;
@@ -12743,6 +12735,7 @@ export type Database = {
           qonto_public_url: string | null;
           quote_status: string | null;
           responsable_contact_id: string | null;
+          revision_number: number;
           sales_order_id: string | null;
           sent_at: string | null;
           shipping_address: Json | null;

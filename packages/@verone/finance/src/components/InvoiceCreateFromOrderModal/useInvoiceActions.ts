@@ -29,6 +29,8 @@ interface IInvoiceActionsParams {
   insuranceCostHt: number;
   feesVatRate: number;
   customLines: ICustomLine[];
+  /** ID de l'org de facturation choisie (null = org commande) */
+  billingOrgId: string | null;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (invoiceId: string, invoiceNumber: string) => void;
   setStatus: (status: CreateStatus) => void;
@@ -57,6 +59,7 @@ export function useInvoiceActions(params: IInvoiceActionsParams) {
     insuranceCostHt,
     feesVatRate,
     customLines,
+    billingOrgId,
     onOpenChange,
     onSuccess,
     setStatus,
@@ -153,6 +156,8 @@ export function useInvoiceActions(params: IInvoiceActionsParams) {
             insurance_cost_ht: insuranceCostHt,
             fees_vat_rate: feesVatRate,
           },
+          // Org de facturation si différente de l'org commande
+          billingOrgId: billingOrgId ?? undefined,
           // Lignes personnalisées
           customLines: customLines.map(line => ({
             title: line.title,

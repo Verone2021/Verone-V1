@@ -64,6 +64,9 @@ export interface IInvoiceCreateState {
   editingShipping: boolean;
   setEditingShipping: (v: boolean) => void;
   isMissingSiret: boolean;
+  /** ID de l'org de facturation choisie via BillingAddressEditor (null = org commande) */
+  billingOrgId: string | null;
+  setBillingOrgId: (id: string | null) => void;
   resolveBillingAddress: () => IDocumentAddress;
   resolveShippingAddress: () => IDocumentAddress | null;
 }
@@ -76,10 +79,13 @@ export function useInvoiceCreateState(
     null
   );
 
-  // SIRET guard states
+  // SIRET guard states (legacy — conservés pour réinitialisation handleClose)
   const [siretInput, setSiretInput] = useState<string>('');
   const [savingSiret, setSavingSiret] = useState(false);
   const [siretSaved, setSiretSaved] = useState(false);
+
+  // Org de facturation choisie (null = org commande par défaut)
+  const [billingOrgId, setBillingOrgId] = useState<string | null>(null);
 
   // Nouveaux champs : date de facture et label
   const [issueDate, setIssueDate] = useState<string>(
@@ -236,7 +242,7 @@ export function useInvoiceCreateState(
     }
   }, [order, resolveBillingAddress, resolveShippingAddress]);
 
-  // SIRET guard
+  // SIRET guard (statique — sera surchargé par useQuoteSiretGuard dans le modal)
   const isMissingSiret =
     order?.customer_type === 'organization' &&
     !order.organisations?.siret &&
@@ -293,6 +299,8 @@ export function useInvoiceCreateState(
     editingShipping,
     setEditingShipping,
     isMissingSiret,
+    billingOrgId,
+    setBillingOrgId,
     resolveBillingAddress,
     resolveShippingAddress,
   };

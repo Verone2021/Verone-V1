@@ -13,16 +13,15 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Separator,
 } from '@verone/ui';
 import {
   AlertTriangle,
   Building2,
   Check,
   ExternalLink,
-  Mail,
   MapPin,
   Pencil,
-  Phone,
   Truck,
   XCircle,
 } from 'lucide-react';
@@ -247,65 +246,66 @@ export function OrganisationCard({
                 </span>
               )}
             </div>
+            <Separator className="my-1" />
             {/* Adresse de livraison */}
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 items-center">
-              {order.organisation.has_different_shipping_address ? (
-                (order.organisation.shipping_address_line1 ??
-                order.organisation.shipping_postal_code) ? (
-                  <span className="flex items-center gap-1">
-                    <Truck className="h-3 w-3 text-blue-500" />
-                    Livraison :{' '}
-                    {[
-                      order.organisation.shipping_address_line1,
-                      order.organisation.shipping_postal_code,
-                      order.organisation.shipping_city,
-                    ]
-                      .filter(Boolean)
-                      .join(', ')}
-                  </span>
-                ) : (
-                  <span className="text-amber-600 flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3" />
-                    Adresse livraison : Non renseignée
-                  </span>
-                )
-              ) : (
-                <span className="flex items-center gap-1 text-gray-400">
-                  <Truck className="h-3 w-3" />
-                  Livraison : même que facturation
-                </span>
-              )}
-              {/* Bouton modifier adresse livraison — uniquement si commande draft */}
-              {isOrderDraft && onUpdateOrganisation && (
-                <button
-                  type="button"
-                  onClick={() => setShowShippingModal(true)}
-                  className="ml-1 text-blue-500 hover:text-blue-700 flex items-center gap-0.5"
-                  title="Modifier l'adresse de livraison"
-                >
-                  <Pencil className="h-2.5 w-2.5" />
-                  <span className="text-xs">Modifier</span>
-                </button>
-              )}
-            </div>
-            {/* Contact */}
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
-              {order.organisation.email && (
-                <a
-                  href={`mailto:${order.organisation.email}`}
-                  className="text-blue-600 hover:underline flex items-center gap-1"
-                >
-                  <Mail className="h-3 w-3" />
-                  {order.organisation.email}
-                </a>
-              )}
-              {order.organisation.phone && (
-                <span className="flex items-center gap-1">
-                  <Phone className="h-3 w-3" />
-                  {order.organisation.phone}
-                </span>
-              )}
-            </div>
+            {(() => {
+              // order.organisation est non-null ici : on est dans le branchement order.organisation ? (...)
+              const shippingOrg = order.organisation;
+              const norm = (v: string | null | undefined) =>
+                (v ?? '').trim().toLowerCase();
+              // Référence facturation : billing_address_line1 si renseigné, sinon address_line1
+              const billingRef = norm(
+                shippingOrg.billing_address_line1 ?? shippingOrg.address_line1
+              );
+              const shippingLine1 = norm(shippingOrg.shipping_address_line1);
+              // Afficher l'adresse de livraison si le flag est actif OU si
+              // shipping_address_line1 existe et diffère réellement de l'adresse de facturation
+              const hasDifferentShipping =
+                shippingOrg.has_different_shipping_address === true ||
+                (shippingLine1.length > 0 && shippingLine1 !== billingRef);
+              return (
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 items-center">
+                  {hasDifferentShipping ? (
+                    (shippingOrg.shipping_address_line1 ??
+                    shippingOrg.shipping_postal_code) ? (
+                      <span className="flex items-center gap-1">
+                        <Truck className="h-3 w-3 text-blue-500" />
+                        Livraison :{' '}
+                        {[
+                          shippingOrg.shipping_address_line1,
+                          shippingOrg.shipping_postal_code,
+                          shippingOrg.shipping_city,
+                        ]
+                          .filter(Boolean)
+                          .join(', ')}
+                      </span>
+                    ) : (
+                      <span className="text-amber-600 flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        Adresse livraison : Non renseignée
+                      </span>
+                    )
+                  ) : (
+                    <span className="flex items-center gap-1 text-gray-400">
+                      <Truck className="h-3 w-3" />
+                      Livraison : même que facturation
+                    </span>
+                  )}
+                  {/* Bouton modifier adresse livraison — uniquement si commande draft */}
+                  {isOrderDraft && onUpdateOrganisation && (
+                    <button
+                      type="button"
+                      onClick={() => setShowShippingModal(true)}
+                      className="ml-1 text-blue-500 hover:text-blue-700 flex items-center gap-0.5"
+                      title="Modifier l'adresse de livraison"
+                    >
+                      <Pencil className="h-2.5 w-2.5" />
+                      <span className="text-xs">Modifier</span>
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         ) : (
           <p className="text-gray-500 text-sm">Organisation non renseignée</p>

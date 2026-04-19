@@ -1,6 +1,6 @@
 # Carte des Dependances — packages/@verone/
 
-**Genere le 2026-04-16** — Scanner `package.json` de chaque package
+**Genere le 2026-04-19** — Scanner `package.json` de chaque package
 
 ---
 
@@ -43,7 +43,7 @@
 
 ### @verone/finance
 
-**Depend de** : @verone/common, @verone/integrations, @verone/products, @verone/types, @verone/ui, @verone/utils
+**Depend de** : @verone/common, @verone/integrations, @verone/organisations, @verone/products, @verone/types, @verone/ui, @verone/utils
 **Utilise par** : @verone/consultations, @verone/orders
 
 ### @verone/hooks
@@ -74,7 +74,7 @@
 ### @verone/organisations
 
 **Depend de** : @verone/types, @verone/ui, @verone/utils
-**Utilise par** : @verone/orders
+**Utilise par** : @verone/finance, @verone/orders
 
 ### @verone/prettier-config
 
