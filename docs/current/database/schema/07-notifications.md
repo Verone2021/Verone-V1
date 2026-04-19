@@ -1,6 +1,6 @@
 # Domaine Notifications & Formulaires — Schema Base de Donnees
 
-_Generated: 2026-04-18 23:03_
+_Generated: 2026-04-19 02:48_
 
 **Tables : 9**
 
@@ -257,7 +257,7 @@ _Generated: 2026-04-18 23:03_
 
 **RLS :** 2 policies
 
-- `user_own_prefs` : ALL — authenticated
 - `staff_full_access_notification_prefs` : ALL — authenticated
+- `user_own_prefs` : ALL — authenticated
 
 ---

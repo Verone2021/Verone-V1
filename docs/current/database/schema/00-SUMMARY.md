@@ -1,6 +1,6 @@
 # Schema Base de Donnees Verone — Sommaire
 
-_Generated: 2026-04-18 23:03_
+_Generated: 2026-04-19 02:48_
 
 | Metrique     | Valeur |
 | ------------ | ------ |
