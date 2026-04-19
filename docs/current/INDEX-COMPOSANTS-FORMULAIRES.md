@@ -3,7 +3,7 @@
 **Derniere mise a jour** : 2026-04-19
 **23 packages** dans `packages/@verone/`
 
-## **539 composants, 12 hooks**
+## **541 composants, 12 hooks**
 
 ## @verone/categories
 
@@ -411,12 +411,14 @@
 | `GeneralInfoSection`             | Component | `src/components/forms/unified-organisation-form/GeneralInfoSection.tsx` |
 | `LegalSection`                   | Component | `src/components/forms/unified-organisation-form/LegalSection.tsx`       |
 | `NotesSection`                   | Component | `src/components/forms/unified-organisation-form/NotesSection.tsx`       |
+| `MapLibreMapView`                | Component | `src/components/maps/MapLibreMapView.tsx`                               |
+| `MapPopupCard`                   | Component | `src/components/maps/MapPopupCard.tsx`                                  |
 | `AssignOrganisationsModal`       | Modal     | `src/components/modals/AssignOrganisationsModal.tsx`                    |
 | `ConfirmDeleteOrganisationModal` | Modal     | `src/components/modals/ConfirmDeleteOrganisationModal.tsx`              |
 | `ContactFormModalWrapper`        | Modal     | `src/components/modals/ContactFormModalWrapper.tsx`                     |
 | `NewContactModal`                | Modal     | `src/components/modals/NewContactModal.tsx`                             |
 | `OrgBrowseModal`                 | Modal     | `src/components/modals/OrgBrowseModal.tsx`                              |
-| `OrganisationPickerModal`        | Modal     | `src/components/modals/OrganisationPickerModal.tsx`                     |
+| `OrganisationAddressPickerModal` | Modal     | `src/components/modals/OrganisationAddressPickerModal.tsx`              |
 | `OrganisationQuickViewModal`     | Modal     | `src/components/modals/OrganisationQuickViewModal.tsx`                  |
 | `OrganisationSelectorItems`      | Component | `src/components/modals/OrganisationSelectorItems.tsx`                   |
 | `OrganisationSelectorModal`      | Modal     | `src/components/modals/OrganisationSelectorModal.tsx`                   |
