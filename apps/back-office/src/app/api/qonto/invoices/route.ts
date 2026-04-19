@@ -25,7 +25,6 @@ import { resolveQontoClient } from './_lib/resolve-qonto-client';
 import { buildInvoiceItems } from './_lib/build-invoice-items';
 import { computeDueDate } from './_lib/compute-due-date';
 import { persistFinancialDocument } from './_lib/persist-financial-document';
-import { propagateOrderCustomer } from './_lib/propagate-order-customer';
 import type { IPostRequestBody } from './_lib/types';
 
 /**
@@ -227,17 +226,6 @@ export async function POST(request: NextRequest): Promise<
     let finalizedInvoice = invoice;
     if (autoFinalize && invoice.status === 'draft') {
       finalizedInvoice = await qontoClient.finalizeClientInvoice(invoice.id);
-    }
-
-    // [BO-FIN-037] Propager billingOrgId + adresses vers la commande si draft (R6)
-    if (billingOrgId && billingOrgId !== typedOrder.customer_id) {
-      await propagateOrderCustomer({
-        supabase,
-        salesOrderId,
-        billingOrgId,
-        billingAddress: bodyBillingAddress,
-        shippingAddress: bodyShippingAddress,
-      });
     }
 
     // Computed fees values for persist ctx

@@ -62,10 +62,11 @@ export async function persistFinancialDocument(
   const totalTtc = totalHt + totalVat;
 
   // Déterminer le partner_id (organisation uniquement pour l'instant)
-  // [BO-FIN-037] Si billingOrgId fourni, il prime sur order.customer_id
+  // [BO-FIN-039] partner_id = org commande TOUJOURS (R5 finance.md)
+  // billing_org_id porte l'org de facturation si différente
   let partnerId: string | null = null;
   if (order.customer_type === 'organization') {
-    partnerId = ctx.billingOrgId ?? order.customer_id ?? null;
+    partnerId = order.customer_id ?? null;
   }
 
   // Récupérer l'utilisateur connecté
@@ -113,6 +114,7 @@ export async function persistFinancialDocument(
         billing_contact_id: order.billing_contact_id ?? null,
         delivery_contact_id: order.delivery_contact_id ?? null,
         responsable_contact_id: order.responsable_contact_id ?? null,
+        billing_org_id: ctx.billingOrgId ?? null,
       };
     const { data: insertedDoc, error: insertDocError } = await supabase
       .from('financial_documents')

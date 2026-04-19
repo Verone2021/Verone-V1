@@ -52,7 +52,24 @@ export async function resolveQontoClient(
         // Surcharger TIN avec celui de l'org de facturation
         const billingVat =
           billingOrg.vat_number ?? billingOrg.siret ?? undefined;
-        if (billingVat) vatNumber = billingVat;
+        if (billingVat) {
+          vatNumber = billingVat;
+        } else {
+          // [BO-FIN-039 W3] Guard anti-discordance : si l'org de facturation choisie
+          // n'a pas de SIRET/VAT, refuser la facture plutôt que d'utiliser silencieusement
+          // le TIN de l'org commande avec le nom de l'org de facturation.
+          return {
+            qontoClientId: '',
+            error: NextResponse.json(
+              {
+                success: false,
+                error:
+                  "L'organisation de facturation choisie n'a pas de SIRET ni de numéro de TVA. Facturation interdite.",
+              },
+              { status: 400 }
+            ),
+          };
+        }
 
         // Surcharger nom et email avec l'org de facturation
         const billingLegal =

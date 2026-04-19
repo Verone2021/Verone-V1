@@ -32,7 +32,6 @@ import {
   updateOrganisationAddresses,
 } from './route.context';
 import type { IRequestContext, MappedQuote } from './route.context';
-import { propagateOrderCustomer } from '../invoices/_lib/propagate-order-customer';
 
 type Supabase = ReturnType<typeof createAdminClient>;
 
@@ -70,6 +69,18 @@ export async function buildAndCreateQontoQuote(
     body.customerEmail
   );
 
+  // [BO-FIN-039] Guard SIRET strict devis (règle R4 renforcée — symétrie avec invoice guard)
+  if (effectiveCustomerType === 'organization' && !vatNumber && !taxId) {
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          "SIRET ou numéro TVA requis pour émettre un devis. Choisissez l'organisation maison mère ayant un SIRET.",
+      },
+      { status: 400 }
+    );
+  }
+
   const qontoAddress: IResolvedBillingAddress | null = resolveBillingAddress(
     body.billingAddress,
     ctx.orderBillingAddress,
@@ -103,13 +114,29 @@ export async function buildAndCreateQontoQuote(
     ctx.orderItems,
     body.fees,
     ctx.orderFees,
-    body.customLines
+    body.customLines,
+    body.itemComments
   );
-  const { issueDate, expiryDate } = computeQuoteDates(body.expiryDays ?? 30);
+  const computed = computeQuoteDates(body.expiryDays ?? 30);
+  const issueDate = body.issueDate ?? computed.issueDate;
+  const expiryDaysCount = body.expiryDays ?? 30;
+  const expiryDate = body.issueDate
+    ? new Date(new Date(body.issueDate).getTime() + expiryDaysCount * 86400000)
+        .toISOString()
+        .slice(0, 10)
+    : computed.expiryDate;
 
-  const shippingFooter =
+  // [BO-FIN-044] L'API Qonto n'a pas de champ shipping_address structuré pour les
+  // quotes clients. On utilise header pour l'adresse de livraison (visible en haut
+  // du devis) et footer pour les commentaires libres de l'utilisateur.
+  const shippingHeader =
     body.shippingAddress?.city && body.shippingAddress?.address_line1
-      ? `Adresse de livraison : ${body.shippingAddress.address_line1}, ${body.shippingAddress.postal_code ?? ''} ${body.shippingAddress.city}${body.shippingAddress.country && body.shippingAddress.country !== 'FR' ? `, ${body.shippingAddress.country}` : ''}`
+      ? `ADRESSE DE LIVRAISON\n${body.shippingAddress.address_line1}\n${body.shippingAddress.postal_code ?? ''} ${body.shippingAddress.city}${body.shippingAddress.country && body.shippingAddress.country !== 'FR' ? `\n${body.shippingAddress.country}` : ''}`
+      : undefined;
+
+  const footerCustom =
+    body.footerNote && body.footerNote.trim().length > 0
+      ? body.footerNote.trim()
       : undefined;
 
   const quoteParams: CreateClientQuoteParams = {
@@ -119,7 +146,8 @@ export async function buildAndCreateQontoQuote(
     expiryDate,
     purchaseOrderNumber: ctx.orderNumber,
     items,
-    ...(shippingFooter ? { footer: shippingFooter } : {}),
+    ...(shippingHeader ? { header: shippingHeader } : {}),
+    ...(footerCustom ? { footer: footerCustom } : {}),
   };
 
   const rawQuote = await qontoClient.createClientQuote(quoteParams);
@@ -169,22 +197,13 @@ export async function persistQuoteResults(
   }
 
   try {
-    // Option B : si billingOrg présente → elle devient le partner_id du document local
+    // [BO-FIN-039] partner_id = org commande TOUJOURS (R5 finance.md)
+    // billing_org_id porte l'org de facturation si différente
     const orderCustomerId = (ctx.customer as { id?: string } | null)?.id;
-    const effectiveCustomerId = billingOrg?.id ?? orderCustomerId;
-
-    // [BO-FIN-037] Propager billingOrg + adresses vers la commande source si draft (R6)
-    if (body.salesOrderId && billingOrg && billingOrg.id !== orderCustomerId) {
-      await propagateOrderCustomer({
-        supabase,
-        salesOrderId: body.salesOrderId,
-        billingOrgId: billingOrg.id,
-        billingAddress: body.billingAddress,
-        shippingAddress: body.shippingAddress,
-      });
-    }
+    const effectiveCustomerId = orderCustomerId;
 
     // Persist addresses to organisation si demandé (non-bloquant)
+    // Utilise l'org commande (effectiveCustomerId) et non billingOrg (facturation)
     if (
       (body.updateOrgBilling ?? body.updateOrgShipping) &&
       effectiveCustomerId
@@ -215,6 +234,7 @@ export async function persistQuoteResults(
       fees: body.fees,
       billingAddress: body.billingAddress,
       shippingAddress: body.shippingAddress,
+      billingOrgId: billingOrg?.id,
     });
   } catch (e) {
     console.error('[API Qonto Quotes] DB save error (non-blocking):', e);

@@ -1,6 +1,6 @@
 # Domaine Stock & Stockage — Schema Base de Donnees
 
-_Generated: 2026-04-19 16:00_
+_Generated: 2026-04-19 18:55_
 
 **Tables : 9**
 
@@ -312,8 +312,8 @@ _Generated: 2026-04-19 16:00_
 **RLS :** 3 policies
 
 - `backoffice_full_access_storage_billing_events` : ALL — authenticated
-- `LinkMe view own enseigne events` : SELECT — public
 - `Admin view all storage events` : SELECT — public
+- `LinkMe view own enseigne events` : SELECT — public
 
 ---
 

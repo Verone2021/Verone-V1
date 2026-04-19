@@ -1,6 +1,6 @@
 # Domaine Organisations & Contacts — Schema Base de Donnees
 
-_Generated: 2026-04-19 16:00_
+_Generated: 2026-04-19 18:55_
 
 **Tables : 8**
 
@@ -252,8 +252,8 @@ _Generated: 2026-04-19 16:00_
 
 - `backoffice_full_access_individual_customers` : ALL — authenticated
 - `individual_customers_insert_self` : INSERT — authenticated
-- `customer_read_own_profile` : SELECT — authenticated
 - `linkme_users_read_individual_customers` : SELECT — authenticated
+- `customer_read_own_profile` : SELECT — authenticated
 
 **Triggers :** 1
 

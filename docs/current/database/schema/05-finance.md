@@ -1,6 +1,6 @@
 # Domaine Finance & Comptabilite — Schema Base de Donnees
 
-_Generated: 2026-04-19 16:00_
+_Generated: 2026-04-19 18:55_
 
 **Tables : 13**
 
@@ -10,7 +10,7 @@ _Generated: 2026-04-19 16:00_
 | [bank_transactions_enrichment_audit](#bank-transactions-enrichment-audit) | 10       | 1   | 3   | 0        |
 | [finance_settings](#finance-settings)                                     | 4        | 0   | 3   | 0        |
 | [financial_document_items](#financial-document-items)                     | 18       | 3   | 1   | 0        |
-| [financial_documents](#financial-documents)                               | 65       | 12  | 2   | 3        |
+| [financial_documents](#financial-documents)                               | 66       | 13  | 2   | 3        |
 | [fiscal_obligations_done](#fiscal-obligations-done)                       | 5        | 0   | 1   | 0        |
 | [fixed_asset_depreciations](#fixed-asset-depreciations)                   | 8        | 1   | 1   | 0        |
 | [fixed_assets](#fixed-assets)                                             | 20       | 0   | 1   | 1        |
@@ -238,6 +238,7 @@ _Generated: 2026-04-19 16:00_
 | linkme_affiliate_id      | uuid                    | YES      |                          |
 | consultation_id          | uuid                    | YES      |                          |
 | revision_number          | integer                 | NO       | 1                        |
+| billing_org_id           | uuid                    | YES      |                          |
 
 **Relations :**
 
@@ -253,6 +254,7 @@ _Generated: 2026-04-19 16:00_
 - `converted_to_invoice_id` → `financial_documents.id`
 - `channel_id` → `sales_channels.id`
 - `individual_customer_id` → `individual_customers.id`
+- `billing_org_id` → `organisations.id`
 
 **RLS :** 2 policies
 

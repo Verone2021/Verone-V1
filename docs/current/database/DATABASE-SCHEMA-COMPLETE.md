@@ -1,6 +1,6 @@
 # Database Schema Complete — Index
 
-_Generated: 2026-04-19 16:00 — 142 tables_
+_Generated: 2026-04-19 18:55 — 142 tables_
 
 | Table                               | Domaine                     | Colonnes |
 | ----------------------------------- | --------------------------- | -------- |
@@ -44,7 +44,7 @@ _Generated: 2026-04-19 16:00 — 142 tables_
 | feed_configs                        | Autres                      | 16       |
 | finance_settings                    | Finance & Comptabilite      | 4        |
 | financial_document_items            | Finance & Comptabilite      | 18       |
-| financial_documents                 | Finance & Comptabilite      | 65       |
+| financial_documents                 | Finance & Comptabilite      | 66       |
 | fiscal_obligations_done             | Finance & Comptabilite      | 5        |
 | fixed_asset_depreciations           | Finance & Comptabilite      | 8        |
 | fixed_assets                        | Finance & Comptabilite      | 20       |

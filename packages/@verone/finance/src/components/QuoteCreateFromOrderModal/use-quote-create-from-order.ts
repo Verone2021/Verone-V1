@@ -28,6 +28,12 @@ export interface IUseQuoteCreateFromOrderParams {
   shippingAddress: IShippingAddressResolved | null;
   /** ID de l'org choisie comme destinataire de facturation (Option B). Null = org commande. */
   billingOrgId: string | null;
+  /** Date d'émission du devis (YYYY-MM-DD). Si absent, date du jour. */
+  issueDate: string;
+  /** Commentaire pied de page libre (max 1000 chars). */
+  footerNote: string;
+  /** Commentaires par ligne article : clé = sales_order_item.id, valeur = commentaire. */
+  itemComments: Record<string, string>;
   onSuccess?: (id: string) => void;
   handleClose: () => void;
 }
@@ -60,6 +66,9 @@ export function useQuoteCreateFromOrder(
     updateOrgBilling,
     shippingAddress,
     billingOrgId,
+    issueDate,
+    footerNote,
+    itemComments,
     onSuccess,
     handleClose,
   } = params;
@@ -148,6 +157,10 @@ export function useQuoteCreateFromOrder(
             billingAddress: resolvedBillingAddress,
             fees: feesPayload,
             customLines: consultationLines,
+            issueDate,
+            footerNote: footerNote.trim().length > 0 ? footerNote : undefined,
+            itemComments:
+              Object.keys(itemComments).length > 0 ? itemComments : undefined,
           }
         : {
             salesOrderId: order.id,
@@ -168,6 +181,10 @@ export function useQuoteCreateFromOrder(
             customLines: allCustomLines,
             // Option B : org de facturation si différente de l'org commande
             billingOrgId: billingOrgId ?? undefined,
+            issueDate,
+            footerNote: footerNote.trim().length > 0 ? footerNote : undefined,
+            itemComments:
+              Object.keys(itemComments).length > 0 ? itemComments : undefined,
           };
 
       const response = await fetch('/api/qonto/quotes', {
@@ -217,6 +234,9 @@ export function useQuoteCreateFromOrder(
     updateOrgBilling,
     shippingAddress,
     billingOrgId,
+    issueDate,
+    footerNote,
+    itemComments,
     onSuccess,
     toast,
   ]);

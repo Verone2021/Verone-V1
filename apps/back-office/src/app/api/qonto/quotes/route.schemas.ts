@@ -59,6 +59,13 @@ export const PostRequestBodySchema = z.object({
   billingOrgId: z.string().uuid().optional().nullable(),
   fees: FeesDataSchema.optional(),
   customLines: z.array(CustomLineSchema).optional(),
+  issueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  footerNote: z.string().max(1000).optional(),
+  /** itemComments : clé = sales_order_item.id (uuid), valeur = commentaire */
+  itemComments: z.record(z.string(), z.string().max(500)).optional(),
 });
 
 export type IDocumentAddress = z.infer<typeof DocumentAddressSchema>;
