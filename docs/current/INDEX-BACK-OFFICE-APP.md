@@ -1,6 +1,6 @@
 # Back-Office — Documentation App
 
-_Generated: 2026-04-19 01:21_
+_Generated: 2026-04-19 02:09_
 
 ## Pages (147)
 
@@ -281,7 +281,7 @@ _Generated: 2026-04-19 01:21_
 | `/api/transactions/update-vat`                               | POST               |
 | `/api/webhooks/packlink`                                     | POST               |
 
-## Components in app (347)
+## Components in app (348)
 
 | Fichier                                                                                                                         |
 | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -333,6 +333,7 @@ _Generated: 2026-04-19 01:21_
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/left-column/InfoRequestsCard.tsx`                    |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/left-column/OrderItemsTable.tsx`                     |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/left-column/OrderTotalsCard.tsx`                     |
+| `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/left-column/OrgShippingModal.tsx`                    |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/left-column/OrganisationCard.tsx`                    |
 | `src/app/(protected)/canaux-vente/linkme/commissions/components/CommissionDetailContent.tsx`                                    |
 | `src/app/(protected)/canaux-vente/linkme/commissions/components/CommissionDetailSheet.tsx`                                      |

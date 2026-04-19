@@ -2,8 +2,8 @@
  * API Route: POST /api/qonto/quotes/by-order/[orderId]/regenerate
  *
  * Régénère un devis draft lié à une commande après modification de celle-ci.
- * - Soft delete l'ancien devis (quote_status = 'superseded' + deleted_at)
- * - Supprime le devis Qonto côté API
+ * - Soft delete local EN PREMIER (bloquant) — atomicité garantie
+ * - Supprime le devis Qonto côté API (non-bloquant, avec log)
  * - Crée un nouveau devis avec revision_number incrémenté
  * - Préserve les customLines et notes choisis par l'utilisateur
  *
@@ -18,13 +18,14 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { QontoClient } from '@verone/integrations/qonto';
-import { createAdminClient } from '@verone/utils/supabase/server';
+import {
+  createAdminClient,
+  createServerClient,
+} from '@verone/utils/supabase/server';
+import type { CreateClientQuoteParams } from '@verone/integrations/qonto';
 
 import {
   resolveRequestContext,
-  saveQuoteToLocalDb,
-  markQuotesSuperseded,
   linkQuoteToOrder,
 } from '../../../route.context';
 import {
@@ -35,7 +36,11 @@ import {
   resolveQontoClient,
 } from '../../../route.helpers';
 import type { IQontoQuoteRaw } from '../../../route.helpers';
-import type { CreateClientQuoteParams } from '@verone/integrations/qonto';
+import {
+  getQontoClient,
+  buildShippingFooter,
+  persistNewQuote,
+} from './_helpers';
 
 // ---------------------------------------------------------------------------
 // Validation Zod
@@ -64,8 +69,8 @@ const FeesDataSchema = z.object({
   fees_vat_rate: z.number().optional(),
 });
 
+// userId retiré — résolu via auth serveur (createServerClient)
 const RegenerateBodySchema = z.object({
-  userId: z.string().uuid(),
   preservedCustomLines: z.array(CustomLineSchema).optional(),
   preservedNotes: z.string().optional(),
   billingAddress: DocumentAddressSchema.optional(),
@@ -75,19 +80,6 @@ const RegenerateBodySchema = z.object({
 });
 
 type RegenerateBody = z.infer<typeof RegenerateBodySchema>;
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function getQontoClient(): QontoClient {
-  return new QontoClient({
-    authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') ?? 'oauth',
-    organizationId: process.env.QONTO_ORGANIZATION_ID,
-    apiKey: process.env.QONTO_API_KEY,
-    accessToken: process.env.QONTO_ACCESS_TOKEN,
-  });
-}
 
 // ---------------------------------------------------------------------------
 // POST /api/qonto/quotes/by-order/[orderId]/regenerate
@@ -108,9 +100,22 @@ export async function POST(
   }>
 > {
   try {
+    // Auth serveur — userId depuis session, jamais depuis le body
+    const supabaseAuth = await createServerClient();
+    const {
+      data: { user: authUser },
+      error: authError,
+    } = await supabaseAuth.auth.getUser();
+    if (authError || !authUser) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    const userId = authUser.id;
+
     const { orderId } = await params;
 
-    // Validation UUID
     if (
       !orderId ||
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
@@ -137,9 +142,9 @@ export async function POST(
     }
     const body: RegenerateBody = parsed.data;
 
+    // Opérations admin uniquement APRÈS auth validée
     const supabase = createAdminClient();
 
-    // Charger les devis liés à cette commande (colonnes typées par le SDK)
     const { data: existingDocs, error: fetchError } = await supabase
       .from('financial_documents')
       .select('id, document_number, status, qonto_invoice_id')
@@ -186,55 +191,33 @@ export async function POST(
     }
 
     const draftDocs = existingDocs.filter(d => d.status === 'draft');
+    const supersededIds = draftDocs.map(d => d.id);
 
-    // Déterminer le revision_number max via requête SQL brute
-    // (colonne revision_number nouvelle, pas encore dans les types générés)
-    const maxRevisionFromDb: number = await (async () => {
-      try {
-        const ids = draftDocs.map(d => d.id);
-        if (ids.length === 0) return 0;
-        // Cast nécessaire car revision_number absent des types générés (migration récente)
-        const { data } = await (
-          supabase as unknown as ReturnType<typeof createAdminClient>
-        )
-          .from('financial_documents')
-          .select('id')
-          .in('id', ids);
-        const rows = data as Array<{ id: string }> | null;
-        if (!rows) return 0;
-        // Fallback safe : revision 1 par défaut (nouveau champ, docs existants ont DEFAULT 1)
-        return rows.length;
-      } catch {
-        return 1;
-      }
-    })();
-    // revision_number max = nombre de docs existants (heuristique safe, ou 1 si premier)
-    const newRevisionNumber = maxRevisionFromDb > 0 ? maxRevisionFromDb + 1 : 2;
-
-    // Supprimer les devis Qonto existants
-    const qontoClient = getQontoClient();
-    for (const doc of draftDocs) {
-      if (doc.qonto_invoice_id) {
-        try {
-          await qontoClient.deleteClientQuote(doc.qonto_invoice_id);
-        } catch (err) {
-          console.warn(
-            `[Regenerate Quote] Qonto delete failed for ${doc.qonto_invoice_id} (non-blocking):`,
-            err
-          );
-          // Non-bloquant : Qonto peut avoir déjà supprimé ou le devis peut être expiré
-        }
-      }
+    // revision_number correct depuis la DB via requête séparée
+    // (colonne ajoutée en migration récente, pas encore dans les types générés)
+    let newRevisionNumber = 2;
+    if (supersededIds.length > 0) {
+      const { data: revRows } = await (
+        supabase as unknown as ReturnType<typeof createAdminClient>
+      )
+        .from('financial_documents')
+        .select('revision_number')
+        .in('id', supersededIds)
+        .order('revision_number', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const maxRev =
+        (revRows as { revision_number?: number } | null)?.revision_number ?? 1;
+      newRevisionNumber = maxRev + 1;
     }
 
-    // Soft delete local (quote_status = 'superseded' + deleted_at)
-    const supersededIds = draftDocs.map(d => d.id);
+    // Soft-delete local EN PREMIER (bloquant) — garantit l'atomicité
     const { error: softDeleteError } = await supabase
       .from('financial_documents')
       .update({
         quote_status: 'superseded',
         deleted_at: new Date().toISOString(),
-      } as Record<string, unknown>)
+      })
       .in('id', supersededIds);
 
     if (softDeleteError) {
@@ -246,6 +229,22 @@ export async function POST(
         },
         { status: 500 }
       );
+    }
+
+    // Qonto delete (non-bloquant, avec log explicite)
+    const qontoClient = getQontoClient();
+    for (const doc of draftDocs) {
+      if (doc.qonto_invoice_id) {
+        try {
+          await qontoClient.deleteClientQuote(doc.qonto_invoice_id);
+        } catch (err) {
+          console.error(
+            `[Regenerate Quote] Qonto delete failed for quote ${doc.qonto_invoice_id}:`,
+            err
+          );
+          // Non-bloquant — soft-delete local déjà effectué
+        }
+      }
     }
 
     // Résoudre le contexte commande (R1 + R2 : items depuis la commande)
@@ -302,7 +301,7 @@ export async function POST(
       taxId
     );
 
-    // R1 : items depuis la commande + customLines préservés par l'utilisateur
+    // R1 : items depuis la commande + customLines préservés
     const items = buildQuoteItems(
       ctxResult.orderItems,
       body.fees,
@@ -311,11 +310,7 @@ export async function POST(
     );
 
     const { issueDate, expiryDate } = computeQuoteDates(body.expiryDays ?? 30);
-
-    const shippingFooter =
-      body.shippingAddress?.city && body.shippingAddress?.address_line1
-        ? `Adresse de livraison : ${body.shippingAddress.address_line1}, ${body.shippingAddress.postal_code ?? ''} ${body.shippingAddress.city}${body.shippingAddress.country && body.shippingAddress.country !== 'FR' ? `, ${body.shippingAddress.country}` : ''}`
-        : undefined;
+    const shippingFooter = buildShippingFooter(body.shippingAddress);
 
     const quoteParams: CreateClientQuoteParams = {
       clientId: qontoClientId,
@@ -341,60 +336,26 @@ export async function POST(
       public_url: raw.public_url,
     };
 
-    // Lier le nouveau devis à la commande
     await linkQuoteToOrder(supabase, orderId, quote.id, quote.quote_number);
 
-    // Marquer les anciens comme superseded (colonne quote_status — déjà fait via soft-delete + update)
-    await markQuotesSuperseded(supabase, supersededIds);
-
-    // Sauvegarder le nouveau devis en local avec revision_number
     const customerId = (ctxResult.customer as { id?: string } | null)?.id;
-    let localDocId: string | null = null;
-    try {
-      localDocId = await saveQuoteToLocalDb({
-        supabase,
-        userId: body.userId,
-        items,
-        quoteId: quote.id,
-        pdfUrl: raw.pdf_url,
-        publicUrl: raw.public_url,
-        issueDate,
-        expiryDate,
-        consultationId: undefined,
-        salesOrderId: orderId,
-        customerId,
-        standaloneCustomerId: undefined,
-        fees: body.fees,
-        shippingAddress: body.shippingAddress,
-      });
-    } catch (e) {
-      console.error('[Regenerate Quote] DB save error (non-blocking):', e);
-    }
-
-    // Mettre à jour le revision_number sur le nouveau document
-    if (localDocId) {
-      const { error: revisionError } = await supabase
-        .from('financial_documents')
-        .update({ revision_number: newRevisionNumber } as Record<
-          string,
-          unknown
-        >)
-        .eq('id', localDocId);
-      if (revisionError) {
-        console.warn(
-          '[Regenerate Quote] Failed to set revision_number:',
-          revisionError
-        );
-      }
-
-      // Stocker les notes préservées si fournies
-      if (body.preservedNotes) {
-        await supabase
-          .from('financial_documents')
-          .update({ notes: body.preservedNotes } as Record<string, unknown>)
-          .eq('id', localDocId);
-      }
-    }
+    const localDocId = await persistNewQuote({
+      supabase,
+      userId,
+      orderId,
+      supersededIds,
+      quoteId: quote.id,
+      pdfUrl: raw.pdf_url,
+      publicUrl: raw.public_url,
+      issueDate,
+      expiryDate,
+      customerId,
+      items,
+      fees: body.fees,
+      shippingAddress: body.shippingAddress,
+      preservedNotes: body.preservedNotes,
+      newRevisionNumber,
+    });
 
     console.warn(
       `[Regenerate Quote] Order ${orderId}: superseded ${supersededIds.length} quote(s), created new revision ${newRevisionNumber}`

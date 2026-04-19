@@ -19,15 +19,17 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import type { CreateClientInvoiceParams } from '@verone/integrations/qonto';
-import { createAdminClient } from '@verone/utils/supabase/server';
-import type { Database, Json } from '@verone/types';
-import { createServerClient } from '@verone/utils/supabase/server';
+import {
+  createAdminClient,
+  createServerClient,
+} from '@verone/utils/supabase/server';
 
 import { getQontoClient } from '../../../_lib/qonto-client';
 import { fetchOrderWithCustomer } from '../../../_lib/fetch-order-with-customer';
 import { resolveQontoClient } from '../../../_lib/resolve-qonto-client';
 import { buildInvoiceItems } from '../../../_lib/build-invoice-items';
 import { computeDueDate } from '../../../_lib/compute-due-date';
+import { computeProformaTotals, buildProformaInsertPayload } from './_helpers';
 
 // ---------------------------------------------------------------------------
 // Validation Zod
@@ -119,7 +121,7 @@ export async function POST(
     // Chercher la proforma draft liée à cette commande
     const { data: existingDocs, error: fetchError } = await supabase
       .from('financial_documents')
-      .select('id, document_number, status, qonto_invoice_id')
+      .select('id, document_number, status, qonto_invoice_id, amount_paid')
       .eq('sales_order_id', orderId)
       .eq('document_type', 'customer_invoice')
       .is('deleted_at', null)
@@ -150,7 +152,7 @@ export async function POST(
       );
     }
 
-    // R4 : refus si une proforma finalisée/payée existe
+    // R4 : refus si une proforma finalisée/payée existe (statut)
     const finalizedDoc = existingDocs.find(d => d.status !== 'draft');
     if (finalizedDoc) {
       return NextResponse.json(
@@ -158,6 +160,24 @@ export async function POST(
           success: false,
           error: `Impossible de régénérer : une facture finalisée ou payée existe (${finalizedDoc.document_number ?? finalizedDoc.id}). Seules les proformas draft peuvent être régénérées.`,
           existingDocId: finalizedDoc.id,
+        },
+        { status: 409 }
+      );
+    }
+
+    // R4 : refus si une proforma a déjà un paiement enregistré (amount_paid > 0)
+    const paidDoc = existingDocs.find(
+      d =>
+        d.amount_paid !== null &&
+        d.amount_paid !== undefined &&
+        Number(d.amount_paid) > 0
+    );
+    if (paidDoc) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Impossible de régénérer : la proforma ${paidDoc.document_number ?? paidDoc.id} a un paiement enregistré (amount_paid=${String(paidDoc.amount_paid)}). Annulez le paiement avant de régénérer.`,
+          existingDocId: paidDoc.id,
         },
         { status: 409 }
       );
@@ -275,16 +295,7 @@ export async function POST(
     const invoice = await qontoClient.createClientInvoice(invoiceParams);
 
     // Calculer les totaux (round-per-line, R1)
-    let totalHt = 0;
-    let totalVat = 0;
-    for (const item of items) {
-      const lineHt = (item.unit_price_ht ?? 0) * (item.quantity_num ?? 1);
-      const lineVat =
-        Math.round(lineHt * (item.vat_rate_num ?? 0.2) * 100) / 100;
-      totalHt += lineHt;
-      totalVat += lineVat;
-    }
-    const totalTtc = totalHt + totalVat;
+    const { totalHt, totalVat, totalTtc } = computeProformaTotals(items);
 
     // Déterminer partner_id
     let partnerId: string | null = null;
@@ -302,50 +313,26 @@ export async function POST(
     let localDocumentId: string | null = null;
 
     if (partnerId && currentUserId) {
-      const feesVatRate =
-        body.fees?.fees_vat_rate ?? typedOrder.fees_vat_rate ?? 0.2;
-      const shippingCost =
-        body.fees?.shipping_cost_ht ?? typedOrder.shipping_cost_ht ?? 0;
-      const handlingCost =
-        body.fees?.handling_cost_ht ?? typedOrder.handling_cost_ht ?? 0;
-      const insuranceCost =
-        body.fees?.insurance_cost_ht ?? typedOrder.insurance_cost_ht ?? 0;
-
-      const insertPayload: Database['public']['Tables']['financial_documents']['Insert'] =
-        {
-          document_type: 'customer_invoice',
-          document_direction: 'inbound',
-          document_number: `PROFORMA-${typedOrder.order_number}`,
-          partner_id: partnerId,
-          partner_type: 'customer',
-          document_date: issueDate,
-          due_date: dueDate,
-          total_ht: totalHt,
-          total_ttc: totalTtc,
-          tva_amount: totalVat,
-          amount_paid: 0,
-          status: 'draft',
-          sales_order_id: orderId,
-          qonto_invoice_id: invoice.id,
-          qonto_pdf_url:
-            (invoice as { pdf_url?: string | null }).pdf_url ?? null,
-          qonto_public_url:
-            (invoice as { public_url?: string | null }).public_url ?? null,
-          synchronized_at: new Date().toISOString(),
-          created_by: currentUserId,
-          billing_address: (body.billingAddress ??
-            typedOrder.billing_address) as Json,
-          shipping_address: (body.shippingAddress ??
-            typedOrder.shipping_address) as Json,
-          shipping_cost_ht: shippingCost,
-          handling_cost_ht: handlingCost,
-          insurance_cost_ht: insuranceCost,
-          fees_vat_rate: feesVatRate,
-          billing_contact_id: typedOrder.billing_contact_id ?? null,
-          delivery_contact_id: typedOrder.delivery_contact_id ?? null,
-          responsable_contact_id: typedOrder.responsable_contact_id ?? null,
-          notes: body.preservedNotes ?? null,
-        };
+      const insertPayload = buildProformaInsertPayload({
+        orderId,
+        typedOrder,
+        invoice: invoice as {
+          id: string;
+          pdf_url?: string | null;
+          public_url?: string | null;
+        },
+        issueDate,
+        dueDate,
+        totalHt,
+        totalTtc,
+        totalVat,
+        partnerId,
+        currentUserId,
+        fees: body.fees,
+        billingAddress: body.billingAddress,
+        shippingAddress: body.shippingAddress,
+        preservedNotes: body.preservedNotes,
+      });
 
       const { data: insertedDoc, error: insertError } = await supabase
         .from('financial_documents')
@@ -358,7 +345,6 @@ export async function POST(
           '[Regenerate Proforma] Failed to insert financial_document:',
           insertError
         );
-        // La proforma Qonto a été créée, retourner quand même le succès partiel
         console.warn(
           '[Regenerate Proforma] Qonto invoice created but local persistence failed'
         );
