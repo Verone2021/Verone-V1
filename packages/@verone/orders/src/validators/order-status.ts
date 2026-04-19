@@ -182,20 +182,39 @@ export function isFinalStatus(status: SalesOrderStatus): boolean {
 }
 
 /**
- * Vérifier si commande est verrouillée (shipped, partially_shipped, delivered, cancelled)
- * Commande verrouillée = informations non modifiables (sauf paiement/factures/rapprochement)
+ * Vérifier si commande est verrouillée.
+ *
+ * [BO-FIN-009 Phase 3 — R6 finance.md]
+ * Règle absolue : seul `draft` autorise la modification. Tous les autres
+ * statuts (pending_approval, validated, partially_shipped, shipped, delivered,
+ * cancelled) sont verrouillés. Pour modifier une commande validée,
+ * il faut la dévalider (`validated → draft`) puis revalider après modification.
+ *
+ * Commande verrouillée = informations non modifiables (sauf paiement/factures/rapprochement
+ * qui passent par leurs propres flows dédiés).
  */
 export function isOrderLocked(status: SalesOrderStatus | string): boolean {
-  return ['shipped', 'partially_shipped', 'delivered', 'cancelled'].includes(
-    status
-  );
+  return [
+    'pending_approval',
+    'validated',
+    'partially_shipped',
+    'shipped',
+    'delivered',
+    'cancelled',
+  ].includes(status);
 }
 
 /**
- * Vérifier si status permet modification items
+ * Vérifier si status permet modification items.
+ *
+ * [BO-FIN-009 Phase 3 — R6 finance.md]
+ * Seul `draft` autorise la modification des items. Pour modifier une commande
+ * validée : dévalider (`validated → draft`) → modifier → revalider.
+ * Le trigger DB `lock_prices_on_order_validation` fige les prix lockés à la
+ * validation et les rollback à la dévalidation.
  */
 export function canEditItems(status: SalesOrderStatus): boolean {
-  return status === 'draft' || status === 'validated';
+  return status === 'draft';
 }
 
 /**

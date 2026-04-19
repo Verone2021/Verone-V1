@@ -95,30 +95,37 @@ Portée : back-office (`@verone/finance`, routes `/api/qonto/*`, pages `/facture
 
 ## R6 — Verrouillage par statut commande
 
-**Règle** :
+**Règle absolue** :
 
-- **Commande status `draft`** : modifiable. Devis/factures associés modifiables via régénération auto (R3).
-- **Commande status `validated` ou supérieur (partially_shipped, shipped, delivered)** : **non modifiable** sauf champs exempts. Devis/factures associés non modifiables non plus.
+- **Commande status `draft`** : **entièrement modifiable** (articles, adresses, contacts, notes, frais, date livraison, client, tout).
+- **Commande status `validated` ou supérieur** (`partially_shipped`, `shipped`, `delivered`) : **AUCUN champ modifiable**. La commande est gelée. Devis/factures associés non modifiables non plus.
 
-**Champs exempts** (éditables même sur commande validée) :
+**Workflow obligatoire pour corriger une commande validée** :
 
-- `notes`
-- `expected_delivery_date`
-- Champs tracking expédition (packlink*\*, shipping*\*)
-- `billing_contact_id`, `delivery_contact_id`, `responsable_contact_id`
+1. **Dévalider** la commande (`validated → draft`) — le système rollback automatiquement en cascade :
+   - Stock prévisionnel (`stock_forecasted_out`) via trigger `rollback_forecasted_out_on_so_devalidation`
+   - Prix lockés (`base_price_ht_locked`, `selling_price_ht_locked`, `price_locked_at`) via trigger `lock_prices_on_order_validation` (branche inverse)
+   - Commission LinkMe (`linkme_commissions`) via trigger `create_linkme_commission_on_order_update` (DELETE si hors validated/shipped)
+   - Stock movements forecast (DELETE automatique)
+   - Sync `stock_alert_tracking`
+2. **Modifier** les champs nécessaires (hook `updateOrderWithItems` / `updateOrder` autorisés uniquement en `draft`).
+3. **Revalider** la commande (`draft → validated`) — les cascades sont ré-appliquées automatiquement.
 
-**Verrous stricts** (non éditables une fois validée) :
+**Dévalidation bloquée si** :
 
-- `sales_order_items` (items, quantités, prix, remises, TVA)
-- `shipping_cost_ht`, `handling_cost_ht`, `insurance_cost_ht`, `fees_vat_rate`
-- `billing_address`, `shipping_address`
-- Client (`customer_id`, `customer_type`)
+- Items déjà expédiés (`quantity_shipped > 0`) → contrôle côté `updateStatus`
+- Facture liée `sent` ou `paid` → créer un avoir d'abord
 
-**Seule action possible sur commande validée avec erreur** : annulation (status `cancelled`).
+**Annulation directe `validated → cancelled` : bloquée** par le trigger DB `prevent_so_direct_cancellation`. Workflow obligatoire : dévalider d'abord, puis annuler depuis `draft`.
 
-**Pourquoi** : une commande validée a déclenché des effets de bord (stock prévisionnel, commissions LinkMe, envoi fournisseurs). Modifier ses items sans annulation préalable casse l'intégrité de la chaîne.
+**Pourquoi ce verrouillage total** : une commande validée déclenche des effets en cascade (stock, prix, commission, notifications). Toute modification directe désynchronise les données en aval (facture Qonto émise, commission LinkMe déjà calculée, stock réservé sur un prix obsolète). Le workflow "dévalider → modifier → revalider" garantit que toutes les cascades sont rejouées proprement.
 
-**À implémenter** : BO-FIN-009 Phase 3 (hook `updateOrderWithItems` + UI désactivation boutons).
+**Implémentation** :
+
+- Hook `updateOrderWithItems` (`@verone/orders`) : rejet si `status !== 'draft'` avec message explicite. ✅ BO-FIN-009 Phase 3.
+- Hook `updateOrder` (`@verone/orders`) : rejet si `status !== 'draft'` avec message explicite. ✅ BO-FIN-009 Phase 3.
+- Hook LinkMe `updateDraftOrder` (`apps/linkme/src/lib/hooks/use-update-draft-order.ts`) : guard déjà en place historiquement.
+- UI `SalesOrderFormModal` mode édition : bouton "Dévalider pour modifier" (scope Phase 3.2 à venir).
 
 ---
 

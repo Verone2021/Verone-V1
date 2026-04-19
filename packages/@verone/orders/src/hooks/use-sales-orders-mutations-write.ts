@@ -254,6 +254,13 @@ export function useSalesOrdersWriteMutations({
           order_number: string;
         };
         if (!existingOrder) throw new Error('Commande non trouvée');
+        // [BO-FIN-009 Phase 3 — R6 finance.md] Aucun champ modifiable hors draft.
+        // Pour corriger : dévalider (validated → draft), modifier, revalider.
+        if (existingOrder.status !== 'draft') {
+          throw new Error(
+            `Commande ${existingOrder.order_number} en statut "${existingOrder.status ?? 'inconnu'}" : dévalidez-la d'abord (retour en brouillon) pour modifier, puis revalidez-la après modification.`
+          );
+        }
         if (existingOrder.payment_status_v2 === 'paid')
           throw new Error('Impossible de modifier une commande déjà payée');
 
