@@ -6,10 +6,10 @@ export { OrgBrowseModal } from './OrgBrowseModal';
 export { OrganisationSelectorModal } from './OrganisationSelectorModal';
 export { OrganisationQuickViewModal } from './OrganisationQuickViewModal';
 export {
-  OrganisationPickerModal,
+  OrganisationAddressPickerModal,
   getOwnershipBadge,
-} from './OrganisationPickerModal';
+} from './OrganisationAddressPickerModal';
 export type {
-  OrganisationPickerItem,
-  OrganisationPickerModalProps,
-} from './OrganisationPickerModal';
+  OrganisationListItem,
+  OrganisationAddressPickerModalProps,
+} from './OrganisationAddressPickerModal';
