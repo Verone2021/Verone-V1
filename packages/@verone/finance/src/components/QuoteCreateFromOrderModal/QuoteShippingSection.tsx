@@ -25,7 +25,10 @@ import { OrganisationLogo } from '@verone/organisations/components/display';
 
 interface IShippingOrg {
   id: string;
+  /** Résolu : trade_name ?? legal_name — pour affichage local */
   name: string;
+  trade_name: string | null;
+  legal_name: string;
   address_line1: string | null;
   postal_code: string | null;
   city: string | null;
@@ -103,12 +106,14 @@ export function QuoteShippingSection({
             'id, trade_name, legal_name, address_line1, postal_code, city, country, shipping_address_line1, shipping_postal_code, shipping_city, has_different_shipping_address'
           )
           .eq('enseigne_id', enseigneId)
-          .limit(20);
+          .limit(100);
         if (data) {
           setOrgs(
             data.map(o => ({
               id: o.id,
               name: o.trade_name ?? o.legal_name,
+              trade_name: o.trade_name,
+              legal_name: o.legal_name,
               address_line1: o.address_line1,
               postal_code: o.postal_code,
               city: o.city,
@@ -293,8 +298,8 @@ export function QuoteShippingSection({
               onOpenChange={setPickerOpen}
               organisations={otherOrgs.map(o => ({
                 id: o.id,
-                legal_name: o.name,
-                trade_name: null,
+                legal_name: o.legal_name,
+                trade_name: o.trade_name,
                 address_line1: o.address_line1,
                 city: o.city,
                 postal_code: o.postal_code,
