@@ -7,21 +7,20 @@ import { NextResponse } from 'next/server';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { QontoClient } from '@verone/integrations/qonto';
-import type { Database, Json } from '@verone/types';
+import type { Database } from '@verone/types';
 
-import {
-  fetchCustomerFromSupabase,
-  generateLocalDocNumber,
-} from './route.helpers';
+import { fetchCustomerFromSupabase } from './route.helpers';
 import type {
   ISalesOrderWithItems,
   IQontoQuoteRaw,
   Organisation,
   IndividualCustomer,
   IStandaloneCustomer,
-  IQuoteItem,
-  IFeesData,
 } from './route.helpers';
+import type { ISaveLocalDbAddress } from './route.db';
+
+export { saveQuoteToLocalDb } from './route.db';
+export type { ISaveLocalDbParams } from './route.db';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -263,109 +262,76 @@ export async function markQuotesSuperseded(
   }
 }
 
-interface ISaveLocalDbAddress {
-  address_line1?: string;
-  postal_code?: string;
-  city?: string;
-  country?: string;
-}
+// ---------------------------------------------------------------------------
+// Org address update helpers
+// ---------------------------------------------------------------------------
 
-interface ISaveLocalDbParams {
+interface IOrgAddressUpdate {
   supabase: SupabaseClient;
-  userId: string;
-  items: IQuoteItem[];
-  quoteId: string;
-  pdfUrl: string | null | undefined;
-  publicUrl: string | null | undefined;
-  issueDate: string;
-  expiryDate: string;
-  consultationId: string | undefined;
-  salesOrderId: string | undefined;
-  customerId: string | undefined;
-  standaloneCustomerId: string | undefined;
-  fees: IFeesData | undefined;
+  orgId: string;
+  billingAddress?: ISaveLocalDbAddress;
   shippingAddress?: ISaveLocalDbAddress;
+  updateOrgBilling?: boolean;
+  updateOrgShipping?: boolean;
 }
 
-export async function saveQuoteToLocalDb(
-  params: ISaveLocalDbParams
-): Promise<string | null> {
+/**
+ * Persiste les nouvelles adresses dans la table organisations.
+ * Non-bloquant : les erreurs sont loggées mais ne font pas échouer la route.
+ * Le devis Qonto doit être créé EN PREMIER (appel avant persistQuoteResults).
+ */
+export async function updateOrganisationAddresses(
+  params: IOrgAddressUpdate
+): Promise<void> {
   const {
     supabase,
-    userId,
-    items,
-    quoteId,
-    pdfUrl,
-    publicUrl,
-    issueDate,
-    expiryDate,
-    consultationId,
-    salesOrderId,
-    customerId,
-    standaloneCustomerId,
-    fees,
+    orgId,
+    billingAddress,
     shippingAddress,
+    updateOrgBilling,
+    updateOrgShipping,
   } = params;
 
-  type FinancialDocumentInsert =
-    Database['public']['Tables']['financial_documents']['Insert'];
+  type OrgUpdate = Database['public']['Tables']['organisations']['Update'];
+  const update: OrgUpdate = {};
 
-  // Calcul ligne par ligne — round-per-line (aligné R1 finance.md + migration round_per_line)
-  // JAMAIS avgVat (sum/count) : divergence garantie avec multi-taux TVA
-  let totalHt = 0;
-  let tva = 0;
-  for (const item of items) {
-    const qty = parseFloat(item.quantity) || 0;
-    const unit = parseFloat(item.unitPrice.value) || 0;
-    const vatRate = parseFloat(item.vatRate) || 0.2;
-    const lineHt = qty * unit;
-    const lineTva = Math.round(lineHt * vatRate * 100) / 100;
-    totalHt += lineHt;
-    tva += lineTva;
+  if (updateOrgBilling && billingAddress?.city) {
+    update.billing_address_line1 = billingAddress.address_line1 ?? null;
+    update.billing_postal_code = billingAddress.postal_code ?? null;
+    update.billing_city = billingAddress.city;
+    update.billing_country = billingAddress.country ?? 'FR';
   }
-  const localDocNumber = generateLocalDocNumber();
 
-  const payload: FinancialDocumentInsert = {
-    document_type: 'customer_quote',
-    document_direction: 'inbound',
-    partner_id: standaloneCustomerId ?? customerId ?? userId,
-    partner_type: 'customer',
-    document_number: localDocNumber,
-    document_date: issueDate,
-    due_date: expiryDate,
-    validity_date: expiryDate,
-    total_ht: totalHt,
-    total_ttc: totalHt + tva,
-    tva_amount: tva,
-    status: 'draft',
-    quote_status: 'draft',
-    qonto_invoice_id: quoteId,
-    qonto_pdf_url: pdfUrl ?? null,
-    qonto_public_url: publicUrl ?? null,
-    consultation_id: consultationId ?? null,
-    sales_order_id: salesOrderId ?? null,
-    created_by: userId,
-    shipping_cost_ht: fees?.shipping_cost_ht ?? 0,
-    handling_cost_ht: fees?.handling_cost_ht ?? 0,
-    insurance_cost_ht: fees?.insurance_cost_ht ?? 0,
-    fees_vat_rate: fees?.fees_vat_rate ?? 0.2,
-    shipping_address: (shippingAddress ?? null) as Json | null,
-  };
-
-  const { data: rawDoc, error } = await supabase
-    .from('financial_documents')
-    .insert([payload])
-    .select('id')
-    .single();
-
-  if (error) {
-    console.error('[API Qonto Quotes] Failed to save to local DB:', error);
-    return null;
+  if (updateOrgShipping && shippingAddress?.city) {
+    update.shipping_address_line1 = shippingAddress.address_line1 ?? null;
+    update.shipping_postal_code = shippingAddress.postal_code ?? null;
+    update.shipping_city = shippingAddress.city;
+    update.shipping_country = shippingAddress.country ?? 'FR';
+    update.has_different_shipping_address = true;
   }
-  const doc: { id: string } | null = rawDoc as { id: string } | null;
-  const docId: string | null = doc?.id ?? null;
-  console.warn(
-    `[API Qonto Quotes] Saved to local DB: ${docId} (${localDocNumber})`
-  );
-  return docId;
+
+  if (Object.keys(update).length === 0) return;
+
+  try {
+    const { error } = await supabase
+      .from('organisations')
+      .update(update as Record<string, unknown>)
+      .eq('id', orgId);
+
+    if (error) {
+      console.error(
+        '[API Qonto Quotes] Failed to update org addresses (non-blocking):',
+        error
+      );
+    } else {
+      console.warn(
+        `[API Qonto Quotes] Updated org ${orgId} addresses (billing=${updateOrgBilling}, shipping=${updateOrgShipping})`
+      );
+    }
+  } catch (e) {
+    console.error(
+      '[API Qonto Quotes] Exception updating org addresses (non-blocking):',
+      e
+    );
+  }
 }

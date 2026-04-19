@@ -47,6 +47,10 @@ export const PostRequestBodySchema = z.object({
   expiryDays: z.number().int().positive().optional(),
   billingAddress: DocumentAddressSchema.optional(),
   shippingAddress: DocumentAddressSchema.optional(),
+  /** Si true : persiste billingAddress dans organisations.billing_* */
+  updateOrgBilling: z.boolean().optional(),
+  /** Si true : persiste shippingAddress dans organisations.shipping_* */
+  updateOrgShipping: z.boolean().optional(),
   fees: FeesDataSchema.optional(),
   customLines: z.array(CustomLineSchema).optional(),
 });

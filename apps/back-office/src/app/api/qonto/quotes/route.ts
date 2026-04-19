@@ -33,6 +33,7 @@ import {
   linkQuoteToOrder,
   markQuotesSuperseded,
   saveQuoteToLocalDb,
+  updateOrganisationAddresses,
 } from './route.context';
 import type { IRequestContext, MappedQuote } from './route.context';
 
@@ -242,6 +243,19 @@ async function persistQuoteResults(
 
   try {
     const customerId = (ctx.customer as { id?: string } | null)?.id;
+
+    // Persist addresses to organisation if requested (non-blocking, delegated)
+    if ((body.updateOrgBilling ?? body.updateOrgShipping) && customerId) {
+      await updateOrganisationAddresses({
+        supabase,
+        orgId: customerId,
+        billingAddress: body.billingAddress,
+        shippingAddress: body.shippingAddress,
+        updateOrgBilling: body.updateOrgBilling,
+        updateOrgShipping: body.updateOrgShipping,
+      });
+    }
+
     return await saveQuoteToLocalDb({
       supabase,
       userId: body.userId,

@@ -13,26 +13,6 @@ export function QuoteClientCard({
   order,
   customerName,
 }: IQuoteClientCardProps): React.ReactNode {
-  const billingAddr = order.billing_address;
-  const org = order.organisations;
-  const billingLine1 =
-    billingAddr?.address_line1 ??
-    org?.billing_address_line1 ??
-    org?.address_line1;
-  const billingCity = billingAddr?.city ?? org?.billing_city ?? org?.city;
-  const billingPostal =
-    billingAddr?.postal_code ?? org?.billing_postal_code ?? org?.postal_code;
-
-  const shipAddr = order.shipping_address;
-  const hasShipping = org?.has_different_shipping_address;
-  const shippingLine1 =
-    shipAddr?.address_line1 ??
-    (hasShipping ? org?.shipping_address_line1 : null);
-  const shippingCity =
-    shipAddr?.city ?? (hasShipping ? org?.shipping_city : null);
-  const shippingPostal =
-    shipAddr?.postal_code ?? (hasShipping ? org?.shipping_postal_code : null);
-
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -55,30 +35,6 @@ export function QuoteClientCard({
             </p>
           )}
         </div>
-
-        {(billingLine1 ?? billingCity) && (
-          <div className="text-xs text-muted-foreground border-t pt-2 mt-1">
-            <p className="font-medium text-foreground text-xs mb-0.5">
-              Adresse de facturation
-            </p>
-            {billingLine1 && <p>{billingLine1}</p>}
-            {(billingPostal ?? billingCity) && (
-              <p>{[billingPostal, billingCity].filter(Boolean).join(' ')}</p>
-            )}
-          </div>
-        )}
-
-        {(shippingLine1 ?? shippingCity) && (
-          <div className="text-xs text-muted-foreground border-t pt-2 mt-1">
-            <p className="font-medium text-foreground text-xs mb-0.5">
-              Adresse de livraison
-            </p>
-            {shippingLine1 && <p>{shippingLine1}</p>}
-            {(shippingPostal ?? shippingCity) && (
-              <p>{[shippingPostal, shippingCity].filter(Boolean).join(' ')}</p>
-            )}
-          </div>
-        )}
       </CardContent>
     </Card>
   );

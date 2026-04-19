@@ -3,7 +3,7 @@
 **Derniere mise a jour** : 2026-04-19
 **23 packages** dans `packages/@verone/`
 
-## **536 composants, 11 hooks**
+## **538 composants, 12 hooks**
 
 ## @verone/categories
 
@@ -140,12 +140,14 @@
 | `PdfPreviewModal`                   | Modal     | `src/components/PdfPreviewModal.tsx`                                            |
 | `PdfPreviewModalDynamic`            | Modal     | `src/components/PdfPreviewModalDynamic.tsx`                                     |
 | `QuickClassificationModal`          | Modal     | `src/components/QuickClassificationModal.tsx`                                   |
+| `BillingAddressEditor`              | Component | `src/components/QuoteCreateFromOrderModal/BillingAddressEditor.tsx`             |
 | `QuoteClientCard`                   | Component | `src/components/QuoteCreateFromOrderModal/QuoteClientCard.tsx`                  |
 | `QuoteCustomLinesSection`           | Component | `src/components/QuoteCreateFromOrderModal/QuoteCustomLinesSection.tsx`          |
 | `QuoteFeesSection`                  | Component | `src/components/QuoteCreateFromOrderModal/QuoteFeesSection.tsx`                 |
 | `QuoteFinalizeWarning`              | Component | `src/components/QuoteCreateFromOrderModal/QuoteFinalizeWarning.tsx`             |
 | `QuoteItemsTable`                   | Component | `src/components/QuoteCreateFromOrderModal/QuoteItemsTable.tsx`                  |
 | `QuoteShippingSection`              | Component | `src/components/QuoteCreateFromOrderModal/QuoteShippingSection.tsx`             |
+| `QuoteSiretGuardBanner`             | Component | `src/components/QuoteCreateFromOrderModal/QuoteSiretGuardBanner.tsx`            |
 | `QuoteSuccessView`                  | Component | `src/components/QuoteCreateFromOrderModal/QuoteSuccessView.tsx`                 |
 | `QuoteTotalsSection`                | Component | `src/components/QuoteCreateFromOrderModal/QuoteTotalsSection.tsx`               |
 | `QuoteCustomerCard`                 | Component | `src/components/QuoteFormModal/QuoteCustomerCard.tsx`                           |
@@ -234,6 +236,7 @@
 | -------------------------- | --------------------------------------------------------------------- |
 | `useInvoiceActions`        | `src/components/InvoiceCreateFromOrderModal/useInvoiceActions.ts`     |
 | `useInvoiceCreateState`    | `src/components/InvoiceCreateFromOrderModal/useInvoiceCreateState.ts` |
+| `useQuoteSiretGuard`       | `src/components/QuoteCreateFromOrderModal/useQuoteSiretGuard.ts`      |
 | `useRapprochementData`     | `src/components/RapprochementContent/useRapprochementData.ts`         |
 | `useRapprochementFetchers` | `src/components/RapprochementContent/useRapprochementFetchers.ts`     |
 | `useTransactionHandlers`   | `src/components/TransactionDetailContent/useTransactionHandlers.ts`   |

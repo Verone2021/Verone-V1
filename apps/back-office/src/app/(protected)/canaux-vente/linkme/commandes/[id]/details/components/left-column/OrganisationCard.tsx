@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import Link from 'next/link';
+
 import {
   Card,
   CardContent,
@@ -16,6 +18,7 @@ import {
   AlertTriangle,
   Building2,
   Check,
+  ExternalLink,
   Mail,
   MapPin,
   Pencil,
@@ -25,6 +28,7 @@ import {
 } from 'lucide-react';
 
 import type { OrderWithDetails } from '../types';
+import { OrgShippingModal } from './OrgShippingModal';
 
 interface OrganisationCardProps {
   order: OrderWithDetails;
@@ -44,6 +48,9 @@ export function OrganisationCard({
   const [editingOwnership, setEditingOwnership] = useState(false);
   const [editingOrgField, setEditingOrgField] = useState<'siret' | null>(null);
   const [editOrgValue, setEditOrgValue] = useState('');
+  const [showShippingModal, setShowShippingModal] = useState(false);
+
+  const isOrderDraft = order.status === 'draft';
 
   return (
     <Card>
@@ -52,10 +59,15 @@ export function OrganisationCard({
           <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
               <Building2 className="h-4 w-4 text-orange-600 flex-shrink-0" />
-              <span className="font-semibold text-gray-900">
+              {/* Lien cliquable vers la fiche organisation */}
+              <Link
+                href={`/contacts-organisations/customers/${org?.id}`}
+                className="font-semibold text-gray-900 hover:text-orange-600 hover:underline flex items-center gap-1"
+              >
                 {order.organisation.trade_name ?? order.organisation.legal_name}
-              </span>
-              {/* Badge ownership_type — complétable si vide, lecture seule si renseigné */}
+                <ExternalLink className="h-3 w-3 opacity-60" />
+              </Link>
+              {/* Badge ownership_type */}
               {org?.ownership_type ? (
                 <span
                   className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full ${
@@ -112,7 +124,7 @@ export function OrganisationCard({
                 </span>
               )}
             </div>
-            {/* Identifiants : SIRET / TVA — complétable si vide */}
+            {/* Identifiants : SIRET / TVA */}
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
               {(() => {
                 const isFrench =
@@ -235,10 +247,10 @@ export function OrganisationCard({
                 </span>
               )}
             </div>
-            {/* Adresse de livraison (si différente) */}
-            {order.organisation.has_different_shipping_address && (
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
-                {(order.organisation.shipping_address_line1 ??
+            {/* Adresse de livraison */}
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 items-center">
+              {order.organisation.has_different_shipping_address ? (
+                (order.organisation.shipping_address_line1 ??
                 order.organisation.shipping_postal_code) ? (
                   <span className="flex items-center gap-1">
                     <Truck className="h-3 w-3 text-blue-500" />
@@ -256,9 +268,26 @@ export function OrganisationCard({
                     <AlertTriangle className="h-3 w-3" />
                     Adresse livraison : Non renseignée
                   </span>
-                )}
-              </div>
-            )}
+                )
+              ) : (
+                <span className="flex items-center gap-1 text-gray-400">
+                  <Truck className="h-3 w-3" />
+                  Livraison : même que facturation
+                </span>
+              )}
+              {/* Bouton modifier adresse livraison — uniquement si commande draft */}
+              {isOrderDraft && onUpdateOrganisation && (
+                <button
+                  type="button"
+                  onClick={() => setShowShippingModal(true)}
+                  className="ml-1 text-blue-500 hover:text-blue-700 flex items-center gap-0.5"
+                  title="Modifier l'adresse de livraison"
+                >
+                  <Pencil className="h-2.5 w-2.5" />
+                  <span className="text-xs">Modifier</span>
+                </button>
+              )}
+            </div>
             {/* Contact */}
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
               {order.organisation.email && (
@@ -282,6 +311,17 @@ export function OrganisationCard({
           <p className="text-gray-500 text-sm">Organisation non renseignée</p>
         )}
       </CardContent>
+
+      {/* Modal modifier adresse de livraison — extrait dans OrgShippingModal */}
+      {org && onUpdateOrganisation && (
+        <OrgShippingModal
+          open={showShippingModal}
+          onOpenChange={setShowShippingModal}
+          orgId={org.id}
+          orgDisplayName={org.trade_name ?? org.legal_name ?? ''}
+          onUpdateOrganisation={onUpdateOrganisation}
+        />
+      )}
     </Card>
   );
 }

@@ -2,8 +2,6 @@
 
 import { useCallback, useState } from 'react';
 
-import { useToast } from '@verone/common/hooks';
-import { createClient } from '@verone/utils/supabase/client';
 import {
   Button,
   Dialog,
@@ -18,6 +16,8 @@ import {
 import { FileEdit, Loader2 } from 'lucide-react';
 
 import type { ICustomLine } from '../OrderSelectModal';
+import { BillingAddressEditor } from './BillingAddressEditor';
+import type { IBillingAddressResolved } from './BillingAddressEditor';
 import { QuoteClientCard } from './QuoteClientCard';
 import { QuoteCustomLinesSection } from './QuoteCustomLinesSection';
 import { QuoteFeesSection } from './QuoteFeesSection';
@@ -25,15 +25,40 @@ import { QuoteFinalizeWarning } from './QuoteFinalizeWarning';
 import { QuoteItemsTable } from './QuoteItemsTable';
 import { QuoteShippingSection } from './QuoteShippingSection';
 import type { IShippingAddressResolved } from './QuoteShippingSection';
+import { QuoteSiretGuardBanner } from './QuoteSiretGuardBanner';
 import { QuoteSuccessView } from './QuoteSuccessView';
 import { QuoteTotalsSection } from './QuoteTotalsSection';
-import type {
-  CreateStatus,
-  ICreatedQuote,
-  IQuoteCreateFromOrderModalProps,
-  IQuoteFeesState,
-} from './types';
+import type { IQuoteCreateFromOrderModalProps, IQuoteFeesState } from './types';
 import { resolveCustomerName } from './quote-utils';
+import { useQuoteCreateFromOrder } from './use-quote-create-from-order';
+import { useQuoteSiretGuard } from './useQuoteSiretGuard';
+
+// ---------------------------------------------------------------------------
+// Helper — resoudre l adresse de facturation initiale depuis la commande/org
+// ---------------------------------------------------------------------------
+
+function resolveInitialBillingAddress(
+  order: NonNullable<IQuoteCreateFromOrderModalProps['order']>
+): IBillingAddressResolved | null {
+  const billingAddr = order.billing_address;
+  const org = order.organisations;
+  const line1 =
+    billingAddr?.address_line1 ??
+    org?.billing_address_line1 ??
+    org?.address_line1;
+  const postal =
+    billingAddr?.postal_code ?? org?.billing_postal_code ?? org?.postal_code;
+  const city = billingAddr?.city ?? org?.billing_city ?? org?.city;
+  const country =
+    billingAddr?.country ?? org?.billing_country ?? org?.country ?? 'FR';
+  if (!city) return null;
+  return {
+    address_line1: line1 ?? '',
+    postal_code: postal ?? '',
+    city,
+    country,
+  };
+}
 
 export function QuoteCreateFromOrderModal({
   order,
@@ -44,11 +69,7 @@ export function QuoteCreateFromOrderModal({
   consultationId,
   supersededQuoteIds,
 }: IQuoteCreateFromOrderModalProps): React.ReactNode {
-  const { toast } = useToast();
-  const [status, setStatus] = useState<CreateStatus>('idle');
   const [expiryDays, setExpiryDays] = useState(30);
-  const [createdQuote, setCreatedQuote] = useState<ICreatedQuote | null>(null);
-  const [showFinalizeWarning, setShowFinalizeWarning] = useState(false);
   const [customLines, setCustomLines] = useState<ICustomLine[]>([]);
   const [fees, setFees] = useState<IQuoteFeesState>({
     shippingCostHt: order?.shipping_cost_ht ?? 0,
@@ -59,251 +80,66 @@ export function QuoteCreateFromOrderModal({
   const [shippingAddress, setShippingAddress] =
     useState<IShippingAddressResolved | null>(null);
 
-  const resetState = useCallback((): void => {
-    setStatus('idle');
+  // Adresse facturation overridee (null = adresse initiale de l org)
+  const [billingAddressOverride, setBillingAddressOverride] =
+    useState<IBillingAddressResolved | null>(null);
+  const [updateOrgBilling, setUpdateOrgBilling] = useState(false);
+
+  const {
+    isMissingSiret,
+    siretInput,
+    setSiretInput,
+    savingSiret,
+    handleSaveSiret,
+    reset: resetSiretGuard,
+  } = useQuoteSiretGuard(order);
+
+  const resetFormState = useCallback((): void => {
     setExpiryDays(30);
-    setCreatedQuote(null);
-    setShowFinalizeWarning(false);
     setShippingAddress(null);
-  }, []);
+    setBillingAddressOverride(null);
+    setUpdateOrgBilling(false);
+    resetSiretGuard();
+  }, [resetSiretGuard]);
 
   const handleClose = useCallback((): void => {
-    resetState();
+    resetFormState();
     onOpenChange(false);
-  }, [onOpenChange, resetState]);
+  }, [onOpenChange, resetFormState]);
 
-  const handleCreateQuote = async (): Promise<void> => {
-    if (!order) return;
-
-    setStatus('creating');
-
-    try {
-      const supabaseClient = createClient();
-      const { data: userData } = await supabaseClient.auth.getUser();
-      const currentUserId = userData.user?.id ?? null;
-
-      const resolvedBillingAddress = order.billing_address
-        ? {
-            address_line1: order.billing_address?.address_line1 ?? '',
-            postal_code: order.billing_address?.postal_code ?? '',
-            city: order.billing_address?.city ?? '',
-            country: order.billing_address?.country ?? 'FR',
-          }
-        : order.organisations
-          ? {
-              address_line1:
-                order.organisations.billing_address_line1 ??
-                order.organisations.address_line1 ??
-                '',
-              postal_code:
-                order.organisations.billing_postal_code ??
-                order.organisations.postal_code ??
-                '',
-              city:
-                order.organisations.billing_city ??
-                order.organisations.city ??
-                '',
-              country: order.organisations.billing_country ?? 'FR',
-            }
-          : undefined;
-
-      const allCustomLines = customLines.map(line => ({
-        title: line.title,
-        description: line.description,
-        quantity: line.quantity,
-        unit_price_ht: line.unit_price_ht,
-        vat_rate: line.vat_rate,
-      }));
-
-      const consultationLines = isConsultation
-        ? [
-            ...(order.sales_order_items ?? []).map(item => ({
-              title: item.products?.name ?? 'Produit',
-              quantity: item.quantity,
-              unit_price_ht: item.unit_price_ht,
-              vat_rate: item.tax_rate,
-            })),
-            ...allCustomLines,
-          ]
-        : allCustomLines;
-
-      const feesPayload = {
-        shipping_cost_ht: fees.shippingCostHt,
-        handling_cost_ht: fees.handlingCostHt,
-        insurance_cost_ht: fees.insuranceCostHt,
-        fees_vat_rate: fees.feesVatRate,
-      };
-
-      const requestBody = isConsultation
-        ? {
-            consultationId,
-            userId: currentUserId,
-            supersededQuoteIds: supersededQuoteIds?.length
-              ? supersededQuoteIds
-              : undefined,
-            customer: {
-              customerId: order.customer_id,
-              customerType: order.customer_type ?? 'organization',
-            },
-            customerEmail: order.organisations?.email ?? undefined,
-            expiryDays,
-            billingAddress: resolvedBillingAddress,
-            fees: feesPayload,
-            customLines: consultationLines,
-          }
-        : {
-            salesOrderId: order.id,
-            userId: currentUserId,
-            expiryDays,
-            billingAddress: resolvedBillingAddress,
-            shippingAddress: shippingAddress ?? undefined,
-            fees: feesPayload,
-            customLines: allCustomLines,
-          };
-
-      const response = await fetch('/api/qonto/quotes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      });
-
-      const data = (await response.json()) as {
-        success?: boolean;
-        error?: string;
-        quote?: ICreatedQuote;
-      };
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error ?? 'Failed to create quote');
-      }
-
-      setCreatedQuote(data.quote ?? null);
-      setStatus('success');
-      if (data.quote) {
-        toast({
-          title: 'Devis créé',
-          description: `Devis ${data.quote.quote_number} créé en brouillon`,
-        });
-        onSuccess?.(data.quote.id);
-      }
-    } catch (error) {
-      setStatus('error');
-      toast({
-        title: 'Erreur',
-        description:
-          error instanceof Error ? error.message : 'Erreur lors de la création',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleFinalizeQuote = async (): Promise<void> => {
-    if (!createdQuote?.id) return;
-
-    setShowFinalizeWarning(false);
-
-    try {
-      const response = await fetch(
-        `/api/qonto/quotes/${createdQuote.id}/finalize`,
-        { method: 'POST' }
-      );
-
-      const data = (await response.json()) as {
-        success?: boolean;
-        error?: string;
-        quote?: ICreatedQuote;
-      };
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error ?? 'Failed to finalize quote');
-      }
-
-      setCreatedQuote(data.quote ?? null);
-      toast({
-        title: 'Devis finalisé',
-        description: 'Devis finalisé et envoyable au client',
-      });
-    } catch (error) {
-      toast({
-        title: 'Erreur',
-        description:
-          error instanceof Error
-            ? error.message
-            : 'Erreur lors de la finalisation',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleDownloadPdf = async (): Promise<void> => {
-    if (!createdQuote?.id) return;
-
-    try {
-      const response = await fetch(`/api/qonto/quotes/${createdQuote.id}/pdf`);
-
-      if (!response.ok) throw new Error('Failed to download PDF');
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `devis-${createdQuote.quote_number}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      toast({
-        title: 'PDF téléchargé',
-        description: 'Le devis a été téléchargé',
-      });
-    } catch (_error) {
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de télécharger le PDF',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleConvertToInvoice = async (): Promise<void> => {
-    if (!createdQuote?.id) return;
-
-    try {
-      const response = await fetch(
-        `/api/qonto/quotes/${createdQuote.id}/convert`,
-        { method: 'POST' }
-      );
-
-      const data = (await response.json()) as {
-        success?: boolean;
-        error?: string;
-      };
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error ?? 'Failed to convert quote');
-      }
-
-      toast({
-        title: 'Devis converti',
-        description: 'Facture créée en brouillon depuis le devis',
-      });
-      handleClose();
-    } catch (error) {
-      toast({
-        title: 'Erreur',
-        description:
-          error instanceof Error
-            ? error.message
-            : 'Erreur lors de la conversion',
-        variant: 'destructive',
-      });
-    }
-  };
+  const {
+    status,
+    createdQuote,
+    showFinalizeWarning,
+    setShowFinalizeWarning,
+    handleCreateQuote,
+    handleFinalizeQuote,
+    handleDownloadPdf,
+    handleConvertToInvoice,
+  } = useQuoteCreateFromOrder({
+    order: order!,
+    isConsultation,
+    consultationId,
+    supersededQuoteIds,
+    fees,
+    expiryDays,
+    customLines,
+    billingAddressOverride,
+    updateOrgBilling,
+    shippingAddress,
+    onSuccess,
+    handleClose,
+  });
 
   if (!order) return null;
 
   const customerName = resolveCustomerName(order);
+  const initialBillingAddress = resolveInitialBillingAddress(order);
+  const orgDisplayName =
+    order.organisations?.trade_name ??
+    order.organisations?.legal_name ??
+    order.organisations?.name ??
+    null;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -332,12 +168,24 @@ export function QuoteCreateFromOrderModal({
             <div className="space-y-4">
               <QuoteClientCard order={order} customerName={customerName} />
               {!isConsultation && (
-                <QuoteShippingSection
-                  enseigneId={order.organisations?.enseigne_id}
-                  defaultOrgId={order.customer_id}
-                  disabled={status === 'creating'}
-                  onShippingAddressChange={setShippingAddress}
-                />
+                <>
+                  <BillingAddressEditor
+                    enseigneId={order.organisations?.enseigne_id}
+                    defaultOrgId={order.customer_id}
+                    initialBillingAddress={initialBillingAddress}
+                    orgName={orgDisplayName ?? undefined}
+                    disabled={status === 'creating'}
+                    onBillingAddressChange={setBillingAddressOverride}
+                    onUpdateOrgBillingChange={setUpdateOrgBilling}
+                  />
+                  <QuoteShippingSection
+                    enseigneId={order.organisations?.enseigne_id}
+                    defaultOrgId={order.customer_id}
+                    orgName={orgDisplayName}
+                    disabled={status === 'creating'}
+                    onShippingAddressChange={setShippingAddress}
+                  />
+                </>
               )}
               <QuoteItemsTable order={order} />
               <QuoteFeesSection fees={fees} onFeesChange={setFees} />
@@ -370,38 +218,48 @@ export function QuoteCreateFromOrderModal({
           )}
         </div>
 
-        <DialogFooter className="flex-col gap-2 md:flex-row">
+        <DialogFooter className="flex-shrink-0 border-t pt-4 mt-4">
           {status === 'success' ? (
             <Button className="w-full md:w-auto" onClick={handleClose}>
               Fermer
             </Button>
           ) : (
-            <>
-              <Button
-                variant="outline"
-                className="w-full md:w-auto"
-                onClick={handleClose}
-              >
-                Annuler
-              </Button>
-              <Button
-                className="w-full md:w-auto"
-                onClick={() => void handleCreateQuote()}
-                disabled={status === 'creating'}
-              >
-                {status === 'creating' ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Création...
-                  </>
-                ) : (
-                  <>
-                    <FileEdit className="mr-2 h-4 w-4" />
-                    Créer le devis (brouillon)
-                  </>
-                )}
-              </Button>
-            </>
+            <div className="flex flex-col gap-3 w-full">
+              {isMissingSiret && (
+                <QuoteSiretGuardBanner
+                  siretInput={siretInput}
+                  setSiretInput={setSiretInput}
+                  savingSiret={savingSiret}
+                  onSaveSiret={() => void handleSaveSiret()}
+                />
+              )}
+              <div className="flex flex-col gap-2 md:flex-row md:justify-end">
+                <Button
+                  variant="outline"
+                  className="w-full md:w-auto"
+                  onClick={handleClose}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  className="w-full md:w-auto"
+                  onClick={() => void handleCreateQuote()}
+                  disabled={status === 'creating' || isMissingSiret}
+                >
+                  {status === 'creating' ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Création...
+                    </>
+                  ) : (
+                    <>
+                      <FileEdit className="mr-2 h-4 w-4" />
+                      Créer le devis (brouillon)
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           )}
         </DialogFooter>
       </DialogContent>

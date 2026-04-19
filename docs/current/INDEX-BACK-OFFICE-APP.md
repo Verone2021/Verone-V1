@@ -1,6 +1,6 @@
 # Back-Office — Documentation App
 
-_Generated: 2026-04-19 02:14_
+_Generated: 2026-04-19 02:48_
 
 ## Pages (147)
 
@@ -154,7 +154,7 @@ _Generated: 2026-04-19 02:14_
 | `/`                                                                      | page.tsx |
 | `/unauthorized`                                                          | page.tsx |
 
-## API Routes (122)
+## API Routes (123)
 
 | Endpoint                                                     | Methods            |
 | ------------------------------------------------------------ | ------------------ |
@@ -212,6 +212,7 @@ _Generated: 2026-04-19 02:14_
 | `/api/linkme/users/update-email`                             | POST               |
 | `/api/logs`                                                  | GET, POST          |
 | `/api/meta-commerce/sync-statuses`                           | POST               |
+| `/api/organisations/[id]/shipping-address`                   | PATCH              |
 | `/api/packlink/dropoffs`                                     | GET                |
 | `/api/packlink/services`                                     | POST               |
 | `/api/packlink/shipment/[ref]/labels`                        | GET                |
