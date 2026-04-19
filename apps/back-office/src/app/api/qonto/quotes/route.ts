@@ -10,34 +10,24 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { QontoClient } from '@verone/integrations/qonto';
-import type { CreateClientQuoteParams } from '@verone/integrations/qonto';
 import { createAdminClient } from '@verone/utils/supabase/server';
 
-import {
-  mapQontoQuote,
-  resolveBillingAddress,
-  resolveCustomerInfo,
-  buildQuoteItems,
-  computeQuoteDates,
-  resolveQontoClient,
-  PostRequestBodySchema,
-} from './route.helpers';
+import { mapQontoQuote, PostRequestBodySchema } from './route.helpers';
 import type {
   IPostRequestBody,
   IQontoQuoteRaw,
-  IResolvedBillingAddress,
-  IQuoteItem,
+  Organisation,
 } from './route.helpers';
 import {
   resolveRequestContext,
-  linkQuoteToOrder,
+  resolveBillingOrg,
   markQuotesSuperseded,
-  saveQuoteToLocalDb,
-  updateOrganisationAddresses,
 } from './route.context';
-import type { IRequestContext, MappedQuote } from './route.context';
-
-type Supabase = ReturnType<typeof createAdminClient>;
+import {
+  buildAndCreateQontoQuote,
+  persistQuoteResults,
+  validatePostBody,
+} from './route.post';
 
 function getQontoClient(): QontoClient {
   return new QontoClient({
@@ -120,198 +110,17 @@ export async function GET(request: NextRequest): Promise<
 }
 
 // ---------------------------------------------------------------------------
-// POST helpers — Qonto quote creation
-// ---------------------------------------------------------------------------
-
-async function buildAndCreateQontoQuote(
-  qontoClient: QontoClient,
-  ctx: IRequestContext,
-  body: IPostRequestBody
-): Promise<
-  | {
-      quote: MappedQuote;
-      items: IQuoteItem[];
-      issueDate: string;
-      expiryDate: string;
-      raw: IQontoQuoteRaw;
-    }
-  | NextResponse<{ success: boolean; error?: string }>
-> {
-  const {
-    email: customerEmail,
-    name: customerName,
-    vatNumber,
-    taxId,
-  } = resolveCustomerInfo(ctx.customerType, ctx.customer, body.customerEmail);
-
-  const qontoAddress: IResolvedBillingAddress | null = resolveBillingAddress(
-    body.billingAddress,
-    ctx.orderBillingAddress,
-    ctx.customerType,
-    ctx.customer
-  );
-  if (!qontoAddress) {
-    return NextResponse.json(
-      {
-        success: false,
-        error:
-          'Adresse de facturation incomplète. Ville et code postal requis.',
-      },
-      { status: 400 }
-    );
-  }
-
-  const qontoClientType =
-    ctx.customerType === 'organization' ? 'company' : 'individual';
-  const qontoClientId = await resolveQontoClient(
-    qontoClient,
-    customerName,
-    customerEmail,
-    qontoClientType,
-    qontoAddress,
-    vatNumber,
-    taxId
-  );
-
-  const items = buildQuoteItems(
-    ctx.orderItems,
-    body.fees,
-    ctx.orderFees,
-    body.customLines
-  );
-  const { issueDate, expiryDate } = computeQuoteDates(body.expiryDays ?? 30);
-
-  const shippingFooter =
-    body.shippingAddress?.city && body.shippingAddress?.address_line1
-      ? `Adresse de livraison : ${body.shippingAddress.address_line1}, ${body.shippingAddress.postal_code ?? ''} ${body.shippingAddress.city}${body.shippingAddress.country && body.shippingAddress.country !== 'FR' ? `, ${body.shippingAddress.country}` : ''}`
-      : undefined;
-
-  const quoteParams: CreateClientQuoteParams = {
-    clientId: qontoClientId,
-    currency: 'EUR',
-    issueDate,
-    expiryDate,
-    purchaseOrderNumber: ctx.orderNumber,
-    items,
-    ...(shippingFooter ? { footer: shippingFooter } : {}),
-  };
-
-  const rawQuote = await qontoClient.createClientQuote(quoteParams);
-  const raw = rawQuote as IQontoQuoteRaw;
-  return {
-    quote: mapQontoQuote(raw, true) as MappedQuote,
-    items,
-    issueDate,
-    expiryDate,
-    raw,
-  };
-}
-
-// ---------------------------------------------------------------------------
-// POST helpers — persistence
-// ---------------------------------------------------------------------------
-
-async function persistQuoteResults(
-  supabase: Supabase,
-  ctx: IRequestContext,
-  quoteResult: {
-    quote: MappedQuote;
-    items: IQuoteItem[];
-    issueDate: string;
-    expiryDate: string;
-    raw: IQontoQuoteRaw;
-  },
-  body: IPostRequestBody
-): Promise<string | null> {
-  const { quote, items, issueDate, expiryDate, raw } = quoteResult;
-
-  if (body.salesOrderId) {
-    await linkQuoteToOrder(
-      supabase,
-      body.salesOrderId,
-      quote.id,
-      quote.quote_number
-    );
-  }
-
-  if (!((body.consultationId ?? body.salesOrderId) && body.userId)) {
-    if (body.consultationId ?? body.salesOrderId) {
-      console.error('[API Qonto Quotes] No userId provided for DB save');
-    }
-    return null;
-  }
-
-  try {
-    const customerId = (ctx.customer as { id?: string } | null)?.id;
-
-    // Persist addresses to organisation if requested (non-blocking, delegated)
-    if ((body.updateOrgBilling ?? body.updateOrgShipping) && customerId) {
-      await updateOrganisationAddresses({
-        supabase,
-        orgId: customerId,
-        billingAddress: body.billingAddress,
-        shippingAddress: body.shippingAddress,
-        updateOrgBilling: body.updateOrgBilling,
-        updateOrgShipping: body.updateOrgShipping,
-      });
-    }
-
-    return await saveQuoteToLocalDb({
-      supabase,
-      userId: body.userId,
-      items,
-      quoteId: quote.id,
-      pdfUrl: raw.pdf_url,
-      publicUrl: raw.public_url,
-      issueDate,
-      expiryDate,
-      consultationId: body.consultationId,
-      salesOrderId: body.salesOrderId,
-      customerId,
-      standaloneCustomerId: body.customer?.customerId,
-      fees: body.fees,
-      shippingAddress: body.shippingAddress,
-    });
-  } catch (e) {
-    console.error('[API Qonto Quotes] DB save error (non-blocking):', e);
-    return null;
-  }
-}
-
-function validatePostBody(
-  body: IPostRequestBody
-): NextResponse<{ success: boolean; error?: string }> | null {
-  const { salesOrderId, customer, customLines } = body;
-  if (!salesOrderId && !customer) {
-    return NextResponse.json(
-      { success: false, error: 'salesOrderId ou customer est requis' },
-      { status: 400 }
-    );
-  }
-  if (!salesOrderId && (!customLines || customLines.length === 0)) {
-    return NextResponse.json(
-      {
-        success: false,
-        error:
-          'customLines est requis pour un devis standalone (sans commande)',
-      },
-      { status: 400 }
-    );
-  }
-  return null;
-}
-
-// ---------------------------------------------------------------------------
 // POST /api/qonto/quotes
 // ---------------------------------------------------------------------------
 
 /**
  * POST /api/qonto/quotes
- * Crée un devis depuis une commande client
+ * Crée un devis depuis une commande client.
  *
  * Body:
  * - salesOrderId?: UUID de la commande (optionnel pour devis standalone)
  * - customer?: { customerId, customerType } (requis si pas de salesOrderId)
+ * - billingOrgId?: UUID de l'org de facturation (Option B — remplace l'org commande pour Qonto)
  * - expiryDays: nombre de jours avant expiration (défaut: 30)
  * - customLines: lignes personnalisées (requises si pas de salesOrderId)
  */
@@ -351,10 +160,24 @@ export async function POST(request: NextRequest): Promise<
     );
     if ('errorResponse' in ctxResult) return ctxResult.errorResponse;
 
+    // Option B : résoudre l'org de facturation si billingOrgId présent
+    const orderCustomerId = (ctxResult.customer as { id?: string } | null)?.id;
+    const billingOrgResult = await resolveBillingOrg(
+      supabase,
+      body.billingOrgId,
+      orderCustomerId
+    );
+    if (billingOrgResult !== null && 'errorResponse' in billingOrgResult) {
+      return billingOrgResult.errorResponse;
+    }
+    const billingOrg: Organisation | null =
+      billingOrgResult !== null ? billingOrgResult.org : null;
+
     const quoteResult = await buildAndCreateQontoQuote(
       qontoClient,
       ctxResult,
-      body
+      body,
+      billingOrg
     );
     if (quoteResult instanceof NextResponse) return quoteResult;
 
@@ -362,7 +185,8 @@ export async function POST(request: NextRequest): Promise<
       supabase,
       ctxResult,
       quoteResult,
-      body
+      body,
+      billingOrg
     );
 
     if (body.supersededQuoteIds && body.supersededQuoteIds.length > 0) {

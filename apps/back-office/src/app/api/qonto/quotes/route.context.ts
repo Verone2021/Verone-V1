@@ -219,6 +219,44 @@ export async function resolveRequestContext(
 }
 
 // ---------------------------------------------------------------------------
+// Billing org resolution (Option B)
+// ---------------------------------------------------------------------------
+
+/**
+ * Résout l'org de facturation effective (Option B).
+ * Si billingOrgId est présent et différent de l'org commande :
+ *   → fetch l'org, retourne { org } ou { errorResponse } si introuvable.
+ * Sinon retourne null (comportement par défaut = org commande).
+ */
+export async function resolveBillingOrg(
+  supabase: SupabaseClient,
+  billingOrgId: string | null | undefined,
+  orderCustomerId: string | undefined
+): Promise<
+  | { org: Organisation }
+  | { errorResponse: NextResponse<{ success: boolean; error?: string }> }
+  | null
+> {
+  if (!billingOrgId || billingOrgId === orderCustomerId) return null;
+
+  const result = await fetchCustomerFromSupabase(
+    supabase,
+    'organization',
+    billingOrgId
+  );
+  const org = result as Organisation | null;
+  if (!org) {
+    return {
+      errorResponse: NextResponse.json(
+        { success: false, error: 'Organisation de facturation introuvable' },
+        { status: 404 }
+      ),
+    };
+  }
+  return { org };
+}
+
+// ---------------------------------------------------------------------------
 // DB persistence helpers
 // ---------------------------------------------------------------------------
 

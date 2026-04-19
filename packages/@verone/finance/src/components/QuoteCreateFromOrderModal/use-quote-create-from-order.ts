@@ -26,6 +26,8 @@ export interface IUseQuoteCreateFromOrderParams {
   billingAddressOverride: IBillingAddressResolved | null;
   updateOrgBilling: boolean;
   shippingAddress: IShippingAddressResolved | null;
+  /** ID de l'org choisie comme destinataire de facturation (Option B). Null = org commande. */
+  billingOrgId: string | null;
   onSuccess?: (id: string) => void;
   handleClose: () => void;
 }
@@ -57,6 +59,7 @@ export function useQuoteCreateFromOrder(
     billingAddressOverride,
     updateOrgBilling,
     shippingAddress,
+    billingOrgId,
     onSuccess,
     handleClose,
   } = params;
@@ -163,6 +166,8 @@ export function useQuoteCreateFromOrder(
             updateOrgShipping: shippingAddress?.saveToOrg === true,
             fees: feesPayload,
             customLines: allCustomLines,
+            // Option B : org de facturation si différente de l'org commande
+            billingOrgId: billingOrgId ?? undefined,
           };
 
       const response = await fetch('/api/qonto/quotes', {
@@ -211,6 +216,7 @@ export function useQuoteCreateFromOrder(
     billingAddressOverride,
     updateOrgBilling,
     shippingAddress,
+    billingOrgId,
     onSuccess,
     toast,
   ]);
