@@ -32,6 +32,7 @@ import {
   updateOrganisationAddresses,
 } from './route.context';
 import type { IRequestContext, MappedQuote } from './route.context';
+import { propagateOrderCustomer } from '../invoices/_lib/propagate-order-customer';
 
 type Supabase = ReturnType<typeof createAdminClient>;
 
@@ -171,6 +172,17 @@ export async function persistQuoteResults(
     // Option B : si billingOrg présente → elle devient le partner_id du document local
     const orderCustomerId = (ctx.customer as { id?: string } | null)?.id;
     const effectiveCustomerId = billingOrg?.id ?? orderCustomerId;
+
+    // [BO-FIN-037] Propager billingOrg + adresses vers la commande source si draft (R6)
+    if (body.salesOrderId && billingOrg && billingOrg.id !== orderCustomerId) {
+      await propagateOrderCustomer({
+        supabase,
+        salesOrderId: body.salesOrderId,
+        billingOrgId: billingOrg.id,
+        billingAddress: body.billingAddress,
+        shippingAddress: body.shippingAddress,
+      });
+    }
 
     // Persist addresses to organisation si demandé (non-bloquant)
     if (

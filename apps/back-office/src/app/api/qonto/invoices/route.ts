@@ -25,6 +25,7 @@ import { resolveQontoClient } from './_lib/resolve-qonto-client';
 import { buildInvoiceItems } from './_lib/build-invoice-items';
 import { computeDueDate } from './_lib/compute-due-date';
 import { persistFinancialDocument } from './_lib/persist-financial-document';
+import { propagateOrderCustomer } from './_lib/propagate-order-customer';
 import type { IPostRequestBody } from './_lib/types';
 
 /**
@@ -228,6 +229,17 @@ export async function POST(request: NextRequest): Promise<
       finalizedInvoice = await qontoClient.finalizeClientInvoice(invoice.id);
     }
 
+    // [BO-FIN-037] Propager billingOrgId + adresses vers la commande si draft (R6)
+    if (billingOrgId && billingOrgId !== typedOrder.customer_id) {
+      await propagateOrderCustomer({
+        supabase,
+        salesOrderId,
+        billingOrgId,
+        billingAddress: bodyBillingAddress,
+        shippingAddress: bodyShippingAddress,
+      });
+    }
+
     // Computed fees values for persist ctx
     const feesVatRate = fees?.fees_vat_rate ?? typedOrder.fees_vat_rate ?? 0.2;
     const shippingCost =
@@ -252,6 +264,7 @@ export async function POST(request: NextRequest): Promise<
         bodyShippingAddress,
         fees: { shippingCost, handlingCost, insuranceCost, feesVatRate },
         finalizedInvoice,
+        billingOrgId: billingOrgId ?? undefined,
       });
     if (persistError)
       return persistError as NextResponse<{

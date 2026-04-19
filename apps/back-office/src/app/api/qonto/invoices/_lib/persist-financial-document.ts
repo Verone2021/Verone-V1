@@ -29,6 +29,8 @@ interface IPersistCtx {
     pdf_url?: string | null;
     public_url?: string | null;
   };
+  /** [BO-FIN-037] Org de facturation effective (si différente de order.customer_id) */
+  billingOrgId?: string;
 }
 
 export async function persistFinancialDocument(
@@ -60,9 +62,10 @@ export async function persistFinancialDocument(
   const totalTtc = totalHt + totalVat;
 
   // Déterminer le partner_id (organisation uniquement pour l'instant)
+  // [BO-FIN-037] Si billingOrgId fourni, il prime sur order.customer_id
   let partnerId: string | null = null;
-  if (order.customer_type === 'organization' && order.customer_id) {
-    partnerId = order.customer_id;
+  if (order.customer_type === 'organization') {
+    partnerId = ctx.billingOrgId ?? order.customer_id ?? null;
   }
 
   // Récupérer l'utilisateur connecté
