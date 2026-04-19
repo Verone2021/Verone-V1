@@ -3,7 +3,7 @@
 **Derniere mise a jour** : 2026-04-19
 **23 packages** dans `packages/@verone/`
 
-## **538 composants, 12 hooks**
+## **539 composants, 12 hooks**
 
 ## @verone/categories
 
@@ -416,6 +416,7 @@
 | `ContactFormModalWrapper`        | Modal     | `src/components/modals/ContactFormModalWrapper.tsx`                     |
 | `NewContactModal`                | Modal     | `src/components/modals/NewContactModal.tsx`                             |
 | `OrgBrowseModal`                 | Modal     | `src/components/modals/OrgBrowseModal.tsx`                              |
+| `OrganisationPickerModal`        | Modal     | `src/components/modals/OrganisationPickerModal.tsx`                     |
 | `OrganisationQuickViewModal`     | Modal     | `src/components/modals/OrganisationQuickViewModal.tsx`                  |
 | `OrganisationSelectorItems`      | Component | `src/components/modals/OrganisationSelectorItems.tsx`                   |
 | `OrganisationSelectorModal`      | Modal     | `src/components/modals/OrganisationSelectorModal.tsx`                   |

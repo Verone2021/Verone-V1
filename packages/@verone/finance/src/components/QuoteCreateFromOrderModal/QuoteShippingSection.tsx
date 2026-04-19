@@ -13,12 +13,15 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  cn,
 } from '@verone/ui';
 import { AddressAutocomplete } from '@verone/ui';
 import type { AddressResult } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import { Checkbox } from '@verone/ui';
-import { MapPin, Truck } from 'lucide-react';
+import { MapPin, Truck, Building2 } from 'lucide-react';
+import { OrganisationPickerModal } from '@verone/organisations/components/modals';
+import { OrganisationLogo } from '@verone/organisations/components/display';
 
 interface IShippingOrg {
   id: string;
@@ -81,6 +84,7 @@ export function QuoteShippingSection({
   const [orgs, setOrgs] = useState<IShippingOrg[]>([]);
   const [selectedOrgId, setSelectedOrgId] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [newAddressInput, setNewAddressInput] = useState('');
   const [newAddressResolved, setNewAddressResolved] =
     useState<IShippingAddressResolved | null>(null);
@@ -145,16 +149,18 @@ export function QuoteShippingSection({
     }
   };
 
-  const handleOrgSelect = (orgId: string) => {
-    setSelectedOrgId(orgId);
-    const org = orgs.find(o => o.id === orgId);
-    if (!org) {
-      notify(null);
-      return;
-    }
-    const addr = resolveOrgAddress(org);
-    notify(addr);
-  };
+  const handleOrgPickerSelect = useCallback(
+    (pickedOrg: { id: string }) => {
+      setSelectedOrgId(pickedOrg.id);
+      const org = orgs.find(o => o.id === pickedOrg.id);
+      if (!org) {
+        notify(null);
+        return;
+      }
+      notify(resolveOrgAddress(org));
+    },
+    [orgs, notify]
+  );
 
   const handleAddressSelect = (result: AddressResult) => {
     const resolved: IShippingAddressResolved = {
@@ -212,54 +218,100 @@ export function QuoteShippingSection({
           </SelectContent>
         </Select>
 
-        {/* Other org sub-selector */}
+        {/* Other org — picker modal */}
         {mode === 'other_org' && (
           <div className="space-y-2">
-            <Select
-              value={selectedOrgId}
-              onValueChange={handleOrgSelect}
-              disabled={disabled || loading}
-            >
-              <SelectTrigger className="h-8 text-sm">
-                <SelectValue placeholder="Choisir une organisation..." />
-              </SelectTrigger>
-              <SelectContent>
-                {otherOrgs.map(o => (
-                  <SelectItem key={o.id} value={o.id}>
-                    {o.name}
-                    {o.city ? ` — ${o.city}` : ''}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {resolvedOtherAddr && (
-              <div className="flex items-start gap-2 text-xs text-muted-foreground">
-                <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p>{resolvedOtherAddr.address_line1}</p>
-                  <p>
-                    {[resolvedOtherAddr.postal_code, resolvedOtherAddr.city]
-                      .filter(Boolean)
-                      .join(' ')}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {selectedOrgId && !resolvedOtherAddr && !loading && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 text-xs text-muted-foreground"
-                onClick={() => {
-                  setSelectedOrgId('');
-                  notify(null);
-                }}
+            {selectedOrg ? (
+              /* Carte compacte de l'org sélectionnée */
+              <div
+                className={cn(
+                  'flex items-center gap-3 p-3 border rounded-lg bg-blue-50 border-blue-200'
+                )}
               >
-                Organisation sans adresse — revenir à la facturation
-              </Button>
+                <OrganisationLogo
+                  logoUrl={null}
+                  organisationName={selectedOrg.name}
+                  size="sm"
+                  fallback="initials"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-medium text-sm text-gray-900 truncate">
+                      {selectedOrg.name}
+                    </span>
+                  </div>
+                  {resolvedOtherAddr && (
+                    <div className="flex items-start gap-1 text-xs text-muted-foreground mt-0.5">
+                      <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                      <span>
+                        {resolvedOtherAddr.address_line1},{' '}
+                        {[resolvedOtherAddr.postal_code, resolvedOtherAddr.city]
+                          .filter(Boolean)
+                          .join(' ')}
+                      </span>
+                    </div>
+                  )}
+                  {selectedOrgId && !resolvedOtherAddr && !loading && (
+                    <p className="text-xs text-amber-600 mt-0.5">
+                      Adresse non renseignée
+                    </p>
+                  )}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs flex-shrink-0"
+                  disabled={disabled}
+                  onClick={() => setPickerOpen(true)}
+                >
+                  Changer
+                </Button>
+              </div>
+            ) : (
+              /* Bouton d'ouverture du picker */
+              <button
+                type="button"
+                disabled={disabled || loading}
+                onClick={() => setPickerOpen(true)}
+                className={cn(
+                  'w-full flex items-center gap-3 px-4 py-3 border border-dashed rounded-lg text-left transition-colors',
+                  'hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+                  'border-gray-300 text-gray-500',
+                  (disabled || loading) && 'opacity-50 cursor-not-allowed'
+                )}
+              >
+                <Building2 className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                <span className="text-sm">
+                  Sélectionner une organisation...
+                </span>
+              </button>
             )}
+
+            {/* OrganisationPickerModal */}
+            <OrganisationPickerModal
+              open={pickerOpen}
+              onOpenChange={setPickerOpen}
+              organisations={otherOrgs.map(o => ({
+                id: o.id,
+                legal_name: o.name,
+                trade_name: null,
+                address_line1: o.address_line1,
+                city: o.city,
+                postal_code: o.postal_code,
+                shipping_address_line1: o.shipping_address_line1,
+                logo_url: null,
+                ownership_type: null,
+              }))}
+              selectedId={selectedOrgId || null}
+              onSelect={handleOrgPickerSelect}
+              title="Sélectionner une adresse de livraison"
+              description={
+                otherOrgs.length > 0
+                  ? `${otherOrgs.length.toString()} organisation${otherOrgs.length > 1 ? 's' : ''} disponible${otherOrgs.length > 1 ? 's' : ''}`
+                  : undefined
+              }
+              emptyMessage="Aucune organisation trouvée dans cette enseigne"
+            />
           </div>
         )}
 

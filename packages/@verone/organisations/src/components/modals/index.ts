@@ -5,3 +5,11 @@ export { AssignOrganisationsModal } from './AssignOrganisationsModal';
 export { OrgBrowseModal } from './OrgBrowseModal';
 export { OrganisationSelectorModal } from './OrganisationSelectorModal';
 export { OrganisationQuickViewModal } from './OrganisationQuickViewModal';
+export {
+  OrganisationPickerModal,
+  getOwnershipBadge,
+} from './OrganisationPickerModal';
+export type {
+  OrganisationPickerItem,
+  OrganisationPickerModalProps,
+} from './OrganisationPickerModal';
