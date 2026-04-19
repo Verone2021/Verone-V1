@@ -168,6 +168,23 @@ export async function POST(request: NextRequest): Promise<
         `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim() || 'Client';
     }
 
+    // Guard TIN : si organisation, SIRET ou VAT requis avant tout appel Qonto
+    // Qonto refuse la finalisation (422) si le client B2B n'a ni SIRET ni TVA
+    if (clientType === 'organization') {
+      const org = customer as Organisation;
+      if (!org.siret && !org.vat_number) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'SIRET_OR_VAT_REQUIRED',
+            message: `L'organisation "${org.trade_name ?? org.legal_name ?? 'inconnue'}" n'a ni SIRET ni numéro de TVA. Qonto exige l'un des deux pour créer une facture B2B. Ajoutez un SIRET ou VAT dans la fiche organisation.`,
+            orgId: clientId,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // Email facultatif — Qonto accepte la création de client sans email
     const hasRealEmail = !!customerEmail;
     const emailForQonto = customerEmail ?? undefined;
