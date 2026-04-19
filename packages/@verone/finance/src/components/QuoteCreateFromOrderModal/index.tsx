@@ -84,6 +84,8 @@ export function QuoteCreateFromOrderModal({
   const [billingAddressOverride, setBillingAddressOverride] =
     useState<IBillingAddressResolved | null>(null);
   const [updateOrgBilling, setUpdateOrgBilling] = useState(false);
+  // Org de facturation choisie (null = org commande par defaut)
+  const [billingOrgId, setBillingOrgId] = useState<string | null>(null);
 
   const {
     isMissingSiret,
@@ -92,13 +94,14 @@ export function QuoteCreateFromOrderModal({
     savingSiret,
     handleSaveSiret,
     reset: resetSiretGuard,
-  } = useQuoteSiretGuard(order);
+  } = useQuoteSiretGuard(order, billingOrgId);
 
   const resetFormState = useCallback((): void => {
     setExpiryDays(30);
     setShippingAddress(null);
     setBillingAddressOverride(null);
     setUpdateOrgBilling(false);
+    setBillingOrgId(null);
     resetSiretGuard();
   }, [resetSiretGuard]);
 
@@ -177,6 +180,7 @@ export function QuoteCreateFromOrderModal({
                     disabled={status === 'creating'}
                     onBillingAddressChange={setBillingAddressOverride}
                     onUpdateOrgBillingChange={setUpdateOrgBilling}
+                    onBillingOrgChange={setBillingOrgId}
                   />
                   <QuoteShippingSection
                     enseigneId={order.organisations?.enseigne_id}

@@ -44,6 +44,8 @@ export interface IBillingOrg {
   country: string | null;
   logo_url: string | null;
   ownership_type: string | null;
+  siret: string | null;
+  vat_number: string | null;
 }
 
 interface IBillingAddressEditorProps {
@@ -60,6 +62,8 @@ interface IBillingAddressEditorProps {
   onBillingAddressChange: (addr: IBillingAddressResolved | null) => void;
   /** Callback quand la checkbox "sauvegarder" change */
   onUpdateOrgBillingChange: (save: boolean) => void;
+  /** Callback quand l'org de facturation choisie change (null = org commande) */
+  onBillingOrgChange?: (orgId: string | null) => void;
 }
 
 type AddressMode = 'current' | 'other-org' | 'new';
@@ -87,6 +91,7 @@ export function BillingAddressEditor({
   disabled = false,
   onBillingAddressChange,
   onUpdateOrgBillingChange,
+  onBillingOrgChange,
 }: IBillingAddressEditorProps): React.ReactNode {
   const [isEditing, setIsEditing] = useState(false);
   const [mode, setMode] = useState<AddressMode>('current');
@@ -109,7 +114,7 @@ export function BillingAddressEditor({
         const { data } = await supabase
           .from('organisations')
           .select(
-            'id, trade_name, legal_name, billing_address_line1, billing_postal_code, billing_city, billing_country, address_line1, postal_code, city, country, logo_url, ownership_type'
+            'id, trade_name, legal_name, billing_address_line1, billing_postal_code, billing_city, billing_country, address_line1, postal_code, city, country, logo_url, ownership_type, siret, vat_number'
           )
           .eq('enseigne_id', enseigneId);
         if (data) {
@@ -129,6 +134,8 @@ export function BillingAddressEditor({
               country: o.country,
               logo_url: o.logo_url,
               ownership_type: o.ownership_type,
+              siret: o.siret ?? null,
+              vat_number: o.vat_number ?? null,
             }))
           );
         }
@@ -148,19 +155,23 @@ export function BillingAddressEditor({
 
     if (newMode === 'current') {
       onBillingAddressChange(null);
+      onBillingOrgChange?.(null);
     } else if (newMode === 'other-org') {
       setSelectedOrgId('');
       onBillingAddressChange(null);
+      onBillingOrgChange?.(null);
     } else if (newMode === 'new') {
       setNewAddress(null);
       setNewAddressInput('');
       onBillingAddressChange(null);
+      onBillingOrgChange?.(null);
     }
   };
 
   const handleOrgPickerSelect = useCallback(
     (pickedOrg: { id: string }) => {
       setSelectedOrgId(pickedOrg.id);
+      onBillingOrgChange?.(pickedOrg.id);
       const org = orgs.find(o => o.id === pickedOrg.id);
       if (!org) {
         onBillingAddressChange(null);
@@ -168,7 +179,7 @@ export function BillingAddressEditor({
       }
       onBillingAddressChange(resolveOrgBillingAddress(org));
     },
-    [orgs, onBillingAddressChange]
+    [orgs, onBillingAddressChange, onBillingOrgChange]
   );
 
   const handleAddressSelect = (result: AddressResult) => {
@@ -196,6 +207,7 @@ export function BillingAddressEditor({
     setSelectedOrgId('');
     onBillingAddressChange(null);
     onUpdateOrgBillingChange(false);
+    onBillingOrgChange?.(null);
   };
 
   const otherOrgs = orgs;

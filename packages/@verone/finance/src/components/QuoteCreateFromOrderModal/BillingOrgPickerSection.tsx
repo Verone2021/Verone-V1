@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, cn } from '@verone/ui';
-import { Building2, MapPin } from 'lucide-react';
+import { Building2, CheckCircle2, MapPin, XCircle } from 'lucide-react';
 import { OrganisationAddressPickerModal } from '@verone/organisations/components/modals';
 import { OrganisationLogo } from '@verone/organisations/components/display';
 import type {
@@ -68,6 +68,27 @@ export function BillingOrgPickerSection({
                 Adresse non renseignee
               </p>
             )}
+            {selectedOrg?.siret && (
+              <div className="flex items-center gap-1 text-xs text-green-700 font-mono mt-0.5">
+                <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
+                <span>SIRET : {selectedOrg.siret}</span>
+              </div>
+            )}
+            {!selectedOrg?.siret && selectedOrg?.vat_number && (
+              <div className="flex items-center gap-1 text-xs text-green-700 font-mono mt-0.5">
+                <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
+                <span>TVA : {selectedOrg.vat_number}</span>
+              </div>
+            )}
+            {selectedOrgId &&
+              !loadingOrgs &&
+              !selectedOrg?.siret &&
+              !selectedOrg?.vat_number && (
+                <div className="flex items-center gap-1 text-xs text-red-600 mt-0.5">
+                  <XCircle className="h-3 w-3 flex-shrink-0" />
+                  <span>Aucun SIRET ni n° TVA</span>
+                </div>
+              )}
           </div>
           <Button
             variant="outline"
