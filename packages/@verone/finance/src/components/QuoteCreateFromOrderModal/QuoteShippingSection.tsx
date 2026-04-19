@@ -20,7 +20,7 @@ import type { AddressResult } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import { Checkbox } from '@verone/ui';
 import { MapPin, Truck, Building2 } from 'lucide-react';
-import { OrganisationPickerModal } from '@verone/organisations/components/modals';
+import { OrganisationAddressPickerModal } from '@verone/organisations/components/modals';
 import { OrganisationLogo } from '@verone/organisations/components/display';
 
 interface IShippingOrg {
@@ -37,6 +37,8 @@ interface IShippingOrg {
   shipping_postal_code: string | null;
   shipping_city: string | null;
   has_different_shipping_address: boolean | null;
+  logo_url: string | null;
+  ownership_type: string | null;
 }
 
 export interface IShippingAddressResolved {
@@ -103,10 +105,9 @@ export function QuoteShippingSection({
         const { data } = await supabase
           .from('organisations')
           .select(
-            'id, trade_name, legal_name, address_line1, postal_code, city, country, shipping_address_line1, shipping_postal_code, shipping_city, has_different_shipping_address'
+            'id, trade_name, legal_name, address_line1, postal_code, city, country, shipping_address_line1, shipping_postal_code, shipping_city, has_different_shipping_address, logo_url, ownership_type'
           )
-          .eq('enseigne_id', enseigneId)
-          .limit(100);
+          .eq('enseigne_id', enseigneId);
         if (data) {
           setOrgs(
             data.map(o => ({
@@ -122,6 +123,8 @@ export function QuoteShippingSection({
               shipping_postal_code: o.shipping_postal_code,
               shipping_city: o.shipping_city,
               has_different_shipping_address: o.has_different_shipping_address,
+              logo_url: o.logo_url,
+              ownership_type: o.ownership_type,
             }))
           );
         }
@@ -292,8 +295,8 @@ export function QuoteShippingSection({
               </button>
             )}
 
-            {/* OrganisationPickerModal */}
-            <OrganisationPickerModal
+            {/* OrganisationAddressPickerModal */}
+            <OrganisationAddressPickerModal
               open={pickerOpen}
               onOpenChange={setPickerOpen}
               organisations={otherOrgs.map(o => ({
@@ -304,8 +307,8 @@ export function QuoteShippingSection({
                 city: o.city,
                 postal_code: o.postal_code,
                 shipping_address_line1: o.shipping_address_line1,
-                logo_url: null,
-                ownership_type: null,
+                logo_url: o.logo_url,
+                ownership_type: o.ownership_type,
               }))}
               selectedId={selectedOrgId || null}
               onSelect={handleOrgPickerSelect}
@@ -316,6 +319,9 @@ export function QuoteShippingSection({
                   : undefined
               }
               emptyMessage="Aucune organisation trouvée dans cette enseigne"
+              showOwnershipFilter
+              showMapView={false}
+              hideTrigger
             />
           </div>
         )}
