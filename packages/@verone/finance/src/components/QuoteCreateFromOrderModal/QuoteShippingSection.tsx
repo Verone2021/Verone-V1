@@ -18,7 +18,6 @@ import {
 import { AddressAutocomplete } from '@verone/ui';
 import type { AddressResult } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
-import { Checkbox } from '@verone/ui';
 import { MapPin, Truck, Building2 } from 'lucide-react';
 import { OrganisationAddressPickerModal } from '@verone/organisations/components/modals';
 import { OrganisationLogo } from '@verone/organisations/components/display';
@@ -46,7 +45,6 @@ export interface IShippingAddressResolved {
   postal_code: string;
   city: string;
   country: string;
-  saveToOrg?: boolean;
 }
 
 type ShippingMode = 'same' | 'other_org' | 'new';
@@ -54,8 +52,6 @@ type ShippingMode = 'same' | 'other_org' | 'new';
 interface QuoteShippingSectionProps {
   enseigneId: string | null | undefined;
   defaultOrgId: string | null | undefined;
-  /** Trade name of the default organisation, used in save checkbox label */
-  orgName?: string | null;
   disabled?: boolean;
   onShippingAddressChange: (addr: IShippingAddressResolved | null) => void;
 }
@@ -81,7 +77,6 @@ function resolveOrgAddress(org: IShippingOrg): IShippingAddressResolved | null {
 export function QuoteShippingSection({
   enseigneId,
   defaultOrgId: _defaultOrgId,
-  orgName,
   disabled = false,
   onShippingAddressChange,
 }: QuoteShippingSectionProps): React.ReactNode {
@@ -93,7 +88,6 @@ export function QuoteShippingSection({
   const [newAddressInput, setNewAddressInput] = useState('');
   const [newAddressResolved, setNewAddressResolved] =
     useState<IShippingAddressResolved | null>(null);
-  const [saveToOrg, setSaveToOrg] = useState(false);
 
   // Load enseigne orgs for "other_org" mode
   useEffect(() => {
@@ -150,7 +144,6 @@ export function QuoteShippingSection({
     setSelectedOrgId('');
     setNewAddressInput('');
     setNewAddressResolved(null);
-    setSaveToOrg(false);
 
     if (newMode === 'same') {
       notify(null);
@@ -176,24 +169,14 @@ export function QuoteShippingSection({
       postal_code: result.postalCode,
       city: result.city,
       country: result.countryCode ?? 'FR',
-      saveToOrg: false,
     };
     setNewAddressResolved(resolved);
-    setSaveToOrg(false);
-    notify({ ...resolved, saveToOrg: false });
-  };
-
-  const handleSaveToOrgChange = (checked: boolean) => {
-    setSaveToOrg(checked);
-    if (newAddressResolved) {
-      notify({ ...newAddressResolved, saveToOrg: checked });
-    }
+    notify(resolved);
   };
 
   const otherOrgs = orgs;
   const selectedOrg = orgs.find(o => o.id === selectedOrgId);
   const resolvedOtherAddr = selectedOrg ? resolveOrgAddress(selectedOrg) : null;
-  const displayOrgName = orgName ?? 'cette organisation';
 
   return (
     <Card>
@@ -351,25 +334,6 @@ export function QuoteShippingSection({
                 </div>
               </div>
             )}
-
-            <div className="flex items-center gap-2 pt-1">
-              <Checkbox
-                id="save-shipping-to-org"
-                checked={saveToOrg}
-                onCheckedChange={checked =>
-                  handleSaveToOrgChange(checked === true)
-                }
-                disabled={disabled || !newAddressResolved}
-              />
-              <label
-                htmlFor="save-shipping-to-org"
-                className="text-xs text-muted-foreground cursor-pointer leading-snug"
-              >
-                Sauvegarder cette adresse comme adresse de livraison de{' '}
-                <span className="font-medium">{displayOrgName}</span> pour les
-                prochains devis
-              </label>
-            </div>
           </div>
         )}
       </CardContent>

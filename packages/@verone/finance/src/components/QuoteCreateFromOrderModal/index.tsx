@@ -186,7 +186,6 @@ export function QuoteCreateFromOrderModal({
                   <QuoteShippingSection
                     enseigneId={order.organisations?.enseigne_id}
                     defaultOrgId={order.customer_id}
-                    orgName={orgDisplayName}
                     disabled={status === 'creating'}
                     onShippingAddressChange={setShippingAddress}
                   />

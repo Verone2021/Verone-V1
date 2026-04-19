@@ -240,7 +240,6 @@ export function InvoiceCreateFromOrderModal({
               <QuoteShippingSection
                 enseigneId={order.organisations?.enseigne_id}
                 defaultOrgId={order.customer_id}
-                orgName={orgDisplayName}
                 disabled={state.status === 'creating'}
                 onShippingAddressChange={handleShippingAddressChange}
               />

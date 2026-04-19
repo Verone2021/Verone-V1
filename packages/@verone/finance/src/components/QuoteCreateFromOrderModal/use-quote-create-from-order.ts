@@ -163,7 +163,7 @@ export function useQuoteCreateFromOrder(
                   country: shippingAddress.country,
                 }
               : undefined,
-            updateOrgShipping: shippingAddress?.saveToOrg === true,
+            updateOrgShipping: false,
             fees: feesPayload,
             customLines: allCustomLines,
             // Option B : org de facturation si différente de l'org commande
