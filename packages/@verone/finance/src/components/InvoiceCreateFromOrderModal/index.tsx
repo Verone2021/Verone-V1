@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import {
   Dialog,
@@ -10,6 +10,12 @@ import {
   DialogTitle,
 } from '@verone/ui';
 import { FileText } from 'lucide-react';
+
+import { BillingAddressEditor } from '../QuoteCreateFromOrderModal/BillingAddressEditor';
+import type { IBillingAddressResolved } from '../QuoteCreateFromOrderModal/BillingAddressEditor';
+import { QuoteShippingSection } from '../QuoteCreateFromOrderModal/QuoteShippingSection';
+import type { IShippingAddressResolved } from '../QuoteCreateFromOrderModal/QuoteShippingSection';
+import { useQuoteSiretGuard } from '../QuoteCreateFromOrderModal/useQuoteSiretGuard';
 
 import type { IInvoiceListApiResponse } from './types';
 import type { IInvoiceCreateFromOrderModalProps } from './types';
@@ -25,6 +31,33 @@ import { InvoiceCustomLinesSection } from './InvoiceCustomLinesSection';
 import { InvoiceTotalsSection } from './InvoiceTotalsSection';
 import { InvoiceFooter } from './InvoiceFooter';
 
+// ---------------------------------------------------------------------------
+// Helper — résoudre l'adresse initiale depuis la commande/org
+// ---------------------------------------------------------------------------
+
+function resolveInitialBillingAddress(
+  order: NonNullable<IInvoiceCreateFromOrderModalProps['order']>
+): IBillingAddressResolved | null {
+  const billingAddr = order.billing_address;
+  const org = order.organisations;
+  const line1 =
+    billingAddr?.address_line1 ??
+    org?.billing_address_line1 ??
+    org?.address_line1;
+  const postal =
+    billingAddr?.postal_code ?? org?.billing_postal_code ?? org?.postal_code;
+  const city = billingAddr?.city ?? org?.billing_city ?? org?.city;
+  const country =
+    billingAddr?.country ?? org?.billing_country ?? org?.country ?? 'FR';
+  if (!city) return null;
+  return {
+    address_line1: line1 ?? '',
+    postal_code: postal ?? '',
+    city,
+    country,
+  };
+}
+
 export function InvoiceCreateFromOrderModal({
   order,
   open,
@@ -33,30 +66,78 @@ export function InvoiceCreateFromOrderModal({
 }: IInvoiceCreateFromOrderModalProps): React.ReactNode {
   const state = useInvoiceCreateState(order);
 
-  const { handleClose, handleSaveSiret, handleCreateInvoice } =
-    useInvoiceActions({
-      order,
-      issueDate: state.issueDate,
-      invoiceLabel: state.invoiceLabel,
-      billingAddress: state.billingAddress,
-      hasDifferentShipping: state.hasDifferentShipping,
-      shippingAddress: state.shippingAddress,
-      shippingCostHt: state.shippingCostHt,
-      handlingCostHt: state.handlingCostHt,
-      insuranceCostHt: state.insuranceCostHt,
-      feesVatRate: state.feesVatRate,
-      customLines: state.customLines,
-      onOpenChange,
-      onSuccess,
-      setStatus: state.setStatus,
-      setCreatedInvoice: state.setCreatedInvoice,
-      setSiretInput: state.setSiretInput,
-      setSiretSaved: state.setSiretSaved,
-      setIssueDate: state.setIssueDate,
-      setInvoiceLabel: state.setInvoiceLabel,
-      setSavingSiret: state.setSavingSiret,
-      siretInput: state.siretInput,
-    });
+  // Guard SIRET dynamique — réagit à billingOrgId (même logique que devis)
+  const {
+    isMissingSiret,
+    siretInput,
+    setSiretInput,
+    savingSiret,
+    handleSaveSiret,
+    reset: resetSiretGuard,
+  } = useQuoteSiretGuard(order, state.billingOrgId);
+
+  const handleBillingAddressChange = useCallback(
+    (addr: IBillingAddressResolved | null) => {
+      if (addr) {
+        state.setBillingAddress({
+          address_line1: addr.address_line1,
+          address_line2: '',
+          postal_code: addr.postal_code,
+          city: addr.city,
+          country: addr.country,
+        });
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const handleShippingAddressChange = useCallback(
+    (addr: IShippingAddressResolved | null) => {
+      if (addr) {
+        state.setHasDifferentShipping(true);
+        state.setShippingAddress({
+          address_line1: addr.address_line1,
+          address_line2: '',
+          postal_code: addr.postal_code,
+          city: addr.city,
+          country: addr.country,
+        });
+      } else {
+        state.setHasDifferentShipping(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const { handleClose, handleCreateInvoice } = useInvoiceActions({
+    order,
+    issueDate: state.issueDate,
+    invoiceLabel: state.invoiceLabel,
+    billingAddress: state.billingAddress,
+    hasDifferentShipping: state.hasDifferentShipping,
+    shippingAddress: state.shippingAddress,
+    shippingCostHt: state.shippingCostHt,
+    handlingCostHt: state.handlingCostHt,
+    insuranceCostHt: state.insuranceCostHt,
+    feesVatRate: state.feesVatRate,
+    customLines: state.customLines,
+    billingOrgId: state.billingOrgId,
+    onOpenChange: (isOpen: boolean) => {
+      if (!isOpen) resetSiretGuard();
+      onOpenChange(isOpen);
+    },
+    onSuccess,
+    setStatus: state.setStatus,
+    setCreatedInvoice: state.setCreatedInvoice,
+    setSiretInput: state.setSiretInput,
+    setSiretSaved: state.setSiretSaved,
+    setIssueDate: state.setIssueDate,
+    setInvoiceLabel: state.setInvoiceLabel,
+    setSavingSiret: state.setSavingSiret,
+    siretInput,
+  });
 
   // Récupérer le prochain numéro de facture au chargement (GET /api/qonto/invoices)
   useEffect(() => {
@@ -102,6 +183,13 @@ export function InvoiceCreateFromOrderModal({
   const customerEmail =
     order.organisations?.email ?? order.individual_customers?.email;
 
+  const initialBillingAddress = resolveInitialBillingAddress(order);
+  const orgDisplayName =
+    order.organisations?.trade_name ??
+    order.organisations?.legal_name ??
+    order.organisations?.name ??
+    null;
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="h-screen md:h-auto max-w-full md:max-w-4xl md:max-h-[90vh] overflow-hidden flex flex-col">
@@ -136,6 +224,25 @@ export function InvoiceCreateFromOrderModal({
                 setShippingAddress={state.setShippingAddress}
                 editingShipping={state.editingShipping}
                 setEditingShipping={state.setEditingShipping}
+              />
+              <BillingAddressEditor
+                enseigneId={order.organisations?.enseigne_id}
+                defaultOrgId={order.customer_id}
+                initialBillingAddress={initialBillingAddress}
+                orgName={orgDisplayName ?? undefined}
+                disabled={state.status === 'creating'}
+                onBillingAddressChange={handleBillingAddressChange}
+                onUpdateOrgBillingChange={() => {
+                  /* factures : pas de save-to-org côté billing */
+                }}
+                onBillingOrgChange={state.setBillingOrgId}
+              />
+              <QuoteShippingSection
+                enseigneId={order.organisations?.enseigne_id}
+                defaultOrgId={order.customer_id}
+                orgName={orgDisplayName}
+                disabled={state.status === 'creating'}
+                onShippingAddressChange={handleShippingAddressChange}
               />
               <InvoiceInfoSection
                 issueDate={state.issueDate}
@@ -184,10 +291,10 @@ export function InvoiceCreateFromOrderModal({
 
         <InvoiceFooter
           status={state.status}
-          isMissingSiret={state.isMissingSiret}
-          siretInput={state.siretInput}
-          setSiretInput={state.setSiretInput}
-          savingSiret={state.savingSiret}
+          isMissingSiret={isMissingSiret}
+          siretInput={siretInput}
+          setSiretInput={setSiretInput}
+          savingSiret={savingSiret}
           onSaveSiret={() => {
             void handleSaveSiret();
           }}
