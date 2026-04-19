@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import {
   Button,
@@ -20,6 +20,7 @@ import {
 import type { AddressResult } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import { Building, MapPin } from 'lucide-react';
+import { BillingOrgPickerSection } from './BillingOrgPickerSection';
 
 export interface IBillingAddressResolved {
   address_line1: string;
@@ -28,9 +29,11 @@ export interface IBillingAddressResolved {
   country: string;
 }
 
-interface IBillingOrg {
+export interface IBillingOrg {
   id: string;
   name: string;
+  trade_name: string | null;
+  legal_name: string;
   billing_address_line1: string | null;
   billing_postal_code: string | null;
   billing_city: string | null;
@@ -39,6 +42,8 @@ interface IBillingOrg {
   postal_code: string | null;
   city: string | null;
   country: string | null;
+  logo_url: string | null;
+  ownership_type: string | null;
 }
 
 interface IBillingAddressEditorProps {
@@ -87,6 +92,7 @@ export function BillingAddressEditor({
   const [mode, setMode] = useState<AddressMode>('current');
   const [orgs, setOrgs] = useState<IBillingOrg[]>([]);
   const [selectedOrgId, setSelectedOrgId] = useState<string>('');
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [newAddress, setNewAddress] = useState<IBillingAddressResolved | null>(
     null
   );
@@ -103,15 +109,16 @@ export function BillingAddressEditor({
         const { data } = await supabase
           .from('organisations')
           .select(
-            'id, trade_name, legal_name, billing_address_line1, billing_postal_code, billing_city, billing_country, address_line1, postal_code, city, country'
+            'id, trade_name, legal_name, billing_address_line1, billing_postal_code, billing_city, billing_country, address_line1, postal_code, city, country, logo_url, ownership_type'
           )
-          .eq('enseigne_id', enseigneId)
-          .limit(20);
+          .eq('enseigne_id', enseigneId);
         if (data) {
           setOrgs(
             data.map(o => ({
               id: o.id,
               name: o.trade_name ?? o.legal_name ?? '',
+              trade_name: o.trade_name,
+              legal_name: o.legal_name ?? '',
               billing_address_line1: o.billing_address_line1,
               billing_postal_code: o.billing_postal_code,
               billing_city: o.billing_city,
@@ -120,6 +127,8 @@ export function BillingAddressEditor({
               postal_code: o.postal_code,
               city: o.city,
               country: o.country,
+              logo_url: o.logo_url,
+              ownership_type: o.ownership_type,
             }))
           );
         }
@@ -149,13 +158,18 @@ export function BillingAddressEditor({
     }
   };
 
-  const handleOrgSelect = (orgId: string) => {
-    setSelectedOrgId(orgId);
-    const org = orgs.find(o => o.id === orgId);
-    if (!org) return;
-    const addr = resolveOrgBillingAddress(org);
-    onBillingAddressChange(addr);
-  };
+  const handleOrgPickerSelect = useCallback(
+    (pickedOrg: { id: string }) => {
+      setSelectedOrgId(pickedOrg.id);
+      const org = orgs.find(o => o.id === pickedOrg.id);
+      if (!org) {
+        onBillingAddressChange(null);
+        return;
+      }
+      onBillingAddressChange(resolveOrgBillingAddress(org));
+    },
+    [orgs, onBillingAddressChange]
+  );
 
   const handleAddressSelect = (result: AddressResult) => {
     const addr: IBillingAddressResolved = {
@@ -184,6 +198,11 @@ export function BillingAddressEditor({
     onUpdateOrgBillingChange(false);
   };
 
+  const otherOrgs = orgs.filter(o => o.id !== defaultOrgId);
+  const selectedOrg = orgs.find(o => o.id === selectedOrgId);
+  const resolvedBillingAddr = selectedOrg
+    ? resolveOrgBillingAddress(selectedOrg)
+    : null;
   const displayAddr = initialBillingAddress;
 
   return (
@@ -267,47 +286,17 @@ export function BillingAddressEditor({
             )}
 
             {mode === 'other-org' && (
-              <div className="space-y-2">
-                <Select
-                  value={selectedOrgId}
-                  onValueChange={handleOrgSelect}
-                  disabled={disabled || loadingOrgs}
-                >
-                  <SelectTrigger className="h-8 text-sm">
-                    <SelectValue placeholder="Choisir une organisation..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {orgs
-                      .filter(o => o.id !== defaultOrgId)
-                      .map(o => (
-                        <SelectItem key={o.id} value={o.id}>
-                          {o.name}
-                          {(o.billing_city ?? o.city)
-                            ? ` — ${o.billing_city ?? o.city}`
-                            : ''}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                {selectedOrgId &&
-                  (() => {
-                    const org = orgs.find(o => o.id === selectedOrgId);
-                    const addr = org ? resolveOrgBillingAddress(org) : null;
-                    return addr ? (
-                      <div className="flex items-start gap-2 text-xs text-muted-foreground">
-                        <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p>{addr.address_line1}</p>
-                          <p>
-                            {[addr.postal_code, addr.city]
-                              .filter(Boolean)
-                              .join(' ')}
-                          </p>
-                        </div>
-                      </div>
-                    ) : null;
-                  })()}
-              </div>
+              <BillingOrgPickerSection
+                otherOrgs={otherOrgs}
+                selectedOrg={selectedOrg}
+                resolvedBillingAddr={resolvedBillingAddr}
+                selectedOrgId={selectedOrgId}
+                loadingOrgs={loadingOrgs}
+                disabled={disabled}
+                pickerOpen={pickerOpen}
+                setPickerOpen={setPickerOpen}
+                onSelect={handleOrgPickerSelect}
+              />
             )}
 
             {mode === 'new' && (

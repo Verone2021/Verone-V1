@@ -3,7 +3,7 @@
 **Derniere mise a jour** : 2026-04-19
 **23 packages** dans `packages/@verone/`
 
-## **541 composants, 12 hooks**
+## **542 composants, 12 hooks**
 
 ## @verone/categories
 
@@ -141,6 +141,7 @@
 | `PdfPreviewModalDynamic`            | Modal     | `src/components/PdfPreviewModalDynamic.tsx`                                     |
 | `QuickClassificationModal`          | Modal     | `src/components/QuickClassificationModal.tsx`                                   |
 | `BillingAddressEditor`              | Component | `src/components/QuoteCreateFromOrderModal/BillingAddressEditor.tsx`             |
+| `BillingOrgPickerSection`           | Component | `src/components/QuoteCreateFromOrderModal/BillingOrgPickerSection.tsx`          |
 | `QuoteClientCard`                   | Component | `src/components/QuoteCreateFromOrderModal/QuoteClientCard.tsx`                  |
 | `QuoteCustomLinesSection`           | Component | `src/components/QuoteCreateFromOrderModal/QuoteCustomLinesSection.tsx`          |
 | `QuoteFeesSection`                  | Component | `src/components/QuoteCreateFromOrderModal/QuoteFeesSection.tsx`                 |
