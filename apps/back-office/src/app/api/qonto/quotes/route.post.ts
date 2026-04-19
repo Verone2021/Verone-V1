@@ -201,6 +201,7 @@ export async function persistQuoteResults(
       customerId: effectiveCustomerId,
       standaloneCustomerId: body.customer?.customerId,
       fees: body.fees,
+      billingAddress: body.billingAddress,
       shippingAddress: body.shippingAddress,
     });
   } catch (e) {
