@@ -87,6 +87,20 @@ export async function POST(
   }>
 > {
   try {
+    // 1. AUTH SERVEUR EN PREMIER — avant toute opération destructive
+    const supabaseAuth = await createServerClient();
+    const {
+      data: { user: authUser },
+      error: authError,
+    } = await supabaseAuth.auth.getUser();
+    if (authError || !authUser) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    const currentUserId = authUser.id;
+
     const { orderId } = await params;
 
     // Validation UUID
@@ -116,6 +130,7 @@ export async function POST(
     }
     const body: RegenerateProformaBody = parsed.data;
 
+    // Admin client pour bypass RLS (staff confirmé via auth ci-dessus)
     const supabase = createAdminClient();
 
     // Chercher la proforma draft liée à cette commande
@@ -193,19 +208,7 @@ export async function POST(
 
     const qontoClient = getQontoClient();
 
-    // Hard delete Qonto
-    if (draftDoc.qonto_invoice_id) {
-      try {
-        await qontoClient.deleteClientInvoice(draftDoc.qonto_invoice_id);
-      } catch (err) {
-        console.warn(
-          `[Regenerate Proforma] Qonto delete failed for ${draftDoc.qonto_invoice_id} (non-blocking):`,
-          err
-        );
-      }
-    }
-
-    // Soft delete local
+    // Soft-delete local EN PREMIER (bloquant) — garantit l'atomicité
     const { error: softDeleteError } = await supabase
       .from('financial_documents')
       .update({ deleted_at: new Date().toISOString() })
@@ -223,6 +226,19 @@ export async function POST(
         },
         { status: 500 }
       );
+    }
+
+    // Hard delete Qonto EN SECOND (non-bloquant, avec log explicite)
+    if (draftDoc.qonto_invoice_id) {
+      try {
+        await qontoClient.deleteClientInvoice(draftDoc.qonto_invoice_id);
+      } catch (err) {
+        console.error(
+          `[BO-FIN-029] Qonto delete failed for proforma ${draftDoc.qonto_invoice_id}:`,
+          err
+        );
+        // Non-bloquant — monitoring à ajouter
+      }
     }
 
     // Charger la commande (R1 + R2 : items depuis la commande)
@@ -302,13 +318,6 @@ export async function POST(
     if (typedOrder.customer_type === 'organization' && typedOrder.customer_id) {
       partnerId = typedOrder.customer_id;
     }
-
-    // Récupérer l'utilisateur connecté
-    const supabaseAuth = await createServerClient();
-    const {
-      data: { user: authUser },
-    } = await supabaseAuth.auth.getUser();
-    const currentUserId = authUser?.id ?? null;
 
     let localDocumentId: string | null = null;
 
