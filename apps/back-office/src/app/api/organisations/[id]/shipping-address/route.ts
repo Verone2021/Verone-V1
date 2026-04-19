@@ -9,7 +9,10 @@ import { NextResponse } from 'next/server';
 
 import { z } from 'zod';
 
-import { createAdminClient } from '@verone/utils/supabase/server';
+import {
+  createAdminClient,
+  createServerClient,
+} from '@verone/utils/supabase/server';
 
 const ShippingAddressSchema = z.object({
   address_line1: z.string().min(1),
@@ -25,6 +28,20 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
+    // 1. Verify authentication
+    const supabaseAuth = await createServerClient();
+    const {
+      data: { user: authUser },
+      error: authError,
+    } = await supabaseAuth.auth.getUser();
+
+    if (authError ?? !authUser) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { id } = await params;
     if (!id) {
       return NextResponse.json(
@@ -49,6 +66,7 @@ export async function PATCH(
     const { address_line1, postal_code, city, country, latitude, longitude } =
       parsed.data;
 
+    // 2. Use admin client for RLS bypass after auth confirmed
     const supabase = createAdminClient();
 
     const updateData: Record<string, unknown> = {
