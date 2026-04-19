@@ -1,6 +1,6 @@
 # Back-Office — Documentation App
 
-_Generated: 2026-04-19 00:42_
+_Generated: 2026-04-19 02:14_
 
 ## Pages (147)
 
@@ -154,132 +154,134 @@ _Generated: 2026-04-19 00:42_
 | `/`                                                                      | page.tsx |
 | `/unauthorized`                                                          | page.tsx |
 
-## API Routes (120)
+## API Routes (122)
 
-| Endpoint                                        | Methods            |
-| ----------------------------------------------- | ------------------ |
-| `/api/admin/run-migration`                      | POST               |
-| `/api/admin/users/[id]/activity`                | GET                |
-| `/api/admin/users`                              | GET                |
-| `/api/ambassadors/create-auth`                  | POST               |
-| `/api/analytics/batch`                          | POST               |
-| `/api/analytics/events`                         | POST               |
-| `/api/catalogue/products`                       | ?                  |
-| `/api/consultations/associations`               | POST               |
-| `/api/cron/google-merchant-poll`                | GET                |
-| `/api/csp-report`                               | GET, POST          |
-| `/api/documents/[id]/download`                  | GET                |
-| `/api/emails/form-reply`                        | POST               |
-| `/api/emails/linkme-info-completed`             | POST               |
-| `/api/emails/linkme-info-request`               | POST               |
-| `/api/emails/linkme-order-approved`             | POST               |
-| `/api/emails/linkme-order-rejected`             | POST               |
-| `/api/emails/linkme-step4-confirmed`            | POST               |
-| `/api/emails/notify-enseigne-order`             | POST               |
-| `/api/emails/preview/linkme-info-request`       | GET                |
-| `/api/emails/send-consultation`                 | POST               |
-| `/api/emails/send-document`                     | POST               |
-| `/api/emails/send-invoice`                      | POST               |
-| `/api/emails/send-order-documents`              | POST               |
-| `/api/emails/storage-request-approved`          | POST               |
-| `/api/emails/storage-request-rejected`          | POST               |
-| `/api/expenses/classify`                        | POST               |
-| `/api/exports/google-merchant-excel`            | GET, POST          |
-| `/api/exports/products`                         | POST               |
-| `/api/finance/export-fec`                       | GET                |
-| `/api/finance/export-justificatifs`             | GET                |
-| `/api/financial-documents/[id]/archive`         | POST               |
-| `/api/financial-documents/[id]/unarchive`       | POST               |
-| `/api/form-submissions/[id]/messages`           | POST               |
-| `/api/google-merchant/batch-sync`               | POST               |
-| `/api/google-merchant/poll-statuses`            | POST               |
-| `/api/google-merchant/products/[id]/metadata`   | PATCH              |
-| `/api/google-merchant/products/[id]/price`      | PUT                |
-| `/api/google-merchant/products/[id]`            | DELETE             |
-| `/api/google-merchant/products/[id]/visibility` | PATCH              |
-| `/api/google-merchant/products/batch-add`       | POST               |
-| `/api/google-merchant/sync-product/[id]`        | GET, POST          |
-| `/api/google-merchant/test-connection`          | GET, POST          |
-| `/api/health`                                   | ?                  |
-| `/api/library/documents/[id]`                   | DELETE             |
-| `/api/linkme/selections/add-item`               | POST               |
-| `/api/linkme/selections/create`                 | POST               |
-| `/api/linkme/selections/delete`                 | POST               |
-| `/api/linkme/selections/toggle-item-visibility` | POST               |
-| `/api/linkme/users/create`                      | POST               |
-| `/api/linkme/users/hard-delete`                 | POST               |
-| `/api/linkme/users/reset-password`              | POST               |
-| `/api/linkme/users/update-email`                | POST               |
-| `/api/logs`                                     | GET, POST          |
-| `/api/meta-commerce/sync-statuses`              | POST               |
-| `/api/packlink/dropoffs`                        | GET                |
-| `/api/packlink/services`                        | POST               |
-| `/api/packlink/shipment/[ref]/labels`           | GET                |
-| `/api/packlink/shipment/[ref]`                  | GET, DELETE        |
-| `/api/packlink/shipment/[ref]/tracking`         | GET                |
-| `/api/packlink/shipment`                        | POST               |
-| `/api/packlink/shipments/pending`               | GET                |
-| `/api/packlink/shipments`                       | GET                |
-| `/api/qonto/attachments/[id]`                   | GET, DELETE        |
-| `/api/qonto/attachments/auto-attach`            | POST               |
-| `/api/qonto/attachments/cleanup-duplicates`     | POST               |
-| `/api/qonto/attachments/upload`                 | POST               |
-| `/api/qonto/balance`                            | GET                |
-| `/api/qonto/clients`                            | GET, POST          |
-| `/api/qonto/credit-notes/[id]/pdf`              | GET                |
-| `/api/qonto/credit-notes/[id]`                  | GET, PATCH, DELETE |
-| `/api/qonto/credit-notes/[id]/send`             | POST               |
-| `/api/qonto/credit-notes`                       | GET                |
-| `/api/qonto/debug-counts`                       | GET                |
-| `/api/qonto/debug`                              | GET                |
-| `/api/qonto/health`                             | GET                |
-| `/api/qonto/invoices/[id]/cancel`               | POST               |
-| `/api/qonto/invoices/[id]/convert-to-quote`     | POST               |
-| `/api/qonto/invoices/[id]/delete`               | DELETE             |
-| `/api/qonto/invoices/[id]/details`              | GET                |
-| `/api/qonto/invoices/[id]/finalize`             | POST               |
-| `/api/qonto/invoices/[id]/mark-paid`            | POST               |
-| `/api/qonto/invoices/[id]/pdf`                  | GET                |
-| `/api/qonto/invoices/[id]/reconcile`            | POST               |
-| `/api/qonto/invoices/[id]`                      | GET, PATCH         |
-| `/api/qonto/invoices/[id]/send`                 | POST               |
-| `/api/qonto/invoices/[id]/sync-to-order`        | POST               |
-| `/api/qonto/invoices/backfill-pdfs`             | POST               |
-| `/api/qonto/invoices/by-order/[orderId]`        | GET                |
-| `/api/qonto/invoices/consolidate`               | POST               |
-| `/api/qonto/invoices`                           | GET, POST          |
-| `/api/qonto/invoices/service`                   | POST               |
-| `/api/qonto/quotes/[id]/accept`                 | POST               |
-| `/api/qonto/quotes/[id]/convert`                | POST               |
-| `/api/qonto/quotes/[id]/decline`                | POST               |
-| `/api/qonto/quotes/[id]/finalize`               | POST               |
-| `/api/qonto/quotes/[id]/pdf`                    | GET                |
-| `/api/qonto/quotes/[id]`                        | GET, PATCH, DELETE |
-| `/api/qonto/quotes/[id]/send`                   | POST               |
-| `/api/qonto/quotes/[id]/view`                   | GET                |
-| `/api/qonto/quotes/by-order/[orderId]`          | GET                |
-| `/api/qonto/quotes/from-invoice/[invoiceId]`    | POST               |
-| `/api/qonto/quotes`                             | GET, POST          |
-| `/api/qonto/quotes/service`                     | POST               |
-| `/api/qonto/status`                             | GET                |
-| `/api/qonto/supplier-invoices/[id]/pdf`         | GET                |
-| `/api/qonto/supplier-invoices/sync`             | POST               |
-| `/api/qonto/sync-invoices`                      | GET, POST          |
-| `/api/qonto/sync`                               | GET, POST          |
-| `/api/qonto/test-connection`                    | GET                |
-| `/api/qonto/transactions`                       | GET                |
-| `/api/quotes/[id]/finalize`                     | POST               |
-| `/api/quotes/[id]/link-qonto`                   | POST               |
-| `/api/quotes/[id]/push-to-qonto`                | POST               |
-| `/api/sales-orders/[id]/customer-address`       | GET                |
-| `/api/sourcing/auth`                            | GET                |
-| `/api/sourcing/import-supplier`                 | POST               |
-| `/api/sourcing/import`                          | POST               |
-| `/api/stock-movements/[id]`                     | DELETE             |
-| `/api/transactions/update-vat`                  | POST               |
-| `/api/webhooks/packlink`                        | POST               |
+| Endpoint                                                     | Methods            |
+| ------------------------------------------------------------ | ------------------ |
+| `/api/admin/run-migration`                                   | POST               |
+| `/api/admin/users/[id]/activity`                             | GET                |
+| `/api/admin/users`                                           | GET                |
+| `/api/ambassadors/create-auth`                               | POST               |
+| `/api/analytics/batch`                                       | POST               |
+| `/api/analytics/events`                                      | POST               |
+| `/api/catalogue/products`                                    | ?                  |
+| `/api/consultations/associations`                            | POST               |
+| `/api/cron/google-merchant-poll`                             | GET                |
+| `/api/csp-report`                                            | GET, POST          |
+| `/api/documents/[id]/download`                               | GET                |
+| `/api/emails/form-reply`                                     | POST               |
+| `/api/emails/linkme-info-completed`                          | POST               |
+| `/api/emails/linkme-info-request`                            | POST               |
+| `/api/emails/linkme-order-approved`                          | POST               |
+| `/api/emails/linkme-order-rejected`                          | POST               |
+| `/api/emails/linkme-step4-confirmed`                         | POST               |
+| `/api/emails/notify-enseigne-order`                          | POST               |
+| `/api/emails/preview/linkme-info-request`                    | GET                |
+| `/api/emails/send-consultation`                              | POST               |
+| `/api/emails/send-document`                                  | POST               |
+| `/api/emails/send-invoice`                                   | POST               |
+| `/api/emails/send-order-documents`                           | POST               |
+| `/api/emails/storage-request-approved`                       | POST               |
+| `/api/emails/storage-request-rejected`                       | POST               |
+| `/api/expenses/classify`                                     | POST               |
+| `/api/exports/google-merchant-excel`                         | GET, POST          |
+| `/api/exports/products`                                      | POST               |
+| `/api/finance/export-fec`                                    | GET                |
+| `/api/finance/export-justificatifs`                          | GET                |
+| `/api/financial-documents/[id]/archive`                      | POST               |
+| `/api/financial-documents/[id]/unarchive`                    | POST               |
+| `/api/form-submissions/[id]/messages`                        | POST               |
+| `/api/google-merchant/batch-sync`                            | POST               |
+| `/api/google-merchant/poll-statuses`                         | POST               |
+| `/api/google-merchant/products/[id]/metadata`                | PATCH              |
+| `/api/google-merchant/products/[id]/price`                   | PUT                |
+| `/api/google-merchant/products/[id]`                         | DELETE             |
+| `/api/google-merchant/products/[id]/visibility`              | PATCH              |
+| `/api/google-merchant/products/batch-add`                    | POST               |
+| `/api/google-merchant/sync-product/[id]`                     | GET, POST          |
+| `/api/google-merchant/test-connection`                       | GET, POST          |
+| `/api/health`                                                | ?                  |
+| `/api/library/documents/[id]`                                | DELETE             |
+| `/api/linkme/selections/add-item`                            | POST               |
+| `/api/linkme/selections/create`                              | POST               |
+| `/api/linkme/selections/delete`                              | POST               |
+| `/api/linkme/selections/toggle-item-visibility`              | POST               |
+| `/api/linkme/users/create`                                   | POST               |
+| `/api/linkme/users/hard-delete`                              | POST               |
+| `/api/linkme/users/reset-password`                           | POST               |
+| `/api/linkme/users/update-email`                             | POST               |
+| `/api/logs`                                                  | GET, POST          |
+| `/api/meta-commerce/sync-statuses`                           | POST               |
+| `/api/packlink/dropoffs`                                     | GET                |
+| `/api/packlink/services`                                     | POST               |
+| `/api/packlink/shipment/[ref]/labels`                        | GET                |
+| `/api/packlink/shipment/[ref]`                               | GET, DELETE        |
+| `/api/packlink/shipment/[ref]/tracking`                      | GET                |
+| `/api/packlink/shipment`                                     | POST               |
+| `/api/packlink/shipments/pending`                            | GET                |
+| `/api/packlink/shipments`                                    | GET                |
+| `/api/qonto/attachments/[id]`                                | GET, DELETE        |
+| `/api/qonto/attachments/auto-attach`                         | POST               |
+| `/api/qonto/attachments/cleanup-duplicates`                  | POST               |
+| `/api/qonto/attachments/upload`                              | POST               |
+| `/api/qonto/balance`                                         | GET                |
+| `/api/qonto/clients`                                         | GET, POST          |
+| `/api/qonto/credit-notes/[id]/pdf`                           | GET                |
+| `/api/qonto/credit-notes/[id]`                               | GET, PATCH, DELETE |
+| `/api/qonto/credit-notes/[id]/send`                          | POST               |
+| `/api/qonto/credit-notes`                                    | GET                |
+| `/api/qonto/debug-counts`                                    | GET                |
+| `/api/qonto/debug`                                           | GET                |
+| `/api/qonto/health`                                          | GET                |
+| `/api/qonto/invoices/[id]/cancel`                            | POST               |
+| `/api/qonto/invoices/[id]/convert-to-quote`                  | POST               |
+| `/api/qonto/invoices/[id]/delete`                            | DELETE             |
+| `/api/qonto/invoices/[id]/details`                           | GET                |
+| `/api/qonto/invoices/[id]/finalize`                          | POST               |
+| `/api/qonto/invoices/[id]/mark-paid`                         | POST               |
+| `/api/qonto/invoices/[id]/pdf`                               | GET                |
+| `/api/qonto/invoices/[id]/reconcile`                         | POST               |
+| `/api/qonto/invoices/[id]`                                   | GET, PATCH         |
+| `/api/qonto/invoices/[id]/send`                              | POST               |
+| `/api/qonto/invoices/[id]/sync-to-order`                     | POST               |
+| `/api/qonto/invoices/backfill-pdfs`                          | POST               |
+| `/api/qonto/invoices/by-order/[orderId]/regenerate-proforma` | POST               |
+| `/api/qonto/invoices/by-order/[orderId]`                     | GET                |
+| `/api/qonto/invoices/consolidate`                            | POST               |
+| `/api/qonto/invoices`                                        | GET, POST          |
+| `/api/qonto/invoices/service`                                | POST               |
+| `/api/qonto/quotes/[id]/accept`                              | POST               |
+| `/api/qonto/quotes/[id]/convert`                             | POST               |
+| `/api/qonto/quotes/[id]/decline`                             | POST               |
+| `/api/qonto/quotes/[id]/finalize`                            | POST               |
+| `/api/qonto/quotes/[id]/pdf`                                 | GET                |
+| `/api/qonto/quotes/[id]`                                     | GET, PATCH, DELETE |
+| `/api/qonto/quotes/[id]/send`                                | POST               |
+| `/api/qonto/quotes/[id]/view`                                | GET                |
+| `/api/qonto/quotes/by-order/[orderId]/regenerate`            | POST               |
+| `/api/qonto/quotes/by-order/[orderId]`                       | GET                |
+| `/api/qonto/quotes/from-invoice/[invoiceId]`                 | POST               |
+| `/api/qonto/quotes`                                          | GET, POST          |
+| `/api/qonto/quotes/service`                                  | POST               |
+| `/api/qonto/status`                                          | GET                |
+| `/api/qonto/supplier-invoices/[id]/pdf`                      | GET                |
+| `/api/qonto/supplier-invoices/sync`                          | POST               |
+| `/api/qonto/sync-invoices`                                   | GET, POST          |
+| `/api/qonto/sync`                                            | GET, POST          |
+| `/api/qonto/test-connection`                                 | GET                |
+| `/api/qonto/transactions`                                    | GET                |
+| `/api/quotes/[id]/finalize`                                  | POST               |
+| `/api/quotes/[id]/link-qonto`                                | POST               |
+| `/api/quotes/[id]/push-to-qonto`                             | POST               |
+| `/api/sales-orders/[id]/customer-address`                    | GET                |
+| `/api/sourcing/auth`                                         | GET                |
+| `/api/sourcing/import-supplier`                              | POST               |
+| `/api/sourcing/import`                                       | POST               |
+| `/api/stock-movements/[id]`                                  | DELETE             |
+| `/api/transactions/update-vat`                               | POST               |
+| `/api/webhooks/packlink`                                     | POST               |
 
-## Components in app (347)
+## Components in app (348)
 
 | Fichier                                                                                                                         |
 | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -331,6 +333,7 @@ _Generated: 2026-04-19 00:42_
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/left-column/InfoRequestsCard.tsx`                    |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/left-column/OrderItemsTable.tsx`                     |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/left-column/OrderTotalsCard.tsx`                     |
+| `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/left-column/OrgShippingModal.tsx`                    |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/left-column/OrganisationCard.tsx`                    |
 | `src/app/(protected)/canaux-vente/linkme/commissions/components/CommissionDetailContent.tsx`                                    |
 | `src/app/(protected)/canaux-vente/linkme/commissions/components/CommissionDetailSheet.tsx`                                      |

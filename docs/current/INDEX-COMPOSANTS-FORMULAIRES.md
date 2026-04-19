@@ -1,9 +1,9 @@
 # Index Composants, Formulaires & Hooks — packages/@verone/
 
-**Derniere mise a jour** : 2026-04-18
+**Derniere mise a jour** : 2026-04-19
 **23 packages** dans `packages/@verone/`
 
-## **535 composants, 11 hooks**
+## **536 composants, 11 hooks**
 
 ## @verone/categories
 
@@ -114,6 +114,7 @@
 | `CreditNoteCreateModal`             | Modal     | `src/components/CreditNoteCreateModal.tsx`                                      |
 | `DocumentDiscordanceBadge`          | Component | `src/components/DocumentDiscordanceBadge.tsx`                                   |
 | `DocumentEmailHistory`              | Component | `src/components/DocumentEmailHistory.tsx`                                       |
+| `DocumentOutOfSyncBadge`            | Component | `src/components/DocumentOutOfSyncBadge.tsx`                                     |
 | `DocumentSourceBadge`               | Component | `src/components/DocumentSourceBadge.tsx`                                        |
 | `HierarchicalCategorySelector`      | Component | `src/components/HierarchicalCategorySelector.tsx`                               |
 | `InvoiceClientSection`              | Component | `src/components/InvoiceCreateFromOrderModal/InvoiceClientSection.tsx`           |
