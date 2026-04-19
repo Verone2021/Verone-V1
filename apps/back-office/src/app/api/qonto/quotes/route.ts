@@ -33,6 +33,7 @@ import {
   linkQuoteToOrder,
   markQuotesSuperseded,
   saveQuoteToLocalDb,
+  updateOrganisationAddresses,
 } from './route.context';
 import type { IRequestContext, MappedQuote } from './route.context';
 
@@ -243,55 +244,16 @@ async function persistQuoteResults(
   try {
     const customerId = (ctx.customer as { id?: string } | null)?.id;
 
-    // Persist shipping address to organisation if requested
-    if (
-      body.updateOrgShipping === true &&
-      body.shippingAddress?.city &&
-      body.shippingAddress?.address_line1 &&
-      customerId
-    ) {
-      const { error: shippingUpdateError } = await supabase
-        .from('organisations')
-        .update({
-          shipping_address_line1: body.shippingAddress.address_line1,
-          shipping_postal_code: body.shippingAddress.postal_code ?? '',
-          shipping_city: body.shippingAddress.city,
-          shipping_country: body.shippingAddress.country ?? 'FR',
-          has_different_shipping_address: true,
-        })
-        .eq('id', customerId);
-
-      if (shippingUpdateError) {
-        console.error(
-          '[API Qonto Quotes] Failed to update org shipping address:',
-          shippingUpdateError
-        );
-      }
-    }
-
-    // Persist billing address to organisation if requested
-    if (
-      body.updateOrgBilling === true &&
-      body.billingAddress?.city &&
-      body.billingAddress?.address_line1 &&
-      customerId
-    ) {
-      const { error: billingUpdateError } = await supabase
-        .from('organisations')
-        .update({
-          billing_address_line1: body.billingAddress.address_line1,
-          billing_postal_code: body.billingAddress.postal_code ?? '',
-          billing_city: body.billingAddress.city,
-          billing_country: body.billingAddress.country ?? 'FR',
-        })
-        .eq('id', customerId);
-
-      if (billingUpdateError) {
-        console.error(
-          '[API Qonto Quotes] Failed to update org billing address:',
-          billingUpdateError
-        );
-      }
+    // Persist addresses to organisation if requested (non-blocking, delegated)
+    if ((body.updateOrgBilling ?? body.updateOrgShipping) && customerId) {
+      await updateOrganisationAddresses({
+        supabase,
+        orgId: customerId,
+        billingAddress: body.billingAddress,
+        shippingAddress: body.shippingAddress,
+        updateOrgBilling: body.updateOrgBilling,
+        updateOrgShipping: body.updateOrgShipping,
+      });
     }
 
     return await saveQuoteToLocalDb({

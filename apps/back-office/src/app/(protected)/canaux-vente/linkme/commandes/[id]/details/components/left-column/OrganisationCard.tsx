@@ -5,15 +5,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 import {
-  Button,
   Card,
   CardContent,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
   Input,
   Select,
   SelectContent,
@@ -21,15 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import { AddressAutocomplete } from '@verone/ui';
-import type { AddressResult } from '@verone/ui';
-import { useToast } from '@verone/common/hooks';
 import {
   AlertTriangle,
   Building2,
   Check,
   ExternalLink,
-  Loader2,
   Mail,
   MapPin,
   Pencil,
@@ -39,6 +28,7 @@ import {
 } from 'lucide-react';
 
 import type { OrderWithDetails } from '../types';
+import { OrgShippingModal } from './OrgShippingModal';
 
 interface OrganisationCardProps {
   order: OrderWithDetails;
@@ -54,66 +44,13 @@ export function OrganisationCard({
   details,
   onUpdateOrganisation,
 }: OrganisationCardProps) {
-  const { toast } = useToast();
   const org = order.organisation;
   const [editingOwnership, setEditingOwnership] = useState(false);
   const [editingOrgField, setEditingOrgField] = useState<'siret' | null>(null);
   const [editOrgValue, setEditOrgValue] = useState('');
-
-  // Shipping address edit modal
   const [showShippingModal, setShowShippingModal] = useState(false);
-  const [shippingInput, setShippingInput] = useState('');
-  const [shippingResolved, setShippingResolved] = useState<{
-    address_line1: string;
-    postal_code: string;
-    city: string;
-    country: string;
-  } | null>(null);
-  const [savingShipping, setSavingShipping] = useState(false);
 
   const isOrderDraft = order.status === 'draft';
-
-  const handleAddressSelect = (result: AddressResult) => {
-    setShippingResolved({
-      address_line1: result.streetAddress,
-      postal_code: result.postalCode,
-      city: result.city,
-      country: result.countryCode ?? 'FR',
-    });
-  };
-
-  const handleSaveShipping = async () => {
-    if (!org || !shippingResolved || !onUpdateOrganisation) return;
-
-    setSavingShipping(true);
-    try {
-      await onUpdateOrganisation(org.id, {
-        shipping_address_line1: shippingResolved.address_line1,
-        shipping_postal_code: shippingResolved.postal_code,
-        shipping_city: shippingResolved.city,
-        shipping_country: shippingResolved.country,
-        has_different_shipping_address: true,
-      });
-      toast({
-        title: 'Adresse de livraison mise à jour',
-        description: `${shippingResolved.address_line1}, ${shippingResolved.city}`,
-      });
-      setShowShippingModal(false);
-      setShippingInput('');
-      setShippingResolved(null);
-    } catch (err) {
-      toast({
-        title: 'Erreur',
-        description:
-          err instanceof Error
-            ? err.message
-            : "Impossible de sauvegarder l'adresse",
-        variant: 'destructive',
-      });
-    } finally {
-      setSavingShipping(false);
-    }
-  };
 
   return (
     <Card>
@@ -342,11 +279,7 @@ export function OrganisationCard({
               {isOrderDraft && onUpdateOrganisation && (
                 <button
                   type="button"
-                  onClick={() => {
-                    setShippingInput('');
-                    setShippingResolved(null);
-                    setShowShippingModal(true);
-                  }}
+                  onClick={() => setShowShippingModal(true)}
                   className="ml-1 text-blue-500 hover:text-blue-700 flex items-center gap-0.5"
                   title="Modifier l'adresse de livraison"
                 >
@@ -379,62 +312,16 @@ export function OrganisationCard({
         )}
       </CardContent>
 
-      {/* Modal modifier adresse de livraison */}
-      <Dialog open={showShippingModal} onOpenChange={setShowShippingModal}>
-        <DialogContent className="sm:max-w-[480px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Truck className="h-5 w-5" />
-              Modifier l&apos;adresse de livraison
-            </DialogTitle>
-            <DialogDescription>
-              {org?.trade_name ?? org?.legal_name} — adresse de livraison
-              enregistrée pour les prochains devis
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-2">
-            <AddressAutocomplete
-              value={shippingInput}
-              onChange={setShippingInput}
-              onSelect={handleAddressSelect}
-              placeholder="Rechercher une adresse..."
-              id="org-shipping-autocomplete"
-            />
-            {shippingResolved && (
-              <div className="mt-2 flex items-start gap-2 text-xs text-muted-foreground">
-                <MapPin className="h-3 w-3 mt-0.5 text-green-500 flex-shrink-0" />
-                <div>
-                  <p>{shippingResolved.address_line1}</p>
-                  <p>
-                    {[shippingResolved.postal_code, shippingResolved.city]
-                      .filter(Boolean)
-                      .join(' ')}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowShippingModal(false)}
-            >
-              Annuler
-            </Button>
-            <Button
-              onClick={() => void handleSaveShipping()}
-              disabled={savingShipping || !shippingResolved}
-            >
-              {savingShipping ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : null}
-              Enregistrer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Modal modifier adresse de livraison — extrait dans OrgShippingModal */}
+      {org && onUpdateOrganisation && (
+        <OrgShippingModal
+          open={showShippingModal}
+          onOpenChange={setShowShippingModal}
+          orgId={org.id}
+          orgDisplayName={org.trade_name ?? org.legal_name ?? ''}
+          onUpdateOrganisation={onUpdateOrganisation}
+        />
+      )}
     </Card>
   );
 }

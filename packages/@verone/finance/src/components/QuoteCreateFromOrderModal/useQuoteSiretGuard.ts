@@ -37,7 +37,7 @@ export function useQuoteSiretGuard(
     setSiretSaved(false);
   }, []);
 
-  const handleSaveSiret = async (): Promise<void> => {
+  const handleSaveSiret = useCallback(async (): Promise<void> => {
     if (!order?.customer_id || !siretInput.trim()) return;
 
     setSavingSiret(true);
@@ -73,7 +73,7 @@ export function useQuoteSiretGuard(
     } finally {
       setSavingSiret(false);
     }
-  };
+  }, [order?.customer_id, siretInput, toast]);
 
   return {
     isMissingSiret,
