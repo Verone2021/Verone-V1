@@ -685,9 +685,6 @@ importers:
       '@verone/integrations':
         specifier: workspace:*
         version: link:../integrations
-      '@verone/orders':
-        specifier: workspace:*
-        version: link:../orders
       '@verone/organisations':
         specifier: workspace:*
         version: link:../organisations
