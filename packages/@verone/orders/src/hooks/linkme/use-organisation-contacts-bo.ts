@@ -425,6 +425,84 @@ export function useDeleteContactBO() {
   });
 }
 
+// ============================================
+// HOOK COMBINÉ ORG + ENSEIGNE
+// ============================================
+
+export interface ContactBOWithSource extends ContactBO {
+  /** 'org' = contact appartenant à l'organisation, 'enseigne' = contact de l'enseigne mère */
+  source: 'org' | 'enseigne';
+}
+
+export interface ContactsForOrderResult {
+  orgContacts: ContactBOWithSource[];
+  enseigneContacts: ContactBOWithSource[];
+  allContacts: ContactBOWithSource[];
+}
+
+/**
+ * Récupère TOUS les contacts disponibles pour une commande :
+ * - contacts de l'organisation (organisation_id)
+ * - contacts de l'enseigne mère (enseigne_id de l'org)
+ *
+ * Remplace la logique isSuccursale ? enseigne : org — on combine toujours les deux.
+ *
+ * @param organisationId - ID de l'organisation de la commande
+ * @param enseigneId     - ID de l'enseigne mère (depuis organisations.enseigne_id)
+ */
+export function useContactsForOrder(
+  organisationId: string | null,
+  enseigneId: string | null
+) {
+  const { data: orgData, isLoading: orgLoading } =
+    useOrganisationContactsBO(organisationId);
+  const { data: enseigneData, isLoading: enseigneLoading } =
+    useEnseigneContactsBO(enseigneId);
+
+  // Fetch enseigne name for display label
+  const { data: enseigneNameData } = useQuery({
+    queryKey: ['enseigne-name', enseigneId],
+    queryFn: async () => {
+      if (!enseigneId) return null;
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('enseignes')
+        .select('name')
+        .eq('id', enseigneId)
+        .single();
+      return data?.name ?? null;
+    },
+    enabled: !!enseigneId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const orgContacts: ContactBOWithSource[] = (orgData?.contacts ?? []).map(
+    c => ({ ...c, source: 'org' as const })
+  );
+  const enseigneContacts: ContactBOWithSource[] = (
+    enseigneData?.contacts ?? []
+  ).map(c => ({ ...c, source: 'enseigne' as const }));
+
+  // Deduplicate: si un contact est dans les deux (même id), on le garde une seule fois côté org
+  const enseigneIds = new Set(enseigneContacts.map(c => c.id));
+  const deduplicatedOrgContacts = orgContacts.filter(
+    c => !enseigneIds.has(c.id)
+  );
+
+  const allContacts: ContactBOWithSource[] = [
+    ...deduplicatedOrgContacts,
+    ...enseigneContacts,
+  ];
+
+  return {
+    orgContacts: deduplicatedOrgContacts,
+    enseigneContacts,
+    allContacts,
+    enseigneName: enseigneNameData ?? null,
+    isLoading: orgLoading || enseigneLoading,
+  };
+}
+
 /**
  * Mutation pour mettre à jour le flag is_billing_contact d'un contact
  */

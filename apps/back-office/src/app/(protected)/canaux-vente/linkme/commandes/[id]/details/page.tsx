@@ -70,6 +70,8 @@ export default function LinkMeOrderDetailsPage() {
     selectedContactId,
     setSelectedContactId,
     availableContacts,
+    orgLabel,
+    enseigneLabel,
     locked,
     fusedContacts,
     deliveryAddressMatchesOrg,
@@ -296,6 +298,8 @@ export default function LinkMeOrderDetailsPage() {
           });
         }}
         createContactPending={createContactBO.isPending}
+        orgLabel={orgLabel}
+        enseigneLabel={enseigneLabel}
       />
 
       {showAddProductModal && (
