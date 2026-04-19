@@ -81,7 +81,7 @@ function resolveOrgBillingAddress(
 
 export function BillingAddressEditor({
   enseigneId,
-  defaultOrgId,
+  defaultOrgId: _defaultOrgId,
   initialBillingAddress,
   orgName,
   disabled = false,
@@ -198,7 +198,7 @@ export function BillingAddressEditor({
     onUpdateOrgBillingChange(false);
   };
 
-  const otherOrgs = orgs.filter(o => o.id !== defaultOrgId);
+  const otherOrgs = orgs;
   const selectedOrg = orgs.find(o => o.id === selectedOrgId);
   const resolvedBillingAddr = selectedOrg
     ? resolveOrgBillingAddress(selectedOrg)

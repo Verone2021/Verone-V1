@@ -80,7 +80,7 @@ function resolveOrgAddress(org: IShippingOrg): IShippingAddressResolved | null {
 
 export function QuoteShippingSection({
   enseigneId,
-  defaultOrgId,
+  defaultOrgId: _defaultOrgId,
   orgName,
   disabled = false,
   onShippingAddressChange,
@@ -190,7 +190,7 @@ export function QuoteShippingSection({
     }
   };
 
-  const otherOrgs = orgs.filter(o => o.id !== defaultOrgId);
+  const otherOrgs = orgs;
   const selectedOrg = orgs.find(o => o.id === selectedOrgId);
   const resolvedOtherAddr = selectedOrg ? resolveOrgAddress(selectedOrg) : null;
   const displayOrgName = orgName ?? 'cette organisation';
