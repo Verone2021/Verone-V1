@@ -15,6 +15,7 @@
     "@react-pdf/renderer": "^4.3.1",
     "@verone/common": "workspace:*",
     "@verone/integrations": "workspace:*",
+    "@verone/orders": "workspace:*",
     "@verone/organisations": "workspace:*",
     "@verone/products": "workspace:*",
     "@verone/types": "workspace:*",

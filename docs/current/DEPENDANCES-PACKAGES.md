@@ -43,7 +43,7 @@
 
 ### @verone/finance
 
-**Depend de** : @verone/common, @verone/integrations, @verone/organisations, @verone/products, @verone/types, @verone/ui, @verone/utils
+**Depend de** : @verone/common, @verone/integrations, @verone/orders, @verone/organisations, @verone/products, @verone/types, @verone/ui, @verone/utils
 **Utilise par** : @verone/consultations, @verone/orders
 
 ### @verone/hooks
@@ -69,7 +69,7 @@
 ### @verone/orders
 
 **Depend de** : @verone/categories, @verone/finance, @verone/organisations, @verone/types, @verone/ui, @verone/utils
-**Utilise par** : @verone/consultations
+**Utilise par** : @verone/consultations, @verone/finance
 
 ### @verone/organisations
 
