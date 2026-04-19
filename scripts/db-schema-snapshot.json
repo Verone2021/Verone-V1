@@ -6112,6 +6112,14 @@
         "udt_name": "int4",
         "is_nullable": "NO",
         "column_default": "1"
+      },
+      {
+        "table_name": "financial_documents",
+        "column_name": "billing_org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
       }
     ],
     "fiscal_obligations_done": [
@@ -20517,6 +20525,12 @@
       "target_column": "id"
     },
     {
+      "source_table": "financial_documents",
+      "source_column": "billing_org_id",
+      "target_table": "organisations",
+      "target_column": "id"
+    },
+    {
       "source_table": "stock_movements",
       "source_column": "product_id",
       "target_table": "products",
@@ -22204,14 +22218,6 @@
     },
     {
       "tablename": "individual_customers",
-      "policyname": "customer_read_own_profile",
-      "permissive": "PERMISSIVE",
-      "roles": "{authenticated}",
-      "cmd": "SELECT",
-      "qual": "(auth_user_id = ( SELECT auth.uid() AS uid))"
-    },
-    {
-      "tablename": "individual_customers",
       "policyname": "linkme_users_read_individual_customers",
       "permissive": "PERMISSIVE",
       "roles": "{authenticated}",
@@ -22219,12 +22225,12 @@
       "qual": "(EXISTS ( SELECT 1\n   FROM user_app_roles uar\n  WHERE ((uar.user_id = ( SELECT auth.uid() AS uid)) AND (uar.app = 'linkme'::app_type) AND (uar.role = "
     },
     {
-      "tablename": "linkme_affiliates",
-      "policyname": "linkme_affiliates_own",
+      "tablename": "individual_customers",
+      "policyname": "customer_read_own_profile",
       "permissive": "PERMISSIVE",
-      "roles": "{public}",
-      "cmd": "ALL",
-      "qual": "(EXISTS ( SELECT 1\n   FROM user_app_roles uar\n  WHERE ((uar.user_id = ( SELECT auth.uid() AS uid)) AND (uar.app = 'linkme'::app_type) AND (uar.is_acti"
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "(auth_user_id = ( SELECT auth.uid() AS uid))"
     },
     {
       "tablename": "linkme_affiliates",
@@ -22233,6 +22239,14 @@
       "roles": "{authenticated}",
       "cmd": "ALL",
       "qual": "is_backoffice_user()"
+    },
+    {
+      "tablename": "linkme_affiliates",
+      "policyname": "linkme_affiliates_own",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "ALL",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_app_roles uar\n  WHERE ((uar.user_id = ( SELECT auth.uid() AS uid)) AND (uar.app = 'linkme'::app_type) AND (uar.is_acti"
     },
     {
       "tablename": "linkme_affiliates",
@@ -23204,19 +23218,19 @@
     },
     {
       "tablename": "sales_orders",
-      "policyname": "staff_update_sales_orders",
-      "permissive": "PERMISSIVE",
-      "roles": "{authenticated}",
-      "cmd": "UPDATE",
-      "qual": "is_backoffice_user()"
-    },
-    {
-      "tablename": "sales_orders",
       "policyname": "linkme_users_update_own_draft_orders",
       "permissive": "PERMISSIVE",
       "roles": "{authenticated}",
       "cmd": "UPDATE",
       "qual": "((status = 'draft'::sales_order_status) AND (NOT is_backoffice_user()) AND is_own_linkme_order(id, created_by_affiliate_id, linkme_selection_id))"
+    },
+    {
+      "tablename": "sales_orders",
+      "policyname": "staff_update_sales_orders",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "is_backoffice_user()"
     },
     {
       "tablename": "sample_order_items",
@@ -23260,14 +23274,6 @@
     },
     {
       "tablename": "shopping_carts",
-      "policyname": "users_own_cart_insert",
-      "permissive": "PERMISSIVE",
-      "roles": "{authenticated}",
-      "cmd": "INSERT",
-      "qual": null
-    },
-    {
-      "tablename": "shopping_carts",
       "policyname": "anon_cart_insert",
       "permissive": "PERMISSIVE",
       "roles": "{anon}",
@@ -23276,11 +23282,11 @@
     },
     {
       "tablename": "shopping_carts",
-      "policyname": "anon_cart_select",
+      "policyname": "users_own_cart_insert",
       "permissive": "PERMISSIVE",
-      "roles": "{anon}",
-      "cmd": "SELECT",
-      "qual": "(session_id IS NOT NULL)"
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null
     },
     {
       "tablename": "shopping_carts",
@@ -23292,11 +23298,11 @@
     },
     {
       "tablename": "shopping_carts",
-      "policyname": "anon_cart_update",
+      "policyname": "anon_cart_select",
       "permissive": "PERMISSIVE",
       "roles": "{anon}",
-      "cmd": "UPDATE",
-      "qual": "((session_id IS NOT NULL) AND (user_id IS NULL))"
+      "cmd": "SELECT",
+      "qual": "(session_id IS NOT NULL)"
     },
     {
       "tablename": "shopping_carts",
@@ -23305,6 +23311,14 @@
       "roles": "{authenticated}",
       "cmd": "UPDATE",
       "qual": "(user_id = ( SELECT auth.uid() AS uid))"
+    },
+    {
+      "tablename": "shopping_carts",
+      "policyname": "anon_cart_update",
+      "permissive": "PERMISSIVE",
+      "roles": "{anon}",
+      "cmd": "UPDATE",
+      "qual": "((session_id IS NOT NULL) AND (user_id IS NULL))"
     },
     {
       "tablename": "site_ambassadors",
@@ -23548,19 +23562,19 @@
     },
     {
       "tablename": "storage_billing_events",
-      "policyname": "LinkMe view own enseigne events",
-      "permissive": "PERMISSIVE",
-      "roles": "{public}",
-      "cmd": "SELECT",
-      "qual": "((owner_enseigne_id IS NOT NULL) AND (EXISTS ( SELECT 1\n   FROM user_app_roles uar\n  WHERE ((uar.user_id = ( SELECT auth.uid() AS uid)) AND (uar.app ="
-    },
-    {
-      "tablename": "storage_billing_events",
       "policyname": "Admin view all storage events",
       "permissive": "PERMISSIVE",
       "roles": "{public}",
       "cmd": "SELECT",
       "qual": "(EXISTS ( SELECT 1\n   FROM user_app_roles uar\n  WHERE ((uar.user_id = ( SELECT auth.uid() AS uid)) AND (uar.app = 'back-office'::app_type) AND (uar.is"
+    },
+    {
+      "tablename": "storage_billing_events",
+      "policyname": "LinkMe view own enseigne events",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "SELECT",
+      "qual": "((owner_enseigne_id IS NOT NULL) AND (EXISTS ( SELECT 1\n   FROM user_app_roles uar\n  WHERE ((uar.user_id = ( SELECT auth.uid() AS uid)) AND (uar.app ="
     },
     {
       "tablename": "storage_pricing_tiers",
@@ -23676,6 +23690,14 @@
     },
     {
       "tablename": "user_app_roles",
+      "policyname": "owner_insert_roles",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null
+    },
+    {
+      "tablename": "user_app_roles",
       "policyname": "Enseigne admins can insert roles for their enseigne",
       "permissive": "PERMISSIVE",
       "roles": "{public}",
@@ -23684,11 +23706,11 @@
     },
     {
       "tablename": "user_app_roles",
-      "policyname": "owner_insert_roles",
+      "policyname": "privileged_view_all_roles",
       "permissive": "PERMISSIVE",
       "roles": "{authenticated}",
-      "cmd": "INSERT",
-      "qual": null
+      "cmd": "SELECT",
+      "qual": "is_back_office_privileged()"
     },
     {
       "tablename": "user_app_roles",
@@ -23708,27 +23730,11 @@
     },
     {
       "tablename": "user_app_roles",
-      "policyname": "privileged_view_all_roles",
-      "permissive": "PERMISSIVE",
-      "roles": "{authenticated}",
-      "cmd": "SELECT",
-      "qual": "is_back_office_privileged()"
-    },
-    {
-      "tablename": "user_app_roles",
       "policyname": "owner_update_roles",
       "permissive": "PERMISSIVE",
       "roles": "{authenticated}",
       "cmd": "UPDATE",
       "qual": "is_back_office_owner()"
-    },
-    {
-      "tablename": "user_notification_preferences",
-      "policyname": "staff_full_access_notification_prefs",
-      "permissive": "PERMISSIVE",
-      "roles": "{authenticated}",
-      "cmd": "ALL",
-      "qual": "is_backoffice_user()"
     },
     {
       "tablename": "user_notification_preferences",
@@ -23739,12 +23745,12 @@
       "qual": "(user_id = ( SELECT auth.uid() AS uid))"
     },
     {
-      "tablename": "user_profiles",
-      "policyname": "users_own_user_profiles",
+      "tablename": "user_notification_preferences",
+      "policyname": "staff_full_access_notification_prefs",
       "permissive": "PERMISSIVE",
       "roles": "{authenticated}",
       "cmd": "ALL",
-      "qual": "(user_id = ( SELECT auth.uid() AS uid))"
+      "qual": "is_backoffice_user()"
     },
     {
       "tablename": "user_profiles",
@@ -23755,12 +23761,12 @@
       "qual": "( SELECT is_backoffice_user() AS is_backoffice_user)"
     },
     {
-      "tablename": "user_sessions",
-      "policyname": "backoffice_full_access_user_sessions",
+      "tablename": "user_profiles",
+      "policyname": "users_own_user_profiles",
       "permissive": "PERMISSIVE",
       "roles": "{authenticated}",
       "cmd": "ALL",
-      "qual": "( SELECT is_backoffice_user() AS is_backoffice_user)"
+      "qual": "(user_id = ( SELECT auth.uid() AS uid))"
     },
     {
       "tablename": "user_sessions",
@@ -23769,6 +23775,14 @@
       "roles": "{public}",
       "cmd": "ALL",
       "qual": "true"
+    },
+    {
+      "tablename": "user_sessions",
+      "policyname": "backoffice_full_access_user_sessions",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "ALL",
+      "qual": "( SELECT is_backoffice_user() AS is_backoffice_user)"
     },
     {
       "tablename": "user_sessions",
