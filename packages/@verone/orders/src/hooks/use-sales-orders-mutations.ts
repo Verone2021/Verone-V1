@@ -49,6 +49,25 @@ export function useSalesOrdersMutations({
     async (orderId: string, data: UpdateSalesOrderData) => {
       setLoading(true);
       try {
+        // [BO-FIN-009 Phase 3 — R6 finance.md] Aucun champ modifiable hors draft.
+        // Pour corriger : dévalider (validated → draft), modifier, revalider.
+        const { data: existing, error: fetchError } = await supabase
+          .from('sales_orders')
+          .select('status, order_number')
+          .eq('id', orderId)
+          .single();
+        if (fetchError) throw fetchError;
+        if (!existing) throw new Error('Commande non trouvée');
+        const existingOrder = existing as unknown as {
+          status: string | null;
+          order_number: string;
+        };
+        if (existingOrder.status !== 'draft') {
+          throw new Error(
+            `Commande ${existingOrder.order_number} en statut "${existingOrder.status ?? 'inconnu'}" : dévalidez-la d'abord (retour en brouillon) pour modifier, puis revalidez-la après modification.`
+          );
+        }
+
         const { error } = await supabase
           .from('sales_orders')
           .update(data)

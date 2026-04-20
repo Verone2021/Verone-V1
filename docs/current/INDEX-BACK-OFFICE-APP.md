@@ -1,6 +1,6 @@
 # Back-Office — Documentation App
 
-_Generated: 2026-04-19 02:48_
+_Generated: 2026-04-20 03:36_
 
 ## Pages (147)
 
@@ -282,7 +282,7 @@ _Generated: 2026-04-19 02:48_
 | `/api/transactions/update-vat`                               | POST               |
 | `/api/webhooks/packlink`                                     | POST               |
 
-## Components in app (348)
+## Components in app (349)
 
 | Fichier                                                                                                                         |
 | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -630,6 +630,7 @@ _Generated: 2026-04-19 02:48_
 | `src/components/orders/FeesSection.tsx`                                                                                         |
 | `src/components/orders/InvoicesSection.tsx`                                                                                     |
 | `src/components/orders/PaymentSection.tsx`                                                                                      |
+| `src/components/orders/QuotesSection.tsx`                                                                                       |
 | `src/components/profile/ProfileFieldRow.tsx`                                                                                    |
 | `src/components/profile/ProfileFormFields.tsx`                                                                                  |
 | `src/components/profile/ProfilePageHeader.tsx`                                                                                  |

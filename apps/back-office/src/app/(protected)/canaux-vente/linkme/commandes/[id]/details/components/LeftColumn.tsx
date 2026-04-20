@@ -1,5 +1,7 @@
 'use client';
 
+import { canEditFees } from '@verone/orders';
+
 import type { LinkMeOrderDetails } from '../../../../hooks/use-linkme-order-actions';
 import { FeesSection } from '@/components/orders/FeesSection';
 
@@ -121,7 +123,7 @@ export function LeftColumn({
         handlingCostHt={order.handling_cost_ht ?? 0}
         insuranceCostHt={order.insurance_cost_ht ?? 0}
         feesVatRate={order.fees_vat_rate ?? 0.2}
-        readOnly={locked}
+        readOnly={!canEditFees(order.status)}
       />
 
       <OrderTotalsCard totalHt={order.total_ht} totalTtc={order.total_ttc} />

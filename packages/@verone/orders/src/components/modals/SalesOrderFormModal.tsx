@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState, useCallback } from 'react';
+
 import { useStockMovements } from '@verone/stock/hooks';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -10,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@verone/ui';
+import { createClient } from '@verone/utils/supabase/client';
 import { Plus, ArrowLeft } from 'lucide-react';
 
 import { ChannelSelector } from './sales-order-form/ChannelSelector';
@@ -22,6 +25,7 @@ import { useSalesOrderTotals } from './sales-order-form/hooks/use-sales-order-to
 import { LinkMeWorkflow } from './sales-order-form/LinkMeWorkflow';
 import { OrderConfirmationDialog } from './sales-order-form/OrderConfirmationDialog';
 import type { OrderItem } from './sales-order-form/OrderItemsTable';
+import { OrderDevalidateBanner } from './sales-order-form/OrderDevalidateBanner';
 import { StandardOrderForm } from './sales-order-form/StandardOrderForm';
 
 interface SalesOrderFormModalProps {
@@ -211,6 +215,48 @@ export function SalesOrderFormModal({
     void updateItem(itemId, field, value).catch(console.error);
   };
 
+  // [BO-FIN-009 Phase 3.2] Fetch status + order_number en mode édition
+  // Sert à afficher la bannière "Dévalider pour modifier" si status !== 'draft'.
+  const [loadedStatus, setLoadedStatus] = useState<string | null>(null);
+  const [loadedOrderNumber, setLoadedOrderNumber] = useState<string | null>(
+    null
+  );
+
+  const reloadOrderStatus = useCallback(async (): Promise<void> => {
+    if (!orderId) return;
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('sales_orders')
+      .select('status, order_number')
+      .eq('id', orderId)
+      .maybeSingle();
+    const row = data as {
+      status: string | null;
+      order_number: string | null;
+    } | null;
+    setLoadedStatus(row?.status ?? null);
+    setLoadedOrderNumber(row?.order_number ?? null);
+  }, [orderId]);
+
+  useEffect(() => {
+    if (open && mode === 'edit' && orderId) {
+      void reloadOrderStatus();
+    } else if (!open) {
+      setLoadedStatus(null);
+      setLoadedOrderNumber(null);
+    }
+  }, [open, mode, orderId, reloadOrderStatus]);
+
+  const handleDevalidated = useCallback(async (): Promise<void> => {
+    // Après dévalidation : refresh status (bannière disparaît) + refresh data commande
+    await reloadOrderStatus();
+    if (orderId) {
+      // Force reload order via submit hook loadExistingOrder
+      // en rouvrant le modal. Plus simple : invalider le cache parent via onSuccess.
+      onSuccess?.();
+    }
+  }, [orderId, onSuccess, reloadOrderStatus]);
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {/* Trigger visible uniquement en mode non-contrôlé (pas de prop open) */}
@@ -316,6 +362,16 @@ export function SalesOrderFormModal({
                   onCancel={() => setOpen(false)}
                   previewSelection={linkme.previewSelection}
                   previewLoading={linkme.previewLoading}
+                />
+              )}
+
+              {/* [BO-FIN-009 Phase 3.2] Bannière "Dévalider pour modifier" — mode édition uniquement */}
+              {mode === 'edit' && orderId && loadedStatus && (
+                <OrderDevalidateBanner
+                  orderId={orderId}
+                  status={loadedStatus}
+                  orderNumber={loadedOrderNumber}
+                  onDevalidated={handleDevalidated}
                 />
               )}
 

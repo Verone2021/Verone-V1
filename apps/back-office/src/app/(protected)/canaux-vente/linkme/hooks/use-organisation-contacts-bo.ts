@@ -4,10 +4,13 @@
  */
 export {
   type ContactBO,
+  type ContactBOWithSource,
+  type ContactsForOrderResult,
   type CreateContactInput,
   type UpdateContactInput,
   useOrganisationContactsBO,
   useEnseigneContactsBO,
+  useContactsForOrder,
   useCreateContactBO,
   useUpdateContactBO,
   useDeleteContactBO,

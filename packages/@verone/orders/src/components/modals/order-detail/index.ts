@@ -57,3 +57,6 @@ export type { OrderActionsCardProps } from './OrderActionsCard';
 
 export { OrderSubModals } from './OrderSubModals';
 export type { OrderSubModalsProps } from './OrderSubModals';
+
+export { OrderMarginReportCard } from './OrderMarginReportCard';
+export type { OrderMarginReportCardProps } from './OrderMarginReportCard';

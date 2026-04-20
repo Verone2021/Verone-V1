@@ -30,7 +30,10 @@ export interface ISaveLocalDbParams {
   customerId: string | undefined;
   standaloneCustomerId: string | undefined;
   fees: IFeesData | undefined;
+  billingAddress?: ISaveLocalDbAddress;
   shippingAddress?: ISaveLocalDbAddress;
+  /** [BO-FIN-039] Org de facturation si différente de l'org commande (Option B) */
+  billingOrgId?: string;
 }
 
 export async function saveQuoteToLocalDb(
@@ -50,7 +53,9 @@ export async function saveQuoteToLocalDb(
     customerId,
     standaloneCustomerId,
     fees,
+    billingAddress,
     shippingAddress,
+    billingOrgId,
   } = params;
 
   type FinancialDocumentInsert =
@@ -95,7 +100,9 @@ export async function saveQuoteToLocalDb(
     handling_cost_ht: fees?.handling_cost_ht ?? 0,
     insurance_cost_ht: fees?.insurance_cost_ht ?? 0,
     fees_vat_rate: fees?.fees_vat_rate ?? 0.2,
+    billing_address: (billingAddress ?? null) as Json | null,
     shipping_address: (shippingAddress ?? null) as Json | null,
+    billing_org_id: billingOrgId ?? null,
   };
 
   const { data: rawDoc, error } = await supabase

@@ -63,6 +63,8 @@ export interface IPostRequestBody {
   shippingAddress?: IAddressData;
   fees?: IFeesData;
   customLines?: ICustomLine[];
+  /** ID de l'organisation de facturation (si différente de l'organisation commande) */
+  billingOrgId?: string;
 }
 
 export interface IInvoiceItem {

@@ -236,11 +236,12 @@ export function buildQuoteItems(
     insuranceCostHt: number;
     feesVatRate: number;
   },
-  customLines?: ICustomLine[]
+  customLines?: ICustomLine[],
+  itemComments?: Record<string, string>
 ): IQuoteItem[] {
   const items: IQuoteItem[] = orderItems.map(item => ({
     title: item.products?.name ?? 'Article',
-    description: item.notes ?? undefined,
+    description: itemComments?.[item.id] ?? item.notes ?? undefined,
     quantity: String(item.quantity ?? 1),
     unit: 'pièce',
     unitPrice: { value: String(item.unit_price_ht ?? 0), currency: 'EUR' },
@@ -373,7 +374,9 @@ export async function fetchCustomerFromSupabase(
   if (customerType === 'organization') {
     const result = await supabase
       .from('organisations')
-      .select('*')
+      .select(
+        'id, legal_name, trade_name, email, siret, vat_number, address_line1, address_line2, postal_code, city, country, billing_address_line1, billing_address_line2, billing_postal_code, billing_city, billing_country, enseigne_id, is_enseigne_parent'
+      )
       .eq('id', customerId)
       .single();
     return (result.data as Organisation | null) ?? null;

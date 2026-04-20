@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { AlertCircle, FileEdit } from 'lucide-react';
+import { AlertCircle, FileEdit, FileText } from 'lucide-react';
 
 import {
   Button,
@@ -18,6 +18,7 @@ import {
 import { createClient } from '@verone/utils/supabase/client';
 import {
   QuoteCreateFromOrderModal,
+  InvoiceCreateFromOrderModal,
   type IOrderForDocument,
 } from '@verone/finance/components';
 import { SalesOrderShipmentModal } from '@verone/orders';
@@ -33,6 +34,7 @@ import { OrderHeader } from './components/OrderHeader';
 
 export default function LinkMeOrderDetailsPage() {
   const [showShipmentModal, setShowShipmentModal] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
 
   const {
     order,
@@ -68,6 +70,8 @@ export default function LinkMeOrderDetailsPage() {
     selectedContactId,
     setSelectedContactId,
     availableContacts,
+    orgLabel,
+    enseigneLabel,
     locked,
     fusedContacts,
     deliveryAddressMatchesOrg,
@@ -191,14 +195,24 @@ export default function LinkMeOrderDetailsPage() {
           setEditOrderDateValue={setEditOrderDateValue}
         />
         {(order.status === 'draft' || order.status === 'validated') && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowQuoteModal(true)}
-          >
-            <FileEdit className="mr-2 h-4 w-4" />
-            Créer un devis
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowQuoteModal(true)}
+            >
+              <FileEdit className="mr-2 h-4 w-4" />
+              Créer un devis
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowInvoiceModal(true)}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Créer une facture
+            </Button>
+          </div>
         )}
       </div>
 
@@ -284,6 +298,8 @@ export default function LinkMeOrderDetailsPage() {
           });
         }}
         createContactPending={createContactBO.isPending}
+        orgLabel={orgLabel}
+        enseigneLabel={enseigneLabel}
       />
 
       {showAddProductModal && (
@@ -306,6 +322,14 @@ export default function LinkMeOrderDetailsPage() {
           order={orderForDocument}
           open={showQuoteModal}
           onOpenChange={setShowQuoteModal}
+        />
+      )}
+
+      {orderForDocument && (
+        <InvoiceCreateFromOrderModal
+          order={orderForDocument}
+          open={showInvoiceModal}
+          onOpenChange={setShowInvoiceModal}
         />
       )}
 

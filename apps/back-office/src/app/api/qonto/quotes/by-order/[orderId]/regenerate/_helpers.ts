@@ -4,6 +4,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { QontoClient } from '@verone/integrations/qonto';
+import type { Database } from '@verone/types';
 
 import {
   saveQuoteToLocalDb,
@@ -52,7 +53,7 @@ export function buildShippingFooter(
 // ---------------------------------------------------------------------------
 
 interface IPersistNewQuoteParams {
-  supabase: SupabaseClient;
+  supabase: SupabaseClient<Database>;
   userId: string;
   orderId: string;
   supersededIds: string[];
@@ -120,7 +121,7 @@ export async function persistNewQuote(
 
   const { error: revisionError } = await supabase
     .from('financial_documents')
-    .update({ revision_number: newRevisionNumber })
+    .update({ revision_number: newRevisionNumber } as Record<string, unknown>)
     .eq('id', localDocId);
   if (revisionError) {
     console.warn(

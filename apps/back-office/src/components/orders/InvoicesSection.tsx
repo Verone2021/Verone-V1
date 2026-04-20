@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { InvoiceDetailModal } from '@verone/finance';
+import { DocumentResyncAction } from '@verone/finance/components';
 import { Button, Card, CardContent } from '@verone/ui';
 import { FileText, Download, Send, Loader2, Eye } from 'lucide-react';
 
@@ -17,12 +18,18 @@ interface InvoiceLinked {
   due_date: string | null;
   qonto_pdf_url: string | null;
   finalized_at: string | null;
+  /** [BO-FIN-009 Phase 4] created_at du document local, pour détection out-of-sync */
+  created_at?: string | null;
+  /** [BO-FIN-009 Phase 4] notes libres, préservées lors d'une re-synchronisation */
+  notes?: string | null;
 }
 
 interface InvoicesByOrderResponse {
   success: boolean;
   invoices?: InvoiceLinked[];
   count?: number;
+  /** [BO-FIN-009 Phase 4] sales_orders.updated_at pour comparaison out-of-sync */
+  order_updated_at?: string | null;
   error?: string;
 }
 
@@ -80,6 +87,7 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
   });
 
   const invoices: InvoiceLinked[] = data?.invoices ?? [];
+  const orderUpdatedAt = data?.order_updated_at ?? null;
 
   if (isLoading) {
     return (
@@ -139,6 +147,20 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
                   {new Date(invoice.document_date).toLocaleDateString('fr-FR')}
                 </span>
                 <span>Payé : {invoice.amount_paid.toFixed(2)} €</span>
+              </div>
+
+              {/* [BO-FIN-009 Phase 4] Badge + bouton Re-synchroniser (proforma draft out-of-sync uniquement) */}
+              <div className="flex flex-wrap items-center gap-1">
+                <DocumentResyncAction
+                  documentType="proforma"
+                  orderId={orderId}
+                  documentStatus={invoice.status}
+                  orderUpdatedAt={orderUpdatedAt}
+                  documentCreatedAt={
+                    invoice.created_at ?? invoice.document_date ?? null
+                  }
+                  existingNotes={invoice.notes ?? ''}
+                />
               </div>
 
               {/* Actions — compact row */}

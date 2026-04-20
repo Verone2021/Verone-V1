@@ -1,9 +1,9 @@
 # Index Composants, Formulaires & Hooks — packages/@verone/
 
-**Derniere mise a jour** : 2026-04-19
+**Derniere mise a jour** : 2026-04-20
 **23 packages** dans `packages/@verone/`
 
-## **538 composants, 12 hooks**
+## **545 composants, 12 hooks**
 
 ## @verone/categories
 
@@ -75,7 +75,9 @@
 | `ConsultationProductAssociation` | Component | `src/components/associations/ConsultationProductAssociation.tsx` |
 | `ConsultationImageGallery`       | Component | `src/components/images/ConsultationImageGallery.tsx`             |
 | `ConsultationImageViewerModal`   | Modal     | `src/components/images/ConsultationImageViewerModal.tsx`         |
+| `ConsultationMarginKpis`         | Component | `src/components/interfaces/ConsultationMarginKpis.tsx`           |
 | `ConsultationOrderInterface`     | Component | `src/components/interfaces/ConsultationOrderInterface.tsx`       |
+| `ConsultationProductsTable`      | Component | `src/components/interfaces/ConsultationProductsTable.tsx`        |
 | `ConsultationEmailAttachments`   | Component | `src/components/modals/ConsultationEmailAttachments.tsx`         |
 | `ConsultationPhotosModal`        | Modal     | `src/components/modals/ConsultationPhotosModal.tsx`              |
 | `EditConsultationModal`          | Modal     | `src/components/modals/EditConsultationModal.tsx`                |
@@ -353,6 +355,7 @@
 | `OrderActionsCard`                  | Component | `src/components/modals/order-detail/OrderActionsCard.tsx`                         |
 | `OrderCustomerCard`                 | Component | `src/components/modals/order-detail/OrderCustomerCard.tsx`                        |
 | `OrderInvoicingCard`                | Component | `src/components/modals/order-detail/OrderInvoicingCard.tsx`                       |
+| `OrderMarginReportCard`             | Component | `src/components/modals/order-detail/OrderMarginReportCard.tsx`                    |
 | `OrderPaymentDialog`                | Component | `src/components/modals/order-detail/OrderPaymentDialog.tsx`                       |
 | `OrderPaymentSummaryCard`           | Component | `src/components/modals/order-detail/OrderPaymentSummaryCard.tsx`                  |
 | `OrderProductsCard`                 | Component | `src/components/modals/order-detail/OrderProductsCard.tsx`                        |
@@ -363,6 +366,7 @@
 | `LinkMeCartTable`                   | Component | `src/components/modals/sales-order-form/LinkMeCartTable.tsx`                      |
 | `LinkMeWorkflow`                    | Component | `src/components/modals/sales-order-form/LinkMeWorkflow.tsx`                       |
 | `OrderConfirmationDialog`           | Component | `src/components/modals/sales-order-form/OrderConfirmationDialog.tsx`              |
+| `OrderDevalidateBanner`             | Component | `src/components/modals/sales-order-form/OrderDevalidateBanner.tsx`                |
 | `OrderItemsTable`                   | Component | `src/components/modals/sales-order-form/OrderItemsTable.tsx`                      |
 | `QuantityInput`                     | Component | `src/components/modals/sales-order-form/QuantityInput.tsx`                        |
 | `StandardOrderForm`                 | Form      | `src/components/modals/sales-order-form/StandardOrderForm.tsx`                    |
@@ -411,11 +415,14 @@
 | `GeneralInfoSection`             | Component | `src/components/forms/unified-organisation-form/GeneralInfoSection.tsx` |
 | `LegalSection`                   | Component | `src/components/forms/unified-organisation-form/LegalSection.tsx`       |
 | `NotesSection`                   | Component | `src/components/forms/unified-organisation-form/NotesSection.tsx`       |
+| `MapLibreMapView`                | Component | `src/components/maps/MapLibreMapView.tsx`                               |
+| `MapPopupCard`                   | Component | `src/components/maps/MapPopupCard.tsx`                                  |
 | `AssignOrganisationsModal`       | Modal     | `src/components/modals/AssignOrganisationsModal.tsx`                    |
 | `ConfirmDeleteOrganisationModal` | Modal     | `src/components/modals/ConfirmDeleteOrganisationModal.tsx`              |
 | `ContactFormModalWrapper`        | Modal     | `src/components/modals/ContactFormModalWrapper.tsx`                     |
 | `NewContactModal`                | Modal     | `src/components/modals/NewContactModal.tsx`                             |
 | `OrgBrowseModal`                 | Modal     | `src/components/modals/OrgBrowseModal.tsx`                              |
+| `OrganisationAddressPickerModal` | Modal     | `src/components/modals/OrganisationAddressPickerModal.tsx`              |
 | `OrganisationQuickViewModal`     | Modal     | `src/components/modals/OrganisationQuickViewModal.tsx`                  |
 | `OrganisationSelectorItems`      | Component | `src/components/modals/OrganisationSelectorItems.tsx`                   |
 | `OrganisationSelectorModal`      | Modal     | `src/components/modals/OrganisationSelectorModal.tsx`                   |
