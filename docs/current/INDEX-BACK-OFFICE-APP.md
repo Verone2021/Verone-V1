@@ -1,6 +1,6 @@
 # Back-Office — Documentation App
 
-_Generated: 2026-04-20 01:13_
+_Generated: 2026-04-20 13:19_
 
 ## Pages (147)
 
@@ -154,7 +154,7 @@ _Generated: 2026-04-20 01:13_
 | `/`                                                                      | page.tsx |
 | `/unauthorized`                                                          | page.tsx |
 
-## API Routes (123)
+## API Routes (124)
 
 | Endpoint                                                     | Methods            |
 | ------------------------------------------------------------ | ------------------ |
@@ -165,6 +165,7 @@ _Generated: 2026-04-20 01:13_
 | `/api/analytics/batch`                                       | POST               |
 | `/api/analytics/events`                                      | POST               |
 | `/api/catalogue/products`                                    | ?                  |
+| `/api/channel-pricing/upsert`                                | POST               |
 | `/api/consultations/associations`                            | POST               |
 | `/api/cron/google-merchant-poll`                             | GET                |
 | `/api/csp-report`                                            | GET, POST          |
