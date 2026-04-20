@@ -9,7 +9,7 @@ import type {
 import type { Organisation } from '@verone/organisations';
 import { ViewModeToggle } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { Search, X, RotateCcw } from 'lucide-react';
+import { Search, X, RefreshCw } from 'lucide-react';
 
 import {
   CatalogueFilterPanel,
@@ -32,6 +32,7 @@ interface CatalogueToolbarProps {
   onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onClearSearch: () => void;
   onResetAllFilters: () => void;
+  onResync: () => void;
   onFiltersChange: (newFilterState: FilterState) => void;
 }
 
@@ -49,6 +50,7 @@ export function CatalogueToolbar({
   onSearchChange,
   onClearSearch,
   onResetAllFilters,
+  onResync,
   onFiltersChange,
 }: CatalogueToolbarProps) {
   return (
@@ -99,15 +101,24 @@ export function CatalogueToolbar({
           )}
         </div>
 
+        <button
+          type="button"
+          onClick={onResync}
+          className="flex items-center gap-1.5 h-[38px] px-3 border border-black bg-white text-black hover:bg-gray-100 transition-colors text-sm"
+          title="Resynchroniser les produits depuis la base (force un re-fetch si les filtres se désynchronisent)"
+        >
+          <RefreshCw className="h-4 w-4" />
+          <span className="hidden sm:inline">Resynchroniser</span>
+        </button>
         {hasActiveFilters && (
           <button
             type="button"
             onClick={onResetAllFilters}
-            className="flex items-center gap-1.5 h-[38px] px-3 border border-black bg-white text-black hover:bg-gray-100 transition-colors text-sm"
-            title="Réinitialiser tous les filtres"
+            className="flex items-center gap-1.5 h-[38px] px-3 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors text-sm"
+            title="Effacer tous les filtres"
           >
-            <RotateCcw className="h-4 w-4" />
-            <span className="hidden sm:inline">Réinitialiser</span>
+            <X className="h-4 w-4" />
+            <span className="hidden sm:inline">Effacer filtres</span>
           </button>
         )}
 
