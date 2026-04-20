@@ -270,7 +270,12 @@ Tout empilé 1 colonne, même ordre. KPI en 2×2 grid (cost + marge / min + eco)
 
 _Rempli au fur et à mesure par l'agent._
 
-- Project ID : _à venir_
-- Design system asset ID : _à venir_
-- Desktop screen ID : _à venir_
-- Mobile screen ID : _à venir_
+- Project ID : `14273265056008991888` (projects/14273265056008991888)
+- Design system asset ID : `9039856936060385642` (Verone Admin Neutral)
+- Desktop screen (v1 Gemini 3.1 Pro) : thumbnail récupéré `.playwright-mcp/screenshots/stitch-tarification-desktop-v1-2026-04-20.png`
+  - URL publique Google Stitch : https://lh3.googleusercontent.com/aida/ADBb0ujR4mx6f0dv1xzs5Z9pHTioWllcGjZGU_Lagl0Q24Q0GQ5ozYT6hDJJdCtfO3vmFhroG6Akmer0U5ajV3E7iqQwhFvZatqgkGp9ljUUl1njDQRjKGLfPRsMnK80EwkeEIioHKI_ucBzfJ4F6IX37uj8dsr8VV0KBnvAf6YnGrNggHEaSWdiYi0x1o-2jvhp2FO-39fJXWUJ-J7c12oVQk6H7_k-M53XYsAQzH8xYzI2CwiQoYEr564DjZKY
+- Mobile screen ID : à venir (nouvelle génération après validation Romeo du desktop)
+
+### Note sur l'exécution
+
+`mcp__stitch__generate_screen_from_text` a renvoyé "operation timed out" à 3 reprises côté client MCP, mais le job a tourné côté Google Stitch (~4 min). Le thumbnail du projet (récupéré via `mcp__stitch__get_project`) montre l'écran final complet. `mcp__stitch__list_screens` renvoie vide — probable latence d'indexation côté Stitch. Ré-exécuter `list_screens` plus tard pour obtenir l'ID screen et utiliser `apply_design_system` si besoin.
