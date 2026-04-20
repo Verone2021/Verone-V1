@@ -3,7 +3,7 @@
 **Derniere mise a jour** : 2026-04-20
 **23 packages** dans `packages/@verone/`
 
-## **542 composants, 12 hooks**
+## **545 composants, 12 hooks**
 
 ## @verone/categories
 
@@ -75,7 +75,9 @@
 | `ConsultationProductAssociation` | Component | `src/components/associations/ConsultationProductAssociation.tsx` |
 | `ConsultationImageGallery`       | Component | `src/components/images/ConsultationImageGallery.tsx`             |
 | `ConsultationImageViewerModal`   | Modal     | `src/components/images/ConsultationImageViewerModal.tsx`         |
+| `ConsultationMarginKpis`         | Component | `src/components/interfaces/ConsultationMarginKpis.tsx`           |
 | `ConsultationOrderInterface`     | Component | `src/components/interfaces/ConsultationOrderInterface.tsx`       |
+| `ConsultationProductsTable`      | Component | `src/components/interfaces/ConsultationProductsTable.tsx`        |
 | `ConsultationEmailAttachments`   | Component | `src/components/modals/ConsultationEmailAttachments.tsx`         |
 | `ConsultationPhotosModal`        | Modal     | `src/components/modals/ConsultationPhotosModal.tsx`              |
 | `EditConsultationModal`          | Modal     | `src/components/modals/EditConsultationModal.tsx`                |
