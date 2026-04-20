@@ -1,5 +1,7 @@
 /**
- * Hooks pour la gestion des marges et métadonnées custom du catalogue
+ * Hooks pour la gestion des paramètres de marge du catalogue LinkMe.
+ * SI-DESC-001 (2026-04-21) : useUpdateCustomMetadata retiré — les colonnes
+ * custom_* ont été droppées de channel_pricing (0 % usage prod).
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -27,40 +29,6 @@ export function useUpdateMarginSettings() {
       const { error } = await supabase
         .from('channel_pricing')
         .update(marginSettings)
-        .eq('id', catalogProductId);
-
-      if (error) throw error;
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ['linkme-catalog-products'],
-      });
-    },
-  });
-}
-
-/**
- * Hook: mettre à jour les métadonnées custom
- */
-export function useUpdateCustomMetadata() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      catalogProductId,
-      metadata,
-    }: {
-      catalogProductId: string;
-      metadata: {
-        custom_title?: string | null;
-        custom_description?: string | null;
-        custom_selling_points?: string[] | null;
-      };
-    }) => {
-      const supabase = getSupabaseClient();
-      const { error } = await supabase
-        .from('channel_pricing')
-        .update(metadata)
         .eq('id', catalogProductId);
 
       if (error) throw error;

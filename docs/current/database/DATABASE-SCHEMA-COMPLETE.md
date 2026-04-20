@@ -1,6 +1,6 @@
 # Database Schema Complete — Index
 
-_Generated: 2026-04-21 01:37 — 142 tables_
+_Generated: 2026-04-21 01:58 — 142 tables_
 
 | Table                               | Domaine                     | Colonnes |
 | ----------------------------------- | --------------------------- | -------- |
@@ -17,9 +17,9 @@ _Generated: 2026-04-21 01:37 — 142 tables_
 | bank_transactions_enrichment_audit  | Finance & Comptabilite      | 10       |
 | categories                          | Produits & Catalogue        | 16       |
 | channel_price_lists                 | Autres                      | 17       |
-| channel_pricing                     | Autres                      | 35       |
+| channel_pricing                     | Autres                      | 32       |
 | channel_pricing_history             | Autres                      | 16       |
-| channel_product_metadata            | Autres                      | 14       |
+| channel_product_metadata            | Autres                      | 8        |
 | client_consultations                | Commandes & Consultations   | 26       |
 | cms_pages                           | Autres                      | 9        |
 | collection_images                   | Produits & Catalogue        | 15       |
@@ -66,7 +66,7 @@ _Generated: 2026-04-21 01:37 — 142 tables_
 | linkme_page_configurations          | LinkMe & Affiliation        | 11       |
 | linkme_payment_request_items        | LinkMe & Affiliation        | 5        |
 | linkme_payment_requests             | LinkMe & Affiliation        | 17       |
-| linkme_selection_items              | LinkMe & Affiliation        | 12       |
+| linkme_selection_items              | LinkMe & Affiliation        | 11       |
 | linkme_selection_items_with_pricing | Autres                      | 14       |
 | linkme_selections                   | LinkMe & Affiliation        | 16       |
 | matching_rules                      | Finance & Comptabilite      | 20       |

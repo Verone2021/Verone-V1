@@ -1,6 +1,6 @@
 # Domaine LinkMe & Affiliation — Schema Base de Donnees
 
-_Generated: 2026-04-21 01:37_
+_Generated: 2026-04-21 01:58_
 
 **Tables : 10**
 
@@ -14,7 +14,7 @@ _Generated: 2026-04-21 01:37_
 | [linkme_page_configurations](#linkme-page-configurations)     | 11       | 0   | 2   | 1        |
 | [linkme_payment_request_items](#linkme-payment-request-items) | 5        | 2   | 4   | 0        |
 | [linkme_payment_requests](#linkme-payment-requests)           | 17       | 1   | 4   | 3        |
-| [linkme_selection_items](#linkme-selection-items)             | 12       | 2   | 6   | 4        |
+| [linkme_selection_items](#linkme-selection-items)             | 11       | 2   | 6   | 4        |
 | [linkme_selections](#linkme-selections)                       | 16       | 1   | 3   | 1        |
 
 ## linkme_affiliates
@@ -303,7 +303,6 @@ _Generated: 2026-04-21 01:37_
 | base_price_ht      | numeric     | NO       |                   |
 | margin_rate        | numeric     | NO       |                   |
 | display_order      | integer     | YES      | 0                 |
-| custom_description | text        | YES      |                   |
 | is_featured        | boolean     | YES      | false             |
 | created_at         | timestamptz | YES      | now()             |
 | updated_at         | timestamptz | YES      | now()             |

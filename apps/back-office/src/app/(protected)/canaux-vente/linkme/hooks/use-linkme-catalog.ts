@@ -47,17 +47,13 @@ export {
   useToggleShowSupplier,
 } from './catalog/use-catalog-toggles';
 
-// Metadata hooks (marges, custom metadata)
-export {
-  useUpdateMarginSettings,
-  useUpdateCustomMetadata,
-} from './catalog/use-catalog-metadata';
+// Metadata hooks (marges uniquement — custom_* retirés dans SI-DESC-001)
+export { useUpdateMarginSettings } from './catalog/use-catalog-metadata';
 
 // Detail page hooks
 export {
   useLinkMeProductDetail,
   useUpdateLinkMePricing,
-  useUpdateLinkMeMetadata,
   useUpdateAffiliateCommission,
   useToggleLinkMeProductField,
 } from './catalog/use-product-detail';

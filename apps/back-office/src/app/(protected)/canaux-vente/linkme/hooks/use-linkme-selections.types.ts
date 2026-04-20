@@ -9,7 +9,6 @@ export interface SelectionItem {
   margin_rate: number;
   selling_price_ht: number | null;
   display_order: number | null;
-  custom_description: string | null;
   is_featured: boolean | null;
   is_hidden_by_staff: boolean;
   created_at: string | null;
@@ -127,7 +126,6 @@ export interface AddProductData {
 export interface UpdateSelectionItemData {
   base_price_ht?: number;
   margin_rate?: number;
-  custom_description?: string | null;
   is_featured?: boolean;
 }
 
