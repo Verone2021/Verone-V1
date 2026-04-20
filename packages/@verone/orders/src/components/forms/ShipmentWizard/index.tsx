@@ -17,6 +17,7 @@ import { useState } from 'react';
 import { InventoryAdjustmentModal } from '@verone/stock';
 import type { ShipmentItem } from '@verone/types';
 
+import { parseShippingAddress } from './parse-address';
 import type { ShipmentWizardProps } from './types';
 import { useShipmentWizard } from './useShipmentWizard';
 import { StepStepper } from './StepStepper';
@@ -52,10 +53,7 @@ export function ShipmentWizard({
       }
     : null;
 
-  const addr = (salesOrder.shipping_address ?? null) as Record<
-    string,
-    string
-  > | null;
+  const addr = parseShippingAddress(salesOrder.shipping_address);
   const customerName = salesOrder.customer_name ?? 'Client';
 
   return (

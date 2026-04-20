@@ -1,6 +1,6 @@
 # Domaine Finance & Comptabilite — Schema Base de Donnees
 
-_Generated: 2026-04-19 19:09_
+_Generated: 2026-04-20 16:54_
 
 **Tables : 13**
 
