@@ -12,6 +12,7 @@ import {
   orderStatusLabels,
   orderStatusColors,
   OrderProductsCard,
+  OrderMarginReportCard,
   OrderPaymentSummaryCard,
   OrderReconciliationCard,
   OrderShipmentHistoryCard,
@@ -188,6 +189,11 @@ export function OrderDetailModal({
                 }
                 onUpdate={onUpdate}
               />
+
+              {/* [BO-ORD-003] Récap gain/perte — lecture seule */}
+              <div className="mt-3">
+                <OrderMarginReportCard orderId={order.id} />
+              </div>
             </div>
 
             {/* SIDEBAR (35%) */}

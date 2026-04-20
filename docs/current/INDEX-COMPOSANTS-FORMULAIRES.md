@@ -353,6 +353,7 @@
 | `OrderActionsCard`                  | Component | `src/components/modals/order-detail/OrderActionsCard.tsx`                         |
 | `OrderCustomerCard`                 | Component | `src/components/modals/order-detail/OrderCustomerCard.tsx`                        |
 | `OrderInvoicingCard`                | Component | `src/components/modals/order-detail/OrderInvoicingCard.tsx`                       |
+| `OrderMarginReportCard`             | Component | `src/components/modals/order-detail/OrderMarginReportCard.tsx`                    |
 | `OrderPaymentDialog`                | Component | `src/components/modals/order-detail/OrderPaymentDialog.tsx`                       |
 | `OrderPaymentSummaryCard`           | Component | `src/components/modals/order-detail/OrderPaymentSummaryCard.tsx`                  |
 | `OrderProductsCard`                 | Component | `src/components/modals/order-detail/OrderProductsCard.tsx`                        |
