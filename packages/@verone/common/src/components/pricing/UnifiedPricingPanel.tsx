@@ -1,12 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-
-import { ButtonV2 } from '@verone/ui';
-import { History } from 'lucide-react';
-
 import { ChannelPricingEditor } from './ChannelPricingEditor';
-import { PurchasePriceHistoryTimeline } from './PurchasePriceHistoryTimeline';
 import { SupplierVsPricingEditSection } from './SupplierVsPricingEditSection';
 import type { Product, VariantGroup } from './supplier-pricing-types';
 import { calculateMinSellingPrice } from './use-supplier-pricing-calc';
@@ -24,8 +18,6 @@ export function UnifiedPricingPanel({
   onUpdate,
   className,
 }: UnifiedPricingPanelProps) {
-  const [historyOpen, setHistoryOpen] = useState(false);
-
   const costPrice =
     variantGroup?.has_common_cost_price && product.variant_group_id
       ? (variantGroup.common_cost_price ?? 0)
@@ -47,28 +39,11 @@ export function UnifiedPricingPanel({
           onUpdate={onUpdate}
         />
 
-        <div className="flex items-center justify-end">
-          <ButtonV2
-            variant="outline"
-            size="sm"
-            onClick={() => setHistoryOpen(true)}
-          >
-            <History className="h-3 w-3 mr-1" />
-            Historique des achats
-          </ButtonV2>
-        </div>
-
         <ChannelPricingEditor
           productId={product.id}
           minimumSellingPrice={minimumSellingPrice}
         />
       </div>
-
-      <PurchasePriceHistoryTimeline
-        productId={product.id}
-        open={historyOpen}
-        onOpenChange={setHistoryOpen}
-      />
     </div>
   );
 }
