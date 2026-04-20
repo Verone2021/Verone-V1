@@ -17,6 +17,14 @@ export interface ChannelPricingEntry {
   is_active: boolean;
   notes: string | null;
   updated_at: string | null;
+  /** Canal LinkMe : prix par sélection (selling_price_ht calculé en DB) */
+  selection_prices?: Array<{
+    selection_id: string;
+    selection_name: string;
+    base_price_ht: number | null;
+    margin_rate: number | null;
+    selling_price_ht: number | null;
+  }>;
 }
 
 const CHANNEL_CODES_SUPPORTED = [
@@ -59,6 +67,31 @@ export function useChannelPricing(productId: string | null | undefined) {
         throw new Error(`Tarifs canal: ${pricingError.message}`);
       }
 
+      const { data: selectionRows, error: selectionError } = await supabase
+        .from('linkme_selection_items')
+        .select(
+          'selection_id, base_price_ht, margin_rate, selling_price_ht, selection:linkme_selections!linkme_selection_items_selection_id_fkey(id, name)'
+        )
+        .eq('product_id', productId);
+
+      if (selectionError) {
+        throw new Error(`Sélections LinkMe: ${selectionError.message}`);
+      }
+
+      const selectionPrices = (selectionRows ?? []).map(row => {
+        const sel = row.selection as unknown as {
+          id: string;
+          name: string;
+        } | null;
+        return {
+          selection_id: sel?.id ?? row.selection_id,
+          selection_name: sel?.name ?? 'Sélection inconnue',
+          base_price_ht: row.base_price_ht,
+          margin_rate: row.margin_rate,
+          selling_price_ht: row.selling_price_ht,
+        };
+      });
+
       return (channels ?? []).map(channel => {
         const row = (pricing ?? []).find(p => p.channel_id === channel.id);
         return {
@@ -75,6 +108,8 @@ export function useChannelPricing(productId: string | null | undefined) {
           is_active: row?.is_active ?? false,
           notes: row?.notes ?? null,
           updated_at: row?.updated_at ?? null,
+          selection_prices:
+            channel.code === 'linkme' ? selectionPrices : undefined,
         };
       });
     },

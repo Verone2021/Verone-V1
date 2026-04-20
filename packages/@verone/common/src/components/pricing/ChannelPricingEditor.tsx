@@ -126,11 +126,18 @@ export function ChannelPricingEditor({
           {editable.map(entry => {
             const Icon = CHANNEL_ICONS[entry.channel_code] ?? Globe;
             const isEditing = editing === entry.channel_id;
-            const effectivePrice = entry.custom_price_ht;
+            const displayedPrice =
+              entry.custom_price_ht ?? entry.public_price_ht;
+            const priceSource: 'custom' | 'public' | 'none' =
+              entry.custom_price_ht != null
+                ? 'custom'
+                : entry.public_price_ht != null
+                  ? 'public'
+                  : 'none';
             const belowMin =
-              effectivePrice != null &&
+              displayedPrice != null &&
               minimumSellingPrice > 0 &&
-              effectivePrice < minimumSellingPrice;
+              displayedPrice < minimumSellingPrice;
 
             return (
               <div
@@ -177,11 +184,24 @@ export function ChannelPricingEditor({
                       <div className="mt-2 flex items-end justify-between gap-3">
                         <div>
                           <div className="text-2xl font-semibold text-neutral-900 tabular-nums">
-                            {entry.custom_price_ht != null
-                              ? formatPrice(entry.custom_price_ht)
+                            {displayedPrice != null
+                              ? formatPrice(displayedPrice)
                               : '—'}
                           </div>
-                          {entry.custom_price_ht == null && (
+                          {priceSource === 'public' && (
+                            <div className="text-xs text-neutral-500">
+                              prix public (aucun override custom)
+                            </div>
+                          )}
+                          {priceSource === 'custom' &&
+                            entry.public_price_ht != null &&
+                            entry.public_price_ht !== entry.custom_price_ht && (
+                              <div className="text-xs text-neutral-500">
+                                override custom · prix public{' '}
+                                {formatPrice(entry.public_price_ht)}
+                              </div>
+                            )}
+                          {priceSource === 'none' && (
                             <div className="text-xs text-neutral-500">
                               Aucun prix défini pour ce canal
                             </div>
@@ -282,6 +302,40 @@ export function ChannelPricingEditor({
                         </div>
                       </div>
                     )}
+
+                    {entry.channel_code === 'linkme' &&
+                      entry.selection_prices &&
+                      entry.selection_prices.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-neutral-200">
+                          <div className="text-xs text-neutral-500 font-medium uppercase tracking-wide mb-1.5">
+                            Prix appliqué dans les sélections
+                          </div>
+                          <ul className="space-y-1">
+                            {entry.selection_prices.map(sel => (
+                              <li
+                                key={sel.selection_id}
+                                className="flex items-center justify-between text-xs"
+                              >
+                                <span className="text-neutral-700 truncate mr-3">
+                                  {sel.selection_name}
+                                </span>
+                                <span className="tabular-nums text-neutral-900 font-medium shrink-0">
+                                  {sel.selling_price_ht != null
+                                    ? formatPrice(sel.selling_price_ht)
+                                    : '—'}
+                                  {sel.base_price_ht != null &&
+                                    sel.margin_rate != null && (
+                                      <span className="text-neutral-400 font-normal ml-1.5">
+                                        ({formatPrice(sel.base_price_ht)} +{' '}
+                                        {sel.margin_rate}%)
+                                      </span>
+                                    )}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                   </div>
                 </div>
               </div>

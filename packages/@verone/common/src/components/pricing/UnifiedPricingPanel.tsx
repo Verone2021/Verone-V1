@@ -35,11 +35,8 @@ export function UnifiedPricingPanel({
       ? (variantGroup.common_eco_tax ?? 0)
       : (product.eco_tax_default ?? 0);
   const margin = product.margin_percentage ?? 0;
-  const minimumSellingPrice = calculateMinSellingPrice(
-    costPrice,
-    ecoTax,
-    margin
-  );
+  const minimumSellingPrice =
+    margin > 0 ? calculateMinSellingPrice(costPrice, ecoTax, margin) : 0;
 
   return (
     <div className={className}>
