@@ -1,44 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '@verone/types';
-
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        id: {
-          initialize: (config: {
-            client_id: string;
-            callback: (response: { credential: string }) => void;
-            auto_select?: boolean;
-          }) => void;
-          prompt: (
-            notification?: (n: {
-              isNotDisplayed: () => boolean;
-              isSkippedMoment: () => boolean;
-            }) => void
-          ) => void;
-          renderButton: (
-            element: HTMLElement,
-            config: {
-              theme?: string;
-              size?: string;
-              text?: string;
-              shape?: string;
-              width?: number;
-            }
-          ) => void;
-        };
-      };
-    };
-  }
-}
-
-const GOOGLE_CLIENT_ID =
-  '815096025483-lvlqgje963p9dav6nit7i61lvaamlisv.apps.googleusercontent.com';
 
 function createSupabaseClient() {
   return createBrowserClient<Database>(
@@ -49,108 +14,42 @@ function createSupabaseClient() {
 
 export function GoogleAuthButton() {
   const [loading, setLoading] = useState(false);
-  const [gsiReady, setGsiReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (
-      document.querySelector(
-        'script[src="https://accounts.google.com/gsi/client"]'
-      )
-    ) {
-      if (window.google?.accounts?.id) {
-        setGsiReady(true);
-      }
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-
-    script.onload = () => {
-      setGsiReady(true);
-    };
-
-    script.onerror = () => {
-      console.error(
-        '[GoogleAuth] Failed to load Google Identity Services script'
-      );
-      setError('Impossible de charger Google. Veuillez réessayer.');
-    };
-
-    document.head.appendChild(script);
-  }, []);
-
   const handleGoogleLogin = () => {
-    if (!gsiReady || !window.google?.accounts?.id) {
-      setError('Google Identity Services non disponible. Veuillez réessayer.');
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
     const supabase = createSupabaseClient();
 
-    window.google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: (response: { credential: string }) => {
-        void (async () => {
-          try {
-            const { data, error: signInError } =
-              await supabase.auth.signInWithIdToken({
-                provider: 'google',
-                token: response.credential,
-              });
+    void (async () => {
+      const redirectTo =
+        typeof window !== 'undefined'
+          ? `${window.location.origin}/auth/callback?next=/compte`
+          : undefined;
 
-            if (signInError) {
-              console.error(
-                '[GoogleAuth] signInWithIdToken error:',
-                signInError.message
-              );
-              setError('Erreur de connexion Google. Veuillez réessayer.');
-              setLoading(false);
-              return;
-            }
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
 
-            if (data.user) {
-              const existingSource = data.user.user_metadata?.source as
-                | string
-                | undefined;
-              if (!existingSource) {
-                const { error: updateError } = await supabase.auth.updateUser({
-                  data: { source: 'site-internet' },
-                });
-                if (updateError) {
-                  console.error(
-                    '[GoogleAuth] Failed to update user metadata:',
-                    updateError.message
-                  );
-                }
-              }
-            }
-
-            window.location.href = '/compte';
-          } catch (err: unknown) {
-            console.error('[GoogleAuth] Unexpected error during sign-in:', err);
-            setError('Une erreur inattendue est survenue. Veuillez réessayer.');
-            setLoading(false);
-          }
-        })();
-      },
-    });
-
-    window.google.accounts.id.prompt(notification => {
-      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        console.warn('[GoogleAuth] GSI prompt not displayed or skipped');
-        setError(
-          "Le popup Google n'a pas pu s'afficher. Vérifiez votre navigateur."
+      if (oauthError) {
+        console.error(
+          '[GoogleAuth] signInWithOAuth error:',
+          oauthError.message
         );
+        setError('Erreur de connexion Google. Veuillez réessayer.');
         setLoading(false);
       }
-    });
+      // Succès : Supabase redirige le navigateur vers Google puis vers redirectTo.
+      // Pas besoin de gérer le cas success ici — la page sera changée.
+    })();
   };
 
   return (
@@ -158,7 +57,7 @@ export function GoogleAuthButton() {
       <button
         type="button"
         onClick={handleGoogleLogin}
-        disabled={loading || !gsiReady}
+        disabled={loading}
         className="w-full flex items-center justify-center gap-3 bg-white border border-verone-gray-300 text-verone-gray-700 py-3 rounded-lg font-medium hover:bg-verone-gray-50 transition-colors text-sm disabled:opacity-50"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -179,7 +78,7 @@ export function GoogleAuthButton() {
             fill="#EA4335"
           />
         </svg>
-        {loading ? 'Connexion...' : 'Continuer avec Google'}
+        {loading ? 'Redirection…' : 'Continuer avec Google'}
       </button>
       {error !== null && (
         <p className="mt-2 text-sm text-red-600 text-center">{error}</p>
