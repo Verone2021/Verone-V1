@@ -32,7 +32,6 @@ export function ConsultationOrderInterface({
     addItem,
     updateItem,
     removeItem,
-    toggleFreeItem,
     getTotalItemsCount,
     fetchConsultationItems,
   } = useConsultationItems(consultationId);
@@ -123,17 +122,31 @@ export function ConsultationOrderInterface({
     });
   };
 
-  const handleToggleFree = (itemId: string): void => {
-    void toggleFreeItem(itemId).catch(err => {
-      console.error('[ConsultationOrderInterface] toggleFreeItem failed:', err);
-    });
-  };
-
-  const handleToggleSample = (itemId: string): void => {
-    const item = consultationItems.find(i => i.id === itemId);
-    if (!item) return;
-    void updateItem(itemId, { is_sample: !item.is_sample }).catch(err => {
-      console.error('[ConsultationOrderInterface] toggleSample failed:', err);
+  const handleSampleChange = (itemId: string, priceStr: string): void => {
+    // Input vide → ligne normale (pas echantillon)
+    // Input '0' → echantillon gratuit
+    // Input > 0 → echantillon a prix reduit
+    const trimmed = priceStr.trim();
+    let patch: Partial<{
+      is_sample: boolean;
+      is_free: boolean;
+      unit_price: number;
+    }> = {};
+    if (trimmed === '') {
+      patch = { is_sample: false, is_free: false };
+    } else {
+      const price = parseFloat(trimmed);
+      if (Number.isNaN(price) || price < 0) return;
+      patch =
+        price === 0
+          ? { is_sample: true, is_free: true, unit_price: 0 }
+          : { is_sample: true, is_free: false, unit_price: price };
+    }
+    void updateItem(itemId, patch).catch(err => {
+      console.error(
+        '[ConsultationOrderInterface] handleSampleChange failed:',
+        err
+      );
     });
   };
 
@@ -259,14 +272,12 @@ export function ConsultationOrderInterface({
           onSetEditNotes={setEditNotes}
           onSetEditShippingCost={setEditShippingCost}
           onSetEditCostPriceOverride={setEditCostPriceOverride}
-          onSetEditIsSample={setEditIsSample}
           onStartEdit={startEditItem}
           onSaveEdit={saveEditItem}
           onCancelEdit={cancelEditItem}
           onChangeQuantity={changeQuantity}
           onChangeStatus={changeLineStatus}
-          onToggleFree={handleToggleFree}
-          onToggleSample={handleToggleSample}
+          onSampleChange={handleSampleChange}
           onRemove={handleRemoveItem}
           getItemCostPrice={getItemCostPrice}
           getItemMargin={getItemMargin}

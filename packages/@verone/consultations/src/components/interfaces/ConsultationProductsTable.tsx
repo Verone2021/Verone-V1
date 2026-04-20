@@ -8,7 +8,6 @@ import {
   DropdownMenuTrigger,
 } from '@verone/ui';
 import { Input } from '@verone/ui';
-import { Checkbox } from '@verone/ui';
 import {
   Plus,
   Minus,
@@ -19,7 +18,6 @@ import {
   Check,
   X,
   MoreHorizontal,
-  Gift,
 } from 'lucide-react';
 
 import type { ConsultationItem } from '@verone/consultations/hooks';
@@ -38,14 +36,12 @@ interface ConsultationProductsTableProps {
   onSetEditNotes: (v: string) => void;
   onSetEditShippingCost: (v: string) => void;
   onSetEditCostPriceOverride: (v: string) => void;
-  onSetEditIsSample: (v: boolean) => void;
   onStartEdit: (item: ConsultationItem) => void;
   onSaveEdit: (itemId: string) => void;
   onCancelEdit: () => void;
   onChangeQuantity: (itemId: string, delta: number) => void;
   onChangeStatus: (itemId: string, status: string) => void;
-  onToggleFree: (itemId: string) => void;
-  onToggleSample: (itemId: string) => void;
+  onSampleChange: (itemId: string, priceStr: string) => void;
   onRemove: (itemId: string, productName: string) => void;
   getItemCostPrice: (item: ConsultationItem) => number;
   getItemMargin: (item: ConsultationItem) => number;
@@ -73,14 +69,12 @@ export function ConsultationProductsTable({
   onSetEditNotes,
   onSetEditShippingCost,
   onSetEditCostPriceOverride,
-  onSetEditIsSample,
   onStartEdit,
   onSaveEdit,
   onCancelEdit,
   onChangeQuantity,
   onChangeStatus,
-  onToggleFree,
-  onToggleSample,
+  onSampleChange,
   onRemove,
   getItemCostPrice,
   getItemMargin,
@@ -124,8 +118,8 @@ export function ConsultationProductsTable({
             <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 w-[55px] hidden md:table-cell">
               Stock
             </th>
-            <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 w-[60px] hidden lg:table-cell">
-              Gratuit
+            <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 w-[100px]">
+              Échantillon
             </th>
             <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 w-[90px]">
               Marge
@@ -343,31 +337,49 @@ export function ConsultationProductsTable({
                   </span>
                 </td>
 
-                {/* Gratuit/Échantillon */}
-                <td className="px-3 py-0 h-10 hidden lg:table-cell">
-                  {isEditing ? (
-                    <label className="flex items-center gap-1 cursor-pointer">
-                      <Checkbox
-                        checked={editIsSample}
-                        onCheckedChange={checked =>
-                          onSetEditIsSample(checked === true)
-                        }
-                      />
-                      <span className="text-[10px] text-zinc-500">Échant.</span>
-                    </label>
-                  ) : (
+                {/* Échantillon — prix (vide=non-sample, 0=gratuit, >0=payant) */}
+                <td className="px-3 py-0 h-10">
+                  {item.is_sample && item.is_free ? (
                     <div className="flex items-center gap-1">
-                      <Checkbox
-                        checked={item.is_free}
-                        onCheckedChange={() => onToggleFree(item.id)}
-                        aria-label="Marquer gratuit"
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value="0"
+                        placeholder="—"
+                        onChange={e => onSampleChange(item.id, e.target.value)}
+                        className="w-14 h-6 text-[11px] px-1 py-0"
+                        aria-label="Prix échantillon"
                       />
-                      {item.is_sample && (
-                        <span className="text-[8px] text-zinc-500 uppercase font-bold">
-                          Éch.
-                        </span>
-                      )}
+                      <span className="text-[9px] text-emerald-600 font-bold uppercase">
+                        Offert
+                      </span>
                     </div>
+                  ) : item.is_sample ? (
+                    <div className="relative w-16">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={item.unit_price?.toString() ?? ''}
+                        placeholder="—"
+                        onChange={e => onSampleChange(item.id, e.target.value)}
+                        className="w-full h-6 text-[11px] px-1 pr-4 py-0"
+                        aria-label="Prix échantillon"
+                      />
+                      <Euro className="absolute right-1 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-zinc-400 pointer-events-none" />
+                    </div>
+                  ) : (
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value=""
+                      placeholder="—"
+                      onChange={e => onSampleChange(item.id, e.target.value)}
+                      className="w-16 h-6 text-[11px] px-1 py-0 text-zinc-400"
+                      aria-label="Prix échantillon"
+                    />
                   )}
                 </td>
 
@@ -401,60 +413,39 @@ export function ConsultationProductsTable({
                       {STATUS_LABELS['ordered']}
                     </span>
                   ) : (
-                    <div className="flex items-center gap-1">
-                      <div className="flex bg-zinc-100 p-0.5 rounded text-[9px] font-bold gap-0.5">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            void onChangeStatus(
-                              item.id,
-                              item.status === 'pending' ? 'approved' : 'pending'
-                            )
-                          }
-                          className={`px-1.5 py-0.5 rounded transition-all ${
-                            item.status === 'approved'
-                              ? 'bg-emerald-500 text-white shadow-sm'
-                              : 'text-zinc-400 hover:text-zinc-600'
-                          }`}
-                        >
-                          OK
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            void onChangeStatus(
-                              item.id,
-                              item.status === 'pending' ? 'rejected' : 'pending'
-                            )
-                          }
-                          className={`px-1.5 py-0.5 rounded transition-all ${
-                            item.status === 'rejected'
-                              ? 'bg-red-500 text-white shadow-sm'
-                              : 'text-zinc-400 hover:text-zinc-600'
-                          }`}
-                        >
-                          Non
-                        </button>
-                      </div>
-                      {item.status === 'approved' && (
-                        <button
-                          type="button"
-                          onClick={() => onToggleSample(item.id)}
-                          title={
-                            item.is_sample
-                              ? 'Échantillon offert — cliquer pour retirer'
-                              : 'Offrir un échantillon au client'
-                          }
-                          aria-label="Basculer échantillon offert"
-                          className={`h-5 w-5 flex items-center justify-center rounded transition-all ${
-                            item.is_sample
-                              ? 'bg-amber-400 text-white shadow-sm hover:bg-amber-500'
-                              : 'text-zinc-400 hover:text-amber-500 hover:bg-amber-50'
-                          }`}
-                        >
-                          <Gift className="h-3 w-3" />
-                        </button>
-                      )}
+                    <div className="flex bg-zinc-100 p-0.5 rounded text-[9px] font-bold gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void onChangeStatus(
+                            item.id,
+                            item.status === 'pending' ? 'approved' : 'pending'
+                          )
+                        }
+                        className={`px-1.5 py-0.5 rounded transition-all ${
+                          item.status === 'approved'
+                            ? 'bg-emerald-500 text-white shadow-sm'
+                            : 'text-zinc-400 hover:text-zinc-600'
+                        }`}
+                      >
+                        OK
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void onChangeStatus(
+                            item.id,
+                            item.status === 'pending' ? 'rejected' : 'pending'
+                          )
+                        }
+                        className={`px-1.5 py-0.5 rounded transition-all ${
+                          item.status === 'rejected'
+                            ? 'bg-red-500 text-white shadow-sm'
+                            : 'text-zinc-400 hover:text-zinc-600'
+                        }`}
+                      >
+                        Non
+                      </button>
                     </div>
                   )}
                 </td>
