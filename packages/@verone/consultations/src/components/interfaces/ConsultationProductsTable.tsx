@@ -341,33 +341,45 @@ export function ConsultationProductsTable({
                 <td className="px-3 py-0 h-10">
                   {item.is_sample && item.is_free ? (
                     <div className="flex items-center gap-1">
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value="0"
-                        placeholder="—"
-                        onChange={e => onSampleChange(item.id, e.target.value)}
-                        className="w-14 h-6 text-[11px] px-1 py-0"
-                        aria-label="Prix échantillon"
-                      />
-                      <span className="text-[9px] text-emerald-600 font-bold uppercase">
-                        Offert
+                      <span className="px-1.5 py-0.5 bg-emerald-500 text-white text-[9px] font-bold uppercase tracking-wider rounded shadow-sm">
+                        Gratuit
                       </span>
+                      <button
+                        type="button"
+                        onClick={() => onSampleChange(item.id, '')}
+                        className="h-4 w-4 flex items-center justify-center rounded text-zinc-300 hover:text-zinc-600 hover:bg-zinc-100"
+                        aria-label="Retirer échantillon"
+                        title="Retirer l'échantillon"
+                      >
+                        <X className="h-2.5 w-2.5" />
+                      </button>
                     </div>
                   ) : item.is_sample ? (
-                    <div className="relative w-16">
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={item.unit_price?.toString() ?? ''}
-                        placeholder="—"
-                        onChange={e => onSampleChange(item.id, e.target.value)}
-                        className="w-full h-6 text-[11px] px-1 pr-4 py-0"
-                        aria-label="Prix échantillon"
-                      />
-                      <Euro className="absolute right-1 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-zinc-400 pointer-events-none" />
+                    <div className="flex items-center gap-1">
+                      <div className="relative w-16">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={item.unit_price?.toString() ?? ''}
+                          placeholder="—"
+                          onChange={e =>
+                            onSampleChange(item.id, e.target.value)
+                          }
+                          className="w-full h-6 text-[11px] px-1 pr-4 py-0"
+                          aria-label="Prix échantillon"
+                        />
+                        <Euro className="absolute right-1 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-zinc-400 pointer-events-none" />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => onSampleChange(item.id, '0')}
+                        className="px-1.5 h-5 flex items-center rounded bg-zinc-100 hover:bg-emerald-100 text-[9px] font-bold uppercase tracking-wider text-zinc-500 hover:text-emerald-700"
+                        aria-label="Marquer gratuit"
+                        title="Basculer en échantillon gratuit"
+                      >
+                        Free
+                      </button>
                     </div>
                   ) : (
                     <Input

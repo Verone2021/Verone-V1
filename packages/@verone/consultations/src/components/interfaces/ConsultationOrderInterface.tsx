@@ -124,7 +124,7 @@ export function ConsultationOrderInterface({
 
   const handleSampleChange = (itemId: string, priceStr: string): void => {
     // Input vide → ligne normale (pas echantillon)
-    // Input '0' → echantillon gratuit
+    // Input '0' → echantillon gratuit (is_free=true, unit_price inchange : DB constraint > 0)
     // Input > 0 → echantillon a prix reduit
     const trimmed = priceStr.trim();
     let patch: Partial<{
@@ -139,7 +139,7 @@ export function ConsultationOrderInterface({
       if (Number.isNaN(price) || price < 0) return;
       patch =
         price === 0
-          ? { is_sample: true, is_free: true, unit_price: 0 }
+          ? { is_sample: true, is_free: true }
           : { is_sample: true, is_free: false, unit_price: price };
     }
     void updateItem(itemId, patch).catch(err => {
