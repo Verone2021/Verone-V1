@@ -117,6 +117,11 @@ export * from './compact-quick-actions';
 export * from './image-upload-zone';
 
 // ========================================
+// IMAGE DISPLAY COMPONENTS
+// ========================================
+export { CloudflareImage, type CloudflareImageProps } from './cloudflare-image';
+
+// ========================================
 // CUSTOM COMPONENTS
 // ========================================
 export * from './room-multi-select';

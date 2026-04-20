@@ -83,6 +83,25 @@ export * from './middleware/logging';
 export * from './middleware/enforce-app-isolation';
 
 // ========================================
+// CLOUDFLARE IMAGES
+// ========================================
+
+// Note: uploadImageToCloudflare et deleteImageFromCloudflare sont async server-side uniquement.
+// buildCloudflareImageUrl et isCloudflareConfigured fonctionnent côté client (NEXT_PUBLIC_*).
+export {
+  isCloudflareConfigured,
+  buildCloudflareImageUrl,
+  uploadImageToCloudflare,
+  deleteImageFromCloudflare,
+  CloudflareNotConfiguredError,
+} from './cloudflare/images';
+export type {
+  CloudflareUploadMetadata,
+  CloudflareImageUploadResult,
+  CloudflareImageVariant,
+} from './cloudflare/images';
+
+// ========================================
 // LINKME
 // ========================================
 

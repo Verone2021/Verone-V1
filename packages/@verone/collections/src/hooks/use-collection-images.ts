@@ -10,6 +10,7 @@ import { useState, useCallback, useEffect } from 'react';
 
 import logger from '@verone/utils/logger';
 import { createClient } from '@verone/utils/supabase/client';
+import { smartUploadImage } from '@verone/utils/upload';
 
 // Types simplifiés pour collection_images table
 export interface CollectionImage {
@@ -118,15 +119,15 @@ export function useCollectionImages({
         const fileExt = file.name.split('.').pop()?.toLowerCase();
         const fileName = `collections/${collectionId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
-        // 📤 Upload to Supabase Storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from(bucketName)
-          .upload(fileName, file, {
-            cacheControl: '3600',
-            upsert: false,
-          });
+        // 📤 Upload via smart-upload (Cloudflare si configuré, Supabase sinon)
+        const uploadResult = await smartUploadImage(file, {
+          bucket: bucketName,
+          path: fileName,
+          ownerId: collectionId,
+          ownerType: 'collection',
+        });
 
-        if (uploadError) throw uploadError;
+        const uploadData = { path: uploadResult.storagePath ?? fileName };
 
         // 🔢 Get next display order
         const { data: existingImages } = await supabase
@@ -152,6 +153,10 @@ export function useCollectionImages({
           file_name: file.name,
           file_size: file.size,
           mime_type: file.type,
+          // Persist Cloudflare ID si upload Cloudflare réussi (backward compat: null sinon)
+          ...(uploadResult.cloudflareImageId
+            ? { cloudflare_image_id: uploadResult.cloudflareImageId }
+            : {}),
         };
 
         const { data: dbData, error: dbError } = await supabase
@@ -164,7 +169,11 @@ export function useCollectionImages({
 
         if (dbError) {
           // Cleanup uploaded file if database insert fails
-          await supabase.storage.from(bucketName).remove([uploadData.path]);
+          if (uploadResult.storagePath) {
+            await supabase.storage
+              .from(bucketName)
+              .remove([uploadResult.storagePath]);
+          }
           throw dbError;
         }
 

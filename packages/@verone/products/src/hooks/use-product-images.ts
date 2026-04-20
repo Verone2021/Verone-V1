@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 
 import logger from '@verone/utils/logger';
 import { createClient } from '@verone/utils/supabase/client';
+import { smartUploadImage } from '@verone/utils/upload';
 import type { Database } from '@verone/utils/supabase/types';
 
 type ProductImage = Database['public']['Tables']['product_images']['Row'];
@@ -108,15 +109,16 @@ export function useProductImages({
         const fileExt = file.name.split('.').pop()?.toLowerCase();
         const fileName = `products/${productId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
-        // 📤 Upload to Supabase Storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from(bucketName)
-          .upload(fileName, file, {
-            cacheControl: '3600',
-            upsert: false,
-          });
+        // 📤 Upload via smart-upload (Cloudflare si configuré, Supabase sinon)
+        const uploadResult = await smartUploadImage(file, {
+          bucket: bucketName,
+          path: fileName,
+          ownerId: productId,
+          ownerType: 'product',
+        });
 
-        if (uploadError) throw uploadError;
+        // Reconstruit un objet compatible avec l'ancien uploadData
+        const uploadData = { path: uploadResult.storagePath ?? fileName };
 
         // 🔢 Get next display order
         const { data: existingImages } = await supabase
@@ -144,6 +146,10 @@ export function useProductImages({
           width: undefined, // Sera ajouté plus tard si nécessaire
           height: undefined,
           created_by: undefined, // Supabase auth automatique
+          // Persist Cloudflare ID si upload Cloudflare réussi (backward compat: null sinon)
+          ...(uploadResult.cloudflareImageId
+            ? { cloudflare_image_id: uploadResult.cloudflareImageId }
+            : {}),
         };
 
         const { data: dbData, error: dbError } = await supabase
@@ -156,7 +162,11 @@ export function useProductImages({
 
         if (dbError) {
           // Cleanup uploaded file if database insert fails
-          await supabase.storage.from(bucketName).remove([uploadData.path]);
+          if (uploadResult.storagePath) {
+            await supabase.storage
+              .from(bucketName)
+              .remove([uploadResult.storagePath]);
+          }
           throw dbError;
         }
 
