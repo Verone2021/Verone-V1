@@ -28,6 +28,7 @@ export * from './DocumentSourceBadge'; // Badge Commande vs Service (BO-FIN-010)
 export * from './DocumentDiscordanceBadge'; // Badge discordance total DB vs Qonto (BO-FIN-011)
 export * from './DocumentOutOfSyncBadge'; // Badge non-synchronise commande > document (BO-FIN-029)
 export * from './RegenerateDocumentConfirmModal'; // Modal confirmation regeneration devis/proforma (BO-FIN-029)
+export * from './DocumentResyncAction'; // Badge + bouton Re-synchroniser + modal (BO-FIN-009 Phase 4)
 export * from './SupplierCell';
 export * from './OrganisationTransactionsSection';
 export * from './TransactionDetailDialog';

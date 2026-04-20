@@ -23,12 +23,18 @@ interface Invoice {
   synchronized_at: string | null;
   finalized_at: string | null;
   sent_at: string | null;
+  /** [BO-FIN-009 Phase 4] Timestamp de création doc local (pour détection out-of-sync) */
+  created_at?: string | null;
+  /** [BO-FIN-009 Phase 4] Notes libres du doc local (préservées si régénération) */
+  notes?: string | null;
 }
 
 interface InvoicesByOrderResponse {
   success: boolean;
   invoices?: Invoice[];
   count?: number;
+  /** [BO-FIN-009 Phase 4] sales_orders.updated_at pour comparaison out-of-sync (null si PO) */
+  order_updated_at?: string | null;
   error?: string;
 }
 
@@ -60,14 +66,17 @@ export async function GET(
       );
     }
 
-    // Détecter le type de commande (vente ou achat)
+    // Détecter le type de commande (vente ou achat) + fetch updated_at pour phase 4
     const { data: salesOrder } = await supabase
       .from('sales_orders')
-      .select('id')
+      .select('id, updated_at')
       .eq('id', orderId)
       .maybeSingle();
 
     const isPurchaseOrder = !salesOrder;
+    const orderUpdatedAt = salesOrder
+      ? ((salesOrder as { updated_at: string | null }).updated_at ?? null)
+      : null;
 
     // Récupérer factures liées à la commande
     let query = supabase
@@ -85,7 +94,9 @@ export async function GET(
         qonto_pdf_url,
         synchronized_at,
         finalized_at,
-        sent_at
+        sent_at,
+        created_at,
+        notes
       `
       )
       .is('deleted_at', null)
@@ -122,6 +133,7 @@ export async function GET(
       success: true,
       invoices: invoices as Invoice[],
       count: invoices?.length ?? 0,
+      order_updated_at: orderUpdatedAt,
     });
   } catch (error) {
     console.error('[Invoices by order] Error:', error);

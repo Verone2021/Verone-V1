@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card, CardContent } from '@verone/ui';
+import { DocumentResyncAction } from '@verone/finance/components';
 import { Download, Eye, FileEdit, Loader2 } from 'lucide-react';
 
 interface LinkedQuote {
@@ -12,12 +13,18 @@ interface LinkedQuote {
   currency: string;
   issue_date: string;
   expiry_date: string;
+  /** [BO-FIN-009 Phase 4] created_at du financial_document local, pour détection out-of-sync */
+  document_created_at?: string | null;
+  /** [BO-FIN-009 Phase 4] notes libres du document local, préservées lors d'une re-synchronisation */
+  document_notes?: string | null;
 }
 
 interface QuotesByOrderResponse {
   success: boolean;
   quotes?: LinkedQuote[];
   count?: number;
+  /** [BO-FIN-009 Phase 4] sales_orders.updated_at pour comparaison out-of-sync */
+  order_updated_at?: string | null;
   error?: string;
 }
 
@@ -48,6 +55,7 @@ export function QuotesSection({ orderId }: { orderId: string }) {
   });
 
   const quotes: LinkedQuote[] = data?.quotes ?? [];
+  const orderUpdatedAt = data?.order_updated_at ?? null;
 
   if (isLoading) {
     return (
@@ -126,6 +134,20 @@ export function QuotesSection({ orderId }: { orderId: string }) {
                     {new Date(quote.expiry_date).toLocaleDateString('fr-FR')}
                   </span>
                 )}
+              </div>
+
+              {/* [BO-FIN-009 Phase 4] Badge + bouton Re-synchroniser si out-of-sync (draft uniquement) */}
+              <div className="flex flex-wrap items-center gap-1">
+                <DocumentResyncAction
+                  documentType="quote"
+                  orderId={orderId}
+                  documentStatus={quote.status}
+                  orderUpdatedAt={orderUpdatedAt}
+                  documentCreatedAt={
+                    quote.document_created_at ?? quote.issue_date ?? null
+                  }
+                  existingNotes={quote.document_notes ?? ''}
+                />
               </div>
 
               {/* Actions */}
