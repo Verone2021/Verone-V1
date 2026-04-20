@@ -22,20 +22,20 @@ const CHANNEL_ICONS: Record<
   string,
   React.ComponentType<{ className?: string }>
 > = {
-  'site-internet': Globe,
+  site_internet: Globe,
   linkme: Link2,
-  'google-merchant': Store,
-  'meta-commerce': Store,
+  google_merchant: Store,
+  meta_commerce: Store,
 };
 
 const CHANNEL_HINT: Record<string, string> = {
-  'site-internet': 'Prix publié sur veronecollections.fr (= Google + Meta)',
+  site_internet: 'Prix publié sur veronecollections.fr (= Google + Meta)',
   linkme: 'Prix B2B affilié LinkMe',
-  'google-merchant': 'Prix Google Shopping (lecture seule, aligné site)',
-  'meta-commerce': 'Prix Meta FB/IG (lecture seule, aligné site)',
+  google_merchant: 'Prix Google Shopping (lecture seule, aligné site)',
+  meta_commerce: 'Prix Meta FB/IG (lecture seule, aligné site)',
 };
 
-const READ_ONLY_CHANNELS = new Set(['google-merchant', 'meta-commerce']);
+const READ_ONLY_CHANNELS = new Set(['google_merchant', 'meta_commerce']);
 
 export function ChannelPricingEditor({
   productId,

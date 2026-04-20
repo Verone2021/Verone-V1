@@ -20,10 +20,10 @@ export interface ChannelPricingEntry {
 }
 
 const CHANNEL_CODES_SUPPORTED = [
-  'site-internet',
+  'site_internet',
   'linkme',
-  'google-merchant',
-  'meta-commerce',
+  'google_merchant',
+  'meta_commerce',
 ] as const;
 
 export const channelPricingQueryKey = (productId: string) =>

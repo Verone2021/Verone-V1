@@ -27,8 +27,8 @@ test.describe('SI-PRICING-001 minimum guard', () => {
 
     const productId = process.env.PRODUCT_ID_WITH_COST;
     test.skip(
-      !productId,
-      'Set PRODUCT_ID_WITH_COST to a product with cost_price + margin > 0'
+      !productId || !process.env.CHANNEL_ID_SITE,
+      'Set PRODUCT_ID_WITH_COST + CHANNEL_ID_SITE (channel site_internet id: 0c2639e9-df80-41fa-84d0-9da96a128f7f)'
     );
 
     const channelRes = await request.get(
