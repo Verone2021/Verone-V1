@@ -467,6 +467,19 @@ Liste :
 ## 11. Traces
 
 - PR actuelle : #693 (SI-PRICING-001), branche `feat/SI-PRICING-001-unified-product-pricing`
-- Commits récents clés : `5ec300420`, `b9c4765b5` (retrait bouton Historique cassé), `825ac035e` (mockup Stitch desktop v1)
-- Stitch project : `14273265056008991888` (thumbnail `docs/scratchpad/stitch/stitch-tarification-desktop-v1-2026-04-20.png`)
+- Commits récents clés : `5ec300420`, `b9c4765b5` (retrait bouton Historique cassé), `825ac035e` (mockup Stitch Tarification v1)
 - Rapport agent Explore intégral : cet audit (rédigé par Explore, corrigé et contextualisé par l'orchestrateur)
+
+### Projets Stitch (1 par onglet)
+
+| Onglet           | Project ID           | Thumbnail                                                               |
+| ---------------- | -------------------- | ----------------------------------------------------------------------- |
+| Tarification     | 14273265056008991888 | `docs/scratchpad/stitch/stitch-tarification-desktop-v1-2026-04-20.png`  |
+| Général          | 14298953834634591181 | `docs/scratchpad/stitch/stitch-general-desktop-2026-04-20.png`          |
+| Descriptions     | 17155834100199281752 | `docs/scratchpad/stitch/stitch-descriptions-desktop-2026-04-20.png`     |
+| Stock            | 6883403801102419941  | `docs/scratchpad/stitch/stitch-stock-desktop-2026-04-20.png`            |
+| Caractéristiques | 12619363905674465118 | `docs/scratchpad/stitch/stitch-caracteristiques-desktop-2026-04-20.png` |
+| Images           | 17803953971591978693 | `docs/scratchpad/stitch/stitch-images-desktop-2026-04-20.png`           |
+| Publication      | 6689251741578606646  | `docs/scratchpad/stitch/stitch-publication-desktop-2026-04-20.png`      |
+
+Design system de référence (Tarification) : asset `9039856936060385642` (Verone Admin Neutral, Inter only, neutral palette). Les autres projets ont pioché dans leurs propres variantes de design system — à harmoniser avant implémentation (appliquer le DS commun via `mcp__stitch__apply_design_system` sur chaque projet).
