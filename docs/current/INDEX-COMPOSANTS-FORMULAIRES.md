@@ -1,9 +1,9 @@
 # Index Composants, Formulaires & Hooks — packages/@verone/
 
-**Derniere mise a jour** : 2026-04-19
+**Derniere mise a jour** : 2026-04-20
 **23 packages** dans `packages/@verone/`
 
-## **541 composants, 12 hooks**
+## **542 composants, 12 hooks**
 
 ## @verone/categories
 
@@ -363,6 +363,7 @@
 | `LinkMeCartTable`                   | Component | `src/components/modals/sales-order-form/LinkMeCartTable.tsx`                      |
 | `LinkMeWorkflow`                    | Component | `src/components/modals/sales-order-form/LinkMeWorkflow.tsx`                       |
 | `OrderConfirmationDialog`           | Component | `src/components/modals/sales-order-form/OrderConfirmationDialog.tsx`              |
+| `OrderDevalidateBanner`             | Component | `src/components/modals/sales-order-form/OrderDevalidateBanner.tsx`                |
 | `OrderItemsTable`                   | Component | `src/components/modals/sales-order-form/OrderItemsTable.tsx`                      |
 | `QuantityInput`                     | Component | `src/components/modals/sales-order-form/QuantityInput.tsx`                        |
 | `StandardOrderForm`                 | Form      | `src/components/modals/sales-order-form/StandardOrderForm.tsx`                    |
