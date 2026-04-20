@@ -15,6 +15,7 @@ import {
   formatTransitLabel,
   formatEstimatedDate,
 } from './formatters';
+import { parseShippingAddress, extractPostalCode } from './parse-address';
 import {
   makeQuantityChangeHandler,
   makeShipAllHandler,
@@ -189,10 +190,9 @@ export function useShipmentWizard(
   // Insurance price: 3% of declared value, min 2€
   const insurancePrice = Math.max(2, declaredValue * 0.03);
 
-  // Destination zip from shipping_address
+  // Destination zip from shipping_address (tolerates string or object payload)
   const destinationZip = useMemo(() => {
-    const addr = salesOrder.shipping_address as Record<string, string> | null;
-    return addr?.postal_code ?? addr?.zip ?? '';
+    return extractPostalCode(parseShippingAddress(salesOrder.shipping_address));
   }, [salesOrder.shipping_address]);
 
   // Sorted services
@@ -284,10 +284,7 @@ export function useShipmentWizard(
 
   // Build destination object from order data
   const buildDestination = useCallback(() => {
-    const addr = (salesOrder.shipping_address ?? null) as Record<
-      string,
-      string
-    > | null;
+    const addr = parseShippingAddress(salesOrder.shipping_address);
     const name = salesOrder.customer_name ?? '';
     const nameParts = name.split(' ');
     const email = salesOrder.organisations?.email ?? 'client@verone.fr';
@@ -297,7 +294,7 @@ export function useShipmentWizard(
       surname: nameParts.slice(1).join(' ') || 'Client',
       email,
       phone: addr?.phone ?? '+33600000000',
-      street1: addr?.line1 ?? '',
+      street1: addr?.address_line1 ?? addr?.line1 ?? '',
       city: addr?.city ?? '',
       zip_code: addr?.postal_code ?? '',
       country: addr?.country ?? 'FR',

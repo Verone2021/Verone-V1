@@ -89,7 +89,8 @@ export function StepPayment({
             <p className="font-medium text-sm mt-1">{customerName}</p>
             {addr && (
               <p className="text-xs text-muted-foreground">
-                {addr.line1 ?? ''}, {addr.postal_code ?? ''} {addr.city ?? ''}
+                {addr.address_line1 ?? addr.line1 ?? ''},{' '}
+                {addr.postal_code ?? ''} {addr.city ?? ''}
               </p>
             )}
           </div>

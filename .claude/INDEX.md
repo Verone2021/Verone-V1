@@ -195,3 +195,11 @@ Rapports récents clés :
 Voir `docs/scratchpad/automation-roadmap.md` (historique uniquement).
 
 ---
+
+## Regles
+
+| Fichier                                 | Contenu              |
+| --------------------------------------- | -------------------- |
+| `.claude/rules/playwright-artifacts.md` | Playwright Artifacts |
+
+---
