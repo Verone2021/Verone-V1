@@ -242,6 +242,18 @@ Les ADRs ne se modifient pas rétroactivement. Si une décision est renversée, 
 
 ---
 
+## ADR-012 — 2026-04-20 — Règle `playwright-artifacts.md` + nettoyage artefacts
+
+**Contexte** : `.playwright-mcp/` avait accumulé 1857 fichiers (logs jusqu'à 10 MB, screenshots de debug sans convention, un `client-secret-*.json` OAuth Google qui traînait à côté des logs). En parallèle, 34 PNG de debug Playwright polluaient la racine du repo. Aucune règle ne définissait où ranger les screenshots capturés via le MCP Playwright, ni quoi nettoyer périodiquement.
+
+**Décision** : créer `.claude/rules/playwright-artifacts.md` qui sépare trois classes de fichiers (baseline versionnés, runtime éphémère, docs versionnés) et impose un nommage `.playwright-mcp/screenshots/YYYYMMDD/[context]-[description]-[HHmmss].png`. Nettoyer immédiatement les 1857 fichiers (sauf README + dossier screenshots), les 34 PNG racine non versionnés, et `test-results/`.
+
+**Conséquence** : repo racine propre. `.gitignore` déjà correctement configuré (exceptions pour `docs/**/*.png` et `apps/**/public/**/*.png`). Le secret OAuth a été supprimé localement — Romeo doit le révoquer côté Google Cloud Console. Synthèse basée sur les pratiques officielles Playwright + Vercel + Shopify.
+
+**Référence** : session 2026-04-20 avec Romeo. PR `[BO-PACKLINK-001]`.
+
+---
+
 ## Index rapide
 
 - ADR-001 : Suppression agents expert (2026-04-15)
@@ -255,3 +267,4 @@ Les ADRs ne se modifient pas rétroactivement. Si une décision est renversée, 
 - ADR-009 : Cleanup Phase 2 orpheline + suppression agents morts (2026-04-19)
 - ADR-010 : Restauration 4 fichiers config supprimés le 15 avril (2026-04-19)
 - ADR-011 : Suppression playbooks génériques (garder migrate-page-responsive seul) (2026-04-19)
+- ADR-012 : Règle `playwright-artifacts.md` + nettoyage 1857 artefacts Playwright (2026-04-20)

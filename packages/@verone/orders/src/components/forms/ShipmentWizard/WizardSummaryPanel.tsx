@@ -2,6 +2,7 @@
 
 import { Card } from '@verone/ui';
 
+import { parseShippingAddress } from './parse-address';
 import type { WizardSummaryPanelProps } from './types';
 
 export function WizardSummaryPanel({
@@ -13,10 +14,7 @@ export function WizardSummaryPanel({
   selectedService,
   wantsInsurance,
 }: WizardSummaryPanelProps) {
-  const addr = (salesOrder.shipping_address ?? null) as Record<
-    string,
-    string
-  > | null;
+  const addr = parseShippingAddress(salesOrder.shipping_address);
   const customerName = salesOrder.customer_name ?? 'Client';
 
   const insurancePrice = Math.max(2, declaredValue * 0.03);
@@ -43,7 +41,8 @@ export function WizardSummaryPanel({
           <p className="font-medium">{customerName}</p>
           {addr && (
             <p className="text-xs text-muted-foreground">
-              {addr.line1 ?? ''}, {addr.postal_code ?? ''} {addr.city ?? ''}
+              {addr.address_line1 ?? addr.line1 ?? ''}, {addr.postal_code ?? ''}{' '}
+              {addr.city ?? ''}
             </p>
           )}
         </div>

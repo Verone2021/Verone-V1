@@ -29,7 +29,6 @@ export default function ProductDetailPage() {
     setShowDescriptionsModal,
     isCategorizeModalOpen,
     setIsCategorizeModalOpen,
-    channelPricing,
     productImages,
     _primaryImage,
     breadcrumbParts,
@@ -107,7 +106,6 @@ export default function ProductDetailPage() {
         <TabContent activeTab={activeTab} tabId="pricing">
           <ProductPricingTab
             product={product}
-            channelPricing={channelPricing}
             onProductUpdate={handleProductUpdate}
           />
         </TabContent>

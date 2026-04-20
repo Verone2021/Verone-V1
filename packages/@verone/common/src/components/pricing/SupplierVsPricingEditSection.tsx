@@ -49,21 +49,24 @@ export function SupplierVsPricingEditSection({
   const currentCostPrice = isCostPriceManagedByGroup
     ? (variantGroup?.common_cost_price ?? 0)
     : (product.cost_price ?? 0);
-  const currentMarginPercentage = product.margin_percentage ?? 25;
+  const currentMarginPercentage = product.margin_percentage ?? 0;
   const currentEcoTax = isEcoTaxManagedByGroup
     ? (variantGroup?.common_eco_tax ?? 0)
     : (product.eco_tax_default ?? 0);
-  const currentSellingPrice = calculateMinSellingPrice(
-    currentCostPrice,
-    currentEcoTax,
-    currentMarginPercentage
-  );
+  const currentSellingPrice =
+    currentMarginPercentage > 0
+      ? calculateMinSellingPrice(
+          currentCostPrice,
+          currentEcoTax,
+          currentMarginPercentage
+        )
+      : 0;
 
   const handleStartEdit = () => {
     startEdit(section, {
       cost_price: currentCostPrice,
       eco_tax_default: currentEcoTax,
-      margin_percentage: currentMarginPercentage,
+      margin_percentage: currentMarginPercentage || undefined,
     });
   };
 

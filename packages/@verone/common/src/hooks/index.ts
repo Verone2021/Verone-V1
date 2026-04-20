@@ -15,6 +15,14 @@ export { useSmartSuggestions } from './use-smart-suggestions';
 export { useSupabaseQuery, useSupabaseMutation } from './use-supabase-query';
 export { useToast } from './use-toast';
 export { useToggleFavorite } from './use-toggle-favorite';
+export {
+  useChannelPricing,
+  useUpdateChannelPrice,
+  channelPricingQueryKey,
+  type ChannelPricingEntry,
+  type UpdateChannelPriceInput,
+  type UpdateChannelPriceResult,
+} from './use-channel-pricing';
 
 // Note: Specialized hooks are now imported directly from their packages
 // Example: import { useProducts } from '@verone/products/hooks';

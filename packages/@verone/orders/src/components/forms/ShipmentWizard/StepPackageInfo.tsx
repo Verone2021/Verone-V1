@@ -91,7 +91,7 @@ export function StepPackageInfo({
             <p className="text-sm font-medium mt-1">{customerName}</p>
             <p className="text-xs text-muted-foreground">
               {addr
-                ? `${addr.line1 ?? ''}, ${addr.postal_code ?? ''} ${addr.city ?? ''}`
+                ? `${addr.address_line1 ?? addr.line1 ?? ''}, ${addr.postal_code ?? ''} ${addr.city ?? ''}`
                 : ''}
             </p>
           </div>
