@@ -182,8 +182,17 @@ export function isFinalStatus(status: SalesOrderStatus): boolean {
 }
 
 /**
- * Vérifier si commande est verrouillée (shipped, partially_shipped, delivered, cancelled)
- * Commande verrouillée = informations non modifiables (sauf paiement/factures/rapprochement)
+ * Vérifier si commande est verrouillée globalement (post-expédition ou annulée).
+ *
+ * [BO-FIN-009 Phase 3 — R6 finance.md]
+ * Une commande `validated` n'est **PAS** globalement verrouillée :
+ * - Items / prix / quantités / adresses / client : figés (trigger DB lock_prices
+ *   + guard côté hook `updateOrderWithItems`) → règle R6 stricte
+ * - Frais annexes (livraison, manutention, assurance, TVA frais) : **restent
+ *   éditables jusqu'à la facturation** → voir `canEditFees`
+ *
+ * `isOrderLocked = true` signifie UI totalement verrouillée (plus aucune édition possible).
+ * Ne retourne `true` que pour les statuts post-expédition et annulés.
  */
 export function isOrderLocked(status: SalesOrderStatus | string): boolean {
   return ['shipped', 'partially_shipped', 'delivered', 'cancelled'].includes(
@@ -192,10 +201,33 @@ export function isOrderLocked(status: SalesOrderStatus | string): boolean {
 }
 
 /**
- * Vérifier si status permet modification items
+ * Vérifier si les frais annexes (shipping_cost_ht, handling_cost_ht,
+ * insurance_cost_ht, fees_vat_rate) peuvent être modifiés.
+ *
+ * [BO-FIN-009 Phase 3 — R6 finance.md — Exception frais]
+ * Les frais sont modifiables sur les commandes `draft` **et `validated`**
+ * car ils n'affectent ni les prix lockés, ni la commission LinkMe, ni le
+ * stock. Ils sont figés une fois la commande expédiée.
+ *
+ * Pour un verrouillage strict lors d'une facture finalisée liée,
+ * le composant parent doit combiner avec sa propre logique
+ * `hasActiveFinalizedInvoice`.
+ */
+export function canEditFees(status: SalesOrderStatus | string): boolean {
+  return status === 'draft' || status === 'validated';
+}
+
+/**
+ * Vérifier si status permet modification items.
+ *
+ * [BO-FIN-009 Phase 3 — R6 finance.md]
+ * Seul `draft` autorise la modification des items. Pour modifier une commande
+ * validée : dévalider (`validated → draft`) → modifier → revalider.
+ * Le trigger DB `lock_prices_on_order_validation` fige les prix lockés à la
+ * validation et les rollback à la dévalidation.
  */
 export function canEditItems(status: SalesOrderStatus): boolean {
-  return status === 'draft' || status === 'validated';
+  return status === 'draft';
 }
 
 /**
