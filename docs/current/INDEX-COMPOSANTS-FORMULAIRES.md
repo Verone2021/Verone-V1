@@ -3,7 +3,7 @@
 **Derniere mise a jour** : 2026-04-20
 **23 packages** dans `packages/@verone/`
 
-## **545 composants, 12 hooks**
+## **548 composants, 12 hooks**
 
 ## @verone/categories
 
@@ -55,14 +55,17 @@
 | `StepSettingsMetadata`           | Component | `src/components/collections/wizard-steps/StepSettingsMetadata.tsx` |
 | `StepStyleCategory`              | Component | `src/components/collections/wizard-steps/StepStyleCategory.tsx`    |
 | `KPICard`                        | Component | `src/components/kpi/KPICard.tsx`                                   |
+| `ChannelPricingEditor`           | Component | `src/components/pricing/ChannelPricingEditor.tsx`                  |
 | `GoogleMerchantPriceEditor`      | Component | `src/components/pricing/GoogleMerchantPriceEditor.tsx`             |
 | `PriceListFormModal`             | Modal     | `src/components/pricing/PriceListFormModal.tsx`                    |
 | `PriceListItemFormModal`         | Modal     | `src/components/pricing/PriceListItemFormModal.tsx`                |
 | `PriceProductSelector`           | Component | `src/components/pricing/PriceProductSelector.tsx`                  |
 | `PriceTierForm`                  | Form      | `src/components/pricing/PriceTierForm.tsx`                         |
+| `PurchasePriceHistoryTimeline`   | Component | `src/components/pricing/PurchasePriceHistoryTimeline.tsx`          |
 | `SupplierPricingDisplay`         | Component | `src/components/pricing/SupplierPricingDisplay.tsx`                |
 | `SupplierPricingEditForm`        | Form      | `src/components/pricing/SupplierPricingEditForm.tsx`               |
 | `SupplierVsPricingEditSection`   | Component | `src/components/pricing/SupplierVsPricingEditSection.tsx`          |
+| `UnifiedPricingPanel`            | Component | `src/components/pricing/UnifiedPricingPanel.tsx`                   |
 | `IdentifiersCompleteEditSection` | Component | `src/components/sections/IdentifiersCompleteEditSection.tsx`       |
 
 ---
