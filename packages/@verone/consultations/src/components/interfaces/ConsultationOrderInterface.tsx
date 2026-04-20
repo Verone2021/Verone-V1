@@ -33,7 +33,6 @@ export function ConsultationOrderInterface({
     updateItem,
     removeItem,
     toggleFreeItem,
-    calculateTotal,
     getTotalItemsCount,
     fetchConsultationItems,
   } = useConsultationItems(consultationId);
@@ -130,6 +129,14 @@ export function ConsultationOrderInterface({
     });
   };
 
+  const handleToggleSample = (itemId: string): void => {
+    const item = consultationItems.find(i => i.id === itemId);
+    if (!item) return;
+    void updateItem(itemId, { is_sample: !item.is_sample }).catch(err => {
+      console.error('[ConsultationOrderInterface] toggleSample failed:', err);
+    });
+  };
+
   // Calculs marges
   const getItemCostPrice = (item: ConsultationItem): number =>
     item.cost_price_override ?? item.product?.cost_price ?? 0;
@@ -153,21 +160,27 @@ export function ConsultationOrderInterface({
     return (((item.unit_price ?? 0) - costPerUnit) / costPerUnit) * 100;
   };
 
-  const total = calculateTotal();
   const totalItems = getTotalItemsCount();
-  const acceptedItems = consultationItems.filter(i => i.status === 'approved');
+  const acceptedItems = consultationItems.filter(
+    i => i.status === 'approved' || i.status === 'ordered'
+  );
   const hasAcceptedItems = acceptedItems.length > 0;
 
-  const totalCost = consultationItems.reduce(
+  // KPIs = uniquement les items acceptes ou commandes (projection reelle)
+  const total = acceptedItems.reduce((sum, item) => {
+    if (item.is_free) return sum;
+    return sum + (item.unit_price ?? 0) * item.quantity;
+  }, 0);
+  const totalCost = acceptedItems.reduce(
     (sum, item) => sum + getItemCostTotal(item),
     0
   );
-  const totalShipping = consultationItems.reduce(
+  const totalShipping = acceptedItems.reduce(
     (sum, item) =>
       item.is_sample ? sum : sum + item.shipping_cost * item.quantity,
     0
   );
-  const totalMargin = consultationItems.reduce(
+  const totalMargin = acceptedItems.reduce(
     (sum, item) => sum + getItemMargin(item),
     0
   );
@@ -253,6 +266,7 @@ export function ConsultationOrderInterface({
           onChangeQuantity={changeQuantity}
           onChangeStatus={changeLineStatus}
           onToggleFree={handleToggleFree}
+          onToggleSample={handleToggleSample}
           onRemove={handleRemoveItem}
           getItemCostPrice={getItemCostPrice}
           getItemMargin={getItemMargin}

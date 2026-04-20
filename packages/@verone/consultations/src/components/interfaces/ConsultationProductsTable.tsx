@@ -19,6 +19,7 @@ import {
   Check,
   X,
   MoreHorizontal,
+  Gift,
 } from 'lucide-react';
 
 import type { ConsultationItem } from '@verone/consultations/hooks';
@@ -44,6 +45,7 @@ interface ConsultationProductsTableProps {
   onChangeQuantity: (itemId: string, delta: number) => void;
   onChangeStatus: (itemId: string, status: string) => void;
   onToggleFree: (itemId: string) => void;
+  onToggleSample: (itemId: string) => void;
   onRemove: (itemId: string, productName: string) => void;
   getItemCostPrice: (item: ConsultationItem) => number;
   getItemMargin: (item: ConsultationItem) => number;
@@ -78,6 +80,7 @@ export function ConsultationProductsTable({
   onChangeQuantity,
   onChangeStatus,
   onToggleFree,
+  onToggleSample,
   onRemove,
   getItemCostPrice,
   getItemMargin,
@@ -391,46 +394,67 @@ export function ConsultationProductsTable({
                   )}
                 </td>
 
-                {/* Statut segmented */}
+                {/* Statut segmented + toggle echantillon (si accepte) */}
                 <td className="px-3 py-0 h-10">
                   {item.status === 'ordered' ? (
                     <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-bold uppercase rounded">
                       {STATUS_LABELS['ordered']}
                     </span>
                   ) : (
-                    <div className="flex bg-zinc-100 p-0.5 rounded text-[9px] font-bold gap-0.5">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void onChangeStatus(
-                            item.id,
-                            item.status === 'pending' ? 'approved' : 'pending'
-                          )
-                        }
-                        className={`px-1.5 py-0.5 rounded transition-all ${
-                          item.status === 'approved'
-                            ? 'bg-emerald-500 text-white shadow-sm'
-                            : 'text-zinc-400 hover:text-zinc-600'
-                        }`}
-                      >
-                        OK
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void onChangeStatus(
-                            item.id,
-                            item.status === 'pending' ? 'rejected' : 'pending'
-                          )
-                        }
-                        className={`px-1.5 py-0.5 rounded transition-all ${
-                          item.status === 'rejected'
-                            ? 'bg-red-500 text-white shadow-sm'
-                            : 'text-zinc-400 hover:text-zinc-600'
-                        }`}
-                      >
-                        Non
-                      </button>
+                    <div className="flex items-center gap-1">
+                      <div className="flex bg-zinc-100 p-0.5 rounded text-[9px] font-bold gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void onChangeStatus(
+                              item.id,
+                              item.status === 'pending' ? 'approved' : 'pending'
+                            )
+                          }
+                          className={`px-1.5 py-0.5 rounded transition-all ${
+                            item.status === 'approved'
+                              ? 'bg-emerald-500 text-white shadow-sm'
+                              : 'text-zinc-400 hover:text-zinc-600'
+                          }`}
+                        >
+                          OK
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void onChangeStatus(
+                              item.id,
+                              item.status === 'pending' ? 'rejected' : 'pending'
+                            )
+                          }
+                          className={`px-1.5 py-0.5 rounded transition-all ${
+                            item.status === 'rejected'
+                              ? 'bg-red-500 text-white shadow-sm'
+                              : 'text-zinc-400 hover:text-zinc-600'
+                          }`}
+                        >
+                          Non
+                        </button>
+                      </div>
+                      {item.status === 'approved' && (
+                        <button
+                          type="button"
+                          onClick={() => onToggleSample(item.id)}
+                          title={
+                            item.is_sample
+                              ? 'Échantillon offert — cliquer pour retirer'
+                              : 'Offrir un échantillon au client'
+                          }
+                          aria-label="Basculer échantillon offert"
+                          className={`h-5 w-5 flex items-center justify-center rounded transition-all ${
+                            item.is_sample
+                              ? 'bg-amber-400 text-white shadow-sm hover:bg-amber-500'
+                              : 'text-zinc-400 hover:text-amber-500 hover:bg-amber-50'
+                          }`}
+                        >
+                          <Gift className="h-3 w-3" />
+                        </button>
+                      )}
                     </div>
                   )}
                 </td>
