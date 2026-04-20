@@ -38,6 +38,14 @@ export const StandaloneCustomerSchema = z.object({
 });
 
 export const PostRequestBodySchema = z.object({
+  /**
+   * [BO-FIN-009 Phase 5 — R5 finance.md]
+   * Source de vérité explicite du type de devis. Requis.
+   * - 'from-order'  : devis adossé à une commande existante (`salesOrderId` REQUIS)
+   * - 'service'     : devis libre sans commande (`customer` + `customLines` REQUIS,
+   *                   `consultationId` optionnel pour devis de consultation)
+   */
+  kind: z.enum(['from-order', 'service']),
   salesOrderId: z.string().uuid().optional(),
   consultationId: z.string().uuid().optional(),
   userId: z.string().uuid().optional(),

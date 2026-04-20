@@ -249,20 +249,62 @@ export async function persistQuoteResults(
 export function validatePostBody(
   body: IPostRequestBody
 ): NextResponse<{ success: boolean; error?: string }> | null {
-  const { salesOrderId, customer, customLines } = body;
-  if (!salesOrderId && !customer) {
-    return NextResponse.json(
-      { success: false, error: 'salesOrderId ou customer est requis' },
-      { status: 400 }
-    );
+  // [BO-FIN-009 Phase 5 — R5 finance.md] Verrouillage kind 'from-order' | 'service'
+  const { kind, salesOrderId, customer, customLines, consultationId } = body;
+
+  if (kind === 'from-order') {
+    if (!salesOrderId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "kind='from-order' requiert salesOrderId",
+        },
+        { status: 400 }
+      );
+    }
+    if (customer) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "kind='from-order' ne doit pas contenir customer (l'organisation vient de la commande)",
+        },
+        { status: 400 }
+      );
+    }
+    if (consultationId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "kind='from-order' incompatible avec consultationId (utiliser kind='service')",
+        },
+        { status: 400 }
+      );
+    }
+    return null;
   }
-  if (!salesOrderId && (!customLines || customLines.length === 0)) {
+
+  // kind === 'service'
+  if (salesOrderId) {
     return NextResponse.json(
       {
         success: false,
         error:
-          'customLines est requis pour un devis standalone (sans commande)',
+          "kind='service' incompatible avec salesOrderId (utiliser kind='from-order')",
       },
+      { status: 400 }
+    );
+  }
+  if (!customer) {
+    return NextResponse.json(
+      { success: false, error: "kind='service' requiert customer" },
+      { status: 400 }
+    );
+  }
+  if (!customLines || customLines.length === 0) {
+    return NextResponse.json(
+      { success: false, error: "kind='service' requiert customLines" },
       { status: 400 }
     );
   }

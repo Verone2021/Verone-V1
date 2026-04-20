@@ -143,6 +143,7 @@ export function useQuoteCreateFromOrder(
 
       const requestBody = isConsultation
         ? {
+            kind: 'service' as const,
             consultationId,
             userId: currentUserId,
             supersededQuoteIds: supersededQuoteIds?.length
@@ -163,6 +164,7 @@ export function useQuoteCreateFromOrder(
               Object.keys(itemComments).length > 0 ? itemComments : undefined,
           }
         : {
+            kind: 'from-order' as const,
             salesOrderId: order.id,
             userId: currentUserId,
             expiryDays,
