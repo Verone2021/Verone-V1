@@ -43,6 +43,7 @@ export interface IShippingAddressResolved {
   postal_code: string;
   city: string;
   country: string;
+  saveToOrg?: boolean;
 }
 
 type ShippingMode = 'org_default' | 'other_org' | 'new';
