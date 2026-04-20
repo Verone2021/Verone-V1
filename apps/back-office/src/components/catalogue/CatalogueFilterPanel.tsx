@@ -8,9 +8,8 @@
  */
 
 import { Badge } from '@verone/ui';
-import { Button } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { Filter, RotateCcw } from 'lucide-react';
+import { Filter } from 'lucide-react';
 
 import { CatalogueActiveFilterBadges } from './CatalogueActiveFilterBadges';
 import { CatalogueExtraFilters } from './CatalogueExtraFilters';
@@ -52,7 +51,6 @@ export function CatalogueFilterPanel({
     handleStockToggle,
     handleConditionToggle,
     handleCompletionToggle,
-    handleClearAll,
     toggleFamilyExpand,
     toggleCategoryExpand,
   } = useCatalogueFilterPanel({
@@ -112,18 +110,6 @@ export function CatalogueFilterPanel({
           onConditionToggle={handleConditionToggle}
           onCompletionToggle={handleCompletionToggle}
         />
-
-        {activeFilterCount > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClearAll}
-            className="h-9 text-xs text-gray-600 hover:text-black"
-          >
-            <RotateCcw className="h-3 w-3 mr-1" />
-            Effacer tout
-          </Button>
-        )}
       </div>
 
       {activeFilterCount > 0 && (
