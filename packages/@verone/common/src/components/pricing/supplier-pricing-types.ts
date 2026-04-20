@@ -1,6 +1,6 @@
 export interface Product {
   id: string;
-  variant_group_id?: string;
+  variant_group_id?: string | null;
   // Tarification simplifiée
   cost_price?: number;
   eco_tax_default?: number;
