@@ -60,7 +60,7 @@ export function ProductGeneralDashboard({
     [landedCost, ecoTax, margin]
   );
 
-  const suggestedPriceTtc = useMemo(
+  const minSellingPriceTtc = useMemo(
     () =>
       minimumSellingPrice > 0
         ? Number((minimumSellingPrice * 1.2).toFixed(2))
@@ -171,7 +171,10 @@ export function ProductGeneralDashboard({
         <KpiStrip
           costPrice={costPrice}
           landedCost={costNetAvg}
-          suggestedPriceTtc={suggestedPriceTtc}
+          minSellingPriceHt={
+            minimumSellingPrice > 0 ? minimumSellingPrice : null
+          }
+          minSellingPriceTtc={minSellingPriceTtc}
           marginPercent={margin}
           stockAvailable={product.stock_real ?? 0}
           minStock={product.min_stock ?? null}
@@ -183,6 +186,7 @@ export function ProductGeneralDashboard({
         <ChannelPricingTable
           productId={product.id}
           minimumSellingPrice={minimumSellingPrice}
+          landedCost={landedCost}
           onManageAll={() => onTabChange('pricing')}
         />
 
