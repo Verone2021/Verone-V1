@@ -27,6 +27,7 @@ import {
 import {
   planCascadeCancel,
   executeCascade,
+  RaceConditionError,
 } from '@/lib/orders/cascade-cancel-linked-docs';
 import type { LinkedDoc } from '@/lib/orders/cascade-cancel-linked-docs';
 
@@ -140,13 +141,6 @@ async function cancelOrderInDb(orderId: string): Promise<boolean> {
  * Lève une RaceConditionError si la commande n'était plus en draft au moment
  * de l'écriture (guard atomique dans cancelOrderInDb).
  */
-export class RaceConditionError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'RaceConditionError';
-  }
-}
-
 async function performCancellation(
   orderId: string,
   userId: string,
@@ -171,6 +165,8 @@ async function performCancellation(
 // ---------------------------------------------------------------------------
 // POST /api/sales-orders/[id]/cancel
 // ---------------------------------------------------------------------------
+// NOTE: RaceConditionError is defined in cascade-cancel-linked-docs.ts
+// (not here) to avoid Next.js route validation error on named non-HTTP exports.
 
 export async function POST(
   request: NextRequest,

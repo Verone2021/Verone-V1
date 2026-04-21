@@ -24,6 +24,17 @@ import { QontoClient, QontoError } from '@verone/integrations/qonto';
 import { createAdminClient } from '@verone/utils/supabase/server';
 
 // ============================================================
+// ERRORS
+// ============================================================
+
+export class RaceConditionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RaceConditionError';
+  }
+}
+
+// ============================================================
 // TYPES
 // ============================================================
 
