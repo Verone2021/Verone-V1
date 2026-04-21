@@ -67,6 +67,12 @@ export function useCancelOrderAction({
           });
           setShowCancelGuardDialog(true);
           setShowCancelConfirmation(false);
+        } else if ('error' in data) {
+          toast({
+            title: 'Erreur',
+            description: data.error,
+            variant: 'destructive',
+          });
         }
         return;
       }
