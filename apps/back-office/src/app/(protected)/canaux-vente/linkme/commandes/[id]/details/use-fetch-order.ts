@@ -37,7 +37,7 @@ export function useFetchOrder(orderId: string) {
           id, order_number, linkme_display_number, created_at, order_date, status, total_ht, total_ttc, notes,
           customer_id, customer_type, expected_delivery_date, pending_admin_validation,
           created_by_affiliate_id, linkme_selection_id, created_by,
-          payment_status_v2, payment_terms, currency, tax_rate,
+          payment_status_v2, payment_terms, paid_amount, currency, tax_rate,
           shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate,
           responsable_contact_id, billing_contact_id, delivery_contact_id,
           organisations!sales_orders_customer_id_fkey (
@@ -186,6 +186,14 @@ export function useFetchOrder(orderId: string) {
         payment_status: null,
         payment_status_v2: orderData.payment_status_v2 ?? null,
         payment_terms: orderData.payment_terms ?? null,
+        paid_amount:
+          (orderData as { paid_amount?: number | string | null }).paid_amount !=
+          null
+            ? Number(
+                (orderData as { paid_amount?: number | string | null })
+                  .paid_amount
+              )
+            : 0,
         currency: orderData.currency ?? null,
         tax_rate: orderData.tax_rate ?? null,
         shipping_cost_ht: orderData.shipping_cost_ht ?? null,

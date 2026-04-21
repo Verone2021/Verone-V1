@@ -156,45 +156,53 @@ export function useSalesOrdersFetch({
           }
         }
 
-        let matchInfo: {
+        type MatchInfo = {
           transaction_id: string;
           label: string;
           amount: number;
           emitted_at: string | null;
           attachment_ids: string[] | null;
-        } | null = null;
+        };
 
-        const { data: linkData } = await supabase
+        // Fetch ALL linked transactions (N-N supported via transaction_document_links).
+        // Legacy singleton fields (matched_transaction_id, ...) remain = first row, for
+        // backwards compatibility with consumers that read only the first match.
+        const { data: linkRows } = await supabase
           .from('transaction_document_links')
           .select(
-            'transaction_id, bank_transactions!inner (id, label, amount, emitted_at, attachment_ids)'
+            'transaction_id, created_at, bank_transactions!inner (id, label, amount, emitted_at, attachment_ids)'
           )
           .eq('sales_order_id', orderId)
-          .limit(1)
-          .maybeSingle();
+          .order('created_at', { ascending: true });
 
-        if (linkData?.bank_transactions) {
-          const bt = linkData.bank_transactions as unknown as {
-            id: string;
-            label: string | null;
-            amount: number | null;
-            emitted_at: string | null;
-            attachment_ids: string[] | null;
-          };
-          matchInfo = {
-            transaction_id: bt.id,
-            label: bt.label ?? '',
-            amount: bt.amount ?? 0,
-            emitted_at: bt.emitted_at ?? null,
-            attachment_ids: bt.attachment_ids ?? null,
-          };
-        }
+        const matchInfos: MatchInfo[] = (linkRows ?? [])
+          .map(row => {
+            const bt = row.bank_transactions as unknown as {
+              id: string;
+              label: string | null;
+              amount: number | null;
+              emitted_at: string | null;
+              attachment_ids: string[] | null;
+            } | null;
+            if (!bt) return null;
+            return {
+              transaction_id: bt.id,
+              label: bt.label ?? '',
+              amount: bt.amount ?? 0,
+              emitted_at: bt.emitted_at ?? null,
+              attachment_ids: bt.attachment_ids ?? null,
+            } satisfies MatchInfo;
+          })
+          .filter((m): m is MatchInfo => m !== null);
+
+        const matchInfo = matchInfos[0] ?? null;
 
         const orderWithCustomer = {
           ...orderData,
           sales_order_items: enrichedItems,
           creator: creatorInfo,
-          is_matched: !!matchInfo,
+          is_matched: matchInfos.length > 0,
+          matched_transactions: matchInfos,
           matched_transaction_id: matchInfo?.transaction_id ?? null,
           matched_transaction_label: matchInfo?.label ?? null,
           matched_transaction_amount: matchInfo?.amount ?? null,

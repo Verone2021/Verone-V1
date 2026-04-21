@@ -96,6 +96,14 @@ export interface SalesOrder {
 
   // 🆕 Rapprochement bancaire (jointure transaction_document_links)
   is_matched?: boolean;
+  /** All linked transactions (N-N supported). Singleton fields below = first row. */
+  matched_transactions?: Array<{
+    transaction_id: string;
+    label: string;
+    amount: number;
+    emitted_at: string | null;
+    attachment_ids: string[] | null;
+  }>;
   matched_transaction_id?: string | null;
   matched_transaction_label?: string | null;
   matched_transaction_amount?: number | null;

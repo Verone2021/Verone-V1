@@ -8,10 +8,13 @@ import { useRouter } from 'next/navigation';
 import {
   InvoiceCreateFromOrderModal,
   QuoteCreateFromOrderModal,
+  RapprochementFromOrderModal,
   type IOrderForInvoice,
   type IOrderForDocument,
+  type OrderForLink,
 } from '@verone/finance/components';
 import { Badge, Button, Card, Skeleton, SuccessDialog } from '@verone/ui';
+import { formatCurrency } from '@verone/utils';
 import {
   CheckCircle,
   CreditCard,
@@ -22,18 +25,11 @@ import {
   ScrollText,
 } from 'lucide-react';
 
-/** Invoice linked to this order (from financial_documents) */
-interface ILinkedInvoice {
-  id: string;
-  document_number: string;
-  status: string;
-  total_ttc: number;
-  amount_paid: number;
-  document_date: string;
-  due_date: string | null;
-  qonto_invoice_id: string | null;
-  qonto_pdf_url: string | null;
-}
+import {
+  getInvoiceStatusLabel,
+  type ILinkedInvoice,
+  type ILinkedTransaction,
+} from './PaymentSection.helpers';
 
 interface PaymentSectionProps {
   orderId: string;
@@ -45,6 +41,8 @@ interface PaymentSectionProps {
   currency: string;
   paymentTerms: string;
   paymentStatus: string;
+  /** Montant déjà rapproché (sum of allocated_amount on transaction_document_links) */
+  paidAmount?: number;
   customerName: string;
   customerEmail: string | null;
   customerType: 'organization' | 'individual';
@@ -65,47 +63,16 @@ interface PaymentSectionProps {
       name: string;
     } | null;
   }>;
-  // Rapprochement (intégré)
+  /** Date commande (pour scoring rapprochement) */
+  orderDate?: string | null;
+  /** Nom alternatif client (pour scoring rapprochement — legal_name vs trade_name) */
+  customerNameAlt?: string | null;
+  // Rapprochement (legacy prop: première transaction uniquement — prop kept for compat)
   isMatched?: boolean;
   matchedTransactionLabel?: string | null;
   matchedTransactionAmount?: number | null;
   matchedTransactionEmittedAt?: string | null;
   matchedTransactionId?: string | null;
-}
-
-function getInvoiceStatusLabel(status: string): {
-  label: string;
-  className: string;
-} {
-  switch (status) {
-    case 'finalized':
-    case 'sent':
-      return {
-        label: 'Finalisee',
-        className: 'bg-blue-100 text-blue-800 border-blue-200',
-      };
-    case 'paid':
-      return {
-        label: 'Payee',
-        className: 'bg-green-100 text-green-800 border-green-200',
-      };
-    case 'cancelled':
-      return {
-        label: 'Annulee',
-        className: 'bg-gray-100 text-gray-600 border-gray-200',
-      };
-    case 'synchronized':
-    case 'draft':
-      return {
-        label: 'Brouillon',
-        className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      };
-    default:
-      return {
-        label: status,
-        className: 'bg-gray-100 text-gray-600 border-gray-200',
-      };
-  }
 }
 
 export function PaymentSection({
@@ -118,6 +85,7 @@ export function PaymentSection({
   currency,
   paymentTerms,
   paymentStatus,
+  paidAmount = 0,
   customerName,
   customerEmail,
   customerType,
@@ -128,6 +96,8 @@ export function PaymentSection({
   billingAddress,
   shippingAddress,
   orderItems,
+  orderDate,
+  customerNameAlt,
   isMatched,
   matchedTransactionLabel,
   matchedTransactionAmount,
@@ -137,55 +107,73 @@ export function PaymentSection({
   const router = useRouter();
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [showRapprochementModal, setShowRapprochementModal] = useState(false);
   const [linkedInvoices, setLinkedInvoices] = useState<ILinkedInvoice[]>([]);
   const [loadingInvoices, setLoadingInvoices] = useState(true);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [createdInvoiceNumber, setCreatedInvoiceNumber] = useState('');
 
-  // Auto-fetch rapprochement si isMatched non fourni en prop
-  const [autoMatched, setAutoMatched] = useState(false);
-  const [autoMatchLabel, setAutoMatchLabel] = useState<string | null>(null);
-  const [autoMatchAmount, setAutoMatchAmount] = useState<number | null>(null);
-  const [autoMatchDate, setAutoMatchDate] = useState<string | null>(null);
+  // Auto-fetch: liste complète des transactions liées (N-N supporté)
+  const [autoLinks, setAutoLinks] = useState<ILinkedTransaction[]>([]);
+
+  const fetchAutoLinks = useCallback(async () => {
+    try {
+      const { createClient } = await import('@verone/utils/supabase/client');
+      const supabase = createClient();
+      const { data: links } = await supabase
+        .from('transaction_document_links')
+        .select(
+          'id, allocated_amount, transaction_id, bank_transactions!inner(id, label, emitted_at)'
+        )
+        .eq('sales_order_id', orderId)
+        .order('created_at', { ascending: true });
+
+      if (!links || links.length === 0) {
+        setAutoLinks([]);
+        return;
+      }
+
+      const mapped: ILinkedTransaction[] = links.map(row => {
+        const bt = row.bank_transactions as unknown as {
+          id: string;
+          label: string | null;
+          emitted_at: string | null;
+        } | null;
+        return {
+          transactionId: bt?.id ?? row.transaction_id,
+          label: bt?.label ?? null,
+          amount: Number(row.allocated_amount) || 0,
+          emittedAt: bt?.emitted_at ?? null,
+        };
+      });
+      setAutoLinks(mapped);
+    } catch (err) {
+      console.error('[PaymentSection] Auto-match check failed:', err);
+    }
+  }, [orderId]);
 
   useEffect(() => {
-    if (isMatched !== undefined) return; // Prop fournie, pas besoin d'auto-fetch
-    async function checkReconciliation() {
-      try {
-        const { createClient } = await import('@verone/utils/supabase/client');
-        const supabase = createClient();
-        const { data: links } = await supabase
-          .from('transaction_document_links')
-          .select('id, allocated_amount, transaction_id')
-          .eq('sales_order_id', orderId)
-          .limit(1);
+    void fetchAutoLinks();
+  }, [fetchAutoLinks]);
 
-        if (links && links.length > 0) {
-          setAutoMatched(true);
-          setAutoMatchAmount(Number(links[0].allocated_amount) || 0);
-          // Chercher le label de la transaction
-          const { data: tx } = await supabase
-            .from('bank_transactions')
-            .select('label, emitted_at')
-            .eq('id', links[0].transaction_id)
-            .single();
-          if (tx) {
-            setAutoMatchLabel(tx.label);
-            setAutoMatchDate(tx.emitted_at);
-          }
-        }
-      } catch (err) {
-        console.error('[PaymentSection] Auto-match check failed:', err);
-      }
-    }
-    void checkReconciliation();
-  }, [orderId, isMatched]);
+  // Liste effective : props legacy (1 item) prioritaires si fournies, sinon auto-fetch
+  const effectiveLinks: ILinkedTransaction[] =
+    isMatched && matchedTransactionId
+      ? [
+          {
+            transactionId: matchedTransactionId,
+            label: matchedTransactionLabel ?? null,
+            amount: matchedTransactionAmount ?? 0,
+            emittedAt: matchedTransactionEmittedAt ?? null,
+          },
+          // Compléter avec les liens supplémentaires auto-fetched (si plus d'une ligne)
+          ...autoLinks.filter(l => l.transactionId !== matchedTransactionId),
+        ]
+      : autoLinks;
 
-  // Valeurs finales : prop > auto-fetch
-  const effectiveIsMatched = isMatched ?? autoMatched;
-  const effectiveMatchLabel = matchedTransactionLabel ?? autoMatchLabel;
-  const effectiveMatchAmount = matchedTransactionAmount ?? autoMatchAmount;
-  const effectiveMatchDate = matchedTransactionEmittedAt ?? autoMatchDate;
+  const hasMatches = effectiveLinks.length > 0;
+  const remainingAmount = Math.max(0, (totalTtc ?? 0) - (paidAmount ?? 0));
+  const hasRemaining = remainingAmount > 0.01;
 
   // Fetch linked invoices from financial_documents
   const fetchLinkedInvoices = useCallback(async () => {
@@ -315,40 +303,61 @@ export function PaymentSection({
             )}
           </div>
 
-          {/* Rapprochement — intégré (auto-fetch si prop non fournie) */}
-          {effectiveIsMatched ? (
-            <div className="bg-green-50 p-2 rounded border border-green-200 text-xs space-y-0.5">
-              <div className="flex items-center justify-between">
-                <span className="text-green-800 font-medium flex items-center gap-1">
-                  <Link2 className="h-3 w-3" />
-                  {effectiveMatchLabel ?? 'Transaction liée'}
-                </span>
-                <span className="font-bold text-green-700">
-                  {new Intl.NumberFormat('fr-FR', {
-                    style: 'currency',
-                    currency: 'EUR',
-                  }).format(Math.abs(effectiveMatchAmount ?? 0))}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-gray-500">
-                {effectiveMatchDate && (
+          {/* Rapprochement — intégré (N transactions liées supportées) */}
+          {hasMatches ? (
+            <div className="space-y-1">
+              {effectiveLinks.map(link => (
+                <div
+                  key={link.transactionId}
+                  className="bg-green-50 p-2 rounded border border-green-200 text-xs space-y-0.5"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-green-800 font-medium flex items-center gap-1 truncate">
+                      <Link2 className="h-3 w-3 shrink-0" />
+                      <span className="truncate" title={link.label ?? ''}>
+                        {link.label ?? 'Transaction liée'}
+                      </span>
+                    </span>
+                    <span className="font-bold text-green-700 whitespace-nowrap">
+                      {formatCurrency(Math.abs(link.amount))}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-500">
+                    {link.emittedAt && (
+                      <span>
+                        Payé le{' '}
+                        {new Date(link.emittedAt).toLocaleDateString('fr-FR')}
+                      </span>
+                    )}
+                    <a
+                      href={`https://app.qonto.com/transactions/${link.transactionId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline flex items-center gap-1"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Qonto
+                    </a>
+                  </div>
+                </div>
+              ))}
+
+              {/* Récap total / payé / reste si paiement partiel */}
+              {paidAmount > 0 && (
+                <div className="flex items-center justify-between text-[10px] px-1 pt-0.5 text-gray-600">
                   <span>
-                    Payé le{' '}
-                    {new Date(effectiveMatchDate).toLocaleDateString('fr-FR')}
+                    Total {formatCurrency(totalTtc)} · Payé{' '}
+                    {formatCurrency(paidAmount)}
                   </span>
-                )}
-                {matchedTransactionId && (
-                  <a
-                    href={`https://app.qonto.com/transactions/${matchedTransactionId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline flex items-center gap-1"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                    Qonto
-                  </a>
-                )}
-              </div>
+                  {hasRemaining ? (
+                    <span className="font-semibold text-orange-700">
+                      Reste {formatCurrency(remainingAmount)}
+                    </span>
+                  ) : (
+                    <span className="font-semibold text-green-700">Soldée</span>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-[10px] text-gray-400 italic flex items-center gap-1">
@@ -444,19 +453,17 @@ export function PaymentSection({
             ) : null}
 
             {paymentStatus !== 'paid' && orderStatus !== 'draft' && (
-              <Link
-                href={`/finance/rapprochement?orderId=${orderId}&amount=${totalTtc}`}
-                className="flex-1"
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 h-7 text-xs"
+                onClick={() => setShowRapprochementModal(true)}
               >
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full h-7 text-xs"
-                >
-                  <CreditCard className="h-3 w-3 mr-1" />
-                  Associer paiement
-                </Button>
-              </Link>
+                <CreditCard className="h-3 w-3 mr-1" />
+                {hasMatches && hasRemaining
+                  ? `Rapprocher ${formatCurrency(remainingAmount)}`
+                  : 'Associer paiement'}
+              </Button>
             )}
           </div>
         </div>
@@ -489,6 +496,31 @@ export function PaymentSection({
         title="Facture créée"
         description={`La facture ${createdInvoiceNumber} a été créée en brouillon dans Qonto.`}
         closeText="OK"
+      />
+
+      {/* Modal rapprochement bancaire (1 doc → N transactions) */}
+      <RapprochementFromOrderModal
+        open={showRapprochementModal}
+        onOpenChange={setShowRapprochementModal}
+        order={
+          {
+            id: orderId,
+            order_number: orderNumber,
+            customer_name: customerName,
+            customer_name_alt: customerNameAlt ?? null,
+            total_ttc: totalTtc,
+            paid_amount: paidAmount,
+            created_at: orderDate ?? new Date().toISOString(),
+            order_date: orderDate ?? null,
+            shipped_at: null,
+            payment_status_v2: paymentStatus,
+          } satisfies OrderForLink
+        }
+        onSuccess={() => {
+          void fetchAutoLinks();
+          router.refresh();
+        }}
+        orderType="sales_order"
       />
     </>
   );
