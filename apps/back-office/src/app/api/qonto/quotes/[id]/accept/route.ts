@@ -104,7 +104,20 @@ export async function POST(
       const {
         data: { user },
       } = await supabaseAuth.auth.getUser();
-      const userId = user?.id ?? null;
+
+      if (!user) {
+        console.error(
+          '[API Qonto Quote Accept] Cascade skipped: no authenticated user'
+        );
+        return NextResponse.json({
+          success: true,
+          quote: data.quote,
+          message: 'Devis marqué comme accepté',
+          validatedOrder: null,
+        });
+      }
+
+      const userId = user.id;
 
       // Chercher le financial_document lié au devis Qonto
       const supabase = createAdminClient();
@@ -139,9 +152,7 @@ export async function POST(
             updated_at: new Date().toISOString(),
           };
 
-          if (userId) {
-            updatePayload.confirmed_by = userId;
-          }
+          updatePayload.confirmed_by = userId;
 
           const { error: updateErr } = await supabase
             .from('sales_orders')

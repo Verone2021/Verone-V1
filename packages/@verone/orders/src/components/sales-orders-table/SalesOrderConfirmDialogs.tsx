@@ -214,7 +214,7 @@ export function SalesOrderConfirmDialogs({
                             ? 'Devis'
                             : 'Proforma'}{' '}
                           <strong>{doc.documentNumber ?? doc.id}</strong> (
-                          {doc.qontoStatus}) sera supprime(e)
+                          {doc.qontoStatus}) sera supprimé(e)
                         </span>
                       </li>
                     ))}
@@ -231,7 +231,7 @@ export function SalesOrderConfirmDialogs({
               }}
               className="bg-red-600 hover:bg-red-700"
             >
-              Annuler quand meme
+              Annuler quand même
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

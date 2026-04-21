@@ -7,7 +7,7 @@
  * Utilisé par la route POST /api/sales-orders/[id]/cancel (sprint 2).
  *
  * Règles métier (finance.md R6) :
- *   - Facture finalized / unpaid / paid → REFUSE (créer un avoir d'abord)
+ *   - Facture unpaid / paid / overdue → REFUSE (créer un avoir d'abord)
  *   - Devis accepted → CASCADE_CONFIRM (modal garde-fou)
  *   - Devis draft / pending_approval / finalized / declined / expired → CASCADE_AUTO
  *   - Proforma (customer_invoice draft) → CASCADE_AUTO
@@ -303,51 +303,78 @@ export async function planCascadeCancel(
  *
  * @param docs  Liste des LinkedDoc à supprimer (issue de planCascadeCancel)
  */
+/**
+ * Tente de supprimer un document côté Qonto.
+ * Retourne null si le document est ignorable (absent, cancelled, non-suppressible).
+ * Lève une erreur si l'erreur Qonto est critique.
+ */
+async function deleteFromQonto(
+  doc: LinkedDoc,
+  client: QontoClient
+): Promise<null> {
+  if (doc.qontoStatus === 'not_found' || doc.qontoStatus === 'cancelled') {
+    return null;
+  }
+
+  try {
+    if (doc.documentType === 'customer_quote') {
+      // declined/expired : Qonto refuserait le DELETE — on skip
+      if (doc.qontoStatus !== 'declined' && doc.qontoStatus !== 'expired') {
+        await client.deleteClientQuote(doc.qontoId);
+      }
+    } else {
+      // customer_invoice — seul le statut draft peut être DELETE
+      if (doc.qontoStatus === 'draft') {
+        await client.deleteClientInvoice(doc.qontoId);
+      }
+    }
+  } catch (err) {
+    if (err instanceof QontoError) {
+      // 404 = déjà supprimé, 410 = gone — ignorable
+      if (err.statusCode === 404 || err.statusCode === 410) {
+        console.error(
+          `[cascade-cancel-linked-docs] Qonto ${err.statusCode} sur ${doc.qontoId} — doc déjà absent, soft-delete local uniquement`
+        );
+        return null;
+      }
+      // Erreur critique : remonter
+      console.error(
+        `[cascade-cancel-linked-docs] Erreur Qonto critique sur ${doc.qontoId}:`,
+        err
+      );
+      throw err;
+    }
+    throw err;
+  }
+
+  return null;
+}
+
 export async function executeCascade(docs: LinkedDoc[]): Promise<void> {
   if (docs.length === 0) return;
 
   const client = getQontoClient();
   const supabase = createAdminClient();
 
-  for (const doc of docs) {
-    // a) Suppression côté Qonto (sauf si déjà absent ou déjà cancelled)
-    if (doc.qontoStatus !== 'not_found' && doc.qontoStatus !== 'cancelled') {
-      try {
-        if (doc.documentType === 'customer_quote') {
-          // Tous statuts sauf declined/expired peuvent être DELETE
-          if (doc.qontoStatus !== 'declined' && doc.qontoStatus !== 'expired') {
-            await client.deleteClientQuote(doc.qontoId);
-          }
-          // declined/expired : Qonto refuserait le DELETE — on skip Qonto
-        } else {
-          // customer_invoice — seul le statut draft peut être DELETE
-          // (cancelled est déjà traité par le guard ci-dessus)
-          if (doc.qontoStatus === 'draft') {
-            await client.deleteClientInvoice(doc.qontoId);
-          }
-        }
-      } catch (err) {
-        if (err instanceof QontoError) {
-          // 404 = déjà supprimé, 410 = gone — skip et continuer
-          if (err.statusCode === 404 || err.statusCode === 410) {
-            console.error(
-              `[cascade-cancel-linked-docs] Qonto ${err.statusCode} sur ${doc.qontoId} — doc déjà absent, soft-delete local uniquement`
-            );
-          } else {
-            // Erreur critique : remonter
-            console.error(
-              `[cascade-cancel-linked-docs] Erreur Qonto critique sur ${doc.qontoId}:`,
-              err
-            );
-            throw err;
-          }
-        } else {
-          throw err;
-        }
-      }
+  // a) Suppression Qonto en parallèle (latence réseau maîtrisée)
+  const qontoResults = await Promise.allSettled(
+    docs.map(doc => deleteFromQonto(doc, client))
+  );
+
+  // b) Soft-delete local séquentiel (traçabilité d'erreur précise)
+  for (let i = 0; i < docs.length; i++) {
+    const doc = docs[i];
+    const qontoResult = qontoResults[i];
+
+    if (qontoResult.status === 'rejected') {
+      // L'erreur Qonto est critique et a déjà été loggée dans deleteFromQonto
+      throw qontoResult.reason instanceof Error
+        ? qontoResult.reason
+        : new Error(
+            `Erreur Qonto inattendue pour le document ${doc.documentNumber ?? doc.id}`
+          );
     }
 
-    // b) Soft-delete local
     const { error: updateError } = await supabase
       .from('financial_documents')
       .update({ deleted_at: new Date().toISOString() })

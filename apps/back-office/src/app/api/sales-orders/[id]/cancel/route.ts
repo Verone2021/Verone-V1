@@ -107,22 +107,45 @@ async function releaseStockReservations(
 // Helper : annuler la commande en DB
 // ---------------------------------------------------------------------------
 
-async function cancelOrderInDb(orderId: string): Promise<void> {
+/**
+ * Annule atomiquement la commande en DB.
+ * Le guard `.eq('status', 'draft')` empêche une race condition si le statut
+ * a changé entre la lecture (étape 4) et l'écriture.
+ * Retourne false si la commande n'était plus en draft (race détectée).
+ */
+async function cancelOrderInDb(orderId: string): Promise<boolean> {
   const supabase = createAdminClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('sales_orders')
     .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-    .eq('id', orderId);
+    .eq('id', orderId)
+    .eq('status', 'draft') // guard atomique anti-race
+    .select('id');
 
   if (error) {
     throw new Error(`Mise à jour status commande échouée : ${error.message}`);
   }
+
+  // Aucune ligne mise à jour = la commande a changé de statut entre-temps
+  return Boolean(data && data.length > 0);
 }
 
 // ---------------------------------------------------------------------------
 // Helper : exécuter la cascade + update status + libérer stock
 // Retourne la liste des doc IDs effectivement soft-deletés pour le cas d'erreur partielle
 // ---------------------------------------------------------------------------
+
+/**
+ * Exécute la cascade + update status + libère le stock.
+ * Lève une RaceConditionError si la commande n'était plus en draft au moment
+ * de l'écriture (guard atomique dans cancelOrderInDb).
+ */
+export class RaceConditionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RaceConditionError';
+  }
+}
 
 async function performCancellation(
   orderId: string,
@@ -133,7 +156,13 @@ async function performCancellation(
   // Le status n'est mis à jour QUE si la cascade réussit
   await executeCascade(docsToDelete);
 
-  await cancelOrderInDb(orderId);
+  const updated = await cancelOrderInDb(orderId);
+  if (!updated) {
+    throw new RaceConditionError(
+      'La commande a changé de statut. Annulation impossible.'
+    );
+  }
+
   await releaseStockReservations(orderId, userId);
 
   return { docsDeleted: docsToDelete.length };
@@ -293,6 +322,17 @@ export async function POST(
     return NextResponse.json(successResponse, { status: 200 });
   } catch (err) {
     console.error("[API cancel sales order] Erreur lors de l'annulation:", err);
+
+    // Race condition détectée : commande n'est plus en draft → HTTP 409
+    if (err instanceof RaceConditionError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: err.message,
+        } satisfies RefuseResponse,
+        { status: 409 }
+      );
+    }
 
     // Identifier les docs partiellement supprimés pour la réponse
     // executeCascade soft-delete en séquence — on ne peut pas savoir exactement

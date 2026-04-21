@@ -9,22 +9,8 @@ import type {
   SalesOrder,
   SalesOrderStatus,
 } from '../../../hooks/use-sales-orders';
-
-// ----------------------------------------------------------------
-// Types réponse API cancel (union stricte, zero any)
-// ----------------------------------------------------------------
-
-interface CancelApiDoc {
-  id: string;
-  documentType: 'customer_quote' | 'customer_invoice';
-  documentNumber: string | null;
-  qontoStatus: string;
-}
-
-type CancelApiResponse =
-  | { docsDeleted: number }
-  | { reason: string; docsToDelete: CancelApiDoc[] }
-  | { error: string };
+import type { CancelApiDoc } from './use-cancel-order-action';
+import { useCancelOrderAction } from './use-cancel-order-action';
 
 // ----------------------------------------------------------------
 
@@ -325,123 +311,18 @@ export function useSalesOrderActions({
     }
   };
 
-  const handleCancelConfirmed = async () => {
-    if (!orderToCancel) return;
-    try {
-      const response = await fetch(
-        `/api/sales-orders/${orderToCancel}/cancel`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ force: false }),
-        }
-      );
-
-      if (response.status === 409) {
-        const data = (await response.json()) as CancelApiResponse;
-        if ('docsToDelete' in data) {
-          setCancelGuardData({
-            reason: data.reason,
-            docsToDelete: data.docsToDelete,
-          });
-          setShowCancelGuardDialog(true);
-          setShowCancelConfirmation(false);
-        }
-        return;
-      }
-
-      if (
-        response.status === 400 ||
-        response.status === 401 ||
-        response.status === 404
-      ) {
-        const data = (await response.json()) as CancelApiResponse;
-        toast({
-          title: 'Erreur',
-          description:
-            'error' in data ? data.error : "Impossible d'annuler la commande",
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error('Erreur serveur');
-      }
-
-      const data = (await response.json()) as CancelApiResponse;
-      toast({
-        title: 'Succes',
-        description:
-          'docsDeleted' in data && data.docsDeleted > 0
-            ? `Commande annulee. ${data.docsDeleted} document(s) Qonto supprime(s).`
-            : 'Commande annulee avec succes',
-      });
-
-      const filters = channelId ? { channel_id: channelId } : undefined;
-      await fetchOrders(filters);
-      await fetchStats(filters);
-      onOrderUpdated?.();
-    } catch (error) {
-      console.error("Erreur lors de l'annulation:", error);
-      toast({
-        title: 'Erreur',
-        description:
-          error instanceof Error
-            ? error.message
-            : "Impossible d'annuler la commande",
-        variant: 'destructive',
-      });
-    } finally {
-      setShowCancelConfirmation(false);
-      setOrderToCancel(null);
-    }
-  };
-
-  const handleCancelGuardConfirmed = async () => {
-    if (!orderToCancel) return;
-    try {
-      const response = await fetch(
-        `/api/sales-orders/${orderToCancel}/cancel`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ force: true }),
-        }
-      );
-
-      if (!response.ok) {
-        const data = (await response.json()) as CancelApiResponse;
-        throw new Error('error' in data ? data.error : 'Erreur serveur');
-      }
-
-      const data = (await response.json()) as CancelApiResponse;
-      toast({
-        title: 'Succes',
-        description:
-          'docsDeleted' in data
-            ? `Commande annulee. ${data.docsDeleted} document(s) Qonto supprime(s).`
-            : 'Commande annulee avec succes',
-      });
-
-      const filters = channelId ? { channel_id: channelId } : undefined;
-      await fetchOrders(filters);
-      await fetchStats(filters);
-      onOrderUpdated?.();
-    } catch (error) {
-      console.error('Erreur garde-fou annulation:', error);
-      toast({
-        title: 'Erreur',
-        description:
-          error instanceof Error ? error.message : "Impossible d'annuler",
-        variant: 'destructive',
-      });
-    } finally {
-      setShowCancelGuardDialog(false);
-      setCancelGuardData(null);
-      setOrderToCancel(null);
-    }
-  };
+  const { handleCancelConfirmed, handleCancelGuardConfirmed } =
+    useCancelOrderAction({
+      channelId,
+      orderToCancel,
+      fetchOrders,
+      fetchStats,
+      onOrderUpdated,
+      setShowCancelConfirmation,
+      setOrderToCancel,
+      setShowCancelGuardDialog,
+      setCancelGuardData,
+    });
 
   return {
     handleCloseOrderDetail,
