@@ -9,7 +9,9 @@ import { cn, formatPrice } from '@verone/utils';
 
 interface KpiStripProps {
   costPrice: number | null;
+  landedCost: number | null;
   suggestedPriceTtc: number | null;
+  marginPercent: number;
   stockAvailable: number;
   minStock: number | null;
   siteLivePriceHt: number | null;
@@ -18,7 +20,9 @@ interface KpiStripProps {
 
 export function KpiStrip({
   costPrice,
+  landedCost,
   suggestedPriceTtc,
+  marginPercent,
   stockAvailable,
   minStock,
   siteLivePriceHt,
@@ -26,17 +30,31 @@ export function KpiStrip({
 }: KpiStripProps) {
   const stockOk = minStock == null || stockAvailable > minStock;
 
+  const showLandedCost =
+    landedCost != null &&
+    costPrice != null &&
+    Math.abs(landedCost - costPrice) >= 0.01;
+
+  const suggestedSub =
+    marginPercent > 0
+      ? `TTC · base revient · marge ${marginPercent.toFixed(0)}%`
+      : 'TTC recommandé';
+
   return (
     <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <KpiTile
         kicker="Coût unitaire HT"
         value={costPrice != null ? formatPrice(costPrice) : '—'}
-        sub="prix d'achat"
+        sub={
+          showLandedCost
+            ? `prix revient ${formatPrice(landedCost)}`
+            : "prix d'achat"
+        }
       />
       <KpiTile
         kicker="Prix vente conseillé"
         value={suggestedPriceTtc != null ? formatPrice(suggestedPriceTtc) : '—'}
-        sub="TTC recommandé"
+        sub={suggestedSub}
       />
       <KpiTile
         kicker="Stock disponible"
