@@ -13,6 +13,7 @@
 import { useMemo } from 'react';
 
 import { calculateMinSellingPrice } from '@verone/common';
+import { useProductGeneralDashboard } from '@verone/products';
 
 import { ActivityHistoryCompact } from './_dashboard-blocks/ActivityHistoryCompact';
 import { ChannelPricingTable } from './_dashboard-blocks/ChannelPricingTable';
@@ -38,6 +39,9 @@ export function ProductGeneralDashboard({
   onProductUpdate,
   onTabChange,
 }: ProductGeneralDashboardProps) {
+  // Dashboard aggregation hook — Phase 2
+  const { data: dash } = useProductGeneralDashboard(product.id);
+
   // KPI source values
   const costPrice = product.cost_price ?? null;
   const ecoTax = product.eco_tax_default ?? 0;
@@ -58,6 +62,13 @@ export function ProductGeneralDashboard({
         : null,
     [minimumSellingPrice]
   );
+
+  // Marge site live — calculée côté wrapper à partir du prix négocié min
+  const siteMarginPercent = useMemo(() => {
+    const sitePriceHt = dash?.siteLivePriceHt ?? null;
+    if (sitePriceHt == null || minimumSellingPrice <= 0) return null;
+    return ((sitePriceHt - minimumSellingPrice) / minimumSellingPrice) * 100;
+  }, [dash?.siteLivePriceHt, minimumSellingPrice]);
 
   // Publication checklist (logique extraite de product-publication-tab.tsx)
   const checklistItems = useMemo(
@@ -160,8 +171,8 @@ export function ProductGeneralDashboard({
           suggestedPriceTtc={suggestedPriceTtc}
           stockAvailable={product.stock_real ?? 0}
           minStock={product.min_stock ?? null}
-          siteLivePriceHt={null}
-          siteMarginPercent={null}
+          siteLivePriceHt={dash?.siteLivePriceHt ?? null}
+          siteMarginPercent={siteMarginPercent}
         />
 
         {/* Zone 2 — Bloc dominant prix par canal */}
@@ -181,10 +192,13 @@ export function ProductGeneralDashboard({
               product.supplier?.trade_name ??
               null
             }
-            supplierSiret={null}
-            lastPo={null}
+            supplierSiret={dash?.supplierSiret ?? null}
+            lastPo={dash?.lastPo ?? null}
           />
-          <ActivityHistoryCompact events={[]} stockMoves={[]} />
+          <ActivityHistoryCompact
+            events={dash?.events ?? []}
+            stockMoves={dash?.stockMoves ?? []}
+          />
         </div>
 
         {/* Footer — Notes internes */}
