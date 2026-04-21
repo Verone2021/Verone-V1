@@ -17,6 +17,14 @@ export interface ChannelPricingEntry {
   is_active: boolean;
   notes: string | null;
   updated_at: string | null;
+  /** Taux de commission du canal (ex. 15 pour 15 %) */
+  channel_commission_rate: number | null;
+  /** Taux de marge minimum recommandé pour ce canal */
+  min_margin_rate: number | null;
+  /** Taux de marge maximum recommandé pour ce canal */
+  max_margin_rate: number | null;
+  /** Taux de marge suggéré pour ce canal */
+  suggested_margin_rate: number | null;
   /** Canal LinkMe : prix par sélection (selling_price_ht calculé en DB) */
   selection_prices?: Array<{
     selection_id: string;
@@ -59,7 +67,7 @@ export function useChannelPricing(productId: string | null | undefined) {
       const { data: pricing, error: pricingError } = await supabase
         .from('channel_pricing')
         .select(
-          'id, product_id, channel_id, custom_price_ht, public_price_ht, discount_rate, markup_rate, min_quantity, is_active, notes, updated_at'
+          'id, product_id, channel_id, custom_price_ht, public_price_ht, discount_rate, markup_rate, min_quantity, is_active, notes, updated_at, channel_commission_rate, min_margin_rate, max_margin_rate, suggested_margin_rate'
         )
         .eq('product_id', productId);
 
@@ -108,6 +116,10 @@ export function useChannelPricing(productId: string | null | undefined) {
           is_active: row?.is_active ?? false,
           notes: row?.notes ?? null,
           updated_at: row?.updated_at ?? null,
+          channel_commission_rate: row?.channel_commission_rate ?? null,
+          min_margin_rate: row?.min_margin_rate ?? null,
+          max_margin_rate: row?.max_margin_rate ?? null,
+          suggested_margin_rate: row?.suggested_margin_rate ?? null,
           selection_prices:
             channel.code === 'linkme' ? selectionPrices : undefined,
         };

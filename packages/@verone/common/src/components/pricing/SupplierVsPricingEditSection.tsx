@@ -53,10 +53,15 @@ export function SupplierVsPricingEditSection({
   const currentEcoTax = isEcoTaxManagedByGroup
     ? (variantGroup?.common_eco_tax ?? 0)
     : (product.eco_tax_default ?? 0);
+  // Pour l'affichage readonly du prix min vente, on utilise le prix de revient
+  // (cost_net_avg = moyenne pondérée) quand disponible, sinon le prix d'achat brut.
+  const displayLandedCost = isCostPriceManagedByGroup
+    ? (variantGroup?.common_cost_price ?? 0)
+    : (product.cost_net_avg ?? product.cost_price ?? 0);
   const currentSellingPrice =
     currentMarginPercentage > 0
       ? calculateMinSellingPrice(
-          currentCostPrice,
+          displayLandedCost,
           currentEcoTax,
           currentMarginPercentage
         )
