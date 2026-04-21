@@ -84,7 +84,12 @@ function deriveMoveLabel(
 }
 
 // ---------- Types internes pour Supabase ----------
+// Ces interfaces reflètent la shape réelle retournée par Supabase avec jointures.
+// Les types générés Database['public']['Tables'][...]['Row'] ne capturent pas
+// les colonnes de jointure (.select('..., purchase_orders!inner(...)')),
+// donc on maintient ces interfaces locales avec leur shape exacte.
 
+/** Shape imposé par le join Supabase — voir .select('id, purchased_at, purchase_orders!inner(...)') */
 interface RawPpo {
   id: string;
   purchased_at: string;
@@ -95,6 +100,7 @@ interface RawPpo {
   } | null;
 }
 
+/** Shape imposé par le join Supabase — voir .select('id, performed_at, movement_type, quantity_change, reason_code') */
 interface RawStockMove {
   id: string;
   performed_at: string;
@@ -103,6 +109,7 @@ interface RawStockMove {
   reason_code: string | null;
 }
 
+/** Shape imposé par le join Supabase — voir .select('id, negotiated_at, price, supplier_id, organisations!supplier_id(...)') */
 interface RawSourcingHistory {
   id: string;
   negotiated_at: string | null;
@@ -113,6 +120,7 @@ interface RawSourcingHistory {
   } | null;
 }
 
+/** Shape imposé par le join Supabase — voir .select('id, created_at, publication_date, supplier_id, organisations!supplier_id(siret)') */
 interface RawProduct {
   id: string;
   created_at: string | null;
@@ -122,6 +130,7 @@ interface RawProduct {
   } | null;
 }
 
+/** Shape imposé par le join Supabase — voir .select('custom_price_ht, sales_channels!inner(code)') */
 interface RawChannelPricing {
   custom_price_ht: number | null;
 }
@@ -215,7 +224,7 @@ export function useProductGeneralDashboard(productId: string | null): {
       // --- Last PO ---
       let lastPo: LastPo | null = null;
       if (!poResult.error && poResult.data && poResult.data.length > 0) {
-        const raw = poResult.data[0] as unknown as RawPpo;
+        const raw = poResult.data[0] as RawPpo;
         if (raw.purchase_orders) {
           lastPo = {
             id: raw.id,
@@ -231,7 +240,7 @@ export function useProductGeneralDashboard(productId: string | null): {
       }
 
       // --- Stock moves ---
-      const rawMoves = (stockResult.data ?? []) as unknown as RawStockMove[];
+      const rawMoves = (stockResult.data ?? []) as RawStockMove[];
       const stockMoves: StockMove[] = rawMoves.map(m => ({
         id: m.id,
         date: m.performed_at,
@@ -241,7 +250,7 @@ export function useProductGeneralDashboard(productId: string | null): {
       }));
 
       // --- Product (pour events création/publication + siret) ---
-      const rawProduct = productResult.data as unknown as RawProduct | null;
+      const rawProduct = productResult.data as RawProduct | null;
       const supplierSiret = rawProduct?.organisations?.siret ?? null;
 
       // --- Events timeline ---
@@ -278,8 +287,7 @@ export function useProductGeneralDashboard(productId: string | null): {
       }
 
       // Events changements prix négociés
-      const rawSourcing = (sourcingResult.data ??
-        []) as unknown as RawSourcingHistory[];
+      const rawSourcing = (sourcingResult.data ?? []) as RawSourcingHistory[];
       for (const s of rawSourcing) {
         if (s.negotiated_at) {
           const supplierName =
@@ -303,9 +311,7 @@ export function useProductGeneralDashboard(productId: string | null): {
 
       // --- Site live price ---
       let siteLivePriceHt: number | null = null;
-      const channelRows = channelResult.data as unknown as
-        | RawChannelPricing[]
-        | null;
+      const channelRows = channelResult.data as RawChannelPricing[] | null;
       if (!channelResult.error && channelRows && channelRows.length > 0) {
         const raw = channelRows[0];
         siteLivePriceHt =

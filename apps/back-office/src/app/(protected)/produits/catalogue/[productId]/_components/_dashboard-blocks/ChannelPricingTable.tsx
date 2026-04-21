@@ -102,142 +102,152 @@ export function ChannelPricingTable({
       )}
 
       {!isLoading && rows.length > 0 && (
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-[10px] uppercase tracking-wide text-neutral-500 border-b border-neutral-100">
-              <th className="text-left py-2 pl-2 font-medium">Canal</th>
-              <th className="text-right py-2 font-medium">Prix HT</th>
-              <th className="text-right py-2 font-medium">Écart min</th>
-              <th className="text-right py-2 font-medium">Marge %</th>
-              <th className="text-left py-2 pl-3 font-medium">Statut</th>
-              <th className="text-right py-2 pr-2 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(row => {
-              const Icon = ICONS[row.channel_code] ?? Globe;
-              const readOnly = READ_ONLY.has(row.channel_code);
-              const isEditing = editingId === row.channel_id;
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-[10px] uppercase tracking-wide text-neutral-500 border-b border-neutral-100">
+                <th className="text-left py-2 pl-2 font-medium">Canal</th>
+                <th className="text-right py-2 font-medium">Prix HT</th>
+                <th className="text-right py-2 font-medium hidden lg:table-cell">
+                  Écart min
+                </th>
+                <th className="text-right py-2 font-medium hidden lg:table-cell">
+                  Marge %
+                </th>
+                <th className="text-left py-2 pl-3 font-medium hidden md:table-cell">
+                  Statut
+                </th>
+                <th className="text-right py-2 pr-2 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(row => {
+                const Icon = ICONS[row.channel_code] ?? Globe;
+                const readOnly = READ_ONLY.has(row.channel_code);
+                const isEditing = editingId === row.channel_id;
 
-              return (
-                <tr
-                  key={row.channel_id}
-                  className={cn(
-                    'border-b border-neutral-50 last:border-0',
-                    row.belowMin && 'bg-red-50',
-                    readOnly && 'text-neutral-400'
-                  )}
-                >
-                  <td className="py-2 pl-2">
-                    <div className="flex items-center gap-2">
-                      <Icon className="h-3.5 w-3.5 shrink-0" />
-                      <span className="font-medium text-neutral-800">
-                        {row.channel_name}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-2 text-right tabular-nums">
-                    {isEditing ? (
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={draftPrice}
-                        onChange={e => setDraftPrice(e.target.value)}
-                        className="h-7 w-24 ml-auto text-right"
-                      />
-                    ) : readOnly ? (
-                      <span className="italic text-xs">= site-internet</span>
-                    ) : row.effectivePrice != null ? (
-                      formatPrice(row.effectivePrice)
-                    ) : (
-                      '—'
+                return (
+                  <tr
+                    key={row.channel_id}
+                    className={cn(
+                      'border-b border-neutral-50 last:border-0',
+                      row.belowMin && 'bg-red-50',
+                      readOnly && 'text-neutral-400'
                     )}
-                  </td>
-                  <td className="py-2 text-right tabular-nums text-xs">
-                    {readOnly
-                      ? '—'
-                      : row.effectivePrice != null && minimumSellingPrice > 0
-                        ? formatPrice(row.effectivePrice - minimumSellingPrice)
-                        : '—'}
-                  </td>
-                  <td className="py-2 text-right tabular-nums text-xs">
-                    {readOnly
-                      ? '—'
-                      : row.margin != null
-                        ? `${row.margin.toFixed(0)}%`
-                        : '—'}
-                  </td>
-                  <td className="py-2 pl-3">
-                    {readOnly ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] text-neutral-400">
-                        <Lock className="h-3 w-3" />
-                        miroir
-                      </span>
-                    ) : row.belowMin ? (
-                      <Badge
-                        variant="destructive"
-                        className="text-[10px] inline-flex items-center gap-1"
-                      >
-                        <AlertTriangle className="h-3 w-3" />
-                        Sous min
-                      </Badge>
-                    ) : row.is_active && row.effectivePrice != null ? (
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] bg-green-50 border-green-200 text-green-700"
-                      >
-                        Actif
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-[10px]">
-                        Inactif
-                      </Badge>
-                    )}
-                  </td>
-                  <td className="py-2 pr-2 text-right">
-                    {readOnly ? null : isEditing ? (
-                      <div className="inline-flex gap-1">
-                        <ButtonV2
-                          size="sm"
-                          onClick={() => {
-                            void save(row.channel_id);
-                          }}
-                          disabled={update.isPending}
-                        >
-                          <Check className="h-3 w-3" />
-                        </ButtonV2>
-                        <ButtonV2
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setEditingId(null)}
-                          disabled={update.isPending}
-                        >
-                          <X className="h-3 w-3" />
-                        </ButtonV2>
+                  >
+                    <td className="py-2 pl-2">
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-3.5 w-3.5 shrink-0" />
+                        <span className="font-medium text-neutral-800">
+                          {row.channel_name}
+                        </span>
                       </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingId(row.channel_id);
-                          setDraftPrice(
-                            row.custom_price_ht != null
-                              ? String(row.custom_price_ht)
-                              : ''
-                          );
-                        }}
-                        className="text-neutral-400 hover:text-neutral-700"
-                        title="Modifier le prix canal"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    </td>
+                    <td className="py-2 text-right tabular-nums">
+                      {isEditing ? (
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={draftPrice}
+                          onChange={e => setDraftPrice(e.target.value)}
+                          className="h-7 w-24 ml-auto text-right"
+                        />
+                      ) : readOnly ? (
+                        <span className="italic text-xs">= site-internet</span>
+                      ) : row.effectivePrice != null ? (
+                        formatPrice(row.effectivePrice)
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                    <td className="py-2 text-right tabular-nums text-xs hidden lg:table-cell">
+                      {readOnly
+                        ? '—'
+                        : row.effectivePrice != null && minimumSellingPrice > 0
+                          ? formatPrice(
+                              row.effectivePrice - minimumSellingPrice
+                            )
+                          : '—'}
+                    </td>
+                    <td className="py-2 text-right tabular-nums text-xs hidden lg:table-cell">
+                      {readOnly
+                        ? '—'
+                        : row.margin != null
+                          ? `${row.margin.toFixed(0)}%`
+                          : '—'}
+                    </td>
+                    <td className="py-2 pl-3 hidden md:table-cell">
+                      {readOnly ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-neutral-400">
+                          <Lock className="h-3 w-3" />
+                          miroir
+                        </span>
+                      ) : row.belowMin ? (
+                        <Badge
+                          variant="destructive"
+                          className="text-[10px] inline-flex items-center gap-1"
+                        >
+                          <AlertTriangle className="h-3 w-3" />
+                          Sous min
+                        </Badge>
+                      ) : row.is_active && row.effectivePrice != null ? (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] bg-green-50 border-green-200 text-green-700"
+                        >
+                          Actif
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px]">
+                          Inactif
+                        </Badge>
+                      )}
+                    </td>
+                    <td className="py-2 pr-2 text-right">
+                      {readOnly ? null : isEditing ? (
+                        <div className="inline-flex gap-1">
+                          <ButtonV2
+                            size="sm"
+                            onClick={() => {
+                              void save(row.channel_id);
+                            }}
+                            disabled={update.isPending}
+                          >
+                            <Check className="h-3 w-3" />
+                          </ButtonV2>
+                          <ButtonV2
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditingId(null)}
+                            disabled={update.isPending}
+                          >
+                            <X className="h-3 w-3" />
+                          </ButtonV2>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingId(row.channel_id);
+                            setDraftPrice(
+                              row.custom_price_ht != null
+                                ? String(row.custom_price_ht)
+                                : ''
+                            );
+                          }}
+                          className="h-11 w-11 md:h-8 md:w-8 inline-flex items-center justify-center text-neutral-400 hover:text-neutral-700"
+                          title="Modifier le prix canal"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {onManageAll && (

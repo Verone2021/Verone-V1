@@ -25,7 +25,7 @@ interface GeneralRailProps {
   variantGroupId: string | null;
   variants: Array<{ id: string; name: string; imageUrl: string | null }>;
   onTabClick: (id: string) => void;
-  onExportPdf: () => void;
+  onExportPdf?: () => void;
 }
 
 export function GeneralRail({
@@ -120,6 +120,8 @@ export function GeneralRail({
           size="sm"
           className="w-full"
           onClick={onExportPdf}
+          disabled={!onExportPdf}
+          title={!onExportPdf ? 'Bientôt disponible' : undefined}
         >
           <FileDown className="h-3.5 w-3.5 mr-1.5" />
           Export PDF

@@ -157,10 +157,7 @@ export function ProductGeneralDashboard({
         variantGroupId={product.variant_group_id ?? null}
         variants={[]}
         onTabClick={onTabChange}
-        onExportPdf={() => {
-          // Phase 2 : GET /api/products/[id]/pdf
-          console.warn('[General] Export PDF — to wire in Phase 2');
-        }}
+        onExportPdf={undefined}
       />
 
       {/* Body principal */}

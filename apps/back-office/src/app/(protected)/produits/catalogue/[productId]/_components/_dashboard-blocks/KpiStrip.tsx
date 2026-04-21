@@ -50,13 +50,15 @@ export function KpiStrip({
         valueClassName="text-blue-700"
         sub={
           siteMarginPercent != null
-            ? `marge +${siteMarginPercent.toFixed(0)}%`
+            ? `marge ${siteMarginPercent >= 0 ? '+' : ''}${siteMarginPercent.toFixed(0)}%`
             : 'non publié'
         }
         subChipClassName={
-          siteMarginPercent != null
-            ? 'bg-green-50 text-green-700 border-green-200'
-            : undefined
+          siteMarginPercent == null
+            ? undefined
+            : siteMarginPercent < 0
+              ? 'bg-red-50 text-red-700 border-red-200'
+              : 'bg-green-50 text-green-700 border-green-200'
         }
       />
     </section>
