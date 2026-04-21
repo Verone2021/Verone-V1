@@ -55,9 +55,14 @@ export function useDocumentDetail({
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [showOrgModal, setShowOrgModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showAcceptQuoteGuard, setShowAcceptQuoteGuard] = useState(false);
   const [organisationId, setOrganisationId] = useState<string | null>(null);
   const [partnerLegalName, setPartnerLegalName] = useState<string | null>(null);
   const [partnerTradeName, setPartnerTradeName] = useState<string | null>(null);
+  // Status of the linked sales order (loaded alongside customer data)
+  const [linkedOrderStatus, setLinkedOrderStatus] = useState<string | null>(
+    null
+  );
 
   // Fetch document data
   useEffect(() => {
@@ -143,13 +148,14 @@ export function useDocumentDetail({
       const { data } = await supabase
         .from('sales_orders')
         .select(
-          'customer_id, customer:organisations!sales_orders_customer_id_fkey(legal_name, trade_name)'
+          'customer_id, status, customer:organisations!sales_orders_customer_id_fkey(legal_name, trade_name)'
         )
         .eq('id', orderLink.sales_order_id)
         .single();
 
       if (data?.customer_id) {
         setOrganisationId(data.customer_id);
+        setLinkedOrderStatus(data.status ?? null);
 
         // Set org names if not already populated from localData
         if (!partnerLegalName) {
@@ -216,6 +222,10 @@ export function useDocumentDetail({
 
   // ===== ACTION HANDLERS =====
 
+  // Derived: is the linked order a draft?
+  const linkedDraftOrderNumber =
+    linkedOrderStatus === 'draft' ? (orderLink?.order_number ?? null) : null;
+
   const actions = useDocumentActions({
     id,
     document,
@@ -228,6 +238,8 @@ export function useDocumentDetail({
     setShowAcceptDialog,
     setShowDeclineDialog,
     setShowArchiveDialog,
+    setShowAcceptQuoteGuard,
+    linkedDraftOrderNumber,
   });
 
   // ===== COMPUTED VALUES =====
@@ -344,6 +356,9 @@ export function useDocumentDetail({
     setShowOrgModal,
     showEmailModal,
     setShowEmailModal,
+    showAcceptQuoteGuard,
+    setShowAcceptQuoteGuard,
+    linkedDraftOrderNumber,
     // Action state
     actionLoading,
     // Handlers (from useDocumentActions)

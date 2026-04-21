@@ -23,6 +23,8 @@ interface UseDocumentActionsParams {
   setShowAcceptDialog: (v: boolean) => void;
   setShowDeclineDialog: (v: boolean) => void;
   setShowArchiveDialog: (v: boolean) => void;
+  setShowAcceptQuoteGuard: (v: boolean) => void;
+  linkedDraftOrderNumber: string | null;
 }
 
 export function useDocumentActions({
@@ -37,6 +39,8 @@ export function useDocumentActions({
   setShowAcceptDialog,
   setShowDeclineDialog,
   setShowArchiveDialog,
+  setShowAcceptQuoteGuard,
+  linkedDraftOrderNumber,
 }: UseDocumentActionsParams) {
   const handleFinalize = async () => {
     if (!document) return;
@@ -118,10 +122,26 @@ export function useDocumentActions({
     }
   };
 
-  const handleAcceptQuote = async () => {
+  const handleAcceptQuote = () => {
+    if (!document || documentType !== 'quote') return;
+    setShowAcceptDialog(false);
+
+    // If a linked draft order exists, show the cascade guard before proceeding
+    if (linkedDraftOrderNumber !== null) {
+      setShowAcceptQuoteGuard(true);
+      return;
+    }
+
+    // No linked draft order — proceed directly
+    void handleAcceptQuoteConfirmed().catch(err => {
+      console.error('[DocumentDetail] Accept quote failed:', err);
+    });
+  };
+
+  const handleAcceptQuoteConfirmed = async () => {
     if (!document || documentType !== 'quote') return;
     setActionLoading('accept');
-    setShowAcceptDialog(false);
+    setShowAcceptQuoteGuard(false);
 
     try {
       const response = await fetch(`/api/qonto/quotes/${id}/accept`, {
@@ -131,7 +151,13 @@ export function useDocumentActions({
 
       if (!data.success) throw new Error(data.error);
 
-      toast.success('Devis accepté');
+      if (data.validatedOrder) {
+        toast.success(
+          `Devis accepté. Commande ${data.validatedOrder.number} validée automatiquement.`
+        );
+      } else {
+        toast.success('Devis accepté');
+      }
       window.location.reload();
     } catch (err) {
       toast.error(getFriendlyErrorMessage(err));
@@ -246,6 +272,7 @@ export function useDocumentActions({
     handleDelete,
     handleConvertToInvoice,
     handleAcceptQuote,
+    handleAcceptQuoteConfirmed,
     handleDeclineQuote,
     handleSendEmail,
     handleDownloadPdf,

@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   Archive,
   CheckCircle,
+  ShieldAlert,
   Trash2,
   XCircle,
 } from 'lucide-react';
@@ -64,11 +65,16 @@ interface DocumentDetailDialogsProps {
   setShowPaymentModal: (v: boolean) => void;
   setShowReconcileModal: (v: boolean) => void;
   setShowOrgModal: (v: boolean) => void;
+  // Accept quote guard
+  showAcceptQuoteGuard: boolean;
+  onAcceptQuoteGuardChange: (open: boolean) => void;
+  onAcceptQuoteGuardConfirmed: () => Promise<void>;
+  linkedOrderNumber: string | null;
   // Handlers
   handleFinalize: () => Promise<void>;
   handleDelete: () => Promise<void>;
   handleConvertToInvoice: () => Promise<void>;
-  handleAcceptQuote: () => Promise<void>;
+  handleAcceptQuote: () => void;
   handleDeclineQuote: () => Promise<void>;
   handleArchive: () => Promise<void>;
 }
@@ -92,6 +98,10 @@ export function DocumentDetailDialogs({
   showPaymentModal,
   showReconcileModal,
   showOrgModal,
+  showAcceptQuoteGuard,
+  onAcceptQuoteGuardChange,
+  onAcceptQuoteGuardConfirmed,
+  linkedOrderNumber,
   setShowFinalizeDialog,
   setShowDeleteDialog,
   setShowConvertDialog,
@@ -231,12 +241,55 @@ export function DocumentDetailDialogs({
             <AlertDialogAction
               className="bg-green-600 text-white hover:bg-green-700"
               onClick={() => {
-                void handleAcceptQuote().catch(error => {
-                  console.error('[DocumentDetail] Accept quote failed:', error);
-                });
+                handleAcceptQuote();
               }}
             >
               Marquer accepté
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Accept quote guard dialog — cascade order validation warning */}
+      <AlertDialog
+        open={showAcceptQuoteGuard}
+        onOpenChange={onAcceptQuoteGuardChange}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-blue-600">
+              <ShieldAlert className="h-5 w-5" />
+              Validation en cascade
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Accepter ce devis validera aussi la commande{' '}
+                <strong className="font-semibold text-foreground">
+                  {linkedOrderNumber ?? ''}
+                </strong>{' '}
+                automatiquement.
+              </p>
+              <p>
+                Les prix seront bloqués et le stock prévisionnel sera mis à
+                jour. Cette action ne peut pas être annulée sans dévalider la
+                commande manuellement.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Retour</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-blue-600 text-white hover:bg-blue-700"
+              onClick={() => {
+                void onAcceptQuoteGuardConfirmed().catch(error => {
+                  console.error(
+                    '[DocumentDetail] Accept quote confirmed failed:',
+                    error
+                  );
+                });
+              }}
+            >
+              Accepter et valider la commande
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
