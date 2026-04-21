@@ -2,6 +2,18 @@ import { useState } from 'react';
 
 import type { SalesOrder } from '../../../hooks/use-sales-orders';
 
+export interface CancelGuardDoc {
+  id: string;
+  documentType: 'customer_quote' | 'customer_invoice';
+  documentNumber: string | null;
+  qontoStatus: string;
+}
+
+export interface CancelGuardData {
+  reason: string;
+  docsToDelete: CancelGuardDoc[];
+}
+
 export function useSalesOrdersModals(initialCreateOpen: boolean) {
   const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
   const [showOrderDetail, setShowOrderDetail] = useState(false);
@@ -24,6 +36,9 @@ export function useSalesOrdersModals(initialCreateOpen: boolean) {
   const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState<string | null>(null);
+  const [showCancelGuardDialog, setShowCancelGuardDialog] = useState(false);
+  const [cancelGuardData, setCancelGuardData] =
+    useState<CancelGuardData | null>(null);
   const [showLinkTransactionModal, setShowLinkTransactionModal] =
     useState(false);
   const [selectedOrderForLink, setSelectedOrderForLink] =
@@ -98,6 +113,11 @@ export function useSalesOrdersModals(initialCreateOpen: boolean) {
     setShowCancelConfirmation,
     orderToCancel,
     setOrderToCancel,
+    // Cancel guard
+    showCancelGuardDialog,
+    setShowCancelGuardDialog,
+    cancelGuardData,
+    setCancelGuardData,
     // Link transaction
     showLinkTransactionModal,
     setShowLinkTransactionModal,

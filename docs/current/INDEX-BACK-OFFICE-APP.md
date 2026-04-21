@@ -1,6 +1,6 @@
 # Back-Office — Documentation App
 
-_Generated: 2026-04-21 15:44_
+_Generated: 2026-04-21 17:36_
 
 ## Pages (147)
 
@@ -154,7 +154,7 @@ _Generated: 2026-04-21 15:44_
 | `/`                                                                      | page.tsx |
 | `/unauthorized`                                                          | page.tsx |
 
-## API Routes (124)
+## API Routes (125)
 
 | Endpoint                                                     | Methods            |
 | ------------------------------------------------------------ | ------------------ |
@@ -275,6 +275,7 @@ _Generated: 2026-04-21 15:44_
 | `/api/quotes/[id]/finalize`                                  | POST               |
 | `/api/quotes/[id]/link-qonto`                                | POST               |
 | `/api/quotes/[id]/push-to-qonto`                             | POST               |
+| `/api/sales-orders/[id]/cancel`                              | POST               |
 | `/api/sales-orders/[id]/customer-address`                    | GET                |
 | `/api/sourcing/auth`                                         | GET                |
 | `/api/sourcing/import-supplier`                              | POST               |

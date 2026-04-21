@@ -189,6 +189,13 @@ export default function DocumentDetailPage({
         showPaymentModal={detail.showPaymentModal}
         showReconcileModal={detail.showReconcileModal}
         showOrgModal={detail.showOrgModal}
+        showAcceptQuoteGuard={detail.showAcceptQuoteGuard}
+        onAcceptQuoteGuardChange={detail.setShowAcceptQuoteGuard}
+        onAcceptQuoteGuardConfirmed={detail.handleAcceptQuoteConfirmed}
+        linkedOrderNumber={detail.linkedDraftOrderNumber}
+        showFinalizeInvoiceGuard={detail.showFinalizeInvoiceGuard}
+        onFinalizeInvoiceGuardChange={detail.setShowFinalizeInvoiceGuard}
+        onFinalizeInvoiceGuardConfirmed={detail.handleFinalizeConfirmed}
         setShowFinalizeDialog={detail.setShowFinalizeDialog}
         setShowDeleteDialog={detail.setShowDeleteDialog}
         setShowConvertDialog={detail.setShowConvertDialog}

@@ -13,6 +13,13 @@ import {
   AlertDialogTitle,
 } from '@verone/ui';
 
+export interface CancelGuardDoc {
+  id: string;
+  documentType: 'customer_quote' | 'customer_invoice';
+  documentNumber: string | null;
+  qontoStatus: string;
+}
+
 export interface SalesOrderConfirmDialogsProps {
   /** Validate confirmation */
   showValidateConfirmation: boolean;
@@ -33,6 +40,13 @@ export interface SalesOrderConfirmDialogsProps {
   showCancelConfirmation: boolean;
   onCancelConfirmationChange: (open: boolean) => void;
   onCancelConfirmed: () => void;
+
+  /** Cancel guard (documents Qonto bloquants) */
+  showCancelGuardDialog: boolean;
+  onCancelGuardChange: (open: boolean) => void;
+  onCancelGuardConfirmed: () => void;
+  guardReason: string;
+  docsToDelete: CancelGuardDoc[];
 }
 
 export function SalesOrderConfirmDialogs({
@@ -48,6 +62,11 @@ export function SalesOrderConfirmDialogs({
   showCancelConfirmation,
   onCancelConfirmationChange,
   onCancelConfirmed,
+  showCancelGuardDialog,
+  onCancelGuardChange,
+  onCancelGuardConfirmed,
+  guardReason,
+  docsToDelete,
 }: SalesOrderConfirmDialogsProps) {
   return (
     <>
@@ -167,6 +186,52 @@ export function SalesOrderConfirmDialogs({
               className="bg-orange-600 hover:bg-orange-700"
             >
               Annuler la commande
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* AlertDialog Garde-fou — documents Qonto bloquants */}
+      <AlertDialog
+        open={showCancelGuardDialog}
+        onOpenChange={onCancelGuardChange}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600">
+              Attention — action critique
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div>
+                <p>{guardReason}</p>
+                {docsToDelete.length > 0 && (
+                  <ul className="mt-3 space-y-1 text-sm">
+                    {docsToDelete.map(doc => (
+                      <li key={doc.id} className="flex items-start gap-1">
+                        <span className="mt-0.5 text-red-500">•</span>
+                        <span>
+                          {doc.documentType === 'customer_quote'
+                            ? 'Devis'
+                            : 'Proforma'}{' '}
+                          <strong>{doc.documentNumber ?? doc.id}</strong> (
+                          {doc.qontoStatus}) sera supprimé(e)
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Retour</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                onCancelGuardConfirmed();
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Annuler quand même
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
