@@ -11,7 +11,6 @@ import type { Product, ProductRow } from './types';
 interface ProductPricingTabProps {
   product: Product;
   completionPercentage: number;
-  primaryImageUrl: string | null;
   onProductUpdate: (updates: Partial<ProductRow>) => Promise<void>;
   onTabChange: (tabId: string) => void;
 }

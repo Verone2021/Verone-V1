@@ -87,7 +87,6 @@ export default function ProductDetailPage() {
           <ProductGeneralTab
             product={product}
             completionPercentage={completionPercentage}
-            primaryImageUrl={primaryImageUrl}
             onProductUpdate={handleProductUpdate}
             onTabChange={setActiveTab}
           />
@@ -104,7 +103,6 @@ export default function ProductDetailPage() {
           <ProductPricingTab
             product={product}
             completionPercentage={completionPercentage}
-            primaryImageUrl={primaryImageUrl}
             onProductUpdate={handleProductUpdate}
             onTabChange={setActiveTab}
           />

@@ -6,7 +6,6 @@
  * variantes miniatures, boutons Export PDF + Ouvrir Sourcing.
  */
 
-import Image from 'next/image';
 import Link from 'next/link';
 
 import { ButtonUnified } from '@verone/ui';
@@ -19,7 +18,6 @@ interface GeneralRailProps {
   productId: string;
   productName: string;
   sku: string;
-  primaryImageUrl: string | null;
   completionPercentage: number;
   tabEntries: Array<{ id: string; label: string; percent: number }>;
   variantGroupId: string | null;
@@ -32,7 +30,6 @@ export function GeneralRail({
   productId,
   productName,
   sku,
-  primaryImageUrl,
   completionPercentage,
   tabEntries,
   variantGroupId,
@@ -42,27 +39,12 @@ export function GeneralRail({
 }: GeneralRailProps) {
   return (
     <aside className="w-full lg:w-[220px] lg:sticky lg:top-4 lg:self-start bg-white rounded-lg border border-neutral-200 p-4 space-y-4">
-      {/* Header rail : image + nom + SKU */}
-      <div className="space-y-2">
-        <div className="relative aspect-square w-full max-w-[140px] mx-auto rounded overflow-hidden bg-neutral-100">
-          {primaryImageUrl ? (
-            <Image
-              src={primaryImageUrl}
-              alt={productName}
-              fill
-              sizes="140px"
-              className="object-cover"
-            />
-          ) : (
-            <div className="w-full h-full bg-neutral-200" />
-          )}
-        </div>
-        <div className="text-center">
-          <p className="text-sm font-semibold text-neutral-900 truncate">
-            {productName}
-          </p>
-          <p className="text-xs text-neutral-500 font-mono">{sku}</p>
-        </div>
+      {/* Header rail : nom + SKU (photo retirée — déjà dans le header produit global) */}
+      <div className="text-center">
+        <p className="text-sm font-semibold text-neutral-900 truncate">
+          {productName}
+        </p>
+        <p className="text-xs text-neutral-500 font-mono">{sku}</p>
       </div>
 
       {/* Completion global */}

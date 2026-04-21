@@ -13,7 +13,6 @@ import type { Product, ProductRow } from './types';
 interface ProductGeneralTabProps {
   product: Product;
   completionPercentage: number;
-  primaryImageUrl: string | null;
   onProductUpdate: (updates: Partial<ProductRow>) => Promise<void>;
   onTabChange: (tabId: string) => void;
 }
@@ -21,7 +20,6 @@ interface ProductGeneralTabProps {
 export function ProductGeneralTab({
   product,
   completionPercentage,
-  primaryImageUrl,
   onProductUpdate,
   onTabChange,
 }: ProductGeneralTabProps) {
@@ -29,7 +27,6 @@ export function ProductGeneralTab({
     <ProductGeneralDashboard
       product={product}
       completionPercentage={completionPercentage}
-      primaryImageUrl={primaryImageUrl}
       onProductUpdate={onProductUpdate}
       onTabChange={onTabChange}
     />
