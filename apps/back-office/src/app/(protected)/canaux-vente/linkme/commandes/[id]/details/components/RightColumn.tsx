@@ -424,13 +424,21 @@ export function RightColumn({
           paymentStatus={
             order.payment_status_v2 ?? order.payment_status ?? 'pending'
           }
+          paidAmount={order.paid_amount ?? 0}
           customerName={
             order.organisation?.trade_name ??
             order.organisation?.legal_name ??
             'Client inconnu'
           }
+          customerNameAlt={
+            order.organisation?.legal_name &&
+            order.organisation.legal_name !== order.organisation.trade_name
+              ? order.organisation.legal_name
+              : null
+          }
           customerEmail={order.organisation?.email ?? null}
           customerType="organization"
+          orderDate={order.created_at ?? null}
           shippingCostHt={order.shipping_cost_ht ?? 0}
           handlingCostHt={order.handling_cost_ht ?? 0}
           insuranceCostHt={order.insurance_cost_ht ?? 0}

@@ -39,6 +39,7 @@ export interface OrderWithDetails {
   payment_status: string | null;
   payment_status_v2: string | null;
   payment_terms: string | null;
+  paid_amount: number;
   currency: string | null;
   tax_rate: number | null;
   shipping_cost_ht: number | null;
