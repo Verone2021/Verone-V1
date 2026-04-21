@@ -142,6 +142,7 @@ export function ProductPricingDashboard({
           landedCost={landedCost}
           purchasesCount={data.costStats.purchasesCount}
           minSellingPriceHt={minSellingPriceHt}
+          minSellingPriceTtc={minSellingPriceTtc}
           marginPercent={margin}
           onMarginSave={handleMarginSave}
         />

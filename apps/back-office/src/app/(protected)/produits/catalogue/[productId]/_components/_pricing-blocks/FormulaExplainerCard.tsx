@@ -81,13 +81,14 @@ export function FormulaExplainerCard({
               </>
             )}
           </p>
-          <button
-            type="button"
-            className="text-[11px] text-blue-600 underline hover:text-blue-800 mt-1 block"
+          {/* TODO(BO-UI-PROD-PRICING-002) : ouvrir un dialog explicatif au clic */}
+          <span
+            className="text-[11px] text-blue-600 underline cursor-help mt-1 block"
+            aria-label="Le prix de revient (landed cost) inclut le prix d'achat fournisseur + les frais logistiques (transport, douane, assurance) amortis sur les 12 derniers mois d'achats. C'est la vraie base de coût, plus réaliste que le prix d'achat brut."
             title="Le prix de revient (landed cost) inclut le prix d'achat fournisseur + les frais logistiques (transport, douane, assurance) amortis sur les 12 derniers mois d'achats. C'est la vraie base de coût, plus réaliste que le prix d'achat brut."
           >
             Pourquoi pas le prix d'achat brut ? →
-          </button>
+          </span>
         </div>
       </div>
     </div>

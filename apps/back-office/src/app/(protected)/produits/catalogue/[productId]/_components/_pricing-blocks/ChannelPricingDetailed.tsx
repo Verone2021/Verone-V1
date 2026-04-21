@@ -11,7 +11,7 @@
  * Sprint : BO-UI-PROD-PRICING-001
  */
 
-import { useMemo, useState, useCallback } from 'react';
+import { Fragment, useMemo, useState, useCallback } from 'react';
 
 import { useChannelPricing, useUpdateChannelPrice } from '@verone/common';
 import { Badge, ButtonV2, Input } from '@verone/ui';
@@ -29,6 +29,8 @@ import {
   Store,
   X,
 } from 'lucide-react';
+
+import { LinkMeExpansionRows } from './LinkMeExpansionRows';
 
 interface ChannelPricingDetailedProps {
   productId: string;
@@ -236,9 +238,8 @@ export function ChannelPricingDetailed({
                   row.effectivePrice != null;
 
                 return (
-                  <>
+                  <Fragment key={row.channel_id}>
                     <tr
-                      key={row.channel_id}
                       className={cn(
                         'border-b border-neutral-50 last:border-0',
                         readOnly && 'text-neutral-400',
@@ -284,7 +285,7 @@ export function ChannelPricingDetailed({
                           </div>
                           {row.commissionRate != null &&
                             row.commissionRate > 0 && (
-                              <span className="text-[10px] text-neutral-500 pl-5.5">
+                              <span className="text-[10px] text-neutral-500 pl-6">
                                 commission {row.commissionRate.toFixed(0)} %
                               </span>
                             )}
@@ -418,69 +419,16 @@ export function ChannelPricingDetailed({
 
                     {/* Sub-rows LinkMe : commission + marge nette */}
                     {canExpand && isExpanded && (
-                      <>
-                        <tr
-                          key={`${row.channel_id}-commission`}
-                          className="bg-neutral-50 border-b border-neutral-50"
-                        >
-                          <td />
-                          <td
-                            colSpan={2}
-                            className="py-1.5 pl-9 text-xs text-neutral-500"
-                          >
-                            Commission canal{' '}
-                            <span className="font-medium">
-                              −{row.commissionRate!.toFixed(0)} %
-                            </span>
-                          </td>
-                          <td
-                            colSpan={5}
-                            className="py-1.5 pr-2 text-right text-xs text-red-600 font-medium tabular-nums"
-                          >
-                            {row.commissionAmount != null
-                              ? `−${formatPrice(row.commissionAmount)}`
-                              : '—'}
-                          </td>
-                        </tr>
-                        <tr
-                          key={`${row.channel_id}-netmargin`}
-                          className="bg-neutral-50 border-b border-neutral-100"
-                        >
-                          <td />
-                          <td
-                            colSpan={2}
-                            className="py-1.5 pl-9 text-xs text-neutral-500"
-                          >
-                            Marge nette estimée
-                          </td>
-                          <td
-                            colSpan={5}
-                            className="py-1.5 pr-2 text-right text-xs tabular-nums"
-                          >
-                            <span
-                              className={cn(
-                                'font-medium',
-                                row.netMarginEur != null &&
-                                  row.netMarginEur >= 0
-                                  ? 'text-green-700'
-                                  : 'text-red-600'
-                              )}
-                            >
-                              {row.netMarginEur != null
-                                ? `${row.netMarginEur >= 0 ? '+' : ''}${formatPrice(row.netMarginEur)}`
-                                : '—'}
-                            </span>
-                            {row.netMargin != null && (
-                              <span className="text-neutral-400 ml-1.5">
-                                ({row.netMargin >= 0 ? '+' : ''}
-                                {row.netMargin.toFixed(0)} %)
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      </>
+                      <LinkMeExpansionRows
+                        channelId={row.channel_id}
+                        commissionRate={row.commissionRate!}
+                        commissionAmount={row.commissionAmount}
+                        grossMarginEur={row.grossMargin}
+                        netMarginEur={row.netMarginEur}
+                        netMarginPercent={row.netMargin}
+                      />
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
             </tbody>

@@ -27,6 +27,8 @@ interface PricingKpiStripProps {
   purchasesCount: number;
   /** Prix min vente HT calculé (pour afficher dans sub tuile 3) */
   minSellingPriceHt: number | null;
+  /** Prix min vente TTC (calculé par le parent, source unique) */
+  minSellingPriceTtc: number | null;
   /** Marge cible en % */
   marginPercent: number;
   /** Callback pour sauvegarder la nouvelle marge */
@@ -40,6 +42,7 @@ export function PricingKpiStrip({
   landedCost,
   purchasesCount,
   minSellingPriceHt,
+  minSellingPriceTtc,
   marginPercent,
   onMarginSave,
 }: PricingKpiStripProps) {
@@ -69,11 +72,6 @@ export function PricingKpiStrip({
   const handleCancelEdit = useCallback(() => {
     setEditingMargin(false);
   }, []);
-
-  const minSellingPriceTtc =
-    minSellingPriceHt != null
-      ? Number((minSellingPriceHt * 1.2).toFixed(2))
-      : null;
 
   return (
     <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">

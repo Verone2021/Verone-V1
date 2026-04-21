@@ -63,6 +63,7 @@ interface RawPoItem {
     id: string;
     po_number: string;
     order_date: string | null;
+    status: string;
     supplier: {
       legal_name: string;
       trade_name: string | null;
@@ -126,12 +127,12 @@ export function useProductPricingDashboard(productId: string | null): {
           .select(
             `id, quantity, unit_price_ht, unit_cost_net, total_ht,
             purchase_order:purchase_orders!inner(
-              id, po_number, order_date,
+              id, po_number, order_date, status,
               supplier:organisations!purchase_orders_supplier_id_fkey(legal_name, trade_name)
             )`
           )
           .eq('product_id', productId)
-          .in('purchase_orders.status', [...PURCHASE_STATUSES]),
+          .limit(200),
 
         supabase
           .from('channel_pricing')
@@ -143,16 +144,29 @@ export function useProductPricingDashboard(productId: string | null): {
       ]);
 
       const rawItems = (poResult.data ?? []) as unknown as RawPoItem[];
+
+      // Filtrer en JS : retirer les PO dont le statut n'est pas dans la liste valide.
+      // Le filtre Supabase .in() sur une jointure !inner est silencieusement ignoré.
       const purchases: PurchaseOrderRow[] = rawItems
-        .filter(p => p.purchase_order != null)
+        .filter(
+          (
+            p
+          ): p is RawPoItem & {
+            purchase_order: NonNullable<RawPoItem['purchase_order']>;
+          } =>
+            p.purchase_order != null &&
+            (PURCHASE_STATUSES as readonly string[]).includes(
+              p.purchase_order.status
+            )
+        )
         .map(p => ({
           id: p.id,
-          poId: p.purchase_order!.id,
-          poNumber: p.purchase_order!.po_number,
-          orderDate: p.purchase_order!.order_date,
+          poId: p.purchase_order.id,
+          poNumber: p.purchase_order.po_number,
+          orderDate: p.purchase_order.order_date,
           supplierName:
-            p.purchase_order!.supplier?.trade_name ??
-            p.purchase_order!.supplier?.legal_name ??
+            p.purchase_order.supplier?.trade_name ??
+            p.purchase_order.supplier?.legal_name ??
             '—',
           quantity: p.quantity,
           unitPriceHt: Number(p.unit_price_ht),
