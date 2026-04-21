@@ -1053,10 +1053,7 @@ export type Database = {
           channel_id: string;
           created_at: string | null;
           created_by: string | null;
-          custom_description: string | null;
           custom_price_ht: number | null;
-          custom_selling_points: string[] | null;
-          custom_title: string | null;
           delivery_delay_weeks_max: number | null;
           delivery_delay_weeks_min: number | null;
           discount_rate: number | null;
@@ -1090,10 +1087,7 @@ export type Database = {
           channel_id: string;
           created_at?: string | null;
           created_by?: string | null;
-          custom_description?: string | null;
           custom_price_ht?: number | null;
-          custom_selling_points?: string[] | null;
-          custom_title?: string | null;
           delivery_delay_weeks_max?: number | null;
           delivery_delay_weeks_min?: number | null;
           discount_rate?: number | null;
@@ -1127,10 +1121,7 @@ export type Database = {
           channel_id?: string;
           created_at?: string | null;
           created_by?: string | null;
-          custom_description?: string | null;
           custom_price_ht?: number | null;
-          custom_selling_points?: string[] | null;
-          custom_title?: string | null;
           delivery_delay_weeks_max?: number | null;
           delivery_delay_weeks_min?: number | null;
           discount_rate?: number | null;
@@ -1314,12 +1305,6 @@ export type Database = {
           channel_id: string;
           created_at: string | null;
           created_by: string | null;
-          custom_brand: string | null;
-          custom_description: string | null;
-          custom_description_long: string | null;
-          custom_selling_points: Json | null;
-          custom_technical_description: string | null;
-          custom_title: string | null;
           id: string;
           metadata: Json | null;
           product_id: string;
@@ -1330,12 +1315,6 @@ export type Database = {
           channel_id: string;
           created_at?: string | null;
           created_by?: string | null;
-          custom_brand?: string | null;
-          custom_description?: string | null;
-          custom_description_long?: string | null;
-          custom_selling_points?: Json | null;
-          custom_technical_description?: string | null;
-          custom_title?: string | null;
           id?: string;
           metadata?: Json | null;
           product_id: string;
@@ -1346,12 +1325,6 @@ export type Database = {
           channel_id?: string;
           created_at?: string | null;
           created_by?: string | null;
-          custom_brand?: string | null;
-          custom_description?: string | null;
-          custom_description_long?: string | null;
-          custom_selling_points?: Json | null;
-          custom_technical_description?: string | null;
-          custom_title?: string | null;
           id?: string;
           metadata?: Json | null;
           product_id?: string;
@@ -4644,7 +4617,6 @@ export type Database = {
         Row: {
           base_price_ht: number;
           created_at: string | null;
-          custom_description: string | null;
           display_order: number | null;
           id: string;
           is_featured: boolean | null;
@@ -4658,7 +4630,6 @@ export type Database = {
         Insert: {
           base_price_ht: number;
           created_at?: string | null;
-          custom_description?: string | null;
           display_order?: number | null;
           id?: string;
           is_featured?: boolean | null;
@@ -4672,7 +4643,6 @@ export type Database = {
         Update: {
           base_price_ht?: number;
           created_at?: string | null;
-          custom_description?: string | null;
           display_order?: number | null;
           id?: string;
           is_featured?: boolean | null;
@@ -13248,6 +13218,34 @@ export type Database = {
           started_at: string;
           status: Database['public']['Enums']['sync_run_status'];
           sync_run_id: string;
+        }[];
+      };
+      get_linkme_catalog_products_for_affiliate: {
+        Args: { p_affiliate_id?: string };
+        Returns: {
+          custom_description: string;
+          custom_selling_points: string[];
+          custom_title: string;
+          display_order: number;
+          id: string;
+          is_enabled: boolean;
+          is_featured: boolean;
+          is_public_showcase: boolean;
+          linkme_commission_rate: number;
+          max_margin_rate: number;
+          min_margin_rate: number;
+          product_category_name: string;
+          product_family_name: string;
+          product_id: string;
+          product_image_url: string;
+          product_is_active: boolean;
+          product_name: string;
+          product_price_ht: number;
+          product_reference: string;
+          product_stock_real: number;
+          selections_count: number;
+          suggested_margin_rate: number;
+          views_count: number;
         }[];
       };
       get_linkme_channel_id: { Args: never; Returns: string };

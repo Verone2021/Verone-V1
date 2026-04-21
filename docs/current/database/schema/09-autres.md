@@ -1,6 +1,6 @@
 # Domaine Autres — Schema Base de Donnees
 
-_Generated: 2026-04-20 16:54_
+_Generated: 2026-04-21 01:58_
 
 **Tables : 51**
 
@@ -10,9 +10,9 @@ _Generated: 2026-04-20 16:54_
 | [ambassador_attributions](#ambassador-attributions)                         | 14       | 3   | 2   | 2        |
 | [ambassador_codes](#ambassador-codes)                                       | 8        | 2   | 2   | 0        |
 | [channel_price_lists](#channel-price-lists)                                 | 17       | 2   | 2   | 2        |
-| [channel_pricing](#channel-pricing)                                         | 35       | 2   | 2   | 4        |
+| [channel_pricing](#channel-pricing)                                         | 32       | 2   | 2   | 4        |
 | [channel_pricing_history](#channel-pricing-history)                         | 16       | 3   | 2   | 0        |
-| [channel_product_metadata](#channel-product-metadata)                       | 14       | 2   | 5   | 1        |
+| [channel_product_metadata](#channel-product-metadata)                       | 8        | 2   | 5   | 1        |
 | [cms_pages](#cms-pages)                                                     | 9        | 0   | 2   | 0        |
 | [customer_groups](#customer-groups)                                         | 13       | 0   | 2   | 1        |
 | [customer_pricing](#customer-pricing)                                       | 19       | 1   | 2   | 1        |
@@ -260,9 +260,6 @@ _Generated: 2026-04-20 16:54_
 | views_count              | integer     | YES      | 0                 |
 | selections_count         | integer     | YES      | 0                 |
 | display_order            | integer     | YES      | 0                 |
-| custom_title             | text        | YES      |                   |
-| custom_description       | text        | YES      |                   |
-| custom_selling_points    | text[]      | YES      |                   |
 | public_price_ht          | numeric     | YES      |                   |
 | buffer_rate              | numeric     | YES      | 0.05              |
 | propagate_to_selections  | boolean     | YES      | false             |
@@ -322,22 +319,16 @@ _Generated: 2026-04-20 16:54_
 
 ## channel_product_metadata
 
-| Colonne                      | Type        | Nullable | Default           |
-| ---------------------------- | ----------- | -------- | ----------------- |
-| id                           | uuid        | NO       | gen_random_uuid() |
-| product_id                   | uuid        | NO       |                   |
-| channel_id                   | uuid        | NO       |                   |
-| custom_title                 | text        | YES      |                   |
-| custom_description           | text        | YES      |                   |
-| metadata                     | jsonb       | YES      | '{}'::jsonb       |
-| created_at                   | timestamptz | YES      | now()             |
-| updated_at                   | timestamptz | YES      | now()             |
-| created_by                   | uuid        | YES      |                   |
-| updated_by                   | uuid        | YES      |                   |
-| custom_description_long      | text        | YES      |                   |
-| custom_technical_description | text        | YES      |                   |
-| custom_brand                 | varchar     | YES      |                   |
-| custom_selling_points        | jsonb       | YES      | '[]'::jsonb       |
+| Colonne    | Type        | Nullable | Default           |
+| ---------- | ----------- | -------- | ----------------- |
+| id         | uuid        | NO       | gen_random_uuid() |
+| product_id | uuid        | NO       |                   |
+| channel_id | uuid        | NO       |                   |
+| metadata   | jsonb       | YES      | '{}'::jsonb       |
+| created_at | timestamptz | YES      | now()             |
+| updated_at | timestamptz | YES      | now()             |
+| created_by | uuid        | YES      |                   |
+| updated_by | uuid        | YES      |                   |
 
 **Relations :**
 

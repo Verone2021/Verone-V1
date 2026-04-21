@@ -2229,30 +2229,6 @@
       },
       {
         "table_name": "channel_pricing",
-        "column_name": "custom_title",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "channel_pricing",
-        "column_name": "custom_description",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "channel_pricing",
-        "column_name": "custom_selling_points",
-        "data_type": "ARRAY",
-        "udt_name": "_text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "channel_pricing",
         "column_name": "public_price_ht",
         "data_type": "numeric",
         "udt_name": "numeric",
@@ -2433,22 +2409,6 @@
       },
       {
         "table_name": "channel_product_metadata",
-        "column_name": "custom_title",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "channel_product_metadata",
-        "column_name": "custom_description",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "channel_product_metadata",
         "column_name": "metadata",
         "data_type": "jsonb",
         "udt_name": "jsonb",
@@ -2486,38 +2446,6 @@
         "udt_name": "uuid",
         "is_nullable": "YES",
         "column_default": null
-      },
-      {
-        "table_name": "channel_product_metadata",
-        "column_name": "custom_description_long",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "channel_product_metadata",
-        "column_name": "custom_technical_description",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "channel_product_metadata",
-        "column_name": "custom_brand",
-        "data_type": "character varying",
-        "udt_name": "varchar",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "channel_product_metadata",
-        "column_name": "custom_selling_points",
-        "data_type": "jsonb",
-        "udt_name": "jsonb",
-        "is_nullable": "YES",
-        "column_default": "'[]'::jsonb"
       }
     ],
     "client_consultations": [
@@ -8892,14 +8820,6 @@
         "udt_name": "int4",
         "is_nullable": "YES",
         "column_default": "0"
-      },
-      {
-        "table_name": "linkme_selection_items",
-        "column_name": "custom_description",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
       },
       {
         "table_name": "linkme_selection_items",

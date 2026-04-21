@@ -1,12 +1,12 @@
 'use client';
 
 // =============================================================================
-// Onglet SEO — Titre custom, Description custom, Aperçu waterfall
+// Onglet SEO — meta_title + meta_description (produits), slug affiché
+// SI-DESC-001 (2026-04-21) : retrait custom_title / custom_description.
+// Le SEO vit directement dans products.meta_title / .meta_description.
 // =============================================================================
 
-import { Input } from '@verone/ui';
-import { Label } from '@verone/ui';
-import { Textarea } from '@verone/ui';
+import { Input, Label, Textarea } from '@verone/ui';
 
 import type { TabSharedProps } from './types';
 
@@ -16,92 +16,92 @@ export function TabSEO({
   setFormData,
   getError,
 }: TabSharedProps) {
+  const metaTitle = formData.meta_title ?? '';
+  const metaDescription = formData.meta_description ?? '';
+
   return (
     <div className="space-y-6">
-      {/* Custom Title */}
+      {/* Meta title */}
       <div>
         <div className="flex items-center justify-between">
-          <Label>Titre SEO custom (priorité 1)</Label>
+          <Label>Meta title</Label>
           <span
             className={`text-sm ${
-              (formData.custom_title?.length ?? 0) < 30
+              metaTitle.length < 30
                 ? 'text-red-600'
-                : (formData.custom_title?.length ?? 0) <= 60
+                : metaTitle.length <= 60
                   ? 'text-green-600'
                   : 'text-gray-600'
             }`}
           >
-            {formData.custom_title?.length ?? 0} / 60
+            {metaTitle.length} / 60
           </span>
         </div>
         <Input
-          value={formData.custom_title ?? ''}
+          value={metaTitle}
           onChange={e =>
             setFormData({
               ...formData,
-              custom_title: e.target.value,
+              meta_title: e.target.value,
             })
           }
-          placeholder="Titre optimisé pour le site internet"
+          placeholder="Titre SEO pour Google"
           maxLength={60}
         />
-        {getError('custom_title') && (
+        {getError('meta_title') && (
           <p className="text-sm text-red-600 mt-1">
-            {getError('custom_title')?.message}
+            {getError('meta_title')?.message}
           </p>
         )}
+        <p className="text-xs text-gray-500 mt-1">
+          Fallback : nom du produit si vide.
+        </p>
       </div>
 
-      {/* Custom Description */}
+      {/* Meta description */}
       <div>
         <div className="flex items-center justify-between">
-          <Label>Description SEO custom (priorité 1)</Label>
+          <Label>Meta description</Label>
           <span
             className={`text-sm ${
-              (formData.custom_description?.length ?? 0) < 80
+              metaDescription.length < 80
                 ? 'text-red-600'
-                : (formData.custom_description?.length ?? 0) <= 160
+                : metaDescription.length <= 160
                   ? 'text-green-600'
                   : 'text-gray-600'
             }`}
           >
-            {formData.custom_description?.length ?? 0} / 160
+            {metaDescription.length} / 160
           </span>
         </div>
         <Textarea
-          value={formData.custom_description ?? ''}
+          value={metaDescription}
           onChange={e =>
             setFormData({
               ...formData,
-              custom_description: e.target.value,
+              meta_description: e.target.value,
             })
           }
-          placeholder="Description optimisée pour le site internet"
+          placeholder="Description snippet Google (120-160 caractères)"
           maxLength={160}
           rows={3}
         />
-        {getError('custom_description') && (
+        {getError('meta_description') && (
           <p className="text-sm text-red-600 mt-1">
-            {getError('custom_description')?.message}
+            {getError('meta_description')?.message}
           </p>
         )}
+        <p className="text-xs text-gray-500 mt-1">
+          Fallback : 160 premiers caractères de la description produit.
+        </p>
       </div>
 
-      {/* Waterfall Preview */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="font-medium text-blue-900 mb-2">
-          Aperçu final (waterfall)
-        </div>
-        <div className="space-y-2 text-sm">
-          <div>
-            <span className="text-blue-700 font-medium">Titre:</span>{' '}
-            {formData.custom_title ?? product.seo_title}
-          </div>
-          <div>
-            <span className="text-blue-700 font-medium">Description:</span>{' '}
-            {formData.custom_description ?? product.seo_meta_description}
-          </div>
-        </div>
+      {/* Slug preview */}
+      <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
+        <div className="font-medium text-neutral-900 mb-1">Slug URL</div>
+        <code className="text-sm text-neutral-700">
+          veronecollections.fr/produit/{formData.slug ?? product.slug ?? '…'}
+        </code>
       </div>
     </div>
   );

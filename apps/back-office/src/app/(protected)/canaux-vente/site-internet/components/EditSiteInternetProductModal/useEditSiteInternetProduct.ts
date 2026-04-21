@@ -84,12 +84,13 @@ export function useEditSiteInternetProduct(
     }));
   }, [catalogueImages, product.name]);
 
-  // État formulaire
+  // SI-DESC-001 : formData réduit aux champs qui vivent vraiment côté canal
+  // (slug / publication / prix / SEO meta). La description / brand / selling
+  // points sont la source de vérité du produit mère — édition dans la fiche
+  // produit, pas ici.
   const [formData, setFormData] = useState<Partial<ProductFormData>>({
     slug: product.slug ?? '',
     is_published_online: product.is_published,
-    custom_title: '',
-    custom_description: '',
     meta_title: '',
     meta_description: '',
     custom_price_ht: product.price_ht ?? undefined,
@@ -97,11 +98,6 @@ export function useEditSiteInternetProduct(
     min_quantity: 1,
     notes: '',
     is_active: true,
-    // Nouveaux champs informations produit
-    custom_description_long: product.description ?? '',
-    custom_technical_description: product.technical_description ?? '',
-    custom_brand: product.brand ?? '',
-    custom_selling_points: product.selling_points ?? [],
   });
 
   // Helper get channel ID
@@ -123,21 +119,9 @@ export function useEditSiteInternetProduct(
   // Mutation update
   const updateProduct = useMutation({
     mutationFn: async (data: Partial<ProductFormData>) => {
-      console.warn('🔍 Mutation START', {
-        productId: product.product_id,
-        data: {
-          slug: data.slug,
-          is_published_online: data.is_published_online,
-          custom_title: data.custom_title,
-          custom_price_ht: data.custom_price_ht,
-        },
-      });
-
       const channelId = await getChannelId();
-      console.warn('✅ Channel ID récupéré:', channelId);
 
-      // 1. Update products table (slug, meta_title, meta_description, is_published_online)
-      // Use scheduled date if provided, otherwise now() on publish
+      // 1. Update products table (slug, meta_title, meta_description, publication)
       const publicationDate = data.publication_date
         ? new Date(data.publication_date).toISOString()
         : data.is_published_online
@@ -161,46 +145,10 @@ export function useEditSiteInternetProduct(
         .single();
 
       if (productsError) {
-        console.error('❌ Erreur products update:', productsError);
         throw productsError;
       }
-      console.warn('✅ Products table updated');
 
-      // 2. Upsert channel_product_metadata (incluant nouveaux champs)
-      if (
-        data.custom_title ||
-        data.custom_description ||
-        data.custom_description_long ||
-        data.custom_technical_description ||
-        data.custom_brand ||
-        data.custom_selling_points
-      ) {
-        const { error: metadataError } = await supabase
-          .from('channel_product_metadata')
-          .upsert(
-            {
-              product_id: product.product_id,
-              channel_id: channelId,
-              custom_title: data.custom_title,
-              custom_description: data.custom_description,
-              // Nouveaux champs informations produit
-              custom_description_long: data.custom_description_long,
-              custom_technical_description: data.custom_technical_description,
-              custom_brand: data.custom_brand,
-              custom_selling_points: data.custom_selling_points ?? [],
-            },
-            { onConflict: 'product_id,channel_id' }
-          )
-          .select('id');
-
-        if (metadataError) {
-          console.error('❌ Erreur metadata upsert:', metadataError);
-          throw metadataError;
-        }
-        console.warn('✅ Metadata upserted');
-      }
-
-      // 3. Upsert channel_pricing (si prix OU réduction modifiés)
+      // 2. Upsert channel_pricing (si prix OU réduction modifiés)
       if (data.custom_price_ht != null || data.discount_rate != null) {
         const { error: pricingError } = await supabase
           .from('channel_pricing')
@@ -210,7 +158,7 @@ export function useEditSiteInternetProduct(
               channel_id: channelId,
               custom_price_ht: data.custom_price_ht,
               discount_rate: data.discount_rate ?? null,
-              markup_rate: null, // Toujours null (mode custom_price uniquement)
+              markup_rate: null,
               min_quantity: data.min_quantity ?? 1,
               notes: data.notes ?? null,
               is_active: data.is_active ?? true,
@@ -220,16 +168,11 @@ export function useEditSiteInternetProduct(
           .select('id');
 
         if (pricingError) {
-          console.error('❌ Erreur pricing upsert:', pricingError);
           throw pricingError;
         }
-        console.warn('✅ Pricing upserted');
       }
-
-      console.warn('🎉 Mutation COMPLETE');
     },
     onSuccess: async () => {
-      console.warn('🎉 onSuccess callback');
       await queryClient.invalidateQueries({
         queryKey: ['site-internet-products'],
       });
