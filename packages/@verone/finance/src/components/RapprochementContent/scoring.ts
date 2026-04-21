@@ -27,8 +27,13 @@ export function calculateMatch(
   const reasons: string[] = [];
 
   // Use absolute value: avoirs have negative total_ttc but debit transactions are also
-  // stored as negative amounts — compare absolute values for correct matching
-  const orderAmount = Math.abs(order.total_ttc);
+  // stored as negative amounts — compare absolute values for correct matching.
+  // For partially paid orders, score against the REMAINING amount (total - paid)
+  // so suggestions match what's left to reconcile, not the full invoice total.
+  const totalAmount = Math.abs(order.total_ttc);
+  const paidAmount = order.paid_amount ?? 0;
+  const remaining = totalAmount - paidAmount;
+  const orderAmount = remaining > 0.01 ? remaining : totalAmount;
   const txAmount = Math.abs(transaction.amount);
   const amountDiff = Math.abs(txAmount - orderAmount);
   const amountPct = orderAmount > 0 ? (amountDiff / orderAmount) * 100 : 100;

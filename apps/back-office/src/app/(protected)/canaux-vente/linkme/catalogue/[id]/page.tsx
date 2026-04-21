@@ -41,7 +41,6 @@ import {
 import {
   useLinkMeProductDetail,
   useUpdateLinkMePricing,
-  useUpdateLinkMeMetadata,
   useToggleLinkMeProductField,
   useLinkMeProductVariants,
   useUpdateAffiliateCommission,
@@ -50,7 +49,7 @@ import {
   useDeleteLinkMeCatalogProduct,
 } from '../../hooks/use-linkme-catalog';
 import { useUpdateSelectionItem } from '../../hooks/use-linkme-selections';
-import type { LinkMePricingUpdate, LinkMeMetadataUpdate } from '../../types';
+import type { LinkMePricingUpdate } from '../../types';
 
 /**
  * Page détail produit LinkMe
@@ -79,7 +78,6 @@ export default function LinkMeProductDetailPage(): React.JSX.Element {
   // Hooks mutations
   const updatePricing = useUpdateLinkMePricing();
   const propagatePrice = usePropagatePrice();
-  const updateMetadata = useUpdateLinkMeMetadata();
   const toggleField = useToggleLinkMeProductField();
   const updateAffiliateCommission = useUpdateAffiliateCommission();
   const updateSelectionItem = useUpdateSelectionItem();
@@ -116,17 +114,6 @@ export default function LinkMeProductDetailPage(): React.JSX.Element {
       toast.success('Pricing enregistré');
     } catch {
       toast.error('Erreur lors de la sauvegarde du pricing');
-    }
-  };
-
-  const handleSaveMetadata = async (
-    metadata: LinkMeMetadataUpdate
-  ): Promise<void> => {
-    try {
-      await updateMetadata.mutateAsync({ catalogProductId, metadata });
-      toast.success('Informations enregistrées');
-    } catch {
-      toast.error('Erreur lors de la sauvegarde des informations');
     }
   };
 
@@ -283,12 +270,8 @@ export default function LinkMeProductDetailPage(): React.JSX.Element {
 
       {/* Section 2 : Layout deux colonnes */}
       <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
-        {/* Colonne gauche : Informations personnalisées */}
-        <ProductInfoCard
-          product={product}
-          onSave={handleSaveMetadata}
-          isSaving={updateMetadata.isPending}
-        />
+        {/* Colonne gauche : Informations produit (lecture seule, source = fiche produit mère) */}
+        <ProductInfoCard product={product} />
 
         {/* Colonne droite : Pricing OU Commission affilié */}
         {product.created_by_affiliate ? (

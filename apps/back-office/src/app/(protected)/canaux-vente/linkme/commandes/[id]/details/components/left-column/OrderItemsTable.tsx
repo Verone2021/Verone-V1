@@ -2,6 +2,8 @@
 
 import Image from 'next/image';
 
+import { canEditItems } from '@verone/orders';
+import type { SalesOrderStatus } from '@verone/orders/hooks';
 import {
   Badge,
   Button,
@@ -57,7 +59,8 @@ export function OrderItemsTable({
   onDeleteItem,
   onOpenAddProduct,
 }: OrderItemsTableProps) {
-  const isEditable = order.status === 'draft' || order.status === 'validated';
+  // R6 finance.md: items FIGÉS dès validated. Dévalider → modifier → revalider.
+  const isEditable = canEditItems(order.status as SalesOrderStatus);
 
   return (
     <Card>

@@ -63,44 +63,9 @@ export function useUpdateLinkMePricing() {
   });
 }
 
-/**
- * Hook: mettre à jour metadata custom (channel_pricing)
- */
-export function useUpdateLinkMeMetadata() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      catalogProductId,
-      metadata,
-    }: {
-      catalogProductId: string;
-      metadata: {
-        custom_title?: string | null;
-        custom_description?: string | null;
-        custom_selling_points?: string[] | null;
-      };
-    }) => {
-      const supabase = getSupabaseClient();
-      const { error } = await supabase
-        .from('channel_pricing')
-        .update(metadata)
-        .eq('id', catalogProductId);
-
-      if (error) throw error;
-    },
-    onSuccess: async (_data, variables) => {
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: ['linkme-product-detail', variables.catalogProductId],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ['linkme-catalog-products'],
-        }),
-      ]);
-    },
-  });
-}
+// SI-DESC-001 : useUpdateLinkMeMetadata retiré (custom_* dropped de DB).
+// Les descriptions / arguments de vente viennent désormais du master products.
+// Edition via /produits/catalogue/[id] onglet Descriptions.
 
 /**
  * Hook: mettre à jour la commission affilié (table products)

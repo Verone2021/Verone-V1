@@ -32,7 +32,6 @@ export default function ProductDetailPage() {
     productImages,
     _primaryImage,
     breadcrumbParts,
-    missingFields,
     completionPercentage,
     sourcing,
     primaryImageUrl,
@@ -88,11 +87,9 @@ export default function ProductDetailPage() {
           <ProductGeneralTab
             product={product}
             completionPercentage={completionPercentage}
-            missingFields={missingFields}
-            sourcing={sourcing}
-            breadcrumbParts={breadcrumbParts}
+            primaryImageUrl={primaryImageUrl}
             onProductUpdate={handleProductUpdate}
-            onOpenCategorizeModal={() => setIsCategorizeModalOpen(true)}
+            onTabChange={setActiveTab}
           />
         </TabContent>
 

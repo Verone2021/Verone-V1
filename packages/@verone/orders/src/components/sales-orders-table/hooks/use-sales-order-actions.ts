@@ -9,6 +9,10 @@ import type {
   SalesOrder,
   SalesOrderStatus,
 } from '../../../hooks/use-sales-orders';
+import type { CancelApiDoc } from './use-cancel-order-action';
+import { useCancelOrderAction } from './use-cancel-order-action';
+
+// ----------------------------------------------------------------
 
 interface UseSalesOrderActionsParams {
   channelId: string | null;
@@ -43,6 +47,11 @@ interface UseSalesOrderActionsParams {
   setOrderToDelete: (id: string | null) => void;
   setShowCancelConfirmation: (v: boolean) => void;
   setOrderToCancel: (id: string | null) => void;
+  // Cancel guard modal state
+  setShowCancelGuardDialog: (v: boolean) => void;
+  setCancelGuardData: (
+    data: { reason: string; docsToDelete: CancelApiDoc[] } | null
+  ) => void;
 }
 
 export function useSalesOrderActions({
@@ -72,6 +81,8 @@ export function useSalesOrderActions({
   setOrderToDelete,
   setShowCancelConfirmation,
   setOrderToCancel,
+  setShowCancelGuardDialog,
+  setCancelGuardData,
 }: UseSalesOrderActionsParams) {
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -300,65 +311,18 @@ export function useSalesOrderActions({
     }
   };
 
-  const handleCancelConfirmed = async () => {
-    if (!orderToCancel) return;
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user?.id) {
-        throw new Error('Utilisateur non authentifie');
-      }
-
-      if (updateStatusAction) {
-        const result = await updateStatusAction(
-          orderToCancel,
-          'cancelled',
-          user.id
-        );
-        if (!result.success) {
-          throw new Error(result.error ?? "Erreur lors de l'annulation");
-        }
-      } else {
-        await updateStatus(orderToCancel, 'cancelled');
-      }
-
-      // Liberer les reservations de stock
-      await supabase
-        .from('stock_reservations')
-        .update({
-          released_at: new Date().toISOString(),
-          released_by: user.id,
-        })
-        .eq('reference_type', 'sales_order')
-        .eq('reference_id', orderToCancel)
-        .is('released_at', null);
-
-      toast({
-        title: 'Succes',
-        description: 'Commande annulee avec succes',
-      });
-
-      const filters = channelId ? { channel_id: channelId } : undefined;
-      await fetchOrders(filters);
-      await fetchStats(filters);
-      onOrderUpdated?.();
-    } catch (error) {
-      console.error("Erreur lors de l'annulation:", error);
-      toast({
-        title: 'Erreur',
-        description:
-          error instanceof Error
-            ? error.message
-            : "Impossible d'annuler la commande",
-        variant: 'destructive',
-      });
-    } finally {
-      setShowCancelConfirmation(false);
-      setOrderToCancel(null);
-    }
-  };
+  const { handleCancelConfirmed, handleCancelGuardConfirmed } =
+    useCancelOrderAction({
+      channelId,
+      orderToCancel,
+      fetchOrders,
+      fetchStats,
+      onOrderUpdated,
+      setShowCancelConfirmation,
+      setOrderToCancel,
+      setShowCancelGuardDialog,
+      setCancelGuardData,
+    });
 
   return {
     handleCloseOrderDetail,
@@ -367,5 +331,6 @@ export function useSalesOrderActions({
     handleValidateConfirmed,
     handleDeleteConfirmed,
     handleCancelConfirmed,
+    handleCancelGuardConfirmed,
   };
 }

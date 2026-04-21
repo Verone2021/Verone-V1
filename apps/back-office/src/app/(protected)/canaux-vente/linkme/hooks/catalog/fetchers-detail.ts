@@ -16,7 +16,7 @@ export async function fetchLinkMeProductDetail(
 ): Promise<LinkMeProductDetail | null> {
   const supabase = getSupabaseClient();
 
-  // Requête channel_pricing avec JOIN products
+  // SI-DESC-001 : lecture sans les custom_* (0% usage prod, à DROP)
   const { data: cpData, error: cpError } = await supabase
     .from('channel_pricing')
     .select(
@@ -32,9 +32,6 @@ export async function fetchLinkMeProductDetail(
       suggested_margin_rate,
       channel_commission_rate,
       buffer_rate,
-      custom_title,
-      custom_description,
-      custom_selling_points,
       custom_price_ht,
       public_price_ht,
       views_count,
@@ -165,9 +162,12 @@ export async function fetchLinkMeProductDetail(
     suggested_margin_rate: cp.suggested_margin_rate,
     linkme_commission_rate: cp.channel_commission_rate,
     buffer_rate: cp.buffer_rate ?? 0.05,
-    custom_title: cp.custom_title,
-    custom_description: cp.custom_description,
-    custom_selling_points: cp.custom_selling_points,
+    // SI-DESC-001 : toutes les descriptions viennent du master products.*
+    custom_title: product.name,
+    custom_description: product.description ?? null,
+    custom_selling_points: Array.isArray(product.selling_points)
+      ? (product.selling_points as string[])
+      : null,
     source_description: product.description ?? null,
     source_selling_points: Array.isArray(product.selling_points)
       ? (product.selling_points as string[])

@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ERP Vérone V-D+ v2 - Pricing Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline-variant": "#adb3b4",
+                    "on-error-container": "#752121",
+                    "tertiary-fixed": "#3e76fe",
+                    "secondary-fixed-dim": "#d6d4d3",
+                    "surface-container-highest": "#dde4e5",
+                    "on-primary-fixed-variant": "#5c5b5b",
+                    "surface-tint": "#5f5e5e",
+                    "primary-dim": "#535252",
+                    "surface-dim": "#d4dbdd",
+                    "on-tertiary-container": "#000000",
+                    "primary": "#5f5e5e",
+                    "inverse-surface": "#0c0f0f",
+                    "surface-container-high": "#e4e9ea",
+                    "tertiary": "#0053dc",
+                    "surface-bright": "#f9f9f9",
+                    "error-container": "#fe8983",
+                    "secondary-fixed": "#e4e2e1",
+                    "on-background": "#2d3435",
+                    "surface": "#f9f9f9",
+                    "on-primary-fixed": "#403f3f",
+                    "primary-container": "#e5e2e1",
+                    "tertiary-dim": "#0049c2",
+                    "error-dim": "#4e0309",
+                    "background": "#f9f9f9",
+                    "on-error": "#fff7f6",
+                    "inverse-primary": "#ffffff",
+                    "tertiary-fixed-dim": "#2d68f0",
+                    "surface-variant": "#dde4e5",
+                    "surface-container": "#ebeeef",
+                    "on-secondary": "#fbf8f8",
+                    "on-primary": "#faf7f6",
+                    "outline": "#757c7d",
+                    "on-secondary-container": "#525252",
+                    "secondary-dim": "#535353",
+                    "error": "#9f403d",
+                    "surface-container-low": "#f2f4f4",
+                    "tertiary-container": "#3e76fe",
+                    "on-tertiary": "#faf8ff",
+                    "secondary": "#5f5f5f",
+                    "secondary-container": "#e4e2e1",
+                    "on-tertiary-fixed-variant": "#f9f7ff",
+                    "primary-fixed": "#e5e2e1",
+                    "primary-fixed-dim": "#d6d4d3",
+                    "on-secondary-fixed-variant": "#5c5b5b",
+                    "on-primary-container": "#525151",
+                    "on-tertiary-fixed": "#ffffff",
+                    "on-surface-variant": "#5a6061",
+                    "on-surface": "#2d3435",
+                    "on-secondary-fixed": "#3f3f3f",
+                    "inverse-on-surface": "#9c9d9d",
+                    "surface-container-lowest": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-thumb { background: #adb3b4; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface text-on-background h-screen overflow-hidden flex">
+<!-- SIDEBAR NAVIGATION -->
+<aside class="w-[220px] h-screen sticky left-0 bg-zinc-50 border-r border-zinc-200/15 flex flex-col py-4 px-3 gap-y-4 shrink-0">
+<!-- Product Identity -->
+<div class="px-2 mb-2">
+<div class="relative w-full aspect-square rounded-lg overflow-hidden bg-white shadow-sm mb-3">
+<img class="w-full h-full object-cover" data-alt="Professional studio photograph of a sleek minimalist gray high-tech product on a clean white background with soft shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAU0cXHKX2The86pGHQB3v9WgEaPHZiWaSnAD8E7H2t_NsubOP-UkuCD8OVrgsxGAFk1qwb8BPCUibgS_QptbZrtwyB0vhdRnyH1R-NC5NIFfU1RPUf3q0Q70svU0f0zNTjxgb4YKvdMODGNaqba2zb7WkA2rDeBPtzNs2uxrbpNrgm3Ce56bsdJ5BYhoyYEUVFdkWOMaRnaDiRJ2M2XeRne-wO9jG9MYCJvgESIoQ3L_4A-bV88g4hnNk7iZFq3bXXndKU-PEn3Lm9"/>
+<div class="absolute inset-0 flex items-center justify-center bg-black/5 opacity-0 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white">zoom_in</span>
+</div>
+</div>
+<h1 class="text-sm font-bold text-on-surface leading-tight">Vérone V-D+ v2</h1>
+<p class="text-[10px] text-outline font-medium tracking-wider">SKU: VRN-2024-001</p>
+</div>
+<!-- Completion Circle -->
+<div class="flex items-center gap-3 px-2 py-2 bg-white/50 rounded-lg border border-zinc-200/20">
+<div class="relative w-10 h-10 flex items-center justify-center">
+<svg class="w-10 h-10 -rotate-90">
+<circle cx="20" cy="20" fill="transparent" r="18" stroke="#E4E2E1" stroke-width="3"></circle>
+<circle cx="20" cy="20" fill="transparent" r="18" stroke="#0053DC" stroke-dasharray="113" stroke-dashoffset="36.16" stroke-width="3"></circle>
+</svg>
+<span class="absolute text-[10px] font-bold tabular-nums">68%</span>
+</div>
+<div>
+<p class="text-[10px] font-semibold text-on-surface">Compliance</p>
+<p class="text-[9px] text-outline">Target: 100%</p>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<nav class="flex flex-col gap-1 overflow-y-auto">
+<a class="flex items-center justify-between p-2 text-neutral-500 hover:bg-zinc-200/50 rounded-md transition-all group" href="#">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">info</span>
+<span class="text-sm">General</span>
+</div>
+<span class="text-[9px] font-bold text-tertiary">100%</span>
+</a>
+<a class="flex items-center justify-between p-2 text-neutral-500 hover:bg-zinc-200/50 rounded-md transition-all group" href="#">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">local_shipping</span>
+<span class="text-sm">Logistics</span>
+</div>
+<span class="text-[9px] font-bold text-tertiary">85%</span>
+</a>
+<a class="flex items-center justify-between p-2 text-neutral-500 hover:bg-zinc-200/50 rounded-md transition-all group" href="#">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">image</span>
+<span class="text-sm">Media</span>
+</div>
+<span class="text-[9px] font-bold text-error">40%</span>
+</a>
+<a class="flex items-center justify-between p-2 text-neutral-500 hover:bg-zinc-200/50 rounded-md transition-all group" href="#">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">language</span>
+<span class="text-sm">Channels</span>
+</div>
+<span class="text-[9px] font-bold text-tertiary">92%</span>
+</a>
+<a class="flex items-center justify-between p-2 bg-white text-tertiary font-medium rounded-md shadow-sm transition-all" href="#">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">payments</span>
+<span class="text-sm">Pricing</span>
+</div>
+<span class="text-[9px] font-bold">100%</span>
+</a>
+<a class="flex items-center justify-between p-2 text-neutral-500 hover:bg-zinc-200/50 rounded-md transition-all group" href="#">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">inventory_2</span>
+<span class="text-sm">Inventory</span>
+</div>
+<span class="text-[9px] font-bold text-tertiary">60%</span>
+</a>
+<a class="flex items-center justify-between p-2 text-neutral-500 hover:bg-zinc-200/50 rounded-md transition-all group" href="#">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">history</span>
+<span class="text-sm">History</span>
+</div>
+</a>
+</nav>
+<!-- Variants & Channels -->
+<div class="mt-auto border-t border-zinc-200/20 pt-4 flex flex-col gap-4">
+<div>
+<p class="text-[10px] font-bold text-outline uppercase tracking-widest mb-2">Variant thumbnails</p>
+<div class="flex gap-1 overflow-x-auto pb-1">
+<div class="w-8 h-8 rounded border border-zinc-200 shrink-0 bg-white">
+<img class="w-full h-full object-cover rounded" data-alt="close-up of black designer headphones on a white background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuArtOvgtq36unCuTxRSi42excpzP3W86K19fTbDEcPWXlcBNiZjylfTCG5hzmd7QPdxzwGTtVrccjDPM6v8WI8iNPrmfLse5U_y0SxA1jsdetuv9C4Y0QYjwAhkkM7LU_0wl5pZaVrHNTXvdxdxA7X6UTX0LHaagkd3EiHgHH3MY4n3z7Qd0boLY7Copl_uM47xNF1bP7X3bbKFGXH0SHTU-PvNA0Hb6rBGuxf3IiwrJSAckBGwOIiyfJEkm8I-OwNU_I3F-H0CnULU"/>
+</div>
+<div class="w-8 h-8 rounded border border-zinc-200 shrink-0 bg-white grayscale">
+<img class="w-full h-full object-cover rounded" data-alt="vibrant red athletic sneaker against a minimalist studio background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcZ8lsnol6yJkTvufxbUSbTvfHFNQnKYpQAall8QdoddDo4A-wB8yZCiwC_ECx4vqiv6fuT24hKrKd-q2aSEhHyQpV_UpUKQLmFr5QdJRlSuQ9c230ZpcWDpqQbLKaqv7sccEtQcA6IrCGx0WZzsCjmB5UKavlbLJHOT86Yz5acqGC7Y43lhmw9pLoiDhlQ_CP_7DHtjJyLww87UTIQR5b-EPR7qK7k4zqsRll54tScQIdSQ3XZDoMMLKDX3nwtwkBdT8chUKwDyyc"/>
+</div>
+<div class="w-8 h-8 rounded border border-zinc-200 shrink-0 bg-white opacity-40">
+<img class="w-full h-full object-cover rounded" data-alt="retro polaroid camera with soft pastel colors on a neutral surface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9hIguuCnNg3zct3I1yEkw27uQBKzfH9cIVIu6i5_3ydc_ahvuvIFD5XDHk1R_t-0fDv7kGoKCgE1zO4Pw0Qp2Ec3AYfkydmvE1CAm3sRWPZd3qI6IwORUKoqdz5oCXqszq7oqlTyzLK2t4-cspjC0zPfvbgbXYr_6p2WmVKu2naz5zl9MmgOrc4X5pm3WteIbC-0LKjzHf1djwT1SjKBLJc3bodX8E3wztCzkoUt1CiHzLmIR1u0m_i6W9xYrXi40Q47sE67WX4Ay"/>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<button class="flex items-center gap-2 p-1.5 bg-zinc-200/50 rounded-md hover:bg-zinc-200 transition-colors">
+<span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+<span class="text-[11px] font-medium">Export PDF</span>
+</button>
+<button class="flex items-center gap-2 p-1.5 bg-zinc-200/50 rounded-md hover:bg-zinc-200 transition-colors">
+<span class="material-symbols-outlined text-[16px]">source</span>
+<span class="text-[11px] font-medium">Sourcing</span>
+</button>
+</div>
+<button class="w-full py-2 bg-primary text-on-primary text-xs font-bold rounded-lg shadow-sm hover:bg-primary-dim transition-all">
+                Commit SKU Changes
+            </button>
+</div>
+</aside>
+<!-- MAIN CONTENT AREA -->
+<main class="flex-1 flex flex-col h-screen overflow-hidden">
+<!-- HEADER -->
+<header class="h-[70px] px-6 flex items-center justify-between border-b border-zinc-200/50 bg-white sticky top-0 z-50 shrink-0">
+<div class="flex flex-col">
+<nav class="flex items-center gap-1 text-[10px] text-outline font-medium">
+<span>Products</span>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span>Accessories</span>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span class="text-on-surface">Vérone V-D+ v2</span>
+</nav>
+<div class="flex items-center gap-3 mt-1">
+<h2 class="text-lg font-bold text-neutral-900 tracking-tight">Vérone V-D+ v2</h2>
+<div class="flex gap-1.5">
+<span class="px-2 py-0.5 bg-tertiary/10 text-tertiary text-[10px] font-bold rounded-full uppercase">Actif</span>
+<span class="px-2 py-0.5 bg-zinc-100 text-neutral-500 text-[10px] font-bold rounded-full uppercase border border-zinc-200">Publié</span>
+<span class="px-2 py-0.5 bg-neutral-900 text-white text-[10px] font-bold rounded-full uppercase tabular-nums">68% complet</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex -space-x-2 mr-2">
+<div class="w-7 h-7 rounded-full border-2 border-white bg-zinc-200 flex items-center justify-center text-[10px] font-bold">JD</div>
+<div class="w-7 h-7 rounded-full border-2 border-white bg-tertiary flex items-center justify-center text-[10px] text-white font-bold">ML</div>
+</div>
+<div class="h-8 w-px bg-zinc-200 mx-1"></div>
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-on-surface transition-colors">cloud_done</span>
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-on-surface transition-colors">check_circle</span>
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-on-surface transition-colors">incomplete_circle</span>
+</div>
+</header>
+<!-- CANVAS BODY -->
+<div class="flex-1 overflow-y-auto p-6 space-y-6">
+<!-- ZONE 1: PRIX STRIP -->
+<section class="grid grid-cols-4 gap-4 h-[140px]">
+<div class="bg-surface-container-lowest border border-zinc-200/50 rounded-lg p-5 flex flex-col justify-between shadow-sm">
+<span class="text-[10px] font-bold text-outline uppercase tracking-widest">Coût Unitaire (PAF)</span>
+<div>
+<span class="text-2xl font-light tabular-nums">42.50€</span>
+<p class="text-[10px] text-outline mt-1">+2.4% vs last PO</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-zinc-200/50 rounded-lg p-5 flex flex-col justify-between shadow-sm">
+<span class="text-[10px] font-bold text-outline uppercase tracking-widest">Prix de Vente Conseillé</span>
+<div>
+<span class="text-2xl font-light tabular-nums">115.00€</span>
+<p class="text-[10px] text-outline mt-1">Recommended MSRP</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-zinc-200/50 rounded-lg p-5 flex flex-col justify-between shadow-sm border-l-4 border-l-tertiary">
+<span class="text-[10px] font-bold text-outline uppercase tracking-widest">Stock Disponible</span>
+<div>
+<span class="text-2xl font-light tabular-nums">1,240</span>
+<p class="text-[10px] text-tertiary font-bold mt-1">In Transit: +400</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-zinc-200/50 rounded-lg p-5 flex flex-col justify-between shadow-sm border-2 border-tertiary/20">
+<div class="flex justify-between items-start">
+<span class="text-[10px] font-bold text-outline uppercase tracking-widest">Prix site live</span>
+<span class="px-1.5 py-0.5 bg-tertiary/10 text-tertiary text-[9px] font-bold rounded">LIVE NOW</span>
+</div>
+<div>
+<span class="text-2xl font-bold tabular-nums">89.00€</span>
+<div class="flex items-center gap-2 mt-1">
+<span class="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">marge +45%</span>
+<span class="text-[10px] text-outline tabular-nums">Net: 40.05€</span>
+</div>
+</div>
+</div>
+</section>
+<!-- ZONE 2: PRIX PAR CANAL -->
+<section class="bg-surface-container-lowest border border-zinc-200/50 rounded-lg shadow-sm flex flex-col overflow-hidden">
+<div class="px-6 py-4 border-b border-zinc-100 flex justify-between items-center">
+<h3 class="text-sm font-bold flex items-center gap-2 uppercase tracking-wide">
+<span class="material-symbols-outlined text-[18px]">hub</span>
+                        PRIX PAR CANAL
+                    </h3>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 text-[10px] text-outline font-medium">
+<span>Auto-sync enabled</span>
+<div class="w-6 h-3 bg-tertiary rounded-full relative cursor-pointer">
+<div class="absolute right-0.5 top-0.5 w-2 h-2 bg-white rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex-1 overflow-x-auto">
+<table class="w-full text-left tabular-nums">
+<thead>
+<tr class="bg-zinc-50 border-b border-zinc-200 text-[10px] text-outline uppercase font-bold">
+<th class="px-6 py-3">Canal</th>
+<th class="px-4 py-3">Prix HT</th>
+<th class="px-4 py-3">Écart min</th>
+<th class="px-4 py-3">Marge %</th>
+<th class="px-4 py-3">Statut</th>
+<th class="px-6 py-3 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="text-sm divide-y divide-zinc-100">
+<tr class="hover:bg-zinc-50 transition-colors">
+<td class="px-6 py-3 font-semibold text-on-surface">Site Internet</td>
+<td class="px-4 py-3">89.00€</td>
+<td class="px-4 py-3 text-tertiary">+27.75€</td>
+<td class="px-4 py-3">45%</td>
+<td class="px-4 py-3">
+<span class="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">Actif</span>
+</td>
+<td class="px-6 py-3 text-right text-outline">
+<span class="material-symbols-outlined text-[18px] cursor-pointer hover:text-on-surface">edit</span>
+</td>
+</tr>
+<tr class="hover:bg-zinc-50 transition-colors">
+<td class="px-6 py-3 font-semibold text-on-surface">LinkMe</td>
+<td class="px-4 py-3">72.50€</td>
+<td class="px-4 py-3 text-tertiary">+11.25€</td>
+<td class="px-4 py-3">32%</td>
+<td class="px-4 py-3">
+<span class="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">Actif</span>
+</td>
+<td class="px-6 py-3 text-right text-outline">
+<span class="material-symbols-outlined text-[18px] cursor-pointer hover:text-on-surface">edit</span>
+</td>
+</tr>
+<tr class="bg-zinc-50/50 opacity-60">
+<td class="px-6 py-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">lock</span>
+<span class="font-medium text-outline">Google Merchant</span>
+</td>
+<td class="px-4 py-3 text-[12px] italic text-outline">= site-internet</td>
+<td class="px-4 py-3">—</td>
+<td class="px-4 py-3">—</td>
+<td class="px-4 py-3">
+<span class="px-2 py-0.5 bg-zinc-200 text-neutral-500 text-[10px] font-bold rounded-full">Linked</span>
+</td>
+<td class="px-6 py-3 text-right text-outline">
+<span class="material-symbols-outlined text-[18px] cursor-pointer hover:text-on-surface">link_off</span>
+</td>
+</tr>
+<tr class="bg-zinc-50/50 opacity-60">
+<td class="px-6 py-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">lock</span>
+<span class="font-medium text-outline">Meta Commerce</span>
+</td>
+<td class="px-4 py-3 text-[12px] italic text-outline">= site-internet</td>
+<td class="px-4 py-3">—</td>
+<td class="px-4 py-3">—</td>
+<td class="px-4 py-3">
+<span class="px-2 py-0.5 bg-zinc-200 text-neutral-500 text-[10px] font-bold rounded-full">Linked</span>
+</td>
+<td class="px-6 py-3 text-right text-outline">
+<span class="material-symbols-outlined text-[18px] cursor-pointer hover:text-on-surface">link_off</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-6 py-3 bg-zinc-50/50 border-t border-zinc-100 flex justify-end">
+<button class="text-[11px] font-bold text-tertiary flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+                        Modifier tous les prix canal
+                    </button>
+</div>
+</section>
+<!-- ZONE 3: GRID -->
+<section class="grid grid-cols-3 gap-6 h-[280px]">
+<!-- COL 1: À PUBLIER -->
+<div class="bg-surface-container-lowest border border-zinc-200/50 rounded-lg p-5 shadow-sm flex flex-col">
+<div class="flex justify-between items-start mb-4">
+<h3 class="text-xs font-bold text-on-surface uppercase tracking-wider">À PUBLIER</h3>
+<span class="text-[10px] font-bold tabular-nums text-tertiary">3/4</span>
+</div>
+<div class="space-y-3 flex-1">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="w-3.5 h-3.5 rounded-sm border-zinc-300 text-tertiary focus:ring-tertiary" type="checkbox"/>
+<span class="text-[11px] text-neutral-600 line-through">Main images verified</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="w-3.5 h-3.5 rounded-sm border-zinc-300 text-tertiary focus:ring-tertiary" type="checkbox"/>
+<span class="text-[11px] text-neutral-600 line-through">Attributes schema (v2)</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="w-3.5 h-3.5 rounded-sm border-zinc-300 text-tertiary focus:ring-tertiary" type="checkbox"/>
+<span class="text-[11px] text-neutral-600 line-through">GTIN verification</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-3.5 h-3.5 rounded-sm border-zinc-300 text-tertiary focus:ring-tertiary" type="checkbox"/>
+<span class="text-[11px] text-on-surface font-medium">Meta description draft</span>
+</label>
+</div>
+<div class="mt-4 pt-4 border-t border-zinc-100">
+<div class="flex justify-between items-center mb-1.5">
+<span class="text-[10px] text-outline font-bold">PROGRESSION</span>
+<span class="text-[10px] text-on-surface font-bold">75%</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+<div class="bg-tertiary h-full w-3/4"></div>
+</div>
+<a class="mt-3 block text-center text-[10px] font-bold text-tertiary uppercase hover:underline" href="#">Tout résoudre</a>
+</div>
+</div>
+<!-- COL 2: FOURNISSEUR -->
+<div class="bg-surface-container-lowest border border-zinc-200/50 rounded-lg p-5 shadow-sm flex flex-col">
+<h3 class="text-xs font-bold text-on-surface uppercase tracking-wider mb-4">FOURNISSEUR + DERNIÈRE PO</h3>
+<div class="bg-zinc-50 rounded-lg p-3 flex items-center gap-3 border border-zinc-100 mb-4">
+<div class="w-10 h-10 bg-white rounded border border-zinc-200 flex items-center justify-center p-1">
+<img class="w-full h-full object-contain" data-alt="minimalist modern vector geometric company logo in monochrome black and white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzVYM97tsWDr4YxtQSGWNxOkDZA3ARWRnongg0XbK4x2odkX_qZEMMMswSUhxYuTrLC92l_moiyRfQp-rnQEypP6C8ouRVgfKgl0Yj99B_ZSgGWkvuX9dHXx08Fj4NN3JwEz-V-2w1t1QFQ46cC3p7WTagr4yLUrzxzAd1cq2Yi4evW0_nSgKoWIbiXb1dHYosMTAVGbFoxXubajFhzxzUNBLItH50-e3DlAuzNeHWAhSQTMeEnnNNgE9oBcfCvprWI6QBOl46XMML"/>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface">Vérone Factory Ltd.</p>
+<p class="text-[10px] text-outline tabular-nums">SIRET: 823 112 004 00021</p>
+</div>
+</div>
+<div class="space-y-3 flex-1">
+<div class="flex justify-between items-center">
+<span class="text-[10px] text-outline font-medium">Ref PO</span>
+<span class="text-[11px] font-bold text-on-surface tabular-nums">PO-0012</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-[10px] text-outline font-medium">Amount</span>
+<span class="text-[11px] font-bold text-on-surface tabular-nums">14,250.00€</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-[10px] text-outline font-medium">Status</span>
+<span class="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">Delivered</span>
+</div>
+</div>
+<button class="mt-4 w-full py-2 bg-zinc-100 hover:bg-zinc-200 text-neutral-600 text-[10px] font-bold uppercase rounded transition-colors">
+                        View Supplier Sheet
+                    </button>
+</div>
+<!-- COL 3: HISTORIQUE & STOCK -->
+<div class="flex flex-col gap-6">
+<div class="bg-surface-container-lowest border border-zinc-200/50 rounded-lg p-4 shadow-sm h-1/2">
+<h3 class="text-[10px] font-bold text-on-surface uppercase tracking-widest mb-3">HISTORIQUE</h3>
+<div class="relative pl-4 space-y-4">
+<div class="absolute left-1.5 top-1 bottom-1 w-px bg-zinc-200"></div>
+<div class="relative">
+<div class="absolute -left-[14.5px] top-1 w-2.5 h-2.5 rounded-full bg-tertiary border-2 border-white shadow-sm"></div>
+<p class="text-[10px] font-bold text-on-surface">Price changed by Martin</p>
+<p class="text-[9px] text-outline tabular-nums">Today, 09:42</p>
+</div>
+<div class="relative">
+<div class="absolute -left-[14.5px] top-1 w-2.5 h-2.5 rounded-full bg-zinc-300 border-2 border-white shadow-sm"></div>
+<p class="text-[10px] font-medium text-outline">Media sync failure</p>
+<p class="text-[9px] text-outline tabular-nums">Yesterday, 14:15</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-zinc-200/50 rounded-lg p-4 shadow-sm h-1/2">
+<h3 class="text-[10px] font-bold text-on-surface uppercase tracking-widest mb-2">ACTIVITÉ STOCK</h3>
+<div class="space-y-1.5">
+<div class="flex justify-between items-center text-[10px]">
+<span class="text-on-surface font-medium">Sales (24h)</span>
+<span class="font-bold tabular-nums text-error">-14</span>
+</div>
+<div class="flex justify-between items-center text-[10px]">
+<span class="text-on-surface font-medium">Internal move</span>
+<span class="font-bold tabular-nums text-on-surface">-5</span>
+</div>
+<div class="flex justify-between items-center text-[10px]">
+<span class="text-on-surface font-medium">Inbound</span>
+<span class="font-bold tabular-nums text-tertiary">+120</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- FOOTER: NOTES INTERNES -->
+<footer class="h-[100px] border-t border-zinc-200/50 bg-white p-6 shrink-0">
+<div class="flex gap-4 h-full">
+<div class="shrink-0 flex flex-col justify-center">
+<h4 class="text-[10px] font-bold text-outline uppercase tracking-widest mb-1">NOTES INTERNES</h4>
+<span class="material-symbols-outlined text-outline text-[20px]">sticky_note_2</span>
+</div>
+<textarea class="flex-1 resize-none bg-zinc-50 border border-zinc-200 rounded-lg p-3 text-[11px] text-on-surface focus:ring-1 focus:ring-tertiary focus:border-tertiary focus:bg-white transition-all placeholder:text-outline" placeholder="Add a technical note for the logistics or pricing team..."></textarea>
+<div class="shrink-0 flex items-end">
+<button class="bg-primary text-on-primary p-2 rounded-md shadow-sm hover:bg-primary-dim transition-all">
+<span class="material-symbols-outlined text-[18px]">save</span>
+</button>
+</div>
+</div>
+</footer>
+</main>
+</body></html>

@@ -23,6 +23,9 @@ interface UseDocumentActionsParams {
   setShowAcceptDialog: (v: boolean) => void;
   setShowDeclineDialog: (v: boolean) => void;
   setShowArchiveDialog: (v: boolean) => void;
+  setShowAcceptQuoteGuard: (v: boolean) => void;
+  setShowFinalizeInvoiceGuard: (v: boolean) => void;
+  linkedDraftOrderNumber: string | null;
 }
 
 export function useDocumentActions({
@@ -37,11 +40,34 @@ export function useDocumentActions({
   setShowAcceptDialog,
   setShowDeclineDialog,
   setShowArchiveDialog,
+  setShowAcceptQuoteGuard,
+  setShowFinalizeInvoiceGuard,
+  linkedDraftOrderNumber,
 }: UseDocumentActionsParams) {
-  const handleFinalize = async () => {
+  const handleFinalize = () => {
+    if (!document) return;
+    setShowFinalizeDialog(false);
+
+    // If proforma (invoice draft) with a linked draft order → show cascade guard
+    if (
+      documentType === 'invoice' &&
+      document.status === 'draft' &&
+      linkedDraftOrderNumber !== null
+    ) {
+      setShowFinalizeInvoiceGuard(true);
+      return;
+    }
+
+    // No cascade needed — proceed directly
+    void handleFinalizeConfirmed().catch(err => {
+      console.error('[DocumentDetail] Finalize failed:', err);
+    });
+  };
+
+  const handleFinalizeConfirmed = async () => {
     if (!document) return;
     setActionLoading('finalize');
-    setShowFinalizeDialog(false);
+    setShowFinalizeInvoiceGuard(false);
 
     try {
       const endpoint =
@@ -56,7 +82,13 @@ export function useDocumentActions({
 
       if (!data.success) throw new Error(data.error);
 
-      toast.success('Document finalisé avec succès');
+      if (data.validatedOrder) {
+        toast.success(
+          `Proforma finalisée. Commande ${data.validatedOrder.number} validée automatiquement.`
+        );
+      } else {
+        toast.success('Document finalisé avec succès');
+      }
       window.location.reload();
     } catch (err) {
       toast.error(getFriendlyErrorMessage(err));
@@ -118,10 +150,26 @@ export function useDocumentActions({
     }
   };
 
-  const handleAcceptQuote = async () => {
+  const handleAcceptQuote = () => {
+    if (!document || documentType !== 'quote') return;
+    setShowAcceptDialog(false);
+
+    // If a linked draft order exists, show the cascade guard before proceeding
+    if (linkedDraftOrderNumber !== null) {
+      setShowAcceptQuoteGuard(true);
+      return;
+    }
+
+    // No linked draft order — proceed directly
+    void handleAcceptQuoteConfirmed().catch(err => {
+      console.error('[DocumentDetail] Accept quote failed:', err);
+    });
+  };
+
+  const handleAcceptQuoteConfirmed = async () => {
     if (!document || documentType !== 'quote') return;
     setActionLoading('accept');
-    setShowAcceptDialog(false);
+    setShowAcceptQuoteGuard(false);
 
     try {
       const response = await fetch(`/api/qonto/quotes/${id}/accept`, {
@@ -131,7 +179,13 @@ export function useDocumentActions({
 
       if (!data.success) throw new Error(data.error);
 
-      toast.success('Devis accepté');
+      if (data.validatedOrder) {
+        toast.success(
+          `Devis accepté. Commande ${data.validatedOrder.number} validée automatiquement.`
+        );
+      } else {
+        toast.success('Devis accepté');
+      }
       window.location.reload();
     } catch (err) {
       toast.error(getFriendlyErrorMessage(err));
@@ -243,9 +297,11 @@ export function useDocumentActions({
 
   return {
     handleFinalize,
+    handleFinalizeConfirmed,
     handleDelete,
     handleConvertToInvoice,
     handleAcceptQuote,
+    handleAcceptQuoteConfirmed,
     handleDeclineQuote,
     handleSendEmail,
     handleDownloadPdf,

@@ -20,6 +20,12 @@ export interface QontoApiResponse {
     partner_legal_name?: string | null;
     partner_trade_name?: string | null;
   } | null;
+  // Accept quote endpoint specific fields
+  message?: string;
+  validatedOrder?: {
+    id: string;
+    number: string;
+  } | null;
 }
 
 export interface QontoClient {

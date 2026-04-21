@@ -28,7 +28,7 @@ export async function fetchLinkMeCatalogProducts(): Promise<
     if (a.organisation_id) affiliatedOrgIds.add(a.organisation_id);
   });
 
-  // Requête channel_pricing avec JOIN products
+  // SI-DESC-001 : lecture sans les custom_* (0 % usage prod, à DROP)
   const { data, error } = await supabase
     .from('channel_pricing')
     .select(
@@ -44,9 +44,6 @@ export async function fetchLinkMeCatalogProducts(): Promise<
       suggested_margin_rate,
       channel_commission_rate,
       buffer_rate,
-      custom_title,
-      custom_description,
-      custom_selling_points,
       custom_price_ht,
       public_price_ht,
       views_count,
@@ -56,6 +53,8 @@ export async function fetchLinkMeCatalogProducts(): Promise<
         id,
         sku,
         name,
+        description,
+        selling_points,
         cost_price,
         eco_tax_default,
         margin_percentage,
@@ -231,9 +230,12 @@ export async function fetchLinkMeCatalogProducts(): Promise<
         min_margin_rate: cp.min_margin_rate ?? null,
         max_margin_rate: cp.max_margin_rate ?? null,
         suggested_margin_rate: cp.suggested_margin_rate ?? null,
-        custom_title: cp.custom_title,
-        custom_description: cp.custom_description,
-        custom_selling_points: cp.custom_selling_points,
+        // SI-DESC-001 : description / selling points lus du master products
+        custom_title: cp.products?.name ?? '',
+        custom_description: cp.products?.description ?? null,
+        custom_selling_points: Array.isArray(cp.products?.selling_points)
+          ? (cp.products.selling_points as string[])
+          : null,
         linkme_commission_rate: cp.channel_commission_rate,
         public_price_ht: cp.public_price_ht ?? null,
         channel_commission_rate: cp.channel_commission_rate ?? null,

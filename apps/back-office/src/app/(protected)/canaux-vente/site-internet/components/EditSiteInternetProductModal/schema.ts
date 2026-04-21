@@ -1,5 +1,8 @@
 // =============================================================================
 // Schema Zod + utilitaires — EditSiteInternetProductModal
+// SI-DESC-001 (2026-04-21) : retrait des champs custom_* (0 % d'usage prod).
+// La description / les selling points / la marque sont éditables UNIQUEMENT
+// depuis la fiche produit mère (/produits/catalogue/[id] → onglet Descriptions).
 // =============================================================================
 
 import { z } from 'zod';
@@ -17,9 +20,7 @@ export const productSchema = z.object({
   publication_date: z.string().optional().nullable(),
   unpublication_date: z.string().optional().nullable(),
 
-  // SEO
-  custom_title: z.string().max(60, 'Maximum 60 caractères').optional(),
-  custom_description: z.string().max(160, 'Maximum 160 caractères').optional(),
+  // SEO — écrit directement dans products.meta_title / .meta_description
   meta_title: z.string().max(60, 'Maximum 60 caractères').optional(),
   meta_description: z.string().max(160, 'Maximum 160 caractères').optional(),
 
@@ -29,18 +30,6 @@ export const productSchema = z.object({
   min_quantity: z.number().int().positive().default(1),
   notes: z.string().max(500).optional(),
   is_active: z.boolean().default(true),
-
-  // Informations produit (nouveaux champs éditables avec waterfall)
-  custom_description_long: z
-    .string()
-    .max(5000, 'Maximum 5000 caractères')
-    .optional(),
-  custom_technical_description: z
-    .string()
-    .max(2000, 'Maximum 2000 caractères')
-    .optional(),
-  custom_brand: z.string().max(100, 'Maximum 100 caractères').optional(),
-  custom_selling_points: z.array(z.string()).optional(),
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;
