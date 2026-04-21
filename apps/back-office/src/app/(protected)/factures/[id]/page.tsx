@@ -193,6 +193,9 @@ export default function DocumentDetailPage({
         onAcceptQuoteGuardChange={detail.setShowAcceptQuoteGuard}
         onAcceptQuoteGuardConfirmed={detail.handleAcceptQuoteConfirmed}
         linkedOrderNumber={detail.linkedDraftOrderNumber}
+        showFinalizeInvoiceGuard={detail.showFinalizeInvoiceGuard}
+        onFinalizeInvoiceGuardChange={detail.setShowFinalizeInvoiceGuard}
+        onFinalizeInvoiceGuardConfirmed={detail.handleFinalizeConfirmed}
         setShowFinalizeDialog={detail.setShowFinalizeDialog}
         setShowDeleteDialog={detail.setShowDeleteDialog}
         setShowConvertDialog={detail.setShowConvertDialog}

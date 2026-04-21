@@ -24,6 +24,7 @@ interface UseDocumentActionsParams {
   setShowDeclineDialog: (v: boolean) => void;
   setShowArchiveDialog: (v: boolean) => void;
   setShowAcceptQuoteGuard: (v: boolean) => void;
+  setShowFinalizeInvoiceGuard: (v: boolean) => void;
   linkedDraftOrderNumber: string | null;
 }
 
@@ -40,12 +41,33 @@ export function useDocumentActions({
   setShowDeclineDialog,
   setShowArchiveDialog,
   setShowAcceptQuoteGuard,
+  setShowFinalizeInvoiceGuard,
   linkedDraftOrderNumber,
 }: UseDocumentActionsParams) {
-  const handleFinalize = async () => {
+  const handleFinalize = () => {
+    if (!document) return;
+    setShowFinalizeDialog(false);
+
+    // If proforma (invoice draft) with a linked draft order → show cascade guard
+    if (
+      documentType === 'invoice' &&
+      document.status === 'draft' &&
+      linkedDraftOrderNumber !== null
+    ) {
+      setShowFinalizeInvoiceGuard(true);
+      return;
+    }
+
+    // No cascade needed — proceed directly
+    void handleFinalizeConfirmed().catch(err => {
+      console.error('[DocumentDetail] Finalize failed:', err);
+    });
+  };
+
+  const handleFinalizeConfirmed = async () => {
     if (!document) return;
     setActionLoading('finalize');
-    setShowFinalizeDialog(false);
+    setShowFinalizeInvoiceGuard(false);
 
     try {
       const endpoint =
@@ -60,7 +82,13 @@ export function useDocumentActions({
 
       if (!data.success) throw new Error(data.error);
 
-      toast.success('Document finalisé avec succès');
+      if (data.validatedOrder) {
+        toast.success(
+          `Proforma finalisée. Commande ${data.validatedOrder.number} validée automatiquement.`
+        );
+      } else {
+        toast.success('Document finalisé avec succès');
+      }
       window.location.reload();
     } catch (err) {
       toast.error(getFriendlyErrorMessage(err));
@@ -269,6 +297,7 @@ export function useDocumentActions({
 
   return {
     handleFinalize,
+    handleFinalizeConfirmed,
     handleDelete,
     handleConvertToInvoice,
     handleAcceptQuote,

@@ -70,8 +70,12 @@ interface DocumentDetailDialogsProps {
   onAcceptQuoteGuardChange: (open: boolean) => void;
   onAcceptQuoteGuardConfirmed: () => Promise<void>;
   linkedOrderNumber: string | null;
+  // Finalize invoice guard
+  showFinalizeInvoiceGuard: boolean;
+  onFinalizeInvoiceGuardChange: (open: boolean) => void;
+  onFinalizeInvoiceGuardConfirmed: () => Promise<void>;
   // Handlers
-  handleFinalize: () => Promise<void>;
+  handleFinalize: () => void;
   handleDelete: () => Promise<void>;
   handleConvertToInvoice: () => Promise<void>;
   handleAcceptQuote: () => void;
@@ -102,6 +106,9 @@ export function DocumentDetailDialogs({
   onAcceptQuoteGuardChange,
   onAcceptQuoteGuardConfirmed,
   linkedOrderNumber,
+  showFinalizeInvoiceGuard,
+  onFinalizeInvoiceGuardChange,
+  onFinalizeInvoiceGuardConfirmed,
   setShowFinalizeDialog,
   setShowDeleteDialog,
   setShowConvertDialog,
@@ -150,9 +157,7 @@ export function DocumentDetailDialogs({
             <AlertDialogAction
               className="bg-amber-600 text-white hover:bg-amber-700"
               onClick={() => {
-                void handleFinalize().catch(error => {
-                  console.error('[DocumentDetail] Finalize failed:', error);
-                });
+                handleFinalize();
               }}
             >
               Oui, finaliser
@@ -290,6 +295,51 @@ export function DocumentDetailDialogs({
               }}
             >
               Accepter et valider la commande
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Finalize invoice guard dialog — cascade order validation warning */}
+      <AlertDialog
+        open={showFinalizeInvoiceGuard}
+        onOpenChange={onFinalizeInvoiceGuardChange}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-blue-600">
+              <ShieldAlert className="h-5 w-5" />
+              Finaliser la proforma
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Finaliser cette proforma validera aussi la commande{' '}
+                <strong className="font-semibold text-foreground">
+                  {linkedOrderNumber ?? ''}
+                </strong>{' '}
+                automatiquement.
+              </p>
+              <p>
+                Les prix seront bloqués, le stock prévisionnel sera mis à jour.
+                Cette action ne peut pas être annulée sans dévalider la commande
+                manuellement.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Retour</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-blue-600 text-white hover:bg-blue-700"
+              onClick={() => {
+                void onFinalizeInvoiceGuardConfirmed().catch(error => {
+                  console.error(
+                    '[DocumentDetail] Finalize invoice confirmed failed:',
+                    error
+                  );
+                });
+              }}
+            >
+              Finaliser et valider la commande
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
