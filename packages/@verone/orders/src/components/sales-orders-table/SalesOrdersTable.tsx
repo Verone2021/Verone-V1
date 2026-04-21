@@ -174,6 +174,8 @@ export function SalesOrdersTable({
     setOrderToDelete: modals.setOrderToDelete,
     setShowCancelConfirmation: modals.setShowCancelConfirmation,
     setOrderToCancel: modals.setOrderToCancel,
+    setShowCancelGuardDialog: modals.setShowCancelGuardDialog,
+    setCancelGuardData: modals.setCancelGuardData,
   });
 
   // Build create button for the filter bar
@@ -300,6 +302,8 @@ export function SalesOrdersTable({
         showDevalidateConfirmation={modals.showDevalidateConfirmation}
         showDeleteConfirmation={modals.showDeleteConfirmation}
         showCancelConfirmation={modals.showCancelConfirmation}
+        showCancelGuardDialog={modals.showCancelGuardDialog}
+        cancelGuardData={modals.cancelGuardData}
         showLinkTransactionModal={modals.showLinkTransactionModal}
         selectedOrderForLink={modals.selectedOrderForLink}
         setShowEditModal={modals.setShowEditModal}
@@ -312,12 +316,14 @@ export function SalesOrdersTable({
         setShowDevalidateConfirmation={modals.setShowDevalidateConfirmation}
         setShowDeleteConfirmation={modals.setShowDeleteConfirmation}
         setShowCancelConfirmation={modals.setShowCancelConfirmation}
+        setShowCancelGuardDialog={modals.setShowCancelGuardDialog}
         setShowLinkTransactionModal={modals.setShowLinkTransactionModal}
         handleCloseOrderDetail={actions.handleCloseOrderDetail}
         handleValidateConfirmed={actions.handleValidateConfirmed}
         handleDevalidateConfirmed={actions.handleDevalidateConfirmed}
         handleDeleteConfirmed={actions.handleDeleteConfirmed}
         handleCancelConfirmed={actions.handleCancelConfirmed}
+        handleCancelGuardConfirmed={actions.handleCancelGuardConfirmed}
         handleEditSuccess={successHandlers.handleEditSuccess}
         handleCreateSuccess={successHandlers.handleCreateSuccess}
         handleShipmentSuccess={successHandlers.handleShipmentSuccess}

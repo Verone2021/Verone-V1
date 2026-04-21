@@ -9,6 +9,7 @@ import { CreateLinkMeOrderModal } from '../modals/CreateLinkMeOrderModal';
 import { OrderDetailModal } from '../modals/OrderDetailModal';
 import { SalesOrderFormModal } from '../modals/SalesOrderFormModal';
 import { SalesOrderShipmentModal } from '../modals/SalesOrderShipmentModal';
+import type { CancelGuardDoc } from './SalesOrderConfirmDialogs';
 import { SalesOrderConfirmDialogs } from './SalesOrderConfirmDialogs';
 
 interface SalesOrderModalsProps {
@@ -40,6 +41,8 @@ interface SalesOrderModalsProps {
   showDevalidateConfirmation: boolean;
   showDeleteConfirmation: boolean;
   showCancelConfirmation: boolean;
+  showCancelGuardDialog: boolean;
+  cancelGuardData: { reason: string; docsToDelete: CancelGuardDoc[] } | null;
   showLinkTransactionModal: boolean;
   selectedOrderForLink: SalesOrder | null;
   // Modal setters
@@ -53,6 +56,7 @@ interface SalesOrderModalsProps {
   setShowDevalidateConfirmation: (v: boolean) => void;
   setShowDeleteConfirmation: (v: boolean) => void;
   setShowCancelConfirmation: (v: boolean) => void;
+  setShowCancelGuardDialog: (v: boolean) => void;
   setShowLinkTransactionModal: (v: boolean) => void;
   // Action handlers
   handleCloseOrderDetail: () => void;
@@ -60,6 +64,7 @@ interface SalesOrderModalsProps {
   handleDevalidateConfirmed: () => Promise<void>;
   handleDeleteConfirmed: () => Promise<void>;
   handleCancelConfirmed: () => Promise<void>;
+  handleCancelGuardConfirmed: () => Promise<void>;
   handleEditSuccess: () => void;
   handleCreateSuccess: () => void;
   handleShipmentSuccess: () => void;
@@ -85,6 +90,8 @@ export function SalesOrderModals({
   showDevalidateConfirmation,
   showDeleteConfirmation,
   showCancelConfirmation,
+  showCancelGuardDialog,
+  cancelGuardData,
   showLinkTransactionModal,
   selectedOrderForLink,
   setShowEditModal,
@@ -97,12 +104,14 @@ export function SalesOrderModals({
   setShowDevalidateConfirmation,
   setShowDeleteConfirmation,
   setShowCancelConfirmation,
+  setShowCancelGuardDialog,
   setShowLinkTransactionModal,
   handleCloseOrderDetail,
   handleValidateConfirmed,
   handleDevalidateConfirmed,
   handleDeleteConfirmed,
   handleCancelConfirmed,
+  handleCancelGuardConfirmed,
   handleEditSuccess,
   handleCreateSuccess,
   handleShipmentSuccess,
@@ -216,6 +225,18 @@ export function SalesOrderModals({
             console.error('[SalesOrdersTable] cancel confirmed failed:', err);
           });
         }}
+        showCancelGuardDialog={showCancelGuardDialog}
+        onCancelGuardChange={setShowCancelGuardDialog}
+        onCancelGuardConfirmed={() => {
+          void handleCancelGuardConfirmed().catch((err: unknown) => {
+            console.error(
+              '[SalesOrdersTable] cancel guard confirmed failed:',
+              err
+            );
+          });
+        }}
+        guardReason={cancelGuardData?.reason ?? ''}
+        docsToDelete={cancelGuardData?.docsToDelete ?? []}
       />
 
       {/* Modal Rapprochement Transaction */}
