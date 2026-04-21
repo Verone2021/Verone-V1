@@ -103,7 +103,10 @@ export default function ProductDetailPage() {
         <TabContent activeTab={activeTab} tabId="pricing">
           <ProductPricingTab
             product={product}
+            completionPercentage={completionPercentage}
+            primaryImageUrl={primaryImageUrl}
             onProductUpdate={handleProductUpdate}
+            onTabChange={setActiveTab}
           />
         </TabContent>
 

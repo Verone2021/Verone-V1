@@ -21,3 +21,4 @@ export * from './use-variant-products-create';
 export * from './use-product-images-batch';
 export * from './use-product';
 export * from './use-product-general-dashboard';
+export * from './use-product-pricing-dashboard';
