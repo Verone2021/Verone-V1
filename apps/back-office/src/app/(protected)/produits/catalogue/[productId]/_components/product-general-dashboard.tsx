@@ -44,15 +44,20 @@ export function ProductGeneralDashboard({
 
   // KPI source values
   const costPrice = product.cost_price ?? null;
+  const costNetAvg =
+    product.cost_net_avg != null ? Number(product.cost_net_avg) : null;
+  // Prix de revient = cost_net_avg (moyenne achats + frais logistiques),
+  // fallback sur cost_price si pas d'historique PO.
+  const landedCost = costNetAvg ?? costPrice;
   const ecoTax = product.eco_tax_default ?? 0;
   const margin = product.margin_percentage ?? 0;
 
   const minimumSellingPrice = useMemo(
     () =>
-      margin > 0 && costPrice != null
-        ? calculateMinSellingPrice(costPrice, ecoTax, margin)
+      margin > 0 && landedCost != null && landedCost > 0
+        ? calculateMinSellingPrice(landedCost, ecoTax, margin)
         : 0,
-    [costPrice, ecoTax, margin]
+    [landedCost, ecoTax, margin]
   );
 
   const suggestedPriceTtc = useMemo(
@@ -165,7 +170,9 @@ export function ProductGeneralDashboard({
         {/* Zone 1 — KPI strip */}
         <KpiStrip
           costPrice={costPrice}
+          landedCost={costNetAvg}
           suggestedPriceTtc={suggestedPriceTtc}
+          marginPercent={margin}
           stockAvailable={product.stock_real ?? 0}
           minStock={product.min_stock ?? null}
           siteLivePriceHt={dash?.siteLivePriceHt ?? null}
