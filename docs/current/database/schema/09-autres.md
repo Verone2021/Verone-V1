@@ -1,8 +1,8 @@
 # Domaine Autres — Schema Base de Donnees
 
-_Generated: 2026-04-21 01:58_
+_Generated: 2026-04-22 23:59_
 
-**Tables : 51**
+**Tables : 52**
 
 | Table                                                                       | Colonnes | FK  | RLS | Triggers |
 | --------------------------------------------------------------------------- | -------- | --- | --- | -------- |
@@ -52,6 +52,7 @@ _Generated: 2026-04-21 01:58_
 | [v_matching_rules_with_org](#v-matching-rules-with-org)                     | 23       | 0   | 0   | 0        |
 | [v_pcg_categories_tree](#v-pcg-categories-tree)                             | 10       | 0   | 0   | 0        |
 | [v_pending_invoice_uploads](#v-pending-invoice-uploads)                     | 9        | 0   | 0   | 0        |
+| [v_sales_order_progress](#v-sales-order-progress)                           | 9        | 0   | 0   | 0        |
 | [v_transaction_documents](#v-transaction-documents)                         | 25       | 0   | 0   | 0        |
 | [v_transactions_missing_invoice](#v-transactions-missing-invoice)           | 20       | 0   | 0   | 0        |
 | [v_transactions_unified](#v-transactions-unified)                           | 43       | 0   | 0   | 0        |
@@ -1459,6 +1460,22 @@ _Generated: 2026-04-21 01:58_
 | created_at     | timestamptz        | YES      |         |
 | uploader_name  | text               | YES      |         |
 | uploader_email | text               | YES      |         |
+
+---
+
+## v_sales_order_progress
+
+| Colonne                 | Type    | Nullable | Default |
+| ----------------------- | ------- | -------- | ------- |
+| sales_order_id          | uuid    | YES      |         |
+| total_ordered           | integer | YES      |         |
+| total_confirmed_shipped | integer | YES      |         |
+| total_in_flight         | integer | YES      |         |
+| total_reserved          | integer | YES      |         |
+| total_remaining         | integer | YES      |         |
+| progress_percent        | integer | YES      |         |
+| has_pending_payment     | boolean | YES      |         |
+| has_incident            | boolean | YES      |         |
 
 ---
 

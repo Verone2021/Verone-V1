@@ -1,6 +1,6 @@
 # Back-Office — Documentation App
 
-_Generated: 2026-04-22 14:36_
+_Generated: 2026-04-23 00:20_
 
 ## Pages (147)
 
@@ -154,7 +154,7 @@ _Generated: 2026-04-22 14:36_
 | `/`                                                                      | page.tsx |
 | `/unauthorized`                                                          | page.tsx |
 
-## API Routes (125)
+## API Routes (127)
 
 | Endpoint                                                     | Methods            |
 | ------------------------------------------------------------ | ------------------ |
@@ -182,6 +182,7 @@ _Generated: 2026-04-22 14:36_
 | `/api/emails/send-document`                                  | POST               |
 | `/api/emails/send-invoice`                                   | POST               |
 | `/api/emails/send-order-documents`                           | POST               |
+| `/api/emails/send-shipping-tracking`                         | POST               |
 | `/api/emails/storage-request-approved`                       | POST               |
 | `/api/emails/storage-request-rejected`                       | POST               |
 | `/api/expenses/classify`                                     | POST               |
@@ -216,6 +217,7 @@ _Generated: 2026-04-22 14:36_
 | `/api/organisations/[id]/shipping-address`                   | PATCH              |
 | `/api/packlink/dropoffs`                                     | GET                |
 | `/api/packlink/services`                                     | POST               |
+| `/api/packlink/shipment/[ref]/cancel`                        | POST               |
 | `/api/packlink/shipment/[ref]/labels`                        | GET                |
 | `/api/packlink/shipment/[ref]`                               | GET, DELETE        |
 | `/api/packlink/shipment/[ref]/tracking`                      | GET                |
@@ -284,7 +286,7 @@ _Generated: 2026-04-22 14:36_
 | `/api/transactions/update-vat`                               | POST               |
 | `/api/webhooks/packlink`                                     | POST               |
 
-## Components in app (349)
+## Components in app (352)
 
 | Fichier                                                                                                                         |
 | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -323,6 +325,7 @@ _Generated: 2026-04-22 14:36_
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/components/TotalsSection.tsx`                                           |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/AddProductToOrderModal.tsx`                          |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/ContactSelectionDialog.tsx`                          |
+| `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/ContactsUnified.tsx`                                 |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/EditBillingDialog.tsx`                               |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/EditDeliveryAddressDialog.tsx`                       |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/EditDeliveryOptionsDialog.tsx`                       |
@@ -330,7 +333,9 @@ _Generated: 2026-04-22 14:36_
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/EditResponsableDialog.tsx`                           |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/LeftColumn.tsx`                                      |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/OrderHeader.tsx`                                     |
+| `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/RequestMissingFieldModal.tsx`                        |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/RightColumn.tsx`                                     |
+| `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/ShipmentCardsSection.tsx`                            |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/left-column/CommissionVersementCard.tsx`             |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/left-column/DeliveryCard.tsx`                        |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/left-column/InfoRequestsCard.tsx`                    |

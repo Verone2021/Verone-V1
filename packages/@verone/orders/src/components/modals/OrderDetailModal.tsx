@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
@@ -24,6 +26,8 @@ import {
   OrderActionsCard,
   OrderSubModals,
 } from './order-detail';
+import type { ShipmentHistoryItem } from './order-detail';
+import { SendShippingTrackingModal } from './SendShippingTrackingModal';
 
 export interface OrderDetailModalProps {
   order: SalesOrder | null;
@@ -32,6 +36,7 @@ export interface OrderDetailModalProps {
   onUpdate?: () => void;
   readOnly?: boolean;
   channelRedirectUrl?: string | null;
+  onOpenShipmentModal?: () => void;
 }
 
 export function OrderDetailModal({
@@ -41,6 +46,7 @@ export function OrderDetailModal({
   onUpdate,
   readOnly = false,
   channelRedirectUrl,
+  onOpenShipmentModal,
 }: OrderDetailModalProps) {
   const { markAsManuallyPaid, fetchOrderPayments, deleteManualPayment } =
     useSalesOrders();
@@ -48,6 +54,9 @@ export function OrderDetailModal({
     orderId: order?.id ?? '',
     orderType: 'sales',
   });
+
+  const [shipmentToEmail, setShipmentToEmail] =
+    useState<ShipmentHistoryItem | null>(null);
 
   const data = useOrderDetailData(order, open);
 
@@ -230,11 +239,13 @@ export function OrderDetailModal({
                 shipmentHistory={data.shipmentHistory}
                 readOnly={readOnly}
                 canShip={handlers.canShip}
+                onOpenShipmentModal={onOpenShipmentModal}
               />
 
               <OrderShipmentHistoryCard
                 shipmentHistory={data.shipmentHistory}
                 order={order}
+                onSendTrackingEmail={h => setShipmentToEmail(h)}
               />
 
               <OrderActionsCard
@@ -290,6 +301,58 @@ export function OrderDetailModal({
         linkedDocuments={data.linkedDocuments}
         orderContacts={data.orderContacts}
       />
+
+      {shipmentToEmail && (
+        <SendShippingTrackingModal
+          open={!!shipmentToEmail}
+          onClose={() => setShipmentToEmail(null)}
+          shipment={shipmentToEmail}
+          order={{
+            id: order.id,
+            order_number: order.order_number,
+            organisations: order.organisations
+              ? {
+                  id: order.organisations.id,
+                  email: order.organisations.email ?? null,
+                  trade_name: order.organisations.trade_name ?? null,
+                }
+              : null,
+            individual_customers: order.individual_customers
+              ? {
+                  id: order.individual_customers.id,
+                  email: order.individual_customers.email ?? null,
+                  first_name: order.individual_customers.first_name ?? null,
+                  last_name: order.individual_customers.last_name ?? null,
+                }
+              : null,
+            responsable_contact: order.responsable_contact
+              ? {
+                  id: order.responsable_contact.id,
+                  first_name: order.responsable_contact.first_name ?? null,
+                  last_name: order.responsable_contact.last_name ?? null,
+                  email: order.responsable_contact.email ?? null,
+                }
+              : null,
+            billing_contact: order.billing_contact
+              ? {
+                  id: order.billing_contact.id,
+                  first_name: order.billing_contact.first_name ?? null,
+                  last_name: order.billing_contact.last_name ?? null,
+                  email: order.billing_contact.email ?? null,
+                }
+              : null,
+            delivery_contact: order.delivery_contact
+              ? {
+                  id: order.delivery_contact.id,
+                  first_name: order.delivery_contact.first_name ?? null,
+                  last_name: order.delivery_contact.last_name ?? null,
+                  email: order.delivery_contact.email ?? null,
+                }
+              : null,
+          }}
+          onSuccess={onUpdate}
+        />
+      )}
     </>
   );
 }

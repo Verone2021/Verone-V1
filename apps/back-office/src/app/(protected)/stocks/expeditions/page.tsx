@@ -44,6 +44,7 @@ function ExpeditionsTabs({ exp }: { exp: UseExpeditionsReturn }) {
         urgencyFilter={exp.urgencyFilter}
         expandedRows={exp.expandedRows}
         packlinkPendingOrders={exp.packlinkPendingOrders}
+        orderProgress={exp.orderProgress}
         onSearchChange={exp.setSearchTerm}
         onStatusFilterChange={exp.setStatusFilter}
         onUrgencyFilterChange={exp.setUrgencyFilter}

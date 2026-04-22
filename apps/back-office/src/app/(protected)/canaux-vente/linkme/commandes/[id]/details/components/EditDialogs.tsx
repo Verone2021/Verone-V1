@@ -106,7 +106,6 @@ export function EditDialogs({
       />
       <EditDeliveryOptionsDialog
         open={editingStep === 'delivery_options'}
-        order={order}
         {...sharedEditProps}
       />
     </>

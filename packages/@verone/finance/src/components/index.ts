@@ -36,6 +36,7 @@ export * from './TransactionDetailSheet';
 
 // Email sending
 export * from './SendDocumentEmailModal';
+export * from './RecipientSelector';
 export * from './DocumentEmailHistory';
 
 // PDF Preview

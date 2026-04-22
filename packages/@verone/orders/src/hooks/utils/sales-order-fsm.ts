@@ -20,8 +20,10 @@ export const STATUS_TRANSITIONS: Record<SalesOrderStatus, SalesOrderStatus[]> =
     pending_approval: ['draft', 'cancelled'],
     draft: ['validated', 'cancelled'],
     validated: ['draft', 'partially_shipped', 'shipped', 'cancelled'], // 'draft' pour dévalidation
-    partially_shipped: ['shipped', 'cancelled'],
-    shipped: [], // État final - futur: delivered via Packlink/Chronotruck
+    partially_shipped: ['shipped', 'closed', 'cancelled'],
+    shipped: ['delivered'], // delivered via Packlink/webhook
+    delivered: [], // État final
+    closed: [], // État final (backorder release)
     cancelled: [], // État final
   };
 

@@ -249,14 +249,10 @@ export function useOrderDetailsPage() {
     } else if (step === 'delivery_options') {
       setEditForm({
         delivery_notes: d.delivery_notes,
-        delivery_terms_accepted: d.delivery_terms_accepted,
         desired_delivery_date: d.desired_delivery_date,
         is_mall_delivery: d.is_mall_delivery,
         mall_email: d.mall_email,
         semi_trailer_accessible: d.semi_trailer_accessible,
-        reception_contact_name: d.reception_contact_name,
-        reception_contact_email: d.reception_contact_email,
-        reception_contact_phone: d.reception_contact_phone,
         confirmed_delivery_date: d.confirmed_delivery_date,
       });
     }
@@ -515,6 +511,5 @@ export function useOrderDetailsPage() {
     handleUpdateOrganisation,
     handleUseOrgAddress,
     handleOpenContactDialog,
-    isStep4Complete: !!order?.linkmeDetails?.step4_completed_at,
   };
 }
