@@ -39,8 +39,6 @@ export function useProductDetail() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('general');
   const [showPhotosModal, setShowPhotosModal] = useState(false);
-  const [showCharacteristicsModal, setShowCharacteristicsModal] =
-    useState(false);
   const [showDescriptionsModal, setShowDescriptionsModal] = useState(false);
   const [isCategorizeModalOpen, setIsCategorizeModalOpen] = useState(false);
   const [channelPricing, setChannelPricing] = useState<ChannelPricingRow[]>([]);
@@ -417,8 +415,6 @@ export function useProductDetail() {
     setActiveTab,
     showPhotosModal,
     setShowPhotosModal,
-    showCharacteristicsModal,
-    setShowCharacteristicsModal,
     showDescriptionsModal,
     setShowDescriptionsModal,
     isCategorizeModalOpen,
