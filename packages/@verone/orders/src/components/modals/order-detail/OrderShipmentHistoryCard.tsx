@@ -44,6 +44,19 @@ function formatDate(date: string | null): string {
   });
 }
 
+// Notes auto-générées par les anciens flows wizard / scripts de sauvetage —
+// polluantes pour l'utilisateur, doivent être masquées dans l'historique.
+const LEGACY_NOTE_PATTERNS = [
+  /Transport Packlink.+à payer par Verone/i,
+  /Sauvetage manuel/i,
+  /BO-BUG-SHIPMENT/i,
+];
+
+function isUserNote(notes: string | null): notes is string {
+  if (!notes) return false;
+  return !LEGACY_NOTE_PATTERNS.some(pattern => pattern.test(notes));
+}
+
 export function OrderShipmentHistoryCard({
   shipmentHistory,
   order,
@@ -215,19 +228,25 @@ export function OrderShipmentHistoryCard({
                 return (
                   <div
                     key={itemIdx}
-                    className="flex items-center justify-between"
+                    className="flex items-center justify-between gap-2"
                   >
-                    <span className="text-gray-600 truncate max-w-[120px]">
+                    <span
+                      className="text-gray-600 flex-1 min-w-0 truncate"
+                      title={item.product_name}
+                    >
                       {item.product_name}
                     </span>
-                    <Badge variant="outline" className="text-[10px] px-1 py-0">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] px-1 py-0 shrink-0"
+                    >
                       {item.quantity_shipped}/{qtyOrdered}
                     </Badge>
                   </div>
                 );
               })}
             </div>
-            {h.notes && (
+            {isUserNote(h.notes) && (
               <p className="text-[10px] text-gray-500 ml-4 mt-1 italic">
                 {h.notes}
               </p>
