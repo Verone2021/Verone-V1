@@ -24,7 +24,7 @@ interface ShipmentPayload {
   estimated_delivery_at?: string;
   packlink_shipment_id: string;
   packlink_status: 'a_payer';
-  notes: string;
+  notes?: string;
   packages_info: Array<{
     weight: number;
     width: number;
@@ -119,7 +119,6 @@ async function saveShipmentToDb(
       selectedService.first_estimated_delivery_date ?? undefined,
     packlink_shipment_id: packlinkRef,
     packlink_status: 'a_payer',
-    notes: `Transport Packlink à payer par Verone — ${selectedService.carrier_name}`,
     packages_info: deps.packages,
   });
 }
