@@ -11,9 +11,7 @@ import {
 import {
   AlertTriangle,
   Calendar,
-  Check,
   CheckCircle2,
-  Clock,
   ExternalLink,
   MapPin,
   Pencil,
@@ -22,7 +20,6 @@ import {
 
 import type { LinkMeOrderDetails } from '../../../../../hooks/use-linkme-order-actions';
 import type { FusedContactGroup, OrderWithDetails } from '../types';
-import { renderStepBadge } from './helpers';
 
 interface DeliveryCardProps {
   order: OrderWithDetails;
@@ -32,7 +29,6 @@ interface DeliveryCardProps {
   deliveryAddressMatchesOrg: boolean;
   onUseOrgAddress: () => void;
   updateDetailsPending: boolean;
-  isStep4Complete: boolean;
   onOpenEditDialog: (
     step: 'responsable' | 'billing' | 'delivery_address' | 'delivery_options'
   ) => void;
@@ -47,7 +43,6 @@ export function DeliveryCard({
   deliveryAddressMatchesOrg,
   onUseOrgAddress,
   updateDetailsPending,
-  isStep4Complete,
   onOpenEditDialog,
   onOpenContactDialog,
 }: DeliveryCardProps) {
@@ -59,7 +54,6 @@ export function DeliveryCard({
         <div className="flex items-center gap-2">
           <Truck className="h-4 w-4 text-cyan-600" />
           <CardTitle className="text-base">Livraison</CardTitle>
-          {order.status === 'validated' && renderStepBadge(isStep4Complete)}
         </div>
       </CardHeader>
       <CardContent className="px-4 pb-4 pt-0">
@@ -219,12 +213,6 @@ export function DeliveryCard({
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
                 <span>
-                  Modalités :{' '}
-                  <strong>
-                    {details.delivery_terms_accepted ? 'Oui' : 'Non'}
-                  </strong>
-                </span>
-                <span>
                   Centre co. :{' '}
                   <strong>{details.is_mall_delivery ? 'Oui' : 'Non'}</strong>
                 </span>
@@ -249,6 +237,21 @@ export function DeliveryCard({
                   </span>
                 )}
               </div>
+              {details.confirmed_delivery_date && (
+                <div className="flex items-center gap-2 text-sm p-2 bg-green-50 rounded text-green-700">
+                  <Calendar className="h-3 w-3 flex-shrink-0" />
+                  <span>
+                    <strong>Date confirmee :</strong>{' '}
+                    {new Date(
+                      details.confirmed_delivery_date
+                    ).toLocaleDateString('fr-FR', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                  </span>
+                </div>
+              )}
               {details.is_mall_delivery && details.mall_email && (
                 <p className="text-xs text-gray-500">
                   Email direction : {details.mall_email}
@@ -278,74 +281,6 @@ export function DeliveryCard({
                 </div>
               )}
             </div>
-
-            {/* Post-approbation */}
-            {order.status === 'validated' && (
-              <>
-                <Separator />
-                <div className="space-y-3">
-                  <p className="text-sm font-medium text-gray-700">
-                    Post-approbation
-                  </p>
-                  {details.step4_token && (
-                    <div className="p-3 bg-blue-50 rounded-lg text-sm space-y-1">
-                      <p className="font-medium text-blue-700">
-                        Token de validation actif
-                      </p>
-                      {details.step4_token_expires_at && (
-                        <p className="text-blue-600">
-                          Expire le :{' '}
-                          {new Date(
-                            details.step4_token_expires_at
-                          ).toLocaleDateString('fr-FR')}
-                        </p>
-                      )}
-                      {details.step4_completed_at && (
-                        <p className="text-green-700">
-                          <Check className="h-4 w-4 inline mr-1" />
-                          Complété le :{' '}
-                          {new Date(
-                            details.step4_completed_at
-                          ).toLocaleDateString('fr-FR', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                          })}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                  {details.reception_contact_name && (
-                    <div>
-                      <span className="text-xs text-gray-500">
-                        Contact réception
-                      </span>
-                      <p className="font-medium">
-                        {details.reception_contact_name}
-                      </p>
-                    </div>
-                  )}
-                  {details.confirmed_delivery_date && (
-                    <div className="flex items-center gap-2 text-sm p-3 bg-green-50 rounded-lg text-green-700">
-                      <Calendar className="h-4 w-4" />
-                      <span>
-                        <strong>Date confirmée :</strong>{' '}
-                        {new Date(
-                          details.confirmed_delivery_date
-                        ).toLocaleDateString('fr-FR')}
-                      </span>
-                    </div>
-                  )}
-                  {!details.reception_contact_name &&
-                    !details.confirmed_delivery_date && (
-                      <div className="p-3 bg-amber-50 rounded-lg text-sm text-amber-700">
-                        <Clock className="h-4 w-4 inline mr-1" />
-                        En attente de confirmation via le lien email.
-                      </div>
-                    )}
-                </div>
-              </>
-            )}
           </div>
         ) : (
           <p className="text-gray-500">Données non disponibles</p>

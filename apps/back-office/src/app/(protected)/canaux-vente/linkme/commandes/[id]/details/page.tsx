@@ -88,7 +88,6 @@ export default function LinkMeOrderDetailsPage() {
     handleUpdateOrganisation,
     handleUseOrgAddress,
     handleOpenContactDialog,
-    isStep4Complete,
   } = useOrderDetailsPage();
 
   if (isLoading) {
@@ -250,7 +249,6 @@ export default function LinkMeOrderDetailsPage() {
             });
           }}
           updateDetailsPending={updateDetails.isPending}
-          isStep4Complete={isStep4Complete}
           onUpdateOrganisation={handleUpdateOrganisation}
         />
 
