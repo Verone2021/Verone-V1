@@ -72,6 +72,24 @@ export interface PacklinkShipment {
   created_at: string | null;
 }
 
+/**
+ * Ligne de la vue v_sales_order_progress (BO-SHIP-PROG-001).
+ * Source unifiée de la progression d'expédition d'une commande :
+ * agrège sales_order_items (commandé / confirmé stock) et
+ * sales_order_shipments (lots actifs en cours, incluant Packlink a_payer).
+ */
+export interface SalesOrderProgress {
+  sales_order_id: string;
+  total_ordered: number;
+  total_confirmed_shipped: number;
+  total_in_flight: number;
+  total_reserved: number;
+  total_remaining: number;
+  progress_percent: number;
+  has_pending_payment: boolean;
+  has_incident: boolean;
+}
+
 export interface ToShipFilters {
   status?: string;
   search?: string;

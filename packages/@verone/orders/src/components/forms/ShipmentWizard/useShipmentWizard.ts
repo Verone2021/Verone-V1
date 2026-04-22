@@ -114,9 +114,15 @@ export function useShipmentWizard(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [salesOrder]);
 
-  // Load previous shipments (for partially_shipped orders)
+  // Load previous shipments (commandes avec expéditions partielles ou réservations Packlink).
+  // Inclut 'validated' car les shipments Packlink a_payer n'avancent pas le statut
+  // (trigger `update_stock_on_shipment` early-return tant que paiement pas confirmé)
+  // et 'shipped' pour le cas edge où on ré-ouvre le wizard sur une commande complétée.
   useEffect(() => {
-    if (salesOrder.status !== 'partially_shipped') return;
+    if (
+      !['validated', 'partially_shipped', 'shipped'].includes(salesOrder.status)
+    )
+      return;
 
     const loadPreviousShipments = async () => {
       // Select columns including ones not yet in generated types
