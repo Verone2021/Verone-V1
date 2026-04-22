@@ -3,7 +3,7 @@
 **Derniere mise a jour** : 2026-04-22
 **23 packages** dans `packages/@verone/`
 
-## **547 composants, 12 hooks**
+## **549 composants, 12 hooks**
 
 ## @verone/categories
 
@@ -351,6 +351,8 @@
 | `SalesOrderShipmentModal`           | Modal     | `src/components/modals/SalesOrderShipmentModal.tsx`                               |
 | `SendOrderDocumentsModal`           | Modal     | `src/components/modals/SendOrderDocumentsModal.tsx`                               |
 | `SendShippingTrackingModal`         | Modal     | `src/components/modals/SendShippingTrackingModal.tsx`                             |
+| `ShippingEmailPreviewDialog`        | Component | `src/components/modals/ShippingEmailPreviewDialog.tsx`                            |
+| `TrackingRecapCard`                 | Component | `src/components/modals/TrackingRecapCard.tsx`                                     |
 | `UniversalOrderDetailsModal`        | Modal     | `src/components/modals/UniversalOrderDetailsModal.tsx`                            |
 | `UniversalOrderHeaderCard`          | Component | `src/components/modals/UniversalOrderHeaderCard.tsx`                              |
 | `UniversalOrderItemsCard`           | Component | `src/components/modals/UniversalOrderItemsCard.tsx`                               |

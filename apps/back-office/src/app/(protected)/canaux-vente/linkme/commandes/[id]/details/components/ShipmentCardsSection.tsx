@@ -43,11 +43,36 @@ export function ShipmentCardsSection({
     order_number: order.order_number,
     organisations: order.organisation
       ? {
+          id: order.organisation.id,
           email: order.organisation.email ?? null,
           trade_name: order.organisation.trade_name ?? null,
         }
       : null,
     individual_customers: null,
+    responsable_contact: order.responsable_contact
+      ? {
+          id: order.responsable_contact.id,
+          first_name: order.responsable_contact.first_name,
+          last_name: order.responsable_contact.last_name,
+          email: order.responsable_contact.email,
+        }
+      : null,
+    billing_contact: order.billing_contact
+      ? {
+          id: order.billing_contact.id,
+          first_name: order.billing_contact.first_name,
+          last_name: order.billing_contact.last_name,
+          email: order.billing_contact.email,
+        }
+      : null,
+    delivery_contact: order.delivery_contact
+      ? {
+          id: order.delivery_contact.id,
+          first_name: order.delivery_contact.first_name,
+          last_name: order.delivery_contact.last_name,
+          email: order.delivery_contact.email,
+        }
+      : null,
   };
 
   return (

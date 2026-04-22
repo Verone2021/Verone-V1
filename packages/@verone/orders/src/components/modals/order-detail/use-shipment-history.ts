@@ -50,6 +50,7 @@ export function useShipmentHistory(
       .from('sales_order_shipments')
       .select(
         `
+        id,
         shipped_at,
         tracking_number,
         tracking_url,
@@ -80,6 +81,7 @@ export function useShipmentHistory(
 
         const rows = data as unknown as Array<
           Record<string, unknown> & {
+            id: string;
             shipped_at: string;
             tracking_number: string | null;
             notes: string | null;
@@ -94,6 +96,7 @@ export function useShipmentHistory(
           const product = row.products;
           if (!grouped.has(key)) {
             grouped.set(key, {
+              id: row.id,
               shipped_at: row.shipped_at,
               tracking_number: row.tracking_number,
               tracking_url: (row.tracking_url as string) ?? null,

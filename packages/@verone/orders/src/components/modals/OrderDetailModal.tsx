@@ -312,15 +312,41 @@ export function OrderDetailModal({
             order_number: order.order_number,
             organisations: order.organisations
               ? {
+                  id: order.organisations.id,
                   email: order.organisations.email ?? null,
                   trade_name: order.organisations.trade_name ?? null,
                 }
               : null,
             individual_customers: order.individual_customers
               ? {
+                  id: order.individual_customers.id,
                   email: order.individual_customers.email ?? null,
                   first_name: order.individual_customers.first_name ?? null,
                   last_name: order.individual_customers.last_name ?? null,
+                }
+              : null,
+            responsable_contact: order.responsable_contact
+              ? {
+                  id: order.responsable_contact.id,
+                  first_name: order.responsable_contact.first_name ?? null,
+                  last_name: order.responsable_contact.last_name ?? null,
+                  email: order.responsable_contact.email ?? null,
+                }
+              : null,
+            billing_contact: order.billing_contact
+              ? {
+                  id: order.billing_contact.id,
+                  first_name: order.billing_contact.first_name ?? null,
+                  last_name: order.billing_contact.last_name ?? null,
+                  email: order.billing_contact.email ?? null,
+                }
+              : null,
+            delivery_contact: order.delivery_contact
+              ? {
+                  id: order.delivery_contact.id,
+                  first_name: order.delivery_contact.first_name ?? null,
+                  last_name: order.delivery_contact.last_name ?? null,
+                  email: order.delivery_contact.email ?? null,
                 }
               : null,
           }}
