@@ -1,6 +1,6 @@
 # Back-Office — Documentation App
 
-_Generated: 2026-04-22 14:36_
+_Generated: 2026-04-22 22:03_
 
 ## Pages (147)
 
@@ -284,7 +284,7 @@ _Generated: 2026-04-22 14:36_
 | `/api/transactions/update-vat`                               | POST               |
 | `/api/webhooks/packlink`                                     | POST               |
 
-## Components in app (349)
+## Components in app (351)
 
 | Fichier                                                                                                                         |
 | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -323,6 +323,7 @@ _Generated: 2026-04-22 14:36_
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/components/TotalsSection.tsx`                                           |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/AddProductToOrderModal.tsx`                          |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/ContactSelectionDialog.tsx`                          |
+| `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/ContactsUnified.tsx`                                 |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/EditBillingDialog.tsx`                               |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/EditDeliveryAddressDialog.tsx`                       |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/EditDeliveryOptionsDialog.tsx`                       |
@@ -330,6 +331,7 @@ _Generated: 2026-04-22 14:36_
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/EditResponsableDialog.tsx`                           |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/LeftColumn.tsx`                                      |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/OrderHeader.tsx`                                     |
+| `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/RequestMissingFieldModal.tsx`                        |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/RightColumn.tsx`                                     |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/left-column/CommissionVersementCard.tsx`             |
 | `src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/left-column/DeliveryCard.tsx`                        |

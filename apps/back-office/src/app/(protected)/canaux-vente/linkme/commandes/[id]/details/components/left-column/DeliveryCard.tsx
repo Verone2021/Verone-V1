@@ -21,14 +21,13 @@ import {
 } from 'lucide-react';
 
 import type { LinkMeOrderDetails } from '../../../../../hooks/use-linkme-order-actions';
-import type { FusedContactGroup, OrderWithDetails } from '../types';
+import type { OrderWithDetails } from '../types';
 import { renderStepBadge } from './helpers';
 
 interface DeliveryCardProps {
   order: OrderWithDetails;
   details: LinkMeOrderDetails | null;
   locked: boolean;
-  fusedContacts: FusedContactGroup[];
   deliveryAddressMatchesOrg: boolean;
   onUseOrgAddress: () => void;
   updateDetailsPending: boolean;
@@ -36,20 +35,17 @@ interface DeliveryCardProps {
   onOpenEditDialog: (
     step: 'responsable' | 'billing' | 'delivery_address' | 'delivery_options'
   ) => void;
-  onOpenContactDialog: (role: 'responsable' | 'billing' | 'delivery') => void;
 }
 
 export function DeliveryCard({
   order,
   details,
   locked,
-  fusedContacts,
   deliveryAddressMatchesOrg,
   onUseOrgAddress,
   updateDetailsPending,
   isStep4Complete,
   onOpenEditDialog,
-  onOpenContactDialog,
 }: DeliveryCardProps) {
   const org = order.organisation;
 
@@ -65,52 +61,6 @@ export function DeliveryCard({
       <CardContent className="px-4 pb-4 pt-0">
         {details ? (
           <div className="space-y-3">
-            {/* Contact livraison — only show if NOT already in fused cards */}
-            {!fusedContacts.some(g => g.roles.includes('delivery')) && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Contact livraison
-                  </p>
-                  {!locked && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs"
-                      onClick={() => onOpenContactDialog('delivery')}
-                    >
-                      <Pencil className="h-3 w-3 mr-1" />
-                      Changer
-                    </Button>
-                  )}
-                </div>
-                {details.delivery_contact_name ? (
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                    <span className="font-medium">
-                      {details.delivery_contact_name}
-                    </span>
-                    {details.delivery_contact_email && (
-                      <a
-                        href={`mailto:${details.delivery_contact_email}`}
-                        className="text-blue-600 hover:underline text-xs"
-                      >
-                        {details.delivery_contact_email}
-                      </a>
-                    )}
-                    {details.delivery_contact_phone && (
-                      <span className="text-xs text-gray-500">
-                        {details.delivery_contact_phone}
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-xs text-gray-400 italic">
-                    Aucun contact renseigné
-                  </p>
-                )}
-              </div>
-            )}
-
             {/* Adresse livraison */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
