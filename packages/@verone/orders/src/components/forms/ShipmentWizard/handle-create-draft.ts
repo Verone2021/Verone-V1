@@ -25,6 +25,12 @@ interface ShipmentPayload {
   packlink_shipment_id: string;
   packlink_status: 'a_payer';
   notes: string;
+  packages_info: Array<{
+    weight: number;
+    width: number;
+    height: number;
+    length: number;
+  }>;
 }
 
 type ValidateShipmentFn = (
@@ -114,6 +120,7 @@ async function saveShipmentToDb(
     packlink_shipment_id: packlinkRef,
     packlink_status: 'a_payer',
     notes: `Transport Packlink à payer par Verone — ${selectedService.carrier_name}`,
+    packages_info: deps.packages,
   });
 }
 

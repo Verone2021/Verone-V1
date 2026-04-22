@@ -114,8 +114,11 @@ export function useShipmentWizard(
   const [collectionTime, setCollectionTime] = useState('09:00');
 
   // Previous shipments — extracted to use-previous-shipments.ts
-  const { previousShipments, showPreviousShipments, setShowPreviousShipments } =
-    usePreviousShipments(salesOrder.id, salesOrder.status, supabase);
+  const { previousShipments } = usePreviousShipments(
+    salesOrder.id,
+    salesOrder.status,
+    supabase
+  );
 
   // Init items
   useEffect(() => {
@@ -344,8 +347,6 @@ export function useShipmentWizard(
     collectionTime,
     setCollectionTime,
     previousShipments,
-    showPreviousShipments,
-    setShowPreviousShipments,
     totals,
     insurancePrice,
     destinationZip,

@@ -71,10 +71,9 @@ export function ShipmentWizard({
           items={state.items}
           totals={state.totals}
           previousShipments={state.previousShipments}
-          showPreviousShipments={state.showPreviousShipments}
-          setShowPreviousShipments={state.setShowPreviousShipments}
           handleQuantityChange={state.handleQuantityChange}
           handleShipAll={state.handleShipAll}
+          onReusePackages={pkgs => state.setPackages(pkgs)}
           onOpenAdjustment={item => setAdjustmentItem(item)}
           onNext={() => state.setStep(2)}
           onCancel={onCancel}
