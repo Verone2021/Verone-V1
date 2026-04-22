@@ -23,7 +23,6 @@ interface ProductEditMainColumnProps {
   onFieldChange: (field: string, value: unknown) => void;
   onShowCategorizeModal: () => void;
   onShowDescriptionsModal: () => void;
-  onShowCharacteristicsModal: () => void;
 }
 
 export function ProductEditMainColumn({
@@ -33,7 +32,6 @@ export function ProductEditMainColumn({
   onFieldChange,
   onShowCategorizeModal,
   onShowDescriptionsModal,
-  onShowCharacteristicsModal,
 }: ProductEditMainColumnProps) {
   return (
     <div className="xl:col-span-5 space-y-2">
@@ -234,18 +232,7 @@ export function ProductEditMainColumn({
 
       {/* Caractéristiques */}
       <div className="bg-white border border-black p-2">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="font-medium text-[10px]">Caractéristiques</h3>
-          <ButtonV2
-            variant="ghost"
-            size="sm"
-            onClick={onShowCharacteristicsModal}
-            className="h-5 text-[9px] px-1"
-          >
-            <Settings className="h-2 w-2 mr-1" />
-            Modifier
-          </ButtonV2>
-        </div>
+        <h3 className="font-medium text-[10px] mb-2">Caractéristiques</h3>
         <div className="space-y-1 text-[10px]">
           {product.color && (
             <div className="flex justify-between">

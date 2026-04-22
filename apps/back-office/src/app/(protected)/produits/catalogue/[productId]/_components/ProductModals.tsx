@@ -1,11 +1,7 @@
 'use client';
 
 import { CategoryHierarchySelector } from '@verone/categories';
-import {
-  ProductCharacteristicsModal,
-  ProductDescriptionsModal,
-  ProductPhotosModal,
-} from '@verone/products';
+import { ProductDescriptionsModal, ProductPhotosModal } from '@verone/products';
 import {
   ButtonUnified,
   Dialog,
@@ -22,11 +18,9 @@ import type { Product, ProductRow } from './types';
 interface ProductModalsProps {
   product: Product;
   showPhotosModal: boolean;
-  showCharacteristicsModal: boolean;
   showDescriptionsModal: boolean;
   isCategorizeModalOpen: boolean;
   onClosePhotos: () => void;
-  onCloseCharacteristics: () => void;
   onCloseDescriptions: () => void;
   onCloseCategorize: () => void;
   onProductUpdate: (data: Partial<ProductRow>) => Promise<void>;
@@ -36,11 +30,9 @@ interface ProductModalsProps {
 export function ProductModals({
   product,
   showPhotosModal,
-  showCharacteristicsModal,
   showDescriptionsModal,
   isCategorizeModalOpen,
   onClosePhotos,
-  onCloseCharacteristics,
   onCloseDescriptions,
   onCloseCategorize,
   onProductUpdate,
@@ -56,29 +48,6 @@ export function ProductModals({
         productType="product"
         maxImages={20}
         onImagesUpdated={onImagesUpdated}
-      />
-
-      <ProductCharacteristicsModal
-        isOpen={showCharacteristicsModal}
-        onClose={onCloseCharacteristics}
-        productId={product.id}
-        productName={product.name}
-        initialData={{
-          variant_attributes:
-            (product.variant_attributes as Record<string, unknown>) ??
-            undefined,
-          dimensions:
-            (product.dimensions as Record<string, unknown>) ?? undefined,
-          weight: product.weight ?? undefined,
-        }}
-        onUpdate={data => {
-          void onProductUpdate(data as Partial<ProductRow>).catch(err => {
-            console.error(
-              '[ProductDetail] Characteristics update failed:',
-              err
-            );
-          });
-        }}
       />
 
       <ProductDescriptionsModal

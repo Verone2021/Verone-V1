@@ -15,6 +15,9 @@ export type EditableSection =
   | 'relations'
   | 'identifiers'
   | 'stock'
+  | 'characteristics_attributes'
+  | 'characteristics_dimensions'
+  | 'characteristics_identification'
   // Sections organisations/contacts
   | 'contact'
   | 'address'

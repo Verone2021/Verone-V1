@@ -51,7 +51,6 @@ export function ProductStockTab({
           product={
             {
               id: product.id,
-              condition: product.condition,
               min_stock: product.min_stock ?? undefined,
             } as ComponentProps<typeof StockEditSection>['product']
           }
