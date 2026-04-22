@@ -1,6 +1,5 @@
 export { CreateProductInGroupModal } from './CreateProductInGroupModal';
 export { EditProductVariantModal } from './EditProductVariantModal';
-export { ProductCharacteristicsModal } from './ProductCharacteristicsModal';
 export { ProductCreationModal } from './ProductCreationModal';
 export { ProductDescriptionsModal } from './ProductDescriptionsModal';
 export { ProductHistoryModal } from './ProductHistoryModal';

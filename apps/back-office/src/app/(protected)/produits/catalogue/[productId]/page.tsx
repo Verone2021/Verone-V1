@@ -23,8 +23,6 @@ export default function ProductDetailPage() {
     setActiveTab,
     showPhotosModal,
     setShowPhotosModal,
-    showCharacteristicsModal,
-    setShowCharacteristicsModal,
     showDescriptionsModal,
     setShowDescriptionsModal,
     isCategorizeModalOpen,
@@ -87,7 +85,6 @@ export default function ProductDetailPage() {
           <ProductGeneralTab
             product={product}
             completionPercentage={completionPercentage}
-            primaryImageUrl={primaryImageUrl}
             onProductUpdate={handleProductUpdate}
             onTabChange={setActiveTab}
           />
@@ -103,30 +100,39 @@ export default function ProductDetailPage() {
         <TabContent activeTab={activeTab} tabId="pricing">
           <ProductPricingTab
             product={product}
+            completionPercentage={completionPercentage}
             onProductUpdate={handleProductUpdate}
+            onTabChange={setActiveTab}
           />
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="stock">
           <ProductStockTab
             product={product}
+            completionPercentage={completionPercentage}
             onProductUpdate={handleProductUpdate}
+            onTabChange={setActiveTab}
           />
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="characteristics">
           <ProductCharacteristicsTab
             product={product}
-            onOpenCharacteristicsModal={() => setShowCharacteristicsModal(true)}
+            completionPercentage={completionPercentage}
+            onProductUpdate={handleProductUpdate}
+            onTabChange={setActiveTab}
           />
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="images">
           <ProductImagesTab
+            product={product}
+            completionPercentage={completionPercentage}
             productId={product.id}
             productName={product.name}
             imageCount={productImages.length}
             onOpenPhotosModal={() => setShowPhotosModal(true)}
+            onTabChange={setActiveTab}
           />
         </TabContent>
 
@@ -138,11 +144,9 @@ export default function ProductDetailPage() {
       <ProductModals
         product={product}
         showPhotosModal={showPhotosModal}
-        showCharacteristicsModal={showCharacteristicsModal}
         showDescriptionsModal={showDescriptionsModal}
         isCategorizeModalOpen={isCategorizeModalOpen}
         onClosePhotos={() => setShowPhotosModal(false)}
-        onCloseCharacteristics={() => setShowCharacteristicsModal(false)}
         onCloseDescriptions={() => setShowDescriptionsModal(false)}
         onCloseCategorize={() => setIsCategorizeModalOpen(false)}
         onProductUpdate={handleProductUpdate}

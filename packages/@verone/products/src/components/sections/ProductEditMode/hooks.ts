@@ -48,8 +48,6 @@ export function useProductEditMode(product: any) {
   });
 
   const [showCategorizeModal, setShowCategorizeModal] = useState(false);
-  const [showCharacteristicsModal, setShowCharacteristicsModal] =
-    useState(false);
   const [showDescriptionsModal, setShowDescriptionsModal] = useState(false);
   const [showImagesModal, setShowImagesModal] = useState(false);
 
@@ -94,8 +92,6 @@ export function useProductEditMode(product: any) {
     formData,
     showCategorizeModal,
     setShowCategorizeModal,
-    showCharacteristicsModal,
-    setShowCharacteristicsModal,
     showDescriptionsModal,
     setShowDescriptionsModal,
     showImagesModal,

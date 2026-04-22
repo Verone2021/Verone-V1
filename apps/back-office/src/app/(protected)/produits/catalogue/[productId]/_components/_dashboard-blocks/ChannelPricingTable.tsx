@@ -2,7 +2,8 @@
 
 /**
  * ChannelPricingTable — bloc central du dashboard Général. Affiche tous les
- * canaux de vente dans une table dense avec prix, écart vs min, marge, statut.
+ * canaux de vente dans une table dense avec prix, écart vs min, marge brute,
+ * commission canal, marge nette, statut.
  *
  * Réutilise `useChannelPricing` + `useUpdateChannelPrice` du sprint
  * SI-PRICING-001 (@verone/common/hooks).
@@ -27,6 +28,8 @@ import {
 interface ChannelPricingTableProps {
   productId: string;
   minimumSellingPrice: number;
+  /** Prix de revient (landed cost) pour le calcul de la marge nette */
+  landedCost?: number | null;
   onManageAll?: () => void;
 }
 
@@ -39,9 +42,23 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   meta_commerce: Store,
 };
 
+function calcNetMarginPct(
+  priceHt: number,
+  commissionRate: number | null,
+  landedCost: number
+): number | null {
+  if (priceHt <= 0) return null;
+  const rate = commissionRate ?? 0;
+  const netPrice = priceHt * (1 - rate / 100);
+  if (netPrice <= 0) return null;
+  const netMarginEur = netPrice - landedCost;
+  return (netMarginEur / netPrice) * 100;
+}
+
 export function ChannelPricingTable({
   productId,
   minimumSellingPrice,
+  landedCost,
   onManageAll,
 }: ChannelPricingTableProps) {
   const { data: channels, isLoading } = useChannelPricing(productId);
@@ -57,14 +74,29 @@ export function ChannelPricingTable({
           effectivePrice != null &&
           minimumSellingPrice > 0 &&
           effectivePrice < minimumSellingPrice;
-        const margin =
+        // Marge brute (vs min vente)
+        const grossMargin =
           effectivePrice != null && minimumSellingPrice > 0
             ? ((effectivePrice - minimumSellingPrice) / minimumSellingPrice) *
               100
             : null;
-        return { ...c, effectivePrice, belowMin, margin };
+        // Commission canal
+        const commissionRate = c.channel_commission_rate ?? null;
+        // Marge nette (après commission, vs landed cost)
+        const netMargin =
+          effectivePrice != null && landedCost != null && landedCost > 0
+            ? calcNetMarginPct(effectivePrice, commissionRate, landedCost)
+            : null;
+        return {
+          ...c,
+          effectivePrice,
+          belowMin,
+          grossMargin,
+          commissionRate,
+          netMargin,
+        };
       }),
-    [channels, minimumSellingPrice]
+    [channels, minimumSellingPrice, landedCost]
   );
 
   const save = async (channelId: string) => {
@@ -92,7 +124,7 @@ export function ChannelPricingTable({
         </h3>
         {minimumSellingPrice > 0 && (
           <Badge variant="outline" className="text-xs">
-            Min vente : {formatPrice(minimumSellingPrice)}
+            Min vente HT : {formatPrice(minimumSellingPrice)}
           </Badge>
         )}
       </div>
@@ -112,7 +144,13 @@ export function ChannelPricingTable({
                   Écart min
                 </th>
                 <th className="text-right py-2 font-medium hidden lg:table-cell">
-                  Marge %
+                  Marge brute %
+                </th>
+                <th className="text-right py-2 font-medium hidden xl:table-cell">
+                  Commission
+                </th>
+                <th className="text-right py-2 font-medium hidden xl:table-cell">
+                  Marge nette %
                 </th>
                 <th className="text-left py-2 pl-3 font-medium hidden md:table-cell">
                   Statut
@@ -131,18 +169,35 @@ export function ChannelPricingTable({
                     key={row.channel_id}
                     className={cn(
                       'border-b border-neutral-50 last:border-0',
-                      row.belowMin && 'bg-red-50',
                       readOnly && 'text-neutral-400'
                     )}
                   >
+                    {/* Canal */}
                     <td className="py-2 pl-2">
-                      <div className="flex items-center gap-2">
-                        <Icon className="h-3.5 w-3.5 shrink-0" />
-                        <span className="font-medium text-neutral-800">
-                          {row.channel_name}
-                        </span>
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-3.5 w-3.5 shrink-0" />
+                          <span
+                            className={cn(
+                              'font-medium',
+                              readOnly
+                                ? 'text-neutral-400 italic'
+                                : 'text-neutral-800'
+                            )}
+                          >
+                            {row.channel_name}
+                          </span>
+                        </div>
+                        {row.commissionRate != null &&
+                          row.commissionRate > 0 && (
+                            <span className="text-[10px] text-neutral-500 pl-5.5">
+                              commission {row.commissionRate.toFixed(0)} %
+                            </span>
+                          )}
                       </div>
                     </td>
+
+                    {/* Prix HT */}
                     <td className="py-2 text-right tabular-nums">
                       {isEditing ? (
                         <Input
@@ -160,6 +215,8 @@ export function ChannelPricingTable({
                         '—'
                       )}
                     </td>
+
+                    {/* Écart min */}
                     <td className="py-2 text-right tabular-nums text-xs hidden lg:table-cell">
                       {readOnly
                         ? '—'
@@ -169,13 +226,47 @@ export function ChannelPricingTable({
                             )
                           : '—'}
                     </td>
-                    <td className="py-2 text-right tabular-nums text-xs hidden lg:table-cell">
+
+                    {/* Marge brute % */}
+                    <td
+                      className={cn(
+                        'py-2 text-right tabular-nums text-xs hidden lg:table-cell',
+                        row.belowMin && 'text-red-600 font-semibold'
+                      )}
+                    >
                       {readOnly
                         ? '—'
-                        : row.margin != null
-                          ? `${row.margin.toFixed(0)}%`
+                        : row.grossMargin != null
+                          ? `${row.grossMargin >= 0 ? '+' : ''}${row.grossMargin.toFixed(0)} %`
                           : '—'}
                     </td>
+
+                    {/* Commission */}
+                    <td className="py-2 text-right tabular-nums text-xs hidden xl:table-cell text-neutral-500">
+                      {readOnly ||
+                      row.commissionRate == null ||
+                      row.commissionRate === 0
+                        ? '—'
+                        : `−${row.commissionRate.toFixed(0)} %`}
+                    </td>
+
+                    {/* Marge nette % */}
+                    <td
+                      className={cn(
+                        'py-2 text-right tabular-nums text-xs hidden xl:table-cell',
+                        row.netMargin != null && row.netMargin < 0
+                          ? 'text-red-600 font-semibold'
+                          : 'text-neutral-700'
+                      )}
+                    >
+                      {readOnly
+                        ? '—'
+                        : row.netMargin != null
+                          ? `${row.netMargin >= 0 ? '+' : ''}${row.netMargin.toFixed(0)} %`
+                          : '—'}
+                    </td>
+
+                    {/* Statut */}
                     <td className="py-2 pl-3 hidden md:table-cell">
                       {readOnly ? (
                         <span className="inline-flex items-center gap-1 text-[10px] text-neutral-400">
@@ -185,7 +276,7 @@ export function ChannelPricingTable({
                       ) : row.belowMin ? (
                         <Badge
                           variant="destructive"
-                          className="text-[10px] inline-flex items-center gap-1"
+                          className="text-[10px] inline-flex items-center gap-1 bg-red-100 text-red-700 border border-red-300 px-2 py-0.5"
                         >
                           <AlertTriangle className="h-3 w-3" />
                           Sous min
@@ -203,6 +294,8 @@ export function ChannelPricingTable({
                         </Badge>
                       )}
                     </td>
+
+                    {/* Actions */}
                     <td className="py-2 pr-2 text-right">
                       {readOnly ? null : isEditing ? (
                         <div className="inline-flex gap-1">

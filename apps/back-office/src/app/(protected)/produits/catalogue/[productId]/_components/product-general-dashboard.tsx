@@ -27,7 +27,6 @@ import type { Product, ProductRow } from './types';
 interface ProductGeneralDashboardProps {
   product: Product;
   completionPercentage: number;
-  primaryImageUrl: string | null;
   onProductUpdate: (updates: Partial<ProductRow>) => Promise<void>;
   onTabChange: (tabId: string) => void;
 }
@@ -35,7 +34,6 @@ interface ProductGeneralDashboardProps {
 export function ProductGeneralDashboard({
   product,
   completionPercentage,
-  primaryImageUrl,
   onProductUpdate,
   onTabChange,
 }: ProductGeneralDashboardProps) {
@@ -44,18 +42,23 @@ export function ProductGeneralDashboard({
 
   // KPI source values
   const costPrice = product.cost_price ?? null;
+  const costNetAvg =
+    product.cost_net_avg != null ? Number(product.cost_net_avg) : null;
+  // Prix de revient = cost_net_avg (moyenne achats + frais logistiques),
+  // fallback sur cost_price si pas d'historique PO.
+  const landedCost = costNetAvg ?? costPrice;
   const ecoTax = product.eco_tax_default ?? 0;
   const margin = product.margin_percentage ?? 0;
 
   const minimumSellingPrice = useMemo(
     () =>
-      margin > 0 && costPrice != null
-        ? calculateMinSellingPrice(costPrice, ecoTax, margin)
+      margin > 0 && landedCost != null && landedCost > 0
+        ? calculateMinSellingPrice(landedCost, ecoTax, margin)
         : 0,
-    [costPrice, ecoTax, margin]
+    [landedCost, ecoTax, margin]
   );
 
-  const suggestedPriceTtc = useMemo(
+  const minSellingPriceTtc = useMemo(
     () =>
       minimumSellingPrice > 0
         ? Number((minimumSellingPrice * 1.2).toFixed(2))
@@ -151,7 +154,6 @@ export function ProductGeneralDashboard({
         productId={product.id}
         productName={product.name}
         sku={product.sku ?? ''}
-        primaryImageUrl={primaryImageUrl}
         completionPercentage={completionPercentage}
         tabEntries={tabEntries}
         variantGroupId={product.variant_group_id ?? null}
@@ -165,7 +167,12 @@ export function ProductGeneralDashboard({
         {/* Zone 1 — KPI strip */}
         <KpiStrip
           costPrice={costPrice}
-          suggestedPriceTtc={suggestedPriceTtc}
+          landedCost={costNetAvg}
+          minSellingPriceHt={
+            minimumSellingPrice > 0 ? minimumSellingPrice : null
+          }
+          minSellingPriceTtc={minSellingPriceTtc}
+          marginPercent={margin}
           stockAvailable={product.stock_real ?? 0}
           minStock={product.min_stock ?? null}
           siteLivePriceHt={dash?.siteLivePriceHt ?? null}
@@ -176,6 +183,7 @@ export function ProductGeneralDashboard({
         <ChannelPricingTable
           productId={product.id}
           minimumSellingPrice={minimumSellingPrice}
+          landedCost={landedCost}
           onManageAll={() => onTabChange('pricing')}
         />
 

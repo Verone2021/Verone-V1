@@ -6,7 +6,6 @@ import { Badge, ButtonV2 } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { Eye } from 'lucide-react';
 
-import { ProductCharacteristicsModal } from '../../modals/ProductCharacteristicsModal';
 import { ProductDescriptionsModal } from '../../modals/ProductDescriptionsModal';
 import { ProductImagesModal } from '../../modals/ProductImagesModal';
 import { useProductEditMode } from './hooks';
@@ -26,8 +25,6 @@ export function ProductEditMode({
     formData,
     showCategorizeModal,
     setShowCategorizeModal,
-    showCharacteristicsModal,
-    setShowCharacteristicsModal,
     showDescriptionsModal,
     setShowDescriptionsModal,
     showImagesModal,
@@ -82,7 +79,6 @@ export function ProductEditMode({
           onFieldChange={onFieldChange}
           onShowCategorizeModal={() => setShowCategorizeModal(true)}
           onShowDescriptionsModal={() => setShowDescriptionsModal(true)}
-          onShowCharacteristicsModal={() => setShowCharacteristicsModal(true)}
         />
 
         <ProductEditManagementColumn
@@ -96,19 +92,6 @@ export function ProductEditMode({
         isOpen={showCategorizeModal}
         onClose={() => setShowCategorizeModal(false)}
         product={product}
-        onUpdate={onUpdate}
-      />
-
-      <ProductCharacteristicsModal
-        isOpen={showCharacteristicsModal}
-        onClose={() => setShowCharacteristicsModal(false)}
-        productId={product.id}
-        productName={product.name ?? 'Produit'}
-        initialData={{
-          variant_attributes: product.variant_attributes,
-          dimensions: product.dimensions,
-          weight: product.weight,
-        }}
         onUpdate={onUpdate}
       />
 

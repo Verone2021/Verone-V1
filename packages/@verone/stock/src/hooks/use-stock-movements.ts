@@ -19,6 +19,7 @@ export type {
 import type {
   StockReasonCode,
   StockMovement,
+  StockMovementReferenceEnrichment,
   CreateStockMovementData,
   StockMovementFilters,
   StockMovementStats,
@@ -27,6 +28,25 @@ import {
   getReasonDescription as _getReasonDescription,
   getReasonsByCategory as _getReasonsByCategory,
 } from './stock-reason-utils';
+
+// Types locaux pour les jointures Supabase nested (PostgREST peut renvoyer
+// soit un objet soit un tableau selon la cardinalité détectée).
+interface OrganisationMini {
+  legal_name: string | null;
+  trade_name: string | null;
+}
+interface RawSalesOrderRow {
+  id: string;
+  order_number: string | null;
+  customer_id: string | null;
+  organisations: OrganisationMini | OrganisationMini[] | null;
+}
+interface RawPurchaseOrderRow {
+  id: string;
+  po_number: string | null;
+  supplier_id: string | null;
+  organisations: OrganisationMini | OrganisationMini[] | null;
+}
 
 export function useStockMovements() {
   const [loading, setLoading] = useState(false);
@@ -40,6 +60,7 @@ export function useStockMovements() {
     async (filters?: StockMovementFilters) => {
       setLoading(true);
       try {
+        // Étape 1 : fetch des mouvements + produits (sans user_profiles, FK inexistante dans le schema PostgREST)
         let query = supabase
           .from('stock_movements')
           .select(
@@ -69,10 +90,6 @@ export function useStockMovements() {
               public_url,
               is_primary
             )
-          ),
-          user_profiles!stock_movements_performed_by_fkey (
-            first_name,
-            last_name
           )
         `
           )
@@ -105,17 +122,224 @@ export function useStockMovements() {
 
         if (error) throw error;
 
-        // Enrichir les produits avec primary_image_url (BR-TECH-002)
-        const enrichedMovements = (data ?? []).map(movement => ({
-          ...movement,
-          products: movement.products
-            ? {
-                ...movement.products,
-                primary_image_url:
-                  movement.products.product_images?.[0]?.public_url ?? null,
+        const rawMovements = data ?? [];
+
+        // Étape 2 : fetch des profils utilisateurs séparément (pas de FK nommée explicite
+        // sur stock_movements.performed_by côté PostgREST — pattern identique à getProductHistory)
+        const userIds = Array.from(
+          new Set(
+            rawMovements
+              .map(m => m.performed_by)
+              .filter((id): id is string => Boolean(id))
+          )
+        );
+
+        let userProfilesMap = new Map<
+          string,
+          { first_name: string | null; last_name: string | null }
+        >();
+
+        if (userIds.length > 0) {
+          const { data: userProfiles, error: profilesError } = await supabase
+            .from('user_profiles')
+            .select('user_id, first_name, last_name')
+            .in('user_id', userIds);
+
+          if (profilesError) {
+            console.warn(
+              '[useStockMovements] user_profiles fetch:',
+              profilesError
+            );
+          } else if (userProfiles) {
+            userProfilesMap = new Map(
+              userProfiles.map(p => [
+                p.user_id,
+                { first_name: p.first_name, last_name: p.last_name },
+              ])
+            );
+          }
+        }
+
+        // ── Étape 3 : enrichissement références commandes (max 4 requêtes batchées) ──
+
+        // Regrouper les reference_id par type pour éviter le N+1
+        const shipmentIds = rawMovements
+          .filter(m => m.reference_type === 'shipment')
+          .map(m => m.reference_id)
+          .filter((id): id is string => Boolean(id));
+
+        const receptionIds = rawMovements
+          .filter(m => m.reference_type === 'reception')
+          .map(m => m.reference_id)
+          .filter((id): id is string => Boolean(id));
+
+        const directSoIds = rawMovements
+          .filter(
+            m =>
+              m.reference_type === 'sales_order_forecast' ||
+              m.reference_type === 'sale'
+          )
+          .map(m => m.reference_id)
+          .filter((id): id is string => Boolean(id));
+
+        // Maps résultats
+        const shipmentToSoIdMap = new Map<string, string>();
+        const receptionToPOIdMap = new Map<string, string>();
+        const soEnrichMap = new Map<
+          string,
+          { order_number: string; customer_name: string | null }
+        >();
+        const poEnrichMap = new Map<
+          string,
+          { po_number: string; supplier_name: string | null }
+        >();
+
+        // Requête 1 : shipments → sales_order_id
+        if (shipmentIds.length > 0) {
+          const { data: shipmentRows, error: shipErr } = await supabase
+            .from('sales_order_shipments')
+            .select('id, sales_order_id')
+            .in('id', shipmentIds);
+
+          if (shipErr) {
+            console.warn('[useStockMovements] shipments fetch:', shipErr);
+          } else if (shipmentRows) {
+            for (const row of shipmentRows) {
+              if (row.sales_order_id) {
+                shipmentToSoIdMap.set(row.id, row.sales_order_id);
               }
-            : null,
-        }));
+            }
+          }
+        }
+
+        // Requête 2 : receptions → purchase_order_id
+        if (receptionIds.length > 0) {
+          const { data: receptionRows, error: recErr } = await supabase
+            .from('purchase_order_receptions')
+            .select('id, purchase_order_id')
+            .in('id', receptionIds);
+
+          if (recErr) {
+            console.warn('[useStockMovements] receptions fetch:', recErr);
+          } else if (receptionRows) {
+            for (const row of receptionRows) {
+              if (row.purchase_order_id) {
+                receptionToPOIdMap.set(row.id, row.purchase_order_id);
+              }
+            }
+          }
+        }
+
+        // Tous les SO IDs à résoudre (directs + via shipments)
+        const allSoIds = Array.from(
+          new Set([...directSoIds, ...Array.from(shipmentToSoIdMap.values())])
+        );
+
+        // Tous les PO IDs à résoudre (via receptions)
+        const allPoIds = Array.from(
+          new Set(Array.from(receptionToPOIdMap.values()))
+        );
+
+        // Requête 3 : sales_orders + organisations customer
+        if (allSoIds.length > 0) {
+          const { data: soRows, error: soErr } = await supabase
+            .from('sales_orders')
+            .select(
+              'id, order_number, customer_id, organisations!left ( legal_name, trade_name )'
+            )
+            .in('id', allSoIds);
+
+          if (soErr) {
+            console.warn('[useStockMovements] sales_orders fetch:', soErr);
+          } else if (soRows) {
+            for (const rawRow of soRows) {
+              const row = rawRow as unknown as RawSalesOrderRow;
+              const org = Array.isArray(row.organisations)
+                ? (row.organisations[0] ?? null)
+                : row.organisations;
+              const customerName = org?.trade_name ?? org?.legal_name ?? null;
+              soEnrichMap.set(row.id, {
+                order_number: row.order_number ?? row.id.slice(0, 8),
+                customer_name: customerName,
+              });
+            }
+          }
+        }
+
+        // Requête 4 : purchase_orders + organisations supplier
+        if (allPoIds.length > 0) {
+          const { data: poRows, error: poErr } = await supabase
+            .from('purchase_orders')
+            .select(
+              'id, po_number, supplier_id, organisations!left ( legal_name, trade_name )'
+            )
+            .in('id', allPoIds);
+
+          if (poErr) {
+            console.warn('[useStockMovements] purchase_orders fetch:', poErr);
+          } else if (poRows) {
+            for (const rawRow of poRows) {
+              const row = rawRow as unknown as RawPurchaseOrderRow;
+              const org = Array.isArray(row.organisations)
+                ? (row.organisations[0] ?? null)
+                : row.organisations;
+              const supplierName = org?.trade_name ?? org?.legal_name ?? null;
+              poEnrichMap.set(row.id, {
+                po_number: row.po_number ?? row.id.slice(0, 8),
+                supplier_name: supplierName,
+              });
+            }
+          }
+        }
+
+        // ── Étape 4 : Enrichir les produits avec primary_image_url + user_profiles + reference_enrichment ──
+        const enrichedMovements = rawMovements.map(movement => {
+          // Calcul reference_enrichment selon reference_type
+          let referenceEnrichment: StockMovementReferenceEnrichment | null =
+            null;
+
+          if (movement.reference_type === 'shipment' && movement.reference_id) {
+            const soId = shipmentToSoIdMap.get(movement.reference_id);
+            if (soId) {
+              referenceEnrichment = {
+                salesOrder: soEnrichMap.get(soId) ?? null,
+              };
+            }
+          } else if (
+            movement.reference_type === 'reception' &&
+            movement.reference_id
+          ) {
+            const poId = receptionToPOIdMap.get(movement.reference_id);
+            if (poId) {
+              referenceEnrichment = {
+                purchaseOrder: poEnrichMap.get(poId) ?? null,
+              };
+            }
+          } else if (
+            (movement.reference_type === 'sales_order_forecast' ||
+              movement.reference_type === 'sale') &&
+            movement.reference_id
+          ) {
+            referenceEnrichment = {
+              salesOrder: soEnrichMap.get(movement.reference_id) ?? null,
+            };
+          }
+
+          return {
+            ...movement,
+            products: movement.products
+              ? {
+                  ...movement.products,
+                  primary_image_url:
+                    movement.products.product_images?.[0]?.public_url ?? null,
+                }
+              : null,
+            user_profiles: movement.performed_by
+              ? (userProfilesMap.get(movement.performed_by) ?? null)
+              : null,
+            reference_enrichment: referenceEnrichment,
+          };
+        });
 
         setMovements(enrichedMovements as unknown as StockMovement[]);
       } catch (error) {

@@ -17,3 +17,19 @@ export { useStockUI } from './use-stock-ui';
 
 // Re-export types
 export type { StockReasonCode, MovementType } from './use-stock-movements';
+
+// Utils motifs — export direct pour usage sans instancier le hook
+export {
+  getReasonDescription,
+  getReasonsByCategory,
+} from './stock-reason-utils';
+
+// Utils références mouvements — formatage lisible des références
+export { formatMovementReference } from './movement-reference-utils';
+export type {
+  MovementReferenceLabel,
+  MovementReferenceEnrichment,
+} from './movement-reference-utils';
+
+// Type enrichissement référence (utilisé par StockMovement)
+export type { StockMovementReferenceEnrichment } from './stock-movements-types';

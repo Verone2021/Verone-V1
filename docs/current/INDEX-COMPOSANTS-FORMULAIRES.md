@@ -1,9 +1,9 @@
 # Index Composants, Formulaires & Hooks — packages/@verone/
 
-**Derniere mise a jour** : 2026-04-21
+**Derniere mise a jour** : 2026-04-22
 **23 packages** dans `packages/@verone/`
 
-## **548 composants, 12 hooks**
+## **545 composants, 12 hooks**
 
 ## @verone/categories
 
@@ -477,7 +477,6 @@
 | `ProductVariantAttributesSection`  | Component | `src/components/images/ProductVariantAttributesSection.tsx`                       |
 | `CreateProductInGroupModal`        | Modal     | `src/components/modals/CreateProductInGroupModal.tsx`                             |
 | `EditProductVariantModal`          | Modal     | `src/components/modals/EditProductVariantModal.tsx`                               |
-| `ProductCharacteristicsModal`      | Modal     | `src/components/modals/ProductCharacteristicsModal.tsx`                           |
 | `ProductCreationModal`             | Modal     | `src/components/modals/ProductCreationModal.tsx`                                  |
 | `ProductDescriptionsModal`         | Modal     | `src/components/modals/ProductDescriptionsModal.tsx`                              |
 | `ProductHistoryModal`              | Modal     | `src/components/modals/ProductHistoryModal.tsx`                                   |
@@ -489,8 +488,6 @@
 | `VariantCreationModal`             | Modal     | `src/components/modals/VariantCreationModal.tsx`                                  |
 | `VariantGroupCreateModal`          | Modal     | `src/components/modals/VariantGroupCreateModal.tsx`                               |
 | `VariantGroupEditModal`            | Modal     | `src/components/modals/VariantGroupEditModal.tsx`                                 |
-| `ProductCustomAttributesForm`      | Form      | `src/components/modals/product-characteristics/ProductCustomAttributesForm.tsx`   |
-| `ProductVariantAttributesForm`     | Form      | `src/components/modals/product-characteristics/ProductVariantAttributesForm.tsx`  |
 | `ProductDescriptionsFooter`        | Component | `src/components/modals/product-descriptions/ProductDescriptionsFooter.tsx`        |
 | `ProductDescriptionsPreview`       | Component | `src/components/modals/product-descriptions/ProductDescriptionsPreview.tsx`       |
 | `ProductHistoryFilters`            | Component | `src/components/modals/product-history/ProductHistoryFilters.tsx`                 |
