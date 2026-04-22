@@ -10,18 +10,15 @@ import {
   DialogTitle,
   Input,
   Label,
-  Separator,
   Switch,
   Textarea,
 } from '@verone/ui';
 
 import type { LinkMeOrderDetails } from '../../../../hooks/use-linkme-order-actions';
-import type { OrderWithDetails } from './types';
 
 interface EditDeliveryOptionsDialogProps {
   open: boolean;
   onClose: () => void;
-  order: OrderWithDetails;
   editForm: Partial<LinkMeOrderDetails>;
   setEditForm: React.Dispatch<
     React.SetStateAction<Partial<LinkMeOrderDetails>>
@@ -33,7 +30,6 @@ interface EditDeliveryOptionsDialogProps {
 export function EditDeliveryOptionsDialog({
   open,
   onClose,
-  order,
   editForm,
   setEditForm,
   onSaveEdit,
@@ -49,23 +45,6 @@ export function EditDeliveryOptionsDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
-          <div className="flex items-center justify-between p-3 border rounded-lg">
-            <div>
-              <Label>Modalités de livraison acceptées</Label>
-              <p className="text-xs text-gray-500">
-                Le client a accepté les conditions
-              </p>
-            </div>
-            <Switch
-              checked={editForm.delivery_terms_accepted ?? false}
-              onCheckedChange={checked =>
-                setEditForm(prev => ({
-                  ...prev,
-                  delivery_terms_accepted: checked,
-                }))
-              }
-            />
-          </div>
           <div className="space-y-2">
             <Label>Date de livraison souhaitée</Label>
             <Input
@@ -129,64 +108,19 @@ export function EditDeliveryOptionsDialog({
               rows={3}
             />
           </div>
-          {order.status === 'validated' && (
-            <>
-              <Separator />
-              <p className="text-sm font-medium text-gray-700">
-                Réception (post-approbation)
-              </p>
-              <div className="space-y-2">
-                <Label>Nom du contact réception</Label>
-                <Input
-                  value={editForm.reception_contact_name ?? ''}
-                  onChange={e =>
-                    setEditForm(prev => ({
-                      ...prev,
-                      reception_contact_name: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Email contact réception</Label>
-                <Input
-                  type="email"
-                  value={editForm.reception_contact_email ?? ''}
-                  onChange={e =>
-                    setEditForm(prev => ({
-                      ...prev,
-                      reception_contact_email: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Téléphone contact réception</Label>
-                <Input
-                  value={editForm.reception_contact_phone ?? ''}
-                  onChange={e =>
-                    setEditForm(prev => ({
-                      ...prev,
-                      reception_contact_phone: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Date de livraison confirmée</Label>
-                <Input
-                  type="date"
-                  value={editForm.confirmed_delivery_date ?? ''}
-                  onChange={e =>
-                    setEditForm(prev => ({
-                      ...prev,
-                      confirmed_delivery_date: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-            </>
-          )}
+          <div className="space-y-2">
+            <Label>Date de livraison confirmée</Label>
+            <Input
+              type="date"
+              value={editForm.confirmed_delivery_date ?? ''}
+              onChange={e =>
+                setEditForm(prev => ({
+                  ...prev,
+                  confirmed_delivery_date: e.target.value,
+                }))
+              }
+            />
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>

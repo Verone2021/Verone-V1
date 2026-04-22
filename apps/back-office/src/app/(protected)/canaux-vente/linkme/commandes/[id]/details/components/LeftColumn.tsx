@@ -48,8 +48,6 @@ export interface LeftColumnProps {
   deliveryAddressMatchesOrg: boolean;
   onUseOrgAddress: () => void;
   updateDetailsPending: boolean;
-  // Step badge
-  isStep4Complete: boolean;
   // Organisation inline edit
   onUpdateOrganisation?: (
     orgId: string,
@@ -81,7 +79,6 @@ export function LeftColumn({
   deliveryAddressMatchesOrg,
   onUseOrgAddress,
   updateDetailsPending,
-  isStep4Complete,
   onUpdateOrganisation,
 }: LeftColumnProps) {
   return (
@@ -128,7 +125,6 @@ export function LeftColumn({
         deliveryAddressMatchesOrg={deliveryAddressMatchesOrg}
         onUseOrgAddress={onUseOrgAddress}
         updateDetailsPending={updateDetailsPending}
-        isStep4Complete={isStep4Complete}
         onOpenEditDialog={onOpenEditDialog}
       />
 
