@@ -21,20 +21,20 @@ import {
   Package,
   AlertTriangle,
   ArrowRight,
-  ChevronDown,
+  History,
   Settings,
 } from 'lucide-react';
 
-import type { PreviousShipmentGroup } from './types';
+import { PreviousShipmentCard } from './PreviousShipmentCard';
+import type { PackageInfo, PreviousShipmentGroup } from './types';
 
 interface StepStockProps {
   items: ShipmentItem[];
   totals: { totalQty: number; totalValue: number; hasStockIssue: boolean };
   previousShipments: PreviousShipmentGroup[];
-  showPreviousShipments: boolean;
-  setShowPreviousShipments: (v: boolean) => void;
   handleQuantityChange: (itemId: string, value: string) => void;
   handleShipAll: () => void;
+  onReusePackages?: (packages: PackageInfo[]) => void;
   onOpenAdjustment: (item: ShipmentItem) => void;
   onNext: () => void;
   onCancel: () => void;
@@ -44,10 +44,9 @@ export function StepStock({
   items,
   totals,
   previousShipments,
-  showPreviousShipments,
-  setShowPreviousShipments,
   handleQuantityChange,
   handleShipAll,
+  onReusePackages,
   onOpenAdjustment,
   onNext,
   onCancel,
@@ -70,109 +69,32 @@ export function StepStock({
         </ButtonV2>
       </div>
 
-      {/* Previous Shipments (for partially_shipped orders) */}
+      {/* Previous Shipments — toujours visibles (BO-SHIP-UX-002) */}
       {previousShipments.length > 0 && (
-        <Card className="border-amber-200 bg-amber-50/50">
-          <button
-            type="button"
-            className="w-full p-3 flex items-center justify-between text-left"
-            onClick={() => setShowPreviousShipments(!showPreviousShipments)}
-          >
-            <div className="flex items-center gap-2">
-              <Package className="w-4 h-4 text-amber-600" />
-              <span className="text-sm font-medium text-amber-800">
-                {previousShipments.length} expedition
-                {previousShipments.length > 1 ? 's' : ''} precedente
-                {previousShipments.length > 1 ? 's' : ''}
-              </span>
-            </div>
-            <ChevronDown
-              className={`w-4 h-4 text-amber-600 transition-transform ${showPreviousShipments ? 'rotate-180' : ''}`}
-            />
-          </button>
-          {showPreviousShipments && (
-            <div className="px-3 pb-3 space-y-3">
-              {previousShipments.map((shipment, idx) => (
-                <div
-                  key={shipment.shipped_at}
-                  className="rounded-md border border-amber-200 bg-white p-3"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-gray-700">
-                      Expedition #{idx + 1} —{' '}
-                      {new Date(shipment.shipped_at).toLocaleDateString(
-                        'fr-FR'
-                      )}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      {shipment.carrier_name && (
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] px-1.5 py-0"
-                        >
-                          {shipment.carrier_name}
-                        </Badge>
-                      )}
-                      {shipment.packlink_status === 'a_payer' && (
-                        <Badge className="text-[10px] bg-red-100 text-red-800 px-1.5 py-0">
-                          Transport a payer
-                        </Badge>
-                      )}
-                      {shipment.packlink_status === 'paye' && (
-                        <Badge className="text-[10px] bg-green-100 text-green-800 px-1.5 py-0">
-                          Transport paye
-                        </Badge>
-                      )}
-                      {shipment.packlink_status === 'in_transit' && (
-                        <Badge className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0">
-                          En transit
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    {shipment.items.map((item, iIdx) => (
-                      <div
-                        key={iIdx}
-                        className="text-xs text-gray-600 flex justify-between"
-                      >
-                        <span>{item.product_name}</span>
-                        <span className="font-medium">x{item.quantity}</span>
-                      </div>
-                    ))}
-                  </div>
-                  {(shipment.tracking_number ?? shipment.shipping_cost) && (
-                    <div className="flex items-center gap-3 mt-2 pt-2 border-t border-amber-100 text-[10px] text-gray-500">
-                      {shipment.tracking_number && (
-                        <span>
-                          Suivi :{' '}
-                          {shipment.tracking_url ? (
-                            <a
-                              href={shipment.tracking_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline"
-                            >
-                              {shipment.tracking_number}
-                            </a>
-                          ) : (
-                            shipment.tracking_number
-                          )}
-                        </span>
-                      )}
-                      {shipment.shipping_cost != null &&
-                        shipment.shipping_cost > 0 && (
-                          <span>
-                            Transport : {formatCurrency(shipment.shipping_cost)}
-                          </span>
-                        )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+        <div className="space-y-2">
+          <h4 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+            <History className="h-4 w-4 text-amber-600" />
+            {previousShipments.length} expédition
+            {previousShipments.length > 1 ? 's' : ''} précédente
+            {previousShipments.length > 1 ? 's' : ''}
+          </h4>
+          <div className="space-y-2">
+            {previousShipments.map((shipment, idx) => (
+              <PreviousShipmentCard
+                key={shipment.shipped_at}
+                group={shipment}
+                index={idx}
+                onReusePackages={onReusePackages}
+              />
+            ))}
+          </div>
+          {onReusePackages && (
+            <p className="text-[11px] text-slate-500 italic">
+              Astuce : cliquez sur « Reproduire ces dimensions » pour
+              pré-remplir l'étape 3 avec la même configuration de colis.
+            </p>
           )}
-        </Card>
+        </div>
       )}
 
       {/* Stats Cards */}

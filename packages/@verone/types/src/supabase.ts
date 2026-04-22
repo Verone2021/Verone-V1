@@ -7861,6 +7861,7 @@ export type Database = {
           id: string;
           label_url: string | null;
           notes: string | null;
+          packages_info: Json;
           packlink_label_url: string | null;
           packlink_shipment_id: string | null;
           packlink_status: string | null;
@@ -7883,6 +7884,7 @@ export type Database = {
           id?: string;
           label_url?: string | null;
           notes?: string | null;
+          packages_info?: Json;
           packlink_label_url?: string | null;
           packlink_shipment_id?: string | null;
           packlink_status?: string | null;
@@ -7905,6 +7907,7 @@ export type Database = {
           id?: string;
           label_url?: string | null;
           notes?: string | null;
+          packages_info?: Json;
           packlink_label_url?: string | null;
           packlink_shipment_id?: string | null;
           packlink_status?: string | null;

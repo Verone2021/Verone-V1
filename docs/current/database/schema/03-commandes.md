@@ -1,6 +1,6 @@
 # Domaine Commandes & Consultations — Schema Base de Donnees
 
-_Generated: 2026-04-22 23:59_
+_Generated: 2026-04-23 01:12_
 
 **Tables : 17**
 
@@ -18,7 +18,7 @@ _Generated: 2026-04-22 23:59_
 | [sales_order_events](#sales-order-events)                 | 6        | 1   | 2   | 1        |
 | [sales_order_items](#sales-order-items)                   | 22       | 3   | 7   | 6        |
 | [sales_order_linkme_details](#sales-order-linkme-details) | 51       | 1   | 6   | 3        |
-| [sales_order_shipments](#sales-order-shipments)           | 20       | 2   | 1   | 5        |
+| [sales_order_shipments](#sales-order-shipments)           | 21       | 2   | 1   | 5        |
 | [sales_orders](#sales-orders)                             | 68       | 10  | 7   | 23       |
 | [sample_order_items](#sample-order-items)                 | 13       | 2   | 1   | 0        |
 | [sample_orders](#sample-orders)                           | 17       | 1   | 1   | 0        |
@@ -580,6 +580,7 @@ _Generated: 2026-04-22 23:59_
 | packlink_shipment_id  | text        | YES      |                    |
 | packlink_label_url    | text        | YES      |                    |
 | packlink_status       | text        | YES      |                    |
+| packages_info         | jsonb       | NO       | '[]'::jsonb        |
 
 **Relations :**
 

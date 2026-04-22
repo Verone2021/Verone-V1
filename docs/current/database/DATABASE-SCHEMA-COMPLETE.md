@@ -1,6 +1,6 @@
 # Database Schema Complete — Index
 
-_Generated: 2026-04-22 23:59 — 143 tables_
+_Generated: 2026-04-23 01:12 — 143 tables_
 
 | Table                               | Domaine                     | Colonnes |
 | ----------------------------------- | --------------------------- | -------- |
@@ -101,7 +101,7 @@ _Generated: 2026-04-22 23:59 — 143 tables_
 | sales_order_events                  | Commandes & Consultations   | 6        |
 | sales_order_items                   | Commandes & Consultations   | 22       |
 | sales_order_linkme_details          | Commandes & Consultations   | 51       |
-| sales_order_shipments               | Commandes & Consultations   | 20       |
+| sales_order_shipments               | Commandes & Consultations   | 21       |
 | sales_orders                        | Commandes & Consultations   | 68       |
 | sample_order_items                  | Commandes & Consultations   | 13       |
 | sample_orders                       | Commandes & Consultations   | 17       |

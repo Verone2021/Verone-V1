@@ -14186,6 +14186,14 @@
         "udt_name": "text",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "sales_order_shipments",
+        "column_name": "packages_info",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
       }
     ],
     "sales_orders": [
@@ -18944,6 +18952,80 @@
         "column_name": "uploader_email",
         "data_type": "text",
         "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "v_sales_order_progress": [
+      {
+        "table_name": "v_sales_order_progress",
+        "column_name": "sales_order_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_sales_order_progress",
+        "column_name": "total_ordered",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_sales_order_progress",
+        "column_name": "total_confirmed_shipped",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_sales_order_progress",
+        "column_name": "total_in_flight",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_sales_order_progress",
+        "column_name": "total_reserved",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_sales_order_progress",
+        "column_name": "total_remaining",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_sales_order_progress",
+        "column_name": "progress_percent",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_sales_order_progress",
+        "column_name": "has_pending_payment",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "v_sales_order_progress",
+        "column_name": "has_incident",
+        "data_type": "boolean",
+        "udt_name": "bool",
         "is_nullable": "YES",
         "column_default": null
       }
