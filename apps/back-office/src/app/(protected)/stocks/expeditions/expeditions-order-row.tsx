@@ -101,12 +101,16 @@ function OrderItemsList({ order }: { order: SalesOrder }) {
 
 interface ProgressCellProps {
   percent: number;
+  reserved: number;
+  ordered: number;
   hasPendingPayment: boolean;
   hasIncident: boolean;
 }
 
 function ProgressCell({
   percent,
+  reserved,
+  ordered,
   hasPendingPayment,
   hasIncident,
 }: ProgressCellProps) {
@@ -117,14 +121,24 @@ function ProgressCell({
       ? 'bg-orange-400'
       : 'bg-green-500';
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 bg-gray-200 rounded-full h-2">
-        <div
-          className={`h-2 rounded-full transition-all ${barColor}`}
-          style={{ width: `${percent}%` }}
-        />
+    <div className="flex flex-col gap-0.5 min-w-[140px]">
+      <div className="flex items-center gap-2">
+        <div className="flex-1 bg-gray-200 rounded-full h-2">
+          <div
+            className={`h-2 rounded-full transition-all ${barColor}`}
+            style={{ width: `${percent}%` }}
+          />
+        </div>
+        <span className="text-sm text-gray-600 w-12 text-right">
+          {percent}%
+        </span>
       </div>
-      <span className="text-sm text-gray-600 w-12 text-right">{percent}%</span>
+      {ordered > 0 && (
+        <span className="text-[11px] text-gray-500">
+          {reserved}/{ordered} article{ordered > 1 ? 's' : ''}
+          {hasPendingPayment && reserved > 0 && ' en attente paiement'}
+        </span>
+      )}
     </div>
   );
 }
@@ -132,18 +146,57 @@ function ProgressCell({
 interface ActionCellProps {
   order: SalesOrder;
   isPacklinkPending: boolean;
+  isFullyShipped: boolean;
   onShip: (order: SalesOrder) => void;
 }
 
-function ActionCell({ order, isPacklinkPending, onShip }: ActionCellProps) {
-  if (isPacklinkPending) {
-    // L'ID du shipment Packlink spécifique n'est pas disponible dans la ligne
-    // commande (les shipments sont chargés à part via /api/packlink/shipments/pending).
-    // Fallback vers la liste Packlink PRO filtrée par référence commande.
-    const href = `https://pro.packlink.fr/private/shipments?search=${encodeURIComponent(order.order_number ?? '')}`;
+function ActionCell({
+  order,
+  isPacklinkPending,
+  isFullyShipped,
+  onShip,
+}: ActionCellProps) {
+  // L'ID du shipment Packlink spécifique n'est pas disponible dans la ligne
+  // commande (les shipments sont chargés à part via /api/packlink/shipments/pending).
+  // Fallback vers la liste Packlink PRO filtrée par référence commande.
+  const packlinkHref = `https://pro.packlink.fr/private/shipments?search=${encodeURIComponent(order.order_number ?? '')}`;
+
+  // Scénario multi-colis : une commande peut avoir un lot a_payer ET des articles
+  // restant à expédier. On affiche alors les 2 actions (Payer + Nouvelle expédition).
+  const showPayButton = isPacklinkPending;
+  const showShipButton = !isFullyShipped;
+
+  if (showPayButton && showShipButton) {
+    return (
+      <div className="flex gap-1 flex-wrap">
+        <a
+          href={packlinkHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md bg-orange-100 text-orange-800 border border-orange-200 hover:bg-orange-200 transition-colors"
+          onClick={e => e.stopPropagation()}
+        >
+          <ExternalLink className="h-3 w-3" />
+          Payer
+        </a>
+        <ButtonV2
+          variant="outline"
+          size="sm"
+          onClick={e => {
+            e.stopPropagation();
+            onShip(order);
+          }}
+        >
+          <Truck className="h-4 w-4 mr-1" />
+          Reste
+        </ButtonV2>
+      </div>
+    );
+  }
+  if (showPayButton) {
     return (
       <a
-        href={href}
+        href={packlinkHref}
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md bg-orange-100 text-orange-800 border border-orange-200 hover:bg-orange-200 transition-colors"
@@ -171,8 +224,11 @@ function ActionCell({ order, isPacklinkPending, onShip }: ActionCellProps) {
 
 interface OrderMainRowProps extends OrderRowProps {
   progressPercent: number;
+  totalReserved: number;
+  totalOrdered: number;
   hasPendingPayment: boolean;
   hasIncident: boolean;
+  isFullyShipped: boolean;
   isOverdue: boolean;
   isUrgent: boolean;
 }
@@ -184,8 +240,11 @@ function OrderMainRow({
   onToggle,
   onShip,
   progressPercent,
+  totalReserved,
+  totalOrdered,
   hasPendingPayment,
   hasIncident,
+  isFullyShipped,
   isOverdue,
   isUrgent,
 }: OrderMainRowProps) {
@@ -238,6 +297,8 @@ function OrderMainRow({
       <TableCell className="hidden xl:table-cell">
         <ProgressCell
           percent={progressPercent}
+          reserved={totalReserved}
+          ordered={totalOrdered}
           hasPendingPayment={hasPendingPayment}
           hasIncident={hasIncident}
         />
@@ -246,6 +307,7 @@ function OrderMainRow({
         <ActionCell
           order={order}
           isPacklinkPending={isPacklinkPending}
+          isFullyShipped={isFullyShipped}
           onShip={onShip}
         />
       </TableCell>
@@ -264,8 +326,11 @@ export function OrderRow({
   // Progression source unifiée v_sales_order_progress : pas de calcul côté client,
   // pas de hardcode de statuts. Fallback 0% si la vue n'a pas (encore) renvoyé la ligne.
   const progressPercent = progress?.progress_percent ?? 0;
+  const totalReserved = progress?.total_reserved ?? 0;
+  const totalOrdered = progress?.total_ordered ?? 0;
   const hasPendingPayment = progress?.has_pending_payment ?? isPacklinkPending;
   const hasIncident = progress?.has_incident ?? false;
+  const isFullyShipped = totalOrdered > 0 && totalReserved >= totalOrdered;
   const { isOverdue, isUrgent } = computeUrgency(order);
   return (
     <React.Fragment>
@@ -277,8 +342,11 @@ export function OrderRow({
         onToggle={onToggle}
         onShip={onShip}
         progressPercent={progressPercent}
+        totalReserved={totalReserved}
+        totalOrdered={totalOrdered}
         hasPendingPayment={hasPendingPayment}
         hasIncident={hasIncident}
+        isFullyShipped={isFullyShipped}
         isOverdue={isOverdue}
         isUrgent={isUrgent}
       />

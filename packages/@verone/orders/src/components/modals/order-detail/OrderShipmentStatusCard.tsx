@@ -18,6 +18,30 @@ function formatDate(date: string | null): string {
   });
 }
 
+/**
+ * Vrai si toutes les quantités commandées ont été réservées par des shipments
+ * (incl. Packlink `a_payer`). Permet de distinguer "commande complètement
+ * expédiée" de "commande partiellement expédiée" pour afficher/masquer le
+ * bouton "Nouvelle expédition" (scénario multi-colis Packlink).
+ */
+function isOrderFullyShipped(
+  order: SalesOrder,
+  shipmentHistory: ShipmentHistoryItem[]
+): boolean {
+  const totalOrdered =
+    order.sales_order_items?.reduce(
+      (sum, item) => sum + (item.quantity ?? 0),
+      0
+    ) ?? 0;
+  if (totalOrdered === 0) return false;
+  const totalShipped = shipmentHistory.reduce(
+    (sum, h) =>
+      sum + h.items.reduce((s, i) => s + (i.quantity_shipped ?? 0), 0),
+    0
+  );
+  return totalShipped >= totalOrdered;
+}
+
 export interface OrderShipmentStatusCardProps {
   order: SalesOrder;
   shipmentHistory: ShipmentHistoryItem[];
@@ -119,9 +143,13 @@ export function OrderShipmentStatusCard({
           </p>
         )}
 
+        {/* Bouton "Nouvelle expédition" — visible tant que des articles restent
+            à expédier (pas juste quand aucun shipment). Permet de créer des
+            shipments partiels successifs (1 par colis) : le wizard utilise
+            usePreviousShipments pour soustraire les quantités déjà réservées. */}
         {!readOnly &&
           canShip &&
-          shipmentHistory.length === 0 &&
+          !isOrderFullyShipped(order, shipmentHistory) &&
           onOpenShipmentModal && (
             <ButtonV2
               size="sm"
