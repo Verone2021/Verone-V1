@@ -3,7 +3,7 @@
 import { Badge } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
-import { History, CheckCircle2, ExternalLink } from 'lucide-react';
+import { History, CheckCircle2, ExternalLink, Mail } from 'lucide-react';
 
 import type { SalesOrder } from '@verone/orders/hooks';
 
@@ -29,6 +29,7 @@ export interface ShipmentHistoryItem {
 export interface OrderShipmentHistoryCardProps {
   shipmentHistory: ShipmentHistoryItem[];
   order: SalesOrder;
+  onSendTrackingEmail?: (shipment: ShipmentHistoryItem) => void;
 }
 
 /** Format a date string to French locale */
@@ -44,6 +45,7 @@ function formatDate(date: string | null): string {
 export function OrderShipmentHistoryCard({
   shipmentHistory,
   order,
+  onSendTrackingEmail,
 }: OrderShipmentHistoryCardProps) {
   if (shipmentHistory.length === 0) return null;
 
@@ -160,8 +162,8 @@ export function OrderShipmentHistoryCard({
               </p>
             )}
             {h.tracking_number && (
-              <p className="text-[10px] text-gray-500 ml-4 mb-1">
-                Suivi :{' '}
+              <p className="text-[10px] text-gray-500 ml-4 mb-1 flex items-center flex-wrap gap-x-1">
+                <span>Suivi :</span>
                 {h.tracking_url ? (
                   <a
                     href={h.tracking_url}
@@ -172,7 +174,16 @@ export function OrderShipmentHistoryCard({
                     {h.tracking_number}
                   </a>
                 ) : (
-                  h.tracking_number
+                  <span>{h.tracking_number}</span>
+                )}
+                {onSendTrackingEmail && (
+                  <button
+                    className="ml-2 inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline"
+                    onClick={() => onSendTrackingEmail(h)}
+                  >
+                    <Mail className="h-3 w-3" />
+                    Envoyer au client
+                  </button>
                 )}
               </p>
             )}

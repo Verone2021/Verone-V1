@@ -1,10 +1,14 @@
 'use client';
 
+import { useState } from 'react';
+
 import {
   OrderShipmentHistoryCard,
   OrderShipmentStatusCard,
   useShipmentHistory,
 } from '@verone/orders/components/modals/order-detail';
+import type { ShipmentHistoryItem } from '@verone/orders/components/modals/order-detail';
+import { SendShippingTrackingModal } from '@verone/orders/components/modals';
 import type { SalesOrder } from '@verone/orders/hooks';
 
 import type { OrderWithDetails } from './types';
@@ -27,7 +31,24 @@ export function ShipmentCardsSection({
     true
   );
 
+  const [shipmentToEmail, setShipmentToEmail] =
+    useState<ShipmentHistoryItem | null>(null);
+
   if (shipmentHistory.length === 0) return null;
+
+  // Build minimal order shape for SendShippingTrackingModal
+  // OrderWithDetails uses `organisation` (singular), no individual_customers
+  const orderForModal = {
+    id: order.id,
+    order_number: order.order_number,
+    organisations: order.organisation
+      ? {
+          email: order.organisation.email ?? null,
+          trade_name: order.organisation.trade_name ?? null,
+        }
+      : null,
+    individual_customers: null,
+  };
 
   return (
     <>
@@ -59,7 +80,17 @@ export function ShipmentCardsSection({
             })),
           } as unknown as SalesOrder
         }
+        onSendTrackingEmail={h => setShipmentToEmail(h)}
       />
+
+      {shipmentToEmail && (
+        <SendShippingTrackingModal
+          open={!!shipmentToEmail}
+          onClose={() => setShipmentToEmail(null)}
+          shipment={shipmentToEmail}
+          order={orderForModal}
+        />
+      )}
     </>
   );
 }

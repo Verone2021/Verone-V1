@@ -27,3 +27,7 @@ export {
   type SendOrderDocumentsModalProps,
 } from './SendOrderDocumentsModal';
 export { EditShipmentModal } from './EditShipmentModal';
+export {
+  SendShippingTrackingModal,
+  type SendShippingTrackingModalProps,
+} from './SendShippingTrackingModal';
