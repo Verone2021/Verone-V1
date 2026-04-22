@@ -79,7 +79,6 @@ export function ProductEditMode({
           onFieldChange={onFieldChange}
           onShowCategorizeModal={() => setShowCategorizeModal(true)}
           onShowDescriptionsModal={() => setShowDescriptionsModal(true)}
-          onShowCharacteristicsModal={() => undefined}
         />
 
         <ProductEditManagementColumn

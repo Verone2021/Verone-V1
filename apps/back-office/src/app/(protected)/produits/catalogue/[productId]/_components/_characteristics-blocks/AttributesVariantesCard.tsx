@@ -12,13 +12,13 @@ import { useInlineEdit } from '@verone/common/hooks';
 import { VARIANT_ATTRIBUTE_LABELS } from '@verone/products/components/images';
 import { MATERIAL_OPTIONS, COLLECTION_STYLE_OPTIONS } from '@verone/types';
 import { Input } from '@verone/ui';
-import { DynamicColorSelector } from '@verone/ui-business';
-import { cn } from '@verone/utils';
-import { Lock, Pencil, Plus, X, Check } from 'lucide-react';
+import { Plus, X, Check } from 'lucide-react';
 
 import type { Product, ProductRow } from '../types';
-import { AttributeSelect } from './AttributeSelect';
 import type { AttributeSelectOption } from './AttributeSelect';
+import { AttributeRow } from './attribute-rows/AttributeRow';
+import { ColorAttributeRow } from './attribute-rows/ColorAttributeRow';
+import { SelectAttributeRow } from './attribute-rows/SelectAttributeRow';
 
 // Attributs prédéfinis avec configuration de leur sélecteur
 const PREDEFINED_KEYS = [
@@ -68,224 +68,6 @@ const MATERIAL_SELECT_OPTIONS: AttributeSelectOption[] = MATERIAL_OPTIONS.map(
 interface AttributesVariantesCardProps {
   product: Product;
   onProductUpdate: (updates: Partial<ProductRow>) => Promise<void>;
-}
-
-// ——— Composant AttributeRow pour les attributs custom (texte libre) ———
-
-interface AttributeRowProps {
-  attrKey: string;
-  label: string;
-  value: string;
-  onSave: (key: string, value: string) => void;
-  onDelete?: (key: string) => void;
-  isCustom?: boolean;
-}
-
-function AttributeRow({
-  attrKey,
-  label,
-  value,
-  onSave,
-  onDelete,
-  isCustom = false,
-}: AttributeRowProps) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
-
-  const handleSave = useCallback(() => {
-    onSave(attrKey, draft.trim());
-    setEditing(false);
-  }, [attrKey, draft, onSave]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter') handleSave();
-      if (e.key === 'Escape') {
-        setDraft(value);
-        setEditing(false);
-      }
-    },
-    [handleSave, value]
-  );
-
-  return (
-    <div className="group flex items-center gap-2 py-1.5 border-b border-neutral-100 last:border-0">
-      <span className="w-32 flex-shrink-0 text-[10px] uppercase tracking-wide text-neutral-500 font-medium">
-        {label}
-      </span>
-      {editing ? (
-        <div className="flex items-center gap-1 flex-1">
-          <Input
-            autoFocus
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="h-6 text-xs px-1.5 flex-1"
-          />
-          <button
-            onClick={handleSave}
-            className="h-6 w-6 flex items-center justify-center rounded text-green-600 hover:bg-green-50"
-            aria-label="Valider"
-          >
-            <Check className="h-3 w-3" />
-          </button>
-          <button
-            onClick={() => {
-              setDraft(value);
-              setEditing(false);
-            }}
-            className="h-6 w-6 flex items-center justify-center rounded text-neutral-400 hover:bg-neutral-100"
-            aria-label="Annuler"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </div>
-      ) : (
-        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-          <span
-            className={cn(
-              'flex-1 text-xs truncate tabular-nums',
-              value ? 'text-neutral-900' : 'text-neutral-400 italic'
-            )}
-          >
-            {value || '—'}
-          </span>
-          <button
-            onClick={() => {
-              setDraft(value);
-              setEditing(true);
-            }}
-            className="opacity-0 group-hover:opacity-100 h-6 w-6 flex items-center justify-center rounded text-neutral-400 hover:bg-neutral-100 transition-opacity"
-            aria-label={`Modifier ${label}`}
-          >
-            <Pencil className="h-3 w-3" />
-          </button>
-          {isCustom && onDelete && (
-            <button
-              onClick={() => onDelete(attrKey)}
-              className="opacity-0 group-hover:opacity-100 h-6 w-6 flex items-center justify-center rounded text-red-400 hover:bg-red-50 transition-opacity"
-              aria-label={`Supprimer ${label}`}
-            >
-              <X className="h-3 w-3" />
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ——— Composant pour les attributs couleur (DynamicColorSelector) ———
-
-interface ColorAttributeRowProps {
-  attrKey: string;
-  label: string;
-  value: string;
-  onSave: (key: string, value: string) => void;
-}
-
-function ColorAttributeRow({
-  attrKey,
-  label,
-  value,
-  onSave,
-}: ColorAttributeRowProps) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
-
-  const handleConfirm = useCallback(() => {
-    onSave(attrKey, draft);
-    setEditing(false);
-  }, [attrKey, draft, onSave]);
-
-  return (
-    <div className="group flex items-center gap-2 py-1.5 border-b border-neutral-100 last:border-0">
-      <span className="w-32 flex-shrink-0 text-[10px] uppercase tracking-wide text-neutral-500 font-medium">
-        {label}
-      </span>
-      {editing ? (
-        <div className="flex items-center gap-1 flex-1 min-w-0">
-          <div className="flex-1 min-w-0">
-            <DynamicColorSelector value={draft} onChange={setDraft} />
-          </div>
-          <button
-            onClick={handleConfirm}
-            className="h-6 w-6 flex-shrink-0 flex items-center justify-center rounded text-green-600 hover:bg-green-50"
-            aria-label="Valider"
-          >
-            <Check className="h-3 w-3" />
-          </button>
-          <button
-            onClick={() => {
-              setDraft(value);
-              setEditing(false);
-            }}
-            className="h-6 w-6 flex-shrink-0 flex items-center justify-center rounded text-neutral-400 hover:bg-neutral-100"
-            aria-label="Annuler"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </div>
-      ) : (
-        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-          <span
-            className={cn(
-              'flex-1 text-xs truncate',
-              value ? 'text-neutral-900' : 'text-neutral-400 italic'
-            )}
-          >
-            {value || '—'}
-          </span>
-          <button
-            onClick={() => {
-              setDraft(value);
-              setEditing(true);
-            }}
-            className="opacity-0 group-hover:opacity-100 h-6 w-6 flex items-center justify-center rounded text-neutral-400 hover:bg-neutral-100 transition-opacity"
-            aria-label={`Modifier ${label}`}
-          >
-            <Pencil className="h-3 w-3" />
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ——— Composant pour les attributs avec select ———
-
-interface SelectAttributeRowProps {
-  attrKey: string;
-  label: string;
-  value: string;
-  options: AttributeSelectOption[];
-  allowCustom?: boolean;
-  onSave: (key: string, value: string) => void;
-}
-
-function SelectAttributeRow({
-  attrKey,
-  label,
-  value,
-  options,
-  allowCustom = false,
-  onSave,
-}: SelectAttributeRowProps) {
-  return (
-    <div className="group flex items-center gap-2 py-1.5 border-b border-neutral-100 last:border-0">
-      <span className="w-32 flex-shrink-0 text-[10px] uppercase tracking-wide text-neutral-500 font-medium">
-        {label}
-      </span>
-      <div className="flex-1 min-w-0">
-        <AttributeSelect
-          value={value}
-          onChange={v => onSave(attrKey, v)}
-          options={options}
-          allowCustom={allowCustom}
-        />
-      </div>
-    </div>
-  );
 }
 
 // ——— Configuration des attributs prédéfinis ———
@@ -442,7 +224,6 @@ export function AttributesVariantesCard({
             href={`/produits/catalogue/variantes/${product.variant_group_id}`}
             className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-blue-200 bg-blue-50 text-[10px] text-blue-700 hover:bg-blue-100 transition-colors"
           >
-            <Lock className="h-2.5 w-2.5" />
             Hérité du groupe · voir groupe
           </a>
         )}
@@ -519,7 +300,7 @@ export function AttributesVariantesCard({
           />
           <button
             onClick={handleAddAttr}
-            className="h-6 w-6 flex items-center justify-center rounded text-green-600 hover:bg-green-50"
+            className="h-11 w-11 md:h-7 md:w-7 flex items-center justify-center rounded text-green-600 hover:bg-green-50"
             aria-label="Ajouter"
           >
             <Check className="h-3 w-3" />
@@ -530,7 +311,7 @@ export function AttributesVariantesCard({
               setNewKey('');
               setNewValue('');
             }}
-            className="h-6 w-6 flex items-center justify-center rounded text-neutral-400 hover:bg-neutral-100"
+            className="h-11 w-11 md:h-7 md:w-7 flex items-center justify-center rounded text-neutral-400 hover:bg-neutral-100"
             aria-label="Annuler"
           >
             <X className="h-3 w-3" />

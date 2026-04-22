@@ -122,20 +122,20 @@ function InlineDimField({
           <span className="text-[9px] text-neutral-400">{unit}</span>
           <button
             onClick={handleSave}
-            className="h-5 w-5 flex items-center justify-center rounded text-green-600 hover:bg-green-50"
+            className="h-11 w-11 md:h-7 md:w-7 flex items-center justify-center rounded text-green-600 hover:bg-green-50"
             aria-label="Valider"
           >
-            <Check className="h-2.5 w-2.5" />
+            <Check className="h-3 w-3" />
           </button>
           <button
             onClick={() => {
               setDraft(value?.toString() ?? '');
               setEditing(false);
             }}
-            className="h-5 w-5 flex items-center justify-center rounded text-neutral-400 hover:bg-neutral-100"
+            className="h-11 w-11 md:h-7 md:w-7 flex items-center justify-center rounded text-neutral-400 hover:bg-neutral-100"
             aria-label="Annuler"
           >
-            <X className="h-2.5 w-2.5" />
+            <X className="h-3 w-3" />
           </button>
         </div>
       ) : (
@@ -297,36 +297,38 @@ export function DimensionsWeightCard({
         {/* Cube wireframe */}
         <div className="flex-shrink-0">
           <CubeWireframe
-            length={displayLength as number | null}
-            width={displayWidth as number | null}
-            height={displayHeight as number | null}
+            length={displayLength ?? null}
+            width={displayWidth ?? null}
+            height={displayHeight ?? null}
           />
         </div>
 
         {/* 4 mini-cards */}
         <div className="grid grid-cols-2 gap-2 flex-1 min-w-0">
           <InlineDimField
-            label="Largeur (L)"
-            value={(displayLength as number | null) ?? null}
+            label="Longueur (L)"
+            value={displayLength ?? null}
             unit={dims?.unit ?? 'cm'}
             readOnly={isInherited}
-            onChange={v => handleDimChange('width_cm', v)}
+            onChange={v => handleDimChange('length_cm', v)}
           />
           <InlineDimField
             label="Hauteur (H)"
-            value={(displayHeight as number | null) ?? null}
+            value={displayHeight ?? null}
             unit={dims?.unit ?? 'cm'}
             readOnly={isInherited}
             onChange={v => handleDimChange('height_cm', v)}
           />
           <InlineDimField
-            label={
-              dims?.diameter != null ? 'Diamètre (⌀)' : 'Profondeur / Diam.'
-            }
-            value={dims?.diameter ?? (displayWidth as number | null)}
+            label={dims?.diameter != null ? 'Diamètre (⌀)' : 'Largeur (l)'}
+            value={dims?.diameter ?? displayWidth ?? null}
             unit={dims?.unit ?? 'cm'}
             readOnly={isInherited}
-            onChange={v => handleDimChange('depth_cm', v)}
+            onChange={v =>
+              dims?.diameter != null
+                ? handleDimChange('diameter_cm', v)
+                : handleDimChange('width_cm', v)
+            }
           />
           <InlineDimField
             label="Poids"
@@ -340,9 +342,9 @@ export function DimensionsWeightCard({
 
       {/* Volume calculé automatiquement */}
       <VolumeDisplay
-        length={displayLength as number | null}
-        width={displayWidth as number | null}
-        height={displayHeight as number | null}
+        length={displayLength ?? null}
+        width={displayWidth ?? null}
+        height={displayHeight ?? null}
         unit={dims?.unit ?? 'cm'}
       />
 
