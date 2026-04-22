@@ -24,6 +24,7 @@ import {
 
 import { OrderTimeline } from '@verone/orders';
 import { PaymentSection } from '@/components/orders/PaymentSection';
+import { ShipmentCardsSection } from './ShipmentCardsSection';
 import { InvoicesSection } from '@/components/orders/InvoicesSection';
 import { QuotesSection } from '@/components/orders/QuotesSection';
 
@@ -169,6 +170,12 @@ export function RightColumn({
           </div>
         </CardContent>
       </Card>
+
+      {/* EXPEDITION — historique + statut */}
+      <ShipmentCardsSection
+        order={order}
+        onOpenShipmentModal={onOpenShipmentModal}
+      />
 
       {/* CONTACTS: Cards fusionnées via FK — compact */}
       {fusedContacts.length > 0 ? (
