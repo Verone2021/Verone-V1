@@ -1,6 +1,6 @@
 # Back-Office — Documentation App
 
-_Generated: 2026-04-22 20:24_
+_Generated: 2026-04-22 21:14_
 
 ## Pages (147)
 
@@ -154,7 +154,7 @@ _Generated: 2026-04-22 20:24_
 | `/`                                                                      | page.tsx |
 | `/unauthorized`                                                          | page.tsx |
 
-## API Routes (126)
+## API Routes (127)
 
 | Endpoint                                                     | Methods            |
 | ------------------------------------------------------------ | ------------------ |
@@ -182,6 +182,7 @@ _Generated: 2026-04-22 20:24_
 | `/api/emails/send-document`                                  | POST               |
 | `/api/emails/send-invoice`                                   | POST               |
 | `/api/emails/send-order-documents`                           | POST               |
+| `/api/emails/send-shipping-tracking`                         | POST               |
 | `/api/emails/storage-request-approved`                       | POST               |
 | `/api/emails/storage-request-rejected`                       | POST               |
 | `/api/expenses/classify`                                     | POST               |

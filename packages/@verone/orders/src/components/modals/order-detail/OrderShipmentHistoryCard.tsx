@@ -8,6 +8,8 @@ import { History, CheckCircle2, ExternalLink, Mail } from 'lucide-react';
 import type { SalesOrder } from '@verone/orders/hooks';
 
 export interface ShipmentHistoryItem {
+  /** UUID of the first sales_order_shipment row in this shipment group (same shipped_at). */
+  id: string;
   shipped_at: string;
   tracking_number: string | null;
   tracking_url: string | null;
@@ -178,7 +180,7 @@ export function OrderShipmentHistoryCard({
                 )}
                 {onSendTrackingEmail && (
                   <button
-                    className="ml-2 inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline"
+                    className="ml-2 inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline min-h-[44px] md:min-h-0 px-2 py-3 md:py-0.5"
                     onClick={() => onSendTrackingEmail(h)}
                   >
                     <Mail className="h-3 w-3" />
