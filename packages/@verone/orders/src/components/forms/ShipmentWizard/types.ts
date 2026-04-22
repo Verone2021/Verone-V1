@@ -50,6 +50,7 @@ export interface PreviousShipmentGroup {
   tracking_url: string | null;
   packlink_status: string | null;
   shipping_cost: number | null;
+  packages_info: PackageInfo[];
   items: Array<{ product_name: string; quantity: number }>;
 }
 
@@ -62,6 +63,7 @@ export interface ShipmentRow {
   tracking_url: string | null;
   packlink_status: string | null;
   shipping_cost: number | null;
+  packages_info: unknown;
   products: { name: string } | null;
 }
 
@@ -159,8 +161,6 @@ export interface ShipmentWizardState {
 
   // Previous shipments
   previousShipments: PreviousShipmentGroup[];
-  showPreviousShipments: boolean;
-  setShowPreviousShipments: (v: boolean) => void;
 
   // Computed
   totals: { totalQty: number; totalValue: number; hasStockIssue: boolean };

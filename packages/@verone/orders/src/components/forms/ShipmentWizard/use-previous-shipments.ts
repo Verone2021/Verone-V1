@@ -1,10 +1,35 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import type { PreviousShipmentGroup, ShipmentRow } from './types';
+import type { PackageInfo, PreviousShipmentGroup, ShipmentRow } from './types';
+
+function parsePackagesInfo(raw: unknown): PackageInfo[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap(item => {
+    if (
+      item == null ||
+      typeof item !== 'object' ||
+      typeof (item as { weight?: unknown }).weight !== 'number' ||
+      typeof (item as { width?: unknown }).width !== 'number' ||
+      typeof (item as { height?: unknown }).height !== 'number' ||
+      typeof (item as { length?: unknown }).length !== 'number'
+    ) {
+      return [];
+    }
+    const pkg = item as PackageInfo;
+    return [
+      {
+        weight: pkg.weight,
+        width: pkg.width,
+        height: pkg.height,
+        length: pkg.length,
+      },
+    ];
+  });
+}
 
 /**
  * Loads previous shipments for partially-shipped orders.
@@ -16,13 +41,10 @@ export function usePreviousShipments(
   supabase: SupabaseClient
 ): {
   previousShipments: PreviousShipmentGroup[];
-  showPreviousShipments: boolean;
-  setShowPreviousShipments: (v: boolean) => void;
 } {
   const [previousShipments, setPreviousShipments] = useState<
     PreviousShipmentGroup[]
   >([]);
-  const [showPreviousShipments, setShowPreviousShipments] = useState(false);
 
   // Charge aussi pour 'validated' et 'shipped' — les shipments Packlink `a_payer`
   // ne déclenchent pas le trigger `update_stock_on_shipment` (early return tant que
@@ -41,7 +63,7 @@ export function usePreviousShipments(
         .select(
           `shipped_at, quantity_shipped, product_id,
           delivery_method, carrier_name, tracking_number, tracking_url,
-          packlink_status, shipping_cost,
+          packlink_status, shipping_cost, packages_info,
           products:product_id (name)`
         )
         .eq('sales_order_id', salesOrderId)
@@ -63,6 +85,7 @@ export function usePreviousShipments(
             tracking_url: row.tracking_url,
             packlink_status: row.packlink_status,
             shipping_cost: row.shipping_cost,
+            packages_info: parsePackagesInfo(row.packages_info),
             items: [],
           });
         }
@@ -77,5 +100,5 @@ export function usePreviousShipments(
     void loadPreviousShipments();
   }, [salesOrderId, salesOrderStatus, supabase]);
 
-  return { previousShipments, showPreviousShipments, setShowPreviousShipments };
+  return { previousShipments };
 }

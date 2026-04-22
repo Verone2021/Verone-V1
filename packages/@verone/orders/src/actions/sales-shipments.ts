@@ -13,6 +13,14 @@ const shipmentItemSchema = z.object({
   quantity_to_ship: z.number().int().positive(),
 });
 
+// Dimensions colis envoyés à Packlink (BO-SHIP-UX-002)
+const packageInfoSchema = z.object({
+  weight: z.number().positive(),
+  width: z.number().positive(),
+  height: z.number().positive(),
+  length: z.number().positive(),
+});
+
 const validateShipmentSchema = z.object({
   sales_order_id: z.string().uuid(),
   items: z.array(shipmentItemSchema).min(1),
@@ -33,6 +41,8 @@ const validateShipmentSchema = z.object({
   packlink_status: z
     .enum(['a_payer', 'paye', 'in_transit', 'delivered', 'incident'])
     .optional(),
+  // Dimensions colis Packlink (persistés pour l'historique)
+  packages_info: z.array(packageInfoSchema).optional(),
 });
 
 /**
@@ -172,6 +182,9 @@ export async function validateSalesShipment(
           estimated_delivery_at: validatedData.estimated_delivery_at,
           packlink_shipment_id: validatedData.packlink_shipment_id,
           packlink_status: validatedData.packlink_status,
+          // Dupliqué sur chaque row du shipment (groupé par shipped_at côté lecture).
+          // Default '[]'::jsonb si non fourni (ex: shipment manuel sans dimensions).
+          packages_info: validatedData.packages_info ?? [],
         });
 
       if (insertError) {

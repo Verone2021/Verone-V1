@@ -31,6 +31,13 @@ export function useShipmentValidator() {
           | 'in_transit'
           | 'delivered'
           | 'incident';
+        /** Dimensions des colis envoyés à Packlink (BO-SHIP-UX-002) */
+        packages_info?: Array<{
+          weight: number;
+          width: number;
+          height: number;
+          length: number;
+        }>;
       }
     ): Promise<{ success: boolean; error?: string }> => {
       try {
