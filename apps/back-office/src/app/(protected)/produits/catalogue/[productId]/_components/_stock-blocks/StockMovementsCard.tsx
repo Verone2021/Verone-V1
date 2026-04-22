@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 import { ProductStockHistoryModal } from '@verone/products';
-import { useStockMovements, type StockReasonCode } from '@verone/stock';
+import { getReasonDescription, type StockReasonCode } from '@verone/stock';
 import type { MovementType } from '@verone/stock';
 
 interface Movement {
@@ -30,6 +30,10 @@ interface Movement {
   unit_cost?: number;
   performed_by: string;
   performed_at: string;
+  user_profiles?: {
+    first_name?: string | null;
+    last_name?: string | null;
+  } | null;
 }
 
 interface MovementsStats {
@@ -105,7 +109,6 @@ export function StockMovementsCard({
   stats,
 }: StockMovementsCardProps) {
   const [showHistory, setShowHistory] = useState(false);
-  const { getReasonDescription } = useStockMovements();
 
   const handleOpenHistory = useCallback(() => {
     setShowHistory(true);
@@ -179,7 +182,10 @@ export function StockMovementsCard({
                   <th className="px-2 py-2 text-left font-medium hidden lg:table-cell">
                     Référence
                   </th>
-                  <th className="px-2 py-2 text-right font-medium hidden xl:table-cell">
+                  <th className="px-2 py-2 text-left font-medium hidden xl:table-cell">
+                    Utilisateur
+                  </th>
+                  <th className="px-2 py-2 text-right font-medium hidden 2xl:table-cell">
                     Coût unit.
                   </th>
                 </tr>
@@ -218,7 +224,27 @@ export function StockMovementsCard({
                     <td className="px-2 py-2.5 text-neutral-500 text-xs font-mono hidden lg:table-cell">
                       {formatRef(m.reference_type, m.reference_id)}
                     </td>
-                    <td className="px-2 py-2.5 text-right tabular-nums text-neutral-600 text-xs hidden xl:table-cell">
+                    <td className="px-2 py-2.5 text-neutral-600 text-xs hidden xl:table-cell">
+                      {m.user_profiles?.first_name != null ||
+                      m.user_profiles?.last_name != null ? (
+                        <span>
+                          {[
+                            m.user_profiles.first_name,
+                            m.user_profiles.last_name,
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
+                        </span>
+                      ) : (
+                        <span
+                          className="font-mono text-neutral-400"
+                          title={m.performed_by}
+                        >
+                          {m.performed_by.slice(0, 8)}…
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-2 py-2.5 text-right tabular-nums text-neutral-600 text-xs hidden 2xl:table-cell">
                       {m.unit_cost != null
                         ? new Intl.NumberFormat('fr-FR', {
                             style: 'currency',

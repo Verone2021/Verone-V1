@@ -66,6 +66,11 @@ export function ProductStockDashboard({
       console.error
     );
     void fetchAlerts().catch(console.error);
+    // fetchMovements / fetchMovementsStats / fetchReservations / fetchAlerts sont
+    // wrappées dans useCallback avec des deps stables (createClient() via useMemo,
+    // product.id non utilisé comme dep interne). Les inclure causerait une boucle
+    // infinie car chaque appel réinitialise l'état du hook (nouvelles références).
+    // Safe à exclure — déclenchement uniquement sur changement de product.id.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
@@ -101,6 +106,10 @@ export function ProductStockDashboard({
   // Données stock
   const stockReal = product.stock_real ?? 0;
   const minStock = product.min_stock ?? 0;
+  // stockAvailable = source de vérité unique pour la condition d'alerte
+  // (inclut stock_forecasted_out + réservations actives, plus précis que stockReal)
+  const stockAvailable =
+    stockReal - (product.stock_forecasted_out ?? 0) - reservationsTotal;
 
   // Données alerte
   const draftOrderId = productAlert?.draft_order_id ?? null;
@@ -216,8 +225,10 @@ export function ProductStockDashboard({
         {/* Body principal */}
         <div className="flex-1 space-y-4 min-w-0 pb-8">
           {/* Bloc 0 — Bannière alerte (conditionnelle) */}
-          {stockReal <= minStock && (
+          {/* Condition unifiée : stockAvailable < minStock (source de vérité unique) */}
+          {stockAvailable < minStock && (
             <StockAlertBanner
+              stockAvailable={stockAvailable}
               stockReal={stockReal}
               minStock={minStock}
               draftOrderId={draftOrderId}

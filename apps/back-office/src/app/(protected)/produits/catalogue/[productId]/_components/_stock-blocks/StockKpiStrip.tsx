@@ -154,7 +154,7 @@ export function StockKpiStrip({
             <button
               type="button"
               onClick={handleStartEdit}
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-neutral-100 text-neutral-400 hover:text-neutral-700"
+              className="opacity-0 group-hover:opacity-100 transition-opacity h-11 w-11 md:h-8 md:w-8 flex items-center justify-center rounded hover:bg-neutral-100 text-neutral-400 hover:text-neutral-700"
               aria-label="Modifier les seuils"
             >
               <Pencil className="h-3.5 w-3.5" />
@@ -195,7 +195,7 @@ export function StockKpiStrip({
                   void handleSave().catch(console.error);
                 }}
                 disabled={saving}
-                className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
+                className="flex items-center gap-1 px-3 py-2 md:px-2 md:py-0.5 rounded text-[11px] bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 min-h-[44px] md:min-h-0"
               >
                 <Check className="h-3 w-3" />
                 {saving ? '…' : 'OK'}
@@ -203,7 +203,7 @@ export function StockKpiStrip({
               <button
                 type="button"
                 onClick={handleCancelEdit}
-                className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] border border-neutral-300 text-neutral-600 hover:bg-neutral-50"
+                className="flex items-center gap-1 px-3 py-2 md:px-2 md:py-0.5 rounded text-[11px] border border-neutral-300 text-neutral-600 hover:bg-neutral-50 min-h-[44px] md:min-h-0"
               >
                 <X className="h-3 w-3" />
                 Annuler

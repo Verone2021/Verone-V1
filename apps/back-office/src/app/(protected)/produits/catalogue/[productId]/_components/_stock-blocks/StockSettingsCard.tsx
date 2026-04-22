@@ -105,14 +105,14 @@ function InlineNumberField({
               void handleSave().catch(console.error);
             }}
             disabled={saving}
-            className="p-0.5 rounded bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
+            className="h-11 w-11 md:h-8 md:w-8 flex items-center justify-center rounded bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
           >
             <Check className="h-3 w-3" />
           </button>
           <button
             type="button"
             onClick={handleCancel}
-            className="p-0.5 rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-50"
+            className="h-11 w-11 md:h-8 md:w-8 flex items-center justify-center rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-50"
           >
             <X className="h-3 w-3" />
           </button>
@@ -126,7 +126,7 @@ function InlineNumberField({
           <button
             type="button"
             onClick={handleStart}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-neutral-100 text-neutral-400 hover:text-neutral-700"
+            className="opacity-0 group-hover:opacity-100 transition-opacity h-11 w-11 md:h-8 md:w-8 flex items-center justify-center rounded hover:bg-neutral-100 text-neutral-400 hover:text-neutral-700"
             aria-label={`Modifier ${label}`}
           >
             <Pencil className="h-3.5 w-3.5" />
