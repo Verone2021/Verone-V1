@@ -17,6 +17,7 @@ export interface ShipmentHistoryItem {
   carrier_service: string | null;
   shipping_cost: number | null;
   packlink_status: string | null;
+  packlink_shipment_id: string | null;
   label_url: string | null;
   items: Array<{
     product_name: string;
@@ -112,7 +113,11 @@ export function OrderShipmentHistoryCard({
             {h.packlink_status === 'a_payer' && (
               <p className="text-[10px] ml-4 mb-1">
                 <a
-                  href="https://pro.packlink.fr/private/shipments"
+                  href={
+                    h.packlink_shipment_id
+                      ? `https://pro.packlink.fr/private/shipments/${h.packlink_shipment_id}/create/address`
+                      : 'https://pro.packlink.fr/private/shipments'
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-blue-600 hover:underline font-medium"

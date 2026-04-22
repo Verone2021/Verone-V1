@@ -32,6 +32,7 @@ export interface OrderDetailModalProps {
   onUpdate?: () => void;
   readOnly?: boolean;
   channelRedirectUrl?: string | null;
+  onOpenShipmentModal?: () => void;
 }
 
 export function OrderDetailModal({
@@ -41,6 +42,7 @@ export function OrderDetailModal({
   onUpdate,
   readOnly = false,
   channelRedirectUrl,
+  onOpenShipmentModal,
 }: OrderDetailModalProps) {
   const { markAsManuallyPaid, fetchOrderPayments, deleteManualPayment } =
     useSalesOrders();
@@ -230,6 +232,7 @@ export function OrderDetailModal({
                 shipmentHistory={data.shipmentHistory}
                 readOnly={readOnly}
                 canShip={handlers.canShip}
+                onOpenShipmentModal={onOpenShipmentModal}
               />
 
               <OrderShipmentHistoryCard

@@ -3,7 +3,7 @@
 **Derniere mise a jour** : 2026-04-22
 **23 packages** dans `packages/@verone/`
 
-## **545 composants, 12 hooks**
+## **546 composants, 12 hooks**
 
 ## @verone/categories
 
@@ -296,6 +296,7 @@
 | `StepCarrierSelection`              | Component | `src/components/forms/ShipmentWizard/StepCarrierSelection.tsx`                    |
 | `StepDeliveryMethod`                | Component | `src/components/forms/ShipmentWizard/StepDeliveryMethod.tsx`                      |
 | `StepDropoffs`                      | Component | `src/components/forms/ShipmentWizard/StepDropoffs.tsx`                            |
+| `StepError`                         | Component | `src/components/forms/ShipmentWizard/StepError.tsx`                               |
 | `StepPackageInfo`                   | Component | `src/components/forms/ShipmentWizard/StepPackageInfo.tsx`                         |
 | `StepPayment`                       | Component | `src/components/forms/ShipmentWizard/StepPayment.tsx`                             |
 | `StepStepper`                       | Component | `src/components/forms/ShipmentWizard/StepStepper.tsx`                             |

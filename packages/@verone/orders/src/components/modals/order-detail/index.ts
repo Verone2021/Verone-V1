@@ -40,6 +40,12 @@ export type { OrderPaymentDialogProps } from './OrderPaymentDialog';
 export { useOrderDetailData } from './useOrderDetailData';
 export type { OrderDetailDataState } from './useOrderDetailData';
 
+export { useShipmentHistory } from './use-shipment-history';
+export type {
+  ShipmentHistoryResult,
+  OrderItemSummary,
+} from './use-shipment-history';
+
 export { useOrderDetailHandlers } from './useOrderDetailHandlers';
 export type {
   OrderDetailHandlersInput,
