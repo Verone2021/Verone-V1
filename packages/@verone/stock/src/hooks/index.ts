@@ -23,3 +23,13 @@ export {
   getReasonDescription,
   getReasonsByCategory,
 } from './stock-reason-utils';
+
+// Utils références mouvements — formatage lisible des références
+export { formatMovementReference } from './movement-reference-utils';
+export type {
+  MovementReferenceLabel,
+  MovementReferenceEnrichment,
+} from './movement-reference-utils';
+
+// Type enrichissement référence (utilisé par StockMovement)
+export type { StockMovementReferenceEnrichment } from './stock-movements-types';

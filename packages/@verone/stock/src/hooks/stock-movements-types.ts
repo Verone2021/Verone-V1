@@ -26,6 +26,17 @@ export type StockReasonCode =
   | 'found_inventory'
   | 'manual_adjustment';
 
+export interface StockMovementReferenceEnrichment {
+  salesOrder?: {
+    order_number: string;
+    customer_name: string | null;
+  } | null;
+  purchaseOrder?: {
+    po_number: string;
+    supplier_name: string | null;
+  } | null;
+}
+
 export interface StockMovement {
   id: string;
   product_id: string;
@@ -52,6 +63,8 @@ export interface StockMovement {
     primary_image_url?: string;
   };
   user_profiles?: { first_name?: string; last_name?: string };
+  /** Données enrichies côté client — non stockées en DB */
+  reference_enrichment?: StockMovementReferenceEnrichment | null;
 }
 
 export interface CreateStockMovementData {
