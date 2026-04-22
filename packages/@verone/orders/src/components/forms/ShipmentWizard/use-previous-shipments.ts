@@ -24,8 +24,16 @@ export function usePreviousShipments(
   >([]);
   const [showPreviousShipments, setShowPreviousShipments] = useState(false);
 
+  // Charge aussi pour 'validated' et 'shipped' — les shipments Packlink `a_payer`
+  // ne déclenchent pas le trigger `update_stock_on_shipment` (early return tant que
+  // transport pas payé), donc la commande reste `validated` même avec des shipments
+  // existants. Sans cette extension, le wizard propose de réexpédier des quantités
+  // déjà réservées → risque de doubler l'envoi (BO-SHIP-PROG-001).
   useEffect(() => {
-    if (salesOrderStatus !== 'partially_shipped') return;
+    if (
+      !['validated', 'partially_shipped', 'shipped'].includes(salesOrderStatus)
+    )
+      return;
 
     const loadPreviousShipments = async () => {
       const { data: rawData } = await supabase

@@ -4,6 +4,7 @@ import { useSalesShipments } from '@verone/orders';
 
 import type {
   SalesOrder,
+  SalesOrderProgress,
   ShipmentStats,
   ShipmentHistoryItem,
   PacklinkShipment,
@@ -29,6 +30,7 @@ export interface UseExpeditionsReturn {
   historyOrders: SalesOrder[];
   packlinkShipments: PacklinkShipment[];
   packlinkPendingOrders: Set<string>;
+  orderProgress: Map<string, SalesOrderProgress>;
   expandedRows: Set<string>;
   expandedHistoryRows: Set<string>;
   activeTab: string;
@@ -79,13 +81,14 @@ export function useExpeditions(): UseExpeditionsReturn {
   const { stats, setStats } = useExpeditionsStats({ loadShipmentStats });
   const expanded = useExpeditionsExpanded();
   const modal = useShipmentModal();
-  const { orders, setOrders, packlinkPendingOrders } = useToShipOrders({
-    loadSalesOrdersReadyForShipment,
-    activeTab,
-    statusFilter,
-    searchTerm,
-    urgencyFilter,
-  });
+  const { orders, setOrders, packlinkPendingOrders, orderProgress } =
+    useToShipOrders({
+      loadSalesOrdersReadyForShipment,
+      activeTab,
+      statusFilter,
+      searchTerm,
+      urgencyFilter,
+    });
   const { packlinkShipments, handleCancelPacklinkShipment } =
     usePacklinkShipmentsList({ activeTab });
   const history = useHistoryOrders({
@@ -111,6 +114,7 @@ export function useExpeditions(): UseExpeditionsReturn {
     orders,
     packlinkShipments,
     packlinkPendingOrders,
+    orderProgress,
     historyOrders: history.historyOrders,
     selectedOrder: history.selectedOrder,
     shipmentHistory: history.shipmentHistory,
