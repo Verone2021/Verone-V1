@@ -40,6 +40,7 @@ export function useStockMovements() {
     async (filters?: StockMovementFilters) => {
       setLoading(true);
       try {
+        // Étape 1 : fetch des mouvements + produits (sans user_profiles, FK inexistante dans le schema PostgREST)
         let query = supabase
           .from('stock_movements')
           .select(
@@ -69,10 +70,6 @@ export function useStockMovements() {
               public_url,
               is_primary
             )
-          ),
-          user_profiles!stock_movements_performed_by_fkey (
-            first_name,
-            last_name
           )
         `
           )
@@ -105,8 +102,46 @@ export function useStockMovements() {
 
         if (error) throw error;
 
-        // Enrichir les produits avec primary_image_url (BR-TECH-002)
-        const enrichedMovements = (data ?? []).map(movement => ({
+        const rawMovements = data ?? [];
+
+        // Étape 2 : fetch des profils utilisateurs séparément (pas de FK nommée explicite
+        // sur stock_movements.performed_by côté PostgREST — pattern identique à getProductHistory)
+        const userIds = Array.from(
+          new Set(
+            rawMovements
+              .map(m => m.performed_by)
+              .filter((id): id is string => Boolean(id))
+          )
+        );
+
+        let userProfilesMap = new Map<
+          string,
+          { first_name: string | null; last_name: string | null }
+        >();
+
+        if (userIds.length > 0) {
+          const { data: userProfiles, error: profilesError } = await supabase
+            .from('user_profiles')
+            .select('user_id, first_name, last_name')
+            .in('user_id', userIds);
+
+          if (profilesError) {
+            console.warn(
+              '[useStockMovements] user_profiles fetch:',
+              profilesError
+            );
+          } else if (userProfiles) {
+            userProfilesMap = new Map(
+              userProfiles.map(p => [
+                p.user_id,
+                { first_name: p.first_name, last_name: p.last_name },
+              ])
+            );
+          }
+        }
+
+        // Enrichir les produits avec primary_image_url + user_profiles
+        const enrichedMovements = rawMovements.map(movement => ({
           ...movement,
           products: movement.products
             ? {
@@ -114,6 +149,9 @@ export function useStockMovements() {
                 primary_image_url:
                   movement.products.product_images?.[0]?.public_url ?? null,
               }
+            : null,
+          user_profiles: movement.performed_by
+            ? (userProfilesMap.get(movement.performed_by) ?? null)
             : null,
         }));
 
