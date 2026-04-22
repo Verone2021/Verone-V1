@@ -47,6 +47,20 @@ export function OrderShipmentHistoryCard({
 }: OrderShipmentHistoryCardProps) {
   if (shipmentHistory.length === 0) return null;
 
+  // Global shipping progress
+  const totalOrdered =
+    order.sales_order_items?.reduce(
+      (sum, item) => sum + (item.quantity ?? 0),
+      0
+    ) ?? 0;
+  const totalShipped = shipmentHistory.reduce(
+    (sum, h) =>
+      sum + h.items.reduce((s, i) => s + (i.quantity_shipped ?? 0), 0),
+    0
+  );
+  const percentShipped =
+    totalOrdered > 0 ? Math.round((totalShipped / totalOrdered) * 100) : 0;
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -56,6 +70,24 @@ export function OrderShipmentHistoryCard({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 max-h-[320px] overflow-y-auto">
+        {totalOrdered > 0 && (
+          <div className="mb-2 rounded-md border border-blue-200 bg-blue-50 px-2 py-1.5">
+            <div className="flex items-center justify-between text-[11px] font-medium text-blue-900">
+              <span>
+                {shipmentHistory.length} expédition
+                {shipmentHistory.length > 1 ? 's' : ''} · {totalShipped}/
+                {totalOrdered} articles
+              </span>
+              <span>{percentShipped}%</span>
+            </div>
+            <div className="mt-1 h-1 w-full overflow-hidden rounded bg-blue-100">
+              <div
+                className="h-full bg-blue-600 transition-all"
+                style={{ width: `${Math.min(percentShipped, 100)}%` }}
+              />
+            </div>
+          </div>
+        )}
         {shipmentHistory.map((h, idx) => (
           <div
             key={`shipment-${idx}`}
