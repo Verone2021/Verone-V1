@@ -126,10 +126,13 @@ export default function ProductDetailPage() {
 
         <TabContent activeTab={activeTab} tabId="images">
           <ProductImagesTab
+            product={product}
+            completionPercentage={completionPercentage}
             productId={product.id}
             productName={product.name}
             imageCount={productImages.length}
             onOpenPhotosModal={() => setShowPhotosModal(true)}
+            onTabChange={setActiveTab}
           />
         </TabContent>
 
