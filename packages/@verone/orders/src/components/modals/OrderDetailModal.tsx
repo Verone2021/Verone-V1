@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
@@ -24,6 +26,8 @@ import {
   OrderActionsCard,
   OrderSubModals,
 } from './order-detail';
+import type { ShipmentHistoryItem } from './order-detail';
+import { SendShippingTrackingModal } from './SendShippingTrackingModal';
 
 export interface OrderDetailModalProps {
   order: SalesOrder | null;
@@ -50,6 +54,9 @@ export function OrderDetailModal({
     orderId: order?.id ?? '',
     orderType: 'sales',
   });
+
+  const [shipmentToEmail, setShipmentToEmail] =
+    useState<ShipmentHistoryItem | null>(null);
 
   const data = useOrderDetailData(order, open);
 
@@ -238,6 +245,7 @@ export function OrderDetailModal({
               <OrderShipmentHistoryCard
                 shipmentHistory={data.shipmentHistory}
                 order={order}
+                onSendTrackingEmail={h => setShipmentToEmail(h)}
               />
 
               <OrderActionsCard
@@ -293,6 +301,32 @@ export function OrderDetailModal({
         linkedDocuments={data.linkedDocuments}
         orderContacts={data.orderContacts}
       />
+
+      {shipmentToEmail && (
+        <SendShippingTrackingModal
+          open={!!shipmentToEmail}
+          onClose={() => setShipmentToEmail(null)}
+          shipment={shipmentToEmail}
+          order={{
+            id: order.id,
+            order_number: order.order_number,
+            organisations: order.organisations
+              ? {
+                  email: order.organisations.email ?? null,
+                  trade_name: order.organisations.trade_name ?? null,
+                }
+              : null,
+            individual_customers: order.individual_customers
+              ? {
+                  email: order.individual_customers.email ?? null,
+                  first_name: order.individual_customers.first_name ?? null,
+                  last_name: order.individual_customers.last_name ?? null,
+                }
+              : null,
+          }}
+          onSuccess={onUpdate}
+        />
+      )}
     </>
   );
 }

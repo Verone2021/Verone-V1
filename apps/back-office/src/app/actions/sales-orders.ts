@@ -4,13 +4,9 @@ import { revalidatePath } from 'next/cache';
 
 import { createAdminClient } from '@verone/utils/supabase/server';
 
-export type SalesOrderStatus =
-  | 'pending_approval'
-  | 'draft'
-  | 'validated'
-  | 'partially_shipped'
-  | 'shipped'
-  | 'cancelled';
+import type { SalesOrderStatus } from '@verone/orders/hooks';
+
+export type { SalesOrderStatus };
 
 interface UpdateStatusResult {
   success: boolean;

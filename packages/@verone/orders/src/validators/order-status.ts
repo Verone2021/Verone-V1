@@ -41,6 +41,7 @@ export type SalesOrderStatus =
   | 'partially_shipped'
   | 'shipped'
   | 'delivered'
+  | 'closed'
   | 'cancelled';
 
 /**
@@ -98,9 +99,10 @@ const STATUS_TRANSITIONS: Record<SalesOrderStatus, SalesOrderStatus[]> = {
   pending_approval: ['draft', 'cancelled'],
   draft: ['validated', 'cancelled'],
   validated: ['partially_shipped', 'shipped', 'cancelled'],
-  partially_shipped: ['shipped', 'cancelled'],
-  shipped: [], // État final - futur: delivered via Packlink/Chronotruck
-  delivered: [], // Backward compat DB - plus utilisé dans workflow actif
+  partially_shipped: ['shipped', 'closed', 'cancelled'],
+  shipped: ['delivered'], // delivered via webhook Packlink
+  delivered: [], // État final
+  closed: [], // État final (backorder release)
   cancelled: [], // État final
 };
 
@@ -114,6 +116,7 @@ export const STATUS_LABELS: Record<SalesOrderStatus, string> = {
   partially_shipped: 'Partiellement expédiée',
   shipped: 'Expédiée',
   delivered: 'Livrée',
+  closed: 'Clôturée',
   cancelled: 'Annulée',
 };
 
@@ -130,6 +133,7 @@ export const STATUS_COLORS: Record<
   partially_shipped: 'yellow',
   shipped: 'green',
   delivered: 'green',
+  closed: 'gray',
   cancelled: 'red',
 };
 
@@ -195,9 +199,13 @@ export function isFinalStatus(status: SalesOrderStatus): boolean {
  * Ne retourne `true` que pour les statuts post-expédition et annulés.
  */
 export function isOrderLocked(status: SalesOrderStatus | string): boolean {
-  return ['shipped', 'partially_shipped', 'delivered', 'cancelled'].includes(
-    status
-  );
+  return [
+    'shipped',
+    'partially_shipped',
+    'delivered',
+    'closed',
+    'cancelled',
+  ].includes(status);
 }
 
 /**
