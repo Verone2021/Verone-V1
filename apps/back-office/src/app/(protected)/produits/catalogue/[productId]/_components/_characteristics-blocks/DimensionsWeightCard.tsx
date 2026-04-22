@@ -153,6 +153,64 @@ function InlineDimField({
   );
 }
 
+/** Convertit une dimension vers cm selon l'unité source */
+function toCm(value: number, unit: string): number {
+  if (unit === 'm') return value * 100;
+  if (unit === 'mm') return value / 10;
+  return value; // cm par défaut
+}
+
+/** Formate un volume m³ avec 3-5 décimales significatives */
+function formatVolume(m3: number): string {
+  if (m3 === 0) return '0 m³';
+  // Trouver le bon nombre de décimales significatives
+  const decimals = m3 < 0.001 ? 6 : m3 < 0.01 ? 5 : m3 < 0.1 ? 4 : 3;
+  return `${m3.toFixed(decimals)} m³`;
+}
+
+interface VolumeDisplayProps {
+  length: number | null;
+  width: number | null;
+  height: number | null;
+  unit: string;
+}
+
+function VolumeDisplay({ length, width, height, unit }: VolumeDisplayProps) {
+  if (length == null || width == null || height == null) {
+    return (
+      <div className="mt-3 flex items-center gap-2 px-2 py-1.5 bg-neutral-50 rounded border border-neutral-100">
+        <span className="text-sm">📦</span>
+        <span className="text-[10px] uppercase tracking-wide text-neutral-400 font-medium w-20 flex-shrink-0">
+          Volume
+        </span>
+        <span className="text-xs text-neutral-400 italic tabular-nums">
+          — (L × l × H requis)
+        </span>
+      </div>
+    );
+  }
+
+  const lcm = toCm(length, unit);
+  const wcm = toCm(width, unit);
+  const hcm = toCm(height, unit);
+  const volumeM3 = (lcm * wcm * hcm) / 1_000_000;
+
+  return (
+    <div className="mt-3 flex items-center gap-2 px-2 py-1.5 bg-neutral-50 rounded border border-neutral-100">
+      <span className="text-sm">📦</span>
+      <span className="text-[10px] uppercase tracking-wide text-neutral-400 font-medium w-20 flex-shrink-0">
+        Volume
+      </span>
+      <span className="text-sm font-semibold tabular-nums text-neutral-700">
+        {formatVolume(volumeM3)}
+      </span>
+      <span className="text-[10px] text-neutral-400 italic ml-auto">
+        entreposage
+      </span>
+    </div>
+  );
+}
+
 export function DimensionsWeightCard({
   product,
   onProductUpdate,
@@ -279,6 +337,14 @@ export function DimensionsWeightCard({
           />
         </div>
       </div>
+
+      {/* Volume calculé automatiquement */}
+      <VolumeDisplay
+        length={displayLength as number | null}
+        width={displayWidth as number | null}
+        height={displayHeight as number | null}
+        unit={dims?.unit ?? 'cm'}
+      />
 
       {/* Info héritage */}
       {isInherited && product.variant_group_id && (

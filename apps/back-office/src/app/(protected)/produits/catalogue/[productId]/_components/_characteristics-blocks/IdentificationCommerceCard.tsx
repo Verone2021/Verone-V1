@@ -6,7 +6,7 @@
  * Row full-width : Pièces compatibles (chips multi) + Vidéo URL.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 import { useInlineEdit } from '@verone/common/hooks';
 import { formatStyle } from '@verone/products/components/images';
@@ -160,6 +160,9 @@ export function IdentificationCommerceCard({
   onProductUpdate,
 }: IdentificationCommerceCardProps) {
   const [videoPreview, setVideoPreview] = useState(false);
+  const [roomsEditMode, setRoomsEditMode] = useState(false);
+  const [roomsDraft, setRoomsDraft] = useState<RoomType[]>([]);
+  const roomsDraftRef = useRef<RoomType[]>([]);
 
   const { startEdit, updateEditedData, saveChanges, cancelEdit } =
     useInlineEdit({
@@ -203,17 +206,33 @@ export function IdentificationCommerceCard({
     conditionValue ??
     '—';
 
-  const handleToggleRoom = useCallback(
-    (room: RoomType) => {
-      if (roomsIsInherited) return;
-      const current: RoomType[] = product.suitable_rooms ?? [];
-      const next = current.includes(room)
-        ? current.filter(r => r !== room)
-        : [...current, room];
-      handleSave('suitable_rooms', next);
-    },
-    [roomsIsInherited, product.suitable_rooms, handleSave]
-  );
+  const handleToggleRoomDraft = useCallback((room: RoomType) => {
+    setRoomsDraft(prev => {
+      const next = prev.includes(room)
+        ? prev.filter(r => r !== room)
+        : [...prev, room];
+      roomsDraftRef.current = next;
+      return next;
+    });
+  }, []);
+
+  const handleRoomsEditStart = useCallback(() => {
+    const current: RoomType[] = product.suitable_rooms ?? [];
+    setRoomsDraft(current);
+    roomsDraftRef.current = current;
+    setRoomsEditMode(true);
+  }, [product.suitable_rooms]);
+
+  const handleRoomsEditSave = useCallback(() => {
+    handleSave('suitable_rooms', roomsDraftRef.current);
+    setRoomsEditMode(false);
+  }, [handleSave]);
+
+  const handleRoomsEditCancel = useCallback(() => {
+    setRoomsEditMode(false);
+    setRoomsDraft([]);
+    roomsDraftRef.current = [];
+  }, []);
 
   return (
     <div className="bg-white rounded-lg border border-neutral-200 p-4">
@@ -327,37 +346,83 @@ export function IdentificationCommerceCard({
               Hérité du groupe
             </span>
           )}
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {Object.entries(ROOM_LABELS).map(([key, label]) => {
-            const room = key as RoomType;
-            const isActive = rooms.includes(room);
-            if (!isActive && roomsIsInherited) return null;
-            return (
-              <button
-                key={room}
-                onClick={() => handleToggleRoom(room)}
-                disabled={roomsIsInherited}
-                className={cn(
-                  'px-1.5 py-0.5 text-[10px] rounded border transition-colors',
-                  isActive
-                    ? roomsIsInherited
-                      ? 'bg-blue-50 border-blue-200 text-blue-700 cursor-default'
-                      : 'bg-indigo-600 border-indigo-600 text-white'
-                    : 'border-neutral-200 text-neutral-500 hover:border-neutral-400 hover:text-neutral-700',
-                  roomsIsInherited && !isActive && 'hidden'
-                )}
-              >
-                {label}
-              </button>
-            );
-          })}
-          {rooms.length === 0 && (
-            <span className="text-[10px] text-neutral-400 italic">
-              Aucune pièce sélectionnée
-            </span>
+          {!roomsIsInherited && !roomsEditMode && (
+            <button
+              onClick={handleRoomsEditStart}
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-neutral-200 bg-white text-[10px] text-neutral-600 hover:border-neutral-400 hover:text-neutral-800 transition-colors"
+            >
+              <Pencil className="h-2.5 w-2.5" />
+              Modifier
+            </button>
           )}
         </div>
+
+        {/* Mode VIEW : chips readonly des pièces sélectionnées uniquement */}
+        {!roomsEditMode && (
+          <div className="flex flex-wrap gap-1.5">
+            {rooms.length > 0 ? (
+              rooms.map(room => (
+                <span
+                  key={room}
+                  className={cn(
+                    'px-1.5 py-0.5 text-[10px] rounded border',
+                    roomsIsInherited
+                      ? 'bg-blue-50 border-blue-200 text-blue-700'
+                      : 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                  )}
+                >
+                  {ROOM_LABELS[room]}
+                </span>
+              ))
+            ) : (
+              <span className="text-[10px] text-neutral-400 italic">
+                Aucune pièce sélectionnée
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Mode EDIT : tous les 30 rooms toggleables + actions */}
+        {roomsEditMode && (
+          <div>
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {Object.entries(ROOM_LABELS).map(([key, label]) => {
+                const room = key as RoomType;
+                const isActive = roomsDraft.includes(room);
+                return (
+                  <button
+                    key={room}
+                    onClick={() => handleToggleRoomDraft(room)}
+                    className={cn(
+                      'px-1.5 py-0.5 text-[10px] rounded border transition-colors',
+                      isActive
+                        ? 'bg-indigo-600 border-indigo-600 text-white'
+                        : 'border-neutral-200 text-neutral-500 hover:border-neutral-400 hover:text-neutral-700'
+                    )}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleRoomsEditSave}
+                className="flex items-center gap-1 px-2 py-1 rounded bg-indigo-600 text-white text-[10px] font-medium hover:bg-indigo-700 transition-colors"
+              >
+                <Check className="h-2.5 w-2.5" />
+                Enregistrer
+              </button>
+              <button
+                onClick={handleRoomsEditCancel}
+                className="flex items-center gap-1 px-2 py-1 rounded border border-neutral-200 text-neutral-600 text-[10px] hover:bg-neutral-50 transition-colors"
+              >
+                <X className="h-2.5 w-2.5" />
+                Annuler
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Vidéo URL */}
