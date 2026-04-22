@@ -134,6 +134,14 @@ export function SalesOrderModals({
           });
           onOrderUpdated?.();
         }}
+        onOpenShipmentModal={
+          selectedOrder
+            ? () => {
+                setOrderToShip(selectedOrder);
+                setShowShipmentModal(true);
+              }
+            : undefined
+        }
       />
 
       {/* Modal Edition Commande */}

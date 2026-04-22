@@ -1,6 +1,6 @@
 # Back-Office — Documentation App
 
-_Generated: 2026-04-22 14:36_
+_Generated: 2026-04-22 19:26_
 
 ## Pages (147)
 
@@ -154,7 +154,7 @@ _Generated: 2026-04-22 14:36_
 | `/`                                                                      | page.tsx |
 | `/unauthorized`                                                          | page.tsx |
 
-## API Routes (125)
+## API Routes (126)
 
 | Endpoint                                                     | Methods            |
 | ------------------------------------------------------------ | ------------------ |
@@ -216,6 +216,7 @@ _Generated: 2026-04-22 14:36_
 | `/api/organisations/[id]/shipping-address`                   | PATCH              |
 | `/api/packlink/dropoffs`                                     | GET                |
 | `/api/packlink/services`                                     | POST               |
+| `/api/packlink/shipment/[ref]/cancel`                        | POST               |
 | `/api/packlink/shipment/[ref]/labels`                        | GET                |
 | `/api/packlink/shipment/[ref]`                               | GET, DELETE        |
 | `/api/packlink/shipment/[ref]/tracking`                      | GET                |

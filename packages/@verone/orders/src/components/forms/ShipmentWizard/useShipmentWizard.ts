@@ -23,14 +23,15 @@ import {
   makeRemovePackageHandler,
   makePackageChangeHandler,
 } from './handlers';
+import { useCreateDraftHandlers } from './handle-create-draft';
+import { useFetchDropoffs } from './use-fetch-dropoffs';
+import { usePreviousShipments } from './use-previous-shipments';
 import type {
   DeliveryMethod,
   SortOption,
   PacklinkService,
   PackageInfo,
   DropoffPoint,
-  PreviousShipmentGroup,
-  ShipmentRow,
   ShipmentWizardState,
 } from './types';
 
@@ -38,7 +39,10 @@ export function useShipmentWizard(
   salesOrder: SalesOrderForShipment,
   onSuccess: () => void
 ): ShipmentWizardState {
-  const supabase = createClient();
+  // Stabilise the Supabase client so it doesn't trigger useEffect re-runs.
+  // createClient() is cache-backed but TypeScript can't guarantee ref stability
+  // across renders without useMemo.
+  const supabase = useMemo(() => createClient(), []);
   const { prepareShipmentItems, validateShipment, validating } =
     useSalesShipments();
 
@@ -84,6 +88,13 @@ export function useShipmentWizard(
   } | null>(null);
   const [paying, setPaying] = useState(false);
 
+  // Error recovery state (step 8)
+  const [dbError, setDbError] = useState<string | null>(null);
+  const [pendingPacklinkRef, setPendingPacklinkRef] = useState<string | null>(
+    null
+  );
+  const [pendingAction, setPendingAction] = useState(false);
+
   // Dropoffs — sender + receiver
   const [senderDropoffs, setSenderDropoffs] = useState<DropoffPoint[]>([]);
   const [selectedSenderDropoff, setSelectedSenderDropoff] = useState<
@@ -102,67 +113,15 @@ export function useShipmentWizard(
   const [collectionDate, setCollectionDate] = useState('');
   const [collectionTime, setCollectionTime] = useState('09:00');
 
-  // Previous shipments
-  const [previousShipments, setPreviousShipments] = useState<
-    PreviousShipmentGroup[]
-  >([]);
-  const [showPreviousShipments, setShowPreviousShipments] = useState(false);
+  // Previous shipments — extracted to use-previous-shipments.ts
+  const { previousShipments, showPreviousShipments, setShowPreviousShipments } =
+    usePreviousShipments(salesOrder.id, salesOrder.status, supabase);
 
   // Init items
   useEffect(() => {
     setItems(prepareShipmentItems(salesOrder));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [salesOrder]);
-
-  // Load previous shipments (for partially_shipped orders)
-  useEffect(() => {
-    if (salesOrder.status !== 'partially_shipped') return;
-
-    const loadPreviousShipments = async () => {
-      // Select columns including ones not yet in generated types
-      // Cast pattern: same as OrderDetailModal.tsx
-      const { data: rawData } = await supabase
-        .from('sales_order_shipments')
-        .select(
-          `shipped_at, quantity_shipped, product_id,
-          delivery_method, carrier_name, tracking_number, tracking_url,
-          packlink_status, shipping_cost,
-          products:product_id (name)`
-        )
-        .eq('sales_order_id', salesOrder.id)
-        .order('shipped_at', { ascending: true });
-
-      if (!rawData || rawData.length === 0) return;
-
-      // Cast to access columns not yet in generated Supabase types
-      const rows = rawData as unknown as ShipmentRow[];
-
-      // Group by shipped_at timestamp
-      const groups = new Map<string, PreviousShipmentGroup>();
-      for (const row of rows) {
-        const key = row.shipped_at;
-        if (!groups.has(key)) {
-          groups.set(key, {
-            shipped_at: row.shipped_at,
-            delivery_method: row.delivery_method,
-            carrier_name: row.carrier_name,
-            tracking_number: row.tracking_number,
-            tracking_url: row.tracking_url,
-            packlink_status: row.packlink_status,
-            shipping_cost: row.shipping_cost,
-            items: [],
-          });
-        }
-        groups.get(key)!.items.push({
-          product_name: row.products?.name ?? 'Produit',
-          quantity: row.quantity_shipped,
-        });
-      }
-      setPreviousShipments(Array.from(groups.values()));
-    };
-
-    void loadPreviousShipments();
-  }, [salesOrder.id, salesOrder.status, supabase]);
 
   // Totals
   const totals = useMemo(() => {
@@ -301,149 +260,42 @@ export function useShipmentWizard(
     };
   }, [salesOrder]);
 
-  // Fetch dropoff points for relay services — sender (91300) + receiver (destination)
-  const fetchDropoffs = useCallback(async () => {
-    if (!selectedService || !destinationZip) return;
+  // Fetch dropoff points for relay services — extracted to use-fetch-dropoffs.ts
+  const fetchDropoffs = useFetchDropoffs({
+    selectedService,
+    destinationZip,
+    setSenderDropoffs,
+    setLoadingSenderDropoffs,
+    setReceiverDropoffs,
+    setLoadingReceiverDropoffs,
+  });
 
-    // Fetch sender dropoffs (around Massy 91300)
-    setLoadingSenderDropoffs(true);
-    try {
-      const res = await fetch(
-        `/api/packlink/dropoffs?service_id=${selectedService.id}&country=FR&zip=91300`
-      );
-      if (res.ok) {
-        const data = (await res.json()) as { dropoffs: DropoffPoint[] };
-        setSenderDropoffs(data.dropoffs ?? []);
-      }
-    } catch (err) {
-      console.error('[Dropoffs sender]', err);
-      setSenderDropoffs([]);
-    }
-    setLoadingSenderDropoffs(false);
-
-    // Fetch receiver dropoffs (around destination)
-    if (selectedService.delivery_to_parcelshop) {
-      setLoadingReceiverDropoffs(true);
-      try {
-        const res = await fetch(
-          `/api/packlink/dropoffs?service_id=${selectedService.id}&country=FR&zip=${destinationZip}`
-        );
-        if (res.ok) {
-          const data = (await res.json()) as { dropoffs: DropoffPoint[] };
-          setReceiverDropoffs(data.dropoffs ?? []);
-        }
-      } catch (err) {
-        console.error('[Dropoffs receiver]', err);
-        setReceiverDropoffs([]);
-      }
-      setLoadingReceiverDropoffs(false);
-    }
-  }, [selectedService, destinationZip]);
-
-  // Create Packlink draft shipment (POST /shipments)
-  // Payment is done manually on Packlink PRO website after draft creation
-  const handleCreateDraft = async () => {
-    if (!selectedService) return;
-    setPaying(true);
-    setServicesError(null);
-
-    const destination = buildDestination();
-
-    try {
-      const res = await fetch('/api/packlink/shipment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          serviceId: selectedService.id,
-          destination,
-          packages,
-          content: contentDescription,
-          contentValue: declaredValue,
-          contentSecondHand: isSecondHand,
-          orderReference: salesOrder.order_number ?? salesOrder.id.slice(0, 8),
-          ...(selectedSenderDropoff
-            ? { dropoffPointId: selectedSenderDropoff }
-            : {}),
-          ...(collectionDate
-            ? {
-                collectionDate: collectionDate.split('-').join('/'),
-                collectionTime: `${collectionTime}-18:00`,
-              }
-            : {}),
-        }),
-      });
-
-      if (!res.ok) {
-        const errData = (await res.json().catch(() => ({}))) as {
-          error?: string;
-          details?: string;
-        };
-        throw new Error(
-          errData.details ?? errData.error ?? `Erreur ${res.status}`
-        );
-      }
-
-      const data = (await res.json()) as {
-        success: boolean;
-        shipmentReference: string;
-      };
-
-      if (data.success) {
-        // Enregistrer l'expédition dans notre DB (packlink_status = 'a_payer')
-        // Le trigger INSERT ne décrémente PAS le stock pour les expéditions Packlink
-        // Le stock sera décrémenté quand Verone paie le transport (webhook → 'paye')
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (user?.id) {
-          const itemsToShip = items
-            .filter(i => (i.quantity_to_ship ?? 0) > 0)
-            .map(i => ({
-              sales_order_item_id: i.sales_order_item_id,
-              product_id: i.product_id,
-              quantity_to_ship: i.quantity_to_ship ?? 0,
-            }));
-
-          if (itemsToShip.length > 0) {
-            const dbResult = await validateShipment({
-              sales_order_id: salesOrder.id,
-              items: itemsToShip,
-              shipped_at: new Date().toISOString(),
-              shipped_by: user.id,
-              delivery_method: 'packlink',
-              carrier_name: selectedService.carrier_name,
-              carrier_service: selectedService.name,
-              shipping_cost: selectedService.price.total_price,
-              estimated_delivery_at:
-                selectedService.first_estimated_delivery_date ?? undefined,
-              packlink_shipment_id: data.shipmentReference,
-              packlink_status: 'a_payer',
-              notes: `Transport Packlink à payer par Verone — ${selectedService.carrier_name}`,
-            });
-
-            if (!dbResult.success) {
-              console.error('[ShipmentWizard] DB save failed:', dbResult.error);
-            }
-          }
-        }
-
-        setShipmentResult({
-          trackingNumber: null,
-          labelUrl: null,
-          carrierName: selectedService.carrier_name,
-          orderReference: data.shipmentReference,
-          totalPaid: selectedService.price.total_price,
-        });
-        setStep(7); // Success — show link to Packlink PRO for payment
-      }
-    } catch (err) {
-      setServicesError(
-        err instanceof Error ? err.message : 'Erreur creation expedition'
-      );
-    }
-    setPaying(false);
-  };
+  // Create Packlink draft shipment + DB save — extracted to handle-create-draft.ts
+  const { handleCreateDraft, handleRetryDbSave, handleCancelPacklink } =
+    useCreateDraftHandlers({
+      salesOrderId: salesOrder.id,
+      salesOrderNumber: salesOrder.order_number ?? null,
+      items,
+      packages,
+      selectedService,
+      contentDescription,
+      declaredValue,
+      isSecondHand,
+      collectionDate,
+      collectionTime,
+      selectedSenderDropoff,
+      pendingPacklinkRef,
+      supabase,
+      validateShipment,
+      buildDestination,
+      setStep,
+      setPaying,
+      setServicesError,
+      setDbError,
+      setPendingPacklinkRef,
+      setPendingAction,
+      setShipmentResult,
+    });
 
   return {
     step,
@@ -501,6 +353,9 @@ export function useShipmentWizard(
     stepLabels,
     maxStep,
     validating,
+    dbError,
+    pendingPacklinkRef,
+    pendingAction,
     handleQuantityChange,
     handleShipAll,
     handleAddPackage,
@@ -510,6 +365,8 @@ export function useShipmentWizard(
     fetchDropoffs,
     handleSimpleValidation,
     handleCreateDraft,
+    handleRetryDbSave,
+    handleCancelPacklink,
     formatTransit,
     formatTransitLabel,
     formatEstimatedDate,

@@ -92,6 +92,7 @@ export function useOrderDetailData(
         carrier_service,
         shipping_cost,
         packlink_status,
+        packlink_shipment_id,
         label_url,
         products:product_id (name, sku)
       `
@@ -139,6 +140,8 @@ export function useOrderDetailData(
               carrier_service: (row.carrier_service as string) ?? null,
               shipping_cost: (row.shipping_cost as number) ?? null,
               packlink_status: (row.packlink_status as string) ?? null,
+              packlink_shipment_id:
+                (row.packlink_shipment_id as string) ?? null,
               label_url: (row.label_url as string) ?? null,
               items: [],
             });

@@ -23,6 +23,7 @@ export interface OrderShipmentStatusCardProps {
   shipmentHistory: ShipmentHistoryItem[];
   readOnly: boolean;
   canShip: boolean;
+  onOpenShipmentModal?: () => void;
 }
 
 export function OrderShipmentStatusCard({
@@ -30,6 +31,7 @@ export function OrderShipmentStatusCard({
   shipmentHistory,
   readOnly,
   canShip,
+  onOpenShipmentModal,
 }: OrderShipmentStatusCardProps) {
   return (
     <Card>
@@ -84,15 +86,25 @@ export function OrderShipmentStatusCard({
             >
               Transport à payer (Packlink)
             </Badge>
-            <a
-              href="https://pro.packlink.fr/private/shipments"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1 text-xs text-orange-700 hover:text-orange-900 underline"
-            >
-              <ExternalLink className="h-3 w-3" />
-              Payer sur Packlink PRO
-            </a>
+            {(() => {
+              const firstToPay = shipmentHistory.find(
+                h => h.packlink_status === 'a_payer'
+              );
+              const packlinkUrl = firstToPay?.packlink_shipment_id
+                ? `https://pro.packlink.fr/private/shipments/${firstToPay.packlink_shipment_id}/create/address`
+                : 'https://pro.packlink.fr/private/shipments';
+              return (
+                <a
+                  href={packlinkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1 text-xs text-orange-700 hover:text-orange-900 underline"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Payer sur Packlink PRO
+                </a>
+              );
+            })()}
           </div>
         ) : shipmentHistory.length > 0 ? (
           <Badge
@@ -107,17 +119,19 @@ export function OrderShipmentStatusCard({
           </p>
         )}
 
-        {!readOnly && canShip && shipmentHistory.length === 0 && (
-          <ButtonV2
-            size="sm"
-            className="w-full"
-            disabled
-            title="Fonctionnalité en cours de développement"
-          >
-            <Truck className="h-3 w-3 mr-1" />
-            Gérer expédition
-          </ButtonV2>
-        )}
+        {!readOnly &&
+          canShip &&
+          shipmentHistory.length === 0 &&
+          onOpenShipmentModal && (
+            <ButtonV2
+              size="sm"
+              className="w-full"
+              onClick={onOpenShipmentModal}
+            >
+              <Truck className="h-3 w-3 mr-1" />
+              Nouvelle expédition
+            </ButtonV2>
+          )}
       </CardContent>
     </Card>
   );
