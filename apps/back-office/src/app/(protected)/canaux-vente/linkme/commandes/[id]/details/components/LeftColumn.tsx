@@ -5,11 +5,7 @@ import { canEditFees } from '@verone/orders';
 import type { LinkMeOrderDetails } from '../../../../hooks/use-linkme-order-actions';
 import { FeesSection } from '@/components/orders/FeesSection';
 
-import type {
-  EnrichedOrderItem,
-  FusedContactGroup,
-  OrderWithDetails,
-} from './types';
+import type { EnrichedOrderItem, OrderWithDetails } from './types';
 import { CommissionVersementCard } from './left-column/CommissionVersementCard';
 import { DeliveryCard } from './left-column/DeliveryCard';
 import { InfoRequestsCard } from './left-column/InfoRequestsCard';
@@ -26,7 +22,6 @@ export interface LeftColumnProps {
   enrichedItems: EnrichedOrderItem[];
   locked: boolean;
   details: LinkMeOrderDetails | null;
-  fusedContacts: FusedContactGroup[];
   // Items editing
   editedQuantities: Record<string, number>;
   setEditedQuantities: React.Dispatch<
@@ -49,14 +44,10 @@ export interface LeftColumnProps {
   onOpenEditDialog: (
     step: 'responsable' | 'billing' | 'delivery_address' | 'delivery_options'
   ) => void;
-  // Contact dialog
-  onOpenContactDialog: (role: 'responsable' | 'billing' | 'delivery') => void;
   // Delivery address
   deliveryAddressMatchesOrg: boolean;
   onUseOrgAddress: () => void;
   updateDetailsPending: boolean;
-  // Step badge
-  isStep4Complete: boolean;
   // Organisation inline edit
   onUpdateOrganisation?: (
     orgId: string,
@@ -73,7 +64,6 @@ export function LeftColumn({
   enrichedItems,
   locked,
   details,
-  fusedContacts,
   editedQuantities,
   setEditedQuantities,
   editedPrices,
@@ -86,11 +76,9 @@ export function LeftColumn({
   onDeleteItem,
   onOpenAddProduct,
   onOpenEditDialog,
-  onOpenContactDialog,
   deliveryAddressMatchesOrg,
   onUseOrgAddress,
   updateDetailsPending,
-  isStep4Complete,
   onUpdateOrganisation,
 }: LeftColumnProps) {
   return (
@@ -134,13 +122,10 @@ export function LeftColumn({
         order={order}
         details={details}
         locked={locked}
-        fusedContacts={fusedContacts}
         deliveryAddressMatchesOrg={deliveryAddressMatchesOrg}
         onUseOrgAddress={onUseOrgAddress}
         updateDetailsPending={updateDetailsPending}
-        isStep4Complete={isStep4Complete}
         onOpenEditDialog={onOpenEditDialog}
-        onOpenContactDialog={onOpenContactDialog}
       />
 
       <InfoRequestsCard infoRequests={order.infoRequests} />

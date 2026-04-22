@@ -171,6 +171,11 @@ export interface ShipmentWizardState {
   maxStep: number;
   validating: boolean;
 
+  // Error recovery state (step 8)
+  dbError: string | null;
+  pendingPacklinkRef: string | null;
+  pendingAction: boolean;
+
   // Handlers
   handleQuantityChange: (itemId: string, value: string) => void;
   handleShipAll: () => void;
@@ -185,6 +190,8 @@ export interface ShipmentWizardState {
   fetchDropoffs: () => Promise<void>;
   handleSimpleValidation: () => Promise<void>;
   handleCreateDraft: () => Promise<void>;
+  handleRetryDbSave: () => Promise<void>;
+  handleCancelPacklink: () => Promise<void>;
   formatTransit: (hours: string) => string;
   formatTransitLabel: (hours: string) => string;
   formatEstimatedDate: (dateStr: string) => string;

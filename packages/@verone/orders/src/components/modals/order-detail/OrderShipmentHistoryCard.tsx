@@ -3,11 +3,13 @@
 import { Badge } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
-import { History, CheckCircle2, ExternalLink } from 'lucide-react';
+import { History, CheckCircle2, ExternalLink, Mail } from 'lucide-react';
 
 import type { SalesOrder } from '@verone/orders/hooks';
 
 export interface ShipmentHistoryItem {
+  /** UUID of the first sales_order_shipment row in this shipment group (same shipped_at). */
+  id: string;
   shipped_at: string;
   tracking_number: string | null;
   tracking_url: string | null;
@@ -17,6 +19,7 @@ export interface ShipmentHistoryItem {
   carrier_service: string | null;
   shipping_cost: number | null;
   packlink_status: string | null;
+  packlink_shipment_id: string | null;
   label_url: string | null;
   items: Array<{
     product_name: string;
@@ -28,6 +31,7 @@ export interface ShipmentHistoryItem {
 export interface OrderShipmentHistoryCardProps {
   shipmentHistory: ShipmentHistoryItem[];
   order: SalesOrder;
+  onSendTrackingEmail?: (shipment: ShipmentHistoryItem) => void;
 }
 
 /** Format a date string to French locale */
@@ -43,8 +47,23 @@ function formatDate(date: string | null): string {
 export function OrderShipmentHistoryCard({
   shipmentHistory,
   order,
+  onSendTrackingEmail,
 }: OrderShipmentHistoryCardProps) {
   if (shipmentHistory.length === 0) return null;
+
+  // Global shipping progress
+  const totalOrdered =
+    order.sales_order_items?.reduce(
+      (sum, item) => sum + (item.quantity ?? 0),
+      0
+    ) ?? 0;
+  const totalShipped = shipmentHistory.reduce(
+    (sum, h) =>
+      sum + h.items.reduce((s, i) => s + (i.quantity_shipped ?? 0), 0),
+    0
+  );
+  const percentShipped =
+    totalOrdered > 0 ? Math.round((totalShipped / totalOrdered) * 100) : 0;
 
   return (
     <Card>
@@ -55,6 +74,24 @@ export function OrderShipmentHistoryCard({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 max-h-[320px] overflow-y-auto">
+        {totalOrdered > 0 && (
+          <div className="mb-2 rounded-md border border-blue-200 bg-blue-50 px-2 py-1.5">
+            <div className="flex items-center justify-between text-[11px] font-medium text-blue-900">
+              <span>
+                {shipmentHistory.length} expédition
+                {shipmentHistory.length > 1 ? 's' : ''} · {totalShipped}/
+                {totalOrdered} articles
+              </span>
+              <span>{percentShipped}%</span>
+            </div>
+            <div className="mt-1 h-1 w-full overflow-hidden rounded bg-blue-100">
+              <div
+                className="h-full bg-blue-600 transition-all"
+                style={{ width: `${Math.min(percentShipped, 100)}%` }}
+              />
+            </div>
+          </div>
+        )}
         {shipmentHistory.map((h, idx) => (
           <div
             key={`shipment-${idx}`}
@@ -112,7 +149,11 @@ export function OrderShipmentHistoryCard({
             {h.packlink_status === 'a_payer' && (
               <p className="text-[10px] ml-4 mb-1">
                 <a
-                  href="https://pro.packlink.fr/private/shipments"
+                  href={
+                    h.packlink_shipment_id
+                      ? `https://pro.packlink.fr/private/shipments/${h.packlink_shipment_id}/create/address`
+                      : 'https://pro.packlink.fr/private/shipments'
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-blue-600 hover:underline font-medium"
@@ -123,8 +164,8 @@ export function OrderShipmentHistoryCard({
               </p>
             )}
             {h.tracking_number && (
-              <p className="text-[10px] text-gray-500 ml-4 mb-1">
-                Suivi :{' '}
+              <p className="text-[10px] text-gray-500 ml-4 mb-1 flex items-center flex-wrap gap-x-1">
+                <span>Suivi :</span>
                 {h.tracking_url ? (
                   <a
                     href={h.tracking_url}
@@ -135,7 +176,16 @@ export function OrderShipmentHistoryCard({
                     {h.tracking_number}
                   </a>
                 ) : (
-                  h.tracking_number
+                  <span>{h.tracking_number}</span>
+                )}
+                {onSendTrackingEmail && (
+                  <button
+                    className="ml-2 inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline min-h-[44px] md:min-h-0 px-2 py-3 md:py-0.5"
+                    onClick={() => onSendTrackingEmail(h)}
+                  >
+                    <Mail className="h-3 w-3" />
+                    Envoyer au client
+                  </button>
                 )}
               </p>
             )}

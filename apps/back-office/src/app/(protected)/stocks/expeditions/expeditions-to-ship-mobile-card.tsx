@@ -11,25 +11,7 @@ import {
 import { formatDate } from '@verone/utils';
 import { ChevronDown, ChevronRight, ExternalLink, Truck } from 'lucide-react';
 
-import type { SalesOrder, SalesOrderItem } from './expeditions-types';
-
-function computeProgress(
-  order: SalesOrder,
-  isPacklinkPending: boolean
-): number {
-  const totalItems =
-    order.sales_order_items?.reduce(
-      (sum: number, item: SalesOrderItem) => sum + item.quantity,
-      0
-    ) ?? 0;
-  const shippedItems =
-    order.sales_order_items?.reduce(
-      (sum: number, item: SalesOrderItem) => sum + (item.quantity_shipped ?? 0),
-      0
-    ) ?? 0;
-  if (isPacklinkPending) return 100;
-  return totalItems > 0 ? Math.round((shippedItems / totalItems) * 100) : 0;
-}
+import type { SalesOrder, SalesOrderProgress } from './expeditions-types';
 
 function computeUrgency(order: SalesOrder) {
   const deliveryDate = order.expected_delivery_date
@@ -49,19 +31,43 @@ function computeUrgency(order: SalesOrder) {
 
 interface ProgressBarProps {
   percent: number;
-  isPacklinkPending: boolean;
+  reserved: number;
+  ordered: number;
+  hasPendingPayment: boolean;
+  hasIncident: boolean;
 }
 
-function ProgressBar({ percent, isPacklinkPending }: ProgressBarProps) {
+function ProgressBar({
+  percent,
+  reserved,
+  ordered,
+  hasPendingPayment,
+  hasIncident,
+}: ProgressBarProps) {
+  const barColor = hasIncident
+    ? 'bg-red-500'
+    : hasPendingPayment
+      ? 'bg-orange-400'
+      : 'bg-green-500';
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 bg-gray-200 rounded-full h-2">
-        <div
-          className={`h-2 rounded-full transition-all ${isPacklinkPending ? 'bg-orange-400' : 'bg-green-500'}`}
-          style={{ width: `${percent}%` }}
-        />
+    <div className="flex flex-col gap-0.5">
+      <div className="flex items-center gap-2">
+        <div className="flex-1 bg-gray-200 rounded-full h-2">
+          <div
+            className={`h-2 rounded-full transition-all ${barColor}`}
+            style={{ width: `${percent}%` }}
+          />
+        </div>
+        <span className="text-sm text-gray-600 w-10 text-right">
+          {percent}%
+        </span>
       </div>
-      <span className="text-sm text-gray-600 w-10 text-right">{percent}%</span>
+      {ordered > 0 && (
+        <span className="text-[11px] text-gray-500">
+          {reserved}/{ordered} article{ordered > 1 ? 's' : ''}
+          {hasPendingPayment && reserved > 0 && ' en attente paiement'}
+        </span>
+      )}
     </div>
   );
 }
@@ -70,6 +76,8 @@ export interface ToShipMobileCardProps {
   order: SalesOrder;
   isExpanded: boolean;
   isPacklinkPending: boolean;
+  /** Source unifiée v_sales_order_progress (BO-SHIP-PROG-001). */
+  progress?: SalesOrderProgress;
   onToggle: (id: string) => void;
   onShip: (order: SalesOrder) => void;
 }
@@ -78,10 +86,16 @@ export function ToShipMobileCard({
   order,
   isExpanded,
   isPacklinkPending,
+  progress,
   onToggle,
   onShip,
 }: ToShipMobileCardProps) {
-  const progress = computeProgress(order, isPacklinkPending);
+  const progressPercent = progress?.progress_percent ?? 0;
+  const totalReserved = progress?.total_reserved ?? 0;
+  const totalOrdered = progress?.total_ordered ?? 0;
+  const hasPendingPayment = progress?.has_pending_payment ?? isPacklinkPending;
+  const hasIncident = progress?.has_incident ?? false;
+  const isFullyShipped = totalOrdered > 0 && totalReserved >= totalOrdered;
   const { isOverdue, isUrgent } = computeUrgency(order);
 
   const statusLabel = isPacklinkPending
@@ -134,31 +148,40 @@ export function ToShipMobileCard({
             Livraison prévue : {formatDate(order.expected_delivery_date)}
           </p>
         )}
-        <ProgressBar percent={progress} isPacklinkPending={isPacklinkPending} />
+        <ProgressBar
+          percent={progressPercent}
+          reserved={totalReserved}
+          ordered={totalOrdered}
+          hasPendingPayment={hasPendingPayment}
+          hasIncident={hasIncident}
+        />
       </CardContent>
 
-      <CardFooter className="pt-0 pb-3">
-        {isPacklinkPending ? (
+      <CardFooter className="pt-0 pb-3 gap-2 flex-wrap">
+        {isPacklinkPending && (
           <a
-            href="https://pro.packlink.fr/private/shipments"
+            href={`https://pro.packlink.fr/private/shipments?search=${encodeURIComponent(order.order_number ?? '')}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 px-4 py-2.5 text-sm font-medium rounded-md bg-orange-100 text-orange-800 border border-orange-200 hover:bg-orange-200 transition-colors h-11 w-full justify-center"
+            className={`inline-flex items-center gap-1 px-4 py-2.5 text-sm font-medium rounded-md bg-orange-100 text-orange-800 border border-orange-200 hover:bg-orange-200 transition-colors h-11 justify-center ${
+              !isFullyShipped ? 'flex-1' : 'w-full'
+            }`}
           >
             <ExternalLink className="h-4 w-4" />
             Payer Packlink
           </a>
-        ) : (
+        )}
+        {!isFullyShipped && (
           <ButtonV2
             variant="outline"
-            className="h-11 w-full"
+            className={`h-11 ${isPacklinkPending ? 'flex-1' : 'w-full'}`}
             onClick={e => {
               e.stopPropagation();
               onShip(order);
             }}
           >
             <Truck className="h-5 w-5 mr-2" />
-            Expédier
+            {isPacklinkPending ? 'Expédier reste' : 'Expédier'}
           </ButtonV2>
         )}
       </CardFooter>

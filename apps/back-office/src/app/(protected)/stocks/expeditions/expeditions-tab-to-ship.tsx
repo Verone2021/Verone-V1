@@ -23,7 +23,7 @@ import { Filter, Search, Package } from 'lucide-react';
 import { ToShipMobileCard } from './expeditions-to-ship-mobile-card';
 
 import { OrderRow } from './expeditions-order-row';
-import type { SalesOrder } from './expeditions-types';
+import type { SalesOrder, SalesOrderProgress } from './expeditions-types';
 
 interface ToShipTabProps {
   orders: SalesOrder[];
@@ -34,6 +34,7 @@ interface ToShipTabProps {
   urgencyFilter: string;
   expandedRows: Set<string>;
   packlinkPendingOrders: Set<string>;
+  orderProgress: Map<string, SalesOrderProgress>;
   onSearchChange: (v: string) => void;
   onStatusFilterChange: (v: string) => void;
   onUrgencyFilterChange: (v: string) => void;
@@ -117,6 +118,7 @@ interface ToShipTableContentProps {
   error: string | null;
   expandedRows: Set<string>;
   packlinkPendingOrders: Set<string>;
+  orderProgress: Map<string, SalesOrderProgress>;
   onToggleRow: (id: string) => void;
   onShip: (order: SalesOrder) => void;
 }
@@ -127,6 +129,7 @@ function ToShipTableContent({
   error,
   expandedRows,
   packlinkPendingOrders,
+  orderProgress,
   onToggleRow,
   onShip,
 }: ToShipTableContentProps) {
@@ -162,6 +165,7 @@ function ToShipTableContent({
                 order={order}
                 isExpanded={expandedRows.has(order.id)}
                 isPacklinkPending={packlinkPendingOrders.has(order.id)}
+                progress={orderProgress.get(order.id)}
                 onToggle={onToggleRow}
                 onShip={onShip}
               />
@@ -175,6 +179,7 @@ function ToShipTableContent({
           order={order}
           isExpanded={expandedRows.has(order.id)}
           isPacklinkPending={packlinkPendingOrders.has(order.id)}
+          progress={orderProgress.get(order.id)}
           onToggle={onToggleRow}
           onShip={onShip}
         />
@@ -192,6 +197,7 @@ export function ToShipTab({
   urgencyFilter,
   expandedRows,
   packlinkPendingOrders,
+  orderProgress,
   onSearchChange,
   onStatusFilterChange,
   onUrgencyFilterChange,
@@ -222,6 +228,7 @@ export function ToShipTab({
             error={error}
             expandedRows={expandedRows}
             packlinkPendingOrders={packlinkPendingOrders}
+            orderProgress={orderProgress}
             onToggleRow={onToggleRow}
             onShip={onShip}
           />

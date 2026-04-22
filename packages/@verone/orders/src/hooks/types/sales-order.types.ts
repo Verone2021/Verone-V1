@@ -10,6 +10,8 @@ export type SalesOrderStatus =
   | 'validated'
   | 'partially_shipped'
   | 'shipped'
+  | 'delivered'
+  | 'closed'
   | 'cancelled';
 
 export type ManualPaymentType =

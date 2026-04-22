@@ -28,6 +28,7 @@ import { StepCarrierSelection } from './StepCarrierSelection';
 import { StepDropoffs } from './StepDropoffs';
 import { StepPayment } from './StepPayment';
 import { StepSuccess } from './StepSuccess';
+import { StepError } from './StepError';
 
 interface ShipmentWizardExtendedProps extends ShipmentWizardProps {
   onRefetch?: () => void;
@@ -219,6 +220,23 @@ export function ShipmentWizard({
         <StepSuccess
           shipmentResult={state.shipmentResult}
           onClose={onSuccess}
+        />
+      )}
+
+      {/* STEP 8: Error recovery — Packlink created but DB save failed */}
+      {state.step === 8 && (
+        <StepError
+          packlinkRef={state.pendingPacklinkRef}
+          dbError={state.dbError}
+          authError={null}
+          retrying={state.pendingAction}
+          onRetryDb={() => {
+            void state.handleRetryDbSave().catch(console.error);
+          }}
+          onCancelPacklink={() => {
+            void state.handleCancelPacklink().catch(console.error);
+          }}
+          onClose={onCancel}
         />
       )}
 

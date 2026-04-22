@@ -18,11 +18,36 @@ function formatDate(date: string | null): string {
   });
 }
 
+/**
+ * Vrai si toutes les quantités commandées ont été réservées par des shipments
+ * (incl. Packlink `a_payer`). Permet de distinguer "commande complètement
+ * expédiée" de "commande partiellement expédiée" pour afficher/masquer le
+ * bouton "Nouvelle expédition" (scénario multi-colis Packlink).
+ */
+function isOrderFullyShipped(
+  order: SalesOrder,
+  shipmentHistory: ShipmentHistoryItem[]
+): boolean {
+  const totalOrdered =
+    order.sales_order_items?.reduce(
+      (sum, item) => sum + (item.quantity ?? 0),
+      0
+    ) ?? 0;
+  if (totalOrdered === 0) return false;
+  const totalShipped = shipmentHistory.reduce(
+    (sum, h) =>
+      sum + h.items.reduce((s, i) => s + (i.quantity_shipped ?? 0), 0),
+    0
+  );
+  return totalShipped >= totalOrdered;
+}
+
 export interface OrderShipmentStatusCardProps {
   order: SalesOrder;
   shipmentHistory: ShipmentHistoryItem[];
   readOnly: boolean;
   canShip: boolean;
+  onOpenShipmentModal?: () => void;
 }
 
 export function OrderShipmentStatusCard({
@@ -30,6 +55,7 @@ export function OrderShipmentStatusCard({
   shipmentHistory,
   readOnly,
   canShip,
+  onOpenShipmentModal,
 }: OrderShipmentStatusCardProps) {
   return (
     <Card>
@@ -84,15 +110,25 @@ export function OrderShipmentStatusCard({
             >
               Transport à payer (Packlink)
             </Badge>
-            <a
-              href="https://pro.packlink.fr/private/shipments"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1 text-xs text-orange-700 hover:text-orange-900 underline"
-            >
-              <ExternalLink className="h-3 w-3" />
-              Payer sur Packlink PRO
-            </a>
+            {(() => {
+              const firstToPay = shipmentHistory.find(
+                h => h.packlink_status === 'a_payer'
+              );
+              const packlinkUrl = firstToPay?.packlink_shipment_id
+                ? `https://pro.packlink.fr/private/shipments/${firstToPay.packlink_shipment_id}/create/address`
+                : 'https://pro.packlink.fr/private/shipments';
+              return (
+                <a
+                  href={packlinkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1 text-xs text-orange-700 hover:text-orange-900 underline"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Payer sur Packlink PRO
+                </a>
+              );
+            })()}
           </div>
         ) : shipmentHistory.length > 0 ? (
           <Badge
@@ -107,17 +143,23 @@ export function OrderShipmentStatusCard({
           </p>
         )}
 
-        {!readOnly && canShip && shipmentHistory.length === 0 && (
-          <ButtonV2
-            size="sm"
-            className="w-full"
-            disabled
-            title="Fonctionnalité en cours de développement"
-          >
-            <Truck className="h-3 w-3 mr-1" />
-            Gérer expédition
-          </ButtonV2>
-        )}
+        {/* Bouton "Nouvelle expédition" — visible tant que des articles restent
+            à expédier (pas juste quand aucun shipment). Permet de créer des
+            shipments partiels successifs (1 par colis) : le wizard utilise
+            usePreviousShipments pour soustraire les quantités déjà réservées. */}
+        {!readOnly &&
+          canShip &&
+          !isOrderFullyShipped(order, shipmentHistory) &&
+          onOpenShipmentModal && (
+            <ButtonV2
+              size="sm"
+              className="w-full"
+              onClick={onOpenShipmentModal}
+            >
+              <Truck className="h-3 w-3 mr-1" />
+              Nouvelle expédition
+            </ButtonV2>
+          )}
       </CardContent>
     </Card>
   );

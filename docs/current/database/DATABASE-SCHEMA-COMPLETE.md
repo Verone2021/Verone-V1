@@ -1,6 +1,6 @@
 # Database Schema Complete — Index
 
-_Generated: 2026-04-21 01:58 — 142 tables_
+_Generated: 2026-04-22 23:59 — 143 tables_
 
 | Table                               | Domaine                     | Colonnes |
 | ----------------------------------- | --------------------------- | -------- |
@@ -138,6 +138,7 @@ _Generated: 2026-04-21 01:58 — 142 tables_
 | v_matching_rules_with_org           | Autres                      | 23       |
 | v_pcg_categories_tree               | Autres                      | 10       |
 | v_pending_invoice_uploads           | Autres                      | 9        |
+| v_sales_order_progress              | Autres                      | 9        |
 | v_transaction_documents             | Autres                      | 25       |
 | v_transactions_missing_invoice      | Autres                      | 20       |
 | v_transactions_unified              | Autres                      | 43       |

@@ -88,7 +88,6 @@ export default function LinkMeOrderDetailsPage() {
     handleUpdateOrganisation,
     handleUseOrgAddress,
     handleOpenContactDialog,
-    isStep4Complete,
   } = useOrderDetailsPage();
 
   if (isLoading) {
@@ -222,7 +221,6 @@ export default function LinkMeOrderDetailsPage() {
           enrichedItems={enrichedItems}
           locked={locked}
           details={order.linkmeDetails}
-          fusedContacts={fusedContacts}
           editedQuantities={editedQuantities}
           setEditedQuantities={setEditedQuantities}
           editedPrices={editedPrices}
@@ -239,7 +237,6 @@ export default function LinkMeOrderDetailsPage() {
           }}
           onOpenAddProduct={() => setShowAddProductModal(true)}
           onOpenEditDialog={openEditDialog}
-          onOpenContactDialog={handleOpenContactDialog}
           deliveryAddressMatchesOrg={deliveryAddressMatchesOrg}
           onUseOrgAddress={() => {
             void handleUseOrgAddress().catch((err: unknown) => {
@@ -250,7 +247,6 @@ export default function LinkMeOrderDetailsPage() {
             });
           }}
           updateDetailsPending={updateDetails.isPending}
-          isStep4Complete={isStep4Complete}
           onUpdateOrganisation={handleUpdateOrganisation}
         />
 
@@ -258,7 +254,6 @@ export default function LinkMeOrderDetailsPage() {
           order={order}
           locked={locked}
           fusedContacts={fusedContacts}
-          details={order.linkmeDetails}
           isUpdatingStatus={isUpdatingStatus}
           onStatusChange={(newStatus: string) => {
             void handleStatusChange(newStatus).catch(err => console.error(err));

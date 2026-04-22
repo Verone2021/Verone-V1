@@ -81,6 +81,7 @@ export function useOrderDetailData(
       .from('sales_order_shipments')
       .select(
         `
+        id,
         shipped_at,
         tracking_number,
         tracking_url,
@@ -92,6 +93,7 @@ export function useOrderDetailData(
         carrier_service,
         shipping_cost,
         packlink_status,
+        packlink_shipment_id,
         label_url,
         products:product_id (name, sku)
       `
@@ -114,6 +116,7 @@ export function useOrderDetailData(
 
         const rows = data as unknown as Array<
           Record<string, unknown> & {
+            id: string;
             shipped_at: string;
             tracking_number: string | null;
             notes: string | null;
@@ -130,6 +133,7 @@ export function useOrderDetailData(
 
           if (!grouped.has(key)) {
             grouped.set(key, {
+              id: row.id,
               shipped_at: row.shipped_at,
               tracking_number: row.tracking_number,
               tracking_url: (row.tracking_url as string) ?? null,
@@ -139,6 +143,8 @@ export function useOrderDetailData(
               carrier_service: (row.carrier_service as string) ?? null,
               shipping_cost: (row.shipping_cost as number) ?? null,
               packlink_status: (row.packlink_status as string) ?? null,
+              packlink_shipment_id:
+                (row.packlink_shipment_id as string) ?? null,
               label_url: (row.label_url as string) ?? null,
               items: [],
             });
