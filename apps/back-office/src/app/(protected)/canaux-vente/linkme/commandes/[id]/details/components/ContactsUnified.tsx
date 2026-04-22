@@ -194,12 +194,18 @@ export function ContactsUnified({
     r => !fusedContacts.some(g => g.roles.includes(r))
   );
 
+  const TERMINAL_STATUSES = ['delivered', 'cancelled'] as const;
+  const canAssign = !locked;
+  const canRequestInfo = !(TERMINAL_STATUSES as readonly string[]).includes(
+    order.status
+  );
+
   return (
     <Card>
       <CardHeader className="pb-2 pt-4 px-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">Contacts</CardTitle>
-          {!locked && (
+          {canAssign && (
             <Button
               variant="ghost"
               size="sm"
@@ -229,7 +235,7 @@ export function ContactsUnified({
           ))
         )}
 
-        {!locked && missingRoles.length > 0 && (
+        {(canAssign || canRequestInfo) && missingRoles.length > 0 && (
           <div className="pt-2 border-t">
             <p className="text-xs font-medium text-amber-700 uppercase tracking-wider mb-2 flex items-center gap-1">
               <AlertCircle className="h-3 w-3" />
@@ -251,24 +257,28 @@ export function ContactsUnified({
                     {ROLE_FULL_LABELS[role]}
                   </span>
                   <div className="flex gap-1.5 shrink-0">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-11 md:h-7 text-xs gap-1"
-                      onClick={() => onOpenContactDialog(role)}
-                    >
-                      <Pencil className="h-3 w-3" />
-                      Assigner
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-11 md:h-7 text-xs gap-1"
-                      onClick={() => onOpenRequestModal(role)}
-                    >
-                      <Send className="h-3 w-3" />
-                      Demander
-                    </Button>
+                    {canAssign && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-11 md:h-7 text-xs gap-1"
+                        onClick={() => onOpenContactDialog(role)}
+                      >
+                        <Pencil className="h-3 w-3" />
+                        Assigner
+                      </Button>
+                    )}
+                    {canRequestInfo && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-11 md:h-7 text-xs gap-1"
+                        onClick={() => onOpenRequestModal(role)}
+                      >
+                        <Send className="h-3 w-3" />
+                        Demander
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
