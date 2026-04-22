@@ -16,8 +16,13 @@ import {
 } from 'lucide-react';
 
 import { ProductStockHistoryModal } from '@verone/products';
-import { getReasonDescription, type StockReasonCode } from '@verone/stock';
-import type { MovementType } from '@verone/stock';
+import {
+  getReasonDescription,
+  formatMovementReference,
+  type StockReasonCode,
+  type MovementType,
+} from '@verone/stock';
+import type { StockMovementReferenceEnrichment } from '@verone/stock';
 
 interface Movement {
   id: string;
@@ -27,6 +32,7 @@ interface Movement {
   reason_code?: StockReasonCode | string;
   reference_type?: string;
   reference_id?: string;
+  notes?: string;
   unit_cost?: number;
   performed_by: string;
   performed_at: string;
@@ -34,6 +40,7 @@ interface Movement {
     first_name?: string | null;
     last_name?: string | null;
   } | null;
+  reference_enrichment?: StockMovementReferenceEnrichment | null;
 }
 
 interface MovementsStats {
@@ -87,18 +94,6 @@ function movementQtyColor(type: string): string {
     default:
       return 'text-neutral-500';
   }
-}
-
-function formatRef(refType?: string, refId?: string): string {
-  if (!refType || !refId) return '—';
-  const prefixMap: Record<string, string> = {
-    purchase_order: 'PO',
-    sales_order: 'SO',
-    manual: 'MAN',
-    transfer: 'TR',
-  };
-  const prefix = prefixMap[refType] ?? refType.toUpperCase();
-  return `${prefix}-${refId.slice(0, 8)}`;
 }
 
 export function StockMovementsCard({
@@ -221,8 +216,30 @@ export function StockMovementsCard({
                         ? getReasonDescription(m.reason_code as StockReasonCode)
                         : '—'}
                     </td>
-                    <td className="px-2 py-2.5 text-neutral-500 text-xs font-mono hidden lg:table-cell">
-                      {formatRef(m.reference_type, m.reference_id)}
+                    <td className="px-2 py-2.5 hidden lg:table-cell">
+                      {(() => {
+                        const ref = formatMovementReference(
+                          {
+                            reference_type: m.reference_type,
+                            reference_id: m.reference_id,
+                            notes: m.notes,
+                            reason_code: m.reason_code as StockReasonCode,
+                          },
+                          m.reference_enrichment ?? undefined
+                        );
+                        return (
+                          <div>
+                            <div className="text-xs font-medium text-neutral-700">
+                              {ref.label}
+                            </div>
+                            {ref.sublabel != null && (
+                              <div className="text-[10px] text-neutral-400 mt-0.5">
+                                {ref.sublabel}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="px-2 py-2.5 text-neutral-600 text-xs hidden xl:table-cell">
                       {m.user_profiles?.first_name != null ||
