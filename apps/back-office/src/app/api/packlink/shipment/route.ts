@@ -1,10 +1,11 @@
 /**
- * API Route: Create Packlink Draft Shipment
+ * API Route: Create Packlink Shipment
  * POST /api/packlink/shipment
  *
- * Creates a brouillon on Packlink PRO via POST /v1/drafts.
- * No auto-insurance: the user pays from the Packlink PRO web interface
- * and chooses insurance there if desired.
+ * Creates a shipment via POST /v1/shipments with enriched additional_data
+ * (warehouse + postal zone IDs) so it lands in READY_TO_PURCHASE on Packlink PRO.
+ * Insurance is explicitly set to 0 / insurance_selected=false.
+ * The user pays from the Packlink PRO web interface.
  */
 
 import { NextResponse } from 'next/server';
@@ -16,8 +17,10 @@ import {
   VERONE_SOURCE_ADDRESS,
 } from '@verone/common/lib/packlink/client';
 
-const CreateDraftSchema = z.object({
+const CreateShipmentSchema = z.object({
   serviceId: z.number(),
+  serviceName: z.string().optional(),
+  carrierName: z.string().optional(),
   destination: z.object({
     name: z.string().min(1),
     surname: z.string().min(1),
@@ -49,7 +52,7 @@ const CreateDraftSchema = z.object({
 export async function POST(request: Request) {
   try {
     const body: unknown = await request.json();
-    const validated = CreateDraftSchema.safeParse(body);
+    const validated = CreateShipmentSchema.safeParse(body);
 
     if (!validated.success) {
       return NextResponse.json(
@@ -60,6 +63,8 @@ export async function POST(request: Request) {
 
     const {
       serviceId,
+      serviceName,
+      carrierName,
       destination,
       packages: pkgs,
       content,
@@ -72,7 +77,7 @@ export async function POST(request: Request) {
 
     const client = getPacklinkClient();
 
-    const draft = await client.createDraft({
+    const shipment = await client.createShipment({
       from: VERONE_SOURCE_ADDRESS,
       to: {
         ...destination,
@@ -80,8 +85,12 @@ export async function POST(request: Request) {
       },
       packages: pkgs,
       service_id: serviceId,
+      service_name: serviceName,
+      carrier_name: carrierName,
       content,
-      contentvalue: contentValue,
+      // Packlink rejects contentvalue=0 — use declared value or minimum 1
+      contentvalue: contentValue > 0 ? contentValue : 1,
+      source: 'PRO',
       shipment_custom_reference: orderReference.slice(0, 50),
       ...(dropoffPointId ? { dropoff_point_id: dropoffPointId } : {}),
       ...(collectionDate ? { collection_date: collectionDate } : {}),
@@ -90,7 +99,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      shipmentReference: draft.shipment_reference,
+      shipmentReference: shipment.reference,
     });
   } catch (error) {
     console.error('[Packlink Shipment] Error:', error);

@@ -144,13 +144,11 @@ export function useCreateDraftHandlers(deps: CreateDraftDeps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           serviceId: selectedService.id,
+          serviceName: selectedService.name,
+          carrierName: selectedService.carrier_name,
           destination,
           packages: deps.packages,
           content: deps.contentDescription,
-          // POST /v1/drafts does not auto-apply insurance regardless of
-          // contentvalue — use the real declared value for accurate content
-          // declaration. The user chooses insurance (if any) on Packlink PRO
-          // web when they confirm payment.
           contentValue: deps.declaredValue,
           orderReference:
             deps.salesOrderNumber ?? deps.salesOrderId.slice(0, 8),
