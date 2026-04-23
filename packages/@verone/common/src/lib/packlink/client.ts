@@ -43,6 +43,10 @@ interface PacklinkShipmentInput {
     weight: number;
   }>;
   service_id: number;
+  /** Service display name returned by GET /services (ex: "Standard"). Required by /v1/shipments. */
+  service_name?: string;
+  /** Carrier display name returned by GET /services (ex: "UPS"). Required by /v1/shipments. */
+  carrier_name?: string;
   content: string;
   contentvalue: number;
   content_second_hand?: boolean;
@@ -60,6 +64,24 @@ interface PacklinkShipmentResult {
   receipt_url?: string;
   total_price: number;
   currency: string;
+}
+
+interface PacklinkWarehouse {
+  id: string;
+  default_selection: boolean;
+  name: string;
+  postal_code: string;
+  postal_code_id: string;
+  city: string;
+  country: string;
+  postal_zone: { id: string };
+}
+
+interface PacklinkPostalCodeInfo {
+  id: string;
+  zipcode: string;
+  city: string;
+  postal_zone_id: number;
 }
 
 interface PacklinkTrackingEvent {
@@ -152,13 +174,137 @@ export class PacklinkClient {
   }
 
   /**
-   * Create a shipment order
-   * Endpoint: POST /shipments
+   * List warehouses configured on the Packlink account.
+   * Endpoint: GET /warehouses
+   *
+   * Used internally by createShipment to resolve `selectedWarehouseId` and
+   * `zip_code_id_from` for the `additional_data` payload required to land a
+   * shipment in the "Prêts pour le paiement" inbox of Packlink PRO.
+   */
+  async listWarehouses(): Promise<PacklinkWarehouse[]> {
+    return this.request<PacklinkWarehouse[]>('GET', '/warehouses');
+  }
+
+  /**
+   * Resolve a destination zip_code into the internal Packlink ID.
+   * Endpoint: GET /locations/postalcodes?language=fr_FR&postalzone={zone}&q={zip}&platform=PRO&platform_country=FR
+   *
+   * Returns the first matching entry (most relevant). The `id` field is the
+   * UUID that must be passed in `additional_data.zip_code_id_to`.
+   */
+  async resolvePostalCode(params: {
+    zip: string;
+    postalZone: string;
+    country?: string;
+  }): Promise<PacklinkPostalCodeInfo | null> {
+    const qs = new URLSearchParams({
+      language: 'fr_FR',
+      postalzone: params.postalZone,
+      q: params.zip,
+      platform: 'PRO',
+      platform_country: params.country ?? 'FR',
+    });
+    const list = await this.request<PacklinkPostalCodeInfo[]>(
+      'GET',
+      `/locations/postalcodes?${qs.toString()}`
+    );
+    return list[0] ?? null;
+  }
+
+  /**
+   * Create a shipment that lands in "Prêts pour le paiement" of Packlink PRO.
+   *
+   * IMPORTANT: A naive `POST /shipments` with only the basics produces a
+   * shipment stuck in `AWAITING_COMPLETION` (invisible to the user, never
+   * payable). The PRO web wizard does an enriched POST with `additional_data`
+   * containing the warehouse + postal-zone + zip-code internal IDs and a
+   * `parcelIds` field. We reproduce that payload below so the shipment
+   * lands in `READY_TO_PURCHASE` and the user can pay it from the PRO web
+   * interface.
+   *
+   * Reference: reverse-engineered on 2026-04-23 by inspecting the network
+   * traffic of pro.packlink.fr (see scratchpad rapport).
    */
   async createShipment(
     input: PacklinkShipmentInput
   ): Promise<PacklinkShipmentResult> {
-    return this.request<PacklinkShipmentResult>('POST', '/shipments', input);
+    // 1. Resolve sender warehouse (default selection if multiple).
+    const warehouses = await this.listWarehouses();
+    const warehouse =
+      warehouses.find(w => w.default_selection) ?? warehouses[0];
+    if (!warehouse) {
+      throw new Error(
+        'No warehouse configured on Packlink account. Configure one on Packlink PRO before shipping.'
+      );
+    }
+
+    // 2. Resolve destination postal code into Packlink internal ID.
+    const destInfo = await this.resolvePostalCode({
+      zip: input.to.zip_code,
+      postalZone: warehouse.postal_zone.id,
+      country: input.to.country,
+    });
+    if (!destInfo) {
+      throw new Error(
+        `Packlink postal code resolver returned no match for ${input.to.country} ${input.to.zip_code}`
+      );
+    }
+
+    // 3. Build the rich payload exactly as the PRO web wizard does.
+    const richPayload = {
+      carrier: input.carrier_name,
+      service: input.service_name,
+      service_id: input.service_id,
+      adult_signature: false,
+      additional_handling: false,
+      insurance: { amount: 0, insurance_selected: false },
+      print_in_store_selected: false,
+      proof_of_delivery: false,
+      priority: false,
+      additional_data: {
+        selectedWarehouseId: warehouse.id,
+        postal_zone_id_from: warehouse.postal_zone.id,
+        postal_zone_name_from: 'France',
+        zip_code_id_from: warehouse.postal_code_id,
+        postal_zone_id_to: String(destInfo.postal_zone_id),
+        postal_zone_name_to: 'France',
+        zip_code_id_to: destInfo.id,
+        parcelIds: ['custom-parcel-id'],
+      },
+      content: input.content,
+      contentvalue: input.contentvalue,
+      currency: 'EUR',
+      from: {
+        ...input.from,
+        state: 'France',
+      },
+      packages: input.packages.map(pkg => ({
+        ...pkg,
+        id: 'custom-parcel-id',
+        name: 'CUSTOM_PARCEL',
+      })),
+      to: {
+        ...input.to,
+        state: 'France',
+      },
+      has_customs: false,
+      shipment_custom_reference: input.shipment_custom_reference,
+      ...(input.dropoff_point_id
+        ? { dropoff_point_id: input.dropoff_point_id }
+        : {}),
+      ...(input.collection_date
+        ? { collection_date: input.collection_date }
+        : {}),
+      ...(input.collection_time
+        ? { collection_time: input.collection_time }
+        : {}),
+    };
+
+    return this.request<PacklinkShipmentResult>(
+      'POST',
+      '/shipments',
+      richPayload
+    );
   }
 
   /**
