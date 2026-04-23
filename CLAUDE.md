@@ -109,6 +109,10 @@ Le reviewer lit le rapport, pas le chat. Le ops-agent lit le verdict PASS, pas l
   Pas d'INSERT/UPDATE manuel pour "rattraper" un état cassé. Pas de note
   technique dans une colonne visible utilisateur. Pas d'alignement cosmétique
   d'un état qui n'existe pas côté système externe (Packlink, Qonto, etc.).
+- **JAMAIS demander à Romeo de vérifier sur un site externe** (Vercel,
+  Packlink, Qonto, Supabase dashboard, GitHub UI). Voir
+  `.claude/rules/agent-autonomy-external.md`. L'agent fait tout lui-même
+  via CLI (`vercel`, `gh`, `supabase` MCP) ou MCP Playwright.
 - Zero `any` TypeScript
 - JAMAIS modifier les routes API existantes (Qonto, adresses, emails, webhooks)
 - JAMAIS modifier les triggers stock (voir `.claude/rules/stock-triggers-protected.md`)
@@ -134,6 +138,7 @@ Le reviewer lit le rapport, pas le chat. Le ops-agent lit le verdict PASS, pas l
 | Workflow git/PR         | `.claude/rules/workflow.md`                    |
 | Autonomie agent         | `.claude/rules/autonomy-boundaries.md`         |
 | Zéro donnée fantôme     | `.claude/rules/no-phantom-data.md`             |
+| Autonomie externe       | `.claude/rules/agent-autonomy-external.md`     |
 | Index config agent      | `.claude/INDEX.md`                             |
 | Decisions structurelles | `.claude/DECISIONS.md` (ADRs)                  |
 
