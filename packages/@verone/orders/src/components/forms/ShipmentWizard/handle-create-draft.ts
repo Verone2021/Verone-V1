@@ -144,23 +144,14 @@ export function useCreateDraftHandlers(deps: CreateDraftDeps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           serviceId: selectedService.id,
-          serviceName: selectedService.name,
-          carrierName: selectedService.carrier_name,
           destination,
           packages: deps.packages,
           content: deps.contentDescription,
-          // Packlink's /v1/shipments endpoint auto-applies 3% × contentvalue as
-          // an INSURANCE line, regardless of insurance_selected:false (verified
-          // exhaustively on 2026-04-23 after Packlink deprecated the old
-          // /v1/drafts + /v1/orders workflow used in Nov 2025). No payload
-          // flag overrides this. contentvalue=0 breaks the shipment into
-          // AWAITING_COMPLETION (invisible on PRO web). Sending 1€ drops the
-          // insurance to the 0.99€ floor.
-          //
-          // wantsInsurance may be null here only if the UI skipped the opt-in
-          // step — treat as "no insurance" by default for safety.
-          contentValue: deps.wantsInsurance === true ? deps.declaredValue : 1,
-          contentSecondHand: deps.isSecondHand,
+          // POST /v1/drafts does not auto-apply insurance regardless of
+          // contentvalue — use the real declared value for accurate content
+          // declaration. The user chooses insurance (if any) on Packlink PRO
+          // web when they confirm payment.
+          contentValue: deps.declaredValue,
           orderReference:
             deps.salesOrderNumber ?? deps.salesOrderId.slice(0, 8),
           ...(deps.selectedSenderDropoff
