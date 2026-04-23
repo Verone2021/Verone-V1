@@ -51,6 +51,7 @@ interface CreateDraftDeps {
   contentDescription: string;
   declaredValue: number;
   isSecondHand: boolean;
+  wantsInsurance: boolean | null;
   collectionDate: string;
   collectionTime: string;
   selectedSenderDropoff: string | null;
@@ -148,7 +149,17 @@ export function useCreateDraftHandlers(deps: CreateDraftDeps) {
           destination,
           packages: deps.packages,
           content: deps.contentDescription,
-          contentValue: deps.declaredValue,
+          // Packlink's /v1/shipments endpoint auto-applies 3% × contentvalue as
+          // an INSURANCE line, regardless of insurance_selected:false (verified
+          // exhaustively on 2026-04-23 after Packlink deprecated the old
+          // /v1/drafts + /v1/orders workflow used in Nov 2025). No payload
+          // flag overrides this. contentvalue=0 breaks the shipment into
+          // AWAITING_COMPLETION (invisible on PRO web). Sending 1€ drops the
+          // insurance to the 0.99€ floor.
+          //
+          // wantsInsurance may be null here only if the UI skipped the opt-in
+          // step — treat as "no insurance" by default for safety.
+          contentValue: deps.wantsInsurance === true ? deps.declaredValue : 1,
           contentSecondHand: deps.isSecondHand,
           orderReference:
             deps.salesOrderNumber ?? deps.salesOrderId.slice(0, 8),
@@ -254,6 +265,7 @@ export function useCreateDraftHandlers(deps: CreateDraftDeps) {
     deps.contentDescription,
     deps.declaredValue,
     deps.isSecondHand,
+    deps.wantsInsurance,
     deps.collectionDate,
     deps.collectionTime,
     deps.selectedSenderDropoff,

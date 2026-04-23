@@ -21,7 +21,7 @@ interface StepPaymentProps {
   items: ShipmentItem[];
   contentDescription: string;
   declaredValue: number;
-  wantsInsurance: boolean;
+  wantsInsurance: boolean | null;
   insurancePrice: number;
   selectedService: PacklinkService;
   senderDropoffs: DropoffPoint[];
@@ -61,7 +61,8 @@ export function StepPayment({
   onCreateDraft,
 }: StepPaymentProps) {
   const totalAmount =
-    selectedService.price.total_price + (wantsInsurance ? insurancePrice : 0);
+    selectedService.price.total_price +
+    (wantsInsurance === true ? insurancePrice : 0);
 
   return (
     <div className="flex gap-4">
@@ -192,7 +193,7 @@ export function StepPayment({
             </div>
             <p className="text-xs text-blue-600 mt-1">
               Debite sur le compte Packlink PRO
-              {wantsInsurance &&
+              {wantsInsurance === true &&
                 ` · dont ${insurancePrice.toFixed(2)} EUR de protection`}
             </p>
           </div>
