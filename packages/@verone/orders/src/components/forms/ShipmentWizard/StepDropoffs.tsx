@@ -24,7 +24,7 @@ interface StepDropoffsProps {
   items: ShipmentItem[];
   contentDescription: string;
   declaredValue: number;
-  wantsInsurance: boolean;
+  wantsInsurance: boolean | null;
   selectedService: PacklinkService;
   destinationZip: string;
   senderDropoffs: DropoffPoint[];

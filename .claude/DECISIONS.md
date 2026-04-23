@@ -272,6 +272,68 @@ Les ADRs ne se modifient pas rétroactivement. Si une décision est renversée, 
 
 ---
 
+## ADR-014 — 2026-04-23 — Hygiène scratchpad : extension cleanup + auto-invocation + promotion refs
+
+**Contexte** : audit session Cowork (rapport `docs/scratchpad/audit-2026-04-23-scratchpad-hygiene-proposal.md`) révèle que `docs/scratchpad/` accumule 131 fichiers depuis début avril parce que :
+
+1. Le script `.claude/scripts/cleanup-scratchpad.sh` n'est jamais invoqué automatiquement (aucun hook dans `settings.json` ni `.husky/post-merge`).
+2. Il ne couvre que 6 préfixes sur les 15 utilisés en pratique. Non couverts : `rapport-*`, `bug-*`, `fix-*`, `handoff-*`, `plan-*`, `diagnostic-*`, `cleanup-*`, `CLAUDE-*proposed*`, `BO-UI-RESP-*` (hors standard).
+3. Deux fichiers de référence permanente (`BO-UI-RESP-LISTS-pilot-v2-template.md` cité par ADR-007, `automation-roadmap.md` cité par `.claude/INDEX.md`) vivaient dans scratchpad au lieu de `docs/current/`, ce qui les exposait à l'archivage automatique.
+4. 4 doublons INDEX à la racine du repo (ACTIVE.md, DEPENDANCES-PACKAGES.md, INDEX-COMPOSANTS-FORMULAIRES.md, INDEX-PAGES-BACK-OFFICE.md) gitignored mais induisaient les agents en erreur (les canoniques sont dans `.claude/work/` et `docs/current/`).
+
+La convention plate du scratchpad (réaffirmée dans `docs/scratchpad/README.md` et les 4 agents) reste valable — c'est le flux d'hygiène qui est cassé.
+
+**Décision** :
+
+1. Étendre `cleanup-scratchpad.sh` pour couvrir 13 préfixes au total (5 pipeline + 8 secondaires) avec archivage 14 jours. Ajouter alerte sur préfixes non-standards et élargir la liste des candidats promotion (audit, post-mortem, protocole, decision, dette, coherence, documentation).
+2. Ajouter un hook `PostToolUse` dans `.claude/settings.json` qui invoque `cleanup-scratchpad.sh` après `Bash(gh pr merge*)` ET `Bash(git push*)`.
+3. Promouvoir 2 fichiers de référence permanente :
+   - `docs/scratchpad/BO-UI-RESP-LISTS-pilot-v2-template.md` → `docs/current/responsive/pilot-v2-template.md`
+   - `docs/scratchpad/automation-roadmap.md` → `docs/current/automation-roadmap.md`
+4. Déplacer 2 `stitch-*.md` depuis la racine du scratchpad vers `docs/scratchpad/stitch/` (cohérence avec les `.png` déjà dans ce sous-dossier).
+5. Réécrire `docs/scratchpad/README.md` pour documenter les 15 préfixes autorisés, les 3 préfixes interdits, le cycle de vie complet, et le rôle de `stitch/` et `archive/`.
+6. Supprimer les 4 doublons INDEX à la racine du repo (gitignored) et renforcer `.gitignore` avec les patterns explicites pour bloquer leur retour.
+7. Mettre à jour les références dans `.claude/INDEX.md` (sections Scripts et Scratchpad) et `.claude/playbooks/migrate-page-responsive.md` (ligne 5 et référence dans « Triple lecture »).
+
+**Conséquence** :
+
+- `cleanup-scratchpad.sh` passe d'une couverture 6/15 préfixes à 13/15 (2 restent en alerte : CLAUDE-\* et préfixes non-standards).
+- Le scratchpad s'auto-nettoie après chaque merge et chaque push. Fin du dump permanent.
+- Les 2 références permanentes sortent du scratchpad — fin du conflit éphémère vs canonique.
+- `docs/scratchpad/README.md` devient une vraie source de vérité (148 lignes contre 28 avant) au lieu d'une ébauche partielle.
+- Les 4 agents (`dev`, `reviewer`, `verify`, `ops`) ne sont PAS modifiés — leur convention d'écriture reste plate.
+- `ADR-007` continue de citer le template — le chemin a changé, pas l'autorité canonique.
+
+**Référence** : rapport scratchpad `docs/scratchpad/audit-2026-04-23-scratchpad-hygiene-proposal.md`. Branche `feat/INFRA-DOC-014-scratchpad-hygiene`. PR `[INFRA-DOC-014]`.
+
+---
+
+## ADR-015 — 2026-04-23 — Interdit absolu : l'agent ne demande jamais à Romeo de vérifier sur un site externe
+
+**Contexte** : sur plusieurs sessions récentes (Packlink reverse engineering, debug Vercel, vérifications Supabase), l'agent a régulièrement demandé à Romeo de se connecter à une interface web (dashboard Vercel, Packlink PRO, Supabase Studio, GitHub UI) pour vérifier un état, cliquer sur un bouton, lire un log. Romeo est novice, non-technique côté UI développeur. Chaque sollicitation externe génère friction, perte de temps, et surtout une érosion progressive de sa santé et de sa confiance dans le workflow. Le 2026-04-23 Romeo a explicitement signalé : « sa santé a été mise en jeu ». Cette règle ne peut plus attendre.
+
+**Décision** :
+
+1. Créer `.claude/rules/agent-autonomy-external.md` qui interdit absolument toute sollicitation de Romeo pour une vérification sur un service externe. L'agent utilise CLI (`vercel`, `gh`, `supabase` MCP) ou MCP Playwright pour toute interaction UI nécessaire.
+2. Documenter pour chaque plateforme (Vercel, Packlink, Qonto, Supabase, GitHub) la liste exhaustive des outils disponibles et des credentials déjà configurés (`.env.local`, `.claude/test-credentials.md`).
+3. Inscrire la règle en deuxième position dans la section INTERDICTIONS ABSOLUES de `CLAUDE.md` racine (juste après `no-phantom-data`).
+4. Ajouter une ligne « Autonomie externe » dans la table SOURCES DE VERITE de `CLAUDE.md` racine.
+5. Règle d'or : si une demande contient « va voir », « clique », « vérifie que », « configure sur », « teste depuis », « connecte-toi à », « ouvre le dashboard » — l'agent **ne répète jamais ces verbes à Romeo**, il exécute lui-même et rapporte le résultat avec preuve (log, screenshot, JSON).
+
+**Conséquence** :
+
+- L'agent gagne en autonomie totale sur les interactions externes.
+- Romeo ne valide plus que le résultat final, jamais les étapes intermédiaires.
+- Credentials centralisés : `.env.local` pour API, `.claude/test-credentials.md` pour UI.
+- Complémentaire de `no-phantom-data.md` (ADR-013) : les deux protègent Romeo — santé, temps, confiance.
+- `.claude/rules/agent-autonomy-external.md` créé (150 lignes).
+- `CLAUDE.md` racine mis à jour (2 endroits).
+- Aucune modification des agents existants (`dev-agent`, `reviewer-agent`, etc.) — la règle est transversale et lue automatiquement via le dossier `.claude/rules/`.
+
+**Référence** : session Cowork 2026-04-23. Branche `fix/INFRA-RULE-AGENT-AUTONOMY`. PR `[INFRA-RULE-014]`.
+
+---
+
 ## Index rapide
 
 - ADR-001 : Suppression agents expert (2026-04-15)
@@ -287,3 +349,5 @@ Les ADRs ne se modifient pas rétroactivement. Si une décision est renversée, 
 - ADR-011 : Suppression playbooks génériques (garder migrate-page-responsive seul) (2026-04-19)
 - ADR-012 : Règle `playwright-artifacts.md` + nettoyage 1857 artefacts Playwright (2026-04-20)
 - ADR-013 : Règle `no-phantom-data.md` après incident sauvetage manuel SO-00158 (2026-04-22)
+- ADR-014 : Hygiène scratchpad (extension cleanup + auto-invocation + promotion refs) (2026-04-23)
+- ADR-015 : Interdit absolu de solliciter Romeo pour vérifier sur un site externe (2026-04-23)

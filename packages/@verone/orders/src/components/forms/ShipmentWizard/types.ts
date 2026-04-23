@@ -82,7 +82,7 @@ export interface WizardSummaryPanelProps {
   contentDescription: string;
   declaredValue: number;
   selectedService: PacklinkService | null;
-  wantsInsurance: boolean;
+  wantsInsurance: boolean | null;
 }
 
 // ── Wizard state (returned by useShipmentWizard) ─────────────────
@@ -130,7 +130,7 @@ export interface ShipmentWizardState {
   setIsSecondHand: (v: boolean) => void;
   declaredValue: number;
   setDeclaredValue: (v: number) => void;
-  wantsInsurance: boolean;
+  wantsInsurance: boolean | null;
   setWantsInsurance: (v: boolean) => void;
 
   // Packlink result

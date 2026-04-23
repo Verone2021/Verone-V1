@@ -51,6 +51,7 @@ interface CreateDraftDeps {
   contentDescription: string;
   declaredValue: number;
   isSecondHand: boolean;
+  wantsInsurance: boolean | null;
   collectionDate: string;
   collectionTime: string;
   selectedSenderDropoff: string | null;
@@ -143,13 +144,14 @@ export function useCreateDraftHandlers(deps: CreateDraftDeps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           serviceId: selectedService.id,
-          serviceName: selectedService.name,
-          carrierName: selectedService.carrier_name,
           destination,
           packages: deps.packages,
           content: deps.contentDescription,
+          // POST /v1/drafts does not auto-apply insurance regardless of
+          // contentvalue — use the real declared value for accurate content
+          // declaration. The user chooses insurance (if any) on Packlink PRO
+          // web when they confirm payment.
           contentValue: deps.declaredValue,
-          contentSecondHand: deps.isSecondHand,
           orderReference:
             deps.salesOrderNumber ?? deps.salesOrderId.slice(0, 8),
           ...(deps.selectedSenderDropoff
@@ -254,6 +256,7 @@ export function useCreateDraftHandlers(deps: CreateDraftDeps) {
     deps.contentDescription,
     deps.declaredValue,
     deps.isSecondHand,
+    deps.wantsInsurance,
     deps.collectionDate,
     deps.collectionTime,
     deps.selectedSenderDropoff,

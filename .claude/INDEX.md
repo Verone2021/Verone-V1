@@ -91,14 +91,14 @@ Commandes slash disponibles dans Claude Code.
 
 ---
 
-## Scripts (8 fichiers)
+## Scripts (9 fichiers)
 
 - `.claude/scripts/auto-sync-with-main.sh` — Bloque commit si branche en retard sur staging
 - `.claude/scripts/check-open-prs.sh` — Liste PRs ouvertes + conflits + oublis _(créé Phase 1)_
 - `.claude/scripts/check-responsive-violations.sh` — Audit anti-patterns responsive
 - `.claude/scripts/clarify-before-code.sh` — Hook UserPromptSubmit checklist
 - `.claude/scripts/cleanup-active-tasks.sh` — Détecte tâches terminées dans ACTIVE.md
-- `.claude/scripts/cleanup-scratchpad.sh` — Nettoyage scratchpad post-merge
+- `.claude/scripts/cleanup-scratchpad.sh` — Nettoyage scratchpad auto (post-merge + post-push). Archive 13 préfixes à 14j, session-\* à 30j, purge archive/ à 90j. Voir ADR-014.
 - `.claude/scripts/statusline-debug.sh` — Statusline Claude Code
 - `.claude/scripts/validate-git-checkout.sh` — Validation checkout
 - `.claude/scripts/validate-playwright-screenshot.sh` — Validation screenshots
@@ -145,15 +145,19 @@ Consolidation en 1 seul `SPRINT-CURRENT.md` prévue après merge PR A (voir ADR-
 
 ## Scratchpad
 
-- `docs/scratchpad/` — Plans, rapports, verdicts inter-agents (versionnés)
+- `docs/scratchpad/` — Plans, rapports, verdicts inter-agents (structure plate par design). Voir `docs/scratchpad/README.md` pour la convention complète (15 préfixes autorisés, cycle de vie, archivage auto). Nettoyage auto via `.claude/scripts/cleanup-scratchpad.sh` (hook PostToolUse).
 
-Rapports récents clés :
+Références permanentes promues vers `docs/current/` (voir ADR-014) :
 
+- `docs/current/responsive/pilot-v2-template.md` — Template pilote v2 responsive (ex-scratchpad)
+- `docs/current/automation-roadmap.md` — Intégrations externes (ex-scratchpad)
+
+Rapports récents clés (actifs dans scratchpad) :
+
+- `audit-2026-04-23-scratchpad-hygiene-proposal.md` — Audit hygiène scratchpad (ADR-014)
 - `audit-config-agent-2026-04-19.md` — Audit brutal config
 - `plan-restructuration-config.md` — Plan 3 phases
-- `automation-roadmap.md` — Intégrations externes
 - `audit-agents-2026-04-19.md` — Usage des 6 agents
-- `BO-UI-RESP-LISTS-pilot-v2-template.md` — Template pilote v2 responsive
 - `audit-responsive-global-2026-04-19.md` — Inventaire 196 pages
 
 ---
@@ -198,9 +202,10 @@ Voir `docs/scratchpad/automation-roadmap.md` (historique uniquement).
 
 ## Regles
 
-| Fichier                                 | Contenu              |
-| --------------------------------------- | -------------------- |
-| `.claude/rules/playwright-artifacts.md` | Playwright Artifacts |
-| `.claude/rules/no-phantom-data.md`      | No Phantom Data      |
+| Fichier                                    | Contenu                 |
+| ------------------------------------------ | ----------------------- |
+| `.claude/rules/playwright-artifacts.md`    | Playwright Artifacts    |
+| `.claude/rules/no-phantom-data.md`         | No Phantom Data         |
+| `.claude/rules/agent-autonomy-external.md` | Agent Autonomy External |
 
 ---

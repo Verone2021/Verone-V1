@@ -28,7 +28,7 @@ interface StepPackageInfoProps {
   setIsSecondHand: (v: boolean) => void;
   declaredValue: number;
   setDeclaredValue: (v: number) => void;
-  wantsInsurance: boolean;
+  wantsInsurance: boolean | null;
   setWantsInsurance: (v: boolean) => void;
   insurancePrice: number;
   selectedService: PacklinkService | null;
@@ -231,7 +231,7 @@ export function StepPackageInfo({
               <input
                 type="radio"
                 name="insurance"
-                checked={wantsInsurance}
+                checked={wantsInsurance === true}
                 onChange={() => setWantsInsurance(true)}
                 className="mt-0.5 h-4 w-4"
               />
@@ -246,7 +246,7 @@ export function StepPackageInfo({
               <input
                 type="radio"
                 name="insurance"
-                checked={!wantsInsurance}
+                checked={wantsInsurance === false}
                 onChange={() => setWantsInsurance(false)}
                 className="mt-0.5 h-4 w-4"
               />
@@ -255,6 +255,11 @@ export function StepPackageInfo({
               </span>
             </label>
           </div>
+          {wantsInsurance === null && (
+            <p className="text-xs text-amber-600">
+              Merci de choisir avant de continuer.
+            </p>
+          )}
         </Card>
 
         <div className="flex justify-between">
@@ -262,7 +267,7 @@ export function StepPackageInfo({
             <ArrowLeft className="h-4 w-4 mr-1" />
             Retour
           </ButtonV2>
-          <ButtonV2 onClick={onNext}>
+          <ButtonV2 onClick={onNext} disabled={wantsInsurance === null}>
             Rechercher les transporteurs
             <ArrowRight className="h-4 w-4 ml-1" />
           </ButtonV2>

@@ -87,11 +87,11 @@ export function WizardSummaryPanel({
             <p className="font-bold text-base">
               {(
                 selectedService.price.total_price +
-                (wantsInsurance ? insurancePrice : 0)
+                (wantsInsurance === true ? insurancePrice : 0)
               ).toFixed(2)}{' '}
               €
             </p>
-            {wantsInsurance && (
+            {wantsInsurance === true && (
               <p className="text-xs text-muted-foreground">
                 dont {insurancePrice.toFixed(2)} € protection
               </p>

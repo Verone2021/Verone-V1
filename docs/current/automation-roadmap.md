@@ -21,6 +21,7 @@ Objectif : **Romeo ne donne que des missions**. Le reste (choisir la tâche, cod
 **Trigger** : `pull_request.opened` et `pull_request.synchronize` (nouveau commit poussé).
 
 **Comportement** :
+
 - Un job CI exécute la logique du `reviewer-agent` (à extraire en script réutilisable).
 - Poste un commentaire sur la PR avec le verdict PASS / FAIL / PASS_WITH_WARNINGS + détails.
 - Si FAIL : ajoute le label `review-failed` sur la PR.
@@ -30,6 +31,7 @@ Objectif : **Romeo ne donne que des missions**. Le reste (choisir la tâche, cod
 **Référence industrie** : GitHub Copilot PR Review, CodeRabbit, Codemagic. Ils font exactement ce pattern.
 
 **Implémentation** :
+
 ```yaml
 name: Auto Review
 on:
@@ -63,6 +65,7 @@ jobs:
 **Trigger** : `pull_request.closed` avec `merged == true`.
 
 **Comportement** :
+
 - Parse le titre/body de la PR pour extraire les Task IDs (`[BO-UI-RESP-001]`).
 - Pour chaque Task ID :
   - Déplace le fichier de `.claude/queue/02-IN-PROGRESS/` vers `.claude/queue/03-DONE/`
@@ -83,6 +86,7 @@ jobs:
 Actuellement : aucun test E2E en CI (confirmé par audit 17/04). Playwright installé mais uniquement en local. Risque de régression non détecté.
 
 **Périmètre minimal** (à définir avec Romeo, mais une base raisonnable) :
+
 - `apps/back-office` : login + dashboard + créer une SO simple
 - `apps/linkme` : login affilié + voir une sélection
 - `apps/site-internet` : homepage + ajout panier
@@ -130,18 +134,21 @@ Les webhooks permettent à Claude Code (via un serveur intermédiaire comme une 
 ### 2.1 — Webhook `pull_request.review.submitted`
 
 Quand Romeo (ou un autre reviewer) soumet une review :
+
 - Si `state == 'approved'` → agent peut promouvoir la PR de draft à ready
 - Si `state == 'changes_requested'` → agent lit les commentaires, priorise les fixes, annonce à Romeo "j'ai vu X commentaires, je traite"
 
 ### 2.2 — Webhook `check_run.completed`
 
 Quand la CI termine :
+
 - Si `conclusion == 'failure'` → agent lit les logs, propose un fix ou signale à Romeo
 - Si `conclusion == 'success'` ET PR draft → agent peut passer à ready (selon config autonomy)
 
 ### 2.3 — Webhook `issues.opened` (si issues utilisées)
 
 Quand une issue est créée :
+
 - Auto-triage : parser le titre/body pour extraire domaine, app, priorité
 - Créer le fichier correspondant dans `.claude/queue/01-TODO/` avec YAML frontmatter pré-rempli
 
@@ -155,12 +162,12 @@ Quand une issue est créée :
 
 ### 3.1 — Déjà actifs (listés dans `settings.json`)
 
-| MCP                | Usage actuel                                    |
-|--------------------|-------------------------------------------------|
-| `context7`         | Docs bibliothèques tierces à jour               |
-| `playwright-lane-1` / `lane-2` | Deux profils Chrome pour tests visuels |
-| `shadcn`           | Registre composants UI                          |
-| `supabase`         | Accès DB (execute_sql, list_tables, etc.)       |
+| MCP                            | Usage actuel                              |
+| ------------------------------ | ----------------------------------------- |
+| `context7`                     | Docs bibliothèques tierces à jour         |
+| `playwright-lane-1` / `lane-2` | Deux profils Chrome pour tests visuels    |
+| `shadcn`                       | Registre composants UI                    |
+| `supabase`                     | Accès DB (execute_sql, list_tables, etc.) |
 
 Bon setup. Rien à toucher.
 
@@ -169,6 +176,7 @@ Bon setup. Rien à toucher.
 **`mcp-github`** — accès aux issues, PRs, commentaires, labels, workflows.
 
 Permet à l'agent de :
+
 - Lire les commentaires de PR pour prioriser les fixes
 - Créer des issues pour les TODO découverts
 - Vérifier le statut CI d'une PR avant de la promouvoir
@@ -180,13 +188,13 @@ Permet à l'agent de :
 
 ### 3.3 — À évaluer selon le workflow
 
-| MCP                     | Intérêt                                             | Effort | Prérequis                    |
-|-------------------------|-----------------------------------------------------|--------|------------------------------|
-| **Linear MCP**          | Si Romeo veut piloter depuis Linear. Sinon, `.claude/queue/` suffit | 1h | Compte Linear payant (~8€/user/mois) |
-| **Notion MCP**          | Si la doc business est dans Notion                  | 0.5h   | Compte Notion                |
-| **Sentry MCP**          | Agent surveille les erreurs prod, triage auto       | 1h     | Compte Sentry (gratuit jusqu'à 5k events) |
-| **Vercel MCP**          | Lire logs déploiements, statuts                     | 0.5h   | Token Vercel (existe déjà)   |
-| **Slack MCP** ou **Discord MCP** | Notifier Romeo sur mobile quand validation nécessaire | 1h     | Webhook Slack/Discord |
+| MCP                              | Intérêt                                                             | Effort | Prérequis                                 |
+| -------------------------------- | ------------------------------------------------------------------- | ------ | ----------------------------------------- |
+| **Linear MCP**                   | Si Romeo veut piloter depuis Linear. Sinon, `.claude/queue/` suffit | 1h     | Compte Linear payant (~8€/user/mois)      |
+| **Notion MCP**                   | Si la doc business est dans Notion                                  | 0.5h   | Compte Notion                             |
+| **Sentry MCP**                   | Agent surveille les erreurs prod, triage auto                       | 1h     | Compte Sentry (gratuit jusqu'à 5k events) |
+| **Vercel MCP**                   | Lire logs déploiements, statuts                                     | 0.5h   | Token Vercel (existe déjà)                |
+| **Slack MCP** ou **Discord MCP** | Notifier Romeo sur mobile quand validation nécessaire               | 1h     | Webhook Slack/Discord                     |
 
 **Recommandation** : commencer par `mcp-github` (obligatoire) + `Sentry MCP` (surveillance prod = énorme gain). Reste en fonction des besoins.
 
@@ -378,23 +386,23 @@ Voici le flux idéal post-restructuration :
 
 ## 7. Budget effort total
 
-| Phase d'automation               | Effort   | Priorité        | Dépendances            |
-|----------------------------------|----------|-----------------|------------------------|
-| `auto-review.yml`                | 2-3h     | **Haute**       | Phase 1+2 finies       |
-| `auto-advance-queue.yml`         | 2h       | **Haute**       | Phase 2 finie (queue)  |
-| `config-integrity-check.yml`     | 1-2h     | **Haute**       | Phase 1 finie          |
-| `e2e-smoke.yml`                  | 3-4h     | Moyenne         | Tests Playwright maintenus |
-| `pr-title-linter.yml`            | 0.5h     | Basse           | —                      |
-| `scratchpad-archive.yml`         | 0.5h     | Basse           | —                      |
-| MCP GitHub                       | 0.5h     | **Haute**       | —                      |
-| MCP Sentry                       | 1h       | Moyenne         | Compte Sentry          |
-| `/next-task`                     | 1h       | **Haute**       | Phase 2                |
-| `/ship`                          | 1h       | Moyenne         | Phase 2                |
-| `/promote` + `/rollback`         | 1.5h     | Basse           | Phase 2                |
-| `/queue` + `/unblock`            | 1h       | Basse           | Phase 2                |
-| Hook SessionStart ajusté         | 0.5h     | **Haute**       | Phase 2 + `/next-task` |
-| Hooks PreToolUse ajustés         | 0.5h     | Moyenne         | Phase 2 + autonomy-boundaries |
-| Webhooks GitHub (infra + logique)| 4-6h     | Basse (phase 2) | Infra serveur          |
+| Phase d'automation                | Effort | Priorité        | Dépendances                   |
+| --------------------------------- | ------ | --------------- | ----------------------------- |
+| `auto-review.yml`                 | 2-3h   | **Haute**       | Phase 1+2 finies              |
+| `auto-advance-queue.yml`          | 2h     | **Haute**       | Phase 2 finie (queue)         |
+| `config-integrity-check.yml`      | 1-2h   | **Haute**       | Phase 1 finie                 |
+| `e2e-smoke.yml`                   | 3-4h   | Moyenne         | Tests Playwright maintenus    |
+| `pr-title-linter.yml`             | 0.5h   | Basse           | —                             |
+| `scratchpad-archive.yml`          | 0.5h   | Basse           | —                             |
+| MCP GitHub                        | 0.5h   | **Haute**       | —                             |
+| MCP Sentry                        | 1h     | Moyenne         | Compte Sentry                 |
+| `/next-task`                      | 1h     | **Haute**       | Phase 2                       |
+| `/ship`                           | 1h     | Moyenne         | Phase 2                       |
+| `/promote` + `/rollback`          | 1.5h   | Basse           | Phase 2                       |
+| `/queue` + `/unblock`             | 1h     | Basse           | Phase 2                       |
+| Hook SessionStart ajusté          | 0.5h   | **Haute**       | Phase 2 + `/next-task`        |
+| Hooks PreToolUse ajustés          | 0.5h   | Moyenne         | Phase 2 + autonomy-boundaries |
+| Webhooks GitHub (infra + logique) | 4-6h   | Basse (phase 2) | Infra serveur                 |
 
 **Total priorité haute** : ~9-12h
 **Total priorité moyenne** : ~7-9h
@@ -407,6 +415,7 @@ Voici le flux idéal post-restructuration :
 Après Phase 1 + 2 du plan de restructuration :
 
 **Sprint d'automation 1** (1 semaine réel) — priorité haute uniquement :
+
 1. MCP GitHub activé
 2. `config-integrity-check.yml`
 3. `auto-review.yml`
@@ -415,15 +424,9 @@ Après Phase 1 + 2 du plan de restructuration :
 
 Avec ça, l'agent est déjà très autonome sur son périmètre feu-vert.
 
-**Sprint d'automation 2** (1 semaine réel) — priorité moyenne :
-6. `e2e-smoke.yml`
-7. MCP Sentry
-8. `/ship` + hooks PreToolUse ajustés
+**Sprint d'automation 2** (1 semaine réel) — priorité moyenne : 6. `e2e-smoke.yml` 7. MCP Sentry 8. `/ship` + hooks PreToolUse ajustés
 
-**Sprint d'automation 3** (optionnel, selon usage) — priorité basse :
-9. `/promote`, `/rollback`, `/queue`, `/unblock`
-10. `pr-title-linter.yml`
-11. Webhooks GitHub (si workflow scale)
+**Sprint d'automation 3** (optionnel, selon usage) — priorité basse : 9. `/promote`, `/rollback`, `/queue`, `/unblock` 10. `pr-title-linter.yml` 11. Webhooks GitHub (si workflow scale)
 
 ---
 

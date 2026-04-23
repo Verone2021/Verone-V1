@@ -1,10 +1,10 @@
 /**
- * API Route: Create Packlink Shipment
+ * API Route: Create Packlink Draft Shipment
  * POST /api/packlink/shipment
  *
- * Creates a shipment on Packlink PRO.
- * The admin then pays on Packlink PRO website.
- * After payment, webhook updates our DB with tracking + label.
+ * Creates a brouillon on Packlink PRO via POST /v1/drafts.
+ * No auto-insurance: the user pays from the Packlink PRO web interface
+ * and chooses insurance there if desired.
  */
 
 import { NextResponse } from 'next/server';
@@ -16,12 +16,8 @@ import {
   VERONE_SOURCE_ADDRESS,
 } from '@verone/common/lib/packlink/client';
 
-const CreateShipmentSchema = z.object({
+const CreateDraftSchema = z.object({
   serviceId: z.number(),
-  // Display names from GET /services — required by /v1/shipments to land
-  // the shipment in "Prêts pour le paiement" instead of "AWAITING_COMPLETION".
-  serviceName: z.string().min(1),
-  carrierName: z.string().min(1),
   destination: z.object({
     name: z.string().min(1),
     surname: z.string().min(1),
@@ -44,7 +40,6 @@ const CreateShipmentSchema = z.object({
     .min(1),
   content: z.string().default('Produits decoration et mobilier'),
   contentValue: z.number().min(0).default(0),
-  contentSecondHand: z.boolean().optional(),
   orderReference: z.string().min(1),
   dropoffPointId: z.string().optional(),
   collectionDate: z.string().optional(),
@@ -54,7 +49,7 @@ const CreateShipmentSchema = z.object({
 export async function POST(request: Request) {
   try {
     const body: unknown = await request.json();
-    const validated = CreateShipmentSchema.safeParse(body);
+    const validated = CreateDraftSchema.safeParse(body);
 
     if (!validated.success) {
       return NextResponse.json(
@@ -65,13 +60,10 @@ export async function POST(request: Request) {
 
     const {
       serviceId,
-      serviceName,
-      carrierName,
       destination,
       packages: pkgs,
       content,
       contentValue,
-      contentSecondHand,
       orderReference,
       dropoffPointId,
       collectionDate,
@@ -80,7 +72,7 @@ export async function POST(request: Request) {
 
     const client = getPacklinkClient();
 
-    const shipment = await client.createShipment({
+    const draft = await client.createDraft({
       from: VERONE_SOURCE_ADDRESS,
       to: {
         ...destination,
@@ -88,21 +80,17 @@ export async function POST(request: Request) {
       },
       packages: pkgs,
       service_id: serviceId,
-      service_name: serviceName,
-      carrier_name: carrierName,
       content,
       contentvalue: contentValue,
-      content_second_hand: contentSecondHand ?? false,
       shipment_custom_reference: orderReference.slice(0, 50),
-      source: 'verone-backoffice',
-      dropoff_point_id: dropoffPointId,
-      collection_date: collectionDate,
-      collection_time: collectionTime,
+      ...(dropoffPointId ? { dropoff_point_id: dropoffPointId } : {}),
+      ...(collectionDate ? { collection_date: collectionDate } : {}),
+      ...(collectionTime ? { collection_time: collectionTime } : {}),
     });
 
     return NextResponse.json({
       success: true,
-      shipmentReference: shipment.reference,
+      shipmentReference: draft.shipment_reference,
     });
   } catch (error) {
     console.error('[Packlink Shipment] Error:', error);

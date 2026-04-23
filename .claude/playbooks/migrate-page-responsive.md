@@ -2,7 +2,7 @@
 
 Pattern rodé sur le pilote v2 `/factures` (commit 51bced9e5). Valide pour toute migration de liste Pattern A/B back-office ou LinkMe.
 
-**Référence complète** : `docs/scratchpad/BO-UI-RESP-LISTS-pilot-v2-template.md`.
+**Référence complète** : `docs/current/responsive/pilot-v2-template.md` (promue depuis scratchpad, voir ADR-014).
 
 ---
 
@@ -13,6 +13,7 @@ Pattern rodé sur le pilote v2 `/factures` (commit 51bced9e5). Valide pour toute
 - Actions CRUD multiples (voir, modifier, supprimer, télécharger, etc.)
 
 **Ne pas utiliser pour** :
+
 - Pages détail (Pattern C) → pas de table, layout 2 colonnes → autre pattern
 - Pages dashboard (Pattern D) → KpiGrid suffit → pas de playbook dédié
 - Formulaires (Pattern F) → grid responsive simple → pas besoin
@@ -33,8 +34,9 @@ Pattern rodé sur le pilote v2 `/factures` (commit 51bced9e5). Valide pour toute
 ```
 
 Lire **obligatoirement** :
+
 - `.claude/rules/responsive.md` (5 techniques)
-- `docs/scratchpad/BO-UI-RESP-LISTS-pilot-v2-template.md` (diagnostic bug React v1 + template v2)
+- `docs/current/responsive/pilot-v2-template.md` (diagnostic bug React v1 + template v2)
 - `packages/@verone/ui/src/components/ui/responsive-data-view.tsx` (API du composant)
 - `packages/@verone/ui/src/components/ui/responsive-action-menu.tsx` (API actions)
 - `packages/@verone/hooks/src/use-breakpoint.ts` (breakpoints Verone)
@@ -51,6 +53,7 @@ components/
 ```
 
 **Règles non-négociables** :
+
 - Chaque fichier < 400 lignes (voir `.claude/rules/code-standards.md`)
 - `[Entity]Table.tsx` ne contient **AUCUN hook dans les callbacks** `renderCard`/`renderTable` — ils instancient des vrais composants
 - `[Entity]MobileCard.tsx` reçoit toutes les props actions explicitement (pas de « spread » magique)
@@ -67,6 +70,7 @@ components/
 ### 4. Classes Tailwind obligatoires
 
 Colonnes :
+
 - `hidden lg:table-cell` — masque sous 1024px
 - `hidden xl:table-cell` — masque sous 1280px
 - `hidden 2xl:table-cell` — masque sous 1536px
@@ -74,10 +78,12 @@ Colonnes :
 Colonnes toujours visibles : identifiant, libellé principal, montant/total, actions.
 
 Largeurs :
+
 - `w-[100px]` — colonne technique fixe (N°, montant, actions)
 - `min-w-[160px]` — colonne principale fluide (client, produit)
 
 Touch targets :
+
 - `h-11 w-11 md:h-9 md:w-9` sur tous les boutons icons
 
 ### 5. Checklist avant commit (OBLIGATOIRE, dans l'ordre)
@@ -144,6 +150,7 @@ git push
 ### 8. Rapport
 
 Créer `docs/scratchpad/dev-report-[date]-[task-id].md` avec :
+
 - Liste des fichiers modifiés + `wc -l` de chacun
 - Résultat Playwright (screenshots + console messages)
 - Checklist des 5 techniques appliquées
@@ -176,7 +183,7 @@ Dans `[Entity]Actions.tsx`, construire le tableau `actions: ResponsiveAction[]` 
 
 ### « Le composant enfant (ex : InvoiceStatusBadge) utilise un hook qui crash »
 
-Bisection : commenter les imports un par un et retester. Si un composant @verone/* interne casse, créer une tâche dédiée `[INFRA-UI-NNN]` pour le fixer dans son package.
+Bisection : commenter les imports un par un et retester. Si un composant @verone/\* interne casse, créer une tâche dédiée `[INFRA-UI-NNN]` pour le fixer dans son package.
 
 ### « L'action "Voir" doit rester un vrai bouton sur mobile »
 
