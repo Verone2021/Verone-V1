@@ -25,6 +25,13 @@ import { SalesOrderShipmentModal } from '@verone/orders';
 
 import type { NewContactFormData } from '../../../components/contacts/NewContactForm';
 
+import { useRequestInfo } from '../../../hooks/use-linkme-order-actions';
+import {
+  getOrderMissingFields,
+  type MissingFieldCategory,
+} from '../../../utils/order-missing-fields';
+import { RequestInfoDialog } from '../components/ApprovalActionDialogs';
+import type { OrderWithDetails as OrderWithDetailsApproval } from '../components/types';
 import { useOrderDetailsPage } from './hooks';
 import { AddProductToOrderModal } from './components/AddProductToOrderModal';
 import { LeftColumn } from './components/LeftColumn';
@@ -35,6 +42,13 @@ import { OrderHeader } from './components/OrderHeader';
 export default function LinkMeOrderDetailsPage() {
   const [showShipmentModal, setShowShipmentModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showRequestInfoDialog, setShowRequestInfoDialog] = useState(false);
+  const [requestMessage, setRequestMessage] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState<
+    Set<MissingFieldCategory>
+  >(new Set());
+  const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
+  const requestInfo = useRequestInfo();
 
   const {
     order,
@@ -115,6 +129,54 @@ export default function LinkMeOrderDetailsPage() {
       </div>
     );
   }
+
+  const details = order.linkmeDetails;
+  const missingFieldsResult = details
+    ? getOrderMissingFields({
+        details,
+        organisationSiret: order.organisation?.siret,
+        organisationCountry: order.organisation?.country,
+        organisationVatNumber: order.organisation?.vat_number,
+        organisationLegalName: order.organisation?.legal_name,
+        organisationBillingAddress: order.organisation?.billing_address_line1,
+        organisationBillingPostalCode: order.organisation?.billing_postal_code,
+        organisationBillingCity: order.organisation?.billing_city,
+        ownerType: details.owner_type,
+      })
+    : null;
+
+  const handleRequestInfo = () => {
+    if (!requestMessage.trim() || !order) return;
+    void requestInfo
+      .mutateAsync({
+        orderId: order.id,
+        customMessage: requestMessage || undefined,
+        missingFields: missingFieldsResult
+          ? Object.entries(missingFieldsResult.byCategory)
+              .filter(([cat]) =>
+                selectedCategories.has(cat as MissingFieldCategory)
+              )
+              .flatMap(([cat, fields]) =>
+                fields.map(f => ({
+                  key: f.key,
+                  label: f.label,
+                  category: cat,
+                  inputType: f.inputType ?? 'text',
+                }))
+              )
+          : [],
+        recipientEmails: selectedEmails.length > 0 ? selectedEmails : undefined,
+      })
+      .then(() => {
+        setShowRequestInfoDialog(false);
+        setRequestMessage('');
+        setSelectedCategories(new Set());
+        setSelectedEmails([]);
+      })
+      .catch(err => {
+        console.error('[LinkMeOrderDetails] Request info failed:', err);
+      });
+  };
 
   // Build IOrderForDocument from order data for QuoteCreateFromOrderModal
   const orderForDocument: IOrderForDocument | null =
@@ -260,6 +322,8 @@ export default function LinkMeOrderDetailsPage() {
           }}
           onOpenShipmentModal={() => setShowShipmentModal(true)}
           onOpenContactDialog={handleOpenContactDialog}
+          onRequestInfo={() => setShowRequestInfoDialog(true)}
+          missingFieldsTotal={missingFieldsResult?.totalCategories}
           historyEvents={historyEvents}
           historyLoading={historyLoading}
         />
@@ -327,6 +391,22 @@ export default function LinkMeOrderDetailsPage() {
           onOpenChange={setShowInvoiceModal}
         />
       )}
+
+      <RequestInfoDialog
+        open={showRequestInfoDialog}
+        onOpenChange={setShowRequestInfoDialog}
+        order={order as unknown as OrderWithDetailsApproval}
+        details={details}
+        createdByProfile={order.createdByProfile}
+        requestMessage={requestMessage}
+        setRequestMessage={setRequestMessage}
+        selectedCategories={selectedCategories}
+        setSelectedCategories={setSelectedCategories}
+        selectedEmails={selectedEmails}
+        setSelectedEmails={setSelectedEmails}
+        onSend={handleRequestInfo}
+        isPending={requestInfo.isPending}
+      />
 
       {(order.status === 'validated' ||
         order.status === 'partially_shipped') && (

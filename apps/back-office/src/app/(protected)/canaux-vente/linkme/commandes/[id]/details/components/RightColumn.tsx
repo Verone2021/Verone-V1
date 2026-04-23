@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Badge, Button, Card, CardContent } from '@verone/ui';
 import {
   CheckCircle2,
+  MessageSquare,
   RotateCcw,
   Truck,
   XCircle,
@@ -36,6 +37,9 @@ export interface RightColumnProps {
   onOpenShipmentModal: () => void;
   // Contact dialog
   onOpenContactDialog: (role: 'responsable' | 'billing' | 'delivery') => void;
+  // Request info
+  onRequestInfo?: () => void;
+  missingFieldsTotal?: number;
   // History
   historyEvents: ReturnType<
     typeof import('@verone/orders').useOrderHistory
@@ -55,6 +59,8 @@ export function RightColumn({
   onStatusChange,
   onOpenShipmentModal,
   onOpenContactDialog,
+  onRequestInfo,
+  missingFieldsTotal,
   historyEvents,
   historyLoading,
 }: RightColumnProps) {
@@ -135,6 +141,23 @@ export function RightColumn({
                 </Button>
               </>
             )}
+            {onRequestInfo &&
+              order.status !== 'cancelled' &&
+              order.status !== 'delivered' && (
+                <Button
+                  variant="outline"
+                  className="w-full gap-2 relative"
+                  onClick={onRequestInfo}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Demander compléments
+                  {!!missingFieldsTotal && missingFieldsTotal > 0 && (
+                    <span className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold">
+                      {missingFieldsTotal}
+                    </span>
+                  )}
+                </Button>
+              )}
             {/* shipped is a terminal status before delivery — no further action */}
             {order.status !== 'cancelled' &&
               order.status !== 'delivered' &&
