@@ -134,7 +134,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'ALERTE DUPLICATION — Vous creez un formulaire/modal dans un package non-source.\n\nRegles :\n- Formulaires Organisation → @verone/organisations UNIQUEMENT\n- Formulaires Produit → @verone/products UNIQUEMENT\n- JAMAIS de formulaire de creation d entite dans @verone/orders ou apps/\n\nVerifier INDEX-COMPOSANTS-FORMULAIRES.md AVANT de continuer.\nSi le composant existe deja, le REUTILISER.' && exit 0"
+            "command": "echo 'ALERTE DUPLICATION \u2014 Vous creez un formulaire/modal dans un package non-source.\n\nRegles :\n- Formulaires Organisation \u2192 @verone/organisations UNIQUEMENT\n- Formulaires Produit \u2192 @verone/products UNIQUEMENT\n- JAMAIS de formulaire de creation d entite dans @verone/orders ou apps/\n\nVerifier INDEX-COMPOSANTS-FORMULAIRES.md AVANT de continuer.\nSi le composant existe deja, le REUTILISER.' && exit 0"
           }
         ]
       },
@@ -143,7 +143,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'FICHIER @protected — Ce fichier est valide et teste en production.\n\nAvant de modifier :\n1. As-tu lu le commentaire @protected en tete du fichier ?\n2. Les deps de useEffect sont-elles toutes STABLES (useState setter ou useCallback) ?\n3. Incident du 16 avril 2026 : resetNewCustomerForm sans useCallback = 48h de casse.\n\nModification autorisee UNIQUEMENT avec approbation Romeo.' && exit 0"
+            "command": "echo 'FICHIER @protected \u2014 Ce fichier est valide et teste en production.\n\nAvant de modifier :\n1. As-tu lu le commentaire @protected en tete du fichier ?\n2. Les deps de useEffect sont-elles toutes STABLES (useState setter ou useCallback) ?\n3. Incident du 16 avril 2026 : resetNewCustomerForm sans useCallback = 48h de casse.\n\nModification autorisee UNIQUEMENT avec approbation Romeo.' && exit 0"
           }
         ]
       },
@@ -200,6 +200,15 @@
           {
             "type": "command",
             "command": "bash -c 'CHANGED=$(git diff --cached --name-only 2>/dev/null | grep -cE \"\\.(tsx)$\" || echo 0); if [ \"$CHANGED\" -gt 3 ]; then echo \"Rappel: $CHANGED composants modifies - verifier visuellement avec Playwright MCP apres commit.\"; fi; $CLAUDE_PROJECT_DIR/.claude/scripts/cleanup-active-tasks.sh; exit 0'"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(gh pr merge*) || Bash(git push*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/scripts/cleanup-scratchpad.sh 2>/dev/null || true"
           }
         ]
       }

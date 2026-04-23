@@ -18,7 +18,7 @@ J'ai relu `ResponsiveDataView` (86 lignes) et `ResponsiveActionMenu` (~180 ligne
 ```tsx
 // ❌ CASSE — hook dans un callback passé comme prop
 <ResponsiveDataView
-  renderCard={(invoice) => {
+  renderCard={invoice => {
     const [hovered, setHovered] = useState(false); // HOOK DANS UNE LAMBDA
     const actions = useMemo(() => buildActions(invoice), [invoice]); // IDEM
     return <Card>...</Card>;
@@ -59,9 +59,11 @@ function InvoiceMobileCard({ invoice, onView, onDelete }: Props) {
 }
 
 <ResponsiveDataView
-  renderCard={(invoice) => <InvoiceMobileCard invoice={invoice} onView={onView} onDelete={onDelete} />}
+  renderCard={invoice => (
+    <InvoiceMobileCard invoice={invoice} onView={onView} onDelete={onDelete} />
+  )}
   // ↑ renderCard ne fait que instancier un composant, pas appeler des hooks
-/>
+/>;
 ```
 
 ---
@@ -79,7 +81,12 @@ Chaque fichier doit rester **< 400 lignes** (règle CLAUDE.md). On vise 3 × 150
 import {
   ResponsiveDataView,
   Skeleton,
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@verone/ui';
 import { FileText } from 'lucide-react';
 
@@ -121,7 +128,7 @@ export function InvoicesTable(props: InvoicesTableProps) {
       loading={loading}
       emptyMessage={emptyState}
       skeletonCount={3}
-      renderTable={(items) => (
+      renderTable={items => (
         <Table>
           <TableHeader>
             <TableRow>
@@ -129,17 +136,25 @@ export function InvoicesTable(props: InvoicesTableProps) {
               <TableHead className="w-[140px]">N° Facture</TableHead>
               <TableHead className="min-w-[160px]">Client</TableHead>
               {/* Masquables */}
-              <TableHead className="hidden lg:table-cell w-[110px]">Date</TableHead>
-              <TableHead className="hidden xl:table-cell w-[110px]">Echeance</TableHead>
-              <TableHead className="hidden lg:table-cell w-[120px]">Statut</TableHead>
-              <TableHead className="hidden 2xl:table-cell w-[140px]">Paiement</TableHead>
+              <TableHead className="hidden lg:table-cell w-[110px]">
+                Date
+              </TableHead>
+              <TableHead className="hidden xl:table-cell w-[110px]">
+                Echeance
+              </TableHead>
+              <TableHead className="hidden lg:table-cell w-[120px]">
+                Statut
+              </TableHead>
+              <TableHead className="hidden 2xl:table-cell w-[140px]">
+                Paiement
+              </TableHead>
               {/* Toujours visibles */}
               <TableHead className="w-[140px] text-right">Montant</TableHead>
               <TableHead className="w-[120px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.map((invoice) => (
+            {items.map(invoice => (
               // ✅ Vrai composant — peut contenir des hooks en toute sécurité
               <InvoiceTableRow
                 key={invoice.id}
@@ -150,13 +165,9 @@ export function InvoicesTable(props: InvoicesTableProps) {
           </TableBody>
         </Table>
       )}
-      renderCard={(invoice) => (
+      renderCard={invoice => (
         // ✅ Vrai composant — peut contenir des hooks en toute sécurité
-        <InvoiceMobileCard
-          key={invoice.id}
-          invoice={invoice}
-          {...handlers}
-        />
+        <InvoiceMobileCard key={invoice.id} invoice={invoice} {...handlers} />
       )}
     />
   );
@@ -164,6 +175,7 @@ export function InvoicesTable(props: InvoicesTableProps) {
 ```
 
 **Points critiques** :
+
 - `renderTable` et `renderCard` **n'instancient QUE des composants**. Aucun `useState`, aucun `useMemo`, aucune logique.
 - Les props sont passées telles quelles via `{...handlers}`. Ça reste typé.
 - Si besoin de `useCallback` sur les handlers : **ça se fait dans le parent qui appelle `InvoicesTable`**, pas ici.
@@ -282,8 +294,14 @@ export function InvoiceMobileCard(props: InvoiceMobileCardProps) {
 
 import { ResponsiveActionMenu, type ResponsiveAction } from '@verone/ui';
 import {
-  Archive, ArchiveRestore, Banknote, CheckCircle2, Download, Eye,
-  Pencil, Trash2,
+  Archive,
+  ArchiveRestore,
+  Banknote,
+  CheckCircle2,
+  Download,
+  Eye,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 
 import type { Invoice } from './types';
@@ -304,9 +322,16 @@ interface InvoiceActionsProps {
 }
 
 export function InvoiceActions({
-  invoice, isDraft, isArchived,
-  onView, onDownloadPdf, onArchive, onUnarchive, onFinalize,
-  onRapprochement, onDelete,
+  invoice,
+  isDraft,
+  isArchived,
+  onView,
+  onDownloadPdf,
+  onArchive,
+  onUnarchive,
+  onFinalize,
+  onRapprochement,
+  onDelete,
   breakpoint = 'lg',
 }: InvoiceActionsProps) {
   // Construction des actions selon état
@@ -352,7 +377,11 @@ export function InvoiceActions({
       icon: Download,
       onClick: () => onDownloadPdf(invoice),
     });
-    if (onRapprochement && invoice.sales_order_id && invoice.status !== 'paid') {
+    if (
+      onRapprochement &&
+      invoice.sales_order_id &&
+      invoice.status !== 'paid'
+    ) {
       actions.push({
         label: 'Rapprocher',
         icon: Banknote,
@@ -437,13 +466,13 @@ Si UNE erreur console :
 
 ## 4. Points de vigilance issus des 5 CRITICAL v1
 
-| CRITICAL v1 | Cause probable | Prévention v2 |
-|-------------|----------------|---------------|
-| #1 InvoicesTable 491L | Tout en un fichier | Décomposition obligatoire en 3 fichiers |
-| #2 InventaireTable 431L | Pas dans /factures mais à noter | Même pattern quand on y arrivera |
-| #3 Cast `as PurchaseOrderExtended` | Shortcut non typé | Aucun cast unsafe — utiliser les types de `@verone/orders` directement |
-| #4 `onRapprochement` absent de `InvoiceMobileCard` | Oubli de prop | Liste exhaustive des props dans section 2 fichier 2 |
-| #5 5 boutons sur mobile sans dropdown | `ResponsiveActionMenu` mal utilisé | `alwaysVisible: true` seulement sur 1 action (Voir). Reste en dropdown. |
+| CRITICAL v1                                        | Cause probable                     | Prévention v2                                                           |
+| -------------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------- |
+| #1 InvoicesTable 491L                              | Tout en un fichier                 | Décomposition obligatoire en 3 fichiers                                 |
+| #2 InventaireTable 431L                            | Pas dans /factures mais à noter    | Même pattern quand on y arrivera                                        |
+| #3 Cast `as PurchaseOrderExtended`                 | Shortcut non typé                  | Aucun cast unsafe — utiliser les types de `@verone/orders` directement  |
+| #4 `onRapprochement` absent de `InvoiceMobileCard` | Oubli de prop                      | Liste exhaustive des props dans section 2 fichier 2                     |
+| #5 5 boutons sur mobile sans dropdown              | `ResponsiveActionMenu` mal utilisé | `alwaysVisible: true` seulement sur 1 action (Voir). Reste en dropdown. |
 
 ---
 
@@ -452,6 +481,7 @@ Si UNE erreur console :
 Signe que le bug n'est **pas** dans les hooks du dev-agent mais dans un composant importé (`DocumentSourceBadge`, `DocumentDiscordanceBadge`, `InvoiceStatusBadge`, `OrganisationNameDisplay`).
 
 Dans ce cas :
+
 1. Commenter les imports un par un dans `InvoiceMobileCard`
 2. Retester `browser_console_messages` après chaque suppression
 3. Isoler le composant qui déclenche — probable qu'il utilise un hook conditionnel interne
@@ -463,12 +493,14 @@ Dans ce cas :
 ## 6. Prochaine étape pour Claude Code après ce pilote v2
 
 **Si PASS** :
+
 - 1 page migrée et validée runtime → pattern rodé
-- Scaler sur 14 pages suivantes Pattern A critique (commandes/fournisseurs, /stocks/*, /finance/*, etc.) en réutilisant exactement le même pattern 3-fichiers
+- Scaler sur 14 pages suivantes Pattern A critique (commandes/fournisseurs, /stocks/_, /finance/_, etc.) en réutilisant exactement le même pattern 3-fichiers
 - Commit séparé par groupe de 3-5 pages (pas 15 d'un coup)
 - Playwright runtime OBLIGATOIRE à chaque commit
 
 **Si FAIL à nouveau** :
+
 - Reporter à Romeo avec stack trace complet
 - Décision : soit corriger le bug identifié, soit reviser `ResponsiveDataView` lui-même
 - NE PAS forcer un 3e essai à l'aveugle
