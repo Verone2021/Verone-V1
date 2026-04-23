@@ -143,6 +143,8 @@ export function useCreateDraftHandlers(deps: CreateDraftDeps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           serviceId: selectedService.id,
+          serviceName: selectedService.name,
+          carrierName: selectedService.carrier_name,
           destination,
           packages: deps.packages,
           content: deps.contentDescription,

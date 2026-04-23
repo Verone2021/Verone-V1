@@ -18,6 +18,10 @@ import {
 
 const CreateShipmentSchema = z.object({
   serviceId: z.number(),
+  // Display names from GET /services — required by /v1/shipments to land
+  // the shipment in "Prêts pour le paiement" instead of "AWAITING_COMPLETION".
+  serviceName: z.string().min(1),
+  carrierName: z.string().min(1),
   destination: z.object({
     name: z.string().min(1),
     surname: z.string().min(1),
@@ -61,6 +65,8 @@ export async function POST(request: Request) {
 
     const {
       serviceId,
+      serviceName,
+      carrierName,
       destination,
       packages: pkgs,
       content,
@@ -82,6 +88,8 @@ export async function POST(request: Request) {
       },
       packages: pkgs,
       service_id: serviceId,
+      service_name: serviceName,
+      carrier_name: carrierName,
       content,
       contentvalue: contentValue,
       content_second_hand: contentSecondHand ?? false,
