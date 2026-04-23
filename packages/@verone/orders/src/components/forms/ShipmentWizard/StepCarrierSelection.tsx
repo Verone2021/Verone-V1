@@ -25,7 +25,7 @@ interface StepCarrierSelectionProps {
   items: ShipmentItem[];
   contentDescription: string;
   declaredValue: number;
-  wantsInsurance: boolean;
+  wantsInsurance: boolean | null;
   services: PacklinkService[];
   sortedServices: PacklinkService[];
   selectedService: PacklinkService | null;

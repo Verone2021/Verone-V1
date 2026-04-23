@@ -76,7 +76,11 @@ export function useShipmentWizard(
   const [contentDescription, setContentDescription] = useState('');
   const [isSecondHand, setIsSecondHand] = useState(false);
   const [declaredValue, setDeclaredValue] = useState(0);
-  const [wantsInsurance, setWantsInsurance] = useState(false);
+  // null = aucun choix encore fait — le wizard bloque "Suivant" dans StepPackageInfo
+  // tant que l'utilisateur n'a pas explicitement choisi OUI ou NON. Romeo a demandé
+  // ce comportement après l'incident du 2026-04-23 où l'assurance était appliquée
+  // silencieusement sans choix utilisateur.
+  const [wantsInsurance, setWantsInsurance] = useState<boolean | null>(null);
 
   // Packlink result
   const [shipmentResult, setShipmentResult] = useState<{
