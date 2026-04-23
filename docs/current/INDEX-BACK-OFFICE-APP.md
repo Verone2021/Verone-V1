@@ -1,6 +1,6 @@
 # Back-Office — Documentation App
 
-_Generated: 2026-04-23 03:32_
+_Generated: 2026-04-23 14:22_
 
 ## Pages (147)
 
@@ -154,7 +154,7 @@ _Generated: 2026-04-23 03:32_
 | `/`                                                                      | page.tsx |
 | `/unauthorized`                                                          | page.tsx |
 
-## API Routes (127)
+## API Routes (128)
 
 | Endpoint                                                     | Methods            |
 | ------------------------------------------------------------ | ------------------ |
@@ -224,6 +224,7 @@ _Generated: 2026-04-23 03:32_
 | `/api/packlink/shipment`                                     | POST               |
 | `/api/packlink/shipments/pending`                            | GET                |
 | `/api/packlink/shipments`                                    | GET                |
+| `/api/packlink/shipments/sync`                               | POST               |
 | `/api/qonto/attachments/[id]`                                | GET, DELETE        |
 | `/api/qonto/attachments/auto-attach`                         | POST               |
 | `/api/qonto/attachments/cleanup-duplicates`                  | POST               |
