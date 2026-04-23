@@ -86,21 +86,9 @@ export function PublicationScoreCard({
         <div className="flex-shrink-0">
           <button
             type="button"
-            disabled={!isReady}
-            title={
-              !isReady
-                ? `${missing} critère${missing > 1 ? 's' : ''} manquant${missing > 1 ? 's' : ''}`
-                : 'Publier sur le site'
-            }
-            className={`
-              inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-              transition-colors
-              ${
-                isReady
-                  ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              }
-            `}
+            disabled
+            title="Bientôt disponible"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-100 text-gray-400 cursor-not-allowed"
           >
             Publier sur le site
           </button>
