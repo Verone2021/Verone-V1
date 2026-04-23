@@ -284,6 +284,7 @@ export function useShipmentWizard(
       contentDescription,
       declaredValue,
       isSecondHand,
+      wantsInsurance,
       collectionDate,
       collectionTime,
       selectedSenderDropoff,
