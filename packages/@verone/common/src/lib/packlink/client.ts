@@ -348,6 +348,39 @@ export class PacklinkClient {
   }
 
   /**
+   * Create a draft shipment — no auto-insurance, no additional_data.
+   * Endpoint: POST /v1/drafts
+   *
+   * The shipment lands in the "Brouillon" tab of Packlink PRO.
+   * The user pays from the Packlink PRO web interface.
+   * Unlike POST /v1/shipments, this endpoint does NOT apply any INSURANCE
+   * line regardless of contentvalue.
+   */
+  async createDraft(input: {
+    from: PacklinkAddress;
+    to: PacklinkAddress;
+    packages: Array<{
+      weight: number;
+      width: number;
+      height: number;
+      length: number;
+    }>;
+    service_id: number;
+    content: string;
+    contentvalue: number;
+    shipment_custom_reference?: string;
+    dropoff_point_id?: string;
+    collection_date?: string;
+    collection_time?: string;
+  }): Promise<{ shipment_reference: string }> {
+    return this.request<{ shipment_reference: string }>(
+      'POST',
+      '/drafts',
+      input
+    );
+  }
+
+  /**
    * Delete a draft shipment
    * Endpoint: DELETE /shipments/{reference}
    */
