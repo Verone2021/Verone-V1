@@ -46,6 +46,10 @@ interface PaymentSectionProps {
   customerName: string;
   customerEmail: string | null;
   customerType: 'organization' | 'individual';
+  /** ID organisation client (requis pour auto-maison-mère devis). */
+  customerId?: string | null;
+  /** Organisation complète — si fournie, propagée au modal devis/facture pour activer la détection maison mère. */
+  customerOrganisation?: IOrderForDocument['organisations'];
   // Frais de service
   shippingCostHt?: number;
   handlingCostHt?: number;
@@ -89,6 +93,8 @@ export function PaymentSection({
   customerName,
   customerEmail,
   customerType,
+  customerId,
+  customerOrganisation,
   shippingCostHt,
   handlingCostHt,
   insuranceCostHt,
@@ -236,9 +242,11 @@ export function PaymentSection({
     handling_cost_ht: handlingCostHt ?? null,
     insurance_cost_ht: insuranceCostHt ?? null,
     fees_vat_rate: feesVatRate ?? null,
+    customer_id: customerId ?? null,
+    customer_type: customerType,
     organisations:
       customerType === 'organization'
-        ? { name: customerName, email: customerEmail }
+        ? (customerOrganisation ?? { name: customerName, email: customerEmail })
         : null,
     individual_customers:
       customerType === 'individual'
