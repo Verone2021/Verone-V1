@@ -16,11 +16,13 @@ setup('authenticate', async ({ page }) => {
   // Attendre que la page soit chargée
   await page.waitForLoadState('networkidle');
 
+  // Creds : env vars en CI, fallback sur creds locales MVP
+  const email = process.env.E2E_TEST_EMAIL ?? 'veronebyromeo@gmail.com';
+  const password = process.env.E2E_TEST_PASSWORD ?? 'Abc123456';
+
   // Remplir le formulaire de login avec sélecteurs robustes
-  await page
-    .getByRole('textbox', { name: /email/i })
-    .fill('veronebyromeo@gmail.com');
-  await page.getByRole('textbox', { name: /mot de passe/i }).fill('Abc123456');
+  await page.getByRole('textbox', { name: /email/i }).fill(email);
+  await page.getByRole('textbox', { name: /mot de passe/i }).fill(password);
 
   // Cliquer sur le bouton de connexion
   await page.getByRole('button', { name: /se connecter/i }).click();

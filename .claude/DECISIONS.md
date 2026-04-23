@@ -351,3 +351,60 @@ La convention plate du scratchpad (réaffirmée dans `docs/scratchpad/README.md`
 - ADR-013 : Règle `no-phantom-data.md` après incident sauvetage manuel SO-00158 (2026-04-22)
 - ADR-014 : Hygiène scratchpad (extension cleanup + auto-invocation + promotion refs) (2026-04-23)
 - ADR-015 : Interdit absolu de solliciter Romeo pour vérifier sur un site externe (2026-04-23)
+- ADR-016 : E2E smoke tests bloquants en CI + runtime guards contre les régressions silencieuses (2026-04-24)
+
+---
+
+## ADR-016 — Durcissement CI pour détecter les régressions runtime (2026-04-24)
+
+**Contexte** : audit 15 jours révèle 30+ régressions concrètes en production
+alors que la CI `quality.yml` était verte à chaque merge. Cause : la CI
+actuelle vérifie uniquement ESLint + Type-Check + Build. Elle ne détecte pas :
+
+- SELECT SQL qui oublie un champ → TS ne sait pas ce qui est fetché runtime.
+- FK DB modifiée hors migration → la CI ne touche pas la base.
+- Fragment React sans key, useEffect infini, key prop warning → ignoré.
+- Props TS optionnels non propagés → TS accepte `undefined`.
+- Workflow UI cassé (bouton qui n'apparaît plus, modal qui plante) →
+  aucun test automatisé ne l'exerce.
+
+**Décision** :
+
+1. **Gate E2E smoke bloquant en CI** (`.github/workflows/quality.yml`) :
+   - Nouveau job `e2e-smoke` qui run après `quality`, requis pour merger.
+   - Run seulement si `back-office` ou `packages` changent.
+   - 2 specs : `smoke-finance-modals.spec.ts`, `smoke-critical-workflows.spec.ts`.
+   - Échec = PR bloquée + commentaire automatique + Playwright report uploadé.
+
+2. **ConsoleErrorCollector étendu** (`tests/fixtures/base.ts`) :
+   - Capture `console.error` + warnings React critiques (`key prop`,
+     `Maximum update depth`, `Rendered more hooks`, `Hydration failed`).
+   - Les smoke tests font `expectNoErrors()` sur chaque page.
+
+3. **Runtime guards dans les composants à risque**
+   (`quote-input-guards.ts`) :
+   - Détecte `enseigne_id`, `customer_id` absents au moment du render.
+   - Log `console.error` avec pointeur sur le consumer fautif.
+   - Attrapé par les smoke tests → casse la PR.
+   - Pattern à étendre aux autres modals critiques (facture, rapprochement).
+
+4. **Report à ADR-017** : builder central `buildOrderForFinanceModal` dans
+   `@verone/orders` pour supprimer les 6 reconstructions ad-hoc. Sprint
+   dédié après stabilisation (coût plus élevé, impact fort).
+
+**Secrets GitHub requis** (à configurer par Romeo dans Settings → Secrets) :
+
+- `E2E_TEST_EMAIL` : email du compte de test back-office (peut être
+  `veronebyromeo@gmail.com` existant, ou un compte `test@verone.fr` dédié).
+- `E2E_TEST_PASSWORD` : mot de passe associé.
+
+**Impact CI** : +5 à 8 minutes par run (build + start + 15 tests smoke).
+Acceptable contre le coût des régressions silencieuses.
+
+**Effet attendu** : 50% des 30 régressions listées dans l'audit auraient été
+détectées par ces smoke tests. Les régressions DB-level (FK drift) restent
+invisibles — script `db-drift-check.py` prévu pour ADR-018.
+
+**Référence** : commit `[INFRA-HARDENING-001]`, branche
+`feat/infra-hardening-001`. Suite de `[BO-FIN-041]` (fixes des 3 régressions
+déclenchantes : SIRET enseigne_id, delete cancelled order, Fragment key).
