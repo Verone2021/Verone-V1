@@ -198,9 +198,10 @@ Voir `docs/scratchpad/automation-roadmap.md` (historique uniquement).
 
 ## Regles
 
-| Fichier                                 | Contenu              |
-| --------------------------------------- | -------------------- |
-| `.claude/rules/playwright-artifacts.md` | Playwright Artifacts |
-| `.claude/rules/no-phantom-data.md`      | No Phantom Data      |
+| Fichier                                    | Contenu                 |
+| ------------------------------------------ | ----------------------- |
+| `.claude/rules/playwright-artifacts.md`    | Playwright Artifacts    |
+| `.claude/rules/no-phantom-data.md`         | No Phantom Data         |
+| `.claude/rules/agent-autonomy-external.md` | Agent Autonomy External |
 
 ---
