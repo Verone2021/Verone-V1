@@ -166,3 +166,16 @@ Untitled
 /export-claude-config-*.md
 /diagnostic-*.md
 /AUDIT_*.md
+
+# Doublons INDEX a la racine du repo (canoniques dans docs/current/ et .claude/work/)
+# Voir ADR-014. Les vrais vivent dans :
+#   - .claude/work/ACTIVE.md
+#   - docs/current/INDEX-*.md
+#   - docs/current/DEPENDANCES-PACKAGES.md
+/ACTIVE.md
+/DEPENDANCES-PACKAGES.md
+/INDEX-COMPOSANTS-FORMULAIRES.md
+/INDEX-PAGES-BACK-OFFICE.md
+/INDEX-BACK-OFFICE-*.md
+/INDEX-LINKME-*.md
+/INDEX-SITE-INTERNET-*.md
