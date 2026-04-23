@@ -201,5 +201,6 @@ Voir `docs/scratchpad/automation-roadmap.md` (historique uniquement).
 | Fichier                                 | Contenu              |
 | --------------------------------------- | -------------------- |
 | `.claude/rules/playwright-artifacts.md` | Playwright Artifacts |
+| `.claude/rules/no-phantom-data.md`      | No Phantom Data      |
 
 ---
