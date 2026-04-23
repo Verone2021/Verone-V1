@@ -254,6 +254,24 @@ Les ADRs ne se modifient pas rétroactivement. Si une décision est renversée, 
 
 ---
 
+## ADR-013 — 2026-04-22 — Règle « zéro donnée fantôme en prod »
+
+**Contexte** : sur SO-2026-00158, Romeo a découvert une row `sales_order_shipments` créée la veille par un script de sauvetage manuel après échec d'INSERT côté wizard. Cette row avait `packlink_status='a_payer'` et un `packlink_shipment_id='UN2026PRO0001424092'` qui N'EXISTAIT PAS sur Packlink PRO. Le champ `notes` contenait en plus une trace technique : « Sauvetage manuel 2026-04-22: wizard a créé le shipment Packlink mais a échoué sur INSERT DB (bug useShipmentWizard:425-438 à corriger dans sprint BO-BUG-SHIPMENT-001) ». Quand Romeo cliquait « Payer », il atterrissait sur une page Packlink vide. Rupture de confiance complète.
+
+**Décision** :
+
+1. Créer `.claude/rules/no-phantom-data.md` qui interdit absolument toute injection de donnée non-réelle en production (rows fantômes, statuts cosmétiques, ids fictifs, notes techniques dans colonnes utilisateur).
+2. Référencer la règle dans `CLAUDE.md` racine section INTERDICTIONS ABSOLUES en première position (gravité maximale).
+3. Référencer dans la table SOURCES DE VERITE de CLAUDE.md.
+4. Compléter par une mémoire user `feedback_no_phantom_data_in_prod.md` (4 questions garde-fou avant tout write prod).
+5. Supprimer la row fantôme de SO-2026-00158 après vérification que le trigger `handle_shipment_deletion` fait un early-return safe pour `packlink_status='a_payer'` (zéro side-effect stock).
+
+**Conséquence** : tout agent futur qui aurait l'instinct de "rattraper" un état cassé via INSERT manuel doit s'arrêter et fixer le code, pas la donnée. Le code source des règles est désormais dans le repo (visible aux agents qui n'ont pas la mémoire user). Le pattern « rescue script » reste possible uniquement après accord explicite Romeo, sans aucune trace technique laissée en DB.
+
+**Référence** : incident 2026-04-22, branche `fix/INFRA-RULE-NO-PHANTOM-DATA`.
+
+---
+
 ## Index rapide
 
 - ADR-001 : Suppression agents expert (2026-04-15)
@@ -268,3 +286,4 @@ Les ADRs ne se modifient pas rétroactivement. Si une décision est renversée, 
 - ADR-010 : Restauration 4 fichiers config supprimés le 15 avril (2026-04-19)
 - ADR-011 : Suppression playbooks génériques (garder migrate-page-responsive seul) (2026-04-19)
 - ADR-012 : Règle `playwright-artifacts.md` + nettoyage 1857 artefacts Playwright (2026-04-20)
+- ADR-013 : Règle `no-phantom-data.md` après incident sauvetage manuel SO-00158 (2026-04-22)

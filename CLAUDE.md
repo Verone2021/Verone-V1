@@ -105,6 +105,10 @@ Le reviewer lit le rapport, pas le chat. Le ops-agent lit le verdict PASS, pas l
 
 ## INTERDICTIONS ABSOLUES
 
+- **JAMAIS de donnée fantôme en prod** (voir `.claude/rules/no-phantom-data.md`).
+  Pas d'INSERT/UPDATE manuel pour "rattraper" un état cassé. Pas de note
+  technique dans une colonne visible utilisateur. Pas d'alignement cosmétique
+  d'un état qui n'existe pas côté système externe (Packlink, Qonto, etc.).
 - Zero `any` TypeScript
 - JAMAIS modifier les routes API existantes (Qonto, adresses, emails, webhooks)
 - JAMAIS modifier les triggers stock (voir `.claude/rules/stock-triggers-protected.md`)
@@ -129,6 +133,7 @@ Le reviewer lit le rapport, pas le chat. Le ops-agent lit le verdict PASS, pas l
 | Standards responsive    | `.claude/rules/responsive.md`                  |
 | Workflow git/PR         | `.claude/rules/workflow.md`                    |
 | Autonomie agent         | `.claude/rules/autonomy-boundaries.md`         |
+| Zéro donnée fantôme     | `.claude/rules/no-phantom-data.md`             |
 | Index config agent      | `.claude/INDEX.md`                             |
 | Decisions structurelles | `.claude/DECISIONS.md` (ADRs)                  |
 
