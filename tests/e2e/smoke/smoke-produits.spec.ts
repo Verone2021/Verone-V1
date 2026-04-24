@@ -35,15 +35,12 @@ test.describe('Smoke — Produits', () => {
     consoleErrors.expectNoErrors();
   });
 
-  test('Catalogue — 1er produit → détail charge (7 onglets)', async ({
+  test('Catalogue — 1er produit → détail RENDU (pas de 404 SSR)', async ({
     page,
   }) => {
     await page.goto('/produits/catalogue');
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(SETTLE_MS);
-    // Chercher un lien direct vers une page détail produit (URL contient
-    // `/produits/catalogue/` suivi d'un UUID). Plus fiable que getByRole
-    // (qui matche aussi les liens sidebar/nav).
     const detailLink = page
       .locator('a[href*="/produits/catalogue/"]')
       .filter({ hasNot: page.locator('a[href$="/produits/catalogue"]') })
@@ -57,8 +54,15 @@ test.describe('Smoke — Produits', () => {
       await detailLink.click();
       await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(SETTLE_MS);
-      // On doit avoir quitté la liste (URL change vers un détail).
-      await expect(page).not.toHaveURL(/\/produits\/catalogue$/);
+      // Assertions CONTENU (pas juste URL) — détecte un 404 SSR silencieux
+      // où Next.js sert /_not-found mais l'URL reste sur /produits/catalogue/UUID.
+      // (Régression prod 2026-04-24 rollback.)
+      const bodyText = await page.locator('body').innerText();
+      expect(bodyText).not.toContain('Page introuvable');
+      expect(bodyText).not.toMatch(/^404/m);
+      // Au moins 1 onglet doit être visible (Général, Tarification, Stock, etc.)
+      const anyTab = page.getByRole('tab').first();
+      await expect(anyTab).toBeVisible({ timeout: 5000 });
     }
     consoleErrors.expectNoErrors();
   });

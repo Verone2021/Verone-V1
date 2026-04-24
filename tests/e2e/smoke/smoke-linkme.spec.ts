@@ -36,7 +36,9 @@ test.describe('Smoke — LinkMe', () => {
     consoleErrors.expectNoErrors();
   });
 
-  test('Commandes LinkMe — 1er œil → détail charge', async ({ page }) => {
+  test('Commandes LinkMe — 1er détail RENDU (pas de 404 SSR)', async ({
+    page,
+  }) => {
     await page.goto('/canaux-vente/linkme/commandes');
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(SETTLE_MS);
@@ -45,6 +47,10 @@ test.describe('Smoke — LinkMe', () => {
       await eye.click();
       await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(SETTLE_MS);
+      // Assertions contenu (détecte 404 SSR silencieux)
+      const bodyText = await page.locator('body').innerText();
+      expect(bodyText).not.toContain('Page introuvable');
+      expect(bodyText).not.toMatch(/^404/m);
     }
     consoleErrors.expectNoErrors();
   });
