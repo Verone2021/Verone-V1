@@ -44,8 +44,22 @@ SUMMARY_PATH = ROOT / "advisors-summary.md"
 
 
 def fetch_advisors(project_ref: str, token: str, advisor_type: str) -> List[Dict]:
-    url = f"https://api.supabase.com/v1/projects/{project_ref}/advisors/lints?type={advisor_type}"
-    req = Request(url, headers={"Authorization": f"Bearer {token}"})
+    # Endpoint officiel confirmé via OpenAPI spec :
+    #   https://api.supabase.com/api/v1-json → /v1/projects/{ref}/advisors/security
+    # (NB : l'URL plus intuitive /advisors/lints?type=security n'existe pas.)
+    #
+    # Note : Cloudflare (devant api.supabase.com) bloque les User-Agents
+    # Python-urllib par défaut (error code 1010). On envoie un UA
+    # identifiable pour traçabilité côté Supabase.
+    url = f"https://api.supabase.com/v1/projects/{project_ref}/advisors/{advisor_type}"
+    req = Request(
+        url,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "User-Agent": "verone-ci-advisors-check/1.0 (+https://github.com/Verone2021/Verone-V1)",
+            "Accept": "application/json",
+        },
+    )
     try:
         with urlopen(req, timeout=30) as resp:
             data = json.loads(resp.read().decode("utf-8"))
