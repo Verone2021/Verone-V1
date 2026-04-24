@@ -1,0 +1,10 @@
+{
+  "auth_leaked_password_protection": 1,
+  "auth_users_exposed": 1,
+  "extension_in_public": 2,
+  "function_search_path_mutable": 24,
+  "materialized_view_in_api": 3,
+  "public_bucket_allows_listing": 5,
+  "rls_policy_always_true": 48,
+  "security_definer_view": 13
+}
