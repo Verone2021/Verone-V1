@@ -35,6 +35,7 @@ import { useQuoteCreateFromOrder } from './use-quote-create-from-order';
 import { useQuoteSiretGuard } from './useQuoteSiretGuard';
 import { useParentOrgForBilling } from '../../hooks/use-parent-org-for-billing';
 import type { IParentOrgSuggestion } from '../../hooks/use-parent-org-for-billing';
+import { warnIfQuoteOrderInputDegraded } from './quote-input-guards';
 
 // ---------------------------------------------------------------------------
 // Helper — resoudre l adresse de facturation initiale depuis la commande/org
@@ -108,6 +109,12 @@ export function QuoteCreateFromOrderModal({
     order?.organisations?.enseigne_id ?? null,
     order?.customer_id ?? null
   );
+
+  // [INFRA-HARDENING-001] Détecte les consumers qui passent un order dégradé.
+  // Log en console.error → attrapé par ConsoleErrorCollector en smoke CI.
+  warnIfQuoteOrderInputDegraded(order, {
+    consumer: 'QuoteCreateFromOrderModal',
+  });
 
   const handleUseParentOrg = useCallback(
     (parent: IParentOrgSuggestion): void => {

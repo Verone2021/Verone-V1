@@ -351,3 +351,126 @@ La convention plate du scratchpad (réaffirmée dans `docs/scratchpad/README.md`
 - ADR-013 : Règle `no-phantom-data.md` après incident sauvetage manuel SO-00158 (2026-04-22)
 - ADR-014 : Hygiène scratchpad (extension cleanup + auto-invocation + promotion refs) (2026-04-23)
 - ADR-015 : Interdit absolu de solliciter Romeo pour vérifier sur un site externe (2026-04-23)
+- ADR-016 : E2E smoke tests bloquants en CI + runtime guards contre les régressions silencieuses (2026-04-24)
+- ADR-018 : Script `db-drift-check.py` contre le drift silencieux de schéma DB (2026-04-24)
+
+---
+
+## ADR-018 — Détecter le drift de schéma DB vs migrations (2026-04-24)
+
+**Contexte** : le 2026-04-24, on a découvert que la FK
+`financial_documents.sales_order_id` était `ON DELETE RESTRICT` en DB alors
+que la migration d'origine (`20251222_012_create_financial_tables.sql:222`)
+la définissait comme `fk_sales_order … ON DELETE SET NULL`. Aucune migration
+versionnée ne trace ce changement. La FK a donc été modifiée manuellement
+(probablement via le SQL Editor de Supabase Studio). Conséquence : impossible
+de supprimer une commande annulée liée à des devis soft-deletés (incident
+SO-2026-00165 Pokawa Avignon, corrigé dans PR #743).
+
+La règle `.claude/rules/database.md` exige pourtant :
+
+> Ne JAMAIS éditer une migration existante (append-only)
+> TOUJOURS exécuter `python3 scripts/generate-docs.py --db` après chaque migration
+
+Cette règle est respectée POUR les migrations versionnées. Mais rien
+n'empêche une modification directe en DB qui contourne tout le workflow.
+
+**Décision** : créer `scripts/db-drift-check.py` qui :
+
+1. Parse toutes les migrations `supabase/migrations/*.sql` et extrait pour
+   chaque couple `(table, colonne)` la dernière règle `ON DELETE` déclarée.
+2. Interroge la DB live (`information_schema.referential_constraints`)
+   pour récupérer les règles actuellement en vigueur.
+3. Compare et retourne :
+   - `ON DELETE mismatch` : la DB diverge de la migration.
+   - `Undeclared FK` : une FK existe en DB sans aucune migration qui la
+     déclare.
+   - `Missing FK` : une FK déclarée dans une migration est absente de la DB.
+4. Exit code non-zéro si drift → bloque la CI si ajouté comme gate.
+
+**Usage** :
+
+```bash
+# Local (avec DATABASE_URL en .env.local)
+python3 scripts/db-drift-check.py
+
+# CI
+SUPABASE_DB_URL=... python3 scripts/db-drift-check.py --ci
+```
+
+**Impact** :
+
+- **Immédiat** : on peut détecter les drifts existants (au moins celui de
+  `financial_documents.sales_order_id`).
+- **Préventif** : chaque nouvelle modif manuelle silencieuse sera attrapée
+  au prochain run.
+- **Hebdomadaire** en premier lieu (cron GitHub Actions) pour ne pas
+  ralentir chaque PR ; promotion en gate bloquant une fois le backlog de
+  drifts existants nettoyé.
+
+**Non-décidé pour l'instant** : que faire des drifts existants détectés ?
+Deux choix possibles, à arbitrer par Romeo :
+
+- **A** — Aligner la DB sur la migration d'origine (créer une migration
+  `ALTER TABLE … DROP CONSTRAINT … ADD CONSTRAINT … ON DELETE SET NULL`).
+- **B** — Déclarer la nouvelle intention dans une migration rétroactive
+  (`… ON DELETE RESTRICT`) si le RESTRICT était voulu.
+
+**Référence** : `scripts/db-drift-check.py`. Branche
+`feat/infra-hardening-001`. Suite de ADR-016.
+
+---
+
+## ADR-016 — Durcissement CI pour détecter les régressions runtime (2026-04-24)
+
+**Contexte** : audit 15 jours révèle 30+ régressions concrètes en production
+alors que la CI `quality.yml` était verte à chaque merge. Cause : la CI
+actuelle vérifie uniquement ESLint + Type-Check + Build. Elle ne détecte pas :
+
+- SELECT SQL qui oublie un champ → TS ne sait pas ce qui est fetché runtime.
+- FK DB modifiée hors migration → la CI ne touche pas la base.
+- Fragment React sans key, useEffect infini, key prop warning → ignoré.
+- Props TS optionnels non propagés → TS accepte `undefined`.
+- Workflow UI cassé (bouton qui n'apparaît plus, modal qui plante) →
+  aucun test automatisé ne l'exerce.
+
+**Décision** :
+
+1. **Gate E2E smoke bloquant en CI** (`.github/workflows/quality.yml`) :
+   - Nouveau job `e2e-smoke` qui run après `quality`, requis pour merger.
+   - Run seulement si `back-office` ou `packages` changent.
+   - 2 specs : `smoke-finance-modals.spec.ts`, `smoke-critical-workflows.spec.ts`.
+   - Échec = PR bloquée + commentaire automatique + Playwright report uploadé.
+
+2. **ConsoleErrorCollector étendu** (`tests/fixtures/base.ts`) :
+   - Capture `console.error` + warnings React critiques (`key prop`,
+     `Maximum update depth`, `Rendered more hooks`, `Hydration failed`).
+   - Les smoke tests font `expectNoErrors()` sur chaque page.
+
+3. **Runtime guards dans les composants à risque**
+   (`quote-input-guards.ts`) :
+   - Détecte `enseigne_id`, `customer_id` absents au moment du render.
+   - Log `console.error` avec pointeur sur le consumer fautif.
+   - Attrapé par les smoke tests → casse la PR.
+   - Pattern à étendre aux autres modals critiques (facture, rapprochement).
+
+4. **Report à ADR-017** : builder central `buildOrderForFinanceModal` dans
+   `@verone/orders` pour supprimer les 6 reconstructions ad-hoc. Sprint
+   dédié après stabilisation (coût plus élevé, impact fort).
+
+**Secrets GitHub requis** (à configurer par Romeo dans Settings → Secrets) :
+
+- `E2E_TEST_EMAIL` : email du compte de test back-office (peut être
+  `veronebyromeo@gmail.com` existant, ou un compte `test@verone.fr` dédié).
+- `E2E_TEST_PASSWORD` : mot de passe associé.
+
+**Impact CI** : +5 à 8 minutes par run (build + start + 15 tests smoke).
+Acceptable contre le coût des régressions silencieuses.
+
+**Effet attendu** : 50% des 30 régressions listées dans l'audit auraient été
+détectées par ces smoke tests. Les régressions DB-level (FK drift) restent
+invisibles — script `db-drift-check.py` prévu pour ADR-018.
+
+**Référence** : commit `[INFRA-HARDENING-001]`, branche
+`feat/infra-hardening-001`. Suite de `[BO-FIN-041]` (fixes des 3 régressions
+déclenchantes : SIRET enseigne_id, delete cancelled order, Fragment key).
