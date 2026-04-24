@@ -56,6 +56,9 @@ export function useFetchOrdersList({
           billing_contact:contacts!sales_orders_billing_contact_id_fkey(id, first_name, last_name, email, phone),
           delivery_contact:contacts!sales_orders_delivery_contact_id_fkey(id, first_name, last_name, email, phone),
           responsable_contact:contacts!sales_orders_responsable_contact_id_fkey(id, first_name, last_name, email, phone),
+          sales_order_linkme_details (
+            desired_delivery_date, confirmed_delivery_date
+          ),
           sales_order_items (
             id, product_id, quantity, unit_price_ht, total_ht, tax_rate,
             products (
@@ -128,6 +131,16 @@ export function useFetchOrdersList({
             email: string | null;
             phone: string | null;
           } | null;
+          sales_order_linkme_details:
+            | {
+                desired_delivery_date: string | null;
+                confirmed_delivery_date: string | null;
+              }
+            | Array<{
+                desired_delivery_date: string | null;
+                confirmed_delivery_date: string | null;
+              }>
+            | null;
           sales_order_items: Array<{
             id: string;
             product_id: string | null;
@@ -408,9 +421,18 @@ export function useFetchOrdersList({
             : null;
           const matchInfo = matchedOrdersMap.get(order.id);
 
+          // LinkMe details peut être objet ou tableau selon cardinalité Supabase.
+          const linkmeRaw = order.sales_order_linkme_details;
+          const linkmeDetail = Array.isArray(linkmeRaw)
+            ? (linkmeRaw[0] ?? null)
+            : (linkmeRaw ?? null);
+
           return {
             ...order,
             sales_order_items: enrichedItems,
+            desired_delivery_date: linkmeDetail?.desired_delivery_date ?? null,
+            confirmed_delivery_date:
+              linkmeDetail?.confirmed_delivery_date ?? null,
             creator: creatorInfo ?? null,
             invoice_id: invoiceMap.get(order.id)?.id ?? null,
             invoice_qonto_id: invoiceMap.get(order.id)?.qontoId ?? null,

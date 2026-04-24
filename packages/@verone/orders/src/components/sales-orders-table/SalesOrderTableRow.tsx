@@ -184,6 +184,37 @@ export function SalesOrderTableRow({
                 Echantillon
               </Badge>
             )}
+            {(() => {
+              // Alerte livraison en retard : date souhaitée dépassée et commande
+              // ni expédiée ni livrée ni annulée. Accessible dès la liste —
+              // Romeo demande plus de visibilité que l'info cachée en bas du détail.
+              const desired = order.desired_delivery_date;
+              if (!desired) return null;
+              const notShippedYet =
+                order.status !== 'shipped' &&
+                order.status !== 'delivered' &&
+                order.status !== 'cancelled' &&
+                (order.status as string) !== 'partially_shipped';
+              if (!notShippedYet) return null;
+              const target = new Date(desired);
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              target.setHours(0, 0, 0, 0);
+              const diffDays = Math.round(
+                (today.getTime() - target.getTime()) / (1000 * 60 * 60 * 24)
+              );
+              if (diffDays <= 0) return null;
+              return (
+                <Badge
+                  className="text-[10px] bg-red-100 text-red-800 border border-red-300"
+                  title={`Date de livraison souhaitée dépassée de ${diffDays} jour${
+                    diffDays > 1 ? 's' : ''
+                  } (${desired})`}
+                >
+                  ⚠ Retard {diffDays}j
+                </Badge>
+              );
+            })()}
           </div>
         </TableCell>
         <TableCell className="hidden xl:table-cell">
