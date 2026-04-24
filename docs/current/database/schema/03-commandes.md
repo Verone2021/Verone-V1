@@ -1,6 +1,6 @@
 # Domaine Commandes & Consultations — Schema Base de Donnees
 
-_Generated: 2026-04-24 18:48_
+_Generated: 2026-04-24 20:48_
 
 **Tables : 17**
 
@@ -160,8 +160,8 @@ _Generated: 2026-04-24 18:48_
 
 **Relations :**
 
-- `product_id` → `products.id`
 - `consultation_id` → `client_consultations.id`
+- `product_id` → `products.id`
 
 **RLS :** 1 policy
 
@@ -263,8 +263,8 @@ _Generated: 2026-04-24 18:48_
 
 **Relations :**
 
-- `product_id` → `products.id`
 - `purchase_order_id` → `purchase_orders.id`
+- `product_id` → `products.id`
 - `customer_organisation_id` → `organisations.id`
 - `customer_individual_id` → `individual_customers.id`
 
@@ -308,9 +308,9 @@ _Generated: 2026-04-24 18:48_
 
 **Relations :**
 
+- `affiliate_id` → `linkme_affiliates.id`
 - `purchase_order_id` → `purchase_orders.id`
 - `product_id` → `products.id`
-- `affiliate_id` → `linkme_affiliates.id`
 
 **RLS :** 2 policies
 
@@ -682,10 +682,10 @@ _Generated: 2026-04-24 18:48_
 - `delivery_contact_id` → `contacts.id`
 - `customer_id` → `organisations.id`
 - `individual_customer_id` → `individual_customers.id`
+- `applied_discount_id` → `order_discounts.id`
 - `linkme_selection_id` → `linkme_selections.id`
 - `channel_id` → `sales_channels.id`
 - `consultation_id` → `client_consultations.id`
-- `applied_discount_id` → `order_discounts.id`
 
 **RLS :** 7 policies
 

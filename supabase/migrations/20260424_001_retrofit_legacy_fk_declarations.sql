@@ -327,7 +327,7 @@ ALTER TABLE stock_movements
 ALTER TABLE stock_movements
   DROP CONSTRAINT IF EXISTS fk_stock_movements_performed_by,
   ADD CONSTRAINT fk_stock_movements_performed_by
-    FOREIGN KEY (performed_by) REFERENCES user_profiles(id) ON DELETE SET NULL;
+    FOREIGN KEY (performed_by) REFERENCES user_profiles(user_id) ON DELETE SET NULL;
 
 ALTER TABLE stock_movements
   DROP CONSTRAINT IF EXISTS stock_movements_purchase_order_item_id_fkey,
@@ -512,7 +512,7 @@ ALTER TABLE user_profiles
 ALTER TABLE user_profiles
   DROP CONSTRAINT IF EXISTS user_profiles_parent_user_id_fkey,
   ADD CONSTRAINT user_profiles_parent_user_id_fkey
-    FOREIGN KEY (parent_user_id) REFERENCES user_profiles(id) ON DELETE NO ACTION;
+    FOREIGN KEY (parent_user_id) REFERENCES user_profiles(user_id) ON DELETE NO ACTION;
 
 ALTER TABLE user_app_roles
   DROP CONSTRAINT IF EXISTS user_app_roles_enseigne_id_fkey,
@@ -527,7 +527,7 @@ ALTER TABLE user_app_roles
 ALTER TABLE user_activity_logs
   DROP CONSTRAINT IF EXISTS user_activity_logs_user_id_fkey,
   ADD CONSTRAINT user_activity_logs_user_id_fkey
-    FOREIGN KEY (user_id) REFERENCES user_profiles(id) ON DELETE CASCADE;
+    FOREIGN KEY (user_id) REFERENCES user_profiles(user_id) ON DELETE CASCADE;
 
 ALTER TABLE user_activity_logs
   DROP CONSTRAINT IF EXISTS user_activity_logs_organisation_id_fkey,
@@ -537,7 +537,7 @@ ALTER TABLE user_activity_logs
 ALTER TABLE user_sessions
   DROP CONSTRAINT IF EXISTS user_sessions_user_id_fkey,
   ADD CONSTRAINT user_sessions_user_id_fkey
-    FOREIGN KEY (user_id) REFERENCES user_profiles(id) ON DELETE CASCADE;
+    FOREIGN KEY (user_id) REFERENCES user_profiles(user_id) ON DELETE CASCADE;
 
 ALTER TABLE user_sessions
   DROP CONSTRAINT IF EXISTS user_sessions_organisation_id_fkey,
@@ -561,27 +561,8 @@ ALTER TABLE storage_allocations
   ADD CONSTRAINT affiliate_storage_allocations_owner_organisation_id_fkey
     FOREIGN KEY (owner_organisation_id) REFERENCES organisations(id) ON DELETE CASCADE;
 
--- --- Expenses (re-créer FK perdues post-migration 20251223_100) ------------
---
--- Ces 2 FK sont déclarées dans 20251223_100_identity_master_expenses.sql
--- mais absentes de la DB live — probablement droppées manuellement
--- pendant le MVP. Vérifié 2026-04-24 : 0 ligne orpheline sur les 522
--- expenses existantes, donc la re-création est safe.
---
--- (expenses.counterparty_id n'est PAS re-créée : la table `counterparties`
--- n'existe pas en DB — migration 20251223_100 partiellement appliquée.
--- Le script db-drift-check.py l'ignore désormais via le filtre
--- « target_table not in live_columns ».)
-
-ALTER TABLE expenses
-  DROP CONSTRAINT IF EXISTS expenses_transaction_id_fkey,
-  ADD CONSTRAINT expenses_transaction_id_fkey
-    FOREIGN KEY (transaction_id) REFERENCES bank_transactions(id) ON DELETE CASCADE;
-
-ALTER TABLE expenses
-  DROP CONSTRAINT IF EXISTS expenses_organisation_id_fkey,
-  ADD CONSTRAINT expenses_organisation_id_fkey
-    FOREIGN KEY (organisation_id) REFERENCES organisations(id) ON DELETE SET NULL;
+-- --- Expenses : historique, plus applicable ---------------------------------
+-- Voir scripts/db-drift-check.py pour le détail du filtre VIEW.
 
 -- --- Misc ------------------------------------------------------------------
 

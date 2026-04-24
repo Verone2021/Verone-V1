@@ -1,0 +1,157 @@
+name: DB FK Drift — weekly monitoring
+
+# Détecte les dérives de schéma DB entre deux déploiements.
+# Complément au gate CI synchrone `db-drift-check` (quality.yml) : ce cron
+# capture les modifications faites directement sur Supabase (SQL Editor,
+# dashboard, script externe) qui n'ont pas eu de PR à bloquer.
+#
+# Comportement :
+# - Lundi 06:00 UTC → run du script de drift.
+# - Si drift détecté, crée ou met à jour une GitHub Issue (pas de mail).
+# - Pas de modification automatique de la DB.
+#
+# Setup requis : secret repo `SUPABASE_DB_URL`.
+
+on:
+  schedule:
+    # Chaque lundi à 06:00 UTC (= 07:00/08:00 Paris selon DST)
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  drift-check:
+    name: Weekly DB FK drift scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install psycopg2
+        run: pip install psycopg2-binary
+
+      - name: Run drift check
+        id: drift
+        if: env.SUPABASE_DB_URL != ''
+        continue-on-error: true
+        run: |
+          python3 scripts/db-drift-check.py --ci | tee drift-output.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+
+      - name: Upload drift report
+        if: always() && env.SUPABASE_DB_URL != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: drift-report
+          path: |
+            drift-report.json
+            drift-output.txt
+          retention-days: 90
+
+      - name: Open/update GitHub Issue on drift
+        if: steps.drift.outputs.exit_code != '0' && env.SUPABASE_DB_URL != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            let output = '';
+            try {
+              output = fs.readFileSync('drift-output.txt', 'utf8');
+            } catch (e) {
+              output = '(drift-output.txt introuvable)';
+            }
+            const title = `[DB-DRIFT] Dérive de schéma détectée`;
+            const body = [
+              `## Drift DB détecté le ${new Date().toISOString().slice(0, 10)}`,
+              ``,
+              `Le cron hebdo de \`db-drift-check.py\` a détecté un ou plusieurs drifts :`,
+              '',
+              '```',
+              output.slice(0, 5000),
+              '```',
+              '',
+              `### Action requise`,
+              `1. Identifier la cause (modification SQL Editor ? script externe ?).`,
+              `2. Créer une migration versionnée \`supabase/migrations/YYYYMMDD_XXX_description.sql\` qui déclare le changement.`,
+              `3. Si le changement doit être annulé : créer la migration inverse.`,
+              `4. Fermer cette issue une fois le drift résorbé.`,
+              '',
+              `### Référence`,
+              `- ADR-018 dans \`.claude/DECISIONS.md\``,
+              `- Script \`scripts/db-drift-check.py\``,
+              `- [Run actions]((${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}))`,
+            ].join('\n');
+
+            // Chercher une issue existante "DB-DRIFT" encore ouverte
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'db-drift',
+              state: 'open',
+            });
+
+            if (existing.data.length > 0) {
+              const issue = existing.data[0];
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: body,
+              });
+              console.log(`Updated existing issue #${issue.number}`);
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['db-drift', 'infra'],
+              });
+              console.log('Created new DB-DRIFT issue');
+            }
+
+      - name: Close stale DB-DRIFT issues if clean
+        if: steps.drift.outputs.exit_code == '0' && env.SUPABASE_DB_URL != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'db-drift',
+              state: 'open',
+            });
+            for (const issue of existing.data) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `✅ Drift résorbé au ${new Date().toISOString().slice(0, 10)}. Fermeture automatique.`,
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed',
+              });
+              console.log(`Auto-closed resolved drift issue #${issue.number}`);
+            }
+
+      - name: Skip note
+        if: env.SUPABASE_DB_URL == ''
+        run: |
+          echo "⚠️ SUPABASE_DB_URL secret not set — drift scan skipped." >> $GITHUB_STEP_SUMMARY

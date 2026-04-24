@@ -1,6 +1,6 @@
 # Domaine Produits & Catalogue — Schema Base de Donnees
 
-_Generated: 2026-04-24 18:48_
+_Generated: 2026-04-24 20:48_
 
 **Tables : 17**
 
@@ -567,13 +567,13 @@ _Generated: 2026-04-24 18:48_
 
 **Relations :**
 
-- `variant_group_id` → `variant_groups.id`
-- `supplier_id` → `organisations.id`
-- `subcategory_id` → `subcategories.id`
-- `enseigne_id` → `enseignes.id`
 - `created_by_affiliate` → `linkme_affiliates.id`
-- `assigned_client_id` → `organisations.id`
 - `consultation_id` → `client_consultations.id`
+- `assigned_client_id` → `organisations.id`
+- `enseigne_id` → `enseignes.id`
+- `subcategory_id` → `subcategories.id`
+- `supplier_id` → `organisations.id`
+- `variant_group_id` → `variant_groups.id`
 
 **RLS :** 3 policies
 
@@ -666,8 +666,8 @@ _Generated: 2026-04-24 18:48_
 
 **Relations :**
 
-- `supplier_id` → `organisations.id`
 - `subcategory_id` → `subcategories.id`
+- `supplier_id` → `organisations.id`
 
 **RLS :** 2 policies
 

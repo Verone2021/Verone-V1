@@ -1,6 +1,6 @@
 # Domaine LinkMe & Affiliation — Schema Base de Donnees
 
-_Generated: 2026-04-24 18:48_
+_Generated: 2026-04-24 20:48_
 
 **Tables : 10**
 
@@ -50,8 +50,8 @@ _Generated: 2026-04-24 18:48_
 
 **Relations :**
 
-- `enseigne_id` → `enseignes.id`
 - `organisation_id` → `organisations.id`
+- `enseigne_id` → `enseignes.id`
 
 **RLS :** 3 policies
 
@@ -126,11 +126,11 @@ _Generated: 2026-04-24 18:48_
 
 **Relations :**
 
-- `payment_request_id` → `linkme_payment_requests.id`
 - `affiliate_id` → `linkme_affiliates.id`
 - `selection_id` → `linkme_selections.id`
 - `order_id` → `sales_orders.id`
 - `order_item_id` → `sales_order_items.id`
+- `payment_request_id` → `linkme_payment_requests.id`
 
 **RLS :** 2 policies
 

@@ -280,19 +280,18 @@ jobs:
           echo "Parcours critiques back-office validés sans console error ni warning React critique." >> $GITHUB_STEP_SUMMARY
 
   # ----------------------------------------------------------------
-  # 4. DB FK drift check — détecte les modifications DB hors migrations
-  #    (ADR-018). Initialement non-bloquant (backlog en cours de
-  #    nettoyage via migration 20260424_001_retrofit_legacy_fk_declarations.sql).
-  #    À promouvoir en gate bloquant une fois la migration appliquée à
-  #    staging et `db-drift-check.py` retournant 0.
+  # 4. DB FK drift check — gate bloquant (ADR-018)
+  #    Détecte toute modification DB faite hors migration (SQL Editor
+  #    Supabase, script manuel, etc.). Le backlog a été nettoyé par la
+  #    migration 20260424_001_retrofit_legacy_fk_declarations.sql
+  #    (INFRA-HARDENING-002), drift = 0 au moment du merge.
+  #    Tout nouveau drift fait échouer la PR → oblige à versionner.
   # ----------------------------------------------------------------
   db-drift-check:
-    name: DB FK drift (non-blocking — will gate once backlog cleared)
+    name: DB FK drift check (blocking)
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # Ne tourne que sur push vers staging/main ou si une migration a changé
     if: github.event_name == 'push' || github.event_name == 'pull_request'
-    continue-on-error: true
     env:
       SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
 
@@ -319,6 +318,19 @@ jobs:
           name: drift-report
           path: drift-report.json
           retention-days: 30
+
+      - name: Comment PR on drift failure
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ❌ DB FK Drift Detected\n\nUne FK a été ajoutée, supprimée ou modifiée sur la DB **sans migration versionnée**.\n\nVoir le [drift report](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) téléchargé en artifact.\n\n**Corriger :**\n1. Créer une migration \`supabase/migrations/YYYYMMDD_XXX_description.sql\` qui déclare le changement.\n2. Si le changement en live est intentionnel : ajouter \`DROP CONSTRAINT IF EXISTS ... ADD CONSTRAINT ... ON DELETE <rule>\`.\n3. Ne **pas** modifier une migration existante (règle append-only).\n\nRéférence : ADR-018 dans \`.claude/DECISIONS.md\`.`
+            });
 
       - name: Skip note
         if: env.SUPABASE_DB_URL == ''

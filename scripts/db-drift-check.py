@@ -107,6 +107,9 @@ def parse_migrations() -> Dict[Tuple[str, str], Dict[str, str]]:
 
     for migration_file in migration_files:
         content = migration_file.read_text(encoding="utf-8", errors="replace")
+        # Strip SQL line comments (-- ...) to éviter les faux matchs quand
+        # un commentaire contient "ALTER TABLE ..." ou "FOREIGN KEY ...".
+        content = re.sub(r"--[^\n]*", "", content)
         current_table: Optional[str] = None
 
         # On scanne ligne par ligne pour suivre le "current_table" contexte.
@@ -213,10 +216,18 @@ def fetch_live_fks() -> Tuple[
       AND tc.table_schema = 'public';
     """
 
+    # On ne prend que les BASE TABLE : une VIEW apparaît dans
+    # information_schema.columns mais ne peut pas porter de FK, et l'ajout
+    # d'une FK est impossible (ALTER TABLE ... ADD CONSTRAINT échoue sur
+    # une VIEW). Les drifts sur les VIEWs seraient faux positifs.
     columns_query = """
-    SELECT table_name, column_name
-    FROM information_schema.columns
-    WHERE table_schema = 'public';
+    SELECT c.table_name, c.column_name
+    FROM information_schema.columns c
+    JOIN information_schema.tables t
+      ON t.table_schema = c.table_schema
+     AND t.table_name = c.table_name
+    WHERE c.table_schema = 'public'
+      AND t.table_type = 'BASE TABLE';
     """
 
     live: Dict[Tuple[str, str], Dict[str, str]] = {}

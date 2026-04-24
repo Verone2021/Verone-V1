@@ -1,6 +1,6 @@
 # Domaine Finance & Comptabilite — Schema Base de Donnees
 
-_Generated: 2026-04-24 18:48_
+_Generated: 2026-04-24 20:48_
 
 **Tables : 13**
 
@@ -244,17 +244,17 @@ _Generated: 2026-04-24 18:48_
 
 - `linkme_selection_id` → `linkme_selections.id`
 - `linkme_affiliate_id` → `linkme_affiliates.id`
-- `billing_contact_id` → `contacts.id`
-- `delivery_contact_id` → `contacts.id`
-- `responsable_contact_id` → `contacts.id`
 - `consultation_id` → `client_consultations.id`
-- `partner_id` → `organisations.id`
 - `sales_order_id` → `sales_orders.id`
+- `partner_id` → `organisations.id`
 - `purchase_order_id` → `purchase_orders.id`
 - `converted_to_invoice_id` → `financial_documents.id`
 - `channel_id` → `sales_channels.id`
 - `individual_customer_id` → `individual_customers.id`
 - `billing_org_id` → `organisations.id`
+- `billing_contact_id` → `contacts.id`
+- `delivery_contact_id` → `contacts.id`
+- `responsable_contact_id` → `contacts.id`
 
 **RLS :** 2 policies
 
