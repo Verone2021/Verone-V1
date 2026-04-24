@@ -3,6 +3,7 @@
 ## REGLES IMPERATIVES
 
 - Ne JAMAIS utiliser `browser_snapshot` — crash "Request too large (max 20MB)"
+- Ne JAMAIS utiliser `browser_resize` pour élargir au-delà du viewport de référence (1440×900). Le viewport est defini dans `.mcp.json` pour garder une captation cohérente entre les sessions. Si un élément est hors viewport, scroller avec `browser_press_key("PageDown")` ou cliquer directement via ref (Playwright scroll automatiquement). Régression vue le 2026-04-24 : un `browser_resize(1920, 1080)` avait généré des screenshots tronqués dans `.playwright-mcp/screenshots/`.
 - TOUJOURS sauvegarder les screenshots dans `.playwright-mcp/screenshots/`
 - TOUJOURS nommer : `.playwright-mcp/screenshots/[context]-[description]-[YYYYMMDD].png`
 
