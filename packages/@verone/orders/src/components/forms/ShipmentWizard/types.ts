@@ -4,6 +4,20 @@ import type { ShipmentItem } from '@verone/types';
 
 import type { SalesOrderForShipment } from '@verone/orders/hooks';
 
+// ── Contact destinataire (subset de ContactBOWithSource, pas d'import circulaire) ─
+
+export interface ShipmentContact {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string | null;
+  mobile: string | null;
+  isPrimaryContact: boolean;
+  isBillingContact: boolean;
+  source: 'org' | 'enseigne';
+}
+
 // ── Delivery method ──────────────────────────────────────────────
 
 export type DeliveryMethod = 'pickup' | 'hand_delivery' | 'manual' | 'packlink';
@@ -175,6 +189,12 @@ export interface ShipmentWizardState {
   dbError: string | null;
   pendingPacklinkRef: string | null;
   pendingAction: boolean;
+
+  // Contact destinataire
+  selectedContact: ShipmentContact | null;
+  setSelectedContact: (contact: ShipmentContact | null) => void;
+  allContacts: ShipmentContact[];
+  contactsLoading: boolean;
 
   // Handlers
   handleQuantityChange: (itemId: string, value: string) => void;
