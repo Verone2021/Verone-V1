@@ -185,7 +185,7 @@ export function useOrderSelect(
           const { data: org } = await supabase
             .from('organisations')
             .select(
-              'legal_name, trade_name, email, address_line1, city, postal_code, country, billing_address_line1, billing_city, billing_postal_code, billing_country, shipping_address_line1, shipping_city, shipping_postal_code, shipping_country, has_different_shipping_address, siret, vat_number'
+              'legal_name, trade_name, email, address_line1, city, postal_code, country, billing_address_line1, billing_city, billing_postal_code, billing_country, shipping_address_line1, shipping_city, shipping_postal_code, shipping_country, has_different_shipping_address, siret, vat_number, enseigne_id'
             )
             .eq('id', order.customer_id)
             .single();

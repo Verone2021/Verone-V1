@@ -85,6 +85,39 @@ export function OrderRightColumn({
         }
         customerEmail={order.organisation?.email ?? null}
         customerType="organization"
+        customerId={order.organisation?.id ?? null}
+        customerOrganisation={
+          order.organisation
+            ? {
+                name:
+                  order.organisation.trade_name ??
+                  order.organisation.legal_name ??
+                  undefined,
+                trade_name: order.organisation.trade_name ?? null,
+                legal_name: order.organisation.legal_name ?? null,
+                email: order.organisation.email ?? null,
+                siret: order.organisation.siret ?? null,
+                vat_number: order.organisation.vat_number ?? null,
+                enseigne_id: order.organisation.enseigne_id ?? null,
+                address_line1: order.organisation.address_line1 ?? null,
+                postal_code: order.organisation.postal_code ?? null,
+                city: order.organisation.city ?? null,
+                country: order.organisation.country ?? null,
+                billing_address_line1:
+                  order.organisation.billing_address_line1 ?? null,
+                billing_postal_code:
+                  order.organisation.billing_postal_code ?? null,
+                billing_city: order.organisation.billing_city ?? null,
+                shipping_address_line1:
+                  order.organisation.shipping_address_line1 ?? null,
+                shipping_postal_code:
+                  order.organisation.shipping_postal_code ?? null,
+                shipping_city: order.organisation.shipping_city ?? null,
+                has_different_shipping_address:
+                  order.organisation.has_different_shipping_address ?? null,
+              }
+            : null
+        }
         shippingCostHt={order.shipping_cost_ht ?? 0}
         handlingCostHt={order.handling_cost_ht ?? 0}
         insuranceCostHt={order.insurance_cost_ht ?? 0}

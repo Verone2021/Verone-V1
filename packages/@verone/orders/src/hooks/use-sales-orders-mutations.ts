@@ -296,6 +296,16 @@ export function useSalesOrdersMutations({
             'Seules les commandes en brouillon ou annulées peuvent être supprimées'
           );
 
+        // La FK financial_documents.sales_order_id est ON DELETE RESTRICT.
+        // La cascade d'annulation (BO-FIN-023) fait un soft-delete (deleted_at = now())
+        // sans purger la row : le DELETE direct ci-dessous échoue alors en 409.
+        // On détache ces docs soft-deletés avant de supprimer la commande.
+        await supabase
+          .from('financial_documents')
+          .update({ sales_order_id: null })
+          .eq('sales_order_id', orderId)
+          .not('deleted_at', 'is', null);
+
         const { data, error } = await supabase
           .from('sales_orders')
           .delete()
