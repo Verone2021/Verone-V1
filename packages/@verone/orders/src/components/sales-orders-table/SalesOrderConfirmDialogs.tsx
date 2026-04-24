@@ -172,41 +172,90 @@ export function SalesOrderConfirmDialogs({
                   )}
 
                 {!loadingDeleteDependencies &&
-                  deleteDependencies.length > 0 && (
-                    <div className="rounded-md border border-orange-200 bg-orange-50 p-3 text-sm">
-                      <p className="mb-2 font-medium text-orange-900">
-                        Documents liés qui seront impactés :
-                      </p>
-                      <ul className="space-y-1">
-                        {deleteDependencies.map(dep => (
-                          <li
-                            key={dep.id}
-                            className="flex items-start gap-2 text-orange-800"
-                          >
-                            <span className="mt-0.5">•</span>
-                            <span className="flex-1">
-                              <span className="font-mono">
-                                {dep.documentNumber ?? '(sans numéro)'}
-                              </span>
-                              {' — '}
-                              {dep.documentType === 'customer_quote'
-                                ? 'Devis'
-                                : 'Facture'}
-                              {dep.status ? ` (${dep.status})` : ''}
-                              {dep.softDeleted
-                                ? ' — déjà annulé, lien sera détaché'
-                                : ' — lien sera détaché'}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                      <p className="mt-2 text-xs text-orange-700">
-                        Note : les documents eux-mêmes restent conservés pour
-                        l'historique comptable. Seul le lien avec la commande
-                        est retiré.
-                      </p>
-                    </div>
-                  )}
+                  deleteDependencies.length > 0 &&
+                  (() => {
+                    // Statuts supprimables (brouillon/annulé/expiré/refusé/remplacé).
+                    const deletable = new Set([
+                      'draft',
+                      'expired',
+                      'declined',
+                      'cancelled',
+                      'superseded',
+                      null,
+                    ]);
+                    const toDelete = deleteDependencies.filter(
+                      d => d.softDeleted || deletable.has(d.status)
+                    );
+                    const blockers = deleteDependencies.filter(
+                      d => !d.softDeleted && !deletable.has(d.status)
+                    );
+
+                    return (
+                      <>
+                        {blockers.length > 0 && (
+                          <div className="rounded-md border border-red-300 bg-red-50 p-3 text-sm">
+                            <p className="mb-2 font-medium text-red-900">
+                              Suppression bloquée — document(s) finalisé(s) :
+                            </p>
+                            <ul className="space-y-1">
+                              {blockers.map(dep => (
+                                <li
+                                  key={dep.id}
+                                  className="flex items-start gap-2 text-red-800"
+                                >
+                                  <span className="mt-0.5">•</span>
+                                  <span className="flex-1">
+                                    <span className="font-mono">
+                                      {dep.documentNumber ?? '(sans numéro)'}
+                                    </span>
+                                    {' — '}
+                                    {dep.documentType === 'customer_quote'
+                                      ? 'Devis'
+                                      : 'Facture'}
+                                    {dep.status ? ` (${dep.status})` : ''}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                            <p className="mt-2 text-xs text-red-700">
+                              Créez un avoir avant de supprimer la commande.
+                            </p>
+                          </div>
+                        )}
+                        {toDelete.length > 0 && (
+                          <div className="rounded-md border border-orange-200 bg-orange-50 p-3 text-sm">
+                            <p className="mb-2 font-medium text-orange-900">
+                              Seront supprimés définitivement :
+                            </p>
+                            <ul className="space-y-1">
+                              {toDelete.map(dep => (
+                                <li
+                                  key={dep.id}
+                                  className="flex items-start gap-2 text-orange-800"
+                                >
+                                  <span className="mt-0.5">•</span>
+                                  <span className="flex-1">
+                                    <span className="font-mono">
+                                      {dep.documentNumber ?? '(sans numéro)'}
+                                    </span>
+                                    {' — '}
+                                    {dep.documentType === 'customer_quote'
+                                      ? 'Devis'
+                                      : 'Facture'}
+                                    {dep.status ? ` (${dep.status})` : ''}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                            <p className="mt-2 text-xs text-orange-700">
+                              Brouillons et documents annulés : suppression
+                              irréversible en base et côté Qonto.
+                            </p>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
 
                 <p>Voulez-vous continuer ?</p>
               </div>
@@ -219,7 +268,20 @@ export function SalesOrderConfirmDialogs({
                 onDeleteConfirmed();
               }}
               className="bg-red-600 hover:bg-red-700"
-              disabled={loadingDeleteDependencies}
+              disabled={
+                loadingDeleteDependencies ||
+                deleteDependencies.some(d => {
+                  const deletable = new Set([
+                    'draft',
+                    'expired',
+                    'declined',
+                    'cancelled',
+                    'superseded',
+                    null,
+                  ]);
+                  return !d.softDeleted && !deletable.has(d.status);
+                })
+              }
             >
               Supprimer la commande
             </AlertDialogAction>
