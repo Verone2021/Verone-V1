@@ -20161,42 +20161,6 @@
   },
   "fks": [
     {
-      "source_table": "consultation_products",
-      "source_column": "product_id",
-      "target_table": "products",
-      "target_column": "id"
-    },
-    {
-      "source_table": "consultation_products",
-      "source_column": "consultation_id",
-      "target_table": "client_consultations",
-      "target_column": "id"
-    },
-    {
-      "source_table": "collection_products",
-      "source_column": "collection_id",
-      "target_table": "collections",
-      "target_column": "id"
-    },
-    {
-      "source_table": "collection_products",
-      "source_column": "product_id",
-      "target_table": "products",
-      "target_column": "id"
-    },
-    {
-      "source_table": "collection_shares",
-      "source_column": "collection_id",
-      "target_table": "collections",
-      "target_column": "id"
-    },
-    {
-      "source_table": "product_packages",
-      "source_column": "product_id",
-      "target_table": "products",
-      "target_column": "id"
-    },
-    {
       "source_table": "bank_transactions",
       "source_column": "applied_rule_id",
       "target_table": "matching_rules",
@@ -20221,21 +20185,33 @@
       "target_column": "id"
     },
     {
-      "source_table": "stock_alert_tracking",
-      "source_column": "product_id",
-      "target_table": "products",
-      "target_column": "id"
-    },
-    {
-      "source_table": "stock_alert_tracking",
-      "source_column": "supplier_id",
+      "source_table": "linkme_affiliates",
+      "source_column": "organisation_id",
       "target_table": "organisations",
       "target_column": "id"
     },
     {
-      "source_table": "stock_alert_tracking",
-      "source_column": "draft_order_id",
-      "target_table": "purchase_orders",
+      "source_table": "linkme_affiliates",
+      "source_column": "enseigne_id",
+      "target_table": "enseignes",
+      "target_column": "id"
+    },
+    {
+      "source_table": "linkme_selections",
+      "source_column": "affiliate_id",
+      "target_table": "linkme_affiliates",
+      "target_column": "id"
+    },
+    {
+      "source_table": "linkme_selection_items",
+      "source_column": "selection_id",
+      "target_table": "linkme_selections",
+      "target_column": "id"
+    },
+    {
+      "source_table": "linkme_selection_items",
+      "source_column": "product_id",
+      "target_table": "products",
       "target_column": "id"
     },
     {
@@ -20251,112 +20227,70 @@
       "target_column": "id"
     },
     {
-      "source_table": "sales_order_items",
-      "source_column": "sales_order_id",
-      "target_table": "sales_orders",
-      "target_column": "id"
-    },
-    {
-      "source_table": "sales_order_items",
-      "source_column": "product_id",
-      "target_table": "products",
-      "target_column": "id"
-    },
-    {
-      "source_table": "sales_order_items",
-      "source_column": "linkme_selection_item_id",
-      "target_table": "linkme_selection_items",
-      "target_column": "id"
-    },
-    {
-      "source_table": "purchase_order_items",
-      "source_column": "product_id",
-      "target_table": "products",
-      "target_column": "id"
-    },
-    {
-      "source_table": "purchase_order_items",
-      "source_column": "purchase_order_id",
-      "target_table": "purchase_orders",
-      "target_column": "id"
-    },
-    {
-      "source_table": "purchase_order_items",
-      "source_column": "customer_organisation_id",
-      "target_table": "organisations",
-      "target_column": "id"
-    },
-    {
-      "source_table": "purchase_order_items",
-      "source_column": "customer_individual_id",
-      "target_table": "individual_customers",
-      "target_column": "id"
-    },
-    {
-      "source_table": "purchase_order_receptions",
-      "source_column": "purchase_order_id",
-      "target_table": "purchase_orders",
-      "target_column": "id"
-    },
-    {
-      "source_table": "purchase_order_receptions",
-      "source_column": "product_id",
-      "target_table": "products",
-      "target_column": "id"
-    },
-    {
-      "source_table": "purchase_order_receptions",
-      "source_column": "affiliate_id",
-      "target_table": "linkme_affiliates",
-      "target_column": "id"
-    },
-    {
-      "source_table": "products",
-      "source_column": "variant_group_id",
-      "target_table": "variant_groups",
-      "target_column": "id"
-    },
-    {
-      "source_table": "products",
+      "source_table": "linkme_channel_suppliers",
       "source_column": "supplier_id",
       "target_table": "organisations",
       "target_column": "id"
     },
     {
-      "source_table": "products",
-      "source_column": "subcategory_id",
-      "target_table": "subcategories",
+      "source_table": "linkme_channel_suppliers",
+      "source_column": "channel_id",
+      "target_table": "sales_channels",
       "target_column": "id"
     },
     {
-      "source_table": "products",
-      "source_column": "enseigne_id",
-      "target_table": "enseignes",
-      "target_column": "id"
-    },
-    {
-      "source_table": "products",
-      "source_column": "created_by_affiliate",
+      "source_table": "linkme_commissions",
+      "source_column": "affiliate_id",
       "target_table": "linkme_affiliates",
       "target_column": "id"
     },
     {
-      "source_table": "products",
-      "source_column": "assigned_client_id",
+      "source_table": "linkme_commissions",
+      "source_column": "selection_id",
+      "target_table": "linkme_selections",
+      "target_column": "id"
+    },
+    {
+      "source_table": "linkme_commissions",
+      "source_column": "order_id",
+      "target_table": "sales_orders",
+      "target_column": "id"
+    },
+    {
+      "source_table": "linkme_commissions",
+      "source_column": "order_item_id",
+      "target_table": "sales_order_items",
+      "target_column": "id"
+    },
+    {
+      "source_table": "linkme_commissions",
+      "source_column": "payment_request_id",
+      "target_table": "linkme_payment_requests",
+      "target_column": "id"
+    },
+    {
+      "source_table": "linkme_info_requests",
+      "source_column": "sales_order_id",
+      "target_table": "sales_orders",
+      "target_column": "id"
+    },
+    {
+      "source_table": "user_profiles",
+      "source_column": "individual_customer_id",
+      "target_table": "individual_customers",
+      "target_column": "id"
+    },
+    {
+      "source_table": "user_profiles",
+      "source_column": "organisation_id",
       "target_table": "organisations",
       "target_column": "id"
     },
     {
-      "source_table": "products",
-      "source_column": "consultation_id",
-      "target_table": "client_consultations",
-      "target_column": "id"
-    },
-    {
-      "source_table": "google_merchant_syncs",
-      "source_column": "product_id",
-      "target_table": "products",
-      "target_column": "id"
+      "source_table": "user_profiles",
+      "source_column": "parent_user_id",
+      "target_table": "user_profiles",
+      "target_column": "user_id"
     },
     {
       "source_table": "webhook_logs",
@@ -20383,6 +20317,30 @@
       "target_column": "id"
     },
     {
+      "source_table": "user_app_roles",
+      "source_column": "enseigne_id",
+      "target_table": "enseignes",
+      "target_column": "id"
+    },
+    {
+      "source_table": "user_app_roles",
+      "source_column": "organisation_id",
+      "target_table": "organisations",
+      "target_column": "id"
+    },
+    {
+      "source_table": "user_activity_logs",
+      "source_column": "user_id",
+      "target_table": "user_profiles",
+      "target_column": "user_id"
+    },
+    {
+      "source_table": "user_activity_logs",
+      "source_column": "organisation_id",
+      "target_table": "organisations",
+      "target_column": "id"
+    },
+    {
       "source_table": "transaction_document_links",
       "source_column": "transaction_id",
       "target_table": "bank_transactions",
@@ -20404,42 +20362,6 @@
       "source_table": "transaction_document_links",
       "source_column": "purchase_order_id",
       "target_table": "purchase_orders",
-      "target_column": "id"
-    },
-    {
-      "source_table": "linkme_info_requests",
-      "source_column": "sales_order_id",
-      "target_table": "sales_orders",
-      "target_column": "id"
-    },
-    {
-      "source_table": "subcategories",
-      "source_column": "category_id",
-      "target_table": "categories",
-      "target_column": "id"
-    },
-    {
-      "source_table": "categories",
-      "source_column": "family_id",
-      "target_table": "families",
-      "target_column": "id"
-    },
-    {
-      "source_table": "channel_product_metadata",
-      "source_column": "product_id",
-      "target_table": "products",
-      "target_column": "id"
-    },
-    {
-      "source_table": "channel_product_metadata",
-      "source_column": "channel_id",
-      "target_table": "sales_channels",
-      "target_column": "id"
-    },
-    {
-      "source_table": "purchase_orders",
-      "source_column": "supplier_id",
-      "target_table": "organisations",
       "target_column": "id"
     },
     {
@@ -20468,38 +20390,20 @@
     },
     {
       "source_table": "financial_documents",
-      "source_column": "billing_contact_id",
-      "target_table": "contacts",
-      "target_column": "id"
-    },
-    {
-      "source_table": "financial_documents",
-      "source_column": "delivery_contact_id",
-      "target_table": "contacts",
-      "target_column": "id"
-    },
-    {
-      "source_table": "financial_documents",
-      "source_column": "responsable_contact_id",
-      "target_table": "contacts",
-      "target_column": "id"
-    },
-    {
-      "source_table": "financial_documents",
       "source_column": "consultation_id",
       "target_table": "client_consultations",
       "target_column": "id"
     },
     {
       "source_table": "financial_documents",
-      "source_column": "partner_id",
-      "target_table": "organisations",
+      "source_column": "sales_order_id",
+      "target_table": "sales_orders",
       "target_column": "id"
     },
     {
       "source_table": "financial_documents",
-      "source_column": "sales_order_id",
-      "target_table": "sales_orders",
+      "source_column": "partner_id",
+      "target_table": "organisations",
       "target_column": "id"
     },
     {
@@ -20533,63 +20437,21 @@
       "target_column": "id"
     },
     {
-      "source_table": "stock_movements",
-      "source_column": "product_id",
-      "target_table": "products",
+      "source_table": "financial_documents",
+      "source_column": "billing_contact_id",
+      "target_table": "contacts",
       "target_column": "id"
     },
     {
-      "source_table": "stock_movements",
-      "source_column": "performed_by",
-      "target_table": "user_profiles",
-      "target_column": "user_id"
-    },
-    {
-      "source_table": "stock_movements",
-      "source_column": "purchase_order_item_id",
-      "target_table": "purchase_order_items",
+      "source_table": "financial_documents",
+      "source_column": "delivery_contact_id",
+      "target_table": "contacts",
       "target_column": "id"
     },
     {
-      "source_table": "stock_movements",
-      "source_column": "channel_id",
-      "target_table": "sales_channels",
-      "target_column": "id"
-    },
-    {
-      "source_table": "variant_groups",
-      "source_column": "supplier_id",
-      "target_table": "organisations",
-      "target_column": "id"
-    },
-    {
-      "source_table": "variant_groups",
-      "source_column": "subcategory_id",
-      "target_table": "subcategories",
-      "target_column": "id"
-    },
-    {
-      "source_table": "linkme_affiliates",
-      "source_column": "enseigne_id",
-      "target_table": "enseignes",
-      "target_column": "id"
-    },
-    {
-      "source_table": "linkme_affiliates",
-      "source_column": "organisation_id",
-      "target_table": "organisations",
-      "target_column": "id"
-    },
-    {
-      "source_table": "linkme_channel_suppliers",
-      "source_column": "supplier_id",
-      "target_table": "organisations",
-      "target_column": "id"
-    },
-    {
-      "source_table": "linkme_channel_suppliers",
-      "source_column": "channel_id",
-      "target_table": "sales_channels",
+      "source_table": "financial_documents",
+      "source_column": "responsable_contact_id",
+      "target_table": "contacts",
       "target_column": "id"
     },
     {
@@ -20608,36 +20470,6 @@
       "source_table": "linkme_payment_request_items",
       "source_column": "commission_id",
       "target_table": "linkme_commissions",
-      "target_column": "id"
-    },
-    {
-      "source_table": "linkme_commissions",
-      "source_column": "payment_request_id",
-      "target_table": "linkme_payment_requests",
-      "target_column": "id"
-    },
-    {
-      "source_table": "linkme_commissions",
-      "source_column": "affiliate_id",
-      "target_table": "linkme_affiliates",
-      "target_column": "id"
-    },
-    {
-      "source_table": "linkme_commissions",
-      "source_column": "selection_id",
-      "target_table": "linkme_selections",
-      "target_column": "id"
-    },
-    {
-      "source_table": "linkme_commissions",
-      "source_column": "order_id",
-      "target_table": "sales_orders",
-      "target_column": "id"
-    },
-    {
-      "source_table": "linkme_commissions",
-      "source_column": "order_item_id",
-      "target_table": "sales_order_items",
       "target_column": "id"
     },
     {
@@ -20678,6 +20510,12 @@
     },
     {
       "source_table": "sales_orders",
+      "source_column": "applied_discount_id",
+      "target_table": "order_discounts",
+      "target_column": "id"
+    },
+    {
+      "source_table": "sales_orders",
       "source_column": "linkme_selection_id",
       "target_table": "linkme_selections",
       "target_column": "id"
@@ -20692,30 +20530,6 @@
       "source_table": "sales_orders",
       "source_column": "consultation_id",
       "target_table": "client_consultations",
-      "target_column": "id"
-    },
-    {
-      "source_table": "sales_orders",
-      "source_column": "applied_discount_id",
-      "target_table": "order_discounts",
-      "target_column": "id"
-    },
-    {
-      "source_table": "channel_pricing_history",
-      "source_column": "channel_pricing_id",
-      "target_table": "channel_pricing",
-      "target_column": "id"
-    },
-    {
-      "source_table": "channel_pricing_history",
-      "source_column": "product_id",
-      "target_table": "products",
-      "target_column": "id"
-    },
-    {
-      "source_table": "channel_pricing_history",
-      "source_column": "channel_id",
-      "target_table": "sales_channels",
       "target_column": "id"
     },
     {
@@ -20743,33 +20557,63 @@
       "target_column": "id"
     },
     {
-      "source_table": "organisation_families",
-      "source_column": "organisation_id",
+      "source_table": "products",
+      "source_column": "created_by_affiliate",
+      "target_table": "linkme_affiliates",
+      "target_column": "id"
+    },
+    {
+      "source_table": "products",
+      "source_column": "consultation_id",
+      "target_table": "client_consultations",
+      "target_column": "id"
+    },
+    {
+      "source_table": "products",
+      "source_column": "assigned_client_id",
       "target_table": "organisations",
       "target_column": "id"
     },
     {
-      "source_table": "organisation_families",
-      "source_column": "family_id",
-      "target_table": "families",
-      "target_column": "id"
-    },
-    {
-      "source_table": "product_images",
-      "source_column": "product_id",
-      "target_table": "products",
-      "target_column": "id"
-    },
-    {
-      "source_table": "contacts",
-      "source_column": "organisation_id",
-      "target_table": "organisations",
-      "target_column": "id"
-    },
-    {
-      "source_table": "contacts",
+      "source_table": "products",
       "source_column": "enseigne_id",
       "target_table": "enseignes",
+      "target_column": "id"
+    },
+    {
+      "source_table": "products",
+      "source_column": "subcategory_id",
+      "target_table": "subcategories",
+      "target_column": "id"
+    },
+    {
+      "source_table": "products",
+      "source_column": "supplier_id",
+      "target_table": "organisations",
+      "target_column": "id"
+    },
+    {
+      "source_table": "products",
+      "source_column": "variant_group_id",
+      "target_table": "variant_groups",
+      "target_column": "id"
+    },
+    {
+      "source_table": "purchase_order_receptions",
+      "source_column": "affiliate_id",
+      "target_table": "linkme_affiliates",
+      "target_column": "id"
+    },
+    {
+      "source_table": "purchase_order_receptions",
+      "source_column": "purchase_order_id",
+      "target_table": "purchase_orders",
+      "target_column": "id"
+    },
+    {
+      "source_table": "purchase_order_receptions",
+      "source_column": "product_id",
+      "target_table": "products",
       "target_column": "id"
     },
     {
@@ -20780,18 +20624,6 @@
     },
     {
       "source_table": "meta_commerce_syncs",
-      "source_column": "product_id",
-      "target_table": "products",
-      "target_column": "id"
-    },
-    {
-      "source_table": "sales_order_shipments",
-      "source_column": "sales_order_id",
-      "target_table": "sales_orders",
-      "target_column": "id"
-    },
-    {
-      "source_table": "sales_order_shipments",
       "source_column": "product_id",
       "target_table": "products",
       "target_column": "id"
@@ -20812,36 +20644,6 @@
       "source_table": "sourcing_photos",
       "source_column": "product_id",
       "target_table": "products",
-      "target_column": "id"
-    },
-    {
-      "source_table": "stock_reservations",
-      "source_column": "product_id",
-      "target_table": "products",
-      "target_column": "id"
-    },
-    {
-      "source_table": "consultation_images",
-      "source_column": "consultation_id",
-      "target_table": "client_consultations",
-      "target_column": "id"
-    },
-    {
-      "source_table": "product_groups",
-      "source_column": "primary_product_id",
-      "target_table": "products",
-      "target_column": "id"
-    },
-    {
-      "source_table": "product_group_members",
-      "source_column": "product_id",
-      "target_table": "products",
-      "target_column": "id"
-    },
-    {
-      "source_table": "product_group_members",
-      "source_column": "group_id",
-      "target_table": "product_groups",
       "target_column": "id"
     },
     {
@@ -20869,51 +20671,33 @@
       "target_column": "id"
     },
     {
-      "source_table": "user_profiles",
-      "source_column": "individual_customer_id",
-      "target_table": "individual_customers",
-      "target_column": "id"
-    },
-    {
-      "source_table": "user_profiles",
-      "source_column": "organisation_id",
-      "target_table": "organisations",
-      "target_column": "id"
-    },
-    {
-      "source_table": "user_profiles",
-      "source_column": "parent_user_id",
+      "source_table": "user_sessions",
+      "source_column": "user_id",
       "target_table": "user_profiles",
       "target_column": "user_id"
     },
     {
-      "source_table": "linkme_selections",
-      "source_column": "affiliate_id",
-      "target_table": "linkme_affiliates",
-      "target_column": "id"
-    },
-    {
-      "source_table": "matching_rules",
+      "source_table": "user_sessions",
       "source_column": "organisation_id",
       "target_table": "organisations",
       "target_column": "id"
     },
     {
-      "source_table": "matching_rules",
-      "source_column": "individual_customer_id",
-      "target_table": "individual_customers",
-      "target_column": "id"
-    },
-    {
-      "source_table": "linkme_selection_items",
-      "source_column": "selection_id",
-      "target_table": "linkme_selections",
-      "target_column": "id"
-    },
-    {
-      "source_table": "linkme_selection_items",
+      "source_table": "storage_allocations",
       "source_column": "product_id",
       "target_table": "products",
+      "target_column": "id"
+    },
+    {
+      "source_table": "storage_allocations",
+      "source_column": "owner_enseigne_id",
+      "target_table": "enseignes",
+      "target_column": "id"
+    },
+    {
+      "source_table": "storage_allocations",
+      "source_column": "owner_organisation_id",
+      "target_table": "organisations",
       "target_column": "id"
     },
     {
@@ -20983,54 +20767,12 @@
       "target_column": "id"
     },
     {
-      "source_table": "channel_price_lists",
-      "source_column": "price_list_id",
-      "target_table": "price_lists",
-      "target_column": "id"
-    },
-    {
-      "source_table": "channel_price_lists",
-      "source_column": "channel_id",
-      "target_table": "sales_channels",
-      "target_column": "id"
-    },
-    {
       "source_table": "consultation_emails",
       "source_column": "consultation_id",
       "target_table": "client_consultations",
       "target_column": "id"
     },
     {
-      "source_table": "user_activity_logs",
-      "source_column": "user_id",
-      "target_table": "user_profiles",
-      "target_column": "user_id"
-    },
-    {
-      "source_table": "user_activity_logs",
-      "source_column": "organisation_id",
-      "target_table": "organisations",
-      "target_column": "id"
-    },
-    {
-      "source_table": "user_sessions",
-      "source_column": "user_id",
-      "target_table": "user_profiles",
-      "target_column": "user_id"
-    },
-    {
-      "source_table": "user_sessions",
-      "source_column": "organisation_id",
-      "target_table": "organisations",
-      "target_column": "id"
-    },
-    {
-      "source_table": "collection_images",
-      "source_column": "collection_id",
-      "target_table": "collections",
-      "target_column": "id"
-    },
-    {
       "source_table": "sourcing_candidate_suppliers",
       "source_column": "product_id",
       "target_table": "products",
@@ -21043,87 +20785,33 @@
       "target_column": "id"
     },
     {
-      "source_table": "channel_pricing",
+      "source_table": "google_merchant_syncs",
       "source_column": "product_id",
       "target_table": "products",
       "target_column": "id"
     },
     {
-      "source_table": "channel_pricing",
-      "source_column": "channel_id",
-      "target_table": "sales_channels",
-      "target_column": "id"
-    },
-    {
-      "source_table": "customer_pricing",
+      "source_table": "shopping_carts",
       "source_column": "product_id",
       "target_table": "products",
       "target_column": "id"
     },
     {
-      "source_table": "price_list_items",
-      "source_column": "price_list_id",
-      "target_table": "price_lists",
+      "source_table": "shopping_carts",
+      "source_column": "variant_group_id",
+      "target_table": "variant_groups",
       "target_column": "id"
     },
     {
-      "source_table": "price_list_items",
-      "source_column": "product_id",
-      "target_table": "products",
-      "target_column": "id"
-    },
-    {
-      "source_table": "price_list_history",
-      "source_column": "price_list_item_id",
-      "target_table": "price_list_items",
-      "target_column": "id"
-    },
-    {
-      "source_table": "group_price_lists",
-      "source_column": "group_id",
-      "target_table": "customer_groups",
-      "target_column": "id"
-    },
-    {
-      "source_table": "group_price_lists",
-      "source_column": "price_list_id",
-      "target_table": "price_lists",
-      "target_column": "id"
-    },
-    {
-      "source_table": "sample_orders",
-      "source_column": "supplier_id",
-      "target_table": "organisations",
-      "target_column": "id"
-    },
-    {
-      "source_table": "user_app_roles",
-      "source_column": "enseigne_id",
-      "target_table": "enseignes",
-      "target_column": "id"
-    },
-    {
-      "source_table": "user_app_roles",
+      "source_table": "matching_rules",
       "source_column": "organisation_id",
       "target_table": "organisations",
       "target_column": "id"
     },
     {
-      "source_table": "storage_allocations",
-      "source_column": "product_id",
-      "target_table": "products",
-      "target_column": "id"
-    },
-    {
-      "source_table": "storage_allocations",
-      "source_column": "owner_enseigne_id",
-      "target_table": "enseignes",
-      "target_column": "id"
-    },
-    {
-      "source_table": "storage_allocations",
-      "source_column": "owner_organisation_id",
-      "target_table": "organisations",
+      "source_table": "matching_rules",
+      "source_column": "individual_customer_id",
+      "target_table": "individual_customers",
       "target_column": "id"
     },
     {
@@ -21169,6 +20857,78 @@
       "target_column": "id"
     },
     {
+      "source_table": "product_images",
+      "source_column": "product_id",
+      "target_table": "products",
+      "target_column": "id"
+    },
+    {
+      "source_table": "product_packages",
+      "source_column": "product_id",
+      "target_table": "products",
+      "target_column": "id"
+    },
+    {
+      "source_table": "product_groups",
+      "source_column": "primary_product_id",
+      "target_table": "products",
+      "target_column": "id"
+    },
+    {
+      "source_table": "product_group_members",
+      "source_column": "product_id",
+      "target_table": "products",
+      "target_column": "id"
+    },
+    {
+      "source_table": "product_group_members",
+      "source_column": "group_id",
+      "target_table": "product_groups",
+      "target_column": "id"
+    },
+    {
+      "source_table": "categories",
+      "source_column": "family_id",
+      "target_table": "families",
+      "target_column": "id"
+    },
+    {
+      "source_table": "subcategories",
+      "source_column": "category_id",
+      "target_table": "categories",
+      "target_column": "id"
+    },
+    {
+      "source_table": "variant_groups",
+      "source_column": "subcategory_id",
+      "target_table": "subcategories",
+      "target_column": "id"
+    },
+    {
+      "source_table": "variant_groups",
+      "source_column": "supplier_id",
+      "target_table": "organisations",
+      "target_column": "id"
+    },
+    {
+      "source_table": "collection_images",
+      "source_column": "collection_id",
+      "target_table": "collections",
+      "target_column": "id"
+    },
+    {
+      "source_table": "collection_products",
+      "source_column": "collection_id",
+      "target_table": "collections",
+      "target_column": "id"
+    },
+    {
+      "source_table": "collection_products",
+      "source_column": "product_id",
+      "target_table": "products",
+      "target_column": "id"
+    },
+    {
       "source_table": "order_discount_targets",
       "source_column": "discount_id",
       "target_table": "order_discounts",
@@ -21190,6 +20950,90 @@
       "source_table": "promotion_usages",
       "source_column": "customer_id",
       "target_table": "individual_customers",
+      "target_column": "id"
+    },
+    {
+      "source_table": "collection_shares",
+      "source_column": "collection_id",
+      "target_table": "collections",
+      "target_column": "id"
+    },
+    {
+      "source_table": "channel_pricing",
+      "source_column": "product_id",
+      "target_table": "products",
+      "target_column": "id"
+    },
+    {
+      "source_table": "channel_pricing",
+      "source_column": "channel_id",
+      "target_table": "sales_channels",
+      "target_column": "id"
+    },
+    {
+      "source_table": "channel_pricing_history",
+      "source_column": "channel_pricing_id",
+      "target_table": "channel_pricing",
+      "target_column": "id"
+    },
+    {
+      "source_table": "channel_pricing_history",
+      "source_column": "product_id",
+      "target_table": "products",
+      "target_column": "id"
+    },
+    {
+      "source_table": "channel_pricing_history",
+      "source_column": "channel_id",
+      "target_table": "sales_channels",
+      "target_column": "id"
+    },
+    {
+      "source_table": "channel_product_metadata",
+      "source_column": "product_id",
+      "target_table": "products",
+      "target_column": "id"
+    },
+    {
+      "source_table": "channel_product_metadata",
+      "source_column": "channel_id",
+      "target_table": "sales_channels",
+      "target_column": "id"
+    },
+    {
+      "source_table": "customer_pricing",
+      "source_column": "product_id",
+      "target_table": "products",
+      "target_column": "id"
+    },
+    {
+      "source_table": "price_list_items",
+      "source_column": "price_list_id",
+      "target_table": "price_lists",
+      "target_column": "id"
+    },
+    {
+      "source_table": "price_list_items",
+      "source_column": "product_id",
+      "target_table": "products",
+      "target_column": "id"
+    },
+    {
+      "source_table": "price_list_history",
+      "source_column": "price_list_item_id",
+      "target_table": "price_list_items",
+      "target_column": "id"
+    },
+    {
+      "source_table": "channel_price_lists",
+      "source_column": "price_list_id",
+      "target_table": "price_lists",
+      "target_column": "id"
+    },
+    {
+      "source_table": "channel_price_lists",
+      "source_column": "channel_id",
+      "target_table": "sales_channels",
       "target_column": "id"
     },
     {
@@ -21253,9 +21097,105 @@
       "target_column": "id"
     },
     {
+      "source_table": "group_price_lists",
+      "source_column": "group_id",
+      "target_table": "customer_groups",
+      "target_column": "id"
+    },
+    {
+      "source_table": "group_price_lists",
+      "source_column": "price_list_id",
+      "target_table": "price_lists",
+      "target_column": "id"
+    },
+    {
       "source_table": "wishlist_items",
       "source_column": "product_id",
       "target_table": "products",
+      "target_column": "id"
+    },
+    {
+      "source_table": "sales_order_items",
+      "source_column": "sales_order_id",
+      "target_table": "sales_orders",
+      "target_column": "id"
+    },
+    {
+      "source_table": "sales_order_items",
+      "source_column": "product_id",
+      "target_table": "products",
+      "target_column": "id"
+    },
+    {
+      "source_table": "sales_order_items",
+      "source_column": "linkme_selection_item_id",
+      "target_table": "linkme_selection_items",
+      "target_column": "id"
+    },
+    {
+      "source_table": "sales_order_shipments",
+      "source_column": "sales_order_id",
+      "target_table": "sales_orders",
+      "target_column": "id"
+    },
+    {
+      "source_table": "sales_order_shipments",
+      "source_column": "product_id",
+      "target_table": "products",
+      "target_column": "id"
+    },
+    {
+      "source_table": "purchase_orders",
+      "source_column": "supplier_id",
+      "target_table": "organisations",
+      "target_column": "id"
+    },
+    {
+      "source_table": "purchase_order_items",
+      "source_column": "purchase_order_id",
+      "target_table": "purchase_orders",
+      "target_column": "id"
+    },
+    {
+      "source_table": "purchase_order_items",
+      "source_column": "product_id",
+      "target_table": "products",
+      "target_column": "id"
+    },
+    {
+      "source_table": "purchase_order_items",
+      "source_column": "customer_organisation_id",
+      "target_table": "organisations",
+      "target_column": "id"
+    },
+    {
+      "source_table": "purchase_order_items",
+      "source_column": "customer_individual_id",
+      "target_table": "individual_customers",
+      "target_column": "id"
+    },
+    {
+      "source_table": "stock_movements",
+      "source_column": "product_id",
+      "target_table": "products",
+      "target_column": "id"
+    },
+    {
+      "source_table": "stock_movements",
+      "source_column": "performed_by",
+      "target_table": "user_profiles",
+      "target_column": "user_id"
+    },
+    {
+      "source_table": "stock_movements",
+      "source_column": "purchase_order_item_id",
+      "target_table": "purchase_order_items",
+      "target_column": "id"
+    },
+    {
+      "source_table": "stock_movements",
+      "source_column": "channel_id",
+      "target_table": "sales_channels",
       "target_column": "id"
     },
     {
@@ -21271,21 +21211,81 @@
       "target_column": "id"
     },
     {
-      "source_table": "shopping_carts",
+      "source_table": "stock_reservations",
       "source_column": "product_id",
       "target_table": "products",
       "target_column": "id"
     },
     {
-      "source_table": "shopping_carts",
-      "source_column": "variant_group_id",
-      "target_table": "variant_groups",
+      "source_table": "stock_alert_tracking",
+      "source_column": "product_id",
+      "target_table": "products",
+      "target_column": "id"
+    },
+    {
+      "source_table": "stock_alert_tracking",
+      "source_column": "supplier_id",
+      "target_table": "organisations",
+      "target_column": "id"
+    },
+    {
+      "source_table": "stock_alert_tracking",
+      "source_column": "draft_order_id",
+      "target_table": "purchase_orders",
       "target_column": "id"
     },
     {
       "source_table": "product_reviews",
       "source_column": "product_id",
       "target_table": "products",
+      "target_column": "id"
+    },
+    {
+      "source_table": "consultation_products",
+      "source_column": "consultation_id",
+      "target_table": "client_consultations",
+      "target_column": "id"
+    },
+    {
+      "source_table": "consultation_products",
+      "source_column": "product_id",
+      "target_table": "products",
+      "target_column": "id"
+    },
+    {
+      "source_table": "consultation_images",
+      "source_column": "consultation_id",
+      "target_table": "client_consultations",
+      "target_column": "id"
+    },
+    {
+      "source_table": "sample_orders",
+      "source_column": "supplier_id",
+      "target_table": "organisations",
+      "target_column": "id"
+    },
+    {
+      "source_table": "organisation_families",
+      "source_column": "organisation_id",
+      "target_table": "organisations",
+      "target_column": "id"
+    },
+    {
+      "source_table": "organisation_families",
+      "source_column": "family_id",
+      "target_table": "families",
+      "target_column": "id"
+    },
+    {
+      "source_table": "contacts",
+      "source_column": "organisation_id",
+      "target_table": "organisations",
+      "target_column": "id"
+    },
+    {
+      "source_table": "contacts",
+      "source_column": "enseigne_id",
+      "target_table": "enseignes",
       "target_column": "id"
     }
   ],

@@ -39,6 +39,14 @@ from typing import Dict, List, Optional, Tuple
 ROOT = Path(__file__).resolve().parent.parent
 MIGRATIONS_DIR = ROOT / "supabase" / "migrations"
 
+# Mots-clés SQL à ignorer quand ils sont parsés par erreur comme un nom
+# de table (ex. "FOR (selection_id)" où "FOR" n'est pas une table).
+SQL_KEYWORDS_BLACKLIST = {
+    "for", "from", "as", "on", "in", "by", "to",
+    "select", "insert", "update", "delete", "where",
+    "set", "null", "default", "values",
+}
+
 
 # ---------------------------------------------------------------------------
 # Parse migrations → FK déclarée par (table, colonne) avec sa dernière règle.
@@ -99,6 +107,9 @@ def parse_migrations() -> Dict[Tuple[str, str], Dict[str, str]]:
 
     for migration_file in migration_files:
         content = migration_file.read_text(encoding="utf-8", errors="replace")
+        # Strip SQL line comments (-- ...) to éviter les faux matchs quand
+        # un commentaire contient "ALTER TABLE ..." ou "FOREIGN KEY ...".
+        content = re.sub(r"--[^\n]*", "", content)
         current_table: Optional[str] = None
 
         # On scanne ligne par ligne pour suivre le "current_table" contexte.
@@ -136,6 +147,11 @@ def parse_migrations() -> Dict[Tuple[str, str], Dict[str, str]]:
                 col = m.group(1).lower()
                 tgt_table = m.group(2).lower()
                 on_delete = _normalize(m.group(4))
+                # Filtre faux positifs : le contexte `current_table` a été
+                # résolu sur un mot-clé SQL (ex. "FOR") au lieu d'un nom de
+                # table réel.
+                if current_table in SQL_KEYWORDS_BLACKLIST:
+                    continue
                 declared[(current_table, col)] = {
                     "target_table": tgt_table,
                     "on_delete": on_delete,
@@ -153,7 +169,17 @@ def parse_migrations() -> Dict[Tuple[str, str], Dict[str, str]]:
 # ---------------------------------------------------------------------------
 
 
-def fetch_live_fks() -> Dict[Tuple[str, str], Dict[str, str]]:
+def fetch_live_fks() -> Tuple[
+    Dict[Tuple[str, str], Dict[str, str]],
+    Dict[str, set],
+]:
+    """
+    Retourne (live_fks, live_columns) où :
+      - live_fks : {(table, col): {target_table, on_delete}}
+      - live_columns : {table: {col1, col2, ...}} pour savoir si une colonne
+        existe physiquement en DB (distingue "FK absente" de "colonne
+        jamais créée").
+    """
     db_url = os.environ.get("DATABASE_URL") or os.environ.get("SUPABASE_DB_URL")
     if not db_url:
         print(
@@ -170,7 +196,7 @@ def fetch_live_fks() -> Dict[Tuple[str, str], Dict[str, str]]:
         print("ERROR: pip install psycopg2-binary", file=sys.stderr)
         sys.exit(2)
 
-    query = """
+    fk_query = """
     SELECT
       tc.table_name AS source_table,
       kcu.column_name AS source_column,
@@ -190,21 +216,42 @@ def fetch_live_fks() -> Dict[Tuple[str, str], Dict[str, str]]:
       AND tc.table_schema = 'public';
     """
 
+    # On ne prend que les BASE TABLE : une VIEW apparaît dans
+    # information_schema.columns mais ne peut pas porter de FK, et l'ajout
+    # d'une FK est impossible (ALTER TABLE ... ADD CONSTRAINT échoue sur
+    # une VIEW). Les drifts sur les VIEWs seraient faux positifs.
+    columns_query = """
+    SELECT c.table_name, c.column_name
+    FROM information_schema.columns c
+    JOIN information_schema.tables t
+      ON t.table_schema = c.table_schema
+     AND t.table_name = c.table_name
+    WHERE c.table_schema = 'public'
+      AND t.table_type = 'BASE TABLE';
+    """
+
     live: Dict[Tuple[str, str], Dict[str, str]] = {}
+    live_columns: Dict[str, set] = {}
     conn = psycopg2.connect(db_url)
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute(query)
+        cur.execute(fk_query)
         for row in cur.fetchall():
             key = (row["source_table"].lower(), row["source_column"].lower())
             live[key] = {
                 "target_table": row["target_table"].lower(),
                 "on_delete": _normalize(row["on_delete"]),
             }
+
+        cur.execute(columns_query)
+        for row in cur.fetchall():
+            t = row["table_name"].lower()
+            c = row["column_name"].lower()
+            live_columns.setdefault(t, set()).add(c)
     finally:
         conn.close()
 
-    return live
+    return live, live_columns
 
 
 # ---------------------------------------------------------------------------
@@ -215,6 +262,7 @@ def fetch_live_fks() -> Dict[Tuple[str, str], Dict[str, str]]:
 def compute_diff(
     declared: Dict[Tuple[str, str], Dict[str, str]],
     live: Dict[Tuple[str, str], Dict[str, str]],
+    live_columns: Dict[str, set],
 ) -> List[Dict[str, str]]:
     drifts: List[Dict[str, str]] = []
 
@@ -244,19 +292,40 @@ def compute_diff(
                 }
             )
 
-    # Les déclarations manquantes en DB (la migration est là mais la FK a été
-    # drop manuellement) : à signaler aussi.
+    # Déclarations manquantes en DB (la migration est là mais la FK a été
+    # drop manuellement) : à signaler UNIQUEMENT si la table + la colonne
+    # existent physiquement en DB. Si la table/colonne n'a jamais été
+    # créée (migration rollbackée, table dropped dans une migration
+    # ultérieure), ce n'est pas un drift — c'est une trace historique.
     for key, declared_fk in declared.items():
-        if key not in live:
-            drifts.append(
-                {
-                    "kind": "missing_in_live_db",
-                    "table": key[0],
-                    "column": key[1],
-                    "declared_on_delete": declared_fk["on_delete"],
-                    "declared_source": declared_fk["source_file"],
-                }
-            )
+        if key in live:
+            continue
+        table_name, column_name = key
+        table_cols = live_columns.get(table_name)
+        if table_cols is None:
+            # La table n'existe pas en DB → migration historique sans
+            # objet vivant. Pas un drift.
+            continue
+        if column_name not in table_cols:
+            # La colonne n'existe pas en DB → idem.
+            continue
+        # Vérifier aussi que la table cible existe — si la migration
+        # référence une table qui n'existe pas (ex. `counterparties` jamais
+        # créée), la FK ne peut physiquement pas être créée. Trace
+        # historique, pas drift.
+        tgt_table = declared_fk.get("target_table")
+        if tgt_table and tgt_table not in live_columns:
+            continue
+        # Table + colonne + cible existent mais la FK a été dropped → vrai drift.
+        drifts.append(
+            {
+                "kind": "missing_in_live_db",
+                "table": table_name,
+                "column": column_name,
+                "declared_on_delete": declared_fk["on_delete"],
+                "declared_source": declared_fk["source_file"],
+            }
+        )
 
     return drifts
 
@@ -281,8 +350,8 @@ def main() -> int:
     args = parser.parse_args()
 
     declared = parse_migrations()
-    live = fetch_live_fks()
-    drifts = compute_diff(declared, live)
+    live, live_columns = fetch_live_fks()
+    drifts = compute_diff(declared, live, live_columns)
 
     if args.allow_undeclared:
         drifts = [d for d in drifts if d["kind"] != "undeclared_in_migrations"]
