@@ -69,8 +69,8 @@
     "@verone/utils": "workspace:*",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
-    "lucide-react": "^0.309.0",
-    "motion": "^12.34.3",
-    "tailwind-merge": "^2.2.1"
+    "lucide-react": "^0.577.0",
+    "motion": "^12.38.0",
+    "tailwind-merge": "^2.6.1"
   }
 }
