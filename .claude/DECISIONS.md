@@ -530,3 +530,83 @@ Configurés le 2026-04-24 via Playwright :
 - **Auto-PR release staging → main hebdo** : non une best practice universelle, dépend du workflow équipe. À activer si bruit acceptable.
 
 **Référence** : PR #750, #751 et suite (Dependabot + auto-release + release staging→main).
+
+---
+
+## ADR-020 — 2026-04-24 — INFRA-HARDENING-004/005 + branch protection + retour d'expérience SSR crash
+
+**Contexte** : suite et fin de la série INFRA-HARDENING (ADR-019). Extension
+avec Dependabot, auto-release hebdo, retry du release prod après régression
+SSR découverte en production.
+
+### INFRA-HARDENING-004 (PR #752, mergée staging)
+
+- `.github/dependabot.yml` : bumps npm hebdo groupés minor/patch + github-actions mensuel.
+- `.github/workflows/auto-release-staging-to-main.yml` : cron lundi 06h UTC ouvrant/maj la release PR si staging ahead.
+- Fix endpoint Supabase advisors : `/v1/projects/{ref}/advisors/security` (pas `/advisors/lints`). User-Agent explicite vs Cloudflare 1010.
+
+### INFRA-HARDENING-005 (PR #754, mergée staging)
+
+- Fix types drift gate CI : `pnpm install` complet pour résoudre `@verone/prettier-config` + prettier format sur le fichier régénéré avant diff. Sans ça : 30000 lignes de faux positif à chaque run.
+- Fix smoke-produits selector : `a[href*='/produits/catalogue/']` avec exclusions des sous-routes (categories, collections, etc.) + assertion URL `not.toHaveURL(/catalogue$/)` au lieu de regex UUID.
+- **Smoke tests durcis** (leçon régression SSR du 24/04) : 3 assertions contenu ajoutées sur les tests 'détail' des 3 rubriques critiques (produits, commandes, linkme) :
+  - `body text !== 'Page introuvable'`
+  - `body text !matches /^404/m`
+  - `getByRole('tab').first()` visible
+
+### Branch protection rules (2026-04-24, activée via `gh api`)
+
+- **main** : `required_status_checks.strict=true`, contexts = ESLint+Type-Check+Build, DB FK drift, E2E Smoke, Supabase TS types drift. `enforce_admins=true` (admin ne peut PAS bypasser).
+- **staging** : mêmes contexts. `enforce_admins=false` (urgence autorisée).
+- Sans ces règles, tous les gates CI étaient contournables par un merge direct.
+
+### Secrets Supabase configurés (Playwright → GitHub Settings)
+
+- `SUPABASE_DB_URL` — drift + types drift
+- `SUPABASE_ACCESS_TOKEN` (PAT existant dans `.env.local`)
+- `SUPABASE_PROJECT_REF` = `aorroydfjsrygmosnzrl`
+
+### Régression SSR prod — retour d'expérience
+
+Pendant la session, la release staging→main #749 (15:51 UTC) a propagé en
+prod ~15 commits incluant la refonte des 7 onglets produit. Résultat :
+`/produits/catalogue/[productId]` a renvoyé **404** en prod, alors que :
+
+- Le fichier `page.tsx` existe sur main
+- Le build Vercel inclut la route (40.8 kB output)
+- Aucun `notFound()` n'est appelé dans le code
+
+Signature HTTP : `x-matched-path: /_not-found`, `x-next-error-status: 404`.
+→ Crash runtime SSR silencieux. Next.js bascule sur le fallback `/_not-found`.
+
+**Rollback appliqué** : `vercel promote <njqx4dcu9-url>` vers le déploiement
+d'hier (22:14 UTC) qui fonctionnait. Prod rétablie HTTP 200 immédiatement.
+
+**Pourquoi mes smoke tests initiaux n'ont pas attrapé le bug** : ils ne
+testaient que l'URL (`not.toHaveURL(/catalogue$/)`). Or en cas de 404 SSR,
+Next.js sert le contenu `/_not-found` **mais l'URL reste sur
+`/produits/catalogue/UUID`** → l'assertion passait vert alors que la page
+était cassée.
+
+**Fix** : assertions contenu dans INFRA-HARDENING-005 (cf. ci-dessus).
+
+**Investigation root cause** : à faire dans un sprint séparé (décision
+Romeo 2026-04-24). Le code fautif fait partie des ~15 commits poussés entre
+yesterday 22:14 et today 15:51. Bisection git recommandée, ou déploiement
+progressif onglet par onglet.
+
+### Référence CI finale — état au 2026-04-24
+
+| Gate                            |   Blocking    | Déclenché sur                                 |
+| ------------------------------- | :-----------: | --------------------------------------------- |
+| ESLint + Type-Check + Build     |      ✅       | chaque PR (apps/back-office, packages, tests) |
+| E2E Smoke Playwright (67 tests) |      ✅       | apps/back-office, packages, tests             |
+| DB FK drift check               |      ✅       | chaque PR et push                             |
+| Supabase TS types drift         |      ✅       | changements supabase/migrations ou types.ts   |
+| Supabase security advisors      | Informational | chaque PR                                     |
+| Vercel preview deploy           |      ✅       | main push                                     |
+
+Monitoring hebdo : cron DB drift (lundi), Dependabot (lundi),
+auto-release staging→main (lundi).
+
+**Référence** : PR #750, #751, #752, #753 (release), #754 (fixes post-release).
