@@ -1,0 +1,103 @@
+name: Auto Release — staging → main
+
+# Ouvre automatiquement une PR release staging → main si staging a des
+# commits en avance sur main. Opens ONE draft PR at a time, updates it
+# if it already exists.
+#
+# Schedule : lundi matin 07h Paris (= 06h/05h UTC selon DST). Coïncide
+# avec le cron DB drift pour concentrer la review hebdo de Romeo.
+#
+# Trigger manuel aussi via workflow_dispatch.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Monday 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  create-release-pr:
+    name: Open/update release PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # besoin du full history pour git log
+
+      - name: Compare staging vs main
+        id: compare
+        run: |
+          git fetch origin staging main
+          AHEAD=$(git rev-list --count origin/main..origin/staging)
+          echo "commits_ahead=$AHEAD" >> $GITHUB_OUTPUT
+          echo "Staging is $AHEAD commits ahead of main"
+
+      - name: Generate PR body
+        if: steps.compare.outputs.commits_ahead != '0'
+        id: body
+        run: |
+          {
+            echo 'body<<PR_BODY_EOF'
+            echo "## Auto-release staging → main"
+            echo ""
+            echo "**${{ steps.compare.outputs.commits_ahead }} commits** en avance sur main."
+            echo ""
+            echo "### Commits inclus"
+            echo ""
+            git log --pretty=format:'- %s (%h)' origin/main..origin/staging | head -50
+            echo ""
+            echo ""
+            echo "### Validation avant merge"
+            echo "- [ ] CI verte sur staging (`gh pr checks`)"
+            echo "- [ ] Aucune régression signalée depuis le dernier release"
+            echo "- [ ] Migrations DB déjà appliquées en prod (ou incluses ici)"
+            echo ""
+            echo "_Généré automatiquement chaque lundi 06h UTC par \`.github/workflows/auto-release-staging-to-main.yml\`._"
+            echo 'PR_BODY_EOF'
+          } >> $GITHUB_OUTPUT
+
+      - name: Find existing release PR
+        if: steps.compare.outputs.commits_ahead != '0'
+        id: find
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUM=$(gh pr list --base main --head staging --state open --json number --jq '.[0].number // empty')
+          echo "pr_number=$PR_NUM" >> $GITHUB_OUTPUT
+
+      - name: Create release PR
+        if: steps.compare.outputs.commits_ahead != '0' && steps.find.outputs.pr_number == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base main \
+            --head staging \
+            --title "[RELEASE] staging → main (${{ steps.compare.outputs.commits_ahead }} commits)" \
+            --body "${{ steps.body.outputs.body }}" \
+            --label "release"
+
+      - name: Update existing release PR
+        if: steps.compare.outputs.commits_ahead != '0' && steps.find.outputs.pr_number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr edit ${{ steps.find.outputs.pr_number }} \
+            --title "[RELEASE] staging → main (${{ steps.compare.outputs.commits_ahead }} commits)" \
+            --body "${{ steps.body.outputs.body }}"
+
+      - name: Summary
+        run: |
+          if [ "${{ steps.compare.outputs.commits_ahead }}" = "0" ]; then
+            echo "✅ Staging et main alignés — pas de release nécessaire." >> $GITHUB_STEP_SUMMARY
+          elif [ -z "${{ steps.find.outputs.pr_number }}" ]; then
+            echo "✅ Nouvelle release PR créée (${{ steps.compare.outputs.commits_ahead }} commits)." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Release PR #${{ steps.find.outputs.pr_number }} mise à jour." >> $GITHUB_STEP_SUMMARY
+          fi
