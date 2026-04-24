@@ -25,10 +25,12 @@ export default defineConfig({
     ['list'],
   ],
 
-  // Timeout global
-  timeout: 30000, // 30s par test
+  // Timeout global — plus souple en CI (cold-start Supabase, réseau runner
+  // GitHub plus lent que localhost). En local on garde 30 s pour feedback
+  // rapide.
+  timeout: process.env.CI ? 60000 : 30000,
   expect: {
-    timeout: 5000, // 5s pour assertions
+    timeout: process.env.CI ? 10000 : 5000,
   },
 
   // Configuration base
@@ -41,9 +43,9 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
 
-    // Navigation
-    navigationTimeout: 10000,
-    actionTimeout: 5000,
+    // Navigation — idem, CI doit supporter les cold-starts.
+    navigationTimeout: process.env.CI ? 30000 : 10000,
+    actionTimeout: process.env.CI ? 10000 : 5000,
 
     // Console error tracking (zero tolerance)
     bypassCSP: false,

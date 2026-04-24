@@ -17,11 +17,18 @@ import { test, expect, ConsoleErrorCollector } from '../../fixtures/base';
 test.describe('Smoke — Finance modals (régression BO-FIN-040)', () => {
   let consoleErrors: ConsoleErrorCollector;
 
+  // 'domcontentloaded' au lieu de 'networkidle' : les pages Verone font du
+  // polling Supabase (realtime, refresh token) → 'networkidle' ne se produit
+  // jamais et le test timeout. On laisse ensuite SETTLE_MS pour que les
+  // fetches initiaux se terminent avant d'inspecter les errors console.
+  const SETTLE_MS = 800;
+
   test.beforeEach(async ({ page }) => {
     consoleErrors = new ConsoleErrorCollector();
     consoleErrors.attach(page);
     await page.goto('/commandes/clients');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(SETTLE_MS);
   });
 
   test('page /commandes/clients — 0 erreur console + 0 warning key prop', async ({
@@ -38,7 +45,8 @@ test.describe('Smoke — Finance modals (régression BO-FIN-040)', () => {
     page,
   }) => {
     await page.goto('/devis/nouveau');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(SETTLE_MS);
     // Au moins un CTA doit apparaître (choix commande / service)
     await expect(
       page.getByRole('button').or(page.getByRole('link')).first()
@@ -50,7 +58,8 @@ test.describe('Smoke — Finance modals (régression BO-FIN-040)', () => {
     page,
   }) => {
     await page.goto('/factures/nouvelle');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(SETTLE_MS);
     consoleErrors.expectNoErrors();
   });
 
@@ -63,7 +72,8 @@ test.describe('Smoke — Finance modals (régression BO-FIN-040)', () => {
       .first();
     if (await firstEye.isVisible({ timeout: 5000 }).catch(() => false)) {
       await firstEye.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
+      await page.waitForTimeout(SETTLE_MS);
     }
     consoleErrors.expectNoErrors();
   });

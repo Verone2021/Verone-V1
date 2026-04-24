@@ -22,9 +22,15 @@ test.describe('Smoke — parcours critiques', () => {
     consoleErrors.attach(page);
   });
 
+  // Après domcontentloaded, on laisse 800 ms de rab pour que les fetches
+  // Supabase initiaux se terminent (polling realtime, getSession, etc.).
+  // 'networkidle' est INUTILISABLE sur ces pages : polling continu → timeout.
+  const SETTLE_MS = 800;
+
   test('Commandes clients — filtrer par statut Annulée', async ({ page }) => {
     await page.goto('/commandes/clients');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(SETTLE_MS);
     // Cliquer sur le tab "Annulée"
     const tabAnnulee = page.getByRole('tab', { name: /annulée/i });
     if (await tabAnnulee.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -36,43 +42,50 @@ test.describe('Smoke — parcours critiques', () => {
 
   test('Stocks — page inventaire', async ({ page }) => {
     await page.goto('/stocks/inventaire');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(SETTLE_MS);
     consoleErrors.expectNoErrors();
   });
 
   test('Stocks — page mouvements', async ({ page }) => {
     await page.goto('/stocks/mouvements');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(SETTLE_MS);
     consoleErrors.expectNoErrors();
   });
 
   test('Stocks — page alertes', async ({ page }) => {
     await page.goto('/stocks/alertes');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(SETTLE_MS);
     consoleErrors.expectNoErrors();
   });
 
   test('Produits — liste', async ({ page }) => {
     await page.goto('/produits');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(SETTLE_MS);
     consoleErrors.expectNoErrors();
   });
 
   test('Factures — liste', async ({ page }) => {
     await page.goto('/factures');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(SETTLE_MS);
     consoleErrors.expectNoErrors();
   });
 
   test('Devis — liste', async ({ page }) => {
     await page.goto('/devis');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(SETTLE_MS);
     consoleErrors.expectNoErrors();
   });
 
   test('LinkMe commandes — liste', async ({ page }) => {
     await page.goto('/canaux-vente/linkme/commandes');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(SETTLE_MS);
     consoleErrors.expectNoErrors();
   });
 
@@ -81,14 +94,16 @@ test.describe('Smoke — parcours critiques', () => {
       .goto('/commandes/clients/expeditions')
       .catch(() => null);
     if (res) {
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
+      await page.waitForTimeout(SETTLE_MS);
     }
     consoleErrors.expectNoErrors();
   });
 
   test('Commandes fournisseurs — liste', async ({ page }) => {
     await page.goto('/commandes/fournisseurs');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(SETTLE_MS);
     consoleErrors.expectNoErrors();
   });
 });
