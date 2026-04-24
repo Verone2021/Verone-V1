@@ -162,11 +162,7 @@ export function OrderShipmentHistoryCard({
             {h.packlink_status === 'a_payer' && (
               <p className="text-[10px] ml-4 mb-1">
                 <a
-                  href={
-                    h.packlink_shipment_id
-                      ? `https://pro.packlink.fr/private/shipments/${h.packlink_shipment_id}/create/address`
-                      : 'https://pro.packlink.fr/private/shipments'
-                  }
+                  href="https://pro.packlink.fr/private/shipments/ready-to-purchase"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-blue-600 hover:underline font-medium"

@@ -29,6 +29,7 @@ export interface SalesOrderForShipment {
     postal_code?: string;
     city?: string;
     region?: string;
+    enseigne_id?: string | null;
   };
 
   // Items enrichis pour expédition

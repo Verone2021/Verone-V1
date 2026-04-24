@@ -9,6 +9,7 @@ import {
   useSalesShipments,
   type SalesOrderForShipment,
 } from '@verone/orders/hooks';
+import { useContactsForOrder } from '@verone/orders/hooks/linkme';
 
 import {
   formatTransit,
@@ -28,6 +29,7 @@ import { useFetchDropoffs } from './use-fetch-dropoffs';
 import { usePreviousShipments } from './use-previous-shipments';
 import type {
   DeliveryMethod,
+  ShipmentContact,
   SortOption,
   PacklinkService,
   PackageInfo,
@@ -117,6 +119,33 @@ export function useShipmentWizard(
   const [collectionDate, setCollectionDate] = useState('');
   const [collectionTime, setCollectionTime] = useState('09:00');
 
+  // Contact destinataire sélectionné dans StepAddresses
+  const [selectedContact, setSelectedContact] =
+    useState<ShipmentContact | null>(null);
+
+  // Contacts disponibles pour l'organisation de la commande
+  const enseigneId = salesOrder.organisations?.enseigne_id ?? null;
+  const { allContacts: rawContacts, isLoading: contactsLoading } =
+    useContactsForOrder(
+      salesOrder.customer_type === 'organization'
+        ? salesOrder.customer_id
+        : null,
+      enseigneId
+    );
+
+  // Réduire ContactBOWithSource → ShipmentContact (subset compatible)
+  const allContacts: ShipmentContact[] = rawContacts.map(c => ({
+    id: c.id,
+    firstName: c.firstName,
+    lastName: c.lastName,
+    email: c.email,
+    phone: c.phone,
+    mobile: c.mobile,
+    isPrimaryContact: c.isPrimaryContact,
+    isBillingContact: c.isBillingContact,
+    source: c.source,
+  }));
+
   // Previous shipments — extracted to use-previous-shipments.ts
   const { previousShipments } = usePreviousShipments(
     salesOrder.id,
@@ -176,6 +205,7 @@ export function useShipmentWizard(
 
   // Step constants
   const stepLabels = [
+    'Adresses',
     'Stock',
     'Mode',
     'Colis',
@@ -183,7 +213,7 @@ export function useShipmentWizard(
     'Relais',
     'Resume',
   ];
-  const maxStep = deliveryMethod === 'packlink' ? 6 : 2;
+  const maxStep = deliveryMethod === 'packlink' ? 7 : 3;
 
   // Handlers — items & packages (sync, extracted to handlers.ts)
   const handleQuantityChange = makeQuantityChangeHandler(setItems);
@@ -248,24 +278,33 @@ export function useShipmentWizard(
     if (result.success) onSuccess();
   };
 
-  // Build destination object from order data
+  // Build destination object from order data + contact sélectionné
   const buildDestination = useCallback(() => {
     const addr = parseShippingAddress(salesOrder.shipping_address);
     const name = salesOrder.customer_name ?? '';
     const nameParts = name.split(' ');
-    const email = salesOrder.organisations?.email ?? 'client@verone.fr';
+
+    const email =
+      selectedContact?.email ??
+      salesOrder.organisations?.email ??
+      'client@verone.fr';
+    const phone =
+      selectedContact?.mobile ??
+      selectedContact?.phone ??
+      addr?.phone ??
+      '+33600000000';
 
     return {
       name: nameParts[0] ?? 'Client',
       surname: nameParts.slice(1).join(' ') || 'Client',
       email,
-      phone: addr?.phone ?? '+33600000000',
+      phone,
       street1: addr?.address_line1 ?? addr?.line1 ?? '',
       city: addr?.city ?? '',
       zip_code: addr?.postal_code ?? '',
       country: addr?.country ?? 'FR',
     };
-  }, [salesOrder]);
+  }, [salesOrder, selectedContact]);
 
   // Fetch dropoff points for relay services — extracted to use-fetch-dropoffs.ts
   const fetchDropoffs = useFetchDropoffs({
@@ -376,5 +415,9 @@ export function useShipmentWizard(
     formatTransit,
     formatTransitLabel,
     formatEstimatedDate,
+    selectedContact,
+    setSelectedContact,
+    allContacts,
+    contactsLoading,
   };
 }
