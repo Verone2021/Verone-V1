@@ -239,6 +239,13 @@ jobs:
           pnpm exec playwright test \
             tests/e2e/smoke/smoke-finance-modals.spec.ts \
             tests/e2e/smoke/smoke-critical-workflows.spec.ts \
+            tests/e2e/smoke/smoke-stock.spec.ts \
+            tests/e2e/smoke/smoke-commandes.spec.ts \
+            tests/e2e/smoke/smoke-finance.spec.ts \
+            tests/e2e/smoke/smoke-linkme.spec.ts \
+            tests/e2e/smoke/smoke-canaux.spec.ts \
+            tests/e2e/smoke/smoke-produits.spec.ts \
+            tests/e2e/smoke/smoke-contacts.spec.ts \
             --reporter=list
         env:
           BASE_URL: http://localhost:3000
