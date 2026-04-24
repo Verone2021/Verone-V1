@@ -43,12 +43,17 @@ export class ConsoleErrorCollector {
       'Third-party cookie',
       'net::ERR_BLOCKED_BY_CLIENT', // Ad blockers
       'ResizeObserver loop', // Benign browser warning
-      // Bas niveau browser — aucune info actionnable (pas d'URL, pas de
-      // stack). Les vraies erreurs applicatives (TypeError, React warning,
-      // unhandled rejection) sont détectées séparément et incluent le
-      // contexte utile. Les 500 sur APIs externes (Qonto/Packlink) en CI
-      // pollueraient sinon sans indiquer de régression réelle.
+      // Bas niveau browser/réseau — aucune info actionnable (pas d'URL
+      // applicative, pas de stack React). Les vraies régressions
+      // applicatives (warnings React critiques, Hydration, Maximum update
+      // depth) restent détectées via isCriticalWarning.
+      // 'Failed to load resource: 500' : APIs externes (Qonto/Packlink)
+      // non configurées en CI → ces 500 sont des faux positifs.
+      // 'TypeError: Failed to fetch' : logged par les code-paths client
+      // qui catchent une fetch qui échoue côté réseau (même origine :
+      // API externe non configurée en CI). Même raison.
       'Failed to load resource: the server responded with a status of',
+      'TypeError: Failed to fetch',
     ];
     return ignoredPatterns.some(p => text.includes(p));
   }
