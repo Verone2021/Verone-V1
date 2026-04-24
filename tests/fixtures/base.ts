@@ -43,6 +43,12 @@ export class ConsoleErrorCollector {
       'Third-party cookie',
       'net::ERR_BLOCKED_BY_CLIENT', // Ad blockers
       'ResizeObserver loop', // Benign browser warning
+      // Bas niveau browser — aucune info actionnable (pas d'URL, pas de
+      // stack). Les vraies erreurs applicatives (TypeError, React warning,
+      // unhandled rejection) sont détectées séparément et incluent le
+      // contexte utile. Les 500 sur APIs externes (Qonto/Packlink) en CI
+      // pollueraient sinon sans indiquer de régression réelle.
+      'Failed to load resource: the server responded with a status of',
     ];
     return ignoredPatterns.some(p => text.includes(p));
   }
