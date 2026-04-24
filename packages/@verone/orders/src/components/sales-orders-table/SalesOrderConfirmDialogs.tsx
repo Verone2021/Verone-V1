@@ -20,6 +20,14 @@ export interface CancelGuardDoc {
   qontoStatus: string;
 }
 
+export interface DeleteDependency {
+  id: string;
+  documentType: 'customer_quote' | 'customer_invoice';
+  documentNumber: string | null;
+  status: string | null;
+  softDeleted: boolean;
+}
+
 export interface SalesOrderConfirmDialogsProps {
   /** Validate confirmation */
   showValidateConfirmation: boolean;
@@ -35,6 +43,8 @@ export interface SalesOrderConfirmDialogsProps {
   showDeleteConfirmation: boolean;
   onDeleteConfirmationChange: (open: boolean) => void;
   onDeleteConfirmed: () => void;
+  deleteDependencies: DeleteDependency[];
+  loadingDeleteDependencies: boolean;
 
   /** Cancel confirmation */
   showCancelConfirmation: boolean;
@@ -59,6 +69,8 @@ export function SalesOrderConfirmDialogs({
   showDeleteConfirmation,
   onDeleteConfirmationChange,
   onDeleteConfirmed,
+  deleteDependencies,
+  loadingDeleteDependencies,
   showCancelConfirmation,
   onCancelConfirmationChange,
   onCancelConfirmed,
@@ -139,12 +151,65 @@ export function SalesOrderConfirmDialogs({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-            <AlertDialogDescription>
-              Vous etes sur le point de supprimer cette commande client. Cette
-              action est irreversible.
-              <br />
-              <br />
-              Voulez-vous continuer ?
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Vous êtes sur le point de supprimer cette commande client.
+                  Cette action est irréversible.
+                </p>
+
+                {loadingDeleteDependencies && (
+                  <p className="text-xs italic text-muted-foreground">
+                    Chargement des documents liés…
+                  </p>
+                )}
+
+                {!loadingDeleteDependencies &&
+                  deleteDependencies.length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Aucun devis ni facture lié à cette commande.
+                    </p>
+                  )}
+
+                {!loadingDeleteDependencies &&
+                  deleteDependencies.length > 0 && (
+                    <div className="rounded-md border border-orange-200 bg-orange-50 p-3 text-sm">
+                      <p className="mb-2 font-medium text-orange-900">
+                        Documents liés qui seront impactés :
+                      </p>
+                      <ul className="space-y-1">
+                        {deleteDependencies.map(dep => (
+                          <li
+                            key={dep.id}
+                            className="flex items-start gap-2 text-orange-800"
+                          >
+                            <span className="mt-0.5">•</span>
+                            <span className="flex-1">
+                              <span className="font-mono">
+                                {dep.documentNumber ?? '(sans numéro)'}
+                              </span>
+                              {' — '}
+                              {dep.documentType === 'customer_quote'
+                                ? 'Devis'
+                                : 'Facture'}
+                              {dep.status ? ` (${dep.status})` : ''}
+                              {dep.softDeleted
+                                ? ' — déjà annulé, lien sera détaché'
+                                : ' — lien sera détaché'}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="mt-2 text-xs text-orange-700">
+                        Note : les documents eux-mêmes restent conservés pour
+                        l'historique comptable. Seul le lien avec la commande
+                        est retiré.
+                      </p>
+                    </div>
+                  )}
+
+                <p>Voulez-vous continuer ?</p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -154,6 +219,7 @@ export function SalesOrderConfirmDialogs({
                 onDeleteConfirmed();
               }}
               className="bg-red-600 hover:bg-red-700"
+              disabled={loadingDeleteDependencies}
             >
               Supprimer la commande
             </AlertDialogAction>

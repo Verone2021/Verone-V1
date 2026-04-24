@@ -301,6 +301,8 @@ export function SalesOrdersTable({
         showValidateConfirmation={modals.showValidateConfirmation}
         showDevalidateConfirmation={modals.showDevalidateConfirmation}
         showDeleteConfirmation={modals.showDeleteConfirmation}
+        deleteDependencies={modals.deleteDependencies}
+        loadingDeleteDependencies={modals.loadingDeleteDependencies}
         showCancelConfirmation={modals.showCancelConfirmation}
         showCancelGuardDialog={modals.showCancelGuardDialog}
         cancelGuardData={modals.cancelGuardData}

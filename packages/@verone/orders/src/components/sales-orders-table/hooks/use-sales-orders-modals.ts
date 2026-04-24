@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import { createClient } from '@verone/utils/supabase/client';
+
 import type { SalesOrder } from '../../../hooks/use-sales-orders';
 
 export interface CancelGuardDoc {
@@ -12,6 +14,19 @@ export interface CancelGuardDoc {
 export interface CancelGuardData {
   reason: string;
   docsToDelete: CancelGuardDoc[];
+}
+
+/**
+ * Dépendance affichée dans le modal de suppression commande.
+ * L'utilisateur voit AVANT de confirmer ce qui va être détaché/supprimé.
+ */
+export interface DeleteDependency {
+  id: string;
+  documentType: 'customer_quote' | 'customer_invoice';
+  documentNumber: string | null;
+  status: string | null;
+  /** Indique si le doc est déjà soft-deleted (cascade d'annulation). */
+  softDeleted: boolean;
 }
 
 export function useSalesOrdersModals(initialCreateOpen: boolean) {
@@ -34,6 +49,11 @@ export function useSalesOrdersModals(initialCreateOpen: boolean) {
   );
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
+  const [deleteDependencies, setDeleteDependencies] = useState<
+    DeleteDependency[]
+  >([]);
+  const [loadingDeleteDependencies, setLoadingDeleteDependencies] =
+    useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState<string | null>(null);
   const [showCancelGuardDialog, setShowCancelGuardDialog] = useState(false);
@@ -61,7 +81,36 @@ export function useSalesOrdersModals(initialCreateOpen: boolean) {
 
   const handleDelete = (orderId: string) => {
     setOrderToDelete(orderId);
+    setDeleteDependencies([]);
     setShowDeleteConfirmation(true);
+    // Fetch async — on ouvre immédiatement le dialog, la liste apparaît
+    // dès qu'elle est chargée (spinner pendant ce temps).
+    setLoadingDeleteDependencies(true);
+    void (async () => {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from('financial_documents')
+          .select('id, document_type, document_number, status, deleted_at')
+          .eq('sales_order_id', orderId);
+        if (error) throw error;
+        const deps: DeleteDependency[] = (data ?? []).map(row => ({
+          id: row.id,
+          documentType: row.document_type as
+            | 'customer_quote'
+            | 'customer_invoice',
+          documentNumber: (row.document_number as string | null) ?? null,
+          status: (row.status as string | null) ?? null,
+          softDeleted: row.deleted_at !== null,
+        }));
+        setDeleteDependencies(deps);
+      } catch (err) {
+        console.error('[handleDelete] fetch dependencies failed:', err);
+        setDeleteDependencies([]);
+      } finally {
+        setLoadingDeleteDependencies(false);
+      }
+    })();
   };
 
   const handleCancel = (orderId: string) => {
@@ -108,6 +157,9 @@ export function useSalesOrdersModals(initialCreateOpen: boolean) {
     setShowDeleteConfirmation,
     orderToDelete,
     setOrderToDelete,
+    deleteDependencies,
+    setDeleteDependencies,
+    loadingDeleteDependencies,
     // Cancel
     showCancelConfirmation,
     setShowCancelConfirmation,
