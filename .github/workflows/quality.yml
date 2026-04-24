@@ -278,3 +278,50 @@ jobs:
         run: |
           echo "## ✅ E2E Smoke Tests Passed" >> $GITHUB_STEP_SUMMARY
           echo "Parcours critiques back-office validés sans console error ni warning React critique." >> $GITHUB_STEP_SUMMARY
+
+  # ----------------------------------------------------------------
+  # 4. DB FK drift check — détecte les modifications DB hors migrations
+  #    (ADR-018). Initialement non-bloquant (backlog en cours de
+  #    nettoyage via migration 20260424_001_retrofit_legacy_fk_declarations.sql).
+  #    À promouvoir en gate bloquant une fois la migration appliquée à
+  #    staging et `db-drift-check.py` retournant 0.
+  # ----------------------------------------------------------------
+  db-drift-check:
+    name: DB FK drift (non-blocking — will gate once backlog cleared)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Ne tourne que sur push vers staging/main ou si une migration a changé
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    continue-on-error: true
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install psycopg2
+        run: pip install psycopg2-binary
+
+      - name: Run db-drift-check
+        if: env.SUPABASE_DB_URL != ''
+        run: python3 scripts/db-drift-check.py --ci
+
+      - name: Upload drift report
+        if: always() && env.SUPABASE_DB_URL != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: drift-report
+          path: drift-report.json
+          retention-days: 30
+
+      - name: Skip note
+        if: env.SUPABASE_DB_URL == ''
+        run: |
+          echo "⚠️ SUPABASE_DB_URL secret not set — drift check skipped." >> $GITHUB_STEP_SUMMARY
+          echo "Configure secret in repo settings to enable." >> $GITHUB_STEP_SUMMARY
