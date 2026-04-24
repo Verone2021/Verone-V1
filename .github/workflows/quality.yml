@@ -27,6 +27,7 @@ jobs:
       linkme: ${{ steps.filter.outputs.linkme }}
       site-internet: ${{ steps.filter.outputs.site-internet }}
       packages: ${{ steps.filter.outputs.packages }}
+      migrations: ${{ steps.filter.outputs.migrations }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -35,6 +36,12 @@ jobs:
           filters: |
             back-office:
               - 'apps/back-office/**'
+              # Déclencher le smoke E2E aussi quand les specs ou la config
+              # Playwright changent : sinon une PR qui n'ajoute que des tests
+              # passe sans être exécutée (gap observé sur PR #750).
+              - 'tests/**'
+              - 'playwright.config.ts'
+              - 'tests/auth.setup.ts'
             linkme:
               - 'apps/linkme/**'
             site-internet:
@@ -45,6 +52,10 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'tsconfig.json'
               - 'turbo.json'
+            migrations:
+              - 'supabase/migrations/**'
+              - 'packages/@verone/types/src/supabase.ts'
+              - 'packages/@verone/types/src/database.ts'
 
   # ----------------------------------------------------------------
   # 2. Quality checks — only on affected apps
@@ -239,6 +250,13 @@ jobs:
           pnpm exec playwright test \
             tests/e2e/smoke/smoke-finance-modals.spec.ts \
             tests/e2e/smoke/smoke-critical-workflows.spec.ts \
+            tests/e2e/smoke/smoke-stock.spec.ts \
+            tests/e2e/smoke/smoke-commandes.spec.ts \
+            tests/e2e/smoke/smoke-finance.spec.ts \
+            tests/e2e/smoke/smoke-linkme.spec.ts \
+            tests/e2e/smoke/smoke-canaux.spec.ts \
+            tests/e2e/smoke/smoke-produits.spec.ts \
+            tests/e2e/smoke/smoke-contacts.spec.ts \
             --reporter=list
         env:
           BASE_URL: http://localhost:3000
@@ -271,3 +289,227 @@ jobs:
         run: |
           echo "## ✅ E2E Smoke Tests Passed" >> $GITHUB_STEP_SUMMARY
           echo "Parcours critiques back-office validés sans console error ni warning React critique." >> $GITHUB_STEP_SUMMARY
+
+  # ----------------------------------------------------------------
+  # 4. DB FK drift check — gate bloquant (ADR-018)
+  #    Détecte toute modification DB faite hors migration (SQL Editor
+  #    Supabase, script manuel, etc.). Le backlog a été nettoyé par la
+  #    migration 20260424_001_retrofit_legacy_fk_declarations.sql
+  #    (INFRA-HARDENING-002), drift = 0 au moment du merge.
+  #    Tout nouveau drift fait échouer la PR → oblige à versionner.
+  # ----------------------------------------------------------------
+  db-drift-check:
+    name: DB FK drift check (blocking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install psycopg2
+        run: pip install psycopg2-binary
+
+      - name: Run db-drift-check
+        if: env.SUPABASE_DB_URL != ''
+        run: python3 scripts/db-drift-check.py --ci
+
+      - name: Upload drift report
+        if: always() && env.SUPABASE_DB_URL != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: drift-report
+          path: drift-report.json
+          retention-days: 30
+
+      - name: Comment PR on drift failure
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ❌ DB FK Drift Detected\n\nUne FK a été ajoutée, supprimée ou modifiée sur la DB **sans migration versionnée**.\n\nVoir le [drift report](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) téléchargé en artifact.\n\n**Corriger :**\n1. Créer une migration \`supabase/migrations/YYYYMMDD_XXX_description.sql\` qui déclare le changement.\n2. Si le changement en live est intentionnel : ajouter \`DROP CONSTRAINT IF EXISTS ... ADD CONSTRAINT ... ON DELETE <rule>\`.\n3. Ne **pas** modifier une migration existante (règle append-only).\n\nRéférence : ADR-018 dans \`.claude/DECISIONS.md\`.`
+            });
+
+      - name: Skip note
+        if: env.SUPABASE_DB_URL == ''
+        run: |
+          echo "⚠️ SUPABASE_DB_URL secret not set — drift check skipped." >> $GITHUB_STEP_SUMMARY
+          echo "Configure secret in repo settings to enable." >> $GITHUB_STEP_SUMMARY
+
+  # ----------------------------------------------------------------
+  # 5. Supabase TypeScript types drift — gate bloquant
+  #    Toute migration SQL change le schéma DB. Les types TS dans
+  #    packages/@verone/types/src/supabase.ts doivent refléter ce schéma.
+  #    Si un dev ajoute une migration sans régénérer les types, le code TS
+  #    ignore la nouvelle colonne/FK silencieusement → régression runtime.
+  #
+  #    Ce job régénère les types côté CI via `supabase gen types typescript
+  #    --db-url $SUPABASE_DB_URL` (méthode officielle Supabase) et compare
+  #    au fichier commité. Drift non-nul → PR refusée.
+  #
+  #    Ne tourne que si une migration ou le fichier supabase.ts change.
+  #    Nécessite le secret `SUPABASE_DB_URL` (déjà utilisé par db-drift-check).
+  # ----------------------------------------------------------------
+  supabase-types-drift:
+    name: Supabase TS types drift (blocking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: detect-changes
+    if: needs.detect-changes.outputs.migrations == 'true'
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        if: env.SUPABASE_DB_URL != ''
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10.13.1
+
+      - name: Setup Node.js
+        if: env.SUPABASE_DB_URL != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies (needed for @verone/prettier-config)
+        if: env.SUPABASE_DB_URL != ''
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Supabase CLI
+        if: env.SUPABASE_DB_URL != ''
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Regenerate types from live DB
+        if: env.SUPABASE_DB_URL != ''
+        run: |
+          supabase gen types typescript --db-url "$SUPABASE_DB_URL" \
+            > packages/@verone/types/src/supabase.ts.generated
+          # Format via prettier pour aligner sur la convention du repo
+          # (semi: true, etc.). Sans ça le diff matche sur chaque ;/,
+          # → faux positif 30000 lignes.
+          pnpm exec prettier --write packages/@verone/types/src/supabase.ts.generated --parser typescript
+          # Comparer au fichier commité (--ignore-all-space pour neutraliser
+          # les diff de whitespace entre versions de la CLI).
+          diff -w packages/@verone/types/src/supabase.ts \
+            packages/@verone/types/src/supabase.ts.generated \
+            > types-drift.diff || true
+          if [ -s types-drift.diff ]; then
+            echo "❌ Les types Supabase sont désynchronisés du schéma DB."
+            echo "Corriger localement : pnpm run generate:types"
+            echo ""
+            echo "=== Diff (200 premières lignes) ==="
+            head -200 types-drift.diff
+            exit 1
+          fi
+
+      - name: Upload drift diff on failure
+        if: failure() && env.SUPABASE_DB_URL != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-types-drift
+          path: |
+            types-drift.diff
+            packages/@verone/types/src/supabase.ts.generated
+          retention-days: 7
+
+      - name: Comment PR on types drift
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ❌ Supabase Types Drift\n\nLe fichier \`packages/@verone/types/src/supabase.ts\` n'est pas à jour avec le schéma DB actuel.\n\n**Corriger :**\n\`\`\`bash\npnpm run generate:types\ngit add packages/@verone/types/src/supabase.ts\ngit commit -m "chore: regenerate supabase types"\ngit push\n\`\`\`\n\nVoir le diff en artifact du workflow.`
+            });
+
+      - name: Skip note
+        if: env.SUPABASE_DB_URL == ''
+        run: |
+          echo "⚠️ SUPABASE_DB_URL secret not set — types drift skipped." >> $GITHUB_STEP_SUMMARY
+
+  # ----------------------------------------------------------------
+  # 6. Supabase security advisors — informationnel (non-bloquant)
+  #    Appelle le Supabase Management API pour lister les lints
+  #    (security_definer_view, rls_policy_always_true, function_search_path_mutable,
+  #    etc.). Ne bloque pas la PR mais commente avec un delta si le
+  #    nombre total d'issues augmente vs la dernière mesure sur `main`.
+  #
+  #    Source : https://supabase.com/docs/guides/database/database-advisors
+  #    API : GET /v1/projects/{ref}/advisors/lints?type=security
+  #
+  #    Nécessite les secrets :
+  #      - SUPABASE_ACCESS_TOKEN (Personal Access Token Supabase)
+  #      - SUPABASE_PROJECT_REF (ex. `aorroydfjsrygmosnzrl`)
+  # ----------------------------------------------------------------
+  supabase-advisors-security:
+    name: Supabase security advisors (informational)
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    if: github.event_name == 'pull_request'
+    continue-on-error: true
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fetch security advisors
+        if: env.SUPABASE_ACCESS_TOKEN != '' && env.SUPABASE_PROJECT_REF != ''
+        run: python3 scripts/supabase-advisors-check.py --type security --baseline scripts/supabase-advisors-baseline.json
+
+      - name: Comment PR with summary
+        if: always() && env.SUPABASE_ACCESS_TOKEN != '' && env.SUPABASE_PROJECT_REF != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            let summary = '';
+            try {
+              summary = fs.readFileSync('advisors-summary.md', 'utf8');
+            } catch (e) {
+              summary = '(advisors summary non disponible)';
+            }
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary,
+            });
+
+      - name: Skip note
+        if: env.SUPABASE_ACCESS_TOKEN == '' || env.SUPABASE_PROJECT_REF == ''
+        run: |
+          echo "⚠️ Secrets SUPABASE_ACCESS_TOKEN / SUPABASE_PROJECT_REF absents." >> $GITHUB_STEP_SUMMARY
+          echo "Configure-les dans repo settings → Secrets → Actions." >> $GITHUB_STEP_SUMMARY
+          echo "Token : https://supabase.com/dashboard/account/tokens" >> $GITHUB_STEP_SUMMARY

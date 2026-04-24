@@ -474,3 +474,59 @@ invisibles — script `db-drift-check.py` prévu pour ADR-018.
 **Référence** : commit `[INFRA-HARDENING-001]`, branche
 `feat/infra-hardening-001`. Suite de `[BO-FIN-041]` (fixes des 3 régressions
 déclenchantes : SIRET enseigne_id, delete cancelled order, Fragment key).
+
+---
+
+## ADR-019 — 2026-04-24 — INFRA-HARDENING-002/003 : filet smoke exhaustif + drift DB + types + advisors
+
+**Contexte** : suite d'ADR-016 (smoke CI gate initial) et ADR-018 (drift
+check). L'audit 2 semaines avait révélé que 50 % des régressions passaient
+sous le radar de la CI. Il fallait (1) étendre le filet smoke au-delà de 15
+tests, (2) activer le drift DB comme gate bloquant après nettoyage du
+backlog, (3) automatiser les best practices Supabase officielles (types
+regen, security advisors).
+
+**Décisions** :
+
+### INFRA-HARDENING-002 (PR #750, mergée staging 2026-04-24)
+
+1. 7 fichiers smoke thématiques (`smoke-{stock,commandes,finance,linkme,canaux,produits,contacts}.spec.ts`) = 53 tests interactifs. Pattern ADR-016 strict (`domcontentloaded` + `SETTLE_MS=800`, pas de `networkidle`).
+2. Suppression `smoke-all-modules.spec.ts` (doublon intégral avec `smoke-147-pages.spec.ts`).
+3. Migration `20260424_001_retrofit_legacy_fk_declarations.sql` : retrofit 94 FK UNDECLARED + 3 MISMATCH alignés live. Idempotente (DROP IF EXISTS + ADD CONSTRAINT). Appliquée sur DB prod.
+4. Parser `db-drift-check.py` durci : strip commentaires SQL + filtre `BASE TABLE` (exclut VIEWs) + blacklist mots-clés SQL.
+5. Gate CI `db-drift-check` bloquant (sans `continue-on-error`).
+6. Cron hebdo `.github/workflows/db-drift-cron.yml` (lundi 06h UTC) : ouvre/ferme auto une issue GitHub sur drift détecté.
+
+### INFRA-HARDENING-003 (PR #751, mergée staging 2026-04-24)
+
+1. Fix paths-filter `quality.yml` : ajoute `tests/**`, `playwright.config.ts` au filtre `back-office`. Smoke tourne désormais sur toute PR modifiant les specs (gap observé PR #750).
+2. Nouveau filtre `migrations` + job `supabase-types-drift` bloquant : regénère `packages/@verone/types/src/supabase.ts` via `supabase gen types typescript --db-url` et échoue sur diff.
+3. Job `supabase-advisors-security` informational (non-bloquant) : appelle Supabase Management API `/v1/projects/{ref}/advisors/lints?type=security`, compare au baseline `scripts/supabase-advisors-baseline.json` (97 issues figées), comment PR avec delta.
+
+### Sources (best practices officielles)
+
+- Supabase types : https://supabase.com/docs/reference/cli/supabase-gen-types
+- Supabase advisors : https://supabase.com/docs/guides/database/database-advisors
+- API advisors : https://supabase.com/docs/reference/api/v1-list-project-lints-types
+
+### Secrets GitHub Actions requis
+
+Configurés le 2026-04-24 via Playwright :
+
+- `SUPABASE_DB_URL` (postgresql://...pooler.supabase.com:5432/postgres) — utilisé par drift + types
+- `SUPABASE_ACCESS_TOKEN` (PAT `sbp_...`) — utilisé par advisors
+- `SUPABASE_PROJECT_REF` (`aorroydfjsrygmosnzrl`) — utilisé par advisors
+
+### Conséquence
+
+- 67 tests smoke bloquants (vs 14 avant — x4.8) couvrant les 7 rubriques critiques.
+- Gate drift DB empêche toute modification de schéma hors migration.
+- Gate types drift empêche toute migration sans régénération des types.
+- Monitoring hebdo automatique, issue GitHub auto.
+
+### Recommandations explicitement non-retenues
+
+- **Lighthouse CI / visual regression / dead code detection** : cargo cult au stade actuel, coût maintenance > bénéfice.
+- **Auto-PR release staging → main hebdo** : non une best practice universelle, dépend du workflow équipe. À activer si bruit acceptable.
+
+**Référence** : PR #750, #751 et suite (Dependabot + auto-release + release staging→main).
