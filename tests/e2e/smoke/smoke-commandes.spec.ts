@@ -60,7 +60,7 @@ test.describe('Smoke — Commandes', () => {
     consoleErrors.expectNoErrors();
   });
 
-  test('Commandes clients — cliquer 1er "voir détails" → page détail charge', async ({
+  test('Commandes clients — 1er détail RENDU (pas de 404 SSR)', async ({
     page,
   }) => {
     await page.goto('/commandes/clients');
@@ -71,8 +71,12 @@ test.describe('Smoke — Commandes', () => {
       await eye.click();
       await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(SETTLE_MS);
-      // URL doit contenir un UUID (pas rester sur /commandes/clients)
       await expect(page).toHaveURL(/\/commandes\/clients\/[0-9a-f-]{10,}/);
+      // Assertions contenu (détecte 404 SSR silencieux, cf. régression
+      // produit détail prod 2026-04-24).
+      const bodyText = await page.locator('body').innerText();
+      expect(bodyText).not.toContain('Page introuvable');
+      expect(bodyText).not.toMatch(/^404/m);
     }
     consoleErrors.expectNoErrors();
   });

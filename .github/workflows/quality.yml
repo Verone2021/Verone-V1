@@ -376,6 +376,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        if: env.SUPABASE_DB_URL != ''
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10.13.1
+
+      - name: Setup Node.js
+        if: env.SUPABASE_DB_URL != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies (needed for @verone/prettier-config)
+        if: env.SUPABASE_DB_URL != ''
+        run: pnpm install --frozen-lockfile
+
       - name: Install Supabase CLI
         if: env.SUPABASE_DB_URL != ''
         uses: supabase/setup-cli@v1
@@ -387,6 +404,10 @@ jobs:
         run: |
           supabase gen types typescript --db-url "$SUPABASE_DB_URL" \
             > packages/@verone/types/src/supabase.ts.generated
+          # Format via prettier pour aligner sur la convention du repo
+          # (semi: true, etc.). Sans ça le diff matche sur chaque ;/,
+          # → faux positif 30000 lignes.
+          pnpm exec prettier --write packages/@verone/types/src/supabase.ts.generated --parser typescript
           # Comparer au fichier commité (--ignore-all-space pour neutraliser
           # les diff de whitespace entre versions de la CLI).
           diff -w packages/@verone/types/src/supabase.ts \
@@ -396,7 +417,7 @@ jobs:
             echo "❌ Les types Supabase sont désynchronisés du schéma DB."
             echo "Corriger localement : pnpm run generate:types"
             echo ""
-            echo "=== Diff ===" | head -200
+            echo "=== Diff (200 premières lignes) ==="
             head -200 types-drift.diff
             exit 1
           fi
