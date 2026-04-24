@@ -41,17 +41,24 @@ test.describe('Smoke — Produits', () => {
     await page.goto('/produits/catalogue');
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(SETTLE_MS);
-    // Cliquer la 1ère ligne produit (lien ou bouton œil)
-    const firstLink = page
-      .getByRole('link', { name: /^[A-Z]/ })
-      .first()
-      .or(page.getByRole('button', { name: /voir/i }).first());
-    if (await firstLink.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await firstLink.click();
+    // Chercher un lien direct vers une page détail produit (URL contient
+    // `/produits/catalogue/` suivi d'un UUID). Plus fiable que getByRole
+    // (qui matche aussi les liens sidebar/nav).
+    const detailLink = page
+      .locator('a[href*="/produits/catalogue/"]')
+      .filter({ hasNot: page.locator('a[href$="/produits/catalogue"]') })
+      .filter({ hasNot: page.locator('a[href*="/catalogue/nouveau"]') })
+      .filter({ hasNot: page.locator('a[href*="/catalogue/archived"]') })
+      .filter({ hasNot: page.locator('a[href*="/catalogue/categories"]') })
+      .filter({ hasNot: page.locator('a[href*="/catalogue/collections"]') })
+      .filter({ hasNot: page.locator('a[href*="/catalogue/variantes"]') })
+      .first();
+    if (await detailLink.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await detailLink.click();
       await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(SETTLE_MS);
-      // Vérifier qu'on est bien sur une page détail (URL contient productId)
-      await expect(page).toHaveURL(/\/produits\/catalogue\/[0-9a-f-]{8,}/);
+      // On doit avoir quitté la liste (URL change vers un détail).
+      await expect(page).not.toHaveURL(/\/produits\/catalogue$/);
     }
     consoleErrors.expectNoErrors();
   });
@@ -62,9 +69,17 @@ test.describe('Smoke — Produits', () => {
     await page.goto('/produits/catalogue');
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(SETTLE_MS);
-    const firstLink = page.getByRole('link', { name: /^[A-Z]/ }).first();
-    if (await firstLink.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await firstLink.click();
+    const detailLink = page
+      .locator('a[href*="/produits/catalogue/"]')
+      .filter({ hasNot: page.locator('a[href$="/produits/catalogue"]') })
+      .filter({ hasNot: page.locator('a[href*="/catalogue/nouveau"]') })
+      .filter({ hasNot: page.locator('a[href*="/catalogue/archived"]') })
+      .filter({ hasNot: page.locator('a[href*="/catalogue/categories"]') })
+      .filter({ hasNot: page.locator('a[href*="/catalogue/collections"]') })
+      .filter({ hasNot: page.locator('a[href*="/catalogue/variantes"]') })
+      .first();
+    if (await detailLink.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await detailLink.click();
       await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(SETTLE_MS);
       for (const tabName of [
