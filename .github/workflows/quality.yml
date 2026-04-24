@@ -389,9 +389,9 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
-      - name: Install prettier only
+      - name: Install dependencies (needed for @verone/prettier-config)
         if: env.SUPABASE_DB_URL != ''
-        run: pnpm install --frozen-lockfile --filter '!@verone/*' || pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Install Supabase CLI
         if: env.SUPABASE_DB_URL != ''
