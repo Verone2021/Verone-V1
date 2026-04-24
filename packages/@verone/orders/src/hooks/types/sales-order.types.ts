@@ -48,6 +48,10 @@ export interface SalesOrder {
   paid_amount?: number;
   order_date?: string | null;
   expected_delivery_date?: string;
+  /** LinkMe : date de livraison souhaitée par le client (sales_order_linkme_details.desired_delivery_date). */
+  desired_delivery_date?: string | null;
+  /** LinkMe : date de livraison confirmée (sales_order_linkme_details.confirmed_delivery_date). */
+  confirmed_delivery_date?: string | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- JSONB from Supabase, shape varies per context
   shipping_address?: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- JSONB from Supabase, shape varies per context

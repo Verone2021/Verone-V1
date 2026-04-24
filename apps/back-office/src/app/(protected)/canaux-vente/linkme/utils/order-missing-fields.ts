@@ -105,8 +105,27 @@ export {
   REJECT_REASON_TEMPLATES,
 } from './order-request-templates';
 
+/**
+ * Contact attaché à une commande (via contacts table FK).
+ * Si un contact est présent avec email ou phone, la catégorie correspondante
+ * est considérée comme complète — indépendamment des champs flat legacy
+ * de sales_order_linkme_details.
+ */
+export interface LinkedContact {
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+}
+
 export interface GetOrderMissingFieldsOptions {
   details: LinkMeOrderDetails | null;
+  /** Contact attaché via sales_orders.responsable_contact_id (source de vérité). */
+  responsableContact?: LinkedContact | null;
+  /** Contact attaché via sales_orders.billing_contact_id (source de vérité). */
+  billingContact?: LinkedContact | null;
+  /** Contact attaché via sales_orders.delivery_contact_id (source de vérité). */
+  deliveryContact?: LinkedContact | null;
   /** SIRET from the linked organisation (pass null/undefined if unknown) */
   organisationSiret?: string | null;
   /** Country code of the organisation (ISO 3166-1 alpha-2, e.g. 'FR', 'BE') */
@@ -128,6 +147,20 @@ export interface GetOrderMissingFieldsOptions {
 }
 
 /**
+ * Un contact est "utilisable" s'il a un nom (prénom ou famille) ET au moins
+ * un moyen de contact (email ou phone). Si oui → pas la peine de demander
+ * des compléments sur cette catégorie.
+ */
+function contactUsable(c: LinkedContact | null | undefined): boolean {
+  if (!c) return false;
+  const hasName = Boolean(
+    (c.first_name ?? '').trim() || (c.last_name ?? '').trim()
+  );
+  const hasReach = Boolean((c.email ?? '').trim() || (c.phone ?? '').trim());
+  return hasName && hasReach;
+}
+
+/**
  * Analyse les détails LinkMe d'une commande et retourne les champs manquants.
  *
  * @param options - Détails LinkMe + contexte organisation
@@ -138,6 +171,9 @@ export function getOrderMissingFields(
 ): MissingFieldsResult {
   const {
     details,
+    responsableContact,
+    billingContact,
+    deliveryContact,
     organisationSiret,
     organisationCountry,
     organisationVatNumber,
@@ -149,6 +185,14 @@ export function getOrderMissingFields(
   } = options;
   const ignored = new Set(ignoredFields ?? []);
   const fields: MissingField[] = [];
+
+  // Les contacts attachés via FK sont la source de vérité depuis
+  // sales_orders.{responsable,billing,delivery}_contact_id. Les champs
+  // flat (details.requester_*, details.billing_*, details.delivery_*) sont
+  // un legacy qui peut être vide même quand le contact existe.
+  const hasResponsable = contactUsable(responsableContact);
+  const hasBilling = contactUsable(billingContact);
+  const hasDelivery = contactUsable(deliveryContact);
 
   if (!details) {
     const allFields: MissingField[] = [
@@ -174,82 +218,91 @@ export function getOrderMissingFields(
     return buildResult(allFields.filter(f => !ignored.has(f.key)));
   }
 
-  // --- Contact responsable (bloc unique, sans distinction demandeur/proprietaire) ---
-  if (!details.requester_name) {
-    fields.push({
-      key: 'requester_name',
-      label: 'Nom du responsable',
-      category: 'responsable',
-      inputType: 'text',
-    });
-  }
-  if (!details.requester_email) {
-    fields.push({
-      key: 'requester_email',
-      label: 'Email du responsable',
-      category: 'responsable',
-      inputType: 'email',
-    });
-  }
-  if (!details.requester_phone) {
-    fields.push({
-      key: 'requester_phone',
-      label: 'Téléphone du responsable',
-      category: 'responsable',
-      inputType: 'tel',
-    });
+  // --- Contact responsable ---
+  // Si un contact responsable est attaché avec nom + email/phone, catégorie OK.
+  // Sinon, fallback sur les champs flat legacy (qui peuvent être remplis côté
+  // wizard initial avant migration contact).
+  if (!hasResponsable) {
+    if (!details.requester_name) {
+      fields.push({
+        key: 'requester_name',
+        label: 'Nom du responsable',
+        category: 'responsable',
+        inputType: 'text',
+      });
+    }
+    if (!details.requester_email) {
+      fields.push({
+        key: 'requester_email',
+        label: 'Email du responsable',
+        category: 'responsable',
+        inputType: 'email',
+      });
+    }
+    if (!details.requester_phone) {
+      fields.push({
+        key: 'requester_phone',
+        label: 'Téléphone du responsable',
+        category: 'responsable',
+        inputType: 'tel',
+      });
+    }
   }
 
   // --- Facturation ---
-  if (!details.billing_name) {
-    fields.push({
-      key: 'billing_name',
-      label: 'Nom contact facturation',
-      category: 'billing',
-      inputType: 'text',
-    });
-  }
-  if (!details.billing_email) {
-    fields.push({
-      key: 'billing_email',
-      label: 'Email facturation',
-      category: 'billing',
-      inputType: 'email',
-    });
-  }
-  if (!details.billing_phone) {
-    fields.push({
-      key: 'billing_phone',
-      label: 'Téléphone facturation',
-      category: 'billing',
-      inputType: 'tel',
-    });
+  if (!hasBilling) {
+    if (!details.billing_name) {
+      fields.push({
+        key: 'billing_name',
+        label: 'Nom contact facturation',
+        category: 'billing',
+        inputType: 'text',
+      });
+    }
+    if (!details.billing_email) {
+      fields.push({
+        key: 'billing_email',
+        label: 'Email facturation',
+        category: 'billing',
+        inputType: 'email',
+      });
+    }
+    if (!details.billing_phone) {
+      fields.push({
+        key: 'billing_phone',
+        label: 'Téléphone facturation',
+        category: 'billing',
+        inputType: 'tel',
+      });
+    }
   }
 
-  // --- Livraison ---
-  if (!details.delivery_contact_name) {
-    fields.push({
-      key: 'delivery_contact_name',
-      label: 'Nom contact livraison',
-      category: 'delivery',
-      inputType: 'text',
-    });
-  }
-  if (!details.delivery_contact_email) {
-    fields.push({
-      key: 'delivery_contact_email',
-      label: 'Email contact livraison',
-      category: 'delivery',
-      inputType: 'email',
-    });
-  }
-  if (!details.delivery_contact_phone) {
-    fields.push({
-      key: 'delivery_contact_phone',
-      label: 'Téléphone contact livraison',
-      category: 'delivery',
-      inputType: 'tel',
-    });
+  // --- Livraison (contact) ---
+  if (!hasDelivery) {
+    if (!details.delivery_contact_name) {
+      fields.push({
+        key: 'delivery_contact_name',
+        label: 'Nom contact livraison',
+        category: 'delivery',
+        inputType: 'text',
+      });
+    }
+    if (!details.delivery_contact_email) {
+      fields.push({
+        key: 'delivery_contact_email',
+        label: 'Email contact livraison',
+        category: 'delivery',
+        inputType: 'email',
+      });
+    }
+    if (!details.delivery_contact_phone) {
+      fields.push({
+        key: 'delivery_contact_phone',
+        label: 'Téléphone contact livraison',
+        category: 'delivery',
+        inputType: 'tel',
+      });
+    }
   }
   if (!details.delivery_address) {
     fields.push({

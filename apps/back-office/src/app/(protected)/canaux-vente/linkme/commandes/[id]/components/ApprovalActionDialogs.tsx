@@ -73,20 +73,66 @@ export function ApproveDialog({
 
 // ---- Helpers ----
 
+function formatContactName(
+  c: {
+    first_name?: string | null;
+    last_name?: string | null;
+  } | null
+): string | null {
+  if (!c) return null;
+  const full = [c.first_name ?? '', c.last_name ?? '']
+    .map(s => s.trim())
+    .filter(Boolean)
+    .join(' ');
+  return full || null;
+}
+
 function buildRecipients(
   createdByProfile: CreatedByProfile | null,
-  details: LinkMeOrderDetails | null
+  details: LinkMeOrderDetails | null,
+  order: OrderWithDetails
 ): Recipient[] {
   const recipients: Recipient[] = [];
+
+  // Contacts attachés à la commande (source de vérité depuis BO-FIN-038).
+  const resp = order.responsable_contact;
+  if (resp?.email && !recipients.some(r => r.email === resp.email)) {
+    recipients.push({
+      email: resp.email,
+      label: formatContactName(resp) ?? 'Responsable',
+      type: 'Responsable',
+    });
+  }
+  const bill = order.billing_contact;
+  if (bill?.email && !recipients.some(r => r.email === bill.email)) {
+    recipients.push({
+      email: bill.email,
+      label: formatContactName(bill) ?? 'Facturation',
+      type: 'Facturation',
+    });
+  }
+  const del = order.delivery_contact;
+  if (del?.email && !recipients.some(r => r.email === del.email)) {
+    recipients.push({
+      email: del.email,
+      label: formatContactName(del) ?? 'Livraison',
+      type: 'Livraison',
+    });
+  }
+
+  // Fallbacks legacy : créateur de la commande + champs flat sales_order_linkme_details
+  // (uniquement si rien n'a été trouvé dans les contacts).
   if (createdByProfile?.email) {
     const name = [createdByProfile.first_name, createdByProfile.last_name]
       .filter(Boolean)
       .join(' ');
-    recipients.push({
-      email: createdByProfile.email,
-      label: name || 'Utilisateur',
-      type: 'Createur de la commande',
-    });
+    if (!recipients.some(r => r.email === createdByProfile.email)) {
+      recipients.push({
+        email: createdByProfile.email,
+        label: name || 'Utilisateur',
+        type: 'Createur de la commande',
+      });
+    }
   }
   if (
     details?.requester_email &&
@@ -95,7 +141,7 @@ function buildRecipients(
     recipients.push({
       email: details.requester_email,
       label: details.requester_name ?? 'Responsable',
-      type: 'Responsable',
+      type: 'Responsable (saisi)',
     });
   }
   if (
@@ -117,6 +163,9 @@ function buildMissingFields(
 ): MissingFieldsResult {
   return getOrderMissingFields({
     details,
+    responsableContact: order.responsable_contact,
+    billingContact: order.billing_contact,
+    deliveryContact: order.delivery_contact,
     organisationSiret: order.organisation?.siret,
     organisationCountry: order.organisation?.country,
     organisationVatNumber: order.organisation?.vat_number,
@@ -221,7 +270,7 @@ export function RequestInfoDialog({
   isPending,
 }: RequestInfoDialogProps) {
   const [manualEmail, setManualEmail] = useState('');
-  const availableRecipients = buildRecipients(createdByProfile, details);
+  const availableRecipients = buildRecipients(createdByProfile, details, order);
   const missingFields = buildMissingFields(order, details);
   const relevantCategories = getRelevantCats(missingFields);
   const canSend = requestMessage.trim().length > 0 && selectedEmails.length > 0;
