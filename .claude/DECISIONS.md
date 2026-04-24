@@ -352,6 +352,72 @@ La convention plate du scratchpad (réaffirmée dans `docs/scratchpad/README.md`
 - ADR-014 : Hygiène scratchpad (extension cleanup + auto-invocation + promotion refs) (2026-04-23)
 - ADR-015 : Interdit absolu de solliciter Romeo pour vérifier sur un site externe (2026-04-23)
 - ADR-016 : E2E smoke tests bloquants en CI + runtime guards contre les régressions silencieuses (2026-04-24)
+- ADR-018 : Script `db-drift-check.py` contre le drift silencieux de schéma DB (2026-04-24)
+
+---
+
+## ADR-018 — Détecter le drift de schéma DB vs migrations (2026-04-24)
+
+**Contexte** : le 2026-04-24, on a découvert que la FK
+`financial_documents.sales_order_id` était `ON DELETE RESTRICT` en DB alors
+que la migration d'origine (`20251222_012_create_financial_tables.sql:222`)
+la définissait comme `fk_sales_order … ON DELETE SET NULL`. Aucune migration
+versionnée ne trace ce changement. La FK a donc été modifiée manuellement
+(probablement via le SQL Editor de Supabase Studio). Conséquence : impossible
+de supprimer une commande annulée liée à des devis soft-deletés (incident
+SO-2026-00165 Pokawa Avignon, corrigé dans PR #743).
+
+La règle `.claude/rules/database.md` exige pourtant :
+
+> Ne JAMAIS éditer une migration existante (append-only)
+> TOUJOURS exécuter `python3 scripts/generate-docs.py --db` après chaque migration
+
+Cette règle est respectée POUR les migrations versionnées. Mais rien
+n'empêche une modification directe en DB qui contourne tout le workflow.
+
+**Décision** : créer `scripts/db-drift-check.py` qui :
+
+1. Parse toutes les migrations `supabase/migrations/*.sql` et extrait pour
+   chaque couple `(table, colonne)` la dernière règle `ON DELETE` déclarée.
+2. Interroge la DB live (`information_schema.referential_constraints`)
+   pour récupérer les règles actuellement en vigueur.
+3. Compare et retourne :
+   - `ON DELETE mismatch` : la DB diverge de la migration.
+   - `Undeclared FK` : une FK existe en DB sans aucune migration qui la
+     déclare.
+   - `Missing FK` : une FK déclarée dans une migration est absente de la DB.
+4. Exit code non-zéro si drift → bloque la CI si ajouté comme gate.
+
+**Usage** :
+
+```bash
+# Local (avec DATABASE_URL en .env.local)
+python3 scripts/db-drift-check.py
+
+# CI
+SUPABASE_DB_URL=... python3 scripts/db-drift-check.py --ci
+```
+
+**Impact** :
+
+- **Immédiat** : on peut détecter les drifts existants (au moins celui de
+  `financial_documents.sales_order_id`).
+- **Préventif** : chaque nouvelle modif manuelle silencieuse sera attrapée
+  au prochain run.
+- **Hebdomadaire** en premier lieu (cron GitHub Actions) pour ne pas
+  ralentir chaque PR ; promotion en gate bloquant une fois le backlog de
+  drifts existants nettoyé.
+
+**Non-décidé pour l'instant** : que faire des drifts existants détectés ?
+Deux choix possibles, à arbitrer par Romeo :
+
+- **A** — Aligner la DB sur la migration d'origine (créer une migration
+  `ALTER TABLE … DROP CONSTRAINT … ADD CONSTRAINT … ON DELETE SET NULL`).
+- **B** — Déclarer la nouvelle intention dans une migration rétroactive
+  (`… ON DELETE RESTRICT`) si le RESTRICT était voulu.
+
+**Référence** : `scripts/db-drift-check.py`. Branche
+`feat/infra-hardening-001`. Suite de ADR-016.
 
 ---
 
