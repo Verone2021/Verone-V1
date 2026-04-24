@@ -83,7 +83,7 @@ export function useShipmentDetail() {
           const { data: org } = await supabase
             .from('organisations')
             .select(
-              'id, legal_name, trade_name, email, phone, address_line1, address_line2, postal_code, city, region'
+              'id, legal_name, trade_name, email, phone, address_line1, address_line2, postal_code, city, region, enseigne_id'
             )
             .eq('id', data.customer_id)
             .single();
@@ -99,6 +99,7 @@ export function useShipmentDetail() {
               postal_code: org.postal_code ?? undefined,
               city: org.city ?? undefined,
               region: org.region ?? undefined,
+              enseigne_id: org.enseigne_id ?? null,
             };
           }
         } else if (

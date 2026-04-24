@@ -9,7 +9,10 @@ import { CreateLinkMeOrderModal } from '../modals/CreateLinkMeOrderModal';
 import { OrderDetailModal } from '../modals/OrderDetailModal';
 import { SalesOrderFormModal } from '../modals/SalesOrderFormModal';
 import { SalesOrderShipmentModal } from '../modals/SalesOrderShipmentModal';
-import type { CancelGuardDoc } from './SalesOrderConfirmDialogs';
+import type {
+  CancelGuardDoc,
+  DeleteDependency,
+} from './SalesOrderConfirmDialogs';
 import { SalesOrderConfirmDialogs } from './SalesOrderConfirmDialogs';
 
 interface SalesOrderModalsProps {
@@ -40,6 +43,8 @@ interface SalesOrderModalsProps {
   showValidateConfirmation: boolean;
   showDevalidateConfirmation: boolean;
   showDeleteConfirmation: boolean;
+  deleteDependencies: DeleteDependency[];
+  loadingDeleteDependencies: boolean;
   showCancelConfirmation: boolean;
   showCancelGuardDialog: boolean;
   cancelGuardData: { reason: string; docsToDelete: CancelGuardDoc[] } | null;
@@ -89,6 +94,8 @@ export function SalesOrderModals({
   showValidateConfirmation,
   showDevalidateConfirmation,
   showDeleteConfirmation,
+  deleteDependencies,
+  loadingDeleteDependencies,
   showCancelConfirmation,
   showCancelGuardDialog,
   cancelGuardData,
@@ -226,6 +233,8 @@ export function SalesOrderModals({
             console.error('[SalesOrdersTable] delete confirmed failed:', err);
           });
         }}
+        deleteDependencies={deleteDependencies}
+        loadingDeleteDependencies={loadingDeleteDependencies}
         showCancelConfirmation={showCancelConfirmation}
         onCancelConfirmationChange={setShowCancelConfirmation}
         onCancelConfirmed={() => {

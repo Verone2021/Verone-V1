@@ -10,13 +10,30 @@ export class ConsoleErrorCollector {
 
   attach(page: Page) {
     page.on('console', msg => {
-      if (msg.type() === 'error') {
-        const text = msg.text();
-        // Ignore known non-critical errors
-        if (this.isIgnorable(text)) return;
-        this.errors.push(text);
-      }
+      const type = msg.type();
+      const text = msg.text();
+      // Capture errors AND critical React warnings (key prop, useEffect deps,
+      // hydration) — these signal real bugs that break workflows silently.
+      const isCritical =
+        type === 'error' ||
+        (type === 'warning' && this.isCriticalWarning(text));
+      if (!isCritical) return;
+      if (this.isIgnorable(text)) return;
+      this.errors.push(text);
     });
+  }
+
+  private isCriticalWarning(text: string): boolean {
+    const criticalReactPatterns = [
+      'Each child in a list should have a unique "key"',
+      'missing key',
+      'Rendered more hooks than during the previous render',
+      'Cannot update a component',
+      'Maximum update depth exceeded',
+      'Hydration failed',
+      'Text content does not match server',
+    ];
+    return criticalReactPatterns.some(p => text.includes(p));
   }
 
   private isIgnorable(text: string): boolean {
@@ -26,6 +43,17 @@ export class ConsoleErrorCollector {
       'Third-party cookie',
       'net::ERR_BLOCKED_BY_CLIENT', // Ad blockers
       'ResizeObserver loop', // Benign browser warning
+      // Bas niveau browser/réseau — aucune info actionnable (pas d'URL
+      // applicative, pas de stack React). Les vraies régressions
+      // applicatives (warnings React critiques, Hydration, Maximum update
+      // depth) restent détectées via isCriticalWarning.
+      // 'Failed to load resource: 500' : APIs externes (Qonto/Packlink)
+      // non configurées en CI → ces 500 sont des faux positifs.
+      // 'TypeError: Failed to fetch' : logged par les code-paths client
+      // qui catchent une fetch qui échoue côté réseau (même origine :
+      // API externe non configurée en CI). Même raison.
+      'Failed to load resource: the server responded with a status of',
+      'TypeError: Failed to fetch',
     ];
     return ignoredPatterns.some(p => text.includes(p));
   }

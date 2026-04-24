@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 
 import {
   Card,
@@ -71,8 +71,8 @@ export function QuoteItemsTable({
           </TableHeader>
           <TableBody>
             {order.sales_order_items?.map(item => (
-              <>
-                <TableRow key={item.id}>
+              <Fragment key={item.id}>
+                <TableRow>
                   <TableCell>
                     <div className="flex flex-col gap-0.5">
                       <span>{item.products?.name ?? 'Article'}</span>
@@ -112,7 +112,7 @@ export function QuoteItemsTable({
                   </TableCell>
                 </TableRow>
                 {expandedItems.has(item.id) && (
-                  <TableRow key={`${item.id}-comment`}>
+                  <TableRow>
                     <TableCell colSpan={5} className="pt-0 pb-2">
                       <Textarea
                         value={itemComments[item.id] ?? ''}
@@ -130,7 +130,7 @@ export function QuoteItemsTable({
                     </TableCell>
                   </TableRow>
                 )}
-              </>
+              </Fragment>
             ))}
           </TableBody>
         </Table>

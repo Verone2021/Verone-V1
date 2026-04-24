@@ -55,6 +55,16 @@ export function useOrdersWithMissingFields() {
           total_ttc,
           status,
           customer_id,
+          responsable_contact_id, billing_contact_id, delivery_contact_id,
+          responsable_contact:contacts!responsable_contact_id (
+            id, first_name, last_name, email, phone
+          ),
+          billing_contact:contacts!billing_contact_id (
+            id, first_name, last_name, email, phone
+          ),
+          delivery_contact:contacts!delivery_contact_id (
+            id, first_name, last_name, email, phone
+          ),
           organisations!sales_orders_customer_id_fkey (
             id, trade_name, legal_name, siret, enseigne_id, country, vat_number, billing_address_line1, billing_postal_code, billing_city
           ),
@@ -134,8 +144,33 @@ export function useOrdersWithMissingFields() {
         > | null;
         const ownerType = (detailsRecord?.owner_type as string | null) ?? null;
 
+        // Normalize nested contact refs — Supabase .select() peut renvoyer
+        // l'embed comme objet ou tableau selon la cardinalité détectée.
+        const pickContact = (raw: unknown) => {
+          if (!raw) return null;
+          const maybeArray = raw as Array<Record<string, unknown>>;
+          const obj = Array.isArray(maybeArray) ? maybeArray[0] : raw;
+          if (!obj) return null;
+          const rec = obj as Record<string, unknown>;
+          return {
+            first_name: (rec.first_name as string | null) ?? null,
+            last_name: (rec.last_name as string | null) ?? null,
+            email: (rec.email as string | null) ?? null,
+            phone: (rec.phone as string | null) ?? null,
+          };
+        };
+
         const missingFields = getOrderMissingFields({
           details,
+          responsableContact: pickContact(
+            (order as unknown as Record<string, unknown>).responsable_contact
+          ),
+          billingContact: pickContact(
+            (order as unknown as Record<string, unknown>).billing_contact
+          ),
+          deliveryContact: pickContact(
+            (order as unknown as Record<string, unknown>).delivery_contact
+          ),
           organisationSiret: org?.siret,
           organisationCountry: org?.country,
           organisationVatNumber: org?.vat_number,

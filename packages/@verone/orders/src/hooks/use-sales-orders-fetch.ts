@@ -99,7 +99,7 @@ export function useSalesOrdersFetch({
           const { data: org } = await supabase
             .from('organisations')
             .select(
-              'id, legal_name, trade_name, email, phone, website, address_line1, address_line2, postal_code, city, region, siret, vat_number, billing_address_line1, billing_address_line2, billing_city, billing_postal_code, billing_country, shipping_address_line1, shipping_address_line2, shipping_city, shipping_postal_code, shipping_country, has_different_shipping_address'
+              'id, legal_name, trade_name, email, phone, website, address_line1, address_line2, postal_code, city, region, country, siret, vat_number, billing_address_line1, billing_address_line2, billing_city, billing_postal_code, billing_country, shipping_address_line1, shipping_address_line2, shipping_city, shipping_postal_code, shipping_country, has_different_shipping_address, enseigne_id, is_enseigne_parent'
             )
             .eq('id', orderData.customer_id)
             .single();

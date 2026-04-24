@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import {
   Button,
@@ -35,6 +35,7 @@ import { useQuoteCreateFromOrder } from './use-quote-create-from-order';
 import { useQuoteSiretGuard } from './useQuoteSiretGuard';
 import { useParentOrgForBilling } from '../../hooks/use-parent-org-for-billing';
 import type { IParentOrgSuggestion } from '../../hooks/use-parent-org-for-billing';
+import { warnIfQuoteOrderInputDegraded } from './quote-input-guards';
 
 // ---------------------------------------------------------------------------
 // Helper — resoudre l adresse de facturation initiale depuis la commande/org
@@ -104,10 +105,16 @@ export function QuoteCreateFromOrderModal({
   } = useQuoteSiretGuard(order, billingOrgId);
 
   // [BO-FIN-040] Auto-resolve maison mère si org commande sans SIRET
-  const { parentOrg } = useParentOrgForBilling(
+  const { parentOrg, isLoading: isLoadingParentOrg } = useParentOrgForBilling(
     order?.organisations?.enseigne_id ?? null,
     order?.customer_id ?? null
   );
+
+  // [INFRA-HARDENING-001] Détecte les consumers qui passent un order dégradé.
+  // Log en console.error → attrapé par ConsoleErrorCollector en smoke CI.
+  warnIfQuoteOrderInputDegraded(order, {
+    consumer: 'QuoteCreateFromOrderModal',
+  });
 
   const handleUseParentOrg = useCallback(
     (parent: IParentOrgSuggestion): void => {
@@ -154,6 +161,30 @@ export function QuoteCreateFromOrderModal({
     },
     [order?.organisations]
   );
+
+  // [BO-FIN-040] Mode maison mère actif = billingOrgId défini + différent de l'org commande
+  const isParentOrgMode =
+    billingOrgId !== null && billingOrgId !== (order?.customer_id ?? null);
+
+  // Activation automatique dès que parentOrg chargé et SIRET manquant
+  useEffect(() => {
+    if (
+      !open ||
+      isLoadingParentOrg ||
+      !parentOrg ||
+      !isMissingSiret ||
+      isParentOrgMode
+    )
+      return;
+    handleUseParentOrg(parentOrg);
+  }, [
+    open,
+    isLoadingParentOrg,
+    parentOrg,
+    isMissingSiret,
+    isParentOrgMode,
+    handleUseParentOrg,
+  ]);
 
   const resetFormState = useCallback((): void => {
     setExpiryDays(30);
@@ -210,10 +241,6 @@ export function QuoteCreateFromOrderModal({
     order.organisations?.legal_name ??
     order.organisations?.name ??
     null;
-
-  // [BO-FIN-040] Mode maison mère actif = billingOrgId défini + différent de l'org commande
-  const isParentOrgMode =
-    billingOrgId !== null && billingOrgId !== order.customer_id;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>

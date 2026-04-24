@@ -111,15 +111,9 @@ export function OrderShipmentStatusCard({
               Transport à payer (Packlink)
             </Badge>
             {(() => {
-              const firstToPay = shipmentHistory.find(
-                h => h.packlink_status === 'a_payer'
-              );
-              const packlinkUrl = firstToPay?.packlink_shipment_id
-                ? `https://pro.packlink.fr/private/shipments/${firstToPay.packlink_shipment_id}/create/address`
-                : 'https://pro.packlink.fr/private/shipments';
               return (
                 <a
-                  href={packlinkUrl}
+                  href="https://pro.packlink.fr/private/shipments/ready-to-purchase"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-1 text-xs text-orange-700 hover:text-orange-900 underline"

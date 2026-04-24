@@ -212,6 +212,9 @@ export default function LinkMeOrderDetailPage() {
   const missingFieldsResult = details
     ? getOrderMissingFields({
         details,
+        responsableContact: order.responsable_contact,
+        billingContact: order.billing_contact,
+        deliveryContact: order.delivery_contact,
         organisationSiret: order.organisation?.siret,
         organisationCountry: order.organisation?.country,
         organisationVatNumber: order.organisation?.vat_number,

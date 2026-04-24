@@ -42,7 +42,7 @@ export function StepSuccess({ shipmentResult, onClose }: StepSuccessProps) {
           className="mt-3 bg-blue-600 hover:bg-blue-700 w-full"
           onClick={() =>
             window.open(
-              `https://pro.packlink.fr/private/shipments/${shipmentResult?.orderReference}/create/address`,
+              'https://pro.packlink.fr/private/shipments/ready-to-purchase',
               '_blank'
             )
           }

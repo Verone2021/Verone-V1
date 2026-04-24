@@ -296,6 +296,63 @@ export function useSalesOrdersMutations({
             'Seules les commandes en brouillon ou annulées peuvent être supprimées'
           );
 
+        // [BO-FIN-UX-002] Règle métier finance.md R6 :
+        // - Devis + factures BROUILLON liés → hard-delete (pas de trace résiduelle)
+        // - Factures finalisées/payées → REFUS (créer un avoir d'abord)
+        //
+        // Les commandes cancelled ont déjà passé la cascade d'annulation
+        // (BO-FIN-023) qui a soft-deleté les docs en local et supprimé de Qonto.
+        // On hard-delete ici toutes les rows financial_documents liées dont
+        // le status autorise la suppression définitive.
+        interface LinkedDocRow {
+          id: string;
+          document_type: string | null;
+          status: string | null;
+          deleted_at: string | null;
+        }
+        const { data: linkedDocsRaw, error: linkedErr } = await supabase
+          .from('financial_documents')
+          .select('id, document_type, status, deleted_at')
+          .eq('sales_order_id', orderId);
+        if (linkedErr) throw linkedErr;
+        const linkedDocs = (linkedDocsRaw ?? []) as LinkedDocRow[];
+
+        // Statuts qui autorisent la suppression définitive (cascade).
+        const deletableStatuses = new Set<string>([
+          'draft',
+          'expired',
+          'declined',
+          'cancelled',
+          'superseded',
+        ]);
+
+        const blocking = linkedDocs.filter(
+          d =>
+            d.status != null &&
+            !deletableStatuses.has(d.status) &&
+            d.deleted_at === null
+        );
+        if (blocking.length > 0) {
+          const labels = blocking
+            .map(
+              d =>
+                `${d.document_type === 'customer_quote' ? 'devis' : 'facture'} (${d.status ?? '?'})`
+            )
+            .join(', ');
+          throw new Error(
+            `Impossible de supprimer : ${blocking.length === 1 ? 'un document' : 'des documents'} finalisé(s) existe(nt) (${labels}). Créez un avoir d'abord.`
+          );
+        }
+
+        const idsToDelete: string[] = linkedDocs.map(d => d.id);
+        if (idsToDelete.length > 0) {
+          const { error: hardDeleteErr } = await supabase
+            .from('financial_documents')
+            .delete()
+            .in('id', idsToDelete);
+          if (hardDeleteErr) throw hardDeleteErr;
+        }
+
         const { data, error } = await supabase
           .from('sales_orders')
           .delete()
