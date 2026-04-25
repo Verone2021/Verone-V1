@@ -500,6 +500,7 @@ export function useOrderDetailsPage() {
     updateDetails,
     createContactBO,
     orderId,
+    fetchOrder,
     handleStatusChange,
     handleSaveItems,
     handleDeleteItem,

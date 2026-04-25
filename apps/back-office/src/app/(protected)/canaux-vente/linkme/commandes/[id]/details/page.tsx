@@ -102,6 +102,7 @@ export default function LinkMeOrderDetailsPage() {
     handleUpdateOrganisation,
     handleUseOrgAddress,
     handleOpenContactDialog,
+    fetchOrder,
   } = useOrderDetailsPage();
 
   if (isLoading) {
@@ -320,6 +321,7 @@ export default function LinkMeOrderDetailsPage() {
           }}
           updateDetailsPending={updateDetails.isPending}
           onUpdateOrganisation={handleUpdateOrganisation}
+          onRefetchOrder={fetchOrder}
         />
 
         <RightColumn
