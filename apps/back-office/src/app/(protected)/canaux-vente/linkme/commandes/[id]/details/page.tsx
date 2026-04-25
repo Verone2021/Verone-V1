@@ -38,6 +38,7 @@ import { LeftColumn } from './components/LeftColumn';
 import { RightColumn } from './components/RightColumn';
 import { EditDialogs } from './components/EditDialogs';
 import { OrderHeader } from './components/OrderHeader';
+import { MissingInfoBanner } from './components/MissingInfoBanner';
 
 export default function LinkMeOrderDetailsPage() {
   const [showShipmentModal, setShowShipmentModal] = useState(false);
@@ -287,6 +288,13 @@ export default function LinkMeOrderDetailsPage() {
           </div>
         )}
       </div>
+
+      {missingFieldsResult && (
+        <MissingInfoBanner
+          missingFields={missingFieldsResult}
+          onRequestComplements={() => setShowRequestInfoDialog(true)}
+        />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <LeftColumn
