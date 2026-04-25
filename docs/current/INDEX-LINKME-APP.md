@@ -1,8 +1,8 @@
 # LinkMe — Documentation App
 
-_Generated: 2026-04-19 19:09_
+_Generated: 2026-04-25 17:22_
 
-## Pages (49)
+## Pages (50)
 
 | Route                              | Fichier  |
 | ---------------------------------- | -------- |
@@ -20,6 +20,7 @@ _Generated: 2026-04-19 19:09_
 | `/aide/produits`                   | page.tsx |
 | `/aide/selections`                 | page.tsx |
 | `/cart`                            | page.tsx |
+| `/catalogue/[id]`                  | page.tsx |
 | `/catalogue`                       | page.tsx |
 | `/checkout`                        | page.tsx |
 | `/commandes/[id]/modifier`         | page.tsx |

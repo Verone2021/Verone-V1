@@ -51,9 +51,34 @@ export function MetaPixel() {
 // ============================================
 // E-commerce event helpers
 // ============================================
+//
+// IMPORTANT — content_ids = SKU côté Meta Catalog
+//
+// Le catalog Meta Verone utilise les SKUs (COU-0001, TAB-0004, …) comme
+// retailer_id. Pour que Meta puisse matcher les events Pixel avec les
+// produits du catalog (et donc afficher les produits pertinents dans
+// les ads + dans le shop), content_ids doit contenir les SKUs, PAS les
+// UUIDs Supabase. Les helpers acceptent `sku` en priorité, et fallback
+// sur `id` (UUID) seulement si sku absent.
+//
+// Voir docs/current/integrations/meta-commerce/USAGE.md action 3.
+
+function resolveContentId(
+  sku: string | null | undefined,
+  fallbackId: string
+): string {
+  return sku && sku.trim().length > 0 ? sku : fallbackId;
+}
+
+function resolveContentIds(
+  items: Array<{ sku?: string | null; product_id: string }>
+): string[] {
+  return items.map(item => resolveContentId(item.sku, item.product_id));
+}
 
 export function trackMetaViewContent(product: {
   id: string;
+  sku?: string | null;
   name: string;
   price: number;
   category?: string;
@@ -61,7 +86,7 @@ export function trackMetaViewContent(product: {
   if (!META_PIXEL_ID) return;
   const fbq = getFbq();
   fbq?.('track', 'ViewContent', {
-    content_ids: [product.id],
+    content_ids: [resolveContentId(product.sku, product.id)],
     content_name: product.name,
     content_type: 'product',
     content_category: product.category,
@@ -72,6 +97,7 @@ export function trackMetaViewContent(product: {
 
 export function trackMetaAddToCart(product: {
   id: string;
+  sku?: string | null;
   name: string;
   price: number;
   quantity: number;
@@ -79,7 +105,7 @@ export function trackMetaAddToCart(product: {
   if (!META_PIXEL_ID) return;
   const fbq = getFbq();
   fbq?.('track', 'AddToCart', {
-    content_ids: [product.id],
+    content_ids: [resolveContentId(product.sku, product.id)],
     content_name: product.name,
     content_type: 'product',
     value: product.price * product.quantity,
@@ -91,7 +117,7 @@ export function trackMetaAddToCart(product: {
 export function trackMetaInitiateCheckout(params: {
   value: number;
   itemCount: number;
-  contentIds: string[];
+  items: Array<{ sku?: string | null; product_id: string }>;
 }) {
   if (!META_PIXEL_ID) return;
   const fbq = getFbq();
@@ -99,7 +125,7 @@ export function trackMetaInitiateCheckout(params: {
     value: params.value,
     currency: 'EUR',
     num_items: params.itemCount,
-    content_ids: params.contentIds,
+    content_ids: resolveContentIds(params.items),
     content_type: 'product',
   });
 }
@@ -107,7 +133,7 @@ export function trackMetaInitiateCheckout(params: {
 export function trackMetaPurchase(params: {
   transactionId: string;
   value: number;
-  contentIds: string[];
+  items: Array<{ sku?: string | null; product_id: string }>;
   itemCount: number;
 }) {
   if (!META_PIXEL_ID) return;
@@ -115,7 +141,7 @@ export function trackMetaPurchase(params: {
   fbq?.('track', 'Purchase', {
     value: params.value,
     currency: 'EUR',
-    content_ids: params.contentIds,
+    content_ids: resolveContentIds(params.items),
     content_type: 'product',
     num_items: params.itemCount,
     order_id: params.transactionId,

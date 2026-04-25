@@ -4,8 +4,17 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { logger } from '@verone/utils/logger';
 
-import { callRpc } from './rpc-helper';
-
+/**
+ * Hook: useToggleMetaVisibility
+ *
+ * Mutation pour masquer/afficher un produit sur Meta Commerce.
+ * Appelle la route HTTP PATCH /api/meta-commerce/products/[id]/visibility
+ * (créée dans BO-API-PUB-001) qui applique le guard cascade : si le
+ * produit n'est pas publié sur Site Internet (is_published_online=false),
+ * la route renvoie 422 et la mutation échoue.
+ *
+ * Voir docs/current/canaux-vente-publication-rules.md
+ */
 export function useToggleMetaVisibility() {
   const queryClient = useQueryClient();
 
@@ -22,14 +31,20 @@ export function useToggleMetaVisibility() {
         visible,
       });
 
-      const { error } = await callRpc<void>('toggle_meta_commerce_visibility', {
-        p_product_id: productId,
-        p_visible: visible,
-      });
+      const response = await fetch(
+        `/api/meta-commerce/products/${productId}/visibility`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ visible }),
+        }
+      );
 
-      if (error) {
-        logger.error(`[useToggleMetaVisibility] Failed: ${error.message}`);
-        throw new Error(`Failed to toggle Meta visibility: ${error.message}`);
+      if (!response.ok) {
+        const errorData = (await response.json()) as { error?: string };
+        const message = errorData.error ?? `HTTP ${response.status}`;
+        logger.error(`[useToggleMetaVisibility] Failed: ${message}`);
+        throw new Error(message);
       }
     },
     onSuccess: async () => {
