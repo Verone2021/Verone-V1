@@ -15,9 +15,11 @@ name: Regen Docs Index (post-merge staging)
 on:
   push:
     branches: [staging]
+  workflow_dispatch: # Permet déclenchement manuel pour test
 
 permissions:
   contents: write
+  pull-requests: write # Nécessaire pour gh pr create depuis le bot
 
 # Évite que 2 runs concurrents ne se marchent dessus (push staging
 # rapproché). On annule l'ancien run pour ne garder que le plus récent.
@@ -46,12 +48,18 @@ jobs:
           python-version: '3.12'
 
       - name: Régénérer les INDEX
+        # ⚠️ Toujours --all : --auto ne marche QUE sur fichiers staged
+        # (vide ici, on est sur un checkout post-merge). Bug fixé 2026-04-25.
         run: |
-          python3 scripts/generate-docs.py --auto || python3 scripts/generate-docs.py --all
+          python3 scripts/generate-docs.py --all
           echo "Fichiers modifiés par la régénération :"
           git diff --name-only
 
-      - name: Commit + push si diff
+      - name: Ouvrir une PR si diff (contourne branch protection staging)
+        # ⚠️ On ne peut PAS push direct sur staging : 4 required checks bloquent
+        # le push direct du bot. Solution : créer une branche + PR auto-merge.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -61,18 +69,17 @@ jobs:
             exit 0
           fi
 
+          BRANCH="chore/regen-index-$(date -u +%Y%m%d-%H%M%S)"
+          git checkout -b "$BRANCH"
           git add -A
           git commit -m "[NO-TASK] chore: regen INDEX docs (post-merge staging)" \
-            -m "Auto-régénéré par .github/workflows/regen-docs-index.yml suite au merge précédent. Voir INFRA-CI-001 pour le contexte."
+            -m "Auto-régénéré par .github/workflows/regen-docs-index.yml suite au merge précédent. Voir INFRA-CI-001."
+          git push origin "$BRANCH"
 
-          # Push avec retry — staging peut bouger pendant le commit
-          for i in 1 2 3; do
-            if git push origin staging; then
-              echo "✅ INDEX régénérés et pushés sur staging"
-              exit 0
-            fi
-            echo "Push refusé (probablement nouveau commit sur staging), pull rebase + retry"
-            git pull --rebase origin staging
-          done
-          echo "❌ Push échoué après 3 retries"
-          exit 1
+          gh pr create --base staging --head "$BRANCH" \
+            --title "[NO-TASK] chore: regen INDEX docs (auto post-merge)" \
+            --body "Régénération automatique des fichiers INDEX après merge sur staging. Voir workflow regen-docs-index.yml."
+
+          # Auto-merge dès que les 4 required checks passent
+          gh pr merge "$BRANCH" --squash --auto --delete-branch
+          echo "✅ PR auto-merge enabled — sera mergée dès que CI verte"
