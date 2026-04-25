@@ -213,6 +213,7 @@ interface UseRequestInfoDialogArgs {
   missingFields: MissingFieldsResult;
   relevantCategories: MissingFieldCategory[];
   selectedEmails: string[];
+  selectedCategories: Set<MissingFieldCategory>;
   setSelectedEmails: (emails: string[]) => void;
   setSelectedCategories: (cats: Set<MissingFieldCategory>) => void;
   setRequestMessage: (msg: string) => void;
@@ -225,6 +226,7 @@ function makeHandleOpenChange({
   missingFields,
   relevantCategories,
   selectedEmails: _selectedEmails,
+  selectedCategories,
   setSelectedEmails,
   setSelectedCategories,
   setRequestMessage,
@@ -234,12 +236,17 @@ function makeHandleOpenChange({
   return (nextOpen: boolean) => {
     onOpenChange(nextOpen);
     if (nextOpen) {
-      const cats = new Set<MissingFieldCategory>(
-        relevantCategories.filter(
-          (cat): cat is Exclude<MissingFieldCategory, 'custom'> =>
-            cat !== 'custom'
-        )
-      );
+      // Respect a pre-selected category set (e.g. dialog opened from a specific
+      // missing role). Otherwise default to all relevant categories.
+      const cats =
+        selectedCategories.size > 0
+          ? selectedCategories
+          : new Set<MissingFieldCategory>(
+              relevantCategories.filter(
+                (cat): cat is Exclude<MissingFieldCategory, 'custom'> =>
+                  cat !== 'custom'
+              )
+            );
       setSelectedCategories(cats);
       setRequestMessage(generateCombinedMessage(missingFields, cats));
       if (availableRecipients.length > 0) {
@@ -279,6 +286,7 @@ export function RequestInfoDialog({
     missingFields,
     relevantCategories,
     selectedEmails,
+    selectedCategories,
     setSelectedEmails,
     setSelectedCategories,
     setRequestMessage,
