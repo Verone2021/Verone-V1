@@ -179,3 +179,25 @@ Untitled
 /INDEX-BACK-OFFICE-*.md
 /INDEX-LINKME-*.md
 /INDEX-SITE-INTERNET-*.md
+
+# Fichiers auto-générés par scripts/generate-docs.py
+# Régénérer en local : python3 scripts/generate-docs.py --all
+# Décision 2026-04-25 : ne plus versionner pour éviter conflits de merge
+# entre PRs concurrentes (incident multiples conflits INDEX-BACK-OFFICE-APP.md).
+docs/current/INDEX-BACK-OFFICE-APP.md
+docs/current/INDEX-LINKME-APP.md
+docs/current/INDEX-SITE-INTERNET-APP.md
+docs/current/INDEX-COMPOSANTS-FORMULAIRES.md
+docs/current/DEPENDANCES-PACKAGES.md
+docs/current/database/DATABASE-SCHEMA-COMPLETE.md
+docs/current/database/schema/00-SUMMARY.md
+docs/current/database/schema/01-organisations.md
+docs/current/database/schema/02-produits.md
+docs/current/database/schema/03-commandes.md
+docs/current/database/schema/04-stock.md
+docs/current/database/schema/05-finance.md
+docs/current/database/schema/06-linkme.md
+docs/current/database/schema/07-notifications.md
+docs/current/database/schema/08-utilisateurs.md
+docs/current/database/schema/09-autres.md
+scripts/db-schema-snapshot.json
