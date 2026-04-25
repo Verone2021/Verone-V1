@@ -8,8 +8,8 @@ import { createClient } from '@verone/utils/supabase/client';
 import {
   useSalesShipments,
   type SalesOrderForShipment,
+  type ShipmentRecipientContact,
 } from '@verone/orders/hooks';
-import { useContactsForOrder } from '@verone/orders/hooks/linkme';
 
 import {
   formatTransit,
@@ -29,7 +29,8 @@ import { useFetchDropoffs } from './use-fetch-dropoffs';
 import { usePreviousShipments } from './use-previous-shipments';
 import type {
   DeliveryMethod,
-  ShipmentContact,
+  RecipientForm,
+  RecipientSource,
   SortOption,
   PacklinkService,
   PackageInfo,
@@ -119,32 +120,97 @@ export function useShipmentWizard(
   const [collectionDate, setCollectionDate] = useState('');
   const [collectionTime, setCollectionTime] = useState('09:00');
 
-  // Contact destinataire sélectionné dans StepAddresses
-  const [selectedContact, setSelectedContact] =
-    useState<ShipmentContact | null>(null);
+  // ── Destinataire Packlink (etape Destinataire si deliveryMethod === 'packlink') ──
+  // Source de verite des coordonnees envoyees a Packlink.
+  // Initialise depuis les contacts FK joints (delivery > responsable > billing)
+  // et editable manuellement. Pas de fallback hardcode (l'ancien client@verone.fr
+  // / +33600000000 partait silencieusement chez Packlink quand le user ne
+  // selectionnait rien).
+  const [recipientForm, setRecipientForm] = useState<RecipientForm>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+  });
+  const [recipientSource, setRecipientSource] =
+    useState<RecipientSource>('manual');
 
-  // Contacts disponibles pour l'organisation de la commande
-  const enseigneId = salesOrder.organisations?.enseigne_id ?? null;
-  const { allContacts: rawContacts, isLoading: contactsLoading } =
-    useContactsForOrder(
-      salesOrder.customer_type === 'organization'
-        ? salesOrder.customer_id
-        : null,
-      enseigneId
-    );
+  // Pre-remplissage initial : delivery_contact > responsable_contact > billing_contact
+  // Si aucun, source='manual' avec champs vides (l'utilisateur saisit).
+  // Re-execute si la commande change (reload).
+  useEffect(() => {
+    const candidates: Array<{
+      source: Exclude<RecipientSource, 'manual'>;
+      contact: ShipmentRecipientContact | null | undefined;
+    }> = [
+      { source: 'delivery', contact: salesOrder.delivery_contact },
+      { source: 'responsable', contact: salesOrder.responsable_contact },
+      { source: 'billing', contact: salesOrder.billing_contact },
+    ];
+    const first = candidates.find(c => c.contact?.id);
+    if (first?.contact) {
+      const c = first.contact;
+      setRecipientSource(first.source);
+      setRecipientForm({
+        firstName: c.first_name ?? '',
+        lastName: c.last_name ?? '',
+        email: c.email ?? '',
+        phone: c.mobile ?? c.phone ?? '',
+      });
+    } else {
+      setRecipientSource('manual');
+      setRecipientForm({ firstName: '', lastName: '', email: '', phone: '' });
+    }
+  }, [
+    salesOrder.delivery_contact,
+    salesOrder.responsable_contact,
+    salesOrder.billing_contact,
+  ]);
 
-  // Réduire ContactBOWithSource → ShipmentContact (subset compatible)
-  const allContacts: ShipmentContact[] = rawContacts.map(c => ({
-    id: c.id,
-    firstName: c.firstName,
-    lastName: c.lastName,
-    email: c.email,
-    phone: c.phone,
-    mobile: c.mobile,
-    isPrimaryContact: c.isPrimaryContact,
-    isBillingContact: c.isBillingContact,
-    source: c.source,
-  }));
+  const setRecipientField = useCallback(
+    (key: keyof RecipientForm, value: string) => {
+      setRecipientForm(prev => ({ ...prev, [key]: value }));
+      // Editer un champ = bascule en saisie manuelle (le user a pris la main).
+      setRecipientSource('manual');
+    },
+    []
+  );
+
+  const selectRecipientContact = useCallback(
+    (source: RecipientSource) => {
+      setRecipientSource(source);
+      if (source === 'manual') {
+        setRecipientForm({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+        });
+        return;
+      }
+      const map: Record<
+        Exclude<RecipientSource, 'manual'>,
+        ShipmentRecipientContact | null | undefined
+      > = {
+        delivery: salesOrder.delivery_contact,
+        responsable: salesOrder.responsable_contact,
+        billing: salesOrder.billing_contact,
+      };
+      const c = map[source];
+      if (!c) return;
+      setRecipientForm({
+        firstName: c.first_name ?? '',
+        lastName: c.last_name ?? '',
+        email: c.email ?? '',
+        phone: c.mobile ?? c.phone ?? '',
+      });
+    },
+    [
+      salesOrder.delivery_contact,
+      salesOrder.responsable_contact,
+      salesOrder.billing_contact,
+    ]
+  );
 
   // Previous shipments — extracted to use-previous-shipments.ts
   const { previousShipments } = usePreviousShipments(
@@ -203,16 +269,23 @@ export function useShipmentWizard(
     return copy;
   }, [services, sortOption]);
 
-  // Step constants
-  const stepLabels = [
-    'Stock',
-    'Mode',
-    'Colis',
-    'Transport',
-    'Relais',
-    'Resume',
-  ];
-  const maxStep = deliveryMethod === 'packlink' ? 6 : 2;
+  // Step constants — Packlink ajoute une etape "Destinataire" entre Mode et Colis.
+  const stepLabels = useMemo(
+    () =>
+      deliveryMethod === 'packlink'
+        ? [
+            'Stock',
+            'Mode',
+            'Destinataire',
+            'Colis',
+            'Transport',
+            'Relais',
+            'Resume',
+          ]
+        : ['Stock', 'Mode'],
+    [deliveryMethod]
+  );
+  const maxStep = deliveryMethod === 'packlink' ? 7 : 2;
 
   // Handlers — items & packages (sync, extracted to handlers.ts)
   const handleQuantityChange = makeQuantityChangeHandler(setItems);
@@ -277,33 +350,22 @@ export function useShipmentWizard(
     if (result.success) onSuccess();
   };
 
-  // Build destination object from order data + contact sélectionné
+  // Build destination object from recipientForm (saisi a l'etape Destinataire)
+  // + adresse de la commande. Pas de fallback hardcode ici : l'etape
+  // Destinataire bloque "Suivant" tant que les 4 champs ne sont pas remplis.
   const buildDestination = useCallback(() => {
     const addr = parseShippingAddress(salesOrder.shipping_address);
-    const name = salesOrder.customer_name ?? '';
-    const nameParts = name.split(' ');
-
-    const email =
-      selectedContact?.email ??
-      salesOrder.organisations?.email ??
-      'client@verone.fr';
-    const phone =
-      selectedContact?.mobile ??
-      selectedContact?.phone ??
-      addr?.phone ??
-      '+33600000000';
-
     return {
-      name: nameParts[0] ?? 'Client',
-      surname: nameParts.slice(1).join(' ') || 'Client',
-      email,
-      phone,
+      name: recipientForm.firstName.trim(),
+      surname: recipientForm.lastName.trim(),
+      email: recipientForm.email.trim(),
+      phone: recipientForm.phone.trim(),
       street1: addr?.address_line1 ?? addr?.line1 ?? '',
       city: addr?.city ?? '',
       zip_code: addr?.postal_code ?? '',
       country: addr?.country ?? 'FR',
     };
-  }, [salesOrder, selectedContact]);
+  }, [salesOrder, recipientForm]);
 
   // Fetch dropoff points for relay services — extracted to use-fetch-dropoffs.ts
   const fetchDropoffs = useFetchDropoffs({
@@ -414,9 +476,9 @@ export function useShipmentWizard(
     formatTransit,
     formatTransitLabel,
     formatEstimatedDate,
-    selectedContact,
-    setSelectedContact,
-    allContacts,
-    contactsLoading,
+    recipientForm,
+    recipientSource,
+    setRecipientField,
+    selectRecipientContact,
   };
 }
