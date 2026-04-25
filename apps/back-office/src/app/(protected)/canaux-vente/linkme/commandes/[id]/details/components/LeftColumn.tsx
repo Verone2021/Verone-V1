@@ -53,6 +53,9 @@ export interface LeftColumnProps {
     orgId: string,
     updates: Record<string, unknown>
   ) => Promise<void>;
+  // Refetch parent order (relayed to FeesSection so the totals refresh
+  // immediately after a fees save — see hooks.ts fetchOrder).
+  onRefetchOrder?: () => void | Promise<void>;
 }
 
 // ============================================
@@ -80,6 +83,7 @@ export function LeftColumn({
   onUseOrgAddress,
   updateDetailsPending,
   onUpdateOrganisation,
+  onRefetchOrder,
 }: LeftColumnProps) {
   return (
     <div className="lg:col-span-2 space-y-4">
@@ -112,6 +116,7 @@ export function LeftColumn({
         insuranceCostHt={order.insurance_cost_ht ?? 0}
         feesVatRate={order.fees_vat_rate ?? 0.2}
         readOnly={!canEditFees(order.status)}
+        onSaved={onRefetchOrder}
       />
 
       <OrderTotalsCard totalHt={order.total_ht} totalTtc={order.total_ttc} />
