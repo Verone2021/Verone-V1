@@ -77,6 +77,12 @@
       "destination": "/api/feeds/:path*"
     }
   ],
+  "crons": [
+    {
+      "path": "/api/cron/meta-commerce-sync",
+      "schedule": "0 */2 * * *"
+    }
+  ],
   "cleanUrls": true,
   "trailingSlash": false
 }
