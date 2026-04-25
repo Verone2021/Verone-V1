@@ -1,0 +1,78 @@
+name: Regen Docs Index (post-merge staging)
+
+# Régénère les fichiers d'index auto-générés (INDEX-BACK-OFFICE-APP.md,
+# INDEX-COMPOSANTS-FORMULAIRES.md, etc.) APRÈS un merge sur staging.
+#
+# Pourquoi ici (et pas en pre-commit) :
+# - Le pre-commit local régénère sur chaque branche en parallèle
+#   → versions divergentes entre PRs → conflit garanti au merge
+# - Ici : 1 seule source d'exécution (post-merge sur staging) → 0 conflit
+# - Source de vérité unique : ce que GitHub Actions calcule depuis staging
+#
+# Voir incident 2026-04-25 (4 conflits sur INDEX-BACK-OFFICE-APP.md
+# dans la même session : PRs #762, #767, #768, #769).
+
+on:
+  push:
+    branches: [staging]
+
+permissions:
+  contents: write
+
+# Évite que 2 runs concurrents ne se marchent dessus (push staging
+# rapproché). On annule l'ancien run pour ne garder que le plus récent.
+concurrency:
+  group: regen-docs-staging
+  cancel-in-progress: true
+
+jobs:
+  regen:
+    name: Régénération INDEX docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout staging
+        uses: actions/checkout@v4
+        with:
+          ref: staging
+          # Token avec write contents (par défaut suffisant via permissions ci-dessus)
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Régénérer les INDEX
+        run: |
+          python3 scripts/generate-docs.py --auto || python3 scripts/generate-docs.py --all
+          echo "Fichiers modifiés par la régénération :"
+          git diff --name-only
+
+      - name: Commit + push si diff
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "✅ Aucun changement — INDEX à jour"
+            exit 0
+          fi
+
+          git add -A
+          git commit -m "[NO-TASK] chore: regen INDEX docs (post-merge staging)" \
+            -m "Auto-régénéré par .github/workflows/regen-docs-index.yml suite au merge précédent. Voir INFRA-CI-001 pour le contexte."
+
+          # Push avec retry — staging peut bouger pendant le commit
+          for i in 1 2 3; do
+            if git push origin staging; then
+              echo "✅ INDEX régénérés et pushés sur staging"
+              exit 0
+            fi
+            echo "Push refusé (probablement nouveau commit sur staging), pull rebase + retry"
+            git pull --rebase origin staging
+          done
+          echo "❌ Push échoué après 3 retries"
+          exit 1

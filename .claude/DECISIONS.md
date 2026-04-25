@@ -474,3 +474,139 @@ invisibles — script `db-drift-check.py` prévu pour ADR-018.
 **Référence** : commit `[INFRA-HARDENING-001]`, branche
 `feat/infra-hardening-001`. Suite de `[BO-FIN-041]` (fixes des 3 régressions
 déclenchantes : SIRET enseigne_id, delete cancelled order, Fragment key).
+
+---
+
+## ADR-019 — 2026-04-24 — INFRA-HARDENING-002/003 : filet smoke exhaustif + drift DB + types + advisors
+
+**Contexte** : suite d'ADR-016 (smoke CI gate initial) et ADR-018 (drift
+check). L'audit 2 semaines avait révélé que 50 % des régressions passaient
+sous le radar de la CI. Il fallait (1) étendre le filet smoke au-delà de 15
+tests, (2) activer le drift DB comme gate bloquant après nettoyage du
+backlog, (3) automatiser les best practices Supabase officielles (types
+regen, security advisors).
+
+**Décisions** :
+
+### INFRA-HARDENING-002 (PR #750, mergée staging 2026-04-24)
+
+1. 7 fichiers smoke thématiques (`smoke-{stock,commandes,finance,linkme,canaux,produits,contacts}.spec.ts`) = 53 tests interactifs. Pattern ADR-016 strict (`domcontentloaded` + `SETTLE_MS=800`, pas de `networkidle`).
+2. Suppression `smoke-all-modules.spec.ts` (doublon intégral avec `smoke-147-pages.spec.ts`).
+3. Migration `20260424_001_retrofit_legacy_fk_declarations.sql` : retrofit 94 FK UNDECLARED + 3 MISMATCH alignés live. Idempotente (DROP IF EXISTS + ADD CONSTRAINT). Appliquée sur DB prod.
+4. Parser `db-drift-check.py` durci : strip commentaires SQL + filtre `BASE TABLE` (exclut VIEWs) + blacklist mots-clés SQL.
+5. Gate CI `db-drift-check` bloquant (sans `continue-on-error`).
+6. Cron hebdo `.github/workflows/db-drift-cron.yml` (lundi 06h UTC) : ouvre/ferme auto une issue GitHub sur drift détecté.
+
+### INFRA-HARDENING-003 (PR #751, mergée staging 2026-04-24)
+
+1. Fix paths-filter `quality.yml` : ajoute `tests/**`, `playwright.config.ts` au filtre `back-office`. Smoke tourne désormais sur toute PR modifiant les specs (gap observé PR #750).
+2. Nouveau filtre `migrations` + job `supabase-types-drift` bloquant : regénère `packages/@verone/types/src/supabase.ts` via `supabase gen types typescript --db-url` et échoue sur diff.
+3. Job `supabase-advisors-security` informational (non-bloquant) : appelle Supabase Management API `/v1/projects/{ref}/advisors/lints?type=security`, compare au baseline `scripts/supabase-advisors-baseline.json` (97 issues figées), comment PR avec delta.
+
+### Sources (best practices officielles)
+
+- Supabase types : https://supabase.com/docs/reference/cli/supabase-gen-types
+- Supabase advisors : https://supabase.com/docs/guides/database/database-advisors
+- API advisors : https://supabase.com/docs/reference/api/v1-list-project-lints-types
+
+### Secrets GitHub Actions requis
+
+Configurés le 2026-04-24 via Playwright :
+
+- `SUPABASE_DB_URL` (postgresql://...pooler.supabase.com:5432/postgres) — utilisé par drift + types
+- `SUPABASE_ACCESS_TOKEN` (PAT `sbp_...`) — utilisé par advisors
+- `SUPABASE_PROJECT_REF` (`aorroydfjsrygmosnzrl`) — utilisé par advisors
+
+### Conséquence
+
+- 67 tests smoke bloquants (vs 14 avant — x4.8) couvrant les 7 rubriques critiques.
+- Gate drift DB empêche toute modification de schéma hors migration.
+- Gate types drift empêche toute migration sans régénération des types.
+- Monitoring hebdo automatique, issue GitHub auto.
+
+### Recommandations explicitement non-retenues
+
+- **Lighthouse CI / visual regression / dead code detection** : cargo cult au stade actuel, coût maintenance > bénéfice.
+- **Auto-PR release staging → main hebdo** : non une best practice universelle, dépend du workflow équipe. À activer si bruit acceptable.
+
+**Référence** : PR #750, #751 et suite (Dependabot + auto-release + release staging→main).
+
+---
+
+## ADR-020 — 2026-04-24 — INFRA-HARDENING-004/005 + branch protection + retour d'expérience SSR crash
+
+**Contexte** : suite et fin de la série INFRA-HARDENING (ADR-019). Extension
+avec Dependabot, auto-release hebdo, retry du release prod après régression
+SSR découverte en production.
+
+### INFRA-HARDENING-004 (PR #752, mergée staging)
+
+- `.github/dependabot.yml` : bumps npm hebdo groupés minor/patch + github-actions mensuel.
+- `.github/workflows/auto-release-staging-to-main.yml` : cron lundi 06h UTC ouvrant/maj la release PR si staging ahead.
+- Fix endpoint Supabase advisors : `/v1/projects/{ref}/advisors/security` (pas `/advisors/lints`). User-Agent explicite vs Cloudflare 1010.
+
+### INFRA-HARDENING-005 (PR #754, mergée staging)
+
+- Fix types drift gate CI : `pnpm install` complet pour résoudre `@verone/prettier-config` + prettier format sur le fichier régénéré avant diff. Sans ça : 30000 lignes de faux positif à chaque run.
+- Fix smoke-produits selector : `a[href*='/produits/catalogue/']` avec exclusions des sous-routes (categories, collections, etc.) + assertion URL `not.toHaveURL(/catalogue$/)` au lieu de regex UUID.
+- **Smoke tests durcis** (leçon régression SSR du 24/04) : 3 assertions contenu ajoutées sur les tests 'détail' des 3 rubriques critiques (produits, commandes, linkme) :
+  - `body text !== 'Page introuvable'`
+  - `body text !matches /^404/m`
+  - `getByRole('tab').first()` visible
+
+### Branch protection rules (2026-04-24, activée via `gh api`)
+
+- **main** : `required_status_checks.strict=true`, contexts = ESLint+Type-Check+Build, DB FK drift, E2E Smoke, Supabase TS types drift. `enforce_admins=true` (admin ne peut PAS bypasser).
+- **staging** : mêmes contexts. `enforce_admins=false` (urgence autorisée).
+- Sans ces règles, tous les gates CI étaient contournables par un merge direct.
+
+### Secrets Supabase configurés (Playwright → GitHub Settings)
+
+- `SUPABASE_DB_URL` — drift + types drift
+- `SUPABASE_ACCESS_TOKEN` (PAT existant dans `.env.local`)
+- `SUPABASE_PROJECT_REF` = `aorroydfjsrygmosnzrl`
+
+### Régression SSR prod — retour d'expérience
+
+Pendant la session, la release staging→main #749 (15:51 UTC) a propagé en
+prod ~15 commits incluant la refonte des 7 onglets produit. Résultat :
+`/produits/catalogue/[productId]` a renvoyé **404** en prod, alors que :
+
+- Le fichier `page.tsx` existe sur main
+- Le build Vercel inclut la route (40.8 kB output)
+- Aucun `notFound()` n'est appelé dans le code
+
+Signature HTTP : `x-matched-path: /_not-found`, `x-next-error-status: 404`.
+→ Crash runtime SSR silencieux. Next.js bascule sur le fallback `/_not-found`.
+
+**Rollback appliqué** : `vercel promote <njqx4dcu9-url>` vers le déploiement
+d'hier (22:14 UTC) qui fonctionnait. Prod rétablie HTTP 200 immédiatement.
+
+**Pourquoi mes smoke tests initiaux n'ont pas attrapé le bug** : ils ne
+testaient que l'URL (`not.toHaveURL(/catalogue$/)`). Or en cas de 404 SSR,
+Next.js sert le contenu `/_not-found` **mais l'URL reste sur
+`/produits/catalogue/UUID`** → l'assertion passait vert alors que la page
+était cassée.
+
+**Fix** : assertions contenu dans INFRA-HARDENING-005 (cf. ci-dessus).
+
+**Investigation root cause** : à faire dans un sprint séparé (décision
+Romeo 2026-04-24). Le code fautif fait partie des ~15 commits poussés entre
+yesterday 22:14 et today 15:51. Bisection git recommandée, ou déploiement
+progressif onglet par onglet.
+
+### Référence CI finale — état au 2026-04-24
+
+| Gate                            |   Blocking    | Déclenché sur                                 |
+| ------------------------------- | :-----------: | --------------------------------------------- |
+| ESLint + Type-Check + Build     |      ✅       | chaque PR (apps/back-office, packages, tests) |
+| E2E Smoke Playwright (67 tests) |      ✅       | apps/back-office, packages, tests             |
+| DB FK drift check               |      ✅       | chaque PR et push                             |
+| Supabase TS types drift         |      ✅       | changements supabase/migrations ou types.ts   |
+| Supabase security advisors      | Informational | chaque PR                                     |
+| Vercel preview deploy           |      ✅       | main push                                     |
+
+Monitoring hebdo : cron DB drift (lundi), Dependabot (lundi),
+auto-release staging→main (lundi).
+
+**Référence** : PR #750, #751, #752, #753 (release), #754 (fixes post-release).

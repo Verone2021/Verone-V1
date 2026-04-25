@@ -137,11 +137,7 @@ export default function ProductDetailPage() {
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="publication">
-          <ProductPublicationTab
-            product={product}
-            completionPercentage={completionPercentage}
-            onTabChange={setActiveTab}
-          />
+          <ProductPublicationTab product={product} />
         </TabContent>
       </div>
 
