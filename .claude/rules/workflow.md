@@ -5,6 +5,32 @@ par tous les agents avant toute action git.**
 
 ---
 
+## RÈGLE ABSOLUE — Cible des branches
+
+**Toute branche feature/fix/hotfix part de `staging` et PR vers `staging`. JAMAIS vers `main`.**
+
+```bash
+# CORRECT
+git checkout staging && git pull
+git checkout -b feat/XXX
+gh pr create --base staging --head feat/XXX
+
+# INTERDIT
+git checkout main
+git checkout -b feat/XXX        # ← branche partie de main
+gh pr create --base main ...    # ← PR vers main
+```
+
+Seule exception autorisée vers `main` : la **release PR** `staging → main`, créée périodiquement par Romeo (ou le workflow `auto-release-staging-to-main.yml`).
+
+Toute autre PR vers `main` est **bloquée par le workflow `protect-main-source.yml`** (CI fail). Pour bypass un hotfix vraiment critique : ajouter le label `hotfix-direct`.
+
+Pourquoi : si tu PR vers main directement, main avance avant staging → la release PR staging→main devient un calvaire de conflits. Cf incident 2026-04-25 (6 PRs ouvertes vers main au lieu de staging, 72h perdues à débrouiller).
+
+**Avant tout `gh pr create` : vérifie deux fois la base.** Si tu hésites, c'est `--base staging`.
+
+---
+
 ## Principe fondamental : 1 PR = 1 bloc de travail coherent
 
 Les vrais developpeurs seniors **ne creent PAS une PR par sprint/sous-tache**.
