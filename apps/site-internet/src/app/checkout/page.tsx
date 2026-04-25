@@ -96,7 +96,7 @@ export default function CheckoutPage() {
       trackMetaInitiateCheckout({
         value: subtotal,
         itemCount,
-        contentIds: items.map(item => item.product_id),
+        items,
       });
       hasTrackedCheckout.current = true;
     }

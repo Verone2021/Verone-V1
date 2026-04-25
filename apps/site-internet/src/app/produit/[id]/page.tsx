@@ -143,6 +143,7 @@ export default function ProductPage({
       });
       trackMetaViewContent({
         id: product.product_id,
+        sku: product.sku,
         name: product.name,
         price: product.price_ttc ?? 0,
         category: product.subcategory_name ?? undefined,
