@@ -35,9 +35,14 @@ if [ -n "$STAGED_FILES" ]; then
   echo "$STAGED_FILES" | xargs git add
 fi
 
-# 5. Auto-update docs based on staged files (--auto detects what changed)
-python3 scripts/generate-docs.py --auto 2>/dev/null
-git diff --name-only docs/ .claude/INDEX.md 2>/dev/null | xargs -r git add
+# 5. ⚠️ DÉSACTIVÉ 2026-04-25 — la régénération auto de
+#    INDEX-BACK-OFFICE-APP.md / INDEX-COMPOSANTS-FORMULAIRES.md sur
+#    CHAQUE commit créait des conflits garantis entre PRs concurrentes
+#    (4 conflits dans la même session : #762, #767, #768, #769).
+#    Régénération désormais via cron post-merge sur staging.
+#
+# python3 scripts/generate-docs.py --auto 2>/dev/null
+# git diff --name-only docs/ .claude/INDEX.md 2>/dev/null | xargs -r git add
 
 # 6. ESLint sur fichiers modifiés (lint-staged, ~2-5s)
 npx lint-staged
