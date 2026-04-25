@@ -1,0 +1,53 @@
+name: Protect main — only staging can PR
+
+# Bloque toute PR vers main qui ne vient pas de staging.
+# Workflow Verone : feature/hotfix → staging → release PR → main.
+# Une PR avec base=main et head!=staging est une violation du workflow
+# (cf .claude/rules/workflow.md).
+#
+# Exception : les hotfix critiques peuvent toujours être ouverts vers main
+# manuellement par Romeo, mais doivent être labellisés `hotfix-direct`
+# pour bypass ce check.
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  check-source-branch:
+    name: PR vers main doit venir de staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Verify PR source
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: |
+          echo "PR head branch: $HEAD_REF"
+          echo "PR labels: $LABELS"
+
+          if [[ "$HEAD_REF" == "staging" ]]; then
+            echo "✅ Source = staging. Release PR autorisée."
+            exit 0
+          fi
+
+          if [[ ",$LABELS," == *",hotfix-direct,"* ]]; then
+            echo "✅ Label 'hotfix-direct' présent. Bypass autorisé pour hotfix critique."
+            exit 0
+          fi
+
+          echo "❌ PR vers main interdite : la source doit être 'staging' (release PR)."
+          echo ""
+          echo "Workflow Verone (cf .claude/rules/workflow.md) :"
+          echo "  feature/hotfix → PR vers staging → release PR staging → main"
+          echo ""
+          echo "Actions possibles :"
+          echo "  1. Re-cibler la PR vers staging (gh pr edit $PR_NUM --base staging)"
+          echo "  2. Ou ajouter le label 'hotfix-direct' si vraiment urgence prod"
+          exit 1
