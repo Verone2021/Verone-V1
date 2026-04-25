@@ -8,6 +8,13 @@ export interface CreatedByProfile {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
+  /**
+   * true si le créateur est un salarié back-office (entrée active dans
+   * user_app_roles avec app='back-office'). Permet d'exclure ce destinataire
+   * du modal "Demander des compléments" : un salarié ne peut pas se
+   * demander à lui-même les infos qu'il n'a pas saisies.
+   */
+  is_back_office?: boolean;
 }
 
 /** Contact résolu via FK JOIN sur sales_orders -> contacts */

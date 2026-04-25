@@ -11,7 +11,10 @@ import {
 
 interface MissingInfoBannerProps {
   missingFields: MissingFieldsResult;
+  /** Ouvre le modal avec toutes les categories pertinentes pre-cochees. */
   onRequestComplements: () => void;
+  /** Ouvre le modal avec UNIQUEMENT la categorie cliquee pre-cochee. */
+  onRequestComplementForCategory: (cat: MissingFieldCategory) => void;
 }
 
 // Couleurs alignees avec ContactsUnified et le reste du monorepo : on garde
@@ -35,6 +38,7 @@ const CATEGORY_ORDER: MissingFieldCategory[] = [
 export function MissingInfoBanner({
   missingFields,
   onRequestComplements,
+  onRequestComplementForCategory,
 }: MissingInfoBannerProps) {
   if (missingFields.total === 0) return null;
 
@@ -59,11 +63,11 @@ export function MissingInfoBanner({
               client en un seul email.
             </p>
 
-            <div className="mt-3 space-y-2">
+            <div className="mt-3 space-y-1.5">
               {groups.map(group => (
                 <div
                   key={group.category}
-                  className="flex flex-wrap items-baseline gap-x-2 gap-y-1"
+                  className="flex flex-wrap items-center gap-x-2 gap-y-1"
                 >
                   <Badge
                     variant="outline"
@@ -71,9 +75,19 @@ export function MissingInfoBanner({
                   >
                     {CATEGORY_LABELS[group.category]}
                   </Badge>
-                  <span className="text-xs text-gray-700">
+                  <span className="text-xs text-gray-700 flex-1 min-w-0">
                     {group.fields.map(f => f.label).join(', ')}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onRequestComplementForCategory(group.category)
+                    }
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 hover:text-amber-900 hover:underline flex-shrink-0"
+                  >
+                    <Send className="h-3 w-3" />
+                    Demander
+                  </button>
                 </div>
               ))}
             </div>

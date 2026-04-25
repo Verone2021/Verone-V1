@@ -150,10 +150,28 @@ export default function LinkMeOrderDetailsPage() {
       })
     : null;
 
+  // Le créateur DB (sales_orders.created_by) peut être un salarié back-office
+  // même si la commande est rattachée à un canal LinkMe (cas typique : un
+  // salarié saisit la commande pour le compte d'un affilié). On exclut le
+  // créateur du sélecteur de destinataires uniquement quand il est salarié
+  // BO — l'info vient de user_app_roles, pré-calculée dans use-fetch-order.
+  const isCreatedByBackOffice = order.createdByProfile?.is_back_office === true;
+
   const handleRequestComplementForRole = (
     role: 'responsable' | 'billing' | 'delivery'
   ) => {
-    setSelectedCategories(new Set<MissingFieldCategory>([role]));
+    handleRequestComplementForCategory(role);
+  };
+
+  const handleRequestComplementForCategory = (cat: MissingFieldCategory) => {
+    setSelectedCategories(new Set<MissingFieldCategory>([cat]));
+    setShowRequestInfoDialog(true);
+  };
+
+  const handleOpenRequestComplementsAll = () => {
+    // Vide le set : makeHandleOpenChange (cf. ApprovalActionDialogs) coche
+    // automatiquement toutes les catégories pertinentes à l'ouverture.
+    setSelectedCategories(new Set());
     setShowRequestInfoDialog(true);
   };
 
@@ -292,7 +310,8 @@ export default function LinkMeOrderDetailsPage() {
       {missingFieldsResult && (
         <MissingInfoBanner
           missingFields={missingFieldsResult}
-          onRequestComplements={() => setShowRequestInfoDialog(true)}
+          onRequestComplements={handleOpenRequestComplementsAll}
+          onRequestComplementForCategory={handleRequestComplementForCategory}
         />
       )}
 
@@ -342,9 +361,7 @@ export default function LinkMeOrderDetailsPage() {
           }}
           onOpenShipmentModal={() => setShowShipmentModal(true)}
           onOpenContactDialog={handleOpenContactDialog}
-          onRequestInfo={() => setShowRequestInfoDialog(true)}
           onRequestComplementForRole={handleRequestComplementForRole}
-          missingFieldsTotal={missingFieldsResult?.totalCategories}
           historyEvents={historyEvents}
           historyLoading={historyLoading}
         />
@@ -419,6 +436,7 @@ export default function LinkMeOrderDetailsPage() {
         order={order as unknown as OrderWithDetailsApproval}
         details={details}
         createdByProfile={order.createdByProfile}
+        excludeCreator={isCreatedByBackOffice}
         requestMessage={requestMessage}
         setRequestMessage={setRequestMessage}
         selectedCategories={selectedCategories}
