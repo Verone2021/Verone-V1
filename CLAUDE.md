@@ -143,7 +143,22 @@ Le reviewer lit le rapport, pas le chat. Le ops-agent lit le verdict PASS, pas l
 | Decisions structurelles | `.claude/DECISIONS.md` (ADRs)                  |
 
 INTERDIT de deviner. TOUJOURS lire la doc.
-Apres chaque migration SQL : `python3 scripts/generate-docs.py --db`
+
+### Fichiers auto-générés (gitignored depuis 2026-04-25)
+
+Les fichiers suivants sont générés depuis le code et NON versionnés :
+
+- `docs/current/INDEX-BACK-OFFICE-APP.md`, `INDEX-LINKME-APP.md`, `INDEX-SITE-INTERNET-APP.md`
+- `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md`
+- `docs/current/DEPENDANCES-PACKAGES.md`
+- `docs/current/database/DATABASE-SCHEMA-COMPLETE.md`
+- `docs/current/database/schema/00-SUMMARY.md` à `09-autres.md`
+- `scripts/db-schema-snapshot.json`
+
+**En début de session** (ou après git pull qui change la structure) : `python3 scripts/generate-docs.py --all`
+**Apres chaque migration SQL** : `python3 scripts/generate-docs.py --db`
+
+Pourquoi gitignored : versionner ces fichiers générés provoquait des conflits de merge en cascade entre PRs concurrentes (incident 2026-04-25, plusieurs heures perdues). Voir `.claude/DECISIONS.md` ADR-021.
 
 ## MEMOIRE SCEPTIQUE
 
