@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * 🔧 Hook : Configuration Google Merchant Center
  *

@@ -1,6 +1,6 @@
 # Index Composants, Formulaires & Hooks — packages/@verone/
 
-**Derniere mise a jour** : 2026-04-24
+**Derniere mise a jour** : 2026-04-25
 **23 packages** dans `packages/@verone/`
 
 ## **551 composants, 12 hooks**

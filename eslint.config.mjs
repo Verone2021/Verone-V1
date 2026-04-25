@@ -81,6 +81,10 @@ export default defineConfig([
       // Legacy/backups
       '**/backups/**',
       '**/MEMORY-BANK/**',
+
+      // Restored docs from git history — archive, not active code
+      // (contains .ts/.sql files of past integrations like Packlink for reference)
+      'docs/restored/**',
     ],
   },
 

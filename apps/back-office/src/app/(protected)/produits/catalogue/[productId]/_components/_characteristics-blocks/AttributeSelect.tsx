@@ -101,50 +101,54 @@ export function AttributeSelect({
 
   return (
     <div ref={containerRef} className="relative">
-      {/* Trigger */}
-      <button
-        type="button"
-        onClick={() => {
-          if (!open) {
-            setOpen(true);
-            setSearch('');
-            setCustomMode(false);
-            setTimeout(() => inputRef.current?.focus(), 50);
-          } else {
-            setOpen(false);
-          }
-        }}
+      {/* Trigger row — wrapper div to allow Clear as sibling button (HTML interdit button-in-button) */}
+      <div
         className={cn(
-          'group flex items-center gap-1 text-left w-full min-w-0',
+          'group flex items-center gap-1 w-full min-w-0',
           'rounded px-1 py-0.5 hover:bg-neutral-100 transition-colors'
         )}
       >
-        <span
-          className={cn(
-            'flex-1 text-xs truncate',
-            value ? 'text-neutral-900' : 'text-neutral-400 italic',
-            isCustomValue && 'text-violet-700'
-          )}
+        <button
+          type="button"
+          onClick={() => {
+            if (!open) {
+              setOpen(true);
+              setSearch('');
+              setCustomMode(false);
+              setTimeout(() => inputRef.current?.focus(), 50);
+            } else {
+              setOpen(false);
+            }
+          }}
+          className="flex-1 flex items-center gap-1 min-w-0 text-left"
         >
-          {displayLabel}
-        </span>
+          <span
+            className={cn(
+              'flex-1 text-xs truncate',
+              value ? 'text-neutral-900' : 'text-neutral-400 italic',
+              isCustomValue && 'text-violet-700'
+            )}
+          >
+            {displayLabel}
+          </span>
+          <ChevronDown
+            className={cn(
+              'h-2.5 w-2.5 flex-shrink-0 text-neutral-400 transition-transform',
+              open && 'rotate-180'
+            )}
+          />
+        </button>
         {value && (
           <button
             type="button"
             onClick={handleClear}
-            className="opacity-0 group-hover:opacity-100 h-4 w-4 flex items-center justify-center rounded text-neutral-400 hover:text-red-400 transition-opacity"
+            className="opacity-0 group-hover:opacity-100 h-4 w-4 flex items-center justify-center rounded text-neutral-400 hover:text-red-400 transition-opacity flex-shrink-0"
             aria-label="Effacer"
           >
             <X className="h-2.5 w-2.5" />
           </button>
         )}
-        <ChevronDown
-          className={cn(
-            'h-2.5 w-2.5 flex-shrink-0 text-neutral-400 transition-transform',
-            open && 'rotate-180'
-          )}
-        />
-      </button>
+      </div>
 
       {/* Popover */}
       {open && (

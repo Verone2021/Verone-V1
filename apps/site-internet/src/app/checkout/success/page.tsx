@@ -33,7 +33,7 @@ function PurchaseTracker() {
     trackMetaPurchase({
       transactionId,
       value,
-      contentIds: [],
+      items: [],
       itemCount,
     });
   }, [searchParams]);
