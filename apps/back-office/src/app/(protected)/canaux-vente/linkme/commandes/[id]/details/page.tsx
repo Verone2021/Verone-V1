@@ -175,6 +175,34 @@ export default function LinkMeOrderDetailsPage() {
     setShowRequestInfoDialog(true);
   };
 
+  // Handler pour les inline edits depuis MissingInfoBanner. La cible est soit
+  // l'organisation rattachée à la commande, soit la row sales_order_linkme_details
+  // de la commande. Refetch derrière pour rafraîchir la liste des champs
+  // manquants (le bandeau disparaîtra si tout est complété).
+  const handleSaveInlineMissingField = async (
+    target: 'organisations' | 'sales_order_linkme_details',
+    column: string,
+    value: string
+  ): Promise<void> => {
+    if (!order) return;
+    const supabase = createClient();
+    if (target === 'organisations') {
+      if (!order.customer_id) throw new Error('Organisation introuvable');
+      const { error: orgErr } = await supabase
+        .from('organisations')
+        .update({ [column]: value })
+        .eq('id', order.customer_id);
+      if (orgErr) throw new Error(orgErr.message);
+    } else {
+      const { error: detErr } = await supabase
+        .from('sales_order_linkme_details')
+        .update({ [column]: value })
+        .eq('sales_order_id', order.id);
+      if (detErr) throw new Error(detErr.message);
+    }
+    await fetchOrder();
+  };
+
   const handleRequestInfo = () => {
     if (!requestMessage.trim() || !order) return;
     void requestInfo
@@ -312,6 +340,8 @@ export default function LinkMeOrderDetailsPage() {
           missingFields={missingFieldsResult}
           onRequestComplements={handleOpenRequestComplementsAll}
           onRequestComplementForCategory={handleRequestComplementForCategory}
+          onSaveInlineField={handleSaveInlineMissingField}
+          onOpenContactModal={handleOpenContactDialog}
         />
       )}
 

@@ -9,12 +9,27 @@ import {
   type MissingFieldsResult,
 } from '../../../../utils/order-missing-fields';
 
+import { dedupeContactFields, MissingFieldRow } from './MissingFieldRow';
+
 interface MissingInfoBannerProps {
   missingFields: MissingFieldsResult;
   /** Ouvre le modal avec toutes les categories pertinentes pre-cochees. */
   onRequestComplements: () => void;
   /** Ouvre le modal avec UNIQUEMENT la categorie cliquee pre-cochee. */
   onRequestComplementForCategory: (cat: MissingFieldCategory) => void;
+  /**
+   * Sauvegarde un champ "simple" en DB. Le composant utilise (target,
+   * column, value) pour faire un UPDATE adapte (organisations ou
+   * sales_order_linkme_details). Le parent connait l'id de la commande
+   * et de l'organisation.
+   */
+  onSaveInlineField: (
+    target: 'organisations' | 'sales_order_linkme_details',
+    column: string,
+    value: string
+  ) => Promise<void>;
+  /** Ouvre le modal de selection de contact pour le role donne. */
+  onOpenContactModal: (role: 'responsable' | 'billing' | 'delivery') => void;
 }
 
 // Couleurs alignees avec ContactsUnified et le reste du monorepo : on garde
@@ -39,12 +54,15 @@ export function MissingInfoBanner({
   missingFields,
   onRequestComplements,
   onRequestComplementForCategory,
+  onSaveInlineField,
+  onOpenContactModal,
 }: MissingInfoBannerProps) {
   if (missingFields.total === 0) return null;
 
   const groups = CATEGORY_ORDER.map(cat => ({
     category: cat,
-    fields: missingFields.byCategory[cat],
+    // Dedup contact fields (3 lignes "nom/email/tel" -> 1 ligne "Contact X")
+    fields: dedupeContactFields(missingFields.byCategory[cat]),
   })).filter(g => g.fields.length > 0);
 
   return (
@@ -59,35 +77,41 @@ export function MissingInfoBanner({
               {missingFields.total > 1 ? 's' : ''} pour finaliser cette commande
             </p>
             <p className="text-xs text-amber-700 mt-0.5">
-              Cliquez sur « Demander des compléments » pour les réclamer au
-              client en un seul email.
+              Renseignez chaque ligne directement, ou demandez-les au client
+              avec le bouton « Demander » de la catégorie.
             </p>
 
-            <div className="mt-3 space-y-1.5">
+            <div className="mt-3 space-y-3">
               {groups.map(group => (
-                <div
-                  key={group.category}
-                  className="flex flex-wrap items-center gap-x-2 gap-y-1"
-                >
-                  <Badge
-                    variant="outline"
-                    className={`text-[10px] font-semibold px-2 py-0.5 ${CATEGORY_BADGE_COLORS[group.category]}`}
-                  >
-                    {CATEGORY_LABELS[group.category]}
-                  </Badge>
-                  <span className="text-xs text-gray-700 flex-1 min-w-0">
-                    {group.fields.map(f => f.label).join(', ')}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onRequestComplementForCategory(group.category)
-                    }
-                    className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 hover:text-amber-900 hover:underline flex-shrink-0"
-                  >
-                    <Send className="h-3 w-3" />
-                    Demander
-                  </button>
+                <div key={group.category} className="space-y-0.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] font-semibold px-2 py-0.5 ${CATEGORY_BADGE_COLORS[group.category]}`}
+                    >
+                      {CATEGORY_LABELS[group.category]}
+                    </Badge>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onRequestComplementForCategory(group.category)
+                      }
+                      className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 hover:text-amber-900 hover:underline flex-shrink-0"
+                    >
+                      <Send className="h-3 w-3" />
+                      Demander
+                    </button>
+                  </div>
+                  <div className="rounded-md bg-white/60 border border-amber-100 divide-y divide-amber-100">
+                    {group.fields.map(field => (
+                      <MissingFieldRow
+                        key={field.key}
+                        field={field}
+                        onSaveInline={onSaveInlineField}
+                        onOpenContactModal={onOpenContactModal}
+                      />
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
