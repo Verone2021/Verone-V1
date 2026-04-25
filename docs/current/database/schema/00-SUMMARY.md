@@ -1,28 +1,28 @@
 # Schema Base de Donnees Verone — Sommaire
 
-_Generated: 2026-04-24 20:48_
+_Generated: 2026-04-25 16:33_
 
-| Metrique     | Valeur |
-| ------------ | ------ |
-| Tables       | 143    |
-| Foreign Keys | 188    |
-| RLS Policies | 327    |
-| Triggers     | 297    |
-| Enums        | 45     |
+| Metrique | Valeur |
+|----------|--------|
+| Tables | 143 |
+| Foreign Keys | 188 |
+| RLS Policies | 327 |
+| Triggers | 297 |
+| Enums | 45 |
 
 ## Index des Domaines
 
-| #   | Domaine                     | Tables | Fichier                                    |
-| --- | --------------------------- | ------ | ------------------------------------------ |
-| 01  | Organisations & Contacts    | 8      | [01-organisations.md](01-organisations.md) |
-| 02  | Produits & Catalogue        | 17     | [02-produits.md](02-produits.md)           |
-| 03  | Commandes & Consultations   | 17     | [03-commandes.md](03-commandes.md)         |
-| 04  | Stock & Stockage            | 9      | [04-stock.md](04-stock.md)                 |
-| 05  | Finance & Comptabilite      | 13     | [05-finance.md](05-finance.md)             |
-| 06  | LinkMe & Affiliation        | 10     | [06-linkme.md](06-linkme.md)               |
-| 07  | Notifications & Formulaires | 9      | [07-notifications.md](07-notifications.md) |
-| 08  | Utilisateurs & Securite     | 8      | [08-utilisateurs.md](08-utilisateurs.md)   |
-| 09  | Autres                      | 52     | [09-autres.md](09-autres.md)               |
+| # | Domaine | Tables | Fichier |
+|---|---------|--------|---------|
+| 01 | Organisations & Contacts | 8 | [01-organisations.md](01-organisations.md) |
+| 02 | Produits & Catalogue | 17 | [02-produits.md](02-produits.md) |
+| 03 | Commandes & Consultations | 17 | [03-commandes.md](03-commandes.md) |
+| 04 | Stock & Stockage | 9 | [04-stock.md](04-stock.md) |
+| 05 | Finance & Comptabilite | 13 | [05-finance.md](05-finance.md) |
+| 06 | LinkMe & Affiliation | 10 | [06-linkme.md](06-linkme.md) |
+| 07 | Notifications & Formulaires | 9 | [07-notifications.md](07-notifications.md) |
+| 08 | Utilisateurs & Securite | 8 | [08-utilisateurs.md](08-utilisateurs.md) |
+| 09 | Autres | 52 | [09-autres.md](09-autres.md) |
 
 ## Enums
 
