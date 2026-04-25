@@ -1,17 +1,26 @@
 /**
  * HTML email template for shipping tracking notification.
  * Reuses buildEmailHtml from email-template.ts for consistent Verone branding.
+ *
+ * Supports both single and multi-shipments emails. When the customer has paid
+ * 2+ shipments for the same order (typical Packlink flow when items are split
+ * into multiple parcels), Romeo wants ONE email that lists all trackings side
+ * by side rather than N separate emails.
  */
 
 import { buildEmailHtml } from './email-template';
 
-interface TrackingEmailOptions {
-  customerName: string;
-  orderNumber: string;
+export interface TrackingInfo {
   trackingNumber: string;
   trackingUrl?: string | null;
   carrierName?: string | null;
   shippedAt: string | null;
+}
+
+interface TrackingEmailOptions {
+  customerName: string;
+  orderNumber: string;
+  trackings: TrackingInfo[];
   customMessage: string;
 }
 
@@ -42,30 +51,33 @@ function resolveTrackingUrl(
   return `https://www.veronecollections.fr/tracking?order=${encodeURIComponent(orderNumber)}&tracking=${encodeURIComponent(trackingNumber)}`;
 }
 
-export function buildTrackingEmailHtml(options: TrackingEmailOptions): string {
-  const {
-    customerName,
+function buildShipmentBlock(
+  t: TrackingInfo,
+  orderNumber: string,
+  index: number,
+  total: number
+): string {
+  const formattedDate = formatDate(t.shippedAt);
+  const ctaUrl = resolveTrackingUrl(
+    t.trackingUrl,
     orderNumber,
-    trackingNumber,
-    trackingUrl,
-    carrierName,
-    shippedAt,
-    customMessage,
-  } = options;
-
-  const ctaUrl = resolveTrackingUrl(trackingUrl, orderNumber, trackingNumber);
-  const formattedDate = formatDate(shippedAt);
+    t.trackingNumber
+  );
+  const heading =
+    total > 1
+      ? `<p style="margin: 16px 0 6px 0; font-size: 13px; font-weight: 600; color: #6b7280; letter-spacing: 0.04em; text-transform: uppercase;">Colis ${index + 1} / ${total}</p>`
+      : '';
 
   const infoRows = [
-    carrierName
+    t.carrierName
       ? `<tr>
           <td style="padding: 6px 0; color: #6b7280; font-size: 14px; width: 140px;">Transporteur</td>
-          <td style="padding: 6px 0; font-size: 14px; font-weight: 600;">${escapeHtml(carrierName)}</td>
+          <td style="padding: 6px 0; font-size: 14px; font-weight: 600;">${escapeHtml(t.carrierName)}</td>
         </tr>`
       : '',
     `<tr>
       <td style="padding: 6px 0; color: #6b7280; font-size: 14px; width: 140px;">N° de suivi</td>
-      <td style="padding: 6px 0; font-size: 14px; font-family: 'SFMono-Regular', Consolas, monospace; font-weight: 600; letter-spacing: 0.05em;">${escapeHtml(trackingNumber)}</td>
+      <td style="padding: 6px 0; font-size: 14px; font-family: 'SFMono-Regular', Consolas, monospace; font-weight: 600; letter-spacing: 0.05em;"><a href="${ctaUrl}" style="color: #0f766e; text-decoration: none;">${escapeHtml(t.trackingNumber)}</a></td>
     </tr>`,
     `<tr>
       <td style="padding: 6px 0; color: #6b7280; font-size: 14px; width: 140px;">Date d'expédition</td>
@@ -75,33 +87,73 @@ export function buildTrackingEmailHtml(options: TrackingEmailOptions): string {
     .filter(Boolean)
     .join('');
 
-  const bodyHtml = `
-    <p style="margin: 0 0 20px 0; font-size: 15px;">
-      Votre commande <strong>${escapeHtml(orderNumber)}</strong> a été expédiée le ${escapeHtml(formattedDate)}.
-    </p>
-
-    <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px;">
+  return `
+    ${heading}
+    <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px 20px; margin-bottom: 12px;">
       <table style="border-collapse: collapse; width: 100%;">
         ${infoRows}
       </table>
     </div>
+  `;
+}
 
+export function buildTrackingEmailHtml(options: TrackingEmailOptions): string {
+  const { customerName, orderNumber, trackings, customMessage } = options;
+
+  if (trackings.length === 0) {
+    throw new Error('buildTrackingEmailHtml: at least one tracking required');
+  }
+
+  const total = trackings.length;
+  const earliestShippedAt = trackings
+    .map(t => t.shippedAt)
+    .filter((d): d is string => Boolean(d))
+    .sort()[0];
+  const introDate = earliestShippedAt ? formatDate(earliestShippedAt) : '';
+
+  const intro =
+    total > 1
+      ? `<p style="margin: 0 0 20px 0; font-size: 15px;">
+          Votre commande <strong>${escapeHtml(orderNumber)}</strong> a été expédiée en <strong>${total} colis</strong>${introDate ? ` à partir du ${escapeHtml(introDate)}` : ''}. Voici les numéros de suivi :
+        </p>`
+      : `<p style="margin: 0 0 20px 0; font-size: 15px;">
+          Votre commande <strong>${escapeHtml(orderNumber)}</strong> a été expédiée${introDate ? ` le ${escapeHtml(introDate)}` : ''}.
+        </p>`;
+
+  const blocks = trackings
+    .map((t, idx) => buildShipmentBlock(t, orderNumber, idx, total))
+    .join('');
+
+  const bodyHtml = `
+    ${intro}
+    ${blocks}
     ${
       customMessage
-        ? `<div style="margin-bottom: 20px; white-space: pre-line; font-size: 14px; color: #374151;">
+        ? `<div style="margin: 16px 0 0 0; white-space: pre-line; font-size: 14px; color: #374151;">
         ${escapeHtml(customMessage)}
       </div>`
         : ''
     }
   `;
 
+  // CTA = the first tracking's URL (or fallback). For multi, the customer
+  // sees inline links above too, so the CTA stays clickable but secondary.
+  const primaryCta = resolveTrackingUrl(
+    trackings[0].trackingUrl,
+    orderNumber,
+    trackings[0].trackingNumber
+  );
+
   return buildEmailHtml({
-    title: `Votre commande ${orderNumber} est en route`,
+    title:
+      total > 1
+        ? `Votre commande ${orderNumber} est en route (${total} colis)`
+        : `Votre commande ${orderNumber} est en route`,
     recipientName: customerName,
     accentColor: 'teal',
     bodyHtml,
-    ctaUrl,
-    ctaLabel: 'Suivre ma commande',
+    ctaUrl: primaryCta,
+    ctaLabel: total > 1 ? 'Suivre le 1er colis' : 'Suivre ma commande',
     footerNote: `Commande ${orderNumber}`,
   });
 }

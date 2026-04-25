@@ -7,13 +7,19 @@ import type { EmailContact } from '@verone/finance/components';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
+/** Une expédition individuelle exposée au modal et ses helpers. */
+export interface ShipmentForEmail {
+  id: string;
+  tracking_number: string | null;
+  tracking_url: string | null;
+  carrier_name: string | null;
+  shipped_at: string | null;
+}
+
 export interface ShipmentPreviewOptions {
   customerName: string;
   orderNumber: string;
-  carrierName: string | null;
-  trackingNumber: string | null;
-  trackingUrl?: string | null;
-  shippedAt: string | null;
+  shipments: ShipmentForEmail[];
   customMessage: string;
 }
 
@@ -138,7 +144,13 @@ export function buildContactList(order: OrderForContacts): EmailContact[] {
 
 // ── buildDefaultSubject ────────────────────────────────────────────────
 
-export function buildDefaultSubject(orderNumber: string): string {
+export function buildDefaultSubject(
+  orderNumber: string,
+  shipmentCount = 1
+): string {
+  if (shipmentCount > 1) {
+    return `Votre commande ${orderNumber} est en route (${shipmentCount} colis) !`;
+  }
   return `Votre commande ${orderNumber} est en route !`;
 }
 
@@ -146,27 +158,40 @@ export function buildDefaultSubject(orderNumber: string): string {
 
 export function buildDefaultMessage({
   orderNumber,
-  carrierName,
-  trackingNumber,
-  shippedAt,
+  shipments,
 }: {
   orderNumber: string;
-  carrierName: string | null;
-  trackingNumber: string | null;
-  shippedAt: string | null;
+  shipments: ShipmentForEmail[];
 }): string {
   const lines: string[] = [];
-  lines.push(
-    `Votre commande ${orderNumber} a été expédiée le ${formatDateFr(shippedAt)}.`
-  );
-  lines.push('');
-  if (carrierName) {
-    lines.push(`Transporteur : ${carrierName}`);
+  if (shipments.length > 1) {
+    lines.push(
+      `Votre commande ${orderNumber} a été expédiée en ${shipments.length} colis :`
+    );
+  } else {
+    const s = shipments[0];
+    lines.push(
+      `Votre commande ${orderNumber} a été expédiée le ${formatDateFr(s?.shipped_at ?? null)}.`
+    );
   }
-  if (trackingNumber) {
-    lines.push(`Numéro de suivi : ${trackingNumber}`);
-  }
   lines.push('');
+  for (const [idx, s] of shipments.entries()) {
+    if (shipments.length > 1) {
+      lines.push(`Colis ${idx + 1} — expédié le ${formatDateFr(s.shipped_at)}`);
+    }
+    if (s.carrier_name) {
+      lines.push(`  Transporteur : ${s.carrier_name}`);
+    }
+    if (s.tracking_number) {
+      lines.push(`  Numéro de suivi : ${s.tracking_number}`);
+    }
+    if (shipments.length > 1) {
+      lines.push('');
+    }
+  }
+  if (shipments.length === 1) {
+    lines.push('');
+  }
   lines.push(
     'Vous pouvez suivre votre livraison en cliquant sur le lien ci-dessous.'
   );
@@ -180,25 +205,17 @@ export function buildDefaultMessage({
 // ── buildPreviewHtml ───────────────────────────────────────────────────
 // ALL user-controlled fields are escaped via escapeHtml() to prevent XSS.
 
-export function buildPreviewHtml({
-  orderNumber,
-  carrierName,
-  trackingNumber,
-  trackingUrl,
-  shippedAt,
-  customMessage,
-}: ShipmentPreviewOptions): string {
-  const resolvedTrackingUrl =
-    trackingUrl ??
-    (trackingNumber
-      ? `https://www.veronecollections.fr/tracking?order=${encodeURIComponent(orderNumber)}&tracking=${encodeURIComponent(trackingNumber)}`
-      : null);
-
-  const safeOrderNumber = escapeHtml(orderNumber);
-  const safeCarrierName = carrierName ? escapeHtml(carrierName) : null;
-  const safeTrackingNumber = trackingNumber ? escapeHtml(trackingNumber) : null;
-  const safeShippedAt = escapeHtml(formatDateFr(shippedAt));
-  const safeMessage = escapeHtml(customMessage);
+function buildShipmentBlock(
+  s: ShipmentForEmail,
+  orderNumber: string,
+  index: number,
+  total: number
+): string {
+  const safeCarrierName = s.carrier_name ? escapeHtml(s.carrier_name) : null;
+  const safeTrackingNumber = s.tracking_number
+    ? escapeHtml(s.tracking_number)
+    : null;
+  const safeShippedAt = escapeHtml(formatDateFr(s.shipped_at));
 
   const rows = [
     safeCarrierName
@@ -212,19 +229,63 @@ export function buildPreviewHtml({
     .filter(Boolean)
     .join('');
 
-  const ctaHtml = resolvedTrackingUrl
-    ? `<div style="text-align:center;margin:24px 0 16px 0;"><a href="${escapeHtml(resolvedTrackingUrl)}" style="display:inline-block;background-color:#0d9488;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:bold;">Suivre ma commande</a></div>`
+  const heading =
+    total > 1
+      ? `<p style="margin:16px 0 6px 0;font-size:13px;font-weight:600;color:#6b7280;letter-spacing:0.04em;text-transform:uppercase;">Colis ${index + 1} / ${total}</p>`
+      : '';
+
+  return `${heading}<div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px 16px;margin-bottom:12px;"><table style="border-collapse:collapse;width:100%;">${rows}</table></div>`;
+}
+
+export function buildPreviewHtml({
+  orderNumber,
+  shipments,
+  customMessage,
+}: ShipmentPreviewOptions): string {
+  if (shipments.length === 0) {
+    return "<p>Aucune expédition sélectionnée pour l'aperçu.</p>";
+  }
+  const total = shipments.length;
+  const safeOrderNumber = escapeHtml(orderNumber);
+  const safeMessage = escapeHtml(customMessage);
+
+  const earliest = shipments
+    .map(s => s.shipped_at)
+    .filter((d): d is string => Boolean(d))
+    .sort()[0];
+  const safeEarliestDate = earliest
+    ? escapeHtml(formatDateFr(earliest))
+    : escapeHtml(formatDateFr(null));
+
+  const intro =
+    total > 1
+      ? `<p style="margin:0 0 16px 0;">Votre commande <strong>${safeOrderNumber}</strong> a été expédiée en <strong>${total} colis</strong>${earliest ? ` à partir du ${safeEarliestDate}` : ''}.</p>`
+      : `<p style="margin:0 0 16px 0;">Votre commande <strong>${safeOrderNumber}</strong> a été expédiée${earliest ? ` le ${safeEarliestDate}` : ''}.</p>`;
+
+  const blocks = shipments
+    .map((s, idx) => buildShipmentBlock(s, orderNumber, idx, total))
+    .join('');
+
+  // CTA pointe vers le 1er tracking_url s'il existe (ou la page tracking
+  // Verone par défaut).
+  const first = shipments[0];
+  const ctaUrl =
+    first.tracking_url ??
+    (first.tracking_number
+      ? `https://www.veronecollections.fr/tracking?order=${encodeURIComponent(orderNumber)}&tracking=${encodeURIComponent(first.tracking_number)}`
+      : null);
+
+  const ctaHtml = ctaUrl
+    ? `<div style="text-align:center;margin:24px 0 16px 0;"><a href="${escapeHtml(ctaUrl)}" style="display:inline-block;background-color:#0d9488;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:bold;">${total > 1 ? 'Suivre le 1er colis' : 'Suivre ma commande'}</a></div>`
     : '';
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:sans-serif;line-height:1.6;color:#333;padding:20px;background:#f9fafb;">
     <div style="max-width:560px;margin:0 auto;">
       <div style="background:#f0fdfa;padding:24px;border-radius:8px;border-left:4px solid #5DBEBB;">
-        <h2 style="color:#0f766e;margin:0 0 16px 0;">Votre commande ${safeOrderNumber} est en route</h2>
+        <h2 style="color:#0f766e;margin:0 0 16px 0;">${total > 1 ? `Votre commande ${safeOrderNumber} est en route (${total} colis)` : `Votre commande ${safeOrderNumber} est en route`}</h2>
         <p style="margin:0 0 16px 0;">Bonjour,</p>
-        <p style="margin:0 0 16px 0;">Votre commande <strong>${safeOrderNumber}</strong> a été expédiée le ${safeShippedAt}.</p>
-        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px 16px;margin-bottom:16px;">
-          <table style="border-collapse:collapse;width:100%;">${rows}</table>
-        </div>
+        ${intro}
+        ${blocks}
         <div style="white-space:pre-line;font-size:14px;color:#374151;margin-bottom:16px;">${safeMessage}</div>
         ${ctaHtml}
       </div>

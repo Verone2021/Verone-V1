@@ -112,7 +112,18 @@ export function ShipmentCardsSection({
         <SendShippingTrackingModal
           open={!!shipmentToEmail}
           onClose={() => setShipmentToEmail(null)}
-          shipment={shipmentToEmail}
+          // On passe TOUS les shipments avec tracking — le user peut
+          // décocher dans le modal s'il veut n'envoyer qu'un sous-ensemble
+          // (cas typique : 2 colis payés à des jours différents).
+          shipments={shipmentHistory
+            .filter(s => Boolean(s.tracking_number))
+            .map(s => ({
+              id: s.id,
+              tracking_number: s.tracking_number,
+              tracking_url: s.tracking_url,
+              carrier_name: s.carrier_name,
+              shipped_at: s.shipped_at,
+            }))}
           order={orderForModal}
         />
       )}

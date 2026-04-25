@@ -306,7 +306,17 @@ export function OrderDetailModal({
         <SendShippingTrackingModal
           open={!!shipmentToEmail}
           onClose={() => setShipmentToEmail(null)}
-          shipment={shipmentToEmail}
+          // Idem ShipmentCardsSection : on passe TOUS les shipments avec
+          // tracking, le user décoche dans le modal s'il veut filtrer.
+          shipments={data.shipmentHistory
+            .filter(s => Boolean(s.tracking_number))
+            .map(s => ({
+              id: s.id,
+              tracking_number: s.tracking_number ?? null,
+              tracking_url: s.tracking_url ?? null,
+              carrier_name: s.carrier_name ?? null,
+              shipped_at: s.shipped_at ?? null,
+            }))}
           order={{
             id: order.id,
             order_number: order.order_number,
