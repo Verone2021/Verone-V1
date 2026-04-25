@@ -24,6 +24,10 @@ const CreateShipmentSchema = z.object({
   destination: z.object({
     name: z.string().min(1),
     surname: z.string().min(1),
+    // Champ facultatif Packlink (to.company) — utile pour Verone B2B
+    // (commandes pour des enseignes type Pokawa). Quand renseigne, il
+    // apparait sur l'etiquette de transport.
+    company: z.string().optional(),
     email: z.string().email(),
     phone: z.string().min(1),
     street1: z.string().min(1),
@@ -79,10 +83,7 @@ export async function POST(request: Request) {
 
     const shipment = await client.createShipment({
       from: VERONE_SOURCE_ADDRESS,
-      to: {
-        ...destination,
-        company: undefined,
-      },
+      to: destination,
       packages: pkgs,
       service_id: serviceId,
       service_name: serviceName,

@@ -38,6 +38,32 @@ import type {
   ShipmentWizardState,
 } from './types';
 
+// Defaults Verone pour le destinataire Packlink. Packlink REJETTE l'API call
+// si email ou mobile est vide. Quand un contact FK n'a ni email ni mobile
+// renseigne, on injecte ces defaults — visiblement — dans le form (l'utilisateur
+// peut toujours les corriger a la main avant Suivant). Plus de fallback
+// silencieux comme l'ancien 'client@verone.fr' / '+33600000000'.
+const DEFAULT_RECIPIENT_EMAIL = 'romeo@veronecollections.fr';
+const DEFAULT_RECIPIENT_PHONE = '0656720702';
+
+function firstNonEmpty(
+  ...candidates: Array<string | null | undefined>
+): string {
+  for (const v of candidates) {
+    const trimmed = v?.trim();
+    if (trimmed && trimmed.length > 0) return trimmed;
+  }
+  return '';
+}
+
+function pickEmail(c: ShipmentRecipientContact): string {
+  return firstNonEmpty(c.email) || DEFAULT_RECIPIENT_EMAIL;
+}
+
+function pickPhone(c: ShipmentRecipientContact): string {
+  return firstNonEmpty(c.mobile, c.phone) || DEFAULT_RECIPIENT_PHONE;
+}
+
 export function useShipmentWizard(
   salesOrder: SalesOrderForShipment,
   onSuccess: () => void
@@ -123,12 +149,11 @@ export function useShipmentWizard(
   // ── Destinataire Packlink (etape Destinataire si deliveryMethod === 'packlink') ──
   // Source de verite des coordonnees envoyees a Packlink.
   // Initialise depuis les contacts FK joints (delivery > responsable > billing)
-  // et editable manuellement. Pas de fallback hardcode (l'ancien client@verone.fr
-  // / +33600000000 partait silencieusement chez Packlink quand le user ne
-  // selectionnait rien).
+  // et editable manuellement.
   const [recipientForm, setRecipientForm] = useState<RecipientForm>({
     firstName: '',
     lastName: '',
+    company: '',
     email: '',
     phone: '',
   });
@@ -154,17 +179,31 @@ export function useShipmentWizard(
       setRecipientForm({
         firstName: c.first_name ?? '',
         lastName: c.last_name ?? '',
-        email: c.email ?? '',
-        phone: c.mobile ?? c.phone ?? '',
+        company:
+          salesOrder.organisations?.trade_name ??
+          salesOrder.organisations?.legal_name ??
+          '',
+        email: pickEmail(c),
+        phone: pickPhone(c),
       });
     } else {
       setRecipientSource('manual');
-      setRecipientForm({ firstName: '', lastName: '', email: '', phone: '' });
+      setRecipientForm({
+        firstName: '',
+        lastName: '',
+        company:
+          salesOrder.organisations?.trade_name ??
+          salesOrder.organisations?.legal_name ??
+          '',
+        email: '',
+        phone: '',
+      });
     }
   }, [
     salesOrder.delivery_contact,
     salesOrder.responsable_contact,
     salesOrder.billing_contact,
+    salesOrder.organisations,
   ]);
 
   const setRecipientField = useCallback(
@@ -180,9 +219,16 @@ export function useShipmentWizard(
     (source: RecipientSource) => {
       setRecipientSource(source);
       if (source === 'manual') {
+        // En saisie manuelle on garde quand meme le nom d'entreprise pre-rempli
+        // depuis l'organisation : c'est rarement modifie et toujours utile pour
+        // l'etiquette Packlink.
         setRecipientForm({
           firstName: '',
           lastName: '',
+          company:
+            salesOrder.organisations?.trade_name ??
+            salesOrder.organisations?.legal_name ??
+            '',
           email: '',
           phone: '',
         });
@@ -201,14 +247,19 @@ export function useShipmentWizard(
       setRecipientForm({
         firstName: c.first_name ?? '',
         lastName: c.last_name ?? '',
-        email: c.email ?? '',
-        phone: c.mobile ?? c.phone ?? '',
+        company:
+          salesOrder.organisations?.trade_name ??
+          salesOrder.organisations?.legal_name ??
+          '',
+        email: pickEmail(c),
+        phone: pickPhone(c),
       });
     },
     [
       salesOrder.delivery_contact,
       salesOrder.responsable_contact,
       salesOrder.billing_contact,
+      salesOrder.organisations,
     ]
   );
 
@@ -355,9 +406,13 @@ export function useShipmentWizard(
   // Destinataire bloque "Suivant" tant que les 4 champs ne sont pas remplis.
   const buildDestination = useCallback(() => {
     const addr = parseShippingAddress(salesOrder.shipping_address);
+    const company = recipientForm.company.trim();
     return {
       name: recipientForm.firstName.trim(),
       surname: recipientForm.lastName.trim(),
+      // Packlink Pro field to.company (facultatif cote API mais essentiel
+      // pour Verone B2B). Si vide, on omet la cle plutot que d'envoyer "".
+      ...(company ? { company } : {}),
       email: recipientForm.email.trim(),
       phone: recipientForm.phone.trim(),
       street1: addr?.address_line1 ?? addr?.line1 ?? '',

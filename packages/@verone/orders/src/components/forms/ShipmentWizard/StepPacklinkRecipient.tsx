@@ -187,6 +187,20 @@ export function StepPacklinkRecipient({
             placeholder="Vandecapelle"
           />
         </div>
+        <div className="space-y-1 md:col-span-2">
+          <label className="text-xs font-medium text-gray-600">
+            Entreprise{' '}
+            <span className="text-gray-400 font-normal">(facultatif)</span>
+          </label>
+          <input
+            type="text"
+            value={recipientForm.company}
+            disabled={inputsLocked}
+            onChange={e => setRecipientField('company', e.target.value)}
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500"
+            placeholder="Pokawa Marseille Terrasses du Port"
+          />
+        </div>
         <div className="space-y-1">
           <label className="text-xs font-medium text-gray-600">Email *</label>
           <input
