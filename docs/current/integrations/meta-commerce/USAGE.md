@@ -8,33 +8,59 @@
 
 ## TL;DR
 
-Tu as **déjà** un catalogue connecté à ta Page Facebook Vérone et à ton Instagram @veronecollections. Les 28 produits du catalogue sont **déjà visibles** sur les deux. Tu n'as rien d'autre à faire pour qu'ils apparaissent — ils sont publics dès maintenant. La seule chose qui manque, c'est :
+Le catalogue Meta existe (28 produits, source `https://www.veronecollections.fr/api/feeds/products.xml`, mis à jour automatiquement chaque heure, statut "Tout bon"). Catalog API back-office configuré (token + catalog_id en Vercel le 2026-04-25).
 
-1. Faire la promotion (publications, lien direct, ads) pour que tes clients voient la boutique
-2. Compléter les credentials API back-office (`META_ACCESS_TOKEN` / `META_CATALOG_ID`) si tu veux que le BO Verone puisse pousser les modifs produits automatiquement vers Meta
+**MAIS** — vu sur la page Facebook publique de Vérone : il n'y a **PAS d'onglet "Boutique"** dans la nav (Tout / À propos / Followers / Photos / Mentions / Plus). Donc tes 28 produits ne sont pas visibles par tes visiteurs Facebook actuels.
+
+Côté Business Manager > Paramètres du catalogue, le canal "Vérone (Page Facebook)" est marqué "Visible" — la connexion technique existe, mais la **section Boutique de la Page n'est pas activée**. Il faut activer l'onglet manuellement (procédure section 2 ci-dessous).
+
+Sur Instagram @veronecollections, à vérifier directement dans l'app (icône Shop sur le profil).
 
 ---
 
-## 1. Où sont les produits aujourd'hui ?
+## 1. État réel constaté sur la page Facebook publique (audit 2026-04-25)
 
-### Sur ta Page Facebook Vérone
+URL admin : `https://www.facebook.com/461826940345802` (redirige vers la page Vérone en vue admin).
 
-URL publique : `https://www.facebook.com/[ID page]` (ID `461826940345802`).
+**Page Vérone publique** :
 
-Onglet **"Boutique"** dans le menu de la page. Les visiteurs voient les 28 produits, peuvent cliquer sur un produit, voir les images + prix + description, et le bouton « Voir sur le site Web » les redirige vers `veronecollections.fr/produit/[id]` (mode redirect, pas de checkout Meta).
+- Nom : Vérone — Magasin de vente en gros
+- 6 followers · 0 suivi
+- Description : "Vérone est un concept store de décoration dédié au design et à l'art de vivre…"
+- Adresse : 229 rue Saint Honoré, Paris 75001
+- Lien web : `sumupstore.com` ⚠️ (devrait être `veronecollections.fr`)
+- Email : `contact@verone.ai`
+- Onglets : **Tout / À propos / Followers / Photos / Mentions / Plus** (Plus = En direct, Groupes, Suivi(e)s)
+- ❌ **Pas d'onglet Boutique**
 
-### Sur ton profil Instagram @veronecollections
+Constat : les visiteurs FB voient la page mais aucun produit. Le catalog est techniquement connecté à la page (Business Manager > Paramètres > Canaux de vente : "Vérone — Visible"), mais l'onglet Boutique n'est pas activé sur la nav publique.
 
-Icône **sac à provisions** sur le profil (en haut, à côté des Reels). Tap dessus → grille des produits du catalogue. Idem Facebook : redirect vers le site pour acheter.
+## 2. Activer l'onglet Boutique sur la Page Vérone
 
-### Pour vérifier visuellement
+Sur les nouvelles Pages Facebook (refonte 2024), la procédure est :
 
-```
-Facebook : ouvrir https://www.facebook.com/profile.php?id=461826940345802 → cliquer "Boutique"
-Instagram : ouvrir l'app Instagram → @veronecollections → icône Shop
-```
+1. Aller sur https://www.facebook.com/461826940345802 connecté en admin
+2. Cliquer **"Basculer"** en haut de la sidebar → "Vérone (Page)" pour passer en vue admin de la Page (pas de la persona Roméo)
+3. Dans la sidebar admin → **Paramètres** (engrenage) → **Modèles et onglets** (ou "Templates and Tabs")
+4. Activer **Boutique**
+5. Optionnel : réordonner pour mettre Boutique en haut
 
-Si l'onglet Boutique ou l'icône Shop n'apparaît pas, c'est que la connexion catalogue → page a été désactivée. Reconnexion : https://business.facebook.com/commerce/1011870551039929/settings/assets/?business_id=222452897164348 → section "Canaux de vente" → bouton "Visible" doit être actif.
+Si l'option Boutique n'apparaît pas dans Modèles et onglets : aller sur https://business.facebook.com/commerce/1011870551039929/settings/assets/?business_id=222452897164348 → section "Canaux de vente" → cliquer **"Déconnecter"** sur Vérone → puis **"Associer"** à nouveau → choisir Vérone Page. Cela force la re-création du lien et active l'onglet.
+
+## 3. Côté Instagram @veronecollections
+
+À vérifier directement dans l'app Instagram (le web ne montre pas tous les onglets shopping) :
+
+- Ouvrir profil `@veronecollections`
+- Chercher l'icône **sac à provisions** en haut du profil
+- Si présente → tap → grille des 28 produits du catalogue
+- Si absente → vérifier `https://business.facebook.com/commerce/1011870551039929/settings/assets/?business_id=222452897164348`, "@veronecollections" doit être marqué Visible (déjà OK au 2026-04-25)
+
+## 4. Lien web de la Page : sumupstore.com vs veronecollections.fr
+
+⚠️ Le champ "Liens" de la Page Vérone pointe vers `sumupstore.com` au lieu de `veronecollections.fr`. À corriger :
+
+1. Vue admin Page → Modifier les détails → Liens → remplacer par `https://www.veronecollections.fr`
 
 ---
 
@@ -76,25 +102,30 @@ Meta génère automatiquement des publicités à partir du catalogue. Tu choisis
 
 ---
 
-## 4. Actions concrètes à prioriser
+## 6. Actions restantes pour Romeo (dans l'ordre)
 
-### Action 1 (priorité 1) — Vérifier la source du flux catalogue
+### Action A (5 min) — Activer l'onglet Boutique sur la Page Vérone
 
-Aller sur https://business.facebook.com/commerce/catalogs/1223749196006844/home/?business_id=222452897164348 → cliquer **"Gérer"** dans la card "Catalogue" en haut à droite. Tu verras la source : feed URL, planning de mise à jour, dernière synchro.
+Procédure section 2 ci-dessus. C'est l'action #1 : sans ça, tout le reste (Pixel, catalog, ads) ne sert à rien côté visiteur Facebook.
 
-Si c'est un feed XML/CSV vers `veronecollections.fr/feed/meta.xml` (ou similaire), il faut s'assurer que ce feed reste à jour quand on modifie un produit dans le BO. Si c'est un feed manuel uploadé une fois, alors le catalogue est figé et il faut migrer vers l'API (action 2).
+### Action B (1 min) — Corriger le lien web sur la Page
 
-### Action 2 (priorité 2) — Configurer l'API Catalog côté back-office
+Remplacer `sumupstore.com` par `https://www.veronecollections.fr` (section 4).
 
-Voir `SETUP.md` étapes 1 à 7. Permet au BO Verone d'appeler `PATCH /api/meta-commerce/products/[id]/visibility`, etc. (routes créées dans PR #762). Sans ça, les onglets Publication / Pricing du BO ne pourront pas piloter Meta.
+### Action C (2 min) — Vérifier l'icône Shop sur Instagram
 
-### Action 3 (priorité 3) — Résoudre les "problèmes d'événements"
+Ouvrir l'app Instagram, profil @veronecollections, vérifier la présence de l'icône sac à provisions. Si absente, le canal est marqué Visible côté admin mais déconnecter/reconnecter peut aider.
 
-Sur la page d'accueil du Sales Manager, cliquer le bouton bleu "Examiner les problèmes". Meta dira si les events `ViewContent`/`AddToCart`/`Purchase` du Pixel ne trouvent pas leur correspondance dans le catalogue. Cause probable : les `content_ids` envoyés par le Pixel (`product.id` UUID Supabase) ne matchent pas les `id` côté catalog Meta (qui sont les `retailer_id` = SKU). Fix : modifier `MetaPixel.tsx` pour envoyer `product.sku` au lieu de `product.id` dans les helpers `trackMeta*`.
+### Action D (optionnel, plus tard) — Activer les ads catalog
 
-### Action 4 (optionnel) — Activer les ads
+Si tu veux faire des Advantage+ Catalog Ads : associer un compte publicitaire au catalog. Cf. https://business.facebook.com/commerce/1011870551039929/settings/assets/?business_id=222452897164348 → "Comptes publicitaires" → Modifier dans Business Manager.
 
-Aller sur https://business.facebook.com/commerce/1011870551039929/settings/assets/?business_id=222452897164348 → section "Comptes publicitaires" → "Modifier dans Business Manager" → associer le compte ads Verone (s'il existe, sinon en créer un).
+### Ce qui est déjà fait par l'agent (2026-04-25)
+
+- ✅ Confirmé URL feed `https://www.veronecollections.fr/api/feeds/products.xml`
+- ✅ Configuré `META_ACCESS_TOKEN` + `META_CATALOG_ID` en Vercel pour les 3 environnements (Production / Preview / Development) via System User VeroneCatalog
+- ✅ Fix Pixel content_ids = SKU (`[SI-PIXEL-001]` PR #766)
+- ✅ Doc complète : README technique + SETUP procédure + USAGE (ce fichier)
 
 ---
 
