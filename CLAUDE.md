@@ -34,7 +34,10 @@ Avant de coder :
 
 ## WORKFLOW GIT
 
-**Source unique** : `.claude/rules/workflow.md`
+**Sources uniques** :
+
+- `.claude/rules/workflow.md` (1 PR = 1 bloc cohérent)
+- `.claude/rules/branch-strategy.md` (checklist 3 questions avant `git checkout -b` ou `gh pr create`)
 
 Regle d'or : **1 PR = 1 BLOC COHERENT**, jamais 1 PR par sprint.
 
@@ -43,6 +46,7 @@ Regle d'or : **1 PR = 1 BLOC COHERENT**, jamais 1 PR par sprint.
 - Merge squash apres validation Romeo + CI verte
 - Format commit : `[APP-DOMAIN-NNN] type: description`
 - PR toujours vers `staging`, jamais vers `main`
+- **Avant toute nouvelle branche** : `gh pr list --state open` → si une PR ouverte couvre le même sujet, commit dessus (cf. `branch-strategy.md`)
 
 ## AUTONOMIE — FEU VERT / ORANGE / ROUGE
 
