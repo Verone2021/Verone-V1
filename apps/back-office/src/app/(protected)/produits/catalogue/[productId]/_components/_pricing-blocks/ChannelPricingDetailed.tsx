@@ -14,10 +14,11 @@
 import { Fragment, useMemo, useState, useCallback } from 'react';
 
 import { useChannelPricing, useUpdateChannelPrice } from '@verone/common';
-import { Badge, ButtonV2, Input } from '@verone/ui';
+import { Badge, ButtonV2, ConfirmDialog, Input } from '@verone/ui';
 import { cn, formatPrice } from '@verone/utils';
 import {
   AlertTriangle,
+  ArrowDown,
   Check,
   ChevronDown,
   ChevronRight,
@@ -93,6 +94,11 @@ export function ChannelPricingDetailed({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftPrice, setDraftPrice] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [overrideConfirm, setOverrideConfirm] = useState<{
+    channelId: string;
+    channelName: string;
+    price: number;
+  } | null>(null);
 
   const toggleExpand = useCallback((id: string) => {
     setExpandedId(prev => (prev === id ? null : id));
@@ -145,25 +151,51 @@ export function ChannelPricingDetailed({
     [channels, minimumSellingPrice, landedCost]
   );
 
-  const save = useCallback(
-    async (channelId: string) => {
-      const parsed = draftPrice ? parseFloat(draftPrice) : null;
-      if (parsed != null && (Number.isNaN(parsed) || parsed < 0)) return;
+  const persist = useCallback(
+    async (channelId: string, price: number | null, override = false) => {
       try {
         await update.mutateAsync({
           product_id: productId,
           channel_id: channelId,
-          custom_price_ht: parsed,
+          custom_price_ht: price,
           discount_rate: null,
           is_active: true,
+          override_minimum: override,
         });
         setEditingId(null);
+        setOverrideConfirm(null);
       } catch {
         // toast géré par le hook
       }
     },
-    [draftPrice, update, productId]
+    [update, productId]
   );
+
+  const save = useCallback(
+    async (channelId: string, channelName: string) => {
+      const parsed = draftPrice ? parseFloat(draftPrice) : null;
+      if (parsed != null && (Number.isNaN(parsed) || parsed < 0)) return;
+      // Si le prix est sous le minimum, demander confirmation explicite
+      // pour activer override_minimum (la route /api/channel-pricing/upsert
+      // renverrait sinon 422). Voir docs/current/canaux-vente-publication-rules.md
+      if (
+        parsed != null &&
+        minimumSellingPrice > 0 &&
+        parsed < minimumSellingPrice
+      ) {
+        setOverrideConfirm({ channelId, channelName, price: parsed });
+        return;
+      }
+      await persist(channelId, parsed, false);
+    },
+    [draftPrice, minimumSellingPrice, persist]
+  );
+
+  const fillWithMinimum = useCallback(() => {
+    if (minimumSellingPrice > 0) {
+      setDraftPrice(minimumSellingPrice.toFixed(2));
+    }
+  }, [minimumSellingPrice]);
 
   return (
     <section className="bg-white rounded-lg border border-neutral-200 p-4">
@@ -295,13 +327,26 @@ export function ChannelPricingDetailed({
                       {/* Prix HT */}
                       <td className="py-2 text-right tabular-nums">
                         {isEditing ? (
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={draftPrice}
-                            onChange={e => setDraftPrice(e.target.value)}
-                            className="h-7 w-24 ml-auto text-right"
-                          />
+                          <div className="inline-flex items-center gap-1">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={draftPrice}
+                              onChange={e => setDraftPrice(e.target.value)}
+                              className="h-7 w-24 text-right"
+                            />
+                            {minimumSellingPrice > 0 && (
+                              <button
+                                type="button"
+                                onClick={fillWithMinimum}
+                                className="h-7 inline-flex items-center gap-0.5 rounded border border-neutral-200 bg-white px-1.5 text-[10px] font-medium text-neutral-600 hover:bg-green-50 hover:border-green-200 hover:text-green-700"
+                                title={`Utiliser le prix min vente (${formatPrice(minimumSellingPrice)})`}
+                              >
+                                <ArrowDown className="h-3 w-3" />
+                                min
+                              </button>
+                            )}
+                          </div>
                         ) : readOnly ? (
                           <span className="italic text-xs text-neutral-400">
                             = site-internet
@@ -382,7 +427,7 @@ export function ChannelPricingDetailed({
                             <ButtonV2
                               size="sm"
                               onClick={() => {
-                                void save(row.channel_id);
+                                void save(row.channel_id, row.channel_name);
                               }}
                               disabled={update.isPending}
                             >
@@ -435,6 +480,32 @@ export function ChannelPricingDetailed({
           </table>
         </div>
       )}
+
+      <ConfirmDialog
+        open={overrideConfirm !== null}
+        onOpenChange={open => {
+          if (!open) setOverrideConfirm(null);
+        }}
+        variant="destructive"
+        title="Prix sous le minimum vente"
+        description={
+          overrideConfirm
+            ? `Le prix saisi pour ${overrideConfirm.channelName} (${formatPrice(overrideConfirm.price)}) est inférieur au prix minimum vente (${formatPrice(minimumSellingPrice)}). Confirmer cette dérogation ?`
+            : ''
+        }
+        confirmText="Forcer ce prix"
+        cancelText="Annuler"
+        loading={update.isPending}
+        onConfirm={async () => {
+          if (overrideConfirm) {
+            await persist(
+              overrideConfirm.channelId,
+              overrideConfirm.price,
+              true
+            );
+          }
+        }}
+      />
     </section>
   );
 }
