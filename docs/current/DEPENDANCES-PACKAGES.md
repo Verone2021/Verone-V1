@@ -1,6 +1,6 @@
 # Carte des Dependances — packages/@verone/
 
-**Genere le 2026-04-19** — Scanner `package.json` de chaque package
+**Genere le 2026-04-25** — Scanner `package.json` de chaque package
 
 ---
 

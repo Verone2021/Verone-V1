@@ -134,10 +134,6 @@ Commandes slash disponibles dans Claude Code.
 **Note** : `.claude/work/` est gitignored (voir ADR-006). Fichiers visibles uniquement sur la machine de Romeo.
 
 - `.claude/work/ACTIVE.md` — Sprints et tâches actives
-- `.claude/work/AGENT-ENTRY-POINT.md` — Point d'entrée agent (sprint responsive)
-- `.claude/work/NEXT-SPRINTS.md` — Plan détaillé des sprints à venir
-- `.claude/work/PROMPTS-TO-COPY.md` — Prompts à copier-coller
-- `.claude/work/plan-canaux-de-vente.md` — Plan canaux de vente
 
 Consolidation en 1 seul `SPRINT-CURRENT.md` prévue après merge PR A (voir ADR-006).
 
