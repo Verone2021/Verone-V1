@@ -80,7 +80,7 @@
   "crons": [
     {
       "path": "/api/cron/meta-commerce-sync",
-      "schedule": "0 */2 * * *"
+      "schedule": "0 4 * * *"
     }
   ],
   "cleanUrls": true,
