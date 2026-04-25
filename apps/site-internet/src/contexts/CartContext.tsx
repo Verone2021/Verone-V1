@@ -205,9 +205,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           console.error('[CartContext] addItem sync failed:', error);
         });
 
-        // Meta Pixel: track AddToCart
+        // Meta Pixel: track AddToCart (sku = retailer_id côté catalog Meta)
         trackMetaAddToCart({
           id: input.product_id,
+          sku: input.sku,
           name: input.name,
           price: input.price_ttc,
           quantity: input.quantity,
