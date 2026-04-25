@@ -161,9 +161,9 @@ export function MissingFieldRow({
 
   if (config.type === 'unsupported') {
     return (
-      <div className="flex items-center justify-between gap-2 text-xs text-gray-700 px-2 py-1">
+      <div className="flex items-center justify-between gap-2 text-xs text-slate-700 px-2.5 py-1.5">
         <span className="truncate">{field.label}</span>
-        <span className="text-[10px] italic text-gray-400 flex-shrink-0">
+        <span className="text-[10px] italic text-slate-400 flex-shrink-0">
           Édition non disponible
         </span>
       </div>
@@ -172,12 +172,12 @@ export function MissingFieldRow({
 
   if (config.type === 'contact') {
     return (
-      <div className="flex items-center justify-between gap-2 text-xs text-gray-700 px-2 py-1">
+      <div className="group flex items-center justify-between gap-2 text-xs text-slate-700 px-2.5 py-1.5 hover:bg-slate-50 transition-colors">
         <span className="truncate">{field.label}</span>
         <button
           type="button"
           onClick={() => onOpenContactModal(config.role)}
-          className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 hover:text-amber-900 hover:underline flex-shrink-0"
+          className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-slate-900 flex-shrink-0"
         >
           <UserPlus className="h-3 w-3" />
           Renseigner
@@ -203,8 +203,8 @@ export function MissingFieldRow({
 
   if (editing) {
     return (
-      <div className="flex items-center gap-2 px-2 py-1">
-        <span className="text-xs text-gray-700 flex-shrink-0">
+      <div className="flex items-center gap-2 px-2.5 py-1.5 bg-slate-50">
+        <span className="text-xs text-slate-700 flex-shrink-0">
           {field.label}
         </span>
         <input
@@ -213,7 +213,7 @@ export function MissingFieldRow({
           onChange={e => setValue(e.target.value)}
           autoFocus
           disabled={saving}
-          className="flex-1 min-w-0 h-7 rounded-md border border-amber-300 bg-white px-2 text-xs focus:border-amber-500 focus:outline-none disabled:bg-gray-50"
+          className="flex-1 min-w-0 h-7 rounded-md border border-slate-300 bg-white px-2 text-xs focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-300 disabled:bg-slate-100"
         />
         <button
           type="button"
@@ -221,7 +221,7 @@ export function MissingFieldRow({
             void handleSave();
           }}
           disabled={saving || !value.trim()}
-          className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 hover:text-emerald-900 disabled:text-gray-400 flex-shrink-0"
+          className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 hover:text-emerald-900 disabled:text-slate-300 flex-shrink-0"
         >
           {saving ? (
             <Loader2 className="h-3 w-3 animate-spin" />
@@ -237,7 +237,8 @@ export function MissingFieldRow({
             setValue('');
           }}
           disabled={saving}
-          className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+          className="text-slate-400 hover:text-slate-600 flex-shrink-0"
+          aria-label="Annuler"
         >
           <X className="h-3 w-3" />
         </button>
@@ -246,12 +247,12 @@ export function MissingFieldRow({
   }
 
   return (
-    <div className="flex items-center justify-between gap-2 text-xs text-gray-700 px-2 py-1">
+    <div className="group flex items-center justify-between gap-2 text-xs text-slate-700 px-2.5 py-1.5 hover:bg-slate-50 transition-colors">
       <span className="truncate">{field.label}</span>
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 hover:text-amber-900 hover:underline flex-shrink-0"
+        className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-slate-900 flex-shrink-0"
       >
         <Pencil className="h-3 w-3" />
         Modifier
