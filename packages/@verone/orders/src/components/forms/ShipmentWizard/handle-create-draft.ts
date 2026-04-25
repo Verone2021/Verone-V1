@@ -192,7 +192,7 @@ export function useCreateDraftHandlers(deps: CreateDraftDeps) {
           "Session expirée. Reconnectez-vous pour enregistrer l'expédition."
         );
         deps.setPendingPacklinkRef(data.shipmentReference);
-        deps.setStep(9);
+        deps.setStep(8);
         deps.setPaying(false);
         return;
       }
@@ -204,7 +204,7 @@ export function useCreateDraftHandlers(deps: CreateDraftDeps) {
           'Aucun article sélectionné avec une quantité > 0.'
         );
         deps.setPendingPacklinkRef(data.shipmentReference);
-        deps.setStep(9);
+        deps.setStep(8);
         deps.setPaying(false);
         return;
       }
@@ -222,7 +222,7 @@ export function useCreateDraftHandlers(deps: CreateDraftDeps) {
           dbResult.error ?? 'Erreur enregistrement base de données'
         );
         deps.setPendingPacklinkRef(data.shipmentReference);
-        deps.setStep(9);
+        deps.setStep(8);
         deps.setPaying(false);
         return;
       }
@@ -235,7 +235,7 @@ export function useCreateDraftHandlers(deps: CreateDraftDeps) {
         orderReference: data.shipmentReference,
         totalPaid: selectedService.price.total_price,
       });
-      deps.setStep(8);
+      deps.setStep(7);
     } catch (err) {
       deps.setServicesError(
         err instanceof Error ? err.message : 'Erreur création expédition'
@@ -289,7 +289,7 @@ export function useCreateDraftHandlers(deps: CreateDraftDeps) {
         orderReference: pendingPacklinkRef,
         totalPaid: selectedService.price.total_price,
       });
-      deps.setStep(8);
+      deps.setStep(7);
       deps.setDbError(null);
       deps.setPendingPacklinkRef(null);
     } else {

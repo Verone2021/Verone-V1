@@ -205,7 +205,6 @@ export function useShipmentWizard(
 
   // Step constants
   const stepLabels = [
-    'Adresses',
     'Stock',
     'Mode',
     'Colis',
@@ -213,7 +212,7 @@ export function useShipmentWizard(
     'Relais',
     'Resume',
   ];
-  const maxStep = deliveryMethod === 'packlink' ? 7 : 3;
+  const maxStep = deliveryMethod === 'packlink' ? 6 : 2;
 
   // Handlers — items & packages (sync, extracted to handlers.ts)
   const handleQuantityChange = makeQuantityChangeHandler(setItems);
