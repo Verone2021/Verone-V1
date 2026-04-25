@@ -1,9 +1,19 @@
 'use client';
 
+import { useState } from 'react';
+
 import { Badge } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
-import { History, CheckCircle2, ExternalLink, Mail } from 'lucide-react';
+import {
+  History,
+  CheckCircle2,
+  ExternalLink,
+  Mail,
+  Download,
+  Copy,
+  Check,
+} from 'lucide-react';
 
 import type { SalesOrder } from '@verone/orders/hooks';
 
@@ -55,6 +65,44 @@ const LEGACY_NOTE_PATTERNS = [
 function isUserNote(notes: string | null): notes is string {
   if (!notes) return false;
   return !LEGACY_NOTE_PATTERNS.some(pattern => pattern.test(notes));
+}
+
+/**
+ * Petit bouton "Copier" qui copie une valeur dans le presse-papier et affiche
+ * une coche pendant 1.5s pour confirmer. Tombe en silence si l'API n'est pas
+ * disponible (dev SSR par exemple).
+ */
+function CopyButton({ value, label }: { value: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      title={`Copier ${label}`}
+      onClick={() => {
+        if (typeof navigator === 'undefined' || !navigator.clipboard) return;
+        void navigator.clipboard
+          .writeText(value)
+          .then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          })
+          .catch(err => console.error('[CopyButton] failed', err));
+      }}
+      className="inline-flex items-center gap-1 text-[10px] text-slate-500 hover:text-slate-900"
+    >
+      {copied ? (
+        <>
+          <Check className="h-3 w-3 text-emerald-600" />
+          Copié
+        </>
+      ) : (
+        <>
+          <Copy className="h-3 w-3" />
+          Copier
+        </>
+      )}
+    </button>
+  );
 }
 
 export function OrderShipmentHistoryCard({
@@ -173,7 +221,7 @@ export function OrderShipmentHistoryCard({
               </p>
             )}
             {h.tracking_number && (
-              <p className="text-[10px] text-gray-500 ml-4 mb-1 flex items-center flex-wrap gap-x-1">
+              <p className="text-[10px] text-gray-500 ml-4 mb-1 flex items-center flex-wrap gap-x-2">
                 <span>Suivi :</span>
                 {h.tracking_url ? (
                   <a
@@ -187,6 +235,7 @@ export function OrderShipmentHistoryCard({
                 ) : (
                   <span>{h.tracking_number}</span>
                 )}
+                <CopyButton value={h.tracking_number} label="le n° de suivi" />
                 {onSendTrackingEmail && (
                   <button
                     className="ml-2 inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline min-h-[44px] md:min-h-0 px-2 py-3 md:py-0.5"
@@ -204,16 +253,19 @@ export function OrderShipmentHistoryCard({
               </p>
             )}
             {h.label_url && (
-              <p className="text-[10px] ml-4 mb-1">
+              <div className="ml-4 mb-1">
                 <a
                   href={h.label_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
+                  download
+                  className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors"
+                  title="Télécharger l'étiquette PDF du transporteur"
                 >
-                  Télécharger étiquette
+                  <Download className="h-3 w-3" />
+                  Télécharger le bordereau PDF
                 </a>
-              </p>
+              </div>
             )}
             <div className="ml-4 space-y-0.5">
               {h.items.map((item, itemIdx) => {
