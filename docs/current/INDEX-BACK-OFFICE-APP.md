@@ -1,6 +1,6 @@
 # Back-Office — Documentation App
 
-_Generated: 2026-04-25 17:10_
+_Generated: 2026-04-25 17:19_
 
 ## Pages (147)
 
@@ -154,7 +154,7 @@ _Generated: 2026-04-25 17:10_
 | `/`                                                                      | page.tsx |
 | `/unauthorized`                                                          | page.tsx |
 
-## API Routes (132)
+## API Routes (136)
 
 | Endpoint                                                     | Methods            |
 | ------------------------------------------------------------ | ------------------ |
@@ -216,6 +216,8 @@ _Generated: 2026-04-25 17:10_
 | `/api/logs`                                                  | GET, POST          |
 | `/api/meta-commerce/products/[id]/metadata`                  | PATCH              |
 | `/api/meta-commerce/products/[id]/price`                     | PUT                |
+| `/api/meta-commerce/products/[id]`                           | DELETE             |
+| `/api/meta-commerce/products/[id]/visibility`                | PATCH              |
 | `/api/meta-commerce/products/batch-add`                      | POST               |
 | `/api/meta-commerce/sync-statuses`                           | POST               |
 | `/api/organisations/[id]/shipping-address`                   | PATCH              |
@@ -229,6 +231,8 @@ _Generated: 2026-04-25 17:10_
 | `/api/packlink/shipments/pending`                            | GET                |
 | `/api/packlink/shipments`                                    | GET                |
 | `/api/packlink/shipments/sync`                               | POST               |
+| `/api/products/[id]/publish`                                 | POST               |
+| `/api/products/[id]/unpublish`                               | POST               |
 | `/api/qonto/attachments/[id]`                                | GET, DELETE        |
 | `/api/qonto/attachments/auto-attach`                         | POST               |
 | `/api/qonto/attachments/cleanup-duplicates`                  | POST               |
