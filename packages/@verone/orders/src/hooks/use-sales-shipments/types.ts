@@ -1,3 +1,12 @@
+export interface ShipmentRecipientContact {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  phone: string | null;
+  mobile: string | null;
+}
+
 export interface SalesOrderForShipment {
   id: string;
   order_number: string;
@@ -31,6 +40,13 @@ export interface SalesOrderForShipment {
     region?: string;
     enseigne_id?: string | null;
   };
+
+  // Contacts FK joints (pour pre-remplir l'etape Destinataire Packlink).
+  // Ces 3 references sont les 3 roles que le user peut piocher dans la liste
+  // radio. Si tous null, on tombe directement en saisie manuelle.
+  responsable_contact?: ShipmentRecipientContact | null;
+  billing_contact?: ShipmentRecipientContact | null;
+  delivery_contact?: ShipmentRecipientContact | null;
 
   // Items enrichis pour expédition
   sales_order_items: Array<{
