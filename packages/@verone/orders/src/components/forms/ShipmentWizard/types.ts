@@ -16,12 +16,17 @@ export type RecipientSource = 'delivery' | 'responsable' | 'billing' | 'manual';
 
 /**
  * Coordonnees envoyees a Packlink (mappees 1:1 avec les champs Packlink Pro
- * to.firstName / to.lastName / to.email / to.phone).
+ * to.firstName / to.lastName / to.company / to.email / to.phone).
  * L'adresse de livraison reste prise depuis la commande (shipping_address).
+ *
+ * `company` est facultatif cote Packlink Pro mais essentiel pour Verone B2B
+ * (commandes pour des enseignes type Pokawa Marseille — l'entreprise apparait
+ * sur l'etiquette de transport et permet la reception en restaurant).
  */
 export interface RecipientForm {
   firstName: string;
   lastName: string;
+  company: string;
   email: string;
   phone: string;
 }

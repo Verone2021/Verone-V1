@@ -61,6 +61,7 @@ interface CreateDraftDeps {
   buildDestination: () => {
     name: string;
     surname: string;
+    company?: string;
     email: string;
     phone: string;
     street1: string;
