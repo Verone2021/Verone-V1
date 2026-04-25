@@ -127,16 +127,17 @@ export function useOrderDetailsPage() {
           editedMargins[itemId] !== undefined
             ? editedMargins[itemId] / 100
             : (enriched?.retrocession_rate ?? 0);
-        const total_ht = quantity * unit_price_ht;
-        const retrocession_amount = total_ht * retrocession_rate;
+        // total_ht est une colonne GENERATED ALWAYS (quantity * unit_price_ht *
+        // (1 - discount/100)) — Postgres rejette tout UPDATE explicite (428C9).
+        // retrocession_amount est recalcule par le trigger DB
+        // trg_calculate_retrocession sur (unit_price_ht, quantity, retrocession_rate).
+        // On envoie donc uniquement les inputs.
         await supabase
           .from('sales_order_items')
           .update({
             quantity,
             unit_price_ht,
-            total_ht,
             retrocession_rate,
-            retrocession_amount,
           })
           .eq('id', itemId);
       }
@@ -193,16 +194,16 @@ export function useOrderDetailsPage() {
   const handleAddItems = async (newItems: NewItemInput[]) => {
     if (!order) return;
     const supabase = createClient();
+    // Idem handleSaveItems : total_ht (GENERATED ALWAYS) et retrocession_amount
+    // (trigger trg_calculate_retrocession) sont calcules par la DB. Les envoyer
+    // depuis le client provoque une erreur 428C9 sur INSERT comme sur UPDATE.
     const inserts = newItems.map(item => ({
       sales_order_id: order.id,
       product_id: item.product_id,
       quantity: item.quantity,
       unit_price_ht: item.unit_price_ht,
-      total_ht: item.quantity * item.unit_price_ht,
       tax_rate: order.tax_rate ?? 0.2,
       retrocession_rate: item.retrocession_rate,
-      retrocession_amount:
-        item.quantity * item.unit_price_ht * item.retrocession_rate,
       base_price_ht_locked: item.base_price_ht,
       selling_price_ht_locked: item.unit_price_ht,
       linkme_selection_item_id: item.linkme_selection_item_id ?? null,
