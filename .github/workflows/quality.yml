@@ -89,7 +89,7 @@ jobs:
 
       # ---- Next.js build cache (official pattern from nextjs.org/docs) ----
       - name: Cache Next.js builds
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             apps/back-office/.next/cache
@@ -219,7 +219,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Cache Next.js build
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: apps/back-office/.next/cache
           key: ${{ runner.os }}-nextjs-bo-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/back-office/**/*.ts', 'apps/back-office/**/*.tsx') }}
