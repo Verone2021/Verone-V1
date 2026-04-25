@@ -38,6 +38,32 @@ import type {
   ShipmentWizardState,
 } from './types';
 
+// Defaults Verone pour le destinataire Packlink. Packlink REJETTE l'API call
+// si email ou mobile est vide. Quand un contact FK n'a ni email ni mobile
+// renseigne, on injecte ces defaults — visiblement — dans le form (l'utilisateur
+// peut toujours les corriger a la main avant Suivant). Plus de fallback
+// silencieux comme l'ancien 'client@verone.fr' / '+33600000000'.
+const DEFAULT_RECIPIENT_EMAIL = 'romeo@veronecollections.fr';
+const DEFAULT_RECIPIENT_PHONE = '0656720702';
+
+function firstNonEmpty(
+  ...candidates: Array<string | null | undefined>
+): string {
+  for (const v of candidates) {
+    const trimmed = v?.trim();
+    if (trimmed && trimmed.length > 0) return trimmed;
+  }
+  return '';
+}
+
+function pickEmail(c: ShipmentRecipientContact): string {
+  return firstNonEmpty(c.email) || DEFAULT_RECIPIENT_EMAIL;
+}
+
+function pickPhone(c: ShipmentRecipientContact): string {
+  return firstNonEmpty(c.mobile, c.phone) || DEFAULT_RECIPIENT_PHONE;
+}
+
 export function useShipmentWizard(
   salesOrder: SalesOrderForShipment,
   onSuccess: () => void
@@ -123,9 +149,7 @@ export function useShipmentWizard(
   // ── Destinataire Packlink (etape Destinataire si deliveryMethod === 'packlink') ──
   // Source de verite des coordonnees envoyees a Packlink.
   // Initialise depuis les contacts FK joints (delivery > responsable > billing)
-  // et editable manuellement. Pas de fallback hardcode (l'ancien client@verone.fr
-  // / +33600000000 partait silencieusement chez Packlink quand le user ne
-  // selectionnait rien).
+  // et editable manuellement.
   const [recipientForm, setRecipientForm] = useState<RecipientForm>({
     firstName: '',
     lastName: '',
@@ -154,8 +178,8 @@ export function useShipmentWizard(
       setRecipientForm({
         firstName: c.first_name ?? '',
         lastName: c.last_name ?? '',
-        email: c.email ?? '',
-        phone: c.mobile ?? c.phone ?? '',
+        email: pickEmail(c),
+        phone: pickPhone(c),
       });
     } else {
       setRecipientSource('manual');
@@ -201,8 +225,8 @@ export function useShipmentWizard(
       setRecipientForm({
         firstName: c.first_name ?? '',
         lastName: c.last_name ?? '',
-        email: c.email ?? '',
-        phone: c.mobile ?? c.phone ?? '',
+        email: pickEmail(c),
+        phone: pickPhone(c),
       });
     },
     [
