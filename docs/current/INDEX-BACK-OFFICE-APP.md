@@ -1,6 +1,6 @@
 # Back-Office — Documentation App
 
-_Generated: 2026-04-25 17:09_
+_Generated: 2026-04-25 17:19_
 
 ## Pages (147)
 
@@ -154,7 +154,7 @@ _Generated: 2026-04-25 17:09_
 | `/`                                                                      | page.tsx |
 | `/unauthorized`                                                          | page.tsx |
 
-## API Routes (132)
+## API Routes (136)
 
 | Endpoint                                                     | Methods            |
 | ------------------------------------------------------------ | ------------------ |
@@ -168,6 +168,7 @@ _Generated: 2026-04-25 17:09_
 | `/api/channel-pricing/upsert`                                | POST               |
 | `/api/consultations/associations`                            | POST               |
 | `/api/cron/google-merchant-poll`                             | GET                |
+| `/api/cron/meta-commerce-sync`                               | GET                |
 | `/api/csp-report`                                            | GET, POST          |
 | `/api/documents/[id]/download`                               | GET                |
 | `/api/emails/form-reply`                                     | POST               |
@@ -213,8 +214,11 @@ _Generated: 2026-04-25 17:09_
 | `/api/linkme/users/reset-password`                           | POST               |
 | `/api/linkme/users/update-email`                             | POST               |
 | `/api/logs`                                                  | GET, POST          |
+| `/api/meta-commerce/products/[id]/metadata`                  | PATCH              |
+| `/api/meta-commerce/products/[id]/price`                     | PUT                |
 | `/api/meta-commerce/products/[id]`                           | DELETE             |
 | `/api/meta-commerce/products/[id]/visibility`                | PATCH              |
+| `/api/meta-commerce/products/batch-add`                      | POST               |
 | `/api/meta-commerce/sync-statuses`                           | POST               |
 | `/api/organisations/[id]/shipping-address`                   | PATCH              |
 | `/api/packlink/dropoffs`                                     | GET                |
