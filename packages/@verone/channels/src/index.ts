@@ -7,3 +7,6 @@ export * from './components/google-merchant';
 
 // Hooks
 export * from './hooks';
+
+// Constants
+export * from './constants/channel-ids';

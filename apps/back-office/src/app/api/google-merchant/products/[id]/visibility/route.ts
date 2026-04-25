@@ -92,6 +92,39 @@ export async function PATCH(
     // 3. Initialisation Supabase
     const supabase = await createServerClient();
 
+    // 3.5 Guard cascade : Google Merchant dépend du Site Internet.
+    // Refuser visible=true si le produit n'est pas publié sur le Site Internet.
+    // Voir docs/current/canaux-vente-publication-rules.md
+    if (visible) {
+      const { data: product, error: fetchError } = await supabase
+        .from('products')
+        .select('is_published_online')
+        .eq('id', productId)
+        .single();
+
+      if (fetchError) {
+        console.error(
+          '[API] Fetch product is_published_online failed:',
+          fetchError
+        );
+        return NextResponse.json(
+          { success: false, error: `Database error: ${fetchError.message}` },
+          { status: 500 }
+        );
+      }
+
+      if (!product.is_published_online) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              'Le produit doit être publié sur le Site Internet avant de pouvoir être activé sur Google Merchant.',
+          },
+          { status: 422 }
+        );
+      }
+    }
+
     // 4. Appeler RPC toggle_google_merchant_visibility
     const { data, error } = await supabase.rpc(
       'toggle_google_merchant_visibility',
