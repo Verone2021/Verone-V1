@@ -148,6 +148,13 @@ export default function LinkMeOrderDetailsPage() {
       })
     : null;
 
+  const handleRequestComplementForRole = (
+    role: 'responsable' | 'billing' | 'delivery'
+  ) => {
+    setSelectedCategories(new Set<MissingFieldCategory>([role]));
+    setShowRequestInfoDialog(true);
+  };
+
   const handleRequestInfo = () => {
     if (!requestMessage.trim() || !order) return;
     void requestInfo
@@ -326,6 +333,7 @@ export default function LinkMeOrderDetailsPage() {
           onOpenShipmentModal={() => setShowShipmentModal(true)}
           onOpenContactDialog={handleOpenContactDialog}
           onRequestInfo={() => setShowRequestInfoDialog(true)}
+          onRequestComplementForRole={handleRequestComplementForRole}
           missingFieldsTotal={missingFieldsResult?.totalCategories}
           historyEvents={historyEvents}
           historyLoading={historyLoading}

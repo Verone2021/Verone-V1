@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 import { Badge, Button, Card, CardContent } from '@verone/ui';
 import {
   CheckCircle2,
@@ -20,7 +18,6 @@ import { QuotesSection } from '@/components/orders/QuotesSection';
 
 import type { OrderWithDetails, FusedContactGroup } from './types';
 import { ContactsUnified } from './ContactsUnified';
-import { RequestMissingFieldModal } from './RequestMissingFieldModal';
 
 // ============================================
 // PROPS
@@ -39,6 +36,9 @@ export interface RightColumnProps {
   onOpenContactDialog: (role: 'responsable' | 'billing' | 'delivery') => void;
   // Request info
   onRequestInfo?: () => void;
+  onRequestComplementForRole: (
+    role: 'responsable' | 'billing' | 'delivery'
+  ) => void;
   missingFieldsTotal?: number;
   // History
   historyEvents: ReturnType<
@@ -60,14 +60,11 @@ export function RightColumn({
   onOpenShipmentModal,
   onOpenContactDialog,
   onRequestInfo,
+  onRequestComplementForRole,
   missingFieldsTotal,
   historyEvents,
   historyLoading,
 }: RightColumnProps) {
-  const [requestModalRole, setRequestModalRole] = useState<
-    'responsable' | 'billing' | 'delivery' | null
-  >(null);
-
   const getStatusBadge = (status: string) => {
     const variants: Record<
       string,
@@ -188,14 +185,7 @@ export function RightColumn({
         fusedContacts={fusedContacts}
         locked={locked}
         onOpenContactDialog={onOpenContactDialog}
-        onOpenRequestModal={role => setRequestModalRole(role)}
-      />
-      <RequestMissingFieldModal
-        open={!!requestModalRole}
-        onClose={() => setRequestModalRole(null)}
-        order={order}
-        role={requestModalRole}
-        onSuccess={() => setRequestModalRole(null)}
+        onOpenRequestModal={onRequestComplementForRole}
       />
 
       {/* PAIEMENT + RAPPROCHEMENT (intégrés) — masqué si commande en attente d'approbation */}
