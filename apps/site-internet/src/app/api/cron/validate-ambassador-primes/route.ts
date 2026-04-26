@@ -35,9 +35,10 @@ export async function GET(request: Request) {
 
     // Find pending attributions past their validation date
     const now = new Date().toISOString();
+    // ADR-021 D1: ambassador_attributions.customer_id (refacto unification)
     const { data: pendingAttributions, error: fetchError } = await supabase
       .from('ambassador_attributions')
-      .select('id, ambassador_id, prime_amount')
+      .select('id, customer_id, prime_amount')
       .eq('status', 'pending')
       .lte('validation_date', now);
 

@@ -180,9 +180,10 @@ export async function createAmbassadorAttribution(
 ): Promise<void> {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+  // ADR-021 D1: ambassador_codes.customer_id pointe sur individual_customers (refacto unification)
   const { data: ambassadorCode } = await supabase
     .from('ambassador_codes')
-    .select('id, ambassador_id, code')
+    .select('id, customer_id, code')
     .eq('code', discountCode.toUpperCase())
     .eq('is_active', true)
     .single();
@@ -191,23 +192,28 @@ export async function createAmbassadorAttribution(
 
   const ambCode = ambassadorCode as {
     id: string;
-    ambassador_id: string;
+    customer_id: string;
     code: string;
   };
 
-  const { data: ambassador } = await supabase
-    .from('site_ambassadors')
-    .select('id, commission_rate')
-    .eq('id', ambCode.ambassador_id)
+  // ADR-021 D1: l'ambassadeur est un client avec is_ambassador=true
+  const { data: customer } = await supabase
+    .from('individual_customers')
+    .select('id, ambassador_commission_rate, is_ambassador, is_active')
+    .eq('id', ambCode.customer_id)
+    .eq('is_ambassador', true)
     .eq('is_active', true)
     .single();
 
-  if (!ambassador) return;
+  if (!customer) return;
 
-  const amb = ambassador as { id: string; commission_rate: number };
+  const cust = customer as {
+    id: string;
+    ambassador_commission_rate: number | null;
+  };
+  const commissionRate = Number(cust.ambassador_commission_rate ?? 10);
   const orderHt = Math.round((finalTtc / 1.2) * 100) / 100;
-  const primeAmount =
-    Math.round(orderHt * (Number(amb.commission_rate) / 100) * 100) / 100;
+  const primeAmount = Math.round(orderHt * (commissionRate / 100) * 100) / 100;
   const validationDate = new Date();
   validationDate.setDate(validationDate.getDate() + 30);
 
@@ -215,10 +221,10 @@ export async function createAmbassadorAttribution(
     .from('ambassador_attributions')
     .insert({
       order_id: orderId,
-      ambassador_id: amb.id,
+      customer_id: cust.id,
       code_id: ambCode.id,
       order_total_ht: orderHt,
-      commission_rate: Number(ambassador.commission_rate),
+      commission_rate: commissionRate,
       prime_amount: primeAmount,
       status: 'pending',
       validation_date: validationDate.toISOString(),
