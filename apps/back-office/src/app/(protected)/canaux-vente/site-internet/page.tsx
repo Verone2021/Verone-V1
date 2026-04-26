@@ -44,15 +44,18 @@ import { ReviewsSection } from './components/ReviewsSection';
 /**
  * Page Canal Site Internet - Back Office CMS
  *
- * Sections:
- * - Dashboard: KPIs produits, commandes, CA
- * - Produits: Gestion complète (add/edit/delete + variantes)
- * - Collections: Toggle visibilité collections
- * - Catégories: Gestion arborescence catégories
- * - Promotions: Codes promo par article ou collection
- * - Configuration: Domaine, SEO, contact
- * - Commandes: Suivi commandes e-commerce
- * - Clients: Clients du site
+ * Sections (11 onglets) :
+ * - Dashboard : KPIs produits, commandes, CA
+ * - Produits : gestion complète (add/edit/delete + variantes)
+ * - Collections : toggle visibilité collections
+ * - Catégories : gestion arborescence catégories
+ * - Configuration : domaine, SEO, contact
+ * - Commandes : suivi commandes e-commerce
+ * - Clients : clients du site
+ * - Avis : modération avis produits
+ * - Contenu : CMS sections + pages + newsletter
+ * - Promotions : codes promo par article ou collection
+ * - Ambassadeurs : programme d'affiliation B2C (cf ADR-021)
  */
 export default function SiteInternetPage() {
   const router = useRouter();
