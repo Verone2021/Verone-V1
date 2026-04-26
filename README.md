@@ -223,7 +223,7 @@ npm run lint:fix     # Auto-fix ESLint
 
 ## Documentation
 
-**Source de verite** : [`docs/current/`](./docs/current/) (9 fichiers)
+**Source de verite** : [`docs/current/`](./docs/current/) (31 fichiers .md)
 
 Voir [`docs/README.md`](./docs/README.md) pour l'index complet.
 
