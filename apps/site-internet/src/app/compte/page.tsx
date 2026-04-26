@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import type { Metadata } from 'next';
 import {
+  Award,
   Heart,
   Key,
   LogOut,
@@ -180,6 +181,13 @@ export default async function ComptePage() {
                 <Key className="h-3.5 w-3.5" />
                 Sécurité
               </a>
+              <Link
+                href="/compte/ambassadeur"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm text-verone-gray-600 hover:bg-verone-gray-50 transition-colors"
+              >
+                <Award className="h-3.5 w-3.5" />
+                Programme ambassadeur
+              </Link>
               <Link
                 href="/catalogue"
                 className="block px-4 py-2.5 rounded-lg text-sm text-verone-gray-600 hover:bg-verone-gray-50 transition-colors"

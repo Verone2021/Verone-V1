@@ -86,6 +86,18 @@ export interface CreateAmbassadorData {
   siret?: string;
 }
 
+export interface ActivateExistingData {
+  customer_id: string;
+  commission_rate: number;
+  discount_rate: number;
+  code: string;
+  iban?: string;
+  bic?: string;
+  bank_name?: string;
+  account_holder_name?: string;
+  siret?: string;
+}
+
 // ============================================
 // Helper: map individual_customers row → Ambassador shape
 // ============================================
@@ -343,6 +355,91 @@ export function useToggleAmbassadorActive() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    },
+  });
+}
+
+export function useActivateExistingAsAmbassador() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: ActivateExistingData) => {
+      const supabase = createClient();
+
+      // 1. Activer l'ambassador sur le customer existant
+      const { error: updateError } = await supabase
+        .from('individual_customers')
+        .update({
+          is_ambassador: true,
+          ambassador_activated_at: new Date().toISOString(),
+          ambassador_commission_rate: input.commission_rate,
+          ambassador_discount_rate: input.discount_rate,
+          ambassador_iban: input.iban ?? null,
+          ambassador_bic: input.bic ?? null,
+          ambassador_bank_name: input.bank_name ?? null,
+          ambassador_account_holder_name: input.account_holder_name ?? null,
+          ambassador_siret: input.siret ?? null,
+        } as never)
+        .eq('id', input.customer_id);
+
+      if (updateError) throw updateError;
+
+      // 2. Creer le code promo (order_discounts)
+      const codeUpper = input.code.toUpperCase().replace(/\s/g, '');
+      const validUntil = new Date();
+      validUntil.setFullYear(validUntil.getFullYear() + 10);
+
+      const { data: discount, error: discountError } = await supabase
+        .from('order_discounts')
+        .insert({
+          code: codeUpper,
+          name: `Ambassadeur code ${codeUpper}`,
+          description: `Code ambassadeur — ${input.discount_rate}% de reduction`,
+          discount_type: 'percentage',
+          discount_value: input.discount_rate,
+          valid_from: new Date().toISOString().slice(0, 10),
+          valid_until: validUntil.toISOString().slice(0, 10),
+          max_uses_total: null,
+          max_uses_per_customer: null,
+          is_active: true,
+          requires_code: true,
+          is_combinable: false,
+          target_type: 'all',
+          is_automatic: false,
+          exclude_sale_items: false,
+        })
+        .select()
+        .single();
+
+      if (discountError) throw discountError;
+
+      // 3. Lier le code au customer
+      const siteUrl =
+        process.env.NEXT_PUBLIC_SITE_URL ?? 'https://veronecollections.fr';
+      const qrUrl = `${siteUrl}?ref=${codeUpper}`;
+
+      const { error: codeError } = await supabase
+        .from('ambassador_codes')
+        .insert({
+          customer_id: input.customer_id,
+          discount_id: discount.id,
+          code: codeUpper,
+          qr_code_url: qrUrl,
+        } as never);
+
+      if (codeError) throw codeError;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      toast.success('Client activé comme ambassadeur');
+    },
+    onError: (error: Error) => {
+      console.error('[useActivateExistingAsAmbassador]', error);
+      if (error.message.includes('duplicate key')) {
+        toast.error('Ce code existe déjà');
+      } else {
+        toast.error("Erreur lors de l'activation");
+      }
     },
   });
 }
