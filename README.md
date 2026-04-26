@@ -14,14 +14,14 @@ graph TB
         SI["Site Internet<br/>:3001"]
     end
 
-    subgraph Packages["26 Packages @verone"]
+    subgraph Packages["23 Packages @verone"]
         CORE["Core: types, utils, ui, hooks"]
         BIZ["Business: products, orders, stock, customers"]
         INT["Integrations: Google Merchant, Qonto"]
     end
 
     subgraph Supabase["Supabase PostgreSQL"]
-        DB[("74 Tables")]
+        DB[("119 Tables")]
         AUTH["Auth + RLS"]
     end
 
@@ -42,21 +42,21 @@ verone-back-office/
 │   ├── back-office/            # CRM/ERP (port 3000)
 │   ├── linkme/                 # Affiliation (port 3002)
 │   └── site-internet/          # E-commerce B2C (port 3001)
-├── packages/@verone/           # 26 packages partages
+├── packages/@verone/           # 23 packages partages
 │   ├── types/                  # Types TypeScript + Supabase
-│   ├── ui/                     # 54 composants shadcn/ui
+│   ├── ui/                     # 79 composants shadcn/ui
 │   ├── utils/                  # Helpers (logger, excel, upload)
 │   ├── products/               # Gestion produits
 │   ├── orders/                 # Commandes
 │   ├── stock/                  # Stock & alertes
-│   └── ...                     # +20 autres packages
+│   └── ...                     # +17 autres packages
 ├── supabase/
-│   └── migrations/             # 74 migrations SQL
+│   └── migrations/             # 686 migrations SQL
 ├── docs/
-│   ├── current/                # 12 docs canoniques
-│   └── business-rules/         # 93 dossiers regles metier
+│   ├── current/                # 31 docs canoniques
+│   └── business-rules/         # 3 dossiers regles metier
 ├── tests/                      # E2E Playwright
-└── .github/workflows/          # 8 pipelines CI/CD
+└── .github/workflows/          # 5 pipelines CI/CD
 ```
 
 ---
@@ -240,18 +240,26 @@ Voir [`docs/README.md`](./docs/README.md) pour l'index complet.
 
 ## CI/CD
 
-8 workflows GitHub Actions dans [`.github/workflows/`](./.github/workflows/)
+5 workflows GitHub Actions dans [`.github/workflows/`](./.github/workflows/)
 
-| Workflow                 | Trigger   | Description                                  |
-| ------------------------ | --------- | -------------------------------------------- |
-| `deploy-production.yml`  | Push main | Deploy Vercel + tests E2E                    |
-| `pr-validation.yml`      | PR main   | Validation TypeScript, lint, tests critiques |
-| `typescript-quality.yml` | Push/PR   | Check TypeScript (limite 1000 errors)        |
+| Workflow                           | Trigger       | Description                                    |
+| ---------------------------------- | ------------- | ---------------------------------------------- |
+| `quality.yml`                      | Push/PR       | Type-check, lint, tests critiques (sequential) |
+| `protect-main-source.yml`          | PR main       | Bloque PRs vers main hors release staging      |
+| `auto-release-staging-to-main.yml` | manual / cron | Release periodique staging → main              |
+| `db-drift-cron.yml`                | cron          | Detection drift schema Supabase                |
+| `scratchpad-cleanup.yml`           | cron          | Purge `docs/scratchpad/` ancien                |
+
+Deploiement Vercel : integration native (preview sur push staging, production sur merge `main`).
 
 ### Pipeline Production
 
 ```
-Push main → Quality Gates → E2E Tests → Security Scan → Deploy Staging → Deploy Production
+Feature branch → PR → staging (preview Vercel auto)
+   ↓
+Release PR staging → main (auto-release-staging-to-main.yml)
+   ↓
+Quality Gates (quality.yml) → Deploy Production Vercel
 ```
 
 ---
@@ -261,30 +269,34 @@ Push main → Quality Gates → E2E Tests → Security Scan → Deploy Staging �
 ### Workflow Git
 
 ```bash
-# 1. Creer branche
-git checkout -b feature/ma-feature
+# 1. Partir de staging
+git checkout staging && git pull
+git checkout -b feat/[APP-DOMAIN-NNN]-ma-feature
 
 # 2. Developper
-# ...
 
 # 3. Valider
-npm run build      # Doit passer
-npm run type-check # Doit passer
+pnpm --filter @verone/[app] type-check  # Doit passer
+pnpm --filter @verone/[app] build       # Doit passer
+pnpm --filter @verone/[app] lint        # Doit passer
 
-# 4. Commit (avec autorisation)
-git add .
-git commit -m "feat: description"
+# 4. Commit (Task ID obligatoire)
+git add <files-precis>
+git commit -m "[APP-DOMAIN-NNN] type: description"
 
-# 5. Push & PR
-git push -u origin feature/ma-feature
-# Creer PR vers main
+# 5. Push & PR vers staging (jamais main)
+git push -u origin feat/[APP-DOMAIN-NNN]-ma-feature
+gh pr create --base staging --title "[APP-DOMAIN-NNN] ..." --body "..."
 ```
 
 ### Regles
 
-- **Build obligatoire** avant commit
-- **PR review** requise pour merge
-- **Auto-deploy** sur merge vers main
+- **Toute branche feature/fix part de staging** et PR vers staging
+- **JAMAIS** PR vers main (sauf release `staging → main` periodique)
+- **1 PR = 1 bloc fonctionnellement coherent**, pas 1 PR par sous-tache
+- **Build + type-check + lint** verts avant commit
+- **PR review** + CI verte requises pour merge
+- **Auto-deploy** preview sur push staging, production sur merge staging → main
 
 ---
 
@@ -306,11 +318,13 @@ Tasks trackées dans `.tasks/` (Git-tracked, 1 fichier par task).
 
 `[APP]-[DOMAIN]-[NNN]` où APP = BO | LM | WEB
 
-| Prefixe | Application   |
-| ------- | ------------- |
-| `BO-*`  | back-office   |
-| `LM-*`  | linkme        |
-| `WEB-*` | site-internet |
+| Prefixe   | Application                 |
+| --------- | --------------------------- |
+| `BO-*`    | back-office                 |
+| `LM-*`    | linkme                      |
+| `SI-*`    | site-internet               |
+| `INFRA-*` | infrastructure / CI / rules |
+| `NO-TASK` | chores (deps, etc.)         |
 
 ### Créer une Task
 
