@@ -85,6 +85,7 @@ export function OrderApprovalDialogs({
         order={order}
         details={details}
         createdByProfile={createdByProfile}
+        excludeCreator={createdByProfile?.is_back_office === true}
         requestMessage={requestMessage}
         setRequestMessage={setRequestMessage}
         selectedCategories={selectedCategories}

@@ -61,6 +61,36 @@ export async function POST(
 
     const supabase = await createServerClient();
 
+    // Guard cascade : Meta Commerce dépend du Site Internet.
+    // Refuser tout productId dont products.is_published_online = false.
+    // Voir docs/current/canaux-vente-publication-rules.md
+    const { data: validProducts, error: fetchError } = await supabase
+      .from('products')
+      .select('id')
+      .in('id', productIds)
+      .eq('is_published_online', true);
+
+    if (fetchError) {
+      console.error('[API] Fetch is_published_online failed:', fetchError);
+      return NextResponse.json(
+        { success: false, error: `Database error: ${fetchError.message}` },
+        { status: 500 }
+      );
+    }
+
+    const publishedIds = new Set((validProducts ?? []).map(p => p.id));
+    const unpublishedIds = productIds.filter(id => !publishedIds.has(id));
+
+    if (unpublishedIds.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `${unpublishedIds.length} produit(s) non publié(s) sur le Site Internet ne peuvent pas être ajoutés à Meta Commerce. Publiez-les d'abord sur le Site Internet.`,
+        },
+        { status: 422 }
+      );
+    }
+
     const rpcArgs: { p_product_ids: string[]; p_catalog_id?: string } = {
       p_product_ids: productIds,
     };

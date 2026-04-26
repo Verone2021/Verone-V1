@@ -109,41 +109,61 @@ export function useFetchOrder(orderId: string) {
       ) as InfoRequest[];
 
       const createdByUserId = rawOrder.created_by as string | null;
-      const [contactResults, profileResult, linkResult] = await Promise.all([
-        Promise.all(
-          uniqueContactIds.map(id =>
-            supabase
-              .from('contacts')
-              .select('id, first_name, last_name, email, phone, title')
-              .eq('id', id)
-              .single()
-              .then(r => ({ id, data: r.data as ContactRef | null }))
-          )
-        ),
-        createdByUserId
-          ? supabase
-              .from('user_profiles')
-              .select('first_name, last_name, email')
-              .eq('user_id', createdByUserId)
-              .single()
-          : Promise.resolve({ data: null }),
-        supabase
-          .from('transaction_document_links')
-          .select(
-            `sales_order_id, transaction_id,
+      const [contactResults, profileResult, creatorRoleResult, linkResult] =
+        await Promise.all([
+          Promise.all(
+            uniqueContactIds.map(id =>
+              supabase
+                .from('contacts')
+                .select('id, first_name, last_name, email, phone, title')
+                .eq('id', id)
+                .single()
+                .then(r => ({ id, data: r.data as ContactRef | null }))
+            )
+          ),
+          createdByUserId
+            ? supabase
+                .from('user_profiles')
+                .select('first_name, last_name, email')
+                .eq('user_id', createdByUserId)
+                .single()
+            : Promise.resolve({ data: null }),
+          // Détecte si le créateur est un salarié back-office (au moins
+          // un user_app_roles actif avec app='back-office'). Source de
+          // vérité unique pour le filtre excludeCreator du modal de demande
+          // de compléments.
+          createdByUserId
+            ? supabase
+                .from('user_app_roles')
+                .select('user_id')
+                .eq('user_id', createdByUserId)
+                .eq('app', 'back-office')
+                .eq('is_active', true)
+                .limit(1)
+            : Promise.resolve({ data: [] as Array<{ user_id: string }> }),
+          supabase
+            .from('transaction_document_links')
+            .select(
+              `sales_order_id, transaction_id,
             bank_transactions!inner ( id, label, amount, emitted_at, attachment_ids )`
-          )
-          .eq('sales_order_id', orderId)
-          .eq('link_type', 'sales_order')
-          .limit(1),
-      ]);
+            )
+            .eq('sales_order_id', orderId)
+            .eq('link_type', 'sales_order')
+            .limit(1),
+        ]);
 
       const contactMap = new Map<string, ContactRef>();
       for (const cr of contactResults) {
         if (cr.data) contactMap.set(cr.id, cr.data);
       }
 
-      const createdByProfile = (profileResult.data as CreatedByProfile) ?? null;
+      const profileData = profileResult.data as CreatedByProfile | null;
+      const isBackOfficeCreator =
+        Array.isArray(creatorRoleResult.data) &&
+        creatorRoleResult.data.length > 0;
+      const createdByProfile: CreatedByProfile | null = profileData
+        ? { ...profileData, is_back_office: isBackOfficeCreator }
+        : null;
       let matchInfo: {
         transaction_id: string;
         label: string;

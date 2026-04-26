@@ -4,18 +4,31 @@ import type { ShipmentItem } from '@verone/types';
 
 import type { SalesOrderForShipment } from '@verone/orders/hooks';
 
-// ── Contact destinataire (subset de ContactBOWithSource, pas d'import circulaire) ─
+// ── Destinataire Packlink (etape "Destinataire") ─────────────────
 
-export interface ShipmentContact {
-  id: string;
+/**
+ * Source du destinataire selectionne par l'utilisateur dans l'etape Destinataire.
+ * Les 3 premieres valeurs correspondent aux contacts FK de la commande
+ * (sales_orders.delivery_contact_id, .responsable_contact_id, .billing_contact_id).
+ * 'manual' = saisie libre.
+ */
+export type RecipientSource = 'delivery' | 'responsable' | 'billing' | 'manual';
+
+/**
+ * Coordonnees envoyees a Packlink (mappees 1:1 avec les champs Packlink Pro
+ * to.firstName / to.lastName / to.company / to.email / to.phone).
+ * L'adresse de livraison reste prise depuis la commande (shipping_address).
+ *
+ * `company` est facultatif cote Packlink Pro mais essentiel pour Verone B2B
+ * (commandes pour des enseignes type Pokawa Marseille — l'entreprise apparait
+ * sur l'etiquette de transport et permet la reception en restaurant).
+ */
+export interface RecipientForm {
   firstName: string;
   lastName: string;
+  company: string;
   email: string;
-  phone: string | null;
-  mobile: string | null;
-  isPrimaryContact: boolean;
-  isBillingContact: boolean;
-  source: 'org' | 'enseigne';
+  phone: string;
 }
 
 // ── Delivery method ──────────────────────────────────────────────
@@ -190,11 +203,11 @@ export interface ShipmentWizardState {
   pendingPacklinkRef: string | null;
   pendingAction: boolean;
 
-  // Contact destinataire
-  selectedContact: ShipmentContact | null;
-  setSelectedContact: (contact: ShipmentContact | null) => void;
-  allContacts: ShipmentContact[];
-  contactsLoading: boolean;
+  // Destinataire Packlink (formulaire de l'etape Destinataire)
+  recipientForm: RecipientForm;
+  recipientSource: RecipientSource;
+  setRecipientField: (key: keyof RecipientForm, value: string) => void;
+  selectRecipientContact: (source: RecipientSource) => void;
 
   // Handlers
   handleQuantityChange: (itemId: string, value: string) => void;

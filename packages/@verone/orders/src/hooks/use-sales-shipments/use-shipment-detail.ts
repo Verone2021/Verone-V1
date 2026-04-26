@@ -40,6 +40,9 @@ export function useShipmentDetail() {
           customer_id,
           customer_type,
           individual_customer_id,
+          responsable_contact:contacts!sales_orders_responsable_contact_id_fkey(id, first_name, last_name, email, phone, mobile),
+          billing_contact:contacts!sales_orders_billing_contact_id_fkey(id, first_name, last_name, email, phone, mobile),
+          delivery_contact:contacts!sales_orders_delivery_contact_id_fkey(id, first_name, last_name, email, phone, mobile),
           sales_order_items (
             id,
             product_id,

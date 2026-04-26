@@ -90,7 +90,8 @@ function formatContactName(
 function buildRecipients(
   createdByProfile: CreatedByProfile | null,
   details: LinkMeOrderDetails | null,
-  order: OrderWithDetails
+  order: OrderWithDetails,
+  excludeCreator: boolean
 ): Recipient[] {
   const recipients: Recipient[] = [];
 
@@ -120,9 +121,11 @@ function buildRecipients(
     });
   }
 
-  // Fallbacks legacy : créateur de la commande + champs flat sales_order_linkme_details
-  // (uniquement si rien n'a été trouvé dans les contacts).
-  if (createdByProfile?.email) {
+  // Createur de la commande : on l'inclut UNIQUEMENT si la commande vient
+  // d'un canal LinkMe (formulaire affilie ou selection publique). Pour une
+  // commande creee depuis le back-office par un salarie Verone, c'est
+  // illogique de proposer de lui demander des informations qu'il n'a pas.
+  if (!excludeCreator && createdByProfile?.email) {
     const name = [createdByProfile.first_name, createdByProfile.last_name]
       .filter(Boolean)
       .join(' ');
@@ -198,6 +201,13 @@ interface RequestInfoDialogProps {
   order: OrderWithDetails;
   details: LinkMeOrderDetails | null;
   createdByProfile: CreatedByProfile | null;
+  /**
+   * true quand la commande a été créée depuis le back-office (pas de
+   * created_by_affiliate_id ni linkme_selection_id). Le créateur est alors
+   * un salarié Vérone, on l'exclut du sélecteur de destinataires : il ne
+   * peut pas se demander à lui-même les infos qu'il n'a pas saisies.
+   */
+  excludeCreator: boolean;
   requestMessage: string;
   setRequestMessage: (msg: string) => void;
   selectedCategories: Set<MissingFieldCategory>;
@@ -213,6 +223,7 @@ interface UseRequestInfoDialogArgs {
   missingFields: MissingFieldsResult;
   relevantCategories: MissingFieldCategory[];
   selectedEmails: string[];
+  selectedCategories: Set<MissingFieldCategory>;
   setSelectedEmails: (emails: string[]) => void;
   setSelectedCategories: (cats: Set<MissingFieldCategory>) => void;
   setRequestMessage: (msg: string) => void;
@@ -225,6 +236,7 @@ function makeHandleOpenChange({
   missingFields,
   relevantCategories,
   selectedEmails: _selectedEmails,
+  selectedCategories,
   setSelectedEmails,
   setSelectedCategories,
   setRequestMessage,
@@ -234,12 +246,17 @@ function makeHandleOpenChange({
   return (nextOpen: boolean) => {
     onOpenChange(nextOpen);
     if (nextOpen) {
-      const cats = new Set<MissingFieldCategory>(
-        relevantCategories.filter(
-          (cat): cat is Exclude<MissingFieldCategory, 'custom'> =>
-            cat !== 'custom'
-        )
-      );
+      // Respect a pre-selected category set (e.g. dialog opened from a specific
+      // missing role). Otherwise default to all relevant categories.
+      const cats =
+        selectedCategories.size > 0
+          ? selectedCategories
+          : new Set<MissingFieldCategory>(
+              relevantCategories.filter(
+                (cat): cat is Exclude<MissingFieldCategory, 'custom'> =>
+                  cat !== 'custom'
+              )
+            );
       setSelectedCategories(cats);
       setRequestMessage(generateCombinedMessage(missingFields, cats));
       if (availableRecipients.length > 0) {
@@ -260,6 +277,7 @@ export function RequestInfoDialog({
   order,
   details,
   createdByProfile,
+  excludeCreator,
   requestMessage,
   setRequestMessage,
   selectedCategories,
@@ -270,7 +288,12 @@ export function RequestInfoDialog({
   isPending,
 }: RequestInfoDialogProps) {
   const [manualEmail, setManualEmail] = useState('');
-  const availableRecipients = buildRecipients(createdByProfile, details, order);
+  const availableRecipients = buildRecipients(
+    createdByProfile,
+    details,
+    order,
+    excludeCreator
+  );
   const missingFields = buildMissingFields(order, details);
   const relevantCategories = getRelevantCats(missingFields);
   const canSend = requestMessage.trim().length > 0 && selectedEmails.length > 0;
@@ -279,6 +302,7 @@ export function RequestInfoDialog({
     missingFields,
     relevantCategories,
     selectedEmails,
+    selectedCategories,
     setSelectedEmails,
     setSelectedCategories,
     setRequestMessage,

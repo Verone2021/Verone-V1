@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { useToast } from '@verone/common';
 import type { EmailContact } from '@verone/finance/components';
@@ -24,6 +24,8 @@ import {
   buildDefaultMessage,
   buildDefaultSubject,
   buildPreviewHtml,
+  formatDateFr,
+  type ShipmentForEmail,
 } from './shipping-tracking-helpers';
 import { TrackingRecapCard } from './TrackingRecapCard';
 
@@ -32,13 +34,15 @@ import { TrackingRecapCard } from './TrackingRecapCard';
 export interface SendShippingTrackingModalProps {
   open: boolean;
   onClose: () => void;
-  shipment: {
-    id: string;
-    tracking_number: string | null;
-    tracking_url: string | null;
-    carrier_name: string | null;
-    shipped_at: string | null;
-  };
+  /**
+   * Toutes les expéditions de la commande qui ont un tracking_number — on
+   * filtre côté caller pour exclure les modes sans tracking (main propre,
+   * retrait, manuel sans tracking saisi). Si la liste contient 2+ items,
+   * l'utilisateur peut cocher / décocher chaque colis et l'email regroupe
+   * tous les trackings sélectionnés (Romeo : "1 email avec les 2 trackings
+   * côte à côte").
+   */
+  shipments: ShipmentForEmail[];
   order: {
     id: string;
     order_number: string;
@@ -80,7 +84,7 @@ export interface SendShippingTrackingModalProps {
 export function SendShippingTrackingModal({
   open,
   onClose,
-  shipment,
+  shipments,
   order,
   onSuccess,
 }: SendShippingTrackingModalProps) {
@@ -92,30 +96,75 @@ export function SendShippingTrackingModal({
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const contacts: EmailContact[] = buildContactList(order);
 
+  // Sous-ensemble des shipments effectivement cochés (ordre stable de
+  // shipments[]). Si une seule expédition existe, elle est sélectionnée
+  // implicitement.
+  const selectedShipments = useMemo(
+    () => shipments.filter(s => selectedIds.has(s.id)),
+    [shipments, selectedIds]
+  );
+
   const resetState = useCallback(() => {
+    const allIds = new Set(shipments.map(s => s.id));
+    setSelectedIds(allIds);
     setRecipients([]);
     setManualEmail('');
-    setSubject(buildDefaultSubject(order.order_number));
+    setSubject(buildDefaultSubject(order.order_number, shipments.length));
     setMessage(
       buildDefaultMessage({
         orderNumber: order.order_number,
-        carrierName: shipment.carrier_name,
-        trackingNumber: shipment.tracking_number,
-        shippedAt: shipment.shipped_at,
+        shipments,
       })
     );
     setSending(false);
     setPreviewHtml(null);
-  }, [order.order_number, shipment]);
+  }, [order.order_number, shipments]);
 
   useEffect(() => {
     if (open) {
       resetState();
     }
   }, [open, resetState]);
+
+  // Quand le user coche / décoche, on régénère le sujet et le message par
+  // défaut pour qu'ils restent cohérents avec ce qui sera envoyé. Si le user
+  // a déjà personnalisé le message, il reste prioritaire — on ne touche que
+  // le sujet / message tant qu'ils correspondent au défaut courant.
+  useEffect(() => {
+    if (!open) return;
+    setSubject(prev => {
+      const previousDefault = buildDefaultSubject(
+        order.order_number,
+        shipments.length === selectedShipments.length
+          ? shipments.length
+          : selectedShipments.length || 1
+      );
+      const newDefault = buildDefaultSubject(
+        order.order_number,
+        selectedShipments.length || 1
+      );
+      // Si le sujet courant est encore un sujet par défaut (peu importe le N),
+      // on le rafraîchit.
+      const isStillDefault =
+        prev === previousDefault ||
+        prev === buildDefaultSubject(order.order_number, 1) ||
+        prev === buildDefaultSubject(order.order_number, shipments.length);
+      return isStillDefault ? newDefault : prev;
+    });
+  }, [selectedShipments.length, order.order_number, shipments.length, open]);
+
+  const toggleShipment = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   // ── Recipient helpers ──
 
@@ -151,10 +200,7 @@ export function SendShippingTrackingModal({
       buildPreviewHtml({
         customerName: '',
         orderNumber: order.order_number,
-        carrierName: shipment.carrier_name,
-        trackingNumber: shipment.tracking_number,
-        trackingUrl: shipment.tracking_url,
-        shippedAt: shipment.shipped_at,
+        shipments: selectedShipments,
         customMessage: message,
       })
     );
@@ -171,6 +217,14 @@ export function SendShippingTrackingModal({
       });
       return;
     }
+    if (selectedShipments.length === 0) {
+      toast({
+        title: 'Aucune expédition sélectionnée',
+        description: "Cochez au moins une expédition à inclure dans l'email.",
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setSending(true);
     try {
@@ -179,7 +233,7 @@ export function SendShippingTrackingModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           salesOrderId: order.id,
-          shipmentId: shipment.id,
+          shipmentIds: selectedShipments.map(s => s.id),
           to: recipients,
           subject,
           message,
@@ -193,7 +247,7 @@ export function SendShippingTrackingModal({
 
       toast({
         title: 'Email envoyé',
-        description: `Suivi envoyé à ${String(recipients.length)} destinataire(s)`,
+        description: `Suivi de ${selectedShipments.length} colis envoyé à ${String(recipients.length)} destinataire(s)`,
       });
       onSuccess?.();
       onClose();
@@ -210,7 +264,11 @@ export function SendShippingTrackingModal({
     }
   };
 
-  const canSend = recipients.length > 0 && subject.trim() && message.trim();
+  const canSend =
+    recipients.length > 0 &&
+    selectedShipments.length > 0 &&
+    subject.trim() &&
+    message.trim();
 
   return (
     <>
@@ -229,6 +287,49 @@ export function SendShippingTrackingModal({
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto md:max-h-[65vh] space-y-4 py-2">
+            {/* Sélecteur multi-shipments — masqué si une seule expédition */}
+            {shipments.length > 1 && (
+              <div className="space-y-1.5">
+                <Label>Expéditions à inclure</Label>
+                <div className="rounded-md border border-slate-200 divide-y divide-slate-100">
+                  {shipments.map((s, idx) => {
+                    const checked = selectedIds.has(s.id);
+                    return (
+                      <label
+                        key={s.id}
+                        className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleShipment(s.id)}
+                          className="h-4 w-4 accent-slate-700"
+                        />
+                        <div className="flex-1 min-w-0 text-xs">
+                          <p className="font-medium text-slate-900">
+                            Colis {idx + 1} / {shipments.length}
+                            {s.carrier_name && (
+                              <span className="ml-1 font-normal text-slate-500">
+                                · {s.carrier_name}
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-slate-500 truncate">
+                            {s.tracking_number ?? '(pas de tracking)'}
+                            {s.shipped_at && (
+                              <span className="ml-1">
+                                · {formatDateFr(s.shipped_at)}
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Destinataires */}
             <RecipientSelector
               recipients={recipients}
@@ -271,7 +372,7 @@ export function SendShippingTrackingModal({
 
             {/* Récap tracking */}
             <TrackingRecapCard
-              shipment={shipment}
+              shipments={selectedShipments}
               orderNumber={order.order_number}
             />
 
@@ -282,6 +383,7 @@ export function SendShippingTrackingModal({
                 size="sm"
                 onClick={handlePreview}
                 className="h-11 md:h-9"
+                disabled={selectedShipments.length === 0}
               >
                 <Eye className="h-4 w-4 mr-2" />
                 Aperçu de l'email

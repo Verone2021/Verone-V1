@@ -3,13 +3,13 @@
 /**
  * ShipmentWizard — Modal expedition multi-etapes
  *
- * Etape 1 : Selection stock (produits + quantites)
- * Etape 2 : Mode de livraison (retrait / main propre / manuel / Packlink)
- * Etape 3 : Infos colis (Packlink — dimensions, poids, contenu, assurance)
- * Etape 4 : Choix transporteur (Packlink — services + prix, style Packlink PRO)
- * Etape 5 : Points relais (Packlink — si service relais)
- * Etape 6 : Resume + confirmation (Packlink)
- * Etape 7 : Success + lien Packlink PRO
+ * Modes simples (pickup / hand_delivery / manual) : 2 etapes uniquement
+ *   1 Stock — 2 Mode (validation directe)
+ *
+ * Mode Packlink : 7 etapes
+ *   1 Stock — 2 Mode — 3 Destinataire (4 champs alignes Packlink Pro)
+ *   4 Colis — 5 Transport — 6 Relais — 7 Resume/paiement
+ *   8 Success — 9 Recovery (Packlink cree mais DB save echoue)
  */
 
 import { useState } from 'react';
@@ -21,9 +21,9 @@ import { parseShippingAddress } from './parse-address';
 import type { ShipmentWizardProps } from './types';
 import { useShipmentWizard } from './useShipmentWizard';
 import { StepStepper } from './StepStepper';
-import { StepAddresses } from './StepAddresses';
 import { StepStock } from './StepStock';
 import { StepDeliveryMethod } from './StepDeliveryMethod';
+import { StepPacklinkRecipient } from './StepPacklinkRecipient';
 import { StepPackageInfo } from './StepPackageInfo';
 import { StepCarrierSelection } from './StepCarrierSelection';
 import { StepDropoffs } from './StepDropoffs';
@@ -66,21 +66,8 @@ export function ShipmentWizard({
         maxStep={state.maxStep}
       />
 
-      {/* STEP 1: Adresses (expediteur + contact destinataire) */}
+      {/* STEP 1: Stock selection */}
       {state.step === 1 && (
-        <StepAddresses
-          salesOrder={salesOrder}
-          allContacts={state.allContacts}
-          contactsLoading={state.contactsLoading}
-          selectedContact={state.selectedContact}
-          setSelectedContact={state.setSelectedContact}
-          onBack={onCancel}
-          onNext={() => state.setStep(2)}
-        />
-      )}
-
-      {/* STEP 2: Stock selection */}
-      {state.step === 2 && (
         <StepStock
           items={state.items}
           totals={state.totals}
@@ -89,13 +76,13 @@ export function ShipmentWizard({
           handleShipAll={state.handleShipAll}
           onReusePackages={pkgs => state.setPackages(pkgs)}
           onOpenAdjustment={item => setAdjustmentItem(item)}
-          onNext={() => state.setStep(3)}
+          onNext={() => state.setStep(2)}
           onCancel={onCancel}
         />
       )}
 
-      {/* STEP 3: Delivery method */}
-      {state.step === 3 && (
+      {/* STEP 2: Delivery method */}
+      {state.step === 2 && (
         <StepDeliveryMethod
           deliveryMethod={state.deliveryMethod}
           setDeliveryMethod={state.setDeliveryMethod}
@@ -108,11 +95,24 @@ export function ShipmentWizard({
           notes={state.notes}
           setNotes={state.setNotes}
           validating={state.validating}
-          onBack={() => state.setStep(2)}
-          onNext={() => state.setStep(4)}
+          onBack={() => state.setStep(1)}
+          onNext={() => state.setStep(3)}
           onValidateSimple={() => {
             void state.handleSimpleValidation().catch(console.error);
           }}
+        />
+      )}
+
+      {/* STEP 3: Destinataire Packlink (uniquement mode 'packlink') */}
+      {state.step === 3 && state.deliveryMethod === 'packlink' && (
+        <StepPacklinkRecipient
+          salesOrder={salesOrder}
+          recipientForm={state.recipientForm}
+          recipientSource={state.recipientSource}
+          setRecipientField={state.setRecipientField}
+          selectRecipientContact={state.selectRecipientContact}
+          onBack={() => state.setStep(2)}
+          onNext={() => state.setStep(4)}
         />
       )}
 

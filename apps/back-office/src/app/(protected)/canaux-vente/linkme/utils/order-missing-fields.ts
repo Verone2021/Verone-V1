@@ -54,7 +54,7 @@ export interface MissingFieldsResult {
 export const CATEGORY_LABELS: Record<MissingFieldCategory, string> = {
   responsable: 'Contact responsable',
   billing: 'Contact facturation',
-  delivery: 'Contact & adresse livraison',
+  delivery: 'Livraison',
   organisation: 'Informations entreprise',
   custom: 'Message personnalisé',
 };
@@ -329,11 +329,11 @@ export function getOrderMissingFields(
     });
   }
 
-  // Date de livraison souhaitee (critique pour devis transport)
+  // Date de reception souhaitee (critique pour devis transport)
   if (!details.desired_delivery_date) {
     fields.push({
       key: 'desired_delivery_date',
-      label: 'Date de livraison souhaitée',
+      label: 'Date de réception souhaitée',
       category: 'delivery',
       inputType: 'date',
     });

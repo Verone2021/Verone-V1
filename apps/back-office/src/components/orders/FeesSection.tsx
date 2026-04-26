@@ -13,6 +13,13 @@ interface IFeesSectionProps {
   insuranceCostHt: number;
   feesVatRate: number;
   readOnly?: boolean;
+  /**
+   * Refetch parent order after a successful save. Required to refresh the
+   * `initial*` props (which back hasChanges and the totals card) — without it,
+   * the user sees the Save button stay active and the totals stay stale, which
+   * looks like the save did nothing.
+   */
+  onSaved?: () => void | Promise<void>;
 }
 
 const VAT_RATE_OPTIONS: Array<{ value: number; label: string }> = [
@@ -30,6 +37,7 @@ export function FeesSection(props: IFeesSectionProps): React.ReactNode {
     insuranceCostHt: initialInsurance,
     feesVatRate: initialVatRate,
     readOnly = false,
+    onSaved,
   } = props;
 
   const [shippingCostHt, setShippingCostHt] = useState<number>(initialShipping);
@@ -81,12 +89,28 @@ export function FeesSection(props: IFeesSectionProps): React.ReactNode {
 
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2000);
+      // Refetch parent so initial* props match what we just saved (otherwise
+      // hasChanges stays true and OrderTotalsCard / TTC stay stale).
+      if (onSaved) {
+        try {
+          await onSaved();
+        } catch (refetchErr) {
+          console.error('[FeesSection] Refetch after save failed:', refetchErr);
+        }
+      }
     } catch (err) {
       console.error('[FeesSection] Failed to save fees:', err);
     } finally {
       setIsSaving(false);
     }
-  }, [orderId, shippingCostHt, handlingCostHt, insuranceCostHt, feesVatRate]);
+  }, [
+    orderId,
+    shippingCostHt,
+    handlingCostHt,
+    insuranceCostHt,
+    feesVatRate,
+    onSaved,
+  ]);
 
   const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('fr-FR', {

@@ -15,7 +15,10 @@ import { z } from 'zod';
 import type { Database } from '@verone/types';
 
 import { getLogoAttachments } from '../_shared/email-logo';
-import { buildTrackingEmailHtml } from '../_shared/shipping-tracking-template';
+import {
+  buildTrackingEmailHtml,
+  type TrackingInfo,
+} from '../_shared/shipping-tracking-template';
 
 // ── Clients ───────────────────────────────────────────────────────────
 
@@ -36,31 +39,36 @@ function getAdminClient() {
 
 // ── Validation ────────────────────────────────────────────────────────
 
-const SendShippingTrackingSchema = z.object({
-  salesOrderId: z.string().uuid(),
-  shipmentId: z.string().uuid(),
-  to: z.array(z.string().email()).min(1).max(10),
-  subject: z.string().min(1).max(200),
-  message: z.string().min(1).max(5000),
-});
+// Multi-shipments par défaut. shipmentId (singulier) reste accepté pour
+// rétro-compat avec les éventuels appels externes pendant la transition.
+const SendShippingTrackingSchema = z
+  .object({
+    salesOrderId: z.string().uuid(),
+    shipmentId: z.string().uuid().optional(),
+    shipmentIds: z.array(z.string().uuid()).max(10).optional(),
+    to: z.array(z.string().email()).min(1).max(10),
+    subject: z.string().min(1).max(200),
+    message: z.string().min(1).max(5000),
+  })
+  .refine(
+    data => Boolean(data.shipmentId) || (data.shipmentIds?.length ?? 0) > 0,
+    { message: 'Provide at least shipmentId or shipmentIds' }
+  );
 
 // ── Order + Shipment fetch ────────────────────────────────────────────
 
-interface ShipmentInfo {
+interface OrderTrackingsInfo {
   customerName: string;
   orderNumber: string;
-  trackingNumber: string | null;
-  trackingUrl: string | null;
-  carrierName: string | null;
-  shippedAt: string | null;
+  trackings: Array<TrackingInfo & { shipmentId: string }>;
 }
 
-async function fetchShipmentInfo(
+async function fetchShipmentsInfo(
   supabase: ReturnType<typeof getAdminClient>,
   salesOrderId: string,
-  shipmentId: string
-): Promise<ShipmentInfo | null> {
-  const [orderResult, shipmentResult] = await Promise.all([
+  shipmentIds: string[]
+): Promise<OrderTrackingsInfo | null> {
+  const [orderResult, shipmentsResult] = await Promise.all([
     supabase
       .from('sales_orders')
       .select(
@@ -74,24 +82,21 @@ async function fetchShipmentInfo(
       .single(),
     supabase
       .from('sales_order_shipments')
-      .select('tracking_number, tracking_url, carrier_name, shipped_at')
+      .select('id, tracking_number, tracking_url, carrier_name, shipped_at')
       .eq('sales_order_id', salesOrderId)
-      .eq('id', shipmentId)
-      .limit(1)
-      .single(),
+      .in('id', shipmentIds)
+      .order('shipped_at', { ascending: true }),
   ]);
 
   if (orderResult.error || !orderResult.data) return null;
-  if (shipmentResult.error || !shipmentResult.data) return null;
+  if (shipmentsResult.error || !shipmentsResult.data) return null;
 
   const order = orderResult.data;
-  const shipment = shipmentResult.data;
 
   const org = (order as Record<string, unknown>).organisations as {
     trade_name: string | null;
     legal_name: string | null;
   } | null;
-
   const indiv = (order as Record<string, unknown>).individual_customers as {
     first_name: string | null;
     last_name: string | null;
@@ -107,13 +112,24 @@ async function fetchShipmentInfo(
       `${indiv?.first_name ?? ''} ${indiv?.last_name ?? ''}`.trim();
   }
 
+  // On filtre les shipments sans tracking_number — un envoi tracking n'a
+  // aucun sens sans numéro (cas main propre / retrait sans tracking ou
+  // shipment Packlink pas encore en `paye`). Le caller doit déjà filtrer
+  // côté UI mais on protège le backend.
+  const trackings = shipmentsResult.data
+    .filter(s => Boolean(s.tracking_number))
+    .map(s => ({
+      shipmentId: s.id,
+      trackingNumber: s.tracking_number as string,
+      trackingUrl: s.tracking_url,
+      carrierName: s.carrier_name,
+      shippedAt: s.shipped_at,
+    }));
+
   return {
     customerName,
     orderNumber: order.order_number,
-    trackingNumber: shipment.tracking_number,
-    trackingUrl: shipment.tracking_url,
-    carrierName: shipment.carrier_name,
-    shippedAt: shipment.shipped_at,
+    trackings,
   };
 }
 
@@ -163,38 +179,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { salesOrderId, shipmentId, to, subject, message } = parsed.data;
+    const { salesOrderId, shipmentId, shipmentIds, to, subject, message } =
+      parsed.data;
     const supabase = getAdminClient();
 
-    const shipmentInfo = await fetchShipmentInfo(
-      supabase,
-      salesOrderId,
-      shipmentId
-    );
-    if (!shipmentInfo) {
+    // Normalise : on travaille toujours sur un array (rétro-compat avec
+    // l'ancien `shipmentId` singulier).
+    const ids = shipmentIds ?? (shipmentId ? [shipmentId] : []);
+
+    const info = await fetchShipmentsInfo(supabase, salesOrderId, ids);
+    if (!info) {
       return NextResponse.json(
-        { success: false, error: 'Order or shipment not found' },
+        { success: false, error: 'Order or shipments not found' },
         { status: 404 }
       );
     }
 
-    if (!shipmentInfo.trackingNumber) {
+    if (info.trackings.length === 0) {
       return NextResponse.json(
         {
           success: false,
-          error: 'No tracking number available for this shipment',
+          error: 'No tracking number available for the selected shipments',
         },
         { status: 422 }
       );
     }
 
     const html = buildTrackingEmailHtml({
-      customerName: shipmentInfo.customerName,
-      orderNumber: shipmentInfo.orderNumber,
-      trackingNumber: shipmentInfo.trackingNumber,
-      trackingUrl: shipmentInfo.trackingUrl,
-      carrierName: shipmentInfo.carrierName,
-      shippedAt: shipmentInfo.shippedAt,
+      customerName: info.customerName,
+      orderNumber: info.orderNumber,
+      trackings: info.trackings.map(t => ({
+        trackingNumber: t.trackingNumber,
+        trackingUrl: t.trackingUrl,
+        carrierName: t.carrierName,
+        shippedAt: t.shippedAt,
+      })),
       customMessage: message,
     });
 
@@ -223,8 +242,8 @@ export async function POST(request: NextRequest) {
         event_type: 'email_tracking_sent',
         metadata: {
           recipients: to,
-          shipment_id: shipmentId,
-          tracking_number: shipmentInfo.trackingNumber,
+          shipment_ids: info.trackings.map(t => t.shipmentId),
+          tracking_numbers: info.trackings.map(t => t.trackingNumber),
           resend_id: emailData?.id,
         },
         created_by: user.id,
@@ -238,7 +257,11 @@ export async function POST(request: NextRequest) {
         }
       });
 
-    return NextResponse.json({ success: true, emailId: emailData?.id });
+    return NextResponse.json({
+      success: true,
+      emailId: emailData?.id,
+      shipmentsCount: info.trackings.length,
+    });
   } catch (error) {
     console.error('[send-shipping-tracking] Unexpected error:', error);
     return NextResponse.json(

@@ -1,11 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-
 import { Badge, Button, Card, CardContent } from '@verone/ui';
 import {
   CheckCircle2,
-  MessageSquare,
   RotateCcw,
   Truck,
   XCircle,
@@ -20,7 +17,6 @@ import { QuotesSection } from '@/components/orders/QuotesSection';
 
 import type { OrderWithDetails, FusedContactGroup } from './types';
 import { ContactsUnified } from './ContactsUnified';
-import { RequestMissingFieldModal } from './RequestMissingFieldModal';
 
 // ============================================
 // PROPS
@@ -37,9 +33,12 @@ export interface RightColumnProps {
   onOpenShipmentModal: () => void;
   // Contact dialog
   onOpenContactDialog: (role: 'responsable' | 'billing' | 'delivery') => void;
-  // Request info
-  onRequestInfo?: () => void;
-  missingFieldsTotal?: number;
+  // Request info — depuis ContactsUnified (rôles non assignés). Le bouton
+  // "Demander compléments" global vit désormais uniquement dans le bandeau
+  // MissingInfoBanner en haut de page (suppression du doublon).
+  onRequestComplementForRole: (
+    role: 'responsable' | 'billing' | 'delivery'
+  ) => void;
   // History
   historyEvents: ReturnType<
     typeof import('@verone/orders').useOrderHistory
@@ -59,15 +58,10 @@ export function RightColumn({
   onStatusChange,
   onOpenShipmentModal,
   onOpenContactDialog,
-  onRequestInfo,
-  missingFieldsTotal,
+  onRequestComplementForRole,
   historyEvents,
   historyLoading,
 }: RightColumnProps) {
-  const [requestModalRole, setRequestModalRole] = useState<
-    'responsable' | 'billing' | 'delivery' | null
-  >(null);
-
   const getStatusBadge = (status: string) => {
     const variants: Record<
       string,
@@ -141,23 +135,8 @@ export function RightColumn({
                 </Button>
               </>
             )}
-            {onRequestInfo &&
-              order.status !== 'cancelled' &&
-              order.status !== 'delivered' && (
-                <Button
-                  variant="outline"
-                  className="w-full gap-2 relative"
-                  onClick={onRequestInfo}
-                >
-                  <MessageSquare className="h-4 w-4" />
-                  Demander compléments
-                  {!!missingFieldsTotal && missingFieldsTotal > 0 && (
-                    <span className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold">
-                      {missingFieldsTotal}
-                    </span>
-                  )}
-                </Button>
-              )}
+            {/* "Demander compléments" déplacé dans MissingInfoBanner (haut
+                de page) pour éviter le doublon. */}
             {/* shipped is a terminal status before delivery — no further action */}
             {order.status !== 'cancelled' &&
               order.status !== 'delivered' &&
@@ -188,14 +167,7 @@ export function RightColumn({
         fusedContacts={fusedContacts}
         locked={locked}
         onOpenContactDialog={onOpenContactDialog}
-        onOpenRequestModal={role => setRequestModalRole(role)}
-      />
-      <RequestMissingFieldModal
-        open={!!requestModalRole}
-        onClose={() => setRequestModalRole(null)}
-        order={order}
-        role={requestModalRole}
-        onSuccess={() => setRequestModalRole(null)}
+        onOpenRequestModal={onRequestComplementForRole}
       />
 
       {/* PAIEMENT + RAPPROCHEMENT (intégrés) — masqué si commande en attente d'approbation */}

@@ -38,6 +38,7 @@ import { LeftColumn } from './components/LeftColumn';
 import { RightColumn } from './components/RightColumn';
 import { EditDialogs } from './components/EditDialogs';
 import { OrderHeader } from './components/OrderHeader';
+import { MissingInfoBanner } from './components/MissingInfoBanner';
 
 export default function LinkMeOrderDetailsPage() {
   const [showShipmentModal, setShowShipmentModal] = useState(false);
@@ -102,6 +103,7 @@ export default function LinkMeOrderDetailsPage() {
     handleUpdateOrganisation,
     handleUseOrgAddress,
     handleOpenContactDialog,
+    fetchOrder,
   } = useOrderDetailsPage();
 
   if (isLoading) {
@@ -147,6 +149,59 @@ export default function LinkMeOrderDetailsPage() {
         ownerType: details.owner_type,
       })
     : null;
+
+  // Le créateur DB (sales_orders.created_by) peut être un salarié back-office
+  // même si la commande est rattachée à un canal LinkMe (cas typique : un
+  // salarié saisit la commande pour le compte d'un affilié). On exclut le
+  // créateur du sélecteur de destinataires uniquement quand il est salarié
+  // BO — l'info vient de user_app_roles, pré-calculée dans use-fetch-order.
+  const isCreatedByBackOffice = order.createdByProfile?.is_back_office === true;
+
+  const handleRequestComplementForRole = (
+    role: 'responsable' | 'billing' | 'delivery'
+  ) => {
+    handleRequestComplementForCategory(role);
+  };
+
+  const handleRequestComplementForCategory = (cat: MissingFieldCategory) => {
+    setSelectedCategories(new Set<MissingFieldCategory>([cat]));
+    setShowRequestInfoDialog(true);
+  };
+
+  const handleOpenRequestComplementsAll = () => {
+    // Vide le set : makeHandleOpenChange (cf. ApprovalActionDialogs) coche
+    // automatiquement toutes les catégories pertinentes à l'ouverture.
+    setSelectedCategories(new Set());
+    setShowRequestInfoDialog(true);
+  };
+
+  // Handler pour les inline edits depuis MissingInfoBanner. La cible est soit
+  // l'organisation rattachée à la commande, soit la row sales_order_linkme_details
+  // de la commande. Refetch derrière pour rafraîchir la liste des champs
+  // manquants (le bandeau disparaîtra si tout est complété).
+  const handleSaveInlineMissingField = async (
+    target: 'organisations' | 'sales_order_linkme_details',
+    column: string,
+    value: string
+  ): Promise<void> => {
+    if (!order) return;
+    const supabase = createClient();
+    if (target === 'organisations') {
+      if (!order.customer_id) throw new Error('Organisation introuvable');
+      const { error: orgErr } = await supabase
+        .from('organisations')
+        .update({ [column]: value })
+        .eq('id', order.customer_id);
+      if (orgErr) throw new Error(orgErr.message);
+    } else {
+      const { error: detErr } = await supabase
+        .from('sales_order_linkme_details')
+        .update({ [column]: value })
+        .eq('sales_order_id', order.id);
+      if (detErr) throw new Error(detErr.message);
+    }
+    await fetchOrder();
+  };
 
   const handleRequestInfo = () => {
     if (!requestMessage.trim() || !order) return;
@@ -280,6 +335,16 @@ export default function LinkMeOrderDetailsPage() {
         )}
       </div>
 
+      {missingFieldsResult && (
+        <MissingInfoBanner
+          missingFields={missingFieldsResult}
+          onRequestComplements={handleOpenRequestComplementsAll}
+          onRequestComplementForCategory={handleRequestComplementForCategory}
+          onSaveInlineField={handleSaveInlineMissingField}
+          onOpenContactModal={handleOpenContactDialog}
+        />
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <LeftColumn
           order={order}
@@ -313,6 +378,7 @@ export default function LinkMeOrderDetailsPage() {
           }}
           updateDetailsPending={updateDetails.isPending}
           onUpdateOrganisation={handleUpdateOrganisation}
+          onRefetchOrder={fetchOrder}
         />
 
         <RightColumn
@@ -325,8 +391,7 @@ export default function LinkMeOrderDetailsPage() {
           }}
           onOpenShipmentModal={() => setShowShipmentModal(true)}
           onOpenContactDialog={handleOpenContactDialog}
-          onRequestInfo={() => setShowRequestInfoDialog(true)}
-          missingFieldsTotal={missingFieldsResult?.totalCategories}
+          onRequestComplementForRole={handleRequestComplementForRole}
           historyEvents={historyEvents}
           historyLoading={historyLoading}
         />
@@ -401,6 +466,7 @@ export default function LinkMeOrderDetailsPage() {
         order={order as unknown as OrderWithDetailsApproval}
         details={details}
         createdByProfile={order.createdByProfile}
+        excludeCreator={isCreatedByBackOffice}
         requestMessage={requestMessage}
         setRequestMessage={setRequestMessage}
         selectedCategories={selectedCategories}

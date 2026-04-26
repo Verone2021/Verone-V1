@@ -232,12 +232,29 @@ async function fetchCreatedByProfile(
   supabase: ReturnType<typeof createClient>,
   createdByUserId: string
 ): Promise<CreatedByProfile | null> {
-  const { data: profileData } = await supabase
-    .from('user_profiles')
-    .select('first_name, last_name, email')
-    .eq('user_id', createdByUserId)
-    .single();
-  return profileData ? (profileData as CreatedByProfile) : null;
+  // Récupère le profil + détecte si c'est un salarié back-office (rôle actif
+  // dans user_app_roles). is_back_office alimente le filtre excludeCreator
+  // du modal "Demander des compléments".
+  const [profileResult, roleResult] = await Promise.all([
+    supabase
+      .from('user_profiles')
+      .select('first_name, last_name, email')
+      .eq('user_id', createdByUserId)
+      .single(),
+    supabase
+      .from('user_app_roles')
+      .select('user_id')
+      .eq('user_id', createdByUserId)
+      .eq('app', 'back-office')
+      .eq('is_active', true)
+      .limit(1),
+  ]);
+  if (!profileResult.data) return null;
+  return {
+    ...(profileResult.data as CreatedByProfile),
+    is_back_office:
+      Array.isArray(roleResult.data) && roleResult.data.length > 0,
+  };
 }
 
 // ============================================
