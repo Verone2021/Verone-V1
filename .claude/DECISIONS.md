@@ -610,3 +610,74 @@ Monitoring hebdo : cron DB drift (lundi), Dependabot (lundi),
 auto-release staging→main (lundi).
 
 **Référence** : PR #750, #751, #752, #753 (release), #754 (fixes post-release).
+
+---
+
+## ADR-021 — 2026-04-26 — Architecture programme ambassadeurs site-internet
+
+**Statut** : Accepté
+**Décideur** : Romeo
+**Référence** : `docs/scratchpad/audit-2026-04-26-ambassadeurs-architecture.md`
+
+### Contexte
+
+Le système ambassadeurs B2C site-internet a été créé en avril 2026 (PR #583 [SI-AMB-001]) sur un modèle "profil ambassadeur séparé" : table `site_ambassadors` distincte de `individual_customers`, avec son propre `auth_user_id` et ses propres workflows BO. 0 ambassadeurs en production à ce jour.
+
+Romeo veut refondre pour aligner avec son modèle métier : **un client est un compte unique ; "ambassadeur" est juste une option qu'il peut activer**. Audit complet livré, benchmark industrie 2026 (Refersion, Shopify Collabs, Awin, Amazon Associates) effectué.
+
+### Décisions tranchées
+
+| #   | Sujet                                    | Décision                                                                                                                                                                                                      |
+| --- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | Modèle de données                        | **Refacto** `site_ambassadors` → flag `is_ambassador` + colonnes `ambassador_*` sur `individual_customers`. Drop table séparée.                                                                               |
+| D2  | Système de niveaux                       | **Pas de tiers** au lancement. Flat rate par défaut + custom override par ambassadeur (champ `commission_rate`). Tiers introduits éventuellement >30 ambassadeurs actifs.                                     |
+| D3  | Base de calcul commission                | **HT après remise** (standard industrie 2026). Verone le fait déjà via `orderHt = finalTtc / 1.20`. Documenter en CGU.                                                                                        |
+| D4  | Lien sans code promo                     | **Ambassadeur tracé via cookie, pas de réduction client.** Si client oublie de saisir le code mais a cliqué sur le lien d'affiliation, l'ambassadeur reçoit sa prime mais le client paye plein tarif.         |
+| D5  | Durée cookie tracking                    | **30 jours** (déjà en place dans `apps/site-internet/src/middleware.ts`). Standard e-commerce.                                                                                                                |
+| D6  | Notification email                       | **Email à chaque gain** (après webhook Stripe paid) + opt-out via toggle dans paramètres ambassadeur. Vision Romeo R6.                                                                                        |
+| D7  | Onboarding ambassadeur                   | **Double entrée** : (a) self-service client via toggle dans `/compte/ambassadeur`, (b) admin BO peut activer un client existant ou créer un client+ambassadeur direct (envoi email avec password temporaire). |
+| D8  | URL pages ambassadeur                    | `/ambassadeur` reste **dashboard public partagé** (KPIs, codes, history). Nouvelle section `/compte/ambassadeur` pour les **paramètres** (toggle, taux, IBAN, opt-in notifs).                                 |
+| D9  | Workflow paiement                        | **SEPA manuel** + UI BO "Marquer payé" avec date virement + référence. Email auto à l'ambassadeur. Intégration Qonto API plus tard si volume justifie.                                                        |
+| D10 | Bug 404 BO `/canaux-vente/site-internet` | **À fixer en priorité (PR 0)** avant tout sprint ambassadeur. Sans BO admin fonctionnel, impossible d'administrer la feature.                                                                                 |
+| D11 | Règle d'attribution conflictuelle        | **Le code saisi gagne** sur le cookie (action explicite > tracking implicite). Si client visite via lien Ambassadeur A puis saisit code Ambassadeur B au checkout, B est attribué.                            |
+| D12 | Seuil minimum retrait prime              | **20 €** (override Romeo de la recommandation 50€ de la CGU page site). Aligner les CGU site et BO sur 20€.                                                                                                   |
+
+### Plan d'exécution (6 PRs séquentielles)
+
+| PR         | Branche                                    | Scope                                        | FEU                       |
+| ---------- | ------------------------------------------ | -------------------------------------------- | ------------------------- |
+| **PR 0**   | `fix/canaux-vente-site-internet-route-404` | Investiguer + fixer 404 BO prod              | VERT                      |
+| **PR 0.5** | `test/ambassador-baseline-e2e`             | Tests E2E filet de sécurité avant migration  | VERT                      |
+| **PR A**   | `feat/ambassador-customer-unification`     | Migration DB unification client/ambassadeur  | **ROUGE** (migration SQL) |
+| **PR B**   | `feat/ambassador-link-tracking-completion` | Tracking lien sans code + email gain         | VERT                      |
+| **PR C**   | `feat/ambassador-ui-unification`           | UI client `/compte/ambassadeur` + refonte BO | ORANGE (>5 fichiers)      |
+| **PR D**   | `feat/ambassador-payout-workflow`          | Workflow paiement primes BO                  | VERT                      |
+
+### Conséquences
+
+**Positives** :
+
+- Modèle CRM unifié (un client = un compte = potentiellement aussi ambassadeur)
+- Self-onboarding client (réduit la charge admin, aligné avec Refersion/Shopify Collabs)
+- Tracking dual (code + lien) déjà en place côté DB et middleware → juste à compléter côté checkout
+- Calcul commission conforme standard 2026 (déjà en place)
+
+**Risques** :
+
+- Migration DB sur table avec FK existantes (mitigé par 0 records)
+- RLS à reconcevoir sur `individual_customers` (pattern Verone connu)
+- Tests E2E manquants → PR 0.5 obligatoire avant PR A
+
+**À documenter** :
+
+- ADR séparé si Verone décide d'introduire les tiers (D2 phase 2)
+- Mise à jour CGU site (seuil retrait 20€ vs 50€ actuel)
+- Mise à jour CGU ambassadeur (mention HT après remise)
+
+### Sources benchmark
+
+- [Refgrow — Affiliate Commission Structures](https://refgrow.com/blog/affiliate-commission-structures-guide)
+- [Influence Flow — Multi-Tier Affiliate 2026](https://influenceflow.io/resources/mastering-multi-tier-affiliate-commission-structures-in-2026/)
+- [iRev — Server-Side Tracking 2026](https://irev.com/blog/cookieless-affiliate-tracking-what-actually-works-in-2026/)
+- [Refersion Shopify](https://www.refersion.com/partners/shopify/)
+- [Shopify Affiliate Apps Comparison (Hulkapps)](https://www.hulkapps.com/blogs/compare/shopify-affiliate-program-apps-refersion-affiliate-marketing-vs-shopify-collabs)
