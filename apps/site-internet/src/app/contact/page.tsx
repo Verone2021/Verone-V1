@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { Mail, MapPin, Phone } from 'lucide-react';
+import { Mail, MapPin } from 'lucide-react';
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -71,24 +71,10 @@ export default function ContactPage() {
                 <div>
                   <p className="text-sm font-medium text-verone-black">Email</p>
                   <a
-                    href="mailto:contact@verone.fr"
+                    href="mailto:romeo@veronecollections.fr"
                     className="text-sm text-verone-gray-600 hover:text-verone-black transition-colors"
                   >
-                    contact@verone.fr
-                  </a>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Phone className="h-5 w-5 text-verone-gray-400 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-verone-black">
-                    Téléphone
-                  </p>
-                  <a
-                    href="tel:+33123456789"
-                    className="text-sm text-verone-gray-600 hover:text-verone-black transition-colors"
-                  >
-                    +33 1 23 45 67 89
+                    romeo@veronecollections.fr
                   </a>
                 </div>
               </div>
