@@ -96,8 +96,8 @@ export function CardProductLuxury({
       )}
 
       <Link href={href} className="block">
-        {/* Image Container */}
-        <div className="relative bg-verone-gray-50 aspect-square overflow-hidden">
+        {/* Image Container — bg-white pour fusionner avec les images sur fond blanc (audit Romeo 2026-04-26) */}
+        <div className="relative bg-white aspect-square overflow-hidden">
           {imageUrl ? (
             <Image
               src={imageUrl}
@@ -105,7 +105,9 @@ export function CardProductLuxury({
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
               className={cn(
-                'object-contain p-4 group-hover:scale-105 transition-transform duration-700',
+                // p-8 (au lieu de p-4) pour donner plus d'air autour de l'image, moins zoome
+                // scale-102 (au lieu de scale-105) pour un hover plus subtil
+                'object-contain p-8 group-hover:scale-[1.02] transition-transform duration-700',
                 isOutOfStock && 'opacity-60'
               )}
               priority={priority}
