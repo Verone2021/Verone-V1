@@ -116,6 +116,14 @@ export default function ConsultationDetailPage() {
                 );
               });
             }}
+            onUnvalidate={() => {
+              void detail.handleUnvalidateConsultation().catch(error => {
+                console.error(
+                  '[ConsultationDetailPage] Unvalidate failed:',
+                  error
+                );
+              });
+            }}
             onArchive={() => {
               void detail.handleArchiveConsultation().catch(error => {
                 console.error(

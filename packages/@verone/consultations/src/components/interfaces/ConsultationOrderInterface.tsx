@@ -179,21 +179,24 @@ export function ConsultationOrderInterface({
   );
   const hasAcceptedItems = acceptedItems.length > 0;
 
-  // KPIs = uniquement les items acceptes ou commandes (projection reelle)
-  const total = acceptedItems.reduce((sum, item) => {
+  // KPIs = items en attente + acceptés + commandés (projection courante du devis).
+  // Seuls les "rejected" sont exclus. Sinon le total reste à 0 € tant qu'aucun
+  // item n'a été basculé en "OK", ce qui ne reflète pas l'état du devis envoyé.
+  const kpiItems = consultationItems.filter(i => i.status !== 'rejected');
+  const total = kpiItems.reduce((sum, item) => {
     if (item.is_free) return sum;
     return sum + (item.unit_price ?? 0) * item.quantity;
   }, 0);
-  const totalCost = acceptedItems.reduce(
+  const totalCost = kpiItems.reduce(
     (sum, item) => sum + getItemCostTotal(item),
     0
   );
-  const totalShipping = acceptedItems.reduce(
+  const totalShipping = kpiItems.reduce(
     (sum, item) =>
       item.is_sample ? sum : sum + item.shipping_cost * item.quantity,
     0
   );
-  const totalMargin = acceptedItems.reduce(
+  const totalMargin = kpiItems.reduce(
     (sum, item) => sum + getItemMargin(item),
     0
   );

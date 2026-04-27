@@ -31,6 +31,9 @@ interface DevisDialogsProps {
   showEmailModal: boolean;
   onEmailModalClose: () => void;
   onEmailSent: () => void;
+  /** Vrai si le devis est lié à une consultation (financial_documents.consultation_id IS NOT NULL).
+   *  Adapte le message email par défaut. */
+  fromConsultation?: boolean;
   // Delete dialog
   showDeleteConfirm: boolean;
   onDeleteConfirmClose: (open: boolean) => void;
@@ -50,6 +53,7 @@ export function DevisDialogs({
   showEmailModal,
   onEmailModalClose,
   onEmailSent,
+  fromConsultation = false,
   showDeleteConfirm,
   onDeleteConfirmClose,
   onDelete,
@@ -103,6 +107,7 @@ export function DevisDialogs({
         clientEmail={quote.client?.email ?? ''}
         clientName={quote.client?.name ?? ''}
         pdfUrl={`/api/qonto/quotes/${id}/pdf`}
+        fromConsultation={fromConsultation}
         onSent={onEmailSent}
       />
 
