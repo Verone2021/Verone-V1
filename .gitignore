@@ -97,6 +97,9 @@ next-env.d.ts
 .claude/*.log
 .claude/work/
 
+# Local runbook & secrets vault — never committed (one per machine)
+.claude/local/
+
 # ESLint baseline (local uniquement, régénéré dynamiquement)
 .eslint-baseline.json
 

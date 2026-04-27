@@ -14,6 +14,7 @@ import {
   Mail,
   FileText,
   CheckCircle,
+  Undo2,
   Archive,
   ArchiveRestore,
   Trash2,
@@ -34,6 +35,7 @@ interface ConsultationToolbarProps {
   onEdit: () => void;
   onStatusChange: (status: ClientConsultation['status']) => void;
   onValidate: () => void;
+  onUnvalidate: () => void;
   onArchive: () => void;
   onUnarchive: () => void;
   onDelete: () => void;
@@ -59,6 +61,7 @@ export function ConsultationToolbar({
   onEdit,
   onStatusChange,
   onValidate,
+  onUnvalidate,
   onArchive,
   onUnarchive,
   onDelete,
@@ -169,6 +172,23 @@ export function ConsultationToolbar({
               >
                 <CheckCircle className="h-4 w-4 mr-2 text-emerald-600" />
                 Valider la consultation
+              </DropdownMenuItem>
+            )}
+
+            {/* Dévalider — permet de reprendre l'édition prix/quantité après une validation prématurée */}
+            {consultation.validated_at && !consultation.archived_at && (
+              <DropdownMenuItem
+                onClick={() => {
+                  void Promise.resolve(onUnvalidate()).catch(err => {
+                    console.error(
+                      '[ConsultationToolbar] Unvalidate failed:',
+                      err
+                    );
+                  });
+                }}
+              >
+                <Undo2 className="h-4 w-4 mr-2 text-amber-600" />
+                Dévalider pour modifier
               </DropdownMenuItem>
             )}
 

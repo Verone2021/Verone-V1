@@ -65,6 +65,9 @@ interface SendDocumentEmailModalProps {
   pdfUrl: string;
   /** Contacts from linked sales order (billing, responsable, etc.) */
   contacts?: EmailContact[];
+  /** Indique que le document est issu d'une consultation : adapte le message
+   *  par défaut pour demander la validation au client. */
+  fromConsultation?: boolean;
   onSent?: () => void;
 }
 
@@ -80,6 +83,7 @@ export function SendDocumentEmailModal({
   clientName: _clientName,
   pdfUrl,
   contacts = [],
+  fromConsultation = false,
   onSent,
 }: SendDocumentEmailModalProps) {
   const { toast: _toast } = useToast();
@@ -90,7 +94,7 @@ export function SendDocumentEmailModal({
     getDefaultSubject(documentType, documentNumber)
   );
   const [message, setMessage] = useState(
-    getDefaultMessage(documentType, documentNumber)
+    getDefaultMessage(documentType, documentNumber, { fromConsultation })
   );
   const [attachPdf, setAttachPdf] = useState(true);
   const [sending, setSending] = useState(false);
@@ -110,14 +114,16 @@ export function SendDocumentEmailModal({
       setRecipients(initial);
       setManualEmail('');
       setSubject(getDefaultSubject(documentType, documentNumber));
-      setMessage(getDefaultMessage(documentType, documentNumber));
+      setMessage(
+        getDefaultMessage(documentType, documentNumber, { fromConsultation })
+      );
       setAttachPdf(true);
       setSending(false);
       setPdfBlob(null);
       setPreviewUrl(null);
       fetchingRef.current = false;
     }
-  }, [open, clientEmail, documentType, documentNumber]);
+  }, [open, clientEmail, documentType, documentNumber, fromConsultation]);
 
   // ── Recipient helpers ──
   const addRecipient = (email: string) => {

@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { QuoteStatusBadge } from '@verone/finance/components';
 import { useDocumentEmails } from '@verone/finance/hooks';
 import { Badge, Button } from '@verone/ui';
+import { createClient } from '@verone/utils/supabase/client';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
@@ -39,6 +40,24 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  // Détecte si le devis est lié à une consultation (pour adapter le mail).
+  const [fromConsultation, setFromConsultation] = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('financial_documents')
+          .select('consultation_id')
+          .eq('qonto_invoice_id', id)
+          .maybeSingle();
+        setFromConsultation(Boolean(data?.consultation_id));
+      } catch (err) {
+        console.error('[QuoteDetail] consultation check failed:', err);
+      }
+    })();
+  }, [id]);
 
   const {
     emails: documentEmails,
@@ -274,6 +293,7 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
             console.error('[QuoteDetail] Refresh emails failed:', err);
           });
         }}
+        fromConsultation={fromConsultation}
         showDeleteConfirm={showDeleteConfirm}
         onDeleteConfirmClose={setShowDeleteConfirm}
         onDelete={() => {
