@@ -400,12 +400,12 @@ export type Database = {
       };
       ambassador_attributions: {
         Row: {
-          ambassador_id: string;
           attribution_method: string;
           cancellation_reason: string | null;
           code_id: string | null;
           commission_rate: number;
           created_at: string;
+          customer_id: string;
           id: string;
           order_id: string;
           order_total_ht: number;
@@ -416,12 +416,12 @@ export type Database = {
           validation_date: string | null;
         };
         Insert: {
-          ambassador_id: string;
           attribution_method?: string;
           cancellation_reason?: string | null;
           code_id?: string | null;
           commission_rate: number;
           created_at?: string;
+          customer_id: string;
           id?: string;
           order_id: string;
           order_total_ht: number;
@@ -432,12 +432,12 @@ export type Database = {
           validation_date?: string | null;
         };
         Update: {
-          ambassador_id?: string;
           attribution_method?: string;
           cancellation_reason?: string | null;
           code_id?: string | null;
           commission_rate?: number;
           created_at?: string;
+          customer_id?: string;
           id?: string;
           order_id?: string;
           order_total_ht?: number;
@@ -449,17 +449,17 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: 'ambassador_attributions_ambassador_id_fkey';
-            columns: ['ambassador_id'];
-            isOneToOne: false;
-            referencedRelation: 'site_ambassadors';
-            referencedColumns: ['id'];
-          },
-          {
             foreignKeyName: 'ambassador_attributions_code_id_fkey';
             columns: ['code_id'];
             isOneToOne: false;
             referencedRelation: 'ambassador_codes';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'ambassador_attributions_customer_id_fkey';
+            columns: ['customer_id'];
+            isOneToOne: false;
+            referencedRelation: 'individual_customers';
             referencedColumns: ['id'];
           },
           {
@@ -501,9 +501,9 @@ export type Database = {
       };
       ambassador_codes: {
         Row: {
-          ambassador_id: string;
           code: string;
           created_at: string;
+          customer_id: string;
           discount_id: string;
           id: string;
           is_active: boolean;
@@ -511,9 +511,9 @@ export type Database = {
           usage_count: number;
         };
         Insert: {
-          ambassador_id: string;
           code: string;
           created_at?: string;
+          customer_id: string;
           discount_id: string;
           id?: string;
           is_active?: boolean;
@@ -521,9 +521,9 @@ export type Database = {
           usage_count?: number;
         };
         Update: {
-          ambassador_id?: string;
           code?: string;
           created_at?: string;
+          customer_id?: string;
           discount_id?: string;
           id?: string;
           is_active?: boolean;
@@ -532,10 +532,10 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: 'ambassador_codes_ambassador_id_fkey';
-            columns: ['ambassador_id'];
+            foreignKeyName: 'ambassador_codes_customer_id_fkey';
+            columns: ['customer_id'];
             isOneToOne: false;
-            referencedRelation: 'site_ambassadors';
+            referencedRelation: 'individual_customers';
             referencedColumns: ['id'];
           },
           {
@@ -3829,6 +3829,25 @@ export type Database = {
           accepts_notifications: boolean | null;
           address_line1: string | null;
           address_line2: string | null;
+          ambassador_account_holder_name: string | null;
+          ambassador_activated_at: string | null;
+          ambassador_annual_earnings_ytd: number;
+          ambassador_bank_name: string | null;
+          ambassador_bic: string | null;
+          ambassador_cgu_accepted_at: string | null;
+          ambassador_cgu_version: string | null;
+          ambassador_commission_rate: number | null;
+          ambassador_current_balance: number;
+          ambassador_discount_rate: number | null;
+          ambassador_iban: string | null;
+          ambassador_notes: string | null;
+          ambassador_notify_on_gain: boolean;
+          ambassador_payout_threshold: number;
+          ambassador_siret: string | null;
+          ambassador_siret_required: boolean;
+          ambassador_total_primes_earned: number;
+          ambassador_total_primes_paid: number;
+          ambassador_total_sales_generated: number;
           auth_user_id: string | null;
           billing_address_line1: string | null;
           billing_address_line2: string | null;
@@ -3846,6 +3865,7 @@ export type Database = {
           has_different_billing_address: boolean | null;
           id: string;
           is_active: boolean | null;
+          is_ambassador: boolean;
           language_preference: string | null;
           last_name: string;
           notes: string | null;
@@ -3870,6 +3890,25 @@ export type Database = {
           accepts_notifications?: boolean | null;
           address_line1?: string | null;
           address_line2?: string | null;
+          ambassador_account_holder_name?: string | null;
+          ambassador_activated_at?: string | null;
+          ambassador_annual_earnings_ytd?: number;
+          ambassador_bank_name?: string | null;
+          ambassador_bic?: string | null;
+          ambassador_cgu_accepted_at?: string | null;
+          ambassador_cgu_version?: string | null;
+          ambassador_commission_rate?: number | null;
+          ambassador_current_balance?: number;
+          ambassador_discount_rate?: number | null;
+          ambassador_iban?: string | null;
+          ambassador_notes?: string | null;
+          ambassador_notify_on_gain?: boolean;
+          ambassador_payout_threshold?: number;
+          ambassador_siret?: string | null;
+          ambassador_siret_required?: boolean;
+          ambassador_total_primes_earned?: number;
+          ambassador_total_primes_paid?: number;
+          ambassador_total_sales_generated?: number;
           auth_user_id?: string | null;
           billing_address_line1?: string | null;
           billing_address_line2?: string | null;
@@ -3887,6 +3926,7 @@ export type Database = {
           has_different_billing_address?: boolean | null;
           id?: string;
           is_active?: boolean | null;
+          is_ambassador?: boolean;
           language_preference?: string | null;
           last_name: string;
           notes?: string | null;
@@ -3911,6 +3951,25 @@ export type Database = {
           accepts_notifications?: boolean | null;
           address_line1?: string | null;
           address_line2?: string | null;
+          ambassador_account_holder_name?: string | null;
+          ambassador_activated_at?: string | null;
+          ambassador_annual_earnings_ytd?: number;
+          ambassador_bank_name?: string | null;
+          ambassador_bic?: string | null;
+          ambassador_cgu_accepted_at?: string | null;
+          ambassador_cgu_version?: string | null;
+          ambassador_commission_rate?: number | null;
+          ambassador_current_balance?: number;
+          ambassador_discount_rate?: number | null;
+          ambassador_iban?: string | null;
+          ambassador_notes?: string | null;
+          ambassador_notify_on_gain?: boolean;
+          ambassador_payout_threshold?: number;
+          ambassador_siret?: string | null;
+          ambassador_siret_required?: boolean;
+          ambassador_total_primes_earned?: number;
+          ambassador_total_primes_paid?: number;
+          ambassador_total_sales_generated?: number;
           auth_user_id?: string | null;
           billing_address_line1?: string | null;
           billing_address_line2?: string | null;
@@ -3928,6 +3987,7 @@ export type Database = {
           has_different_billing_address?: boolean | null;
           id?: string;
           is_active?: boolean | null;
+          is_ambassador?: boolean;
           language_preference?: string | null;
           last_name?: string;
           notes?: string | null;
@@ -8615,108 +8675,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'variant_groups';
             referencedColumns: ['id'];
-          },
-        ];
-      };
-      site_ambassadors: {
-        Row: {
-          account_holder_name: string | null;
-          annual_earnings_ytd: number;
-          auth_user_id: string | null;
-          bank_name: string | null;
-          bic: string | null;
-          cgu_accepted_at: string | null;
-          cgu_version: string | null;
-          commission_rate: number;
-          created_at: string;
-          created_by: string | null;
-          current_balance: number;
-          discount_rate: number;
-          email: string;
-          first_name: string;
-          iban: string | null;
-          id: string;
-          is_active: boolean;
-          last_name: string;
-          notes: string | null;
-          phone: string | null;
-          siret: string | null;
-          siret_required: boolean;
-          total_primes_earned: number;
-          total_primes_paid: number;
-          total_sales_generated: number;
-          updated_at: string;
-        };
-        Insert: {
-          account_holder_name?: string | null;
-          annual_earnings_ytd?: number;
-          auth_user_id?: string | null;
-          bank_name?: string | null;
-          bic?: string | null;
-          cgu_accepted_at?: string | null;
-          cgu_version?: string | null;
-          commission_rate?: number;
-          created_at?: string;
-          created_by?: string | null;
-          current_balance?: number;
-          discount_rate?: number;
-          email: string;
-          first_name: string;
-          iban?: string | null;
-          id?: string;
-          is_active?: boolean;
-          last_name: string;
-          notes?: string | null;
-          phone?: string | null;
-          siret?: string | null;
-          siret_required?: boolean;
-          total_primes_earned?: number;
-          total_primes_paid?: number;
-          total_sales_generated?: number;
-          updated_at?: string;
-        };
-        Update: {
-          account_holder_name?: string | null;
-          annual_earnings_ytd?: number;
-          auth_user_id?: string | null;
-          bank_name?: string | null;
-          bic?: string | null;
-          cgu_accepted_at?: string | null;
-          cgu_version?: string | null;
-          commission_rate?: number;
-          created_at?: string;
-          created_by?: string | null;
-          current_balance?: number;
-          discount_rate?: number;
-          email?: string;
-          first_name?: string;
-          iban?: string | null;
-          id?: string;
-          is_active?: boolean;
-          last_name?: string;
-          notes?: string | null;
-          phone?: string | null;
-          siret?: string | null;
-          siret_required?: boolean;
-          total_primes_earned?: number;
-          total_primes_paid?: number;
-          total_sales_generated?: number;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'site_ambassadors_auth_user_id_fkey';
-            columns: ['auth_user_id'];
-            isOneToOne: true;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
-          },
-          {
-            foreignKeyName: 'site_ambassadors_created_by_fkey';
-            columns: ['created_by'];
-            isOneToOne: false;
-            referencedRelation: 'v_linkme_users';
-            referencedColumns: ['user_id'];
           },
         ];
       };
