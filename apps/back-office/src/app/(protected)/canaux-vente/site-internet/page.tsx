@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 
 // UI Components
@@ -26,20 +27,108 @@ import {
   Megaphone,
 } from 'lucide-react';
 
-// Local Components
-import { CategoriesSection } from './components/CategoriesSection';
-import { ClientsSection } from './components/ClientsSection';
-import { CMSSection } from './components/CMSSection';
-import { CmsPagesSection } from './components/CmsPagesSection';
-import { CollectionsSection } from './components/CollectionsSection';
-import { ConfigurationSection } from './components/ConfigurationSection';
-import { DashboardSection } from './components/DashboardSection';
-import { NewsletterSection } from './components/NewsletterSection';
-import { OrdersSection } from './components/OrdersSection';
-import { ProductsSection } from './components/ProductsSection';
-import { AmbassadorsSection } from './components/AmbassadorsSection';
-import { PromoCodesSection } from './components/PromoCodesSection';
-import { ReviewsSection } from './components/ReviewsSection';
+// Lazy-loaded sections : audit Bug 0 (404 BO /canaux-vente/site-internet).
+// Static imports of all 13 sections caused a 1MB+ initial bundle that made
+// Vercel's build silently OOM, dropping this route from the manifest
+// (x-matched-path:/_not-found in prod). Loading sections on-demand via
+// next/dynamic keeps the initial page small enough to build correctly,
+// while preserving the same behaviour (each tab still renders the same
+// component, just loaded the first time the user clicks it).
+//
+// SalesOrdersTable alone (pulled by OrdersSection) is 3604 lines across
+// 9 hooks/sub-components — by far the heaviest dependency.
+//
+// `ssr: false` is safe here because the page is `'use client'` anyway and
+// gated behind ProtectedLayout (auth redirect to /login).
+const CategoriesSection = dynamic(
+  () =>
+    import('./components/CategoriesSection').then(m => ({
+      default: m.CategoriesSection,
+    })),
+  { ssr: false, loading: () => null }
+);
+const ClientsSection = dynamic(
+  () =>
+    import('./components/ClientsSection').then(m => ({
+      default: m.ClientsSection,
+    })),
+  { ssr: false, loading: () => null }
+);
+const CMSSection = dynamic(
+  () =>
+    import('./components/CMSSection').then(m => ({ default: m.CMSSection })),
+  { ssr: false, loading: () => null }
+);
+const CmsPagesSection = dynamic(
+  () =>
+    import('./components/CmsPagesSection').then(m => ({
+      default: m.CmsPagesSection,
+    })),
+  { ssr: false, loading: () => null }
+);
+const CollectionsSection = dynamic(
+  () =>
+    import('./components/CollectionsSection').then(m => ({
+      default: m.CollectionsSection,
+    })),
+  { ssr: false, loading: () => null }
+);
+const ConfigurationSection = dynamic(
+  () =>
+    import('./components/ConfigurationSection').then(m => ({
+      default: m.ConfigurationSection,
+    })),
+  { ssr: false, loading: () => null }
+);
+const DashboardSection = dynamic(
+  () =>
+    import('./components/DashboardSection').then(m => ({
+      default: m.DashboardSection,
+    })),
+  { ssr: false, loading: () => null }
+);
+const NewsletterSection = dynamic(
+  () =>
+    import('./components/NewsletterSection').then(m => ({
+      default: m.NewsletterSection,
+    })),
+  { ssr: false, loading: () => null }
+);
+const OrdersSection = dynamic(
+  () =>
+    import('./components/OrdersSection').then(m => ({
+      default: m.OrdersSection,
+    })),
+  { ssr: false, loading: () => null }
+);
+const ProductsSection = dynamic(
+  () =>
+    import('./components/ProductsSection').then(m => ({
+      default: m.ProductsSection,
+    })),
+  { ssr: false, loading: () => null }
+);
+const AmbassadorsSection = dynamic(
+  () =>
+    import('./components/AmbassadorsSection').then(m => ({
+      default: m.AmbassadorsSection,
+    })),
+  { ssr: false, loading: () => null }
+);
+const PromoCodesSection = dynamic(
+  () =>
+    import('./components/PromoCodesSection').then(m => ({
+      default: m.PromoCodesSection,
+    })),
+  { ssr: false, loading: () => null }
+);
+const ReviewsSection = dynamic(
+  () =>
+    import('./components/ReviewsSection').then(m => ({
+      default: m.ReviewsSection,
+    })),
+  { ssr: false, loading: () => null }
+);
 
 /**
  * Page Canal Site Internet - Back Office CMS
