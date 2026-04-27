@@ -44,6 +44,7 @@ export function useConsultationItems(consultationId?: string) {
           status,
           shipping_cost,
           shipping_cost_currency,
+          selling_shipping_cost,
           cost_price_override,
           product:products(
             id,
@@ -96,6 +97,7 @@ export function useConsultationItems(consultationId?: string) {
           status: item.status ?? 'pending',
           shipping_cost: item.shipping_cost ?? 0,
           shipping_cost_currency: item.shipping_cost_currency ?? 'EUR',
+          selling_shipping_cost: item.selling_shipping_cost ?? 0,
           cost_price_override: item.cost_price_override ?? undefined,
           product: productData
             ? {
@@ -230,6 +232,8 @@ export function useConsultationItems(consultationId?: string) {
         updateData.shipping_cost = updates.shipping_cost;
       if (updates.shipping_cost_currency !== undefined)
         updateData.shipping_cost_currency = updates.shipping_cost_currency;
+      if (updates.selling_shipping_cost !== undefined)
+        updateData.selling_shipping_cost = updates.selling_shipping_cost;
       if (updates.cost_price_override !== undefined)
         updateData.cost_price_override = updates.cost_price_override;
       if (updates.is_sample !== undefined)
@@ -256,6 +260,8 @@ export function useConsultationItems(consultationId?: string) {
                 shipping_cost: updates.shipping_cost ?? item.shipping_cost,
                 shipping_cost_currency:
                   updates.shipping_cost_currency ?? item.shipping_cost_currency,
+                selling_shipping_cost:
+                  updates.selling_shipping_cost ?? item.selling_shipping_cost,
                 cost_price_override:
                   updates.cost_price_override ?? item.cost_price_override,
                 status: updates.status ?? item.status,

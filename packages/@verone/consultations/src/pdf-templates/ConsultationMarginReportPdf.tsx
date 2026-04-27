@@ -126,15 +126,23 @@ export function ConsultationMarginReportPdf({
   items,
   clientName,
 }: ConsultationMarginReportPdfProps) {
+  // Sémantique : item.shipping_cost = TOTAL LIGNE (pas par unité). Cohérent
+  // avec ConsultationOrderInterface (BO-CONSULT-FIX-002).
   const getCostPrice = (item: ConsultationItem): number =>
     item.cost_price_override ?? item.product?.cost_price ?? 0;
 
-  const getRevenue = (item: ConsultationItem): number =>
-    item.is_free || item.is_sample ? 0 : (item.unit_price ?? 0) * item.quantity;
+  const getRevenue = (item: ConsultationItem): number => {
+    if (item.is_free || item.is_sample) return 0;
+    return (
+      (item.unit_price ?? 0) * item.quantity + (item.selling_shipping_cost ?? 0)
+    );
+  };
 
-  const getCostTotal = (item: ConsultationItem): number =>
-    (getCostPrice(item) + (item.is_sample ? 0 : item.shipping_cost)) *
-    item.quantity;
+  const getCostTotal = (item: ConsultationItem): number => {
+    const goodsCost = getCostPrice(item) * item.quantity;
+    if (item.is_sample) return goodsCost;
+    return goodsCost + item.shipping_cost;
+  };
 
   const getMargin = (item: ConsultationItem): number =>
     getRevenue(item) - getCostTotal(item);
@@ -148,7 +156,7 @@ export function ConsultationMarginReportPdf({
   const totalRevenue = items.reduce((sum, i) => sum + getRevenue(i), 0);
   const totalCost = items.reduce((sum, i) => sum + getCostTotal(i), 0);
   const totalShipping = items.reduce(
-    (sum, i) => (i.is_sample ? sum : sum + i.shipping_cost * i.quantity),
+    (sum, i) => (i.is_sample ? sum : sum + i.shipping_cost),
     0
   );
   const totalMargin = totalRevenue - totalCost;
@@ -266,7 +274,7 @@ export function ConsultationMarginReportPdf({
               Prix achat
             </Text>
             <Text style={[s.th, { width: '10%', textAlign: 'right' }]}>
-              Transport/u
+              Transport
             </Text>
             <Text style={[s.th, { width: '10%', textAlign: 'right' }]}>
               Prix revient
@@ -284,8 +292,11 @@ export function ConsultationMarginReportPdf({
 
           {items.map(item => {
             const costPrice = getCostPrice(item);
-            const costPerUnit =
-              costPrice + (item.is_sample ? 0 : item.shipping_cost);
+            // Prix de revient unitaire = achat unitaire + (transport ligne / qté)
+            const shippingPerUnit = item.is_sample
+              ? 0
+              : item.shipping_cost / Math.max(1, item.quantity);
+            const costPerUnit = costPrice + shippingPerUnit;
             const margin = getMargin(item);
             const marginPct = getMarginPercent(item);
             const isNegative = margin < 0;

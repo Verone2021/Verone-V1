@@ -45,6 +45,7 @@ export function ConsultationOrderInterface({
   const [editPrice, setEditPrice] = useState('');
   const [editNotes, setEditNotes] = useState('');
   const [editShippingCost, setEditShippingCost] = useState('');
+  const [editSellingShippingCost, setEditSellingShippingCost] = useState('');
   const [editCostPriceOverride, setEditCostPriceOverride] = useState('');
   const [editIsSample, setEditIsSample] = useState(false);
 
@@ -66,6 +67,7 @@ export function ConsultationOrderInterface({
     setEditPrice(item.unit_price?.toString() ?? '');
     setEditNotes(item.notes ?? '');
     setEditShippingCost(item.shipping_cost?.toString() ?? '0');
+    setEditSellingShippingCost(item.selling_shipping_cost?.toString() ?? '0');
     setEditCostPriceOverride(item.cost_price_override?.toString() ?? '');
     setEditIsSample(item.is_sample ?? false);
   };
@@ -76,6 +78,9 @@ export function ConsultationOrderInterface({
       unit_price: editPrice ? parseFloat(editPrice) : undefined,
       notes: editNotes || undefined,
       shipping_cost: editShippingCost ? parseFloat(editShippingCost) : 0,
+      selling_shipping_cost: editSellingShippingCost
+        ? parseFloat(editSellingShippingCost)
+        : 0,
       cost_price_override: editCostPriceOverride
         ? parseFloat(editCostPriceOverride)
         : undefined,
@@ -151,9 +156,11 @@ export function ConsultationOrderInterface({
   };
 
   // Calculs marges
-  // Sémantique : item.shipping_cost = TOTAL LIGNE (pour toute la quantité),
-  // pas par unité. Romeo saisit le coût de transport global pour l'expédition,
-  // qu'il y ait 1 ou 30 articles. (Avant : multiplié par quantity → marge faussée.)
+  // Sémantique :
+  // - item.shipping_cost = COÛT d'expédition Verone (total ligne, pas par unité).
+  // - item.selling_shipping_cost = TRANSPORT VENTE refacturé au client (total ligne).
+  //   Augmente le revenu de la ligne. 0 = pas de refacturation.
+  // - Marge réelle = (vente × qty + selling_shipping) − (achat × qty + shipping_cost)
   const getItemCostPrice = (item: ConsultationItem): number =>
     item.cost_price_override ?? item.product?.cost_price ?? 0;
 
@@ -163,19 +170,23 @@ export function ConsultationOrderInterface({
     return goodsCost + item.shipping_cost;
   };
 
+  const getItemRevenue = (item: ConsultationItem): number => {
+    if (item.is_free || item.is_sample) return 0;
+    return (
+      (item.unit_price ?? 0) * item.quantity + (item.selling_shipping_cost ?? 0)
+    );
+  };
+
   const getItemMargin = (item: ConsultationItem): number => {
     if (item.is_free || item.is_sample)
       return -(getItemCostPrice(item) * item.quantity);
-    const revenue = (item.unit_price ?? 0) * item.quantity;
-    const cost = getItemCostPrice(item) * item.quantity + item.shipping_cost;
-    return revenue - cost;
+    return getItemRevenue(item) - getItemCostTotal(item);
   };
 
   const getItemMarginPercent = (item: ConsultationItem): number => {
-    const cost = getItemCostPrice(item) * item.quantity + item.shipping_cost;
+    const cost = getItemCostTotal(item);
     if (cost === 0 || item.is_free || item.is_sample) return 0;
-    const revenue = (item.unit_price ?? 0) * item.quantity;
-    return ((revenue - cost) / cost) * 100;
+    return ((getItemRevenue(item) - cost) / cost) * 100;
   };
 
   const totalItems = getTotalItemsCount();
@@ -188,10 +199,8 @@ export function ConsultationOrderInterface({
   // Seuls les "rejected" sont exclus. Sinon le total reste à 0 € tant qu'aucun
   // item n'a été basculé en "OK", ce qui ne reflète pas l'état du devis envoyé.
   const kpiItems = consultationItems.filter(i => i.status !== 'rejected');
-  const total = kpiItems.reduce((sum, item) => {
-    if (item.is_free) return sum;
-    return sum + (item.unit_price ?? 0) * item.quantity;
-  }, 0);
+  // CA Total = ventes encaissées + transport refacturé au client.
+  const total = kpiItems.reduce((sum, item) => sum + getItemRevenue(item), 0);
   const totalCost = kpiItems.reduce(
     (sum, item) => sum + getItemCostTotal(item),
     0
@@ -273,12 +282,14 @@ export function ConsultationOrderInterface({
           editPrice={editPrice}
           editNotes={editNotes}
           editShippingCost={editShippingCost}
+          editSellingShippingCost={editSellingShippingCost}
           editCostPriceOverride={editCostPriceOverride}
           editIsSample={editIsSample}
           onSetEditQuantity={setEditQuantity}
           onSetEditPrice={setEditPrice}
           onSetEditNotes={setEditNotes}
           onSetEditShippingCost={setEditShippingCost}
+          onSetEditSellingShippingCost={setEditSellingShippingCost}
           onSetEditCostPriceOverride={setEditCostPriceOverride}
           onStartEdit={startEditItem}
           onSaveEdit={saveEditItem}
