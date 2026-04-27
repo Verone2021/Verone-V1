@@ -14,8 +14,6 @@ export interface MetaCommerceProduct {
   primary_image_url: string | null;
   cost_price: number;
   custom_price_ht: number | null;
-  custom_title: string | null;
-  custom_description: string | null;
   description: string | null;
   catalog_id: string;
   meta_product_id: string | null;
