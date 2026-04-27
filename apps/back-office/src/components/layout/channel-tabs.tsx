@@ -93,7 +93,6 @@ const CHANNEL_TABS: Record<string, TabItem[]> = {
     {
       label: 'Commerce',
       tabs: [
-        { label: 'Commandes', href: '/canaux-vente/site-internet/commandes' },
         { label: 'Clients', href: '/canaux-vente/site-internet?tab=customers' },
         { label: 'Promos', href: '/canaux-vente/site-internet?tab=promos' },
       ],
