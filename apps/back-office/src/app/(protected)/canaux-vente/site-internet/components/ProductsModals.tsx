@@ -1,12 +1,47 @@
 'use client';
 
-import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
+import dynamic from 'next/dynamic';
+
 import { ConfirmDialog } from '@verone/ui';
 
-import { AddVariantGroupModal } from './AddVariantGroupModal';
-import { EditSiteInternetProductModal } from './EditSiteInternetProductModal';
-import { ProductPreviewModal } from './ProductPreviewModal';
 import type { SiteInternetProduct } from '../types';
+
+// Lazy-load heavy modals to avoid Vercel build OOM (audit 2026-04-26 Bug 0).
+// These modals each pull deep dependencies from @verone/products and
+// shadcn ui that previously caused the parent page bundle to silently
+// fail on Vercel build (page chunk missing → /canaux-vente/site-internet
+// returning 404 in prod).
+const UniversalProductSelectorV2 = dynamic(
+  () =>
+    import(
+      '@verone/products/components/selectors/UniversalProductSelectorV2'
+    ).then(m => ({ default: m.UniversalProductSelectorV2 })),
+  { ssr: false, loading: () => null }
+);
+
+const EditSiteInternetProductModal = dynamic(
+  () =>
+    import('./EditSiteInternetProductModal').then(m => ({
+      default: m.EditSiteInternetProductModal,
+    })),
+  { ssr: false, loading: () => null }
+);
+
+const AddVariantGroupModal = dynamic(
+  () =>
+    import('./AddVariantGroupModal').then(m => ({
+      default: m.AddVariantGroupModal,
+    })),
+  { ssr: false, loading: () => null }
+);
+
+const ProductPreviewModal = dynamic(
+  () =>
+    import('./ProductPreviewModal').then(m => ({
+      default: m.ProductPreviewModal,
+    })),
+  { ssr: false, loading: () => null }
+);
 
 interface ProductsModalsProps {
   // Confirm remove

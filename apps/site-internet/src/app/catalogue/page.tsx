@@ -114,8 +114,8 @@ export default function CataloguePage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12">
-      {/* Header */}
+    <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12 pb-32 md:pb-12">
+      {/* Header — pb-32 sur mobile pour la banniere cookies (audit 2026-04-26 Bug 8) */}
       <div className="mb-12">
         <h1 className="font-playfair text-3xl md:text-5xl font-bold text-verone-black mb-4">
           Notre Sélection

@@ -41,6 +41,91 @@ async function trackPromoUsage(
   console.warn('[Stripe Webhook] Promo tracked:', discountId);
 }
 
+/**
+ * Notify ambassador via email when a sale is attributed to them and paid.
+ * ADR-021 D6 : email à chaque gain + opt-in via individual_customers.ambassador_notify_on_gain.
+ * Non-blocking : logs errors but never throws.
+ */
+async function notifyAmbassadorOnGain(
+  supabaseUrl: string,
+  supabaseServiceKey: string,
+  orderId: string,
+  siteUrl: string
+): Promise<void> {
+  const sb = createClient(supabaseUrl, supabaseServiceKey);
+
+  const { data: attr } = await sb
+    .from('ambassador_attributions')
+    .select(
+      'customer_id, code_id, prime_amount, order_total_ht, commission_rate, attribution_method'
+    )
+    .eq('order_id', orderId)
+    .maybeSingle();
+
+  if (!attr) return;
+
+  const a = attr as {
+    customer_id: string;
+    code_id: string | null;
+    prime_amount: number;
+    order_total_ht: number;
+    commission_rate: number;
+    attribution_method: 'coupon_code' | 'referral_link';
+  };
+
+  const { data: customer } = await sb
+    .from('individual_customers')
+    .select('email, first_name, ambassador_notify_on_gain' as never)
+    .eq('id', a.customer_id)
+    .maybeSingle();
+
+  if (!customer) return;
+
+  const c = customer as unknown as {
+    email: string | null;
+    first_name: string | null;
+    ambassador_notify_on_gain: boolean | null;
+  };
+
+  if (c.ambassador_notify_on_gain === false) return;
+  if (!c.email || !c.first_name) return;
+
+  let code: string | undefined;
+  if (a.code_id) {
+    const { data: codeRow } = await sb
+      .from('ambassador_codes')
+      .select('code')
+      .eq('id', a.code_id)
+      .single();
+    code = (codeRow as { code: string } | null)?.code;
+  }
+
+  const response = await fetch(`${siteUrl}/api/emails/ambassador-gain`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: c.email,
+      firstName: c.first_name,
+      primeAmount: a.prime_amount,
+      orderTotalHt: a.order_total_ht,
+      commissionRate: a.commission_rate,
+      attributionMethod: a.attribution_method,
+      code,
+    }),
+  });
+
+  if (!response.ok) {
+    console.error(
+      '[Stripe Webhook] Ambassador gain email failed:',
+      await response.text()
+    );
+  } else {
+    console.warn(
+      `[Stripe Webhook] Ambassador notified: ${c.email} (+${a.prime_amount} EUR)`
+    );
+  }
+}
+
 export async function POST(request: Request) {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -128,6 +213,18 @@ export async function POST(request: Request) {
                 console.error('[Stripe Webhook] Promo tracking failed:', err);
               });
             }
+
+            // ADR-021 D6 : notify ambassador on each new attributed sale
+            const siteUrl =
+              process.env.NEXT_PUBLIC_SITE_URL ?? 'https://verone.fr';
+            void notifyAmbassadorOnGain(
+              supabaseUrl,
+              supabaseServiceKey,
+              existingOrderId,
+              siteUrl
+            ).catch(err => {
+              console.error('[Stripe Webhook] Ambassador notify failed:', err);
+            });
           }
         } else {
           // Fallback: create order directly (legacy or no pre-creation)

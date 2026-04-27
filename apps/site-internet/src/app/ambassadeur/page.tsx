@@ -12,7 +12,8 @@ interface AmbassadorProfile {
   id: string;
   first_name: string;
   last_name: string;
-  email: string;
+  email: string | null;
+  // ambassador_* columns (renamed from site_ambassadors fields)
   commission_rate: number;
   discount_rate: number;
   total_sales_generated: number;
@@ -63,7 +64,7 @@ Ce programme vous permet de partager un code promotionnel unique. Lorsqu'un clie
 3. PAIEMENT
 - Seuil minimum de retrait : 50 EUR.
 - Methode : virement SEPA sur le compte bancaire renseigne dans votre profil.
-- Les paiements sont effectues par l'equipe Verone apres validation.
+- Les paiements sont effectués par l'équipe Vérone après validation.
 
 4. OBLIGATIONS FISCALES
 - En dessous de 305 EUR de primes par an : aucune declaration necessaire (art. 92 CGI).
@@ -76,7 +77,7 @@ Ce programme vous permet de partager un code promotionnel unique. Lorsqu'un clie
 - Vous pouvez demander la desactivation de votre compte a tout moment.
 
 6. RESPONSABILITE
-- Vous vous engagez a ne pas denigrer la marque Verone.
+- Vous vous engagez à ne pas dénigrer la marque Vérone.
 - Vous ne devez pas utiliser de methodes trompeuses pour generer des ventes.
 `;
 
@@ -144,6 +145,30 @@ function StatCard({
 }
 
 // ============================================
+// Helper: map individual_customers row → AmbassadorProfile shape
+// ============================================
+
+function mapRowToProfile(row: Record<string, unknown>): AmbassadorProfile {
+  return {
+    id: row.id as string,
+    first_name: row.first_name as string,
+    last_name: row.last_name as string,
+    email: (row.email as string | null) ?? null,
+    commission_rate: (row.ambassador_commission_rate as number) ?? 0,
+    discount_rate: (row.ambassador_discount_rate as number) ?? 0,
+    total_sales_generated:
+      (row.ambassador_total_sales_generated as number) ?? 0,
+    total_primes_earned: (row.ambassador_total_primes_earned as number) ?? 0,
+    total_primes_paid: (row.ambassador_total_primes_paid as number) ?? 0,
+    current_balance: (row.ambassador_current_balance as number) ?? 0,
+    annual_earnings_ytd: (row.ambassador_annual_earnings_ytd as number) ?? 0,
+    siret_required: (row.ambassador_siret_required as boolean | null) ?? false,
+    cgu_accepted_at: (row.ambassador_cgu_accepted_at as string | null) ?? null,
+    cgu_version: (row.ambassador_cgu_version as string | null) ?? null,
+  };
+}
+
+// ============================================
 // Main Page
 // ============================================
 
@@ -174,11 +199,13 @@ export default function AmbassadorDashboardPage() {
       return;
     }
 
-    // Fetch ambassador profile
+    // Fetch ambassador profile from individual_customers
     const { data: amb } = await supabase
-      .from('site_ambassadors')
+      .from('individual_customers')
       .select('*')
       .eq('auth_user_id', user.id)
+      // is_ambassador column not yet in generated types — cast to bypass
+      .eq('is_ambassador' as never, true as never)
       .single();
 
     if (!amb) {
@@ -187,28 +214,37 @@ export default function AmbassadorDashboardPage() {
       return;
     }
 
-    setProfile(amb as AmbassadorProfile);
+    const mappedProfile = mapRowToProfile(
+      amb as unknown as Record<string, unknown>
+    );
+    setProfile(mappedProfile);
 
-    // Check CGU
-    if (!amb.cgu_accepted_at || amb.cgu_version !== CGU_VERSION) {
+    // Check CGU using new column names
+    const cguAcceptedAt = (amb as unknown as Record<string, unknown>)
+      .ambassador_cgu_accepted_at as string | null;
+    const cguVersion = (amb as unknown as Record<string, unknown>)
+      .ambassador_cgu_version as string | null;
+    if (!cguAcceptedAt || cguVersion !== CGU_VERSION) {
       setShowCgu(true);
     }
 
-    // Fetch codes
+    // Fetch codes using customer_id (new FK name)
     const { data: codesData } = await supabase
       .from('ambassador_codes')
       .select('id, code, qr_code_url, usage_count, is_active')
-      .eq('ambassador_id', amb.id);
+      // customer_id is the new FK name — cast to bypass stale types
+      .eq('customer_id' as never, amb.id as never);
 
     setCodes((codesData as AmbassadorCode[]) ?? []);
 
-    // Fetch attributions
+    // Fetch attributions using customer_id (new FK name)
     const { data: attrData } = await supabase
       .from('ambassador_attributions')
       .select(
         'id, order_total_ht, commission_rate, prime_amount, status, validation_date, created_at'
       )
-      .eq('ambassador_id', amb.id)
+      // customer_id is the new FK name — cast to bypass stale types
+      .eq('customer_id' as never, amb.id as never)
       .order('created_at', { ascending: false })
       .limit(50);
 
@@ -223,12 +259,13 @@ export default function AmbassadorDashboardPage() {
   const acceptCgu = useCallback(async () => {
     if (!profile) return;
     const supabase = createClient();
+    // Update individual_customers with new ambassador_cgu_* column names
     await supabase
-      .from('site_ambassadors')
+      .from('individual_customers')
       .update({
-        cgu_accepted_at: new Date().toISOString(),
-        cgu_version: CGU_VERSION,
-      })
+        ambassador_cgu_accepted_at: new Date().toISOString(),
+        ambassador_cgu_version: CGU_VERSION,
+      } as never)
       .eq('id', profile.id);
     setShowCgu(false);
   }, [profile]);
@@ -246,10 +283,10 @@ export default function AmbassadorDashboardPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center max-w-md">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Acces non autorise
+            Accès non autorisé
           </h1>
           <p className="text-gray-600">
-            Cette page est reservee aux ambassadeurs Verone. Si vous etes
+            Cette page est réservée aux ambassadeurs Vérone. Si vous êtes
             ambassadeur, connectez-vous avec votre compte.
           </p>
           <a
@@ -312,7 +349,7 @@ export default function AmbassadorDashboardPage() {
             <p className="text-sm text-orange-800 font-medium">
               Vos primes depassent 305 EUR cette annee. Un numero SIRET est
               requis pour continuer a recevoir des paiements. Contactez
-              l&apos;equipe Verone.
+              l&apos;équipe Vérone.
             </p>
           </div>
         )}

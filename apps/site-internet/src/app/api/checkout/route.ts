@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 import {
@@ -100,14 +101,25 @@ export async function POST(request: Request) {
       );
       orderId = result.orderId;
 
-      // Ambassador attribution (non-blocking)
-      if (orderId && discount?.code) {
+      // ADR-021 D3 + D4 : ambassador attribution (non-blocking)
+      // Priority: explicit promo code wins over referral cookie (D11).
+      // If no code but referral cookie present, attribute via 'referral_link'
+      // without applying any discount to the customer (D4).
+      const cookieStore = await cookies();
+      const referralCookieCode = cookieStore.get('verone_ref')?.value;
+      const ambassadorCode = discount?.code ?? referralCookieCode;
+      const attributionMethod: 'coupon_code' | 'referral_link' = discount?.code
+        ? 'coupon_code'
+        : 'referral_link';
+
+      if (orderId && ambassadorCode) {
         await createAmbassadorAttribution(
           orderId,
-          discount.code,
+          ambassadorCode,
           finalTtc,
           supabaseUrl,
-          supabaseServiceKey
+          supabaseServiceKey,
+          attributionMethod
         );
       }
     }

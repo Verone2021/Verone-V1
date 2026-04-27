@@ -2,9 +2,9 @@
  * API: Create auth account for an ambassador
  * POST /api/ambassadors/create-auth
  *
- * Creates a Supabase auth user for an existing site_ambassador,
- * generates a temporary password, and links the auth_user_id.
- * The ambassador can change their password on first login.
+ * Creates a Supabase auth user for an existing individual_customer with
+ * is_ambassador=true, generates a temporary password, and links the
+ * auth_user_id. The ambassador can change their password on first login.
  */
 
 import { NextResponse } from 'next/server';
@@ -17,7 +17,7 @@ import { createServerClient } from '@verone/utils/supabase/server';
 export const runtime = 'nodejs';
 
 const RequestSchema = z.object({
-  ambassador_id: z.string().uuid(),
+  customer_id: z.string().uuid(),
 });
 
 function generatePassword(): string {
@@ -46,16 +46,18 @@ export async function POST(request: Request) {
     const parsed = RequestSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'ambassador_id requis' },
+        { error: 'customer_id requis' },
         { status: 400 }
       );
     }
 
-    // 3. Fetch ambassador
+    // 3. Fetch ambassador from individual_customers
     const { data: ambassador, error: ambError } = await supabase
-      .from('site_ambassadors')
+      .from('individual_customers')
       .select('id, email, first_name, last_name, auth_user_id')
-      .eq('id', parsed.data.ambassador_id)
+      .eq('id', parsed.data.customer_id)
+      // is_ambassador column not yet in generated types — cast to bypass
+      .eq('is_ambassador' as never, true as never)
       .single();
 
     if (ambError || !ambassador) {
@@ -91,7 +93,7 @@ export async function POST(request: Request) {
 
     const { data: authData, error: authError } =
       await adminClient.auth.admin.createUser({
-        email: ambassador.email,
+        email: ambassador.email ?? '',
         password: tempPassword,
         email_confirm: true,
         user_metadata: {
@@ -116,9 +118,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // 5. Link auth user to ambassador
+    // 5. Link auth user to individual_customers row
     const { error: linkError } = await adminClient
-      .from('site_ambassadors')
+      .from('individual_customers')
       .update({ auth_user_id: authData.user.id })
       .eq('id', ambassador.id);
 
