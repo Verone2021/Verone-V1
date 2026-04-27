@@ -7,30 +7,10 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '13.0.5';
   };
   public: {
     Tables: {
@@ -13395,9 +13375,7 @@ export type Database = {
           clicks: number;
           conversions: number;
           cost_price: number;
-          custom_description: string;
           custom_price_ht: number;
-          custom_title: string;
           description: string;
           error_message: string;
           id: string;
@@ -14559,14 +14537,6 @@ export type Database = {
           success: boolean;
         }[];
       };
-      update_meta_commerce_metadata: {
-        Args: {
-          p_custom_description?: string;
-          p_custom_title?: string;
-          p_product_id: string;
-        };
-        Returns: undefined;
-      };
       update_meta_commerce_price: {
         Args: { p_custom_price_ht: number; p_product_id: string };
         Returns: undefined;
@@ -15054,9 +15024,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       affiliate_product_approval_status: [
