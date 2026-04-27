@@ -118,11 +118,6 @@ const CHANNEL_TABS: Record<string, TabItem[]> = {
   ],
   'google-merchant': [
     { label: 'Dashboard', href: '/canaux-vente/google-merchant' },
-    { label: 'Flux', href: '/canaux-vente/google-merchant/flux' },
-    {
-      label: 'Synchronisation',
-      href: '/canaux-vente/google-merchant/sync',
-    },
   ],
   meta: [{ label: 'Dashboard', href: '/canaux-vente/meta' }],
 };
