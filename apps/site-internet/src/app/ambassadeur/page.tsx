@@ -64,7 +64,7 @@ Ce programme vous permet de partager un code promotionnel unique. Lorsqu'un clie
 3. PAIEMENT
 - Seuil minimum de retrait : 50 EUR.
 - Methode : virement SEPA sur le compte bancaire renseigne dans votre profil.
-- Les paiements sont effectues par l'equipe Verone apres validation.
+- Les paiements sont effectués par l'équipe Vérone après validation.
 
 4. OBLIGATIONS FISCALES
 - En dessous de 305 EUR de primes par an : aucune declaration necessaire (art. 92 CGI).
@@ -77,7 +77,7 @@ Ce programme vous permet de partager un code promotionnel unique. Lorsqu'un clie
 - Vous pouvez demander la desactivation de votre compte a tout moment.
 
 6. RESPONSABILITE
-- Vous vous engagez a ne pas denigrer la marque Verone.
+- Vous vous engagez à ne pas dénigrer la marque Vérone.
 - Vous ne devez pas utiliser de methodes trompeuses pour generer des ventes.
 `;
 
@@ -283,10 +283,10 @@ export default function AmbassadorDashboardPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center max-w-md">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Acces non autorise
+            Accès non autorisé
           </h1>
           <p className="text-gray-600">
-            Cette page est reservee aux ambassadeurs Verone. Si vous etes
+            Cette page est réservée aux ambassadeurs Vérone. Si vous êtes
             ambassadeur, connectez-vous avec votre compte.
           </p>
           <a
@@ -349,7 +349,7 @@ export default function AmbassadorDashboardPage() {
             <p className="text-sm text-orange-800 font-medium">
               Vos primes depassent 305 EUR cette annee. Un numero SIRET est
               requis pour continuer a recevoir des paiements. Contactez
-              l&apos;equipe Verone.
+              l&apos;équipe Vérone.
             </p>
           </div>
         )}
