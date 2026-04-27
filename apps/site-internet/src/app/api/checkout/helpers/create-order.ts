@@ -173,24 +173,25 @@ export async function createDraftOrder(
 
 export async function createAmbassadorAttribution(
   orderId: string,
-  discountCode: string,
+  ambassadorCode: string,
   finalTtc: number,
   supabaseUrl: string,
-  supabaseServiceKey: string
+  supabaseServiceKey: string,
+  attributionMethod: 'coupon_code' | 'referral_link' = 'coupon_code'
 ): Promise<void> {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   // ADR-021 D1: ambassador_codes.customer_id pointe sur individual_customers (refacto unification)
-  const { data: ambassadorCode } = await supabase
+  const { data: ambassadorCodeRow } = await supabase
     .from('ambassador_codes')
     .select('id, customer_id, code')
-    .eq('code', discountCode.toUpperCase())
+    .eq('code', ambassadorCode.toUpperCase())
     .eq('is_active', true)
     .single();
 
-  if (!ambassadorCode) return;
+  if (!ambassadorCodeRow) return;
 
-  const ambCode = ambassadorCode as {
+  const ambCode = ambassadorCodeRow as {
     id: string;
     customer_id: string;
     code: string;
@@ -228,7 +229,7 @@ export async function createAmbassadorAttribution(
       prime_amount: primeAmount,
       status: 'pending',
       validation_date: validationDate.toISOString(),
-      attribution_method: 'coupon_code',
+      attribution_method: attributionMethod,
     });
 
   if (attrError) {
