@@ -129,13 +129,11 @@ export function ProductSidebar({
           </h1>
 
           {/* Marque UNIQUEMENT si renseignée (pas de fallback "Vérone") */}
+          {/* Lien désactivé tant que la route /marques/[slug] n'existe pas (audit 2026-04-26 Bug 1) */}
           {product.brand && (
-            <Link
-              href={`/marques/${product.brand.toLowerCase().replace(/\s+/g, '-')}`}
-              className="text-sm text-muted-foreground hover:underline mt-2 inline-block"
-            >
+            <span className="text-sm text-muted-foreground mt-2 inline-block">
               par {product.brand}
-            </Link>
+            </span>
           )}
         </div>
 
