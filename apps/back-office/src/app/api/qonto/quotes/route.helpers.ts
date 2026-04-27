@@ -248,6 +248,22 @@ export function buildQuoteItems(
     vatRate: String(item.tax_rate ?? 0.2),
   }));
 
+  // Custom lines (incluent les produits consultation passés via kind='service').
+  // Doivent apparaître AVANT les frais pour que les frais soient toujours en
+  // dernière position du PDF Qonto (BO-CONSULT-FIX-001).
+  if (customLines) {
+    for (const line of customLines) {
+      items.push({
+        title: line.title,
+        description: line.description,
+        quantity: String(line.quantity),
+        unit: 'pièce',
+        unitPrice: { value: String(line.unit_price_ht), currency: 'EUR' },
+        vatRate: String(line.vat_rate),
+      });
+    }
+  }
+
   const feesVatRate = fees?.fees_vat_rate ?? orderFees.feesVatRate;
 
   const addFeeItem = (title: string, cost: number, vatRate: number): void => {
@@ -278,19 +294,6 @@ export function buildQuoteItems(
     fees?.insurance_cost_ht ?? orderFees.insuranceCostHt,
     feesVatRate
   );
-
-  if (customLines) {
-    for (const line of customLines) {
-      items.push({
-        title: line.title,
-        description: line.description,
-        quantity: String(line.quantity),
-        unit: 'pièce',
-        unitPrice: { value: String(line.unit_price_ht), currency: 'EUR' },
-        vatRate: String(line.vat_rate),
-      });
-    }
-  }
 
   return items;
 }

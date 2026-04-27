@@ -36,6 +36,7 @@ export function useConsultationDetail(consultationId: string) {
     updateStatus,
     updateConsultation,
     validateConsultation,
+    unvalidateConsultation,
     archiveConsultation,
     unarchiveConsultation,
     deleteConsultation,
@@ -138,6 +139,15 @@ export function useConsultationDetail(consultationId: string) {
       if (success) await fetchConsultations();
     } catch (error) {
       console.error('[ConsultationDetail] Validate failed:', error);
+    }
+  };
+
+  const handleUnvalidateConsultation = async () => {
+    try {
+      const success = await unvalidateConsultation(consultationId);
+      if (success) await fetchConsultations();
+    } catch (error) {
+      console.error('[ConsultationDetail] Unvalidate failed:', error);
     }
   };
 
@@ -380,6 +390,7 @@ export function useConsultationDetail(consultationId: string) {
     handleStatusChange,
     handleUpdateConsultation,
     handleValidateConsultation,
+    handleUnvalidateConsultation,
     handleArchiveConsultation,
     handleUnarchiveConsultation,
     handleItemsChanged,

@@ -397,6 +397,58 @@ export function useConsultations() {
     }
   };
 
+  // Dévalider une consultation : remet validated_at=null + status='en_cours'.
+  // Permet de reprendre l'édition des items (prix, quantités, échantillons)
+  // après une validation prématurée. Symétrique de validateConsultation.
+  const unvalidateConsultation = async (
+    consultationId: string
+  ): Promise<boolean> => {
+    try {
+      setError(null);
+
+      const { error } = await supabase
+        .from('client_consultations')
+        .update({
+          validated_at: null,
+          validated_by: null,
+          status: 'en_cours',
+        } as unknown as Partial<ClientConsultation>)
+        .eq('id', consultationId);
+
+      if (error) throw error;
+
+      setConsultations(prev =>
+        prev.map(consultation =>
+          consultation.id === consultationId
+            ? {
+                ...consultation,
+                validated_at: undefined,
+                validated_by: undefined,
+                status: 'en_cours' as const,
+              }
+            : consultation
+        )
+      );
+
+      toast({
+        title: 'Consultation dévalidée',
+        description: 'Tu peux à nouveau modifier les prix et quantités',
+      });
+
+      return true;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Erreur lors de la dévalidation';
+      setError(message);
+      toast({
+        title: 'Erreur',
+        description: message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
   // Archiver une consultation
   const archiveConsultation = async (
     consultationId: string
@@ -585,6 +637,7 @@ export function useConsultations() {
     assignConsultation,
     updateStatus,
     validateConsultation,
+    unvalidateConsultation,
     archiveConsultation,
     unarchiveConsultation,
     deleteConsultation,

@@ -36,13 +36,20 @@ export const DOC_TYPE_FILENAME_PREFIX: Record<DocumentEmailType, string> = {
 
 export function getDefaultMessage(
   docType: DocumentEmailType,
-  docNumber: string
+  docNumber: string,
+  options?: { fromConsultation?: boolean }
 ): string {
   const label = DOC_TYPE_LABELS[docType].toLowerCase();
+  // Pour un devis issu d'une consultation, on demande explicitement la validation
+  // au client avant de lancer la commande chez le fournisseur (BO-CONSULT-FIX-001).
+  const consultationLine =
+    docType === 'quote' && options?.fromConsultation
+      ? `(Merci de me le valider afin de lancer la commande chez le fournisseur)\n\n`
+      : '';
   return `Bonjour,
 
 Veuillez trouver ci-joint votre ${label} n${String.fromCharCode(176)}${docNumber}.
-
+${consultationLine}
 N'hesitez pas a nous contacter pour toute question.
 
 Cordialement,
