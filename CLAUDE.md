@@ -76,13 +76,18 @@ Tests Playwright 5 tailles obligatoires avant PR UI : 375 / 768 / 1024 / 1440 / 
 
 ## CODE STANDARDS
 
-**Source unique** : `.claude/rules/code-standards.md`
+**Sources uniques** :
+
+- `.claude/rules/code-standards.md` (TS, props React, promesses, mutations)
+- `.claude/rules/data-fetching.md` (Supabase select, useEffect deps, TanStack Query, pagination, Server Components — incident variantes 27 avril 2026)
 
 - Zero `any` TypeScript — `unknown` + Zod
 - Fichier > 400 lignes = refactoring obligatoire
 - `await queryClient.invalidateQueries()` dans `onSuccess` de `useMutation`
 - `void` + `.catch()` sur promesses event handlers
 - `useEffect` deps : wrapper avec `useCallback` AVANT d'ajouter aux deps (piege production 16 avril 2026)
+- JAMAIS `array.length === N` comme condition d'amorçage `useEffect` — utiliser flag boolean `loaded` (piege variantes 27 avril 2026)
+- JAMAIS `select('*')` Supabase — colonnes explicites uniquement
 - Logout : `window.location.href`, jamais `router.push()`
 
 ## DELEGATION AUTOMATIQUE
@@ -139,6 +144,7 @@ Le reviewer lit le rapport, pas le chat. Le ops-agent lit le verdict PASS, pas l
 | Pages back-office       | `docs/current/INDEX-PAGES-BACK-OFFICE.md`      |
 | Workflows critiques     | `docs/current/WORKFLOWS-CRITIQUES.md`          |
 | Standards responsive    | `.claude/rules/responsive.md`                  |
+| Data fetching & perf    | `.claude/rules/data-fetching.md`               |
 | Workflow git/PR         | `.claude/rules/workflow.md`                    |
 | Autonomie agent         | `.claude/rules/autonomy-boundaries.md`         |
 | Zéro donnée fantôme     | `.claude/rules/no-phantom-data.md`             |
