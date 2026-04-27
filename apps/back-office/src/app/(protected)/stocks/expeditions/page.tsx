@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -83,13 +83,22 @@ export default function ExpeditionsPage() {
   const exp = useExpeditions();
   const searchParams = useSearchParams();
 
-  // Auto-expand la commande si ?order=UUID present (lien depuis notifications)
+  // Auto-expand la commande si ?order=UUID present (lien depuis notifications).
+  // useRef évite la dépendance instable sur exp.toggleRowExpansion / exp.orders
+  // qui rebouclait à chaque render. On garde un flag pour ne déclencher qu'une
+  // seule fois par couple (orderId + orders chargés). Cf rule data-fetching.md.
+  const expRef = useRef(exp);
+  useEffect(() => {
+    expRef.current = exp;
+  });
+  const expandedOnceRef = useRef<string | null>(null);
   useEffect(() => {
     const orderId = searchParams.get('order');
-    if (orderId && exp.orders.length > 0) {
-      exp.toggleRowExpansion(orderId);
-    }
-  }, [searchParams, exp.orders.length]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!orderId || expandedOnceRef.current === orderId) return;
+    if (expRef.current.orders.length === 0) return;
+    expandedOnceRef.current = orderId;
+    expRef.current.toggleRowExpansion(orderId);
+  }, [searchParams, exp.orders.length]);
 
   return (
     <div className="space-y-6 p-6">
