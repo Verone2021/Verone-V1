@@ -264,16 +264,25 @@ export function ConsultationProductsTable({
                       <span className="text-[12px] font-medium text-zinc-700">
                         {costPrice.toFixed(2)}€
                       </span>
-                      {item.cost_price_override != null && (
-                        <span className="text-[8px] text-orange-600 font-bold uppercase">
-                          Modifié
+                      {/* Sous-total si plusieurs unités */}
+                      {item.quantity > 1 && (
+                        <span className="text-[9px] text-zinc-400 mt-0.5">
+                          × {item.quantity} ={' '}
+                          {(costPrice * item.quantity).toFixed(2)}€
                         </span>
                       )}
+                      {/* Badge "Modifié" uniquement si une vraie valeur d'origine existait */}
+                      {item.cost_price_override != null &&
+                        item.product?.cost_price != null && (
+                          <span className="text-[8px] text-orange-600 font-bold uppercase">
+                            Modifié
+                          </span>
+                        )}
                     </div>
                   )}
                 </td>
 
-                {/* Transport */}
+                {/* Transport — total ligne (pas par unité) */}
                 <td className="px-3 py-0 h-10">
                   {isEditing ? (
                     <div className="relative">
@@ -290,11 +299,18 @@ export function ConsultationProductsTable({
                   ) : item.is_sample ? (
                     <span className="text-[12px] text-zinc-400">—</span>
                   ) : (
-                    <span className="text-[12px] text-zinc-700">
-                      {item.shipping_cost > 0
-                        ? `${item.shipping_cost.toFixed(2)}€`
-                        : '—'}
-                    </span>
+                    <div className="flex flex-col leading-none">
+                      <span className="text-[12px] text-zinc-700">
+                        {item.shipping_cost > 0
+                          ? `${item.shipping_cost.toFixed(2)}€`
+                          : '—'}
+                      </span>
+                      {item.shipping_cost > 0 && (
+                        <span className="text-[9px] text-zinc-400 mt-0.5">
+                          total ligne
+                        </span>
+                      )}
+                    </div>
                   )}
                 </td>
 
@@ -318,13 +334,24 @@ export function ConsultationProductsTable({
                       <Euro className="absolute right-1 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-zinc-400 pointer-events-none" />
                     </div>
                   ) : (
-                    <span
-                      className={`text-[12px] font-medium ${item.is_free ? 'text-zinc-400' : 'text-zinc-900'}`}
-                    >
-                      {item.is_free
-                        ? 'Gratuit'
-                        : `${item.unit_price?.toFixed(2) ?? '0.00'}€`}
-                    </span>
+                    <div className="flex flex-col leading-none">
+                      <span
+                        className={`text-[12px] font-medium ${item.is_free ? 'text-zinc-400' : 'text-zinc-900'}`}
+                      >
+                        {item.is_free
+                          ? 'Gratuit'
+                          : `${item.unit_price?.toFixed(2) ?? '0.00'}€`}
+                      </span>
+                      {/* Sous-total vente si plusieurs unités et payant */}
+                      {!item.is_free &&
+                        item.quantity > 1 &&
+                        item.unit_price != null && (
+                          <span className="text-[9px] text-zinc-400 mt-0.5">
+                            × {item.quantity} ={' '}
+                            {(item.unit_price * item.quantity).toFixed(2)}€
+                          </span>
+                        )}
+                    </div>
                   )}
                 </td>
 

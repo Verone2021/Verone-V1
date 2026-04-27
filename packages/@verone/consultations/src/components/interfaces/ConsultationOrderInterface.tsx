@@ -151,26 +151,31 @@ export function ConsultationOrderInterface({
   };
 
   // Calculs marges
+  // Sémantique : item.shipping_cost = TOTAL LIGNE (pour toute la quantité),
+  // pas par unité. Romeo saisit le coût de transport global pour l'expédition,
+  // qu'il y ait 1 ou 30 articles. (Avant : multiplié par quantity → marge faussée.)
   const getItemCostPrice = (item: ConsultationItem): number =>
     item.cost_price_override ?? item.product?.cost_price ?? 0;
 
   const getItemCostTotal = (item: ConsultationItem): number => {
-    if (item.is_free || item.is_sample)
-      return getItemCostPrice(item) * item.quantity;
-    return (getItemCostPrice(item) + item.shipping_cost) * item.quantity;
+    const goodsCost = getItemCostPrice(item) * item.quantity;
+    if (item.is_free || item.is_sample) return goodsCost;
+    return goodsCost + item.shipping_cost;
   };
 
   const getItemMargin = (item: ConsultationItem): number => {
     if (item.is_free || item.is_sample)
       return -(getItemCostPrice(item) * item.quantity);
-    const costPerUnit = getItemCostPrice(item) + item.shipping_cost;
-    return ((item.unit_price ?? 0) - costPerUnit) * item.quantity;
+    const revenue = (item.unit_price ?? 0) * item.quantity;
+    const cost = getItemCostPrice(item) * item.quantity + item.shipping_cost;
+    return revenue - cost;
   };
 
   const getItemMarginPercent = (item: ConsultationItem): number => {
-    const costPerUnit = getItemCostPrice(item) + item.shipping_cost;
-    if (costPerUnit === 0 || item.is_free || item.is_sample) return 0;
-    return (((item.unit_price ?? 0) - costPerUnit) / costPerUnit) * 100;
+    const cost = getItemCostPrice(item) * item.quantity + item.shipping_cost;
+    if (cost === 0 || item.is_free || item.is_sample) return 0;
+    const revenue = (item.unit_price ?? 0) * item.quantity;
+    return ((revenue - cost) / cost) * 100;
   };
 
   const totalItems = getTotalItemsCount();
@@ -191,9 +196,9 @@ export function ConsultationOrderInterface({
     (sum, item) => sum + getItemCostTotal(item),
     0
   );
+  // shipping_cost est un total ligne — on additionne directement, sans × quantity.
   const totalShipping = kpiItems.reduce(
-    (sum, item) =>
-      item.is_sample ? sum : sum + item.shipping_cost * item.quantity,
+    (sum, item) => (item.is_sample ? sum : sum + item.shipping_cost),
     0
   );
   const totalMargin = kpiItems.reduce(
