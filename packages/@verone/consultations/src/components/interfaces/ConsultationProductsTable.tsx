@@ -29,12 +29,14 @@ interface ConsultationProductsTableProps {
   editPrice: string;
   editNotes: string;
   editShippingCost: string;
+  editSellingShippingCost: string;
   editCostPriceOverride: string;
   editIsSample: boolean;
   onSetEditQuantity: (v: number) => void;
   onSetEditPrice: (v: string) => void;
   onSetEditNotes: (v: string) => void;
   onSetEditShippingCost: (v: string) => void;
+  onSetEditSellingShippingCost: (v: string) => void;
   onSetEditCostPriceOverride: (v: string) => void;
   onStartEdit: (item: ConsultationItem) => void;
   onSaveEdit: (itemId: string) => void;
@@ -62,12 +64,14 @@ export function ConsultationProductsTable({
   editPrice,
   editNotes,
   editShippingCost,
+  editSellingShippingCost,
   editCostPriceOverride,
   editIsSample,
   onSetEditQuantity,
   onSetEditPrice,
   onSetEditNotes,
   onSetEditShippingCost,
+  onSetEditSellingShippingCost,
   onSetEditCostPriceOverride,
   onStartEdit,
   onSaveEdit,
@@ -108,6 +112,9 @@ export function ConsultationProductsTable({
             </th>
             <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 w-[80px]">
               Transport
+            </th>
+            <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 w-[80px] hidden lg:table-cell">
+              Transp. vente
             </th>
             <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 w-[55px]">
               TVA
@@ -264,16 +271,25 @@ export function ConsultationProductsTable({
                       <span className="text-[12px] font-medium text-zinc-700">
                         {costPrice.toFixed(2)}€
                       </span>
-                      {item.cost_price_override != null && (
-                        <span className="text-[8px] text-orange-600 font-bold uppercase">
-                          Modifié
+                      {/* Sous-total si plusieurs unités */}
+                      {item.quantity > 1 && (
+                        <span className="text-[9px] text-zinc-400 mt-0.5">
+                          × {item.quantity} ={' '}
+                          {(costPrice * item.quantity).toFixed(2)}€
                         </span>
                       )}
+                      {/* Badge "Modifié" uniquement si une vraie valeur d'origine existait */}
+                      {item.cost_price_override != null &&
+                        item.product?.cost_price != null && (
+                          <span className="text-[8px] text-orange-600 font-bold uppercase">
+                            Modifié
+                          </span>
+                        )}
                     </div>
                   )}
                 </td>
 
-                {/* Transport */}
+                {/* Transport — total ligne (pas par unité) */}
                 <td className="px-3 py-0 h-10">
                   {isEditing ? (
                     <div className="relative">
@@ -290,11 +306,52 @@ export function ConsultationProductsTable({
                   ) : item.is_sample ? (
                     <span className="text-[12px] text-zinc-400">—</span>
                   ) : (
-                    <span className="text-[12px] text-zinc-700">
-                      {item.shipping_cost > 0
-                        ? `${item.shipping_cost.toFixed(2)}€`
-                        : '—'}
-                    </span>
+                    <div className="flex flex-col leading-none">
+                      <span className="text-[12px] text-zinc-700">
+                        {item.shipping_cost > 0
+                          ? `${item.shipping_cost.toFixed(2)}€`
+                          : '—'}
+                      </span>
+                      {item.shipping_cost > 0 && (
+                        <span className="text-[9px] text-zinc-400 mt-0.5">
+                          total ligne
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </td>
+
+                {/* Transport vente — total ligne refacturé au client */}
+                <td className="px-3 py-0 h-10 hidden lg:table-cell">
+                  {isEditing ? (
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={editSellingShippingCost}
+                        onChange={e =>
+                          onSetEditSellingShippingCost(e.target.value)
+                        }
+                        className="w-16 h-6 text-[11px] px-1 pr-5 py-0"
+                        disabled={editIsSample}
+                      />
+                      <Euro className="absolute right-1 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-zinc-400 pointer-events-none" />
+                    </div>
+                  ) : item.is_sample ? (
+                    <span className="text-[12px] text-zinc-400">—</span>
+                  ) : (
+                    <div className="flex flex-col leading-none">
+                      <span className="text-[12px] text-emerald-700">
+                        {item.selling_shipping_cost > 0
+                          ? `${item.selling_shipping_cost.toFixed(2)}€`
+                          : '—'}
+                      </span>
+                      {item.selling_shipping_cost > 0 && (
+                        <span className="text-[9px] text-zinc-400 mt-0.5">
+                          refacturé
+                        </span>
+                      )}
+                    </div>
                   )}
                 </td>
 
@@ -318,13 +375,24 @@ export function ConsultationProductsTable({
                       <Euro className="absolute right-1 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-zinc-400 pointer-events-none" />
                     </div>
                   ) : (
-                    <span
-                      className={`text-[12px] font-medium ${item.is_free ? 'text-zinc-400' : 'text-zinc-900'}`}
-                    >
-                      {item.is_free
-                        ? 'Gratuit'
-                        : `${item.unit_price?.toFixed(2) ?? '0.00'}€`}
-                    </span>
+                    <div className="flex flex-col leading-none">
+                      <span
+                        className={`text-[12px] font-medium ${item.is_free ? 'text-zinc-400' : 'text-zinc-900'}`}
+                      >
+                        {item.is_free
+                          ? 'Gratuit'
+                          : `${item.unit_price?.toFixed(2) ?? '0.00'}€`}
+                      </span>
+                      {/* Sous-total vente si plusieurs unités et payant */}
+                      {!item.is_free &&
+                        item.quantity > 1 &&
+                        item.unit_price != null && (
+                          <span className="text-[9px] text-zinc-400 mt-0.5">
+                            × {item.quantity} ={' '}
+                            {(item.unit_price * item.quantity).toFixed(2)}€
+                          </span>
+                        )}
+                    </div>
                   )}
                 </td>
 
@@ -337,7 +405,11 @@ export function ConsultationProductsTable({
                   </span>
                 </td>
 
-                {/* Échantillon — prix (vide=non-sample, 0=gratuit, >0=payant) */}
+                {/* Échantillon — bouton explicite (prompt) pour éviter
+                    toute bascule accidentelle. Avant : input vide qui se
+                    confondait avec un prix de vente, un clic + tape "0" ou
+                    chiffre par erreur basculait l'item en sample/free et
+                    l'excluait du devis (incident 2026-04-27). */}
                 <td className="px-3 py-0 h-10">
                   {item.is_sample && item.is_free ? (
                     <div className="flex items-center gap-1">
@@ -356,42 +428,40 @@ export function ConsultationProductsTable({
                     </div>
                   ) : item.is_sample ? (
                     <div className="flex items-center gap-1">
-                      <div className="relative w-16">
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={item.unit_price?.toString() ?? ''}
-                          placeholder="—"
-                          onChange={e =>
-                            onSampleChange(item.id, e.target.value)
-                          }
-                          className="w-full h-6 text-[11px] px-1 pr-4 py-0"
-                          aria-label="Prix échantillon"
-                        />
-                        <Euro className="absolute right-1 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-zinc-400 pointer-events-none" />
-                      </div>
+                      <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[9px] font-bold uppercase tracking-wider rounded shadow-sm">
+                        {item.unit_price?.toFixed(2)}€
+                      </span>
                       <button
                         type="button"
-                        onClick={() => onSampleChange(item.id, '0')}
-                        className="px-1.5 h-5 flex items-center rounded bg-zinc-100 hover:bg-emerald-100 text-[9px] font-bold uppercase tracking-wider text-zinc-500 hover:text-emerald-700"
-                        aria-label="Marquer gratuit"
-                        title="Basculer en échantillon gratuit"
+                        onClick={() => onSampleChange(item.id, '')}
+                        className="h-4 w-4 flex items-center justify-center rounded text-zinc-300 hover:text-zinc-600 hover:bg-zinc-100"
+                        aria-label="Retirer échantillon"
+                        title="Retirer l'échantillon"
                       >
-                        Free
+                        <X className="h-2.5 w-2.5" />
                       </button>
                     </div>
                   ) : (
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value=""
-                      placeholder="—"
-                      onChange={e => onSampleChange(item.id, e.target.value)}
-                      className="w-16 h-6 text-[11px] px-1 py-0 text-zinc-400"
-                      aria-label="Prix échantillon"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const value = window.prompt(
+                          "Prix de l'échantillon en € (0 = gratuit, laisser vide = annuler) :",
+                          ''
+                        );
+                        if (value === null) return;
+                        const trimmed = value.trim();
+                        if (trimmed === '') return;
+                        const parsed = parseFloat(trimmed);
+                        if (Number.isNaN(parsed) || parsed < 0) return;
+                        onSampleChange(item.id, String(parsed));
+                      }}
+                      className="px-2 h-5 flex items-center rounded border border-dashed border-zinc-300 hover:border-emerald-500 hover:bg-emerald-50 text-[9px] font-bold uppercase tracking-wider text-zinc-400 hover:text-emerald-600"
+                      aria-label="Marquer comme échantillon"
+                      title="Marquer comme échantillon (saisie explicite)"
+                    >
+                      + Échantillon
+                    </button>
                   )}
                 </td>
 

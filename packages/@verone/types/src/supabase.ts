@@ -2002,6 +2002,7 @@ export type Database = {
           product_id: string;
           proposed_price: number | null;
           quantity: number;
+          selling_shipping_cost: number;
           shipping_cost: number | null;
           shipping_cost_currency: string | null;
           status: string | null;
@@ -2019,6 +2020,7 @@ export type Database = {
           product_id: string;
           proposed_price?: number | null;
           quantity?: number;
+          selling_shipping_cost?: number;
           shipping_cost?: number | null;
           shipping_cost_currency?: string | null;
           status?: string | null;
@@ -2036,6 +2038,7 @@ export type Database = {
           product_id?: string;
           proposed_price?: number | null;
           quantity?: number;
+          selling_shipping_cost?: number;
           shipping_cost?: number | null;
           shipping_cost_currency?: string | null;
           status?: string | null;
