@@ -66,6 +66,8 @@ export interface ConsultationItem {
   created_by?: string;
   shipping_cost: number;
   shipping_cost_currency: string;
+  /** Transport vente facturé au client (total ligne, EUR HT). 0 = aucun. */
+  selling_shipping_cost: number;
   cost_price_override?: number;
   status: string;
   product?: {
@@ -133,6 +135,7 @@ export interface UpdateConsultationItemData {
   notes?: string;
   shipping_cost?: number;
   shipping_cost_currency?: string;
+  selling_shipping_cost?: number;
   cost_price_override?: number;
   status?: string;
 }

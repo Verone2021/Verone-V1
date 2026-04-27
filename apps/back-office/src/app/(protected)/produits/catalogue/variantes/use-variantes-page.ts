@@ -29,6 +29,10 @@ export function useVariantesPage() {
     VariantGroup[]
   >([]);
   const [archivedLoading, setArchivedLoading] = useState(false);
+  // Flag boolean au lieu d'utiliser archivedVariantGroups.length === 0
+  // qui rebouclait quand la DB renvoie 0 résultats.
+  // Cf. .claude/rules/data-fetching.md — incident 2026-04-27 (244 req/5s).
+  const [archivedLoaded, setArchivedLoaded] = useState(false);
 
   const stableFilters = useMemo(
     () => ({
@@ -92,9 +96,13 @@ export function useVariantesPage() {
 
   const handleLoadArchivedGroups = useCallback(async () => {
     setArchivedLoading(true);
-    const archivedGroups = await loadArchivedVariantGroups();
-    setArchivedVariantGroups(archivedGroups);
-    setArchivedLoading(false);
+    try {
+      const archivedGroups = await loadArchivedVariantGroups();
+      setArchivedVariantGroups(archivedGroups);
+    } finally {
+      setArchivedLoaded(true);
+      setArchivedLoading(false);
+    }
   }, [loadArchivedVariantGroups]);
 
   const handleArchiveGroup = useCallback(
@@ -150,12 +158,12 @@ export function useVariantesPage() {
   );
 
   useEffect(() => {
-    if (activeTab === 'archived' && archivedVariantGroups.length === 0) {
+    if (activeTab === 'archived' && !archivedLoaded) {
       void handleLoadArchivedGroups().catch(error => {
         console.error('[Variants] Load archived groups failed:', error);
       });
     }
-  }, [activeTab, archivedVariantGroups.length, handleLoadArchivedGroups]);
+  }, [activeTab, archivedLoaded, handleLoadArchivedGroups]);
 
   const filteredVariantGroups = useMemo(() => {
     if (!filters.subcategoryId) return variantGroups;

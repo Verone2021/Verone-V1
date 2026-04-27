@@ -30,11 +30,14 @@ import {
   DialogFooter,
 } from '@verone/ui';
 import { cn } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
 import { useOrganisations } from '@verone/organisations/hooks';
 import { useVariantGroups } from '@verone/products/hooks';
 import type { DecorativeStyle, CreateVariantGroupData } from '@verone/types';
 
 import { WizardStep1Basic } from './variant-group-creation/WizardStep1Basic';
+import type { MatrixProductInfo } from './variant-group-creation/WizardStep1Basic';
+import { deriveBaseSku } from './variant-group-creation/WizardStep1Basic';
 import { WizardStep2Style } from './variant-group-creation/WizardStep2Style';
 import { WizardStep3Supplier } from './variant-group-creation/WizardStep3Supplier';
 
@@ -49,6 +52,9 @@ interface FormData {
   name: string;
   base_sku: string;
   subcategory_id: string;
+
+  // Produit témoin local (jamais envoyé au backend)
+  matrix_product: MatrixProductInfo | null;
 
   // Step 2: Style & Attributs
   style: DecorativeStyle | '';
@@ -68,6 +74,105 @@ export interface VariantGroupCreationWizardProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: (groupId: string) => void;
+}
+
+// =====================================================================
+// HELPER MODULE-LEVEL — matrix product fetch & apply
+// =====================================================================
+
+/**
+ * Extrait un champ scalaire d'un résultat de join Supabase
+ * (objet direct ou tableau à 1 élément selon la syntaxe utilisée).
+ */
+function getVgField<T>(vg: unknown, field: string): T | null {
+  if (!vg) return null;
+  if (!Array.isArray(vg) && typeof vg === 'object' && field in vg)
+    return (vg as Record<string, T>)[field] ?? null;
+  if (
+    Array.isArray(vg) &&
+    vg.length > 0 &&
+    typeof vg[0] === 'object' &&
+    vg[0] !== null &&
+    field in vg[0]
+  )
+    return (vg[0] as Record<string, T>)[field] ?? null;
+  return null;
+}
+
+/**
+ * Fetche les données complètes du produit sélectionné (variant_group_id,
+ * variant_group.base_sku), applique Q3 (blocage si déjà dans un groupe) et
+ * Q1 (dérivation base_sku), puis met à jour le formData via le setter fourni.
+ */
+function fetchAndApplyMatrixProduct(
+  partialProductId: string,
+  setFormData: React.Dispatch<React.SetStateAction<FormData>>
+): void {
+  const supabase = createClient();
+
+  const run = async () => {
+    const { data, error } = await supabase
+      .from('products')
+      .select(
+        'id, name, sku, subcategory_id, variant_group_id, variant_group:variant_groups!variant_group_id(id, name, base_sku)'
+      )
+      .eq('id', partialProductId)
+      .single();
+
+    if (error || !data) {
+      toast.error('Impossible de charger les informations du produit.');
+      return;
+    }
+
+    // Q3 : bloquer si le produit appartient déjà à un groupe
+    if (data.variant_group_id) {
+      const groupName =
+        getVgField<string>(data.variant_group, 'name') ?? 'inconnu';
+      toast.error(
+        `Ce produit appartient déjà au groupe "${groupName}". Un produit ne peut être que dans une seule variante.`
+      );
+      setFormData(prev => ({ ...prev, matrix_product: null }));
+      return;
+    }
+
+    // Récupérer le base_sku du groupe parent si présent (cas théorique,
+    // bloqué par le test Q3 ci-dessus, mais helper doit rester correct)
+    const parentBaseSku: string | null = getVgField<string>(
+      data.variant_group,
+      'base_sku'
+    );
+
+    const enrichedProduct: MatrixProductInfo = {
+      id: data.id,
+      name: data.name,
+      sku: data.sku ?? '',
+      subcategory_id: data.subcategory_id ?? null,
+      variant_group_id: data.variant_group_id ?? null,
+      variant_group_name: null,
+      variant_group_base_sku: parentBaseSku,
+    };
+
+    // Q1 : dériver base_sku
+    const derivedBaseSku = deriveBaseSku(enrichedProduct.sku, parentBaseSku);
+
+    // Auto-remplir les 3 champs (modifiables ensuite)
+    setFormData(prev => ({
+      ...prev,
+      name: enrichedProduct.name,
+      base_sku: derivedBaseSku,
+      subcategory_id: enrichedProduct.subcategory_id ?? '',
+      matrix_product: enrichedProduct,
+    }));
+  };
+
+  void run().catch((err: unknown) => {
+    const message = err instanceof Error ? err.message : 'Erreur inconnue';
+    console.error(
+      '[VariantGroupCreationWizard] matrix product fetch:',
+      message
+    );
+    toast.error('Erreur lors du chargement du produit témoin.');
+  });
 }
 
 // =====================================================================
@@ -95,6 +200,7 @@ export function VariantGroupCreationWizard({
     name: '',
     base_sku: '',
     subcategory_id: '',
+    matrix_product: null,
     style: '',
     suitable_rooms: [],
     dimensions_length: '',
@@ -126,6 +232,7 @@ export function VariantGroupCreationWizard({
       name: '',
       base_sku: '',
       subcategory_id: '',
+      matrix_product: null,
       style: '',
       suitable_rooms: [],
       dimensions_length: '',
@@ -138,6 +245,20 @@ export function VariantGroupCreationWizard({
     });
     setCurrentStep(1);
     setCompletedSteps(new Set());
+  };
+
+  // ===================================================================
+  // HANDLER PRODUIT TEMOIN
+  // ===================================================================
+
+  const handleMatrixProductChange = (
+    partialProduct: MatrixProductInfo | null
+  ) => {
+    if (!partialProduct) {
+      setFormData(prev => ({ ...prev, matrix_product: null }));
+      return;
+    }
+    fetchAndApplyMatrixProduct(partialProduct.id, setFormData);
   };
 
   // ===================================================================
@@ -351,7 +472,9 @@ export function VariantGroupCreationWizard({
               name={formData.name}
               baseSku={formData.base_sku}
               subcategoryId={formData.subcategory_id}
+              matrixProduct={formData.matrix_product}
               onUpdate={updateFormData}
+              onMatrixProductChange={handleMatrixProductChange}
             />
           )}
 
