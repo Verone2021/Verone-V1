@@ -6,11 +6,12 @@
 - **Composants** : `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md` — pour detecter doublons
 - **Dependances** : `docs/current/DEPENDANCES-PACKAGES.md` — pour detecter dead imports
 
-# Last updated: 2026-03-18 (audit pricing & commissions LinkMe ajouté)
+# Last updated: 2026-04-27 (audit data-fetching back-office ajouté)
 
 ## Rapports Disponibles
 
-- Pricing/Commissions LinkMe : `docs/current/perf/audit-pricing-commissions-linkme-2026-03-18.md` (nouveau)
+- Data-fetching BO : `docs/scratchpad/audit-2026-04-27-data-fetching-bo.md` (nouveau)
+- Pricing/Commissions LinkMe : `docs/current/perf/audit-pricing-commissions-linkme-2026-03-18.md`
 - Back-office : `docs/current/perf/audit-back-office-2026-03-11.md`
 - LinkMe : `docs/current/perf/audit-2026-03-11-linkme.md`
 - Général : `docs/current/perf/audit-2026-03-11.md`
@@ -168,3 +169,26 @@ useState+useEffect+fetch dans use-linkme-analytics.ts. Pas de cache React Query.
 
 Charge TOUTES les commandes de linkme_orders_with_margins (vue 8 LEFT JOIN) sans filtre date.
 Calcul de moyenne mensuelle en JS. Solution : RPC get_linkme_dashboard_kpis() SQL.
+
+## Boucles useEffect détectées (2026-04-27)
+
+Pattern `array.length === 0` dans deps useEffect = risque boucle si DB retourne [] :
+
+- `use-factures-page.ts:131-146` — CRITIQUE : triple boucle sur onglets factures/devis/avoirs vides
+- `stocks/expeditions/page.tsx:87-92` — CRITIQUE : `exp.orders.length` en dep + eslint-disable
+- `variantes/use-variantes-page.ts:152-158` — DÉJÀ CONNU (incident prod 2026-04-27, 244 req/5s)
+
+Pattern positif confirmé : `resetNewCustomerForm` désormais en useCallback (fix post-incident 16 avril). Vérifier TOUS les nouveaux useEffect qui ajoutent une fonction aux deps.
+
+## invalidateQueries BO (audit 2026-04-27)
+
+Contrairement à l'audit 2026-03-11, les invalidateQueries dans le BO sont maintenant TOUS corrects (Promise.all ou await). Les 6 occurrences signalées en mars ont été corrigées.
+
+## select('\*') BO (49 occurrences, 2026-04-27)
+
+Top hotspots actualisés :
+
+- `use-ambassadors.ts` : 5 occurrences (site-internet section ambassadeurs)
+- `contacts-organisations/{customers,suppliers,partners}/hooks` : 3 × 1 occurrence (tables org lourdes)
+- `api/qonto/invoices/_lib/fetch-order-with-customer.ts` : 2 (route protégée — ne pas toucher sans autorisation)
+- `packages/finance/hooks/use-{expenses,bank-transaction-stats,missing-invoices}.ts` : 3 × 1

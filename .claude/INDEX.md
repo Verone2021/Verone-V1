@@ -203,5 +203,26 @@ Voir `docs/scratchpad/automation-roadmap.md` (historique uniquement).
 | `.claude/rules/playwright-artifacts.md`    | Playwright Artifacts    |
 | `.claude/rules/no-phantom-data.md`         | No Phantom Data         |
 | `.claude/rules/agent-autonomy-external.md` | Agent Autonomy External |
+| `.claude/rules/branch-strategy.md`         | Branch Strategy         |
+| `.claude/rules/data-fetching.md`           | Data Fetching           |
+
+---
+
+## Autres
+
+| Fichier                               | Contenu            |
+| ------------------------------------- | ------------------ |
+| `.claude/local/OPERATIONS-RUNBOOK.md` | Operations Runbook |
+
+---
+
+## Taches en cours
+
+| Fichier                                | Contenu              |
+| -------------------------------------- | -------------------- |
+| `.claude/work/AGENT-ENTRY-POINT.md`    | Agent Entry Point    |
+| `.claude/work/NEXT-SPRINTS.md`         | Next Sprints         |
+| `.claude/work/PROMPTS-TO-COPY.md`      | Prompts To Copy      |
+| `.claude/work/plan-canaux-de-vente.md` | Plan Canaux De Vente |
 
 ---
