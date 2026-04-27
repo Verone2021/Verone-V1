@@ -50,7 +50,7 @@ async function fetchProductsShipping(): Promise<ProductShipping[]> {
   const result = await supabase.rpc('get_site_internet_products');
   const { data, error } = result as {
     data: Array<{
-      id: string;
+      product_id: string;
       name: string;
       price_ttc: number;
       weight: number | null;
@@ -62,7 +62,7 @@ async function fetchProductsShipping(): Promise<ProductShipping[]> {
 
   if (error) throw error;
   return (data ?? []).map(p => ({
-    id: p.id,
+    id: p.product_id,
     name: p.name,
     price_ttc: p.price_ttc,
     weight: p.weight,
