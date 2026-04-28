@@ -7,6 +7,7 @@ import {
   FileText,
   Key,
   Mail,
+  Puzzle,
   Settings,
   Shield,
   Users,
@@ -168,6 +169,35 @@ export default function ParametresPage() {
               </Link>
             ))}
           </div>
+        </div>
+
+        {/* Outils */}
+        <div>
+          <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <Puzzle className="h-4 w-4" />
+            Outils
+          </h2>
+          <Link
+            href="/parametres/outils"
+            className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 hover:shadow-sm transition-all group block"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-gray-100 group-hover:bg-gray-200 transition-colors">
+                  <Puzzle className="h-5 w-5 text-gray-700" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Extensions et outils
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Extension Chrome de sourcing produit
+                  </p>
+                </div>
+              </div>
+              <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
+            </div>
+          </Link>
         </div>
 
         {/* Profil — lien vers page profil existante */}
