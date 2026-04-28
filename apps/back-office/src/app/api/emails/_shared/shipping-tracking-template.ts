@@ -8,6 +8,8 @@
  * by side rather than N separate emails.
  */
 
+import { buildCarrierTrackingUrl } from '@verone/orders/components/modals';
+
 import { buildEmailHtml } from './email-template';
 
 export interface TrackingInfo {
@@ -44,10 +46,16 @@ function formatDate(isoDate: string | null): string {
 
 function resolveTrackingUrl(
   trackingUrl: string | null | undefined,
+  carrierName: string | null | undefined,
   orderNumber: string,
   trackingNumber: string
 ): string {
   if (trackingUrl) return trackingUrl;
+  // Fallback : URL publique du transporteur (UPS, DPD, Chronopost, ...)
+  // construite depuis le numéro de tracking si reconnu.
+  const carrierUrl = buildCarrierTrackingUrl(carrierName, trackingNumber);
+  if (carrierUrl) return carrierUrl;
+  // Dernier recours : page de tracking interne Verone (placeholder).
   return `https://www.veronecollections.fr/tracking?order=${encodeURIComponent(orderNumber)}&tracking=${encodeURIComponent(trackingNumber)}`;
 }
 
@@ -60,6 +68,7 @@ function buildShipmentBlock(
   const formattedDate = formatDate(t.shippedAt);
   const ctaUrl = resolveTrackingUrl(
     t.trackingUrl,
+    t.carrierName,
     orderNumber,
     t.trackingNumber
   );
@@ -140,6 +149,7 @@ export function buildTrackingEmailHtml(options: TrackingEmailOptions): string {
   // sees inline links above too, so the CTA stays clickable but secondary.
   const primaryCta = resolveTrackingUrl(
     trackings[0].trackingUrl,
+    trackings[0].carrierName,
     orderNumber,
     trackings[0].trackingNumber
   );
