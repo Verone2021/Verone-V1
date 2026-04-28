@@ -93,7 +93,6 @@ const CHANNEL_TABS: Record<string, TabItem[]> = {
     {
       label: 'Commerce',
       tabs: [
-        { label: 'Commandes', href: '/canaux-vente/site-internet/commandes' },
         { label: 'Clients', href: '/canaux-vente/site-internet?tab=customers' },
         { label: 'Promos', href: '/canaux-vente/site-internet?tab=promos' },
       ],
@@ -118,11 +117,6 @@ const CHANNEL_TABS: Record<string, TabItem[]> = {
   ],
   'google-merchant': [
     { label: 'Dashboard', href: '/canaux-vente/google-merchant' },
-    { label: 'Flux', href: '/canaux-vente/google-merchant/flux' },
-    {
-      label: 'Synchronisation',
-      href: '/canaux-vente/google-merchant/sync',
-    },
   ],
   meta: [{ label: 'Dashboard', href: '/canaux-vente/meta' }],
 };
