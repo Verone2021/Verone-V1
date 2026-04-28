@@ -97,6 +97,12 @@ export function SendShippingTrackingModal({
   const [sending, setSending] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // Map shipmentId → date enrichie depuis Packlink (date pickup réelle ou
+  // date du jour si pas encore d'event). Remplit la liste "Expéditions à
+  // inclure" sans afficher la date de création du wizard.
+  const [enrichedDates, setEnrichedDates] = useState<Map<string, string>>(
+    () => new Map()
+  );
 
   const contacts: EmailContact[] = buildContactList(order);
 
@@ -122,6 +128,7 @@ export function SendShippingTrackingModal({
     );
     setSending(false);
     setPreviewHtml(null);
+    setEnrichedDates(new Map());
   }, [order.order_number, shipments]);
 
   useEffect(() => {
@@ -129,6 +136,48 @@ export function SendShippingTrackingModal({
       resetState();
     }
   }, [open, resetState]);
+
+  // À l'ouverture, on demande au serveur d'enrichir les expéditions avec
+  // la date pickup réelle Packlink (ou date du jour en fallback). On utilise
+  // ces dates dans la liste "Expéditions à inclure" pour ne plus afficher
+  // la date de création du wizard (souvent J-N).
+  useEffect(() => {
+    if (!open || shipments.length === 0) return;
+    const idsToEnrich = shipments.map(s => s.id);
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await fetch('/api/emails/preview-shipping-tracking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            salesOrderId: order.id,
+            shipmentIds: idsToEnrich,
+            customMessage: '',
+          }),
+        });
+        if (!response.ok) return;
+        const data = (await response.json()) as {
+          success: boolean;
+          trackings?: Array<{ shipmentId: string; shippedAt: string | null }>;
+        };
+        if (cancelled || !data.success || !data.trackings) return;
+        const next = new Map<string, string>();
+        for (const t of data.trackings) {
+          if (t.shippedAt) next.set(t.shipmentId, t.shippedAt);
+        }
+        setEnrichedDates(next);
+      } catch (err) {
+        console.error(
+          '[SendShippingTrackingModal] enrichment fetch failed:',
+          err
+        );
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, order.id, shipments]);
 
   // Quand le user coche / décoche, on régénère le sujet et le message par
   // défaut pour qu'ils restent cohérents avec ce qui sera envoyé. Si le user
@@ -363,11 +412,15 @@ export function SendShippingTrackingModal({
                           </p>
                           <p className="text-slate-500 truncate">
                             {s.tracking_number ?? '(pas de tracking)'}
-                            {s.shipped_at && (
-                              <span className="ml-1">
-                                · {formatDateFr(s.shipped_at)}
-                              </span>
-                            )}
+                            {(() => {
+                              const dateForDisplay =
+                                enrichedDates.get(s.id) ?? s.shipped_at;
+                              return dateForDisplay ? (
+                                <span className="ml-1">
+                                  · {formatDateFr(dateForDisplay)}
+                                </span>
+                              ) : null;
+                            })()}
                           </p>
                         </div>
                       </label>
