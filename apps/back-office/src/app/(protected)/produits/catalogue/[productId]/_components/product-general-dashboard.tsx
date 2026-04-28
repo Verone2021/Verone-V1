@@ -21,6 +21,7 @@ import { GeneralRail } from './_dashboard-blocks/GeneralRail';
 import { InternalNotesFooter } from './_dashboard-blocks/InternalNotesFooter';
 import { KpiStrip } from './_dashboard-blocks/KpiStrip';
 import { PublishChecklist } from './_dashboard-blocks/PublishChecklist';
+import { SourcingBlock } from './_dashboard-blocks/SourcingBlock';
 import { SupplierPoCompactCard } from './_dashboard-blocks/SupplierPoCompactCard';
 import type { Product, ProductRow } from './types';
 
@@ -210,6 +211,9 @@ export function ProductGeneralDashboard({
             stockMoves={dash?.stockMoves ?? []}
           />
         </div>
+
+        {/* Bloc Sourcing — uniquement si consultation liée */}
+        <SourcingBlock product={product} />
 
         {/* Footer — Notes internes */}
         <InternalNotesFooter
