@@ -172,11 +172,11 @@ export function SupplierPoCompactCard({
             <div className="min-w-0 flex-1">
               <Link
                 href={`/contacts-organisations/suppliers/${supplierId}`}
-                className="text-sm font-medium text-neutral-900 hover:underline truncate inline-flex items-center gap-1.5"
+                className="text-sm font-medium text-neutral-900 hover:underline flex items-center gap-1.5"
               >
                 {flag && (
                   <span
-                    className="text-base leading-none"
+                    className="text-base leading-none shrink-0"
                     aria-label={`Pays : ${supplierCountry}`}
                     title={supplierCountry ?? undefined}
                   >
@@ -192,7 +192,7 @@ export function SupplierPoCompactCard({
                   href={websiteHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[11px] text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1 truncate max-w-full mt-0.5"
+                  className="text-[11px] text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 mt-0.5 max-w-full"
                   title={websiteHref}
                 >
                   <span className="truncate">{websiteLabel}</span>
