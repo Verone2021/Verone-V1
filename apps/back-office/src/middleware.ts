@@ -70,7 +70,10 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match every page route. Skip static assets and the Next internals.
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    // Match every page route. Skip static assets, Next internals, the
+    // auth pages, and API routes (each route handler enforces its own
+    // auth). Limiting the matcher avoids spurious Supabase calls on the
+    // health-check (curl /login from the CI smoke-test bootstrap).
+    '/((?!_next/static|_next/image|favicon.ico|login|logout|auth|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 };
