@@ -106,14 +106,16 @@ export function PricingSection({
               </div>
             </div>
             <p className="text-xs text-green-600">
-              Calculé automatiquement : Prix d'achat × (1 + Marge cible)
+              Calculé automatiquement : Prix d'achat × (1 + Marge minimum)
             </p>
           </div>
 
           {/* Gestion des marges */}
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="target_margin_percentage">Marge cible (%)</Label>
+              <Label htmlFor="target_margin_percentage">
+                Marge minimum (%)
+              </Label>
               <div className="flex space-x-2">
                 <Input
                   id="target_margin_percentage"
@@ -173,7 +175,7 @@ export function PricingSection({
                       </div>
                     </div>
                     <div>
-                      <div className="text-gray-600">Marge cible</div>
+                      <div className="text-gray-600">Marge minimum</div>
                       <div className="font-semibold text-black">
                         {formData.target_margin_percentage ?? '0'}%
                       </div>
@@ -214,7 +216,7 @@ export function PricingSection({
               </div>
               <div className="text-xs text-green-600">
                 Calculé automatiquement : Prix d'achat HT × (1 + Marge
-                cible/100)
+                minimum/100)
                 <br />
                 Exemple : 10€ × (1 + 100/100) = 20€ HT minimum
               </div>
@@ -226,7 +228,7 @@ export function PricingSection({
               </div>
               <div className="text-xs text-blue-600">
                 Vérone calcule uniquement le prix minimum basé sur vos coûts et
-                marge cible. Tout est en HT, pas de TVA.
+                marge minimum. Tout est en HT, pas de TVA.
               </div>
             </div>
           </div>

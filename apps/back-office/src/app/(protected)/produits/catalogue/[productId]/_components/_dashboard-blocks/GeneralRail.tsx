@@ -3,19 +3,16 @@
 /**
  * GeneralRail — rail gauche 200px sticky du dashboard Général.
  * Contient : image + nom + SKU, completion circle, liste onglets complétude,
- * variantes miniatures, boutons Export PDF + Ouvrir Sourcing.
+ * variantes miniatures, bouton Export PDF.
  */
 
-import Link from 'next/link';
-
 import { ButtonUnified } from '@verone/ui';
-import { FileDown, Compass } from 'lucide-react';
+import { FileDown } from 'lucide-react';
 
 import { TabCompletionList } from './TabCompletionList';
 import { VariantsRailMiniGrid } from './VariantsRailMiniGrid';
 
 interface GeneralRailProps {
-  productId: string;
   productName: string;
   sku: string;
   completionPercentage: number;
@@ -27,7 +24,6 @@ interface GeneralRailProps {
 }
 
 export function GeneralRail({
-  productId,
   productName,
   sku,
   completionPercentage,
@@ -108,13 +104,6 @@ export function GeneralRail({
           <FileDown className="h-3.5 w-3.5 mr-1.5" />
           Export PDF
         </ButtonUnified>
-        <Link
-          href={`/produits/sourcing/produits/${productId}`}
-          className="flex items-center justify-center gap-1.5 w-full text-xs text-neutral-600 hover:text-neutral-900 underline py-1.5"
-        >
-          <Compass className="h-3.5 w-3.5" />
-          Ouvrir Sourcing
-        </Link>
       </div>
     </aside>
   );

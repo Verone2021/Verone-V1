@@ -4,7 +4,13 @@ import { useState } from 'react';
 import { Input, Textarea, Label } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { cn } from '@verone/ui';
-import { Globe, Save, AlertCircle, CheckCircle } from 'lucide-react';
+import {
+  Globe,
+  Save,
+  AlertCircle,
+  CheckCircle,
+  ExternalLink,
+} from 'lucide-react';
 import { createClient } from '@verone/utils/supabase/client';
 
 interface SerpPreviewProps {
@@ -13,6 +19,7 @@ interface SerpPreviewProps {
   initialMetaTitle?: string | null;
   initialMetaDescription?: string | null;
   slug?: string | null;
+  isPublished?: boolean;
   onUpdate?: () => void;
 }
 
@@ -58,6 +65,7 @@ export function SerpPreview({
   initialMetaTitle,
   initialMetaDescription,
   slug,
+  isPublished = false,
   onUpdate,
 }: SerpPreviewProps) {
   const [metaTitle, setMetaTitle] = useState(initialMetaTitle ?? '');
@@ -72,6 +80,10 @@ export function SerpPreview({
     metaDescription ||
     'Ajoutez une meta description pour optimiser votre referencement Google...';
   const displayUrl = `veronecollections.fr/produits/${slug ?? 'produit'}`;
+  const liveUrl =
+    isPublished && slug
+      ? `https://veronecollections.fr/produits/${slug}`
+      : null;
 
   const handleSave = async () => {
     setSaving(true);
@@ -101,11 +113,32 @@ export function SerpPreview({
     <div className="space-y-4">
       {/* Google Preview */}
       <div>
-        <div className="flex items-center gap-2 mb-2">
-          <Globe className="h-4 w-4 text-gray-400" />
-          <span className="text-xs font-medium text-gray-600">
-            Apercu Google
-          </span>
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2">
+            <Globe className="h-4 w-4 text-gray-400" />
+            <span className="text-xs font-medium text-gray-600">
+              Apercu Google
+            </span>
+          </div>
+          {liveUrl ? (
+            <a
+              href={liveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 hover:underline"
+            >
+              Voir en ligne
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          ) : (
+            <span
+              className="inline-flex items-center gap-1 text-xs text-gray-400 cursor-not-allowed"
+              title={!slug ? 'Slug manquant' : 'Produit non publie en ligne'}
+            >
+              Voir en ligne
+              <ExternalLink className="h-3 w-3" />
+            </span>
+          )}
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4 max-w-[600px]">
           <div className="text-xs text-green-700 mb-0.5 truncate">

@@ -231,7 +231,7 @@ export function SupplierPricingDisplay({
                     product.margin_percentage && (
                     <div className="flex items-baseline gap-2">
                       <span className="text-neutral-500 text-xs whitespace-nowrap">
-                        Marge cible
+                        Marge minimum
                       </span>
                       <span className="font-medium text-neutral-800">
                         {product.target_margin_percentage}%

@@ -82,9 +82,9 @@ export function PricingSection({
           </p>
         </div>
 
-        {/* Marge cible */}
+        {/* Marge minimum */}
         <div className="space-y-2">
-          <Label htmlFor="target_margin_percentage">Marge cible (%)</Label>
+          <Label htmlFor="target_margin_percentage">Marge minimum (%)</Label>
           <Input
             id="target_margin_percentage"
             type="number"

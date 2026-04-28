@@ -4,7 +4,7 @@
  * PricingKpiStrip — 3 tuiles KPI pour l'onglet Tarification.
  * Tuile 1 : Prix d'achat HT (subdued)
  * Tuile 2 : Prix de revient (HERO indigo)
- * Tuile 3 : Marge cible (avec édition rapide)
+ * Tuile 3 : Marge minimum (avec édition rapide)
  *
  * Sprint : BO-UI-PROD-PRICING-001
  */
@@ -29,7 +29,7 @@ interface PricingKpiStripProps {
   minSellingPriceHt: number | null;
   /** Prix min vente TTC (calculé par le parent, source unique) */
   minSellingPriceTtc: number | null;
-  /** Marge cible en % */
+  /** Marge minimum en % */
   marginPercent: number;
   /** Callback pour sauvegarder la nouvelle marge */
   onMarginSave?: (newMargin: number) => Promise<void>;
@@ -120,18 +120,18 @@ export function PricingKpiStrip({
         </div>
       </div>
 
-      {/* Tuile 3 — Marge cible */}
+      {/* Tuile 3 — Marge minimum */}
       <div className="bg-white rounded-lg border border-neutral-200 p-4">
         <div className="flex items-center justify-between mb-1">
           <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
-            MARGE CIBLE
+            MARGE MINIMUM
           </span>
           {!editingMargin && onMarginSave && (
             <button
               type="button"
               onClick={handleStartEdit}
               className="h-6 w-6 inline-flex items-center justify-center text-neutral-400 hover:text-neutral-700 rounded"
-              title="Modifier la marge cible"
+              title="Modifier la marge minimum"
             >
               <Pencil className="h-3 w-3" />
             </button>
