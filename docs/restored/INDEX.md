@@ -2,7 +2,7 @@
 
 Documentation restaurée depuis git history par l'agent. Ces fichiers étaient supprimés du tronc actuel mais contiennent de l'information toujours utile (credentials, architectures historiques, plans de configuration). À valider et promouvoir vers `docs/current/` après mise à jour.
 
-**Dernière mise à jour** : 2026-04-25
+**Dernière mise à jour** : 2026-04-28
 
 ---
 
@@ -58,6 +58,21 @@ Configuration et credentials Google Merchant Center.
 | `pricing-multi-canaux-clients.md`                                                              | architecture pricing waterfall + ristourne | ⚠️ **important** — confronter avec `.claude/rules/finance.md` |
 | `PRD-CATALOGUE-CURRENT.md`                                                                     | PRD catalogue                              | mettre à jour                                                 |
 | `conditionnements-packages.md`, `product-images-query-pattern.md`, `product-variants-rules.md` | sous-règles                                | promouvoir individuellement                                   |
+
+### 6. `auth/` (restauré 2026-04-28 — 2 fichiers, audit BO-RBAC-CATALOG-MGR-001)
+
+Documentation rôles/permissions/RLS supprimée le 2026-01-23 (commit `2701d206a`). Restaurée depuis `170aecf0b`.
+
+| Fichier                       | Statut                                                                                                                                      | Action                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `roles-permissions-matrix.md` | ⚠️ obsolète sur le modèle (cite `user_profiles.role` qui n'existe plus, table refactorée vers `user_app_roles` en migration `20251201_001`) | base conceptuelle pour designer `catalog_manager` — NE PAS appliquer telle quelle   |
+| `rls-policies.md`             | 1096 lignes, 68 policies documentées                                                                                                        | confronter avec policies actuelles via `mcp__supabase__execute_sql` avant tout fork |
+
+### 7. `sourcing/` (restauré 2026-04-28 — 1 fichier, audit BO-RBAC-CATALOG-MGR-001)
+
+| Fichier                           | Statut                                               | Action                                        |
+| --------------------------------- | ---------------------------------------------------- | --------------------------------------------- |
+| `sourcing-validation-workflow.md` | workflow validation sourcing → catalogue, 460 lignes | base pour spec capabilities `catalog_manager` |
 
 ---
 
