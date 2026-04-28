@@ -681,3 +681,60 @@ Romeo veut refondre pour aligner avec son modèle métier : **un client est un c
 - [iRev — Server-Side Tracking 2026](https://irev.com/blog/cookieless-affiliate-tracking-what-actually-works-in-2026/)
 - [Refersion Shopify](https://www.refersion.com/partners/shopify/)
 - [Shopify Affiliate Apps Comparison (Hulkapps)](https://www.hulkapps.com/blogs/compare/shopify-affiliate-program-apps-refersion-affiliate-marketing-vs-shopify-collabs)
+
+---
+
+## ADR-022 — Bundling thématique obligatoire pour PRs liées (2026-04-28)
+
+**Contexte** : le 27-28 avril 2026, Romeo a enchaîné 3 demandes liées à la section Canaux de Vente du back-office :
+
+1. Fix bug Meta : page `/canaux-vente/meta` affichait compteurs 30/28/2 mais liste vide (RPC `get_meta_commerce_products` plantait après drop colonnes `custom_*` du 21 avril).
+2. "Tu corriges Google Merchant" : 2 onglets fantômes dans channel-tabs.tsx (`/flux` + `/sync` → 404).
+3. "Tu corriges Site Internet" : 1 onglet fantôme (`/site-internet/commandes` → 404).
+
+L'agent a interprété "L'un après l'autre" comme "1 PR par sujet" et créé **4 PRs** :
+
+- PR #822 [BO-CHAN-META-001] (fix Meta)
+- PR #823 [BO-CHAN-GOOGLE-002] (fix Google)
+- PR #824 [BO-CHAN-SITE-002] (fix Site)
+- PR #826 [BO-CHAN-META-001 types-drift] (rattrapage régen types — la PR #822 avait omis la régénération `pnpm run generate:types` après modif de RPC)
+
+Plus la PR release staging→main #825 qui a fail une fois (drift TS) et a dû être re-run après merge #826.
+
+**Coût total** : ~1h50 de cycles CI (4 PRs staging + 1 PR main fail + 1 PR rattrapage + 1 PR main re-run) vs ~25 min estimés pour un bundle propre `[BO-CHAN-CLEANUP-001]` avec 4 commits.
+
+Romeo a explicitement critiqué : _"Mais tu te rends compte, le temps que ça prend ? Pour faire 4 PR ça prend 1h20."_ puis : _"il faut vraiment que tu corriges cela dans tout ce qui est réalisation de PR"_.
+
+La règle `1 PR = 1 BLOC COHÉRENT` existait déjà dans `.claude/rules/workflow.md` mais sans cas concret d'incident pour la rendre vivante. La règle de régénération des types après migration n'existait nulle part de manière explicite.
+
+**Décision** :
+
+1. Renforcer `CLAUDE.md` racine section INTERDICTIONS ABSOLUES avec 2 nouvelles interdictions :
+   - "JAMAIS 1 PR par sous-tâche quand plusieurs fixes sont thématiquement liés"
+   - "JAMAIS migration SQL sans régénération des types dans la même PR"
+2. Renforcer `.claude/rules/workflow.md` avec une section "Incident 2026-04-28" qui documente :
+   - Le cas concret
+   - La règle "détecter le bundling potentiel à la 2e demande"
+   - La règle "toujours bundler la régénération TS dans la PR de migration"
+   - La règle "détection systématique des onglets fantômes"
+3. Renforcer `.claude/rules/branch-strategy.md` avec une 4e question dans la checklist : "Le sujet touche-t-il un RPC, une fonction DB, ou une colonne ?" → si oui, inclure régen types dans la même PR.
+4. Documenter dans cet ADR.
+
+**Conséquences** :
+
+- Tout futur agent, même sans la mémoire de cette session, lira ces règles à chaque démarrage et appliquera le bundling correct.
+- La 2e demande liée déclenche un push back senior automatique de l'agent : "Vu que [Y] suit [X] dans le même domaine, je mets sur la même branche en 2 commits, 1 seule PR. OK ?"
+- Toute migration SQL touchant un RPC/fonction/colonne déclenche `pnpm run generate:types` dans la même branche AVANT le push.
+- Le coût de cet incident (1h50 de Romeo perdues) ne se reproduira plus.
+
+**Trace** :
+
+- 4 PRs concernées : #822, #823, #824, #826 (toutes mergées sur staging)
+- Release : PR #825 (mergée sur main 2026-04-28 00:42:35 UTC après 2 cycles CI)
+- 3 fichiers `.claude/` modifiés dans la même session : `CLAUDE.md`, `workflow.md`, `branch-strategy.md`
+
+**Référence** :
+
+- `CLAUDE.md` racine section INTERDICTIONS ABSOLUES
+- `.claude/rules/workflow.md` section "Incident 2026-04-28"
+- `.claude/rules/branch-strategy.md` checklist question 4
