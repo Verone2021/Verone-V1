@@ -13395,9 +13395,7 @@ export type Database = {
           clicks: number;
           conversions: number;
           cost_price: number;
-          custom_description: string;
           custom_price_ht: number;
-          custom_title: string;
           description: string;
           error_message: string;
           id: string;
@@ -14558,14 +14556,6 @@ export type Database = {
           error: string;
           success: boolean;
         }[];
-      };
-      update_meta_commerce_metadata: {
-        Args: {
-          p_custom_description?: string;
-          p_custom_title?: string;
-          p_product_id: string;
-        };
-        Returns: undefined;
       };
       update_meta_commerce_price: {
         Args: { p_custom_price_ht: number; p_product_id: string };
