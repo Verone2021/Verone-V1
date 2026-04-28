@@ -47,7 +47,7 @@ export function StockKpiStrip({
   const stockForecastedOut = product.stock_forecasted_out ?? 0;
   const stockAvailable = stockReal - stockForecastedOut - reservationsTotal;
   const minStock = product.min_stock ?? 0;
-  const reorderPoint = product.reorder_point ?? 0;
+  const supplierMoq = product.supplier_moq ?? 1;
   const costNetAvg = product.cost_net_avg ?? 0;
   const valuation = stockReal * costNetAvg;
   const isBelowMin = stockAvailable < minStock;
@@ -55,14 +55,14 @@ export function StockKpiStrip({
   // Edition inline seuils
   const [editingSeuils, setEditingSeuils] = useState(false);
   const [draftMin, setDraftMin] = useState(minStock);
-  const [draftReorder, setDraftReorder] = useState(reorderPoint);
+  const [draftMoq, setDraftMoq] = useState(supplierMoq);
   const [saving, setSaving] = useState(false);
 
   const handleStartEdit = useCallback(() => {
     setDraftMin(product.min_stock ?? 0);
-    setDraftReorder(product.reorder_point ?? 0);
+    setDraftMoq(product.supplier_moq ?? 1);
     setEditingSeuils(true);
-  }, [product.min_stock, product.reorder_point]);
+  }, [product.min_stock, product.supplier_moq]);
 
   const handleCancelEdit = useCallback(() => {
     setEditingSeuils(false);
@@ -73,7 +73,7 @@ export function StockKpiStrip({
     try {
       await onProductUpdate({
         min_stock: draftMin,
-        reorder_point: draftReorder,
+        supplier_moq: Math.max(draftMoq, 1),
       });
       setEditingSeuils(false);
     } catch (err) {
@@ -81,7 +81,7 @@ export function StockKpiStrip({
     } finally {
       setSaving(false);
     }
-  }, [draftMin, draftReorder, onProductUpdate]);
+  }, [draftMin, draftMoq, onProductUpdate]);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -178,13 +178,13 @@ export function StockKpiStrip({
             </div>
             <div className="flex items-center gap-1.5">
               <label className="text-[10px] text-neutral-500 w-10 shrink-0">
-                Réap.
+                MOQ
               </label>
               <input
                 type="number"
-                min={0}
-                value={draftReorder}
-                onChange={e => setDraftReorder(Number(e.target.value))}
+                min={1}
+                value={draftMoq}
+                onChange={e => setDraftMoq(Number(e.target.value))}
                 className="w-full border border-neutral-300 rounded px-1.5 py-0.5 text-sm tabular-nums focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
             </div>
@@ -215,10 +215,10 @@ export function StockKpiStrip({
             <p className="text-2xl font-semibold tabular-nums text-neutral-900">
               {minStock}&nbsp;
               <span className="text-neutral-400">/</span>
-              &nbsp;{reorderPoint}
+              &nbsp;{supplierMoq}
             </p>
             <p className="text-[11px] text-neutral-500 mt-1">
-              seuil min&nbsp;·&nbsp;point de réappro
+              seuil alerte&nbsp;·&nbsp;MOQ fournisseur
             </p>
           </>
         )}

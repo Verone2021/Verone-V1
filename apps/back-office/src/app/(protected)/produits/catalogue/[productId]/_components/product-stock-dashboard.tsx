@@ -121,14 +121,13 @@ export function ProductStockDashboard({
       productAlert.alert_type === 'out_of_stock' ||
       productAlert.alert_type === 'low_stock_forecast');
 
-  // Suggestion réappro
-  const reorderPoint = product.reorder_point ?? 0;
-  const stockForecastedOut = product.stock_forecasted_out ?? 0;
-  const suggestedQty = Math.max(
-    reorderPoint - stockReal + stockForecastedOut,
-    shortageQuantity,
-    0
-  );
+  // Suggestion réappro fournisseur — alignée sur les 2 systèmes d'alertes
+  // existants (out_of_stock = prévisionnel < 0, low_stock = prévisionnel <
+  // min_stock). On commande au moins le MOQ fournisseur si une alerte est
+  // active. shortageQuantity vient de stock_alerts_unified_view (source unique).
+  const supplierMoq = product.supplier_moq ?? 1;
+  const suggestedQty =
+    shortageQuantity > 0 ? Math.max(shortageQuantity, supplierMoq) : 0;
 
   // ── Handlers ─────────────────────────────────────────────────────
   const handleRefreshAll = useCallback(() => {
