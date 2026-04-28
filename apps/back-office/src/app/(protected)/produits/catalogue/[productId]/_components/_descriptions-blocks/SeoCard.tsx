@@ -7,7 +7,7 @@
 
 import { useState, useCallback } from 'react';
 
-import { Copy, Save, Globe } from 'lucide-react';
+import { Copy, Save, Globe, ExternalLink } from 'lucide-react';
 
 import { cn } from '@verone/utils';
 
@@ -54,12 +54,18 @@ function SerpPreviewBox({
   title,
   description,
   slug,
+  isPublished,
 }: {
   title: string;
   description: string;
   slug: string | null;
+  isPublished: boolean;
 }) {
   const displayUrl = `veronecollections.fr/produits/${slug ?? 'produit'}`;
+  const liveUrl =
+    isPublished && slug
+      ? `https://veronecollections.fr/produits/${slug}`
+      : null;
   const displayTitle = title || 'Titre de la page';
   const displayDesc =
     description ||
@@ -67,11 +73,32 @@ function SerpPreviewBox({
 
   return (
     <div className="bg-blue-50 border border-blue-100 rounded-md p-4">
-      <div className="flex items-center gap-1.5 mb-2">
-        <Globe className="h-3.5 w-3.5 text-gray-400" />
-        <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-          Aperçu Google
-        </span>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex items-center gap-1.5">
+          <Globe className="h-3.5 w-3.5 text-gray-400" />
+          <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
+            Aperçu Google
+          </span>
+        </div>
+        {liveUrl ? (
+          <a
+            href={liveUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[11px] text-indigo-600 hover:text-indigo-800 hover:underline"
+          >
+            Voir en ligne
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        ) : (
+          <span
+            className="inline-flex items-center gap-1 text-[11px] text-gray-400 cursor-not-allowed"
+            title={!slug ? 'Slug manquant' : 'Produit non publie en ligne'}
+          >
+            Voir en ligne
+            <ExternalLink className="h-3 w-3" />
+          </span>
+        )}
       </div>
       <div className="space-y-0.5 max-w-xl">
         <div className="text-xs text-green-700 truncate">{displayUrl}</div>
@@ -230,6 +257,7 @@ export function SeoCard({ product, onProductUpdate }: SeoCardProps) {
           title={metaTitle}
           description={metaDescription}
           slug={product.slug ?? null}
+          isPublished={product.is_published_online ?? false}
         />
       </div>
     </div>

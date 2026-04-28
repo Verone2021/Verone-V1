@@ -78,6 +78,7 @@ export function ProductCharacteristicsDashboard({
         variants={[]}
         onTabClick={onTabChange}
         onExportPdf={undefined}
+        hasSourcing={Boolean(product.consultation_id)}
       />
 
       {/* Body principal */}

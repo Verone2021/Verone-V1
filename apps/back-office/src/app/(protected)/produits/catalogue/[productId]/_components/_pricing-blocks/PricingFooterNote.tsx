@@ -15,7 +15,7 @@ export function PricingFooterNote() {
         prix minimum de vente est calculé à partir du prix de revient pondéré
         sur les 12 derniers mois d'achats. Ce prix de revient inclut le prix
         d'achat fournisseur et les frais logistiques (transport, douane,
-        assurance) amortis par unité. Pour l'ajuster, modifie la marge cible
+        assurance) amortis par unité. Pour l'ajuster, modifie la marge minimum
         ci-dessus ou attends le prochain achat fournisseur qui actualisera
         automatiquement le prix de revient moyen.
       </p>

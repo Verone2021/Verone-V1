@@ -53,7 +53,7 @@ export function SupplierPoCompactCard({
           </div>
           <div className="min-w-0 flex-1">
             <Link
-              href={`/fournisseurs/${supplierId}`}
+              href={`/contacts-organisations/suppliers/${supplierId}`}
               className="text-sm font-medium text-neutral-900 hover:underline truncate block"
             >
               {supplierName ?? 'Fournisseur inconnu'}
@@ -106,7 +106,7 @@ export function SupplierPoCompactCard({
 
       {supplierId && (
         <Link
-          href={`/fournisseurs/${supplierId}`}
+          href={`/contacts-organisations/suppliers/${supplierId}`}
           className="mt-3 text-xs text-neutral-600 underline hover:text-neutral-900 inline-flex items-center gap-1"
         >
           Voir la fiche fournisseur

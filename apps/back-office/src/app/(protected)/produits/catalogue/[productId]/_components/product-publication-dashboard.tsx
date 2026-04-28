@@ -230,6 +230,7 @@ export function ProductPublicationDashboard({
         variants={[]}
         onTabClick={onTabChange}
         onExportPdf={undefined}
+        hasSourcing={Boolean(product.consultation_id)}
       />
 
       {/* Body principal — 3 sections empilées */}
