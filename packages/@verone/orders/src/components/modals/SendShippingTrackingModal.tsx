@@ -195,15 +195,62 @@ export function SendShippingTrackingModal({
 
   // ── Preview ──
 
-  const handlePreview = () => {
-    setPreviewHtml(
-      buildPreviewHtml({
-        customerName: '',
-        orderNumber: order.order_number,
-        shipments: selectedShipments,
-        customMessage: message,
-      })
-    );
+  const handlePreview = async () => {
+    if (selectedShipments.length === 0) {
+      toast({
+        title: 'Aucune expédition sélectionnée',
+        description: 'Cochez au moins une expédition à prévisualiser.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    try {
+      // Appel serveur pour générer un aperçu identique à l'email réel :
+      // même enrichissement Packlink (date pickup réelle + tracking_url
+      // récupéré à la volée + persistance DB).
+      const response = await fetch('/api/emails/preview-shipping-tracking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          salesOrderId: order.id,
+          shipmentIds: selectedShipments.map(s => s.id),
+          customMessage: message,
+        }),
+      });
+      const data = (await response.json()) as {
+        success: boolean;
+        html?: string;
+        error?: string;
+      };
+      if (!response.ok || !data.success || !data.html) {
+        // Fallback : preview client-side si la route serveur échoue
+        // (transporteur non Packlink, panne réseau, etc.)
+        console.error(
+          '[SendShippingTrackingModal] preview server failed, fallback client:',
+          data.error
+        );
+        setPreviewHtml(
+          buildPreviewHtml({
+            customerName: '',
+            orderNumber: order.order_number,
+            shipments: selectedShipments,
+            customMessage: message,
+          })
+        );
+        return;
+      }
+      setPreviewHtml(data.html);
+    } catch (err) {
+      console.error('[SendShippingTrackingModal] preview error:', err);
+      setPreviewHtml(
+        buildPreviewHtml({
+          customerName: '',
+          orderNumber: order.order_number,
+          shipments: selectedShipments,
+          customMessage: message,
+        })
+      );
+    }
   };
 
   // ── Send ──
@@ -381,7 +428,14 @@ export function SendShippingTrackingModal({
               <ButtonV2
                 variant="outline"
                 size="sm"
-                onClick={handlePreview}
+                onClick={() => {
+                  void handlePreview().catch(err => {
+                    console.error(
+                      '[SendShippingTrackingModal] handlePreview rejected:',
+                      err
+                    );
+                  });
+                }}
                 className="h-11 md:h-9"
                 disabled={selectedShipments.length === 0}
               >

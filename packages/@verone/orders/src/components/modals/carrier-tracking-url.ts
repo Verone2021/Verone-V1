@@ -16,7 +16,9 @@ export function buildCarrierTrackingUrl(
   const tn = encodeURIComponent(trackingNumber);
 
   if (carrier.includes('ups')) {
-    return `https://www.ups.com/track?tracknum=${tn}`;
+    // Format complet UPS FR : sans loc/requester, UPS bloque la connexion
+    // depuis certains domaines avec une erreur "n'autorise pas la connexion".
+    return `https://www.ups.com/track?loc=fr_fr&requester=ST&tracknum=${tn}`;
   }
   if (carrier.includes('dpd')) {
     return `https://www.dpd.fr/trace/${tn}`;

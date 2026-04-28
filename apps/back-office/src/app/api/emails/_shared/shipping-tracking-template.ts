@@ -96,12 +96,24 @@ function buildShipmentBlock(
     .filter(Boolean)
     .join('');
 
+  // Bouton CTA par colis (visible quand multi-shipments).
+  const ctaButton =
+    total > 1
+      ? `<div style="text-align: center; margin: 12px 0 4px 0;">
+          <a href="${ctaUrl}"
+             style="display: inline-block; background-color: #0d9488; color: #ffffff; text-decoration: none; padding: 10px 24px; border-radius: 6px; font-size: 14px; font-weight: 600; line-height: 1.2;">
+            Suivre le colis ${index + 1}
+          </a>
+        </div>`
+      : '';
+
   return `
     ${heading}
     <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px 20px; margin-bottom: 12px;">
       <table style="border-collapse: collapse; width: 100%;">
         ${infoRows}
       </table>
+      ${ctaButton}
     </div>
   `;
 }
@@ -145,25 +157,28 @@ export function buildTrackingEmailHtml(options: TrackingEmailOptions): string {
     }
   `;
 
-  // CTA = the first tracking's URL (or fallback). For multi, the customer
-  // sees inline links above too, so the CTA stays clickable but secondary.
-  const primaryCta = resolveTrackingUrl(
-    trackings[0].trackingUrl,
-    trackings[0].carrierName,
-    orderNumber,
-    trackings[0].trackingNumber
-  );
+  // En multi-shipments, chaque colis a son propre bouton CTA dans son
+  // bloc — pas de CTA principal en bas. En mono-shipment, un seul CTA
+  // principal classique.
+  const isMulti = total > 1;
+  const primaryCta = isMulti
+    ? undefined
+    : resolveTrackingUrl(
+        trackings[0].trackingUrl,
+        trackings[0].carrierName,
+        orderNumber,
+        trackings[0].trackingNumber
+      );
 
   return buildEmailHtml({
-    title:
-      total > 1
-        ? `Votre commande ${orderNumber} est en route (${total} colis)`
-        : `Votre commande ${orderNumber} est en route`,
+    title: isMulti
+      ? `Votre commande ${orderNumber} est en route (${total} colis)`
+      : `Votre commande ${orderNumber} est en route`,
     recipientName: customerName,
     accentColor: 'teal',
     bodyHtml,
     ctaUrl: primaryCta,
-    ctaLabel: total > 1 ? 'Suivre le 1er colis' : 'Suivre ma commande',
+    ctaLabel: isMulti ? undefined : 'Suivre ma commande',
     footerNote: `Commande ${orderNumber}`,
   });
 }
