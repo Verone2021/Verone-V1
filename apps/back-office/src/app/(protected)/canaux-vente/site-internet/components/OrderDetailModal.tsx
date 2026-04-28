@@ -1,5 +1,7 @@
 'use client';
 
+import { useCallback, useState } from 'react';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { Badge } from '@verone/ui';
 import {
@@ -123,10 +125,31 @@ export function OrderDetailModal({
   onStatusChange,
   isUpdating,
 }: OrderDetailModalProps) {
+  const [reloadKey, setReloadKey] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+
   const { shipmentHistory, salesOrderItems } = useShipmentHistory(
     order?.id,
-    open
+    open,
+    reloadKey
   );
+
+  const handleSyncPacklink = useCallback(() => {
+    if (syncing || !order?.id) return;
+    setSyncing(true);
+    void fetch('/api/packlink/shipments/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sales_order_id: order.id }),
+    })
+      .catch(err => {
+        console.error('[OrderDetailModal] Packlink sync failed:', err);
+      })
+      .finally(() => {
+        setReloadKey(k => k + 1);
+        setSyncing(false);
+      });
+  }, [order?.id, syncing]);
 
   if (!order) return null;
 
@@ -362,6 +385,8 @@ export function OrderDetailModal({
                   salesOrderItems as SalesOrder['sales_order_items'],
               } as SalesOrder
             }
+            onSync={handleSyncPacklink}
+            syncing={syncing}
           />
         </div>
       </DialogContent>
