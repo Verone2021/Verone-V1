@@ -281,15 +281,21 @@ export function CreateUserDialog({ children }: CreateUserDialogProps) {
                   <SelectValue placeholder="Sélectionner un rôle" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="catalog_manager">
+                    <div className="flex items-center space-x-2">
+                      <RoleBadge role="catalog_manager" showDetails={false} />
+                      <span>Gestionnaire Catalogue</span>
+                    </div>
+                  </SelectItem>
                   <SelectItem value="admin">
                     <div className="flex items-center space-x-2">
-                      <RoleBadge role="admin" />
+                      <RoleBadge role="admin" showDetails={false} />
                       <span>Admin</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="owner">
                     <div className="flex items-center space-x-2">
-                      <RoleBadge role="owner" />
+                      <RoleBadge role="owner" showDetails={false} />
                       <span>Owner</span>
                     </div>
                   </SelectItem>
