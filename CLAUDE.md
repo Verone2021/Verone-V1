@@ -122,13 +122,26 @@ Le reviewer lit le rapport, pas le chat. Le ops-agent lit le verdict PASS, pas l
   Packlink, Qonto, Supabase dashboard, GitHub UI). Voir
   `.claude/rules/agent-autonomy-external.md`. L'agent fait tout lui-même
   via CLI (`vercel`, `gh`, `supabase` MCP) ou MCP Playwright.
+- **JAMAIS 1 PR par sous-tâche quand plusieurs fixes sont thématiquement liés**.
+  Si Romeo enchaîne 2+ demandes dans le même domaine (canaux-vente, factures,
+  responsive, etc.) → 1 SEULE branche, plusieurs commits, 1 SEULE PR.
+  Voir `.claude/rules/workflow.md` section "Incident 2026-04-28".
+  Coût d'un mauvais bundling : ~1h50 de cycles CI vs ~25 min pour un bundle propre.
+  À la 2e demande liée : pousser back senior =
+  « Vu que [Y] suit [X] dans le même domaine, je mets sur la même branche
+  en 2 commits, 1 seule PR. OK ? »
+- **JAMAIS migration SQL sans régénération des types dans la même PR**.
+  Si une PR touche un RPC / une fonction / une colonne DB →
+  `pnpm run generate:types` + commit dans la même branche AVANT le push.
+  Sinon le check `Supabase TS types drift (blocking)` fail à la release main
+  et nécessite une PR de rattrapage (incident 2026-04-28 PR #826).
+  Voir `.claude/rules/branch-strategy.md` checklist question 4.
 - Zero `any` TypeScript
 - JAMAIS modifier les routes API existantes (Qonto, adresses, emails, webhooks)
 - JAMAIS modifier les triggers stock (voir `.claude/rules/stock-triggers-protected.md`)
 - JAMAIS lancer `pnpm dev` / `pnpm start` / `turbo dev`
 - JAMAIS `--no-verify` (sauf ordre Romeo explicite)
 - JAMAIS merger vers `main` sans ordre explicite
-- JAMAIS 1 PR par sprint (regrouper en blocs)
 - JAMAIS deviner une structure DB ou composant — lire la doc
 - JAMAIS creer de formulaire dans `apps/` → toujours dans `packages/@verone/`
 - JAMAIS composant UI sans les 5 techniques responsive

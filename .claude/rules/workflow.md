@@ -244,3 +244,70 @@ Les autres playbooks ont ete supprimes (voir `DECISIONS.md` ADR-011) car ils dup
 1. **Commit + push souvent** pour sauvegarder
 2. **PR uniquement quand un bloc coherent (3+ sprints) est fini**
 3. **Merge uniquement quand tout est valide**
+
+---
+
+## Incident 2026-04-28 — bundling thématique manqué (1h50 perdues)
+
+**Contexte** : Romeo a enchaîné 3 demandes liées à la section Canaux de Vente :
+
+1. Fix bug Meta (page liste vide après drop colonnes `custom_*`)
+2. "Tu corriges Google Merchant"
+3. "Tu corriges Site Internet"
+
+**Erreur de l'agent** : a créé **4 PRs séparées** (#822 Meta, #823 Google, #824 Site, #826 types-drift de rattrapage) au lieu de **1 PR bundle** `[BO-CHAN-CLEANUP-001]`.
+
+**Coût** : 4 cycles CI staging + 1 cycle CI main FAILED + 1 PR de rattrapage + 1 cycle CI staging + 1 cycle CI main re-run = **~1h50** de cycles CI, vs **~25 min** estimés pour un bundle propre.
+
+**Causes racines** :
+
+1. L'agent a interprété "L'un après l'autre" littéralement = 1 PR par sujet. Or "l'un après l'autre" voulait dire "fais d'abord X dans la branche puis Y dans la même branche, je merge le bloc à la fin".
+2. La migration SQL Meta nécessitait une régénération `pnpm run generate:types` : pas faite dans la PR Meta → drift TS détecté à la PR release main → PR de rattrapage #826.
+
+**Règles de prévention OBLIGATOIRES** :
+
+### 1. Détecter le bundling potentiel à la 2e demande
+
+Si Romeo demande un 2e fix et que ce fix est dans le même domaine fonctionnel que le 1er (mêmes pages, même section UI, même feature), **NE PAS créer une nouvelle branche/PR**. Au lieu de ça :
+
+```
+"Vu que [Y] suit [X] dans le même domaine ([canaux-vente]),
+ je mets sur la même branche en 2 commits, 1 seule PR. OK ?"
+```
+
+Attendre confirmation. Si OK → continuer sur la branche actuelle.
+
+### 2. Toujours bundler la régénération TS dans la PR de migration
+
+Si une PR contient une migration SQL qui touche un RPC, une fonction, ou une colonne :
+
+```bash
+pnpm run generate:types
+git add packages/@verone/types/src/supabase.ts
+git commit -m "chore: regenerate Supabase types after [TASK-ID] migration"
+```
+
+**Ce commit doit être dans la même PR que la migration.** Sinon le check `Supabase TS types drift (blocking)` du CI release main fail et il faut une PR de rattrapage (incident 2026-04-28).
+
+Si `pnpm run generate:types` échoue (Unauthorized par exemple), utiliser `mcp__supabase__generate_typescript_types` MAIS prendre conscience que le résultat omet le schema `graphql_public` et il faudra rectifier via l'artifact `supabase-types-drift` du CI.
+
+### 3. Détection systématique des onglets fantômes
+
+Si on touche au composant `apps/back-office/src/components/layout/channel-tabs.tsx` ou si on découvre un lien 404 :
+
+```bash
+# Vérifier que chaque href de vraie route (pas ?tab=...) existe en repo
+ls apps/back-office/src/app/(protected)/canaux-vente/[channel]/
+```
+
+Audit complet des onglets de TOUS les canaux à faire **dans la même PR**, pas un canal à la fois.
+
+---
+
+## Référence
+
+Référencé par :
+
+- `CLAUDE.md` racine (section INTERDICTIONS ABSOLUES)
+- `.claude/rules/branch-strategy.md` (checklist 3 questions)
+- `.claude/DECISIONS.md` (ADR-022 sur l'incident 2026-04-28)

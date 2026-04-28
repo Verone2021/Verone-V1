@@ -110,10 +110,44 @@ Une demande inutile coûte 5 secondes. Une PR éclatée coûte 1h de rebase.
 
 ---
 
+## Checklist enrichie 2026-04-28 (incident bundling Canaux de Vente)
+
+**4e question obligatoire** avant `gh pr create` :
+
+### 4. Le sujet touche-t-il un RPC, une fonction DB, ou une colonne ?
+
+Si oui, la PR DOIT inclure dans le même commit (ou un 2e commit sur la même branche) :
+
+```bash
+pnpm run generate:types
+git add packages/@verone/types/src/supabase.ts
+```
+
+**Pourquoi** : sans ça, le check `Supabase TS types drift (blocking)` du workflow Quality fail au moment du merge release staging→main. Il faut alors créer une PR de rattrapage qui ajoute 1 cycle CI staging + 1 re-cycle CI main = ~25 min de plus.
+
+Si `pnpm run generate:types` échoue (CLI Supabase non auth), utiliser `mcp__supabase__generate_typescript_types`. **Attention** : le MCP omet le schema `graphql_public`. Pour un fichier byte-for-byte conforme au CI, télécharger l'artifact `supabase-types-drift` du run failed du CI et utiliser `supabase.ts.generated`.
+
+---
+
+## Anti-pattern incident 2026-04-28
+
+❌ **Vu** : Romeo a enchaîné 3 fixes Canaux de Vente (Meta + Google Merchant + Site Internet). L'agent a créé **4 PRs séparées** au lieu d'1 bundle. Coût : 1h50 de cycles CI.
+
+❌ **Aussi vu** : la PR Meta contenait une migration SQL mais ne régénérait pas les types. → check drift TS fail sur la release main → PR #826 de rattrapage.
+
+✅ **Bonne pratique** : 1 PR `[BO-CHAN-CLEANUP-001]` avec 4 commits :
+
+1. Fix Meta (DB + code + types)
+2. Fix Google Merchant (onglets fantômes)
+3. Fix Site Internet (onglet fantôme)
+4. Si applicable : régen types Supabase (peut-être inclus au commit 1)
+
+---
+
 ## Référence
 
 Référencé par :
 
-- `CLAUDE.md` racine (section WORKFLOW GIT)
-- `.claude/rules/workflow.md` (règle complémentaire "1 PR = 1 bloc")
-- `.claude/DECISIONS.md` (à créer : ADR sur cette règle)
+- `CLAUDE.md` racine (section WORKFLOW GIT + INTERDICTIONS ABSOLUES)
+- `.claude/rules/workflow.md` (règle complémentaire "1 PR = 1 bloc" + section incident 2026-04-28)
+- `.claude/DECISIONS.md` (ADR-022 — incident bundling Canaux de Vente)
