@@ -12,8 +12,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
-import { PublicationSchedulingCard } from './_publication-blocks/PublicationSchedulingCard';
-import type { Product, ProductRow } from './types';
+import type { Product } from './types';
 
 interface ChannelStatus {
   channel_code: string;
@@ -24,13 +23,9 @@ interface ChannelStatus {
 
 interface ProductPublicationTabProps {
   product: Product;
-  onProductUpdate?: (updates: Partial<ProductRow>) => Promise<void>;
 }
 
-export function ProductPublicationTab({
-  product,
-  onProductUpdate,
-}: ProductPublicationTabProps) {
+export function ProductPublicationTab({ product }: ProductPublicationTabProps) {
   const [channels, setChannels] = useState<ChannelStatus[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -272,15 +267,6 @@ export function ProductPublicationTab({
           configuration du canal.
         </p>
       </section>
-
-      {/* Planification — dates de publication / dépublication */}
-      {onProductUpdate && (
-        <PublicationSchedulingCard
-          publicationDate={product.publication_date ?? null}
-          unpublicationDate={product.unpublication_date ?? null}
-          onProductUpdate={onProductUpdate}
-        />
-      )}
     </div>
   );
 }
