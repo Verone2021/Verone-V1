@@ -237,13 +237,21 @@ jobs:
           pnpm --filter @verone/back-office start > /tmp/next-start.log 2>&1 &
           echo $! > /tmp/next-start.pid
           # Attendre que le serveur réponde (max 60 s)
+          UP=0
           for i in {1..60}; do
             if curl -sf http://localhost:3000/login > /dev/null; then
               echo "✅ Back-office up on :3000"
+              UP=1
               break
             fi
             sleep 1
           done
+          if [ "$UP" = "0" ]; then
+            echo "❌ Back-office did NOT come up on :3000 within 60s"
+            echo "===== /tmp/next-start.log (full) ====="
+            cat /tmp/next-start.log || true
+            echo "===== end of /tmp/next-start.log ====="
+          fi
 
       - name: Run smoke tests (smoke-finance-modals + smoke-critical-workflows)
         run: |
