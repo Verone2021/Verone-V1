@@ -12,6 +12,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { z } from 'zod';
 
+import { getPacklinkClient } from '@verone/common/lib/packlink/client';
 import type { Database } from '@verone/types';
 
 import { getLogoAttachments } from '../_shared/email-logo';
@@ -63,6 +64,93 @@ interface OrderTrackingsInfo {
   trackings: Array<TrackingInfo & { shipmentId: string }>;
 }
 
+interface RawShipment {
+  id: string;
+  tracking_number: string | null;
+  tracking_url: string | null;
+  carrier_name: string | null;
+  shipped_at: string | null;
+  packlink_shipment_id: string | null;
+}
+
+/**
+ * Récupère depuis Packlink la date de prise en charge réelle + l'URL
+ * de tracking si elle manque, et persiste les valeurs en DB.
+ *
+ * Stratégie :
+ *  1. Si `tracking_url` manquant → GET /shipments/{ref} pour le récupérer
+ *  2. GET /shipments/{ref}/tracking → premier event = pickup carrier réel.
+ *     On utilise ce timestamp comme date d'expédition.
+ *  3. Si aucun event encore (colis créé mais pas encore pris en charge)
+ *     → fallback sur la date du jour (pas la date de création du wizard
+ *     qui était trompeuse pour le client).
+ */
+async function enrichFromPacklink(
+  supabase: ReturnType<typeof getAdminClient>,
+  shipment: RawShipment
+): Promise<{ trackingUrl: string | null; shippedAt: string }> {
+  if (!shipment.packlink_shipment_id) {
+    return {
+      trackingUrl: shipment.tracking_url,
+      shippedAt: shipment.shipped_at ?? new Date().toISOString(),
+    };
+  }
+
+  const client = getPacklinkClient();
+  const updates: Record<string, unknown> = {};
+  let trackingUrl = shipment.tracking_url;
+  let pickupAt: string | null = null;
+
+  // 1. Récupérer tracking_url si manquant
+  if (!shipment.tracking_url) {
+    try {
+      const details = await client.getShipment(shipment.packlink_shipment_id);
+      if (details.tracking_url) {
+        trackingUrl = details.tracking_url;
+        updates.tracking_url = details.tracking_url;
+      }
+    } catch (err) {
+      console.error(
+        '[send-shipping-tracking] Packlink getShipment failed for',
+        shipment.packlink_shipment_id,
+        err
+      );
+    }
+  }
+
+  // 2. Récupérer la date réelle de prise en charge via les events
+  try {
+    const events = await client.getTracking(shipment.packlink_shipment_id);
+    if (events.length > 0) {
+      const sorted = [...events].sort(
+        (a, b) =>
+          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      );
+      pickupAt = sorted[0].timestamp;
+      updates.shipped_at = pickupAt;
+    }
+  } catch (err) {
+    console.error(
+      '[send-shipping-tracking] Packlink getTracking failed for',
+      shipment.packlink_shipment_id,
+      err
+    );
+  }
+
+  // 3. Fallback : date du jour (pas date de création du wizard)
+  const shippedAt = pickupAt ?? new Date().toISOString();
+
+  if (Object.keys(updates).length > 0) {
+    updates.updated_at = new Date().toISOString();
+    await supabase
+      .from('sales_order_shipments')
+      .update(updates)
+      .eq('id', shipment.id);
+  }
+
+  return { trackingUrl, shippedAt };
+}
+
 async function fetchShipmentsInfo(
   supabase: ReturnType<typeof getAdminClient>,
   salesOrderId: string,
@@ -82,7 +170,9 @@ async function fetchShipmentsInfo(
       .single(),
     supabase
       .from('sales_order_shipments')
-      .select('id, tracking_number, tracking_url, carrier_name, shipped_at')
+      .select(
+        'id, tracking_number, tracking_url, carrier_name, shipped_at, packlink_shipment_id'
+      )
       .eq('sales_order_id', salesOrderId)
       .in('id', shipmentIds)
       .order('shipped_at', { ascending: true }),
@@ -112,24 +202,29 @@ async function fetchShipmentsInfo(
       `${indiv?.first_name ?? ''} ${indiv?.last_name ?? ''}`.trim();
   }
 
-  // On filtre les shipments sans tracking_number — un envoi tracking n'a
-  // aucun sens sans numéro (cas main propre / retrait sans tracking ou
-  // shipment Packlink pas encore en `paye`). Le caller doit déjà filtrer
-  // côté UI mais on protège le backend.
-  const trackings = shipmentsResult.data
-    .filter(s => Boolean(s.tracking_number))
-    .map(s => ({
-      shipmentId: s.id,
-      trackingNumber: s.tracking_number as string,
-      trackingUrl: s.tracking_url,
-      carrierName: s.carrier_name,
-      shippedAt: s.shipped_at,
-    }));
+  // Filtre les shipments sans tracking_number (envoi tracking inutile).
+  const validShipments = shipmentsResult.data.filter(s =>
+    Boolean(s.tracking_number)
+  ) as RawShipment[];
+
+  // Enrichissement Packlink en parallèle (récupère date pickup + URL)
+  const enriched = await Promise.all(
+    validShipments.map(async s => {
+      const { trackingUrl, shippedAt } = await enrichFromPacklink(supabase, s);
+      return {
+        shipmentId: s.id,
+        trackingNumber: s.tracking_number as string,
+        trackingUrl,
+        carrierName: s.carrier_name,
+        shippedAt,
+      };
+    })
+  );
 
   return {
     customerName,
     orderNumber: order.order_number,
-    trackings,
+    trackings: enriched,
   };
 }
 
