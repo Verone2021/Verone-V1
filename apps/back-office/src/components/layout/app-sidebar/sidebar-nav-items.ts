@@ -39,6 +39,50 @@ export interface NavItem {
   children?: NavItem[];
 }
 
+/**
+ * Top-level sidebar entries visible to a back-office `catalog_manager`.
+ * Strict whitelist — anything not listed is hidden so the user never clicks
+ * on something that would crash, redirect, or expose sensitive data.
+ *
+ * Matrix validated by Romeo (2026-04-27/28):
+ * - Produits  : sourcing + catalogue + variantes + collections + categories
+ * - Stocks    : read-only (granular UI locks scoped to BO-RBAC-CATALOG-MGR-002)
+ * - Paramètres: needed to reach /parametres/outils (Chrome extension download)
+ *
+ * Hidden for catalog_manager:
+ * - Dashboard (exposes financial KPIs)
+ * - Messages (commercial)
+ * - Organisations & Contacts (sensitive)
+ * - Ventes / Achats (orders, invoices, suppliers commands)
+ * - Canaux de Vente (publication interdite)
+ * - Finance (interdit)
+ *
+ * @see BO-RBAC-CATALOG-MGR-001
+ */
+const CATALOG_MANAGER_TOP_LEVEL_WHITELIST = new Set<string>([
+  'Produits',
+  'Stocks',
+  'Paramètres',
+]);
+
+/**
+ * Filters the full navigation tree based on the back-office role.
+ * - owner / admin / null (loading) → return everything
+ * - catalog_manager → return only the whitelisted top-level entries
+ * - any other role → conservative default = same restriction as catalog_manager
+ */
+export function filterNavItemsForRole(
+  items: NavItem[],
+  role: 'owner' | 'admin' | 'catalog_manager' | string | null | undefined
+): NavItem[] {
+  if (role === 'owner' || role === 'admin' || role == null) {
+    return items;
+  }
+  return items.filter(item =>
+    CATALOG_MANAGER_TOP_LEVEL_WHITELIST.has(item.title)
+  );
+}
+
 // Navigation principale - Dashboard + Modules
 // Structure optimisée 2026-01-22: 14 items top-level, max 2 niveaux
 export const getNavItems = (

@@ -63,20 +63,7 @@ export function isOwnerRole(role: BoRole | null): boolean {
   return role === 'owner';
 }
 
-/**
- * Server-side guard for layouts/pages restricted to owner+admin.
- * Redirects catalog_manager (and any non-owner/admin role) to /produits.
- *
- * Use in a Server Component layout:
- * ```tsx
- * await gateAdminOrOwner();
- * return <>{children}</>;
- * ```
- */
-export async function gateAdminOrOwner(): Promise<void> {
-  const { redirect } = await import('next/navigation');
-  const role = await getCurrentBoRole();
-  if (!isOwnerOrAdminRole(role)) {
-    redirect('/produits');
-  }
-}
+// Note: route-level RBAC gating for catalog_manager is now handled by
+// apps/back-office/src/middleware.ts (Next.js middleware). The previous
+// gateAdminOrOwner() helper that called redirect() inside a Server Component
+// layout caused hydration mismatches in dev mode.

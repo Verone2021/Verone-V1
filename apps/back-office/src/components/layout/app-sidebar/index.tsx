@@ -4,13 +4,14 @@ import { useMemo } from 'react';
 
 import { useSidebar } from '@verone/ui';
 import { cn } from '@verone/utils';
+import { useCurrentBoRole } from '@verone/utils/hooks';
 import { featureFlags } from '@verone/utils/feature-flags';
 import {
   useSidebarCounts,
   useDatabaseNotifications,
 } from '@verone/notifications';
 
-import { getNavItems } from './sidebar-nav-items';
+import { getNavItems, filterNavItemsForRole } from './sidebar-nav-items';
 import { useHoverExpand, useSidebarState } from './use-sidebar-state';
 import { SidebarNavItemExpanded } from './SidebarNavItemExpanded';
 import { SidebarNavItemCompact } from './SidebarNavItemCompact';
@@ -40,6 +41,10 @@ function SidebarContent() {
   } = useSidebarCounts();
   const { unreadCount: unreadNotificationsCount } = useDatabaseNotifications();
 
+  // Current back-office role — drives RBAC filtering on the sidebar.
+  // catalog_manager sees a strict whitelist; owner/admin see everything.
+  const { role: currentBoRole } = useCurrentBoRole();
+
   // State local sidebar (expanded items, active helpers, module name)
   const {
     expandedItems,
@@ -67,11 +72,12 @@ function SidebarContent() {
     );
 
     // Masquer Finance si financeEnabled = false (module fusionné)
-    if (!featureFlags.financeEnabled) {
-      return items.filter(item => item.title !== 'Finance');
-    }
+    const baseItems = !featureFlags.financeEnabled
+      ? items.filter(item => item.title !== 'Finance')
+      : items;
 
-    return items;
+    // RBAC filtering — catalog_manager only sees Produits + Stocks + Paramètres
+    return filterNavItemsForRole(baseItems, currentBoRole);
   }, [
     stockAlertsCount,
     consultationsCount,
@@ -84,6 +90,7 @@ function SidebarContent() {
     formSubmissionsCount,
     linkmeMissingInfoCount,
     unreadNotificationsCount,
+    currentBoRole,
   ]);
 
   // Fonction récursive pour rendre les enfants (support multi-niveaux) - Reserved
