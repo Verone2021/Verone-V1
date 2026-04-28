@@ -116,7 +116,6 @@ export function ProductPricingDashboard({
     <div className="flex flex-col lg:flex-row gap-4">
       {/* Rail gauche sticky — réutilisé tel quel depuis Général */}
       <GeneralRail
-        productId={product.id}
         productName={product.name}
         sku={product.sku ?? ''}
         completionPercentage={completionPercentage}
@@ -125,7 +124,6 @@ export function ProductPricingDashboard({
         variants={[]}
         onTabClick={onTabChange}
         onExportPdf={undefined}
-        hasSourcing={Boolean(product.consultation_id)}
       />
 
       {/* Body principal */}

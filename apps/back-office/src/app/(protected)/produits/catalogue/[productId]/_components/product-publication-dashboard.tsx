@@ -221,7 +221,6 @@ export function ProductPublicationDashboard({
     <div className="flex flex-col lg:flex-row gap-4">
       {/* Rail gauche sticky — partagé avec les autres onglets */}
       <GeneralRail
-        productId={product.id}
         productName={product.name}
         sku={product.sku ?? ''}
         completionPercentage={completionPercentage}
@@ -230,7 +229,6 @@ export function ProductPublicationDashboard({
         variants={[]}
         onTabClick={onTabChange}
         onExportPdf={undefined}
-        hasSourcing={Boolean(product.consultation_id)}
       />
 
       {/* Body principal — 3 sections empilées */}

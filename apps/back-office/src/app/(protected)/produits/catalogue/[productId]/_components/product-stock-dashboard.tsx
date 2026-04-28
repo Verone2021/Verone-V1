@@ -210,7 +210,6 @@ export function ProductStockDashboard({
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Rail gauche sticky */}
         <GeneralRail
-          productId={product.id}
           productName={product.name}
           sku={product.sku ?? ''}
           completionPercentage={completionPercentage}
@@ -219,7 +218,6 @@ export function ProductStockDashboard({
           variants={[]}
           onTabClick={onTabChange}
           onExportPdf={undefined}
-          hasSourcing={Boolean(product.consultation_id)}
         />
 
         {/* Body principal */}

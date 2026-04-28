@@ -3,20 +3,16 @@
 /**
  * GeneralRail — rail gauche 200px sticky du dashboard Général.
  * Contient : image + nom + SKU, completion circle, liste onglets complétude,
- * variantes miniatures, bouton Export PDF + lien "Ouvrir Sourcing"
- * affiche uniquement si le produit est issu d'un sourcing (consultation_id).
+ * variantes miniatures, bouton Export PDF.
  */
 
-import Link from 'next/link';
-
 import { ButtonUnified } from '@verone/ui';
-import { FileDown, Compass } from 'lucide-react';
+import { FileDown } from 'lucide-react';
 
 import { TabCompletionList } from './TabCompletionList';
 import { VariantsRailMiniGrid } from './VariantsRailMiniGrid';
 
 interface GeneralRailProps {
-  productId: string;
   productName: string;
   sku: string;
   completionPercentage: number;
@@ -25,12 +21,9 @@ interface GeneralRailProps {
   variants: Array<{ id: string; name: string; imageUrl: string | null }>;
   onTabClick: (id: string) => void;
   onExportPdf?: () => void;
-  /** Affiche le lien "Ouvrir Sourcing" si true (produit issu d'un sourcing) */
-  hasSourcing?: boolean;
 }
 
 export function GeneralRail({
-  productId,
   productName,
   sku,
   completionPercentage,
@@ -39,7 +32,6 @@ export function GeneralRail({
   variants,
   onTabClick,
   onExportPdf,
-  hasSourcing = false,
 }: GeneralRailProps) {
   return (
     <aside className="w-full lg:w-[220px] lg:sticky lg:top-4 lg:self-start bg-white rounded-lg border border-neutral-200 p-4 space-y-4">
@@ -112,15 +104,6 @@ export function GeneralRail({
           <FileDown className="h-3.5 w-3.5 mr-1.5" />
           Export PDF
         </ButtonUnified>
-        {hasSourcing && (
-          <Link
-            href={`/produits/sourcing/produits/${productId}`}
-            className="flex items-center justify-center gap-1.5 w-full text-xs text-neutral-600 hover:text-neutral-900 underline py-1.5"
-          >
-            <Compass className="h-3.5 w-3.5" />
-            Ouvrir Sourcing
-          </Link>
-        )}
       </div>
     </aside>
   );
