@@ -2,6 +2,7 @@
 
 import { TabsNavigation, TabContent } from '@verone/ui';
 
+import { ProductCompletionBanner } from './_components/ProductCompletionBanner';
 import { ProductDetailHeader } from './_components/product-detail-header';
 import { ProductDescriptionsTab } from './_components/product-descriptions-tab';
 import { ProductCharacteristicsTab } from './_components/product-characteristics-tab';
@@ -62,6 +63,11 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen bg-neutral-50 pb-20">
+      <ProductCompletionBanner
+        completionStatus={product.completion_status ?? null}
+        rejectionReason={product.rejection_reason ?? null}
+      />
+
       <ProductDetailHeader
         product={product}
         breadcrumbParts={breadcrumbParts}
@@ -137,7 +143,10 @@ export default function ProductDetailPage() {
         </TabContent>
 
         <TabContent activeTab={activeTab} tabId="publication">
-          <ProductPublicationTab product={product} />
+          <ProductPublicationTab
+            product={product}
+            onProductUpdate={handleProductUpdate}
+          />
         </TabContent>
       </div>
 

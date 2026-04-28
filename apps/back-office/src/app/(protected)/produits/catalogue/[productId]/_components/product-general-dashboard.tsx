@@ -16,6 +16,7 @@ import { calculateMinSellingPrice } from '@verone/common';
 import { useProductGeneralDashboard } from '@verone/products';
 
 import { ActivityHistoryCompact } from './_dashboard-blocks/ActivityHistoryCompact';
+import { AdminMetadataCard } from './_dashboard-blocks/AdminMetadataCard';
 import { ChannelPricingTable } from './_dashboard-blocks/ChannelPricingTable';
 import { GeneralRail } from './_dashboard-blocks/GeneralRail';
 import { InternalNotesFooter } from './_dashboard-blocks/InternalNotesFooter';
@@ -208,6 +209,13 @@ export function ProductGeneralDashboard({
             stockMoves={dash?.stockMoves ?? []}
           />
         </div>
+
+        {/* Zone 4 — Métadonnées admin */}
+        <AdminMetadataCard
+          requiresSample={product.requires_sample ?? null}
+          articleType={product.article_type}
+          onProductUpdate={onProductUpdate}
+        />
 
         {/* Footer — Notes internes */}
         <InternalNotesFooter
