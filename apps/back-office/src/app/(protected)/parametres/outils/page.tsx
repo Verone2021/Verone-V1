@@ -113,7 +113,7 @@ export default function OutilsPage() {
                 download
                 className="self-start sm:self-auto"
               >
-                <ButtonUnified variant="primary">
+                <ButtonUnified variant="default">
                   <Download className="h-4 w-4" />
                   Télécharger l&apos;extension
                 </ButtonUnified>
