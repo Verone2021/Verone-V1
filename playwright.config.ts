@@ -90,6 +90,9 @@ export default defineConfig({
     command: 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: true, // Toujours réutiliser serveur existant
-    timeout: 120000, // 2 minutes pour démarrage
+    // GitHub runners are slower than local dev — Next.js cold-start can
+    // exceed 2 minutes when the build/dev cache is cold and the new
+    // middleware (BO-RBAC-CATALOG-MGR-001) adds its first compile pass.
+    timeout: process.env.CI ? 240000 : 120000,
   },
 });
