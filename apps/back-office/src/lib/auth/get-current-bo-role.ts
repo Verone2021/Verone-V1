@@ -62,3 +62,21 @@ export function isOwnerOrAdminRole(role: BoRole | null): boolean {
 export function isOwnerRole(role: BoRole | null): boolean {
   return role === 'owner';
 }
+
+/**
+ * Server-side guard for layouts/pages restricted to owner+admin.
+ * Redirects catalog_manager (and any non-owner/admin role) to /produits.
+ *
+ * Use in a Server Component layout:
+ * ```tsx
+ * await gateAdminOrOwner();
+ * return <>{children}</>;
+ * ```
+ */
+export async function gateAdminOrOwner(): Promise<void> {
+  const { redirect } = await import('next/navigation');
+  const role = await getCurrentBoRole();
+  if (!isOwnerOrAdminRole(role)) {
+    redirect('/produits');
+  }
+}
