@@ -196,11 +196,13 @@ export function ProductGeneralDashboard({
               product.supplier?.trade_name ??
               null
             }
-            supplierSiret={dash?.supplierSiret ?? null}
+            supplierWebsite={
+              dash?.supplierWebsite ?? product.supplier?.website ?? null
+            }
+            supplierCountry={dash?.supplierCountry ?? null}
             lastPo={dash?.lastPo ?? null}
             supplierReference={product.supplier_reference ?? null}
             supplierPageUrl={product.supplier_page_url ?? null}
-            supplierMoq={product.supplier_moq ?? null}
             onUpdateSupplierFields={onProductUpdate}
           />
           <ActivityHistoryCompact

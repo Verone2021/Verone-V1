@@ -3,8 +3,10 @@
 /**
  * SupplierPoCompactCard — col 2 du dashboard. Affiche le fournisseur unique
  * du produit + la dernière PO reçue (ref, date, montant, statut).
- * Inclut également les champs fournisseur : référence produit, URL page
- * fournisseur, et MOQ.
+ * Champs fournisseur produit éditables : référence produit + URL page
+ * fournisseur. Le MOQ s'édite uniquement depuis l'onglet Stock
+ * (Paramètres stock) pour éviter la duplication.
+ * Affiche aussi le drapeau pays + site internet du fournisseur.
  */
 
 import { useState, useCallback } from 'react';
@@ -26,16 +28,32 @@ interface LastPo {
 interface SupplierPoCompactCardProps {
   supplierId: string | null;
   supplierName: string | null;
-  supplierSiret: string | null;
+  supplierWebsite: string | null;
+  supplierCountry: string | null;
   lastPo: LastPo | null;
   supplierReference: string | null;
   supplierPageUrl: string | null;
-  supplierMoq: number | null;
   onUpdateSupplierFields?: (updates: {
     supplier_reference?: string | null;
     supplier_page_url?: string | null;
-    supplier_moq?: number | null;
   }) => Promise<void>;
+}
+
+/** Convertit un code pays ISO 3166-1 alpha-2 en emoji drapeau. */
+function countryCodeToFlag(code: string | null): string | null {
+  if (code?.length !== 2) return null;
+  const upper = code.toUpperCase();
+  // Décale chaque lettre A-Z vers la zone des Regional Indicator Symbols
+  return String.fromCodePoint(
+    ...upper.split('').map(c => 0x1f1e6 + c.charCodeAt(0) - 65)
+  );
+}
+
+/** Normalise une URL : ajoute https:// si manquant. */
+function normalizeUrl(url: string): string {
+  if (!url) return url;
+  if (/^https?:\/\//i.test(url)) return url;
+  return `https://${url}`;
 }
 
 // Champ texte inline compact réutilisable dans cette card
@@ -116,90 +134,21 @@ function InlineRowText({
   );
 }
 
-// Champ number inline compact
-interface InlineRowNumberProps {
-  label: string;
-  value: number | null;
-  onSave: (value: number | null) => void;
-}
-
-function InlineRowNumber({ label, value, onSave }: InlineRowNumberProps) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(String(value ?? ''));
-
-  const handleSave = useCallback(() => {
-    const parsed = parseInt(draft, 10);
-    onSave(isNaN(parsed) ? null : parsed);
-    setEditing(false);
-  }, [draft, onSave]);
-
-  const displayText =
-    value != null ? `${value} unité${value > 1 ? 's' : ''}` : '1 unité';
-
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-neutral-500 text-xs shrink-0">{label}</span>
-      {editing ? (
-        <div className="flex items-center gap-1 flex-1 justify-end">
-          <Input
-            autoFocus
-            type="number"
-            min={1}
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') handleSave();
-              if (e.key === 'Escape') {
-                setDraft(String(value ?? ''));
-                setEditing(false);
-              }
-            }}
-            className="h-6 text-xs px-1.5 w-20"
-          />
-          <button
-            onClick={handleSave}
-            className="h-11 w-11 md:h-6 md:w-6 flex items-center justify-center rounded text-green-600 hover:bg-green-50"
-            aria-label="Valider"
-          >
-            <Check className="h-3 w-3" />
-          </button>
-          <button
-            onClick={() => {
-              setDraft(String(value ?? ''));
-              setEditing(false);
-            }}
-            className="h-11 w-11 md:h-6 md:w-6 flex items-center justify-center rounded text-neutral-400 hover:bg-neutral-100"
-            aria-label="Annuler"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </div>
-      ) : (
-        <button
-          onClick={() => {
-            setDraft(String(value ?? ''));
-            setEditing(true);
-          }}
-          className="group flex items-center gap-1 text-xs text-neutral-900 tabular-nums"
-        >
-          {displayText}
-          <Pencil className="h-2.5 w-2.5 text-neutral-300 group-hover:text-neutral-500 transition-colors flex-shrink-0" />
-        </button>
-      )}
-    </div>
-  );
-}
-
 export function SupplierPoCompactCard({
   supplierId,
   supplierName,
-  supplierSiret,
+  supplierWebsite,
+  supplierCountry,
   lastPo,
   supplierReference,
   supplierPageUrl,
-  supplierMoq,
   onUpdateSupplierFields,
 }: SupplierPoCompactCardProps) {
+  const flag = countryCodeToFlag(supplierCountry);
+  const websiteHref = supplierWebsite ? normalizeUrl(supplierWebsite) : null;
+  const websiteLabel = supplierWebsite
+    ? supplierWebsite.replace(/^https?:\/\//i, '').replace(/\/$/, '')
+    : null;
   return (
     <section className="bg-white rounded-lg border border-neutral-200 p-4">
       <div className="flex items-center justify-between mb-2">
@@ -223,14 +172,32 @@ export function SupplierPoCompactCard({
             <div className="min-w-0 flex-1">
               <Link
                 href={`/contacts-organisations/suppliers/${supplierId}`}
-                className="text-sm font-medium text-neutral-900 hover:underline truncate block"
+                className="text-sm font-medium text-neutral-900 hover:underline truncate inline-flex items-center gap-1.5"
               >
-                {supplierName ?? 'Fournisseur inconnu'}
+                {flag && (
+                  <span
+                    className="text-base leading-none"
+                    aria-label={`Pays : ${supplierCountry}`}
+                    title={supplierCountry ?? undefined}
+                  >
+                    {flag}
+                  </span>
+                )}
+                <span className="truncate">
+                  {supplierName ?? 'Fournisseur inconnu'}
+                </span>
               </Link>
-              {supplierSiret && (
-                <p className="text-[11px] text-neutral-500 font-mono">
-                  SIRET {supplierSiret}
-                </p>
+              {websiteHref && websiteLabel && (
+                <a
+                  href={websiteHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1 truncate max-w-full mt-0.5"
+                  title={websiteHref}
+                >
+                  <span className="truncate">{websiteLabel}</span>
+                  <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                </a>
               )}
             </div>
           </div>
@@ -252,41 +219,37 @@ export function SupplierPoCompactCard({
                 });
               }}
             />
-            <InlineRowNumber
-              label="MOQ"
-              value={supplierMoq}
+            <InlineRowText
+              label="Page fournisseur"
+              value={supplierPageUrl ?? ''}
+              placeholder="—"
               onSave={val => {
+                const trimmed = val.trim();
+                const stored = trimmed ? normalizeUrl(trimmed) : null;
                 void onUpdateSupplierFields?.({
-                  supplier_moq: val,
+                  supplier_page_url: stored,
                 }).catch(err => {
                   console.error(
-                    '[SupplierPoCompactCard] save moq failed:',
+                    '[SupplierPoCompactCard] save page url failed:',
                     err
                   );
                 });
               }}
             />
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-neutral-500 text-xs shrink-0">
-                Page fournisseur
-              </span>
-              {supplierPageUrl ? (
+            {supplierPageUrl && (
+              <div className="flex items-center justify-end">
                 <a
-                  href={supplierPageUrl}
+                  href={normalizeUrl(supplierPageUrl)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:text-blue-800 inline-flex items-center gap-1 truncate max-w-[140px]"
+                  className="text-[11px] text-blue-600 hover:text-blue-800 inline-flex items-center gap-1"
                   title={supplierPageUrl}
                 >
-                  Voir chez le fournisseur
+                  Voir la page produit
                   <ExternalLink className="h-3 w-3 flex-shrink-0" />
                 </a>
-              ) : (
-                <span className="text-xs text-neutral-400 italic">
-                  Pas d&apos;URL fournisseur
-                </span>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </>
       ) : (

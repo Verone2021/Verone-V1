@@ -48,6 +48,8 @@ export interface ProductGeneralDashboardData {
   siteLivePriceHt: number | null;
   siteMarginPercent: number | null;
   supplierSiret: string | null;
+  supplierWebsite: string | null;
+  supplierCountry: string | null;
 }
 
 // ---------- Helpers ----------
@@ -120,13 +122,15 @@ interface RawSourcingHistory {
   } | null;
 }
 
-/** Shape imposé par le join Supabase — voir .select('id, created_at, publication_date, supplier_id, organisations!supplier_id(siret)') */
+/** Shape imposé par le join Supabase — voir .select('id, created_at, publication_date, supplier_id, organisations!supplier_id(siret, website, country)') */
 interface RawProduct {
   id: string;
   created_at: string | null;
   publication_date: string | null;
   organisations: {
     siret: string | null;
+    website: string | null;
+    country: string | null;
   } | null;
 }
 
@@ -149,6 +153,8 @@ export function useProductGeneralDashboard(productId: string | null): {
     siteLivePriceHt: null,
     siteMarginPercent: null,
     supplierSiret: null,
+    supplierWebsite: null,
+    supplierCountry: null,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -190,11 +196,11 @@ export function useProductGeneralDashboard(productId: string | null): {
           .order('performed_at', { ascending: false })
           .limit(5),
 
-        // 3. Produit (créé_at, publication_date, siret fournisseur)
+        // 3. Produit (créé_at, publication_date, siret/website/country fournisseur)
         supabase
           .from('products')
           .select(
-            'id, created_at, publication_date, supplier_id, organisations!supplier_id(siret)'
+            'id, created_at, publication_date, supplier_id, organisations!supplier_id(siret, website, country)'
           )
           .eq('id', productId)
           .limit(1)
@@ -249,9 +255,11 @@ export function useProductGeneralDashboard(productId: string | null): {
         label: deriveMoveLabel(m.reason_code, m.movement_type),
       }));
 
-      // --- Product (pour events création/publication + siret) ---
+      // --- Product (pour events création/publication + siret/website/country) ---
       const rawProduct = productResult.data as RawProduct | null;
       const supplierSiret = rawProduct?.organisations?.siret ?? null;
+      const supplierWebsite = rawProduct?.organisations?.website ?? null;
+      const supplierCountry = rawProduct?.organisations?.country ?? null;
 
       // --- Events timeline ---
       const events: ActivityEvent[] = [];
@@ -325,6 +333,8 @@ export function useProductGeneralDashboard(productId: string | null): {
         siteLivePriceHt,
         siteMarginPercent: null, // calculé côté wrapper avec minimumSellingPrice
         supplierSiret,
+        supplierWebsite,
+        supplierCountry,
       });
     } catch (err) {
       const msg =
