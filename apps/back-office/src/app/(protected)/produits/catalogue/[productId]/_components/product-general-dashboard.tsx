@@ -200,6 +200,10 @@ export function ProductGeneralDashboard({
             }
             supplierSiret={dash?.supplierSiret ?? null}
             lastPo={dash?.lastPo ?? null}
+            supplierReference={product.supplier_reference ?? null}
+            supplierPageUrl={product.supplier_page_url ?? null}
+            supplierMoq={product.supplier_moq ?? null}
+            onUpdateSupplierFields={onProductUpdate}
           />
           <ActivityHistoryCompact
             events={dash?.events ?? []}
