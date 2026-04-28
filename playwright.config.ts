@@ -88,11 +88,12 @@ export default defineConfig({
   // Serveur de développement
   webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: true, // Toujours réutiliser serveur existant
-    // GitHub runners are slower than local dev — Next.js cold-start can
-    // exceed 2 minutes when the build/dev cache is cold and the new
-    // middleware (BO-RBAC-CATALOG-MGR-001) adds its first compile pass.
+    // Probe /login — root '/' returns a redirect to /login that
+    // Playwright's readiness check classifies as "not up", so it
+    // would relaunch `turbo dev` and time out, even when the CI step
+    // already has `next start` bound to :3000 and serving /login.
+    url: 'http://localhost:3000/login',
+    reuseExistingServer: true,
     timeout: process.env.CI ? 240000 : 120000,
   },
 });
