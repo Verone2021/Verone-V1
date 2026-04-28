@@ -31,3 +31,7 @@ export {
   SendShippingTrackingModal,
   type SendShippingTrackingModalProps,
 } from './SendShippingTrackingModal';
+export {
+  buildCarrierTrackingUrl,
+  resolveTrackingUrl,
+} from './carrier-tracking-url';

@@ -163,21 +163,23 @@ export function buildDefaultMessage({
   orderNumber: string;
   shipments: ShipmentForEmail[];
 }): string {
+  // On ne préremplit PAS de date dans ce message libre — la date d'expédition
+  // exacte (récupérée auprès de Packlink à l'envoi : pickup réel ou date du
+  // jour en fallback) est déjà affichée dans le tableau structuré du HTML
+  // côté serveur. Mettre une date ici risquerait d'afficher la date de
+  // création du wizard (J-N) au lieu de la date pertinente côté client.
   const lines: string[] = [];
   if (shipments.length > 1) {
     lines.push(
       `Votre commande ${orderNumber} a été expédiée en ${shipments.length} colis :`
     );
   } else {
-    const s = shipments[0];
-    lines.push(
-      `Votre commande ${orderNumber} a été expédiée le ${formatDateFr(s?.shipped_at ?? null)}.`
-    );
+    lines.push(`Votre commande ${orderNumber} a été expédiée.`);
   }
   lines.push('');
   for (const [idx, s] of shipments.entries()) {
     if (shipments.length > 1) {
-      lines.push(`Colis ${idx + 1} — expédié le ${formatDateFr(s.shipped_at)}`);
+      lines.push(`Colis ${idx + 1}`);
     }
     if (s.carrier_name) {
       lines.push(`  Transporteur : ${s.carrier_name}`);
