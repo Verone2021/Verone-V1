@@ -7,30 +7,10 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '13.0.5';
   };
   public: {
     Tables: {
@@ -14101,10 +14081,12 @@ export type Database = {
       initialize_dashboard_tests: { Args: never; Returns: undefined };
       insert_sales_order_items: { Args: { p_items: Json }; Returns: undefined };
       is_back_office_admin: { Args: never; Returns: boolean };
+      is_back_office_admin_or_owner: { Args: never; Returns: boolean };
       is_back_office_owner: { Args: never; Returns: boolean };
       is_back_office_privileged: { Args: never; Returns: boolean };
       is_backoffice_admin: { Args: never; Returns: boolean };
       is_backoffice_user: { Args: never; Returns: boolean };
+      is_catalog_manager: { Args: never; Returns: boolean };
       is_current_user_admin: { Args: never; Returns: boolean };
       is_customer_user: { Args: never; Returns: boolean };
       is_enseigne_admin: {
@@ -15044,9 +15026,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       affiliate_product_approval_status: [
