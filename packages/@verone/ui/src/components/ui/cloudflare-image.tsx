@@ -57,7 +57,6 @@ export function CloudflareImage({
     try {
       src = buildCloudflareImageUrl(cloudflareId, variant);
     } catch {
-      // Si buildCloudflareImageUrl lance (hash manquant), fallback gracieux
       src = fallbackSrc ?? BLUR_PLACEHOLDER;
     }
   } else if (fallbackSrc) {
@@ -67,6 +66,9 @@ export function CloudflareImage({
   }
 
   const isPlaceholder = src === BLUR_PLACEHOLDER;
+  const isCloudflareSrc =
+    src.includes('imagedelivery.net') ||
+    src.includes('images.veronecollections.fr');
 
   return (
     <Image
@@ -74,6 +76,7 @@ export function CloudflareImage({
       alt={alt}
       placeholder={isPlaceholder ? 'blur' : 'empty'}
       blurDataURL={isPlaceholder ? BLUR_PLACEHOLDER : undefined}
+      unoptimized={isCloudflareSrc || isPlaceholder}
       {...rest}
     />
   );
