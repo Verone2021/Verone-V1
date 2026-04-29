@@ -16,6 +16,7 @@ export interface ProductImage {
   product_id: string;
   storage_path: string;
   public_url: string | null;
+  cloudflare_image_id: string | null;
   is_primary: boolean | null;
   display_order: number | null;
   alt_text: string | null;
@@ -39,7 +40,7 @@ export function useProductImages(productId: string | undefined) {
       const { data, error } = await supabase
         .from('product_images')
         .select(
-          'id, product_id, storage_path, public_url, is_primary, display_order, alt_text, created_at'
+          'id, product_id, storage_path, public_url, cloudflare_image_id, is_primary, display_order, alt_text, created_at'
         )
         .eq('product_id', productId)
         .order('display_order', { ascending: true });
@@ -156,7 +157,7 @@ export function useUploadProductImage() {
           created_by: user.id,
         })
         .select(
-          'id, product_id, storage_path, public_url, is_primary, display_order, alt_text, created_at'
+          'id, product_id, storage_path, public_url, cloudflare_image_id, is_primary, display_order, alt_text, created_at'
         )
         .single();
 

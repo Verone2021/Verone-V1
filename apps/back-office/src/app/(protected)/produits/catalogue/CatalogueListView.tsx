@@ -2,8 +2,9 @@
 
 import { memo, useCallback, useState } from 'react';
 
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+
+import { CloudflareImage } from '@verone/ui';
 
 import type { Product } from '@verone/categories';
 import { useProductImages } from '@verone/products';
@@ -66,9 +67,11 @@ const ProductRow = memo(function ProductRow({
     >
       <td className="py-2 px-2 w-12">
         <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-50 flex items-center justify-center">
-          {primaryImage?.public_url && !imageLoading ? (
-            <Image
-              src={primaryImage.public_url}
+          {(primaryImage?.public_url || primaryImage?.cloudflare_image_id) &&
+          !imageLoading ? (
+            <CloudflareImage
+              cloudflareId={primaryImage?.cloudflare_image_id}
+              fallbackSrc={primaryImage?.public_url}
               alt={product.name}
               width={40}
               height={40}

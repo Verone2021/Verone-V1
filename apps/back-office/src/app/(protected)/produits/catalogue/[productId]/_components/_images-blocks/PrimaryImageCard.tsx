@@ -10,7 +10,7 @@
 
 import { useState, useCallback } from 'react';
 
-import Image from 'next/image';
+import { CloudflareImage } from '@verone/ui';
 
 import { Star, Pencil, Check, X, FileImage } from 'lucide-react';
 
@@ -117,8 +117,9 @@ export function PrimaryImageCard({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Col gauche — image */}
         <div className="relative w-full aspect-square max-w-[320px] mx-auto lg:mx-0 rounded-lg overflow-hidden border border-neutral-200 bg-neutral-50">
-          <Image
-            src={primaryImage.public_url ?? ''}
+          <CloudflareImage
+            cloudflareId={primaryImage.cloudflare_image_id}
+            fallbackSrc={primaryImage.public_url ?? ''}
             alt={primaryImage.alt_text ?? productName}
             fill
             className="object-cover"

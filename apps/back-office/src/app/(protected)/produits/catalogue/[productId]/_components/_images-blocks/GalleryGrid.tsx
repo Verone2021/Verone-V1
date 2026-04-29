@@ -9,7 +9,7 @@
 
 import { useState, useCallback } from 'react';
 
-import Image from 'next/image';
+import { CloudflareImage } from '@verone/ui';
 
 import {
   Eye,
@@ -144,9 +144,10 @@ export function GalleryGrid({
                 className="group relative aspect-square rounded-lg overflow-hidden border border-neutral-200 bg-neutral-50"
               >
                 {/* Image */}
-                {image.public_url ? (
-                  <Image
-                    src={image.public_url}
+                {image.public_url || image.cloudflare_image_id ? (
+                  <CloudflareImage
+                    cloudflareId={image.cloudflare_image_id}
+                    fallbackSrc={image.public_url}
                     alt={image.alt_text ?? productName}
                     fill
                     className="object-cover"
