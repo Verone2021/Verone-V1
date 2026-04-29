@@ -18,6 +18,7 @@ export interface CollectionImage {
   collection_id: string;
   storage_path: string;
   public_url: string | null;
+  cloudflare_image_id: string | null;
   display_order: number;
   is_primary: boolean;
   image_type: 'cover' | 'gallery' | 'banner' | 'thumbnail';
@@ -69,7 +70,7 @@ export function useCollectionImages({
       const { data, error } = await supabase
         .from('collection_images')
         .select(
-          'id, collection_id, public_url, storage_path, display_order, alt_text, is_cover, created_at, updated_at'
+          'id, collection_id, public_url, cloudflare_image_id, storage_path, display_order, alt_text, is_cover, created_at, updated_at'
         )
         .eq('collection_id', collectionId)
         .order('display_order')

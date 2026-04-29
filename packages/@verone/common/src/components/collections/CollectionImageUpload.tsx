@@ -8,7 +8,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 
-import Image from 'next/image';
+import { CloudflareImage } from '@verone/ui';
 
 import {
   Upload,
@@ -171,8 +171,9 @@ export function CollectionImageUpload({
         /* Preview image uploadée */
         <div className="relative group">
           <div className="relative aspect-video w-full max-w-md rounded-lg border-2 border-gray-200 overflow-hidden bg-gray-50">
-            <Image
-              src={primaryImage.public_url ?? ''}
+            <CloudflareImage
+              cloudflareId={primaryImage.cloudflare_image_id}
+              fallbackSrc={primaryImage.public_url ?? ''}
               alt={primaryImage.alt_text ?? 'Collection cover'}
               fill
               className="object-cover"

@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import { CloudflareImage } from '@verone/ui';
 import Link from 'next/link';
 
 import { useProductImages } from '@verone/products/hooks';
@@ -160,10 +160,11 @@ export function StockAlertCard({
             <div className="h-16 w-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <Package className="h-8 w-8 text-gray-400 animate-pulse" />
             </div>
-          ) : primaryImage?.public_url ? (
+          ) : primaryImage?.public_url || primaryImage?.cloudflare_image_id ? (
             <div className="h-16 w-16 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
-              <Image
-                src={primaryImage.public_url}
+              <CloudflareImage
+                cloudflareId={primaryImage?.cloudflare_image_id}
+                fallbackSrc={primaryImage?.public_url}
                 alt={alert.product_name}
                 width={64}
                 height={64}
