@@ -1,0 +1,19 @@
+; Zone file for veronecollections.fr
+; Generated on 2026-04-29 14:37:41 UTC
+
+$ORIGIN veronecollections.fr
+$TTL 3600
+
+@                              3600 IN SOA   ns1.dns-parking.com. dns.hostinger.com. 2026032004 10000 2400 604800 600
+@                              14400 IN A     216.198.79.1
+@                              14400 IN MX    1 SMTP.GOOGLE.COM
+@                              86400 IN NS    ns1.dns-parking.com.
+                               86400 IN NS    ns2.dns-parking.com.
+@                              14400 IN TXT   "google-site-verification=yTQQSKQhTyiY1QvulJ-7gcGU_j_8wIDljJd9O0HoCLQ"
+                               14400 IN TXT   "v=spf1 include:_spf.google.com include:amazonses.com ~all"
+_dmarc                         14400 IN TXT   "v=DMARC1; p=none; rua=mailto:veronebyromeo@gmail.com; pct=100; adkim=r; aspf=r"
+gbnouc5jzx74                   14400 IN CNAME gv-6sopydpinkavcx.dv.googlehosted.com.
+resend._domainkey.app          14400 IN TXT   "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDPAklUmXwXb3Vc3zvR6fxlJzm8p5rqCUvUDJ5jzEJli0uK6qU0FeQHSpNXhQnpO2RC8a7XxWPevnev01wYlOc4AivkGN9+VCqVbir+e5p48XJOXOSb9gVoepsKgxQZ2pVk12Gww5gHMmsAcUiFTIhK8jkAn5SpFPL0U3WN/MVQrQIDAQAB"
+send.app                       14400 IN MX    10 feedback-smtp.eu-west-1.amazonses.com
+send.app                       14400 IN TXT   "v=spf1 include:amazonses.com ~all"
+www                            300 IN CNAME 243ab161976a4289.vercel-dns-017.com.

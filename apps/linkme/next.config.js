@@ -22,6 +22,16 @@ const nextConfig = {
         hostname: 'aorroydfjsrygmosnzrl.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.veronecollections.fr',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'imagedelivery.net',
+        pathname: '/**',
+      },
     ],
   },
   async headers() {
