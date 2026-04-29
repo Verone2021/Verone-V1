@@ -2,9 +2,15 @@
 
 /**
  * StockSettingsCard — paramètres stock inline-éditables (col-span-6).
- * Sprint : BO-UI-PROD-STOCK-001
  *
- * Champs : min_stock, reorder_point (éditables), stock_status (readonly), weight (éditable)
+ * Champs : min_stock (seuil alerte), supplier_moq (MOQ fournisseur),
+ * stock_status (readonly), weight (éditable).
+ *
+ * Le MOQ est la quantité minimum imposée par le fournisseur pour passer
+ * commande. La suggestion de réappro est calculée à partir de la formule
+ * officielle Verone (vue stock_alerts_unified_view.shortage_quantity)
+ * combinée au MOQ : ne plus utiliser reorder_point qui faisait double
+ * emploi avec min_stock.
  */
 
 import { useState, useCallback } from 'react';
@@ -164,9 +170,10 @@ export function StockSettingsCard({
     [onProductUpdate]
   );
 
-  const handleSaveReorderPoint = useCallback(
+  const handleSaveSupplierMoq = useCallback(
     async (v: number) => {
-      await onProductUpdate({ reorder_point: v });
+      // MOQ minimum = 1 (default DB)
+      await onProductUpdate({ supplier_moq: Math.max(v, 1) });
     },
     [onProductUpdate]
   );
@@ -198,11 +205,11 @@ export function StockSettingsCard({
             onSave={handleSaveMinStock}
           />
 
-          {/* Point réappro */}
+          {/* MOQ fournisseur */}
           <InlineNumberField
-            label="Point réappro"
-            value={product.reorder_point ?? 0}
-            onSave={handleSaveReorderPoint}
+            label="MOQ fournisseur"
+            value={product.supplier_moq ?? 1}
+            onSave={handleSaveSupplierMoq}
           />
 
           {/* Statut stock — readonly */}

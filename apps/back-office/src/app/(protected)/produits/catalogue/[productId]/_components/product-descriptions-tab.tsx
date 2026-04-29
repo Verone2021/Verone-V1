@@ -37,6 +37,7 @@ export function ProductDescriptionsTab({
           initialMetaTitle={product.meta_title}
           initialMetaDescription={product.meta_description}
           slug={product.slug}
+          isPublished={product.is_published_online ?? false}
           onUpdate={() => {
             void onProductUpdate({}).catch(console.error);
           }}

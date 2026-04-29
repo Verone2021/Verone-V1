@@ -17,6 +17,8 @@ import {
 
 import type { SalesOrder } from '@verone/orders/hooks';
 
+import { resolveTrackingUrl } from '../carrier-tracking-url';
+
 export interface ShipmentHistoryItem {
   /** UUID of the first sales_order_shipment row in this shipment group (same shipped_at). */
   id: string;
@@ -223,18 +225,25 @@ export function OrderShipmentHistoryCard({
             {h.tracking_number && (
               <p className="text-[10px] text-gray-500 ml-4 mb-1 flex items-center flex-wrap gap-x-2">
                 <span>Suivi :</span>
-                {h.tracking_url ? (
-                  <a
-                    href={h.tracking_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    {h.tracking_number}
-                  </a>
-                ) : (
-                  <span>{h.tracking_number}</span>
-                )}
+                {(() => {
+                  const url = resolveTrackingUrl(
+                    h.tracking_url,
+                    h.carrier_name,
+                    h.tracking_number
+                  );
+                  return url ? (
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {h.tracking_number}
+                    </a>
+                  ) : (
+                    <span>{h.tracking_number}</span>
+                  );
+                })()}
                 <CopyButton value={h.tracking_number} label="le n° de suivi" />
                 {onSendTrackingEmail && (
                   <button

@@ -8,7 +8,6 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { createServerClient } from '@supabase/ssr';
-import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { z } from 'zod';
 
@@ -16,9 +15,10 @@ import type { Database } from '@verone/types';
 
 import { getLogoAttachments } from '../_shared/email-logo';
 import {
-  buildTrackingEmailHtml,
-  type TrackingInfo,
-} from '../_shared/shipping-tracking-template';
+  fetchShipmentsInfo,
+  getAdminClient,
+} from '../_shared/shipping-tracking-data';
+import { buildTrackingEmailHtml } from '../_shared/shipping-tracking-template';
 
 // ── Clients ───────────────────────────────────────────────────────────
 
@@ -28,13 +28,6 @@ function getResendClient(): Resend {
     throw new Error('RESEND_API_KEY environment variable is not set');
   }
   return new Resend(apiKey);
-}
-
-function getAdminClient() {
-  return createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
 }
 
 // ── Validation ────────────────────────────────────────────────────────
@@ -54,84 +47,6 @@ const SendShippingTrackingSchema = z
     data => Boolean(data.shipmentId) || (data.shipmentIds?.length ?? 0) > 0,
     { message: 'Provide at least shipmentId or shipmentIds' }
   );
-
-// ── Order + Shipment fetch ────────────────────────────────────────────
-
-interface OrderTrackingsInfo {
-  customerName: string;
-  orderNumber: string;
-  trackings: Array<TrackingInfo & { shipmentId: string }>;
-}
-
-async function fetchShipmentsInfo(
-  supabase: ReturnType<typeof getAdminClient>,
-  salesOrderId: string,
-  shipmentIds: string[]
-): Promise<OrderTrackingsInfo | null> {
-  const [orderResult, shipmentsResult] = await Promise.all([
-    supabase
-      .from('sales_orders')
-      .select(
-        `
-        id, order_number,
-        organisations!sales_orders_customer_id_fkey(trade_name, legal_name),
-        individual_customers!sales_orders_individual_customer_id_fkey(first_name, last_name)
-      `
-      )
-      .eq('id', salesOrderId)
-      .single(),
-    supabase
-      .from('sales_order_shipments')
-      .select('id, tracking_number, tracking_url, carrier_name, shipped_at')
-      .eq('sales_order_id', salesOrderId)
-      .in('id', shipmentIds)
-      .order('shipped_at', { ascending: true }),
-  ]);
-
-  if (orderResult.error || !orderResult.data) return null;
-  if (shipmentsResult.error || !shipmentsResult.data) return null;
-
-  const order = orderResult.data;
-
-  const org = (order as Record<string, unknown>).organisations as {
-    trade_name: string | null;
-    legal_name: string | null;
-  } | null;
-  const indiv = (order as Record<string, unknown>).individual_customers as {
-    first_name: string | null;
-    last_name: string | null;
-  } | null;
-
-  let customerName = 'Client';
-  if (org?.trade_name) {
-    customerName = org.trade_name;
-  } else if (org?.legal_name) {
-    customerName = org.legal_name;
-  } else if (indiv?.first_name ?? indiv?.last_name) {
-    customerName =
-      `${indiv?.first_name ?? ''} ${indiv?.last_name ?? ''}`.trim();
-  }
-
-  // On filtre les shipments sans tracking_number — un envoi tracking n'a
-  // aucun sens sans numéro (cas main propre / retrait sans tracking ou
-  // shipment Packlink pas encore en `paye`). Le caller doit déjà filtrer
-  // côté UI mais on protège le backend.
-  const trackings = shipmentsResult.data
-    .filter(s => Boolean(s.tracking_number))
-    .map(s => ({
-      shipmentId: s.id,
-      trackingNumber: s.tracking_number as string,
-      trackingUrl: s.tracking_url,
-      carrierName: s.carrier_name,
-      shippedAt: s.shipped_at,
-    }));
-
-  return {
-    customerName,
-    orderNumber: order.order_number,
-    trackings,
-  };
-}
 
 // ── Route ─────────────────────────────────────────────────────────────
 

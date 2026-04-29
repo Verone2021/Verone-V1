@@ -106,11 +106,11 @@ export function validatePricing(
   }
 
   if (targetMarginPercentage < 0) {
-    errors.push('La marge cible ne peut pas être négative');
+    errors.push('La marge minimum ne peut pas être négative');
   }
 
   if (targetMarginPercentage > 1000) {
-    errors.push('La marge cible ne peut pas dépasser 1000%');
+    errors.push('La marge minimum ne peut pas dépasser 1000%');
   }
 
   return errors;

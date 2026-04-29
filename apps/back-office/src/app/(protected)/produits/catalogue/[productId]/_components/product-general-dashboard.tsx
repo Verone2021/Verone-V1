@@ -151,7 +151,6 @@ export function ProductGeneralDashboard({
     <div className="flex flex-col lg:flex-row gap-4">
       {/* Rail gauche sticky */}
       <GeneralRail
-        productId={product.id}
         productName={product.name}
         sku={product.sku ?? ''}
         completionPercentage={completionPercentage}
@@ -197,8 +196,14 @@ export function ProductGeneralDashboard({
               product.supplier?.trade_name ??
               null
             }
-            supplierSiret={dash?.supplierSiret ?? null}
+            supplierWebsite={
+              dash?.supplierWebsite ?? product.supplier?.website ?? null
+            }
+            supplierCountry={dash?.supplierCountry ?? null}
             lastPo={dash?.lastPo ?? null}
+            supplierReference={product.supplier_reference ?? null}
+            supplierPageUrl={product.supplier_page_url ?? null}
+            onUpdateSupplierFields={onProductUpdate}
           />
           <ActivityHistoryCompact
             events={dash?.events ?? []}

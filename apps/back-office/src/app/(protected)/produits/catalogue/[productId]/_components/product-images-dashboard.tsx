@@ -170,7 +170,6 @@ export function ProductImagesDashboard({
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Rail gauche sticky */}
         <GeneralRail
-          productId={product.id}
           productName={product.name}
           sku={product.sku ?? ''}
           completionPercentage={completionPercentage}
