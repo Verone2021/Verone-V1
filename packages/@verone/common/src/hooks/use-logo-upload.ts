@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
+import { smartUploadImage, type SmartUploadResult } from '@verone/utils/upload';
 
 interface UseLogoUploadOptions {
   entityId: string;
@@ -94,20 +95,16 @@ export function useLogoUpload({
       const extension = file.name.split('.').pop()?.toLowerCase() ?? 'png';
       const filePath = `${storagePath}/${timestamp}-logo.${extension}`;
 
-      // Upload vers Storage
-      const { data: _uploadData, error: uploadError } = await supabase.storage
-        .from('organisation-logos')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-        });
+      // Upload via smart-upload (Cloudflare si configuré, Supabase sinon)
+      const uploadResult: SmartUploadResult = await smartUploadImage(file, {
+        bucket: 'organisation-logos',
+        path: filePath,
+        ownerId: id,
+        ownerType: 'organisation',
+      });
 
-      if (uploadError) {
-        throw new Error(`Erreur upload: ${uploadError.message}`);
-      }
-
-      // Supprimer ancien logo si existant
-      if (currentLogoUrl) {
+      // Supprimer ancien logo Supabase si existant (non-bloquant)
+      if (currentLogoUrl && uploadResult.storagePath) {
         // Extraire le path Storage depuis URL complète ou path relatif
         const oldPath = currentLogoUrl.includes('/organisation-logos/')
           ? currentLogoUrl.split('/organisation-logos/')[1]
@@ -121,23 +118,43 @@ export function useLogoUpload({
           });
       }
 
-      // Générer URL publique AVANT de sauver en DB
-      const { data: urlData } = supabase.storage
-        .from('organisation-logos')
-        .getPublicUrl(filePath);
+      // Construire l'URL publique selon le provider utilisé
+      let publicUrl: string;
+      if (uploadResult.cloudflareImageId) {
+        const { buildCloudflareImageUrl } = await import(
+          '@verone/utils/cloudflare/images'
+        );
+        publicUrl = buildCloudflareImageUrl(
+          uploadResult.cloudflareImageId,
+          'public'
+        );
+      } else {
+        const { data: urlData } = supabase.storage
+          .from('organisation-logos')
+          .getPublicUrl(filePath);
+        publicUrl = urlData.publicUrl;
+      }
 
-      const publicUrl = urlData.publicUrl;
+      // Update DB : logo_url + cloudflare_image_id si disponible
+      const updatePayload: Record<string, string | null> = {
+        logo_url: publicUrl,
+      };
+      if (uploadResult.cloudflareImageId) {
+        updatePayload['cloudflare_image_id'] = uploadResult.cloudflareImageId;
+      }
 
-      // Update DB avec URL complète (pas le path relatif)
       const { error: updateError } = await supabase
         .from(entityTable)
-        .update({ logo_url: publicUrl })
+        .update(updatePayload)
         .eq('id', id);
 
       if (updateError) {
-        // Rollback: supprimer le fichier uploadé
-        await supabase.storage.from('organisation-logos').remove([filePath]);
-
+        // Rollback: supprimer le fichier uploadé (Supabase uniquement)
+        if (uploadResult.storagePath) {
+          await supabase.storage
+            .from('organisation-logos')
+            .remove([uploadResult.storagePath]);
+        }
         throw new Error(`Erreur mise à jour DB: ${updateError.message}`);
       }
 

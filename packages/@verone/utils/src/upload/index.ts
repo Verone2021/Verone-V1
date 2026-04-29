@@ -7,3 +7,4 @@ export * from './validation';
 export * from './supabase-utils';
 export * from './upload-performance-monitor';
 export * from './image-optimization';
+export * from './smart-upload';

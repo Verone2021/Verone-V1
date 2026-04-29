@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 
 import logger from '@verone/utils/logger';
 import { createClient } from '@verone/utils/supabase/client';
+import { smartUploadImage } from '@verone/utils/upload';
 import type { Database } from '@verone/utils/supabase/types';
 
 type ProductImage = Database['public']['Tables']['product_images']['Row'];
@@ -57,7 +58,7 @@ export function useProductImages({
       const { data, error } = await supabase
         .from('product_images')
         .select(
-          'id, product_id, public_url, display_order, alt_text, is_primary, created_at, updated_at'
+          'id, product_id, public_url, cloudflare_image_id, display_order, alt_text, is_primary, created_at, updated_at'
         )
         .eq('product_id', productId)
         .order('display_order')
@@ -108,15 +109,16 @@ export function useProductImages({
         const fileExt = file.name.split('.').pop()?.toLowerCase();
         const fileName = `products/${productId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
-        // 📤 Upload to Supabase Storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from(bucketName)
-          .upload(fileName, file, {
-            cacheControl: '3600',
-            upsert: false,
-          });
+        // 📤 Upload via smart-upload (Cloudflare si configuré, Supabase sinon)
+        const uploadResult = await smartUploadImage(file, {
+          bucket: bucketName,
+          path: fileName,
+          ownerId: productId,
+          ownerType: 'product',
+        });
 
-        if (uploadError) throw uploadError;
+        // Reconstruit un objet compatible avec l'ancien uploadData
+        const uploadData = { path: uploadResult.storagePath ?? fileName };
 
         // 🔢 Get next display order
         const { data: existingImages } = await supabase
@@ -144,19 +146,27 @@ export function useProductImages({
           width: undefined, // Sera ajouté plus tard si nécessaire
           height: undefined,
           created_by: undefined, // Supabase auth automatique
+          // Persist Cloudflare ID si upload Cloudflare réussi (backward compat: null sinon)
+          ...(uploadResult.cloudflareImageId
+            ? { cloudflare_image_id: uploadResult.cloudflareImageId }
+            : {}),
         };
 
         const { data: dbData, error: dbError } = await supabase
           .from('product_images')
           .insert([imageData])
           .select(
-            'id, product_id, public_url, storage_path, display_order, alt_text, is_primary, image_type, file_size, format, width, height, created_by, created_at, updated_at'
+            'id, product_id, public_url, cloudflare_image_id, storage_path, display_order, alt_text, is_primary, image_type, file_size, format, width, height, created_by, created_at, updated_at'
           )
           .single();
 
         if (dbError) {
           // Cleanup uploaded file if database insert fails
-          await supabase.storage.from(bucketName).remove([uploadData.path]);
+          if (uploadResult.storagePath) {
+            await supabase.storage
+              .from(bucketName)
+              .remove([uploadResult.storagePath]);
+          }
           throw dbError;
         }
 
