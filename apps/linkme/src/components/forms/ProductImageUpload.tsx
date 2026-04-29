@@ -10,7 +10,7 @@
 
 import { useState, useRef } from 'react';
 
-import Image from 'next/image';
+import { CloudflareImage } from '@verone/ui';
 
 import {
   Upload,
@@ -174,8 +174,9 @@ export function ProductImageUpload({
               className="relative group aspect-square rounded-lg overflow-hidden border"
             >
               {image.public_url ? (
-                <Image
-                  src={image.public_url}
+                <CloudflareImage
+                  cloudflareId={image.cloudflare_image_id}
+                  fallbackSrc={image.public_url}
                   alt={image.alt_text ?? 'Image produit'}
                   fill
                   className="object-cover"

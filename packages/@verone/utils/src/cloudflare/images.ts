@@ -118,7 +118,13 @@ export function isCloudflareConfigured(): boolean {
 
 /**
  * Construit l'URL de delivery Cloudflare Images pour un imageId donné.
- * Format: https://images.veronecollections.fr/{hash}/{imageId}/{variant}
+ *
+ * Par défaut, utilise l'URL Cloudflare standard `imagedelivery.net/{hash}/{imageId}/{variant}`
+ * qui fonctionne immédiatement pour toute Cloudflare Images Account.
+ *
+ * Pour activer le custom domain `images.veronecollections.fr`, définir l'env var
+ * `NEXT_PUBLIC_CLOUDFLARE_USE_CUSTOM_DOMAIN=true` côté Vercel après que la zone
+ * Cloudflare est active et le cert SSL Universal émis (1-24h après ajout du domaine).
  */
 export function buildCloudflareImageUrl(
   imageId: string,
@@ -132,7 +138,14 @@ export function buildCloudflareImageUrl(
     throw new CloudflareNotConfiguredError();
   }
 
-  return `https://images.veronecollections.fr/${imagesHash}/${imageId}/${variant}`;
+  const useCustomDomain =
+    process.env['NEXT_PUBLIC_CLOUDFLARE_USE_CUSTOM_DOMAIN'] === 'true';
+
+  const baseUrl = useCustomDomain
+    ? 'https://images.veronecollections.fr'
+    : 'https://imagedelivery.net';
+
+  return `${baseUrl}/${imagesHash}/${imageId}/${variant}`;
 }
 
 /**

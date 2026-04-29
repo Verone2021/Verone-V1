@@ -4,7 +4,7 @@
  * SampleFormDialog — modal for creating a new customer sample request.
  */
 
-import Image from 'next/image';
+import { CloudflareImage } from '@verone/ui';
 
 import type { UnifiedCustomer } from '@verone/orders';
 import { CustomerSelector } from '@verone/orders';
@@ -42,8 +42,9 @@ function SelectedProductCard({ product }: SelectedProductCardProps) {
       <CardContent className="pt-4">
         <div className="flex items-start gap-3">
           {primaryImage ? (
-            <Image
-              src={primaryImage.public_url}
+            <CloudflareImage
+              cloudflareId={primaryImage.cloudflare_image_id}
+              fallbackSrc={primaryImage.public_url}
               alt={product.name}
               width={48}
               height={48}

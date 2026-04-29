@@ -125,22 +125,36 @@ async function main(): Promise<void> {
 
   console.log('\n--- buildCloudflareImageUrl ---');
 
-  await test('construit URL avec variant par défaut (public)', () => {
+  await test('construit URL avec variant par défaut (public, imagedelivery.net)', () => {
     setEnvVars(VALID_ENV);
+    const url = buildCloudflareImageUrl('img-uuid-123');
+    assert.equal(
+      url,
+      'https://imagedelivery.net/abc123hash/img-uuid-123/public'
+    );
+  });
+
+  await test('construit URL avec variant thumbnail (imagedelivery.net)', () => {
+    setEnvVars(VALID_ENV);
+    const url = buildCloudflareImageUrl('img-uuid-123', 'thumbnail');
+    assert.equal(
+      url,
+      'https://imagedelivery.net/abc123hash/img-uuid-123/thumbnail'
+    );
+  });
+
+  await test('construit URL custom domain quand NEXT_PUBLIC_CLOUDFLARE_USE_CUSTOM_DOMAIN=true', () => {
+    setEnvVars({
+      ...VALID_ENV,
+      NEXT_PUBLIC_CLOUDFLARE_USE_CUSTOM_DOMAIN: 'true',
+    });
     const url = buildCloudflareImageUrl('img-uuid-123');
     assert.equal(
       url,
       'https://images.veronecollections.fr/abc123hash/img-uuid-123/public'
     );
-  });
-
-  await test('construit URL avec variant thumbnail', () => {
-    setEnvVars(VALID_ENV);
-    const url = buildCloudflareImageUrl('img-uuid-123', 'thumbnail');
-    assert.equal(
-      url,
-      'https://images.veronecollections.fr/abc123hash/img-uuid-123/thumbnail'
-    );
+    // Reset to avoid pollution
+    setEnvVars({ NEXT_PUBLIC_CLOUDFLARE_USE_CUSTOM_DOMAIN: undefined });
   });
 
   await test('lance CloudflareNotConfiguredError si hash absent', () => {

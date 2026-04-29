@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 
-import Image from 'next/image';
+import { CloudflareImage } from '@verone/ui';
 
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -144,8 +144,9 @@ export function ProductImageGallery({
       <div className="flex gap-2 items-start">
         {/* Image principale 400x400 */}
         <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white">
-          <Image
-            src={mainImageSrc}
+          <CloudflareImage
+            cloudflareId={displayImage?.cloudflare_image_id}
+            fallbackSrc={mainImageSrc}
             alt={productName}
             fill
             className="object-contain transition-all duration-300 hover:scale-105"

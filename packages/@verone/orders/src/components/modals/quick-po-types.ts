@@ -15,6 +15,7 @@ export interface ProductData {
   supplier_moq: number;
   eco_tax_default: number;
   primary_image_url?: string;
+  primary_cloudflare_image_id?: string | null;
   supplier?: {
     id: string;
     legal_name: string;

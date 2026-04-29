@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import Image from 'next/image';
+import { CloudflareImage } from '@verone/ui';
 
 import type { Database } from '@verone/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -37,7 +37,12 @@ interface ProductDetail {
   subcategory_name: string | null;
   selling_price_ht: number;
   selling_price_ttc: number;
-  images: { public_url: string; is_primary: boolean; display_order: number }[];
+  images: {
+    public_url: string;
+    cloudflare_image_id?: string | null;
+    is_primary: boolean;
+    display_order: number;
+  }[];
 }
 
 interface ProductDetailModalProps {
@@ -179,6 +184,8 @@ export function ProductDetailModal({
     images.length > 0
       ? images[selectedImageIndex]?.public_url
       : item.product_image;
+  const currentImageCloudflareId =
+    images.length > 0 ? images[selectedImageIndex]?.cloudflare_image_id : null;
 
   const dimensionsText = detail?.dimensions
     ? formatDimensions(detail.dimensions)
@@ -211,8 +218,9 @@ export function ProductDetailModal({
                 {isLoading ? (
                   <Skeleton className="w-full h-full" />
                 ) : currentImage ? (
-                  <Image
-                    src={currentImage}
+                  <CloudflareImage
+                    cloudflareId={currentImageCloudflareId}
+                    fallbackSrc={currentImage}
                     alt={item.product_name}
                     fill
                     sizes="(max-width: 768px) 100vw, 50vw"
@@ -244,8 +252,9 @@ export function ProductDetailModal({
                           : undefined
                       }
                     >
-                      <Image
-                        src={img.public_url}
+                      <CloudflareImage
+                        cloudflareId={img.cloudflare_image_id}
+                        fallbackSrc={img.public_url}
                         alt={`${item.product_name} - photo ${idx + 1}`}
                         fill
                         sizes="64px"

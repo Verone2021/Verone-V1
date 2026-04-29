@@ -1596,6 +1596,7 @@ export type Database = {
       collection_images: {
         Row: {
           alt_text: string | null;
+          cloudflare_image_id: string | null;
           collection_id: string;
           created_at: string | null;
           display_order: number;
@@ -1613,6 +1614,7 @@ export type Database = {
         };
         Insert: {
           alt_text?: string | null;
+          cloudflare_image_id?: string | null;
           collection_id: string;
           created_at?: string | null;
           display_order?: number;
@@ -1630,6 +1632,7 @@ export type Database = {
         };
         Update: {
           alt_text?: string | null;
+          cloudflare_image_id?: string | null;
           collection_id?: string;
           created_at?: string | null;
           display_order?: number;
@@ -1935,6 +1938,7 @@ export type Database = {
       consultation_images: {
         Row: {
           alt_text: string | null;
+          cloudflare_image_id: string | null;
           consultation_id: string;
           created_at: string | null;
           created_by: string | null;
@@ -1952,6 +1956,7 @@ export type Database = {
         };
         Insert: {
           alt_text?: string | null;
+          cloudflare_image_id?: string | null;
           consultation_id: string;
           created_at?: string | null;
           created_by?: string | null;
@@ -1969,6 +1974,7 @@ export type Database = {
         };
         Update: {
           alt_text?: string | null;
+          cloudflare_image_id?: string | null;
           consultation_id?: string;
           created_at?: string | null;
           created_by?: string | null;
@@ -8939,6 +8945,7 @@ export type Database = {
       sourcing_photos: {
         Row: {
           caption: string | null;
+          cloudflare_image_id: string | null;
           created_at: string | null;
           created_by: string | null;
           id: string;
@@ -8950,6 +8957,7 @@ export type Database = {
         };
         Insert: {
           caption?: string | null;
+          cloudflare_image_id?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           id?: string;
@@ -8961,6 +8969,7 @@ export type Database = {
         };
         Update: {
           caption?: string | null;
+          cloudflare_image_id?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           id?: string;

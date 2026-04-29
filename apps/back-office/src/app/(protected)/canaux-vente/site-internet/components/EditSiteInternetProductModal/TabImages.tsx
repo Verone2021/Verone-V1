@@ -4,11 +4,9 @@
 // Onglet Images — Statistiques, Galerie, Actions overlay, Ajout
 // =============================================================================
 
-import Image from 'next/image';
-
 import { useToast } from '@verone/common/hooks';
 import { ButtonV2 } from '@verone/ui';
-import { Badge } from '@verone/ui';
+import { Badge, CloudflareImage } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
   Image as ImageIcon,
@@ -22,6 +20,7 @@ import {
 interface CatalogueImage {
   id: string;
   public_url: string | null;
+  cloudflare_image_id: string | null;
   alt_text: string | null;
   is_primary: boolean | null;
 }
@@ -127,8 +126,9 @@ export function TabImages({
               >
                 {/* Image */}
                 <div className="aspect-square relative bg-gray-100">
-                  <Image
-                    src={image.public_url ?? ''}
+                  <CloudflareImage
+                    cloudflareId={image.cloudflare_image_id}
+                    fallbackSrc={image.public_url ?? ''}
                     alt={image.alt_text ?? `Photo ${index + 1}`}
                     fill
                     className="object-cover"

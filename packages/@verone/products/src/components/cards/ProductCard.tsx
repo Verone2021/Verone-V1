@@ -2,7 +2,7 @@
 
 import { memo, useCallback } from 'react';
 
-import Image from 'next/image';
+import { CloudflareImage } from '@verone/ui';
 import { useRouter } from 'next/navigation';
 
 import { Package, Archive, Trash2, ArchiveRestore } from 'lucide-react';
@@ -165,9 +165,10 @@ export const ProductCard = memo(function ProductCard({
     >
       {/* Image produit - ULTRA COMPACT */}
       <div className="relative h-32 overflow-hidden border-b border-black">
-        {primaryImage?.public_url && !imageLoading ? (
-          <Image
-            src={primaryImage.public_url}
+        {primaryImage && !imageLoading ? (
+          <CloudflareImage
+            cloudflareId={primaryImage.cloudflare_image_id}
+            fallbackSrc={primaryImage.public_url}
             alt={primaryImage.alt_text ?? product.name}
             fill
             priority={priority} // 🚀 Optimisation LCP pour première image

@@ -10,7 +10,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 
-import Image from 'next/image';
+import { CloudflareImage } from '@verone/ui';
 
 import {
   Upload,
@@ -164,8 +164,9 @@ export function PrimaryImageUpload({
       {displayImageUrl && (
         <div className="relative w-full max-w-xs mx-auto">
           <div className="relative w-full h-32 rounded-lg overflow-hidden border">
-            <Image
-              src={displayImageUrl}
+            <CloudflareImage
+              cloudflareId={primaryImage?.cloudflare_image_id}
+              fallbackSrc={displayImageUrl}
               alt="Image principale"
               fill
               className="object-cover"

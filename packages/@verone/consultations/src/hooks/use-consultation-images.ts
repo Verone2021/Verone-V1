@@ -12,6 +12,7 @@ export interface ConsultationImage {
   consultation_id: string;
   storage_path: string;
   public_url?: string | null;
+  cloudflare_image_id?: string | null;
   display_order: number;
   is_primary: boolean;
   image_type: 'primary' | 'gallery' | 'technical' | 'lifestyle' | 'thumbnail';
@@ -84,7 +85,7 @@ export function useConsultationImages({
       const { data, error } = await supabase
         .from('consultation_images')
         .select(
-          'id, consultation_id, storage_path, public_url, display_order, is_primary, image_type, alt_text, width, height, file_size, format, created_by, created_at, updated_at'
+          'id, consultation_id, storage_path, public_url, cloudflare_image_id, display_order, is_primary, image_type, alt_text, width, height, file_size, format, created_by, created_at, updated_at'
         )
         .eq('consultation_id', consultationId)
         .order('display_order', { ascending: true });

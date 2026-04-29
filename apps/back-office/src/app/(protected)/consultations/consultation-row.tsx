@@ -2,11 +2,9 @@
 
 import { useState } from 'react';
 
-import Image from 'next/image';
-
 import { type ClientConsultation } from '@verone/consultations';
 import { useConsultationImages } from '@verone/consultations';
-import { Badge } from '@verone/ui';
+import { Badge, CloudflareImage } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
   DropdownMenu,
@@ -127,8 +125,11 @@ export function ConsultationRow({
               className="relative w-10 h-10 overflow-hidden group"
               title="Cliquer pour voir toutes les photos"
             >
-              <Image
-                src={primaryImage.public_url ?? '/placeholder-consultation.svg'}
+              <CloudflareImage
+                cloudflareId={primaryImage.cloudflare_image_id}
+                fallbackSrc={
+                  primaryImage.public_url ?? '/placeholder-consultation.svg'
+                }
                 alt={`Photo ${clientName}`}
                 width={40}
                 height={40}

@@ -11,7 +11,7 @@
 
 import React, { useState } from 'react';
 
-import Image from 'next/image';
+import { CloudflareImage } from '@verone/ui';
 
 import {
   X,
@@ -322,8 +322,11 @@ export function ConsultationPhotosModal({
                   key={image.id}
                   className="group relative aspect-square bg-gray-100 rounded overflow-hidden border-2 border-gray-200 hover:border-purple-400 transition-all"
                 >
-                  <Image
-                    src={image.public_url ?? '/placeholder-consultation.svg'}
+                  <CloudflareImage
+                    cloudflareId={image.cloudflare_image_id}
+                    fallbackSrc={
+                      image.public_url ?? '/placeholder-consultation.svg'
+                    }
                     alt={image.alt_text ?? 'Photo consultation'}
                     fill
                     className="object-cover"

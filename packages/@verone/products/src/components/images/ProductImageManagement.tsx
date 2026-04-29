@@ -12,7 +12,7 @@
 
 import React, { useState } from 'react';
 
-import Image from 'next/image';
+import { CloudflareImage } from '@verone/ui';
 
 import {
   Upload,
@@ -302,9 +302,10 @@ export function ProductImageManagement({
               >
                 {/* Image */}
                 <div className="aspect-square relative">
-                  {image.public_url ? (
-                    <Image
-                      src={image.public_url}
+                  {image.public_url || image.cloudflare_image_id ? (
+                    <CloudflareImage
+                      cloudflareId={image.cloudflare_image_id}
+                      fallbackSrc={image.public_url}
                       alt={
                         image.alt_text ||
                         `Image ${(image.display_order ?? 0) + 1}`
