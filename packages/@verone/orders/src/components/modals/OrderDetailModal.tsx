@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -58,7 +58,27 @@ export function OrderDetailModal({
   const [shipmentToEmail, setShipmentToEmail] =
     useState<ShipmentHistoryItem | null>(null);
 
-  const data = useOrderDetailData(order, open);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+
+  const data = useOrderDetailData(order, open, reloadKey);
+
+  const handleSyncPacklink = useCallback(() => {
+    if (syncing || !order?.id) return;
+    setSyncing(true);
+    void fetch('/api/packlink/shipments/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sales_order_id: order.id }),
+    })
+      .catch(err => {
+        console.error('[OrderDetailModal] Packlink sync failed:', err);
+      })
+      .finally(() => {
+        setReloadKey(k => k + 1);
+        setSyncing(false);
+      });
+  }, [order?.id, syncing]);
 
   const handlers = useOrderDetailHandlers(
     order
@@ -246,6 +266,8 @@ export function OrderDetailModal({
                 shipmentHistory={data.shipmentHistory}
                 order={order}
                 onSendTrackingEmail={h => setShipmentToEmail(h)}
+                onSync={handleSyncPacklink}
+                syncing={syncing}
               />
 
               <OrderActionsCard
