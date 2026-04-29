@@ -1,10 +1,8 @@
 'use client';
 
-import Image from 'next/image';
-
 import { Camera, Star, Trash2, Loader2 } from 'lucide-react';
 
-import { Badge } from '@verone/ui';
+import { Badge, CloudflareImage } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import { cn } from '@verone/utils';
 import type { Database } from '@verone/utils/supabase/types';
@@ -49,9 +47,10 @@ export function ProductPhotosGallery({
             )}
           >
             <div className="aspect-square relative bg-gray-50">
-              {image.public_url ? (
-                <Image
-                  src={image.public_url}
+              {image.public_url || image.cloudflare_image_id ? (
+                <CloudflareImage
+                  cloudflareId={image.cloudflare_image_id}
+                  fallbackSrc={image.public_url}
                   alt={image.alt_text ?? `Photo ${index + 1}`}
                   fill
                   className="object-contain"

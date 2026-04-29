@@ -7,30 +7,10 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '13.0.5';
   };
   public: {
     Tables: {
@@ -1596,6 +1576,7 @@ export type Database = {
       collection_images: {
         Row: {
           alt_text: string | null;
+          cloudflare_image_id: string | null;
           collection_id: string;
           created_at: string | null;
           display_order: number;
@@ -1613,6 +1594,7 @@ export type Database = {
         };
         Insert: {
           alt_text?: string | null;
+          cloudflare_image_id?: string | null;
           collection_id: string;
           created_at?: string | null;
           display_order?: number;
@@ -1630,6 +1612,7 @@ export type Database = {
         };
         Update: {
           alt_text?: string | null;
+          cloudflare_image_id?: string | null;
           collection_id?: string;
           created_at?: string | null;
           display_order?: number;
@@ -1935,6 +1918,7 @@ export type Database = {
       consultation_images: {
         Row: {
           alt_text: string | null;
+          cloudflare_image_id: string | null;
           consultation_id: string;
           created_at: string | null;
           created_by: string | null;
@@ -1952,6 +1936,7 @@ export type Database = {
         };
         Insert: {
           alt_text?: string | null;
+          cloudflare_image_id?: string | null;
           consultation_id: string;
           created_at?: string | null;
           created_by?: string | null;
@@ -1969,6 +1954,7 @@ export type Database = {
         };
         Update: {
           alt_text?: string | null;
+          cloudflare_image_id?: string | null;
           consultation_id?: string;
           created_at?: string | null;
           created_by?: string | null;
@@ -8939,6 +8925,7 @@ export type Database = {
       sourcing_photos: {
         Row: {
           caption: string | null;
+          cloudflare_image_id: string | null;
           created_at: string | null;
           created_by: string | null;
           id: string;
@@ -8950,6 +8937,7 @@ export type Database = {
         };
         Insert: {
           caption?: string | null;
+          cloudflare_image_id?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           id?: string;
@@ -8961,6 +8949,7 @@ export type Database = {
         };
         Update: {
           caption?: string | null;
+          cloudflare_image_id?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           id?: string;
@@ -15062,9 +15051,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       affiliate_product_approval_status: [

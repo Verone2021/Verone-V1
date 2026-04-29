@@ -14,6 +14,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
 import Image from 'next/image';
+import { CloudflareImage } from '@verone/ui';
 
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Badge } from '@verone/ui';
@@ -38,6 +39,7 @@ import {
 interface IConsultationImage {
   id: string;
   public_url?: string | null;
+  cloudflare_image_id?: string | null;
   alt_text?: string | null;
   is_primary: boolean;
   file_size?: number | null;
@@ -336,8 +338,9 @@ export function ConsultationImageViewerModal({
                   maxWidth: '100%',
                 }}
               >
-                <Image
-                  src={currentImage.public_url}
+                <CloudflareImage
+                  cloudflareId={currentImage.cloudflare_image_id}
+                  fallbackSrc={currentImage.public_url}
                   alt={
                     currentImage.alt_text ??
                     `Photo consultation ${currentIndex + 1}`

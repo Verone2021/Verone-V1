@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useState } from 'react';
 
-import Image from 'next/image';
+import { CloudflareImage } from '@verone/ui';
 import { useRouter } from 'next/navigation';
 
 import type { Product } from '@verone/categories/hooks';
@@ -128,9 +128,10 @@ export const ProductCardV2 = memo(function ProductCardV2({
     >
       {/* Image produit */}
       <div className="relative h-32 overflow-hidden bg-white">
-        {primaryImage?.public_url && !imageLoading ? (
-          <Image
-            src={primaryImage.public_url}
+        {primaryImage && !imageLoading ? (
+          <CloudflareImage
+            cloudflareId={primaryImage.cloudflare_image_id}
+            fallbackSrc={primaryImage.public_url}
             alt={primaryImage?.alt_text ?? product.name}
             fill
             priority={priority || (index !== undefined && index < 6)}
