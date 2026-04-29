@@ -58,7 +58,7 @@ export function useProductImages({
       const { data, error } = await supabase
         .from('product_images')
         .select(
-          'id, product_id, public_url, display_order, alt_text, is_primary, created_at, updated_at'
+          'id, product_id, public_url, cloudflare_image_id, display_order, alt_text, is_primary, created_at, updated_at'
         )
         .eq('product_id', productId)
         .order('display_order')
@@ -156,7 +156,7 @@ export function useProductImages({
           .from('product_images')
           .insert([imageData])
           .select(
-            'id, product_id, public_url, storage_path, display_order, alt_text, is_primary, image_type, file_size, format, width, height, created_by, created_at, updated_at'
+            'id, product_id, public_url, cloudflare_image_id, storage_path, display_order, alt_text, is_primary, image_type, file_size, format, width, height, created_by, created_at, updated_at'
           )
           .single();
 
