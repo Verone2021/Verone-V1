@@ -9,13 +9,39 @@ import type {
 
 const supabase = createClient();
 
+// `email` is no longer a column of v_linkme_users (BO-SEC-CRITICAL-002 — RGPD).
+// It is fetched separately via the SECURITY DEFINER RPC `get_linkme_users_emails`
+// which is gated by `is_backoffice_user()` server-side.
 const USER_SELECT_COLS =
-  'user_id, user_role_id, email, first_name, last_name, avatar_url, phone, linkme_role, enseigne_id, organisation_id, permissions, is_active, role_created_at, default_margin_rate, enseigne_name, enseigne_logo, organisation_name, organisation_logo';
+  'user_id, user_role_id, first_name, last_name, avatar_url, phone, linkme_role, enseigne_id, organisation_id, permissions, is_active, role_created_at, default_margin_rate, enseigne_name, enseigne_logo, organisation_name, organisation_logo';
 
-function mapUser(user: LinkMeUserView): LinkMeUser {
+async function fetchEmailsForUsers(
+  userIds: string[]
+): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  const cleanIds = userIds.filter(Boolean);
+  if (cleanIds.length === 0) return map;
+  const { data, error } = await supabase.rpc('get_linkme_users_emails', {
+    user_ids: cleanIds,
+  });
+  if (error) {
+    console.error('Erreur fetch LinkMe users emails:', error);
+    return map;
+  }
+  for (const row of data ?? []) {
+    if (row.user_id && row.email) map.set(row.user_id, row.email);
+  }
+  return map;
+}
+
+function mapUser(
+  user: LinkMeUserView,
+  emailByUserId: Map<string, string>
+): LinkMeUser {
+  const userId = user.user_id ?? '';
   return {
-    user_id: user.user_id ?? '',
-    email: user.email ?? '',
+    user_id: userId,
+    email: userId ? (emailByUserId.get(userId) ?? '') : '',
     first_name: user.first_name,
     last_name: user.last_name,
     avatar_url: user.avatar_url,
@@ -43,7 +69,12 @@ export async function fetchLinkMeUsers(): Promise<LinkMeUser[]> {
     console.error('Erreur fetch LinkMe users:', error);
     throw error;
   }
-  return (data ?? []).map((user: LinkMeUserView) => mapUser(user));
+  const rows = (data ?? []) as LinkMeUserView[];
+  const userIds = rows
+    .map(u => u.user_id)
+    .filter((id): id is string => Boolean(id));
+  const emailMap = await fetchEmailsForUsers(userIds);
+  return rows.map(user => mapUser(user, emailMap));
 }
 
 export async function fetchLinkMeUserById(
@@ -60,7 +91,8 @@ export async function fetchLinkMeUserById(
     throw error;
   }
   if (!data) return null;
-  return mapUser(data as LinkMeUserView);
+  const emailMap = await fetchEmailsForUsers([userId]);
+  return mapUser(data as LinkMeUserView, emailMap);
 }
 
 export async function fetchLinkMeUsersByEnseigne(
@@ -76,7 +108,12 @@ export async function fetchLinkMeUsersByEnseigne(
     console.error('Erreur fetch LinkMe users by enseigne:', error);
     throw error;
   }
-  return (data ?? []).map((user: LinkMeUserView) => mapUser(user));
+  const rows = (data ?? []) as LinkMeUserView[];
+  const userIds = rows
+    .map(u => u.user_id)
+    .filter((id): id is string => Boolean(id));
+  const emailMap = await fetchEmailsForUsers(userIds);
+  return rows.map(user => mapUser(user, emailMap));
 }
 
 export async function fetchEnseignesForSelect(): Promise<

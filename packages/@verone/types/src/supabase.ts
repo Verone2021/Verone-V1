@@ -11622,7 +11622,6 @@ export type Database = {
         Row: {
           avatar_url: string | null;
           default_margin_rate: number | null;
-          email: string | null;
           enseigne_id: string | null;
           enseigne_logo: string | null;
           enseigne_name: string | null;
@@ -13388,6 +13387,10 @@ export type Database = {
         }[];
       };
       get_linkme_public_stats: { Args: never; Returns: Json };
+      get_linkme_users_emails: {
+        Args: { user_ids: string[] };
+        Returns: { user_id: string; email: string }[];
+      };
       get_low_stock_products: {
         Args: { limit_count?: number };
         Returns: {

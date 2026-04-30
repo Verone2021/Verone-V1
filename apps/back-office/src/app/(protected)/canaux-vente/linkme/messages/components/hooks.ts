@@ -320,9 +320,10 @@ export function useAffiliates(enseigneId?: string) {
     queryKey: ['admin-affiliates', enseigneId],
     queryFn: async () => {
       const supabase = createClient();
-      type LinkMeUser = {
+      // BO-SEC-CRITICAL-002: `email` no longer in v_linkme_users (RGPD).
+      // Fetched separately via get_linkme_users_emails RPC for fallback display_name.
+      type LinkMeUserRow = {
         user_id: string;
-        email: string;
         first_name: string | null;
         last_name: string | null;
         enseigne_id: string | null;
@@ -330,9 +331,7 @@ export function useAffiliates(enseigneId?: string) {
       };
       let query = supabase
         .from('v_linkme_users')
-        .select(
-          'user_id, email, first_name, last_name, enseigne_id, enseigne_name'
-        )
+        .select('user_id, first_name, last_name, enseigne_id, enseigne_name')
         .eq('is_active', true)
         .not('user_id', 'is', null);
       if (enseigneId) {
@@ -340,13 +339,29 @@ export function useAffiliates(enseigneId?: string) {
       }
       const { data, error } = await query
         .order('first_name')
-        .returns<LinkMeUser[]>();
+        .returns<LinkMeUserRow[]>();
       if (error) throw error;
-      return (data ?? []).map(u => ({
+
+      const rows = data ?? [];
+      const userIds = rows
+        .map(u => u.user_id)
+        .filter((id): id is string => Boolean(id));
+      const emailMap = new Map<string, string>();
+      if (userIds.length > 0) {
+        const { data: emails } = await supabase.rpc('get_linkme_users_emails', {
+          user_ids: userIds,
+        });
+        for (const row of emails ?? []) {
+          if (row.user_id && row.email) emailMap.set(row.user_id, row.email);
+        }
+      }
+
+      return rows.map(u => ({
         id: u.user_id,
         user_id: u.user_id,
         display_name:
-          `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || u.email,
+          `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() ||
+          (emailMap.get(u.user_id) ?? ''),
         enseigne_name: u.enseigne_name ?? null,
       })) as Affiliate[];
     },
