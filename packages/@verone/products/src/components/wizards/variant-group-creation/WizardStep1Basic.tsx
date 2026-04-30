@@ -91,8 +91,8 @@ function InheritedFieldChip({
     <span
       className={
         active
-          ? 'inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded border border-blue-200 bg-blue-50 text-blue-700'
-          : 'inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded border border-neutral-200 bg-neutral-50 text-neutral-500 opacity-50'
+          ? 'inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded border border-blue-200 bg-blue-50 text-blue-700'
+          : 'inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded border border-neutral-200 bg-neutral-50 text-neutral-500 opacity-50'
       }
     >
       {active && <Lock className="h-2 w-2" />}

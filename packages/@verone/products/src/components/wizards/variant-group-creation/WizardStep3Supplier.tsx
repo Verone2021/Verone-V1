@@ -47,22 +47,23 @@ export function WizardStep3Supplier({
     <div className="space-y-4">
       {/* Fournisseur commun */}
       <div className="space-y-3">
-        <div className="flex items-center space-x-2">
+        <label
+          htmlFor="has-common-supplier"
+          className="flex items-center gap-2 min-h-[44px] md:min-h-0 cursor-pointer"
+        >
           <Checkbox
             id="has-common-supplier"
             checked={hasCommonSupplier}
+            checkboxSize="lg"
             onCheckedChange={checked => {
               onUpdate({ has_common_supplier: checked as boolean });
               if (!checked) onUpdate({ supplier_id: '' });
             }}
           />
-          <Label
-            htmlFor="has-common-supplier"
-            className="text-sm font-medium cursor-pointer"
-          >
+          <span className="text-sm font-medium">
             Meme fournisseur pour tous les produits
-          </Label>
-        </div>
+          </span>
+        </label>
 
         {hasCommonSupplier && (
           <div>
@@ -106,22 +107,23 @@ export function WizardStep3Supplier({
 
       {/* Poids commun */}
       <div className="space-y-3">
-        <div className="flex items-center space-x-2">
+        <label
+          htmlFor="has-common-weight"
+          className="flex items-center gap-2 min-h-[44px] md:min-h-0 cursor-pointer"
+        >
           <Checkbox
             id="has-common-weight"
             checked={hasCommonWeight}
+            checkboxSize="lg"
             onCheckedChange={checked => {
               onUpdate({ has_common_weight: checked as boolean });
               if (!checked) onUpdate({ common_weight: '' });
             }}
           />
-          <Label
-            htmlFor="has-common-weight"
-            className="text-sm font-medium cursor-pointer"
-          >
+          <span className="text-sm font-medium">
             Meme poids pour tous les produits
-          </Label>
-        </div>
+          </span>
+        </label>
 
         {hasCommonWeight && (
           <div>
@@ -149,10 +151,14 @@ export function WizardStep3Supplier({
 
       {/* Prix d'achat commun (Q1) */}
       <div className="space-y-3">
-        <div className="flex items-center space-x-2">
+        <label
+          htmlFor="has-common-cost-price"
+          className="flex items-center gap-2 min-h-[44px] md:min-h-0 cursor-pointer"
+        >
           <Checkbox
             id="has-common-cost-price"
             checked={hasCommonCostPrice}
+            checkboxSize="lg"
             onCheckedChange={checked => {
               onUpdate({ has_common_cost_price: checked as boolean });
               if (!checked) {
@@ -161,13 +167,10 @@ export function WizardStep3Supplier({
               }
             }}
           />
-          <Label
-            htmlFor="has-common-cost-price"
-            className="text-sm font-medium cursor-pointer"
-          >
+          <span className="text-sm font-medium">
             Meme prix d&apos;achat pour tous les produits
-          </Label>
-        </div>
+          </span>
+        </label>
 
         {hasCommonCostPrice && (
           <div className="space-y-3">

@@ -474,18 +474,17 @@ export function VariantGroupCreationWizard({
         payload.supplier_id = formData.supplier_id;
       }
 
-      // Ajouter poids commun si défini
-      // FIX BUG LATENT : si common_weight est défini, set aussi has_common_weight=true
-      // pour que propagateWeightToProducts s'exécute dans use-variant-group-crud.ts
+      // Ajouter poids commun — respecte le choix de la checkbox (has_common_weight)
+      // Le flag est celui choisi par l'utilisateur, pas une dérivation forcée depuis la valeur.
+      // Si la checkbox est décochée, on n'envoie pas has_common_weight=true même si common_weight
+      // contient une valeur résiduelle.
+      payload.has_common_weight = formData.has_common_weight;
       if (
+        formData.has_common_weight &&
         formData.common_weight !== '' &&
         formData.common_weight !== undefined
       ) {
         payload.common_weight = Number(formData.common_weight);
-        payload.has_common_weight = true;
-      } else if (formData.has_common_weight) {
-        // Checkbox cochée manuellement sans valeur
-        payload.has_common_weight = true;
       }
 
       // Ajouter prix d'achat commun si défini (Q1)

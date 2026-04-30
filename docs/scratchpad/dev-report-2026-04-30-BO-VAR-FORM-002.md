@@ -178,3 +178,71 @@ git diff HEAD -- \
 - 0 fichier hors scope touché
 - Commit `601f6495` poussé sur `fix/BO-VAR-FORM-002-enrich-matrix-mapping`
 - PR #861 en attente de promotion draft → ready (Romeo décide)
+
+---
+
+## Fixes post-review (reviewer-agent — 2026-04-30)
+
+3 issues identifiées lors de l'audit. Résolues dans le commit suivant, sur la même branche.
+
+### [CRITICAL] Touch targets 44px sur les checkboxes — WizardStep3Supplier.tsx
+
+**Problème** : les 3 `<Checkbox>` (has_common_supplier, has_common_weight, has_common_cost_price)
+étaient dans un `<div className="flex items-center space-x-2">` avec le `<Label>`. Zone touchable
+limitée à la case seule (~16px) — violation touch target mobile 44px.
+
+**Fix** : remplacement des `<div>` wrappers par des `<label>` HTML natifs avec
+`className="flex items-center gap-2 min-h-[44px] md:min-h-0 cursor-pointer"`.
+Le `<Label>` shadcn est remplacé par un `<span>` (évite le double-lien htmlFor/for).
+Prop `checkboxSize="lg"` ajoutée sur les 3 Checkbox (h-5 w-5 au lieu du h-4 w-4 par défaut).
+
+**Approche choisie** : label clickable (zone label+box cliquable) — conforme à la règle responsive
+et meilleur pattern UX que le sizing direct sur la checkbox seule.
+
+Fichier : `packages/@verone/products/src/components/wizards/variant-group-creation/WizardStep3Supplier.tsx`
+Lignes : 50-66, 110-125, 152-168 (après fix)
+
+### [MAJOR] text-[10px] interdit — WizardStep1Basic.tsx
+
+**Problème** : sous-composant `InheritedFieldChip` utilisait `text-[10px]` (10px) — en dessous
+de la taille minimale `text-xs` (12px) définie dans `responsive.md` pour les textes sur mobile.
+
+**Fix** : `text-[10px]` → `text-xs` sur les 2 classes (active + inactive) du chip.
+
+Fichier : `packages/@verone/products/src/components/wizards/variant-group-creation/WizardStep1Basic.tsx`
+Lignes : 94-95
+
+### [MINOR] Court-circuit has_common_weight dans handleSubmit — VariantGroupCreationWizard.tsx
+
+**Problème** : la logique `if (formData.common_weight !== '') { payload.has_common_weight = true; }`
+forçait le flag à `true` si une valeur résiduelle existait dans `common_weight`, même si Romeo
+avait manuellement décoché la checkbox. Le choix utilisateur était écrasé.
+
+**Fix** : `payload.has_common_weight = formData.has_common_weight` (booléen choisi par Romeo).
+`common_weight` n'est ajouté au payload que si la checkbox est cochée ET qu'il y a une valeur.
+
+Fichier : `packages/@verone/products/src/components/wizards/VariantGroupCreationWizard.tsx`
+Lignes : ~477-488 (après fix)
+
+---
+
+## Dette technique connue — hors scope BO-VAR-FORM-002
+
+**[MAJOR — pré-existant] Scroll modal `VariantGroupCreationWizard.tsx`** :
+Le `<DialogContent>` (ligne ~546) utilise `overflow-y-auto` au niveau du conteneur racine.
+Sur mobile, cela provoque un scroll global de la page (violation responsive.md — "Modal sans scroll
+interne cause scroll global sur mobile"). La correction nécessite un refactoring de la structure
+du dialog (DialogHeader fixe + `div.flex-1.overflow-y-auto` interne + DialogFooter fixe).
+Ce refactoring touche la structure du modal et dépasse le scope de ce sprint. À traiter en
+sprint 3 dédié au refactoring structurel du wizard.
+
+---
+
+## Validations post-review
+
+| Validation                                                                       | Résultat      |
+| -------------------------------------------------------------------------------- | ------------- |
+| `pnpm --filter @verone/products type-check`                                      | PASS (exit 0) |
+| `pnpm --filter @verone/back-office type-check`                                   | PASS (exit 0) |
+| `pnpm --filter @verone/back-office lint`                                         | PASS (exit 0) |
+| `NODE_OPTIONS=--max-old-space-size=6144 pnpm --filter @verone/back-office build` | PASS (exit 0) |
