@@ -11,6 +11,14 @@ export interface OrganisationFilters {
   include_archived?: boolean;
   /** Exclure les organisations qui appartiennent à une enseigne (enseigne_id IS NOT NULL) */
   exclude_with_enseigne?: boolean;
+  /**
+   * Mode lightweight pour les usages liste/sélecteur où on n'a besoin que
+   * de id + legal_name + trade_name + type + is_active.
+   * - Réduit le payload réseau (~70 colonnes → 5)
+   * - Skip le calcul `_count.products` (N+1 query évitée)
+   * Utiliser dans les contextes catalogue, dropdowns, filtres.
+   */
+  lightweight?: boolean;
 }
 
 // Type pour création d'organisation (basé sur Supabase Insert)

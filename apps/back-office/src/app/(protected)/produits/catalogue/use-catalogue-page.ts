@@ -56,6 +56,11 @@ export function useCataloguePage() {
   const { organisations: allSuppliers } = useOrganisations({
     type: 'supplier',
     is_active: true,
+    // BO-PERF-CATALOG-001 : la liste catalogue n'a besoin que de
+    // `id, legal_name, trade_name` pour afficher les noms de fournisseurs +
+    // alimenter le filtre. Mode lightweight pour éviter ~70 colonnes inutiles
+    // + skip le N+1 query `_count.products`.
+    lightweight: true,
   });
 
   const productIds = products.map(p => p.id);
