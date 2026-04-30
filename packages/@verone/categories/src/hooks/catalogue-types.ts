@@ -4,7 +4,7 @@ interface ProductGroup {
   description?: string;
   slug: string;
   category_id: string;
-  brand?: string;
+  manufacturer?: string;
   status: 'draft' | 'active' | 'inactive' | 'discontinued';
   created_at: string;
   updated_at: string;
@@ -34,7 +34,7 @@ export interface Product {
   created_at: string;
   updated_at: string;
   subcategory_id?: string;
-  brand?: string;
+  manufacturer?: string;
   supplier_id?: string;
   product_type?: 'standard' | 'custom';
   supplier?: {

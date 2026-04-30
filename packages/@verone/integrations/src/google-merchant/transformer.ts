@@ -24,7 +24,7 @@ interface VéroneProduct {
     | 'coming_soon'
     | 'discontinued';
   condition: 'new' | 'refurbished' | 'used';
-  brand?: string;
+  manufacturer?: string;
   gtin?: string;
   supplier_reference?: string; // MPH
   variant_attributes?: Record<string, string>;
@@ -305,7 +305,7 @@ export function transformProductForGoogle(
       identifierExists: hasUniqueIdentifiers(product),
 
       // CHAMPS CONDITIONNELS
-      ...(product.brand && { brand: product.brand }),
+      ...(product.manufacturer && { brand: product.manufacturer }),
       ...(product.gtin && { gtin: product.gtin }),
       ...(product.supplier_reference && { mpn: product.supplier_reference }),
 

@@ -25,7 +25,7 @@ interface ProductInput {
   price_ht: number;
   status: string;
   condition?: string;
-  brand?: string;
+  manufacturer?: string;
   gtin?: string;
   supplier_reference?: string;
   variant_attributes?: Record<string, string>;
@@ -277,7 +277,7 @@ export function transformProductForExcel(
     ...(product.supplier_reference && { mpn: product.supplier_reference }),
 
     // COLONNES OPTIONNELLES IMPORTANTES (11-13)
-    ...(product.brand && { brand: product.brand }),
+    ...(product.manufacturer && { brand: product.manufacturer }),
     ...(extractProductHighlightsForExcel(product) && {
       'product highlight': extractProductHighlightsForExcel(product),
     }),

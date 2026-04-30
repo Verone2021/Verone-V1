@@ -107,18 +107,16 @@ export function SupplierSection({
             </p>
           </div>
 
-          {/* Marque */}
+          {/* Fabricant */}
           <div className="space-y-2">
-            <Label htmlFor="brand">Marque</Label>
+            <Label htmlFor="manufacturer">Fabricant</Label>
             <Input
-              id="brand"
-              value={formData.brand}
-              onChange={e => updateField('brand', e.target.value)}
+              id="manufacturer"
+              value={formData.manufacturer}
+              onChange={e => updateField('manufacturer', e.target.value)}
               placeholder="Ex: IKEA, Kartell, Hay..."
             />
-            <p className="text-xs text-gray-500">
-              Marque ou fabricant du produit
-            </p>
+            <p className="text-xs text-gray-500">Fabricant du produit</p>
           </div>
 
           {/* GTIN / Code-barres */}

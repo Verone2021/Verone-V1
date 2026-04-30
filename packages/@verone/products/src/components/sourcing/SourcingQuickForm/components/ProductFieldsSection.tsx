@@ -133,16 +133,16 @@ export function ProductFieldsSection({
         </p>
       </div>
 
-      {/* Marque */}
+      {/* Fabricant */}
       <div className="space-y-2">
-        <Label htmlFor="brand" className="text-sm font-medium">
-          Marque (facultatif)
+        <Label htmlFor="manufacturer" className="text-sm font-medium">
+          Fabricant (facultatif)
         </Label>
         <Input
-          id="brand"
-          value={formData.brand}
+          id="manufacturer"
+          value={formData.manufacturer}
           onChange={e => {
-            onFieldChange({ brand: e.target.value });
+            onFieldChange({ manufacturer: e.target.value });
           }}
           placeholder="Ex: HAY, Fermob, Kartell..."
           className="transition-colors"

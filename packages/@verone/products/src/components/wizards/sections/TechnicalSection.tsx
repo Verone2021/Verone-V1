@@ -58,14 +58,14 @@ export function TechnicalSection({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Marque */}
+        {/* Fabricant */}
         <div className="space-y-2">
-          <Label htmlFor="brand">Marque</Label>
+          <Label htmlFor="manufacturer">Fabricant</Label>
           <Input
-            id="brand"
+            id="manufacturer"
             placeholder="Ex: Ikea, Maisons du Monde..."
-            value={formData.brand}
-            onChange={e => handleChange('brand', e.target.value)}
+            value={formData.manufacturer}
+            onChange={e => handleChange('manufacturer', e.target.value)}
           />
         </div>
 

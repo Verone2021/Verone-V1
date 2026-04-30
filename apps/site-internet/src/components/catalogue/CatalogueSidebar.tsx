@@ -104,7 +104,7 @@ export function CatalogueSidebar({
   const categories = getValuesWithCounts(products, p => p.subcategory_name);
   const rooms = getArrayValuesWithCounts(products, p => p.suitable_rooms);
   const styles = getValuesWithCounts(products, p => p.style);
-  const brands = getValuesWithCounts(products, p => p.brand);
+  const brands = getValuesWithCounts(products, p => p.manufacturer);
   const colors = getValuesWithCounts(products, p => p.color);
 
   return (
@@ -251,7 +251,7 @@ export function CatalogueSidebar({
 
       {/* Brands */}
       {brands.length > 0 && (
-        <FilterSection title="Marque" defaultOpen={false}>
+        <FilterSection title="Fabricant" defaultOpen={false}>
           {brands.map(({ value, count }) => (
             <CheckboxItem
               key={value}

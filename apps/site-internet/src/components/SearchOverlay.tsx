@@ -50,7 +50,8 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
           .filter(
             (p: CatalogueProduct) =>
               p.name.toLowerCase().includes(query.toLowerCase()) ||
-              (p.brand?.toLowerCase().includes(query.toLowerCase()) ?? false) ||
+              (p.manufacturer?.toLowerCase().includes(query.toLowerCase()) ??
+                false) ||
               (p.sku?.toLowerCase().includes(query.toLowerCase()) ?? false)
           )
           .slice(0, 6)
@@ -119,9 +120,9 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                     <p className="text-sm font-medium text-verone-black truncate">
                       {product.name}
                     </p>
-                    {product.brand && (
+                    {product.manufacturer && (
                       <p className="text-xs text-verone-gray-500">
-                        {product.brand}
+                        {product.manufacturer}
                       </p>
                     )}
                   </div>

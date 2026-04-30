@@ -19,7 +19,7 @@ interface CreateProductBody {
   description?: string;
   price_ht: number;
   price_ttc?: number;
-  brand?: string;
+  manufacturer?: string;
   status?: string;
   stock_status?: string;
   product_status?: string;
@@ -38,7 +38,7 @@ const MOCK_PRODUCTS = [
     price_ht: 249900, // 2499€ HT
     price_ttc: 299880, // 2999€ TTC (20% VAT)
     category: 'canapes',
-    brand: 'Vérone',
+    manufacturer: 'Vérone',
     status: 'active',
     stock_status: 'in_stock',
     product_status: 'active',
@@ -57,7 +57,7 @@ const MOCK_PRODUCTS = [
     price_ht: 149900, // 1499€ HT
     price_ttc: 179880, // 1799€ TTC
     category: 'tables',
-    brand: 'Vérone',
+    manufacturer: 'Vérone',
     status: 'active',
     stock_status: 'in_stock',
     product_status: 'active',
@@ -73,7 +73,7 @@ const MOCK_PRODUCTS = [
     price_ht: 79900, // 799€ HT
     price_ttc: 95880, // 959€ TTC
     category: 'eclairage',
-    brand: 'Vérone',
+    manufacturer: 'Vérone',
     status: 'active',
     stock_status: 'out_of_stock',
     product_status: 'preorder',

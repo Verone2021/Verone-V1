@@ -42,7 +42,7 @@ export function useSourcingFetch(filters?: SourcingFilters) {
           requires_sample,
           assigned_client_id,
           margin_percentage,
-          brand,
+          manufacturer,
           description,
           supplier_moq,
           dimensions,

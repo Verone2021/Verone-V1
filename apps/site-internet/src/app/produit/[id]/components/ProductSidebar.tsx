@@ -2,7 +2,7 @@
  * ProductSidebar - Sidebar sticky fiche produit (40% largeur)
  * Features:
  * - Sticky top-20
- * - Titre + Marque conditionnelle
+ * - Titre + Fabricant conditionnelle
  * - Prix TTC + Éco-participation (ligne séparée)
  * - Variantes photos 56x56px
  * - Quantité + Checkbox montage
@@ -13,7 +13,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, type ChangeEvent } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -42,7 +42,7 @@ interface ProductSidebarProps {
     product_id: string;
     name: string;
     slug: string;
-    brand: string | null; // Afficher UNIQUEMENT si renseigné
+    manufacturer: string | null; // Afficher UNIQUEMENT si renseigné
     price_ttc: number | null;
     discount_rate: number | null;
     eco_participation_amount: number | null; // Ligne séparée sous prix
@@ -128,11 +128,11 @@ export function ProductSidebar({
             {product.name}
           </h1>
 
-          {/* Marque UNIQUEMENT si renseignée (pas de fallback "Vérone") */}
+          {/* Fabricant UNIQUEMENT si renseignée (pas de fallback "Vérone") */}
           {/* Lien désactivé tant que la route /marques/[slug] n'existe pas (audit 2026-04-26 Bug 1) */}
-          {product.brand && (
+          {product.manufacturer && (
             <span className="text-sm text-muted-foreground mt-2 inline-block">
-              par {product.brand}
+              par {product.manufacturer}
             </span>
           )}
         </div>
@@ -242,8 +242,8 @@ export function ProductSidebar({
             type="number"
             min={1}
             value={quantity}
-            onChange={e =>
-              setQuantity(Math.max(1, parseInt(e.target.value) || 1))
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))
             }
             className="w-24"
           />

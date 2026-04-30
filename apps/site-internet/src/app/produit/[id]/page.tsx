@@ -4,7 +4,7 @@
  * Features:
  * - Layout responsive 60/40 (galerie/sidebar)
  * - Sticky sidebar avec prix + variantes + CTA
- * - Marque conditionnelle (SI renseignée)
+ * - Fabricant conditionnelle (SI renseignée)
  * - Éco-participation ligne séparée
  * - Accordions sections détaillées
  * - Cross-sell carrousel (mock)
@@ -138,7 +138,7 @@ export default function ProductPage({
         id: product.product_id,
         name: product.name,
         price: product.price_ttc ?? 0,
-        brand: product.brand ?? undefined,
+        manufacturer: product.manufacturer ?? undefined,
         category: product.subcategory_name ?? undefined,
       });
       trackMetaViewContent({
@@ -201,7 +201,7 @@ export default function ProductPage({
         slug={product.slug}
         price={product.price_ttc}
         imageUrl={product.primary_image_url}
-        brand={product.brand}
+        manufacturer={product.manufacturer}
         sku={product.sku}
         reviewCount={reviewStats.count}
         averageRating={reviewStats.average}
@@ -271,7 +271,7 @@ export default function ProductPage({
             product_id: product.product_id,
             name: product.name,
             slug: product.slug,
-            brand: product.brand,
+            manufacturer: product.manufacturer,
             price_ttc: product.price_ttc,
             discount_rate: product.discount_rate,
             eco_participation_amount: product.eco_participation_amount,

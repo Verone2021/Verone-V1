@@ -25,7 +25,7 @@ interface SiteProduct {
   description: string | null;
   price_ttc: string;
   stock_status: string | null;
-  brand: string | null;
+  manufacturer: string | null;
   primary_image_url: string | null;
   image_urls: string[] | null;
   color: string | null;
@@ -163,11 +163,11 @@ export async function GET(request: NextRequest) {
         <g:price>0.00 EUR</g:price>
       </g:shipping>`;
 
-      if (product.brand) {
-        itemXml += `\n      <g:brand>${escapeXml(String(product.brand))}</g:brand>`;
+      if (product.manufacturer) {
+        itemXml += `\n      <g:brand>${escapeXml(String(product.manufacturer))}</g:brand>`;
       }
 
-      if (!product.brand) {
+      if (!product.manufacturer) {
         itemXml += `\n      <g:identifier_exists>false</g:identifier_exists>`;
       }
 

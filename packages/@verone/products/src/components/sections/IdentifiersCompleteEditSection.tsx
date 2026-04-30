@@ -17,7 +17,7 @@ interface Product {
   id: string;
   sku: string;
   slug?: string;
-  brand?: string;
+  manufacturer?: string;
   gtin?: string;
   condition?: string;
 }
@@ -57,7 +57,7 @@ export function IdentifiersCompleteEditSection({
   const editData = getEditedData(section) as Product | null;
   const error = getError(section);
 
-  const currentBrand = product.brand ?? '-';
+  const currentBrand = product.manufacturer ?? '-';
   const currentGtin = product.gtin ?? '-';
   const currentCondition = product.condition || 'new';
 
@@ -74,7 +74,7 @@ export function IdentifiersCompleteEditSection({
   const handleStartEdit = () => {
     startEdit(section, {
       slug: product.slug ?? '',
-      brand: product.brand ?? '',
+      manufacturer: product.manufacturer ?? '',
       gtin: product.gtin ?? '',
       condition: product.condition || 'new',
     });
@@ -171,12 +171,14 @@ export function IdentifiersCompleteEditSection({
             </h4>
             <div>
               <label className="block text-sm font-medium text-purple-700 mb-1">
-                Marque du produit
+                Fabricant du produit
               </label>
               <input
                 type="text"
-                value={editData?.brand ?? ''}
-                onChange={e => handleFieldChange('brand', e.target.value)}
+                value={editData?.manufacturer ?? ''}
+                onChange={e =>
+                  handleFieldChange('manufacturer', e.target.value)
+                }
                 className="w-full px-3 py-2 border border-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 placeholder="ex: Kartell, Fermob, Vitra"
               />
@@ -305,8 +307,8 @@ export function IdentifiersCompleteEditSection({
           </div>
         )}
 
-        {/* Marque */}
-        {product.brand && (
+        {/* Fabricant */}
+        {product.manufacturer && (
           <div className="bg-purple-50 p-3 rounded-lg">
             <div className="text-xs text-purple-600 font-medium mb-1">
               <Award className="h-3 w-3 inline mr-1" />
@@ -361,9 +363,9 @@ export function IdentifiersCompleteEditSection({
         </div>
 
         {/* Message si données manquantes */}
-        {!product.brand && !product.gtin && (
+        {!product.manufacturer && !product.gtin && (
           <div className="text-center text-gray-400 text-xs italic py-2">
-            Marque et code-barres non renseignés
+            Fabricant et code-barres non renseignés
           </div>
         )}
       </div>

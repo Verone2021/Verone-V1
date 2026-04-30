@@ -88,7 +88,7 @@ export interface SiteInternetProduct {
   // Descriptions et marketing (editable avec waterfall canal → produit)
   description: string | null;
   technical_description: string | null;
-  brand: string | null;
+  manufacturer: string | null;
   selling_points: string[];
 
   // Informations produit (READ-ONLY - catalogue uniquement)

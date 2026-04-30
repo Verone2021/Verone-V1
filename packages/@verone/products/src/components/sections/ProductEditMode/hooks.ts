@@ -35,7 +35,7 @@ export function useProductEditMode(product: any) {
     stock_quantity: product.stock_quantity ?? 0,
     min_stock: product.min_stock ?? 0,
     sku: product.sku ?? '',
-    brand: product.brand ?? '',
+    manufacturer: product.manufacturer ?? '',
     gtin: product.gtin ?? '',
     dimensions_length: product.dimensions_length ?? '',
     dimensions_width: product.dimensions_width ?? '',

@@ -9,7 +9,7 @@ type ProductUpdate = Database['public']['Tables']['products']['Update'];
 const supabase = createClient();
 
 const PRODUCT_SELECT =
-  'id, sku, name, slug, cost_price, cost_price_count, product_type, stock_real, cost_net_avg, cost_net_last, cost_net_min, cost_net_max, stock_status, product_status, condition, subcategory_id, supplier_id, brand, has_images, dimensions, weight, archived_at, created_at, updated_at';
+  'id, sku, name, slug, cost_price, cost_price_count, product_type, stock_real, cost_net_avg, cost_net_last, cost_net_min, cost_net_max, stock_status, product_status, condition, subcategory_id, supplier_id, manufacturer, has_images, dimensions, weight, archived_at, created_at, updated_at';
 
 export async function createProduct(
   productData: Partial<Product>,

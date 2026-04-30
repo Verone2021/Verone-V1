@@ -61,7 +61,7 @@ const PRODUCT_SELECT = `
   margin_percentage, completion_percentage, completion_status,
   target_margin_percentage, target_price,
   stock_status, product_status, condition,
-  subcategory_id, supplier_id, brand,
+  subcategory_id, supplier_id, manufacturer,
   has_images, dimensions, weight,
   archived_at, created_at, updated_at,
   supplier:organisations!supplier_id(id, legal_name, trade_name),
@@ -80,13 +80,13 @@ export async function loadProducts(
   query = query.neq('creation_mode', 'sourcing');
 
   if (filters.search) {
-    // BO-CATALOG-SEARCH-001 : élargir la recherche aux colonnes brand,
+    // BO-CATALOG-SEARCH-001 : élargir la recherche aux colonnes manufacturer,
     // gtin, supplier_reference (au lieu de seulement name + sku).
-    // Permet de retrouver un produit via son code-barres, sa marque ou
+    // Permet de retrouver un produit via son code-barres, son fabricant ou
     // sa référence fournisseur.
     const term = filters.search;
     query = query.or(
-      `name.ilike.%${term}%,sku.ilike.%${term}%,brand.ilike.%${term}%,gtin.ilike.%${term}%,supplier_reference.ilike.%${term}%`
+      `name.ilike.%${term}%,sku.ilike.%${term}%,manufacturer.ilike.%${term}%,gtin.ilike.%${term}%,supplier_reference.ilike.%${term}%`
     );
   }
 
@@ -122,7 +122,7 @@ export async function loadProducts(
   }
 
   if (filters.brands && filters.brands.length > 0) {
-    query = query.in('brand', filters.brands);
+    query = query.in('manufacturer', filters.brands);
   }
 
   if (filters.publishedOnline === 'published') {
