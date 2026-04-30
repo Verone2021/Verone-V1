@@ -120,6 +120,9 @@ export interface CreateVariantGroupData {
   subcategory_id: string;
   variant_type?: VariantType; // Type de variante (color/material)
 
+  // Produit témoin à attacher automatiquement au groupe créé (variant_position=1)
+  matrix_product_id?: string;
+
   // Attributs communs optionnels
   dimensions_length?: number;
   dimensions_width?: number;

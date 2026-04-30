@@ -66,6 +66,33 @@ export function useVariantGroupCrud(deps: VariantGroupCrudDeps) {
         return null;
       }
 
+      // Attacher le produit témoin au groupe avec variant_position=1
+      if (data.matrix_product_id) {
+        const groupId = String(newGroup.id);
+        const { error: attachError } = await supabase
+          .from('products')
+          .update({ variant_group_id: groupId, variant_position: 1 })
+          .eq('id', data.matrix_product_id);
+
+        if (attachError) {
+          logger.error(
+            'Échec rattachement produit témoin au groupe',
+            new Error(attachError.message),
+            {
+              operation: 'attach_matrix_product_failed',
+              groupId,
+              matrixProductId: data.matrix_product_id,
+            }
+          );
+          toast({
+            title: 'Attention',
+            description:
+              "Groupe créé mais le produit témoin n'a pas pu être ajouté automatiquement. Ajoutez-le manuellement.",
+            variant: 'destructive',
+          });
+        }
+      }
+
       toast({
         title: 'Succès',
         description: `Groupe de variantes "${data.name}" créé`,

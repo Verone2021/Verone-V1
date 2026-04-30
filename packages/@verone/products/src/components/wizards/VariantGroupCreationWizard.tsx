@@ -444,6 +444,10 @@ export function VariantGroupCreationWizard({
         name: formData.name.trim(),
         base_sku: formData.base_sku.trim(),
         subcategory_id: formData.subcategory_id,
+        // Attacher le produit témoin comme premier produit du groupe
+        ...(formData.matrix_product?.id
+          ? { matrix_product_id: formData.matrix_product.id }
+          : {}),
       };
 
       // Ajouter style si défini
