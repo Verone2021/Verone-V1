@@ -40,6 +40,12 @@ export const useCatalogue = () => {
     total: 0,
   });
 
+  // BO-PERF-CATALOG-002 : sérialiser les filtres pour stabilité de la dep.
+  // Avant : `filters` était un objet recréé à chaque setFilters/setFiltersState,
+  // ce qui régénérait `loadCatalogueData` (useCallback) → useEffect re-trigger
+  // → fetch products répété (20+ requêtes idle observées en prod).
+  const filtersKey = JSON.stringify(filters);
+
   const loadCatalogueData = useCallback(async () => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
@@ -73,7 +79,8 @@ export const useCatalogue = () => {
         loading: false,
       }));
     }
-  }, [filters]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- filters dérivé de filtersKey, dep stable
+  }, [filtersKey]);
 
   useEffect(() => {
     void loadCatalogueData().catch(err => {
