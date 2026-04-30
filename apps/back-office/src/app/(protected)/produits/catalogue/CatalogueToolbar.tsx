@@ -9,7 +9,7 @@ import type {
 import type { Organisation } from '@verone/organisations';
 import { ViewModeToggle } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { Search, X, RefreshCw } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 import {
   CatalogueFilterPanel,
@@ -32,7 +32,6 @@ interface CatalogueToolbarProps {
   onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onClearSearch: () => void;
   onResetAllFilters: () => void;
-  onResync: () => void;
   onFiltersChange: (newFilterState: FilterState) => void;
 }
 
@@ -50,7 +49,6 @@ export function CatalogueToolbar({
   onSearchChange,
   onClearSearch,
   onResetAllFilters,
-  onResync,
   onFiltersChange,
 }: CatalogueToolbarProps) {
   return (
@@ -81,11 +79,11 @@ export function CatalogueToolbar({
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black opacity-50" />
           <input
             type="text"
-            placeholder="Rechercher..."
+            placeholder="Nom, SKU, marque, code-barres, réf..."
             value={searchInput}
             onChange={onSearchChange}
             className={cn(
-              'w-56 border border-black bg-white py-2 pl-10 text-sm text-black placeholder:text-black placeholder:opacity-50 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2',
+              'w-72 border border-black bg-white py-2 pl-10 text-sm text-black placeholder:text-black placeholder:opacity-50 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2',
               searchInput ? 'pr-8' : 'pr-3'
             )}
           />
@@ -101,15 +99,6 @@ export function CatalogueToolbar({
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={onResync}
-          className="flex items-center gap-1.5 h-[38px] px-3 border border-black bg-white text-black hover:bg-gray-100 transition-colors text-sm"
-          title="Resynchroniser les produits depuis la base (force un re-fetch si les filtres se désynchronisent)"
-        >
-          <RefreshCw className="h-4 w-4" />
-          <span className="hidden sm:inline">Resynchroniser</span>
-        </button>
         {hasActiveFilters && (
           <button
             type="button"

@@ -80,8 +80,13 @@ export async function loadProducts(
   query = query.neq('creation_mode', 'sourcing');
 
   if (filters.search) {
+    // BO-CATALOG-SEARCH-001 : élargir la recherche aux colonnes brand,
+    // gtin, supplier_reference (au lieu de seulement name + sku).
+    // Permet de retrouver un produit via son code-barres, sa marque ou
+    // sa référence fournisseur.
+    const term = filters.search;
     query = query.or(
-      `name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`
+      `name.ilike.%${term}%,sku.ilike.%${term}%,brand.ilike.%${term}%,gtin.ilike.%${term}%,supplier_reference.ilike.%${term}%`
     );
   }
 
@@ -114,6 +119,30 @@ export async function loadProducts(
 
   if (filters.conditions && filters.conditions.length > 0) {
     query = query.in('condition', filters.conditions);
+  }
+
+  if (filters.brands && filters.brands.length > 0) {
+    query = query.in('brand', filters.brands);
+  }
+
+  if (filters.publishedOnline === 'published') {
+    query = query.eq('is_published_online', true);
+  } else if (filters.publishedOnline === 'unpublished') {
+    query = query.eq('is_published_online', false);
+  }
+
+  if (filters.priceMin !== undefined && filters.priceMin > 0) {
+    query = query.gte('cost_price', filters.priceMin);
+  }
+  if (filters.priceMax !== undefined && filters.priceMax > 0) {
+    query = query.lte('cost_price', filters.priceMax);
+  }
+
+  if (filters.marginMin !== undefined) {
+    query = query.gte('margin_percentage', filters.marginMin);
+  }
+  if (filters.marginMax !== undefined) {
+    query = query.lte('margin_percentage', filters.marginMax);
   }
 
   if (filters.stockLevels && filters.stockLevels.length > 0) {
