@@ -53,8 +53,7 @@ Si la tâche semble exiger une interaction UI, l'agent utilise **MCP Playwright 
 - `gh pr view <num>` — détails d'une PR
 - `gh pr list` — PRs ouvertes
 - `gh pr checks <num> --watch` — attendre la CI
-- `gh pr merge <num> --squash` — merge standard
-- `gh pr merge <num> --admin --squash` — bypass CI si doc-only (ordre Romeo requis)
+- `gh pr merge <num> --squash` — merge standard (vers staging UNIQUEMENT, après ordre Romeo)
 - `gh run list` / `gh run view <id>` — runs CI
 - `gh api` — appels directs à l'API GitHub
 - CLI déjà authentifié localement
