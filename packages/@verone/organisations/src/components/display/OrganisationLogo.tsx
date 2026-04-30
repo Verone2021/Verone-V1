@@ -6,9 +6,14 @@ import { Building2 } from 'lucide-react';
 
 import { colors } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
-import { cn } from '@verone/utils';
+import {
+  cn,
+  buildCloudflareImageUrl,
+  isCloudflareConfigured,
+} from '@verone/utils';
 
 interface OrganisationLogoProps {
+  cloudflareImageId?: string | null;
   logoUrl?: string | null;
   organisationName: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
@@ -61,6 +66,7 @@ const SIZE_CONFIG = {
  * />
  */
 export function OrganisationLogo({
+  cloudflareImageId,
   logoUrl,
   organisationName,
   size = 'md',
@@ -73,11 +79,17 @@ export function OrganisationLogo({
   const sizeConfig = SIZE_CONFIG[size];
   const supabase = createClient();
 
-  // Générer URL publique si logoUrl existe
-  // Si logoUrl est déjà une URL complète (http), l'utiliser directement
-  // Sinon, passer par getPublicUrl pour construire l'URL depuis le path Storage
-  const publicUrl = logoUrl
-    ? logoUrl.startsWith('http')
+  // Cloudflare en priorité, fallback sur Supabase Storage
+  let publicUrl: string | null = null;
+  if (cloudflareImageId && isCloudflareConfigured()) {
+    try {
+      publicUrl = buildCloudflareImageUrl(cloudflareImageId, 'public');
+    } catch {
+      publicUrl = null;
+    }
+  }
+  if (!publicUrl && logoUrl) {
+    publicUrl = logoUrl.startsWith('http')
       ? logoUrl
       : supabase.storage.from('organisation-logos').getPublicUrl(logoUrl, {
           transform: {
@@ -89,8 +101,8 @@ export function OrganisationLogo({
             ),
             quality: 80,
           },
-        }).data.publicUrl
-    : null;
+        }).data.publicUrl;
+  }
 
   // Extraire initiales du nom (ex: "DSA Menuiserie" → "DM")
   const getInitials = (name: string): string => {
@@ -158,7 +170,7 @@ export function OrganisationLogo({
       {/* Image */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={publicUrl}
+        src={publicUrl ?? undefined}
         alt={`Logo ${organisationName}`}
         className={cn(
           'h-full w-full object-contain',

@@ -122,6 +122,10 @@ export function useSimpleImageUpload(
   };
 
   const deleteImage = async (filePath: string): Promise<boolean> => {
+    // Note: cette fonction supprime UNIQUEMENT le fichier Supabase.
+    // Si l'image a été uploadée vers Cloudflare via smartUploadImage(),
+    // elle restera orpheline côté Cloudflare. Cleanup full nécessite
+    // route API server-side (TODO TÂCHE INFRA-IMG-012).
     try {
       const { error } = await supabase.storage.from(bucket).remove([filePath]);
 

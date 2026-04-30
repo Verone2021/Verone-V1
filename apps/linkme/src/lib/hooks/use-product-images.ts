@@ -10,6 +10,7 @@ import { useState } from 'react';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
+import { smartUploadImage } from '@verone/utils/upload';
 
 export interface ProductImage {
   id: string;
@@ -102,26 +103,13 @@ export function useUploadProductImage() {
 
       setProgress(30);
 
-      // Upload to storage
-      const { data: _uploadData, error: uploadError } = await supabase.storage
-        .from(BUCKET)
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: file.type,
-        });
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw new Error(`Erreur upload: ${uploadError.message}`);
-      }
-
-      setProgress(60);
-
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from(BUCKET).getPublicUrl(fileName);
+      // Upload to storage (Cloudflare si configuré, Supabase sinon)
+      const uploadResult = await smartUploadImage(file, {
+        bucket: BUCKET,
+        path: fileName,
+        ownerId: productId,
+        ownerType: 'product',
+      });
 
       setProgress(70);
 
@@ -151,7 +139,8 @@ export function useUploadProductImage() {
         .insert({
           product_id: productId,
           storage_path: fileName,
-          public_url: publicUrl,
+          cloudflare_image_id: uploadResult.cloudflareImageId ?? null,
+          public_url: uploadResult.supabasePublicUrl ?? null,
           is_primary: isPrimary,
           display_order: maxOrder + 1,
           created_by: user.id,
@@ -162,8 +151,14 @@ export function useUploadProductImage() {
         .single();
 
       if (insertError) {
-        // Cleanup: remove uploaded file
-        await supabase.storage.from(BUCKET).remove([fileName]);
+        // Cleanup best-effort — Supabase seulement
+        try {
+          await supabase.storage.from(BUCKET).remove([fileName]);
+        } catch (e) {
+          console.warn('Cleanup Supabase échoué (non bloquant):', e);
+        }
+        // Note: si uploadResult.cloudflareImageId, l'image Cloudflare reste orpheline
+        // (cleanup côté server requis, traité dans une TÂCHE séparée)
         console.error('Insert error:', insertError);
         throw new Error(`Erreur enregistrement: ${insertError.message}`);
       }
