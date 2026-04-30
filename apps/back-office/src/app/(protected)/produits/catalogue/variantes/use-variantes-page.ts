@@ -76,6 +76,17 @@ export function useVariantesPage() {
     setShowEditModal(true);
   }, []);
 
+  const handleLoadArchivedGroups = useCallback(async () => {
+    setArchivedLoading(true);
+    try {
+      const archivedGroups = await loadArchivedVariantGroups();
+      setArchivedVariantGroups(archivedGroups);
+    } finally {
+      setArchivedLoaded(true);
+      setArchivedLoading(false);
+    }
+  }, [loadArchivedVariantGroups]);
+
   const handleDeleteGroup = useCallback(
     async (groupId: string) => {
       if (
@@ -89,21 +100,16 @@ export function useVariantesPage() {
           title: 'Groupe supprimé',
           description: 'Le groupe de variantes a été supprimé avec succès',
         });
+        // Synchronise TOUJOURS les deux listes (active via refetch + archivée)
+        // pour éviter "le groupe supprimé reste affiché jusqu'au refresh manuel".
+        void refetch().catch(error => {
+          console.error('[Variants] Refetch after delete failed:', error);
+        });
+        await handleLoadArchivedGroups();
       }
     },
-    [deleteVariantGroup, toast]
+    [deleteVariantGroup, toast, refetch, handleLoadArchivedGroups]
   );
-
-  const handleLoadArchivedGroups = useCallback(async () => {
-    setArchivedLoading(true);
-    try {
-      const archivedGroups = await loadArchivedVariantGroups();
-      setArchivedVariantGroups(archivedGroups);
-    } finally {
-      setArchivedLoaded(true);
-      setArchivedLoading(false);
-    }
-  }, [loadArchivedVariantGroups]);
 
   const handleArchiveGroup = useCallback(
     async (groupId: string, isArchived: boolean) => {
@@ -112,19 +118,19 @@ export function useVariantesPage() {
         : await archiveVariantGroup(groupId);
 
       if (result) {
+        // Toujours synchroniser les DEUX listes (active + archivée), peu importe
+        // l'onglet courant. Avant ce fix, archiver depuis "Active" laissait
+        // l'état archivedVariantGroups obsolète jusqu'au prochain refresh manuel.
         void refetch().catch(error => {
           console.error('[Variants] Refetch after archive failed:', error);
         });
-        if (activeTab === 'archived') {
-          await handleLoadArchivedGroups();
-        }
+        await handleLoadArchivedGroups();
       }
     },
     [
       archiveVariantGroup,
       unarchiveVariantGroup,
       refetch,
-      activeTab,
       handleLoadArchivedGroups,
     ]
   );
