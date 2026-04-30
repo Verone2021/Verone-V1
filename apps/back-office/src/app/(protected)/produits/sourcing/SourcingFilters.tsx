@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 
+import { useOrganisations } from '@verone/organisations';
 import {
   Input,
   Select,
@@ -10,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui';
-import { createClient } from '@verone/utils/supabase/client';
 import { Search, X } from 'lucide-react';
 
 const PIPELINE_STATUSES = [
@@ -64,29 +64,23 @@ export function SourcingFilters({
   priorityFilter,
   onPriorityChange,
 }: SourcingFiltersProps) {
-  const [suppliers, setSuppliers] = useState<SupplierOption[]>([]);
+  // BO-SOURCING-001 : utilise le hook centralisé `useOrganisations` au lieu
+  // de dupliquer le fetch fournisseurs. Quand PR #848 merge, `lightweight: true`
+  // sera ajouté pour réduire le payload (~70 colonnes → 7) et skip le N+1
+  // query `_count.products`.
+  const { organisations: suppliersData } = useOrganisations({
+    type: 'supplier',
+    is_active: true,
+  });
 
-  useEffect(() => {
-    const fetchSuppliers = async () => {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('organisations')
-        .select('id, trade_name, legal_name')
-        .eq('type', 'supplier')
-        .order('trade_name', { ascending: true })
-        .limit(100);
-
-      if (data) {
-        setSuppliers(
-          data.map(o => ({
-            id: o.id,
-            name: o.trade_name ?? o.legal_name,
-          }))
-        );
-      }
-    };
-    void fetchSuppliers().catch(console.error);
-  }, []);
+  const suppliers = useMemo<SupplierOption[]>(
+    () =>
+      suppliersData.map(o => ({
+        id: o.id,
+        name: o.trade_name ?? o.legal_name,
+      })),
+    [suppliersData]
+  );
 
   const hasActiveFilters =
     statusFilter !== 'all' ||

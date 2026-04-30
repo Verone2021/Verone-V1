@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
+import { smartUploadImage } from '@verone/utils/upload';
 
 const supabase = createClient();
 
@@ -11,6 +12,7 @@ export interface ConsultationImage {
   consultation_id: string;
   storage_path: string;
   public_url?: string | null;
+  cloudflare_image_id?: string | null;
   display_order: number;
   is_primary: boolean;
   image_type: 'primary' | 'gallery' | 'technical' | 'lifestyle' | 'thumbnail';
@@ -83,7 +85,7 @@ export function useConsultationImages({
       const { data, error } = await supabase
         .from('consultation_images')
         .select(
-          'id, consultation_id, storage_path, public_url, display_order, is_primary, image_type, alt_text, width, height, file_size, format, created_by, created_at, updated_at'
+          'id, consultation_id, storage_path, public_url, cloudflare_image_id, display_order, is_primary, image_type, alt_text, width, height, file_size, format, created_by, created_at, updated_at'
         )
         .eq('consultation_id', consultationId)
         .order('display_order', { ascending: true });
@@ -123,15 +125,15 @@ export function useConsultationImages({
         const fileExt = data.file.name.split('.').pop()?.toLowerCase();
         const fileName = `consultation-${consultationId}-${Date.now()}.${fileExt}`;
 
-        // 2. Upload vers Storage (même bucket que les produits)
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('product-images')
-          .upload(fileName, data.file, {
-            cacheControl: '3600',
-            upsert: false,
-          });
+        // 2. Upload via smart-upload (Cloudflare si configuré, Supabase sinon)
+        const uploadResult = await smartUploadImage(data.file, {
+          bucket: 'product-images',
+          path: fileName,
+          ownerId: consultationId,
+          ownerType: 'product',
+        });
 
-        if (uploadError) throw uploadError;
+        const uploadData = { path: uploadResult.storagePath ?? fileName };
 
         // 3. Déterminer l'ordre d'affichage
         const maxOrder = Math.max(
@@ -150,6 +152,10 @@ export function useConsultationImages({
           alt_text: data.altText ?? `Photo consultation`,
           file_size: data.file.size,
           format: fileExt ?? 'jpg',
+          // Persist Cloudflare ID si upload Cloudflare réussi (backward compat: null sinon)
+          ...(uploadResult.cloudflareImageId
+            ? { cloudflare_image_id: uploadResult.cloudflareImageId }
+            : {}),
         };
 
         const { data: newImage, error: dbError } = await supabase
@@ -162,9 +168,11 @@ export function useConsultationImages({
 
         if (dbError) {
           // Nettoyer le fichier uploadé en cas d'erreur DB
-          await supabase.storage
-            .from('product-images')
-            .remove([uploadData.path]);
+          if (uploadResult.storagePath) {
+            await supabase.storage
+              .from('product-images')
+              .remove([uploadResult.storagePath]);
+          }
           throw dbError;
         }
 

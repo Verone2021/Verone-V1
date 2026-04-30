@@ -81,7 +81,13 @@ function ImagePreview({ imageUrl, onRemove }: ImagePreviewProps) {
   return (
     <div className="relative">
       <div className="relative w-full h-32 rounded-lg overflow-hidden">
-        <Image src={imageUrl} alt="Preview" fill className="object-cover" />
+        <Image
+          src={imageUrl}
+          alt="Preview"
+          fill
+          className="object-cover"
+          unoptimized
+        />
       </div>
       <ButtonV2
         type="button"

@@ -2,6 +2,7 @@
 
 import { useToast } from '@verone/common/hooks';
 import { createClient } from '@verone/utils/supabase/client';
+import { smartUploadImage } from '@verone/utils/upload';
 
 interface UseSourcingCreateUpdateParams {
   refetch: () => Promise<void>;
@@ -87,30 +88,47 @@ export function useSourcingCreateUpdate({
             const fileName = `${newProduct.id}-${Date.now()}-${i}.${fileExt}`;
             const filePath = `products/${fileName}`;
 
-            const { error: uploadError } = await supabase.storage
-              .from('product-images')
-              .upload(filePath, file);
-
-            if (uploadError) {
-              console.error(`Erreur upload image ${i}:`, uploadError);
+            const uploadResult = await smartUploadImage(file, {
+              bucket: 'product-images',
+              path: filePath,
+              ownerId: newProduct.id,
+              ownerType: 'product',
+            });
+            const { error: insertError } = await supabase
+              .from('product_images')
+              .insert([
+                {
+                  product_id: newProduct.id,
+                  cloudflare_image_id: uploadResult.cloudflareImageId ?? null,
+                  public_url: uploadResult.supabasePublicUrl ?? null,
+                  storage_path: filePath,
+                  is_primary: i === 0,
+                  image_type: i === 0 ? 'primary' : 'gallery',
+                },
+              ]);
+            if (insertError) {
+              if (uploadResult.storagePath) {
+                try {
+                  await supabase.storage
+                    .from('product-images')
+                    .remove([uploadResult.storagePath]);
+                } catch (cleanupErr) {
+                  console.warn(
+                    `[sourcing] Cleanup Supabase échoué image ${i} (non bloquant):`,
+                    cleanupErr
+                  );
+                }
+              }
+              // Note: si uploadResult.cloudflareImageId, l'image Cloudflare reste
+              // orpheline (cleanup côté server requis, traité dans TÂCHE INFRA-IMG-012)
+              console.error(
+                `[sourcing] Insert product_images échoué image ${i}:`,
+                insertError
+              );
               continue;
             }
-
-            const {
-              data: { publicUrl },
-            } = supabase.storage.from('product-images').getPublicUrl(filePath);
-
-            await supabase.from('product_images').insert([
-              {
-                product_id: newProduct.id,
-                public_url: publicUrl,
-                storage_path: filePath,
-                is_primary: i === 0,
-                image_type: i === 0 ? 'primary' : 'gallery',
-              },
-            ]);
           } catch (imgError) {
-            console.error(`Erreur gestion image ${i}:`, imgError);
+            console.error(`Erreur upload image ${i}:`, imgError);
           }
         }
       }

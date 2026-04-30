@@ -18,7 +18,8 @@ import type { OrderDetailDataState } from './order-detail-types';
 
 export function useOrderDetailData(
   order: SalesOrder | null,
-  open: boolean
+  open: boolean,
+  reloadKey = 0
 ): OrderDetailDataState {
   const [isEditing, setIsEditing] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
@@ -76,11 +77,18 @@ export function useOrderDetailData(
     if (!open || !order?.id) return;
 
     const supabase = createClient();
+    const orderId = order.id;
 
-    void supabase
-      .from('sales_order_shipments')
-      .select(
-        `
+    // Run a Packlink → DB sync on-demand BEFORE loading from the DB. If a
+    // shipment was paid on Packlink PRO without the webhook firing (or the
+    // webhook callback was never registered), this catches up the DB with
+    // the real Packlink state. Errors are non-blocking — we still load
+    // whatever is in DB.
+    const loadFromDb = () =>
+      supabase
+        .from('sales_order_shipments')
+        .select(
+          `
         id,
         shipped_at,
         tracking_number,
@@ -97,69 +105,85 @@ export function useOrderDetailData(
         label_url,
         products:product_id (name, sku)
       `
-      )
-      .eq('sales_order_id', order.id)
-      .order('shipped_at', { ascending: true })
-      .then(({ data, error: queryError }) => {
-        if (queryError) {
-          console.error(
-            '[OrderDetailModal] Load shipment history failed:',
-            queryError
-          );
-          return;
-        }
-
-        if (!data || data.length === 0) {
-          setShipmentHistory([]);
-          return;
-        }
-
-        const rows = data as unknown as Array<
-          Record<string, unknown> & {
-            id: string;
-            shipped_at: string;
-            tracking_number: string | null;
-            notes: string | null;
-            quantity_shipped: number;
-            products: { name: string; sku: string } | null;
+        )
+        .eq('sales_order_id', orderId)
+        .order('shipped_at', { ascending: true })
+        .then(({ data, error: queryError }) => {
+          if (queryError) {
+            console.error(
+              '[OrderDetailModal] Load shipment history failed:',
+              queryError
+            );
+            return;
           }
-        >;
 
-        const grouped = new Map<string, ShipmentHistoryItem>();
+          if (!data || data.length === 0) {
+            setShipmentHistory([]);
+            return;
+          }
 
-        for (const row of rows) {
-          const key = row.shipped_at;
-          const product = row.products;
+          const rows = data as unknown as Array<
+            Record<string, unknown> & {
+              id: string;
+              shipped_at: string;
+              tracking_number: string | null;
+              notes: string | null;
+              quantity_shipped: number;
+              products: { name: string; sku: string } | null;
+            }
+          >;
 
-          if (!grouped.has(key)) {
-            grouped.set(key, {
-              id: row.id,
-              shipped_at: row.shipped_at,
-              tracking_number: row.tracking_number,
-              tracking_url: (row.tracking_url as string) ?? null,
-              notes: row.notes,
-              delivery_method: (row.delivery_method as string) ?? null,
-              carrier_name: (row.carrier_name as string) ?? null,
-              carrier_service: (row.carrier_service as string) ?? null,
-              shipping_cost: (row.shipping_cost as number) ?? null,
-              packlink_status: (row.packlink_status as string) ?? null,
-              packlink_shipment_id:
-                (row.packlink_shipment_id as string) ?? null,
-              label_url: (row.label_url as string) ?? null,
-              items: [],
+          const grouped = new Map<string, ShipmentHistoryItem>();
+
+          for (const row of rows) {
+            const key = row.shipped_at;
+            const product = row.products;
+
+            if (!grouped.has(key)) {
+              grouped.set(key, {
+                id: row.id,
+                shipped_at: row.shipped_at,
+                tracking_number: row.tracking_number,
+                tracking_url: (row.tracking_url as string) ?? null,
+                notes: row.notes,
+                delivery_method: (row.delivery_method as string) ?? null,
+                carrier_name: (row.carrier_name as string) ?? null,
+                carrier_service: (row.carrier_service as string) ?? null,
+                shipping_cost: (row.shipping_cost as number) ?? null,
+                packlink_status: (row.packlink_status as string) ?? null,
+                packlink_shipment_id:
+                  (row.packlink_shipment_id as string) ?? null,
+                label_url: (row.label_url as string) ?? null,
+                items: [],
+              });
+            }
+
+            grouped.get(key)!.items.push({
+              product_name: product?.name ?? 'Produit inconnu',
+              product_sku: product?.sku ?? '-',
+              quantity_shipped: row.quantity_shipped,
             });
           }
 
-          grouped.get(key)!.items.push({
-            product_name: product?.name ?? 'Produit inconnu',
-            product_sku: product?.sku ?? '-',
-            quantity_shipped: row.quantity_shipped,
-          });
-        }
+          setShipmentHistory(Array.from(grouped.values()));
+        });
 
-        setShipmentHistory(Array.from(grouped.values()));
-      });
-  }, [open, order?.id]);
+    const loadAfterSync = async () => {
+      try {
+        await fetch('/api/packlink/shipments/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sales_order_id: orderId }),
+        });
+      } catch {
+        // Sync failure should not block the history display — fall through
+        // and read whatever is in DB.
+      }
+      return loadFromDb();
+    };
+
+    void loadAfterSync();
+  }, [open, order?.id, reloadKey]);
 
   // Charger les factures liees a cette commande (QONTO API — NE PAS MODIFIER)
   useEffect(() => {

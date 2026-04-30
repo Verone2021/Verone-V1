@@ -920,6 +920,7 @@ export type Database = {
       };
       categories: {
         Row: {
+          cloudflare_image_id: string | null;
           created_at: string | null;
           description: string | null;
           display_order: number | null;
@@ -938,6 +939,7 @@ export type Database = {
           updated_at: string | null;
         };
         Insert: {
+          cloudflare_image_id?: string | null;
           created_at?: string | null;
           description?: string | null;
           display_order?: number | null;
@@ -956,6 +958,7 @@ export type Database = {
           updated_at?: string | null;
         };
         Update: {
+          cloudflare_image_id?: string | null;
           created_at?: string | null;
           description?: string | null;
           display_order?: number | null;
@@ -1593,6 +1596,7 @@ export type Database = {
       collection_images: {
         Row: {
           alt_text: string | null;
+          cloudflare_image_id: string | null;
           collection_id: string;
           created_at: string | null;
           display_order: number;
@@ -1610,6 +1614,7 @@ export type Database = {
         };
         Insert: {
           alt_text?: string | null;
+          cloudflare_image_id?: string | null;
           collection_id: string;
           created_at?: string | null;
           display_order?: number;
@@ -1627,6 +1632,7 @@ export type Database = {
         };
         Update: {
           alt_text?: string | null;
+          cloudflare_image_id?: string | null;
           collection_id?: string;
           created_at?: string | null;
           display_order?: number;
@@ -1754,6 +1760,7 @@ export type Database = {
         Row: {
           archived_at: string | null;
           brand_id: string | null;
+          cloudflare_image_id: string | null;
           color_theme: string | null;
           created_at: string | null;
           created_by: string;
@@ -1789,6 +1796,7 @@ export type Database = {
         Insert: {
           archived_at?: string | null;
           brand_id?: string | null;
+          cloudflare_image_id?: string | null;
           color_theme?: string | null;
           created_at?: string | null;
           created_by: string;
@@ -1824,6 +1832,7 @@ export type Database = {
         Update: {
           archived_at?: string | null;
           brand_id?: string | null;
+          cloudflare_image_id?: string | null;
           color_theme?: string | null;
           created_at?: string | null;
           created_by?: string;
@@ -1929,6 +1938,7 @@ export type Database = {
       consultation_images: {
         Row: {
           alt_text: string | null;
+          cloudflare_image_id: string | null;
           consultation_id: string;
           created_at: string | null;
           created_by: string | null;
@@ -1946,6 +1956,7 @@ export type Database = {
         };
         Insert: {
           alt_text?: string | null;
+          cloudflare_image_id?: string | null;
           consultation_id: string;
           created_at?: string | null;
           created_by?: string | null;
@@ -1963,6 +1974,7 @@ export type Database = {
         };
         Update: {
           alt_text?: string | null;
+          cloudflare_image_id?: string | null;
           consultation_id?: string;
           created_at?: string | null;
           created_by?: string | null;
@@ -2648,6 +2660,7 @@ export type Database = {
       };
       families: {
         Row: {
+          cloudflare_image_id: string | null;
           created_at: string | null;
           created_by: string | null;
           description: string | null;
@@ -2662,6 +2675,7 @@ export type Database = {
           updated_at: string | null;
         };
         Insert: {
+          cloudflare_image_id?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           description?: string | null;
@@ -2676,6 +2690,7 @@ export type Database = {
           updated_at?: string | null;
         };
         Update: {
+          cloudflare_image_id?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           description?: string | null;
@@ -5476,6 +5491,7 @@ export type Database = {
           billing_region: string | null;
           certification_labels: string[] | null;
           city: string | null;
+          cloudflare_image_id: string | null;
           communication_language: string | null;
           country: string | null;
           created_at: string | null;
@@ -5564,6 +5580,7 @@ export type Database = {
           billing_region?: string | null;
           certification_labels?: string[] | null;
           city?: string | null;
+          cloudflare_image_id?: string | null;
           communication_language?: string | null;
           country?: string | null;
           created_at?: string | null;
@@ -5652,6 +5669,7 @@ export type Database = {
           billing_region?: string | null;
           certification_labels?: string[] | null;
           city?: string | null;
+          cloudflare_image_id?: string | null;
           communication_language?: string | null;
           country?: string | null;
           created_at?: string | null;
@@ -6309,6 +6327,7 @@ export type Database = {
       product_images: {
         Row: {
           alt_text: string | null;
+          cloudflare_image_id: string | null;
           created_at: string | null;
           created_by: string | null;
           display_order: number | null;
@@ -6326,6 +6345,7 @@ export type Database = {
         };
         Insert: {
           alt_text?: string | null;
+          cloudflare_image_id?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           display_order?: number | null;
@@ -6343,6 +6363,7 @@ export type Database = {
         };
         Update: {
           alt_text?: string | null;
+          cloudflare_image_id?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           display_order?: number | null;
@@ -8924,6 +8945,7 @@ export type Database = {
       sourcing_photos: {
         Row: {
           caption: string | null;
+          cloudflare_image_id: string | null;
           created_at: string | null;
           created_by: string | null;
           id: string;
@@ -8935,6 +8957,7 @@ export type Database = {
         };
         Insert: {
           caption?: string | null;
+          cloudflare_image_id?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           id?: string;
@@ -8946,6 +8969,7 @@ export type Database = {
         };
         Update: {
           caption?: string | null;
+          cloudflare_image_id?: string | null;
           created_at?: string | null;
           created_by?: string | null;
           id?: string;
@@ -11598,7 +11622,6 @@ export type Database = {
         Row: {
           avatar_url: string | null;
           default_margin_rate: number | null;
-          email: string | null;
           enseigne_id: string | null;
           enseigne_logo: string | null;
           enseigne_name: string | null;
@@ -13364,6 +13387,10 @@ export type Database = {
         }[];
       };
       get_linkme_public_stats: { Args: never; Returns: Json };
+      get_linkme_users_emails: {
+        Args: { user_ids: string[] };
+        Returns: { user_id: string; email: string }[];
+      };
       get_low_stock_products: {
         Args: { limit_count?: number };
         Returns: {
@@ -14101,10 +14128,12 @@ export type Database = {
       initialize_dashboard_tests: { Args: never; Returns: undefined };
       insert_sales_order_items: { Args: { p_items: Json }; Returns: undefined };
       is_back_office_admin: { Args: never; Returns: boolean };
+      is_back_office_admin_or_owner: { Args: never; Returns: boolean };
       is_back_office_owner: { Args: never; Returns: boolean };
       is_back_office_privileged: { Args: never; Returns: boolean };
       is_backoffice_admin: { Args: never; Returns: boolean };
       is_backoffice_user: { Args: never; Returns: boolean };
+      is_catalog_manager: { Args: never; Returns: boolean };
       is_current_user_admin: { Args: never; Returns: boolean };
       is_customer_user: { Args: never; Returns: boolean };
       is_enseigne_admin: {
@@ -14403,6 +14432,7 @@ export type Database = {
         Returns: {
           archived_at: string | null;
           brand_id: string | null;
+          cloudflare_image_id: string | null;
           color_theme: string | null;
           created_at: string | null;
           created_by: string;

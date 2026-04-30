@@ -11,3 +11,12 @@ export const ORGANISATION_COLUMNS = `
   show_on_linkme_globe, approval_status, approved_at, approved_by,
   archived_at, created_at, created_by, updated_at, kbis_url
 ` as const;
+
+/**
+ * Colonnes minimales pour les sélecteurs / dropdowns / filtres catalogue.
+ * Évite l'over-fetch de ~70 colonnes quand seul le nom est nécessaire.
+ * Utilisé via `useOrganisations({ lightweight: true })`.
+ */
+export const ORGANISATION_LIGHTWEIGHT_COLUMNS = `
+  id, legal_name, trade_name, type, is_active, archived_at, enseigne_id
+` as const;

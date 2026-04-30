@@ -183,7 +183,9 @@ export function useEnseigneContactsBO(enseigneId: string | null) {
         throw error;
       }
 
-      // Fetch LinkMe users for this enseigne to detect linked accounts and enrich data
+      // Fetch LinkMe users for this enseigne to detect linked accounts and enrich data.
+      // BO-SEC-CRITICAL-002: `email` no longer in v_linkme_users (RGPD).
+      // Fetched separately via get_linkme_users_emails RPC for the email-based contact matching.
       type LinkmeUserRow = {
         user_id: string;
         email: string;
@@ -192,16 +194,37 @@ export function useEnseigneContactsBO(enseigneId: string | null) {
         phone: string | null;
         linkme_role: string | null;
       };
-      const { data: linkmeUsers } = await supabase
+      const { data: linkmeUsersBase } = await supabase
         .from('v_linkme_users')
-        .select('user_id, email, first_name, last_name, phone, linkme_role')
+        .select('user_id, first_name, last_name, phone, linkme_role')
         .eq('enseigne_id', enseigneId)
         .eq('is_active', true)
-        .returns<LinkmeUserRow[]>();
+        .returns<Omit<LinkmeUserRow, 'email'>[]>();
+
+      const baseUsers = linkmeUsersBase ?? [];
+      const userIds = baseUsers
+        .map(u => u.user_id)
+        .filter((id): id is string => Boolean(id));
+      const emailByUserId = new Map<string, string>();
+      if (userIds.length > 0) {
+        const { data: emails } = await supabase.rpc('get_linkme_users_emails', {
+          user_ids: userIds,
+        });
+        for (const row of emails ?? []) {
+          if (row.user_id && row.email) {
+            emailByUserId.set(row.user_id, row.email);
+          }
+        }
+      }
 
       const linkmeEmailMap = new Map<string, LinkmeUserRow>();
-      for (const u of linkmeUsers ?? []) {
-        linkmeEmailMap.set(u.email.toLowerCase(), u);
+      for (const u of baseUsers) {
+        const email = emailByUserId.get(u.user_id);
+        if (!email) continue; // skip users for which we cannot resolve the email (RPC gated by is_backoffice_user)
+        linkmeEmailMap.set(email.toLowerCase(), {
+          ...u,
+          email,
+        });
       }
 
       // Fetch affiliate order stats for this enseigne

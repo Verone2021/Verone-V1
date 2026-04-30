@@ -13,7 +13,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 
-import Image from 'next/image';
+import { CloudflareImage } from '@verone/ui';
 
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import {
@@ -39,6 +39,7 @@ import { cn } from '@verone/utils';
 interface ProductImage {
   id: string;
   public_url: string;
+  cloudflare_image_id?: string | null;
   alt_text?: string;
   is_primary: boolean;
   file_size?: number;
@@ -231,8 +232,9 @@ export function ProductImageViewerModal({
                   maxWidth: '100%',
                 }}
               >
-                <Image
-                  src={currentImage.public_url}
+                <CloudflareImage
+                  cloudflareId={currentImage.cloudflare_image_id}
+                  fallbackSrc={currentImage.public_url}
                   alt={
                     currentImage.alt_text ||
                     `Image ${currentIndex + 1} de ${productName}`
@@ -296,8 +298,9 @@ export function ProductImageViewerModal({
                         : 'border-gray-300 hover:border-gray-500'
                     )}
                   >
-                    <Image
-                      src={image.public_url}
+                    <CloudflareImage
+                      cloudflareId={image.cloudflare_image_id}
+                      fallbackSrc={image.public_url}
                       alt={`Vue ${index + 1}`}
                       fill
                       className="object-cover"

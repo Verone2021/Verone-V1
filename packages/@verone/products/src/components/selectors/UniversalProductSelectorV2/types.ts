@@ -23,7 +23,11 @@ export interface ProductData {
   created_at?: string;
   updated_at?: string;
   archived_at?: string | null;
-  product_images?: Array<{ public_url: string; is_primary: boolean }>;
+  product_images?: Array<{
+    public_url: string;
+    cloudflare_image_id?: string | null;
+    is_primary: boolean;
+  }>;
   supplier?: {
     id: string;
     legal_name: string;

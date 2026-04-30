@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import Image from 'next/image';
+import { CloudflareImage } from '@verone/ui';
 
 import { Alert, AlertDescription } from '@verone/ui';
 import { Button } from '@verone/ui';
@@ -85,7 +85,7 @@ export function QuickPurchaseOrderModal({
             cost_price,
             supplier_moq,
             eco_tax_default,
-            product_images!left(public_url)
+            product_images!left(public_url, cloudflare_image_id)
           `
           )
           .eq('product_images.is_primary', true)
@@ -110,12 +110,17 @@ export function QuickPurchaseOrderModal({
         }
 
         // Extraire l'image principale
-        const primaryImageUrl =
-          (
-            productData as unknown as {
-              product_images?: Array<{ public_url: string }>;
-            }
-          ).product_images?.[0]?.public_url ?? null;
+        const primaryImageData = (
+          productData as unknown as {
+            product_images?: Array<{
+              public_url: string;
+              cloudflare_image_id?: string | null;
+            }>;
+          }
+        ).product_images?.[0];
+        const primaryImageUrl = primaryImageData?.public_url ?? null;
+        const primaryImageCloudflareId =
+          primaryImageData?.cloudflare_image_id ?? null;
 
         const formattedProduct: ProductData = {
           id: productData.id,
@@ -126,6 +131,7 @@ export function QuickPurchaseOrderModal({
           supplier_moq: productData.supplier_moq ?? 1,
           eco_tax_default: productData.eco_tax_default ?? 0,
           primary_image_url: primaryImageUrl ?? undefined,
+          primary_cloudflare_image_id: primaryImageCloudflareId,
           supplier: supplierInfo,
         };
 
@@ -268,9 +274,11 @@ export function QuickPurchaseOrderModal({
               {/* Infos produit */}
               <div className="flex gap-4">
                 <div className="relative w-20 h-20 flex-shrink-0 bg-gray-100 rounded-lg border overflow-hidden">
-                  {product.primary_image_url ? (
-                    <Image
-                      src={product.primary_image_url}
+                  {product.primary_image_url ||
+                  product.primary_cloudflare_image_id ? (
+                    <CloudflareImage
+                      cloudflareId={product.primary_cloudflare_image_id}
+                      fallbackSrc={product.primary_image_url}
                       fill
                       className="object-cover"
                       alt={product.name}

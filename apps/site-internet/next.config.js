@@ -11,17 +11,25 @@ const nextConfig = {
     '@verone/utils',
     '@verone/types',
   ],
-  // Images: bypass Vercel Image Optimization (HTTP 402 quota Hobby atteint).
-  // `unoptimized: true` route `<Image>` vers l'URL source directe (Supabase public URL)
-  // sans passer par `/_next/image`. Trade-off : pas de resize/WebP auto côté CDN Vercel.
-  // À revisiter quand la migration Cloudflare Images (Option C, cf ACTIVE.md) est faite.
+  // Images: Cloudflare Images sert les images via <CloudflareImage> avec
+  // unoptimized={true} routé conditionnellement. Pas de quota Vercel consommé
+  // pour les URLs imagedelivery.net / images.veronecollections.fr.
   images: {
-    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'aorroydfjsrygmosnzrl.supabase.co',
         pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.veronecollections.fr',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'imagedelivery.net',
+        pathname: '/**',
       },
     ],
   },

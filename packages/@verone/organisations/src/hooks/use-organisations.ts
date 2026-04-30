@@ -21,7 +21,10 @@ export {
 } from './organisations.display';
 export { useOrganisation } from './use-organisation-single';
 
-import { ORGANISATION_COLUMNS } from './organisations.constants';
+import {
+  ORGANISATION_COLUMNS,
+  ORGANISATION_LIGHTWEIGHT_COLUMNS,
+} from './organisations.constants';
 import { buildOrganisationsOps } from './use-organisations-crud';
 import type { OrganisationFilters } from './organisations.types';
 
@@ -31,6 +34,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
   const [error, setError] = useState<string | null>(null);
 
   const supabase = useMemo(() => createClient(), []);
+  const lightweight = filters?.lightweight === true;
 
   const fetchOrganisations = async () => {
     setLoading(true);
@@ -39,7 +43,9 @@ export function useOrganisations(filters?: OrganisationFilters) {
     try {
       let query = supabase
         .from('organisations')
-        .select(ORGANISATION_COLUMNS)
+        .select(
+          lightweight ? ORGANISATION_LIGHTWEIGHT_COLUMNS : ORGANISATION_COLUMNS
+        )
         .order('legal_name', { ascending: true });
 
       if (filters?.type) query = query.eq('type', filters.type);
@@ -88,15 +94,29 @@ export function useOrganisations(filters?: OrganisationFilters) {
         return;
       }
 
-      const organisationsWithName = (data ?? []).map(org => ({
+      // Type cast nécessaire : Supabase TS infère un union type sur les
+      // 2 sélections conditionnelles (full vs lightweight) qui ne peuvent
+      // pas être spread directement. Le shape réel match `Organisation`
+      // (toutes les colonnes lightweight sont un sous-ensemble).
+      const rows = (data ?? []) as unknown as Array<
+        Omit<Organisation, 'name'> & {
+          trade_name: string | null;
+          legal_name: string;
+          type: string;
+          id: string;
+        }
+      >;
+      const organisationsWithName = rows.map(org => ({
         ...org,
         name: org.trade_name ?? org.legal_name,
       }));
 
       let organisationsWithCounts = organisationsWithName;
-      const suppliers = organisationsWithName.filter(
-        org => org.type === 'supplier'
-      );
+      // Skip le calcul `_count.products` en mode lightweight (évite N+1
+      // query inutile quand le consumer n'affiche pas le compteur).
+      const suppliers = lightweight
+        ? []
+        : organisationsWithName.filter(org => org.type === 'supplier');
 
       if (suppliers.length > 0) {
         const supplierIds = suppliers.map(s => s.id);
@@ -141,6 +161,7 @@ export function useOrganisations(filters?: OrganisationFilters) {
     filters?.exclude_with_enseigne,
     filters?.is_service_provider,
     filters?.customer_type,
+    filters?.lightweight,
   ]);
 
   const ops = buildOrganisationsOps({

@@ -117,6 +117,11 @@
       "types": "./src/middleware/enforce-app-isolation.ts",
       "import": "./src/middleware/enforce-app-isolation.ts",
       "require": "./src/middleware/enforce-app-isolation.ts"
+    },
+    "./cloudflare/images": {
+      "types": "./src/cloudflare/images.ts",
+      "import": "./src/cloudflare/images.ts",
+      "require": "./src/cloudflare/images.ts"
     }
   }
 }

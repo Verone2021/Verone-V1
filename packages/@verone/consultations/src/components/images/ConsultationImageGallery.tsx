@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 
-import Image from 'next/image';
+import { CloudflareImage } from '@verone/ui';
 
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -167,8 +167,9 @@ export function ConsultationImageGallery({
     <div className={cn('space-y-1', className)}>
       {/* Image principale compacte 200x200 */}
       <div className="relative w-[200px] h-[200px] overflow-hidden rounded border border-gray-200 bg-white">
-        <Image
-          src={mainImageSrc}
+        <CloudflareImage
+          cloudflareId={displayImage?.cloudflare_image_id}
+          fallbackSrc={mainImageSrc}
           alt={`Photo consultation ${consultationTitle}`}
           fill
           className="object-cover transition-all duration-300 hover:scale-105"
@@ -256,8 +257,9 @@ export function ConsultationImageGallery({
                   : 'border-gray-300 hover:border-gray-500'
               )}
             >
-              <Image
-                src={image.public_url ?? fallbackImage}
+              <CloudflareImage
+                cloudflareId={image.cloudflare_image_id}
+                fallbackSrc={image.public_url ?? fallbackImage}
                 alt={image.alt_text ?? `Vue ${index + 1}`}
                 fill
                 className="object-cover transition-transform group-hover:scale-110"

@@ -80,8 +80,13 @@ export async function loadProducts(
   query = query.neq('creation_mode', 'sourcing');
 
   if (filters.search) {
+    // BO-CATALOG-SEARCH-001 : élargir la recherche aux colonnes brand,
+    // gtin, supplier_reference (au lieu de seulement name + sku).
+    // Permet de retrouver un produit via son code-barres, sa marque ou
+    // sa référence fournisseur.
+    const term = filters.search;
     query = query.or(
-      `name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`
+      `name.ilike.%${term}%,sku.ilike.%${term}%,brand.ilike.%${term}%,gtin.ilike.%${term}%,supplier_reference.ilike.%${term}%`
     );
   }
 
@@ -114,6 +119,37 @@ export async function loadProducts(
 
   if (filters.conditions && filters.conditions.length > 0) {
     query = query.in('condition', filters.conditions);
+  }
+
+  if (filters.brands && filters.brands.length > 0) {
+    query = query.in('brand', filters.brands);
+  }
+
+  if (filters.publishedOnline === 'published') {
+    query = query.eq('is_published_online', true);
+  } else if (filters.publishedOnline === 'unpublished') {
+    query = query.eq('is_published_online', false);
+  }
+
+  if (filters.priceMin !== undefined && filters.priceMin > 0) {
+    query = query.gte('cost_price', filters.priceMin);
+  }
+  if (filters.priceMax !== undefined && filters.priceMax > 0) {
+    query = query.lte('cost_price', filters.priceMax);
+  }
+
+  if (filters.marginMin !== undefined) {
+    query = query.gte('margin_percentage', filters.marginMin);
+  }
+  if (filters.marginMax !== undefined) {
+    query = query.lte('margin_percentage', filters.marginMax);
+  }
+
+  // BO-CATALOG-VARIANTS-001 : filtre par appartenance à un groupe de variantes
+  if (filters.variantStatus === 'with_variants') {
+    query = query.not('variant_group_id', 'is', null);
+  } else if (filters.variantStatus === 'without_variants') {
+    query = query.is('variant_group_id', null);
   }
 
   if (filters.stockLevels && filters.stockLevels.length > 0) {
@@ -155,7 +191,12 @@ export async function loadProducts(
 export async function loadArchivedProducts(
   filters: CatalogueFilters = {}
 ): Promise<{ products: Product[]; total: number }> {
-  let query = supabase.from('products').select(PRODUCT_SELECT);
+  // BO-PERF-CATALOG-001 : utiliser `count: 'exact'` pour retourner le vrai
+  // total (ancien comportement renvoyait `data.length` qui était limité à
+  // la taille de la page → pagination cassée si > 50 archivés).
+  let query = supabase
+    .from('products')
+    .select(PRODUCT_SELECT, { count: 'exact' });
 
   query = query.not('archived_at', 'is', null);
 
@@ -197,10 +238,10 @@ export async function loadArchivedProducts(
   query = query.range(offset, offset + limit - 1);
   query = query.order('archived_at', { ascending: false });
 
-  const { data, error } = await query;
+  const { data, error, count } = await query;
   if (error) throw error;
 
-  return { products: (data || []) as Product[], total: (data || []).length };
+  return { products: (data ?? []) as Product[], total: count ?? 0 };
 }
 
 export async function loadIncompleteProducts(

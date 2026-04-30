@@ -10,12 +10,14 @@ import { useState } from 'react';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
+import { smartUploadImage } from '@verone/utils/upload';
 
 export interface ProductImage {
   id: string;
   product_id: string;
   storage_path: string;
   public_url: string | null;
+  cloudflare_image_id: string | null;
   is_primary: boolean | null;
   display_order: number | null;
   alt_text: string | null;
@@ -39,7 +41,7 @@ export function useProductImages(productId: string | undefined) {
       const { data, error } = await supabase
         .from('product_images')
         .select(
-          'id, product_id, storage_path, public_url, is_primary, display_order, alt_text, created_at'
+          'id, product_id, storage_path, public_url, cloudflare_image_id, is_primary, display_order, alt_text, created_at'
         )
         .eq('product_id', productId)
         .order('display_order', { ascending: true });
@@ -101,26 +103,13 @@ export function useUploadProductImage() {
 
       setProgress(30);
 
-      // Upload to storage
-      const { data: _uploadData, error: uploadError } = await supabase.storage
-        .from(BUCKET)
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: file.type,
-        });
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw new Error(`Erreur upload: ${uploadError.message}`);
-      }
-
-      setProgress(60);
-
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from(BUCKET).getPublicUrl(fileName);
+      // Upload to storage (Cloudflare si configuré, Supabase sinon)
+      const uploadResult = await smartUploadImage(file, {
+        bucket: BUCKET,
+        path: fileName,
+        ownerId: productId,
+        ownerType: 'product',
+      });
 
       setProgress(70);
 
@@ -150,19 +139,26 @@ export function useUploadProductImage() {
         .insert({
           product_id: productId,
           storage_path: fileName,
-          public_url: publicUrl,
+          cloudflare_image_id: uploadResult.cloudflareImageId ?? null,
+          public_url: uploadResult.supabasePublicUrl ?? null,
           is_primary: isPrimary,
           display_order: maxOrder + 1,
           created_by: user.id,
         })
         .select(
-          'id, product_id, storage_path, public_url, is_primary, display_order, alt_text, created_at'
+          'id, product_id, storage_path, public_url, cloudflare_image_id, is_primary, display_order, alt_text, created_at'
         )
         .single();
 
       if (insertError) {
-        // Cleanup: remove uploaded file
-        await supabase.storage.from(BUCKET).remove([fileName]);
+        // Cleanup best-effort — Supabase seulement
+        try {
+          await supabase.storage.from(BUCKET).remove([fileName]);
+        } catch (e) {
+          console.warn('Cleanup Supabase échoué (non bloquant):', e);
+        }
+        // Note: si uploadResult.cloudflareImageId, l'image Cloudflare reste orpheline
+        // (cleanup côté server requis, traité dans une TÂCHE séparée)
         console.error('Insert error:', insertError);
         throw new Error(`Erreur enregistrement: ${insertError.message}`);
       }

@@ -63,7 +63,19 @@ export async function POST(request: Request) {
       case 'shipment.carrier.success': {
         // Carrier accepted the shipment — fetch tracking details from Packlink
         try {
-          const details = await client.getShipment(reference);
+          const detailsRaw = await client.getShipment(reference);
+          // The Packlink GET /shipments/{ref} response exposes the real tracking
+          // number under packages[0].carrier_tracking_number, not at top-level
+          // tracking_code as the legacy code assumed.
+          const details = detailsRaw as unknown as {
+            packages?: Array<{ carrier_tracking_number?: string }>;
+            tracking_url?: string;
+            carrier?: string;
+            state?: string;
+          };
+          const trackingNumber =
+            details.packages?.[0]?.carrier_tracking_number ?? null;
+
           // packlink_status: a_payer → paye
           // Ce changement déclenche le trigger confirm_packlink_shipment_stock()
           // qui décrémente le stock et met à jour le statut commande
@@ -72,8 +84,8 @@ export async function POST(request: Request) {
             updated_at: new Date().toISOString(),
           };
 
-          if ('tracking_code' in details && details.tracking_code) {
-            updateFields.tracking_number = details.tracking_code;
+          if (trackingNumber) {
+            updateFields.tracking_number = trackingNumber;
           }
           if (details.tracking_url) {
             updateFields.tracking_url = details.tracking_url;
@@ -142,12 +154,8 @@ export async function POST(request: Request) {
                     orderId:
                       (soData?.order_number as string) ??
                       shipRow.sales_order_id,
-                    trackingNumber:
-                      'tracking_code' in details
-                        ? details.tracking_code
-                        : undefined,
-                    carrierName:
-                      'carrier' in details ? details.carrier : undefined,
+                    trackingNumber: trackingNumber ?? undefined,
+                    carrierName: details.carrier,
                   }),
                 }).catch(emailErr => {
                   console.error(

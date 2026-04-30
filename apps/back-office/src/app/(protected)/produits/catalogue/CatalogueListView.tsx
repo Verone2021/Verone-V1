@@ -2,15 +2,14 @@
 
 import { memo, useCallback, useState } from 'react';
 
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import type { Product } from '@verone/categories';
 import { useProductImages } from '@verone/products';
 import type { QuickEditField } from '@verone/products';
-import { Badge } from '@verone/ui';
-import { cn } from '@verone/utils';
+import { Badge, CloudflareImage, ResponsiveDataView } from '@verone/ui';
 import type { Database } from '@verone/types';
+import { cn } from '@verone/utils';
 import { Package, Pencil } from 'lucide-react';
 
 import {
@@ -22,6 +21,7 @@ import {
   stockColor,
   SortableHeader,
 } from './catalogue-list-helpers';
+import { ProductCardMobile } from './CatalogueProductCardMobile';
 
 type ProductImage = Database['public']['Tables']['product_images']['Row'];
 
@@ -66,9 +66,11 @@ const ProductRow = memo(function ProductRow({
     >
       <td className="py-2 px-2 w-12">
         <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-50 flex items-center justify-center">
-          {primaryImage?.public_url && !imageLoading ? (
-            <Image
-              src={primaryImage.public_url}
+          {(primaryImage?.public_url || primaryImage?.cloudflare_image_id) &&
+          !imageLoading ? (
+            <CloudflareImage
+              cloudflareId={primaryImage?.cloudflare_image_id}
+              fallbackSrc={primaryImage?.public_url}
               alt={product.name}
               width={40}
               height={40}
@@ -87,7 +89,7 @@ const ProductRow = memo(function ProductRow({
         <div className="text-[10px] text-gray-500 font-mono">{product.sku}</div>
       </td>
 
-      <td className="py-2 px-2">
+      <td className="py-2 px-2 hidden lg:table-cell">
         <div className="flex items-center gap-1">
           <span className="text-sm text-gray-700 truncate max-w-[120px]">
             {supplierName}
@@ -98,6 +100,7 @@ const ProductRow = memo(function ProductRow({
               onClick={e => handleEditClick(e, 'supplier')}
               className="p-0.5 rounded hover:bg-orange-100 text-orange-500"
               title="Ajouter fournisseur"
+              aria-label="Ajouter fournisseur"
             >
               <Pencil className="h-3 w-3" />
             </button>
@@ -105,7 +108,7 @@ const ProductRow = memo(function ProductRow({
         </div>
       </td>
 
-      <td className="py-2 px-2">
+      <td className="py-2 px-2 hidden xl:table-cell">
         <div className="flex items-center gap-1">
           <span className="text-sm text-gray-700 truncate max-w-[100px]">
             {subcategoryName}
@@ -116,6 +119,7 @@ const ProductRow = memo(function ProductRow({
               onClick={e => handleEditClick(e, 'subcategory')}
               className="p-0.5 rounded hover:bg-orange-100 text-orange-500"
               title="Ajouter sous-categorie"
+              aria-label="Ajouter sous-categorie"
             >
               <Pencil className="h-3 w-3" />
             </button>
@@ -123,7 +127,7 @@ const ProductRow = memo(function ProductRow({
         </div>
       </td>
 
-      <td className="py-2 px-2 text-right">
+      <td className="py-2 px-2 text-right hidden 2xl:table-cell">
         <div className="flex items-center justify-end gap-1">
           <span className="text-sm text-gray-700">
             {product.weight != null ? `${product.weight} kg` : '-'}
@@ -134,6 +138,7 @@ const ProductRow = memo(function ProductRow({
               onClick={e => handleEditClick(e, 'weight')}
               className="p-0.5 rounded hover:bg-orange-100 text-orange-500"
               title="Ajouter poids"
+              aria-label="Ajouter poids"
             >
               <Pencil className="h-3 w-3" />
             </button>
@@ -141,7 +146,7 @@ const ProductRow = memo(function ProductRow({
         </div>
       </td>
 
-      <td className="py-2 px-2 text-center">
+      <td className="py-2 px-2 text-center hidden 2xl:table-cell">
         <div className="flex items-center justify-center gap-1">
           <span className="text-xs text-gray-600">
             {formatDimensions(product.dimensions)}
@@ -152,6 +157,7 @@ const ProductRow = memo(function ProductRow({
               onClick={e => handleEditClick(e, 'dimensions')}
               className="p-0.5 rounded hover:bg-orange-100 text-orange-500"
               title="Ajouter dimensions"
+              aria-label="Ajouter dimensions"
             >
               <Pencil className="h-3 w-3" />
             </button>
@@ -174,7 +180,7 @@ const ProductRow = memo(function ProductRow({
         <div className="flex items-center justify-end gap-1">
           <span className="text-sm font-semibold text-black">
             {product.cost_price != null
-              ? `${product.cost_price.toFixed(2)} \u20AC`
+              ? `${product.cost_price.toFixed(2)} €`
               : '-'}
           </span>
           {product.cost_price == null && onQuickEdit && (
@@ -183,6 +189,7 @@ const ProductRow = memo(function ProductRow({
               onClick={e => handleEditClick(e, 'price')}
               className="p-0.5 rounded hover:bg-orange-100 text-orange-500"
               title="Ajouter prix"
+              aria-label="Ajouter prix"
             >
               <Pencil className="h-3 w-3" />
             </button>
@@ -190,7 +197,7 @@ const ProductRow = memo(function ProductRow({
         </div>
       </td>
 
-      <td className="py-2 px-2 text-right">
+      <td className="py-2 px-2 text-right hidden lg:table-cell">
         <span
           className={cn(
             'text-sm',
@@ -210,7 +217,7 @@ const ProductRow = memo(function ProductRow({
         </span>
       </td>
 
-      <td className="py-2 px-2 text-center">
+      <td className="py-2 px-2 text-center hidden xl:table-cell">
         <div className="flex items-center justify-center gap-1">
           <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
             <div
@@ -325,109 +332,125 @@ export function CatalogueListView({
     }
   });
 
-  return (
-    <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
-      <table className="w-full text-left">
-        <thead className="bg-gray-50 border-b border-gray-200">
-          <tr>
-            <th className="py-2 px-2 w-12 text-xs font-semibold text-gray-500 uppercase">
-              Photo
-            </th>
-            <SortableHeader
-              label="Produit"
-              field="name"
-              currentSort={sortField}
-              currentDir={sortDir}
-              onSort={handleSort}
-              className="min-w-[180px]"
-            />
-            <SortableHeader
-              label="Fournisseur"
-              field="supplier"
-              currentSort={sortField}
-              currentDir={sortDir}
-              onSort={handleSort}
-            />
-            <SortableHeader
-              label="Sous-cat."
-              field="subcategory"
-              currentSort={sortField}
-              currentDir={sortDir}
-              onSort={handleSort}
-            />
-            <SortableHeader
-              label="Poids"
-              field="weight"
-              currentSort={sortField}
-              currentDir={sortDir}
-              onSort={handleSort}
-              className="text-right"
-            />
-            <th className="py-2 px-2 text-xs font-semibold text-gray-500 uppercase text-center">
-              Dimensions
-            </th>
-            <SortableHeader
-              label="Stock"
-              field="stock_real"
-              currentSort={sortField}
-              currentDir={sortDir}
-              onSort={handleSort}
-              className="text-right"
-            />
-            <SortableHeader
-              label="Prix HT"
-              field="cost_price"
-              currentSort={sortField}
-              currentDir={sortDir}
-              onSort={handleSort}
-              className="text-right"
-            />
-            <SortableHeader
-              label="Marge"
-              field="margin_percentage"
-              currentSort={sortField}
-              currentDir={sortDir}
-              onSort={handleSort}
-              className="text-right"
-            />
-            <SortableHeader
-              label="Compl."
-              field="completion_percentage"
-              currentSort={sortField}
-              currentDir={sortDir}
-              onSort={handleSort}
-              className="text-center"
-            />
-            <SortableHeader
-              label="Statut"
-              field="product_status"
-              currentSort={sortField}
-              currentDir={sortDir}
-              onSort={handleSort}
-            />
-          </tr>
-        </thead>
-        <tbody>
-          {sortedProducts.map(product => {
-            const preloadedImage =
-              activeTab === 'active'
-                ? (getPrimaryImage?.(product.id) ?? null)
-                : activeTab === 'incomplete'
-                  ? (getIncompletePrimaryImage?.(product.id) ?? null)
-                  : null;
+  const resolvePreloadedImage = (productId: string): ProductImage | null => {
+    if (activeTab === 'active') return getPrimaryImage?.(productId) ?? null;
+    if (activeTab === 'incomplete')
+      return getIncompletePrimaryImage?.(productId) ?? null;
+    return null;
+  };
 
-            return (
-              <ProductRow
-                key={product.id}
-                product={product}
-                preloadedImage={preloadedImage}
-                onQuickEdit={onQuickEdit}
-                onRowClick={handleRowClick}
-              />
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+  return (
+    <ResponsiveDataView
+      data={sortedProducts}
+      breakpoint="md"
+      emptyMessage="Aucun produit à afficher"
+      renderTable={items => (
+        <div className="border border-gray-200 rounded-lg bg-white">
+          <table className="w-full text-left">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="py-2 px-2 w-12 text-xs font-semibold text-gray-500 uppercase">
+                  Photo
+                </th>
+                <SortableHeader
+                  label="Produit"
+                  field="name"
+                  currentSort={sortField}
+                  currentDir={sortDir}
+                  onSort={handleSort}
+                  className="min-w-[180px]"
+                />
+                <SortableHeader
+                  label="Fournisseur"
+                  field="supplier"
+                  currentSort={sortField}
+                  currentDir={sortDir}
+                  onSort={handleSort}
+                  className="hidden lg:table-cell"
+                />
+                <SortableHeader
+                  label="Sous-cat."
+                  field="subcategory"
+                  currentSort={sortField}
+                  currentDir={sortDir}
+                  onSort={handleSort}
+                  className="hidden xl:table-cell"
+                />
+                <SortableHeader
+                  label="Poids"
+                  field="weight"
+                  currentSort={sortField}
+                  currentDir={sortDir}
+                  onSort={handleSort}
+                  className="text-right hidden 2xl:table-cell"
+                />
+                <th className="py-2 px-2 text-xs font-semibold text-gray-500 uppercase text-center hidden 2xl:table-cell">
+                  Dimensions
+                </th>
+                <SortableHeader
+                  label="Stock"
+                  field="stock_real"
+                  currentSort={sortField}
+                  currentDir={sortDir}
+                  onSort={handleSort}
+                  className="text-right"
+                />
+                <SortableHeader
+                  label="Prix HT"
+                  field="cost_price"
+                  currentSort={sortField}
+                  currentDir={sortDir}
+                  onSort={handleSort}
+                  className="text-right"
+                />
+                <SortableHeader
+                  label="Marge"
+                  field="margin_percentage"
+                  currentSort={sortField}
+                  currentDir={sortDir}
+                  onSort={handleSort}
+                  className="text-right hidden lg:table-cell"
+                />
+                <SortableHeader
+                  label="Compl."
+                  field="completion_percentage"
+                  currentSort={sortField}
+                  currentDir={sortDir}
+                  onSort={handleSort}
+                  className="text-center hidden xl:table-cell"
+                />
+                <SortableHeader
+                  label="Statut"
+                  field="product_status"
+                  currentSort={sortField}
+                  currentDir={sortDir}
+                  onSort={handleSort}
+                />
+              </tr>
+            </thead>
+            <tbody>
+              {items.map(product => (
+                <ProductRow
+                  key={product.id}
+                  product={product}
+                  preloadedImage={resolvePreloadedImage(product.id)}
+                  onQuickEdit={onQuickEdit}
+                  onRowClick={handleRowClick}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      renderCard={product => (
+        <ProductCardMobile
+          key={product.id}
+          product={product}
+          preloadedImage={resolvePreloadedImage(product.id)}
+          onQuickEdit={onQuickEdit}
+          onCardClick={handleRowClick}
+        />
+      )}
+    />
   );
 }

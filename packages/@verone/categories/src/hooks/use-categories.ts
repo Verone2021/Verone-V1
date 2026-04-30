@@ -42,7 +42,7 @@ export function useCategories() {
         const { data: categoriesData, error: categoriesError } = await supabase
           .from('categories')
           .select(
-            'id, name, slug, level, family_id, display_order, is_active, description, image_url, google_category_id, facebook_category, meta_title, meta_description, is_visible_menu, created_at, updated_at'
+            'id, name, slug, level, family_id, display_order, is_active, description, image_url, cloudflare_image_id, google_category_id, facebook_category, meta_title, meta_description, is_visible_menu, created_at, updated_at'
           )
           .order('level')
           .order('display_order');

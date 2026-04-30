@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-import Image from 'next/image';
+import { CloudflareImage } from '@verone/ui';
 import Link from 'next/link';
 
 import { Package, Loader2 } from 'lucide-react';
@@ -23,6 +23,7 @@ interface OrderItem {
   product_id: string;
   product_name: string;
   product_image_url?: string | null;
+  product_cloudflare_image_id?: string | null;
   quantity: number;
   unit_price: number;
   sku?: string;
@@ -64,7 +65,7 @@ export function OrderItemsTable({ orderId, orderType }: OrderItemsTableProps) {
             products:product_id (
               name,
               sku,
-              product_images!inner(public_url, is_primary)
+              product_images!inner(public_url, cloudflare_image_id, is_primary)
             )
           `
           )
@@ -81,7 +82,10 @@ export function OrderItemsTable({ orderId, orderType }: OrderItemsTableProps) {
           const product = item.products as unknown as {
             name?: string;
             sku?: string;
-            product_images?: Array<{ public_url: string }>;
+            product_images?: Array<{
+              public_url: string;
+              cloudflare_image_id?: string | null;
+            }>;
           } | null;
           const primaryImage = product?.product_images?.[0];
 
@@ -90,6 +94,8 @@ export function OrderItemsTable({ orderId, orderType }: OrderItemsTableProps) {
             product_id: item.product_id,
             product_name: product?.name ?? 'Produit inconnu',
             product_image_url: primaryImage?.public_url ?? null,
+            product_cloudflare_image_id:
+              primaryImage?.cloudflare_image_id ?? null,
             sku: product?.sku,
             quantity: item.quantity,
             unit_price: item.unit_price_ht,
@@ -161,9 +167,11 @@ export function OrderItemsTable({ orderId, orderType }: OrderItemsTableProps) {
             <TableRow key={item.id}>
               <TableCell>
                 <div className="flex items-center gap-3">
-                  {item.product_image_url ? (
-                    <Image
-                      src={item.product_image_url}
+                  {item.product_image_url ||
+                  item.product_cloudflare_image_id ? (
+                    <CloudflareImage
+                      cloudflareId={item.product_cloudflare_image_id}
+                      fallbackSrc={item.product_image_url}
                       alt={item.product_name}
                       width={40}
                       height={40}

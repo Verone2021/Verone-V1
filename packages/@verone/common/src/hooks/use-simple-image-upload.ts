@@ -2,12 +2,10 @@
 
 import { useState } from 'react';
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@verone/utils/supabase/client';
+import { smartUploadImage } from '@verone/utils/upload';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createClient();
 
 interface UploadState {
   uploading: boolean;
@@ -74,22 +72,29 @@ export function useSimpleImageUpload(
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `products/${fileName}`;
 
-      // Upload vers Supabase Storage
-      const { data: _uploadData, error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-        });
+      // Upload via smart-upload (Cloudflare si configuré, Supabase sinon)
+      const uploadResult = await smartUploadImage(file, {
+        bucket,
+        path: filePath,
+        ownerType: 'product',
+      });
 
-      if (uploadError) {
-        throw new Error(`Erreur d'upload: ${uploadError.message}`);
+      // L'URL retournée est soit Cloudflare soit Supabase selon la config
+      let publicUrl: string;
+      if (uploadResult.cloudflareImageId) {
+        // Retourne l'URL Cloudflare variant public
+        const { buildCloudflareImageUrl } = await import(
+          '@verone/utils/cloudflare/images'
+        );
+        publicUrl = buildCloudflareImageUrl(
+          uploadResult.cloudflareImageId,
+          'public'
+        );
+      } else {
+        publicUrl =
+          uploadResult.supabasePublicUrl ??
+          supabase.storage.from(bucket).getPublicUrl(filePath).data.publicUrl;
       }
-
-      // Génération de l'URL publique
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from(bucket).getPublicUrl(filePath);
 
       setState(prev => ({
         ...prev,
@@ -117,6 +122,10 @@ export function useSimpleImageUpload(
   };
 
   const deleteImage = async (filePath: string): Promise<boolean> => {
+    // Note: cette fonction supprime UNIQUEMENT le fichier Supabase.
+    // Si l'image a été uploadée vers Cloudflare via smartUploadImage(),
+    // elle restera orpheline côté Cloudflare. Cleanup full nécessite
+    // route API server-side (TODO TÂCHE INFRA-IMG-012).
     try {
       const { error } = await supabase.storage.from(bucket).remove([filePath]);
 

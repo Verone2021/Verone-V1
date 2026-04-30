@@ -27,7 +27,8 @@ export interface ShipmentHistoryResult {
  */
 export function useShipmentHistory(
   orderId: string | null | undefined,
-  open: boolean
+  open: boolean,
+  reloadKey = 0
 ): ShipmentHistoryResult {
   const [shipmentHistory, setShipmentHistory] = useState<ShipmentHistoryItem[]>(
     []
@@ -155,7 +156,7 @@ export function useShipmentHistory(
         }
         setSalesOrderItems((itemsData ?? []) as unknown as OrderItemSummary[]);
       });
-  }, [orderId, open]);
+  }, [orderId, open, reloadKey]);
 
   return { shipmentHistory, salesOrderItems };
 }

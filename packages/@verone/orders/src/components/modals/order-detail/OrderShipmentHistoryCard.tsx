@@ -13,6 +13,7 @@ import {
   Download,
   Copy,
   Check,
+  RefreshCw,
 } from 'lucide-react';
 
 import type { SalesOrder } from '@verone/orders/hooks';
@@ -44,6 +45,14 @@ export interface OrderShipmentHistoryCardProps {
   shipmentHistory: ShipmentHistoryItem[];
   order: SalesOrder;
   onSendTrackingEmail?: (shipment: ShipmentHistoryItem) => void;
+  /**
+   * Optional callback to trigger a Packlink → DB sync. When provided, the
+   * card renders a "Synchroniser" button in the header. The parent is
+   * responsible for calling /api/packlink/shipments/sync and reloading the
+   * data. If `syncing` is true, the button shows a spinner.
+   */
+  onSync?: () => void;
+  syncing?: boolean;
 }
 
 /** Format a date string to French locale */
@@ -111,6 +120,8 @@ export function OrderShipmentHistoryCard({
   shipmentHistory,
   order,
   onSendTrackingEmail,
+  onSync,
+  syncing = false,
 }: OrderShipmentHistoryCardProps) {
   if (shipmentHistory.length === 0) return null;
 
@@ -131,10 +142,26 @@ export function OrderShipmentHistoryCard({
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
-          <History className="h-3 w-3" />
-          Historique ({shipmentHistory.length})
-        </CardTitle>
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <History className="h-3 w-3" />
+            Historique ({shipmentHistory.length})
+          </CardTitle>
+          {onSync && (
+            <button
+              type="button"
+              onClick={onSync}
+              disabled={syncing}
+              title="Récupérer le tracking et le bordereau depuis Packlink"
+              className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCw
+                className={`h-3 w-3 ${syncing ? 'animate-spin' : ''}`}
+              />
+              {syncing ? 'Synchronisation…' : 'Synchroniser Packlink'}
+            </button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-2 max-h-[320px] overflow-y-auto">
         {totalOrdered > 0 && (
@@ -172,10 +199,20 @@ export function OrderShipmentHistoryCard({
                   {h.carrier_name}
                 </Badge>
               )}
-              {h.packlink_status && (
-                <Badge
-                  className={`text-[10px] px-1 py-0 ml-1 ${
-                    h.packlink_status === 'a_payer'
+              {h.packlink_status &&
+                (() => {
+                  // If the row is technically still 'a_payer' but the carrier
+                  // has assigned a tracking number, the shipment is in fact
+                  // paid and waiting for collection. Show a softer "Prêt à
+                  // expédier" badge instead of the red "à payer" alert until
+                  // the next sync flips packlink_status to 'paye'.
+                  const pendingWithTracking =
+                    h.packlink_status === 'a_payer' &&
+                    Boolean(h.tracking_number);
+
+                  const className = pendingWithTracking
+                    ? 'bg-amber-100 text-amber-800'
+                    : h.packlink_status === 'a_payer'
                       ? 'bg-red-100 text-red-800'
                       : h.packlink_status === 'paye'
                         ? 'bg-green-100 text-green-800'
@@ -183,20 +220,28 @@ export function OrderShipmentHistoryCard({
                           ? 'bg-blue-100 text-blue-800'
                           : h.packlink_status === 'delivered'
                             ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-red-100 text-red-800'
-                  }`}
-                >
-                  {h.packlink_status === 'a_payer'
-                    ? 'Transport à payer'
-                    : h.packlink_status === 'paye'
-                      ? 'Transport payé'
-                      : h.packlink_status === 'in_transit'
-                        ? 'En transit'
-                        : h.packlink_status === 'delivered'
-                          ? 'Livré'
-                          : 'Incident'}
-                </Badge>
-              )}
+                            : 'bg-red-100 text-red-800';
+
+                  const label = pendingWithTracking
+                    ? 'Prêt à expédier'
+                    : h.packlink_status === 'a_payer'
+                      ? 'Transport à payer'
+                      : h.packlink_status === 'paye'
+                        ? 'Transport payé'
+                        : h.packlink_status === 'in_transit'
+                          ? 'En transit'
+                          : h.packlink_status === 'delivered'
+                            ? 'Livré'
+                            : 'Incident';
+
+                  return (
+                    <Badge
+                      className={`text-[10px] px-1 py-0 ml-1 ${className}`}
+                    >
+                      {label}
+                    </Badge>
+                  );
+                })()}
               {h.delivery_method && !h.packlink_status && (
                 <Badge variant="outline" className="text-[10px] px-1 py-0 ml-1">
                   {h.delivery_method === 'manual'
@@ -209,7 +254,7 @@ export function OrderShipmentHistoryCard({
                 </Badge>
               )}
             </div>
-            {h.packlink_status === 'a_payer' && (
+            {h.packlink_status === 'a_payer' && !h.tracking_number && (
               <p className="text-[10px] ml-4 mb-1">
                 <a
                   href="https://pro.packlink.fr/private/shipments/ready-to-purchase"

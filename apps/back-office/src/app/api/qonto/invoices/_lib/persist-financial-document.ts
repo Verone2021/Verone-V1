@@ -50,16 +50,17 @@ export async function persistFinancialDocument(
     finalizedInvoice,
   } = ctx;
 
-  // Calculer les totaux
+  // [BO-FIN-009 Phase 2] Round-per-line aligné avec trigger DB (R1 zéro discordance Qonto)
   let totalHt = 0;
-  let totalVat = 0;
+  let totalTtc = 0;
   for (const item of items) {
     const lineHt = (item.unit_price_ht ?? 0) * (item.quantity_num ?? 1);
-    const lineVat = lineHt * (item.vat_rate_num ?? 0.2);
+    const lineTtc =
+      Math.round(lineHt * (1 + (item.vat_rate_num ?? 0.2)) * 100) / 100;
     totalHt += lineHt;
-    totalVat += lineVat;
+    totalTtc += lineTtc;
   }
-  const totalTtc = totalHt + totalVat;
+  const totalVat = Math.round((totalTtc - totalHt) * 100) / 100;
 
   // Déterminer le partner_id (organisation uniquement pour l'instant)
   // [BO-FIN-039] partner_id = org commande TOUJOURS (R5 finance.md)
@@ -146,26 +147,28 @@ export async function persistFinancialDocument(
       localDocumentId = insertedDoc.id;
 
       // INSERT dans financial_document_items
-      // Note: Cette table existe dans la DB mais peut ne pas être dans les types générés
-      const documentItems = items.map((item, index) => ({
-        document_id: localDocumentId,
-        product_id: item.product_id ?? null,
-        description:
-          item.title + (item.description ? ` - ${item.description}` : ''),
-        quantity: item.quantity_num ?? 1,
-        unit_price_ht: item.unit_price_ht ?? 0,
-        total_ht: (item.unit_price_ht ?? 0) * (item.quantity_num ?? 1),
-        tva_rate: (item.vat_rate_num ?? 0.2) * 100, // Stocké en % (20.00)
-        tva_amount:
-          (item.unit_price_ht ?? 0) *
-          (item.quantity_num ?? 1) *
-          (item.vat_rate_num ?? 0.2),
-        total_ttc:
-          (item.unit_price_ht ?? 0) *
-          (item.quantity_num ?? 1) *
-          (1 + (item.vat_rate_num ?? 0.2)),
-        sort_order: index,
-      }));
+      // [BO-FIN-009 Phase 2] Round-per-line par item, aligné avec trigger DB
+      const documentItems = items.map((item, index) => {
+        const qty = item.quantity_num ?? 1;
+        const unitPriceHt = item.unit_price_ht ?? 0;
+        const vatRate = item.vat_rate_num ?? 0.2;
+        const lineHt = unitPriceHt * qty;
+        const lineTtc = Math.round(lineHt * (1 + vatRate) * 100) / 100;
+        const lineTva = Math.round((lineTtc - lineHt) * 100) / 100;
+        return {
+          document_id: localDocumentId,
+          product_id: item.product_id ?? null,
+          description:
+            item.title + (item.description ? ` - ${item.description}` : ''),
+          quantity: qty,
+          unit_price_ht: unitPriceHt,
+          total_ht: lineHt,
+          tva_rate: vatRate * 100,
+          tva_amount: lineTva,
+          total_ttc: lineTtc,
+          sort_order: index,
+        };
+      });
 
       // Table financial_document_items existe dans la DB mais pas dans les types générés
       const { error: insertItemsError } = await (

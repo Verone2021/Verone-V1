@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import {
   OrderShipmentHistoryCard,
@@ -26,13 +26,34 @@ export function ShipmentCardsSection({
   order,
   onOpenShipmentModal,
 }: ShipmentCardsSectionProps) {
+  const [reloadKey, setReloadKey] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+
   const { shipmentHistory, salesOrderItems } = useShipmentHistory(
     order.id,
-    true
+    true,
+    reloadKey
   );
 
   const [shipmentToEmail, setShipmentToEmail] =
     useState<ShipmentHistoryItem | null>(null);
+
+  const handleSyncPacklink = useCallback(() => {
+    if (syncing) return;
+    setSyncing(true);
+    void fetch('/api/packlink/shipments/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sales_order_id: order.id }),
+    })
+      .catch(err => {
+        console.error('[ShipmentCardsSection] sync failed:', err);
+      })
+      .finally(() => {
+        setReloadKey(k => k + 1);
+        setSyncing(false);
+      });
+  }, [order.id, syncing]);
 
   if (shipmentHistory.length === 0) return null;
 
@@ -106,6 +127,8 @@ export function ShipmentCardsSection({
           } as unknown as SalesOrder
         }
         onSendTrackingEmail={h => setShipmentToEmail(h)}
+        onSync={handleSyncPacklink}
+        syncing={syncing}
       />
 
       {shipmentToEmail && (

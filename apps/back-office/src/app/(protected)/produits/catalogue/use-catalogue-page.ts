@@ -33,7 +33,6 @@ export function useCataloguePage() {
     error,
     total,
     setFilters: setCatalogueFilters,
-    loadCatalogueData,
     loadArchivedProducts,
     loadIncompleteProducts,
     archiveProduct,
@@ -56,6 +55,11 @@ export function useCataloguePage() {
   const { organisations: allSuppliers } = useOrganisations({
     type: 'supplier',
     is_active: true,
+    // BO-PERF-CATALOG-001 : la liste catalogue n'a besoin que de
+    // `id, legal_name, trade_name` pour afficher les noms de fournisseurs +
+    // alimenter le filtre. Mode lightweight pour éviter ~70 colonnes inutiles
+    // + skip le N+1 query `_count.products`.
+    lightweight: true,
   });
 
   const productIds = products.map(p => p.id);
@@ -263,19 +267,6 @@ export function useCataloguePage() {
     applyFilters(emptyFilters);
   };
 
-  // Resynchroniser : force un re-fetch des produits depuis Supabase avec les
-  // filtres courants. Corrige les cas ou le state local et les donnees affichees
-  // se desynchronisent (ex: selection fournisseur qui saute apres plusieurs
-  // changements rapides).
-  const handleResync = useCallback(() => {
-    void loadCatalogueData().catch(err => {
-      console.error('[CataloguePage] Resync failed:', err);
-    });
-    if (tabs.activeTab === 'incomplete') {
-      tabs.triggerIncompleteReload();
-    }
-  }, [loadCatalogueData, tabs]);
-
   const hasActiveFilters =
     filters.search !== '' ||
     filters.families.length > 0 ||
@@ -429,7 +420,6 @@ export function useCataloguePage() {
     handleSearchChange,
     handleClearSearch,
     handleResetAllFilters,
-    handleResync,
     hasActiveFilters,
     searchItems,
     handleSearchSelect,

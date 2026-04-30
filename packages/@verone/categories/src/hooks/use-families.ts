@@ -30,7 +30,7 @@ export function useFamilies() {
         .from('families')
         .select(
           `
-          id, name, slug, description, image_url, is_active, display_order, created_by, meta_title, meta_description, created_at, updated_at,
+          id, name, slug, description, image_url, cloudflare_image_id, is_active, display_order, created_by, meta_title, meta_description, created_at, updated_at,
           categories!categories_family_id_fkey(id)
         `
         )
