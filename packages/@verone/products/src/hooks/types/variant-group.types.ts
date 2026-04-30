@@ -50,4 +50,8 @@ export interface VariantGroupUpdateData {
   common_cost_price?: number | null;
   has_common_cost_price?: boolean;
   common_eco_tax?: number | null;
+  common_material?: string | null;
+  has_common_material?: boolean;
+  common_color?: string | null;
+  has_common_color?: boolean;
 }

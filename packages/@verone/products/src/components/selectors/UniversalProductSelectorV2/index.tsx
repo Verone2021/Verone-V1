@@ -64,12 +64,13 @@ export function UniversalProductSelectorV2({
   searchDebounce = 250,
   className,
   supplierId,
+  initialSearch,
 }: UniversalProductSelectorV2Props) {
   // ============================================================================
   // STATE
   // ============================================================================
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearch ?? '');
   const [localSelectedProducts, setLocalSelectedProducts] =
     useState<SelectedProduct[]>(selectedProducts);
   const [sourcingFilter, setSourcingFilter] = useState<
@@ -96,6 +97,8 @@ export function UniversalProductSelectorV2({
       sourcingType: sourcingFilter,
       supplierId: supplierId,
       productStatus: context === 'consultations' ? 'active' : null,
+      // Pour le contexte variants : exclure les produits deja membres d'un groupe variantes
+      excludeProductsInVariantGroup: context === 'variants',
     },
     [...excludeProductIds, ...localSelectedProducts.map(p => p.id)],
     searchDebounce
@@ -108,13 +111,13 @@ export function UniversalProductSelectorV2({
   useEffect(() => {
     if (open) {
       setLocalSelectedProducts(selectedProducts);
-      setSearchQuery('');
+      setSearchQuery(initialSearch ?? '');
       hierarchicalFilters.resetFilters();
       setSourcingFilter(null);
       setCreationModeFilter(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, initialSearch]);
 
   // ============================================================================
   // HANDLERS

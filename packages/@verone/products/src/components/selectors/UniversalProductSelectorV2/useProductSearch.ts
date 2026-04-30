@@ -36,6 +36,7 @@ export function useProductSearch(
     filters.creationMode,
     filters.sourcingType,
     filters.supplierId,
+    filters.excludeProductsInVariantGroup,
   ]);
 
   const fetchProducts = async () => {
@@ -115,6 +116,12 @@ export function useProductSearch(
       // Filtre par fournisseur (CRITIQUE pour commandes fournisseurs)
       if (filters.supplierId) {
         query = query.eq('supplier_id', filters.supplierId);
+      }
+
+      // Filtre variant_group_id IS NULL (regle "1 produit = 1 variante max")
+      // Utilise pour le contexte 'variants' afin d'exclure les produits deja membres d'un groupe
+      if (filters.excludeProductsInVariantGroup) {
+        query = query.is('variant_group_id', null);
       }
 
       // Filtre par sous-catégorie (plus spécifique)
