@@ -39,7 +39,7 @@ export function useProductImagesBatch(productIds: string[]) {
         const { data, error: fetchError } = await supabase
           .from('product_images')
           .select(
-            'id, product_id, public_url, display_order, alt_text, is_primary, created_at, updated_at'
+            'id, product_id, public_url, cloudflare_image_id, display_order, alt_text, is_primary, created_at, updated_at'
           )
           .in('product_id', validIds)
           .order('display_order')
