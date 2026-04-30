@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 
-import { Check, AlertCircle, ArrowRight } from 'lucide-react';
+import { Check, AlertCircle, ArrowRight, Lock } from 'lucide-react';
 
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
@@ -15,11 +15,94 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@verone/ui';
-import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import type { SelectedProduct } from '@verone/products/components/selectors/UniversalProductSelectorV2';
 import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
 import type { AddProductToGroupData, VariantGroup } from '@verone/types';
+import { MATERIAL_OPTIONS, type ProductMaterial } from '@verone/types';
+import { DynamicColorSelector } from '@verone/ui-business/components/selectors/DynamicColorSelector';
+
+// =====================================================================
+// SOUS-COMPOSANT — Chip hérité (pattern InheritanceRulesCard.tsx dupliqué)
+// Duplication volontaire pour éviter couplage cross-package.
+// =====================================================================
+
+function InheritedFieldChip({
+  label,
+  active,
+}: {
+  label: string;
+  active: boolean;
+}) {
+  return (
+    <span
+      className={
+        active
+          ? 'inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded border border-blue-200 bg-blue-50 text-blue-700'
+          : 'inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded border border-neutral-200 bg-neutral-50 text-neutral-500 opacity-50'
+      }
+    >
+      {active && <Lock className="h-2 w-2" />}
+      {label}
+    </span>
+  );
+}
+
+// =====================================================================
+// SOUS-COMPOSANT — Chips hérités du groupe
+// Tags : Dimensions, Poids, Style décoratif, Pièces compatibles,
+//        Prix de revient, Fournisseur, Sous-catégorie
+// =====================================================================
+
+function GroupInheritanceChips({ group }: { group: VariantGroup }) {
+  const hasDimensions =
+    !!group.dimensions_length ||
+    !!group.dimensions_width ||
+    !!group.dimensions_height;
+
+  const chips: Array<{ label: string; active: boolean }> = [
+    { label: 'Dimensions', active: hasDimensions },
+    {
+      label: 'Poids',
+      active: !!group.common_weight && !!group.has_common_weight,
+    },
+    { label: 'Style décoratif', active: !!group.style },
+    {
+      label: 'Pièces compatibles',
+      active: !!(group.suitable_rooms && group.suitable_rooms.length > 0),
+    },
+    {
+      label: 'Prix de revient',
+      active: !!group.has_common_cost_price && group.common_cost_price != null,
+    },
+    {
+      label: 'Fournisseur',
+      active: !!group.has_common_supplier && !!group.supplier_id,
+    },
+    { label: 'Sous-catégorie', active: !!group.subcategory_id },
+  ];
+
+  return (
+    <div>
+      <p className="text-xs font-medium text-gray-600 mb-1.5">
+        Hérités du groupe
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        {chips.map(chip => (
+          <InheritedFieldChip
+            key={chip.label}
+            label={chip.label}
+            active={chip.active}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// =====================================================================
+// COMPOSANT PRINCIPAL
+// =====================================================================
 
 interface VariantAddProductModalProps {
   isOpen: boolean;
@@ -37,30 +120,49 @@ export function VariantAddProductModal({
   const [showProductSelector, setShowProductSelector] = useState(false);
   const [selectedProduct, setSelectedProduct] =
     useState<SelectedProduct | null>(null);
-  const [color, setColor] = useState('');
-  const [material, setMaterial] = useState('');
-  const [commonWeight, setCommonWeight] = useState<number | undefined>();
+
+  // Couleur : string (nom) pour DynamicColorSelector (compatible avec l'API du composant)
+  const [colorName, setColorName] = useState('');
+  // Matière : enum strict ProductMaterial
+  const [material, setMaterial] = useState<ProductMaterial | ''>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Aperçu du nom : "Groupe - Couleur" ou "Groupe - Matière" ou les deux
+  const nameParts = [colorName, material].filter(Boolean);
   const newName =
-    selectedProduct && (color || material)
-      ? `${group?.name ?? ''} - ${[color, material].filter(Boolean).join(' - ')}`
+    selectedProduct && nameParts.length > 0
+      ? `${group?.name ?? ''} - ${nameParts.join(', ')}`
       : (group?.name ?? '');
+
+  // Résolution hiérarchique de la sous-catégorie depuis les données déjà présentes
+  const subcategoryPath = (() => {
+    if (!group?.subcategory) return null;
+    const cat = group.subcategory.category?.name;
+    const subcat = group.subcategory.name;
+    if (cat && subcat) return `${cat} > ${subcat}`;
+    return subcat ?? null;
+  })();
 
   useEffect(() => {
     if (!isOpen) {
       setSelectedProduct(null);
-      setColor('');
+      setColorName('');
       setMaterial('');
-      setCommonWeight(undefined);
       setShowProductSelector(false);
     }
   }, [isOpen]);
 
   useEffect(() => {
     if (selectedProduct?.variant_attributes) {
-      setColor(selectedProduct.variant_attributes.color ?? '');
-      setMaterial(selectedProduct.variant_attributes.material ?? '');
+      const attrs = selectedProduct.variant_attributes as Record<
+        string,
+        string | undefined
+      >;
+      setColorName(attrs.color ?? attrs.color_name ?? '');
+      const rawMaterial = attrs.material ?? '';
+      // Valider que c'est bien une valeur de l'enum
+      const isValidMat = MATERIAL_OPTIONS.some(o => o.value === rawMaterial);
+      setMaterial(isValidMat ? (rawMaterial as ProductMaterial) : '');
     }
   }, [selectedProduct]);
 
@@ -73,7 +175,7 @@ export function VariantAddProductModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProduct || (!color && !material)) return;
+    if (!selectedProduct || (!colorName && !material)) return;
 
     setIsSubmitting(true);
     try {
@@ -106,8 +208,18 @@ export function VariantAddProductModal({
             onSubmit={handleSubmit}
             className="flex flex-col flex-1 overflow-hidden"
           >
-            <div className="flex-1 overflow-y-auto space-y-6">
+            <div className="flex-1 overflow-y-auto space-y-6 pb-2">
+              {/* ========================================================
+                  CHIPS HÉRITÉS — toujours visibles en haut du modal
+              ======================================================== */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <GroupInheritanceChips group={group} />
+              </div>
+
               <div className="space-y-4">
+                {/* ==================================================
+                    SÉLECTEUR PRODUIT
+                ================================================== */}
                 <div>
                   <Label htmlFor="product" className="text-sm font-medium">
                     Produit à ajouter *
@@ -136,80 +248,71 @@ export function VariantAddProductModal({
                       type="button"
                       variant="outline"
                       onClick={() => setShowProductSelector(true)}
-                      className="mt-2 w-full"
+                      className="mt-2 w-full min-h-[44px] md:min-h-0"
                     >
                       Sélectionner un produit
                     </ButtonV2>
                   )}
                   <p className="text-xs text-gray-600 mt-1">
-                    Seuls les produits de la sous-catégorie "
-                    {group.subcategory?.name}" sans groupe de variantes sont
-                    disponibles
+                    Seuls les produits de la sous-catégorie &ldquo;
+                    {group.subcategory?.name}&rdquo; sans groupe de variantes
+                    sont disponibles
                   </p>
                 </div>
 
                 {selectedProduct && (
                   <>
-                    <div className="grid grid-cols-2 gap-4">
+                    {/* ==================================================
+                        COULEUR — DynamicColorSelector (combobox + création)
+                    ================================================== */}
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div>
-                        <Label htmlFor="color" className="text-sm font-medium">
+                        <Label
+                          htmlFor="color"
+                          className="text-sm font-medium block mb-1"
+                        >
                           Couleur
                         </Label>
-                        <Input
-                          id="color"
-                          value={color}
-                          onChange={e => setColor(e.target.value)}
-                          placeholder="Ex: Noir, Blanc, Bleu"
-                          className="mt-1"
-                        />
+                        <div className="min-h-[44px] md:min-h-0">
+                          <DynamicColorSelector
+                            value={colorName}
+                            onChange={setColorName}
+                            placeholder="Rechercher ou créer une couleur..."
+                          />
+                        </div>
                       </div>
 
+                      {/* ==================================================
+                          MATIÈRE — Select enum strict (15 valeurs)
+                      ================================================== */}
                       <div>
                         <Label
                           htmlFor="material"
-                          className="text-sm font-medium"
+                          className="text-sm font-medium block mb-1"
                         >
                           Matière
                         </Label>
-                        <Input
+                        <select
                           id="material"
                           value={material}
-                          onChange={e => setMaterial(e.target.value)}
-                          placeholder="Ex: Bois, Métal, Tissu"
-                          className="mt-1"
-                        />
+                          onChange={e =>
+                            setMaterial(
+                              (e.target.value as ProductMaterial | '') ?? ''
+                            )
+                          }
+                          className="w-full min-h-[44px] md:min-h-0 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        >
+                          <option value="">— Aucune matière —</option>
+                          {MATERIAL_OPTIONS.map(opt => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </div>
 
-                    <div>
-                      <Label
-                        htmlFor="common_weight"
-                        className="text-sm font-medium"
-                      >
-                        Poids commun (kg)
-                      </Label>
-                      <Input
-                        id="common_weight"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={commonWeight ?? ''}
-                        onChange={e =>
-                          setCommonWeight(
-                            e.target.value
-                              ? parseFloat(e.target.value)
-                              : undefined
-                          )
-                        }
-                        placeholder="Ex: 2.5"
-                        className="mt-1"
-                      />
-                      <p className="text-xs text-gray-600 mt-1">
-                        Poids que tous les produits du groupe partageront
-                      </p>
-                    </div>
-
-                    {!color && !material && (
+                    {!colorName && !material && (
                       <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex items-start space-x-2">
                         <AlertCircle className="h-5 w-5 text-black flex-shrink-0 mt-0.5" />
                         <div className="text-sm text-gray-900">
@@ -223,6 +326,9 @@ export function VariantAddProductModal({
                       </div>
                     )}
 
+                    {/* ==================================================
+                        APERÇU NOM
+                    ================================================== */}
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
                       <h4 className="font-medium text-blue-900 flex items-center">
                         <Check className="h-4 w-4 mr-2" />
@@ -248,6 +354,9 @@ export function VariantAddProductModal({
                       </div>
                     </div>
 
+                    {/* ==================================================
+                        PROPRIÉTÉS CONSERVÉES
+                    ================================================== */}
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                       <h4 className="font-medium text-green-900 mb-2">
                         Propriétés conservées
@@ -261,12 +370,20 @@ export function VariantAddProductModal({
                       </ul>
                     </div>
 
+                    {/* ==================================================
+                        PROPRIÉTÉS SYNCHRONISÉES DU GROUPE
+                    ================================================== */}
                     <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                       <h4 className="font-medium text-gray-900 mb-2">
                         Propriétés synchronisées du groupe
                       </h4>
                       <ul className="text-sm text-gray-700 space-y-1">
-                        <li>→ Sous-catégorie : {group.subcategory?.name}</li>
+                        {subcategoryPath && (
+                          <li>→ Catégorisation : {subcategoryPath}</li>
+                        )}
+                        {!subcategoryPath && group.subcategory?.name && (
+                          <li>→ Sous-catégorie : {group.subcategory.name}</li>
+                        )}
                         {(group.dimensions_length ||
                           group.dimensions_width ||
                           group.dimensions_height) && (
@@ -277,8 +394,18 @@ export function VariantAddProductModal({
                             {group.dimensions_unit}
                           </li>
                         )}
-                        {commonWeight && (
-                          <li>→ Poids commun : {commonWeight} kg</li>
+                        {group.has_common_weight && group.common_weight && (
+                          <li>→ Poids commun : {group.common_weight} kg</li>
+                        )}
+                        {group.has_common_cost_price &&
+                          group.common_cost_price != null && (
+                            <li>
+                              → Prix d&apos;achat commun :{' '}
+                              {group.common_cost_price.toFixed(2)} €
+                            </li>
+                          )}
+                        {group.has_common_supplier && group.supplier && (
+                          <li>→ Fournisseur : {group.supplier.name}</li>
                         )}
                       </ul>
                     </div>
@@ -300,7 +427,7 @@ export function VariantAddProductModal({
               <ButtonV2
                 type="submit"
                 disabled={
-                  !selectedProduct || (!color && !material) || isSubmitting
+                  !selectedProduct || (!colorName && !material) || isSubmitting
                 }
                 className="w-full md:w-auto bg-black text-white hover:bg-gray-800"
               >
@@ -311,7 +438,7 @@ export function VariantAddProductModal({
         </DialogContent>
       </Dialog>
 
-      {/* UniversalProductSelectorV2 - Filtre par subcategory_id */}
+      {/* UniversalProductSelectorV2 — Filtre par subcategory_id */}
       {showProductSelector && group && (
         <UniversalProductSelectorV2
           open={showProductSelector}
