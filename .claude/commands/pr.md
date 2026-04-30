@@ -11,7 +11,14 @@ You are a PR automation tool. Create pull requests with mandatory safety checks.
 - **JAMAIS** de `Co-Authored-By:` dans les commits
 - **JAMAIS** de merge sans validation Vercel
 - **JAMAIS** de PR vers main (toujours `--base staging`)
+- **JAMAIS** `git push --force` nu — toujours `--force-with-lease`
+- **JAMAIS** `gh pr merge --admin` pour bypasser un check fail
 - Si un check échoue → **STOP** et corriger avant de continuer
+
+## RÉFÉRENCE OBLIGATOIRE
+
+- `.claude/rules/multi-agent-workflow.md` — workflow senior (rebase précoce, push draft, worktree, fichiers touchés)
+- `.claude/rules/branch-strategy.md` — checklist 5 questions avant nouvelle branche
 
 ## Workflow Complet
 
@@ -31,20 +38,37 @@ git ls-files | grep -E '\.(swp|swo)$|\.DS_Store|tests/reports/|\.playwright-mcp/
 
 → Si fichiers trouvés → **STOP** "Fichiers parasites détectés, ajouter au .gitignore et git rm --cached"
 
-### PHASE 2 : Synchronisation Remote
+### PHASE 2 : Synchronisation Remote (Rebase précoce)
 
 ```bash
-# 3. Fetch et vérifier état
-git fetch origin
+# 3. Vérifier les autres PRs ouvertes (multi-agents)
+gh pr list --state open --base staging --json number,title,headRefName
+```
+
+→ Si une autre PR ouverte touche les mêmes fichiers → coordonner (cf. `multi-agent-workflow.md` section 4)
+
+```bash
+# 4. Fetch et rebase sur staging à jour (réflexe senior)
+git fetch origin staging
+git rebase origin/staging
+```
+
+→ Si conflit : résoudre avant push (5 min vs 30 min plus tard)
+→ Après rebase, push avec `--force-with-lease`
+
+```bash
+# 5. Vérifier l'état
 git status -sb
 ```
 
-→ Afficher si "ahead by X commits" ou "behind by Y commits"
-→ Si behind → **STOP** "Branche en retard, faire git pull --rebase d'abord"
+```bash
+# 6. Voir les commits qui vont partir
+git log --oneline origin/staging..HEAD
+```
 
 ```bash
-# 4. Voir les commits qui vont partir
-git log --oneline origin/staging..HEAD
+# 7. Voir les fichiers touchés (pour la section "Fichiers touchés" du body PR)
+git diff --stat origin/staging...HEAD
 ```
 
 ### PHASE 3 : Gate Checks (OBLIGATOIRE)
@@ -73,29 +97,39 @@ pnpm run build
 ### PHASE 4 : Création Branche et Push
 
 ```bash
-# 8. Créer branche depuis état actuel (si sur main)
+# 8. Créer branche depuis état actuel (si sur main ou staging)
 git branch --show-current
 ```
 
-→ Si sur `main` → Créer branche : `git switch -c <type>/<description>-<date>`
+→ Si sur `main` ou `staging` → Créer branche : `git switch -c <type>/<description>-<date>`
 
-- Exemple : `chore/cleanup-docs-20251216`
+- Exemple : `chore/cleanup-docs-20261216`
+
+→ **Multi-agents** : si un autre agent travaille dans le working dir → utiliser `git worktree add` au lieu de `git switch -c`. Voir `.claude/rules/multi-agent-workflow.md`.
 
 ```bash
-# 9. Push la branche
-git push -u origin HEAD
+# 9. Push la branche avec --force-with-lease (jamais --force nu)
+git push -u --force-with-lease origin HEAD
 ```
 
 ### PHASE 5 : Création PR
 
 ```bash
-# 10. Voir ce qui part en PR
+# 10. Voir ce qui part en PR (pour la section "Fichiers touchés")
 git diff --stat origin/staging...HEAD
 ```
 
 ```bash
-# 11. Créer la PR
-gh pr create --base staging --title "<type>: <description>" --body "$(cat <<'EOF'
+# 11. Créer la PR (DRAFT par défaut — promote ready quand le bloc est complet)
+gh pr create --draft --base staging --title "<type>: <description>" --body "$(cat <<'EOF'
+## Fichiers touchés (visibilité multi-agents)
+- path/to/file1.ts
+- path/to/file2.tsx
+- nouveau: path/to/file3.tsx
+
+## Tu ne dois PAS toucher à (si applicable)
+- [fichiers couverts par d'autres PRs ouvertes]
+
 ## Summary
 - [changement principal]
 - [changements secondaires]
@@ -109,11 +143,11 @@ gh pr create --base staging --title "<type>: <description>" --body "$(cat <<'EOF
 1. Review les fichiers modifiés
 2. Attendre le status check Vercel
 3. Merge si tout est vert
-
-🤖 Generated with Claude Code
 EOF
 )"
 ```
+
+→ Promouvoir en ready quand le bloc est complet : `gh pr ready <num>` (après ultime rebase + type-check)
 
 ### PHASE 6 : Fin
 

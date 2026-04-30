@@ -34,12 +34,16 @@ Les 3 feux ne décrivent pas quand l'agent « a le droit » — ils décrivent *
 
 ### Git local
 
-- `git checkout -b feat/XXX` ou `fix/XXX` depuis staging
+- `git checkout -b feat/XXX` ou `fix/XXX` depuis staging — **uniquement si aucun autre agent ne travaille en parallèle dans le working dir** (sinon → `git worktree add`, voir ci-dessous)
+- `git worktree add /Users/romeodossantos/verone-[task-short] -b <branche> origin/staging` — OBLIGATOIRE en multi-agents (autre agent dans le working dir partagé). Voir `.claude/rules/multi-agent-workflow.md`
+- `git worktree list` / `git worktree remove <path>` — gestion des worktrees
 - `git add` ciblé (pas de `git add -A` sur repo sale)
 - `git commit` avec Task ID respectant le format `[APP-DOMAIN-NNN] type: description`
 - `git push` sur feature branch
-- `git fetch`, `git pull --rebase origin/staging`
-- `git rebase origin/staging` pour sync
+- `git push --force-with-lease` sur feature branch (jamais `--force` nu)
+- `git fetch` (toujours safe — lecture pure des refs)
+- `git pull --rebase origin/staging` — uniquement si tu es seul dans le working dir
+- `git rebase origin/staging` pour sync (réflexe avant chaque push, toutes les 1-2h)
 - `git status`, `git diff`, `git log`
 
 ### Build et validation
@@ -102,7 +106,8 @@ Si Romeo dit « ok » ou « vas-y », l'agent exécute immédiatement. Sinon il 
 - **`gh pr create --base main` — INTERDIT ABSOLU**, sauf ordre explicite de Romeo dans le message immédiatement précédent (et JAMAIS un ordre antérieur réutilisé).
 - **`gh pr merge --admin` — INTERDIT ABSOLU**. Si la CI fail, on push un commit de fix sur la même branche et on attend la CI verte. JAMAIS de bypass `--admin`, peu importe le délai ou l'ordre. Si Romeo dit "merge tout maintenant" et qu'un check fail, lui dire clairement "le check X fail, je propose de fix dans X minutes — OK ?".
 - Push direct sur `main` ou `staging` (bloqué par hook de toute façon)
-- Force push (`--force`, `--force-with-lease`)
+- Force push sur `main` ou `staging` (`--force` ou `--force-with-lease`) — INTERDIT ABSOLU
+- Force push `--force` nu sur feature branch — utiliser `--force-with-lease` à la place (autorisé en FEU VERT après rebase)
 - `git reset --hard` sur commits déjà mergés
 - Suppression de branche distante (`git push --delete origin`)
 - Rebase interactif avec squash/rewrite d'historique public
@@ -142,6 +147,9 @@ Si Romeo dit « ok » ou « vas-y », l'agent exécute immédiatement. Sinon il 
 - `rm -rf` sur plus d'un fichier
 - Suppression de migrations Supabase (append-only)
 - Modification de `.gitignore` (peut masquer des fichiers sensibles)
+- `git push --force` nu (sans `--force-with-lease`) — risque d'écraser les pushs des autres agents
+- `git checkout <branche>` ou `git pull --rebase` dans le **working dir partagé** quand un autre agent travaille en parallèle — casse le contexte de l'autre agent. Utiliser `git worktree add` (FEU VERT) à la place.
+- `gh pr merge --admin` — INTERDIT ABSOLU peu importe le contexte (déjà mentionné plus haut, rappelé ici comme action destructive). Fix par commit atomique sur la même branche.
 
 ---
 
@@ -169,13 +177,25 @@ Exemple : Romeo dit « force push sur staging ».
 
 **Règle** : FEU ORANGE. Une confirmation inutile coûte 5 secondes. Une action non prévue peut coûter une PR revertée.
 
+### « Romeo lance un autre agent en parallèle »
+
+**Règle** : avant tout `git checkout` ou `git pull --rebase`, vérifier qu'aucun autre agent ne travaille dans le working dir. Si oui → `git worktree add` au lieu de toucher au working dir principal. Voir `.claude/rules/multi-agent-workflow.md` section 2.
+
+### « L'agent dispatche un sous-agent (Agent tool) pendant qu'un autre agent humain travaille »
+
+**Règle** : passer `isolation: "worktree"` au tool Agent. Le sous-agent travaillera dans un worktree isolé, sans toucher au working dir principal. Sans ce flag, le sous-agent peut faire `git checkout` qui casse le contexte de l'agent humain.
+
 ---
 
 ## Référence
+
+Référence :
+
+- `.claude/rules/multi-agent-workflow.md` — détails opérationnels du workflow multi-agents (worktree, rebase précoce, push draft, stacked PRs)
 
 Ce fichier est référencé par :
 
 - `CLAUDE.md` racine (pointeur unique vers cette règle)
 - `.claude/agents/*.md` (section « TU NE FAIS PAS »)
-- `.claude/DECISIONS.md` (ADR-004 ajustement #3)
+- `.claude/DECISIONS.md` (ADR-004 ajustement #3, ADR-023 multi-agent workflow)
 - `.claude/playbooks/*.md` (utilisé implicitement dans chaque recette)

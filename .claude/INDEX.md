@@ -14,7 +14,7 @@ Sommaire unique de la config agent. Si tu cherches où est une règle, un agent,
 
 ---
 
-## Rules (8 fichiers)
+## Rules (14 fichiers)
 
 Règles stables lues automatiquement par l'agent.
 
@@ -26,6 +26,12 @@ Règles stables lues automatiquement par l'agent.
 - `.claude/rules/responsive.md` — Breakpoints + 5 techniques responsive obligatoires
 - `.claude/rules/stock-triggers-protected.md` — Triggers stock IMMUABLES
 - `.claude/rules/workflow.md` — Git, PR, merge, 1 PR = 1 bloc cohérent
+- `.claude/rules/branch-strategy.md` — Checklist 5 questions avant `git checkout -b`
+- `.claude/rules/multi-agent-workflow.md` — Branche tôt, push draft, rebase précoce, worktree, stacked PRs _(NOUVEAU 2026-04-30)_
+- `.claude/rules/data-fetching.md` — TanStack Query, useEffect deps, Supabase select
+- `.claude/rules/playwright-artifacts.md` — Rangement artefacts Playwright
+- `.claude/rules/no-phantom-data.md` — Zéro donnée fantôme en prod
+- `.claude/rules/agent-autonomy-external.md` — Agent fait tout lui-même via CLI/MCP
 
 _Note : sous-dossier `.claude/rules/domain/` envisagé dans ADR-004 mais non appliqué (faux positif du check-integrity). Toutes les règles restent à plat dans `.claude/rules/`._
 
@@ -204,6 +210,7 @@ Voir `docs/scratchpad/automation-roadmap.md` (historique uniquement).
 | `.claude/rules/no-phantom-data.md`         | No Phantom Data         |
 | `.claude/rules/agent-autonomy-external.md` | Agent Autonomy External |
 | `.claude/rules/branch-strategy.md`         | Branch Strategy         |
+| `.claude/rules/multi-agent-workflow.md`    | Multi-Agent Workflow    |
 | `.claude/rules/data-fetching.md`           | Data Fetching           |
 
 ---

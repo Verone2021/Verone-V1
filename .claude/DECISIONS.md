@@ -353,6 +353,8 @@ La convention plate du scratchpad (réaffirmée dans `docs/scratchpad/README.md`
 - ADR-015 : Interdit absolu de solliciter Romeo pour vérifier sur un site externe (2026-04-23)
 - ADR-016 : E2E smoke tests bloquants en CI + runtime guards contre les régressions silencieuses (2026-04-24)
 - ADR-018 : Script `db-drift-check.py` contre le drift silencieux de schéma DB (2026-04-24)
+- ADR-022 : Bundling thématique obligatoire pour PRs liées (2026-04-28)
+- ADR-023 : Multi-agent workflow — branche tôt, push draft, rebase précoce, worktree (2026-04-30)
 
 ---
 
@@ -738,3 +740,81 @@ La règle `1 PR = 1 BLOC COHÉRENT` existait déjà dans `.claude/rules/workflow
 - `CLAUDE.md` racine section INTERDICTIONS ABSOLUES
 - `.claude/rules/workflow.md` section "Incident 2026-04-28"
 - `.claude/rules/branch-strategy.md` checklist question 4
+
+---
+
+## ADR-023 — Multi-agent workflow : branche tôt, push draft, rebase précoce, worktree (2026-04-30)
+
+**Contexte** : Romeo travaille régulièrement avec plusieurs agents Claude Code en parallèle (sessions différentes, ou un agent qui dispatche un sous-agent via Agent tool). Il observe que ces sessions multi-agents génèrent des conflits récurrents qui lui font perdre une demi-journée chaque fois (cycle CI 30 min + rebase manuel + retry).
+
+L'audit (cette session 2026-04-30) révèle :
+
+1. **Mémoires perso codifiées, mais pas dans le repo** — 4 mémoires en `~/.claude/projects/.../memory/` (`feedback_rebase_first_branch_early.md`, `feedback_stacked_prs_and_blocking_checks.md`, `feedback_multi_agent_scope.md`, `feedback_multi_agent_use_worktree.md`) couvrent exactement la pratique senior 2026. Mais elles sont attachées à une session/agent — quand Romeo lance un autre agent ou un nouveau Claude Code, il ne les lit pas. Les autres agents ne lisent que `CLAUDE.md` + `.claude/rules/*`.
+
+2. **Lacunes dans `.claude/rules/`** :
+   - `git worktree` pour multi-agents non documenté nulle part
+   - Rebase précoce mentionné en passant ("rebase régulier") mais sans timing ni pourquoi
+   - Push draft immédiat non explicité (la règle disait "PR draft quand bloc complet")
+   - Stacked PRs (B depuis A) absents
+   - Section `## Fichiers touchés` dans PR description absente
+   - Anti-pattern « j'attends l'autre agent » non interdit explicitement
+
+3. **Incident 2026-04-30** : pendant cette session, l'agent allait faire `git fetch && git checkout staging && git pull --rebase` dans le working dir partagé alors qu'un autre agent travaillait dessus sur sa propre branche. Romeo a interrompu : `git checkout staging` aurait viré l'autre agent de sa branche au milieu de son travail. Romeo a aussi mergé 3 PRs avec `--admin` la veille pour bypasser un drift TS, ce qui a propagé un faux signal en prod.
+
+**Décision** :
+
+1. **Créer `.claude/rules/multi-agent-workflow.md`** (~310 lignes, source de vérité unique). Codifie la pratique senior 2026 :
+   - Branche créée IMMÉDIATEMENT depuis `staging` à jour, push draft tout de suite
+   - Rebase précoce avant chaque push (réflexe toutes les 1-2h), pas une fois en fin de bloc
+   - `git worktree add` OBLIGATOIRE en multi-agents (autre agent dans working dir partagé)
+   - Sous-agent (Agent tool) : `isolation: "worktree"` systématique en multi-agents
+   - Stacked PRs (B depuis A) si dépendance forte
+   - Section `## Fichiers touchés` en haut de chaque PR description (visibilité multi-agents)
+   - `git push --force-with-lease` jamais `--force` nu
+   - Fix CI blocking par commit atomique sur même branche, JAMAIS `--admin`
+   - INTERDIT explicite : « j'attends que l'autre agent finisse »
+
+2. **Mettre à jour les fichiers existants** pour pointer vers le nouveau et compléter les anti-patterns :
+   - `CLAUDE.md` racine (table SOURCES DE VERITE + section WORKFLOW GIT + INTERDICTIONS ABSOLUES)
+   - `.claude/rules/workflow.md` (pointer + section Rebase précoce + Push draft immédiat)
+   - `.claude/rules/branch-strategy.md` (5e question dans la checklist : « autre agent en parallèle ? »)
+   - `.claude/rules/autonomy-boundaries.md` (`git worktree add` en FEU VERT, `--force` nu et `git checkout` en working dir partagé en FEU ROUGE)
+   - `.claude/INDEX.md` (liste Rules passe à 14 fichiers)
+   - `.claude/agents/dev-agent.md` (workflow inclut branche+push draft immédiat, anti-pattern « j'attends » interdit)
+   - `.claude/agents/ops-agent.md` (workflow standard mis à jour avec rebase précoce, push draft, worktree, fichiers touchés, jamais `--admin`)
+   - `.claude/commands/pr.md` (rebase précoce dans Phase 2, section Fichiers touchés dans body, draft par défaut, `--force-with-lease`)
+
+3. **Documenter dans cet ADR** la pratique senior 2026 et les sources externes (trunk-based development DORA/Accelerate, Phabricator/Graphite stacked PRs Meta, Git worktree natif depuis 2.5 en 2015, GitHub branch protection rules avec enforce_admins).
+
+**Conséquences** :
+
+- Tout futur agent (humain Claude Code, sous-agent dev-agent, etc.), même sans accès aux mémoires perso, lira ces règles à chaque démarrage et appliquera le workflow senior. Fin des conflits récurrents qui faisaient perdre une demi-journée à Romeo.
+- Le tool Agent avec `isolation: "worktree"` devient le default en multi-agents (au lieu d'une option ignorée).
+- `--admin` est désormais INTERDIT ABSOLU codifié dans 4 fichiers (rules + agents + CLAUDE.md), pas juste en mémoire perso.
+- La pratique « branche tôt » remplace l'anti-pattern « j'attends », qui apparaissait régulièrement quand un agent était poliment en train de proposer d'attendre la fin d'une release main.
+- L'incident 2026-04-30 ne se reproduit plus : l'agent qui voit qu'un autre agent travaille fait `git worktree add` automatiquement.
+
+**Trace** :
+
+- 9 fichiers modifiés dans la même session :
+  - `CLAUDE.md` (4 sections)
+  - `.claude/rules/multi-agent-workflow.md` (CRÉÉ)
+  - `.claude/rules/workflow.md` (3 sections)
+  - `.claude/rules/branch-strategy.md` (3 sections)
+  - `.claude/rules/autonomy-boundaries.md` (3 sections)
+  - `.claude/INDEX.md` (2 sections)
+  - `.claude/agents/dev-agent.md` (2 sections)
+  - `.claude/agents/ops-agent.md` (5 sections)
+  - `.claude/commands/pr.md` (4 sections)
+  - `.claude/DECISIONS.md` (cet ADR)
+
+**Sources externes (best practices senior 2026)** :
+
+- Trunk-based development : DORA reports, _Accelerate_ (Forsgren/Humble/Kim, IT Revolution Press)
+- Stacked PRs : Phabricator (Meta), Graphite, Reviewable
+- Git worktree : Git 2.5 (2015), https://git-scm.com/docs/git-worktree
+- Branch protection rules : https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository
+- `--force-with-lease` vs `--force` : https://git-scm.com/docs/git-push
+- Anthropic Claude Code Agent tool : `isolation: "worktree"` natif
+
+**Référence** : session 2026-04-30 avec Romeo, audit complet `.claude/` puis codification.

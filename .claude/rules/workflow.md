@@ -3,6 +3,11 @@
 **Source de verite pour le workflow Git / PR / merge. Lecture obligatoire
 par tous les agents avant toute action git.**
 
+**Voir aussi (obligatoire avant tout `git checkout -b` / `gh pr create`)** :
+
+- `.claude/rules/multi-agent-workflow.md` — Branche tôt, push draft immédiat, rebase précoce, worktree obligatoire en multi-agents, stacked PRs, fix CI sans `--admin`. Cette règle complète le présent fichier sur la pratique senior 2026.
+- `.claude/rules/branch-strategy.md` — Checklist 4 questions avant nouvelle branche.
+
 ---
 
 ## RÈGLE ABSOLUE — Cible des branches
@@ -71,12 +76,17 @@ Bloc (ex: Migration Responsive) -> 1 branche ->
 - Commit apres chaque sous-tache terminee (bonne granularite pour rollback)
 - Push apres chaque commit (sauvegarde, pas de travail perdu)
 - Format commit : `[APP-DOMAIN-NNN] type: description`
+- **Rebase précoce** : `git fetch origin staging && git rebase origin/staging` AVANT chaque push (toutes les 1-2h). Absorbe les changes des autres agents au fil de l'eau, conflits petits et résolus en 5 min au lieu d'exploser en 30 min au merge final. Voir `.claude/rules/multi-agent-workflow.md`.
+- **Push draft immédiat** dès la branche créée : `gh pr create --draft --base staging` même avec juste un scratchpad de plan. La PR draft = sauvegarde GitHub + signal pour les autres agents « je touche à X ». Promouvoir draft → ready quand le bloc est complet.
+- **`git push --force-with-lease`** au lieu de `--force` nu. Garde-fou contre l'écrasement accidentel.
 
 **JAMAIS** :
 
 - Commit "WIP" vague sans contenu clair
-- Push force (`--force`) sans autorisation Romeo
+- Push force (`--force` nu) — toujours `--force-with-lease`
 - Commit sans Task ID (sauf `[NO-TASK]` pour chores)
+- « J'attends que l'autre agent finisse avant de créer ma branche » — anti-pattern. Brancher tôt, rebaser souvent.
+- `git checkout` ou `git pull --rebase` dans le working dir partagé si un autre agent y travaille — utiliser `git worktree add` (cf. `multi-agent-workflow.md`).
 
 ### Pull Requests
 
@@ -109,7 +119,8 @@ Exemples de ce qu'il NE faut PAS faire (1 PR par page) :
 
 - Une seule branche par bloc de travail
 - Branche vit plusieurs jours si necessaire (normal pour senior)
-- Rebase regulier sur staging pour eviter conflits : `git rebase origin/staging`
+- **Rebase précoce** sur staging avant chaque push (réflexe toutes les 1-2h) : `git fetch origin staging && git rebase origin/staging && git push --force-with-lease`. Pas une fois en fin de bloc, à chaque push. Conflits petits, résolus tout de suite.
+- En multi-agents (autre agent dans le working dir) : créer la branche dans un **worktree isolé** via `git worktree add /Users/romeodossantos/verone-[task-short] -b <branche> origin/staging`. Voir `.claude/rules/multi-agent-workflow.md`.
 
 ---
 
@@ -306,8 +317,12 @@ Audit complet des onglets de TOUS les canaux à faire **dans la même PR**, pas 
 
 ## Référence
 
+Référence :
+
+- `.claude/rules/multi-agent-workflow.md` — pratique senior multi-agents (worktree, rebase précoce, push draft, stacked PRs, fix CI sans `--admin`)
+
 Référencé par :
 
 - `CLAUDE.md` racine (section INTERDICTIONS ABSOLUES)
-- `.claude/rules/branch-strategy.md` (checklist 3 questions)
-- `.claude/DECISIONS.md` (ADR-022 sur l'incident 2026-04-28)
+- `.claude/rules/branch-strategy.md` (checklist 4 questions)
+- `.claude/DECISIONS.md` (ADR-022 sur l'incident 2026-04-28, ADR-023 sur le multi-agent workflow)
