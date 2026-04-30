@@ -155,7 +155,12 @@ export async function loadProducts(
 export async function loadArchivedProducts(
   filters: CatalogueFilters = {}
 ): Promise<{ products: Product[]; total: number }> {
-  let query = supabase.from('products').select(PRODUCT_SELECT);
+  // BO-PERF-CATALOG-001 : utiliser `count: 'exact'` pour retourner le vrai
+  // total (ancien comportement renvoyait `data.length` qui était limité à
+  // la taille de la page → pagination cassée si > 50 archivés).
+  let query = supabase
+    .from('products')
+    .select(PRODUCT_SELECT, { count: 'exact' });
 
   query = query.not('archived_at', 'is', null);
 
@@ -197,10 +202,10 @@ export async function loadArchivedProducts(
   query = query.range(offset, offset + limit - 1);
   query = query.order('archived_at', { ascending: false });
 
-  const { data, error } = await query;
+  const { data, error, count } = await query;
   if (error) throw error;
 
-  return { products: (data || []) as Product[], total: (data || []).length };
+  return { products: (data ?? []) as Product[], total: count ?? 0 };
 }
 
 export async function loadIncompleteProducts(
