@@ -173,7 +173,7 @@ export function useVariantGroupArchive(deps: VariantGroupArchiveDeps) {
       const { data, error: fetchError } = await supabase
         .from('variant_groups')
         .select(
-          'id, name, base_sku, subcategory_id, variant_type, product_count, has_common_supplier, supplier_id, dimensions_length, dimensions_width, dimensions_height, dimensions_unit, style, suitable_rooms, common_weight, has_common_weight, common_cost_price, has_common_cost_price, common_eco_tax, common_material, has_common_material, common_color, has_common_color, archived_at, created_at, updated_at'
+          'id, name, base_sku, subcategory_id, variant_type, product_count, has_common_supplier, supplier_id, dimensions_length, dimensions_width, dimensions_height, dimensions_unit, style, suitable_rooms, common_weight, has_common_weight, common_cost_price, has_common_cost_price, common_eco_tax, common_material, has_common_material, common_color, has_common_color, material_name_position, color_name_position, archived_at, created_at, updated_at'
         )
         .not('archived_at', 'is', null)
         .order('archived_at', { ascending: false });

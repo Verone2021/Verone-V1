@@ -7,6 +7,20 @@ import type { LucideIcon } from 'lucide-react';
 // Note: pattern retiré car considéré comme moins pertinent que couleur/matériau
 export type VariantType = 'color' | 'material';
 
+// Position d'un attribut commun dans le nom genere des produits du groupe
+export type NamePosition =
+  | 'none'
+  | 'before_group'
+  | 'after_group'
+  | 'before_variant';
+
+export const NAME_POSITION_LABELS: Record<NamePosition, string> = {
+  none: 'Pas dans le nom',
+  before_group: 'Avant le nom du groupe',
+  after_group: 'Après le nom du groupe',
+  before_variant: 'Avant la valeur de la variante',
+};
+
 // Styles décoratifs disponibles
 export type DecorativeStyle =
   | 'minimaliste'
@@ -70,6 +84,10 @@ export interface VariantGroup {
   // Couleur commune (typique quand variant_type='material')
   common_color?: string | null;
   has_common_color?: boolean;
+
+  // Position de la matiere/couleur dans le nom genere des produits du groupe
+  material_name_position?: NamePosition | null;
+  color_name_position?: NamePosition | null;
 
   // Relations
   subcategory?: {
@@ -163,6 +181,10 @@ export interface CreateVariantGroupData {
   // Couleur commune optionnelle (typique quand variant_type='material')
   common_color?: string | null;
   has_common_color?: boolean;
+
+  // Positions dans le nom
+  material_name_position?: NamePosition;
+  color_name_position?: NamePosition;
 }
 
 // Données pour ajouter des produits à un groupe
@@ -230,6 +252,10 @@ export interface UpdateVariantGroupData {
   // Couleur commune
   common_color?: string | null;
   has_common_color?: boolean;
+
+  // Positions dans le nom
+  material_name_position?: NamePosition;
+  color_name_position?: NamePosition;
 
   // Deprecated - gardé pour compatibilité
   common_dimensions?: {

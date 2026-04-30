@@ -54,4 +54,14 @@ export interface VariantGroupUpdateData {
   has_common_material?: boolean;
   common_color?: string | null;
   has_common_color?: boolean;
+  material_name_position?:
+    | 'none'
+    | 'before_group'
+    | 'after_group'
+    | 'before_variant';
+  color_name_position?:
+    | 'none'
+    | 'before_group'
+    | 'after_group'
+    | 'before_variant';
 }

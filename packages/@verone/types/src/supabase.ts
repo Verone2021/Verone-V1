@@ -7,31 +7,6 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
   public: {
     Tables: {
       addresses: {
@@ -9743,6 +9718,7 @@ export type Database = {
           archived_at: string | null;
           auto_name_pattern: string | null;
           base_sku: string;
+          color_name_position: string;
           common_color: string | null;
           common_cost_price: number | null;
           common_dimensions: Json | null;
@@ -9760,6 +9736,7 @@ export type Database = {
           has_common_supplier: boolean;
           has_common_weight: boolean;
           id: string;
+          material_name_position: string;
           name: string;
           product_count: number | null;
           style: string | null;
@@ -9773,6 +9750,7 @@ export type Database = {
           archived_at?: string | null;
           auto_name_pattern?: string | null;
           base_sku: string;
+          color_name_position?: string;
           common_color?: string | null;
           common_cost_price?: number | null;
           common_dimensions?: Json | null;
@@ -9790,6 +9768,7 @@ export type Database = {
           has_common_supplier?: boolean;
           has_common_weight?: boolean;
           id?: string;
+          material_name_position?: string;
           name: string;
           product_count?: number | null;
           style?: string | null;
@@ -9803,6 +9782,7 @@ export type Database = {
           archived_at?: string | null;
           auto_name_pattern?: string | null;
           base_sku?: string;
+          color_name_position?: string;
           common_color?: string | null;
           common_cost_price?: number | null;
           common_dimensions?: Json | null;
@@ -9820,6 +9800,7 @@ export type Database = {
           has_common_supplier?: boolean;
           has_common_weight?: boolean;
           id?: string;
+          material_name_position?: string;
           name?: string;
           product_count?: number | null;
           style?: string | null;
@@ -14351,9 +14332,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       affiliate_product_approval_status: [

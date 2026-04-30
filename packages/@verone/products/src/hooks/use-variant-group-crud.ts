@@ -57,12 +57,14 @@ export function useVariantGroupCrud(deps: VariantGroupCrudDeps) {
             has_common_material: data.has_common_material ?? false,
             common_color: data.common_color ?? null,
             has_common_color: data.has_common_color ?? false,
+            material_name_position: data.material_name_position ?? 'none',
+            color_name_position: data.color_name_position ?? 'none',
             product_count: 0,
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase strict enum types pour suitable_rooms nécessitent cast
         ] as any)
         .select(
-          'id, name, base_sku, subcategory_id, variant_type, product_count, has_common_supplier, supplier_id, dimensions_length, dimensions_width, dimensions_height, dimensions_unit, style, suitable_rooms, common_weight, has_common_weight, common_cost_price, has_common_cost_price, common_eco_tax, common_material, has_common_material, common_color, has_common_color, archived_at, created_at, updated_at'
+          'id, name, base_sku, subcategory_id, variant_type, product_count, has_common_supplier, supplier_id, dimensions_length, dimensions_width, dimensions_height, dimensions_unit, style, suitable_rooms, common_weight, has_common_weight, common_cost_price, has_common_cost_price, common_eco_tax, common_material, has_common_material, common_color, has_common_color, material_name_position, color_name_position, archived_at, created_at, updated_at'
         )
         .single();
 
@@ -243,6 +245,10 @@ export function useVariantGroupCrud(deps: VariantGroupCrudDeps) {
         updateData.common_color = data.common_color;
       if (data.has_common_color !== undefined)
         updateData.has_common_color = data.has_common_color;
+      if (data.material_name_position !== undefined)
+        updateData.material_name_position = data.material_name_position;
+      if (data.color_name_position !== undefined)
+        updateData.color_name_position = data.color_name_position;
 
       logger.info('Mise à jour variant group', {
         operation: 'update_variant_group',
@@ -255,7 +261,7 @@ export function useVariantGroupCrud(deps: VariantGroupCrudDeps) {
         .update(updateData)
         .eq('id', groupId)
         .select(
-          'id, name, base_sku, subcategory_id, variant_type, product_count, has_common_supplier, supplier_id, dimensions_length, dimensions_width, dimensions_height, dimensions_unit, style, suitable_rooms, common_weight, has_common_weight, common_cost_price, has_common_cost_price, common_eco_tax, common_material, has_common_material, common_color, has_common_color, archived_at, created_at, updated_at'
+          'id, name, base_sku, subcategory_id, variant_type, product_count, has_common_supplier, supplier_id, dimensions_length, dimensions_width, dimensions_height, dimensions_unit, style, suitable_rooms, common_weight, has_common_weight, common_cost_price, has_common_cost_price, common_eco_tax, common_material, has_common_material, common_color, has_common_color, material_name_position, color_name_position, archived_at, created_at, updated_at'
         )
         .single();
 
