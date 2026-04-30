@@ -68,7 +68,11 @@
       "@verone/ui-business": ["./packages/@verone/ui-business/src"],
       "@verone/ui-business/*": ["./packages/@verone/ui-business/src/*"],
       "@verone/admin": ["./packages/@verone/admin/src"],
-      "@verone/admin/*": ["./packages/@verone/admin/src/*"]
+      "@verone/admin/*": ["./packages/@verone/admin/src/*"],
+      "@verone/tokens": ["./packages/@verone/tokens/src"],
+      "@verone/tokens/*": ["./packages/@verone/tokens/src/*"],
+      "@verone/themes": ["./packages/@verone/themes/src"],
+      "@verone/themes/*": ["./packages/@verone/themes/src/*"]
     },
     "target": "ES2017"
   },
