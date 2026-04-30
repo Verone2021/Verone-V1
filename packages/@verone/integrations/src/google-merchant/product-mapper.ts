@@ -259,9 +259,9 @@ export function mapSupabaseToGoogleMerchant(
     },
   };
 
-  // Champs optionnels
-  if (product.brand) {
-    productInput.brand = product.brand;
+  // Champs optionnels — Google Merchant API field name is 'brand', value comes from our manufacturer column
+  if (product.manufacturer) {
+    productInput.brand = product.manufacturer;
   }
 
   if (product.gtin) {

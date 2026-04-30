@@ -93,10 +93,10 @@ export function IdentificationCommerceCard({
       {/* Grid 4 cols */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
         <InlineTextField
-          label="Marque"
-          value={product.brand ?? ''}
+          label="Fabricant"
+          value={product.manufacturer ?? ''}
           placeholder="ex: Cassina"
-          onSave={v => handleSave('brand', v || null)}
+          onSave={v => handleSave('manufacturer', v || null)}
         />
         <InlineTextField
           label="GTIN / EAN"

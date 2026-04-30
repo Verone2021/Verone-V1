@@ -54,7 +54,7 @@ export interface CatalogueProduct {
   // Champs produit supplémentaires (ajoutés 2025-11-17)
   description: string | null;
   technical_description: string | null;
-  brand: string | null;
+  manufacturer: string | null;
   selling_points: string[] | null;
   dimensions: {
     length?: number;

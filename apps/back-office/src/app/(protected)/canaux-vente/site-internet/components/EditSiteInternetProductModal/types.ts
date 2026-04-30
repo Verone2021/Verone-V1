@@ -35,7 +35,7 @@ export interface SiteInternetProduct {
   // Nouveaux champs (12) - Ajoutés 2025-11-17
   description: string | null;
   technical_description: string | null;
-  brand: string | null;
+  manufacturer: string | null;
   selling_points: string[];
   dimensions: ProductDimensions | null;
   weight: number | null;

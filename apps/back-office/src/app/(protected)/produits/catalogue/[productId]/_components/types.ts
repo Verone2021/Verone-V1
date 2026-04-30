@@ -171,7 +171,7 @@ export function calculateAllMissingFields(product: Product | null) {
     // Identifiants (3 champs)
     identifiants: [
       !product.sku || product.sku.trim() === '',
-      !product.brand || product.brand.trim() === '',
+      !product.manufacturer || product.manufacturer.trim() === '',
       !product.gtin || product.gtin.trim() === '',
     ].filter(Boolean).length,
   };

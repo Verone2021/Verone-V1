@@ -22,7 +22,7 @@ import type {
 // ============================================
 
 interface ProductDetail {
-  brand: string | null;
+  manufacturer: string | null;
   style: string | null;
   dimensions: {
     width_cm?: number;
@@ -286,12 +286,12 @@ export function ProductDetailModal({
                   <Skeleton className="h-6 w-24 rounded-full" />
                 </div>
               ) : (
-                (detail?.brand ?? detail?.style) && (
+                (detail?.manufacturer ?? detail?.style) && (
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {detail.brand && (
+                    {detail.manufacturer && (
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 text-xs font-medium text-gray-700">
                         <Tag className="h-3 w-3" />
-                        {detail.brand}
+                        {detail.manufacturer}
                       </span>
                     )}
                     {detail.style && (

@@ -74,13 +74,13 @@ export function SourcingProductDetailsSection({
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <Label htmlFor="brand" className="text-xs text-gray-600">
-              Marque
+            <Label htmlFor="manufacturer" className="text-xs text-gray-600">
+              Fabricant
             </Label>
             <Input
-              id="brand"
-              value={editedData?.brand ?? ''}
-              onChange={e => onUpdateData({ brand: e.target.value })}
+              id="manufacturer"
+              value={editedData?.manufacturer ?? ''}
+              onChange={e => onUpdateData({ manufacturer: e.target.value })}
               placeholder="HAY, Fermob..."
               className="mt-1"
             />
@@ -207,11 +207,11 @@ export function SourcingProductDetailsSection({
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {product.brand && (
+        {product.manufacturer && (
           <div className="flex items-center text-sm text-gray-600">
             <Tag className="h-4 w-4 mr-2 text-gray-400" />
-            <span className="font-medium mr-1">Marque:</span>
-            {product.brand}
+            <span className="font-medium mr-1">Fabricant:</span>
+            {product.manufacturer}
           </div>
         )}
         {product.supplier_moq != null && product.supplier_moq > 0 && (
@@ -242,7 +242,7 @@ export function SourcingProductDetailsSection({
         <p className="text-sm text-gray-600 mt-2">{product.description}</p>
       )}
 
-      {!product.brand &&
+      {!product.manufacturer &&
         !product.description &&
         !product.supplier_moq &&
         !product.dimensions &&

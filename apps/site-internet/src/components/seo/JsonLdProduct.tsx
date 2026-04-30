@@ -4,7 +4,7 @@ interface JsonLdProductProps {
   slug: string;
   price: number | null;
   imageUrl: string | null;
-  brand: string | null;
+  manufacturer: string | null;
   sku: string | null;
   inStock?: boolean;
   reviewCount?: number;
@@ -17,7 +17,7 @@ export function JsonLdProduct({
   slug,
   price,
   imageUrl,
-  brand,
+  manufacturer,
   sku,
   inStock = true,
   reviewCount,
@@ -34,11 +34,12 @@ export function JsonLdProduct({
     url: `${siteUrl}/produit/${slug}`,
     ...(imageUrl ? { image: imageUrl } : {}),
     ...(sku ? { sku } : {}),
-    ...(brand
+    // Schema.org standard property name 'brand' (kept), value comes from product manufacturer
+    ...(manufacturer
       ? {
           brand: {
             '@type': 'Brand',
-            name: brand,
+            name: manufacturer,
           },
         }
       : {}),

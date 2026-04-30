@@ -47,7 +47,7 @@ interface ProductData {
   cost_price?: number;
   status: string;
   condition?: string;
-  brand?: string;
+  manufacturer?: string;
   gtin?: string;
   supplier_reference?: string;
   variant_attributes?: Record<string, unknown>;

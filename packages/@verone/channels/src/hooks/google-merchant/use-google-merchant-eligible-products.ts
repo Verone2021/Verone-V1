@@ -29,7 +29,7 @@ export interface GoogleMerchantEligibleProduct {
   stock_status: string | null;
   product_status: string;
   gtin: string | null;
-  brand: string | null;
+  manufacturer: string | null;
 }
 
 /**

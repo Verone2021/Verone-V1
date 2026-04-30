@@ -184,10 +184,12 @@ export function ProductPreviewModal({
 
             {/* Caractéristiques */}
             <div className="grid grid-cols-2 gap-4 text-sm">
-              {product.brand && (
+              {product.manufacturer && (
                 <div>
-                  <span className="text-gray-500">Marque :</span>
-                  <span className="ml-2 font-medium">{product.brand}</span>
+                  <span className="text-gray-500">Fabricant :</span>
+                  <span className="ml-2 font-medium">
+                    {product.manufacturer}
+                  </span>
                 </div>
               )}
               {product.subcategory_name && (

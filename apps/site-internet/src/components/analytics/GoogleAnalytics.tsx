@@ -30,7 +30,7 @@ export function trackViewItem(product: {
   id: string;
   name: string;
   price: number;
-  brand?: string;
+  manufacturer?: string;
   category?: string;
 }) {
   if (typeof window === 'undefined' || !GA_ID) return;
@@ -45,7 +45,8 @@ export function trackViewItem(product: {
         item_id: product.id,
         item_name: product.name,
         price: product.price,
-        item_brand: product.brand,
+        // GA4 standard field name 'item_brand' (kept), value from product manufacturer
+        item_brand: product.manufacturer,
         item_category: product.category,
       },
     ],

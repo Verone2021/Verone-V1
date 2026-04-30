@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     .from('products')
     .select(
       `
-      id, sku, name, slug, brand, product_status, cost_price, weight,
+      id, sku, name, slug, manufacturer, product_status, cost_price, weight,
       dimensions, description, meta_title, meta_description,
       stock_real, stock_forecasted_in, stock_forecasted_out, min_stock,
       condition, gtin, supplier_reference, supplier_page_url, supplier_moq,
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
     return {
       sku: p.sku,
       name: p.name,
-      brand: p.brand ?? '',
+      manufacturer: p.manufacturer ?? '',
       status: p.product_status,
       family: sub?.category?.family?.name ?? '',
       category: sub?.category?.name ?? '',
@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
       [
         r.sku,
         r.name,
-        r.brand,
+        r.manufacturer,
         r.status,
         r.family,
         r.category,
@@ -228,7 +228,7 @@ export async function POST(request: NextRequest) {
   sheet.columns = [
     { header: 'SKU', key: 'sku', width: 14 },
     { header: 'Nom', key: 'name', width: 35 },
-    { header: 'Marque', key: 'brand', width: 15 },
+    { header: 'Fabricant', key: 'manufacturer', width: 15 },
     { header: 'Statut', key: 'status', width: 10 },
     { header: 'Famille', key: 'family', width: 18 },
     { header: 'Categorie', key: 'category', width: 18 },

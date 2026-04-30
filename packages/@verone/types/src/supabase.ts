@@ -6230,7 +6230,6 @@ export type Database = {
           availability_type:
             | Database['public']['Enums']['availability_type_enum']
             | null;
-          brand: string | null;
           completion_percentage: number | null;
           completion_status: string | null;
           condition: string | null;
@@ -6258,6 +6257,7 @@ export type Database = {
           internal_notes: string | null;
           is_published_online: boolean | null;
           item_group_id: string | null;
+          manufacturer: string | null;
           margin_percentage: number | null;
           meta_description: string | null;
           meta_title: string | null;
@@ -6321,7 +6321,6 @@ export type Database = {
           availability_type?:
             | Database['public']['Enums']['availability_type_enum']
             | null;
-          brand?: string | null;
           completion_percentage?: number | null;
           completion_status?: string | null;
           condition?: string | null;
@@ -6349,6 +6348,7 @@ export type Database = {
           internal_notes?: string | null;
           is_published_online?: boolean | null;
           item_group_id?: string | null;
+          manufacturer?: string | null;
           margin_percentage?: number | null;
           meta_description?: string | null;
           meta_title?: string | null;
@@ -6412,7 +6412,6 @@ export type Database = {
           availability_type?:
             | Database['public']['Enums']['availability_type_enum']
             | null;
-          brand?: string | null;
           completion_percentage?: number | null;
           completion_status?: string | null;
           condition?: string | null;
@@ -6440,6 +6439,7 @@ export type Database = {
           internal_notes?: string | null;
           is_published_online?: boolean | null;
           item_group_id?: string | null;
+          manufacturer?: string | null;
           margin_percentage?: number | null;
           meta_description?: string | null;
           meta_title?: string | null;
@@ -9743,16 +9743,20 @@ export type Database = {
           archived_at: string | null;
           auto_name_pattern: string | null;
           base_sku: string;
+          common_color: string | null;
           common_cost_price: number | null;
           common_dimensions: Json | null;
           common_eco_tax: number | null;
+          common_material: string | null;
           common_weight: number | null;
           created_at: string | null;
           dimensions_height: number | null;
           dimensions_length: number | null;
           dimensions_unit: string | null;
           dimensions_width: number | null;
+          has_common_color: boolean;
           has_common_cost_price: boolean;
+          has_common_material: boolean;
           has_common_supplier: boolean;
           has_common_weight: boolean;
           id: string;
@@ -9769,16 +9773,20 @@ export type Database = {
           archived_at?: string | null;
           auto_name_pattern?: string | null;
           base_sku: string;
+          common_color?: string | null;
           common_cost_price?: number | null;
           common_dimensions?: Json | null;
           common_eco_tax?: number | null;
+          common_material?: string | null;
           common_weight?: number | null;
           created_at?: string | null;
           dimensions_height?: number | null;
           dimensions_length?: number | null;
           dimensions_unit?: string | null;
           dimensions_width?: number | null;
+          has_common_color?: boolean;
           has_common_cost_price?: boolean;
+          has_common_material?: boolean;
           has_common_supplier?: boolean;
           has_common_weight?: boolean;
           id?: string;
@@ -9795,16 +9803,20 @@ export type Database = {
           archived_at?: string | null;
           auto_name_pattern?: string | null;
           base_sku?: string;
+          common_color?: string | null;
           common_cost_price?: number | null;
           common_dimensions?: Json | null;
           common_eco_tax?: number | null;
+          common_material?: string | null;
           common_weight?: number | null;
           created_at?: string | null;
           dimensions_height?: number | null;
           dimensions_length?: number | null;
           dimensions_unit?: string | null;
           dimensions_width?: number | null;
+          has_common_color?: boolean;
           has_common_cost_price?: boolean;
+          has_common_material?: boolean;
           has_common_supplier?: boolean;
           has_common_weight?: boolean;
           id?: string;
@@ -12446,11 +12458,11 @@ export type Database = {
       get_google_merchant_eligible_products: {
         Args: never;
         Returns: {
-          brand: string;
           description: string;
           gtin: string;
           id: string;
           image_url: string;
+          manufacturer: string;
           name: string;
           price_ht_cents: number;
           price_ttc_cents: number;
@@ -12998,7 +13010,6 @@ export type Database = {
         Args: never;
         Returns: {
           assembly_price: number;
-          brand: string;
           color: string;
           cost_price: number;
           delivery_delay_weeks_max: number;
@@ -13013,6 +13024,7 @@ export type Database = {
           ineligibility_reasons: string[];
           is_eligible: boolean;
           is_published: boolean;
+          manufacturer: string;
           metadata: Json;
           name: string;
           price_ht: number;

@@ -66,7 +66,7 @@ const ImportProductSchema = z.object({
   description: z.string().nullish(),
   technical_description: z.string().nullish(),
   supplier_reference: z.string().nullish(),
-  brand: z.string().nullish(),
+  manufacturer: z.string().nullish(),
   source_url: z.string().url('URL invalide'),
   source_platform: z
     .enum(['alibaba', 'zentrada', 'faire', 'ankorstore', 'other'])
@@ -327,7 +327,7 @@ export async function POST(request: NextRequest) {
         description: input.description ?? null,
         technical_description: input.technical_description ?? null,
         supplier_reference: input.supplier_reference ?? null,
-        brand: input.brand ?? null,
+        manufacturer: input.manufacturer ?? null,
         product_status: 'draft' as const,
         creation_mode: 'sourcing',
         sourcing_status: 'supplier_search',
@@ -499,7 +499,7 @@ export async function POST(request: NextRequest) {
         name: product.name,
         sku,
         cost_price: input.cost_price ?? null,
-        brand: input.brand ?? null,
+        manufacturer: input.manufacturer ?? null,
         supplier_reference: input.supplier_reference ?? null,
         sourcing_status: 'supplier_search',
         images_count: imageCount ?? 0,

@@ -65,7 +65,7 @@ async function fetchBaseProduct(baseProductId: string) {
   const { data, error } = await supabase
     .from('products')
     .select(
-      'sku, subcategory_id, supplier_id, brand, description, technical_description'
+      'sku, subcategory_id, supplier_id, manufacturer, description, technical_description'
     )
     .eq('id', baseProductId)
     .single();
@@ -132,7 +132,7 @@ async function insertProduct({
         stock_quantity: 0,
         subcategory_id: baseProduct.subcategory_id,
         supplier_id: baseProduct.supplier_id,
-        brand: baseProduct.brand,
+        manufacturer: baseProduct.manufacturer,
         description: baseProduct.description,
         technical_description: baseProduct.technical_description,
       },

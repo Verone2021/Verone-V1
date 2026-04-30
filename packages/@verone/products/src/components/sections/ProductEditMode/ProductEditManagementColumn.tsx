@@ -260,12 +260,12 @@ export function ProductEditManagementColumn({
           </div>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
-              <Label className="text-[9px] text-gray-600">Marque</Label>
+              <Label className="text-[9px] text-gray-600">Fabricant</Label>
               <Input
-                value={formData.brand}
-                onChange={e => onFieldChange('brand', e.target.value)}
+                value={formData.manufacturer}
+                onChange={e => onFieldChange('manufacturer', e.target.value)}
                 className="h-6 text-[10px]"
-                placeholder="Marque"
+                placeholder="Fabricant"
               />
             </div>
             <div>

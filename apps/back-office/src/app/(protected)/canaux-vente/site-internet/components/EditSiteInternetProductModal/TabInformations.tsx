@@ -59,10 +59,10 @@ export function TabInformations({ product }: TabSharedProps) {
         </div>
 
         <div className="bg-white border rounded-lg p-4">
-          <Label className="text-gray-700">Marque</Label>
+          <Label className="text-gray-700">Fabricant</Label>
           <div className="text-sm text-gray-900 mt-2">
-            {product.brand ? (
-              <Badge variant="secondary">{product.brand}</Badge>
+            {product.manufacturer ? (
+              <Badge variant="secondary">{product.manufacturer}</Badge>
             ) : (
               <span className="text-gray-400 italic">Non renseignée</span>
             )}

@@ -22,7 +22,7 @@ export interface ProductFormData {
   stock_quantity: number;
   min_stock: number;
   sku: string;
-  brand: string;
+  manufacturer: string;
   gtin: string;
   dimensions_length: string | number;
   dimensions_width: string | number;
