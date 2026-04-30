@@ -537,7 +537,7 @@ export function VariantAddProductModal({
         </DialogContent>
       </Dialog>
 
-      {/* UniversalProductSelectorV2 — Filtre par subcategory_id */}
+      {/* UniversalProductSelectorV2 — pre-rempli avec le nom du groupe + exclut les produits deja membres */}
       {showProductSelector && group && (
         <UniversalProductSelectorV2
           open={showProductSelector}
@@ -550,6 +550,8 @@ export function VariantAddProductModal({
           showQuantity={false}
           showPricing={false}
           showImages
+          initialSearch={group.name}
+          excludeProductIds={(group.products ?? []).map(p => p.id)}
         />
       )}
     </>
