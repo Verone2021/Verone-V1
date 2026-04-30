@@ -145,6 +145,13 @@ export async function loadProducts(
     query = query.lte('margin_percentage', filters.marginMax);
   }
 
+  // BO-CATALOG-VARIANTS-001 : filtre par appartenance à un groupe de variantes
+  if (filters.variantStatus === 'with_variants') {
+    query = query.not('variant_group_id', 'is', null);
+  } else if (filters.variantStatus === 'without_variants') {
+    query = query.is('variant_group_id', null);
+  }
+
   if (filters.stockLevels && filters.stockLevels.length > 0) {
     const parts: string[] = [];
     if (filters.stockLevels.includes('in_stock'))
