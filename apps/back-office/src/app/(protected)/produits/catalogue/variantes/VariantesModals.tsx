@@ -5,6 +5,7 @@ import type { VariantGroup, UpdateVariantGroupData } from '@verone/types';
 import { VariantAddProductModal } from '@verone/products';
 import { VariantGroupEditModal } from '@verone/products';
 import { VariantGroupCreationWizard } from '@verone/products';
+import { useVariantProducts } from '@verone/products/hooks';
 
 interface VariantesModalsProps {
   showEditModal: boolean;
@@ -34,6 +35,8 @@ export function VariantesModals({
   refetch,
   updateVariantGroup,
 }: VariantesModalsProps) {
+  const { addProductToVariantGroup } = useVariantProducts();
+
   return (
     <>
       {showEditModal && !editingGroup && (
@@ -77,13 +80,14 @@ export function VariantesModals({
             setSelectedGroupForProducts(null);
           }}
           group={selectedGroupForProducts}
-          onSubmit={async _data => {
-            void refetch().catch(error => {
-              console.error(
-                '[Variants] Refetch after add products failed:',
-                error
-              );
-            });
+          onSubmit={async data => {
+            const ok = await addProductToVariantGroup(
+              data.product_id,
+              data.variant_group_id
+            );
+            if (ok) {
+              await refetch();
+            }
           }}
         />
       )}
