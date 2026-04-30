@@ -92,6 +92,11 @@ export interface CatalogueFilters {
   completionLevels?: string[];
   priceMin?: number;
   priceMax?: number;
+  marginMin?: number;
+  marginMax?: number;
+  brands?: string[];
+  /** Filtre publication en ligne (site internet) */
+  publishedOnline?: 'all' | 'published' | 'unpublished';
   limit?: number;
   offset?: number;
   page?: number;

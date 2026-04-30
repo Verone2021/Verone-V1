@@ -87,7 +87,6 @@ export default function CataloguePage() {
           onSearchChange={ctx.handleSearchChange}
           onClearSearch={ctx.handleClearSearch}
           onResetAllFilters={ctx.handleResetAllFilters}
-          onResync={ctx.handleResync}
           onFiltersChange={ctx.handleFiltersChange}
         />
 

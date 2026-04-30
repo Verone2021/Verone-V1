@@ -33,7 +33,6 @@ export function useCataloguePage() {
     error,
     total,
     setFilters: setCatalogueFilters,
-    loadCatalogueData,
     loadArchivedProducts,
     loadIncompleteProducts,
     archiveProduct,
@@ -268,19 +267,6 @@ export function useCataloguePage() {
     applyFilters(emptyFilters);
   };
 
-  // Resynchroniser : force un re-fetch des produits depuis Supabase avec les
-  // filtres courants. Corrige les cas ou le state local et les donnees affichees
-  // se desynchronisent (ex: selection fournisseur qui saute apres plusieurs
-  // changements rapides).
-  const handleResync = useCallback(() => {
-    void loadCatalogueData().catch(err => {
-      console.error('[CataloguePage] Resync failed:', err);
-    });
-    if (tabs.activeTab === 'incomplete') {
-      tabs.triggerIncompleteReload();
-    }
-  }, [loadCatalogueData, tabs]);
-
   const hasActiveFilters =
     filters.search !== '' ||
     filters.families.length > 0 ||
@@ -434,7 +420,6 @@ export function useCataloguePage() {
     handleSearchChange,
     handleClearSearch,
     handleResetAllFilters,
-    handleResync,
     hasActiveFilters,
     searchItems,
     handleSearchSelect,
