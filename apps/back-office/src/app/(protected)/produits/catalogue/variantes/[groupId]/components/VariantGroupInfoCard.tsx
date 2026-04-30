@@ -80,9 +80,7 @@ export function VariantGroupInfoCard({
                 autoFocus
               >
                 <option value="color">Couleur</option>
-                <option value="size">Taille</option>
                 <option value="material">Matériau</option>
-                <option value="pattern">Motif</option>
               </select>
               {savingType && (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black" />
