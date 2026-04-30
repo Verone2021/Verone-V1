@@ -21,9 +21,9 @@ git checkout -b feat/XXX        # ← branche partie de main
 gh pr create --base main ...    # ← PR vers main
 ```
 
-Seule exception autorisée vers `main` : la **release PR** `staging → main`, créée périodiquement par Romeo (ou le workflow `auto-release-staging-to-main.yml`).
+Seule exception autorisée vers `main` : la **release PR** `staging → main`, créée **EXCLUSIVEMENT par Romeo** (manuellement ou via le workflow `auto-release-staging-to-main.yml`). **L'agent ne crée JAMAIS cette release PR de sa propre initiative**, peu importe le contexte (staging ahead, fix urgent, ordre antérieur "merge sur main", etc.). Romeo décide du timing — chaque jour, chaque semaine, ou selon son rythme.
 
-Toute autre PR vers `main` est **bloquée par le workflow `protect-main-source.yml`** (CI fail). Pour bypass un hotfix vraiment critique : ajouter le label `hotfix-direct`.
+Toute autre PR vers `main` est **bloquée par le workflow `protect-main-source.yml`** (CI fail). Le bypass via label `hotfix-direct` est réservé à Romeo lui-même — l'agent ne l'applique JAMAIS.
 
 Pourquoi : si tu PR vers main directement, main avance avant staging → la release PR staging→main devient un calvaire de conflits. Cf incident 2026-04-25 (6 PRs ouvertes vers main au lieu de staging, 72h perdues à débrouiller).
 

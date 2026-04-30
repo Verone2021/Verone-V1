@@ -97,7 +97,10 @@ Si Romeo dit « ok » ou « vas-y », l'agent exécute immédiatement. Sinon il 
 
 ### Merges et branche protégée
 
-- `gh pr merge` vers **staging** ou **main**
+- `gh pr merge` vers **staging** (sans ordre explicite immédiat de Romeo)
+- **`gh pr merge` vers `main` — INTERDIT ABSOLU**, peu importe le contexte. C'est Romeo qui décide quand release sur main, manuellement ou via le workflow `auto-release-staging-to-main.yml`. L'agent ne crée JAMAIS la release PR `staging → main` de sa propre initiative.
+- **`gh pr create --base main` — INTERDIT ABSOLU**, sauf ordre explicite de Romeo dans le message immédiatement précédent (et JAMAIS un ordre antérieur réutilisé).
+- **`gh pr merge --admin` — INTERDIT ABSOLU**. Si la CI fail, on push un commit de fix sur la même branche et on attend la CI verte. JAMAIS de bypass `--admin`, peu importe le délai ou l'ordre. Si Romeo dit "merge tout maintenant" et qu'un check fail, lui dire clairement "le check X fail, je propose de fix dans X minutes — OK ?".
 - Push direct sur `main` ou `staging` (bloqué par hook de toute façon)
 - Force push (`--force`, `--force-with-lease`)
 - `git reset --hard` sur commits déjà mergés
