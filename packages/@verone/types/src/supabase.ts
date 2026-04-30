@@ -9743,6 +9743,7 @@ export type Database = {
           archived_at: string | null;
           auto_name_pattern: string | null;
           base_sku: string;
+          color_name_position: string;
           common_color: string | null;
           common_cost_price: number | null;
           common_dimensions: Json | null;
@@ -9760,6 +9761,7 @@ export type Database = {
           has_common_supplier: boolean;
           has_common_weight: boolean;
           id: string;
+          material_name_position: string;
           name: string;
           product_count: number | null;
           style: string | null;
@@ -9773,6 +9775,7 @@ export type Database = {
           archived_at?: string | null;
           auto_name_pattern?: string | null;
           base_sku: string;
+          color_name_position?: string;
           common_color?: string | null;
           common_cost_price?: number | null;
           common_dimensions?: Json | null;
@@ -9790,6 +9793,7 @@ export type Database = {
           has_common_supplier?: boolean;
           has_common_weight?: boolean;
           id?: string;
+          material_name_position?: string;
           name: string;
           product_count?: number | null;
           style?: string | null;
@@ -9803,6 +9807,7 @@ export type Database = {
           archived_at?: string | null;
           auto_name_pattern?: string | null;
           base_sku?: string;
+          color_name_position?: string;
           common_color?: string | null;
           common_cost_price?: number | null;
           common_dimensions?: Json | null;
@@ -9820,6 +9825,7 @@ export type Database = {
           has_common_supplier?: boolean;
           has_common_weight?: boolean;
           id?: string;
+          material_name_position?: string;
           name?: string;
           product_count?: number | null;
           style?: string | null;

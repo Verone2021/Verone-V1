@@ -18,7 +18,11 @@ import {
 import { Label } from '@verone/ui';
 import type { SelectedProduct } from '@verone/products/components/selectors/UniversalProductSelectorV2';
 import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
-import type { AddProductToGroupData, VariantGroup } from '@verone/types';
+import type {
+  AddProductToGroupData,
+  VariantGroup,
+  NamePosition,
+} from '@verone/types';
 import { MATERIAL_OPTIONS, type ProductMaterial } from '@verone/types';
 import { DynamicColorSelector } from '@verone/ui-business/components/selectors/DynamicColorSelector';
 
@@ -133,13 +137,6 @@ export function VariantAddProductModal({
   const [colorName, setColorName] = useState('');
   // Matière : enum strict ProductMaterial
   const [material, setMaterial] = useState<ProductMaterial | ''>('');
-  // Inclure la matière commune dans le nom du produit (default OFF)
-  // Quand la matière est commune au groupe, par défaut on n'inclut PAS dans le nom
-  // (le groupe = "Bout de canapé Bibi" + couleur, sans répéter "métal" partout).
-  // Romeo peut cocher pour inclure si désiré.
-  const [includeMaterialInName, setIncludeMaterialInName] = useState(false);
-  // Idem pour la couleur quand elle est commune au groupe (variant_type='material')
-  const [includeColorInName, setIncludeColorInName] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Détecte si la propriété est verrouillée (commune au groupe)
@@ -147,20 +144,58 @@ export function VariantAddProductModal({
   const materialIsLocked =
     !!group?.has_common_material && !!group?.common_material;
 
-  // Construit le nom selon les règles :
-  // - Si propriété varie (non locked) → toujours incluse dans le nom
-  // - Si propriété commune (locked) → incluse seulement si checkbox "Inclure dans le nom" cochée
-  const colorPart =
-    colorName && (!colorIsLocked || includeColorInName) ? colorName : '';
-  const materialPart =
-    material && (!materialIsLocked || includeMaterialInName)
-      ? (MATERIAL_OPTIONS.find(o => o.value === material)?.label ?? material)
-      : '';
-  const nameParts = [materialPart, colorPart].filter(Boolean);
-  const newName =
-    selectedProduct && nameParts.length > 0
-      ? `${group?.name ?? ''} - ${nameParts.join(', ')}`
-      : (group?.name ?? '');
+  // Position de la matiere/couleur dans le nom (definie par Romeo dans
+  // VariantGroupEditModal). Pour les proprietes qui VARIENT (non locked),
+  // default 'before_variant' (comportement historique : "{groupe} - couleur, matiere").
+  const variantType = group?.variant_type ?? 'color';
+  const materialPosition: NamePosition = materialIsLocked
+    ? ((group?.material_name_position as NamePosition | null) ?? 'none')
+    : variantType === 'material'
+      ? 'before_variant'
+      : 'none';
+  const colorPosition: NamePosition = colorIsLocked
+    ? ((group?.color_name_position as NamePosition | null) ?? 'none')
+    : variantType === 'color'
+      ? 'before_variant'
+      : 'none';
+
+  // Calcul du nom selon les positions choisies au niveau du groupe
+  const newName = (() => {
+    if (!selectedProduct) return group?.name ?? '';
+    let prefix = '';
+    let suffix = group?.name ?? '';
+    const beforeVariantParts: string[] = [];
+    const variantValueParts: string[] = [];
+
+    const place = (
+      value: string | null,
+      position: NamePosition,
+      isVariantValue: boolean
+    ): void => {
+      if (!value || position === 'none') return;
+      if (isVariantValue && position === 'before_variant') {
+        // L'attribut qui varie (couleur si variant_type='color', matiere sinon)
+        variantValueParts.push(value);
+        return;
+      }
+      if (position === 'before_group') {
+        prefix = prefix ? `${prefix} ${value}` : value;
+      } else if (position === 'after_group') {
+        suffix = `${suffix} ${value}`;
+      } else if (position === 'before_variant') {
+        beforeVariantParts.push(value);
+      }
+    };
+
+    const materialLabel =
+      MATERIAL_OPTIONS.find(o => o.value === material)?.label ?? material;
+    place(materialLabel || null, materialPosition, !materialIsLocked);
+    place(colorName || null, colorPosition, !colorIsLocked);
+
+    const head = prefix ? `${prefix} ${suffix}` : suffix;
+    const tailParts = [...beforeVariantParts, ...variantValueParts];
+    return tailParts.length > 0 ? `${head} - ${tailParts.join(', ')}` : head;
+  })();
 
   // Résolution hiérarchique de la sous-catégorie depuis les données déjà présentes
   const subcategoryPath = (() => {
@@ -247,7 +282,6 @@ export function VariantAddProductModal({
   if (!group) return null;
 
   // Logique conditionnelle selon variant_type du groupe
-  const variantType = group.variant_type ?? 'color';
   const isColorVariant = variantType === 'color';
   const isMaterialVariant = variantType === 'material';
   // Si la propriété est commune au groupe, on la verrouille (lock)
@@ -362,22 +396,11 @@ export function VariantAddProductModal({
                             />
                           )}
                         </div>
-                        {colorLocked && (
-                          <label
-                            htmlFor="include-color-in-name"
-                            className="flex items-center gap-2 mt-2 text-xs text-gray-700 cursor-pointer"
-                          >
-                            <input
-                              id="include-color-in-name"
-                              type="checkbox"
-                              checked={includeColorInName}
-                              onChange={e =>
-                                setIncludeColorInName(e.target.checked)
-                              }
-                              className="h-4 w-4 rounded border-gray-300"
-                            />
-                            Inclure la couleur dans le nom du produit
-                          </label>
+                        {colorLocked && colorPosition !== 'none' && (
+                          <p className="mt-2 text-xs text-blue-700 italic">
+                            Inclus dans le nom · position définie au niveau du
+                            groupe
+                          </p>
                         )}
                       </div>
 
@@ -426,22 +449,11 @@ export function VariantAddProductModal({
                             ))}
                           </select>
                         )}
-                        {materialLocked && (
-                          <label
-                            htmlFor="include-material-in-name"
-                            className="flex items-center gap-2 mt-2 text-xs text-gray-700 cursor-pointer"
-                          >
-                            <input
-                              id="include-material-in-name"
-                              type="checkbox"
-                              checked={includeMaterialInName}
-                              onChange={e =>
-                                setIncludeMaterialInName(e.target.checked)
-                              }
-                              className="h-4 w-4 rounded border-gray-300"
-                            />
-                            Inclure la matière dans le nom du produit
-                          </label>
+                        {materialLocked && materialPosition !== 'none' && (
+                          <p className="mt-2 text-xs text-blue-700 italic">
+                            Inclus dans le nom · position définie au niveau du
+                            groupe
+                          </p>
                         )}
                       </div>
                     </div>

@@ -43,6 +43,7 @@ export function useVariantGroups(filters?: VariantGroupFilters) {
           common_cost_price, has_common_cost_price, common_eco_tax,
           common_material, has_common_material,
           common_color, has_common_color,
+          material_name_position, color_name_position,
           archived_at, created_at, updated_at
         `
         )

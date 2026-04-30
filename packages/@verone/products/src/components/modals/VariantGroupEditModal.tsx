@@ -5,7 +5,11 @@ import { useState, useEffect } from 'react';
 import { useSubcategories } from '@verone/categories/hooks';
 import { useOrganisations } from '@verone/organisations/hooks';
 import { useProductColors } from '@verone/products/hooks';
-import type { VariantGroup, UpdateVariantGroupData } from '@verone/types';
+import type {
+  VariantGroup,
+  UpdateVariantGroupData,
+  NamePosition,
+} from '@verone/types';
 import { Button } from '@verone/ui';
 import {
   Dialog,
@@ -72,6 +76,10 @@ export function VariantGroupEditModal({
   const [commonMaterial, setCommonMaterial] = useState<string>('');
   const [hasCommonColor, setHasCommonColor] = useState(false);
   const [commonColor, setCommonColor] = useState<string>('');
+  const [materialNamePosition, setMaterialNamePosition] =
+    useState<NamePosition>('none');
+  const [colorNamePosition, setColorNamePosition] =
+    useState<NamePosition>('none');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialiser les valeurs du formulaire quand le groupe change
@@ -116,6 +124,14 @@ export function VariantGroupEditModal({
       // Couleur commune
       setHasCommonColor(group.has_common_color ?? false);
       setCommonColor(group.common_color ?? '');
+
+      // Positions dans le nom (default 'none')
+      setMaterialNamePosition(
+        (group.material_name_position as NamePosition | null) ?? 'none'
+      );
+      setColorNamePosition(
+        (group.color_name_position as NamePosition | null) ?? 'none'
+      );
     }
   }, [group, isOpen]);
 
@@ -210,6 +226,15 @@ export function VariantGroupEditModal({
       // Couleur commune
       updateData.has_common_color = hasCommonColor;
       updateData.common_color = hasCommonColor ? commonColor || null : null;
+
+      // Positions dans le nom — uniquement si la propriete commune est cochee
+      // sinon force 'none' pour eviter incoherence
+      updateData.material_name_position = hasCommonMaterial
+        ? materialNamePosition
+        : 'none';
+      updateData.color_name_position = hasCommonColor
+        ? colorNamePosition
+        : 'none';
 
       await onSubmit(group.id, updateData);
       onClose();
@@ -354,6 +379,11 @@ export function VariantGroupEditModal({
               commonColor={commonColor}
               setCommonColor={setCommonColor}
               colors={colors}
+              materialNamePosition={materialNamePosition}
+              setMaterialNamePosition={setMaterialNamePosition}
+              colorNamePosition={colorNamePosition}
+              setColorNamePosition={setColorNamePosition}
+              groupName={name}
             />
 
             <VariantGroupStyleSupplierSection

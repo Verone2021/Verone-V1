@@ -1,7 +1,11 @@
 'use client';
 
 import { Checkbox, Input, Label } from '@verone/ui';
-import { MATERIAL_OPTIONS } from '@verone/types';
+import {
+  MATERIAL_OPTIONS,
+  NAME_POSITION_LABELS,
+  type NamePosition,
+} from '@verone/types';
 
 interface ColorOption {
   name: string;
@@ -31,6 +35,12 @@ interface VariantGroupCommonPropsSectionProps {
   commonColor: string;
   setCommonColor: (v: string) => void;
   colors: ColorOption[];
+  // Positions dans le nom
+  materialNamePosition: NamePosition;
+  setMaterialNamePosition: (v: NamePosition) => void;
+  colorNamePosition: NamePosition;
+  setColorNamePosition: (v: NamePosition) => void;
+  groupName?: string;
 }
 
 export function VariantGroupCommonPropsSection({
@@ -53,6 +63,11 @@ export function VariantGroupCommonPropsSection({
   commonColor,
   setCommonColor,
   colors,
+  materialNamePosition,
+  setMaterialNamePosition,
+  colorNamePosition,
+  setColorNamePosition,
+  groupName,
 }: VariantGroupCommonPropsSectionProps) {
   return (
     <>
@@ -255,6 +270,44 @@ export function VariantGroupCommonPropsSection({
               Cette matiere sera appliquee automatiquement a tous les produits
               du groupe
             </p>
+
+            <div className="space-y-1">
+              <Label
+                htmlFor="material_name_position"
+                className="text-sm font-medium"
+              >
+                Position de la matiere dans le nom des produits
+              </Label>
+              <select
+                id="material_name_position"
+                value={materialNamePosition}
+                onChange={e =>
+                  setMaterialNamePosition(e.target.value as NamePosition)
+                }
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-black focus:border-black"
+              >
+                {(Object.keys(NAME_POSITION_LABELS) as NamePosition[]).map(
+                  pos => (
+                    <option key={pos} value={pos}>
+                      {NAME_POSITION_LABELS[pos]}
+                    </option>
+                  )
+                )}
+              </select>
+              <p className="text-xs text-gray-600">
+                Apercu :{' '}
+                <code className="bg-gray-100 px-1 rounded">
+                  {previewName(
+                    groupName ?? 'Nom du groupe',
+                    'Bleu',
+                    commonMaterial,
+                    materialNamePosition,
+                    null,
+                    'none'
+                  )}
+                </code>
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -304,9 +357,87 @@ export function VariantGroupCommonPropsSection({
               Cette couleur sera appliquee automatiquement a toutes les
               variantes du groupe
             </p>
+
+            <div className="space-y-1">
+              <Label
+                htmlFor="color_name_position"
+                className="text-sm font-medium"
+              >
+                Position de la couleur dans le nom des produits
+              </Label>
+              <select
+                id="color_name_position"
+                value={colorNamePosition}
+                onChange={e =>
+                  setColorNamePosition(e.target.value as NamePosition)
+                }
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-black focus:border-black"
+              >
+                {(Object.keys(NAME_POSITION_LABELS) as NamePosition[]).map(
+                  pos => (
+                    <option key={pos} value={pos}>
+                      {NAME_POSITION_LABELS[pos]}
+                    </option>
+                  )
+                )}
+              </select>
+              <p className="text-xs text-gray-600">
+                Apercu :{' '}
+                <code className="bg-gray-100 px-1 rounded">
+                  {previewName(
+                    groupName ?? 'Nom du groupe',
+                    'metal',
+                    null,
+                    'none',
+                    commonColor,
+                    colorNamePosition
+                  )}
+                </code>
+              </p>
+            </div>
           </div>
         )}
       </div>
     </>
   );
+}
+
+// Helper pour calculer un apercu du nom selon les positions choisies.
+// Reproduit la logique de buildVariantProductName (use-variant-products-create / VariantAddProductModal).
+function previewName(
+  groupName: string,
+  variantValue: string,
+  commonMaterial: string | null,
+  materialPosition: NamePosition,
+  commonColor: string | null,
+  colorPosition: NamePosition
+): string {
+  let prefix = '';
+  let suffix = groupName;
+  let beforeVariant = '';
+
+  const placeAttribute = (
+    value: string | null,
+    position: NamePosition
+  ): void => {
+    if (!value || position === 'none') return;
+    const display =
+      MATERIAL_OPTIONS.find(o => o.value === value)?.label ?? value;
+    if (position === 'before_group') {
+      prefix = prefix ? `${prefix} ${display}` : display;
+    } else if (position === 'after_group') {
+      suffix = `${suffix} ${display}`;
+    } else if (position === 'before_variant') {
+      beforeVariant = beforeVariant ? `${beforeVariant}, ${display}` : display;
+    }
+  };
+
+  placeAttribute(commonMaterial, materialPosition);
+  placeAttribute(commonColor, colorPosition);
+
+  const head = prefix ? `${prefix} ${suffix}` : suffix;
+  const tail = beforeVariant
+    ? `${beforeVariant}, ${variantValue}`
+    : variantValue;
+  return `${head} - ${tail}`;
 }
