@@ -246,3 +246,93 @@ sprint 3 dédié au refactoring structurel du wizard.
 | `pnpm --filter @verone/back-office type-check`                                   | PASS (exit 0) |
 | `pnpm --filter @verone/back-office lint`                                         | PASS (exit 0) |
 | `NODE_OPTIONS=--max-old-space-size=6144 pnpm --filter @verone/back-office build` | PASS (exit 0) |
+
+---
+
+## Sprint A + B + C — 2026-04-30
+
+3 lots de fixes implémentés, 3 commits distincts, 1 push.
+
+### LOT A — Produit témoin auto-attaché à la création du groupe
+
+**Commit** : `c4041b8a`
+**Fichiers** (3) :
+
+1. `packages/@verone/types/src/variant-groups.ts` — ajout champ `matrix_product_id?: string`
+   dans `CreateVariantGroupData` avec commentaire explicatif.
+
+2. `packages/@verone/products/src/hooks/use-variant-group-crud.ts` — dans `createVariantGroup`,
+   après le SELECT du groupe nouvellement inséré : si `data.matrix_product_id` est présent,
+   exécute un UPDATE `products` pour définir `variant_group_id = newGroup.id` et
+   `variant_position = 1`. En cas d'erreur Supabase : log + toast warning (non-bloquant,
+   le groupe est déjà créé). `newGroup.id` casté en `String(newGroup.id)` pour éviter
+   `no-unsafe-assignment` (le résultat du `.insert([...] as any)` perd son typage).
+
+3. `packages/@verone/products/src/components/wizards/VariantGroupCreationWizard.tsx` —
+   dans `handleSubmit`, le payload inclut `matrix_product_id: formData.matrix_product.id`
+   si le produit témoin est défini, via spread conditionnel `...(x ? { matrix_product_id: x.id } : {})`.
+
+**Comportement** : groupe créé → produit témoin apparaît immédiatement en position 1
+dans le groupe, sans action manuelle. Propagation du fournisseur/poids/coût_prix au
+produit n'est pas appelée à la création (idem comportement existant pour addProductsToGroup).
+
+### LOT B — Combobox couleurs/matières + chips héritage dans VariantAddProductModal
+
+**Commit** : `d2f4ad8a`
+**Fichier** (1) : `packages/@verone/products/src/components/modals/VariantAddProductModal.tsx`
+
+Refonte complète du modal :
+
+- **Couleur** : `<Input>` remplacé par `<DynamicColorSelector>` de `@verone/ui-business`
+  (combobox avec recherche + création on-the-fly de nouvelles couleurs). Retourne un `string`
+  (nom de couleur), compatible avec la payload `AddProductToGroupData`.
+
+- **Matière** : `<Input>` remplacé par `<select>` natif alimenté par `MATERIAL_OPTIONS`
+  de `@verone/types` (15 valeurs enum strict). Pas de création on-the-fly — intentionnel
+  (enum strict). Import depuis `@verone/types` (index re-exporte `variant-attributes-types`).
+
+- **Chips hérités** : nouveau sous-composant `InheritedFieldChip` (duplication locale du
+  pattern `WizardStep1Basic.tsx`, évite couplage cross-composant). Nouveau sous-composant
+  `GroupInheritanceChips` affiche 7 chips : Dimensions, Poids, Style décoratif, Pièces
+  compatibles, Prix de revient, Fournisseur, Sous-catégorie — toujours visibles en haut du modal.
+  Actif (bleu + cadenas) si la donnée correspondante existe dans le groupe.
+
+- **Sous-catégorie** : résolue depuis `group.subcategory.category?.name` + `group.subcategory.name`
+  déjà disponibles via le type `VariantGroup` (pas de hook supplémentaire). Affichage :
+  "Catégorie > Sous-catégorie" dans la section "Propriétés synchronisées".
+
+- **Aperçu nom** : concat `${group.name} - ${colorName}, ${materialLabel}` si les deux
+  sont renseignés. Cohérent avec le pattern existant.
+
+- **"Propriétés synchronisées"** : ajout prix d'achat, fournisseur, poids depuis les champs
+  `has_common_*` du groupe (affichés conditionnellement).
+
+- **Touch targets** : bouton "Sélectionner un produit" a `min-h-[44px] md:min-h-0`, le
+  select matière également.
+
+Choix clé : le `commonWeight` local (état qui n'était pas soumis dans la payload) a été
+retiré — il n'était pas transmis à `onSubmit` dans le code original. Le poids est géré
+au niveau du groupe via `has_common_weight`. Cohérent avec l'implémentation existante.
+
+### LOT C — Suppression options variant_type invalides (size, pattern)
+
+**Commit** : `968cb0e8`
+**Fichier** (1) : `apps/back-office/src/app/(protected)/produits/catalogue/variantes/[groupId]/components/VariantGroupInfoCard.tsx`
+
+Le `<select>` proposait 4 options (`color | size | material | pattern`) alors que le type
+`VariantType` n'autorise que `'color' | 'material'`. Suppression de `size` et `pattern`.
+Aucune extension du type — usage restreint maintenu intentionnellement.
+
+---
+
+## Validations sprint A+B+C
+
+| Validation                                                                       | Résultat                |
+| -------------------------------------------------------------------------------- | ----------------------- |
+| `pnpm --filter @verone/products type-check`                                      | PASS (exit 0)           |
+| `pnpm --filter @verone/back-office type-check`                                   | PASS (exit 0)           |
+| `pnpm --filter @verone/back-office lint`                                         | PASS (exit 0)           |
+| `NODE_OPTIONS=--max-old-space-size=6144 pnpm --filter @verone/back-office build` | PASS (exit 0, 72 pages) |
+| Pre-commit hook (lint-staged)                                                    | PASS x3                 |
+
+Push : `968cb0e8` sur `fix/BO-VAR-FORM-002-enrich-matrix-mapping`, PR #861 mise à jour.
