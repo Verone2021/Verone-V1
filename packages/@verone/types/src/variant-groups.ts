@@ -63,6 +63,14 @@ export interface VariantGroup {
   supplier_id?: string | null; // ID du fournisseur commun (si has_common_supplier = true)
   has_common_supplier?: boolean; // Si true, tous les produits héritent du supplier_id
 
+  // Matière commune (typique quand variant_type='color')
+  common_material?: string | null;
+  has_common_material?: boolean;
+
+  // Couleur commune (typique quand variant_type='material')
+  common_color?: string | null;
+  has_common_color?: boolean;
+
   // Relations
   subcategory?: {
     id: string;
@@ -147,6 +155,14 @@ export interface CreateVariantGroupData {
   // Fournisseur commun optionnel
   supplier_id?: string | null;
   has_common_supplier?: boolean;
+
+  // Matière commune optionnelle (typique quand variant_type='color')
+  common_material?: string | null;
+  has_common_material?: boolean;
+
+  // Couleur commune optionnelle (typique quand variant_type='material')
+  common_color?: string | null;
+  has_common_color?: boolean;
 }
 
 // Données pour ajouter des produits à un groupe
@@ -206,6 +222,14 @@ export interface UpdateVariantGroupData {
   // Fournisseur commun
   supplier_id?: string | null;
   has_common_supplier?: boolean;
+
+  // Matière commune
+  common_material?: string | null;
+  has_common_material?: boolean;
+
+  // Couleur commune
+  common_color?: string | null;
+  has_common_color?: boolean;
 
   // Deprecated - gardé pour compatibilité
   common_dimensions?: {

@@ -39,6 +39,9 @@ export interface MatrixProductInfo {
   suitable_rooms: string[];
   cost_price: number | null;
   supplier_id: string | null;
+  // Attributs variant extraits de variant_attributes JSONB
+  material: string | null;
+  color: string | null;
 }
 
 export interface WizardStep1BasicProps {
@@ -131,6 +134,8 @@ function MatrixProductChips({
     },
     { label: 'Prix de revient', active: matrixProduct.cost_price !== null },
     { label: 'Fournisseur', active: matrixProduct.supplier_id !== null },
+    { label: 'Matière', active: matrixProduct.material !== null },
+    { label: 'Couleur', active: matrixProduct.color !== null },
   ];
 
   return (
@@ -182,6 +187,8 @@ export function WizardStep1Basic({
       suitable_rooms: [],
       cost_price: null,
       supplier_id: null,
+      material: null,
+      color: null,
     };
     onMatrixProductChange(info);
   };

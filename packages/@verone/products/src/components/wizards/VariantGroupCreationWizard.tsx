@@ -33,6 +33,7 @@ import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import { useOrganisations } from '@verone/organisations/hooks';
 import { useVariantGroups } from '@verone/products/hooks';
+import { useProductColors } from '@verone/products/hooks';
 import type { DecorativeStyle, CreateVariantGroupData } from '@verone/types';
 
 import { WizardStep1Basic } from './variant-group-creation/WizardStep1Basic';
@@ -83,6 +84,10 @@ interface FormData {
   has_common_cost_price: boolean;
   common_cost_price: number | '';
   common_eco_tax: number | '';
+  has_common_material: boolean;
+  common_material: string;
+  has_common_color: boolean;
+  common_color: string;
 }
 
 export interface VariantGroupCreationWizardProps {
@@ -163,7 +168,7 @@ function fetchAndApplyMatrixProduct(
     const { data, error } = await supabase
       .from('products')
       .select(
-        'id, name, sku, subcategory_id, variant_group_id, variant_group:variant_groups!variant_group_id(id, name, base_sku), weight, dimensions, style, suitable_rooms, supplier_id, cost_price, eco_tax_default'
+        'id, name, sku, subcategory_id, variant_group_id, variant_group:variant_groups!variant_group_id(id, name, base_sku), weight, dimensions, style, suitable_rooms, supplier_id, cost_price, eco_tax_default, variant_attributes'
       )
       .eq('id', partialProductId)
       .single();
@@ -212,6 +217,17 @@ function fetchAndApplyMatrixProduct(
     const supplierId =
       typeof data.supplier_id === 'string' ? data.supplier_id : null;
 
+    // Extraire material et color depuis variant_attributes JSONB
+    const va =
+      data.variant_attributes &&
+      typeof data.variant_attributes === 'object' &&
+      !Array.isArray(data.variant_attributes)
+        ? (data.variant_attributes as Record<string, unknown>)
+        : {};
+    const material =
+      typeof va.material === 'string' && va.material ? va.material : null;
+    const color = typeof va.color === 'string' && va.color ? va.color : null;
+
     const enrichedProduct: MatrixProductInfo = {
       id: data.id,
       name: data.name,
@@ -227,6 +243,8 @@ function fetchAndApplyMatrixProduct(
       suitable_rooms: suitableRooms,
       cost_price: costPrice,
       supplier_id: supplierId,
+      material,
+      color,
     };
 
     // Q1 : dériver base_sku
@@ -236,6 +254,8 @@ function fetchAndApplyMatrixProduct(
     const hasCommonWeight = weight !== null;
     const hasCommonCostPrice = costPrice !== null;
     const hasCommonSupplier = supplierId !== null;
+    const hasCommonMaterial = material !== null;
+    const hasCommonColor = color !== null;
 
     // Auto-remplir tous les champs (modifiables ensuite par Romeo)
     setFormData(prev => ({
@@ -253,7 +273,7 @@ function fetchAndApplyMatrixProduct(
       dimensions_width: parsedDimensions.width,
       dimensions_height: parsedDimensions.height,
       dimensions_unit: parsedDimensions.unit,
-      // Step 3 — poids, fournisseur, prix d'achat
+      // Step 3 — poids, fournisseur, prix d'achat, matiere, couleur
       has_common_weight: hasCommonWeight,
       common_weight: weight ?? prev.common_weight,
       has_common_supplier: hasCommonSupplier,
@@ -261,6 +281,10 @@ function fetchAndApplyMatrixProduct(
       has_common_cost_price: hasCommonCostPrice,
       common_cost_price: costPrice ?? prev.common_cost_price,
       common_eco_tax: ecoTax ?? prev.common_eco_tax,
+      has_common_material: hasCommonMaterial,
+      common_material: material ?? prev.common_material,
+      has_common_color: hasCommonColor,
+      common_color: color ?? prev.common_color,
     }));
   };
 
@@ -286,6 +310,7 @@ export function VariantGroupCreationWizard({
   const router = useRouter();
   const { createVariantGroup } = useVariantGroups();
   const { organisations } = useOrganisations();
+  const { colors } = useProductColors();
 
   // État du wizard
   const [currentStep, setCurrentStep] = useState<WizardStep>(1);
@@ -313,6 +338,10 @@ export function VariantGroupCreationWizard({
     has_common_cost_price: false,
     common_cost_price: '',
     common_eco_tax: '',
+    has_common_material: false,
+    common_material: '',
+    has_common_color: false,
+    common_color: '',
   });
 
   // Fournisseurs actifs uniquement
@@ -349,6 +378,10 @@ export function VariantGroupCreationWizard({
       has_common_cost_price: false,
       common_cost_price: '',
       common_eco_tax: '',
+      has_common_material: false,
+      common_material: '',
+      has_common_color: false,
+      common_color: '',
     });
     setCurrentStep(1);
     setCompletedSteps(new Set());
@@ -508,6 +541,18 @@ export function VariantGroupCreationWizard({
         }
       }
 
+      // Ajouter matière commune si activée
+      if (formData.has_common_material && formData.common_material) {
+        payload.has_common_material = true;
+        payload.common_material = formData.common_material;
+      }
+
+      // Ajouter couleur commune si activée
+      if (formData.has_common_color && formData.common_color) {
+        payload.has_common_color = true;
+        payload.common_color = formData.common_color;
+      }
+
       const newGroup = await createVariantGroup(payload);
 
       toast.success('Groupe de variantes créé avec succès !');
@@ -636,7 +681,12 @@ export function VariantGroupCreationWizard({
               hasCommonCostPrice={formData.has_common_cost_price}
               commonCostPrice={formData.common_cost_price}
               commonEcoTax={formData.common_eco_tax}
+              hasCommonMaterial={formData.has_common_material}
+              commonMaterial={formData.common_material}
+              hasCommonColor={formData.has_common_color}
+              commonColor={formData.common_color}
               suppliers={suppliers}
+              colors={colors}
               onUpdate={updateFormData}
             />
           )}

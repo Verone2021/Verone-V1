@@ -241,6 +241,36 @@ export function VariantGroupInfoCard({
             </div>
           </div>
         )}
+
+        {/* Matière commune */}
+        {variantGroup.has_common_material && variantGroup.common_material && (
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-1">
+              Matière commune
+            </label>
+            <Badge
+              variant="outline"
+              className="bg-blue-50 text-blue-700 border-blue-200"
+            >
+              {variantGroup.common_material}
+            </Badge>
+          </div>
+        )}
+
+        {/* Couleur commune */}
+        {variantGroup.has_common_color && variantGroup.common_color && (
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-1">
+              Couleur commune
+            </label>
+            <Badge
+              variant="outline"
+              className="bg-blue-50 text-blue-700 border-blue-200"
+            >
+              {variantGroup.common_color}
+            </Badge>
+          </div>
+        )}
       </div>
     </Card>
   );

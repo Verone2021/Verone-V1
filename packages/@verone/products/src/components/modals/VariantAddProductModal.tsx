@@ -79,6 +79,14 @@ function GroupInheritanceChips({ group }: { group: VariantGroup }) {
       label: 'Fournisseur',
       active: !!group.has_common_supplier && !!group.supplier_id,
     },
+    {
+      label: 'Matière',
+      active: !!group.has_common_material && !!group.common_material,
+    },
+    {
+      label: 'Couleur',
+      active: !!group.has_common_color && !!group.common_color,
+    },
     { label: 'Sous-catégorie', active: !!group.subcategory_id },
   ];
 
@@ -166,6 +174,25 @@ export function VariantAddProductModal({
     }
   }, [selectedProduct]);
 
+  // Auto-fill couleur depuis common_color du groupe si has_common_color
+  useEffect(() => {
+    if (group?.has_common_color && group.common_color) {
+      setColorName(group.common_color);
+    }
+  }, [group?.has_common_color, group?.common_color]);
+
+  // Auto-fill matière depuis common_material du groupe si has_common_material
+  useEffect(() => {
+    if (group?.has_common_material && group.common_material) {
+      const isValid = MATERIAL_OPTIONS.some(
+        o => o.value === group.common_material
+      );
+      if (isValid) {
+        setMaterial(group.common_material as ProductMaterial);
+      }
+    }
+  }, [group?.has_common_material, group?.common_material]);
+
   const handleProductSelect = (products: SelectedProduct[]) => {
     if (products.length > 0) {
       setSelectedProduct(products[0]);
@@ -175,7 +202,13 @@ export function VariantAddProductModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProduct || (!colorName && !material)) return;
+    // Validation selon variant_type
+    const vt = group?.variant_type ?? 'color';
+    const cLocked = !!group?.has_common_color && !!group?.common_color;
+    const mLocked = !!group?.has_common_material && !!group?.common_material;
+    if (!selectedProduct) return;
+    if (vt === 'color' && !colorName && !cLocked) return;
+    if (vt === 'material' && !material && !mLocked) return;
 
     setIsSubmitting(true);
     try {
@@ -192,6 +225,14 @@ export function VariantAddProductModal({
   };
 
   if (!group) return null;
+
+  // Logique conditionnelle selon variant_type du groupe
+  const variantType = group.variant_type ?? 'color';
+  const isColorVariant = variantType === 'color';
+  const isMaterialVariant = variantType === 'material';
+  // Si la propriété est commune au groupe, on la verrouille (lock)
+  const colorLocked = !!group.has_common_color && !!group.common_color;
+  const materialLocked = !!group.has_common_material && !!group.common_material;
 
   return (
     <>
@@ -263,64 +304,108 @@ export function VariantAddProductModal({
                 {selectedProduct && (
                   <>
                     {/* ==================================================
-                        COULEUR — DynamicColorSelector (combobox + création)
+                        COULEUR + MATIÈRE — adaptation selon variant_type
+                        - Champ qui VARIE (selon variant_type) : obligatoire
+                        - Champ COMMUN : verrouillé (lock) si has_common_X=true
                     ================================================== */}
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div>
                         <Label
                           htmlFor="color"
-                          className="text-sm font-medium block mb-1"
+                          className="text-sm font-medium block mb-1 flex items-center gap-1"
                         >
                           Couleur
+                          {isColorVariant && (
+                            <span className="text-red-500">*</span>
+                          )}
+                          {colorLocked && (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] text-blue-700 bg-blue-50 border border-blue-200 rounded px-1 py-0.5">
+                              <Lock className="h-2 w-2" />
+                              Hérité du groupe
+                            </span>
+                          )}
                         </Label>
                         <div className="min-h-[44px] md:min-h-0">
-                          <DynamicColorSelector
-                            value={colorName}
-                            onChange={setColorName}
-                            placeholder="Rechercher ou créer une couleur..."
-                          />
+                          {colorLocked ? (
+                            <div className="px-3 py-2 rounded-md border border-blue-200 bg-blue-50 text-sm text-blue-900">
+                              {group.common_color}
+                            </div>
+                          ) : (
+                            <DynamicColorSelector
+                              value={colorName}
+                              onChange={setColorName}
+                              placeholder={
+                                isColorVariant
+                                  ? 'Rechercher ou créer une couleur...'
+                                  : 'Optionnel — couleur de cette variante'
+                              }
+                            />
+                          )}
                         </div>
                       </div>
 
-                      {/* ==================================================
-                          MATIÈRE — Select enum strict (15 valeurs)
-                      ================================================== */}
                       <div>
                         <Label
                           htmlFor="material"
-                          className="text-sm font-medium block mb-1"
+                          className="text-sm font-medium block mb-1 flex items-center gap-1"
                         >
                           Matière
+                          {isMaterialVariant && (
+                            <span className="text-red-500">*</span>
+                          )}
+                          {materialLocked && (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] text-blue-700 bg-blue-50 border border-blue-200 rounded px-1 py-0.5">
+                              <Lock className="h-2 w-2" />
+                              Hérité du groupe
+                            </span>
+                          )}
                         </Label>
-                        <select
-                          id="material"
-                          value={material}
-                          onChange={e =>
-                            setMaterial(
-                              (e.target.value as ProductMaterial | '') ?? ''
-                            )
-                          }
-                          className="w-full min-h-[44px] md:min-h-0 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        >
-                          <option value="">— Aucune matière —</option>
-                          {MATERIAL_OPTIONS.map(opt => (
-                            <option key={opt.value} value={opt.value}>
-                              {opt.label}
+                        {materialLocked ? (
+                          <div className="min-h-[44px] md:min-h-0 px-3 py-2 rounded-md border border-blue-200 bg-blue-50 text-sm text-blue-900">
+                            {MATERIAL_OPTIONS.find(
+                              o => o.value === group.common_material
+                            )?.label ?? group.common_material}
+                          </div>
+                        ) : (
+                          <select
+                            id="material"
+                            value={material}
+                            onChange={e =>
+                              setMaterial(
+                                (e.target.value as ProductMaterial | '') ?? ''
+                              )
+                            }
+                            className="w-full min-h-[44px] md:min-h-0 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          >
+                            <option value="">
+                              {isMaterialVariant
+                                ? '— Sélectionner une matière —'
+                                : '— Aucune matière —'}
                             </option>
-                          ))}
-                        </select>
+                            {MATERIAL_OPTIONS.map(opt => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+                        )}
                       </div>
                     </div>
 
-                    {!colorName && !material && (
+                    {((isColorVariant && !colorName && !colorLocked) ||
+                      (isMaterialVariant && !material && !materialLocked)) && (
                       <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex items-start space-x-2">
                         <AlertCircle className="h-5 w-5 text-black flex-shrink-0 mt-0.5" />
                         <div className="text-sm text-gray-900">
                           <p className="font-medium">
-                            Au moins une variante requise
+                            {isColorVariant
+                              ? 'Couleur requise'
+                              : 'Matière requise'}
                           </p>
                           <p className="text-xs mt-1">
-                            Veuillez renseigner la couleur et/ou la matière
+                            Le type de variante du groupe est{' '}
+                            <strong>{variantType}</strong> — cette propriété est
+                            obligatoire pour cette variante.
                           </p>
                         </div>
                       </div>
@@ -407,6 +492,17 @@ export function VariantAddProductModal({
                         {group.has_common_supplier && group.supplier && (
                           <li>→ Fournisseur : {group.supplier.name}</li>
                         )}
+                        {group.has_common_material && group.common_material && (
+                          <li>
+                            → Matière commune :{' '}
+                            {MATERIAL_OPTIONS.find(
+                              o => o.value === group.common_material
+                            )?.label ?? group.common_material}
+                          </li>
+                        )}
+                        {group.has_common_color && group.common_color && (
+                          <li>→ Couleur commune : {group.common_color}</li>
+                        )}
                       </ul>
                     </div>
                   </>
@@ -427,7 +523,10 @@ export function VariantAddProductModal({
               <ButtonV2
                 type="submit"
                 disabled={
-                  !selectedProduct || (!colorName && !material) || isSubmitting
+                  !selectedProduct ||
+                  (isColorVariant && !colorName && !colorLocked) ||
+                  (isMaterialVariant && !material && !materialLocked) ||
+                  isSubmitting
                 }
                 className="w-full md:w-auto bg-black text-white hover:bg-gray-800"
               >
