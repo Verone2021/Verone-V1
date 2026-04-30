@@ -97,6 +97,8 @@ export interface CatalogueFilters {
   brands?: string[];
   /** Filtre publication en ligne (site internet) */
   publishedOnline?: 'all' | 'published' | 'unpublished';
+  /** Filtre groupes de variantes (BO-CATALOG-VARIANTS-001) */
+  variantStatus?: 'all' | 'with_variants' | 'without_variants';
   limit?: number;
   offset?: number;
   page?: number;
