@@ -24,6 +24,10 @@ interface WizardStep3SupplierProps {
   hasCommonSupplier: boolean;
   supplierId: string;
   commonWeight: number | '';
+  hasCommonWeight: boolean;
+  hasCommonCostPrice: boolean;
+  commonCostPrice: number | '';
+  commonEcoTax: number | '';
   suppliers: Supplier[];
   onUpdate: (updates: Record<string, unknown>) => void;
 }
@@ -32,6 +36,10 @@ export function WizardStep3Supplier({
   hasCommonSupplier,
   supplierId,
   commonWeight,
+  hasCommonWeight,
+  hasCommonCostPrice,
+  commonCostPrice,
+  commonEcoTax,
   suppliers,
   onUpdate,
 }: WizardStep3SupplierProps) {
@@ -97,25 +105,122 @@ export function WizardStep3Supplier({
       </div>
 
       {/* Poids commun */}
-      <div>
-        <Label htmlFor="common_weight">Poids commun (kg)</Label>
-        <Input
-          id="common_weight"
-          type="number"
-          value={commonWeight}
-          onChange={e =>
-            onUpdate({
-              common_weight: e.target.value ? Number(e.target.value) : '',
-            })
-          }
-          placeholder="Ex: 12.5"
-          min="0"
-          step="0.1"
-          className="mt-1"
-        />
-        <p className="text-xs text-gray-500 mt-1">
-          Poids partage par tous les produits (optionnel)
-        </p>
+      <div className="space-y-3">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="has-common-weight"
+            checked={hasCommonWeight}
+            onCheckedChange={checked => {
+              onUpdate({ has_common_weight: checked as boolean });
+              if (!checked) onUpdate({ common_weight: '' });
+            }}
+          />
+          <Label
+            htmlFor="has-common-weight"
+            className="text-sm font-medium cursor-pointer"
+          >
+            Meme poids pour tous les produits
+          </Label>
+        </div>
+
+        {hasCommonWeight && (
+          <div>
+            <Label htmlFor="common_weight">Poids commun (kg)</Label>
+            <Input
+              id="common_weight"
+              type="number"
+              value={commonWeight}
+              onChange={e =>
+                onUpdate({
+                  common_weight: e.target.value ? Number(e.target.value) : '',
+                })
+              }
+              placeholder="Ex: 12.5"
+              min="0"
+              step="0.1"
+              className="mt-1"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Poids partage par tous les produits du groupe
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Prix d'achat commun (Q1) */}
+      <div className="space-y-3">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="has-common-cost-price"
+            checked={hasCommonCostPrice}
+            onCheckedChange={checked => {
+              onUpdate({ has_common_cost_price: checked as boolean });
+              if (!checked) {
+                onUpdate({ common_cost_price: '' });
+                onUpdate({ common_eco_tax: '' });
+              }
+            }}
+          />
+          <Label
+            htmlFor="has-common-cost-price"
+            className="text-sm font-medium cursor-pointer"
+          >
+            Meme prix d&apos;achat pour tous les produits
+          </Label>
+        </div>
+
+        {hasCommonCostPrice && (
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="common_cost_price">Prix d&apos;achat HT</Label>
+              <Input
+                id="common_cost_price"
+                type="number"
+                value={commonCostPrice}
+                onChange={e =>
+                  onUpdate({
+                    common_cost_price: e.target.value
+                      ? Number(e.target.value)
+                      : '',
+                  })
+                }
+                placeholder="Ex: 45.00"
+                min="0"
+                step="0.01"
+                className="mt-1"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Prix d&apos;achat indicatif partage par tous les produits du
+                groupe
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="common_eco_tax">
+                Eco-taxe par defaut (optionnel)
+              </Label>
+              <Input
+                id="common_eco_tax"
+                type="number"
+                value={commonEcoTax}
+                onChange={e =>
+                  onUpdate({
+                    common_eco_tax: e.target.value
+                      ? Number(e.target.value)
+                      : '',
+                  })
+                }
+                placeholder="Ex: 0.50"
+                min="0"
+                step="0.01"
+                className="mt-1"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Taxe eco-responsable commune (liee au prix d&apos;achat)
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

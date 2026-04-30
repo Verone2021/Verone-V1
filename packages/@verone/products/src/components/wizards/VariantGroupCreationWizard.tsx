@@ -4,7 +4,7 @@
  * Aligné avec CollectionCreationWizard (Design System V2)
  * - Étape 1: Informations de base (name, SKU, catégorisation)
  * - Étape 2: Style & Attributs (style décoratif avec icônes Lucide, dimensions)
- * - Étape 3: Fournisseur & Options (fournisseur commun, poids)
+ * - Étape 3: Fournisseur & Options (fournisseur commun, poids, prix d'achat)
  *
  * @see src/components/business/collection-creation-wizard.tsx - Pattern de référence
  * @see src/types/variant-groups.ts - DECORATIVE_STYLES avec icônes Lucide
@@ -47,6 +47,17 @@ import { WizardStep3Supplier } from './variant-group-creation/WizardStep3Supplie
 
 type WizardStep = 1 | 2 | 3;
 
+/**
+ * Structure des dimensions jsonb dans la table `products`.
+ * Les clés sont suffixées `_cm` (ex: length_cm, width_cm, height_cm).
+ */
+interface ProductDimensionsJsonb {
+  length_cm?: number | null;
+  width_cm?: number | null;
+  height_cm?: number | null;
+  diameter_cm?: number | null;
+}
+
 interface FormData {
   // Step 1: Informations de base
   name: string;
@@ -68,6 +79,10 @@ interface FormData {
   has_common_supplier: boolean;
   supplier_id: string;
   common_weight: number | '';
+  has_common_weight: boolean;
+  has_common_cost_price: boolean;
+  common_cost_price: number | '';
+  common_eco_tax: number | '';
 }
 
 export interface VariantGroupCreationWizardProps {
@@ -100,9 +115,43 @@ function getVgField<T>(vg: unknown, field: string): T | null {
 }
 
 /**
- * Fetche les données complètes du produit sélectionné (variant_group_id,
- * variant_group.base_sku), applique Q3 (blocage si déjà dans un groupe) et
- * Q1 (dérivation base_sku), puis met à jour le formData via le setter fourni.
+ * Parse le JSONB dimensions d'un product (format `{length_cm, width_cm, height_cm}`)
+ * et retourne des valeurs numériques séparées pour l'étape 2 du wizard.
+ */
+function parseDimensionsJsonb(raw: unknown): {
+  length: number | '';
+  width: number | '';
+  height: number | '';
+  unit: 'cm' | 'm' | 'mm' | 'in';
+} {
+  const empty = {
+    length: '' as const,
+    width: '' as const,
+    height: '' as const,
+    unit: 'cm' as const,
+  };
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return empty;
+
+  const d = raw as ProductDimensionsJsonb;
+
+  const length =
+    typeof d.length_cm === 'number' && d.length_cm !== null ? d.length_cm : '';
+  const width =
+    typeof d.width_cm === 'number' && d.width_cm !== null ? d.width_cm : '';
+  const height =
+    typeof d.height_cm === 'number' && d.height_cm !== null ? d.height_cm : '';
+
+  // Si aucune dimension exploitable, ne pas pré-remplir
+  if (length === '' && width === '' && height === '') return empty;
+
+  return { length, width, height, unit: 'cm' };
+}
+
+/**
+ * Fetche les données complètes du produit sélectionné (avec les 7 nouveaux champs
+ * en plus des colonnes sprint 1), applique Q3 (blocage si déjà dans un groupe),
+ * Q1 (dérivation base_sku) et Q2 (auto-cocher flags has_common_*),
+ * puis met à jour le formData via le setter fourni.
  */
 function fetchAndApplyMatrixProduct(
   partialProductId: string,
@@ -114,7 +163,7 @@ function fetchAndApplyMatrixProduct(
     const { data, error } = await supabase
       .from('products')
       .select(
-        'id, name, sku, subcategory_id, variant_group_id, variant_group:variant_groups!variant_group_id(id, name, base_sku)'
+        'id, name, sku, subcategory_id, variant_group_id, variant_group:variant_groups!variant_group_id(id, name, base_sku), weight, dimensions, style, suitable_rooms, supplier_id, cost_price, eco_tax_default'
       )
       .eq('id', partialProductId)
       .single();
@@ -142,6 +191,27 @@ function fetchAndApplyMatrixProduct(
       'base_sku'
     );
 
+    // Parser les dimensions jsonb (format: {length_cm, width_cm, height_cm})
+    const parsedDimensions = parseDimensionsJsonb(data.dimensions);
+
+    // Extraire suitable_rooms (tableau ou null)
+    const suitableRooms: string[] = Array.isArray(data.suitable_rooms)
+      ? (data.suitable_rooms as string[])
+      : [];
+
+    // Extraire style (string ou null)
+    const style =
+      typeof data.style === 'string' && data.style ? data.style : null;
+
+    // Extraire valeurs numériques
+    const weight = typeof data.weight === 'number' ? data.weight : null;
+    const costPrice =
+      typeof data.cost_price === 'number' ? data.cost_price : null;
+    const ecoTax =
+      typeof data.eco_tax_default === 'number' ? data.eco_tax_default : null;
+    const supplierId =
+      typeof data.supplier_id === 'string' ? data.supplier_id : null;
+
     const enrichedProduct: MatrixProductInfo = {
       id: data.id,
       name: data.name,
@@ -150,18 +220,47 @@ function fetchAndApplyMatrixProduct(
       variant_group_id: data.variant_group_id ?? null,
       variant_group_name: null,
       variant_group_base_sku: parentBaseSku,
+      // Nouveaux champs pour les chips hérités (étape 1)
+      weight,
+      dimensions: data.dimensions as ProductDimensionsJsonb | null,
+      style,
+      suitable_rooms: suitableRooms,
+      cost_price: costPrice,
+      supplier_id: supplierId,
     };
 
     // Q1 : dériver base_sku
     const derivedBaseSku = deriveBaseSku(enrichedProduct.sku, parentBaseSku);
 
-    // Auto-remplir les 3 champs (modifiables ensuite)
+    // Q2 : auto-cocher les flags has_common_* si le champ correspondant a une valeur
+    const hasCommonWeight = weight !== null;
+    const hasCommonCostPrice = costPrice !== null;
+    const hasCommonSupplier = supplierId !== null;
+
+    // Auto-remplir tous les champs (modifiables ensuite par Romeo)
     setFormData(prev => ({
       ...prev,
+      // Step 1
       name: enrichedProduct.name,
       base_sku: derivedBaseSku,
       subcategory_id: enrichedProduct.subcategory_id ?? '',
       matrix_product: enrichedProduct,
+      // Step 2 — style, rooms, dimensions
+      style: (style as DecorativeStyle | null) ?? prev.style,
+      suitable_rooms:
+        suitableRooms.length > 0 ? suitableRooms : prev.suitable_rooms,
+      dimensions_length: parsedDimensions.length,
+      dimensions_width: parsedDimensions.width,
+      dimensions_height: parsedDimensions.height,
+      dimensions_unit: parsedDimensions.unit,
+      // Step 3 — poids, fournisseur, prix d'achat
+      has_common_weight: hasCommonWeight,
+      common_weight: weight ?? prev.common_weight,
+      has_common_supplier: hasCommonSupplier,
+      supplier_id: supplierId ?? prev.supplier_id,
+      has_common_cost_price: hasCommonCostPrice,
+      common_cost_price: costPrice ?? prev.common_cost_price,
+      common_eco_tax: ecoTax ?? prev.common_eco_tax,
     }));
   };
 
@@ -210,6 +309,10 @@ export function VariantGroupCreationWizard({
     has_common_supplier: false,
     supplier_id: '',
     common_weight: '',
+    has_common_weight: false,
+    has_common_cost_price: false,
+    common_cost_price: '',
+    common_eco_tax: '',
   });
 
   // Fournisseurs actifs uniquement
@@ -242,6 +345,10 @@ export function VariantGroupCreationWizard({
       has_common_supplier: false,
       supplier_id: '',
       common_weight: '',
+      has_common_weight: false,
+      has_common_cost_price: false,
+      common_cost_price: '',
+      common_eco_tax: '',
     });
     setCurrentStep(1);
     setCompletedSteps(new Set());
@@ -368,8 +475,34 @@ export function VariantGroupCreationWizard({
       }
 
       // Ajouter poids commun si défini
-      if (formData.common_weight) {
+      // FIX BUG LATENT : si common_weight est défini, set aussi has_common_weight=true
+      // pour que propagateWeightToProducts s'exécute dans use-variant-group-crud.ts
+      if (
+        formData.common_weight !== '' &&
+        formData.common_weight !== undefined
+      ) {
         payload.common_weight = Number(formData.common_weight);
+        payload.has_common_weight = true;
+      } else if (formData.has_common_weight) {
+        // Checkbox cochée manuellement sans valeur
+        payload.has_common_weight = true;
+      }
+
+      // Ajouter prix d'achat commun si défini (Q1)
+      if (formData.has_common_cost_price) {
+        payload.has_common_cost_price = true;
+        if (
+          formData.common_cost_price !== '' &&
+          formData.common_cost_price !== undefined
+        ) {
+          payload.common_cost_price = Number(formData.common_cost_price);
+        }
+        if (
+          formData.common_eco_tax !== '' &&
+          formData.common_eco_tax !== undefined
+        ) {
+          payload.common_eco_tax = Number(formData.common_eco_tax);
+        }
       }
 
       const newGroup = await createVariantGroup(payload);
@@ -496,6 +629,10 @@ export function VariantGroupCreationWizard({
               hasCommonSupplier={formData.has_common_supplier}
               supplierId={formData.supplier_id}
               commonWeight={formData.common_weight}
+              hasCommonWeight={formData.has_common_weight}
+              hasCommonCostPrice={formData.has_common_cost_price}
+              commonCostPrice={formData.common_cost_price}
+              commonEcoTax={formData.common_eco_tax}
               suppliers={suppliers}
               onUpdate={updateFormData}
             />
