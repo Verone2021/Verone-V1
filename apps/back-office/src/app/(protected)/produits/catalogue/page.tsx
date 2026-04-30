@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 
 import { useCataloguePage } from './use-catalogue-page';
 import { CatalogueHeader } from './CatalogueHeader';
+import { CatalogueSavedViews } from './CatalogueSavedViews';
 import { CatalogueTabs } from './CatalogueTabs';
 import { CatalogueToolbar } from './CatalogueToolbar';
 import { CatalogueResultsInfo } from './CatalogueResultsInfo';
@@ -60,6 +61,18 @@ export default function CataloguePage() {
       <CatalogueHeader dashboardSLO={ctx.dashboardSLO} />
 
       <div className="space-y-6">
+        <CatalogueSavedViews
+          activeTab={ctx.activeTab}
+          onApplyView={(filters, tab) => {
+            // BO-CATALOG-VIEWS-001 : changer l'onglet cible avant
+            // d'appliquer les filtres pré-définis de la vue.
+            if (tab !== ctx.activeTab) {
+              ctx.setActiveTab(tab);
+            }
+            ctx.applyFilters(filters, tab);
+          }}
+        />
+
         <CatalogueTabs
           activeTab={ctx.activeTab}
           total={ctx.total}
