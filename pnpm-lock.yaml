@@ -937,6 +937,28 @@ importers:
         specifier: ^5.3.3
         version: 5.9.3
 
+  packages/@verone/themes:
+    dependencies:
+      '@verone/tokens':
+        specifier: workspace:*
+        version: link:../tokens
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+    devDependencies:
+      '@types/react':
+        specifier: ^18.2.55
+        version: 18.3.26
+      '@types/react-dom':
+        specifier: ^18.2.19
+        version: 18.3.7(@types/react@18.3.26)
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
   packages/@verone/tokens:
     devDependencies:
       typescript:
