@@ -10,8 +10,10 @@ import type {
   VariantGroupUpdateData,
 } from './types/variant-group.types';
 import {
+  propagateColorToProducts,
   propagateCommonAttributesToProducts,
   propagateCostPriceToProducts,
+  propagateMaterialToProducts,
   propagateSupplierToProducts,
   propagateWeightToProducts,
 } from './utils/variant-group-propagation';
@@ -98,6 +100,37 @@ export function useVariantGroupCrud(deps: VariantGroupCrudDeps) {
             variant: 'destructive',
           });
         }
+      }
+
+      // Propager les attributs communs (matiere/couleur) au produit temoin nouvellement attache
+      const groupId = String(newGroup.id);
+      if (data.has_common_material && data.common_material) {
+        await propagateMaterialToProducts(
+          supabase,
+          groupId,
+          data.common_material
+        );
+      }
+      if (data.has_common_color && data.common_color) {
+        await propagateColorToProducts(supabase, groupId, data.common_color);
+      }
+      if (data.has_common_supplier && data.supplier_id) {
+        await propagateSupplierToProducts(supabase, groupId, data.supplier_id);
+      }
+      if (data.has_common_weight && data.common_weight != null) {
+        await propagateWeightToProducts(
+          supabase,
+          groupId,
+          Number(data.common_weight)
+        );
+      }
+      if (data.has_common_cost_price && data.common_cost_price != null) {
+        await propagateCostPriceToProducts(
+          supabase,
+          groupId,
+          Number(data.common_cost_price),
+          data.common_eco_tax ?? null
+        );
       }
 
       toast({
@@ -301,6 +334,30 @@ export function useVariantGroupCrud(deps: VariantGroupCrudDeps) {
           operation: 'disable_common_eco_tax',
           groupId,
         });
+      }
+
+      // Propagation matiere commune
+      if (
+        data.has_common_material !== undefined ||
+        data.common_material !== undefined
+      ) {
+        if (data.has_common_material && data.common_material) {
+          await propagateMaterialToProducts(
+            supabase,
+            groupId,
+            data.common_material
+          );
+        }
+      }
+
+      // Propagation couleur commune
+      if (
+        data.has_common_color !== undefined ||
+        data.common_color !== undefined
+      ) {
+        if (data.has_common_color && data.common_color) {
+          await propagateColorToProducts(supabase, groupId, data.common_color);
+        }
       }
 
       // Propagation attributs communs (dimensions, noms, etc.)

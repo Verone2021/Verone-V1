@@ -115,6 +115,76 @@ export async function propagateCostPriceToProducts(
   }
 }
 
+/** Propager la matiere commune dans variant_attributes.material de tous les produits du groupe */
+export async function propagateMaterialToProducts(
+  supabase: SupabaseClient,
+  groupId: string,
+  material: string
+): Promise<void> {
+  logger.info('Propagation matiere aux produits', {
+    operation: 'propagate_material_to_products',
+    groupId,
+    material,
+  });
+
+  const { data: products, error: fetchError } = await supabase
+    .from('products')
+    .select('id, variant_attributes')
+    .eq('variant_group_id', groupId);
+
+  if (fetchError) {
+    logger.error('Erreur fetch produits pour propagation matiere', fetchError, {
+      operation: 'propagate_material_fetch_failed',
+    });
+    return;
+  }
+
+  for (const product of products ?? []) {
+    const attrs =
+      (product.variant_attributes as Record<string, unknown> | null) ?? {};
+    const updated = { ...attrs, material };
+    await supabase
+      .from('products')
+      .update({ variant_attributes: updated })
+      .eq('id', product.id);
+  }
+}
+
+/** Propager la couleur commune dans variant_attributes.color de tous les produits du groupe */
+export async function propagateColorToProducts(
+  supabase: SupabaseClient,
+  groupId: string,
+  color: string
+): Promise<void> {
+  logger.info('Propagation couleur aux produits', {
+    operation: 'propagate_color_to_products',
+    groupId,
+    color,
+  });
+
+  const { data: products, error: fetchError } = await supabase
+    .from('products')
+    .select('id, variant_attributes')
+    .eq('variant_group_id', groupId);
+
+  if (fetchError) {
+    logger.error('Erreur fetch produits pour propagation couleur', fetchError, {
+      operation: 'propagate_color_fetch_failed',
+    });
+    return;
+  }
+
+  for (const product of products ?? []) {
+    const attrs =
+      (product.variant_attributes as Record<string, unknown> | null) ?? {};
+    const updated = { ...attrs, color };
+    await supabase
+      .from('products')
+      .update({ variant_attributes: updated })
+      .eq('id', product.id);
+  }
+}
+
 /** Propager les attributs communs (dimensions, sous-catégorie, poids, noms) aux produits */
 export async function propagateCommonAttributesToProducts(
   supabase: SupabaseClient,
