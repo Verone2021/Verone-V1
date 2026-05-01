@@ -32,6 +32,7 @@ export interface ProductStatsData {
   productName: string;
   productSku: string;
   productImageUrl: string | null;
+  productCloudflareId: string | null;
   quantitySold: number;
   revenueHT: number;
   revenueTTC: number;
@@ -209,7 +210,7 @@ export function useAllProductsStats(
         supabase.from('products').select('id, name, sku').in('id', productIds),
         supabase
           .from('product_images')
-          .select('product_id, public_url')
+          .select('product_id, public_url, cloudflare_image_id')
           .in('product_id', productIds)
           .eq('is_primary', true),
       ]);
@@ -222,7 +223,13 @@ export function useAllProductsStats(
       );
 
       const imageMap = new Map(
-        (imagesResult.data ?? []).map(img => [img.product_id, img.public_url])
+        (imagesResult.data ?? []).map(img => [
+          img.product_id,
+          {
+            public_url: img.public_url,
+            cloudflare_image_id: img.cloudflare_image_id,
+          },
+        ])
       );
 
       // 6. Construire les données finales
@@ -242,7 +249,9 @@ export function useAllProductsStats(
             productId,
             productName: info?.name ?? 'Produit inconnu',
             productSku: info?.sku ?? '',
-            productImageUrl: imageMap.get(productId) ?? null,
+            productImageUrl: imageMap.get(productId)?.public_url ?? null,
+            productCloudflareId:
+              imageMap.get(productId)?.cloudflare_image_id ?? null,
             quantitySold: data.quantity,
             revenueHT: data.revenueHT,
             revenueTTC: data.revenueTTC,

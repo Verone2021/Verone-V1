@@ -202,14 +202,18 @@ export function useSelectionWithProducts(
       );
       const { data: images } = await supabase
         .from('product_images')
-        .select('product_id, public_url')
+        .select('product_id, public_url, cloudflare_image_id')
         .in('product_id', productIds)
         .eq('is_primary', true);
 
       const imageMap = new Map(
         (images ?? []).map(img => [
           (img as { product_id: string }).product_id,
-          (img as { public_url: string }).public_url,
+          {
+            public_url: (img as { public_url: string | null }).public_url,
+            cloudflare_image_id: (img as { cloudflare_image_id: string | null })
+              .cloudflare_image_id,
+          },
         ])
       );
 
@@ -219,11 +223,13 @@ export function useSelectionWithProducts(
           product_id: string;
           product: Record<string, unknown>;
         };
+        const imgData = imageMap.get(typedItem.product_id);
         return {
           ...item,
           product: {
             ...typedItem.product,
-            primary_image_url: imageMap.get(typedItem.product_id) ?? null,
+            primary_image_url: imgData?.public_url ?? null,
+            cloudflare_image_id: imgData?.cloudflare_image_id ?? null,
           },
         };
       });

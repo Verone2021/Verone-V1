@@ -79,6 +79,7 @@ export interface TopProductData {
   productName: string;
   productSku: string;
   productImageUrl: string | null;
+  productCloudflareId?: string | null;
   quantitySold: number;
   revenueHT: number;
   commissionHT: number;

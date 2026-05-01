@@ -86,6 +86,7 @@ export default function CatalogueProductDetailPage({
       public_price_ht: product.public_price_ht,
       channel_commission_rate: null,
       image_url: product.image_url,
+      cloudflare_image_id: product.cloudflare_image_id ?? null,
       is_featured: product.is_featured,
       subcategory_id: null,
       subcategory_name: null,
