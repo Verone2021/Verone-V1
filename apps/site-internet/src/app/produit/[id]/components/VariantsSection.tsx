@@ -6,11 +6,12 @@
 
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
 import { useQuery } from '@tanstack/react-query';
 import { Package, Loader2 } from 'lucide-react';
+
+import { CloudflareImage } from '@verone/ui';
 
 import { createClient } from '@/lib/supabase/client';
 
@@ -143,19 +144,14 @@ export function VariantsSection({
                       : 'border-gray-200 hover:border-gray-400'
                   }`}
                 >
-                  {variant.primary_image_url ? (
-                    <Image
-                      src={variant.primary_image_url}
-                      alt={variant.name}
-                      fill
-                      className="object-contain p-1 bg-white"
-                      sizes="56px"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full bg-gray-50 text-gray-300 text-xs">
-                      ?
-                    </div>
-                  )}
+                  <CloudflareImage
+                    cloudflareId={null}
+                    fallbackSrc={variant.primary_image_url}
+                    alt={variant.name}
+                    fill
+                    className="object-contain p-1 bg-white"
+                    sizes="56px"
+                  />
                 </div>
 
                 {/* Tooltip au survol - apparaît au-dessus */}

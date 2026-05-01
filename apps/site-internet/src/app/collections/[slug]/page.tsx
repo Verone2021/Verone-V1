@@ -151,6 +151,7 @@ export default function CollectionDetailPage({
                   description={p.seo_meta_description ?? undefined}
                   price={p.price_ttc}
                   imageUrl={p.primary_image_url}
+                  cloudflareImageId={p.primary_cloudflare_image_id}
                   href={`/produit/${p.slug}`}
                   priority={index < 4}
                   stockStatus={p.stock_status}

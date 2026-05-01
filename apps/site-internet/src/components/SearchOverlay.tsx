@@ -2,12 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import { CloudflareImage } from '@verone/ui';
 import { formatPrice } from '@verone/utils';
-import { Package, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 import {
   useCatalogueProducts,
@@ -102,19 +102,14 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                   className="flex items-center gap-4 px-4 py-3 hover:bg-verone-gray-50 transition-colors"
                 >
                   <div className="relative w-12 h-12 rounded bg-verone-gray-50 flex-shrink-0">
-                    {product.primary_image_url ? (
-                      <Image
-                        src={product.primary_image_url}
-                        alt={product.name}
-                        fill
-                        sizes="48px"
-                        className="object-contain p-1"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full">
-                        <Package className="h-4 w-4 text-verone-gray-300" />
-                      </div>
-                    )}
+                    <CloudflareImage
+                      cloudflareId={product.primary_cloudflare_image_id ?? null}
+                      fallbackSrc={product.primary_image_url}
+                      alt={product.name}
+                      fill
+                      sizes="48px"
+                      className="object-contain p-1"
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-verone-black truncate">

@@ -1,11 +1,9 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
+import { CloudflareImage } from '@verone/ui';
 import { formatPrice } from '@verone/utils';
-import { Package } from 'lucide-react';
-
 import {
   useCatalogueProducts,
   type CatalogueProduct,
@@ -43,19 +41,14 @@ export function ProductCrossSell({ currentProductId }: ProductCrossSellProps) {
           >
             <div className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
               <div className="relative aspect-[4/3] bg-verone-gray-50">
-                {product.primary_image_url ? (
-                  <Image
-                    src={product.primary_image_url}
-                    alt={product.name}
-                    fill
-                    sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 16vw"
-                    className="object-contain p-2"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <Package className="h-6 w-6 text-verone-gray-300" />
-                  </div>
-                )}
+                <CloudflareImage
+                  cloudflareId={product.primary_cloudflare_image_id ?? null}
+                  fallbackSrc={product.primary_image_url}
+                  alt={product.name}
+                  fill
+                  sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 16vw"
+                  className="object-contain p-2"
+                />
               </div>
 
               <div className="p-3 space-y-1">

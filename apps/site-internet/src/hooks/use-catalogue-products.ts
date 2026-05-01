@@ -35,6 +35,7 @@ export interface CatalogueProduct {
 
   // Images
   primary_image_url: string | null;
+  primary_cloudflare_image_id?: string | null; // optional until RPC migration INFRA-IMG-006
   image_urls: string[] | null;
 
   // Publication

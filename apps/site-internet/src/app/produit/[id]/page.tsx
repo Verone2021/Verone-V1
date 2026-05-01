@@ -282,6 +282,8 @@ export default function ProductPage({
             variant_group_id: product.variant_group_id,
             eligible_variants_count: product.eligible_variants_count,
             primary_image_url: product.primary_image_url,
+            primary_cloudflare_image_id:
+              product.primary_cloudflare_image_id ?? null,
             sku: product.sku,
           }}
           variants={variants}
@@ -323,6 +325,8 @@ export default function ProductPage({
             assembly_price: product.assembly_price ?? 0,
             eco_participation: product.eco_participation_amount ?? 0,
             primary_image_url: product.primary_image_url,
+            primary_cloudflare_image_id:
+              product.primary_cloudflare_image_id ?? null,
             sku: product.sku,
           })
             .then(() => {
