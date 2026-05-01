@@ -13100,7 +13100,9 @@ export type Database = {
         Returns: Json;
       };
       get_site_internet_products: {
-        Args: never;
+        Args: {
+          p_brand_slug?: string;
+        };
         Returns: {
           assembly_price: number;
           color: string;
