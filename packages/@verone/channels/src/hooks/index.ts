@@ -9,3 +9,6 @@ export * from './google-merchant';
 // Meta Commerce
 export * from './use-meta-commerce-products';
 export * from './meta';
+
+// Publication par canal (BO-BRAND-003b)
+export * from './use-product-channel-publication';
