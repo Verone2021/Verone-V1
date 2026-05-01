@@ -6,6 +6,7 @@
  * variantes miniatures, bouton Export PDF.
  */
 
+import { BrandBadgeList } from '@verone/products';
 import { ButtonUnified } from '@verone/ui';
 import { FileDown } from 'lucide-react';
 
@@ -15,6 +16,8 @@ import { VariantsRailMiniGrid } from './VariantsRailMiniGrid';
 interface GeneralRailProps {
   productName: string;
   sku: string;
+  /** UUIDs des marques internes assignées au produit (BO-BRAND-002). */
+  brandIds?: string[] | null;
   completionPercentage: number;
   tabEntries: Array<{ id: string; label: string; percent: number }>;
   variantGroupId: string | null;
@@ -26,6 +29,7 @@ interface GeneralRailProps {
 export function GeneralRail({
   productName,
   sku,
+  brandIds,
   completionPercentage,
   tabEntries,
   variantGroupId,
@@ -42,6 +46,16 @@ export function GeneralRail({
         </p>
         <p className="text-xs text-neutral-500 font-mono">{sku}</p>
       </div>
+
+      {/* Marques internes Vérone Group (lecture seule, BO-BRAND-004) */}
+      {brandIds && brandIds.length > 0 && (
+        <div>
+          <div className="text-xs font-medium uppercase tracking-wide text-neutral-500 mb-2">
+            Marques
+          </div>
+          <BrandBadgeList brandIds={brandIds} size="xs" />
+        </div>
+      )}
 
       {/* Completion global */}
       <div className="flex items-center justify-center gap-2 py-2 border-y border-neutral-100">
