@@ -21,6 +21,7 @@ interface VariantCard {
   name: string;
   sku: string;
   primary_image_url: string | null;
+  primary_cloudflare_image_id: string | null;
   price_ttc: number;
   discount_rate: number | null;
   is_eligible: boolean;
@@ -68,6 +69,7 @@ export function VariantsSection({
         name: string;
         sku: string;
         primary_image_url: string | null;
+        primary_cloudflare_image_id: string | null;
         price_ttc: number;
         discount_rate: number | null;
         is_eligible: boolean;
@@ -86,6 +88,7 @@ export function VariantsSection({
           name: p.name,
           sku: p.sku,
           primary_image_url: p.primary_image_url,
+          primary_cloudflare_image_id: p.primary_cloudflare_image_id,
           price_ttc: p.price_ttc,
           discount_rate: p.discount_rate,
           is_eligible: p.is_eligible,
@@ -145,7 +148,7 @@ export function VariantsSection({
                   }`}
                 >
                   <CloudflareImage
-                    cloudflareId={null}
+                    cloudflareId={variant.primary_cloudflare_image_id}
                     fallbackSrc={variant.primary_image_url}
                     alt={variant.name}
                     fill

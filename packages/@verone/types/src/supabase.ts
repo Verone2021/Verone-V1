@@ -7,30 +7,10 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '13.0.5';
   };
   public: {
     Tables: {
@@ -6272,6 +6252,7 @@ export type Database = {
           affiliate_commission_rate: number | null;
           affiliate_payout_ht: number | null;
           affiliate_rejection_reason: string | null;
+          ai_generated_metadata: Json | null;
           archived_at: string | null;
           article_type: Database['public']['Enums']['article_type'];
           assigned_client_id: string | null;
@@ -6279,6 +6260,7 @@ export type Database = {
             | Database['public']['Enums']['availability_type_enum']
             | null;
           brand_ids: string[] | null;
+          commercial_name: string | null;
           completion_percentage: number | null;
           completion_status: string | null;
           condition: string | null;
@@ -6297,6 +6279,8 @@ export type Database = {
           created_by_affiliate: string | null;
           creation_mode: string | null;
           description: string | null;
+          description_long: string | null;
+          description_short: string | null;
           dimensions: Json | null;
           eco_tax_default: number | null;
           enseigne_id: string | null;
@@ -6344,6 +6328,7 @@ export type Database = {
           supplier_moq: number | null;
           supplier_page_url: string | null;
           supplier_reference: string | null;
+          tags: string[] | null;
           target_margin_percentage: number | null;
           target_price: number | null;
           technical_description: string | null;
@@ -6364,6 +6349,7 @@ export type Database = {
           affiliate_commission_rate?: number | null;
           affiliate_payout_ht?: number | null;
           affiliate_rejection_reason?: string | null;
+          ai_generated_metadata?: Json | null;
           archived_at?: string | null;
           article_type?: Database['public']['Enums']['article_type'];
           assigned_client_id?: string | null;
@@ -6371,6 +6357,7 @@ export type Database = {
             | Database['public']['Enums']['availability_type_enum']
             | null;
           brand_ids?: string[] | null;
+          commercial_name?: string | null;
           completion_percentage?: number | null;
           completion_status?: string | null;
           condition?: string | null;
@@ -6389,6 +6376,8 @@ export type Database = {
           created_by_affiliate?: string | null;
           creation_mode?: string | null;
           description?: string | null;
+          description_long?: string | null;
+          description_short?: string | null;
           dimensions?: Json | null;
           eco_tax_default?: number | null;
           enseigne_id?: string | null;
@@ -6436,6 +6425,7 @@ export type Database = {
           supplier_moq?: number | null;
           supplier_page_url?: string | null;
           supplier_reference?: string | null;
+          tags?: string[] | null;
           target_margin_percentage?: number | null;
           target_price?: number | null;
           technical_description?: string | null;
@@ -6456,6 +6446,7 @@ export type Database = {
           affiliate_commission_rate?: number | null;
           affiliate_payout_ht?: number | null;
           affiliate_rejection_reason?: string | null;
+          ai_generated_metadata?: Json | null;
           archived_at?: string | null;
           article_type?: Database['public']['Enums']['article_type'];
           assigned_client_id?: string | null;
@@ -6463,6 +6454,7 @@ export type Database = {
             | Database['public']['Enums']['availability_type_enum']
             | null;
           brand_ids?: string[] | null;
+          commercial_name?: string | null;
           completion_percentage?: number | null;
           completion_status?: string | null;
           condition?: string | null;
@@ -6481,6 +6473,8 @@ export type Database = {
           created_by_affiliate?: string | null;
           creation_mode?: string | null;
           description?: string | null;
+          description_long?: string | null;
+          description_short?: string | null;
           dimensions?: Json | null;
           eco_tax_default?: number | null;
           enseigne_id?: string | null;
@@ -6528,6 +6522,7 @@ export type Database = {
           supplier_moq?: number | null;
           supplier_page_url?: string | null;
           supplier_reference?: string | null;
+          tags?: string[] | null;
           target_margin_percentage?: number | null;
           target_price?: number | null;
           technical_description?: string | null;
@@ -13108,6 +13103,7 @@ export type Database = {
           price_ht: number;
           price_source: string;
           price_ttc: number;
+          primary_cloudflare_image_id: string;
           primary_image_url: string;
           product_id: string;
           product_type: string;
@@ -14429,9 +14425,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       affiliate_product_approval_status: [
