@@ -1,9 +1,8 @@
 'use client';
 
-import Image from 'next/image';
-
+import { CloudflareImage } from '@verone/ui';
 import { formatPrice } from '@verone/utils';
-import { ShoppingCart, Truck } from 'lucide-react';
+import { Truck } from 'lucide-react';
 
 import { useCart } from '@/contexts/CartContext';
 
@@ -54,19 +53,14 @@ export function CheckoutOrderSummary({
           return (
             <div key={item.id} className="flex gap-3">
               <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-verone-gray-50 flex-shrink-0">
-                {item.primary_image_url ? (
-                  <Image
-                    src={item.primary_image_url}
-                    alt={item.name}
-                    fill
-                    sizes="64px"
-                    className="object-contain p-1"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <ShoppingCart className="h-4 w-4 text-verone-gray-300" />
-                  </div>
-                )}
+                <CloudflareImage
+                  cloudflareId={item.primary_cloudflare_image_id ?? null}
+                  fallbackSrc={item.primary_image_url}
+                  alt={item.name}
+                  fill
+                  sizes="64px"
+                  className="object-contain p-1"
+                />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-verone-black truncate">

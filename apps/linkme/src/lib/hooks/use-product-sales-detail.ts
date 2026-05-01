@@ -38,6 +38,7 @@ export interface ProductSalesDetailResult {
   productName: string;
   productSku: string;
   productImageUrl: string | null;
+  productCloudflareId: string | null;
   productSource: ProductSource;
   sales: ProductSaleDetail[];
   totals: {
@@ -131,7 +132,7 @@ export function useProductSalesDetail(productId: string | null) {
           .single(),
         supabase
           .from('product_images')
-          .select('public_url')
+          .select('public_url, cloudflare_image_id')
           .eq('product_id', productId)
           .eq('is_primary', true)
           .limit(1),
@@ -140,6 +141,12 @@ export function useProductSalesDetail(productId: string | null) {
       const productName = productResult.data?.name ?? 'Produit inconnu';
       const productSku = productResult.data?.sku ?? '';
       const productImageUrl = imageResult.data?.[0]?.public_url ?? null;
+      const productCloudflareId =
+        (
+          imageResult.data?.[0] as
+            | { cloudflare_image_id?: string | null }
+            | undefined
+        )?.cloudflare_image_id ?? null;
 
       // Detect source
       let productSource: ProductSource = 'catalogue';
@@ -203,6 +210,7 @@ export function useProductSalesDetail(productId: string | null) {
         productName,
         productSku,
         productImageUrl,
+        productCloudflareId,
         productSource,
         sales,
         totals,
@@ -220,6 +228,7 @@ function buildEmptyResult(productId: string): ProductSalesDetailResult {
     productName: '',
     productSku: '',
     productImageUrl: null,
+    productCloudflareId: null,
     productSource: 'catalogue',
     sales: [],
     totals: {

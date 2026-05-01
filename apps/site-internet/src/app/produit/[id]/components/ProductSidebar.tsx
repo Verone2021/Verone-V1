@@ -15,12 +15,12 @@
 
 import { useState, type ChangeEvent } from 'react';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import {
   ButtonUnified,
+  CloudflareImage,
   Label,
   Input,
   Checkbox,
@@ -53,6 +53,7 @@ interface ProductSidebarProps {
     variant_group_id: string | null;
     eligible_variants_count: number;
     primary_image_url: string | null;
+    primary_cloudflare_image_id: string | null;
     sku: string | null;
   };
   variants?: Array<{
@@ -60,6 +61,7 @@ interface ProductSidebarProps {
     slug: string;
     name: string;
     primary_image_url: string | null;
+    primary_cloudflare_image_id: string | null;
   }>;
   currentProductId: string;
 }
@@ -205,19 +207,14 @@ export function ProductSidebar({
                         : 'border-gray-200 hover:border-gray-400'
                     }`}
                   >
-                    {variant.primary_image_url ? (
-                      <Image
-                        src={variant.primary_image_url}
-                        alt={variant.name}
-                        fill
-                        className="object-contain p-1 bg-white"
-                        sizes="56px"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full bg-gray-50 text-gray-300 text-xs">
-                        ?
-                      </div>
-                    )}
+                    <CloudflareImage
+                      cloudflareId={variant.primary_cloudflare_image_id}
+                      fallbackSrc={variant.primary_image_url}
+                      alt={variant.name}
+                      fill
+                      className="object-contain p-1 bg-white"
+                      sizes="56px"
+                    />
                   </div>
 
                   {/* Tooltip au survol */}
@@ -306,6 +303,7 @@ export function ProductSidebar({
               assembly_price: product.assembly_price ?? 0,
               eco_participation: ecoParticipation,
               primary_image_url: product.primary_image_url,
+              primary_cloudflare_image_id: product.primary_cloudflare_image_id,
               sku: product.sku,
             })
               .then(() => {

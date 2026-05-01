@@ -75,6 +75,7 @@ export interface SelectionProduct {
   productName: string;
   productSku: string;
   productImage: string | null;
+  productCloudflareId: string | null;
   basePriceHt: number;
   sellingPriceHt: number;
   marginRate: number;
@@ -293,6 +294,7 @@ interface SelectionItemWithProduct {
 interface ProductImageResult {
   product_id: string;
   public_url: string | null;
+  cloudflare_image_id: string | null;
 }
 
 /**
@@ -336,17 +338,24 @@ export function useSelectionProducts(selectionId: string | null) {
       // Récupérer les images séparément (comme useSelectionItems)
       const productIds = (data ?? []).map(item => item.product_id);
       let imageMap = new Map<string, string>();
+      let cloudflareMap = new Map<string, string | null>();
 
       if (productIds.length > 0) {
         const { data: images } = await supabase
           .from('product_images')
-          .select('product_id, public_url')
+          .select('product_id, public_url, cloudflare_image_id')
           .in('product_id', productIds)
           .eq('is_primary', true)
           .returns<ProductImageResult[]>();
 
         imageMap = new Map(
           (images ?? []).map(img => [img.product_id, img.public_url ?? ''])
+        );
+        cloudflareMap = new Map(
+          (images ?? []).map(img => [
+            img.product_id,
+            img.cloudflare_image_id ?? null,
+          ])
         );
       }
 
@@ -356,6 +365,7 @@ export function useSelectionProducts(selectionId: string | null) {
         productName: item.product?.name ?? 'Produit inconnu',
         productSku: item.product?.sku ?? '',
         productImage: imageMap.get(item.product_id) ?? null,
+        productCloudflareId: cloudflareMap.get(item.product_id) ?? null,
         basePriceHt: item.base_price_ht ?? 0,
         sellingPriceHt: item.selling_price_ht ?? 0,
         marginRate: item.margin_rate ?? 0,

@@ -40,6 +40,7 @@ export interface StorageRequest {
   product_name?: string;
   product_sku?: string;
   product_image_url?: string | null;
+  product_cloudflare_image_id?: string | null;
 }
 
 export interface CreateStorageRequestInput {
@@ -109,7 +110,7 @@ export function useAffiliateStorageRequests() {
 
       const { data: images } = await supabase
         .from('product_images')
-        .select('product_id, public_url, display_order')
+        .select('product_id, public_url, cloudflare_image_id, display_order')
         .in('product_id', productIds)
         .order('display_order', { ascending: true });
 
@@ -118,10 +119,16 @@ export function useAffiliateStorageRequests() {
         productMap.set(p.id, { name: p.name, sku: p.sku ?? '' });
       }
 
-      const imageMap = new Map<string, string>();
+      const imageMap = new Map<
+        string,
+        { public_url: string; cloudflare_image_id: string | null }
+      >();
       for (const img of images ?? []) {
         if (!imageMap.has(img.product_id)) {
-          imageMap.set(img.product_id, img.public_url ?? '');
+          imageMap.set(img.product_id, {
+            public_url: img.public_url ?? '',
+            cloudflare_image_id: img.cloudflare_image_id ?? null,
+          });
         }
       }
 
@@ -129,7 +136,9 @@ export function useAffiliateStorageRequests() {
         ...r,
         product_name: productMap.get(r.product_id)?.name ?? 'Produit inconnu',
         product_sku: productMap.get(r.product_id)?.sku ?? '',
-        product_image_url: imageMap.get(r.product_id) ?? null,
+        product_image_url: imageMap.get(r.product_id)?.public_url ?? null,
+        product_cloudflare_image_id:
+          imageMap.get(r.product_id)?.cloudflare_image_id ?? null,
       }));
     },
     enabled: !!enseigneId || (isOrganisationAdmin && !!organisationId),

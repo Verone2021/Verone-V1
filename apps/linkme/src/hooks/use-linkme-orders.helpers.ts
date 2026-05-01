@@ -9,7 +9,8 @@ import type {
  */
 export function mapRowToOrder(
   row: QueryOrderRow,
-  imageMap: Map<string, string | null>
+  imageMap: Map<string, string | null>,
+  cloudflareImageMap: Map<string, string | null> = new Map()
 ): LinkMeOrder {
   const ld = row.linkme_details?.[0] ?? null;
 
@@ -141,6 +142,8 @@ export function mapRowToOrder(
         product_name: item.product?.name ?? 'Produit inconnu',
         product_sku: item.product?.sku ?? '',
         product_image_url: imageMap.get(item.product_id) ?? null,
+        product_cloudflare_image_id:
+          cloudflareImageMap.get(item.product_id) ?? null,
         quantity: item.quantity ?? 0,
         unit_price_ht: Number(item.unit_price_ht) || 0,
         total_ht: Number(item.total_ht) || 0,

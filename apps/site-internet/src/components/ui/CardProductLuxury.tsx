@@ -1,8 +1,8 @@
-import Image from 'next/image';
 import Link from 'next/link';
 
 import { Heart, ShoppingBag } from 'lucide-react';
 
+import { CloudflareImage } from '@verone/ui';
 import { cn } from '@verone/utils';
 
 import { StarRating } from './StarRating';
@@ -13,6 +13,7 @@ export interface CardProductLuxuryProps {
   description?: string;
   price?: number | null;
   imageUrl?: string | null;
+  cloudflareImageId?: string | null;
   href: string;
   className?: string;
   priority?: boolean;
@@ -41,6 +42,7 @@ export function CardProductLuxury({
   description,
   price,
   imageUrl,
+  cloudflareImageId,
   href,
   className,
   priority = false,
@@ -98,9 +100,10 @@ export function CardProductLuxury({
       <Link href={href} className="block">
         {/* Image Container — bg-white pour fusionner avec les images sur fond blanc (audit Romeo 2026-04-26) */}
         <div className="relative bg-white aspect-square overflow-hidden">
-          {imageUrl ? (
-            <Image
-              src={imageUrl}
+          {imageUrl || cloudflareImageId ? (
+            <CloudflareImage
+              cloudflareId={cloudflareImageId ?? null}
+              fallbackSrc={imageUrl}
               alt={name}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"

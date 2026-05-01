@@ -13,6 +13,8 @@ import {
   Plus,
 } from 'lucide-react';
 
+import { CloudflareImage } from '@verone/ui';
+
 import { useCart } from '../../../../components/cart/CartProvider';
 import { useSelectionWithProducts } from '../../../../lib/hooks/use-linkme-public';
 
@@ -61,6 +63,9 @@ export default function SelectionPage({ params }: SelectionPageProps) {
       name: item.product.name,
       sku: item.product.sku,
       image_url: item.product.primary_image_url,
+      cloudflare_image_id:
+        (item.product as { cloudflare_image_id?: string | null })
+          .cloudflare_image_id ?? null,
       base_price_ht: item.base_price_ht,
       selling_price_ht: item.selling_price_ht,
       margin_rate: item.margin_rate,
@@ -193,18 +198,19 @@ export default function SelectionPage({ params }: SelectionPageProps) {
                 >
                   {/* Product Image */}
                   <div className="relative h-48 bg-gray-100">
-                    {item.product.primary_image_url ? (
-                      <Image
-                        src={item.product.primary_image_url}
-                        alt={item.product.name}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <Package className="h-12 w-12" />
-                      </div>
-                    )}
+                    <CloudflareImage
+                      cloudflareId={
+                        (
+                          item.product as {
+                            cloudflare_image_id?: string | null;
+                          }
+                        ).cloudflare_image_id ?? null
+                      }
+                      fallbackSrc={item.product.primary_image_url}
+                      alt={item.product.name}
+                      fill
+                      className="object-cover"
+                    />
                     {item.is_featured && (
                       <span className="absolute top-2 left-2 bg-yellow-400 text-yellow-900 text-xs font-medium px-2 py-1 rounded">
                         Vedette

@@ -1,9 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
-import { ButtonUnified } from '@verone/ui';
+import { ButtonUnified, CloudflareImage } from '@verone/ui';
 import { formatPrice } from '@verone/utils';
 import { Trash2, ShoppingCart, ArrowRight, Minus, Plus } from 'lucide-react';
 
@@ -62,19 +61,14 @@ export default function PanierPage() {
             >
               {/* Image */}
               <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-verone-gray-50 flex-shrink-0">
-                {item.primary_image_url ? (
-                  <Image
-                    src={item.primary_image_url}
-                    alt={item.name}
-                    fill
-                    className="object-contain p-2"
-                    sizes="96px"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <ShoppingCart className="h-8 w-8 text-verone-gray-300" />
-                  </div>
-                )}
+                <CloudflareImage
+                  cloudflareId={item.primary_cloudflare_image_id ?? null}
+                  fallbackSrc={item.primary_image_url}
+                  alt={item.name}
+                  fill
+                  className="object-contain p-2"
+                  sizes="96px"
+                />
               </div>
 
               {/* Details */}

@@ -11,12 +11,14 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
-import Image from 'next/image';
-
-import { Dialog, DialogContent, DialogTitle } from '@verone/ui';
+import {
+  CloudflareImage,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from '@verone/ui';
 
 import {
-  Package,
   X,
   Euro,
   TrendingUp,
@@ -307,19 +309,14 @@ export function ProductDetailSheet({
           {/* Product info */}
           <div className="flex gap-3">
             <div className="relative h-20 w-20 flex-shrink-0 rounded-xl bg-gray-50 overflow-hidden border border-gray-100">
-              {item.product_image_url ? (
-                <Image
-                  src={item.product_image_url}
-                  alt={item.product_name}
-                  fill
-                  className="object-cover"
-                  sizes="80px"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <Package className="h-8 w-8 text-gray-200" />
-                </div>
-              )}
+              <CloudflareImage
+                cloudflareId={item.product_cloudflare_image_id ?? null}
+                fallbackSrc={item.product_image_url}
+                alt={item.product_name}
+                fill
+                className="object-cover"
+                sizes="80px"
+              />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] text-gray-400 font-mono">

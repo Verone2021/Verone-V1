@@ -1,9 +1,8 @@
 'use client';
 
-import Image from 'next/image';
-
 import {
   Badge,
+  CloudflareImage,
   Table,
   TableBody,
   TableCell,
@@ -12,7 +11,7 @@ import {
   TableRow,
 } from '@verone/ui';
 import { LINKME_CONSTANTS } from '@verone/utils';
-import { ImageIcon, PackageIcon } from 'lucide-react';
+import { PackageIcon } from 'lucide-react';
 
 import type { LinkMeOrder } from '../../../../hooks/use-linkme-orders';
 import { formatPrice } from './order-detail.helpers';
@@ -61,19 +60,15 @@ export function OrderItemsTable({
             {order.items.map(item => (
               <TableRow key={item.id}>
                 <TableCell className="w-16">
-                  {item.product_image_url ? (
-                    <Image
-                      src={item.product_image_url}
+                  <div className="relative w-12 h-12">
+                    <CloudflareImage
+                      cloudflareId={item.product_cloudflare_image_id ?? null}
+                      fallbackSrc={item.product_image_url}
                       alt={item.product_name}
-                      width={48}
-                      height={48}
+                      fill
                       className="rounded-md object-cover"
                     />
-                  ) : (
-                    <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center">
-                      <ImageIcon className="h-5 w-5 text-gray-400" />
-                    </div>
-                  )}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <div>

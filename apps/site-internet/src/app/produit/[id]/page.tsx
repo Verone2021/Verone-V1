@@ -40,6 +40,7 @@ interface VariantCard {
   slug: string;
   name: string;
   primary_image_url: string | null;
+  primary_cloudflare_image_id: string | null;
 }
 
 export default function ProductPage({
@@ -118,6 +119,7 @@ export default function ProductPage({
           slug: p.slug,
           name: p.name,
           primary_image_url: p.primary_image_url,
+          primary_cloudflare_image_id: p.primary_cloudflare_image_id,
         }));
 
       return variantsData;
@@ -282,6 +284,8 @@ export default function ProductPage({
             variant_group_id: product.variant_group_id,
             eligible_variants_count: product.eligible_variants_count,
             primary_image_url: product.primary_image_url,
+            primary_cloudflare_image_id:
+              product.primary_cloudflare_image_id ?? null,
             sku: product.sku,
           }}
           variants={variants}
@@ -323,6 +327,8 @@ export default function ProductPage({
             assembly_price: product.assembly_price ?? 0,
             eco_participation: product.eco_participation_amount ?? 0,
             primary_image_url: product.primary_image_url,
+            primary_cloudflare_image_id:
+              product.primary_cloudflare_image_id ?? null,
             sku: product.sku,
           })
             .then(() => {

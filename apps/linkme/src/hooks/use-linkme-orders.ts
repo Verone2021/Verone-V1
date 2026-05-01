@@ -176,11 +176,12 @@ export function useLinkMeOrders(
       );
 
       let imageMap = new Map<string, string | null>();
+      let cloudflareImageMap = new Map<string, string | null>();
       if (productIds.length > 0) {
         const uniqueProductIds = [...new Set(productIds)];
         const { data: images } = await supabase
           .from('product_images')
-          .select('product_id, public_url')
+          .select('product_id, public_url, cloudflare_image_id')
           .in('product_id', uniqueProductIds)
           .eq('is_primary', true)
           .returns<ProductImageRow[]>();
@@ -188,9 +189,14 @@ export function useLinkMeOrders(
         imageMap = new Map(
           (images ?? []).map(img => [img.product_id, img.public_url])
         );
+        cloudflareImageMap = new Map(
+          (images ?? []).map(img => [img.product_id, img.cloudflare_image_id])
+        );
       }
 
-      const orders = rows.map(row => mapRowToOrder(row, imageMap));
+      const orders = rows.map(row =>
+        mapRowToOrder(row, imageMap, cloudflareImageMap)
+      );
 
       return { orders, totalCount: count ?? 0 };
     },

@@ -252,7 +252,7 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
               .in('id', productIds),
             supabase
               .from('product_images')
-              .select('product_id, public_url')
+              .select('product_id, public_url, cloudflare_image_id')
               .in('product_id', productIds)
               .eq('is_primary', true),
           ]);
@@ -260,7 +260,10 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
           const imageMap = new Map(
             (imagesResult.data ?? []).map(img => [
               img.product_id,
-              img.public_url,
+              {
+                public_url: img.public_url,
+                cloudflare_image_id: img.cloudflare_image_id,
+              },
             ])
           );
           const productsInfo = new Map(
@@ -277,11 +280,13 @@ export function useAffiliateAnalytics(period: AnalyticsPeriod = 'all') {
           topProducts = Array.from(productMap.entries())
             .map(([productId, data]) => {
               const info = productsInfo.get(productId);
+              const imgData = imageMap.get(productId);
               return {
                 productId,
                 productName: info?.name ?? 'Produit inconnu',
                 productSku: info?.sku ?? '',
-                productImageUrl: imageMap.get(productId) ?? null,
+                productImageUrl: imgData?.public_url ?? null,
+                productCloudflareId: imgData?.cloudflare_image_id ?? null,
                 quantitySold: data.quantity,
                 revenueHT: data.revenue,
                 commissionHT: data.commission,

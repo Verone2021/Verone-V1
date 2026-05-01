@@ -1,14 +1,13 @@
 'use client';
 
-import Image from 'next/image';
-
 import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
   Badge,
+  CloudflareImage,
 } from '@verone/ui';
-import { ImageIcon, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
+import { Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 
 import type { EditableItem } from '../types';
 
@@ -80,20 +79,15 @@ export function ProductsSection({
               }`}
             >
               {/* Image */}
-              <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
-                {item.product_image_url ? (
-                  <Image
-                    src={item.product_image_url}
-                    alt={item.product_name}
-                    width={48}
-                    height={48}
-                    className="object-cover w-full h-full"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                    <ImageIcon className="h-5 w-5 text-gray-400" />
-                  </div>
-                )}
+              <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0 bg-gray-200">
+                <CloudflareImage
+                  cloudflareId={null}
+                  fallbackSrc={item.product_image_url}
+                  alt={item.product_name}
+                  fill
+                  className="object-cover"
+                  sizes="48px"
+                />
               </div>
 
               {/* Info */}

@@ -263,6 +263,7 @@ export default function CataloguePage() {
                       description={product.seo_meta_description ?? undefined}
                       price={product.price_ttc}
                       imageUrl={product.primary_image_url}
+                      cloudflareImageId={product.primary_cloudflare_image_id}
                       href={`/produit/${product.slug}`}
                       priority={index < 3}
                       subcategoryName={product.subcategory_name ?? undefined}

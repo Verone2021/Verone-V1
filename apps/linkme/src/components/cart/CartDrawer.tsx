@@ -1,7 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
+
+import { CloudflareImage } from '@verone/ui';
 
 import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 
@@ -71,18 +72,13 @@ export function CartDrawer() {
                 >
                   {/* Image */}
                   <div className="relative w-16 h-16 bg-gray-200 rounded-md overflow-hidden flex-shrink-0">
-                    {item.image_url ? (
-                      <Image
-                        src={item.image_url}
-                        alt={item.name}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <ShoppingBag className="h-6 w-6" />
-                      </div>
-                    )}
+                    <CloudflareImage
+                      cloudflareId={item.cloudflare_image_id ?? null}
+                      fallbackSrc={item.image_url}
+                      alt={item.name}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
 
                   {/* Infos */}

@@ -6272,6 +6272,7 @@ export type Database = {
           affiliate_commission_rate: number | null;
           affiliate_payout_ht: number | null;
           affiliate_rejection_reason: string | null;
+          ai_generated_metadata: Json | null;
           archived_at: string | null;
           article_type: Database['public']['Enums']['article_type'];
           assigned_client_id: string | null;
@@ -6279,6 +6280,7 @@ export type Database = {
             | Database['public']['Enums']['availability_type_enum']
             | null;
           brand_ids: string[] | null;
+          commercial_name: string | null;
           completion_percentage: number | null;
           completion_status: string | null;
           condition: string | null;
@@ -6297,6 +6299,8 @@ export type Database = {
           created_by_affiliate: string | null;
           creation_mode: string | null;
           description: string | null;
+          description_long: string | null;
+          description_short: string | null;
           dimensions: Json | null;
           eco_tax_default: number | null;
           enseigne_id: string | null;
@@ -6344,6 +6348,7 @@ export type Database = {
           supplier_moq: number | null;
           supplier_page_url: string | null;
           supplier_reference: string | null;
+          tags: string[] | null;
           target_margin_percentage: number | null;
           target_price: number | null;
           technical_description: string | null;
@@ -6364,6 +6369,7 @@ export type Database = {
           affiliate_commission_rate?: number | null;
           affiliate_payout_ht?: number | null;
           affiliate_rejection_reason?: string | null;
+          ai_generated_metadata?: Json | null;
           archived_at?: string | null;
           article_type?: Database['public']['Enums']['article_type'];
           assigned_client_id?: string | null;
@@ -6371,6 +6377,7 @@ export type Database = {
             | Database['public']['Enums']['availability_type_enum']
             | null;
           brand_ids?: string[] | null;
+          commercial_name?: string | null;
           completion_percentage?: number | null;
           completion_status?: string | null;
           condition?: string | null;
@@ -6389,6 +6396,8 @@ export type Database = {
           created_by_affiliate?: string | null;
           creation_mode?: string | null;
           description?: string | null;
+          description_long?: string | null;
+          description_short?: string | null;
           dimensions?: Json | null;
           eco_tax_default?: number | null;
           enseigne_id?: string | null;
@@ -6436,6 +6445,7 @@ export type Database = {
           supplier_moq?: number | null;
           supplier_page_url?: string | null;
           supplier_reference?: string | null;
+          tags?: string[] | null;
           target_margin_percentage?: number | null;
           target_price?: number | null;
           technical_description?: string | null;
@@ -6456,6 +6466,7 @@ export type Database = {
           affiliate_commission_rate?: number | null;
           affiliate_payout_ht?: number | null;
           affiliate_rejection_reason?: string | null;
+          ai_generated_metadata?: Json | null;
           archived_at?: string | null;
           article_type?: Database['public']['Enums']['article_type'];
           assigned_client_id?: string | null;
@@ -6463,6 +6474,7 @@ export type Database = {
             | Database['public']['Enums']['availability_type_enum']
             | null;
           brand_ids?: string[] | null;
+          commercial_name?: string | null;
           completion_percentage?: number | null;
           completion_status?: string | null;
           condition?: string | null;
@@ -6481,6 +6493,8 @@ export type Database = {
           created_by_affiliate?: string | null;
           creation_mode?: string | null;
           description?: string | null;
+          description_long?: string | null;
+          description_short?: string | null;
           dimensions?: Json | null;
           eco_tax_default?: number | null;
           enseigne_id?: string | null;
@@ -6528,6 +6542,7 @@ export type Database = {
           supplier_moq?: number | null;
           supplier_page_url?: string | null;
           supplier_reference?: string | null;
+          tags?: string[] | null;
           target_margin_percentage?: number | null;
           target_price?: number | null;
           technical_description?: string | null;
@@ -13108,6 +13123,7 @@ export type Database = {
           price_ht: number;
           price_source: string;
           price_ttc: number;
+          primary_cloudflare_image_id: string;
           primary_image_url: string;
           product_id: string;
           product_type: string;
