@@ -1087,6 +1087,7 @@ export type Database = {
           is_active: boolean | null;
           is_featured: boolean | null;
           is_public_showcase: boolean | null;
+          is_published_on_channel: boolean;
           markup_rate: number | null;
           max_margin_rate: number | null;
           min_margin_rate: number | null;
@@ -1121,6 +1122,7 @@ export type Database = {
           is_active?: boolean | null;
           is_featured?: boolean | null;
           is_public_showcase?: boolean | null;
+          is_published_on_channel?: boolean;
           markup_rate?: number | null;
           max_margin_rate?: number | null;
           min_margin_rate?: number | null;
@@ -1155,6 +1157,7 @@ export type Database = {
           is_active?: boolean | null;
           is_featured?: boolean | null;
           is_public_showcase?: boolean | null;
+          is_published_on_channel?: boolean;
           markup_rate?: number | null;
           max_margin_rate?: number | null;
           min_margin_rate?: number | null;
@@ -7015,6 +7018,7 @@ export type Database = {
       };
       sales_channels: {
         Row: {
+          brand_id: string | null;
           code: string;
           config: Json | null;
           contact_email: string | null;
@@ -7039,6 +7043,7 @@ export type Database = {
           updated_at: string | null;
         };
         Insert: {
+          brand_id?: string | null;
           code: string;
           config?: Json | null;
           contact_email?: string | null;
@@ -7063,6 +7068,7 @@ export type Database = {
           updated_at?: string | null;
         };
         Update: {
+          brand_id?: string | null;
           code?: string;
           config?: Json | null;
           contact_email?: string | null;
@@ -7086,7 +7092,15 @@ export type Database = {
           site_name?: string | null;
           updated_at?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'sales_channels_brand_id_fkey';
+            columns: ['brand_id'];
+            isOneToOne: false;
+            referencedRelation: 'brands';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       sales_order_events: {
         Row: {
