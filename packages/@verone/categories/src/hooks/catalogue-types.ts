@@ -35,6 +35,7 @@ export interface Product {
   updated_at: string;
   subcategory_id?: string;
   manufacturer?: string;
+  brand_ids?: string[];
   supplier_id?: string;
   product_type?: 'standard' | 'custom';
   supplier?: {
@@ -95,6 +96,8 @@ export interface CatalogueFilters {
   marginMin?: number;
   marginMax?: number;
   brands?: string[];
+  /** Filtre par marques internes Vérone Group (UUIDs depuis brands.id). Match si brand_ids contient au moins un des uuids fournis. */
+  internalBrandIds?: string[];
   /** Filtre publication en ligne (site internet) */
   publishedOnline?: 'all' | 'published' | 'unpublished';
   /** Filtre groupes de variantes (BO-CATALOG-VARIANTS-001) */

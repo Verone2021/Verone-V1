@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 
 import { STATUS_CONFIG, stockColor } from './catalogue-list-helpers';
+import { ProductBrandChips } from './_components/ProductBrandChips';
 
 type ProductImage = Database['public']['Tables']['product_images']['Row'];
 
@@ -155,6 +156,12 @@ export const ProductCardMobile = memo(function ProductCardMobile({
               {statusCfg.label}
             </Badge>
           </div>
+          <ProductBrandChips
+            brandIds={product.brand_ids}
+            collapsed
+            size="xs"
+            className="mt-1"
+          />
           <div className="text-[10px] text-gray-500 font-mono mt-0.5">
             {product.sku}
           </div>
