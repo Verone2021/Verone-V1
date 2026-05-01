@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { ArrowLeft, Package } from 'lucide-react';
 
 import { CardProductLuxury } from '@/components/ui/CardProductLuxury';
+import { JsonLdBreadcrumbList } from '@/components/seo/JsonLdBreadcrumbList';
 import { useCollectionBySlug } from '@/hooks/use-collections';
 import { useCollectionProducts } from '@/hooks/use-collection-products';
 
@@ -92,6 +93,15 @@ export default function CollectionDetailPage({
 
       {collection && (
         <>
+          {/* JSON-LD BreadcrumbList */}
+          <JsonLdBreadcrumbList
+            items={[
+              { name: 'Accueil', url: '/' },
+              { name: 'Collections', url: '/collections' },
+              { name: collection.name, url: `/collections/${slug}` },
+            ]}
+          />
+
           {/* Collection header */}
           <div className="mb-12">
             {collection.image_url && (

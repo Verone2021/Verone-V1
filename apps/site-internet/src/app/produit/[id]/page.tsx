@@ -24,6 +24,7 @@ import { trackViewItem } from '@/components/analytics/GoogleAnalytics';
 import { trackMetaViewContent } from '@/components/analytics/MetaPixel';
 import { ShareButtons } from '@/components/product/ShareButtons';
 import { StickyAddToCart } from '@/components/product/StickyAddToCart';
+import { JsonLdBreadcrumbList } from '@/components/seo/JsonLdBreadcrumbList';
 import { JsonLdProduct } from '@/components/seo/JsonLdProduct';
 import { useReviewStats } from '@/hooks/use-reviews';
 import { useCart } from '@/contexts/CartContext';
@@ -207,6 +208,15 @@ export default function ProductPage({
         sku={product.sku}
         reviewCount={reviewStats.count}
         averageRating={reviewStats.average}
+      />
+
+      {/* JSON-LD BreadcrumbList */}
+      <JsonLdBreadcrumbList
+        items={[
+          { name: 'Accueil', url: '/' },
+          { name: 'Catalogue', url: '/catalogue' },
+          { name: product.name, url: `/produit/${product.slug}` },
+        ]}
       />
 
       {/* Breadcrumb */}
