@@ -18,7 +18,6 @@
 
 import { useMemo, useState, use } from 'react';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
 import {
@@ -30,6 +29,8 @@ import {
   Sparkles,
   Star,
 } from 'lucide-react';
+
+import { CloudflareImage } from '@verone/ui';
 
 import { AddToSelectionModal } from '@/components/catalogue/AddToSelectionModal';
 import { useAuth, type LinkMeRole } from '@/contexts/AuthContext';
@@ -157,20 +158,15 @@ export default function CatalogueProductDetailPage({
           {/* Image gallery */}
           <div className="bg-white rounded-2xl overflow-hidden border border-gray-100">
             <div className="relative aspect-square">
-              {product.image_url ? (
-                <Image
-                  src={product.image_url}
-                  alt={product.name}
-                  fill
-                  className="object-contain p-6"
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  priority
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-50">
-                  <Package className="h-16 w-16 text-gray-200" />
-                </div>
-              )}
+              <CloudflareImage
+                cloudflareId={product.cloudflare_image_id ?? null}
+                fallbackSrc={product.image_url}
+                alt={product.name}
+                fill
+                className="object-contain p-6"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                priority
+              />
               {product.is_featured && (
                 <span className="absolute top-4 left-4 inline-flex items-center gap-1 bg-yellow-400 text-yellow-900 text-xs font-bold px-2.5 py-1 rounded-full">
                   <Star className="h-3 w-3 fill-current" />

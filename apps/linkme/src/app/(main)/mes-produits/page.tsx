@@ -15,7 +15,6 @@
 
 import { Suspense, useEffect, useState } from 'react';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -40,6 +39,7 @@ import {
 } from 'lucide-react';
 
 import {
+  CloudflareImage,
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
@@ -319,19 +319,15 @@ function ProductRow({ product }: { product: AffiliateProduct }): JSX.Element {
   return (
     <tr className="hover:bg-gray-50/50 transition-colors">
       <td className="px-6 py-4">
-        {product.product_image_url ? (
-          <Image
-            src={product.product_image_url}
+        <div className="relative w-10 h-10">
+          <CloudflareImage
+            cloudflareId={product.cloudflare_image_id ?? null}
+            fallbackSrc={product.product_image_url}
             alt={product.name}
-            width={40}
-            height={40}
-            className="w-10 h-10 rounded-lg object-cover"
+            fill
+            className="rounded-lg object-cover"
           />
-        ) : (
-          <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-            <Package className="h-5 w-5 text-gray-400" />
-          </div>
-        )}
+        </div>
       </td>
       <td className="px-6 py-4">
         <div>

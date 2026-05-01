@@ -1,6 +1,4 @@
-import Image from 'next/image';
-
-import { Package } from 'lucide-react';
+import { CloudflareImage } from '@verone/ui';
 
 import type { CartItem } from '../../../../types';
 
@@ -31,18 +29,13 @@ export function OrderSummary({
         {items.map(item => (
           <div key={item.id} className="py-2 flex gap-2">
             <div className="relative w-12 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-              {item.image_url ? (
-                <Image
-                  src={item.image_url}
-                  alt={item.name}
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  <Package className="h-4 w-4" />
-                </div>
-              )}
+              <CloudflareImage
+                cloudflareId={item.cloudflare_image_id ?? null}
+                fallbackSrc={item.image_url}
+                alt={item.name}
+                fill
+                className="object-cover"
+              />
               <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-gray-700 text-white text-[10px] rounded-full flex items-center justify-center">
                 {item.quantity}
               </span>

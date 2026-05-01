@@ -8,9 +8,9 @@
 
 import { useState } from 'react';
 
-import Image from 'next/image';
+import { Plus, Sparkles, Star } from 'lucide-react';
 
-import { Package, Plus, Sparkles, Star } from 'lucide-react';
+import { CloudflareImage } from '@verone/ui';
 
 import type { LinkMeCatalogProduct } from '@/lib/hooks/use-linkme-catalog';
 import { cn } from '@/lib/utils';
@@ -82,19 +82,14 @@ export function ProductCard({
       >
         {/* Image Container - Carré avec object-contain (style Amazon) */}
         <div className="relative aspect-square overflow-hidden bg-white">
-          {product.image_url ? (
-            <Image
-              src={product.image_url}
-              alt={displayTitle}
-              fill
-              className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-50">
-              <Package className="h-12 w-12 text-gray-200" />
-            </div>
-          )}
+          <CloudflareImage
+            cloudflareId={product.cloudflare_image_id ?? null}
+            fallbackSrc={product.image_url}
+            alt={displayTitle}
+            fill
+            className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          />
 
           {/* Gradient Overlay on Hover */}
           <div
@@ -230,19 +225,14 @@ export function ProductListItem({
     <div className="flex items-center gap-4 p-4 hover:bg-gray-50/50 transition-colors group">
       {/* Image */}
       <div className="w-16 h-16 bg-white border border-gray-100 rounded-lg flex-shrink-0 overflow-hidden relative">
-        {product.image_url ? (
-          <Image
-            src={product.image_url}
-            alt={displayTitle}
-            fill
-            className="object-contain p-1"
-            sizes="64px"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-50">
-            <Package className="h-6 w-6 text-gray-300" />
-          </div>
-        )}
+        <CloudflareImage
+          cloudflareId={product.cloudflare_image_id ?? null}
+          fallbackSrc={product.image_url}
+          alt={displayTitle}
+          fill
+          className="object-contain p-1"
+          sizes="64px"
+        />
       </div>
 
       {/* Info */}

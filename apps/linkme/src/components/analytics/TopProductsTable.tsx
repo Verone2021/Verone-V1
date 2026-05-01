@@ -7,10 +7,10 @@
 
 'use client';
 
-import Image from 'next/image';
-
 import { Card, Badge } from '@tremor/react';
 import { Package, TrendingUp } from 'lucide-react';
+
+import { CloudflareImage } from '@verone/ui';
 
 import { usePermissions } from '@/hooks/use-permissions';
 
@@ -67,19 +67,14 @@ export function TopProductsTable({
           #{index + 1}
         </span>
         <div className="relative h-10 w-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-          {product.productImageUrl ? (
-            <Image
-              src={product.productImageUrl}
-              alt={product.productName}
-              fill
-              className="object-cover"
-              sizes="40px"
-            />
-          ) : (
-            <div className="h-full w-full flex items-center justify-center">
-              <Package className="h-5 w-5 text-gray-400" />
-            </div>
-          )}
+          <CloudflareImage
+            cloudflareId={product.productCloudflareId ?? null}
+            fallbackSrc={product.productImageUrl}
+            alt={product.productName}
+            fill
+            className="object-cover"
+            sizes="40px"
+          />
         </div>
       </div>
     ),
@@ -115,19 +110,14 @@ export function TopProductsTable({
 
               {/* Image */}
               <div className="relative h-12 w-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                {product.productImageUrl ? (
-                  <Image
-                    src={product.productImageUrl}
-                    alt={product.productName}
-                    fill
-                    className="object-cover"
-                    sizes="48px"
-                  />
-                ) : (
-                  <div className="h-full w-full flex items-center justify-center">
-                    <Package className="h-6 w-6 text-gray-400" />
-                  </div>
-                )}
+                <CloudflareImage
+                  cloudflareId={product.productCloudflareId ?? null}
+                  fallbackSrc={product.productImageUrl}
+                  alt={product.productName}
+                  fill
+                  className="object-cover"
+                  sizes="48px"
+                />
               </div>
 
               {/* Infos produit */}

@@ -109,6 +109,7 @@ export interface SelectionItemWithProduct extends LinkMeSelectionItem {
     sku: string;
     description: string | null;
     primary_image_url: string | null;
+    cloudflare_image_id: string | null;
     stock_real: number;
   };
 }
@@ -129,6 +130,7 @@ export interface CartItem {
   name: string;
   sku: string;
   image_url: string | null;
+  cloudflare_image_id?: string | null;
   base_price_ht: number;
   selling_price_ht: number;
   margin_rate: number;

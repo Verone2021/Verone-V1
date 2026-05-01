@@ -21,8 +21,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
-import Image from 'next/image';
-
 import { Card } from '@tremor/react';
 import {
   Package,
@@ -33,6 +31,8 @@ import {
   X,
   Calendar,
 } from 'lucide-react';
+
+import { CloudflareImage } from '@verone/ui';
 
 import type { ProductStatsData } from '@/lib/hooks/use-all-products-stats';
 import { cn } from '@/lib/utils';
@@ -374,20 +374,15 @@ export function ProductStatsTable({
                   {/* Produit avec Badge source */}
                   <td className="py-3 px-2">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
-                        {product.productImageUrl ? (
-                          <Image
-                            src={product.productImageUrl}
-                            alt={product.productName}
-                            width={40}
-                            height={40}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Package className="h-4 w-4 text-gray-400" />
-                          </div>
-                        )}
+                      <div className="relative w-10 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
+                        <CloudflareImage
+                          cloudflareId={product.productCloudflareId ?? null}
+                          fallbackSrc={product.productImageUrl}
+                          alt={product.productName}
+                          fill
+                          className="object-cover"
+                          sizes="40px"
+                        />
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">

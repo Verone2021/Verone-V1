@@ -1,16 +1,10 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
-import {
-  ArrowLeft,
-  Trash2,
-  Plus,
-  Minus,
-  ShoppingBag,
-  Package,
-} from 'lucide-react';
+import { CloudflareImage } from '@verone/ui';
+
+import { ArrowLeft, Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 
 import { useCart } from '../../../components/cart/CartProvider';
 
@@ -88,18 +82,13 @@ export default function CartPage() {
                 <div key={item.id} className="p-3 flex gap-3">
                   {/* Product Image */}
                   <div className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                    {item.image_url ? (
-                      <Image
-                        src={item.image_url}
-                        alt={item.name}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <Package className="h-6 w-6" />
-                      </div>
-                    )}
+                    <CloudflareImage
+                      cloudflareId={item.cloudflare_image_id ?? null}
+                      fallbackSrc={item.image_url}
+                      alt={item.name}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
 
                   {/* Product Info */}
