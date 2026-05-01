@@ -1,8 +1,12 @@
 'use client';
 
+import { useCallback, useState } from 'react';
+
 import { Badge } from '@verone/ui';
+import { Button } from '@verone/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
+import { Textarea } from '@verone/ui';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
@@ -14,14 +18,19 @@ import {
   Heart,
   Star,
   Megaphone,
+  FileText,
+  Save,
+  Loader2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { useCustomerDetail } from '../hooks/use-customer-detail';
+import { useUpdateCustomerNotes } from '../hooks/use-update-customer-notes';
 
 import { CustomerAddressesTab } from './customer-detail/CustomerAddressesTab';
 import { CustomerOrdersTab } from './customer-detail/CustomerOrdersTab';
 
-import type { SiteCustomer } from './ClientsSection';
+import type { SiteCustomer } from '../hooks/use-site-customers';
 
 interface Props {
   customer: SiteCustomer;
@@ -35,9 +44,24 @@ export function CustomerDetailModal({ customer, open, onClose }: Props) {
     customer.auth_user_id
   );
 
+  // Notes internes — initialisées depuis le client passé en prop
+  const [notesValue, setNotesValue] = useState(customer.notes ?? '');
+  const { mutate: updateNotes, isPending: isSavingNotes } =
+    useUpdateCustomerNotes();
+
   const fullName =
     `${customer.first_name ?? ''} ${customer.last_name ?? ''}`.trim() ||
     'Client';
+
+  const handleSaveNotes = useCallback(() => {
+    updateNotes(
+      { customerId: customer.id, notes: notesValue },
+      {
+        onSuccess: () => toast.success('Notes sauvegardées'),
+        onError: () => toast.error('Erreur lors de la sauvegarde'),
+      }
+    );
+  }, [customer.id, notesValue, updateNotes]);
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
@@ -46,7 +70,7 @@ export function CustomerDetailModal({ customer, open, onClose }: Props) {
           <DialogTitle className="text-lg">{fullName}</DialogTitle>
         </DialogHeader>
 
-        {/* Customer Header */}
+        {/* En-tête client */}
         <div className="space-y-3 pb-4 border-b">
           <div className="flex flex-wrap gap-2">
             {customer.is_active ? (
@@ -66,7 +90,7 @@ export function CustomerDetailModal({ customer, open, onClose }: Props) {
             )}
             {customer.auth_user_id && (
               <Badge variant="outline" className="bg-purple-50 text-purple-700">
-                Compte lie
+                Compte lié
               </Badge>
             )}
           </div>
@@ -104,9 +128,9 @@ export function CustomerDetailModal({ customer, open, onClose }: Props) {
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* Onglets */}
         <Tabs defaultValue="commandes" className="mt-2">
-          <TabsList className="grid grid-cols-3 w-full">
+          <TabsList className="grid grid-cols-4 w-full">
             <TabsTrigger value="commandes" className="flex items-center gap-1">
               <ShoppingBag className="h-3.5 w-3.5" />
               Commandes
@@ -127,7 +151,11 @@ export function CustomerDetailModal({ customer, open, onClose }: Props) {
             </TabsTrigger>
             <TabsTrigger value="activite" className="flex items-center gap-1">
               <Heart className="h-3.5 w-3.5" />
-              Activite
+              Activité
+            </TabsTrigger>
+            <TabsTrigger value="notes" className="flex items-center gap-1">
+              <FileText className="h-3.5 w-3.5" />
+              Notes
             </TabsTrigger>
           </TabsList>
 
@@ -171,6 +199,36 @@ export function CustomerDetailModal({ customer, open, onClose }: Props) {
                   </div>
                 </div>
               )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="notes" className="mt-4">
+            <div className="space-y-3">
+              <p className="text-sm text-gray-500">
+                Notes internes — visibles uniquement par l&apos;équipe.
+              </p>
+              <Textarea
+                placeholder="Ajouter une note interne sur ce client..."
+                value={notesValue}
+                onChange={e => setNotesValue(e.target.value)}
+                rows={6}
+                className="resize-none text-sm"
+                disabled={isSavingNotes}
+              />
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  onClick={handleSaveNotes}
+                  disabled={isSavingNotes}
+                >
+                  {isSavingNotes ? (
+                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                  ) : (
+                    <Save className="h-3.5 w-3.5 mr-1.5" />
+                  )}
+                  Sauvegarder
+                </Button>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
