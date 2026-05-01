@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+
 import type { Product } from '@verone/categories';
 import { CategoryHierarchyModal } from '@verone/categories/components/modals/CategorizeModal';
 import { ProductPhotosModal } from '@verone/products/components/modals';
@@ -8,6 +10,8 @@ import {
   type SearchItem,
 } from '@verone/ui-business/components/utils/CommandPaletteSearch';
 import { toast } from 'sonner';
+
+import { useActiveBrand } from '@/hooks/use-active-brand';
 
 import { useCataloguePage } from './use-catalogue-page';
 import { CatalogueHeader } from './CatalogueHeader';
@@ -26,6 +30,15 @@ import { QuickEditDimensionsDialog } from './modals/QuickEditDimensionsDialog';
 
 export default function CataloguePage() {
   const ctx = useCataloguePage();
+  const { activeBrandId } = useActiveBrand();
+
+  // Synchronise le filtre interne brand avec le BrandSwitcher du header.
+  // Quand l'utilisateur change de marque dans le dropdown header, le catalogue
+  // est automatiquement filtré sur la marque sélectionnée.
+  useEffect(() => {
+    ctx.setInternalBrandFilter(activeBrandId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- ctx.setInternalBrandFilter is stable via useCallback
+  }, [activeBrandId]);
 
   // Early returns for initial load and error
   if (ctx.loading && ctx.products.length === 0) {

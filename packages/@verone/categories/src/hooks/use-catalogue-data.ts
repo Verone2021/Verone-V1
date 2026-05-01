@@ -61,7 +61,7 @@ const PRODUCT_SELECT = `
   margin_percentage, completion_percentage, completion_status,
   target_margin_percentage, target_price,
   stock_status, product_status, condition,
-  subcategory_id, supplier_id, manufacturer,
+  subcategory_id, supplier_id, manufacturer, brand_ids,
   has_images, dimensions, weight,
   archived_at, created_at, updated_at,
   supplier:organisations!supplier_id(id, legal_name, trade_name),
@@ -123,6 +123,11 @@ export async function loadProducts(
 
   if (filters.brands && filters.brands.length > 0) {
     query = query.in('manufacturer', filters.brands);
+  }
+
+  if (filters.internalBrandIds && filters.internalBrandIds.length > 0) {
+    // Match si products.brand_ids overlap avec les UUIDs choisis (postgres array operator)
+    query = query.overlaps('brand_ids', filters.internalBrandIds);
   }
 
   if (filters.publishedOnline === 'published') {

@@ -881,6 +881,51 @@ export type Database = {
           },
         ];
       };
+      brands: {
+        Row: {
+          brand_color: string | null;
+          created_at: string;
+          description: string | null;
+          display_order: number;
+          id: string;
+          is_active: boolean;
+          logo_url: string | null;
+          name: string;
+          slug: string;
+          social_handles: Json | null;
+          updated_at: string;
+          website_url: string | null;
+        };
+        Insert: {
+          brand_color?: string | null;
+          created_at?: string;
+          description?: string | null;
+          display_order?: number;
+          id?: string;
+          is_active?: boolean;
+          logo_url?: string | null;
+          name: string;
+          slug: string;
+          social_handles?: Json | null;
+          updated_at?: string;
+          website_url?: string | null;
+        };
+        Update: {
+          brand_color?: string | null;
+          created_at?: string;
+          description?: string | null;
+          display_order?: number;
+          id?: string;
+          is_active?: boolean;
+          logo_url?: string | null;
+          name?: string;
+          slug?: string;
+          social_handles?: Json | null;
+          updated_at?: string;
+          website_url?: string | null;
+        };
+        Relationships: [];
+      };
       categories: {
         Row: {
           cloudflare_image_id: string | null;
@@ -6230,6 +6275,7 @@ export type Database = {
           availability_type:
             | Database['public']['Enums']['availability_type_enum']
             | null;
+          brand_ids: string[] | null;
           completion_percentage: number | null;
           completion_status: string | null;
           condition: string | null;
@@ -6321,6 +6367,7 @@ export type Database = {
           availability_type?:
             | Database['public']['Enums']['availability_type_enum']
             | null;
+          brand_ids?: string[] | null;
           completion_percentage?: number | null;
           completion_status?: string | null;
           condition?: string | null;
@@ -6412,6 +6459,7 @@ export type Database = {
           availability_type?:
             | Database['public']['Enums']['availability_type_enum']
             | null;
+          brand_ids?: string[] | null;
           completion_percentage?: number | null;
           completion_status?: string | null;
           condition?: string | null;
@@ -9586,6 +9634,7 @@ export type Database = {
       };
       user_profiles: {
         Row: {
+          active_brand_id: string | null;
           app_source: Database['public']['Enums']['app_type'] | null;
           avatar_url: string | null;
           client_type: Database['public']['Enums']['client_type'] | null;
@@ -9605,6 +9654,7 @@ export type Database = {
           user_type: Database['public']['Enums']['user_type'] | null;
         };
         Insert: {
+          active_brand_id?: string | null;
           app_source?: Database['public']['Enums']['app_type'] | null;
           avatar_url?: string | null;
           client_type?: Database['public']['Enums']['client_type'] | null;
@@ -9624,6 +9674,7 @@ export type Database = {
           user_type?: Database['public']['Enums']['user_type'] | null;
         };
         Update: {
+          active_brand_id?: string | null;
           app_source?: Database['public']['Enums']['app_type'] | null;
           avatar_url?: string | null;
           client_type?: Database['public']['Enums']['client_type'] | null;
@@ -9655,6 +9706,13 @@ export type Database = {
             columns: ['organisation_id'];
             isOneToOne: false;
             referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'user_profiles_active_brand_id_fkey';
+            columns: ['active_brand_id'];
+            isOneToOne: false;
+            referencedRelation: 'brands';
             referencedColumns: ['id'];
           },
           {

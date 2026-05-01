@@ -15,6 +15,7 @@ export * from './components/sourcing';
 export * from './components/badges';
 export * from './components/selectors';
 export * from './components/compact';
+export * from './components/forms';
 
 // Hooks
 export * from './hooks';

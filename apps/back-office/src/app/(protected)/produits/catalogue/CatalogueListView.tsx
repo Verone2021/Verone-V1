@@ -22,6 +22,7 @@ import {
   SortableHeader,
 } from './catalogue-list-helpers';
 import { ProductCardMobile } from './CatalogueProductCardMobile';
+import { ProductBrandChips } from './_components/ProductBrandChips';
 
 type ProductImage = Database['public']['Tables']['product_images']['Row'];
 
@@ -87,6 +88,12 @@ const ProductRow = memo(function ProductRow({
           {product.name}
         </div>
         <div className="text-[10px] text-gray-500 font-mono">{product.sku}</div>
+        <ProductBrandChips
+          brandIds={product.brand_ids}
+          collapsed
+          size="xs"
+          className="mt-1"
+        />
       </td>
 
       <td className="py-2 px-2 hidden lg:table-cell">
