@@ -69,7 +69,9 @@ export default function ProductPage({
     queryFn: async (): Promise<CatalogueProduct | null> => {
       if (!slug) return null;
 
-      const { data, error } = await supabase.rpc('get_site_internet_products');
+      const { data, error } = await supabase.rpc('get_site_internet_products', {
+        p_brand_slug: 'verone',
+      });
 
       if (error) {
         console.error('❌ Erreur fetch product detail:', error);
@@ -101,7 +103,9 @@ export default function ProductPage({
     queryFn: async (): Promise<VariantCard[]> => {
       if (!product?.variant_group_id) return [];
 
-      const { data, error } = await supabase.rpc('get_site_internet_products');
+      const { data, error } = await supabase.rpc('get_site_internet_products', {
+        p_brand_slug: 'verone',
+      });
 
       if (error) {
         console.error('❌ Erreur fetch variants:', error);

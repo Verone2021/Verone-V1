@@ -92,7 +92,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   // Fetch published products via RPC
-  const productsResult = await supabase.rpc('get_site_internet_products');
+  const productsResult = await supabase.rpc('get_site_internet_products', {
+    p_brand_slug: 'verone',
+  });
   const products = productsResult.data as Array<{ slug: string }> | null;
   const productPages: MetadataRoute.Sitemap = (products ?? []).map(p => ({
     url: `${siteUrl}/produit/${p.slug}`,

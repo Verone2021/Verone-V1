@@ -19,7 +19,9 @@ export function useProductDetail(slug: string | null) {
       if (!slug) return null;
 
       // Récupérer produit par slug via RPC
-      const { data, error } = await supabase.rpc('get_site_internet_products');
+      const { data, error } = await supabase.rpc('get_site_internet_products', {
+        p_brand_slug: 'verone',
+      });
 
       if (error) {
         console.error('❌ Erreur fetch product detail:', error);
