@@ -1,17 +1,24 @@
 'use client';
 
+import { useState } from 'react';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { Badge, ButtonUnified } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
   ArrowLeft,
+  Copy,
   Share2,
   Building2,
   Package,
   UserCircle2,
 } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { duplicateProduct } from '../../../actions/duplicate-product';
 
 import type { Product, SourcingInfo } from './types';
 
@@ -36,6 +43,36 @@ export function ProductDetailHeader({
   onShare,
   onImageClick,
 }: ProductDetailHeaderProps) {
+  const router = useRouter();
+  const [duplicating, setDuplicating] = useState(false);
+
+  const handleDuplicate = async () => {
+    if (duplicating) return;
+    setDuplicating(true);
+    try {
+      const result = await duplicateProduct(product.id);
+      if (!result.success || !result.newProductId) {
+        toast.error('Duplication impossible', {
+          description: result.error ?? 'Erreur inconnue.',
+        });
+        return;
+      }
+      toast.success('Produit dupliqué', {
+        description: `Nouveau SKU : ${result.newSku ?? '—'}`,
+        action: {
+          label: 'Voir',
+          onClick: () =>
+            router.push(`/produits/catalogue/${result.newProductId}`),
+        },
+      });
+      router.push(`/produits/catalogue/${result.newProductId}`);
+    } catch (err) {
+      console.error('[ProductDetailHeader] duplicate failed:', err);
+      toast.error('Duplication impossible');
+    } finally {
+      setDuplicating(false);
+    }
+  };
   const completionColor =
     completionPercentage < 30
       ? 'bg-red-500'
@@ -156,17 +193,30 @@ export function ProductDetailHeader({
             </div>
           </div>
 
-          {/* Share button */}
-          <ButtonUnified
-            variant="outline"
-            size="sm"
-            onClick={onShare}
-            icon={Share2}
-            iconPosition="left"
-            className="flex-shrink-0"
-          >
-            Partager
-          </ButtonUnified>
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <ButtonUnified
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void handleDuplicate();
+              }}
+              icon={Copy}
+              iconPosition="left"
+              disabled={duplicating}
+            >
+              {duplicating ? 'Duplication...' : 'Dupliquer'}
+            </ButtonUnified>
+            <ButtonUnified
+              variant="outline"
+              size="sm"
+              onClick={onShare}
+              icon={Share2}
+              iconPosition="left"
+            >
+              Partager
+            </ButtonUnified>
+          </div>
         </div>
       </div>
     </div>
