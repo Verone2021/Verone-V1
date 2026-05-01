@@ -12,6 +12,7 @@ import {
 } from '@verone/ui';
 import { Settings, BarChart3, DollarSign, Tags, Package } from 'lucide-react';
 
+import { BrandsMultiSelect } from '../../forms/BrandsMultiSelect';
 import type { ProductFormData } from './types';
 
 interface ProductEditManagementColumnProps {
@@ -277,6 +278,16 @@ export function ProductEditManagementColumn({
                 placeholder="13 chiffres"
               />
             </div>
+          </div>
+
+          {/* Marques internes Vérone Group (brand_ids) */}
+          <div>
+            <Label className="text-[9px] text-gray-600">Marques internes</Label>
+            <BrandsMultiSelect
+              value={formData.brand_ids}
+              onChange={nextIds => onFieldChange('brand_ids', nextIds)}
+              emptyLabel="Aucune marque (white-label)"
+            />
           </div>
         </div>
       </div>
