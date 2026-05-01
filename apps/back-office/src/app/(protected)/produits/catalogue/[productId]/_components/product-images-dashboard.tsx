@@ -172,6 +172,7 @@ export function ProductImagesDashboard({
         <GeneralRail
           productName={product.name}
           sku={product.sku ?? ''}
+          brandIds={product.brand_ids ?? null}
           completionPercentage={completionPercentage}
           tabEntries={tabEntries}
           variantGroupId={product.variant_group_id ?? null}
