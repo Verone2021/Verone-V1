@@ -5,7 +5,12 @@ import { memo } from 'react';
 import type { Product } from '@verone/categories';
 import { useProductImages } from '@verone/products';
 import type { QuickEditField } from '@verone/products';
-import { Badge, CloudflareImage, ResponsiveActionMenu } from '@verone/ui';
+import {
+  Badge,
+  Checkbox,
+  CloudflareImage,
+  ResponsiveActionMenu,
+} from '@verone/ui';
 import type { Database } from '@verone/types';
 import { cn } from '@verone/utils';
 import {
@@ -27,6 +32,9 @@ interface ProductCardMobileProps {
   preloadedImage?: ProductImage | null;
   onQuickEdit?: (product: Product, field: QuickEditField) => void;
   onCardClick: (productId: string) => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (productId: string) => void;
 }
 
 /**
@@ -39,6 +47,9 @@ export const ProductCardMobile = memo(function ProductCardMobile({
   preloadedImage,
   onQuickEdit,
   onCardClick,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
 }: ProductCardMobileProps) {
   const { primaryImage: fetchedImage, loading: imageLoading } =
     useProductImages({
@@ -116,8 +127,26 @@ export const ProductCardMobile = memo(function ProductCardMobile({
     product.supplier?.trade_name ?? product.supplier?.legal_name ?? null;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+    <div
+      className={cn(
+        'rounded-lg border border-gray-200 bg-white p-3 shadow-sm',
+        selected && 'border-blue-300 bg-blue-50/40'
+      )}
+    >
       <div className="flex items-start gap-3">
+        {selectable && (
+          <div
+            className="flex h-11 w-11 flex-shrink-0 items-center justify-center"
+            onClick={e => e.stopPropagation()}
+          >
+            <Checkbox
+              checked={selected}
+              onCheckedChange={() => onToggleSelect?.(product.id)}
+              aria-label={`Sélectionner ${product.name}`}
+              checkboxSize="lg"
+            />
+          </div>
+        )}
         <button
           type="button"
           onClick={() => onCardClick(product.id)}

@@ -19,10 +19,13 @@ import { CatalogueSavedViews } from './CatalogueSavedViews';
 import { CatalogueTabs } from './CatalogueTabs';
 import { CatalogueToolbar } from './CatalogueToolbar';
 import { CatalogueResultsInfo } from './CatalogueResultsInfo';
+import { CatalogueBulkActionsBar } from './CatalogueBulkActionsBar';
 import { CatalogueGridView } from './CatalogueGridView';
 import { CatalogueListView } from './CatalogueListView';
 import { CatalogueEmptyState } from './CatalogueEmptyState';
 import { CataloguePagination } from './CataloguePagination';
+import { BulkPriceEditDialog } from './modals/BulkPriceEditDialog';
+import { BulkStatusDialog } from './modals/BulkStatusDialog';
 import { QuickEditSupplierDialog } from './modals/QuickEditSupplierDialog';
 import { QuickEditPriceDialog } from './modals/QuickEditPriceDialog';
 import { QuickEditWeightDialog } from './modals/QuickEditWeightDialog';
@@ -137,6 +140,37 @@ export default function CataloguePage() {
                 onApplyFilters={ctx.applyFilters}
               />
 
+              <CatalogueBulkActionsBar
+                count={ctx.bulkSelection.selectedCount}
+                busy={ctx.bulkActions.busy}
+                onPublish={() => {
+                  void ctx.bulkActions.setPublished(
+                    Array.from(ctx.bulkSelection.selectedIds),
+                    true
+                  );
+                }}
+                onUnpublish={() => {
+                  void ctx.bulkActions.setPublished(
+                    Array.from(ctx.bulkSelection.selectedIds),
+                    false
+                  );
+                }}
+                onChangeStatus={() => ctx.setBulkStatusOpen(true)}
+                onChangePrice={() => ctx.setBulkPriceOpen(true)}
+                onArchive={() => {
+                  if (
+                    confirm(
+                      `Archiver ${ctx.bulkSelection.selectedCount} produit(s) ?`
+                    )
+                  ) {
+                    void ctx.bulkActions.archive(
+                      Array.from(ctx.bulkSelection.selectedIds)
+                    );
+                  }
+                }}
+                onClear={ctx.bulkSelection.clear}
+              />
+
               {ctx.viewMode === 'grid' ? (
                 <CatalogueGridView
                   products={currentProducts}
@@ -168,6 +202,14 @@ export default function CataloguePage() {
                   getPrimaryImage={ctx.getPrimaryImage}
                   getIncompletePrimaryImage={ctx.getIncompletePrimaryImage}
                   onQuickEdit={ctx.handleQuickEdit}
+                  selectable
+                  isSelected={ctx.bulkSelection.isSelected}
+                  allSelected={ctx.bulkSelection.allSelected(currentProducts)}
+                  someSelected={ctx.bulkSelection.someSelected(currentProducts)}
+                  onToggleSelect={ctx.bulkSelection.toggle}
+                  onToggleAll={() =>
+                    ctx.bulkSelection.toggleAll(currentProducts)
+                  }
                 />
               )}
 
@@ -314,6 +356,39 @@ export default function CataloguePage() {
           }}
         />
       )}
+
+      {/* Bulk dialogs (SI-PROD-001) */}
+      <BulkPriceEditDialog
+        open={ctx.bulkPriceOpen}
+        count={ctx.bulkSelection.selectedCount}
+        busy={ctx.bulkActions.busy}
+        onClose={() => ctx.setBulkPriceOpen(false)}
+        onApplyFlat={price => {
+          void ctx.bulkActions
+            .setPriceFlat(Array.from(ctx.bulkSelection.selectedIds), price)
+            .finally(() => ctx.setBulkPriceOpen(false));
+        }}
+        onApplyPercent={percent => {
+          void ctx.bulkActions
+            .adjustPriceByPercent(
+              Array.from(ctx.bulkSelection.selectedIds),
+              percent
+            )
+            .finally(() => ctx.setBulkPriceOpen(false));
+        }}
+      />
+
+      <BulkStatusDialog
+        open={ctx.bulkStatusOpen}
+        count={ctx.bulkSelection.selectedCount}
+        busy={ctx.bulkActions.busy}
+        onClose={() => ctx.setBulkStatusOpen(false)}
+        onApply={status => {
+          void ctx.bulkActions
+            .setStatus(Array.from(ctx.bulkSelection.selectedIds), status)
+            .finally(() => ctx.setBulkStatusOpen(false));
+        }}
+      />
 
       {/* CommandPalette global ⌘K */}
       <CommandPalette
