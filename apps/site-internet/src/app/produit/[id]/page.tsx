@@ -40,6 +40,7 @@ interface VariantCard {
   slug: string;
   name: string;
   primary_image_url: string | null;
+  primary_cloudflare_image_id: string | null;
 }
 
 export default function ProductPage({
@@ -118,6 +119,7 @@ export default function ProductPage({
           slug: p.slug,
           name: p.name,
           primary_image_url: p.primary_image_url,
+          primary_cloudflare_image_id: p.primary_cloudflare_image_id,
         }));
 
       return variantsData;

@@ -61,6 +61,7 @@ interface ProductSidebarProps {
     slug: string;
     name: string;
     primary_image_url: string | null;
+    primary_cloudflare_image_id: string | null;
   }>;
   currentProductId: string;
 }
@@ -207,7 +208,7 @@ export function ProductSidebar({
                     }`}
                   >
                     <CloudflareImage
-                      cloudflareId={null}
+                      cloudflareId={variant.primary_cloudflare_image_id}
                       fallbackSrc={variant.primary_image_url}
                       alt={variant.name}
                       fill
