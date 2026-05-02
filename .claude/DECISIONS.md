@@ -942,3 +942,67 @@ Estimation gain tokens chargés au démarrage de session : **−10 000 à −15 
 - Demande explicite Romeo 2026-05-02 : « Lance [INFRA-LEAN-001] Niveau 1 : allègement faible config Claude »
 
 **Référence** : session 2026-05-02 avec Romeo + audit indépendant croisé.
+
+---
+
+## ADR-026 — Suppression de `autonomy-boundaries.md` (système 3-feux) (2026-05-02)
+
+**Contexte** : suite à l'ajout de la règle 6 anti-paralysie de choix dans `.claude/rules/communication-style.md` (ADR ajoutée au sein de `[INFRA-LEAN-001]`), le système 3-feux (FEU VERT / ORANGE / ROUGE) de `autonomy-boundaries.md` est devenu :
+
+1. **Contradictoire** avec la nouvelle règle anti-paralysie. Exemple : autonomy-boundaries listait « Toucher à plus de 5 fichiers » et « Choix de pattern sans playbook » en FEU ORANGE (l'agent demande confirmation), alors qu'anti-paralysie dit explicitement que l'agent décide seul sur tout sujet technique. La cohabitation des deux règles produisait des décisions contradictoires.
+
+2. **Redondant** sur ses sections FEU ROUGE :
+   - Triggers stock → `stock-triggers-protected.md`
+   - Migrations / RLS → `database.md`
+   - Routes API Qonto / webhooks / emails → `code-standards.md` + `CLAUDE.md` racine
+   - Worktree → `no-worktree-solo.md`
+   - `--admin` / `--force` nu / `pnpm dev` → `CLAUDE.md` racine + `workflow.md`
+   - Données fantômes → `no-phantom-data.md`
+   - Anti-GO intermédiaires → règle 6 anti-paralysie
+
+3. **Coûteux** : 229 lignes (~2 300 tokens) chargés à chaque session pour des règles déjà couvertes ailleurs.
+
+**Décision** : supprimer `autonomy-boundaries.md` après audit de complétude.
+
+**Audit de complétude — 5 interdictions FEU ROUGE migrées dans `CLAUDE.md` racine** (vérifié comme non couvertes ailleurs) :
+
+1. **Modifier `.claude/` sans PR dédiée + ADR** — couvre `rules/`, `agents/*.md`, `settings.json`, `.husky/`, `PROTECTED_FILES.json`, `apps/*/CLAUDE.md`, `CLAUDE.md` racine. Ajouté section « Configuration agent » dans INTERDICTIONS ABSOLUES.
+2. **Merger vers `staging` sans ordre Roméo explicite immédiat** (avant : seul main était listé). Ajouté section « Git et merges ».
+3. **`git reset --hard` sur commits déjà mergés** ou rebase interactif sur historique public. Ajouté section « Git et merges ».
+4. **`rm -rf` sur plus d'un fichier** sans inventaire. Ajouté section « Actions destructives ».
+5. **Modifier `.gitignore` sans raison documentée** (peut masquer fichiers sensibles). Ajouté section « Actions destructives ».
+
+Autres FEU ROUGE de l'ancien fichier confirmés déjà couverts ailleurs (pas besoin de migrer) :
+
+- `gh pr merge --admin`, `git push --force` nu, `git worktree add`, lancer `pnpm dev`, `--no-verify`, modifier triggers stock, modifier routes API Qonto/webhooks/emails, migration SQL sans régen types, modifier policies RLS, supprimer migrations, modifier fichiers `@protected`, suppression de branche distante, créer release PR vers main de sa propre initiative, `gh pr create --base main`.
+
+**Trace** :
+
+- 5 fichiers modifiés / 1 supprimé / 1 ADR ajouté :
+  - `.claude/rules/autonomy-boundaries.md` (SUPPRIMÉ — 229 lignes)
+  - `CLAUDE.md` racine (section AUTONOMIE supprimée, IDENTITE refondu, POINT D'ENTREE remplace pointeur, INTERDICTIONS ABSOLUES réorganisé en 5 catégories + 5 trous bouchés, table SOURCES DE VERITE débarrassée d'une ligne)
+  - `.claude/INDEX.md` (POINT D'ENTREE + listing Rules 13 → 12)
+  - `.claude/rules/no-worktree-solo.md` (1 pointeur retiré)
+  - `.claude/DECISIONS.md` (cette ADR-026)
+
+**Conséquences mesurables** :
+
+| Indicateur                               | Avant Niveau 1 | Après Niveau 1 + suppression autonomy-boundaries | Gain total          |
+| ---------------------------------------- | -------------- | ------------------------------------------------ | ------------------- |
+| Fichiers de règles                       | 15             | **12**                                           | **−3**              |
+| Lignes config chargées au démarrage      | 7 260          | ~6 000                                           | **−17 %**           |
+| Tokens chargés au démarrage (estimation) | ~72 600        | ~60 000                                          | **~−12 600 tokens** |
+| Doublons et contradictions               | élevés         | quasi-nuls                                       | qualitatif          |
+
+**Risques traités** :
+
+- **Perte de sécurité** : neutralisée par migration des 5 vraies interdictions absolues qui n'étaient nulle part ailleurs. La sécurité est même renforcée parce que les interdictions sont maintenant directement dans `CLAUDE.md` racine (chargé en premier) au lieu d'un fichier secondaire.
+- **Référence cassée** : grep complet effectué, seules subsistent les références historiques dans `DECISIONS.md` (intentionnellement conservées).
+- **Confusion sur l'autonomie** : remplacée par règle 6 anti-paralysie (claire, binaire : agent décide seul / 4 cas où il demande).
+
+**Sources** :
+
+- Audit indépendant Claude (ce fichier) 2026-05-02 confirmant que ton autre agent (qui a proposé la suppression) avait raison sur le fond, mais sous-estimait 5 trous à boucher.
+- Demande explicite Roméo 2026-05-02 dans la session `[INFRA-LEAN-001]`.
+
+**Référence** : session 2026-05-02 avec Roméo, audit croisé entre 2 agents convergents.

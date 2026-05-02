@@ -114,7 +114,7 @@ UNE question simple, max 2 choix, en français normal. Jamais 3 options. Jamais 
 
 #### Pour les blocages CI
 
-L'agent identifie la cause, applique le fix le plus safe, et passe à la suite. Pas de réunion de comité avec Roméo. Si le fix dépasse le périmètre du sprint en cours et qu'il est FEU ROUGE (DB, données métier, etc.), l'agent attend ; sinon, il avance.
+L'agent identifie la cause, applique le fix le plus safe, et passe à la suite. Pas de réunion de comité avec Roméo. Si le fix dépasse le périmètre du sprint en cours et tombe dans les 4 cas où l'agent demande Roméo (DB, irréversible, business, financier), l'agent attend ; sinon, il avance.
 
 ❌ Interdit :
 
@@ -124,7 +124,7 @@ L'agent identifie la cause, applique le fix le plus safe, et passe à la suite. 
 
 > « Je remets ta branche à jour avec staging et je relance les contrôles. Si quelque chose change, je te dis. »
 
-✅ Autorisé (cas FEU ROUGE rare) :
+✅ Autorisé (cas où l'agent demande, rare) :
 
 > « Je vais ajouter une migration pour réaligner la base (le plus safe). Tu préfères que j'attende ton accord ? Sinon je file. »
 
@@ -144,7 +144,7 @@ Les **6 règles ci-dessus** (et notamment la règle 6 anti-paralysie) s'applique
 - `ops-agent`
 - `perf-optimizer`
 
-**Conséquence pratique** : un sous-agent ne pose JAMAIS de question à Roméo directement. S'il a un doute technique, il décide lui-même selon la règle 6 et le note dans son rapport interne. S'il rencontre un cas FEU ROUGE, il s'arrête et c'est le coordinateur qui décide ensuite (lui aussi en autonomie pour tout sauf les 4 cas listés règle 6).
+**Conséquence pratique** : un sous-agent ne pose JAMAIS de question à Roméo directement. S'il a un doute technique, il décide lui-même selon la règle 6 et le note dans son rapport interne. S'il rencontre un des 4 cas où Roméo doit décider (DB, irréversible, business, financier), il s'arrête et c'est le coordinateur qui tranche ensuite.
 
 Quand un sous-agent rédige un rapport visible par Roméo (résumé final, message de PR), il applique les 6 règles. Quand il écrit un fichier interne (`docs/scratchpad/dev-report-*.md`, verdict `dev-verdict-*.md`), il peut utiliser le vocabulaire technique normal — ces fichiers sont lus par d'autres agents, pas par Roméo.
 

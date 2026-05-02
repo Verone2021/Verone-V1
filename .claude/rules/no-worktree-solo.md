@@ -134,5 +134,4 @@ Référencé par :
 - `.claude/INDEX.md`
 - `.claude/DECISIONS.md` (ADR-023 ANNULÉE 2026-05-02)
 - `.claude/rules/workflow.md` (complémentaire — règle « 1 PR = 1 bloc » + checklist 4 questions)
-- `.claude/rules/autonomy-boundaries.md` (FEU VERT inclut `git checkout -b`,
-  `git stash`, mais PAS `git worktree add`)
+- `CLAUDE.md` racine section INTERDICTIONS ABSOLUES (worktree listé)

@@ -13,8 +13,10 @@ Roméo n'est sollicité QUE sur : modification DB, action irréversible, choix
 produit/business, transaction financière. Voir
 `.claude/rules/communication-style.md` (règle 6).
 
-Tu es le coordinateur. Tu codes uniquement les taches triviales definies par
-`.claude/rules/autonomy-boundaries.md` (FEU VERT). Tout le reste = delegation.
+Tu es le coordinateur. Tu codes les tâches techniques (workflow, fix safe,
+ordre de tâches, sous-agents) en autonomie selon la règle 6 anti-paralysie
+de `.claude/rules/communication-style.md`. Tu délègues le code applicatif
+aux sous-agents quand la tâche dépasse 5 outils ou 10 fichiers.
 Tu lis TOUJOURS les resultats avant de valider.
 Romeo est NOVICE — tu le PROTEGES, pas tu lui obeis.
 Si sa demande est risquee → DIS NON + explique + propose alternative.
@@ -22,7 +24,7 @@ Langue : francais. Code/commits : anglais.
 
 ## POINT D'ENTREE — A LIRE A CHAQUE SESSION
 
-1. `.claude/rules/autonomy-boundaries.md` — feu vert / orange / rouge par action
+1. `.claude/rules/communication-style.md` — règle 6 anti-paralysie + style français simple
 2. `.claude/work/ACTIVE.md` — file de taches active
 3. Le playbook associe dans `.claude/playbooks/` si la tache en reference un
 4. Le(s) fichier(s) `.claude/rules/*` pertinents pour le domaine
@@ -41,16 +43,6 @@ avant nouvelle branche, bundling, incident 2026-04-28). Plus
 Règle d'or : **1 PR = 1 BLOC COHERENT**, jamais 1 PR par sprint. Branche
 créée depuis `staging` à jour. PR toujours vers `staging`. `git push --force-with-lease`,
 jamais `--force` nu. Merge squash après validation Romeo + CI verte.
-
-## AUTONOMIE — FEU VERT / ORANGE / ROUGE
-
-**Source unique** : `.claude/rules/autonomy-boundaries.md`
-
-- **FEU VERT** : lecture, scratchpad, commit feature branch, push, sous-agent, PR DRAFT
-- **FEU ORANGE** : promouvoir PR draft → ready, toucher > 5 fichiers
-- **FEU ROUGE** : merge staging/main, migration DB, modification `.claude/`, routes API, triggers stock
-
-En cas d'ambiguite : FEU ROUGE par defaut.
 
 ## STANDARDS RESPONSIVE
 
@@ -103,16 +95,41 @@ Le reviewer lit le rapport, pas le chat.
 
 Détails dans les règles citées. Résumés courts ici :
 
+### Données et production
+
 - **Donnée fantôme en prod** — `.claude/rules/no-phantom-data.md`. Pas d'INSERT/UPDATE manuel pour rattraper un état cassé. Pas de note technique dans une colonne visible utilisateur.
+- **Modifier les triggers stock** — `.claude/rules/stock-triggers-protected.md`.
+- **Migration SQL sans régénération des types dans la même PR** — `.claude/rules/workflow.md` checklist question 4.
+- **Modifier les policies RLS sans PR dédiée** — `.claude/rules/database.md`.
+- **Modifier les routes API existantes** (Qonto, adresses, emails, webhooks, middleware).
 - **Demander à Romeo de vérifier sur un site externe** — `.claude/rules/agent-autonomy-external.md`. L'agent fait tout via CLI ou MCP Playwright.
-- **1 PR par sous-tâche quand plusieurs fixes sont liés** — voir `.claude/rules/workflow.md` (incident 2026-04-28, ~1h50 perdues vs 25 min en bundle propre).
-- **Migration SQL sans régénération des types dans la même PR** — voir `.claude/rules/workflow.md` checklist question 4.
-- **`git worktree add`** — voir `.claude/rules/no-worktree-solo.md`.
+
+### Configuration agent
+
+- **Modifier `.claude/` sans PR dédiée et entrée `DECISIONS.md`** — couvre `rules/`, `agents/*.md`, `settings.json`, `.husky/`, `PROTECTED_FILES.json`, `apps/*/CLAUDE.md`, `CLAUDE.md` racine.
+- **Modifier les fichiers marqués `@protected`** dans leur en-tête.
+
+### Git et merges
+
+- **`git worktree add`** — `.claude/rules/no-worktree-solo.md`.
 - **`git push --force` nu** — toujours `--force-with-lease`.
+- **`git push --force` sur `main` ou `staging`** (même avec `--force-with-lease`).
+- **`git reset --hard` sur commits déjà mergés** ou rebase interactif sur historique public.
 - **`gh pr merge --admin`** pour bypasser un check CI fail.
+- **Merger vers `staging` sans ordre Romeo explicite immédiat.**
 - **Merger vers `main` sans ordre Romeo explicite immédiat.**
-- **Modifier les triggers stock** — voir `.claude/rules/stock-triggers-protected.md`.
-- **Modifier les routes API existantes** (Qonto, adresses, emails, webhooks).
+- **`gh pr create --base main`** sauf ordre Romeo explicite immédiat.
+- **1 PR par sous-tâche quand plusieurs fixes sont liés** — `.claude/rules/workflow.md` (incident 2026-04-28).
+
+### Actions destructives
+
+- **`rm -rf` sur plus d'un fichier** sans inventaire et confirmation.
+- **Modifier `.gitignore`** sans raison documentée (peut masquer des fichiers sensibles).
+- **Supprimer une migration Supabase** (append-only).
+- **Supprimer une branche distante** (`git push --delete origin`) sans accord Romeo.
+
+### Code et commandes
+
 - **Lancer `pnpm dev` / `pnpm start` / `turbo dev`** — Romeo lance lui-même.
 - **`--no-verify`** sauf ordre Romeo explicite.
 - **`select('*')` Supabase** — colonnes explicites.
@@ -136,7 +153,6 @@ Détails dans les règles citées. Résumés courts ici :
 | Data fetching & perf      | `.claude/rules/data-fetching.md`               |
 | Workflow git/PR + branche | `.claude/rules/workflow.md`                    |
 | Pas de worktree (solo)    | `.claude/rules/no-worktree-solo.md`            |
-| Autonomie agent           | `.claude/rules/autonomy-boundaries.md`         |
 | Zéro donnée fantôme       | `.claude/rules/no-phantom-data.md`             |
 | Autonomie externe         | `.claude/rules/agent-autonomy-external.md`     |
 | Index config agent        | `.claude/INDEX.md`                             |

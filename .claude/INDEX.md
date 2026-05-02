@@ -9,16 +9,15 @@ Sommaire unique de la config agent. Si tu cherches où est une règle, un agent,
 ## 🟢 Point d'entrée agent
 
 1. `CLAUDE.md` (racine) — identité, workflow, interdictions
-2. `.claude/rules/autonomy-boundaries.md` — feu vert / orange / rouge par action
+2. `.claude/rules/communication-style.md` — règle 6 anti-paralysie (agent décide seul sur sujets techniques)
 3. `.claude/work/ACTIVE.md` (gitignored, local) — file de tâches active (source unique)
 
 ---
 
-## Rules (13 fichiers)
+## Rules (12 fichiers)
 
 Règles stables lues automatiquement par l'agent.
 
-- `.claude/rules/autonomy-boundaries.md` — Quand l'agent agit seul vs attend Romeo
 - `.claude/rules/code-standards.md` — TypeScript, async, composants, API, logout
 - `.claude/rules/communication-style.md` — Roméo est utilisateur final non-développeur, français simple sans jargon
 - `.claude/rules/database.md` — Migrations, RLS patterns, post-migration
@@ -193,7 +192,7 @@ Rapports récents clés (actifs dans scratchpad) :
 ## Roadmap restructuration
 
 - **Phase 1 — Nettoyage** ✅ (chemins corrigés, script check-open-prs créé, INDEX cohérent, README daté)
-- **Phase 2 — Restructuration** ⚠️ partielle (DECISIONS + autonomy-boundaries + playbooks + check-config-integrity gardés ; queue/done supprimés en `[INFRA-DOC-006]` car jamais utilisés — ACTIVE.md reste la source unique)
+- **Phase 2 — Restructuration** ⚠️ partielle (DECISIONS + playbooks + check-config-integrity gardés ; queue/done supprimés en `[INFRA-DOC-006]` ; `autonomy-boundaries.md` supprimé en `[INFRA-LEAN-001]` 2026-05-02 — ADR-026, redondant avec règle 6 anti-paralysie ; ACTIVE.md reste la source unique)
 - **Phase 3 — Automation** 🚫 abandonnée (dépendait de queue/, devenue caduque)
 - **CLAUDE.md v2** 🔲 (PR `[INFRA-DOC-007]` : passage 250 → 120 lignes via pointeurs vers `rules/`)
 
