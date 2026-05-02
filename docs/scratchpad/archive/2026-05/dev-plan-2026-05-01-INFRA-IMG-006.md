@@ -12,11 +12,13 @@
 Forcer LinkMe et site-internet à servir TOUTES leurs images produits via Cloudflare Images (`imagedelivery.net`) au lieu de Supabase Storage URL réoptimisée par Vercel.
 
 **État actuel** :
+
 - 460/460 `product_images` ont un `cloudflare_image_id` ✅
 - LinkMe et site-internet ne sélectionnent PAS `cloudflare_image_id` → fallback sur `public_url` Supabase → réoptimisé par Vercel ❌
 - Back-office utilise déjà `<CloudflareImage>` correctement ✅
 
 **Cible** :
+
 - Ajouter `cloudflare_image_id` au SELECT de tous les hooks qui lisent `product_images`
 - Remplacer `<Image src={image_url} />` natif par `<CloudflareImage cloudflareId={...} fallbackSrc={image_url} />`
 - Le composant `<CloudflareImage>` existe déjà dans `packages/@verone/ui/src/components/ui/cloudflare-image.tsx` — pas de modification nécessaire (sauf amélioration optionnelle).
@@ -27,20 +29,20 @@ Forcer LinkMe et site-internet à servir TOUTES leurs images produits via Cloudf
 
 ### Hooks à toucher (11 fichiers)
 
-| Fichier | Action |
-| --- | --- |
-| `apps/linkme/src/lib/hooks/use-linkme-catalog.ts` | Ajouter `cloudflare_image_id` au SELECT, propager dans le mapping |
-| `apps/linkme/src/lib/hooks/use-linkme-public.ts` | Idem |
-| `apps/linkme/src/lib/hooks/use-affiliate-products.ts` | Idem |
-| `apps/linkme/src/lib/hooks/use-affiliate-orders.ts` | Idem (champs items) |
-| `apps/linkme/src/lib/hooks/use-affiliate-analytics.ts` | Idem |
-| `apps/linkme/src/lib/hooks/use-storage-requests.ts` | Idem |
-| `apps/linkme/src/lib/hooks/use-product-images.ts` | Ajouter `cloudflare_image_id` |
-| `apps/linkme/src/lib/hooks/use-selection-items.ts` | Idem |
-| `apps/linkme/src/lib/hooks/use-product-sales-detail.ts` | Idem |
-| `apps/linkme/src/lib/hooks/use-selection-top-products.ts` | Idem |
-| `apps/linkme/src/lib/hooks/use-all-products-stats.ts` | Idem |
-| `apps/linkme/src/app/(main)/commandes/[id]/modifier/hooks/use-edit-order-items.ts` | Idem |
+| Fichier                                                                            | Action                                                            |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `apps/linkme/src/lib/hooks/use-linkme-catalog.ts`                                  | Ajouter `cloudflare_image_id` au SELECT, propager dans le mapping |
+| `apps/linkme/src/lib/hooks/use-linkme-public.ts`                                   | Idem                                                              |
+| `apps/linkme/src/lib/hooks/use-affiliate-products.ts`                              | Idem                                                              |
+| `apps/linkme/src/lib/hooks/use-affiliate-orders.ts`                                | Idem (champs items)                                               |
+| `apps/linkme/src/lib/hooks/use-affiliate-analytics.ts`                             | Idem                                                              |
+| `apps/linkme/src/lib/hooks/use-storage-requests.ts`                                | Idem                                                              |
+| `apps/linkme/src/lib/hooks/use-product-images.ts`                                  | Ajouter `cloudflare_image_id`                                     |
+| `apps/linkme/src/lib/hooks/use-selection-items.ts`                                 | Idem                                                              |
+| `apps/linkme/src/lib/hooks/use-product-sales-detail.ts`                            | Idem                                                              |
+| `apps/linkme/src/lib/hooks/use-selection-top-products.ts`                          | Idem                                                              |
+| `apps/linkme/src/lib/hooks/use-all-products-stats.ts`                              | Idem                                                              |
+| `apps/linkme/src/app/(main)/commandes/[id]/modifier/hooks/use-edit-order-items.ts` | Idem                                                              |
 
 ### Composants à toucher (~27 fichiers)
 
@@ -78,6 +80,7 @@ apps/linkme/src/components/storage/StorageProductCard.tsx         → product.pr
 ```
 
 **Note importante sur les `selection.image_url`** : ces images sont uploadées via Supabase Storage (pas via Cloudflare). Elles ne sont **PAS** dans `product_images`. Elles vivent dans la colonne `selections.image_url` (URL Supabase Storage directe). Pour ces cas, deux options :
+
 - A. Laisser tel quel (continuer Supabase + Vercel optim) — acceptable, peu d'images
 - B. Migrer ces images vers Cloudflare aussi — hors scope de ce sprint (créer `INFRA-IMG-009`)
 
@@ -89,11 +92,11 @@ apps/linkme/src/components/storage/StorageProductCard.tsx         → product.pr
 
 ### Hooks à toucher
 
-| Fichier | Action |
-| --- | --- |
-| `apps/site-internet/src/hooks/use-product-detail.ts` | Ajouter `cloudflare_image_id` |
-| `apps/site-internet/src/hooks/use-catalogue-products.ts` | Idem |
-| `apps/site-internet/src/hooks/use-collection-products.ts` | Idem |
+| Fichier                                                   | Action                        |
+| --------------------------------------------------------- | ----------------------------- |
+| `apps/site-internet/src/hooks/use-product-detail.ts`      | Ajouter `cloudflare_image_id` |
+| `apps/site-internet/src/hooks/use-catalogue-products.ts`  | Idem                          |
+| `apps/site-internet/src/hooks/use-collection-products.ts` | Idem                          |
 
 ### Composants à toucher (~9 fichiers)
 
@@ -122,6 +125,7 @@ apps/site-internet/src/components/home/HeroSection.tsx         → image statiqu
 ### Pattern unique à appliquer
 
 **Avant** :
+
 ```tsx
 <Image
   src={product.image_url}
@@ -132,6 +136,7 @@ apps/site-internet/src/components/home/HeroSection.tsx         → image statiqu
 ```
 
 **Après** :
+
 ```tsx
 import { CloudflareImage } from '@verone/ui';
 
@@ -141,12 +146,13 @@ import { CloudflareImage } from '@verone/ui';
   alt={product.name}
   fill
   className="object-cover"
-/>
+/>;
 ```
 
 ### Pattern hook SELECT
 
 **Avant** :
+
 ```ts
 .select(`
   id, name, price,
@@ -155,6 +161,7 @@ import { CloudflareImage } from '@verone/ui';
 ```
 
 **Après** :
+
 ```ts
 .select(`
   id, name, price,
@@ -163,6 +170,7 @@ import { CloudflareImage } from '@verone/ui';
 ```
 
 Et dans le mapping retourné :
+
 ```ts
 return {
   ...
@@ -176,6 +184,7 @@ return {
 Si une RPC PostgreSQL renvoie déjà des données produit avec image_url, vérifier qu'elle retourne aussi `cloudflare_image_id`. Si non, créer une nouvelle migration.
 
 À vérifier dans la migration :
+
 - `get_site_internet_products` — RPC site-internet
 - `get_linkme_catalogue` — RPC LinkMe (si existe)
 
@@ -183,13 +192,13 @@ Si une RPC PostgreSQL renvoie déjà des données produit avec image_url, vérif
 
 ## Découpage en commits
 
-| # | Commit | Fichiers | Tests |
-| --- | --- | --- | --- |
-| 1 | `[INFRA-IMG-006] chore: scaffold dev-plan + types` | dev-plan + ajout `cloudflare_image_id` aux interfaces TS partagées | type-check |
-| 2 | `[INFRA-IMG-006] feat(linkme): add cloudflare_image_id to hooks` | 12 hooks LinkMe | type-check + build linkme |
-| 3 | `[INFRA-IMG-006] feat(linkme): route components via CloudflareImage` | 25 composants LinkMe | type-check + build linkme |
-| 4 | `[INFRA-IMG-006] feat(site-internet): add cloudflare_image_id to hooks + components` | 3 hooks + 9 composants site-internet | type-check + build site-internet |
-| 5 | `[INFRA-IMG-006] chore: regen RPC if needed` | migrations SQL si RPC modifiée | regen types Supabase |
+| #   | Commit                                                                               | Fichiers                                                           | Tests                            |
+| --- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------ | -------------------------------- |
+| 1   | `[INFRA-IMG-006] chore: scaffold dev-plan + types`                                   | dev-plan + ajout `cloudflare_image_id` aux interfaces TS partagées | type-check                       |
+| 2   | `[INFRA-IMG-006] feat(linkme): add cloudflare_image_id to hooks`                     | 12 hooks LinkMe                                                    | type-check + build linkme        |
+| 3   | `[INFRA-IMG-006] feat(linkme): route components via CloudflareImage`                 | 25 composants LinkMe                                               | type-check + build linkme        |
+| 4   | `[INFRA-IMG-006] feat(site-internet): add cloudflare_image_id to hooks + components` | 3 hooks + 9 composants site-internet                               | type-check + build site-internet |
+| 5   | `[INFRA-IMG-006] chore: regen RPC if needed`                                         | migrations SQL si RPC modifiée                                     | regen types Supabase             |
 
 Chaque commit poussé avec `--force-with-lease` après rebase précoce sur `origin/staging`.
 
@@ -234,6 +243,7 @@ Chaque commit poussé avec `--force-with-lease` après rebase précoce sur `orig
 
 Le refactor mécanique sera délégué au `dev-agent` via le tool Agent.
 Le brief précise :
+
 - scope = uniquement les fichiers listés ci-dessus
 - pattern unique à appliquer
 - découpage en 4 commits + tests + push avec `--force-with-lease`
@@ -241,6 +251,7 @@ Le brief précise :
 - worktree fixe `/Users/romeodossantos/verone-infra-img-006` (pas de nouveau worktree)
 
 À l'issue, l'agent principal vérifie :
+
 - builds des 3 apps verts
 - runtime Playwright OK
 - reviewer-agent PASS

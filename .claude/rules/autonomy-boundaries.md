@@ -34,16 +34,17 @@ Les 3 feux ne décrivent pas quand l'agent « a le droit » — ils décrivent *
 
 ### Git local
 
-- `git checkout -b feat/XXX` ou `fix/XXX` depuis staging — **uniquement si aucun autre agent ne travaille en parallèle dans le working dir** (sinon → `git worktree add`, voir ci-dessous)
-- `git worktree add /Users/romeodossantos/verone-[task-short] -b <branche> origin/staging` — OBLIGATOIRE en multi-agents (autre agent dans le working dir partagé). Voir `.claude/rules/multi-agent-workflow.md`
-- `git worktree list` / `git worktree remove <path>` — gestion des worktrees
+- `git checkout -b feat/XXX` ou `fix/XXX` depuis staging — workflow solo standard
+- `git checkout <autre-branche>` — bascule entre branches (avec `git stash` si dirty)
+- `git stash push -m "<contexte>"` — sauvegarder dirty state avant checkout
+- `git stash list` / `git stash pop` / `git stash apply`
 - `git add` ciblé (pas de `git add -A` sur repo sale)
 - `git commit` avec Task ID respectant le format `[APP-DOMAIN-NNN] type: description`
 - `git push` sur feature branch
 - `git push --force-with-lease` sur feature branch (jamais `--force` nu)
 - `git fetch` (toujours safe — lecture pure des refs)
-- `git pull --rebase origin/staging` — uniquement si tu es seul dans le working dir
-- `git rebase origin/staging` pour sync (réflexe avant chaque push, toutes les 1-2h)
+- `git pull --ff-only origin staging` (sync staging local sans rebase risqué)
+- `git rebase origin/staging` pour sync ponctuel avant promote ready
 - `git status`, `git diff`, `git log`
 
 ### Build et validation
@@ -147,9 +148,9 @@ Si Romeo dit « ok » ou « vas-y », l'agent exécute immédiatement. Sinon il 
 - `rm -rf` sur plus d'un fichier
 - Suppression de migrations Supabase (append-only)
 - Modification de `.gitignore` (peut masquer des fichiers sensibles)
-- `git push --force` nu (sans `--force-with-lease`) — risque d'écraser les pushs des autres agents
-- `git checkout <branche>` ou `git pull --rebase` dans le **working dir partagé** quand un autre agent travaille en parallèle — casse le contexte de l'autre agent. Utiliser `git worktree add` (FEU VERT) à la place.
-- `gh pr merge --admin` — INTERDIT ABSOLU peu importe le contexte (déjà mentionné plus haut, rappelé ici comme action destructive). Fix par commit atomique sur la même branche.
+- `git push --force` nu (sans `--force-with-lease`) — risque d'écraser un push antérieur
+- `git worktree add` — INTERDIT ABSOLU (workflow solo, voir `.claude/rules/no-worktree-solo.md`)
+- `gh pr merge --admin` — INTERDIT ABSOLU peu importe le contexte. Fix par commit atomique sur la même branche, attendre la CI verte.
 
 ---
 
@@ -177,13 +178,9 @@ Exemple : Romeo dit « force push sur staging ».
 
 **Règle** : FEU ORANGE. Une confirmation inutile coûte 5 secondes. Une action non prévue peut coûter une PR revertée.
 
-### « Romeo lance un autre agent en parallèle »
+### « L'agent dispatche un sous-agent (Agent tool) »
 
-**Règle** : avant tout `git checkout` ou `git pull --rebase`, vérifier qu'aucun autre agent ne travaille dans le working dir. Si oui → `git worktree add` au lieu de toucher au working dir principal. Voir `.claude/rules/multi-agent-workflow.md` section 2.
-
-### « L'agent dispatche un sous-agent (Agent tool) pendant qu'un autre agent humain travaille »
-
-**Règle** : passer `isolation: "worktree"` au tool Agent. Le sous-agent travaillera dans un worktree isolé, sans toucher au working dir principal. Sans ce flag, le sous-agent peut faire `git checkout` qui casse le contexte de l'agent humain.
+**Règle** : ne JAMAIS passer `isolation: "worktree"` au tool Agent. Le sous-agent travaille dans le même working dir. Workflow solo. Voir `.claude/rules/no-worktree-solo.md`.
 
 ---
 
@@ -191,13 +188,13 @@ Exemple : Romeo dit « force push sur staging ».
 
 Référence :
 
-- `.claude/rules/multi-agent-workflow.md` — détails opérationnels du workflow multi-agents (worktree, rebase précoce, push draft, stacked PRs)
+- `.claude/rules/no-worktree-solo.md` — workflow solo, JAMAIS `git worktree add`
 
 Ce fichier est référencé par :
 
 - `CLAUDE.md` racine (pointeur unique vers cette règle)
 - `.claude/agents/*.md` (section « TU NE FAIS PAS »)
-- `.claude/DECISIONS.md` (ADR-004 ajustement #3, ADR-023 multi-agent workflow)
+- `.claude/DECISIONS.md` (ADR-004 ajustement #3, ADR-023 ANNULÉE 2026-05-02)
 - `.claude/playbooks/*.md` (utilisé implicitement dans chaque recette)
 
 ---
@@ -217,7 +214,7 @@ Sinon l'agent fait son rapport **FINAL consolidé** quand toute la procédure es
 
 ### Anti-pattern à bannir
 
-Demander 5 GO sur 5 étapes alors que Roméo a déjà donné son GO global au début. Ça fatigue Roméo et ralentit l'exécution sans valeur ajoutée. C'est la cause #1 de friction conversationnelle dans les sessions multi-agents.
+Demander 5 GO sur 5 étapes alors que Roméo a déjà donné son GO global au début. Ça fatigue Roméo et ralentit l'exécution sans valeur ajoutée. C'est la cause #1 de friction conversationnelle dans les sessions intenses.
 
 ### Quand présenter quelque chose à Roméo
 
@@ -229,4 +226,4 @@ Pas de "step 1 done, je continue ?". Pas de "tu valides l'étape intermédiaire 
 
 ### Référence
 
-Cette règle a été ajoutée suite à une session multi-agents où des agents demandaient un GO entre chaque étape d'une procédure déjà complètement validée par Roméo, créant ~10 GO inutiles sur une procédure de 5 étapes. Voir DECISIONS.md ADR à venir.
+Cette règle a été ajoutée suite à une session où l'agent demandait un GO entre chaque étape d'une procédure déjà complètement validée par Roméo, créant ~10 GO inutiles sur une procédure de 5 étapes.

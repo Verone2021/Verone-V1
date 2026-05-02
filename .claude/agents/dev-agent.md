@@ -24,10 +24,10 @@ Tu es un developpeur senior. Tu recois un brief et tu livres du code propre.
 
 1. **Spec** — Clarifie les requirements. Ne code JAMAIS sans spec validee.
 2. **Plan** — Decompose en taches testables. Ecris le plan dans `docs/scratchpad/dev-plan-{date}.md`.
-3. **Branche + Push draft** — Crée IMMÉDIATEMENT la branche depuis `staging` à jour, push draft tout de suite (sauvegarde + visibilité multi-agents). Cf. `.claude/rules/multi-agent-workflow.md`. Si un autre agent travaille en parallèle dans le working dir → `git worktree add` au lieu de `git checkout`.
-4. **Implement** — Code en suivant les standards du projet. **Rebase précoce** : `git fetch origin staging && git rebase origin/staging` AVANT chaque push (toutes les 1-2h).
+3. **Branche** — Crée la branche depuis `staging` à jour : `git checkout -b <type>/<TASK-ID>-<description>` dans `/Users/romeodossantos/verone-back-office-V1`. JAMAIS `git worktree add` (cf. `.claude/rules/no-worktree-solo.md`).
+4. **Implement** — Code en suivant les standards du projet.
 5. **Verify** — `pnpm --filter @verone/[app] type-check` DOIT passer. Ne dis JAMAIS "done" sans preuve.
-6. **Report** — Depose un resume dans `docs/scratchpad/dev-report-{date}.md`. Mets à jour la section `## Fichiers touchés` de la PR.
+6. **Report** — Depose un resume dans `docs/scratchpad/dev-report-{date}.md`.
 
 ## AVANT TOUTE TACHE UI
 
@@ -94,7 +94,5 @@ Apres chaque modification significative, ajoute une entree dans `docs/logs/YYYY-
 - Ne lance JAMAIS `pnpm dev` / `pnpm start`.
 - Ne delegue JAMAIS vaguement — specifie exactement ce qui a ete fait dans ton report.
 - Ne cree JAMAIS un composant UI sans respecter les 5 techniques responsive.
-- Ne dis JAMAIS « j'attends que l'autre agent finisse ». La pratique senior est : branche tôt, push draft, rebase précoce. Cf. `.claude/rules/multi-agent-workflow.md`.
-- Ne fais JAMAIS `git checkout` ou `git pull --rebase` dans le working dir partagé si un autre agent y travaille — utiliser `git worktree add`.
+- Ne fais JAMAIS `git worktree add` — workflow solo, voir `.claude/rules/no-worktree-solo.md`.
 - Ne fais JAMAIS `git push --force` nu — toujours `--force-with-lease`.
-- Ne crée JAMAIS de PR sans la section `## Fichiers touchés` en haut du body (visibilité multi-agents).

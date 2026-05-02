@@ -105,7 +105,13 @@ Si Romeo veut fusionner ou supprimer l'ancien `@verone/ui/design-system`, c'est 
 - `packages/@verone/themes/package.json`
 - `packages/@verone/themes/src/types.ts` :
   ```ts
-  export type BrandSlug = 'verone' | 'boemia' | 'solar' | 'flos' | 'linkme' | 'office';
+  export type BrandSlug =
+    | 'verone'
+    | 'boemia'
+    | 'solar'
+    | 'flos'
+    | 'linkme'
+    | 'office';
   export const BRAND_LABELS: Record<BrandSlug, string> = {
     verone: 'Vérone',
     boemia: 'Boêmia',
@@ -189,14 +195,14 @@ Si Romeo veut fusionner ou supprimer l'ancien `@verone/ui/design-system`, c'est 
 
 ## Hors scope confirmé (pour clarté)
 
-| Élément                                         | Sprint                  |
-| ----------------------------------------------- | ----------------------- |
-| Tokens approfondis par marque (couleurs, typo)  | BO-DS-002 (claude.ai)   |
-| Réorg `@verone/ui` atomic design                | BO-DS-003+ (futur)      |
-| Migration `@verone/ui/design-system` → `@verone/tokens` | BO-DS-003+ (futur)      |
-| Sortie ImageUploadZone / RoomMultiSelect        | BO-DS-004+ (futur)      |
-| Stories Storybook complètes                     | BO-DS-002 ou BO-DS-005  |
-| Création apps `bohemia`/`solar`/`flos`          | BO-BRAND-005/006/007    |
+| Élément                                                 | Sprint                 |
+| ------------------------------------------------------- | ---------------------- |
+| Tokens approfondis par marque (couleurs, typo)          | BO-DS-002 (claude.ai)  |
+| Réorg `@verone/ui` atomic design                        | BO-DS-003+ (futur)     |
+| Migration `@verone/ui/design-system` → `@verone/tokens` | BO-DS-003+ (futur)     |
+| Sortie ImageUploadZone / RoomMultiSelect                | BO-DS-004+ (futur)     |
+| Stories Storybook complètes                             | BO-DS-002 ou BO-DS-005 |
+| Création apps `bohemia`/`solar`/`flos`                  | BO-BRAND-005/006/007   |
 
 ---
 

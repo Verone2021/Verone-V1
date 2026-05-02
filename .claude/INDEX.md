@@ -1,6 +1,6 @@
 # INDEX — `.claude/` Verone Back Office
 
-**Dernière mise à jour** : 2026-05-01 (règle anti-GO ajoutée à autonomy-boundaries.md)
+**Dernière mise à jour** : 2026-05-02 (revert config multi-agents → workflow solo, voir `no-worktree-solo.md`)
 
 Sommaire unique de la config agent. Si tu cherches où est une règle, un agent, un playbook, tu commences ici.
 
@@ -26,8 +26,8 @@ Règles stables lues automatiquement par l'agent.
 - `.claude/rules/responsive.md` — Breakpoints + 5 techniques responsive obligatoires
 - `.claude/rules/stock-triggers-protected.md` — Triggers stock IMMUABLES
 - `.claude/rules/workflow.md` — Git, PR, merge, 1 PR = 1 bloc cohérent
-- `.claude/rules/branch-strategy.md` — Checklist 5 questions avant `git checkout -b`
-- `.claude/rules/multi-agent-workflow.md` — Branche tôt, push draft, rebase précoce, worktree, stacked PRs _(NOUVEAU 2026-04-30)_
+- `.claude/rules/branch-strategy.md` — Checklist 4 questions avant `git checkout -b`
+- `.claude/rules/no-worktree-solo.md` — Workflow solo, JAMAIS `git worktree add` _(NOUVEAU 2026-05-02 — annule multi-agent-workflow)_
 - `.claude/rules/data-fetching.md` — TanStack Query, useEffect deps, Supabase select
 - `.claude/rules/playwright-artifacts.md` — Rangement artefacts Playwright
 - `.claude/rules/no-phantom-data.md` — Zéro donnée fantôme en prod
@@ -210,7 +210,7 @@ Voir `docs/scratchpad/automation-roadmap.md` (historique uniquement).
 | `.claude/rules/no-phantom-data.md`         | No Phantom Data         |
 | `.claude/rules/agent-autonomy-external.md` | Agent Autonomy External |
 | `.claude/rules/branch-strategy.md`         | Branch Strategy         |
-| `.claude/rules/multi-agent-workflow.md`    | Multi-Agent Workflow    |
+| `.claude/rules/no-worktree-solo.md`        | No Worktree (solo)      |
 | `.claude/rules/data-fetching.md`           | Data Fetching           |
 
 ---

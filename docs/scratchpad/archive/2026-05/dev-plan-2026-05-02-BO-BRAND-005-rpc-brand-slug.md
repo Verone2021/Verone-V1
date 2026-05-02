@@ -81,6 +81,7 @@ COMMIT;
 ### 2.2 Code TypeScript — apps/site-internet
 
 Fichiers à mettre à jour (à confirmer via grep) :
+
 - `apps/site-internet/src/hooks/use-catalogue.ts` (ou équivalent)
 - Tout `supabase.rpc('get_site_internet_products', ...)` dans `apps/site-internet/`
 
