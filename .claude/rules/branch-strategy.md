@@ -9,6 +9,10 @@ en imposant une **checklist obligatoire** avant tout `git checkout -b` ou
 même sujet, déclenche une cascade de rebases, et fait perdre du temps à
 Romeo (incident du 2026-04-25 — 4 PRs `[BO-LM-MISSING-*]` au lieu d'1).
 
+**Voir aussi (obligatoire en multi-agents)** :
+
+- `.claude/rules/multi-agent-workflow.md` — Branche tôt, push draft immédiat, rebase précoce, worktree obligatoire quand un autre agent travaille en parallèle, stacked PRs, fix CI sans `--admin`. À lire AVANT toute création de branche en contexte multi-agents.
+
 ---
 
 ## Checklist OBLIGATOIRE avant `git checkout -b` ou `gh pr create`
@@ -129,6 +133,38 @@ Si `pnpm run generate:types` échoue (CLI Supabase non auth), utiliser `mcp__sup
 
 ---
 
+## Checklist enrichie 2026-04-30 (incident multi-agents working dir partagé)
+
+**5e question obligatoire** avant `git checkout -b` :
+
+### 5. Un autre agent travaille-t-il en parallèle dans le working dir partagé ?
+
+Vérification :
+
+```bash
+gh pr list --state open --base staging --json number,title,headRefName,isDraft
+```
+
+Si OUI (cas habituel multi-agents Romeo) → **`git worktree add` OBLIGATOIRE** :
+
+```bash
+git fetch origin staging
+git worktree add /Users/romeodossantos/verone-[task-short] -b feat/<branche> origin/staging
+cd /Users/romeodossantos/verone-[task-short]
+# Travail entièrement dans ce dossier
+```
+
+**Si tu fais `git checkout -b` ou `git pull --rebase` dans le working dir
+partagé** : tu changes la branche active sous les pieds de l'autre agent,
+tu casses son contexte. **Incident réel observé le 2026-04-30.**
+
+Si tu dispatches un sous-agent (Agent tool) pendant qu'un autre agent
+humain travaille → toujours `isolation: "worktree"`.
+
+Voir `.claude/rules/multi-agent-workflow.md` pour le workflow complet.
+
+---
+
 ## Anti-pattern incident 2026-04-28
 
 ❌ **Vu** : Romeo a enchaîné 3 fixes Canaux de Vente (Meta + Google Merchant + Site Internet). L'agent a créé **4 PRs séparées** au lieu d'1 bundle. Coût : 1h50 de cycles CI.
@@ -146,8 +182,13 @@ Si `pnpm run generate:types` échoue (CLI Supabase non auth), utiliser `mcp__sup
 
 ## Référence
 
+Référence :
+
+- `.claude/rules/multi-agent-workflow.md` — pratique senior multi-agents (worktree, rebase précoce, push draft, stacked PRs)
+- `.claude/rules/workflow.md` — règle "1 PR = 1 bloc cohérent"
+
 Référencé par :
 
 - `CLAUDE.md` racine (section WORKFLOW GIT + INTERDICTIONS ABSOLUES)
 - `.claude/rules/workflow.md` (règle complémentaire "1 PR = 1 bloc" + section incident 2026-04-28)
-- `.claude/DECISIONS.md` (ADR-022 — incident bundling Canaux de Vente)
+- `.claude/DECISIONS.md` (ADR-022 — incident bundling Canaux de Vente, ADR-023 — multi-agent workflow)
