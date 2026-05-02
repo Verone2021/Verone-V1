@@ -20,6 +20,13 @@ export interface UploadAssetInput {
   altText?: string;
   tags?: string[];
   notes?: string;
+  /**
+   * Produit auquel rattacher la photo. Au moins un des deux (productId,
+   * variantGroupId) doit être renseigné — Romeo a verrouillé "zéro photo
+   * en vrac" lors du sprint BO-MKT-DAM-002.
+   */
+  productId?: string | null;
+  variantGroupId?: string | null;
 }
 
 // Colonnes sélectionnées explicitement (pas de select('*'))
@@ -38,6 +45,8 @@ export const MEDIA_ASSET_SELECT_COLS = [
   'tags',
   'notes',
   'source_product_image_id',
+  'product_id',
+  'variant_group_id',
   'created_at',
   'updated_at',
   'archived_at',

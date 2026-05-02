@@ -79,6 +79,8 @@ export function useMediaAssetMutations({
           storage_path: uploadResult.storagePath ?? path,
           public_url: uploadResult.supabasePublicUrl ?? null,
           cloudflare_image_id: uploadResult.cloudflareImageId ?? null,
+          product_id: metadata.productId ?? null,
+          variant_group_id: metadata.variantGroupId ?? null,
         };
 
         const { data, error: insertError } = await supabase
