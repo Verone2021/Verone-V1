@@ -12,12 +12,12 @@ Rapport sprint 1 : `docs/scratchpad/dev-report-2026-04-27-BO-VAR-FORM-001.md`
 
 ## Décisions Romeo (validées 2026-04-30)
 
-| # | Question | Décision |
-|---|----------|----------|
-| Q1 | Inclure `cost_price` + `eco_tax_default` dans le mapping ? | OUI |
-| Q2 | Auto-cocher `has_common_supplier` / `has_common_weight` / `has_common_cost_price` après sélection produit témoin ? | OUI (Romeo peut décocher) |
-| Q3 | Bloquer si produit témoin a déjà `variant_group_id` ? | OUI (règle sprint 1 maintenue) |
-| Q4 | Badges hérités cohérents avec `InheritanceRulesCard.tsx` ? | OUI — chips bleus `Lock` (actif) / neutres opacité 50% (inactif) |
+| #   | Question                                                                                                           | Décision                                                         |
+| --- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| Q1  | Inclure `cost_price` + `eco_tax_default` dans le mapping ?                                                         | OUI                                                              |
+| Q2  | Auto-cocher `has_common_supplier` / `has_common_weight` / `has_common_cost_price` après sélection produit témoin ? | OUI (Romeo peut décocher)                                        |
+| Q3  | Bloquer si produit témoin a déjà `variant_group_id` ?                                                              | OUI (règle sprint 1 maintenue)                                   |
+| Q4  | Badges hérités cohérents avec `InheritanceRulesCard.tsx` ?                                                         | OUI — chips bleus `Lock` (actif) / neutres opacité 50% (inactif) |
 
 ## Fichiers cibles (4 — limites strictes)
 
@@ -59,15 +59,15 @@ Rapport sprint 1 : `docs/scratchpad/dev-report-2026-04-27-BO-VAR-FORM-001.md`
 
 ## Schéma DB — colonnes mappables (vérifié `02-produits.md` régénéré 2026-04-30)
 
-| Colonne `products` | Type | → `variant_groups` | Type | Étape | Flag |
-|---|---|---|---|---|---|
-| `weight` | numeric | `common_weight` | numeric | 3 | `has_common_weight` |
-| `dimensions` (jsonb) | `{length, width, height, unit}` | `dimensions_length/width/height/unit` | 4 colonnes | 2 | (toujours appliqué) |
-| `style` | text | `style` | text | 2 | (toujours appliqué) |
-| `suitable_rooms` | `room_type[]` | `suitable_rooms` | `room_type[]` | 2 | (toujours appliqué) |
-| `supplier_id` | uuid | `supplier_id` | uuid | 3 | `has_common_supplier` |
-| `cost_price` | numeric | `common_cost_price` | numeric | 3 | `has_common_cost_price` |
-| `eco_tax_default` | numeric | `common_eco_tax` | numeric | 3 | (couplé) |
+| Colonne `products`   | Type                            | → `variant_groups`                    | Type          | Étape | Flag                    |
+| -------------------- | ------------------------------- | ------------------------------------- | ------------- | ----- | ----------------------- |
+| `weight`             | numeric                         | `common_weight`                       | numeric       | 3     | `has_common_weight`     |
+| `dimensions` (jsonb) | `{length, width, height, unit}` | `dimensions_length/width/height/unit` | 4 colonnes    | 2     | (toujours appliqué)     |
+| `style`              | text                            | `style`                               | text          | 2     | (toujours appliqué)     |
+| `suitable_rooms`     | `room_type[]`                   | `suitable_rooms`                      | `room_type[]` | 2     | (toujours appliqué)     |
+| `supplier_id`        | uuid                            | `supplier_id`                         | uuid          | 3     | `has_common_supplier`   |
+| `cost_price`         | numeric                         | `common_cost_price`                   | numeric       | 3     | `has_common_cost_price` |
+| `eco_tax_default`    | numeric                         | `common_eco_tax`                      | numeric       | 3     | (couplé)                |
 
 ## UX — chips hérités dans WizardStep1Basic
 
@@ -75,10 +75,13 @@ Rapport sprint 1 : `docs/scratchpad/dev-report-2026-04-27-BO-VAR-FORM-001.md`
 // Pattern identique à InheritanceRulesCard.tsx (lignes 22-44)
 function TagChip({ label, active }: { label: string; active: boolean }) {
   return (
-    <span className={active
-      ? 'inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded border border-blue-200 bg-blue-50 text-blue-700'
-      : 'inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded border border-neutral-200 bg-neutral-50 text-neutral-500 opacity-50'
-    }>
+    <span
+      className={
+        active
+          ? 'inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded border border-blue-200 bg-blue-50 text-blue-700'
+          : 'inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded border border-neutral-200 bg-neutral-50 text-neutral-500 opacity-50'
+      }
+    >
       {active && <Lock className="h-2 w-2" />}
       {label}
     </span>
@@ -87,6 +90,7 @@ function TagChip({ label, active }: { label: string; active: boolean }) {
 ```
 
 Affichés dans la carte « Produit témoin » uniquement si `matrixProduct !== null`. 6 chips :
+
 - Dimensions (active si product.dimensions a length/width/height)
 - Poids (active si product.weight !== null)
 - Style décoratif (active si product.style !== null)

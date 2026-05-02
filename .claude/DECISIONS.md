@@ -354,7 +354,7 @@ La convention plate du scratchpad (réaffirmée dans `docs/scratchpad/README.md`
 - ADR-016 : E2E smoke tests bloquants en CI + runtime guards contre les régressions silencieuses (2026-04-24)
 - ADR-018 : Script `db-drift-check.py` contre le drift silencieux de schéma DB (2026-04-24)
 - ADR-022 : Bundling thématique obligatoire pour PRs liées (2026-04-28)
-- ADR-023 : Multi-agent workflow — branche tôt, push draft, rebase précoce, worktree (2026-04-30)
+- ADR-023 : Multi-agent workflow — branche tôt, push draft, rebase précoce, worktree (2026-04-30) — **ANNULÉE 2026-05-02 (workflow solo restauré, voir `.claude/rules/no-worktree-solo.md`)**
 
 ---
 
@@ -743,7 +743,13 @@ La règle `1 PR = 1 BLOC COHÉRENT` existait déjà dans `.claude/rules/workflow
 
 ---
 
-## ADR-023 — Multi-agent workflow : branche tôt, push draft, rebase précoce, worktree (2026-04-30)
+## ADR-023 — Multi-agent workflow : branche tôt, push draft, rebase précoce, worktree (2026-04-30) — **ANNULÉE 2026-05-02**
+
+> ⚠️ **ANNULÉE 2026-05-02** : workflow solo restauré. Cette ADR a introduit `git worktree add` et un workflow multi-agents qui s'est révélé chaotique pour Roméo qui travaille **seul** sur le repo. Plusieurs worktrees créés (`verone-mkt-002/`, `verone-bo-var-form-002/`, `verone-hotfix-003/`) ont causé une confusion majeure : Roméo perdait le fil de quel dossier contenait quel sprint, le serveur dev Next.js servait le code d'un mauvais worktree (pages 500 inexpliquées), cycles CI doublés.
+>
+> **Voir `.claude/rules/no-worktree-solo.md`** pour la règle qui remplace celle-ci. Le fichier `.claude/rules/multi-agent-workflow.md` a été supprimé. Toutes les références dans `CLAUDE.md`, `INDEX.md`, `workflow.md`, `branch-strategy.md`, `autonomy-boundaries.md`, `dev-agent.md`, `ops-agent.md`, `pr.md` ont été nettoyées.
+>
+> Le contenu ci-dessous est conservé comme **trace historique** uniquement.
 
 **Contexte** : Romeo travaille régulièrement avec plusieurs agents Claude Code en parallèle (sessions différentes, ou un agent qui dispatche un sous-agent via Agent tool). Il observe que ces sessions multi-agents génèrent des conflits récurrents qui lui font perdre une demi-journée chaque fois (cycle CI 30 min + rebase manuel + retry).
 
@@ -818,3 +824,48 @@ L'audit (cette session 2026-04-30) révèle :
 - Anthropic Claude Code Agent tool : `isolation: "worktree"` natif
 
 **Référence** : session 2026-04-30 avec Romeo, audit complet `.claude/` puis codification.
+
+---
+
+## ADR-024 — Workflow solo restauré, suppression worktree (2026-05-02)
+
+**Contexte** : ADR-023 (introduite le 2026-04-30) a imposé `git worktree add` pour gérer plusieurs agents en parallèle dans le working dir. La pratique a généré du chaos pour Roméo qui travaille **seul** sur le repo :
+
+1. Plusieurs worktrees créés et oubliés : `/Users/romeodossantos/verone-mkt-002/`, `/Users/romeodossantos/verone-bo-var-form-002/`, `/Users/romeodossantos/verone-hotfix-003/`. Roméo perdait le fil de quel dossier contenait quel sprint.
+2. Confusion serveur dev : le serveur Next.js sur `localhost:3000` servait le code d'un worktree non-actif → pages 500 inexpliquées, perte de temps à diagnostiquer.
+3. Cycles CI doublés : PRs créées en draft "pour visibilité multi-agents" alors que personne n'en avait besoin.
+4. Le 2026-05-02, Romeo a explicitement demandé la remise en ordre complète : suppression de tous les worktrees, retour à `git checkout` simple dans `/Users/romeodossantos/verone-back-office-V1`, suppression de `multi-agent-workflow.md`, nettoyage de `.claude/` et `CLAUDE.md`.
+
+**Décision** :
+
+1. **Supprimer `.claude/rules/multi-agent-workflow.md`** complètement (418 lignes).
+2. **Créer `.claude/rules/no-worktree-solo.md`** comme nouvelle source de vérité sur la stratégie de branche solo (1 dossier, 1 branche à la fois, bascule via `git checkout` + `git stash`).
+3. **Marquer ADR-023 ANNULÉE** dans cette ADR (trace historique conservée).
+4. **Nettoyer toutes les mentions worktree/multi-agents** dans : `CLAUDE.md` racine (sections WORKFLOW GIT, INTERDICTIONS ABSOLUES, SOURCES DE VERITE), `.claude/INDEX.md`, `.claude/rules/{workflow,branch-strategy,autonomy-boundaries}.md`, `.claude/agents/{dev-agent,ops-agent}.md`, `.claude/commands/pr.md`.
+5. **Conserver les autres règles** introduites par ADR-023 qui restent valides indépendamment du multi-agents : `--force-with-lease` au lieu de `--force` nu, JAMAIS `gh pr merge --admin`, section `## Fichiers touchés` dans body PR (toujours utile pour review). Ces règles ne sont PAS retirées.
+6. **Ajouter `git worktree add` à la liste des INTERDICTIONS ABSOLUES** dans `CLAUDE.md`.
+
+**Conséquences** :
+
+- Workflow simplifié : 1 dossier `/Users/romeodossantos/verone-back-office-V1`, 1 branche checkée à la fois. Bascule via `git checkout <autre-branche>` (avec `git stash` si dirty).
+- Plus de confusion entre dossiers physiques. Le serveur dev sur `localhost:3000` sert toujours le code de la branche checkée dans le main working dir.
+- Sous-agents (Agent tool) ne reçoivent plus `isolation: "worktree"` — ils opèrent dans le même working dir.
+- Si vraiment un cas multi-agents survient (Roméo + un agent en parallèle), coordination par `git status` + `git pull --ff-only`. Pas de worktree.
+- ADR-023 reste visible dans `DECISIONS.md` comme trace historique (annulation explicite).
+
+**Trace** :
+
+- 9 fichiers modifiés / 1 supprimé / 1 créé dans cette session :
+  - `.claude/rules/multi-agent-workflow.md` (SUPPRIMÉ — 418 lignes)
+  - `.claude/rules/no-worktree-solo.md` (CRÉÉ)
+  - `CLAUDE.md` racine (3 sections nettoyées + 1 nouvelle interdiction ajoutée)
+  - `.claude/INDEX.md` (3 sections nettoyées)
+  - `.claude/rules/autonomy-boundaries.md` (3 sections nettoyées)
+  - `.claude/rules/workflow.md` (3 sections nettoyées)
+  - `.claude/rules/branch-strategy.md` (3 sections nettoyées + 5e question retirée)
+  - `.claude/agents/dev-agent.md` (2 sections nettoyées)
+  - `.claude/agents/ops-agent.md` (5 sections nettoyées)
+  - `.claude/commands/pr.md` (4 sections nettoyées)
+  - `.claude/DECISIONS.md` (ADR-023 marquée ANNULÉE + cette ADR-024)
+
+**Référence** : session 2026-05-02 avec Romeo, demande explicite de remise en ordre complète.

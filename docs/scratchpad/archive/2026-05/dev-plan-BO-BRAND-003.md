@@ -12,6 +12,7 @@
 3e étape des fondations multi-marques (après BO-BRAND-001 + BO-BRAND-002 mergées).
 
 Objectifs :
+
 1. Lier les canaux de vente aux marques internes Vérone Group via `sales_channels.brand_id`
 2. Préparer 3 nouveaux canaux site internet pour Boêmia / Solar / Flos
 3. Permettre la publication granulaire produit × canal via `channel_pricing.is_published_on_channel`
@@ -29,18 +30,18 @@ Audit : `docs/scratchpad/audit-marques-canaux-2026-04-30.md`
 
 5 canaux existants (`sales_channels`) :
 
-| code | name | domain_url | site_name |
-|---|---|---|---|
-| google_merchant | Google Merchant | NULL | NULL |
-| linkme | LinkMe | NULL | NULL |
-| manuel | Manuel | NULL | NULL |
-| meta_commerce | Meta Commerce | https://business.facebook.com/commerce | Verone Collections |
-| site_internet | Site Internet Vérone | https://veronecollections.fr | Vérone - Mobilier & Décoration Design |
+| code            | name                 | domain_url                             | site_name                             |
+| --------------- | -------------------- | -------------------------------------- | ------------------------------------- |
+| google_merchant | Google Merchant      | NULL                                   | NULL                                  |
+| linkme          | LinkMe               | NULL                                   | NULL                                  |
+| manuel          | Manuel               | NULL                                   | NULL                                  |
+| meta_commerce   | Meta Commerce        | https://business.facebook.com/commerce | Verone Collections                    |
+| site_internet   | Site Internet Vérone | https://veronecollections.fr           | Vérone - Mobilier & Décoration Design |
 
 4 brands disponibles :
 
-| slug | id |
-|---|---|
+| slug   | id                                     |
+| ------ | -------------------------------------- |
 | verone | `8f5523ff-3b54-4c16-88e5-301fc14fd995` |
 | boemia | `92f83cf7-8276-4460-8e53-e66e704b9d28` |
 | solar  | `222e069a-6e09-40dc-b1bf-47c2d8eb6233` |
@@ -51,10 +52,12 @@ Audit : `docs/scratchpad/audit-marques-canaux-2026-04-30.md`
 ### RLS — déjà en place (rien à ajouter)
 
 `sales_channels` :
+
 - `backoffice_full_access_sales_channels` (ALL → authenticated, staff)
 - `sales_channels_select_authenticated` (SELECT → authenticated)
 
 `channel_pricing` :
+
 - `backoffice_full_access_channel_pricing` (ALL → authenticated, staff)
 - `channel_pricing_select_authenticated` (SELECT → authenticated)
 
@@ -168,6 +171,7 @@ Application : `mcp__supabase__execute_sql`.
 **Fichier modifié** : `packages/@verone/types/src/supabase.ts`
 
 Procédure (retex BO-BRAND-002) :
+
 1. Tenter `pnpm run generate:types` (sans doute fail Unauthorized → fallback)
 2. Sinon `mcp__supabase__generate_typescript_types`
 3. Si CI types drift fail → utiliser l'artifact `supabase-types-drift` byte-for-byte
@@ -185,7 +189,7 @@ Procédure (retex BO-BRAND-002) :
 
 ## Acceptance criteria
 
-- [ ] Migration commit 2 appliquée (brand_id + 3 canaux site_*)
+- [ ] Migration commit 2 appliquée (brand*id + 3 canaux site*\*)
 - [ ] Migration commit 3 appliquée (is_published_on_channel)
 - [ ] Vérification SQL :
   ```sql

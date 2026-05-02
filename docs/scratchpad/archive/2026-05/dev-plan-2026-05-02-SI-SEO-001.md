@@ -11,15 +11,15 @@ Base : `staging` (711aff83)
 
 ## Audit existant — ce qui est DÉJÀ fait
 
-| Item                                     | Statut       | Emplacement                                                                  |
-| ---------------------------------------- | ------------ | ---------------------------------------------------------------------------- |
-| JSON-LD `Product` (offers, brand, etc.)  | ✅ EXISTE    | `apps/site-internet/src/components/seo/JsonLdProduct.tsx`                    |
-| JSON-LD `Organization`                   | ✅ EXISTE    | `apps/site-internet/src/components/seo/JsonLdOrganization.tsx` (layout root) |
-| SerpPreview riche (preview Google)       | ✅ EXISTE    | `packages/@verone/products/src/components/sections/SerpPreview.tsx`          |
-| SerpPreview dans `/produits/catalogue/[id]/descriptions` | ✅ EXISTE    | `_descriptions-blocks/SeoCard.tsx`                                            |
-| Meta Title/Description sur produits      | ✅ généré IA | colonnes `products.meta_title`, `meta_description`                           |
-| Meta Title/Description sur collections   | ✅ EXISTE    | colonnes `collections.meta_title`, `meta_description` + `generateMetadata`   |
-| Alt text images produits                 | ✅ généré IA | colonne `product_images.alt_text` (60 produits couverts)                     |
+| Item                                                     | Statut       | Emplacement                                                                  |
+| -------------------------------------------------------- | ------------ | ---------------------------------------------------------------------------- |
+| JSON-LD `Product` (offers, brand, etc.)                  | ✅ EXISTE    | `apps/site-internet/src/components/seo/JsonLdProduct.tsx`                    |
+| JSON-LD `Organization`                                   | ✅ EXISTE    | `apps/site-internet/src/components/seo/JsonLdOrganization.tsx` (layout root) |
+| SerpPreview riche (preview Google)                       | ✅ EXISTE    | `packages/@verone/products/src/components/sections/SerpPreview.tsx`          |
+| SerpPreview dans `/produits/catalogue/[id]/descriptions` | ✅ EXISTE    | `_descriptions-blocks/SeoCard.tsx`                                           |
+| Meta Title/Description sur produits                      | ✅ généré IA | colonnes `products.meta_title`, `meta_description`                           |
+| Meta Title/Description sur collections                   | ✅ EXISTE    | colonnes `collections.meta_title`, `meta_description` + `generateMetadata`   |
+| Alt text images produits                                 | ✅ généré IA | colonne `product_images.alt_text` (60 produits couverts)                     |
 
 ---
 
@@ -38,6 +38,7 @@ Base : `staging` (711aff83)
 - Test Playwright : vérifie présence `<script type="application/ld+json">` avec `@type: BreadcrumbList` sur 2 pages
 
 **Fichiers** :
+
 - nouveau : `apps/site-internet/src/components/seo/JsonLdBreadcrumbList.tsx`
 - édit : `apps/site-internet/src/app/produit/[id]/page.tsx`
 - édit : `apps/site-internet/src/app/collections/[slug]/page.tsx`
@@ -59,6 +60,7 @@ Base : `staging` (711aff83)
 - Test Playwright : duplique un produit, vérifie redirect + suffixe SKU
 
 **Fichiers** :
+
 - nouveau : `apps/back-office/src/app/(protected)/produits/actions/duplicate-product.ts`
 - édit : page liste catalogue (ajout entrée `Dupliquer` dans `ResponsiveActionMenu`) — fichier à confirmer dans audit fin
 - responsive : conforme aux 5 techniques (action dans le dropdown standard)
@@ -71,13 +73,14 @@ Aucune migration SQL prévue → **commit non nécessaire**.
 
 ## Hors scope (proposition de skip)
 
-| Item du brief                              | Décision                                         | Raison                                                                                                              |
-| ------------------------------------------ | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| Schema.org Product avec offers/brand/etc.  | **SKIP**                                         | Déjà fait (JsonLdProduct.tsx complet, inclut even hasMerchantReturnPolicy)                                          |
-| Preview SERP Google snippet                | **SKIP**                                         | Déjà existant (SerpPreview.tsx) sur la page produit BO `/produits/catalogue/[id]/descriptions`                       |
-| Noindex/nofollow toggle par page CMS       | **SKIP par défaut, à confirmer**                 | Nécessite migration SQL (`ALTER TABLE cms_pages ADD noindex boolean`) + regen types. Hors scope "quick wins". À sortir en sprint dédié SI-SEO-002 si besoin. |
+| Item du brief                             | Décision                         | Raison                                                                                                                                                       |
+| ----------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Schema.org Product avec offers/brand/etc. | **SKIP**                         | Déjà fait (JsonLdProduct.tsx complet, inclut even hasMerchantReturnPolicy)                                                                                   |
+| Preview SERP Google snippet               | **SKIP**                         | Déjà existant (SerpPreview.tsx) sur la page produit BO `/produits/catalogue/[id]/descriptions`                                                               |
+| Noindex/nofollow toggle par page CMS      | **SKIP par défaut, à confirmer** | Nécessite migration SQL (`ALTER TABLE cms_pages ADD noindex boolean`) + regen types. Hors scope "quick wins". À sortir en sprint dédié SI-SEO-002 si besoin. |
 
 **Question Roméo** : valides-tu :
+
 1. de skipper la migration `cms_pages.noindex` (sortable en sprint dédié SI-SEO-002 plus tard) ?
 2. de ne PAS rajouter SerpPreview dans `EditSiteInternetProductModal/TabSEO` (parce que le SerpPreview vit déjà sur la page détail produit BO `/produits/catalogue/[id]`) ?
 
@@ -133,5 +136,6 @@ Sortie : `.playwright-mcp/screenshots/20260502/`
 ## Next steps post-merge
 
 Si Roméo valide les scopes additionnels, créer SI-SEO-002 séparé :
+
 - Toggle `noindex` pages CMS (migration SQL + UI + meta robots côté site-internet)
 - SerpPreview dans `EditSiteInternetProductModal/TabSEO` (réutilisation cross-package)

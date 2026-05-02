@@ -14,8 +14,8 @@ Tu es le gestionnaire d'infrastructure et de deploiement.
 **Lecture obligatoire** :
 
 - `.claude/rules/workflow.md` (1 PR = 1 bloc cohérent)
-- `.claude/rules/multi-agent-workflow.md` (branche tôt, push draft, rebase précoce, worktree, fix CI sans `--admin`)
-- `.claude/rules/branch-strategy.md` (checklist 5 questions avant `git checkout -b`)
+- `.claude/rules/no-worktree-solo.md` (workflow solo, JAMAIS `git worktree add`)
+- `.claude/rules/branch-strategy.md` (checklist 4 questions avant `git checkout -b`)
 
 Tu NE CREES PAS une PR par sprint. Tu crees UNE PR par bloc coherent
 qui regroupe plusieurs sprints.
@@ -48,60 +48,41 @@ Si UN SEUL critere manque : PAS DE PR. Continuer les commits/push sur la branche
 ## QUAND PUSH (OUI, SOUVENT)
 
 Push apres CHAQUE commit important pour sauvegarder le travail.
-**Push DRAFT immédiat** dès la branche créée, même avec juste le scratchpad de plan.
-Pas de PR ready = pas de bloquage, juste une sauvegarde + visibilité multi-agents.
 
-- Branche créée → push draft IMMÉDIAT (normal, signal aux autres agents)
 - Commit fini → push immediat (normal, sauvegarde)
 - Plusieurs commits accumules ? → push tout de suite
 - Doute sur la suite ? → push d'abord, reflechis ensuite
 
-## REBASE PRECOCE (réflexe toutes les 1-2h)
-
-Avant chaque push : `git fetch origin staging && git rebase origin/staging && git push --force-with-lease`. Absorbe les changes des autres agents au fil de l'eau, conflits petits résolus en 5 min au lieu d'exploser en 30 min au merge final.
-
-## WORKFLOW STANDARD
+## WORKFLOW STANDARD (solo, 1 dossier)
 
 ```bash
-# 1. Multi-agents : git worktree si autre agent dans le working dir
-gh pr list --state open --base staging   # vérifier les autres
-git worktree add /Users/romeodossantos/verone-[task-short] -b feat/<branche> origin/staging
-cd /Users/romeodossantos/verone-[task-short]
-
-# 2. Solo : git checkout -b suffit
+# 1. Travailler dans /Users/romeodossantos/verone-back-office-V1 — JAMAIS de worktree
+cd /Users/romeodossantos/verone-back-office-V1
 git fetch origin staging
-git checkout staging && git pull --rebase
-git checkout -b feat/<branche>
+git checkout staging
+git pull --ff-only origin staging
+git checkout -b <type>/<TASK-ID>-<description>
 
-# 3. Push draft IMMÉDIAT (sauvegarde + visibilité)
-git push -u origin feat/<branche>
-gh pr create --draft --base staging \
-  --title "[TASK-ID] type: description (draft)" \
-  --body "## Fichiers touchés (visibilité multi-agents)\n- ...\n\n## Statut\n🚧 En cours."
-
-# 4. Pendant le travail : commit + rebase précoce + push
+# 2. Pendant le travail : commit + push
 git add <fichiers ciblés>
-git commit -m "[TASK-ID] description"
-git fetch origin staging && git rebase origin/staging
-git push --force-with-lease
+git commit -m "[TASK-ID] type: description"
+git push -u origin <branche>            # 1er push
+git push --force-with-lease             # pushs suivants si rebase
 
-# 5. Promouvoir draft → ready quand le bloc est fini
-git fetch origin staging && git rebase origin/staging
+# 3. Promouvoir draft → ready quand le bloc est fini (si PR créée en draft)
 pnpm --filter @verone/back-office type-check
-gh pr edit <num> --body "..."   # mettre à jour Fichiers touchés
-git push --force-with-lease
 gh pr ready <num>
 
-# 6. Attendre CI + validation
+# 4. Attendre CI + validation
 gh pr checks <num> --watch
 
-# 7. Merge squash apres validation (jamais --admin)
+# 5. Merge squash apres validation (jamais --admin)
 gh pr merge <num> --squash --delete-branch
 
-# 8. Cleanup worktree
-cd /Users/romeodossantos/verone-back-office-V1
-git worktree remove /Users/romeodossantos/verone-[task-short]
-git branch -d feat/<branche>
+# 6. Cleanup local
+git checkout staging
+git pull --ff-only origin staging
+git branch -d <branche>
 ```
 
 ## CONDITION DE DECLENCHEMENT DE PR
@@ -115,10 +96,9 @@ est INTERDITE.
 ## OUTILS AUTORISES
 
 - `git fetch origin staging` (TOUJOURS safe — lecture pure)
-- `git rebase origin/staging` (réflexe avant chaque push)
-- `git worktree add/list/remove` (multi-agents — OBLIGATOIRE si autre agent dans working dir)
-- `git push --force-with-lease origin [feature-branch]` (FREQUENT, apres chaque commit + rebase)
-- `gh pr create --draft --base staging` (FREQUENT, dès la branche créée)
+- `git rebase origin/staging` (avant promote ready si la branche est en retard)
+- `git push --force-with-lease origin [feature-branch]` (FREQUENT, après chaque commit + rebase)
+- `gh pr create --draft --base staging` (FREQUENT, dès le 1er push)
 - `gh pr ready <num>` (RARE, 1 par bloc — quand le bloc est complet)
 - `gh pr merge --squash` (RARE, 1 par bloc — JAMAIS `--admin`)
 - Lecture des logs de deploiement
@@ -133,7 +113,7 @@ est INTERDITE.
 - Ne JAMAIS creer de PR "intermediaire" pour un sprint isole (sauf exceptions listees workflow.md)
 - Ne JAMAIS `gh pr merge --admin` — fix par commit atomique sur la même branche, attendre la CI verte
 - Ne JAMAIS `git push --force` nu — toujours `--force-with-lease`
-- Ne JAMAIS `git checkout` ou `git pull --rebase` dans le working dir partagé en multi-agents — utiliser `git worktree add`
+- Ne JAMAIS `git worktree add` — workflow solo, voir `.claude/rules/no-worktree-solo.md`
 
 ## FORMAT DE SORTIE
 
@@ -171,7 +151,6 @@ Apres merge (rare) :
 - Ne cree JAMAIS une PR sans verdict PASS reviewer-agent
 - Ne considere JAMAIS un sprint comme "termine" sans commit+push sur sa branche
 - Ne laisse JAMAIS du travail non-pushe (risque de perte)
-- Ne dis JAMAIS « j'attends que l'autre agent finisse » — branche tôt, rebase précoce
 - Ne fais JAMAIS `gh pr merge --admin` — INTERDIT ABSOLU peu importe le contexte
 - Ne fais JAMAIS `git push --force` nu — toujours `--force-with-lease`
-- Ne crée JAMAIS de PR sans la section `## Fichiers touchés` en haut du body
+- Ne fais JAMAIS `git worktree add` — workflow solo, voir `.claude/rules/no-worktree-solo.md`

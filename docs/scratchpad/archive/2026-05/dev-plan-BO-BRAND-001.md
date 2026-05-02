@@ -25,9 +25,9 @@ SELECT column_name FROM information_schema.columns WHERE column_name LIKE '%bran
 
 Résultat :
 
-| Table | Colonne | Action |
-|---|---|---|
-| `products` | `brand` (varchar, nullable) | ✅ À renommer en `manufacturer` |
+| Table         | Colonne                     | Action                                |
+| ------------- | --------------------------- | ------------------------------------- |
+| `products`    | `brand` (varchar, nullable) | ✅ À renommer en `manufacturer`       |
 | `collections` | `brand_id` (uuid, nullable) | ❌ Concept différent — NE PAS toucher |
 
 ### DB — fonctions RPC qui réfèrent `p.brand`
@@ -36,11 +36,11 @@ Résultat :
 SELECT proname FROM pg_proc WHERE pg_get_functiondef(oid) LIKE '%p.brand%';
 ```
 
-| Fonction | Type retour | Action |
-|---|---|---|
-| `get_site_internet_products()` | TABLE(..., brand text, ...) | ✅ DROP + recreate avec `manufacturer text` |
-| `get_google_merchant_eligible_products()` | TABLE(..., brand varchar) | ✅ DROP + recreate avec `manufacturer varchar` |
-| `get_product_detail_public(uuid, uuid)` | jsonb | ✅ CREATE OR REPLACE (signature jsonb inchangée, on renomme la clé `brand` → `manufacturer` dans le JSON) |
+| Fonction                                  | Type retour                 | Action                                                                                                    |
+| ----------------------------------------- | --------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `get_site_internet_products()`            | TABLE(..., brand text, ...) | ✅ DROP + recreate avec `manufacturer text`                                                               |
+| `get_google_merchant_eligible_products()` | TABLE(..., brand varchar)   | ✅ DROP + recreate avec `manufacturer varchar`                                                            |
+| `get_product_detail_public(uuid, uuid)`   | jsonb                       | ✅ CREATE OR REPLACE (signature jsonb inchangée, on renomme la clé `brand` → `manufacturer` dans le JSON) |
 
 ### Code TS/TSX — fichiers avec `.brand` (filtré pour exclure brand_id, brand_logo, brand_name)
 
@@ -147,6 +147,7 @@ Régénéré via `mcp__supabase__generate_typescript_types` après application d
 #### Apps
 
 `apps/back-office/` :
+
 - `src/app/(protected)/canaux-vente/site-internet/components/EditSiteInternetProductModal/TabInformations.tsx`
 - `src/app/(protected)/canaux-vente/site-internet/components/ProductPreviewModal.tsx`
 - `src/app/(protected)/canaux-vente/site-internet/produits/[id]/components/ProductInfoSection.tsx`
@@ -158,6 +159,7 @@ Régénéré via `mcp__supabase__generate_typescript_types` après application d
 - `src/components/forms/use-quick-variant-form.ts`
 
 `apps/site-internet/` :
+
 - `src/app/produit/[id]/page.tsx`
 - `src/app/produit/[id]/components/ProductSidebar.tsx`
 - `src/app/api/feeds/products.xml/route.ts` (Google Merchant feed — `<g:brand>` reste car c'est le nom XML imposé par Google, mais la valeur lue côté product change)
@@ -167,11 +169,13 @@ Régénéré via `mcp__supabase__generate_typescript_types` après application d
 - `src/hooks/use-catalogue-filters.ts`
 
 `apps/linkme/` :
+
 - `src/components/catalogue/ProductDetailModal.tsx`
 
 #### Packages
 
 `packages/@verone/products/` (~13 fichiers — aucun chevauchement avec PR #861) :
+
 - `src/components/cards/SourcingProductEditCard/SourcingProductDetailsSection.tsx`
 - `src/components/cards/SourcingProductEditCard/index.tsx`
 - `src/components/sections/IdentifiersCompleteEditSection.tsx`
@@ -187,14 +191,17 @@ Régénéré via `mcp__supabase__generate_typescript_types` après application d
 - `src/hooks/use-variant-products-create.ts`
 
 `packages/@verone/integrations/` (Google Merchant — attention noms externes) :
+
 - `src/google-merchant/excel-transformer.ts`
 - `src/google-merchant/product-mapper.ts`
 - `src/google-merchant/transformer.ts`
 
 `packages/@verone/common/` :
+
 - `src/components/sections/IdentifiersCompleteEditSection.tsx`
 
 `packages/@verone/ui-business/` :
+
 - `src/components/sections/RelationsEditSection.tsx`
 
 #### Cas particuliers à traiter manuellement
@@ -210,6 +217,7 @@ Régénéré via `mcp__supabase__generate_typescript_types` après application d
 Pas de fichier modifié — juste un commit récap si nécessaire (souvent omis).
 
 Validations à effectuer AVANT promote ready :
+
 - [ ] `pnpm --filter @verone/back-office build` PASS
 - [ ] `pnpm --filter @verone/site-internet build` PASS
 - [ ] `pnpm --filter @verone/linkme build` PASS

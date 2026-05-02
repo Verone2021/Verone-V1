@@ -38,13 +38,12 @@ Avant de coder :
 
 - `.claude/rules/workflow.md` (1 PR = 1 bloc cohérent)
 - `.claude/rules/branch-strategy.md` (checklist 4 questions avant `git checkout -b` ou `gh pr create`)
-- `.claude/rules/multi-agent-workflow.md` (branche tôt, push draft, rebase précoce, worktree, stacked PRs)
+- `.claude/rules/no-worktree-solo.md` (workflow solo, JAMAIS `git worktree add`)
 
 Regle d'or : **1 PR = 1 BLOC COHERENT**, jamais 1 PR par sprint.
 
+- Workflow solo : 1 dossier `/Users/romeodossantos/verone-back-office-V1`, 1 branche à la fois, bascule via `git checkout`
 - Branche créée IMMÉDIATEMENT depuis `staging` à jour quand Romeo donne GO (pas d'attente)
-- Push PR DRAFT tout de suite après création de la branche (sauvegarde + visibilité multi-agents)
-- **Rebase précoce** : `git fetch origin staging && git rebase origin/staging` AVANT chaque push (toutes les 1-2h)
 - `git push --force-with-lease` (jamais `--force` nu)
 - Commit + push apres chaque sous-tache (sauvegarde, FEU VERT)
 - PR uniquement quand le bloc est fonctionnellement complet (3+ sprints regroupes OU bloc atomique critique)
@@ -52,9 +51,7 @@ Regle d'or : **1 PR = 1 BLOC COHERENT**, jamais 1 PR par sprint.
 - Format commit : `[APP-DOMAIN-NNN] type: description`
 - PR toujours vers `staging`, jamais vers `main`
 - **Avant toute nouvelle branche** : `gh pr list --state open` → si une PR ouverte couvre le même sujet, commit dessus (cf. `branch-strategy.md`)
-- **Multi-agents (autre agent travaille en parallèle dans le working dir)** : OBLIGATOIRE `git worktree add /Users/romeodossantos/verone-[task-short] -b <branche> origin/staging` au lieu de `git checkout` qui casserait le contexte de l'autre agent (cf. `multi-agent-workflow.md`)
-- **Sous-agent (Agent tool)** : si autre agent humain en cours, passer `isolation: "worktree"` systématiquement
-- **PR description** : section `## Fichiers touchés` obligatoire en haut (visibilité multi-agents)
+- **Si dirty state avant `git checkout`** : `git stash push -m "<contexte>"` puis pop après checkout
 
 ## AUTONOMIE — FEU VERT / ORANGE / ROUGE
 
@@ -144,19 +141,13 @@ Le reviewer lit le rapport, pas le chat. Le ops-agent lit le verdict PASS, pas l
   Sinon le check `Supabase TS types drift (blocking)` fail à la release main
   et nécessite une PR de rattrapage (incident 2026-04-28 PR #826).
   Voir `.claude/rules/branch-strategy.md` checklist question 4.
-- **JAMAIS dire "j'attends que l'autre agent finisse"** quand Romeo donne GO sur un sprint.
-  La pratique senior est l'inverse : créer la branche IMMÉDIATEMENT depuis `staging` à jour,
-  push draft tout de suite, rebase précoce avant chaque push. L'attente cache les conflits
-  jusqu'au dernier moment où ils explosent. Voir `.claude/rules/multi-agent-workflow.md`.
-- **JAMAIS `git checkout` ou `git pull --rebase` dans le working dir partagé si un autre
-  agent travaille en parallèle** — utiliser `git worktree add /Users/romeodossantos/verone-[task-short] -b <branche> origin/staging`
-  pour un dossier isolé. Casser le checkout d'un autre agent = perte de son contexte
-  (incident 2026-04-30). Voir `.claude/rules/multi-agent-workflow.md`.
+- **JAMAIS `git worktree add`** — workflow solo, 1 dossier, 1 branche à la fois.
+  Bascule entre branches via `git checkout <autre-branche>` (avec `git stash` si dirty).
+  Voir `.claude/rules/no-worktree-solo.md`.
 - **JAMAIS `git push --force` nu** — toujours `--force-with-lease`. Garde-fou contre
-  l'écrasement accidentel des pushs des autres agents.
+  l'écrasement accidentel.
 - **JAMAIS `gh pr merge --admin`** pour bypasser un check CI fail. Fix par commit
   atomique sur la même branche, attendre la CI verte, merger sans bypass.
-  Voir `.claude/rules/multi-agent-workflow.md` section 5.
 - Zero `any` TypeScript
 - JAMAIS modifier les routes API existantes (Qonto, adresses, emails, webhooks)
 - JAMAIS modifier les triggers stock (voir `.claude/rules/stock-triggers-protected.md`)
@@ -180,7 +171,7 @@ Le reviewer lit le rapport, pas le chat. Le ops-agent lit le verdict PASS, pas l
 | Standards responsive    | `.claude/rules/responsive.md`                  |
 | Data fetching & perf    | `.claude/rules/data-fetching.md`               |
 | Workflow git/PR         | `.claude/rules/workflow.md`                    |
-| Multi-agents (worktree) | `.claude/rules/multi-agent-workflow.md`        |
+| Pas de worktree (solo)  | `.claude/rules/no-worktree-solo.md`            |
 | Branche / PR strategy   | `.claude/rules/branch-strategy.md`             |
 | Autonomie agent         | `.claude/rules/autonomy-boundaries.md`         |
 | Zéro donnée fantôme     | `.claude/rules/no-phantom-data.md`             |

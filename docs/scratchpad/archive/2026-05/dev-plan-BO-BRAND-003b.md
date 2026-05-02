@@ -29,6 +29,7 @@ est créée et testée mais **n'est pas encore branchée** sur les routes API
 existantes (BO-BRAND-003c s'en chargera après audit complet des 7 routes).
 
 **Dépendance DB** :
+
 - `sales_channels.brand_id` (BO-BRAND-003)
 - `channel_pricing.is_published_on_channel` (BO-BRAND-003)
 - `products.brand_ids uuid[]` (BO-BRAND-002)
@@ -47,11 +48,13 @@ Règle actuelle : `docs/current/canaux-vente-publication-rules.md`
 ### Erreur 1 — audit incomplet (v2)
 
 L'agent (moi) avait identifié 3 routes utilisant `is_published_online` :
+
 - `products/[id]/unpublish/route.ts`
 - `meta-commerce/products/[id]/visibility/route.ts`
 - `google-merchant/products/[id]/visibility/route.ts`
 
 Audit Romeo a découvert **7 routes** :
+
 - `products/[id]/publish/route.ts` (manquée)
 - `products/[id]/unpublish/route.ts` ✅
 - `meta-commerce/products/[id]/visibility/route.ts` ✅
@@ -99,11 +102,11 @@ site_flos   : acced10b-e21d-4b9d-85db-d7d3b4e09b43
 
 ### Cible UI
 
-| Fichier | Rôle | Impact BO-BRAND-003b |
-|---|---|---|
-| `apps/back-office/.../produits/catalogue/[productId]/_components/product-publication-dashboard.tsx` (275 lignes) | Onglet Publication actuel | ✅ Cible d'intégration |
-| `apps/back-office/.../produits/catalogue/[productId]/_components/_publication-blocks/PublicationChannels.tsx` | Sous-composant statut canaux (lecture seule) | ⏸️ Conserver tel quel (sémantique différente : "configuré" vs "publié") |
-| `packages/@verone/channels/src/constants/channel-ids.ts` | `CHANNEL_IDS` UUIDs hardcodés | ✏️ Étendre avec 3 nouveaux site_* |
+| Fichier                                                                                                          | Rôle                                         | Impact BO-BRAND-003b                                                    |
+| ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------- |
+| `apps/back-office/.../produits/catalogue/[productId]/_components/product-publication-dashboard.tsx` (275 lignes) | Onglet Publication actuel                    | ✅ Cible d'intégration                                                  |
+| `apps/back-office/.../produits/catalogue/[productId]/_components/_publication-blocks/PublicationChannels.tsx`    | Sous-composant statut canaux (lecture seule) | ⏸️ Conserver tel quel (sémantique différente : "configuré" vs "publié") |
+| `packages/@verone/channels/src/constants/channel-ids.ts`                                                         | `CHANNEL_IDS` UUIDs hardcodés                | ✏️ Étendre avec 3 nouveaux site\_\*                                     |
 
 ### Routes API NON modifiées (zone critique externe — INTERDIT)
 
@@ -126,6 +129,7 @@ apps/back-office/src/app/api/exports/products/route.ts
 ### Dette technique observée — sprint cleanup futur [BO-DEBT-001]
 
 **Doublon `useChannelPricing`** :
+
 - `packages/@verone/common/src/hooks/use-channel-pricing.ts` → consommé par
   `ChannelPricingDetailed.tsx` et `ChannelPricingTable.tsx` (catalogue
   produit). Source active.
@@ -155,6 +159,7 @@ coexistent. Pas de fusion.
 ### B. Filtrage par `brand_ids`
 
 Algo (côté hook + côté query SQL) :
+
 ```
 afficher canal si:
   sales_channels.is_active = true
@@ -165,6 +170,7 @@ afficher canal si:
 ```
 
 Cas concrets :
+
 - Produit `brand_ids = [verone, solar]` → voit `site_internet` (verone) +
   `site_solar` + 4 multi-marques (`google_merchant`, `meta_commerce`,
   `linkme`, `manuel`) = 6 canaux
@@ -197,7 +203,8 @@ complets. **Non consommée** par les routes API existantes dans cette PR.
 Sera utilisée par BO-BRAND-003c (migration des 7 routes).
 
 JSDoc obligatoire :
-- Comportement principal : "publié = au moins un site_* a `is_published_on_channel=true`"
+
+- Comportement principal : "publié = au moins un site\_\* a `is_published_on_channel=true`"
 - **Période transitoire** : tant que les 30 produits legacy n'ont pas été
   basculés via UI, fallback `products.is_published_online=true` pour les
   produits `brand_ids = NULL/[]/[verone-uuid]` uniquement
@@ -221,7 +228,7 @@ JSDoc obligatoire :
 
 (Sera remplacé par le commit du dev-plan v3 ci-après.)
 
-### Commit 2 — Étendre `CHANNEL_IDS` (3 nouveaux site_*)
+### Commit 2 — Étendre `CHANNEL_IDS` (3 nouveaux site\_\*)
 
 ```
 [BO-BRAND-003b] chore: extend CHANNEL_IDS with site_boemia/site_solar/site_flos
@@ -240,6 +247,7 @@ UUIDs réels lus en DB (cf. ci-dessus).
 **Fichier nouveau** : `packages/@verone/channels/src/hooks/use-product-channel-publication.ts`
 
 Règles `data-fetching.md` :
+
 - Pas de `select('*')` — colonnes explicites
 - TanStack Query, `staleTime: 30_000`
 - `await queryClient.invalidateQueries(...)` dans `onSuccess` mutation
@@ -280,21 +288,24 @@ Validation Zod stricte. Pas d'`any`. Auth via `createServerClient`.
 ```
 
 **Fichiers** :
+
 - `packages/@verone/channels/src/utils/cascade.ts` (nouveau)
 - `packages/@verone/channels/src/utils/__tests__/cascade.test.ts` (nouveau)
 - `docs/current/canaux-vente-publication-rules.md` (mis à jour)
 
 Tests obligatoires (6 cas) :
+
 1. Produit `[verone, solar]` publié sur `site_solar` → `true` ✅
 2. Produit `[verone]` publié sur `site_internet` → `true` ✅
 3. Produit `[verone]` legacy `is_published_online=true` sans `is_published_on_channel` → `true` ✅ (rétrocompat)
-4. Produit `[solar]` publié sur AUCUN site_* → `false` ❌
+4. Produit `[solar]` publié sur AUCUN site\_\* → `false` ❌
 5. Produit `[]` legacy `is_published_online=false` → `false` ❌
 6. Produit `NULL` brand_ids, `is_published_online=true` → `true` (legacy) ✅
 
 Mocks : Supabase client mocké (vitest).
 
 Doc :
+
 - Section "Cascade multi-marques (BO-BRAND-003b)"
 - Section "Période transitoire" (rétrocompat 30 produits)
 - Note **importante** : la nouvelle utility n'est PAS encore consommée par
@@ -307,10 +318,12 @@ Doc :
 ```
 
 **Fichiers** :
+
 - `apps/back-office/.../produits/catalogue/[productId]/_components/product-publication-dashboard.tsx` (intégration section)
 - `tests/e2e/product-publication-toggles.spec.ts` (nouveau, 5 tailles)
 
 Tests Playwright :
+
 - 375 / 768 / 1024 / 1440 / 1920 px
 - Toggles s'affichent
 - Touch target 44px sur 375px
@@ -334,7 +347,7 @@ Tests Playwright :
 ## Acceptance criteria
 
 - [ ] Commit 1' — dev-plan v3 commité
-- [ ] Commit 2 — `CHANNEL_IDS` étendu avec 3 nouveaux site_*
+- [ ] Commit 2 — `CHANNEL_IDS` étendu avec 3 nouveaux site\_\*
 - [ ] Commit 3 — Hook `useProductChannelPublication`
 - [ ] **🛑 Ping Romeo pour review intermédiaire**
 - [ ] Commit 4 — Route POST `toggle-publication`

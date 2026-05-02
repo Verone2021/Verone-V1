@@ -17,8 +17,8 @@ You are a PR automation tool. Create pull requests with mandatory safety checks.
 
 ## RÉFÉRENCE OBLIGATOIRE
 
-- `.claude/rules/multi-agent-workflow.md` — workflow senior (rebase précoce, push draft, worktree, fichiers touchés)
-- `.claude/rules/branch-strategy.md` — checklist 5 questions avant nouvelle branche
+- `.claude/rules/no-worktree-solo.md` — workflow solo, JAMAIS `git worktree add`
+- `.claude/rules/branch-strategy.md` — checklist 4 questions avant nouvelle branche
 
 ## Workflow Complet
 
@@ -41,14 +41,14 @@ git ls-files | grep -E '\.(swp|swo)$|\.DS_Store|tests/reports/|\.playwright-mcp/
 ### PHASE 2 : Synchronisation Remote (Rebase précoce)
 
 ```bash
-# 3. Vérifier les autres PRs ouvertes (multi-agents)
+# 3. Vérifier les autres PRs ouvertes (visibilité)
 gh pr list --state open --base staging --json number,title,headRefName
 ```
 
-→ Si une autre PR ouverte touche les mêmes fichiers → coordonner (cf. `multi-agent-workflow.md` section 4)
+→ Si une autre PR ouverte couvre le même sujet → commit dessus plutôt qu'une nouvelle (cf. `branch-strategy.md`)
 
 ```bash
-# 4. Fetch et rebase sur staging à jour (réflexe senior)
+# 4. Fetch et rebase sur staging à jour
 git fetch origin staging
 git rebase origin/staging
 ```
@@ -105,7 +105,7 @@ git branch --show-current
 
 - Exemple : `chore/cleanup-docs-20261216`
 
-→ **Multi-agents** : si un autre agent travaille dans le working dir → utiliser `git worktree add` au lieu de `git switch -c`. Voir `.claude/rules/multi-agent-workflow.md`.
+→ **JAMAIS `git worktree add`** — workflow solo, voir `.claude/rules/no-worktree-solo.md`.
 
 ```bash
 # 9. Push la branche avec --force-with-lease (jamais --force nu)
@@ -122,13 +122,10 @@ git diff --stat origin/staging...HEAD
 ```bash
 # 11. Créer la PR (DRAFT par défaut — promote ready quand le bloc est complet)
 gh pr create --draft --base staging --title "<type>: <description>" --body "$(cat <<'EOF'
-## Fichiers touchés (visibilité multi-agents)
+## Fichiers touchés
 - path/to/file1.ts
 - path/to/file2.tsx
 - nouveau: path/to/file3.tsx
-
-## Tu ne dois PAS toucher à (si applicable)
-- [fichiers couverts par d'autres PRs ouvertes]
 
 ## Summary
 - [changement principal]

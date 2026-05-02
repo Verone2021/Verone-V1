@@ -18,17 +18,20 @@ Brief : `docs/scratchpad/brief-BO-MKT-001-phase1-dam.md` (renommé mentalement B
 ## Audit factuel (effectué avant écriture du plan)
 
 ### DB — état actuel
+
 - `brands` n'existe pas ✅ (à créer)
 - `enseignes` existe (concept B2B partenaires, orthogonal aux brands)
 - `user_profiles` existe (~17 colonnes, pas de `active_brand_id`)
 - Rappel : BO-BRAND-001 a déjà renommé `products.brand` → `products.manufacturer`
 
 ### Code — état actuel
+
 - Aucune occurrence existante de `BrandSwitcher`, `useActiveBrand`, ou `active_brand_id` ✅
 - Header global : `apps/back-office/src/components/layout/app-header.tsx` (où injecter le BrandSwitcher)
 - `/parametres/` existe avec sous-dossiers (emails, webhooks, notifications) — structure pour ajouter `/parametres/marques`
 
 ### Conflits potentiels avec autres PRs
+
 - **PR #867 (BO-VAR-NAME-PATTERN-001)** est en cours de merge :
   - Touche `packages/@verone/types/src/supabase.ts` (régen)
   - Touche `supabase/migrations/20260430_add_name_position_to_variant_groups.sql`
@@ -72,6 +75,7 @@ Brief : `docs/scratchpad/brief-BO-MKT-001-phase1-dam.md` (renommé mentalement B
 **Fichier nouveau** : `supabase/migrations/20260501_NNNNNN_create_brands_table.sql`
 
 Contenu :
+
 ```sql
 -- 1. Table brands
 CREATE TABLE brands (
@@ -129,6 +133,7 @@ Application : via `mcp__supabase__execute_sql` (cf. flow validé BO-BRAND-001).
 **Fichier modifié** : `packages/@verone/types/src/supabase.ts`
 
 Procédure :
+
 1. Si conflit avec staging : rebaser, puis regen
 2. `mcp__supabase__generate_typescript_types`
 3. Si CI types drift fail → utiliser l'artifact `supabase-types-drift` (cf. BO-BRAND-001 retex)
@@ -142,14 +147,17 @@ Procédure :
 ```
 
 **Fichiers nouveaux** :
+
 - `packages/@verone/hooks/src/use-active-brand.ts` (TanStack Query, SSR-safe)
 - `packages/@verone/hooks/src/index.ts` (export hook)
 - `apps/back-office/src/components/layout/brand-switcher.tsx` (composant dropdown)
 
 **Fichier modifié** :
+
 - `apps/back-office/src/components/layout/app-header.tsx` (injection du `<BrandSwitcher>`)
 
 Contenu :
+
 - `useActiveBrand()` : retourne `{ activeBrandId, activeBrand, brands, setActiveBrand, isAllBrands }`
 - `<BrandSwitcher>` : dropdown avec "Toutes les marques" + 4 marques (chip couleur)
 - Persistance : update `user_profiles.active_brand_id` + invalidate React Query
@@ -164,6 +172,7 @@ Contenu :
 ```
 
 **Fichiers nouveaux** :
+
 - `apps/back-office/src/app/(protected)/parametres/marques/page.tsx`
 - `apps/back-office/src/app/(protected)/parametres/marques/_components/BrandsTable.tsx`
 - `apps/back-office/src/app/(protected)/parametres/marques/_components/BrandEditModal.tsx`
@@ -171,10 +180,12 @@ Contenu :
 - `packages/@verone/products/src/components/badges/BrandChip.tsx`
 
 **Fichiers modifiés** :
+
 - `packages/@verone/products/src/components/forms/ProductFormModal.tsx` (intégration BrandsMultiSelect)
 - `apps/back-office/src/app/(protected)/produits/catalogue/page.tsx` (chips + filtre marque dans toolbar)
 
 Contenu :
+
 - Page `/parametres/marques` : `<ResponsiveDataView>` avec édition inline (name, brand_color, logo_url, website_url, social_handles, is_active)
 - Pas de création/suppression (4 marques figées seedées)
 - `<BrandsMultiSelect>` : composant multi-select avec chips colorées
@@ -188,6 +199,7 @@ Contenu :
 5 tailles : 375 / 768 / 1024 / 1440 / 1920 px
 
 Scénarios :
+
 - [ ] Switch dropdown marque header → persistance après reload
 - [ ] Mode "Toutes les marques" → liste produits non filtrée
 - [ ] Mode "Solar" → seuls produits avec brand_ids @> ARRAY['solar_id']
