@@ -19,6 +19,8 @@ import { toast } from 'sonner';
 import type { FilterState } from '@/components/catalogue/CatalogueFilterPanel';
 
 import type { Filters } from './types';
+import { useBulkActions } from './use-bulk-actions';
+import { useBulkSelection } from './use-bulk-selection';
 import { useQuickEdit } from './use-quick-edit';
 import { useCatalogueTabs } from './use-catalogue-tabs';
 
@@ -35,6 +37,7 @@ export function useCataloguePage() {
     setFilters: setCatalogueFilters,
     loadArchivedProducts,
     loadIncompleteProducts,
+    loadCatalogueData,
     archiveProduct,
     unarchiveProduct,
     deleteProduct,
@@ -431,6 +434,42 @@ export function useCataloguePage() {
     }
   };
 
+  // Bulk selection / actions (SI-PROD-001)
+  const bulkSelection = useBulkSelection();
+  const [bulkPriceOpen, setBulkPriceOpen] = useState(false);
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
+
+  const refreshAfterBulk = useCallback(async () => {
+    await loadCatalogueData();
+    if (tabs.activeTab === 'incomplete') {
+      try {
+        const result = await loadIncompleteProductsRef.current({
+          ...(filtersRef.current as unknown as Filters),
+          page: tabs.incompletePage,
+        });
+        tabs.setIncompleteProducts(result.products);
+        tabs.setIncompleteTotal(result.total);
+      } catch (err) {
+        console.error('[Catalogue] refresh after bulk failed:', err);
+      }
+    }
+    if (tabs.activeTab === 'archived') {
+      try {
+        const result = await loadArchivedProductsRef.current(
+          filtersRef.current
+        );
+        tabs.setArchivedProducts(result.products);
+      } catch (err) {
+        console.error('[Catalogue] refresh archived after bulk failed:', err);
+      }
+    }
+  }, [loadCatalogueData, tabs]);
+
+  const bulkActions = useBulkActions({
+    onAfterMutation: refreshAfterBulk,
+    onClearSelection: bulkSelection.clear,
+  });
+
   const dashboardSLO = checkSLOCompliance(startTime, 'dashboard');
 
   return {
@@ -481,6 +520,13 @@ export function useCataloguePage() {
     filtersRef,
     loadIncompleteProductsRef,
     handleProductUpdated,
+    // Bulk selection + actions (SI-PROD-001)
+    bulkSelection,
+    bulkActions,
+    bulkPriceOpen,
+    setBulkPriceOpen,
+    bulkStatusOpen,
+    setBulkStatusOpen,
     // Tabs state (spread from useCatalogueTabs)
     ...tabs,
     // Quick edit (spread from useQuickEdit)
