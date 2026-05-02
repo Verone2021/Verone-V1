@@ -4756,6 +4756,80 @@ export type Database = {
         };
         Relationships: [];
       };
+      media_assets: {
+        Row: {
+          alt_text: string | null;
+          archived_at: string | null;
+          asset_type: string;
+          brand_ids: string[];
+          cloudflare_image_id: string | null;
+          created_at: string;
+          created_by: string | null;
+          file_size: number | null;
+          filename: string | null;
+          format: string | null;
+          height: number | null;
+          id: string;
+          notes: string | null;
+          public_url: string | null;
+          source_product_image_id: string | null;
+          storage_path: string | null;
+          tags: string[];
+          updated_at: string;
+          width: number | null;
+        };
+        Insert: {
+          alt_text?: string | null;
+          archived_at?: string | null;
+          asset_type?: string;
+          brand_ids?: string[];
+          cloudflare_image_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          file_size?: number | null;
+          filename?: string | null;
+          format?: string | null;
+          height?: number | null;
+          id?: string;
+          notes?: string | null;
+          public_url?: string | null;
+          source_product_image_id?: string | null;
+          storage_path?: string | null;
+          tags?: string[];
+          updated_at?: string;
+          width?: number | null;
+        };
+        Update: {
+          alt_text?: string | null;
+          archived_at?: string | null;
+          asset_type?: string;
+          brand_ids?: string[];
+          cloudflare_image_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          file_size?: number | null;
+          filename?: string | null;
+          format?: string | null;
+          height?: number | null;
+          id?: string;
+          notes?: string | null;
+          public_url?: string | null;
+          source_product_image_id?: string | null;
+          storage_path?: string | null;
+          tags?: string[];
+          updated_at?: string;
+          width?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'media_assets_source_product_image_id_fkey';
+            columns: ['source_product_image_id'];
+            isOneToOne: true;
+            referencedRelation: 'product_images';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       meta_commerce_syncs: {
         Row: {
           catalog_id: string;

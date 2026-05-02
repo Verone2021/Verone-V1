@@ -12,7 +12,9 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
-    "@verone/ui": "workspace:*"
+    "@verone/products": "workspace:*",
+    "@verone/ui": "workspace:*",
+    "@verone/utils": "workspace:*"
   },
   "peerDependencies": {
     "react": "^18.2.0",

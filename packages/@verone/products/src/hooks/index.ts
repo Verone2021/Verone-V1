@@ -23,3 +23,4 @@ export * from './use-product';
 export * from './use-product-general-dashboard';
 export * from './use-product-pricing-dashboard';
 export * from './use-brands';
+export * from './use-media-assets';
