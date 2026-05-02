@@ -110,7 +110,9 @@ export function useCatalogueProducts(
   return useQuery({
     queryKey: ['catalogue-products', options],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_site_internet_products');
+      const { data, error } = await supabase.rpc('get_site_internet_products', {
+        p_brand_slug: 'verone',
+      });
 
       if (error) {
         console.error('Error fetching catalogue products:', error);

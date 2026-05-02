@@ -59,7 +59,8 @@ export async function GET(request: NextRequest) {
   // 1. Get products from SAME RPC as site internet
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const { data: rpcData, error: rpcError } = await supabase.rpc(
-    'get_site_internet_products'
+    'get_site_internet_products',
+    { p_brand_slug: 'verone' }
   );
 
   if (rpcError) {

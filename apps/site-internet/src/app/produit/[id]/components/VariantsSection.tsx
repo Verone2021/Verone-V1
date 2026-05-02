@@ -54,7 +54,9 @@ export function VariantsSection({
       if (!variantGroupId) return [];
 
       // Récupérer TOUTES les variantes éligibles du variant_group via RPC
-      const { data, error } = await supabase.rpc('get_site_internet_products');
+      const { data, error } = await supabase.rpc('get_site_internet_products', {
+        p_brand_slug: 'verone',
+      });
 
       if (error) {
         console.error('❌ Erreur fetch variants:', error);

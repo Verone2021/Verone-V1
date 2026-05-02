@@ -24,7 +24,9 @@ export async function generateMetadata({
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey);
-  const result = await supabase.rpc('get_site_internet_products');
+  const result = await supabase.rpc('get_site_internet_products', {
+    p_brand_slug: 'verone',
+  });
   const products = (result.data as CatalogueProduct[]) ?? [];
   const product = products.find(p => p.slug === slug);
 

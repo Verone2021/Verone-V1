@@ -36,7 +36,8 @@ export function useCollectionProducts(collectionId: string | undefined) {
 
       // Get full product details via RPC (already filtered to published)
       const { data: allProducts, error: rpcError } = await supabase.rpc(
-        'get_site_internet_products'
+        'get_site_internet_products',
+        { p_brand_slug: 'verone' }
       );
 
       if (rpcError) {
