@@ -25,10 +25,11 @@ export interface CloudflareImageUploadResult {
 }
 
 export type CloudflareImageVariant =
-  | 'thumbnail'
-  | 'medium'
-  | 'large'
-  | 'public';
+  | 'public'
+  | 'social1x1'
+  | 'banner16x9'
+  | 'pin2x3'
+  | 'story9x16';
 
 // ============================================================================
 // ERREUR CUSTOM

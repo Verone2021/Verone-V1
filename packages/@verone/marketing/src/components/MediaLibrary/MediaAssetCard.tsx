@@ -86,7 +86,7 @@ export function MediaAssetCard({
         alt={asset.alt_text ?? ''}
         fill
         className="object-cover transition-transform group-hover:scale-105"
-        variant="thumbnail"
+        variant="public"
         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
       />
 
