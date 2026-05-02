@@ -28,6 +28,7 @@ import {
   CalendarClock,
   Sparkles,
   Wand2,
+  Image,
 } from 'lucide-react';
 
 // Interface pour les éléments de navigation
@@ -313,6 +314,11 @@ export const getNavItems = (
         title: 'Studio Prompts',
         href: '/marketing/prompts',
         icon: Wand2,
+      },
+      {
+        title: 'Bibliothèque',
+        href: '/marketing/bibliotheque',
+        icon: Image,
       },
     ],
   },
