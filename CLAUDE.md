@@ -25,7 +25,7 @@ Langue : francais. Code/commits : anglais.
 ## POINT D'ENTREE — A LIRE A CHAQUE SESSION
 
 1. `.claude/rules/communication-style.md` — règle 6 anti-paralysie + style français simple
-2. `.claude/work/ACTIVE.md` — file de taches active
+2. `.claude/work/ACTIVE.md` — file de taches active (maintenance : `.claude/rules/active-md-maintenance.md`)
 3. Le playbook associe dans `.claude/playbooks/` si la tache en reference un
 4. Le(s) fichier(s) `.claude/rules/*` pertinents pour le domaine
 
