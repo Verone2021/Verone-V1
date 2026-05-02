@@ -26,6 +26,8 @@ import {
   Receipt,
   Monitor,
   CalendarClock,
+  Sparkles,
+  Wand2,
 } from 'lucide-react';
 
 // Interface pour les éléments de navigation
@@ -298,6 +300,19 @@ export const getNavItems = (
         title: 'Échéancier',
         href: '/finance/echeancier',
         icon: CalendarClock,
+      },
+    ],
+  },
+  // ============ MARKETING ============
+  {
+    title: 'Marketing',
+    href: '/marketing/prompts',
+    icon: Sparkles,
+    children: [
+      {
+        title: 'Studio Prompts',
+        href: '/marketing/prompts',
+        icon: Wand2,
       },
     ],
   },

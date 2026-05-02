@@ -68,7 +68,9 @@
       "@verone/ui-business": ["../../packages/@verone/ui-business/src"],
       "@verone/ui-business/*": ["../../packages/@verone/ui-business/src/*"],
       "@verone/admin": ["../../packages/@verone/admin/src"],
-      "@verone/admin/*": ["../../packages/@verone/admin/src/*"]
+      "@verone/admin/*": ["../../packages/@verone/admin/src/*"],
+      "@verone/marketing": ["../../packages/@verone/marketing/src"],
+      "@verone/marketing/*": ["../../packages/@verone/marketing/src/*"]
     },
     "target": "ES2017"
   },

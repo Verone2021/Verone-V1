@@ -294,6 +294,9 @@ importers:
       '@types/qrcode':
         specifier: ^1.5.6
         version: 1.5.6
+      '@verone/marketing':
+        specifier: workspace:*
+        version: link:../../packages/@verone/marketing
       '@verone/roadmap':
         specifier: workspace:*
         version: link:../../packages/@verone/roadmap
@@ -757,6 +760,21 @@ importers:
       '@verone/types':
         specifier: workspace:*
         version: link:../types
+      '@verone/ui':
+        specifier: workspace:*
+        version: link:../ui
+      '@verone/utils':
+        specifier: workspace:*
+        version: link:../utils
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.3.1(react@18.3.1)
+
+  packages/@verone/marketing:
+    dependencies:
       '@verone/ui':
         specifier: workspace:*
         version: link:../ui
