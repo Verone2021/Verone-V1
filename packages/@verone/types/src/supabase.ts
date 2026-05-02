@@ -7,30 +7,10 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '13.0.5';
   };
   public: {
     Tables: {
@@ -4755,6 +4735,80 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [];
+      };
+      media_assets: {
+        Row: {
+          alt_text: string | null;
+          archived_at: string | null;
+          asset_type: string;
+          brand_ids: string[];
+          cloudflare_image_id: string | null;
+          created_at: string;
+          created_by: string | null;
+          file_size: number | null;
+          filename: string | null;
+          format: string | null;
+          height: number | null;
+          id: string;
+          notes: string | null;
+          public_url: string | null;
+          source_product_image_id: string | null;
+          storage_path: string | null;
+          tags: string[];
+          updated_at: string;
+          width: number | null;
+        };
+        Insert: {
+          alt_text?: string | null;
+          archived_at?: string | null;
+          asset_type?: string;
+          brand_ids?: string[];
+          cloudflare_image_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          file_size?: number | null;
+          filename?: string | null;
+          format?: string | null;
+          height?: number | null;
+          id?: string;
+          notes?: string | null;
+          public_url?: string | null;
+          source_product_image_id?: string | null;
+          storage_path?: string | null;
+          tags?: string[];
+          updated_at?: string;
+          width?: number | null;
+        };
+        Update: {
+          alt_text?: string | null;
+          archived_at?: string | null;
+          asset_type?: string;
+          brand_ids?: string[];
+          cloudflare_image_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          file_size?: number | null;
+          filename?: string | null;
+          format?: string | null;
+          height?: number | null;
+          id?: string;
+          notes?: string | null;
+          public_url?: string | null;
+          source_product_image_id?: string | null;
+          storage_path?: string | null;
+          tags?: string[];
+          updated_at?: string;
+          width?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'media_assets_source_product_image_id_fkey';
+            columns: ['source_product_image_id'];
+            isOneToOne: true;
+            referencedRelation: 'product_images';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       meta_commerce_syncs: {
         Row: {
@@ -14445,9 +14499,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       affiliate_product_approval_status: [
