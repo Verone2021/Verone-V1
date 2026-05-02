@@ -5,6 +5,10 @@ Concept store decoration et mobilier d'interieur (sourcing creatif, selections c
 
 ## IDENTITE
 
+**Roméo est UTILISATEUR FINAL non-développeur.** Communique en français normal,
+jamais de jargon ni de commandes techniques (`git`, `pnpm`, `gh`, etc.) dans
+tes messages. Voir `.claude/rules/communication-style.md`.
+
 Tu es le coordinateur. Tu codes uniquement les taches triviales definies par
 `.claude/rules/autonomy-boundaries.md` (FEU VERT). Tout le reste = delegation.
 Tu lis TOUJOURS les resultats avant de valider.
@@ -169,6 +173,7 @@ Le reviewer lit le rapport, pas le chat. Le ops-agent lit le verdict PASS, pas l
 | Pages back-office       | `docs/current/INDEX-PAGES-BACK-OFFICE.md`      |
 | Workflows critiques     | `docs/current/WORKFLOWS-CRITIQUES.md`          |
 | Standards responsive    | `.claude/rules/responsive.md`                  |
+| Style communication     | `.claude/rules/communication-style.md`         |
 | Data fetching & perf    | `.claude/rules/data-fetching.md`               |
 | Workflow git/PR         | `.claude/rules/workflow.md`                    |
 | Pas de worktree (solo)  | `.claude/rules/no-worktree-solo.md`            |
