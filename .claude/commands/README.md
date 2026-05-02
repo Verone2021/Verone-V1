@@ -18,13 +18,14 @@ Dis simplement ce que tu veux faire. Claude lit ACTIVE.md et choisit le bon work
 
 ## Les agents
 
-| Agent            | Role                          | Quand                           |
-| ---------------- | ----------------------------- | ------------------------------- |
-| `dev-agent`      | Code, TDD, changelog          | Feature, bug fix, refactoring   |
-| `reviewer-agent` | Audit qualite read-only       | Avant PR, apres implementation  |
-| `verify-agent`   | Type-check, build, tests      | Validation avant deploy         |
-| `ops-agent`      | PR, push, deploy              | Apres review PASS               |
-| `perf-optimizer` | Audit perf, dead code, bundle | Audit periodique, perf degradee |
+| Agent            | Role                          | Quand                                         |
+| ---------------- | ----------------------------- | --------------------------------------------- |
+| `dev-agent`      | Code, TDD, changelog          | Gros sprint > 5 outils ou > 10 fichiers       |
+| `reviewer-agent` | Audit qualite read-only       | Avant gros merge, apres implementation        |
+| `ops-agent`      | PR, push, deploy              | Optionnel — gros bloc, release main, recovery |
+| `perf-optimizer` | Audit perf, dead code, bundle | Audit periodique, perf degradee               |
+
+Note : `verify-agent` supprime en `[INFRA-LEAN-002]` (CI couvre type-check + build + tests).
 
 ## Commandes disponibles
 

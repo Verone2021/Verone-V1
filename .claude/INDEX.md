@@ -35,15 +35,14 @@ _Note : sous-dossier `.claude/rules/domain/` envisagé dans ADR-004 mais non app
 
 ---
 
-## Agents (5 fichiers)
+## Agents (4 fichiers)
 
-- `.claude/agents/dev-agent.md` — Code + TDD + changelog (**actif**)
-- `.claude/agents/reviewer-agent.md` — Code reviewer impartial read-only (**actif**)
-- `.claude/agents/verify-agent.md` — Type-check + build + tests (**actif**)
-- `.claude/agents/ops-agent.md` — Push, PR, merge après review PASS (**actif**)
-- `.claude/agents/perf-optimizer.md` — Audit perf, dead code, bundle, overfetch (**restauré 2026-04-19**, mémoire dans `.claude/agent-memory/perf-optimizer/`)
+- `.claude/agents/dev-agent.md` — Code + TDD + changelog (**actif**, gros sprints)
+- `.claude/agents/reviewer-agent.md` — Code reviewer impartial read-only (**actif**, avant gros merges)
+- `.claude/agents/ops-agent.md` — Push, PR, merge (**optionnel** depuis Niveau 2 — gros blocs uniquement)
+- `.claude/agents/perf-optimizer.md` — Audit perf, dead code, bundle, overfetch (mémoire dans `.claude/agent-memory/perf-optimizer/`)
 
-_Agents supprimés (0 usage en 3 mois — voir `DECISIONS.md` ADR-009)_ : `writer-agent`, `market-agent`.\_
+_Agents supprimés_ : `writer-agent`, `market-agent` (ADR-009 — 0 usage en 3 mois) ; `verify-agent` (ADR-027 — Niveau 2, déjà couvert par CI).
 
 ---
 
