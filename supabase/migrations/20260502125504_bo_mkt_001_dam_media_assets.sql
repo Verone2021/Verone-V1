@@ -69,7 +69,6 @@ CREATE TRIGGER trg_media_assets_updated_at
 CREATE OR REPLACE FUNCTION mirror_product_image_to_media_asset()
 RETURNS TRIGGER
 LANGUAGE plpgsql
-SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
@@ -103,7 +102,6 @@ CREATE TRIGGER trg_mirror_product_image_insert
 CREATE OR REPLACE FUNCTION mirror_product_image_update_to_media_asset()
 RETURNS TRIGGER
 LANGUAGE plpgsql
-SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
