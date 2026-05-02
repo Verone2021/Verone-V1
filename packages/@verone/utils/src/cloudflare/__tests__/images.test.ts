@@ -134,12 +134,12 @@ async function main(): Promise<void> {
     );
   });
 
-  await test('construit URL avec variant thumbnail (imagedelivery.net)', () => {
+  await test('construit URL avec variant social1x1 (imagedelivery.net)', () => {
     setEnvVars(VALID_ENV);
-    const url = buildCloudflareImageUrl('img-uuid-123', 'thumbnail');
+    const url = buildCloudflareImageUrl('img-uuid-123', 'social1x1');
     assert.equal(
       url,
-      'https://imagedelivery.net/abc123hash/img-uuid-123/thumbnail'
+      'https://imagedelivery.net/abc123hash/img-uuid-123/social1x1'
     );
   });
 

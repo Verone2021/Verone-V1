@@ -2,7 +2,7 @@
 
 import Image, { type ImageProps } from 'next/image';
 
-import { buildCloudflareImageUrl, isCloudflareConfigured } from '@verone/utils';
+import { buildCloudflareImageUrl } from '@verone/utils';
 import type { CloudflareImageVariant } from '@verone/utils';
 
 // ============================================================================
@@ -53,7 +53,7 @@ export function CloudflareImage({
 }: CloudflareImageProps) {
   let src: string;
 
-  if (cloudflareId && isCloudflareConfigured()) {
+  if (cloudflareId) {
     try {
       src = buildCloudflareImageUrl(cloudflareId, variant);
     } catch {

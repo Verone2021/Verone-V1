@@ -6,11 +6,7 @@ import { Building2 } from 'lucide-react';
 
 import { colors } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
-import {
-  cn,
-  buildCloudflareImageUrl,
-  isCloudflareConfigured,
-} from '@verone/utils';
+import { cn, buildCloudflareImageUrl } from '@verone/utils';
 
 interface OrganisationLogoProps {
   cloudflareImageId?: string | null;
@@ -81,7 +77,7 @@ export function OrganisationLogo({
 
   // Cloudflare en priorité, fallback sur Supabase Storage
   let publicUrl: string | null = null;
-  if (cloudflareImageId && isCloudflareConfigured()) {
+  if (cloudflareImageId) {
     try {
       publicUrl = buildCloudflareImageUrl(cloudflareImageId, 'public');
     } catch {
