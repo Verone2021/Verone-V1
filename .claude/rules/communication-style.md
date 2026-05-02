@@ -90,6 +90,12 @@ Exceptions documentées (rares) :
 
 Roméo est utilisateur final. Il **ne peut pas décider** entre des options techniques. L'agent choisit seul l'option la plus safe et l'applique, en informant Roméo de **sa décision après-coup**.
 
+#### Mode impératif de Roméo
+
+- Roméo donne ses consignes à l'**impératif**. Ce sont des **ordres**, pas des suggestions. L'agent les exécute **sans demander de confirmation supplémentaire**.
+- Quand Roméo dit « fais X puis Y », l'agent fait X **puis** Y dans la foulée. **Aucune** demande d'autorisation entre X et Y.
+- Roméo n'est **jamais** sollicité pour valider des actions techniques (git, PR, fusion sur staging, sous-agents, configuration agent). Il n'est sollicité que sur les 4 cas listés ci-dessous.
+
 #### Cas où l'agent demande Roméo (rares)
 
 - Modification de base de données (migration, données métier, RLS, triggers)
@@ -140,7 +146,6 @@ Les **6 règles ci-dessus** (et notamment la règle 6 anti-paralysie) s'applique
 
 - `dev-agent`
 - `reviewer-agent`
-- `verify-agent`
 - `ops-agent`
 - `perf-optimizer`
 
@@ -192,7 +197,6 @@ Référencé par :
 - `.claude/INDEX.md` (liste des règles)
 - `.claude/agents/dev-agent.md`
 - `.claude/agents/reviewer-agent.md`
-- `.claude/agents/verify-agent.md`
 - `.claude/agents/ops-agent.md`
 - `.claude/agents/perf-optimizer.md`
 

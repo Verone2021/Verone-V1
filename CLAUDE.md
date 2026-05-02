@@ -73,23 +73,38 @@ Tests Playwright 5 tailles avant PR UI : 375 / 768 / 1024 / 1440 / 1920 px.
 
 ## DELEGATION AUTOMATIQUE
 
-| Tache                            | Agent            |
-| -------------------------------- | ---------------- |
-| Code / implementation            | `dev-agent`      |
-| Audit qualite avant PR           | `reviewer-agent` |
-| Types / build / tests            | `verify-agent`   |
-| Push / PR / merge (apres review) | `ops-agent`      |
-| Audit perf / dead code / bundle  | `perf-optimizer` |
+| Tache                             | Agent            | Quand l'invoquer                                           |
+| --------------------------------- | ---------------- | ---------------------------------------------------------- |
+| Code / implementation gros sprint | `dev-agent`      | Tâche > 5 outils ou > 10 fichiers                          |
+| Audit qualité avant gros merge    | `reviewer-agent` | Toujours avant promote ready d'un bloc                     |
+| Push / PR / merge (gros bloc)     | `ops-agent`      | **Optionnel** — bloc 3+ sprints, release main, recovery CI |
+| Audit perf / dead code / bundle   | `perf-optimizer` | Sur demande Roméo                                          |
+
+Le coordinateur fait git/CI/petits fixes **directement** (cf. règle 6
+anti-paralysie). Type-check + build + tests sont déjà couverts par la CI
+GitHub — pas besoin de sous-agent `verify` (supprimé en `[INFRA-LEAN-002]`).
 
 Romeo donne la mission, jamais le nom de l'agent. Chaque delegation =
 instructions PRECISES (fichier, ligne, quoi faire). INTERDIT : « Based on
 your findings, fix the bug. »
 
-## SCRATCHPAD
+## SCRATCHPAD (allégé Niveau 2)
 
-Avant implementation → `docs/scratchpad/dev-plan-{date}-{task}.md`
-Apres implementation → `docs/scratchpad/dev-report-{date}-{task}.md`
-Le reviewer lit le rapport, pas le chat.
+Plan + rapport scratchpad obligatoires UNIQUEMENT si :
+
+- Le sprint touche > 3 fichiers, OU
+- Le sprint change un comportement utilisateur visible, OU
+- Le sprint inclut une migration DB ou un changement métier critique
+
+Pour les petits correctifs (typo, fix CSS, renommage, ajustement responsive
+< 3 fichiers) : commit clair + description PR suffisent. Pas de plan
+écrit obligatoire.
+
+Format quand requis :
+
+- Avant → `docs/scratchpad/dev-plan-{date}-{task}.md`
+- Après → `docs/scratchpad/dev-report-{date}-{task}.md`
+- Le reviewer lit le rapport, pas le chat.
 
 ## INTERDICTIONS ABSOLUES
 

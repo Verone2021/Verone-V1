@@ -1006,3 +1006,84 @@ Autres FEU ROUGE de l'ancien fichier confirmés déjà couverts ailleurs (pas be
 - Demande explicite Roméo 2026-05-02 dans la session `[INFRA-LEAN-001]`.
 
 **Référence** : session 2026-05-02 avec Roméo, audit croisé entre 2 agents convergents.
+
+---
+
+## ADR-027 — `[INFRA-LEAN-002]` Niveau 2 — Suppression verify-agent + compaction règles + scratchpad allégé (2026-05-02)
+
+**Contexte** : Niveau 1 (`[INFRA-LEAN-001]`) mergé sur staging. Roméo donne ordre direct d'enchaîner Niveau 2 sans attendre les 2 sprints de validation prévus. Plan d'allègement validé par double audit (interne + indépendant).
+
+**Décision** : appliquer le **Niveau 2** en 4 mouvements :
+
+1. **Supprimer `.claude/agents/verify-agent.md`** (51 lignes). La CI GitHub couvre déjà type-check + build + lint + tests + drift DB + smoke E2E (4 gates bloquants). Le sous-agent `verify` faisait double emploi local. Le coordinateur lance `pnpm type-check` directement si besoin avant push.
+
+2. **Optionnaliser `.claude/agents/ops-agent.md`** (161 → 64 lignes). Le coordinateur fait git/PR/merge directement pour les actions courantes (push, rebase, fusion staging quand CI verte + reviewer PASS). `ops-agent` invoqué uniquement pour : bloc 3+ sprints à orchestrer, release `staging → main` (ordre Roméo immédiat requis), recovery post-incident CI.
+
+3. **Compacter les 3 grosses règles** sans perte de règle critique :
+   - `responsive.md` : 327 → 192 lignes (−41 %). Exemples de code TSX redondants retirés, règles + composants standards + checklist + anti-patterns intacts.
+   - `data-fetching.md` : 289 → 185 lignes (−36 %). 5 leviers conservés, doublons d'explication retirés.
+   - `workflow.md` : 348 → 220 lignes (−37 %). Section "Comment regrouper les sprints" + "Ce que ça change concrètement" + "Quand 1 sprint = 1 PR" intégrées en synthèse plus dense.
+
+4. **Alléger l'obligation scratchpad** dans `CLAUDE.md` racine. Plan + rapport dev obligatoires UNIQUEMENT si :
+   - Sprint > 3 fichiers, OU
+   - Changement de comportement utilisateur visible, OU
+   - Migration DB ou changement métier critique.
+
+   Pour petits correctifs (typo, fix CSS, renommage, ajustement < 3 fichiers) : commit clair + description PR suffisent.
+
+**Conséquences mesurables** :
+
+| Indicateur                               | Avant Niveau 1 | Après Niveau 1 + 2   | Gain total          |
+| ---------------------------------------- | -------------- | -------------------- | ------------------- |
+| Fichiers de règles                       | 15             | 12                   | −3                  |
+| Sous-agents actifs                       | 5              | 4 (dont 1 optionnel) | −1 supprimé         |
+| Lignes config chargées au démarrage      | 7 260          | ~5 200               | −28 %               |
+| Tokens chargés au démarrage (estimation) | ~72 600        | ~52 000              | **~−20 600 tokens** |
+| Doublons et contradictions               | élevés         | nuls                 | qualitatif          |
+| Overhead estimé par sprint               | 25-50 min      | 10-20 min            | **−15 min/sprint**  |
+
+**Mise à jour règle 6 anti-paralysie** : intégration des 3 règles permanentes données par Roméo dans la même session :
+
+- Roméo donne ses consignes à l'impératif (ordres, pas suggestions). Exécution sans confirmation.
+- "Fais X puis Y" = X puis Y dans la foulée. Aucune autorisation intermédiaire.
+- Roméo n'est jamais sollicité pour valider des actions techniques (git, PR, fusion staging, sous-agents, configuration agent).
+
+**Pointeurs mis à jour** :
+
+- `CLAUDE.md` racine : table DELEGATION (verify retiré, ops marqué optionnel) + section SCRATCHPAD (allégée).
+- `.claude/INDEX.md` : compteur Agents 5 → 4.
+- `.claude/commands/README.md` : table agents mise à jour.
+- `.claude/work/AGENT-ENTRY-POINT.md` + `NEXT-SPRINTS.md` : chaîne déléguation.
+- `.claude/rules/communication-style.md` : sous-agents listés (4) + règle 6 enrichie.
+
+**Risques traités** :
+
+- **Type-check/build manqué localement** : neutralisé — la CI bloque déjà le merge si fail. Le coordinateur peut lancer `pnpm --filter @verone/[app] type-check` ponctuellement avant push pour feedback rapide.
+- **Compaction des règles** : aucune règle métier critique retirée. Toutes les règles impératives (`JAMAIS`, `TOUJOURS`), les anti-patterns, les checklists reviewer et les références aux composants standards sont préservées. Seuls les exemples illustratifs longs ont été condensés.
+- **Scratchpad allégé** : pour les petits correctifs, le commit + description PR remplacent largement le plan/rapport. Pour les gros sprints, l'obligation reste.
+
+**Trace** :
+
+- Branche : `feat/INFRA-LEAN-002-niveau-2-config`
+- Fichiers modifiés / supprimés / créés :
+  - `.claude/agents/verify-agent.md` (SUPPRIMÉ)
+  - `.claude/agents/ops-agent.md` (réécrit compact, 161 → 64 lignes)
+  - `.claude/rules/responsive.md` (compacté, 327 → 192 lignes)
+  - `.claude/rules/data-fetching.md` (compacté, 289 → 185 lignes)
+  - `.claude/rules/workflow.md` (compacté, 348 → 220 lignes)
+  - `.claude/rules/communication-style.md` (règle 6 enrichie + sous-agents 5 → 4)
+  - `CLAUDE.md` racine (DELEGATION mise à jour + SCRATCHPAD allégé)
+  - `.claude/INDEX.md` (compteur Agents 5 → 4)
+  - `.claude/commands/README.md` (table agents)
+  - `.claude/work/AGENT-ENTRY-POINT.md` + `NEXT-SPRINTS.md` (chaîne mise à jour)
+  - `.claude/DECISIONS.md` (cette ADR-027)
+  - 2 mémoires feedback ajoutées : `feedback_anti_paralysie_choix.md`, `feedback_mode_imperatif_romeo.md`
+
+**Sources** :
+
+- Audit indépendant Claude `[INFRA-LEAN-001]` 2026-05-02 confirmant Niveau 2 comme étape recommandée.
+- Demande explicite Roméo 2026-05-02 dans la session : "Tu enchaînes le Niveau 2 maintenant, sans attendre."
+- Anthropic Best Practices 2026 : "Subagents carry overhead. For a quick fix or a focused question, the overhead of delegation outweighs the benefit."
+- Hightower mars 2026 : "Use CLAUDE.md for what applies everywhere, rules for what applies to specific areas, keep it lean."
+
+**Référence** : session 2026-05-02 avec Roméo, enchaînement Niveau 1 + Niveau 2 dans la même journée.
