@@ -281,7 +281,7 @@ jobs:
 
       - name: Upload Playwright report on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: |
@@ -342,7 +342,7 @@ jobs:
 
       - name: Upload drift report
         if: always() && env.SUPABASE_DB_URL != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: drift-report
           path: drift-report.json
@@ -458,7 +458,7 @@ jobs:
 
       - name: Upload drift diff on failure
         if: failure() && env.MIGRATIONS_TOUCHED == 'true' && env.SUPABASE_DB_URL != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: supabase-types-drift
           path: |
