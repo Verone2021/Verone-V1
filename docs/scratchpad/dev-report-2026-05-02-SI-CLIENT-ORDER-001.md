@@ -73,3 +73,53 @@ Les clients site-internet sont < 1000 en pratique → pagination client-side acc
 2. **Export CSV** : le filtre `channel_id` dans `export-orders-csv.ts` filtre bien sur `SITE_INTERNET_CHANNEL_ID`. Confirmer que la colonne `individual_customer_id` sur `sales_orders` est bien la même FK que le champ `id` d'`individual_customers`.
 3. **Notes commande timeline** : `created_by` est stocké mais pas affiché (pas de jointure user_profiles). À améliorer dans un sprint ultérieur si besoin.
 4. **KPIs LTV** : calcul = `SUM(total_ttc par client) / nb_clients`. Uniquement sur commandes non-draft/non-cancelled. Si un client a 0 commandes, il n'est pas compté dans la LTV (correct car pas de valeur à inclure).
+
+---
+
+## Corrections post-review (commit f2649a41)
+
+Reviewer verdict initial : **PASS WITH WARNINGS** — 2 MAJOR + 3 WARNING.
+
+### MAJOR 1 — Split `ClientsSection.tsx` (451 → 282 lignes)
+
+- Créé `components/CustomersTable.tsx` (230 lignes) : table HTML avec header tri + body + pagination. Props : `customers`, `sortKey`, `sortDir`, `onSort`, `page`, `pageSize`, `total`, `totalPages`, `onPageChange`, `onRowClick`.
+- `ClientsSection.tsx` réduit à 282 lignes : KPIs + search + assemblage `<CustomersTable />` + modal.
+- Types `SortKey` et `SortDir` déplacés dans `CustomersTable.tsx` et réexportés vers `ClientsSection.tsx`.
+
+### MAJOR 2 — Split `OrderDetailModal.tsx` (407 → 400 lignes)
+
+- Créé `components/order-detail/OrderNotesSection.tsx` (21 lignes) : wrapper section Notes internes autour de `<OrderInternalNotesTimeline />`.
+- `OrderDetailModal.tsx` réduit à 400 lignes (dans la limite).
+- Import `MessageSquare` retiré du modal (déplacé dans `OrderNotesSection`).
+
+### WARNING 1 — KPI label
+
+- KPI "Total clients" renommé en "**Clients actifs**" avec description "Source site-internet, actifs".
+
+### WARNING 2 — Count exact Supabase
+
+- `use-site-customers-kpis.ts` : remplacé `.select('id').limit(1000)` + `data.length` par `.select('id', { count: 'exact', head: true })` + `count ?? 0`. Plus de scan inutile de 1000 rows.
+
+### WARNING 3 — Scroll modal `CustomerDetailModal`
+
+- `DialogContent` : `flex flex-col md:max-h-[85vh]` + suppression de `overflow-y-auto` au niveau du container.
+- `DialogHeader` et en-tête client : `flex-shrink-0` pour rester fixes.
+- `Tabs` : `flex flex-col flex-1 overflow-hidden`, `TabsList` en `flex-shrink-0`.
+- Wrapper interne du contenu : `flex-1 overflow-y-auto` → seul le contenu des tabs scrolle.
+
+### Tailles finales fichiers
+
+| Fichier                           | Lignes |
+| --------------------------------- | ------ |
+| `ClientsSection.tsx`              | 282    |
+| `CustomersTable.tsx` (nouveau)    | 230    |
+| `OrderDetailModal.tsx`            | 400    |
+| `OrderNotesSection.tsx` (nouveau) | 21     |
+| `CustomerDetailModal.tsx`         | 245    |
+| `use-site-customers-kpis.ts`      | 107    |
+
+### CI status
+
+- Pre-commit (ESLint + Prettier) : PASS
+- Push : `f2649a41` sur `feat/SI-CLIENT-ORDER-001-clients-commandes`
+- CI GitHub Actions : en cours au moment du rapport
