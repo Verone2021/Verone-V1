@@ -4771,11 +4771,13 @@ export type Database = {
           height: number | null;
           id: string;
           notes: string | null;
+          product_id: string | null;
           public_url: string | null;
           source_product_image_id: string | null;
           storage_path: string | null;
           tags: string[];
           updated_at: string;
+          variant_group_id: string | null;
           width: number | null;
         };
         Insert: {
@@ -4792,11 +4794,13 @@ export type Database = {
           height?: number | null;
           id?: string;
           notes?: string | null;
+          product_id?: string | null;
           public_url?: string | null;
           source_product_image_id?: string | null;
           storage_path?: string | null;
           tags?: string[];
           updated_at?: string;
+          variant_group_id?: string | null;
           width?: number | null;
         };
         Update: {
@@ -4813,19 +4817,56 @@ export type Database = {
           height?: number | null;
           id?: string;
           notes?: string | null;
+          product_id?: string | null;
           public_url?: string | null;
           source_product_image_id?: string | null;
           storage_path?: string | null;
           tags?: string[];
           updated_at?: string;
+          variant_group_id?: string | null;
           width?: number | null;
         };
         Relationships: [
+          {
+            foreignKeyName: 'media_assets_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'media_assets_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'media_assets_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'media_assets_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
           {
             foreignKeyName: 'media_assets_source_product_image_id_fkey';
             columns: ['source_product_image_id'];
             isOneToOne: true;
             referencedRelation: 'product_images';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'media_assets_variant_group_id_fkey';
+            columns: ['variant_group_id'];
+            isOneToOne: false;
+            referencedRelation: 'variant_groups';
             referencedColumns: ['id'];
           },
         ];

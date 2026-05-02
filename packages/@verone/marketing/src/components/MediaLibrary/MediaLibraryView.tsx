@@ -6,7 +6,7 @@ import { useMediaAssets } from '@verone/products';
 import type { MediaAsset, MediaAssetType } from '@verone/products';
 
 import { MediaLibraryToolbar } from './MediaLibraryToolbar';
-import { MediaAssetGrid } from './MediaAssetGrid';
+import { MediaLibraryByProduct } from './MediaLibraryByProduct';
 import { UploadAssetModal } from './UploadAssetModal';
 import { MediaAssetDetailModal } from './MediaAssetDetailModal';
 import type { BrandInfo } from './MediaAssetCard';
@@ -55,8 +55,8 @@ export function MediaLibraryView({
     assets,
     loading,
     uploading,
-    hasMore,
-    loadMore,
+    hasMore: _hasMore,
+    loadMore: _loadMore,
     uploadAsset,
     uploadMultiple: _uploadMultiple,
     updateAssetMetadata,
@@ -67,7 +67,7 @@ export function MediaLibraryView({
     assetType,
     search: debouncedSearch,
     archived: false,
-    pageSize: 50,
+    pageSize: 1000, // Vue groupée : on charge tout d'un coup pour grouper côté client
   });
 
   const handleAssetClick = React.useCallback((asset: MediaAsset) => {
@@ -83,12 +83,6 @@ export function MediaLibraryView({
     setDetailOpen(false);
     setSelectedAsset(null);
   }, []);
-
-  const handleLoadMore = React.useCallback(() => {
-    void loadMore().catch(err => {
-      console.error('[MediaLibraryView] loadMore failed:', err);
-    });
-  }, [loadMore]);
 
   const handleUpload = React.useCallback(
     async (file: File, metadata: Parameters<typeof uploadAsset>[1]) => {
@@ -129,12 +123,10 @@ export function MediaLibraryView({
         onUploadClick={() => setUploadOpen(true)}
       />
 
-      <MediaAssetGrid
+      <MediaLibraryByProduct
         assets={assets}
         brands={brands}
         loading={loading}
-        hasMore={hasMore}
-        onLoadMore={handleLoadMore}
         onAssetClick={handleAssetClick}
       />
 
