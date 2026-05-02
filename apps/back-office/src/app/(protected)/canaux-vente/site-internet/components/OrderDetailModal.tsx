@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 
 import { OrderNotesSection } from './order-detail/OrderNotesSection';
+import { OrderTotalsSection } from './order-detail/OrderTotalsSection';
 
 import type { SalesOrder } from '@verone/orders/hooks';
 import {
@@ -335,48 +336,16 @@ export function OrderDetailModal({
           )}
 
           {/* Totals with TVA breakdown */}
-          <div className="rounded-lg border p-4 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4 text-muted-foreground" />
-                Sous-total TTC
-              </span>
-              <span>{formatCurrency(order.subtotal)}</span>
-            </div>
-            {order.discount_amount > 0 && (
-              <div className="flex justify-between text-sm text-green-600">
-                <span>Reduction</span>
-                <span>-{formatCurrency(order.discount_amount)}</span>
-              </div>
-            )}
-            <div className="flex justify-between text-sm">
-              <span className="flex items-center gap-2">
-                <Truck className="h-4 w-4 text-muted-foreground" />
-                Livraison
-              </span>
-              <span>
-                {order.shipping_cost > 0
-                  ? formatCurrency(order.shipping_cost)
-                  : 'Offerte'}
-              </span>
-            </div>
-            <div className="flex justify-between font-semibold text-base border-t pt-2">
-              <span>Total TTC</span>
-              <span>{formatCurrency(order.total)}</span>
-            </div>
-            {order.total_ht != null && order.tax_amount != null && (
-              <div className="border-t pt-2 space-y-1">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Total HT</span>
-                  <span>{formatCurrency(order.total_ht)}</span>
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>TVA ({order.tax_rate ?? 20}%)</span>
-                  <span>{formatCurrency(order.tax_amount)}</span>
-                </div>
-              </div>
-            )}
-          </div>
+          <OrderTotalsSection
+            subtotal={order.subtotal}
+            discountAmount={order.discount_amount}
+            shippingCost={order.shipping_cost}
+            total={order.total}
+            totalHt={order.total_ht}
+            taxAmount={order.tax_amount}
+            taxRate={order.tax_rate}
+            formatCurrency={formatCurrency}
+          />
           {/* Section Expédition & Suivi */}
           <OrderShipmentHistoryCard
             shipmentHistory={shipmentHistory}
