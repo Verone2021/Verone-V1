@@ -86,10 +86,11 @@ Reviewer verdict initial : **PASS WITH WARNINGS** — 2 MAJOR + 3 WARNING.
 - `ClientsSection.tsx` réduit à 282 lignes : KPIs + search + assemblage `<CustomersTable />` + modal.
 - Types `SortKey` et `SortDir` déplacés dans `CustomersTable.tsx` et réexportés vers `ClientsSection.tsx`.
 
-### MAJOR 2 — Split `OrderDetailModal.tsx` (407 → 400 lignes)
+### MAJOR 2 — Split `OrderDetailModal.tsx` (407 → 369 lignes)
 
 - Créé `components/order-detail/OrderNotesSection.tsx` (21 lignes) : wrapper section Notes internes autour de `<OrderInternalNotesTimeline />`.
-- `OrderDetailModal.tsx` réduit à 400 lignes (dans la limite).
+- Créé `components/order-detail/OrderTotalsSection.tsx` (68 lignes) : bloc totaux (sous-total, remise, livraison, TVA) extrait car `OrderDetailModal.tsx` était encore à 400 lignes (= limite stricte < 400).
+- `OrderDetailModal.tsx` réduit à 369 lignes (strictement sous 400).
 - Import `MessageSquare` retiré du modal (déplacé dans `OrderNotesSection`).
 
 ### WARNING 1 — KPI label
@@ -109,17 +110,22 @@ Reviewer verdict initial : **PASS WITH WARNINGS** — 2 MAJOR + 3 WARNING.
 
 ### Tailles finales fichiers
 
-| Fichier                           | Lignes |
-| --------------------------------- | ------ |
-| `ClientsSection.tsx`              | 282    |
-| `CustomersTable.tsx` (nouveau)    | 230    |
-| `OrderDetailModal.tsx`            | 400    |
-| `OrderNotesSection.tsx` (nouveau) | 21     |
-| `CustomerDetailModal.tsx`         | 245    |
-| `use-site-customers-kpis.ts`      | 107    |
+| Fichier                            | Lignes |
+| ---------------------------------- | ------ |
+| `ClientsSection.tsx`               | 282    |
+| `CustomersTable.tsx` (nouveau)     | 226    |
+| `OrderDetailModal.tsx`             | 369    |
+| `OrderNotesSection.tsx` (nouveau)  | 21     |
+| `OrderTotalsSection.tsx` (nouveau) | 68     |
+| `CustomerDetailModal.tsx`          | 245    |
+| `use-site-customers-kpis.ts`       | 107    |
 
-### CI status
+Tous les fichiers sont strictement sous 400 lignes (< 400).
 
-- Pre-commit (ESLint + Prettier) : PASS
-- Push : `f2649a41` sur `feat/SI-CLIENT-ORDER-001-clients-commandes`
+### CI status (correction post-review finale — commit `a19363e8`)
+
+- Type-check : 0 erreur (vérifié via `NODE_OPTIONS=--max-old-space-size=8192 tsc --noEmit`)
+- Lint (ESLint --max-warnings=0) : 0 erreur, 0 warning
+- Pre-commit hooks : PASS
+- Push : `a19363e8` sur `feat/SI-CLIENT-ORDER-001-clients-commandes` (rebasé sur staging)
 - CI GitHub Actions : en cours au moment du rapport
