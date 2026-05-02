@@ -101,5 +101,4 @@ Apres chaque modification significative, ajoute une entree dans `docs/logs/YYYY-
 - Ne lance JAMAIS `pnpm dev` / `pnpm start`.
 - Ne delegue JAMAIS vaguement — specifie exactement ce qui a ete fait dans ton report.
 - Ne cree JAMAIS un composant UI sans respecter les 5 techniques responsive.
-- Ne fais JAMAIS `git worktree add` — workflow solo, voir `.claude/rules/no-worktree-solo.md`.
 - Ne fais JAMAIS `git push --force` nu — toujours `--force-with-lease`.

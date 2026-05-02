@@ -869,3 +869,76 @@ L'audit (cette session 2026-04-30) révèle :
   - `.claude/DECISIONS.md` (ADR-023 marquée ANNULÉE + cette ADR-024)
 
 **Référence** : session 2026-05-02 avec Romeo, demande explicite de remise en ordre complète.
+
+---
+
+## ADR-025 — `[INFRA-LEAN-001]` Niveau 1 — Allègement faible config Claude (2026-05-02)
+
+**Contexte** : Roméo observait un overhead de 25 à 50 min par sprint avant que la CI tourne, anormalement long pour un dev solo. Un audit indépendant 2026-05-02 a confirmé : 7 260 lignes de configuration chargées au démarrage de chaque session (~72 600 tokens), 7 thèmes répétés dans 3 à 9 fichiers, chaîne d'assistants spécialisés qui double partiellement la CI GitHub. Sources externes consultées (Anthropic Best Practices, blog subagents, Hightower « Stop Stuffing Everything into One CLAUDE.md », équipe APAC token economics) convergent : élaguer, fusionner, charger à la demande.
+
+**Décision** : appliquer le **Niveau 1** (allègement faible, sans risque, aucune règle métier touchée) en 5 mouvements :
+
+1. **Élaguer `CLAUDE.md` racine** de 221 → 158 lignes (−28 %) en supprimant les détails redondants déjà présents dans les règles. Sections compressées : WORKFLOW GIT (20 → 8 lignes), INTERDICTIONS ABSOLUES (41 → résumés courts + pointeurs), SOURCES DE VERITE (table compactée), Fichiers auto-générés (15 → 6 lignes), COMMANDES (11 → 3 lignes).
+
+2. **Fusionner `branch-strategy.md` (162 lignes) dans `workflow.md`** comme nouvelle section « Checklist OBLIGATOIRE avant nouvelle branche / nouvelle PR » (4 questions : PR ouverte sur même sujet, même boucle d'itération, demande explicite Romeo, RPC/migration → régen types). Pointeurs mis à jour dans : `CLAUDE.md`, `INDEX.md`, `agents/ops-agent.md`, `commands/pr.md`, `rules/no-worktree-solo.md`, `work/BO-MKT-roadmap.md`.
+
+3. **Fusionner `playwright-artifacts.md` (152 lignes) dans `playwright.md`** comme nouvelle section « Artefacts — rangement et cycle de vie ». Pointeur mis à jour dans `rules/agent-autonomy-external.md`.
+
+4. **Supprimer les rappels worktree en double** : `agents/dev-agent.md` (1 doublon supprimé), `agents/ops-agent.md` (2 doublons supprimés). Conservés : la règle source `no-worktree-solo.md`, le rappel FEU ROUGE dans `autonomy-boundaries.md`, le rappel inline pédagogique dans `commands/pr.md`.
+
+5. **Mettre à jour `INDEX.md`** : compteur Rules 15 → 13, table en bas nettoyée des fichiers fusionnés, mention de la fusion dans l'en-tête.
+
+**Sous-agents NON touchés** (réservés au Niveau 2 si Niveau 1 valide après 2 sprints réels) : `verify-agent`, `ops-agent`, `reviewer-agent`, `dev-agent`, `perf-optimizer`. Aucune règle métier touchée.
+
+**Conséquences mesurables** :
+
+| Indicateur                     | Avant                                     | Après Niveau 1         | Gain                   |
+| ------------------------------ | ----------------------------------------- | ---------------------- | ---------------------- |
+| Fichiers de règles             | 15                                        | 13                     | −2                     |
+| Lignes `CLAUDE.md` racine      | 221                                       | 158                    | −28 %                  |
+| Lignes `workflow.md`           | 324 (+ 162 pour `branch-strategy.md`)     | 348 (consolidé)        | −138 lignes effectives |
+| Lignes `playwright.md`         | 90 (+ 152 pour `playwright-artifacts.md`) | 226 (consolidé)        | −16 lignes effectives  |
+| Doublons "JAMAIS git worktree" | 5 occurrences                             | 3 (sources distinctes) | −2                     |
+
+Estimation gain tokens chargés au démarrage de session : **−10 000 à −15 000 tokens** (−15 % environ). Aucune perte de contenu critique : les checks reviewer-agent restent obligatoires avant promote ready, toutes les règles métier (finance, stock, no-phantom-data, communication, etc.) restent intactes.
+
+**Risques traités** :
+
+- **Lien cassé** : grep complet effectué avant push, aucune référence à `branch-strategy.md` ou `playwright-artifacts.md` ne subsiste hors historique DECISIONS.md (intentionnellement conservé comme trace).
+- **Perte de contenu** : table de correspondance ancien → nouveau dans `docs/scratchpad/dev-plan-2026-05-02-INFRA-LEAN-001.md`, vérifiée à la main.
+- **Historique conservé** : ADR-012 (création `playwright-artifacts.md`) et ADR-022 (référence `branch-strategy.md` checklist Q4) restent dans DECISIONS.md comme trace.
+
+**Plan de validation après merge** :
+
+1. 2 sprints normaux (par ex. BO-MKT-001 + un autre) sans toucher à la config.
+2. Mesurer : temps moyen par sprint a-t-il baissé ? Y a-t-il eu un cas où la fusion a posé problème ?
+3. Si OK → Niveau 2 (suppression `verify-agent`, optionnalisation `ops-agent`, compaction des 3 grosses règles `responsive.md`, `data-fetching.md`).
+4. Niveau 3 NON appliqué — préserver les filets reviewer-agent avant gros merges.
+
+**Trace** :
+
+- Branche : `feat/INFRA-LEAN-001-allegement-config-niveau-1`
+- 9 fichiers modifiés / 2 supprimés / 1 plan + ADR créés :
+  - `CLAUDE.md` racine (réécriture compacte, 221 → 158 lignes)
+  - `.claude/rules/workflow.md` (réécriture, intègre ancien `branch-strategy.md`)
+  - `.claude/rules/playwright.md` (réécriture, intègre ancien `playwright-artifacts.md`)
+  - `.claude/rules/branch-strategy.md` (SUPPRIMÉ)
+  - `.claude/rules/playwright-artifacts.md` (SUPPRIMÉ)
+  - `.claude/rules/no-worktree-solo.md` (pointeurs mis à jour)
+  - `.claude/rules/agent-autonomy-external.md` (pointeur mis à jour)
+  - `.claude/agents/dev-agent.md` (1 doublon worktree supprimé)
+  - `.claude/agents/ops-agent.md` (1 pointeur + 2 doublons worktree supprimés)
+  - `.claude/commands/pr.md` (2 pointeurs mis à jour)
+  - `.claude/work/BO-MKT-roadmap.md` (1 pointeur mis à jour)
+  - `.claude/INDEX.md` (compteur + table mis à jour)
+  - `.claude/DECISIONS.md` (cette ADR-025)
+  - `docs/scratchpad/dev-plan-2026-05-02-INFRA-LEAN-001.md` (CRÉÉ — plan + table de correspondance)
+
+**Sources** :
+
+- Audit indépendant 2026-05-02 (rapport produit en conversation, sources externes Anthropic + Hightower + équipe APAC)
+- Anthropic Best Practices : « Bloated CLAUDE.md files cause Claude to ignore your actual instructions »
+- Anthropic Subagents blog : « Subagents carry overhead. For a quick fix or a focused question, the overhead of delegation outweighs the benefit »
+- Demande explicite Romeo 2026-05-02 : « Lance [INFRA-LEAN-001] Niveau 1 : allègement faible config Claude »
+
+**Référence** : session 2026-05-02 avec Romeo + audit indépendant croisé.

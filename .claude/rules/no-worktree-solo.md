@@ -100,7 +100,7 @@ git checkout <branche-distante>        # suit auto la remote tracking
 
 ### Si une PR ouverte couvre déjà le sujet
 
-Voir `.claude/rules/branch-strategy.md` checklist : commit sur la branche
+Voir `.claude/rules/workflow.md` section Checklist : commit sur la branche
 existante, pas de nouvelle branche.
 
 ---
@@ -133,7 +133,6 @@ Référencé par :
 - `CLAUDE.md` racine (section WORKFLOW GIT + INTERDICTIONS ABSOLUES)
 - `.claude/INDEX.md`
 - `.claude/DECISIONS.md` (ADR-023 ANNULÉE 2026-05-02)
-- `.claude/rules/workflow.md` (complémentaire — règle « 1 PR = 1 bloc »)
-- `.claude/rules/branch-strategy.md` (complémentaire — checklist 4 questions)
+- `.claude/rules/workflow.md` (complémentaire — règle « 1 PR = 1 bloc » + checklist 4 questions)
 - `.claude/rules/autonomy-boundaries.md` (FEU VERT inclut `git checkout -b`,
   `git stash`, mais PAS `git worktree add`)

@@ -62,7 +62,7 @@ Si la tâche semble exiger une interaction UI, l'agent utilise **MCP Playwright 
 
 - **MCP Playwright** (`playwright-lane-1` ou `playwright-lane-2`) sur l'URL concernée
 - Credentials dans `.claude/test-credentials.md` (local only, gitignored)
-- Screenshots dans `.playwright-mcp/screenshots/YYYYMMDD/` (cf. `.claude/rules/playwright-artifacts.md`)
+- Screenshots dans `.playwright-mcp/screenshots/YYYYMMDD/` (cf. `.claude/rules/playwright.md` section Artefacts)
 
 ---
 

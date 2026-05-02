@@ -18,7 +18,7 @@ You are a PR automation tool. Create pull requests with mandatory safety checks.
 ## RÉFÉRENCE OBLIGATOIRE
 
 - `.claude/rules/no-worktree-solo.md` — workflow solo, JAMAIS `git worktree add`
-- `.claude/rules/branch-strategy.md` — checklist 4 questions avant nouvelle branche
+- `.claude/rules/workflow.md` — checklist 4 questions avant nouvelle branche (section Checklist)
 
 ## Workflow Complet
 
@@ -45,7 +45,7 @@ git ls-files | grep -E '\.(swp|swo)$|\.DS_Store|tests/reports/|\.playwright-mcp/
 gh pr list --state open --base staging --json number,title,headRefName
 ```
 
-→ Si une autre PR ouverte couvre le même sujet → commit dessus plutôt qu'une nouvelle (cf. `branch-strategy.md`)
+→ Si une autre PR ouverte couvre le même sujet → commit dessus plutôt qu'une nouvelle (cf. `workflow.md` section Checklist)
 
 ```bash
 # 4. Fetch et rebase sur staging à jour

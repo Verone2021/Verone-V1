@@ -1,12 +1,10 @@
 # Regles Workflow Verone
 
-**Source de verite pour le workflow Git / PR / merge. Lecture obligatoire
-par tous les agents avant toute action git.**
+**Source de vérité unique** pour le workflow Git / PR / merge. Inclut la
+**checklist obligatoire avant nouvelle branche / nouvelle PR** (anciennement
+`branch-strategy.md`, fusionnée ici en `[INFRA-LEAN-001]`).
 
-**Voir aussi (obligatoire avant tout `git checkout -b` / `gh pr create`)** :
-
-- `.claude/rules/no-worktree-solo.md` — Workflow solo, JAMAIS `git worktree add`.
-- `.claude/rules/branch-strategy.md` — Checklist 4 questions avant nouvelle branche.
+**Voir aussi** : `.claude/rules/no-worktree-solo.md` — workflow solo, JAMAIS `git worktree add`.
 
 ---
 
@@ -33,6 +31,91 @@ Toute autre PR vers `main` est **bloquée par le workflow `protect-main-source.y
 Pourquoi : si tu PR vers main directement, main avance avant staging → la release PR staging→main devient un calvaire de conflits. Cf incident 2026-04-25 (6 PRs ouvertes vers main au lieu de staging, 72h perdues à débrouiller).
 
 **Avant tout `gh pr create` : vérifie deux fois la base.** Si tu hésites, c'est `--base staging`.
+
+---
+
+## Checklist OBLIGATOIRE avant nouvelle branche / nouvelle PR
+
+L'agent doit répondre aux **4 questions** ci-dessous AVANT toute création
+de branche ou de PR. Si **une seule** réponse est ambiguë → demander Romeo
+avant d'agir.
+
+### 1. Existe-t-il déjà une PR ouverte sur le même sujet fonctionnel ?
+
+Action attendue :
+
+```bash
+gh pr list --state open --base staging --json number,title,headRefName
+```
+
+Le "même sujet fonctionnel" = même tag domaine `[APP-DOMAIN-*]` (ex:
+`[BO-LM-MISSING-*]`, `[BO-SHIP-WIZ-*]`) OU même page / même feature
+métier (ex: bandeau missing-info, formulaire commande LinkMe).
+
+**Si OUI** → continuer sur sa branche, ajouter un commit. Pas de nouvelle PR.
+
+### 2. La correction demandée est-elle dans la même boucle d'itération ?
+
+Si Romeo enchaîne plusieurs corrections sur le même écran ou la même
+feature dans la même session, c'est UNE seule itération → UNE seule branche.
+
+**Exemple concret** : redesign du bandeau missing-info, puis ajout d'un
+bouton inline, puis filtre destinataire. Tout sur la même feature →
+empiler les commits sur la même branche.
+
+**Si OUI** → continuer sur la branche actuelle.
+
+### 3. Romeo a-t-il explicitement dit "fais une nouvelle PR" ?
+
+L'agent ne décide PAS seul de séparer les changements en plusieurs PRs.
+Soit Romeo a explicitement demandé une PR séparée ("fais une PR à part pour ça"),
+soit la règle par défaut s'applique : **commit sur la branche en cours**.
+
+**Si NON** → reste sur la branche en cours.
+
+### 4. Le sujet touche-t-il un RPC, une fonction DB, ou une colonne ?
+
+Si oui, la PR DOIT inclure dans le même commit (ou un 2e commit sur la même branche) :
+
+```bash
+pnpm run generate:types
+git add packages/@verone/types/src/supabase.ts
+```
+
+**Pourquoi** : sans ça, le check `Supabase TS types drift (blocking)` du workflow Quality fail au moment du merge release staging→main. Il faut alors créer une PR de rattrapage qui ajoute ~25 min de plus.
+
+Si `pnpm run generate:types` échoue (CLI Supabase non auth), utiliser `mcp__supabase__generate_typescript_types`. **Attention** : le MCP omet le schema `graphql_public`. Pour un fichier byte-for-byte conforme au CI, télécharger l'artifact `supabase-types-drift` du run failed du CI et utiliser `supabase.ts.generated`.
+
+### Règle d'or de cette checklist
+
+**Par défaut, commit sur la branche en cours.** La création d'une nouvelle
+branche est l'exception, pas la règle. Une nouvelle branche se justifie
+SEULEMENT si :
+
+- Sujet **complètement** différent (pas de lien fonctionnel)
+- Romeo demande explicitement une PR séparée
+- La PR ouverte précédente est déjà mergée et le sujet a changé
+
+### Au démarrage de chaque session
+
+L'agent DOIT exécuter en première action :
+
+```bash
+gh pr list --state open --base staging --json number,title,headRefName,isDraft
+```
+
+Et garder en tête les sujets en cours pour ne pas en créer de redondants.
+
+### Si la règle semble impossible à respecter
+
+Cas typique : Romeo demande pendant une PR ouverte un fix totalement
+indépendant et urgent. Alors :
+
+1. **Demander** : "Je suis sur la branche X (PR #YYY pour le sujet A). Tu veux que ce nouveau fix B parte sur la même PR ou je crée une PR dédiée ?"
+2. **Attendre** la réponse explicite
+3. Agir selon
+
+Une demande inutile coûte 5 secondes. Une PR éclatée coûte 1h de rebase.
 
 ---
 
@@ -83,7 +166,7 @@ Bloc (ex: Migration Responsive) -> 1 branche ->
 - Commit "WIP" vague sans contenu clair
 - Push force (`--force` nu) — toujours `--force-with-lease`
 - Commit sans Task ID (sauf `[NO-TASK]` pour chores)
-- `git worktree add` — INTERDIT ABSOLU (workflow solo, voir `.claude/rules/no-worktree-solo.md`).
+- `git worktree add` (cf. `.claude/rules/no-worktree-solo.md`)
 
 ### Pull Requests
 
@@ -101,8 +184,6 @@ Exemples de ce qu'il NE faut PAS faire (1 PR par page) :
 - PR "migrer /factures"
 - PR "migrer /commandes/clients"
 - PR "migrer /commandes/fournisseurs"
-- PR "migrer /stocks/inventaire"
-- ...
 
 => BANNI. Regrouper en 1 seule PR "[BO-UI-RESP-003] Pattern A critique".
 
@@ -116,7 +197,7 @@ Exemples de ce qu'il NE faut PAS faire (1 PR par page) :
 
 - Une seule branche par bloc de travail
 - Branche vit plusieurs jours si necessaire (normal pour senior)
-- Bascule entre branches via `git checkout <autre-branche>` (avec `git stash` si dirty). JAMAIS `git worktree add`.
+- Bascule entre branches via `git checkout <autre-branche>` (avec `git stash` si dirty). Voir `.claude/rules/no-worktree-solo.md`.
 
 ---
 
@@ -136,7 +217,7 @@ Au lieu de 7 PRs (003, 004, 005, 006, 007, 008, 009), creer 2-3 PRs :
 
 - PR 1 `[BO-UI-RESP-LISTS] Patterns A + B (listes CRUD et filtres)` = sprints 003, 004, 005
 - PR 2 `[BO-UI-RESP-DETAILS] Patterns C + D (detail et dashboards)` = sprints 006, 007
-- PR 3 `[BO-UI-RESP-FORMS] Patterns E + F (modals et forms)` = sprints 008
+- PR 3 `[BO-UI-RESP-FORMS] Patterns E + F (modals et forms)` = sprint 008
 - PR 4 `[BO-UI-RESP-APPS] LinkMe + site-internet` = sprint 009
 
 ### Point de controle
@@ -174,53 +255,12 @@ Merger en `--squash` pour garder historique propre.
 
 ---
 
-## Ce que ca change concretement pour les agents
+## Anti-patterns interdits (checklist branche/PR)
 
-### Avant (mauvais)
-
-```
-Sprint 003 :
-- branche feat/BO-UI-RESP-003
-- commits
-- PR #XXX
-- merge
-- ACTIVE.md update
-
-Sprint 004 :
-- branche feat/BO-UI-RESP-004
-- commits
-- PR #YYY
-- merge
-- ACTIVE.md update
-```
-
-### Apres (bon)
-
-```
-Bloc "Migration listes" :
-- branche feat/responsive-lists
-- commit (sprint 003) + push
-- commit (sprint 004) + push
-- commit (sprint 005) + push
-- 1 PR [BO-UI-RESP-LISTS] Migration responsive listes (40 pages)
-- 1 merge
-- ACTIVE.md update : 3 sprints marques FAIT d'un coup
-```
-
----
-
-## Exceptions (quand 1 sprint = 1 PR)
-
-Cas ou c'est OK d'avoir 1 PR par sprint :
-
-1. **Sprint d'infrastructure** : pose les fondations (ex: BO-UI-RESP-001)
-2. **Sprint d'audit pur** : pas de code, juste un rapport
-3. **Hotfix urgent** : bug production a deployer vite
-4. **Sprint experimental** : test d'approche, peut etre annule
-
-Dans ces cas seulement, creer la PR juste apres le sprint.
-
-Sinon : **grouper toujours**.
+- ❌ Créer une nouvelle branche pour ajouter un fix UX à un bandeau qui est déjà l'objet d'une PR ouverte
+- ❌ Créer 2 branches pour 2 commits qui touchent les mêmes fichiers
+- ❌ Merger une PR puis créer immédiatement une autre PR sur le même écran pour un raffinement (le raffinement aurait dû être un commit de plus avant le merge)
+- ❌ Force-rebase à répétition parce que les branches partent de staging à des moments différents
 
 ---
 
@@ -238,11 +278,11 @@ SANS creer de PR entre chaque.
 
 ---
 
-## Playbooks (1 recette specifique Verone)
+## Playbooks
 
 Pour la migration responsive uniquement, consulter `.claude/playbooks/migrate-page-responsive.md` qui capture le fix du bug "Rendered more hooks" du pilote v1 FAIL.
 
-Les autres playbooks ont ete supprimes (voir `DECISIONS.md` ADR-011) car ils dupliquaient les capacites natives de Claude Code (workflow git, debug, CI). Pour ces cas, utiliser les regles de cette page + `.claude/rules/code-standards.md` + `.claude/rules/playwright.md`.
+Les autres playbooks ont ete supprimes (voir `DECISIONS.md` ADR-011) car ils dupliquaient les capacites natives de Claude Code.
 
 ---
 
@@ -286,39 +326,23 @@ Attendre confirmation. Si OK → continuer sur la branche actuelle.
 
 ### 2. Toujours bundler la régénération TS dans la PR de migration
 
-Si une PR contient une migration SQL qui touche un RPC, une fonction, ou une colonne :
-
-```bash
-pnpm run generate:types
-git add packages/@verone/types/src/supabase.ts
-git commit -m "chore: regenerate Supabase types after [TASK-ID] migration"
-```
-
-**Ce commit doit être dans la même PR que la migration.** Sinon le check `Supabase TS types drift (blocking)` du CI release main fail et il faut une PR de rattrapage (incident 2026-04-28).
-
-Si `pnpm run generate:types` échoue (Unauthorized par exemple), utiliser `mcp__supabase__generate_typescript_types` MAIS prendre conscience que le résultat omet le schema `graphql_public` et il faudra rectifier via l'artifact `supabase-types-drift` du CI.
+Voir question 4 de la checklist en haut de fichier.
 
 ### 3. Détection systématique des onglets fantômes
 
-Si on touche au composant `apps/back-office/src/components/layout/channel-tabs.tsx` ou si on découvre un lien 404 :
-
-```bash
-# Vérifier que chaque href de vraie route (pas ?tab=...) existe en repo
-ls apps/back-office/src/app/(protected)/canaux-vente/[channel]/
-```
-
-Audit complet des onglets de TOUS les canaux à faire **dans la même PR**, pas un canal à la fois.
+Si on touche au composant `apps/back-office/src/components/layout/channel-tabs.tsx` ou si on découvre un lien 404, audit complet des onglets de TOUS les canaux à faire **dans la même PR**, pas un canal à la fois.
 
 ---
 
 ## Référence
 
-Référence :
+Référence externe :
 
 - `.claude/rules/no-worktree-solo.md` — workflow solo, JAMAIS `git worktree add`
 
 Référencé par :
 
-- `CLAUDE.md` racine (section INTERDICTIONS ABSOLUES)
-- `.claude/rules/branch-strategy.md` (checklist 4 questions)
-- `.claude/DECISIONS.md` (ADR-022 sur l'incident 2026-04-28, ADR-023 ANNULÉE 2026-05-02 — workflow solo restauré)
+- `CLAUDE.md` racine (section WORKFLOW GIT + INTERDICTIONS ABSOLUES)
+- `.claude/agents/ops-agent.md`, `dev-agent.md`
+- `.claude/commands/pr.md`
+- `.claude/DECISIONS.md` (ADR-022 — incident bundling 2026-04-28, ADR-024 — workflow solo restauré 2026-05-02, ADR-025 — fusion `[INFRA-LEAN-001]` 2026-05-02)
