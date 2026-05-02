@@ -96,6 +96,7 @@ const nextConfig = {
     '@verone/integrations',
     '@verone/kpi',
     '@verone/logistics',
+    '@verone/marketing',
     '@verone/notifications',
     '@verone/orders',
     '@verone/organisations',
