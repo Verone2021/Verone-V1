@@ -22,8 +22,10 @@ import {
 import { Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 
-import type { BrandInfo } from './MediaAssetCard';
+import { ProductOrVariantPicker, type PickedItem } from '@verone/products';
 import type { MediaAssetType, UploadAssetInput } from '@verone/products';
+
+import type { BrandInfo } from './MediaAssetCard';
 
 // ============================================================================
 // TYPES
@@ -33,7 +35,8 @@ interface FileEntry {
   file: File;
   preview: string;
   assetType: MediaAssetType;
-  brandIds: string[];
+  pickedItem: PickedItem | null;
+  brandIds: string[]; // dérivés du pickedItem, mais ajustables si plusieurs marques
   altText: string;
   tags: string;
 }
@@ -60,7 +63,6 @@ export function UploadAssetModal({
   const [entries, setEntries] = React.useState<FileEntry[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Nettoyage des previews quand la modal ferme
   React.useEffect(() => {
     if (!open) {
       entries.forEach(e => URL.revokeObjectURL(e.preview));
@@ -76,6 +78,7 @@ export function UploadAssetModal({
       file,
       preview: URL.createObjectURL(file),
       assetType: 'product',
+      pickedItem: null,
       brandIds: [],
       altText: file.name.replace(/\.[^/.]+$/, ''),
       tags: '',
@@ -87,7 +90,6 @@ export function UploadAssetModal({
   const handleDropZoneChange = React.useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       handleFilesSelected(e.target.files);
-      // Reset input pour permettre re-sélection même fichier
       if (fileInputRef.current) fileInputRef.current.value = '';
     },
     [handleFilesSelected]
@@ -128,6 +130,23 @@ export function UploadAssetModal({
     []
   );
 
+  const setPickedItemForEntry = React.useCallback(
+    (index: number, item: PickedItem | null) => {
+      setEntries(prev =>
+        prev.map((e, i) => {
+          if (i !== index) return e;
+          // Hérite des brandIds du produit/variante choisi
+          return {
+            ...e,
+            pickedItem: item,
+            brandIds: item ? item.brandIds : [],
+          };
+        })
+      );
+    },
+    []
+  );
+
   const toggleBrand = React.useCallback((index: number, brandId: string) => {
     setEntries(prev =>
       prev.map((e, i) => {
@@ -144,7 +163,9 @@ export function UploadAssetModal({
   }, []);
 
   const isValid = React.useMemo(
-    () => entries.length > 0 && entries.every(e => e.brandIds.length > 0),
+    () =>
+      entries.length > 0 &&
+      entries.every(e => e.pickedItem !== null && e.brandIds.length > 0),
     [entries]
   );
 
@@ -155,6 +176,7 @@ export function UploadAssetModal({
     let errorCount = 0;
 
     for (const entry of entries) {
+      if (!entry.pickedItem) continue;
       try {
         await onUpload(entry.file, {
           assetType: entry.assetType,
@@ -166,6 +188,12 @@ export function UploadAssetModal({
                 .map(t => t.trim())
                 .filter(Boolean)
             : [],
+          productId:
+            entry.pickedItem.kind === 'product' ? entry.pickedItem.id : null,
+          variantGroupId:
+            entry.pickedItem.kind === 'variant_group'
+              ? entry.pickedItem.id
+              : null,
         });
         successCount++;
       } catch {
@@ -199,10 +227,9 @@ export function UploadAssetModal({
           <DialogTitle>Ajouter des photos</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto md:max-h-[60vh] space-y-4 pr-1">
-          {/* Zone de drop */}
+        <div className="flex-1 space-y-4 overflow-y-auto pr-1 md:max-h-[60vh]">
           <div
-            className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border p-8 text-center transition-colors hover:border-primary hover:bg-muted/50 cursor-pointer min-h-[44px]"
+            className="flex min-h-[44px] cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border p-8 text-center transition-colors hover:border-primary hover:bg-muted/50"
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onClick={() => fileInputRef.current?.click()}
@@ -235,13 +262,11 @@ export function UploadAssetModal({
             />
           </div>
 
-          {/* Lignes de fichiers */}
           {entries.map((entry, index) => (
             <div
               key={`${entry.file.name}-${index}`}
               className="flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-start"
             >
-              {/* Aperçu */}
               <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md bg-muted">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -252,7 +277,22 @@ export function UploadAssetModal({
               </div>
 
               <div className="flex flex-1 flex-col gap-2">
-                {/* Type */}
+                <div className="flex flex-col gap-1">
+                  <Label className="text-xs">
+                    Produit ou variante{' '}
+                    <span className="text-destructive">*</span>
+                    {!entry.pickedItem && (
+                      <span className="ml-1 text-[10px] text-destructive">
+                        Obligatoire
+                      </span>
+                    )}
+                  </Label>
+                  <ProductOrVariantPicker
+                    value={entry.pickedItem}
+                    onChange={item => setPickedItemForEntry(index, item)}
+                  />
+                </div>
+
                 <div className="flex items-center gap-2">
                   <Label className="w-16 shrink-0 text-xs">Type</Label>
                   <Select
@@ -275,12 +315,19 @@ export function UploadAssetModal({
                   </Select>
                 </div>
 
-                {/* Marques — OBLIGATOIRE */}
                 <div className="flex flex-col gap-1">
                   <Label className="text-xs">
                     Marques <span className="text-destructive">*</span>
+                    {entry.pickedItem &&
+                      entry.pickedItem.brandIds.length > 0 &&
+                      entry.brandIds.length ===
+                        entry.pickedItem.brandIds.length && (
+                        <span className="ml-1 text-[10px] text-muted-foreground">
+                          (héritées du produit)
+                        </span>
+                      )}
                     {entry.brandIds.length === 0 && (
-                      <span className="ml-1 text-destructive text-[10px]">
+                      <span className="ml-1 text-[10px] text-destructive">
                         Sélectionner au moins 1
                       </span>
                     )}
@@ -293,7 +340,7 @@ export function UploadAssetModal({
                           key={brand.id}
                           type="button"
                           onClick={() => toggleBrand(index, brand.id)}
-                          className={`rounded px-2 py-1 text-xs font-medium transition-colors min-h-[44px] md:min-h-[28px] ${
+                          className={`min-h-[44px] rounded px-2 py-1 text-xs font-medium transition-colors md:min-h-[28px] ${
                             selected
                               ? 'bg-primary text-primary-foreground'
                               : 'bg-muted text-muted-foreground hover:bg-muted/80'
@@ -306,7 +353,6 @@ export function UploadAssetModal({
                   </div>
                 </div>
 
-                {/* Alt text */}
                 <div className="flex items-center gap-2">
                   <Label className="w-16 shrink-0 text-xs">Description</Label>
                   <Input
@@ -319,7 +365,6 @@ export function UploadAssetModal({
                   />
                 </div>
 
-                {/* Tags */}
                 <div className="flex items-center gap-2">
                   <Label className="w-16 shrink-0 text-xs">Tags</Label>
                   <Input
@@ -331,11 +376,10 @@ export function UploadAssetModal({
                 </div>
               </div>
 
-              {/* Supprimer */}
               <button
                 type="button"
                 onClick={() => removeEntry(index)}
-                className="self-start rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground min-h-[44px] min-w-[44px] md:min-h-[28px] md:min-w-[28px] flex items-center justify-center"
+                className="flex min-h-[44px] min-w-[44px] items-center justify-center self-start rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground md:min-h-[28px] md:min-w-[28px]"
                 aria-label="Retirer ce fichier"
               >
                 <X className="h-4 w-4" />
@@ -349,7 +393,7 @@ export function UploadAssetModal({
             variant="outline"
             onClick={onClose}
             disabled={uploading}
-            className="w-full min-h-[44px] md:min-h-[36px] md:w-auto"
+            className="min-h-[44px] w-full md:min-h-[36px] md:w-auto"
           >
             Annuler
           </Button>
@@ -358,7 +402,7 @@ export function UploadAssetModal({
               void handleSubmit();
             }}
             disabled={uploading || !isValid}
-            className="w-full min-h-[44px] md:min-h-[36px] md:w-auto"
+            className="min-h-[44px] w-full md:min-h-[36px] md:w-auto"
           >
             {uploading
               ? 'Upload en cours...'
