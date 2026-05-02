@@ -14,12 +14,13 @@ Sommaire unique de la config agent. Si tu cherches où est une règle, un agent,
 
 ---
 
-## Rules (14 fichiers)
+## Rules (15 fichiers)
 
 Règles stables lues automatiquement par l'agent.
 
 - `.claude/rules/autonomy-boundaries.md` — Quand l'agent agit seul vs attend Romeo _(NOUVEAU Phase 2)_
 - `.claude/rules/code-standards.md` — TypeScript, async, composants, API, logout
+- `.claude/rules/communication-style.md` — Roméo est utilisateur final non-développeur, français simple sans jargon _(NOUVEAU 2026-05-02)_
 - `.claude/rules/database.md` — Migrations, RLS patterns, post-migration
 - `.claude/rules/finance.md` — Règles métier devis / factures / proformas (R1 à R7)
 - `.claude/rules/playwright.md` — Mode vision, screenshots, workflow
