@@ -4,15 +4,17 @@
 -- (qui seront affichées dans une section "À attribuer" dans l'UI).
 
 -- 1. Colonne product_id (FK soft, ON DELETE SET NULL pour pas casser la photo si produit supprimé)
+-- Note : on n'utilise pas le préfixe `public.` après REFERENCES pour rester
+-- compatible avec le parser regex de scripts/db-drift-check.py (FK_INLINE_PATTERN).
 ALTER TABLE public.media_assets
   ADD COLUMN IF NOT EXISTS product_id UUID
-  REFERENCES public.products(id) ON DELETE SET NULL;
+  REFERENCES products(id) ON DELETE SET NULL;
 
 -- 2. Colonne variant_group_id (cas où on attribue à un groupe de variantes plutôt
 -- qu'à un produit individuel — utile quand toutes les variantes partagent une photo)
 ALTER TABLE public.media_assets
   ADD COLUMN IF NOT EXISTS variant_group_id UUID
-  REFERENCES public.variant_groups(id) ON DELETE SET NULL;
+  REFERENCES variant_groups(id) ON DELETE SET NULL;
 
 -- 3. Index partiels pour les regroupements UI (filtrage rapide par produit/variante)
 CREATE INDEX IF NOT EXISTS idx_media_assets_product_id
