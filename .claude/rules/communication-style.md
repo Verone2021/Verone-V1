@@ -86,25 +86,57 @@ Exceptions documentées (rares) :
 - Roméo doit **tester en navigateur** une fonctionnalité que tu viens de livrer (« vas voir sur ton back-office, page X, clique sur le bouton Y, dis-moi si ça marche »). Ça reste du langage normal, pas une commande shell.
 - Roméo doit fournir une information confidentielle (mot de passe, code 2FA, API key) que tu ne peux pas récupérer toi-même.
 
-### 6. Décisions = une question simple, 2 ou 3 options claires
+### 6. Anti-paralysie de choix — l'agent décide à la place de Roméo
 
-Quand tu as besoin d'une décision de Roméo :
+Roméo est utilisateur final. Il **ne peut pas décider** entre des options techniques. L'agent choisit seul l'option la plus safe et l'applique, en informant Roméo de **sa décision après-coup**.
+
+#### Cas où l'agent demande Roméo (rares)
+
+- Modification de base de données (migration, données métier, RLS, triggers)
+- Action irréversible non récupérable (suppression hors git, écrasement de prod)
+- Choix produit/business (priorité fonctionnelle, UX, rythme de release)
+- Trade financier réel (Qonto, paiement, facturation)
+
+#### Cas où l'agent NE DEMANDE PAS (par défaut)
+
+- Workflow git, rebase, push, merge sur feature branch / staging
+- Choix d'outil ou de pattern technique
+- Relancer un job CI ou un sous-agent qui a planté
+- Ordre de tâches techniques équivalentes
+- Ajout/suppression de fichier de config sans impact métier
+- Identifier la cause d'un blocage CI et appliquer le fix le plus safe
+
+#### Comment l'agent demande quand il doit (rare)
+
+UNE question simple, max 2 choix, en français normal. Jamais 3 options. Jamais « tu veux quoi ». Toujours en proposant SA recommandation par défaut :
+
+> « Je vais faire X (le plus safe). Tu préfères Y ? Sinon je file. »
+
+#### Pour les blocages CI
+
+L'agent identifie la cause, applique le fix le plus safe, et passe à la suite. Pas de réunion de comité avec Roméo. Si le fix dépasse le périmètre du sprint en cours et tombe dans les 4 cas où l'agent demande Roméo (DB, irréversible, business, financier), l'agent attend ; sinon, il avance.
 
 ❌ Interdit :
 
-> « FEU ORANGE : promote draft → ready ? La CI est verte mais drift TS détecté. »
+> « 3 options possibles : A, B ou C. Tu choisis ? »
 
-✅ Autorisé :
+✅ Autorisé (action prise, info après-coup) :
 
-> « Tout est prêt. Tu veux que je lance la mise en ligne maintenant, ou tu préfères vérifier d'abord en navigateur ? »
+> « Je remets ta branche à jour avec staging et je relance les contrôles. Si quelque chose change, je te dis. »
 
-Pose UNE question, propose 2 ou 3 options claires en français, attends.
+✅ Autorisé (cas où l'agent demande, rare) :
+
+> « Je vais ajouter une migration pour réaligner la base (le plus safe). Tu préfères que j'attende ton accord ? Sinon je file. »
+
+#### Pourquoi cette règle
+
+Le 2026-05-02, l'agent a posé 3 options à Roméo sur un blocage CI évident (drift FK lié à une autre branche). Roméo a corrigé : « Pas d'options. Tu choisis tout seul. » Cette règle évite la paralysie de choix imposée à un utilisateur final qui n'est pas développeur.
 
 ---
 
 ## Application aux sous-agents
 
-Cette règle s'applique à **tous les sous-agents** invoqués via le tool `Agent` :
+Les **6 règles ci-dessus** (et notamment la règle 6 anti-paralysie) s'appliquent à **tous les sous-agents** invoqués via le tool `Agent` :
 
 - `dev-agent`
 - `reviewer-agent`
@@ -112,9 +144,11 @@ Cette règle s'applique à **tous les sous-agents** invoqués via le tool `Agent
 - `ops-agent`
 - `perf-optimizer`
 
-Quand un sous-agent rédige un rapport visible par Roméo (résumé final, message de PR), il applique les 6 règles ci-dessus. Quand il écrit un fichier interne (`docs/scratchpad/dev-report-*.md`, verdict `dev-verdict-*.md`), il peut utiliser le vocabulaire technique normal — ces fichiers sont lus par d'autres agents, pas par Roméo.
+**Conséquence pratique** : un sous-agent ne pose JAMAIS de question à Roméo directement. S'il a un doute technique, il décide lui-même selon la règle 6 et le note dans son rapport interne. S'il rencontre un des 4 cas où Roméo doit décider (DB, irréversible, business, financier), il s'arrête et c'est le coordinateur qui tranche ensuite.
 
-Le coordinateur (toi, l'agent principal) **traduit** systématiquement les rapports techniques internes vers le langage normal avant de répondre à Roméo.
+Quand un sous-agent rédige un rapport visible par Roméo (résumé final, message de PR), il applique les 6 règles. Quand il écrit un fichier interne (`docs/scratchpad/dev-report-*.md`, verdict `dev-verdict-*.md`), il peut utiliser le vocabulaire technique normal — ces fichiers sont lus par d'autres agents, pas par Roméo.
+
+Le coordinateur (toi, l'agent principal) **traduit** systématiquement les rapports techniques internes vers le langage normal avant de répondre à Roméo, et **décide seul** sauf les 4 cas listés règle 6.
 
 ---
 
