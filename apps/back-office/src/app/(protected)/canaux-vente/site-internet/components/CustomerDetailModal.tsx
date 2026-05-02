@@ -65,13 +65,13 @@ export function CustomerDetailModal({ customer, open, onClose }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-2xl md:max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="h-screen md:h-auto max-w-full md:max-w-2xl flex flex-col md:max-h-[85vh]">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-lg">{fullName}</DialogTitle>
         </DialogHeader>
 
-        {/* En-tête client */}
-        <div className="space-y-3 pb-4 border-b">
+        {/* En-tête client — fixe */}
+        <div className="flex-shrink-0 space-y-3 pb-4 border-b">
           <div className="flex flex-wrap gap-2">
             {customer.is_active ? (
               <Badge variant="outline" className="bg-green-50 text-green-700">
@@ -128,9 +128,12 @@ export function CustomerDetailModal({ customer, open, onClose }: Props) {
           </div>
         </div>
 
-        {/* Onglets */}
-        <Tabs defaultValue="commandes" className="mt-2">
-          <TabsList className="grid grid-cols-4 w-full">
+        {/* Onglets — tabs fixes, contenu seul scrollable */}
+        <Tabs
+          defaultValue="commandes"
+          className="mt-2 flex flex-col flex-1 overflow-hidden"
+        >
+          <TabsList className="flex-shrink-0 grid grid-cols-4 w-full">
             <TabsTrigger value="commandes" className="flex items-center gap-1">
               <ShoppingBag className="h-3.5 w-3.5" />
               Commandes
@@ -159,78 +162,82 @@ export function CustomerDetailModal({ customer, open, onClose }: Props) {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="commandes" className="mt-4">
-            <CustomerOrdersTab
-              orders={data?.orders ?? []}
-              totalSpent={data?.totalSpent ?? 0}
-              orderCount={data?.orderCount ?? 0}
-              isLoading={isLoading}
-            />
-          </TabsContent>
-
-          <TabsContent value="adresses" className="mt-4">
-            <CustomerAddressesTab
-              addresses={data?.addresses ?? []}
-              isLoading={isLoading}
-            />
-          </TabsContent>
-
-          <TabsContent value="activite" className="mt-4">
-            <div className="space-y-4">
-              {isLoading ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
-                    <Heart className="h-5 w-5 text-pink-500 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-gray-900">
-                      {data?.activity.wishlistCount ?? 0}
-                    </p>
-                    <p className="text-xs text-gray-500">Produits en favoris</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
-                    <Star className="h-5 w-5 text-yellow-500 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-gray-900">
-                      {data?.activity.reviewsCount ?? 0}
-                    </p>
-                    <p className="text-xs text-gray-500">Avis soumis</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="notes" className="mt-4">
-            <div className="space-y-3">
-              <p className="text-sm text-gray-500">
-                Notes internes — visibles uniquement par l&apos;équipe.
-              </p>
-              <Textarea
-                placeholder="Ajouter une note interne sur ce client..."
-                value={notesValue}
-                onChange={e => setNotesValue(e.target.value)}
-                rows={6}
-                className="resize-none text-sm"
-                disabled={isSavingNotes}
+          <div className="flex-1 overflow-y-auto mt-4">
+            <TabsContent value="commandes" className="mt-0">
+              <CustomerOrdersTab
+                orders={data?.orders ?? []}
+                totalSpent={data?.totalSpent ?? 0}
+                orderCount={data?.orderCount ?? 0}
+                isLoading={isLoading}
               />
-              <div className="flex justify-end">
-                <Button
-                  size="sm"
-                  onClick={handleSaveNotes}
-                  disabled={isSavingNotes}
-                >
-                  {isSavingNotes ? (
-                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                  ) : (
-                    <Save className="h-3.5 w-3.5 mr-1.5" />
-                  )}
-                  Sauvegarder
-                </Button>
+            </TabsContent>
+
+            <TabsContent value="adresses" className="mt-0">
+              <CustomerAddressesTab
+                addresses={data?.addresses ?? []}
+                isLoading={isLoading}
+              />
+            </TabsContent>
+
+            <TabsContent value="activite" className="mt-0">
+              <div className="space-y-4">
+                {isLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-gray-50 rounded-lg p-4 text-center">
+                      <Heart className="h-5 w-5 text-pink-500 mx-auto mb-2" />
+                      <p className="text-2xl font-bold text-gray-900">
+                        {data?.activity.wishlistCount ?? 0}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Produits en favoris
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4 text-center">
+                      <Star className="h-5 w-5 text-yellow-500 mx-auto mb-2" />
+                      <p className="text-2xl font-bold text-gray-900">
+                        {data?.activity.reviewsCount ?? 0}
+                      </p>
+                      <p className="text-xs text-gray-500">Avis soumis</p>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          </TabsContent>
+            </TabsContent>
+
+            <TabsContent value="notes" className="mt-0">
+              <div className="space-y-3">
+                <p className="text-sm text-gray-500">
+                  Notes internes — visibles uniquement par l&apos;équipe.
+                </p>
+                <Textarea
+                  placeholder="Ajouter une note interne sur ce client..."
+                  value={notesValue}
+                  onChange={e => setNotesValue(e.target.value)}
+                  rows={6}
+                  className="resize-none text-sm"
+                  disabled={isSavingNotes}
+                />
+                <div className="flex justify-end">
+                  <Button
+                    size="sm"
+                    onClick={handleSaveNotes}
+                    disabled={isSavingNotes}
+                  >
+                    {isSavingNotes ? (
+                      <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    ) : (
+                      <Save className="h-3.5 w-3.5 mr-1.5" />
+                    )}
+                    Sauvegarder
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+          </div>
         </Tabs>
       </DialogContent>
     </Dialog>

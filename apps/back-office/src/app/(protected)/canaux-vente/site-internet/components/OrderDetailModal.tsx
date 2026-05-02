@@ -23,10 +23,9 @@ import {
   FileText,
   Tag,
   Receipt,
-  MessageSquare,
 } from 'lucide-react';
 
-import { OrderInternalNotesTimeline } from './order-detail/OrderInternalNotesTimeline';
+import { OrderNotesSection } from './order-detail/OrderNotesSection';
 
 import type { SalesOrder } from '@verone/orders/hooks';
 import {
@@ -393,13 +392,7 @@ export function OrderDetailModal({
           />
 
           {/* Notes internes — timeline */}
-          <div className="rounded-lg border p-4 space-y-3">
-            <h3 className="font-semibold text-sm flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-              Notes internes
-            </h3>
-            <OrderInternalNotesTimeline salesOrderId={order.id} />
-          </div>
+          <OrderNotesSection orderId={order.id} />
         </div>
       </DialogContent>
     </Dialog>

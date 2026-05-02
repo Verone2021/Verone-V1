@@ -5,8 +5,8 @@
  * Ces clients sont créés automatiquement par le checkout Stripe.
  *
  * Fonctionnalités :
- * - KPIs : total clients, clients actifs (6 mois), LTV moyenne, panier moyen
- * - Tableau avec tri par colonne et pagination côté client
+ * - KPIs : clients actifs, clients actifs (6 mois), LTV moyenne, panier moyen
+ * - Tableau avec tri par colonne et pagination côté client (via CustomersTable)
  * - Recherche textuelle (nom, email, ville, téléphone)
  */
 
@@ -23,30 +23,11 @@ import {
 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@verone/ui';
-import { Button } from '@verone/ui';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import {
   Users,
   Search,
-  Mail,
-  Phone,
-  MapPin,
   UserCheck,
   TrendingUp,
   ShoppingCart,
-  ChevronUp,
-  ChevronDown,
-  ChevronsUpDown,
-  ChevronLeft,
-  ChevronRight,
   Loader2,
 } from 'lucide-react';
 
@@ -54,14 +35,13 @@ import { useSiteCustomers } from '../hooks/use-site-customers';
 import { useSiteCustomersKpis } from '../hooks/use-site-customers-kpis';
 
 import { CustomerDetailModal } from './CustomerDetailModal';
+import { CustomersTable } from './CustomersTable';
 
 import type { SiteCustomer } from '../hooks/use-site-customers';
+import type { SortKey, SortDir } from './CustomersTable';
 
 // ── Constantes ────────────────────────────────────────────────────
 const PAGE_SIZE = 20;
-
-type SortKey = 'last_name' | 'email' | 'city' | 'created_at';
-type SortDir = 'asc' | 'desc';
 
 // ── Helpers ───────────────────────────────────────────────────────
 
@@ -73,35 +53,19 @@ function formatEur(value: number): string {
   }).format(value);
 }
 
-function SortIcon({
-  column,
-  sortKey,
-  sortDir,
-}: {
-  column: SortKey;
-  sortKey: SortKey;
-  sortDir: SortDir;
-}) {
-  if (sortKey !== column)
-    return <ChevronsUpDown className="h-3.5 w-3.5 ml-1 opacity-40" />;
-  return sortDir === 'asc' ? (
-    <ChevronUp className="h-3.5 w-3.5 ml-1" />
-  ) : (
-    <ChevronDown className="h-3.5 w-3.5 ml-1" />
-  );
-}
-
 // ── Composant KPI card ─────────────────────────────────────────────
 
 function KpiCard({
   icon: Icon,
   label,
+  description,
   value,
   loading,
   iconColor,
 }: {
   icon: React.ElementType;
   label: string;
+  description?: string;
   value: string;
   loading: boolean;
   iconColor: string;
@@ -120,6 +84,9 @@ function KpiCard({
               <p className="text-xl font-bold text-gray-900">{value}</p>
             )}
             <p className="text-xs text-gray-500">{label}</p>
+            {description && (
+              <p className="text-xs text-gray-400">{description}</p>
+            )}
           </div>
         </div>
       </CardContent>
@@ -160,8 +127,8 @@ export function ClientsSection() {
   // Tri
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
-      let valA: string | null;
-      let valB: string | null;
+      let valA: string;
+      let valB: string;
 
       if (sortKey === 'last_name') {
         valA = `${a.last_name ?? ''} ${a.first_name ?? ''}`.toLowerCase();
@@ -173,13 +140,12 @@ export function ClientsSection() {
         valA = a.city?.toLowerCase() ?? '';
         valB = b.city?.toLowerCase() ?? '';
       } else {
-        // created_at
         valA = a.created_at ?? '';
         valB = b.created_at ?? '';
       }
 
       if (valA === valB) return 0;
-      const cmp = (valA ?? '') < (valB ?? '') ? -1 : 1;
+      const cmp = valA < valB ? -1 : 1;
       return sortDir === 'asc' ? cmp : -cmp;
     });
   }, [filtered, sortKey, sortDir]);
@@ -188,7 +154,6 @@ export function ClientsSection() {
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const paginated = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
-  // Réinitialiser la page à 0 lors d'une recherche ou d'un changement de tri
   const handleSearch = (value: string) => {
     setSearch(value);
     setPage(0);
@@ -220,7 +185,8 @@ export function ClientsSection() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           icon={Users}
-          label="Total clients"
+          label="Clients actifs"
+          description="Source site-internet, actifs"
           value={kpis ? String(kpis.totalCustomers) : '—'}
           loading={kpisLoading}
           iconColor="bg-blue-50 text-blue-600"
@@ -276,7 +242,7 @@ export function ClientsSection() {
             />
           </div>
 
-          {/* Table */}
+          {/* Contenu */}
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
@@ -288,153 +254,18 @@ export function ClientsSection() {
                 : 'Aucun client site internet pour le moment.'}
             </div>
           ) : (
-            <>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>
-                        <button
-                          type="button"
-                          className="flex items-center text-left font-medium hover:text-gray-900"
-                          onClick={() => handleSort('last_name')}
-                        >
-                          Client
-                          <SortIcon
-                            column="last_name"
-                            sortKey={sortKey}
-                            sortDir={sortDir}
-                          />
-                        </button>
-                      </TableHead>
-                      <TableHead>
-                        <button
-                          type="button"
-                          className="flex items-center text-left font-medium hover:text-gray-900"
-                          onClick={() => handleSort('email')}
-                        >
-                          Contact
-                          <SortIcon
-                            column="email"
-                            sortKey={sortKey}
-                            sortDir={sortDir}
-                          />
-                        </button>
-                      </TableHead>
-                      <TableHead className="hidden lg:table-cell">
-                        <button
-                          type="button"
-                          className="flex items-center text-left font-medium hover:text-gray-900"
-                          onClick={() => handleSort('city')}
-                        >
-                          Localisation
-                          <SortIcon
-                            column="city"
-                            sortKey={sortKey}
-                            sortDir={sortDir}
-                          />
-                        </button>
-                      </TableHead>
-                      <TableHead className="hidden xl:table-cell">
-                        <button
-                          type="button"
-                          className="flex items-center text-left font-medium hover:text-gray-900"
-                          onClick={() => handleSort('created_at')}
-                        >
-                          Inscrit le
-                          <SortIcon
-                            column="created_at"
-                            sortKey={sortKey}
-                            sortDir={sortDir}
-                          />
-                        </button>
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginated.map(customer => (
-                      <TableRow
-                        key={customer.id}
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() => setSelectedCustomer(customer)}
-                      >
-                        <TableCell className="font-medium">
-                          {customer.first_name} {customer.last_name}
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            {customer.email && (
-                              <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                                <Mail className="h-3.5 w-3.5" />
-                                {customer.email}
-                              </div>
-                            )}
-                            {customer.phone && (
-                              <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                                <Phone className="h-3.5 w-3.5" />
-                                {customer.phone}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          {(customer.city ?? customer.postal_code) && (
-                            <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                              <MapPin className="h-3.5 w-3.5" />
-                              {[customer.postal_code, customer.city]
-                                .filter(Boolean)
-                                .join(' ')}
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell className="hidden xl:table-cell text-sm text-gray-500">
-                          {customer.created_at
-                            ? format(
-                                new Date(customer.created_at),
-                                'dd MMM yyyy',
-                                { locale: fr }
-                              )
-                            : '—'}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between text-sm text-gray-600">
-                  <span>
-                    Page {page + 1} / {totalPages} ({sorted.length} résultats)
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage(p => Math.max(0, p - 1))}
-                      disabled={page === 0}
-                      className="h-8 px-2"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      Précédent
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setPage(p => Math.min(totalPages - 1, p + 1))
-                      }
-                      disabled={page >= totalPages - 1}
-                      className="h-8 px-2"
-                    >
-                      Suivant
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
+            <CustomersTable
+              customers={paginated}
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSort={handleSort}
+              page={page}
+              pageSize={PAGE_SIZE}
+              total={sorted.length}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              onRowClick={setSelectedCustomer}
+            />
           )}
         </CardContent>
       </Card>

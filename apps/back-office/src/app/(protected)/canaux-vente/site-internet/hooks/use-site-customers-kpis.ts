@@ -25,14 +25,13 @@ async function fetchSiteCustomersKpis(): Promise<SiteCustomersKpis> {
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
   const sixMonthsAgoStr = sixMonthsAgo.toISOString();
 
-  const [customersResult, ordersResult] = await Promise.all([
-    // Tous les clients actifs site-internet (max 1000 pour calcul LTV)
+  const [customersCountResult, ordersResult] = await Promise.all([
+    // Count exact des clients actifs site-internet (head: true = pas de rows)
     supabase
       .from('individual_customers')
-      .select('id')
+      .select('id', { count: 'exact', head: true })
       .eq('source_type', 'site-internet')
-      .eq('is_active', true)
-      .limit(1000),
+      .eq('is_active', true),
 
     // Toutes les commandes site-internet (hors draft/cancelled)
     supabase
@@ -43,7 +42,9 @@ async function fetchSiteCustomersKpis(): Promise<SiteCustomersKpis> {
       .limit(5000),
   ]);
 
-  const totalCustomers = customersResult.data?.length ?? 0;
+  if (customersCountResult.error) throw customersCountResult.error;
+
+  const totalCustomers = customersCountResult.count ?? 0;
   const allOrders = ordersResult.data ?? [];
 
   // Clients actifs = ceux qui ont commandé dans les 6 derniers mois
