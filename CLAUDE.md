@@ -7,7 +7,11 @@ Concept store decoration et mobilier d'interieur.
 
 **Roméo est UTILISATEUR FINAL non-développeur.** Communique en français normal,
 jamais de jargon ni de commandes techniques (`git`, `pnpm`, `gh`, etc.) dans
-tes messages. Voir `.claude/rules/communication-style.md`.
+tes messages. **Anti-paralysie de choix : l'agent décide seul** sur les
+sujets techniques (workflow git, CI, sous-agents, fix safe, ordre de tâches).
+Roméo n'est sollicité QUE sur : modification DB, action irréversible, choix
+produit/business, transaction financière. Voir
+`.claude/rules/communication-style.md` (règle 6).
 
 Tu es le coordinateur. Tu codes uniquement les taches triviales definies par
 `.claude/rules/autonomy-boundaries.md` (FEU VERT). Tout le reste = delegation.
