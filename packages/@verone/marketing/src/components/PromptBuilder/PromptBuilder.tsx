@@ -39,10 +39,11 @@ export function PromptBuilder({
 
   useEffect(() => {
     const presets = getPresetsByBrand(brand);
-    if (!presets.find(p => p.id === presetId) && presets[0]) {
-      setPresetId(presets[0].id);
-    }
-  }, [brand, presetId]);
+    setPresetId(prev => {
+      if (presets.find(p => p.id === prev)) return prev;
+      return presets[0]?.id ?? '';
+    });
+  }, [brand]);
 
   const composed = useMemo(
     () =>

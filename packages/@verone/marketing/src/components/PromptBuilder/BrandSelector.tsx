@@ -11,6 +11,12 @@ import {
 import { BRANDS } from '../../data/brands';
 import type { BrandSlug } from '../../types';
 
+const VALID_SLUGS: ReadonlyArray<BrandSlug> = BRANDS.map(b => b.slug);
+
+function isBrandSlug(value: string): value is BrandSlug {
+  return (VALID_SLUGS as ReadonlyArray<string>).includes(value);
+}
+
 export interface BrandSelectorProps {
   value: BrandSlug;
   onChange: (slug: BrandSlug) => void;
@@ -25,7 +31,9 @@ export function BrandSelector({
   return (
     <Select
       value={value}
-      onValueChange={v => onChange(v as BrandSlug)}
+      onValueChange={v => {
+        if (isBrandSlug(v)) onChange(v);
+      }}
       disabled={disabled}
     >
       <SelectTrigger className="w-full" aria-label="Marque">

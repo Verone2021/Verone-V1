@@ -51,6 +51,8 @@
       "@verone/finance/*": ["../../packages/@verone/finance/src/*"],
       "@verone/logistics": ["../../packages/@verone/logistics/src"],
       "@verone/logistics/*": ["../../packages/@verone/logistics/src/*"],
+      "@verone/marketing": ["../../packages/@verone/marketing/src"],
+      "@verone/marketing/*": ["../../packages/@verone/marketing/src/*"],
       "@verone/notifications": ["../../packages/@verone/notifications/src"],
       "@verone/notifications/*": ["../../packages/@verone/notifications/src/*"],
       "@verone/orders": ["../../packages/@verone/orders/src"],
@@ -68,9 +70,7 @@
       "@verone/ui-business": ["../../packages/@verone/ui-business/src"],
       "@verone/ui-business/*": ["../../packages/@verone/ui-business/src/*"],
       "@verone/admin": ["../../packages/@verone/admin/src"],
-      "@verone/admin/*": ["../../packages/@verone/admin/src/*"],
-      "@verone/marketing": ["../../packages/@verone/marketing/src"],
-      "@verone/marketing/*": ["../../packages/@verone/marketing/src/*"]
+      "@verone/admin/*": ["../../packages/@verone/admin/src/*"]
     },
     "target": "ES2017"
   },
