@@ -28,6 +28,30 @@ import {
   deleteProduct as deleteProductMutation,
 } from './use-catalogue-mutations';
 
+function extractMessage(error: unknown): string | null {
+  if (typeof error !== 'object' || error === null) return null;
+  const e = error as Record<string, unknown>;
+  if (typeof e['message'] === 'string') return e['message'];
+  return null;
+}
+
+function serializeError(error: unknown): Record<string, unknown> | string {
+  if (error instanceof Error) {
+    return { name: error.name, message: error.message, stack: error.stack };
+  }
+  if (typeof error !== 'object' || error === null) {
+    return String(error);
+  }
+  const e = error as Record<string, unknown>;
+  return {
+    message: e['message'] ?? null,
+    code: e['code'] ?? null,
+    details: e['details'] ?? null,
+    hint: e['hint'] ?? null,
+    raw: e,
+  };
+}
+
 export const useCatalogue = () => {
   const [filters, setFiltersState] = useState<CatalogueFilters>({});
 
@@ -72,10 +96,13 @@ export const useCatalogue = () => {
         loading: false,
       }));
     } catch (error) {
-      console.error('Erreur chargement catalogue:', error);
+      console.error('Erreur chargement catalogue:', serializeError(error));
       setState(prev => ({
         ...prev,
-        error: error instanceof Error ? error.message : 'Erreur inconnue',
+        error:
+          error instanceof Error
+            ? error.message
+            : (extractMessage(error) ?? 'Erreur inconnue'),
         loading: false,
       }));
     }
