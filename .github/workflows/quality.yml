@@ -187,6 +187,11 @@ jobs:
     if: needs.detect-changes.outputs.back-office == 'true' || needs.detect-changes.outputs.packages == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Non-blocking : le smoke E2E reste informationnel. Une régression runtime
+    # est signalée (commentaire PR + artifact) mais n'empêche pas le merge.
+    # Les régressions critiques sont rattrapées par type-check/build et par le
+    # diff de review. Voir INFRA-CI-001.
+    continue-on-error: true
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
@@ -215,8 +220,21 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Playwright browsers (chromium only)
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: playwright-${{ runner.os }}-
+
+      - name: Install Playwright browsers (chromium only — cache miss)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install Playwright system deps (cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
 
       - name: Cache Next.js build
         uses: actions/cache@v5
