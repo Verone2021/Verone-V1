@@ -21,13 +21,19 @@ export interface BrandSelectorProps {
   value: BrandSlug;
   onChange: (slug: BrandSlug) => void;
   disabled?: boolean;
+  allowedSlugs?: ReadonlyArray<BrandSlug>;
 }
 
 export function BrandSelector({
   value,
   onChange,
   disabled,
+  allowedSlugs,
 }: BrandSelectorProps) {
+  const filteredBrands =
+    allowedSlugs && allowedSlugs.length > 0
+      ? BRANDS.filter(b => allowedSlugs.includes(b.slug))
+      : BRANDS;
   return (
     <Select
       value={value}
@@ -40,7 +46,7 @@ export function BrandSelector({
         <SelectValue placeholder="Choisir une marque" />
       </SelectTrigger>
       <SelectContent>
-        {BRANDS.map(brand => (
+        {filteredBrands.map(brand => (
           <SelectItem key={brand.slug} value={brand.slug}>
             <span className="font-medium">{brand.name}</span>
             <span className="ml-2 text-xs text-muted-foreground">

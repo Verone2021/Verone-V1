@@ -1,4 +1,8 @@
 export { ProductSelector } from './ProductSelector';
+export {
+  ProductOrVariantPicker,
+  type PickedItem,
+} from './ProductOrVariantPicker';
 export { ProductStatusSelector } from './ProductStatusSelector';
 export { ProductTypeSelector } from './ProductTypeSelector';
 export {
