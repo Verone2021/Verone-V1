@@ -301,3 +301,27 @@ Les references externes (standard industriel) :
 - Vercel Dashboard
 
 Tous utilisent ces memes 5 techniques. Nous les appliquons avec discipline.
+
+---
+
+## ⚡ Précision sur les tests Playwright 5 tailles (ajoutée 2026-05-02)
+
+**Tests Playwright 5 tailles obligatoires UNIQUEMENT sur les apps publiques** (site-internet, apps de marques à venir, pages publiques LinkMe `/s/[id]/*` et `/[affiliateSlug]/*`).
+
+**Apps admin (back-office, LinkMe SaaS affiliés)** : desktop-first uniquement. Pas de tests Playwright 375 / 768 / 1024 px obligatoires. Seul desktop 1440 + 1920 obligatoire.
+
+**Exceptions back-office responsive obligatoire** (pages réellement utilisées en mobile par Roméo) :
+
+- `/produits/catalogue` (consultation rapide en magasin/livraison)
+- `/produits/catalogue/[productId]` (consultation rapide)
+- `/stocks/inventaire` (audit terrain)
+- `/commandes` (suivi mobile)
+- `/expeditions` (mobile)
+
+Pour CES pages spécifiques back-office : 5 tailles obligatoires comme avant.
+
+**Pour TOUTES les autres pages back-office** (formulaires admin, dashboards complexes, paramètres, finance, etc.) : test desktop suffit. Si la page n'est pas adaptée mobile aujourd'hui, ce n'est pas grave — on l'adaptera plus tard sprint dédié.
+
+### Pourquoi cette règle
+
+Imposer le responsive sur 5 tailles à toutes les pages back-office bloque l'avancement avec des fix cosmétiques mobiles inutiles, alors que Roméo n'utilise PAS le back-office sur petit mobile. Les pages admin sont desktop par nature. Cette règle évite la perte de temps.

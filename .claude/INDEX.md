@@ -1,6 +1,6 @@
 # INDEX — `.claude/` Verone Back Office
 
-**Dernière mise à jour** : 2026-04-19 (Phase 2 restructuration)
+**Dernière mise à jour** : 2026-05-01 (règle anti-GO ajoutée à autonomy-boundaries.md)
 
 Sommaire unique de la config agent. Si tu cherches où est une règle, un agent, un playbook, tu commences ici.
 

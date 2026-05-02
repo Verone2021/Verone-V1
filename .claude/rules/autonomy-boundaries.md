@@ -199,3 +199,34 @@ Ce fichier est référencé par :
 - `.claude/agents/*.md` (section « TU NE FAIS PAS »)
 - `.claude/DECISIONS.md` (ADR-004 ajustement #3, ADR-023 multi-agent workflow)
 - `.claude/playbooks/*.md` (utilisé implicitement dans chaque recette)
+
+---
+
+## ⚡ Règle anti-GO intermédiaires (ajoutée 2026-05-01)
+
+Quand Roméo donne un ordre explicite avec une procédure complète au début d'une session (par exemple un bloc avec étapes 1-2-3-4-5 et des sous-étapes), l'agent **EXÉCUTE toute la procédure en entier sans demander de "GO ?", "Tu valides ?" ou "Je continue ?" entre chaque étape**. L'ordre initial vaut pour TOUTE la procédure documentée.
+
+L'agent s'arrête pour interpeller Roméo **uniquement** si :
+
+- Imprévu majeur qui change le scope du sprint (anomalie non prévue dans le brief)
+- Risque de casse non documenté dans la procédure initiale
+- Action FEU ROUGE (cf. sections plus haut)
+- Credentials manquantes que l'agent ne peut récupérer dans `.claude/local/CREDENTIALS-VAULT.md`, `.claude/test-credentials.md`, ou les `.env.local`
+
+Sinon l'agent fait son rapport **FINAL consolidé** quand toute la procédure est terminée. Pas de check intermédiaire.
+
+### Anti-pattern à bannir
+
+Demander 5 GO sur 5 étapes alors que Roméo a déjà donné son GO global au début. Ça fatigue Roméo et ralentit l'exécution sans valeur ajoutée. C'est la cause #1 de friction conversationnelle dans les sessions multi-agents.
+
+### Quand présenter quelque chose à Roméo
+
+- **Au début** : ton plan global d'exécution (1 paragraphe court, pas un essai)
+- **En cours** : uniquement si anomalie bloquante ou décision FEU ROUGE
+- **À la fin** : rapport final consolidé (1 message structuré)
+
+Pas de "step 1 done, je continue ?". Pas de "tu valides l'étape intermédiaire ?". Pas de "GO ?" toutes les 30 secondes.
+
+### Référence
+
+Cette règle a été ajoutée suite à une session multi-agents où des agents demandaient un GO entre chaque étape d'une procédure déjà complètement validée par Roméo, créant ~10 GO inutiles sur une procédure de 5 étapes. Voir DECISIONS.md ADR à venir.
