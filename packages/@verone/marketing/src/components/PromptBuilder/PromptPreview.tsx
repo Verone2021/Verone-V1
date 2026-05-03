@@ -7,10 +7,12 @@ import { Button } from '@verone/ui/components/ui/button';
 import { Card, CardContent, CardHeader } from '@verone/ui/components/ui/card';
 import { Check, Copy, ExternalLink } from 'lucide-react';
 
+import { saveLastPrompt } from '../../lib/last-prompt-storage';
 import type { ComposedPrompt } from '../../types';
 
 export interface PromptPreviewProps {
   prompt: ComposedPrompt;
+  productLabel?: string | null;
   onCopySuccess?: () => void;
   onCopyError?: (error: Error) => void;
 }
@@ -19,6 +21,7 @@ const NANO_BANANA_URL = 'https://gemini.google.com/app';
 
 export function PromptPreview({
   prompt,
+  productLabel,
   onCopySuccess,
   onCopyError,
 }: PromptPreviewProps) {
@@ -32,6 +35,15 @@ export function PromptPreview({
     void navigator.clipboard
       .writeText(prompt.text)
       .then(() => {
+        // Pont Studio → DAM : on mémorise le prompt côté navigateur pour
+        // pré-remplir l'upload modal de la DAM si l'utilisateur upload une
+        // photo IA dans les 24 h qui suivent.
+        saveLastPrompt({
+          prompt: prompt.text,
+          brandSlug: prompt.brand.slug,
+          presetId: prompt.preset.id,
+          productLabel: productLabel ?? null,
+        });
         setCopied(true);
         onCopySuccess?.();
         setTimeout(() => setCopied(false), 2000);

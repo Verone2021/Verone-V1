@@ -190,6 +190,7 @@ export function PromptBuilder({
         {composed ? (
           <PromptPreview
             prompt={composed}
+            productLabel={pickedItem?.displayName ?? productDescription ?? null}
             onCopySuccess={onCopySuccess}
             onCopyError={onCopyError}
           />
