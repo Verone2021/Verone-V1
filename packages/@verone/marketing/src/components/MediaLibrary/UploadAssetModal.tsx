@@ -23,7 +23,12 @@ import { Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { ProductOrVariantPicker, type PickedItem } from '@verone/products';
-import type { MediaAssetType, UploadAssetInput } from '@verone/products';
+import type {
+  MediaAssetType,
+  MediaAssetSource,
+  UploadAssetInput,
+} from '@verone/products';
+import { Textarea } from '@verone/ui/components/ui/textarea';
 
 import type { BrandInfo } from './MediaAssetCard';
 
@@ -39,6 +44,8 @@ interface FileEntry {
   brandIds: string[]; // dérivés du pickedItem, mais ajustables si plusieurs marques
   altText: string;
   tags: string;
+  source: MediaAssetSource;
+  aiPromptUsed: string;
 }
 
 interface UploadAssetModalProps {
@@ -82,6 +89,8 @@ export function UploadAssetModal({
       brandIds: [],
       altText: file.name.replace(/\.[^/.]+$/, ''),
       tags: '',
+      source: 'manual_upload',
+      aiPromptUsed: '',
     }));
 
     setEntries(prev => [...prev, ...newEntries]);
@@ -193,6 +202,11 @@ export function UploadAssetModal({
           variantGroupId:
             entry.pickedItem.kind === 'variant_group'
               ? entry.pickedItem.id
+              : null,
+          source: entry.source,
+          aiPromptUsed:
+            entry.source === 'ai_generated'
+              ? entry.aiPromptUsed.trim() || null
               : null,
         });
         successCount++;
@@ -314,6 +328,54 @@ export function UploadAssetModal({
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <Label className="w-16 shrink-0 text-xs">Origine</Label>
+                  <Select
+                    value={entry.source}
+                    onValueChange={v =>
+                      updateEntry(index, 'source', v as MediaAssetSource)
+                    }
+                  >
+                    <SelectTrigger className="h-8 flex-1 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="manual_upload">
+                        Upload manuel
+                      </SelectItem>
+                      <SelectItem value="supplier_provided">
+                        Fournisseur
+                      </SelectItem>
+                      <SelectItem value="ai_generated">
+                        Générée par IA (Nano Banana, Gemini…)
+                      </SelectItem>
+                      <SelectItem value="stock_photo">
+                        Banque d'images
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {entry.source === 'ai_generated' && (
+                  <div className="flex flex-col gap-1">
+                    <Label className="text-xs">
+                      Prompt utilisé{' '}
+                      <span className="text-[10px] text-muted-foreground">
+                        (conservé pour réutilisation / affinage)
+                      </span>
+                    </Label>
+                    <Textarea
+                      value={entry.aiPromptUsed}
+                      onChange={e =>
+                        updateEntry(index, 'aiPromptUsed', e.target.value)
+                      }
+                      placeholder="Colle ici le prompt complet qui a généré cette image…"
+                      rows={3}
+                      className="resize-none text-xs"
+                    />
+                  </div>
+                )}
 
                 <div className="flex flex-col gap-1">
                   <Label className="text-xs">
