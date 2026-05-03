@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui/components/ui/select';
-import { Upload, X } from 'lucide-react';
+import { Sparkles, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { ProductOrVariantPicker, type PickedItem } from '@verone/products';
@@ -30,6 +30,12 @@ import type {
 } from '@verone/products';
 import { Textarea } from '@verone/ui/components/ui/textarea';
 
+import {
+  clearLastPrompt,
+  formatPromptAge,
+  readLastPrompt,
+  type StoredPrompt,
+} from '../../lib/last-prompt-storage';
 import type { BrandInfo } from './MediaAssetCard';
 
 // ============================================================================
@@ -70,6 +76,18 @@ export function UploadAssetModal({
   const [entries, setEntries] = React.useState<FileEntry[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  // Pont Studio Marketing → DAM : on lit le dernier prompt copié (si < 24 h)
+  // pour proposer un pré-remplissage 1-clic.
+  const [lastPrompt, setLastPrompt] = React.useState<StoredPrompt | null>(null);
+  const [promptApplied, setPromptApplied] = React.useState(false);
+
+  React.useEffect(() => {
+    if (open) {
+      setLastPrompt(readLastPrompt());
+      setPromptApplied(false);
+    }
+  }, [open]);
+
   React.useEffect(() => {
     if (!open) {
       entries.forEach(e => URL.revokeObjectURL(e.preview));
@@ -77,6 +95,24 @@ export function UploadAssetModal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- entries deliberately excluded
   }, [open]);
+
+  const applyLastPromptToAllEntries = React.useCallback(() => {
+    if (!lastPrompt) return;
+    setEntries(prev =>
+      prev.map(e => ({
+        ...e,
+        source: 'ai_generated',
+        aiPromptUsed: lastPrompt.prompt,
+      }))
+    );
+    setPromptApplied(true);
+    toast.success('Prompt IA pré-rempli sur toutes les photos');
+  }, [lastPrompt]);
+
+  const dismissLastPrompt = React.useCallback(() => {
+    clearLastPrompt();
+    setLastPrompt(null);
+  }, []);
 
   const handleFilesSelected = React.useCallback((files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -242,6 +278,49 @@ export function UploadAssetModal({
         </DialogHeader>
 
         <div className="flex-1 space-y-4 overflow-y-auto pr-1 md:max-h-[60vh]">
+          {/* Pont Studio Marketing → DAM : encart si un prompt récent est mémorisé */}
+          {lastPrompt && !promptApplied && (
+            <div className="flex flex-col gap-2 rounded-lg border border-fuchsia-200 bg-fuchsia-50/60 p-3 text-xs sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex items-start gap-2">
+                <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-fuchsia-600" />
+                <div>
+                  <p className="font-medium text-fuchsia-900">
+                    Tu as copié un prompt depuis Studio Marketing{' '}
+                    {formatPromptAge(lastPrompt.copiedAt)}.
+                  </p>
+                  <p className="text-fuchsia-700">
+                    {lastPrompt.productLabel
+                      ? `« ${lastPrompt.productLabel} » · `
+                      : ''}
+                    Pré-remplir l'origine « Générée par IA » + le prompt pour{' '}
+                    {entries.length > 0
+                      ? `${entries.length} photo${entries.length > 1 ? 's' : ''}`
+                      : 'les prochaines photos'}{' '}
+                    ?
+                  </p>
+                </div>
+              </div>
+              <div className="flex shrink-0 gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={dismissLastPrompt}
+                  className="h-8 text-xs"
+                >
+                  Ignorer
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={applyLastPromptToAllEntries}
+                  disabled={entries.length === 0}
+                  className="h-8 text-xs"
+                >
+                  Pré-remplir
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div
             className="flex min-h-[44px] cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border p-8 text-center transition-colors hover:border-primary hover:bg-muted/50"
             onDrop={handleDrop}
