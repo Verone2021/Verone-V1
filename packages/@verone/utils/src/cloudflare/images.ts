@@ -120,12 +120,15 @@ export function isCloudflareConfigured(): boolean {
 /**
  * Construit l'URL de delivery Cloudflare Images pour un imageId donné.
  *
- * Par défaut, utilise l'URL Cloudflare standard `imagedelivery.net/{hash}/{imageId}/{variant}`
- * qui fonctionne immédiatement pour toute Cloudflare Images Account.
+ * Utilise EXCLUSIVEMENT `imagedelivery.net/{hash}/{imageId}/{variant}` qui
+ * fonctionne pour toute Cloudflare Images Account.
  *
- * Pour activer le custom domain `images.veronecollections.fr`, définir l'env var
- * `NEXT_PUBLIC_CLOUDFLARE_USE_CUSTOM_DOMAIN=true` côté Vercel après que la zone
- * Cloudflare est active et le cert SSL Universal émis (1-24h après ajout du domaine).
+ * Le custom domain `images.veronecollections.fr` est temporairement désactivé
+ * (BO-IMG-FIX-002, 2026-05-03) : la zone Cloudflare for SaaS / le custom
+ * hostname Images n'est pas finalisé, le sous-domaine renvoie 403 sur tous
+ * les variants. Quand la config DNS/SSL sera finalisée, réintroduire le
+ * branchement basé sur `NEXT_PUBLIC_CLOUDFLARE_USE_CUSTOM_DOMAIN` (cf.
+ * Git history avant BO-IMG-FIX-002).
  */
 export function buildCloudflareImageUrl(
   imageId: string,
@@ -139,14 +142,7 @@ export function buildCloudflareImageUrl(
     throw new CloudflareNotConfiguredError();
   }
 
-  const useCustomDomain =
-    process.env['NEXT_PUBLIC_CLOUDFLARE_USE_CUSTOM_DOMAIN'] === 'true';
-
-  const baseUrl = useCustomDomain
-    ? 'https://images.veronecollections.fr'
-    : 'https://imagedelivery.net';
-
-  return `${baseUrl}/${imagesHash}/${imageId}/${variant}`;
+  return `https://imagedelivery.net/${imagesHash}/${imageId}/${variant}`;
 }
 
 /**
