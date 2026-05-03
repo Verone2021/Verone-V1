@@ -10,7 +10,7 @@ import { CloudflareImage } from '@verone/ui/components/ui/cloudflare-image';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 
-import type { MediaAsset } from '@verone/products';
+import type { MediaAsset, PublicationCount } from '@verone/products';
 
 import type { BrandInfo } from './MediaAssetCard';
 
@@ -59,6 +59,7 @@ interface MediaLibraryByProductProps {
   assets: MediaAsset[];
   brands: BrandInfo[];
   loading: boolean;
+  publicationCounts?: Map<string, PublicationCount>;
   onGroupClick?: (group: AssetGroup) => void;
   onAssetClick?: (asset: MediaAsset) => void;
 }
@@ -71,6 +72,7 @@ export function MediaLibraryByProduct({
   assets,
   brands,
   loading,
+  publicationCounts,
   onGroupClick,
   onAssetClick,
 }: MediaLibraryByProductProps) {
@@ -232,6 +234,7 @@ export function MediaLibraryByProduct({
           key={`${group.kind}-${group.id}`}
           group={group}
           brands={brands}
+          publicationCounts={publicationCounts}
           onClick={() => onGroupClick?.(group)}
           onAssetClick={onAssetClick}
         />
@@ -247,6 +250,7 @@ export function MediaLibraryByProduct({
 interface ProductGroupCardProps {
   group: AssetGroup;
   brands: BrandInfo[];
+  publicationCounts?: Map<string, PublicationCount>;
   onClick?: () => void;
   onAssetClick?: (asset: MediaAsset) => void;
 }
@@ -254,6 +258,7 @@ interface ProductGroupCardProps {
 function ProductGroupCard({
   group,
   brands,
+  publicationCounts,
   onClick,
   onAssetClick,
 }: ProductGroupCardProps) {
@@ -323,25 +328,45 @@ function ProductGroupCard({
         )}
 
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
-          {previewAssets.map(asset => (
-            <button
-              key={asset.id}
-              type="button"
-              onClick={() => onAssetClick?.(asset)}
-              className="group relative aspect-square overflow-hidden rounded-md border border-border bg-muted transition-shadow hover:shadow-md"
-              aria-label={asset.alt_text ?? 'Voir la photo'}
-            >
-              <CloudflareImage
-                cloudflareId={asset.cloudflare_image_id}
-                fallbackSrc={asset.public_url}
-                alt={asset.alt_text ?? ''}
-                fill
-                className="object-cover transition-transform group-hover:scale-105"
-                variant="public"
-                sizes="(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 16vw"
-              />
-            </button>
-          ))}
+          {previewAssets.map(asset => {
+            const pubCount = publicationCounts?.get(asset.id);
+            const activePubs = pubCount?.active_count ?? 0;
+            return (
+              <button
+                key={asset.id}
+                type="button"
+                onClick={() => onAssetClick?.(asset)}
+                className="group relative aspect-square overflow-hidden rounded-md border border-border bg-muted transition-shadow hover:shadow-md"
+                aria-label={asset.alt_text ?? 'Voir la photo'}
+              >
+                <CloudflareImage
+                  cloudflareId={asset.cloudflare_image_id}
+                  fallbackSrc={asset.public_url}
+                  alt={asset.alt_text ?? ''}
+                  fill
+                  className="object-cover transition-transform group-hover:scale-105"
+                  variant="public"
+                  sizes="(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 16vw"
+                />
+                {activePubs > 0 && (
+                  <span
+                    className="absolute right-1 top-1 inline-flex items-center rounded-full bg-emerald-600/90 px-1.5 py-0.5 text-[10px] font-medium text-white shadow"
+                    title={`Publié ${activePubs} fois`}
+                  >
+                    ✓ {activePubs}
+                  </span>
+                )}
+                {asset.source === 'ai_generated' && (
+                  <span
+                    className="absolute left-1 top-1 inline-flex items-center rounded-full bg-fuchsia-600/90 px-1.5 py-0.5 text-[10px] font-medium text-white shadow"
+                    title="Image générée par IA"
+                  >
+                    IA
+                  </span>
+                )}
+              </button>
+            );
+          })}
           {moreCount > 0 && (
             <button
               type="button"
