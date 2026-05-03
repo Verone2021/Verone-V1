@@ -39,6 +39,8 @@ import { toast } from 'sonner';
 import type { BrandInfo } from './MediaAssetCard';
 import type { MediaAsset, MediaAssetType } from '@verone/products';
 
+import { MediaAssetPublicationsSection } from './MediaAssetPublicationsSection';
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -308,6 +310,11 @@ export function MediaAssetDetailModal({
                 />
               </div>
             </div>
+          </div>
+
+          {/* Publications — historique des canaux où la photo a été postée */}
+          <div className="mt-6">
+            <MediaAssetPublicationsSection assetId={asset.id} />
           </div>
         </div>
 

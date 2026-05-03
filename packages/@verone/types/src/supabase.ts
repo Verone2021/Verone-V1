@@ -4756,8 +4756,56 @@ export type Database = {
         };
         Relationships: [];
       };
+      media_asset_publications: {
+        Row: {
+          asset_id: string;
+          channel: string;
+          created_at: string;
+          created_by: string | null;
+          external_url: string | null;
+          id: string;
+          notes: string | null;
+          published_at: string;
+          unpublished_at: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          asset_id: string;
+          channel: string;
+          created_at?: string;
+          created_by?: string | null;
+          external_url?: string | null;
+          id?: string;
+          notes?: string | null;
+          published_at?: string;
+          unpublished_at?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          asset_id?: string;
+          channel?: string;
+          created_at?: string;
+          created_by?: string | null;
+          external_url?: string | null;
+          id?: string;
+          notes?: string | null;
+          published_at?: string;
+          unpublished_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'media_asset_publications_asset_id_fkey';
+            columns: ['asset_id'];
+            isOneToOne: false;
+            referencedRelation: 'media_assets';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       media_assets: {
         Row: {
+          ai_prompt_used: string | null;
           alt_text: string | null;
           archived_at: string | null;
           asset_type: string;
@@ -4773,6 +4821,7 @@ export type Database = {
           notes: string | null;
           product_id: string | null;
           public_url: string | null;
+          source: string;
           source_product_image_id: string | null;
           storage_path: string | null;
           tags: string[];
@@ -4781,6 +4830,7 @@ export type Database = {
           width: number | null;
         };
         Insert: {
+          ai_prompt_used?: string | null;
           alt_text?: string | null;
           archived_at?: string | null;
           asset_type?: string;
@@ -4796,6 +4846,7 @@ export type Database = {
           notes?: string | null;
           product_id?: string | null;
           public_url?: string | null;
+          source?: string;
           source_product_image_id?: string | null;
           storage_path?: string | null;
           tags?: string[];
@@ -4804,6 +4855,7 @@ export type Database = {
           width?: number | null;
         };
         Update: {
+          ai_prompt_used?: string | null;
           alt_text?: string | null;
           archived_at?: string | null;
           asset_type?: string;
@@ -4819,6 +4871,7 @@ export type Database = {
           notes?: string | null;
           product_id?: string | null;
           public_url?: string | null;
+          source?: string;
           source_product_image_id?: string | null;
           storage_path?: string | null;
           tags?: string[];

@@ -2,7 +2,11 @@
 
 import * as React from 'react';
 
-import { useMediaAssets } from '@verone/products';
+import {
+  useMediaAssets,
+  fetchPublicationCounts,
+  type PublicationCount,
+} from '@verone/products';
 import type { MediaAsset, MediaAssetType } from '@verone/products';
 
 import { MediaLibraryToolbar } from './MediaLibraryToolbar';
@@ -70,10 +74,38 @@ export function MediaLibraryView({
     pageSize: 1000, // Vue groupée : on charge tout d'un coup pour grouper côté client
   });
 
+  // Compteur de publications par asset (pour badge "Publié N×" sur chaque carte)
+  const [publicationCounts, setPublicationCounts] = React.useState<
+    Map<string, PublicationCount>
+  >(new Map());
+
+  React.useEffect(() => {
+    if (assets.length === 0) {
+      setPublicationCounts(new Map());
+      return;
+    }
+    let cancelled = false;
+    void fetchPublicationCounts(assets.map(a => a.id)).then(map => {
+      if (!cancelled) setPublicationCounts(map);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [assets]);
+
   const handleAssetClick = React.useCallback((asset: MediaAsset) => {
     setSelectedAsset(asset);
     setDetailOpen(true);
   }, []);
+
+  // Quand la modal détail se ferme, on rafraîchit les compteurs (au cas où
+  // l'utilisateur a ajouté/retiré une publication)
+  const refreshPublicationCounts = React.useCallback(() => {
+    if (assets.length === 0) return;
+    void fetchPublicationCounts(assets.map(a => a.id)).then(map => {
+      setPublicationCounts(map);
+    });
+  }, [assets]);
 
   const handleUploadClose = React.useCallback(() => {
     setUploadOpen(false);
@@ -82,7 +114,8 @@ export function MediaLibraryView({
   const handleDetailClose = React.useCallback(() => {
     setDetailOpen(false);
     setSelectedAsset(null);
-  }, []);
+    refreshPublicationCounts();
+  }, [refreshPublicationCounts]);
 
   const handleUpload = React.useCallback(
     async (file: File, metadata: Parameters<typeof uploadAsset>[1]) => {
@@ -127,6 +160,7 @@ export function MediaLibraryView({
         assets={assets}
         brands={brands}
         loading={loading}
+        publicationCounts={publicationCounts}
         onAssetClick={handleAssetClick}
       />
 
