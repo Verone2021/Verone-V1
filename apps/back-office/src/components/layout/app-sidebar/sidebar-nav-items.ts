@@ -29,6 +29,7 @@ import {
   Sparkles,
   Wand2,
   Image,
+  Award,
 } from 'lucide-react';
 
 // Interface pour les éléments de navigation
@@ -319,6 +320,11 @@ export const getNavItems = (
         title: 'Bibliothèque',
         href: '/marketing/bibliotheque',
         icon: Image,
+      },
+      {
+        title: 'Marques',
+        href: '/marques',
+        icon: Award,
       },
     ],
   },
