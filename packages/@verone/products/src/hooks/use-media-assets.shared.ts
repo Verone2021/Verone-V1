@@ -14,6 +14,19 @@ export type MediaAssetType =
   | 'ambiance'
   | 'other';
 
+/**
+ * Origine de la photo, posée à l'upload :
+ * - manual_upload : upload manuel par un utilisateur (défaut)
+ * - supplier_provided : fournie par le fournisseur (catalogue, lookbook…)
+ * - ai_generated : générée via une IA (Nano Banana / Gemini / autre)
+ * - stock_photo : banque d'images (Unsplash, Pexels…)
+ */
+export type MediaAssetSource =
+  | 'manual_upload'
+  | 'supplier_provided'
+  | 'ai_generated'
+  | 'stock_photo';
+
 export interface UploadAssetInput {
   assetType: MediaAssetType;
   brandIds: string[];
@@ -27,6 +40,16 @@ export interface UploadAssetInput {
    */
   productId?: string | null;
   variantGroupId?: string | null;
+  /**
+   * Origine de la photo. Permet de tagger les photos IA et de tracer la
+   * provenance pour l'audit / les droits d'usage. Défaut : manual_upload.
+   */
+  source?: MediaAssetSource;
+  /**
+   * Si source = ai_generated : prompt utilisé pour générer l'image. Conservé
+   * pour pouvoir réutiliser ou affiner le prompt plus tard.
+   */
+  aiPromptUsed?: string | null;
 }
 
 // Colonnes sélectionnées explicitement (pas de select('*'))
@@ -47,6 +70,8 @@ export const MEDIA_ASSET_SELECT_COLS = [
   'source_product_image_id',
   'product_id',
   'variant_group_id',
+  'source',
+  'ai_prompt_used',
   'created_at',
   'updated_at',
   'archived_at',

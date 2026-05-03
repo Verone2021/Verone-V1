@@ -19,6 +19,7 @@ import {
 export type {
   MediaAsset,
   MediaAssetType,
+  MediaAssetSource,
   UploadAssetInput,
 } from './use-media-assets.shared';
 

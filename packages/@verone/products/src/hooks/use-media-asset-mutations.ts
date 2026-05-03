@@ -81,6 +81,11 @@ export function useMediaAssetMutations({
           cloudflare_image_id: uploadResult.cloudflareImageId ?? null,
           product_id: metadata.productId ?? null,
           variant_group_id: metadata.variantGroupId ?? null,
+          source: metadata.source ?? 'manual_upload',
+          ai_prompt_used:
+            metadata.source === 'ai_generated'
+              ? (metadata.aiPromptUsed ?? null)
+              : null,
         };
 
         const { data, error: insertError } = await supabase

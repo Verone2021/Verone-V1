@@ -33,7 +33,7 @@ import {
 } from '@verone/ui/components/ui/select';
 import { Badge } from '@verone/ui/components/ui/badge';
 import { CloudflareImage } from '@verone/ui/components/ui/cloudflare-image';
-import { Archive, ExternalLink, Save } from 'lucide-react';
+import { Archive, Copy, ExternalLink, Save, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 import type { BrandInfo } from './MediaAssetCard';
@@ -311,6 +311,43 @@ export function MediaAssetDetailModal({
               </div>
             </div>
           </div>
+
+          {/* Prompt IA si la photo a été générée par Nano Banana / autre IA */}
+          {asset.source === 'ai_generated' && asset.ai_prompt_used && (
+            <div className="mt-6 space-y-2 rounded-lg border border-fuchsia-200 bg-fuchsia-50/40 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-fuchsia-600" />
+                  <Label className="text-sm font-medium">
+                    Prompt IA utilisé
+                  </Label>
+                  <Badge
+                    variant="secondary"
+                    className="bg-fuchsia-100 text-[10px] text-fuchsia-700"
+                  >
+                    Nano Banana / IA
+                  </Badge>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    void navigator.clipboard
+                      .writeText(asset.ai_prompt_used ?? '')
+                      .then(() => toast.success('Prompt copié'))
+                      .catch(() => toast.error('Copie impossible'));
+                  }}
+                  className="h-8 text-xs"
+                >
+                  <Copy className="mr-1 h-3.5 w-3.5" />
+                  Copier
+                </Button>
+              </div>
+              <pre className="max-h-40 overflow-y-auto rounded-md border border-border bg-card p-2 text-[11px] leading-relaxed text-foreground">
+                {asset.ai_prompt_used}
+              </pre>
+            </div>
+          )}
 
           {/* Publications — historique des canaux où la photo a été postée */}
           <div className="mt-6">
