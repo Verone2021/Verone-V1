@@ -9,7 +9,10 @@ import {
 } from '@verone/products';
 import type { MediaAsset, MediaAssetType } from '@verone/products';
 
-import { MediaLibraryToolbar } from './MediaLibraryToolbar';
+import {
+  MediaLibraryToolbar,
+  type PublicationStatusFilter,
+} from './MediaLibraryToolbar';
 import { MediaLibraryByProduct } from './MediaLibraryByProduct';
 import { UploadAssetModal } from './UploadAssetModal';
 import { MediaAssetDetailModal } from './MediaAssetDetailModal';
@@ -38,6 +41,8 @@ export function MediaLibraryView({
   const [assetType, setAssetType] = React.useState<MediaAssetType | 'all'>(
     'all'
   );
+  const [publicationStatus, setPublicationStatus] =
+    React.useState<PublicationStatusFilter>('all');
 
   // Modals
   const [uploadOpen, setUploadOpen] = React.useState(false);
@@ -92,6 +97,25 @@ export function MediaLibraryView({
       cancelled = true;
     };
   }, [assets]);
+
+  // Filtrage côté client selon le statut publication / IA générée
+  const filteredAssets = React.useMemo(() => {
+    if (publicationStatus === 'all') return assets;
+    if (publicationStatus === 'ai_generated') {
+      return assets.filter(a => a.source === 'ai_generated');
+    }
+    if (publicationStatus === 'published') {
+      return assets.filter(a => {
+        const c = publicationCounts.get(a.id);
+        return c ? c.active_count > 0 : false;
+      });
+    }
+    // unused : aucune publication active
+    return assets.filter(a => {
+      const c = publicationCounts.get(a.id);
+      return !c || c.active_count === 0;
+    });
+  }, [assets, publicationStatus, publicationCounts]);
 
   const handleAssetClick = React.useCallback((asset: MediaAsset) => {
     setSelectedAsset(asset);
@@ -150,14 +174,16 @@ export function MediaLibraryView({
         search={search}
         brandId={brandId}
         assetType={assetType}
+        publicationStatus={publicationStatus}
         onSearchChange={setSearch}
         onBrandChange={setBrandId}
         onAssetTypeChange={setAssetType}
+        onPublicationStatusChange={setPublicationStatus}
         onUploadClick={() => setUploadOpen(true)}
       />
 
       <MediaLibraryByProduct
-        assets={assets}
+        assets={filteredAssets}
         brands={brands}
         loading={loading}
         publicationCounts={publicationCounts}

@@ -21,14 +21,22 @@ import type { MediaAssetType } from '@verone/products';
 // TYPES
 // ============================================================================
 
+export type PublicationStatusFilter =
+  | 'all'
+  | 'published'
+  | 'unused'
+  | 'ai_generated';
+
 interface MediaLibraryToolbarProps {
   brands: BrandInfo[];
   search: string;
   brandId: string;
   assetType: MediaAssetType | 'all';
+  publicationStatus: PublicationStatusFilter;
   onSearchChange: (value: string) => void;
   onBrandChange: (value: string) => void;
   onAssetTypeChange: (value: MediaAssetType | 'all') => void;
+  onPublicationStatusChange: (value: PublicationStatusFilter) => void;
   onUploadClick: () => void;
 }
 
@@ -41,9 +49,11 @@ export function MediaLibraryToolbar({
   search,
   brandId,
   assetType,
+  publicationStatus,
   onSearchChange,
   onBrandChange,
   onAssetTypeChange,
+  onPublicationStatusChange,
   onUploadClick,
 }: MediaLibraryToolbarProps) {
   const handleSearchChange = React.useCallback(
@@ -97,6 +107,23 @@ export function MediaLibraryToolbar({
               <SelectItem value="ambiance">Ambiance</SelectItem>
               <SelectItem value="logo">Logo</SelectItem>
               <SelectItem value="other">Autre</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={publicationStatus}
+            onValueChange={v =>
+              onPublicationStatusChange(v as PublicationStatusFilter)
+            }
+          >
+            <SelectTrigger className="w-full min-h-[44px] md:min-h-[36px] md:w-[180px]">
+              <SelectValue placeholder="Statut publication" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les photos</SelectItem>
+              <SelectItem value="published">Publiées (≥ 1 fois)</SelectItem>
+              <SelectItem value="unused">Jamais utilisées</SelectItem>
+              <SelectItem value="ai_generated">Générées par IA</SelectItem>
             </SelectContent>
           </Select>
         </>
