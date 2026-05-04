@@ -233,6 +233,7 @@ export default function ProductPage({
         slug={product.slug}
         price={product.price_ttc}
         imageUrl={product.primary_image_url}
+        cloudflareImageId={product.primary_cloudflare_image_id}
         manufacturer={product.manufacturer}
         sku={product.sku}
         reviewCount={reviewStats.count}
@@ -284,9 +285,14 @@ export default function ProductPage({
             images={
               galleryImages.length > 0
                 ? galleryImages
-                : (product.image_urls ?? []).map(url => ({
+                : (product.image_urls ?? []).map((url, idx) => ({
                     url,
-                    cloudflareId: null,
+                    // SSR fallback : l'image principale (idx 0) utilise le
+                    // cloudflare_image_id du produit pour éviter le preload
+                    // d'une URL Supabase morte. Les vignettes seront migrées
+                    // dès que React Query a chargé product_images.
+                    cloudflareId:
+                      idx === 0 ? product.primary_cloudflare_image_id : null,
                   }))
             }
             productName={product.name}
