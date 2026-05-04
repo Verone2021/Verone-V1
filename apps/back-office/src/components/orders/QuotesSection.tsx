@@ -1,9 +1,16 @@
 'use client';
 
+import { useState } from 'react';
+
+import { useRouter } from 'next/navigation';
+
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card, CardContent } from '@verone/ui';
-import { DocumentResyncAction } from '@verone/finance/components';
-import { Download, Eye, FileEdit, Loader2 } from 'lucide-react';
+import {
+  DocumentResyncAction,
+  SendDocumentEmailModal,
+} from '@verone/finance/components';
+import { Download, Eye, FileEdit, Loader2, Mail } from 'lucide-react';
 
 interface LinkedQuote {
   id: string;
@@ -44,8 +51,24 @@ const STATUS_COLORS: Record<string, string> = {
   expired: 'text-amber-700 bg-amber-100',
 };
 
-export function QuotesSection({ orderId }: { orderId: string }) {
-  const { data, isLoading } = useQuery<QuotesByOrderResponse>({
+interface QuotesSectionProps {
+  orderId: string;
+  /** Email du client lié à la commande — passé au modal d'envoi email. */
+  clientEmail?: string;
+  /** Nom du client lié à la commande — passé au modal d'envoi email. */
+  clientName?: string;
+}
+
+export function QuotesSection({
+  orderId,
+  clientEmail = '',
+  clientName = '',
+}: QuotesSectionProps) {
+  const router = useRouter();
+  const [sendModalQuoteId, setSendModalQuoteId] = useState<string | null>(null);
+  const [sendModalQuoteNumber, setSendModalQuoteNumber] = useState<string>('');
+
+  const { data, isLoading, refetch } = useQuery<QuotesByOrderResponse>({
     queryKey: ['quotes-by-order', orderId],
     queryFn: async (): Promise<QuotesByOrderResponse> => {
       const res = await fetch(`/api/qonto/quotes/by-order/${orderId}`);
@@ -166,10 +189,23 @@ export function QuotesSection({ orderId }: { orderId: string }) {
 
                 <Button
                   size="sm"
+                  variant="outline"
+                  className="h-6 text-[10px] px-2"
+                  onClick={() => {
+                    setSendModalQuoteId(quote.id);
+                    setSendModalQuoteNumber(quote.quote_number);
+                  }}
+                >
+                  <Mail className="h-3 w-3 mr-0.5" />
+                  Envoyer
+                </Button>
+
+                <Button
+                  size="sm"
                   variant="ghost"
                   className="h-6 text-[10px] px-2 ml-auto"
                   onClick={() => {
-                    window.open(`/api/qonto/quotes/${quote.id}/view`, '_blank');
+                    router.push(`/factures/devis/${quote.id}`);
                   }}
                 >
                   <Eye className="h-3 w-3 mr-0.5" />
@@ -180,6 +216,25 @@ export function QuotesSection({ orderId }: { orderId: string }) {
           );
         })}
       </CardContent>
+
+      {sendModalQuoteId && (
+        <SendDocumentEmailModal
+          open
+          onClose={() => {
+            setSendModalQuoteId(null);
+            setSendModalQuoteNumber('');
+          }}
+          documentType="quote"
+          documentId={sendModalQuoteId}
+          documentNumber={sendModalQuoteNumber}
+          clientEmail={clientEmail}
+          clientName={clientName}
+          pdfUrl={`/api/qonto/quotes/${sendModalQuoteId}/pdf`}
+          onSent={() => {
+            void refetch();
+          }}
+        />
+      )}
     </Card>
   );
 }
