@@ -1,7 +1,5 @@
 'use client';
 
-import Image from 'next/image';
-
 import { canEditItems } from '@verone/orders';
 import type { SalesOrderStatus } from '@verone/orders/hooks';
 import {
@@ -11,6 +9,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CloudflareImage,
   Input,
   Table,
   TableBody,
@@ -139,9 +138,11 @@ export function OrderItemsTable({
                     <TableRow key={item.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          {item.product_image_url ? (
-                            <Image
-                              src={item.product_image_url}
+                          {(item.product_image_cloudflare_id ??
+                          item.product_image_url) ? (
+                            <CloudflareImage
+                              cloudflareId={item.product_image_cloudflare_id}
+                              fallbackSrc={item.product_image_url}
                               alt={item.product_name}
                               width={40}
                               height={40}

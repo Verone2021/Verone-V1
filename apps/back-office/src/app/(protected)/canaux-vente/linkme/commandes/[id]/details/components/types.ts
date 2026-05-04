@@ -127,6 +127,7 @@ export interface EnrichedOrderItem {
   product_name: string;
   product_sku: string;
   product_image_url: string | null;
+  product_image_cloudflare_id: string | null;
   quantity: number;
   unit_price_ht: number;
   total_ht: number;
@@ -157,6 +158,7 @@ export interface LinkmeOrderItemEnrichedRaw {
   product_name: string | null;
   product_sku: string | null;
   product_image_url: string | null;
+  product_image_cloudflare_id: string | null;
   quantity: number | null;
   unit_price_ht: number | null;
   total_ht: number | null;

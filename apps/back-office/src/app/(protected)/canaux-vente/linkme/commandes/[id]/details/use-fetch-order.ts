@@ -266,7 +266,7 @@ export function useFetchOrder(orderId: string) {
       if (enrichedData && enrichedData.length > 0) {
         const typed = enrichedData as LinkmeOrderItemEnrichedRaw[];
 
-        // Fetch stock for all products
+        // Fetch stock + cloudflare image ids for all products
         const productIds = typed.map(i => i.product_id).filter(Boolean);
         const { data: stockData } =
           productIds.length > 0
@@ -277,6 +277,24 @@ export function useFetchOrder(orderId: string) {
                 )
                 .in('id', productIds)
             : { data: null };
+        const { data: imageData } =
+          productIds.length > 0
+            ? await supabase
+                .from('product_images')
+                .select('product_id, cloudflare_image_id')
+                .in('product_id', productIds)
+                .eq('is_primary', true)
+            : { data: null };
+        const cloudflareIdByProductId = new Map<string, string>();
+        (imageData ?? []).forEach(
+          (row: { product_id: string; cloudflare_image_id: string | null }) => {
+            if (row.cloudflare_image_id)
+              cloudflareIdByProductId.set(
+                row.product_id,
+                row.cloudflare_image_id
+              );
+          }
+        );
         const stockMap = new Map(
           (stockData ?? []).map(
             (p: {
@@ -306,6 +324,8 @@ export function useFetchOrder(orderId: string) {
               product_name: item.product_name ?? 'Produit inconnu',
               product_sku: item.product_sku ?? '-',
               product_image_url: item.product_image_url,
+              product_image_cloudflare_id:
+                cloudflareIdByProductId.get(item.product_id) ?? null,
               quantity: item.quantity ?? 0,
               unit_price_ht: item.unit_price_ht ?? 0,
               total_ht: item.total_ht ?? 0,

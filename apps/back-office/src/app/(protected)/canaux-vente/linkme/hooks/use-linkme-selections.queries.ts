@@ -71,7 +71,7 @@ async function fetchSelectionById(
   }
 
   const productIds = items?.map((item: SelectionItem) => item.product_id) ?? [];
-  let imagesByProductId: Record<string, string> = {};
+  const imagesByProductId: Record<string, string> = {};
   const commissionByProductId: Record<string, number | null> = {};
   const catalogPriceByProductId: Record<string, number | null> = {};
   const channelPricingIdByProductId: Record<string, string | null> = {};
@@ -86,23 +86,21 @@ async function fetchSelectionById(
     }
   > = {};
 
+  const cloudflareIdsByProductId: Record<string, string> = {};
+
   if (productIds.length > 0) {
     const { data: images } = await supabase
       .from('product_images')
-      .select('product_id, public_url')
+      .select('product_id, public_url, cloudflare_image_id')
       .in('product_id', productIds)
       .eq('is_primary', true);
 
     if (images) {
-      imagesByProductId = images.reduce(
-        (acc: Record<string, string>, img) => {
-          if (img.public_url) {
-            acc[img.product_id] = img.public_url;
-          }
-          return acc;
-        },
-        {} as Record<string, string>
-      );
+      images.forEach(img => {
+        if (img.public_url) imagesByProductId[img.product_id] = img.public_url;
+        if (img.cloudflare_image_id)
+          cloudflareIdsByProductId[img.product_id] = img.cloudflare_image_id;
+      });
     }
 
     const { data: channelPrices } = await supabase
@@ -160,6 +158,8 @@ async function fetchSelectionById(
           }
         : undefined,
       product_image_url: imagesByProductId[item.product_id] ?? null,
+      product_image_cloudflare_id:
+        cloudflareIdsByProductId[item.product_id] ?? null,
       channel_pricing_id: channelPricingIdByProductId[item.product_id] ?? null,
       commission_rate: commissionByProductId[item.product_id] ?? null,
       catalog_price_ht: catalogPriceByProductId[item.product_id] ?? null,
@@ -239,16 +239,17 @@ async function fetchEnseigneSourcedProducts(
 
   const { data: images } = await supabase
     .from('product_images')
-    .select('product_id, public_url')
+    .select('product_id, public_url, cloudflare_image_id')
     .in('product_id', productIds)
     .eq('is_primary', true);
 
   const imagesByProductId: Record<string, string> = {};
+  const cloudflareIdsByProductId: Record<string, string> = {};
   if (images) {
     images.forEach(img => {
-      if (img.public_url) {
-        imagesByProductId[img.product_id] = img.public_url;
-      }
+      if (img.public_url) imagesByProductId[img.product_id] = img.public_url;
+      if (img.cloudflare_image_id)
+        cloudflareIdsByProductId[img.product_id] = img.cloudflare_image_id;
     });
   }
 
@@ -273,6 +274,7 @@ async function fetchEnseigneSourcedProducts(
       selling_price_ht: Math.round(sellingPrice * 100) / 100,
       supplier_reference: p.supplier_reference,
       primary_image_url: imagesByProductId[p.id] ?? null,
+      primary_image_cloudflare_id: cloudflareIdsByProductId[p.id] ?? null,
     };
   });
 }

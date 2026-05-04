@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import Image from 'next/image';
 
-import { Button } from '@verone/ui';
+import { Button, CloudflareImage } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
   X,
@@ -250,9 +249,11 @@ export function AddProductToOrderModal({
                             onClick={() => addToCart(item)}
                             className="flex items-center gap-3 p-2 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all text-left"
                           >
-                            {item.product_image_url ? (
-                              <Image
-                                src={item.product_image_url}
+                            {(item.product_image_cloudflare_id ??
+                            item.product_image_url) ? (
+                              <CloudflareImage
+                                cloudflareId={item.product_image_cloudflare_id}
+                                fallbackSrc={item.product_image_url}
                                 alt={item.product?.name ?? ''}
                                 width={40}
                                 height={40}
