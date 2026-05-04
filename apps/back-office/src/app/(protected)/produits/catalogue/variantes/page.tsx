@@ -10,6 +10,7 @@ import { VariantGroupCard } from './VariantGroupCard';
 import { VariantesSkeleton } from './VariantesSkeleton';
 import { VariantesFilters } from './VariantesFilters';
 import { VariantesModals } from './VariantesModals';
+import { VariantSuggestionsSection } from './VariantSuggestionsSection';
 import { useVariantesPage } from './use-variantes-page';
 
 export default function VariantesPage() {
@@ -59,6 +60,9 @@ export default function VariantesPage() {
       />
 
       <div className="p-6 space-y-4">
+        {/* Suggestions automatiques de regroupements */}
+        <VariantSuggestionsSection />
+
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <KPICardUnified

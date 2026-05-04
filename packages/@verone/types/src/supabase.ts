@@ -7,30 +7,10 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '13.0.5';
   };
   public: {
     Tables: {
@@ -14056,6 +14036,29 @@ export type Database = {
           total_ttc: number;
         }[];
       };
+      suggest_variant_groups: {
+        Args: {
+          p_max_cluster_size?: number;
+          p_max_results?: number;
+          p_min_cluster_size?: number;
+        };
+        Returns: {
+          common_cost_price: number;
+          common_weight: number;
+          confidence: string;
+          detected_axis: string;
+          has_common_cost_price: boolean;
+          has_common_supplier: boolean;
+          has_common_weight: boolean;
+          product_count: number;
+          product_ids: string[];
+          product_names: string[];
+          product_skus: string[];
+          stem: string;
+          supplier_id: string;
+          supplier_name: string;
+        }[];
+      };
       test_custom_access_token_hook: {
         Args: { test_user_id: string };
         Returns: Json;
@@ -14613,9 +14616,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       affiliate_product_approval_status: [
