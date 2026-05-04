@@ -41,6 +41,7 @@ export interface SelectionItem {
     supplier_name?: string | null;
   };
   product_image_url?: string | null;
+  product_image_cloudflare_id?: string | null;
   commission_rate?: number | null;
   catalog_price_ht?: number | null;
   public_price_ht?: number | null;
@@ -194,7 +195,7 @@ async function fetchSelectionById(
 
   // Récupérer les images des produits
   const productIds = typedItems?.map(item => item.product_id) ?? [];
-  let imagesByProductId: Record<string, string> = {};
+  const imagesByProductId: Record<string, string> = {};
   const commissionByProductId: Record<string, number | null> = {};
   const catalogPriceByProductId: Record<string, number | null> = {};
   const channelPricingIdByProductId: Record<string, string | null> = {};
@@ -209,23 +210,21 @@ async function fetchSelectionById(
     }
   > = {};
 
+  const cloudflareIdsByProductId: Record<string, string> = {};
+
   if (productIds.length > 0) {
     const { data: images } = await supabase
       .from('product_images')
-      .select('product_id, public_url')
+      .select('product_id, public_url, cloudflare_image_id')
       .in('product_id', productIds)
       .eq('is_primary', true);
 
     if (images) {
-      imagesByProductId = images.reduce(
-        (acc: Record<string, string>, img) => {
-          if (img.public_url) {
-            acc[img.product_id] = img.public_url;
-          }
-          return acc;
-        },
-        {} as Record<string, string>
-      );
+      images.forEach(img => {
+        if (img.public_url) imagesByProductId[img.product_id] = img.public_url;
+        if (img.cloudflare_image_id)
+          cloudflareIdsByProductId[img.product_id] = img.cloudflare_image_id;
+      });
     }
 
     // Récupérer les données channel_pricing
@@ -282,6 +281,8 @@ async function fetchSelectionById(
           }
         : undefined,
       product_image_url: imagesByProductId[item.product_id] ?? null,
+      product_image_cloudflare_id:
+        cloudflareIdsByProductId[item.product_id] ?? null,
       channel_pricing_id: channelPricingIdByProductId[item.product_id] ?? null,
       commission_rate: commissionByProductId[item.product_id] ?? null,
       catalog_price_ht: catalogPriceByProductId[item.product_id] ?? null,

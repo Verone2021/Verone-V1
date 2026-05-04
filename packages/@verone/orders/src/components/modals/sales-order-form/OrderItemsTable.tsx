@@ -2,6 +2,7 @@
 
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { CloudflareImage } from '@verone/ui';
 import { Input } from '@verone/ui';
 import {
   Table,
@@ -12,7 +13,6 @@ import {
   TableRow,
 } from '@verone/ui';
 import { cn, formatCurrency } from '@verone/utils';
-import Image from 'next/image';
 import { Plus, Trash2 } from 'lucide-react';
 
 import { QuantityInput } from './QuantityInput';
@@ -33,6 +33,7 @@ interface OrderItem {
     name: string;
     sku: string;
     primary_image_url?: string;
+    primary_image_cloudflare_id?: string | null;
     stock_quantity?: number;
     eco_tax_default?: number;
   };
@@ -112,10 +113,14 @@ export function OrderItemsTable({
                       {/* Produit avec image */}
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {item.product?.primary_image_url && (
-                            <Image
-                              src={item.product.primary_image_url}
-                              alt={item.product.name}
+                          {(item.product?.primary_image_cloudflare_id ??
+                            item.product?.primary_image_url) && (
+                            <CloudflareImage
+                              cloudflareId={
+                                item.product?.primary_image_cloudflare_id
+                              }
+                              fallbackSrc={item.product?.primary_image_url}
+                              alt={item.product?.name ?? 'Produit'}
                               width={32}
                               height={32}
                               className="w-8 h-8 object-cover rounded"

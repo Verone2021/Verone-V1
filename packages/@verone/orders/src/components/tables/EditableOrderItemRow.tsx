@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
+import { CloudflareImage } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { TableCell, TableRow } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
@@ -46,6 +47,7 @@ import type { OrderItem, OrderType } from '@verone/orders/hooks';
 
 interface ProductImage {
   public_url: string;
+  cloudflare_image_id?: string | null;
   is_primary: boolean;
   display_order?: number;
 }
@@ -97,16 +99,19 @@ export function EditableOrderItemRow({
     return subtotal + (item.eco_tax ?? 0) * item.quantity;
   };
 
-  // Récupérer image primaire produit
-  const getPrimaryImage = (): string | null => {
+  // Récupérer image primaire produit (Cloudflare ID + URL fallback)
+  const getPrimaryImage = (): {
+    cloudflareId: string | null;
+    fallbackSrc: string | null;
+  } => {
     const images = (
       item.products as unknown as { product_images?: ProductImage[] }
     )?.product_images;
-    return (
-      images?.find(img => img.is_primary)?.public_url ??
-      images?.[0]?.public_url ??
-      null
-    );
+    const primary = images?.find(img => img.is_primary) ?? images?.[0] ?? null;
+    return {
+      cloudflareId: primary?.cloudflare_image_id ?? null,
+      fallbackSrc: primary?.public_url ?? null,
+    };
   };
 
   // ========== HANDLERS QUANTITÉ (état local string + onBlur) ==========
@@ -212,14 +217,16 @@ export function EditableOrderItemRow({
         <div className="flex gap-3 items-center">
           {/* Image produit */}
           <div className="flex-shrink-0">
-            {primaryImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={primaryImage}
+            {(primaryImage.cloudflareId ?? primaryImage.fallbackSrc) ? (
+              <CloudflareImage
+                cloudflareId={primaryImage.cloudflareId}
+                fallbackSrc={primaryImage.fallbackSrc}
                 alt={
                   (item.products as unknown as { name?: string })?.name ??
                   'Produit'
                 }
+                width={48}
+                height={48}
                 className="w-12 h-12 object-cover rounded border"
               />
             ) : (
