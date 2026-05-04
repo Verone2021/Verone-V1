@@ -73,6 +73,7 @@ export function useSourcingFetch(filters?: SourcingFilters) {
           ),
           product_images!left(
             public_url,
+            cloudflare_image_id,
             is_primary
           )
         `

@@ -43,6 +43,7 @@ export interface SourcingProduct {
   // ✅ FIX: Images produits (jointure LEFT depuis product_images)
   product_images?: Array<{
     public_url: string;
+    cloudflare_image_id?: string | null;
     is_primary: boolean;
   }>;
 

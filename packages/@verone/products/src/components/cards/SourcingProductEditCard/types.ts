@@ -64,6 +64,7 @@ export interface SourcingProduct {
 export interface ProductImage {
   id: string;
   public_url: string | null;
+  cloudflare_image_id?: string | null;
   alt_text?: string | null;
 }
 
