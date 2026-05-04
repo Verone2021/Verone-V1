@@ -28,6 +28,7 @@ export interface FetchedProduct {
 export interface ProductImageRef {
   product_id: string;
   public_url: string;
+  cloudflare_image_id: string | null;
 }
 
 /** Données de mise à jour pour un variant group */

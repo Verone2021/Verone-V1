@@ -13,6 +13,8 @@ export interface VariantSuggestion {
   product_ids: string[];
   product_names: string[];
   product_skus: string[];
+  preview_cloudflare_image_id: string | null;
+  preview_image_url: string | null;
   detected_axis:
     | 'color'
     | 'material'
