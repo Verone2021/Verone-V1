@@ -22,7 +22,7 @@
     "@verone/types": "workspace:*",
     "@verone/ui": "workspace:*",
     "@verone/utils": "workspace:*",
-    "@react-pdf/renderer": "^4.3.1"
+    "@react-pdf/renderer": "^4.5.1"
   },
   "peerDependencies": {
     "react": "^18.2.0",
