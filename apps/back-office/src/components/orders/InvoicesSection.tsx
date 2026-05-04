@@ -2,11 +2,16 @@
 
 import { useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { InvoiceDetailModal } from '@verone/finance';
-import { DocumentResyncAction } from '@verone/finance/components';
+import {
+  DocumentResyncAction,
+  SendDocumentEmailModal,
+  type DocumentEmailType,
+} from '@verone/finance/components';
 import { Button, Card, CardContent } from '@verone/ui';
-import { FileText, Download, Send, Loader2, Eye } from 'lucide-react';
+import { FileText, Download, Send, Loader2, Eye, Mail } from 'lucide-react';
 
 interface InvoiceLinked {
   id: string;
@@ -43,13 +48,24 @@ interface ApiSuccessResponse {
   message?: string;
 }
 
-export function InvoicesSection({ orderId }: { orderId: string }) {
+interface InvoicesSectionProps {
+  orderId: string;
+  /** Email du client lié à la commande — passé au modal d'envoi email. */
+  clientEmail?: string;
+  /** Nom du client lié à la commande — passé au modal d'envoi email. */
+  clientName?: string;
+}
+
+export function InvoicesSection({
+  orderId,
+  clientEmail = '',
+  clientName = '',
+}: InvoicesSectionProps) {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(
-    null
-  );
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [sendModalInvoice, setSendModalInvoice] =
+    useState<InvoiceLinked | null>(null);
 
   const { data, isLoading } = useQuery<InvoicesByOrderResponse>({
     queryKey: ['invoices-by-order', orderId],
@@ -74,9 +90,6 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ['invoices-by-order', orderId],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ['invoice-details', selectedInvoiceId],
       });
       setActionLoading(null);
     },
@@ -186,30 +199,39 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
                   </Button>
                 )}
 
-                {invoice.status !== 'draft' && invoice.qonto_pdf_url && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-6 text-[10px] px-2"
-                    onClick={() => {
-                      window.open(
-                        `/api/qonto/invoices/${invoice.id}/pdf`,
-                        '_blank'
-                      );
-                    }}
-                  >
-                    <Download className="h-3 w-3 mr-0.5" />
-                    PDF
-                  </Button>
-                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 text-[10px] px-2"
+                  onClick={() => {
+                    window.open(
+                      `/api/qonto/invoices/${invoice.id}/pdf`,
+                      '_blank'
+                    );
+                  }}
+                >
+                  <Download className="h-3 w-3 mr-0.5" />
+                  PDF
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 text-[10px] px-2"
+                  onClick={() => {
+                    setSendModalInvoice(invoice);
+                  }}
+                >
+                  <Mail className="h-3 w-3 mr-0.5" />
+                  Envoyer
+                </Button>
 
                 <Button
                   size="sm"
                   variant="ghost"
                   className="h-6 text-[10px] px-2 ml-auto"
                   onClick={() => {
-                    setSelectedInvoiceId(invoice.id);
-                    setIsDetailModalOpen(true);
+                    router.push(`/factures/${invoice.id}`);
                   }}
                 >
                   <Eye className="h-3 w-3 mr-0.5" />
@@ -221,20 +243,27 @@ export function InvoicesSection({ orderId }: { orderId: string }) {
         })}
       </CardContent>
 
-      {/* Modal de détail de facture */}
-      <InvoiceDetailModal
-        invoiceId={selectedInvoiceId}
-        open={isDetailModalOpen}
-        onOpenChange={open => {
-          setIsDetailModalOpen(open);
-          if (!open) setSelectedInvoiceId(null);
-        }}
-        onFinalize={invoiceId => {
-          setActionLoading(invoiceId);
-          finalizeInvoice.mutate(invoiceId);
-        }}
-        isActionLoading={actionLoading === selectedInvoiceId}
-      />
+      {sendModalInvoice && (
+        <SendDocumentEmailModal
+          open
+          onClose={() => setSendModalInvoice(null)}
+          documentType={
+            (sendModalInvoice.status === 'draft'
+              ? 'proforma'
+              : 'invoice') satisfies DocumentEmailType
+          }
+          documentId={sendModalInvoice.id}
+          documentNumber={sendModalInvoice.document_number}
+          clientEmail={clientEmail}
+          clientName={clientName}
+          pdfUrl={`/api/qonto/invoices/${sendModalInvoice.id}/pdf`}
+          onSent={() => {
+            void queryClient.invalidateQueries({
+              queryKey: ['invoices-by-order', orderId],
+            });
+          }}
+        />
+      )}
     </Card>
   );
 }
