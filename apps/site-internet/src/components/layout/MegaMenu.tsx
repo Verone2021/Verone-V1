@@ -108,10 +108,10 @@ export function MegaMenu() {
         />
       </Link>
 
-      {/* Dropdown */}
+      {/* Dropdown — responsive : aligné sous le déclencheur, largeur capée à la viewport */}
       {isOpen && relevantCategories.length > 0 && (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-[700px] bg-white border border-verone-gray-200 shadow-luxury-xl rounded-lg p-8 z-50">
-          <div className="grid grid-cols-3 gap-8">
+        <div className="absolute top-full left-0 mt-4 w-[min(700px,calc(100vw-2rem))] bg-white border border-verone-gray-200 shadow-luxury-xl rounded-lg p-6 lg:p-8 z-50">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {relevantCategories.map(category => (
               <div key={category.id}>
                 <Link
