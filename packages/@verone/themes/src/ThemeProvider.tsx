@@ -64,15 +64,13 @@ export function ThemeProvider({
   }
 
   // Injection sur le wrapper div via style inline
-  const cssVars = tokens ? buildCssVarObject(tokens) : {};
+  const cssVars: React.CSSProperties = tokens
+    ? (buildCssVarObject(tokens) as React.CSSProperties)
+    : {};
 
   return (
     <ThemeContext.Provider value={ctx}>
-      <div
-        data-brand={brand}
-        style={cssVars as React.CSSProperties}
-        className="contents"
-      >
+      <div data-brand={brand} style={cssVars} className="contents">
         {children}
       </div>
     </ThemeContext.Provider>
