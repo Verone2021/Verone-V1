@@ -20,9 +20,10 @@ import {
   Image as ImageIcon,
   Layers,
   Megaphone,
-  Palette,
   Sparkles,
 } from 'lucide-react';
+
+import { DesignSystemPreview } from './_components/DesignSystemPreview';
 
 interface Brand {
   id: string;
@@ -50,12 +51,6 @@ interface UpcomingSection {
 }
 
 const UPCOMING_SECTIONS: UpcomingSection[] = [
-  {
-    icon: Palette,
-    title: 'Design system',
-    description:
-      'Couleurs, typographies, ton de voix, iconographie — recueillis dans Anthropic Console puis appliqués au site.',
-  },
   {
     icon: Layers,
     title: 'Catalogue produits',
@@ -216,6 +211,8 @@ export default function MarqueDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      <DesignSystemPreview slug={brand.slug} />
 
       <Card className="border-dashed">
         <CardHeader>

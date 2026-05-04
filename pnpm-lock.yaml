@@ -300,6 +300,9 @@ importers:
       '@verone/roadmap':
         specifier: workspace:*
         version: link:../../packages/@verone/roadmap
+      '@verone/themes':
+        specifier: workspace:*
+        version: link:../../packages/@verone/themes
       '@verone/types':
         specifier: workspace:*
         version: link:../../packages/@verone/types
@@ -467,6 +470,9 @@ importers:
       '@verone/products':
         specifier: workspace:*
         version: link:../../packages/@verone/products
+      '@verone/themes':
+        specifier: workspace:*
+        version: link:../../packages/@verone/themes
       '@verone/types':
         specifier: workspace:*
         version: link:../../packages/@verone/types
