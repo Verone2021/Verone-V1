@@ -4,8 +4,7 @@ import type { VariantGroup, VariantProduct } from '@verone/types';
 
 import { useRouter } from 'next/navigation';
 
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { Badge, ButtonV2, CloudflareImage } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
   Plus,
@@ -113,12 +112,14 @@ export function VariantGroupCard({
                   key={product.id}
                   className="relative flex-shrink-0 w-14 h-14 rounded bg-gray-100 overflow-hidden group/product"
                 >
-                  {product.image_url ? (
-                    /* eslint-disable-next-line @next/next/no-img-element -- Dynamic URL from Supabase Storage, next/image requires domain config */
-                    <img
-                      src={product.image_url}
+                  {product.image_url || product.cloudflare_image_id ? (
+                    <CloudflareImage
+                      cloudflareId={product.cloudflare_image_id}
+                      fallbackSrc={product.image_url}
                       alt={product.name}
-                      className="w-full h-full object-contain"
+                      fill
+                      className="object-contain"
+                      sizes="56px"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">

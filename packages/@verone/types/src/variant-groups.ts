@@ -124,8 +124,9 @@ export interface VariantProduct {
   // Fournisseur (peut être hérité du groupe ou spécifique au produit)
   supplier_id?: string | null;
 
-  // Image principale pour affichage
+  // Image principale pour affichage (Cloudflare priority + Supabase fallback)
   image_url?: string;
+  cloudflare_image_id?: string | null;
 }
 
 // Pour afficher un produit avec ses variantes (siblings)

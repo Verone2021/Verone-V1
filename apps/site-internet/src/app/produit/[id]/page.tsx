@@ -93,6 +93,31 @@ export default function ProductPage({
     retry: 1,
   });
 
+  // Récupérer images détaillées (URL + cloudflare_image_id) pour la galerie
+  const { data: galleryImages = [] } = useQuery({
+    queryKey: ['product-detail-images', product?.product_id],
+    queryFn: async () => {
+      if (!product?.product_id) return [];
+      const { data, error } = await supabase
+        .from('product_images')
+        .select('public_url, cloudflare_image_id, display_order')
+        .eq('product_id', product.product_id)
+        .order('display_order', { ascending: true });
+      if (error) {
+        console.error('❌ Erreur fetch product images:', error);
+        return [];
+      }
+      return (data ?? [])
+        .filter(d => d.public_url !== null || d.cloudflare_image_id !== null)
+        .map(d => ({
+          url: d.public_url ?? '',
+          cloudflareId: d.cloudflare_image_id,
+        }));
+    },
+    enabled: !!product?.product_id,
+    staleTime: 60000,
+  });
+
   // Récupérer variantes éligibles (si product has variant_group)
   const { data: variants = [] } = useQuery({
     queryKey: [
@@ -208,6 +233,7 @@ export default function ProductPage({
         slug={product.slug}
         price={product.price_ttc}
         imageUrl={product.primary_image_url}
+        cloudflareImageId={product.primary_cloudflare_image_id}
         manufacturer={product.manufacturer}
         sku={product.sku}
         reviewCount={reviewStats.count}
@@ -254,9 +280,21 @@ export default function ProductPage({
       <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 lg:gap-12">
         {/* ===== COLONNE GAUCHE (60%) ===== */}
         <div className="space-y-8">
-          {/* Galerie photos avec lightbox */}
+          {/* Galerie photos avec lightbox (Cloudflare-aware) */}
           <ProductGallery
-            images={product.image_urls ?? []}
+            images={
+              galleryImages.length > 0
+                ? galleryImages
+                : (product.image_urls ?? []).map((url, idx) => ({
+                    url,
+                    // SSR fallback : l'image principale (idx 0) utilise le
+                    // cloudflare_image_id du produit pour éviter le preload
+                    // d'une URL Supabase morte. Les vignettes seront migrées
+                    // dès que React Query a chargé product_images.
+                    cloudflareId:
+                      idx === 0 ? product.primary_cloudflare_image_id : null,
+                  }))
+            }
             productName={product.name}
           />
 

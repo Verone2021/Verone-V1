@@ -1,10 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import type { useRouter } from 'next/navigation';
 
-import { Badge } from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
+import { Badge, ButtonV2, CloudflareImage } from '@verone/ui';
 import { Eye, Edit3, Package, X } from 'lucide-react';
 
 import {
@@ -41,9 +39,10 @@ export function VariantProductCard({
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full">
       {/* Image compacte */}
       <div className="relative w-full h-32 bg-gray-50 flex-shrink-0">
-        {product.image_url ? (
-          <Image
-            src={product.image_url}
+        {product.image_url || product.cloudflare_image_id ? (
+          <CloudflareImage
+            cloudflareId={product.cloudflare_image_id}
+            fallbackSrc={product.image_url}
             alt={product.name}
             fill
             className="object-contain p-2"

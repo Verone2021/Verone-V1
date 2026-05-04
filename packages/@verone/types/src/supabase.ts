@@ -14056,6 +14056,31 @@ export type Database = {
           total_ttc: number;
         }[];
       };
+      suggest_variant_groups: {
+        Args: {
+          p_max_cluster_size?: number;
+          p_max_results?: number;
+          p_min_cluster_size?: number;
+        };
+        Returns: {
+          common_cost_price: number;
+          common_weight: number;
+          confidence: string;
+          detected_axis: string;
+          has_common_cost_price: boolean;
+          has_common_supplier: boolean;
+          has_common_weight: boolean;
+          product_cloudflare_image_ids: string[];
+          product_count: number;
+          product_ids: string[];
+          product_image_urls: string[];
+          product_names: string[];
+          product_skus: string[];
+          stem: string;
+          supplier_id: string;
+          supplier_name: string;
+        }[];
+      };
       test_custom_access_token_hook: {
         Args: { test_user_id: string };
         Returns: Json;
