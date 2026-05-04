@@ -1,7 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
+
+import { CloudflareImage } from '@verone/ui';
 
 import { ArrowRight } from 'lucide-react';
 
@@ -23,7 +24,7 @@ export function HeroSection() {
   const ctaText = heroContent?.cta_text ?? 'Découvrir la sélection';
   const ctaLink = heroContent?.cta_link ?? '/catalogue';
 
-  const heroImage = products?.[0]?.primary_image_url ?? null;
+  const heroCloudflareId = products?.[0]?.primary_cloudflare_image_id ?? null;
 
   return (
     <section className="relative min-h-[90vh] flex items-center bg-verone-white overflow-hidden">
@@ -78,10 +79,10 @@ export function HeroSection() {
             className="relative hidden lg:block animate-fade-in-up"
             style={{ animationDelay: '0.4s' }}
           >
-            {heroImage ? (
+            {heroCloudflareId ? (
               <div className="relative aspect-[4/5] overflow-hidden bg-verone-gray-50">
-                <Image
-                  src={heroImage}
+                <CloudflareImage
+                  cloudflareId={heroCloudflareId}
                   alt="Produit vedette Vérone"
                   fill
                   sizes="50vw"
