@@ -99,49 +99,28 @@ function SuggestionCard({
   onCreate: () => void;
 }) {
   const conf = getConfidenceLabel(suggestion.confidence);
-  const previewNames = suggestion.product_names.slice(0, 3);
-  const remaining = suggestion.product_count - previewNames.length;
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 flex flex-col gap-2 hover:border-amber-300 hover:shadow-sm transition">
-      <div className="flex items-start gap-3">
-        {/* Image preview du premier produit du cluster */}
-        <div className="relative shrink-0 w-16 h-16 rounded bg-slate-100 overflow-hidden">
-          {suggestion.preview_cloudflare_image_id ||
-          suggestion.preview_image_url ? (
-            <CloudflareImage
-              cloudflareId={suggestion.preview_cloudflare_image_id}
-              fallbackSrc={suggestion.preview_image_url}
-              alt={getStemAsTitle(suggestion.stem)}
-              fill
-              className="object-contain"
-              sizes="64px"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Package className="h-6 w-6 text-slate-400" />
-            </div>
-          )}
+    <div className="rounded-lg border border-slate-200 bg-white p-3 flex flex-col gap-3 hover:border-amber-300 hover:shadow-sm transition">
+      {/* Header : titre + fournisseur + badge confiance */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h4 className="font-semibold text-sm text-slate-800 truncate">
+            {getStemAsTitle(suggestion.stem)}
+          </h4>
+          <p className="text-xs text-slate-500 truncate">
+            {suggestion.supplier_name ?? 'Fournisseur inconnu'} ·{' '}
+            {suggestion.product_count} produits
+          </p>
         </div>
-
-        <div className="flex items-start justify-between gap-2 flex-1 min-w-0">
-          <div className="min-w-0 flex-1">
-            <h4 className="font-semibold text-sm text-slate-800 truncate">
-              {getStemAsTitle(suggestion.stem)}
-            </h4>
-            <p className="text-xs text-slate-500 truncate">
-              {suggestion.supplier_name ?? 'Fournisseur inconnu'} ·{' '}
-              {suggestion.product_count} produits
-            </p>
-          </div>
-          <span
-            className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-medium ${conf.color}`}
-          >
-            {conf.label}
-          </span>
-        </div>
+        <span
+          className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-medium ${conf.color}`}
+        >
+          {conf.label}
+        </span>
       </div>
 
+      {/* Axe + valeurs communes */}
       <div className="flex items-center gap-1.5 flex-wrap">
         <span className="text-[10px] uppercase tracking-wide font-semibold text-slate-500">
           Axe :
@@ -161,15 +140,42 @@ function SuggestionCard({
         )}
       </div>
 
-      <ul className="text-xs text-slate-600 space-y-0.5 min-h-0">
-        {previewNames.map((n, i) => (
-          <li key={`${suggestion.product_ids[i]}-${i}`} className="truncate">
-            · {n}
-          </li>
-        ))}
-        {remaining > 0 && (
-          <li className="text-slate-400 italic">+ {remaining} autres</li>
-        )}
+      {/* Vignette PAR PRODUIT (image + nom court) pour validation visuelle */}
+      <ul className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {suggestion.product_names.map((name, i) => {
+          const cfId = suggestion.product_cloudflare_image_ids[i] ?? null;
+          const url = suggestion.product_image_urls[i] ?? null;
+          const productId = suggestion.product_ids[i] ?? `idx-${i}`;
+          return (
+            <li
+              key={productId}
+              className="rounded border border-slate-200 bg-slate-50/50 overflow-hidden"
+            >
+              <div className="relative w-full aspect-square bg-white">
+                {cfId || url ? (
+                  <CloudflareImage
+                    cloudflareId={cfId}
+                    fallbackSrc={url}
+                    alt={name}
+                    fill
+                    className="object-contain p-1"
+                    sizes="120px"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Package className="h-5 w-5 text-slate-300" />
+                  </div>
+                )}
+              </div>
+              <p
+                className="px-1.5 py-1 text-[10px] text-slate-600 truncate text-center"
+                title={name}
+              >
+                {name}
+              </p>
+            </li>
+          );
+        })}
       </ul>
 
       <ButtonV2 variant="primary" size="sm" icon={Plus} onClick={onCreate}>
