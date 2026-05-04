@@ -104,6 +104,8 @@ export interface UniversalProductSelectorV2Props {
   className?: string;
   /** Filtrer les produits par fournisseur (pour commandes fournisseurs) */
   supplierId?: string | null;
+  /** Recherche initiale pré-remplie a l'ouverture du selector (ex: nom du groupe variantes) */
+  initialSearch?: string;
 }
 
 // Types pour filtres hiérarchiques (internes)
@@ -135,4 +137,6 @@ export interface ProductSearchFilters {
   sourcingType?: string | null;
   supplierId?: string | null;
   productStatus?: string | null;
+  /** Si true, exclut les produits qui ont deja un variant_group_id (regle 1 produit = 1 variante max) */
+  excludeProductsInVariantGroup?: boolean;
 }

@@ -42,7 +42,7 @@ export function useSourcingFetch(filters?: SourcingFilters) {
           requires_sample,
           assigned_client_id,
           margin_percentage,
-          brand,
+          manufacturer,
           description,
           supplier_moq,
           dimensions,
@@ -73,6 +73,7 @@ export function useSourcingFetch(filters?: SourcingFilters) {
           ),
           product_images!left(
             public_url,
+            cloudflare_image_id,
             is_primary
           )
         `

@@ -1,9 +1,10 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
 import { Award, Package, Loader2, ArrowRight } from 'lucide-react';
+
+import { CloudflareImage } from '@verone/ui';
 
 type TopProduct = {
   productId: string;
@@ -96,20 +97,15 @@ export function DashboardTopProducts({
                       {index + 1}
                     </span>
                   </div>
-                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 overflow-hidden">
-                    {product.productImageUrl ? (
-                      <Image
-                        src={product.productImageUrl}
-                        alt={product.productName}
-                        width={32}
-                        height={32}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Package className="h-3 w-3 text-gray-400" />
-                      </div>
-                    )}
+                  <div className="relative flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 overflow-hidden">
+                    <CloudflareImage
+                      cloudflareId={null}
+                      fallbackSrc={product.productImageUrl}
+                      alt={product.productName}
+                      fill
+                      className="object-cover"
+                      sizes="32px"
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-linkme-marine text-xs truncate">
@@ -207,20 +203,15 @@ export function DashboardTopProducts({
                       {index + 1}
                     </span>
                   </div>
-                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 overflow-hidden">
-                    {product.productImageUrl ? (
-                      <Image
-                        src={product.productImageUrl}
-                        alt={product.productName}
-                        width={32}
-                        height={32}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Package className="h-3 w-3 text-gray-400" />
-                      </div>
-                    )}
+                  <div className="relative flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 overflow-hidden">
+                    <CloudflareImage
+                      cloudflareId={null}
+                      fallbackSrc={product.productImageUrl}
+                      alt={product.productName}
+                      fill
+                      className="object-cover"
+                      sizes="32px"
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-linkme-marine text-xs truncate">

@@ -1,9 +1,8 @@
 'use client';
 
-import Image from 'next/image';
-
 import type { SourcingProduct } from '@verone/products';
 import {
+  CloudflareImage,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -49,7 +48,8 @@ export function SourcingProductRow({
   onArchive,
   onDelete,
 }: SourcingProductRowProps) {
-  const imageUrl = getPrimaryImage(product);
+  const primaryImage = getPrimaryImage(product);
+  const hasImage = primaryImage.cloudflareId ?? primaryImage.publicUrl;
   const canValidate = product.supplier_id && product.product_status === 'draft';
   const supplierName =
     product.supplier?.trade_name ??
@@ -62,9 +62,10 @@ export function SourcingProductRow({
       <td className="p-3">
         <div className="flex items-center gap-3">
           <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
-            {imageUrl ? (
-              <Image
-                src={imageUrl}
+            {hasImage ? (
+              <CloudflareImage
+                cloudflareId={primaryImage.cloudflareId}
+                fallbackSrc={primaryImage.publicUrl}
                 alt={product.name}
                 width={40}
                 height={40}

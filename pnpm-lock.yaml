@@ -294,9 +294,15 @@ importers:
       '@types/qrcode':
         specifier: ^1.5.6
         version: 1.5.6
+      '@verone/marketing':
+        specifier: workspace:*
+        version: link:../../packages/@verone/marketing
       '@verone/roadmap':
         specifier: workspace:*
         version: link:../../packages/@verone/roadmap
+      '@verone/themes':
+        specifier: workspace:*
+        version: link:../../packages/@verone/themes
       '@verone/types':
         specifier: workspace:*
         version: link:../../packages/@verone/types
@@ -464,6 +470,9 @@ importers:
       '@verone/products':
         specifier: workspace:*
         version: link:../../packages/@verone/products
+      '@verone/themes':
+        specifier: workspace:*
+        version: link:../../packages/@verone/themes
       '@verone/types':
         specifier: workspace:*
         version: link:../../packages/@verone/types
@@ -543,6 +552,9 @@ importers:
 
   packages/@verone/channels:
     dependencies:
+      '@tanstack/react-query':
+        specifier: ^5.0.0
+        version: 5.90.7(react@18.3.1)
       '@verone/types':
         specifier: workspace:*
         version: link:../types
@@ -558,6 +570,9 @@ importers:
       react-dom:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
+      react-hot-toast:
+        specifier: '*'
+        version: 2.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
 
   packages/@verone/collections:
     dependencies:
@@ -764,6 +779,24 @@ importers:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
 
+  packages/@verone/marketing:
+    dependencies:
+      '@verone/products':
+        specifier: workspace:*
+        version: link:../products
+      '@verone/ui':
+        specifier: workspace:*
+        version: link:../ui
+      '@verone/utils':
+        specifier: workspace:*
+        version: link:../utils
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.3.1(react@18.3.1)
+
   packages/@verone/notifications:
     dependencies:
       '@verone/common':
@@ -935,6 +968,34 @@ importers:
         version: 18.3.7(@types/react@18.3.26)
       typescript:
         specifier: ^5.3.3
+        version: 5.9.3
+
+  packages/@verone/themes:
+    dependencies:
+      '@verone/tokens':
+        specifier: workspace:*
+        version: link:../tokens
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+    devDependencies:
+      '@types/react':
+        specifier: ^18.2.55
+        version: 18.3.26
+      '@types/react-dom':
+        specifier: ^18.2.19
+        version: 18.3.7(@types/react@18.3.26)
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
+  packages/@verone/tokens:
+    devDependencies:
+      typescript:
+        specifier: ^5.6.3
         version: 5.9.3
 
   packages/@verone/types:

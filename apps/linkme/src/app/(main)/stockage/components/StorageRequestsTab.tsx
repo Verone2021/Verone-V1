@@ -11,8 +11,9 @@
  * @since 2026-02-25
  */
 
-import Image from 'next/image';
-import { Package, Loader2, X, Inbox } from 'lucide-react';
+import { Loader2, X, Inbox } from 'lucide-react';
+
+import { CloudflareImage } from '@verone/ui';
 
 import {
   useAffiliateStorageRequests,
@@ -118,19 +119,17 @@ export function StorageRequestsTab(): JSX.Element {
                   className="hover:bg-gray-50/50 transition-colors"
                 >
                   <td className="px-4 py-3">
-                    {request.product_image_url ? (
-                      <Image
-                        src={request.product_image_url}
+                    <div className="relative w-8 h-8">
+                      <CloudflareImage
+                        cloudflareId={
+                          request.product_cloudflare_image_id ?? null
+                        }
+                        fallbackSrc={request.product_image_url ?? null}
                         alt={request.product_name ?? ''}
-                        width={32}
-                        height={32}
-                        className="w-8 h-8 rounded-lg object-cover"
+                        fill
+                        className="rounded-lg object-cover"
                       />
-                    ) : (
-                      <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <Package className="h-4 w-4 text-gray-400" />
-                      </div>
-                    )}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <p className="font-medium text-sm text-[#183559]">

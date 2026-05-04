@@ -1,16 +1,10 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
-import {
-  ChevronDown,
-  ChevronRight,
-  User,
-  MapPin,
-  Package,
-  Pencil,
-} from 'lucide-react';
+import { CloudflareImage } from '@verone/ui';
+
+import { ChevronDown, ChevronRight, User, MapPin, Pencil } from 'lucide-react';
 
 import type { LinkMeOrder } from '../../../hooks/use-linkme-orders';
 import { STATUS_LABELS, STATUS_COLORS } from './commandes.constants';
@@ -180,19 +174,17 @@ export function CommandeOrderRow({
                     <tr key={item.id}>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-3">
-                          {item.product_image_url ? (
-                            <Image
-                              src={item.product_image_url}
+                          <div className="relative w-10 h-10 flex-shrink-0">
+                            <CloudflareImage
+                              cloudflareId={
+                                item.product_cloudflare_image_id ?? null
+                              }
+                              fallbackSrc={item.product_image_url}
                               alt={item.product_name}
-                              width={40}
-                              height={40}
-                              className="rounded-md object-cover w-10 h-10 flex-shrink-0"
+                              fill
+                              className="rounded-md object-cover"
                             />
-                          ) : (
-                            <div className="w-10 h-10 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0">
-                              <Package className="h-5 w-5 text-gray-400" />
-                            </div>
-                          )}
+                          </div>
                           <div>
                             <span className="font-medium text-gray-900">
                               {item.product_name}

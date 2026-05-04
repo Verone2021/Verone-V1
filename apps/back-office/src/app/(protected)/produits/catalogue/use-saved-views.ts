@@ -38,6 +38,7 @@ const EMPTY_FILTERS: Filters = {
   stockLevels: [],
   conditions: [],
   completionLevels: [],
+  internalBrandIds: [],
 };
 
 const SYSTEM_VIEWS: SavedView[] = [

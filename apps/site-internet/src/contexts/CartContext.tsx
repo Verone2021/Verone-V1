@@ -31,6 +31,7 @@ export interface CartItem {
   assembly_price: number;
   eco_participation: number;
   primary_image_url: string | null;
+  primary_cloudflare_image_id: string | null;
   sku: string | null;
 }
 
@@ -57,6 +58,7 @@ export interface AddToCartInput {
   assembly_price: number;
   eco_participation: number;
   primary_image_url: string | null;
+  primary_cloudflare_image_id: string | null;
   sku: string | null;
 }
 
@@ -175,6 +177,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                   slug: input.slug || item.slug,
                   primary_image_url:
                     input.primary_image_url ?? item.primary_image_url,
+                  primary_cloudflare_image_id:
+                    input.primary_cloudflare_image_id ??
+                    item.primary_cloudflare_image_id,
                   sku: input.sku ?? item.sku,
                   price_ttc: input.price_ttc,
                   assembly_price: input.assembly_price,
@@ -196,6 +201,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             assembly_price: input.assembly_price,
             eco_participation: input.eco_participation,
             primary_image_url: input.primary_image_url,
+            primary_cloudflare_image_id: input.primary_cloudflare_image_id,
             sku: input.sku,
           };
           updated = [...prev, newItem];

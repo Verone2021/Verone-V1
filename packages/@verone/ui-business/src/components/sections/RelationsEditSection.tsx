@@ -24,7 +24,7 @@ interface Product {
     id: string;
     name: string;
     description?: string;
-    brand?: string;
+    manufacturer?: string;
     status: string;
     subcategories?: {
       id: string;
@@ -45,7 +45,7 @@ interface ProductGroup {
   id: string;
   name: string;
   description?: string;
-  brand?: string;
+  manufacturer?: string;
   status: string;
   subcategories?: {
     id: string;
@@ -179,7 +179,7 @@ export function RelationsEditSection({
     group =>
       (searchTerm === '' ||
         group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        group.brand?.toLowerCase().includes(searchTerm.toLowerCase())) ??
+        group.manufacturer?.toLowerCase().includes(searchTerm.toLowerCase())) ??
       group.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -305,9 +305,9 @@ export function RelationsEditSection({
                             </div>
                           )}
                           {renderHierarchy(group)}
-                          {group.brand && (
+                          {group.manufacturer && (
                             <div className="text-xs text-gray-500 mt-1">
-                              Marque: {group.brand}
+                              Marque: {group.manufacturer}
                             </div>
                           )}
                         </div>

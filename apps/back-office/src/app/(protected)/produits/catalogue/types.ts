@@ -29,4 +29,6 @@ export interface Filters {
   stockLevels: string[];
   conditions: string[];
   completionLevels: string[];
+  /** Filtre marque interne (Vérone/Boêmia/Solar/Flos). Pré-rempli depuis useActiveBrand (BrandSwitcher header). */
+  internalBrandIds: string[];
 }

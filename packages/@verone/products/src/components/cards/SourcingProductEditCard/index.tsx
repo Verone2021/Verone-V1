@@ -138,7 +138,7 @@ export function SourcingProductEditCard({
 
   const handleStartDetailsEdit = () => {
     startEdit(detailsSection, {
-      brand: product.brand ?? '',
+      manufacturer: product.manufacturer ?? '',
       description: product.description ?? '',
       supplier_moq: product.supplier_moq ?? 0,
       dimensions_length: product.dimensions?.length ?? 0,
@@ -161,7 +161,7 @@ export function SourcingProductEditCard({
         : null;
 
     const toSave = {
-      brand: detailsData?.brand ?? null,
+      manufacturer: detailsData?.manufacturer ?? null,
       description: detailsData?.description ?? null,
       supplier_moq: detailsData?.supplier_moq ?? null,
       dimensions: dims,

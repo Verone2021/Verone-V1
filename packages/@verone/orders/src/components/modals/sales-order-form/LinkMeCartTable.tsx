@@ -2,6 +2,7 @@
 
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { CloudflareImage } from '@verone/ui';
 import {
   Table,
   TableBody,
@@ -11,7 +12,6 @@ import {
   TableRow,
 } from '@verone/ui';
 import { formatCurrency } from '@verone/utils';
-import Image from 'next/image';
 import { Trash2 } from 'lucide-react';
 
 import { QuantityInput } from './QuantityInput';
@@ -28,6 +28,7 @@ interface LinkMeCartItem {
   commission_rate: number;
   linkme_selection_item_id: string;
   product_image_url?: string | null;
+  product_image_cloudflare_id?: string | null;
 }
 
 interface LinkMeCartTotals {
@@ -80,9 +81,11 @@ export function LinkMeCartTable({
               <TableRow key={item.id}>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    {item.product_image_url && (
-                      <Image
-                        src={item.product_image_url}
+                    {(item.product_image_cloudflare_id ??
+                      item.product_image_url) && (
+                      <CloudflareImage
+                        cloudflareId={item.product_image_cloudflare_id}
+                        fallbackSrc={item.product_image_url}
                         alt={item.product_name}
                         width={32}
                         height={32}

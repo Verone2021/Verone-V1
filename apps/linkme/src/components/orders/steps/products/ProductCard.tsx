@@ -7,10 +7,8 @@
  * @since 2026-04-14
  */
 
-import Image from 'next/image';
-
-import { Card, cn } from '@verone/ui';
-import { Package, AlertCircle, Check, Plus, User } from 'lucide-react';
+import { Card, CloudflareImage, cn } from '@verone/ui';
+import { AlertCircle, Check, Plus, User } from 'lucide-react';
 
 import type { SelectionItem } from '../../../../lib/hooks/use-user-selection';
 import type { CartItem } from '../../schemas/order-form.schema';
@@ -85,18 +83,13 @@ export function ProductCard({
     >
       {/* Image */}
       <div className="aspect-square bg-gray-100 relative">
-        {item.product_image_url ? (
-          <Image
-            src={item.product_image_url}
-            alt={item.product_name}
-            fill
-            className="object-contain"
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Package className="h-12 w-12 text-gray-300" />
-          </div>
-        )}
+        <CloudflareImage
+          cloudflareId={item.product_cloudflare_image_id ?? null}
+          fallbackSrc={item.product_image_url}
+          alt={item.product_name}
+          fill
+          className="object-contain"
+        />
         {inCart && (
           <div className="absolute top-2 right-2 px-2 py-1 bg-green-500 text-white text-xs font-medium rounded-full flex items-center gap-1">
             <Check className="h-3 w-3" />

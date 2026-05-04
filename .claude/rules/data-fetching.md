@@ -4,103 +4,71 @@ globs: apps/**/*.tsx, apps/**/*.ts, packages/**/*.tsx, packages/**/*.ts
 
 # Data Fetching — Économie de requêtes & robustesse
 
-**Source de vérité** pour toute lecture/écriture de données côté client (React,
-Next.js 15). Né de l'incident 2026-04-27 sur `/produits/catalogue/variantes`
-(244 requêtes Supabase en 5 secondes par boucle infinie de `useEffect` sur
-l'onglet "Archivées" vide).
+**Source de vérité unique** pour toute lecture/écriture de données côté client.
+Lecture obligatoire avant : écrire un `useEffect` qui fetch, construire un
+hook `use*`, faire un `select` Supabase.
 
-Lecture obligatoire avant de :
+> Compactée en `[INFRA-LEAN-002]` — exemples redondants retirés.
 
-- Écrire un `useEffect` qui fetch
-- Construire un hook `use*` qui retourne des données
-- Faire un `select` sur Supabase
+Origine : incident 2026-04-27 sur `/produits/catalogue/variantes` (244 requêtes
+en 5 s par boucle infinie de `useEffect` sur l'onglet "Archivées" vide).
 
 ---
 
 ## REGLES IMPERATIVES
 
-- Ne JAMAIS utiliser `select('*')` — lister explicitement les colonnes utiles
-- Ne JAMAIS mettre `array.length === N` dans les deps d'un `useEffect` comme
-  condition d'amorçage (boucle infinie quand DB renvoie 0 résultats)
-- Ne JAMAIS mettre une fonction non-stable (qui change à chaque render) dans
-  les deps d'un `useEffect` sans la wrapper avec `useCallback` ou `useRef`
-- Ne JAMAIS fetch sans `.limit()` quand la table peut grossir (> 100 lignes
-  attendues)
-- Ne JAMAIS dupliquer un `useEffect(... fetch ...)` dans un parent et un enfant
-  pour la même donnée — cache shared via React Query / Zustand / contexte
-- TOUJOURS utiliser un flag boolean `loaded` plutôt que `length === 0` pour
-  conditionner un effect "first-load"
-- TOUJOURS `await queryClient.invalidateQueries()` dans `onSuccess` d'une
-  mutation (déjà dans `code-standards.md`, rappel ici car lié)
+- Ne JAMAIS `select('*')` — lister explicitement les colonnes utiles
+- Ne JAMAIS `array.length === N` dans les deps d'un `useEffect` comme condition d'amorçage (boucle infinie quand DB renvoie 0 résultats)
+- Ne JAMAIS mettre une fonction non-stable dans les deps d'un `useEffect` sans `useCallback` ou `useRef`
+- Ne JAMAIS fetch sans `.limit()` quand la table peut grossir (> 100 lignes attendues)
+- Ne JAMAIS dupliquer un `useEffect(... fetch ...)` dans un parent et un enfant — cache partagé via TanStack Query
+- TOUJOURS utiliser un flag boolean `loaded` plutôt que `length === 0` pour un effect "first-load"
+- TOUJOURS `await queryClient.invalidateQueries()` dans `onSuccess` d'une mutation
 
 ---
 
-## LES 5 LEVIERS POUR ÉCONOMISER LES REQUÊTES
+## Les 5 leviers pour économiser les requêtes
 
-### 1. Cache + dédup avec TanStack Query (anciennement React Query)
+### 1. Cache + dédup avec TanStack Query
 
-**Quoi** : remplacer `useState + useEffect + setState` par `useQuery`.
+Remplacer `useState + useEffect + setState` par `useQuery` :
 
 ```tsx
-// AVANT — 1 fetch par render parent + risque de boucle
-const [data, setData] = useState([]);
-useEffect(() => {
-  void fetchData().then(setData);
-}, [filters]);
-
-// APRÈS — 1 fetch unique partagé entre tous les consumers
 const { data = [] } = useQuery({
   queryKey: ['variant_groups', filters],
   queryFn: () => fetchVariantGroups(filters),
-  staleTime: 30_000, // pas de refetch si la donnée a < 30s
+  staleTime: 30_000,
 });
 ```
 
-**Économie typique** : 60–90 % des requêtes en moins quand plusieurs composants
-écoutent la même donnée.
+Gain : 60–90 % de requêtes en moins quand plusieurs composants écoutent la même donnée. Client `@tanstack/react-query` déjà installé. Ne PAS utiliser pour état UI purement local ou formulaire en cours de saisie.
 
-**Quand l'utiliser** : par défaut pour toute lecture de liste/détail. Le client
-est déjà installé (`@tanstack/react-query` dans `package.json` racine).
-
-**Quand ne PAS l'utiliser** : pour des données purement locales (état UI,
-formulaire en cours de saisie).
-
-### 2. `select` ciblé sur Supabase
-
-**Quoi** : ne demander que les colonnes nécessaires à l'écran courant.
+### 2. `select` ciblé Supabase
 
 ```ts
 // INTERDIT
 .select('*')
-
-// AUTORISÉ — colonnes nécessaires uniquement
+// AUTORISÉ
 .select('id, name, archived_at, total_ttc')
 ```
 
-**Pourquoi** :
-
-- Payload réseau réduit (moins de bytes transférés)
-- Moins de bandwidth Supabase consommée (quota Hobby = 5 GB/mois)
-- Rendu React plus rapide (moins de props à propager)
-
-**Cas critique** : les tables avec colonnes lourdes (`description`, `notes`,
-`raw_response`, `metadata`, JSONB volumineux) — les exclure si non affichés.
+Payload réduit, bandwidth Supabase préservée (quota 5 GB/mois), rendu React plus rapide. Critique pour tables avec colonnes lourdes (`description`, `notes`, `raw_response`, JSONB volumineux).
 
 ### 3. `useEffect` — règles de stabilité strictes
 
-#### a) Deps acceptables
+#### Deps acceptables
 
-| Type                                                    | OK ?                                                                                     |
-| ------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Primitive stable (string, number, boolean)              | ✅                                                                                       |
-| `useState` setter                                       | ✅ (garanti stable par React)                                                            |
-| `useRef.current`                                        | ✅ (mais ne déclenche jamais le effect)                                                  |
-| `useCallback(..., [stable_deps])`                       | ✅                                                                                       |
-| Fonction normale (déclarée dans le composant)           | 🔴 **INSTABLE**                                                                          |
-| Fonction issue d'un hook tiers (ex: `useQuery.refetch`) | ⚠️ vérifier la doc                                                                       |
-| `array.length`                                          | ⚠️ acceptable si la valeur change vraiment, **JAMAIS** comme condition de "premier load" |
+| Type                                              | OK ?                                                                              |
+| ------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Primitive stable (string, number, boolean)        | ✅                                                                                |
+| `useState` setter                                 | ✅ (garanti stable React)                                                         |
+| `useRef.current`                                  | ✅ (mais ne déclenche jamais l'effect)                                            |
+| `useCallback(..., [stable_deps])`                 | ✅                                                                                |
+| Fonction normale (déclarée dans le composant)     | 🔴 **INSTABLE**                                                                   |
+| Fonction d'un hook tiers (ex: `useQuery.refetch`) | ⚠️ vérifier la doc                                                                |
+| `array.length`                                    | ⚠️ acceptable si change vraiment, **JAMAIS** comme condition de "premier load\*\* |
 
-#### b) Pattern "first-load" sécurisé
+#### Pattern "first-load" sécurisé
 
 ```tsx
 // INTERDIT — boucle si fetch retourne []
@@ -119,10 +87,9 @@ useEffect(() => {
 }, [activeTab, archivedLoaded, loadArchived]);
 ```
 
-#### c) Pattern `useRef` quand la fonction vient d'un hook externe
+#### Pattern `useRef` pour fonction d'un hook externe
 
 ```tsx
-// Quand on ne peut pas garantir la stabilité de loadX
 const loadXRef = useRef(loadX);
 useEffect(() => {
   loadXRef.current = loadX;
@@ -135,11 +102,11 @@ useEffect(() => {
 }, [activeTab]); // SEULEMENT activeTab dans les deps
 ```
 
-C'est le pattern utilisé dans `apps/back-office/src/app/(protected)/produits/catalogue/use-catalogue-page.ts` — référence à imiter.
+Référence : `apps/back-office/src/app/(protected)/produits/catalogue/use-catalogue-page.ts`.
 
 ### 4. Pagination + Infinite scroll
 
-**Quoi** : ne jamais charger plus de 50 lignes d'un coup.
+Ne jamais charger plus de 50 lignes d'un coup :
 
 ```ts
 const PAGE_SIZE = 50;
@@ -149,19 +116,11 @@ const { data } = await supabase
   .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 ```
 
-**Avec TanStack Query** : utiliser `useInfiniteQuery` qui gère le `getNextPageParam` natif.
-
-**Astuces UX** :
-
-- "Charger plus" explicite (bouton) pour les tableaux back-office
-- `IntersectionObserver` pour les listes type carte (catalogue produit, factures)
-- Pour les onglets vides confirmés (`Variantes Archivées (0)`), **ne fetch pas
-  du tout** : afficher juste "0 résultat" sans appel réseau
+Avec TanStack Query : `useInfiniteQuery` + `getNextPageParam`. Pour onglets vides confirmés (`Variantes Archivées (0)`) : ne fetch PAS du tout, afficher "0 résultat" sans appel réseau.
 
 ### 5. Server Components Next.js 15
 
-**Quoi** : déplacer le fetch côté serveur pour les pages purement listes
-(factures, devis, archives, dashboards statiques).
+Pour pages purement listes (factures, devis, archives, dashboards statiques) :
 
 ```tsx
 // app/(protected)/factures/page.tsx
@@ -173,117 +132,56 @@ export default async function FacturesPage() {
     .eq('document_type', 'customer_invoice')
     .order('created_at', { ascending: false })
     .limit(50);
-
-  return <FacturesTable invoices={invoices} />; // ← Client Component
+  return <FacturesTable invoices={invoices} />;
 }
 ```
 
-**Avantages** :
-
-- Plus aucun `useEffect` ni boucle possible
-- HTML pré-rendu (SEO, perf, perçue)
-- Auth Supabase via cookies (plus sécurisé que client)
-- Cache Next.js automatique avec `revalidatePath` après mutation
-
-**Quand pas adapté** : pages très interactives (filtrage live, drag&drop,
-édition en place). Garder ces zones en Client Components, mais externaliser
-les fetches initiaux côté serveur.
-
-**Migration progressive** : on cible 1 module à la fois (factures, devis,
-commandes…). Pas de big bang.
+Avantages : plus aucun `useEffect` ni boucle possible, HTML pré-rendu, auth Supabase via cookies, cache Next.js avec `revalidatePath` après mutation. Pas adapté pour pages très interactives — garder Client Components mais externaliser fetches initiaux côté serveur. Migration progressive, 1 module à la fois.
 
 ---
 
 ## Anti-patterns interdits (avec exemples réels)
 
-### Anti-pattern 1 — Boucle infinie sur onglet vide
-
-**Vu en prod le 2026-04-27** : `apps/back-office/src/app/(protected)/produits/catalogue/variantes/use-variantes-page.ts:152-158`. La condition `archivedVariantGroups.length === 0` reste toujours vraie après un fetch retournant `[]`, donc l'effect re-déclenche en boucle. 244 requêtes / 5 s observées.
-
-**Fix** : voir Levier 3.b ci-dessus.
-
-### Anti-pattern 2 — Fetch dupliqué parent/enfant
-
-**Symptôme** : 2 hooks `useUser()` dans deux composants frères → 2 requêtes au lieu d'1.
-**Fix** : centraliser via TanStack Query (Levier 1) ou contexte React.
-
-### Anti-pattern 3 — `select('*')` sur table large
-
-**Symptôme** : `products` a 40+ colonnes mais l'UI n'en affiche que 5. Payload x8.
-**Fix** : `select('id, name, sku, cost_price, stock_real')`.
-
-### Anti-pattern 4 — `.invalidateQueries` oublié
-
-**Symptôme** : après une mutation, l'UI affiche encore l'ancienne donnée jusqu'au prochain refetch automatique.
-**Fix** : `await queryClient.invalidateQueries({ queryKey: ['x'] })` dans `onSuccess`.
-
-### Anti-pattern 5 — `useEffect` dépendant d'un objet inline
-
-```tsx
-// INTERDIT — { search } est un nouvel objet à chaque render
-useEffect(() => {
-  void fetchData({ search });
-}, [{ search }]); // ← deps array contient un objet recréé
-
-// AUTORISÉ — deps primitive uniquement
-useEffect(() => {
-  void fetchData({ search });
-}, [search]);
-```
+1. **Boucle infinie sur onglet vide** — vu le 2026-04-27 dans `use-variantes-page.ts:152-158`. Fix : voir Levier 3.b.
+2. **Fetch dupliqué parent/enfant** — 2 hooks `useUser()` dans 2 composants frères → 2 requêtes. Fix : centraliser via TanStack Query.
+3. **`select('*')` sur table large** — `products` a 40+ colonnes mais l'UI en affiche 5. Payload x8.
+4. **`.invalidateQueries` oublié** — UI affiche encore l'ancienne donnée jusqu'au prochain refetch auto. Fix : `await queryClient.invalidateQueries({ queryKey: ['x'] })` dans `onSuccess`.
+5. **`useEffect` dépendant d'un objet inline** — `useEffect(..., [{ search }])` recrée l'objet à chaque render. Fix : deps primitives uniquement.
 
 ---
 
-## Checklist reviewer-agent (avant tout merge)
-
-À cocher pour chaque PR qui touche à un hook `use*`, un `useEffect`, ou une
-query Supabase :
+## Checklist reviewer (avant merge)
 
 - [ ] Aucun `select('*')` ajouté
-- [ ] `useEffect` deps : que des primitives stables, des refs, ou des
-      fonctions wrappées en `useCallback` avec deps stables
+- [ ] `useEffect` deps : primitives stables, refs, ou fonctions wrappées en `useCallback`
 - [ ] Aucun `array.length === N` comme condition de premier load
-- [ ] Si fetch sur table > 100 lignes attendues : `range` ou `limit` présent
-- [ ] Si écran consomme une donnée déjà chargée ailleurs : utilisation de
-      TanStack Query avec même `queryKey` plutôt que nouveau fetch
-- [ ] `invalidateQueries` (avec `await`) dans tous les `onSuccess` de mutation
-- [ ] Test runtime avec MCP Playwright + intercepteur fetch sur 5 s pour
-      vérifier l'absence de boucle (≤ 5 requêtes/5s sur la page)
+- [ ] Si fetch sur table > 100 lignes : `range` ou `limit` présent
+- [ ] Si donnée déjà chargée ailleurs : TanStack Query avec même `queryKey`
+- [ ] `await invalidateQueries` dans tous les `onSuccess` de mutation
+- [ ] Test runtime Playwright : ≤ 5 requêtes/5s sur la page idle
 
 ---
 
 ## Mesure d'une boucle (procédure standard)
 
-Pour vérifier qu'une page n'a pas de boucle de requêtes, après navigation :
-
 ```js
-// Dans la console DevTools (ou Playwright browser_evaluate)
+// Console DevTools (ou Playwright browser_evaluate)
 const fetches = [];
 const orig = window.fetch;
 window.fetch = async function (...args) {
   fetches.push({ t: Date.now(), url: args[0] });
   return orig.apply(this, args);
 };
-// ...interagir avec la page (cliquer onglet, etc.)...
+// ...interagir avec la page...
 // Au bout de 5s :
-console.table(fetches);
 console.log('count:', fetches.length, 'rate:', fetches.length / 5, 'req/s');
 ```
 
-**Seuil d'alerte** : > 5 requêtes / 5 secondes sur une page idle (sans
-interaction utilisateur) = boucle suspectée.
+**Seuil d'alerte** : > 5 requêtes/5s sur page idle = boucle suspectée.
 
 ---
 
-## Référence
+## Historique
 
-Référencé par :
-
-- `CLAUDE.md` racine (section CODE STANDARDS — pointeur)
-- `.claude/rules/code-standards.md` (complémentaire sur le `useEffect` deps stability)
-- `.claude/rules/database.md` (complémentaire sur les standards Supabase)
-- `.claude/DECISIONS.md` (à venir : ADR sur la migration TanStack Query)
-
-Histoire des incidents :
-
-- **2026-04-16** : `useEffect` deps de `resetNewCustomerForm` non-stables → boucle infinie de resets, page LinkMe cassée 48 h
-- **2026-04-27** : `useEffect` `length === 0` sur onglet Archives variantes → 48 req/s en boucle silencieuse
+- 2026-04-16 : `useEffect` deps non-stables `resetNewCustomerForm` → boucle infinie de resets, page LinkMe cassée 48 h.
+- 2026-04-27 : `useEffect` `length === 0` sur onglet Archives variantes → 48 req/s en boucle silencieuse.

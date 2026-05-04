@@ -35,6 +35,7 @@ export interface CatalogueProduct {
 
   // Images
   primary_image_url: string | null;
+  primary_cloudflare_image_id: string | null;
   image_urls: string[] | null;
 
   // Publication
@@ -54,7 +55,7 @@ export interface CatalogueProduct {
   // Champs produit supplémentaires (ajoutés 2025-11-17)
   description: string | null;
   technical_description: string | null;
-  brand: string | null;
+  manufacturer: string | null;
   selling_points: string[] | null;
   dimensions: {
     length?: number;
@@ -109,7 +110,9 @@ export function useCatalogueProducts(
   return useQuery({
     queryKey: ['catalogue-products', options],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_site_internet_products');
+      const { data, error } = await supabase.rpc('get_site_internet_products', {
+        p_brand_slug: 'verone',
+      });
 
       if (error) {
         console.error('Error fetching catalogue products:', error);

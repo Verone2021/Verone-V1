@@ -13,6 +13,7 @@ import { Textarea } from '@verone/ui';
 import { formatPrice } from '@verone/utils';
 import { Plus, Package, AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
 
+import { BrandsMultiSelect } from '../forms/BrandsMultiSelect';
 import { getSubcategoryPrefix } from '../../utils/sku-generator';
 
 interface ProductCreationModalProps {
@@ -47,6 +48,7 @@ export function ProductCreationModal({
   const [priceHt, setPriceHt] = useState('');
   const [description, setDescription] = useState('');
   const [minStockLevel, setMinStockLevel] = useState('5');
+  const [brandIds, setBrandIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isGeneratingSKU, startGeneratingSKU] = useTransition();
@@ -115,6 +117,7 @@ export function ProductCreationModal({
         variant_attributes: {},
         dimensions: {},
         weight: null,
+        brand_ids: brandIds, // Marques internes Vérone Group ([] = white-label autorisé)
       };
 
       console.warn('Création produit:', productData);
@@ -160,6 +163,7 @@ export function ProductCreationModal({
     setPriceHt('');
     setDescription('');
     setMinStockLevel('5');
+    setBrandIds([]);
     setErrors({});
   };
 
@@ -339,6 +343,20 @@ export function ProductCreationModal({
                 placeholder="Description rapide du produit..."
                 rows={2}
               />
+            </div>
+
+            {/* Marques internes Vérone Group */}
+            <div className="space-y-2">
+              <Label>Marques internes (optionnel)</Label>
+              <BrandsMultiSelect
+                value={brandIds}
+                onChange={setBrandIds}
+                emptyLabel="Aucune marque (produit white-label)"
+              />
+              <p className="text-xs text-gray-500">
+                Vérone, Boêmia, Solar, Flos. Vide autorisé pour les produits
+                white-label ou sur mesure (Pokawa, etc.).
+              </p>
             </div>
 
             {/* Seuil de stock */}

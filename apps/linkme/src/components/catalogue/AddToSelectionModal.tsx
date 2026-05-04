@@ -9,14 +9,15 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
-import Image from 'next/image';
 
 import {
   calculateMargin,
   LINKME_CONSTANTS,
   PUBLIC_PRICE_ESTIMATION_FACTOR,
 } from '@verone/utils';
-import { X, Plus, Loader2, Package, AlertCircle } from 'lucide-react';
+import { X, Plus, Loader2, AlertCircle } from 'lucide-react';
+
+import { CloudflareImage } from '@verone/ui';
 
 import type { LinkMeCatalogProduct } from '../../lib/hooks/use-linkme-catalog';
 import { useCatalogProduct } from '../../lib/hooks/use-linkme-catalog';
@@ -230,20 +231,15 @@ export function AddToSelectionModal({
         {/* Produit */}
         <div className="px-6 py-4 bg-gray-50 border-b">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-white rounded-lg overflow-hidden flex-shrink-0 border">
-              {product.image_url ? (
-                <Image
-                  src={product.image_url}
-                  alt={product.name}
-                  width={64}
-                  height={64}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-300">
-                  <Package className="h-8 w-8" />
-                </div>
-              )}
+            <div className="relative w-16 h-16 bg-white rounded-lg overflow-hidden flex-shrink-0 border">
+              <CloudflareImage
+                cloudflareId={product.cloudflare_image_id ?? null}
+                fallbackSrc={product.image_url}
+                alt={product.name}
+                fill
+                className="object-cover"
+                sizes="64px"
+              />
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-gray-900 truncate">

@@ -1,0 +1,1 @@
+export { BrandsMultiSelect } from './BrandsMultiSelect';

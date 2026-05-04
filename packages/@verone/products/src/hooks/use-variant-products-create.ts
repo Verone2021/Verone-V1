@@ -64,7 +64,7 @@ export function useVariantProductCreate() {
       const { data: baseProduct, error: baseError } = await supabase
         .from('products')
         .select(
-          'sku, subcategory_id, supplier_id, brand, description, technical_description'
+          'sku, subcategory_id, supplier_id, manufacturer, description, technical_description'
         )
         .eq('id', baseProductId)
         .single();
@@ -112,7 +112,7 @@ export function useVariantProductCreate() {
             stock_quantity: data.stock_quantity ?? 0,
             subcategory_id: data.subcategory_id ?? baseProduct.subcategory_id,
             supplier_id: data.supplier_id ?? baseProduct.supplier_id,
-            brand: baseProduct.brand,
+            manufacturer: baseProduct.manufacturer,
             description: baseProduct.description,
             technical_description: baseProduct.technical_description,
           } as unknown as import('@verone/types').Database['public']['Tables']['products']['Insert'],

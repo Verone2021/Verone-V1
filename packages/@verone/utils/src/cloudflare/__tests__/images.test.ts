@@ -134,26 +134,28 @@ async function main(): Promise<void> {
     );
   });
 
-  await test('construit URL avec variant thumbnail (imagedelivery.net)', () => {
+  await test('construit URL avec variant social1x1 (imagedelivery.net)', () => {
     setEnvVars(VALID_ENV);
-    const url = buildCloudflareImageUrl('img-uuid-123', 'thumbnail');
+    const url = buildCloudflareImageUrl('img-uuid-123', 'social1x1');
     assert.equal(
       url,
-      'https://imagedelivery.net/abc123hash/img-uuid-123/thumbnail'
+      'https://imagedelivery.net/abc123hash/img-uuid-123/social1x1'
     );
   });
 
-  await test('construit URL custom domain quand NEXT_PUBLIC_CLOUDFLARE_USE_CUSTOM_DOMAIN=true', () => {
+  await test('ignore le custom domain (BO-IMG-FIX-002 désactivé temporaire)', () => {
     setEnvVars({
       ...VALID_ENV,
       NEXT_PUBLIC_CLOUDFLARE_USE_CUSTOM_DOMAIN: 'true',
     });
+    // Même avec NEXT_PUBLIC_CLOUDFLARE_USE_CUSTOM_DOMAIN=true, on doit
+    // toujours servir via imagedelivery.net tant que le custom hostname
+    // Cloudflare for SaaS n'est pas finalisé (le sous-domaine renvoie 403).
     const url = buildCloudflareImageUrl('img-uuid-123');
     assert.equal(
       url,
-      'https://images.veronecollections.fr/abc123hash/img-uuid-123/public'
+      'https://imagedelivery.net/abc123hash/img-uuid-123/public'
     );
-    // Reset to avoid pollution
     setEnvVars({ NEXT_PUBLIC_CLOUDFLARE_USE_CUSTOM_DOMAIN: undefined });
   });
 

@@ -13,7 +13,6 @@
 import { useState, useMemo } from 'react';
 
 import { Card } from '@tremor/react';
-import Image from 'next/image';
 import {
   Package,
   Search,
@@ -22,6 +21,8 @@ import {
   Clock,
   RefreshCw,
 } from 'lucide-react';
+
+import { CloudflareImage } from '@verone/ui';
 
 import type {
   StorageAllocation,
@@ -340,19 +341,16 @@ function ProductRow({
           )}
         </td>
         <td className="px-4 py-3">
-          {product.product_image_url ? (
-            <Image
-              src={product.product_image_url}
+          <div className="relative w-9 h-9 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+            <CloudflareImage
+              cloudflareId={null}
+              fallbackSrc={product.product_image_url}
               alt={product.product_name}
-              width={36}
-              height={36}
-              className="w-9 h-9 rounded-lg object-cover"
+              fill
+              className="object-cover"
+              sizes="36px"
             />
-          ) : (
-            <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center">
-              <Package className="h-4 w-4 text-gray-400" />
-            </div>
-          )}
+          </div>
         </td>
         <td className="px-4 py-3">
           <div>

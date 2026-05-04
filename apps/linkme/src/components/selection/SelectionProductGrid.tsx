@@ -2,11 +2,11 @@
 
 import { useState, useMemo } from 'react';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
+import { CloudflareImage } from '@verone/ui';
+
 import {
-  Package,
   Plus,
   Edit3,
   Trash2,
@@ -216,19 +216,14 @@ function ProductCard({
     <div className="flex items-center gap-3 rounded-lg border bg-white border-gray-100 hover:border-linkme-turquoise/40 p-3 hover:shadow-sm transition-all group">
       {/* Image */}
       <div className="relative h-20 w-20 flex-shrink-0 rounded-md bg-gray-50 overflow-hidden">
-        {item.product_image_url ? (
-          <Image
-            src={item.product_image_url}
-            alt={item.product_name}
-            fill
-            className="object-cover"
-            sizes="80px"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <Package className="h-6 w-6 text-gray-200" />
-          </div>
-        )}
+        <CloudflareImage
+          cloudflareId={item.product_cloudflare_image_id ?? null}
+          fallbackSrc={item.product_image_url}
+          alt={item.product_name}
+          fill
+          className="object-cover"
+          sizes="80px"
+        />
       </div>
 
       {/* Info */}

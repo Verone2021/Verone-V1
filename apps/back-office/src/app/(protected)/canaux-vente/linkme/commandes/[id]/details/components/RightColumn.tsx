@@ -252,10 +252,22 @@ export function RightColumn({
       )}
 
       {/* DEVIS */}
-      <QuotesSection orderId={order.id} />
+      <QuotesSection
+        orderId={order.id}
+        clientEmail={order.organisation?.email ?? ''}
+        clientName={
+          order.organisation?.trade_name ?? order.organisation?.legal_name ?? ''
+        }
+      />
 
       {/* FACTURES */}
-      <InvoicesSection orderId={order.id} />
+      <InvoicesSection
+        orderId={order.id}
+        clientEmail={order.organisation?.email ?? ''}
+        clientName={
+          order.organisation?.trade_name ?? order.organisation?.legal_name ?? ''
+        }
+      />
 
       {/* NOTES */}
       <Card>

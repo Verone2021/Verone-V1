@@ -96,7 +96,7 @@ export async function POST(
         product_status,
         stock_status,
         condition,
-        brand,
+        manufacturer,
         gtin,
         cost_price,
         margin_percentage,

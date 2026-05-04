@@ -13,7 +13,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 
-import Image from 'next/image';
 import { CloudflareImage } from '@verone/ui';
 
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
@@ -401,9 +400,10 @@ export function ConsultationImageViewerModal({
                         : 'border-gray-300 hover:border-gray-500'
                     )}
                   >
-                    {image.public_url && (
-                      <Image
-                        src={image.public_url}
+                    {(image.public_url ?? image.cloudflare_image_id) && (
+                      <CloudflareImage
+                        cloudflareId={image.cloudflare_image_id}
+                        fallbackSrc={image.public_url}
                         alt={`Vue ${index + 1}`}
                         fill
                         className="object-cover"

@@ -20,7 +20,7 @@ export function useSourcingCreateUpdate({
     supplier_page_url?: string;
     cost_price?: number;
     supplier_reference?: string;
-    brand?: string;
+    manufacturer?: string;
     description?: string;
     supplier_moq?: number;
     sourcing_channel?: string;
@@ -52,7 +52,7 @@ export function useSourcingCreateUpdate({
             supplier_page_url: data.supplier_page_url ?? null,
             cost_price: data.cost_price ?? null,
             supplier_reference: data.supplier_reference ?? null,
-            brand: data.brand ?? null,
+            manufacturer: data.manufacturer ?? null,
             description: data.description ?? null,
             supplier_moq: data.supplier_moq ?? null,
             sourcing_channel: data.sourcing_channel ?? null,
@@ -161,7 +161,7 @@ export function useSourcingCreateUpdate({
       supplier_id?: string | null;
       supplier_reference?: string | null;
       margin_percentage?: number | null;
-      brand?: string | null;
+      manufacturer?: string | null;
       description?: string | null;
       supplier_moq?: number | null;
       dimensions?: Record<string, number> | null;
@@ -207,7 +207,8 @@ export function useSourcingCreateUpdate({
         updateData.margin_percentage = data.margin_percentage;
       if (data.supplier_reference !== undefined)
         updateData.supplier_reference = data.supplier_reference;
-      if (data.brand !== undefined) updateData.brand = data.brand;
+      if (data.manufacturer !== undefined)
+        updateData.manufacturer = data.manufacturer;
       if (data.description !== undefined)
         updateData.description = data.description;
       if (data.supplier_moq !== undefined)

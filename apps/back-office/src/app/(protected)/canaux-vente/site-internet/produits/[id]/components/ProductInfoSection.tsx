@@ -67,13 +67,13 @@ export default function ProductInfoSection({
           </p>
         </div>
 
-        {/* Marque */}
+        {/* Fabricant */}
         <div>
           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
-            Marque
+            Fabricant
           </div>
-          {product.brand ? (
-            <Badge variant="secondary">{product.brand}</Badge>
+          {product.manufacturer ? (
+            <Badge variant="secondary">{product.manufacturer}</Badge>
           ) : (
             <p className="text-sm text-gray-400 italic">Non renseignée</p>
           )}

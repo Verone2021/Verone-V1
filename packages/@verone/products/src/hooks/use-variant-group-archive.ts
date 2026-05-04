@@ -173,7 +173,7 @@ export function useVariantGroupArchive(deps: VariantGroupArchiveDeps) {
       const { data, error: fetchError } = await supabase
         .from('variant_groups')
         .select(
-          'id, name, base_sku, subcategory_id, variant_type, product_count, has_common_supplier, supplier_id, dimensions_length, dimensions_width, dimensions_height, dimensions_unit, style, suitable_rooms, common_weight, has_common_weight, archived_at, created_at, updated_at'
+          'id, name, base_sku, subcategory_id, variant_type, product_count, has_common_supplier, supplier_id, dimensions_length, dimensions_width, dimensions_height, dimensions_unit, style, suitable_rooms, common_weight, has_common_weight, common_cost_price, has_common_cost_price, common_eco_tax, common_material, has_common_material, common_color, has_common_color, material_name_position, color_name_position, archived_at, created_at, updated_at'
         )
         .not('archived_at', 'is', null)
         .order('archived_at', { ascending: false });
@@ -212,19 +212,22 @@ export function useVariantGroupArchive(deps: VariantGroupArchiveDeps) {
       if (productIds.length > 0) {
         const { data: imagesData } = await supabase
           .from('product_images')
-          .select('product_id, public_url')
+          .select('product_id, public_url, cloudflare_image_id')
           .in('product_id', productIds)
           .order('display_order', { ascending: true });
 
         allImages = (imagesData ?? []) as ProductImageRef[];
       }
 
-      // Associer les images aux produits
-      const productsWithImages = allProducts.map(product => ({
-        ...product,
-        image_url: allImages.find(img => img.product_id === product.id)
-          ?.public_url,
-      }));
+      // Associer les images aux produits (URL + Cloudflare ID)
+      const productsWithImages = allProducts.map(product => {
+        const img = allImages.find(i => i.product_id === product.id);
+        return {
+          ...product,
+          image_url: img?.public_url,
+          cloudflare_image_id: img?.cloudflare_image_id ?? null,
+        };
+      });
 
       // Grouper les produits par variant_group_id
       const groupsWithProducts = (data || []).map(group => ({

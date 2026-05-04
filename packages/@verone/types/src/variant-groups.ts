@@ -7,6 +7,20 @@ import type { LucideIcon } from 'lucide-react';
 // Note: pattern retiré car considéré comme moins pertinent que couleur/matériau
 export type VariantType = 'color' | 'material';
 
+// Position d'un attribut commun dans le nom genere des produits du groupe
+export type NamePosition =
+  | 'none'
+  | 'before_group'
+  | 'after_group'
+  | 'before_variant';
+
+export const NAME_POSITION_LABELS: Record<NamePosition, string> = {
+  none: 'Pas dans le nom',
+  before_group: 'Avant le nom du groupe',
+  after_group: 'Après le nom du groupe',
+  before_variant: 'Avant la valeur de la variante',
+};
+
 // Styles décoratifs disponibles
 export type DecorativeStyle =
   | 'minimaliste'
@@ -63,6 +77,18 @@ export interface VariantGroup {
   supplier_id?: string | null; // ID du fournisseur commun (si has_common_supplier = true)
   has_common_supplier?: boolean; // Si true, tous les produits héritent du supplier_id
 
+  // Matière commune (typique quand variant_type='color')
+  common_material?: string | null;
+  has_common_material?: boolean;
+
+  // Couleur commune (typique quand variant_type='material')
+  common_color?: string | null;
+  has_common_color?: boolean;
+
+  // Position de la matiere/couleur dans le nom genere des produits du groupe
+  material_name_position?: NamePosition | null;
+  color_name_position?: NamePosition | null;
+
   // Relations
   subcategory?: {
     id: string;
@@ -98,8 +124,9 @@ export interface VariantProduct {
   // Fournisseur (peut être hérité du groupe ou spécifique au produit)
   supplier_id?: string | null;
 
-  // Image principale pour affichage
+  // Image principale pour affichage (Cloudflare priority + Supabase fallback)
   image_url?: string;
+  cloudflare_image_id?: string | null;
 }
 
 // Pour afficher un produit avec ses variantes (siblings)
@@ -119,6 +146,9 @@ export interface CreateVariantGroupData {
   base_sku: string; // SKU de base pour génération automatique
   subcategory_id: string;
   variant_type?: VariantType; // Type de variante (color/material)
+
+  // Produit témoin à attacher automatiquement au groupe créé (variant_position=1)
+  matrix_product_id?: string;
 
   // Attributs communs optionnels
   dimensions_length?: number;
@@ -144,6 +174,18 @@ export interface CreateVariantGroupData {
   // Fournisseur commun optionnel
   supplier_id?: string | null;
   has_common_supplier?: boolean;
+
+  // Matière commune optionnelle (typique quand variant_type='color')
+  common_material?: string | null;
+  has_common_material?: boolean;
+
+  // Couleur commune optionnelle (typique quand variant_type='material')
+  common_color?: string | null;
+  has_common_color?: boolean;
+
+  // Positions dans le nom
+  material_name_position?: NamePosition;
+  color_name_position?: NamePosition;
 }
 
 // Données pour ajouter des produits à un groupe
@@ -203,6 +245,18 @@ export interface UpdateVariantGroupData {
   // Fournisseur commun
   supplier_id?: string | null;
   has_common_supplier?: boolean;
+
+  // Matière commune
+  common_material?: string | null;
+  has_common_material?: boolean;
+
+  // Couleur commune
+  common_color?: string | null;
+  has_common_color?: boolean;
+
+  // Positions dans le nom
+  material_name_position?: NamePosition;
+  color_name_position?: NamePosition;
 
   // Deprecated - gardé pour compatibilité
   common_dimensions?: {

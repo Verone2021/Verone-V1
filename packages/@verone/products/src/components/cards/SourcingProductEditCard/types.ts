@@ -16,7 +16,7 @@ export interface SupplierSectionData {
 }
 
 export interface DetailsSectionData {
-  brand: string;
+  manufacturer: string;
   description: string;
   supplier_moq: number | null;
   weight: number;
@@ -41,7 +41,7 @@ export interface SourcingProduct {
   supplier_id: string | null;
   sourcing_type: 'client' | 'interne' | null;
   requires_sample: boolean;
-  brand?: string | null;
+  manufacturer?: string | null;
   description?: string | null;
   supplier_moq?: number | null;
   dimensions?: Record<string, number> | null;
@@ -64,6 +64,7 @@ export interface SourcingProduct {
 export interface ProductImage {
   id: string;
   public_url: string | null;
+  cloudflare_image_id?: string | null;
   alt_text?: string | null;
 }
 

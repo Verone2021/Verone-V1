@@ -8,11 +8,9 @@
  * @updated 2026-04-14 - Refactoring: extraction ProductSalesSection
  */
 
-import Image from 'next/image';
 import Link from 'next/link';
 
 import {
-  Package,
   Euro,
   Ruler,
   Warehouse,
@@ -26,11 +24,12 @@ import {
 } from 'lucide-react';
 
 import {
+  Badge,
+  CloudflareImage,
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  Badge,
 } from '@verone/ui';
 
 import type { AffiliateProduct } from '@/lib/hooks/use-affiliate-products';
@@ -151,19 +150,15 @@ export function ProductDetailSheet({
         {/* Header */}
         <DialogHeader>
           <div className="flex items-start gap-4">
-            {product.product_image_url ? (
-              <Image
-                src={product.product_image_url}
+            <div className="relative w-16 h-16 flex-shrink-0">
+              <CloudflareImage
+                cloudflareId={product.cloudflare_image_id ?? null}
+                fallbackSrc={product.product_image_url}
                 alt={product.name}
-                width={64}
-                height={64}
-                className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
+                fill
+                className="rounded-xl object-cover"
               />
-            ) : (
-              <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Package className="h-6 w-6 text-gray-400" />
-              </div>
-            )}
+            </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <DialogTitle className="text-lg font-semibold text-[#183559]">

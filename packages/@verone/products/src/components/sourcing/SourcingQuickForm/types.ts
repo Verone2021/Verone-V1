@@ -20,7 +20,7 @@ export interface ProductFormData {
   supplier_page_url: string;
   cost_price: number;
   supplier_reference: string;
-  brand: string;
+  manufacturer: string;
   description: string;
   supplier_moq: number;
   sourcing_channel: string;

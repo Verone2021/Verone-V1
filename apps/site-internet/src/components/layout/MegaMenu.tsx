@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 
 import Link from 'next/link';
 
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 import { createUntypedClient } from '@/lib/supabase/untyped-client';
@@ -68,12 +68,19 @@ function useCategoriesWithSubs() {
 
 export function MegaMenu() {
   const [isOpen, setIsOpen] = useState(false);
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const { data: categories = [] } = useCategoriesWithSubs();
 
-  // Only show categories with products (subcategories)
+  // Familles à afficher : seulement celles qui ont des sous-catégories
   const relevantCategories = categories.filter(c => c.subcategories.length > 0);
+
+  // Catégorie active (par défaut : la première)
+  const activeCategory =
+    relevantCategories.find(c => c.id === activeCategoryId) ??
+    relevantCategories[0] ??
+    null;
 
   const handleMouseEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -81,7 +88,10 @@ export function MegaMenu() {
   };
 
   const handleMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => setIsOpen(false), 200);
+    timeoutRef.current = setTimeout(() => {
+      setIsOpen(false);
+      setActiveCategoryId(null);
+    }, 200);
   };
 
   useEffect(() => {
@@ -108,56 +118,91 @@ export function MegaMenu() {
         />
       </Link>
 
-      {/* Dropdown */}
-      {isOpen && relevantCategories.length > 0 && (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-[700px] bg-white border border-verone-gray-200 shadow-luxury-xl rounded-lg p-8 z-50">
-          <div className="grid grid-cols-3 gap-8">
-            {relevantCategories.map(category => (
-              <div key={category.id}>
-                <Link
-                  href={`/catalogue?categorie=${category.slug}`}
-                  className="text-sm font-semibold text-verone-black uppercase tracking-wide hover:text-verone-gray-600 transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  {category.name}
-                </Link>
-                <ul className="mt-3 space-y-1.5">
-                  {category.subcategories.slice(0, 8).map(sub => (
-                    <li key={sub.id}>
-                      <Link
-                        href={`/catalogue?categorie=${sub.slug}`}
-                        className="text-sm text-verone-gray-500 hover:text-verone-black transition-colors duration-200"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        {sub.name}
-                      </Link>
-                    </li>
-                  ))}
-                  {category.subcategories.length > 8 && (
-                    <li>
-                      <Link
-                        href={`/catalogue?categorie=${category.slug}`}
-                        className="text-xs text-verone-gray-400 hover:text-verone-black transition-colors"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Voir tout ({category.subcategories.length})
-                      </Link>
-                    </li>
-                  )}
-                </ul>
-              </div>
-            ))}
-          </div>
-
-          {/* Footer link */}
-          <div className="mt-6 pt-6 border-t border-verone-gray-100 text-center">
-            <Link
-              href="/catalogue"
-              className="text-sm font-medium text-verone-black hover:underline uppercase tracking-wide"
-              onClick={() => setIsOpen(false)}
+      {/* Two-pane mega menu : familles à gauche, sous-catégories à droite.
+          Pleine largeur viewport, fixed pour échapper au header sticky. */}
+      {isOpen && relevantCategories.length > 0 && activeCategory && (
+        <div
+          className="fixed left-0 right-0 mt-4 bg-white border-y border-verone-gray-200 shadow-luxury-xl z-50"
+          style={{ top: 'var(--header-height, 80px)' }}
+        >
+          <div className="max-w-7xl mx-auto flex max-h-[70vh]">
+            {/* Pane gauche : liste verticale des familles */}
+            <nav
+              className="w-64 shrink-0 border-r border-verone-gray-100 py-6 overflow-y-auto"
+              aria-label="Familles de produits"
             >
-              Voir tout le catalogue
-            </Link>
+              <ul className="space-y-0.5">
+                {relevantCategories.map(category => {
+                  const isActive = category.id === activeCategory.id;
+                  return (
+                    <li key={category.id}>
+                      <button
+                        type="button"
+                        onMouseEnter={() => setActiveCategoryId(category.id)}
+                        onFocus={() => setActiveCategoryId(category.id)}
+                        className={`w-full flex items-center justify-between px-6 py-2.5 text-sm font-medium uppercase tracking-wide text-left transition-colors duration-150 ${
+                          isActive
+                            ? 'bg-verone-gray-50 text-verone-black'
+                            : 'text-verone-gray-600 hover:bg-verone-gray-50/60 hover:text-verone-black'
+                        }`}
+                      >
+                        <span className="truncate">{category.name}</span>
+                        <ChevronRight
+                          className={`h-3.5 w-3.5 shrink-0 transition-opacity ${
+                            isActive ? 'opacity-100' : 'opacity-0'
+                          }`}
+                        />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+
+            {/* Pane droite : sous-catégories de la famille active en grille */}
+            <div className="flex-1 py-6 px-8 overflow-y-auto">
+              <div className="flex items-baseline justify-between mb-4">
+                <Link
+                  href={`/catalogue?categorie=${activeCategory.slug}`}
+                  onClick={() => setIsOpen(false)}
+                  className="text-base font-semibold text-verone-black uppercase tracking-wide hover:underline"
+                >
+                  {activeCategory.name}
+                </Link>
+                <Link
+                  href={`/catalogue?categorie=${activeCategory.slug}`}
+                  onClick={() => setIsOpen(false)}
+                  className="text-xs font-medium text-verone-gray-500 hover:text-verone-black uppercase tracking-wide"
+                >
+                  Voir tout ({activeCategory.subcategories.length}) →
+                </Link>
+              </div>
+
+              <ul className="grid grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2">
+                {activeCategory.subcategories.map(sub => (
+                  <li key={sub.id}>
+                    <Link
+                      href={`/catalogue?categorie=${sub.slug}`}
+                      onClick={() => setIsOpen(false)}
+                      className="block py-1 text-sm text-verone-gray-600 hover:text-verone-black transition-colors duration-150"
+                    >
+                      {sub.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+
+              {/* Footer du panneau droit */}
+              <div className="mt-8 pt-4 border-t border-verone-gray-100">
+                <Link
+                  href="/catalogue"
+                  onClick={() => setIsOpen(false)}
+                  className="text-sm font-medium text-verone-black hover:underline uppercase tracking-wide"
+                >
+                  Voir tout le catalogue →
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       )}

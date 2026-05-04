@@ -4,7 +4,12 @@ import { useState, useEffect } from 'react';
 
 import { useSubcategories } from '@verone/categories/hooks';
 import { useOrganisations } from '@verone/organisations/hooks';
-import type { VariantGroup, UpdateVariantGroupData } from '@verone/types';
+import { useProductColors } from '@verone/products/hooks';
+import type {
+  VariantGroup,
+  UpdateVariantGroupData,
+  NamePosition,
+} from '@verone/types';
 import { Button } from '@verone/ui';
 import {
   Dialog,
@@ -42,6 +47,7 @@ export function VariantGroupEditModal({
       type: 'supplier',
       is_active: true,
     });
+  const { colors } = useProductColors();
 
   const [name, setName] = useState('');
   const [baseSku, setBaseSku] = useState('');
@@ -66,6 +72,14 @@ export function VariantGroupEditModal({
   const [suitableRooms, setSuitableRooms] = useState<string[]>([]);
   const [hasCommonSupplier, setHasCommonSupplier] = useState(false);
   const [supplierId, setSupplierId] = useState<string | undefined>();
+  const [hasCommonMaterial, setHasCommonMaterial] = useState(false);
+  const [commonMaterial, setCommonMaterial] = useState<string>('');
+  const [hasCommonColor, setHasCommonColor] = useState(false);
+  const [commonColor, setCommonColor] = useState<string>('');
+  const [materialNamePosition, setMaterialNamePosition] =
+    useState<NamePosition>('none');
+  const [colorNamePosition, setColorNamePosition] =
+    useState<NamePosition>('none');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialiser les valeurs du formulaire quand le groupe change
@@ -102,6 +116,22 @@ export function VariantGroupEditModal({
       // Fournisseur commun
       setHasCommonSupplier(group.has_common_supplier ?? false);
       setSupplierId(group.supplier_id ?? undefined);
+
+      // Matière commune
+      setHasCommonMaterial(group.has_common_material ?? false);
+      setCommonMaterial(group.common_material ?? '');
+
+      // Couleur commune
+      setHasCommonColor(group.has_common_color ?? false);
+      setCommonColor(group.common_color ?? '');
+
+      // Positions dans le nom (default 'none')
+      setMaterialNamePosition(
+        (group.material_name_position as NamePosition | null) ?? 'none'
+      );
+      setColorNamePosition(
+        (group.color_name_position as NamePosition | null) ?? 'none'
+      );
     }
   }, [group, isOpen]);
 
@@ -186,6 +216,25 @@ export function VariantGroupEditModal({
       // Pièces compatibles
       updateData.suitable_rooms =
         suitableRooms.length > 0 ? suitableRooms : undefined;
+
+      // Matière commune
+      updateData.has_common_material = hasCommonMaterial;
+      updateData.common_material = hasCommonMaterial
+        ? commonMaterial || null
+        : null;
+
+      // Couleur commune
+      updateData.has_common_color = hasCommonColor;
+      updateData.common_color = hasCommonColor ? commonColor || null : null;
+
+      // Positions dans le nom — uniquement si la propriete commune est cochee
+      // sinon force 'none' pour eviter incoherence
+      updateData.material_name_position = hasCommonMaterial
+        ? materialNamePosition
+        : 'none';
+      updateData.color_name_position = hasCommonColor
+        ? colorNamePosition
+        : 'none';
 
       await onSubmit(group.id, updateData);
       onClose();
@@ -321,6 +370,20 @@ export function VariantGroupEditModal({
               setCommonCostPrice={setCommonCostPrice}
               commonEcoTax={commonEcoTax}
               setCommonEcoTax={setCommonEcoTax}
+              hasCommonMaterial={hasCommonMaterial}
+              setHasCommonMaterial={setHasCommonMaterial}
+              commonMaterial={commonMaterial}
+              setCommonMaterial={setCommonMaterial}
+              hasCommonColor={hasCommonColor}
+              setHasCommonColor={setHasCommonColor}
+              commonColor={commonColor}
+              setCommonColor={setCommonColor}
+              colors={colors}
+              materialNamePosition={materialNamePosition}
+              setMaterialNamePosition={setMaterialNamePosition}
+              colorNamePosition={colorNamePosition}
+              setColorNamePosition={setColorNamePosition}
+              groupName={name}
             />
 
             <VariantGroupStyleSupplierSection

@@ -13,9 +13,8 @@
 
 import { useState, useMemo } from 'react';
 
-import Image from 'next/image';
-
 import {
+  CloudflareImage,
   Dialog,
   DialogContent,
   DialogHeader,
@@ -288,20 +287,14 @@ export function AddProductDialog({
                     )}
                   >
                     {/* Image */}
-                    <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 bg-gray-100">
-                      {item.product_image_url ? (
-                        <Image
-                          src={item.product_image_url}
-                          alt={item.product_name}
-                          width={48}
-                          height={48}
-                          className="object-cover w-full h-full"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package className="h-5 w-5 text-gray-300" />
-                        </div>
-                      )}
+                    <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0 bg-gray-100">
+                      <CloudflareImage
+                        cloudflareId={item.product_cloudflare_image_id ?? null}
+                        fallbackSrc={item.product_image_url}
+                        alt={item.product_name}
+                        fill
+                        className="object-cover"
+                      />
                     </div>
 
                     {/* Info */}

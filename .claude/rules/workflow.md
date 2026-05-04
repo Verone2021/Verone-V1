@@ -1,7 +1,12 @@
-# Regles Workflow Verone
+# Règles Workflow Verone
 
-**Source de verite pour le workflow Git / PR / merge. Lecture obligatoire
-par tous les agents avant toute action git.**
+**Source de vérité unique** pour Git / PR / merge + checklist 4 questions
+avant nouvelle branche (anciennement `branch-strategy.md`, fusionnée en
+`[INFRA-LEAN-001]`).
+
+> Compactée en `[INFRA-LEAN-002]` — exemples redondants retirés.
+
+**Voir aussi** : `.claude/rules/no-worktree-solo.md` — JAMAIS `git worktree add`.
 
 ---
 
@@ -10,304 +15,208 @@ par tous les agents avant toute action git.**
 **Toute branche feature/fix/hotfix part de `staging` et PR vers `staging`. JAMAIS vers `main`.**
 
 ```bash
-# CORRECT
 git checkout staging && git pull
 git checkout -b feat/XXX
 gh pr create --base staging --head feat/XXX
-
-# INTERDIT
-git checkout main
-git checkout -b feat/XXX        # ← branche partie de main
-gh pr create --base main ...    # ← PR vers main
 ```
 
-Seule exception autorisée vers `main` : la **release PR** `staging → main`, créée périodiquement par Romeo (ou le workflow `auto-release-staging-to-main.yml`).
+Seule exception vers `main` : la **release PR** `staging → main`, créée
+**EXCLUSIVEMENT par Romeo** (manuel ou via `auto-release-staging-to-main.yml`).
+L'agent ne crée JAMAIS cette release PR de sa propre initiative.
 
-Toute autre PR vers `main` est **bloquée par le workflow `protect-main-source.yml`** (CI fail). Pour bypass un hotfix vraiment critique : ajouter le label `hotfix-direct`.
+Toute autre PR vers `main` est bloquée par `protect-main-source.yml`. Bypass
+via label `hotfix-direct` réservé à Romeo. **Avant tout `gh pr create` :
+vérifie deux fois la base.** Si tu hésites, c'est `--base staging`.
 
-Pourquoi : si tu PR vers main directement, main avance avant staging → la release PR staging→main devient un calvaire de conflits. Cf incident 2026-04-25 (6 PRs ouvertes vers main au lieu de staging, 72h perdues à débrouiller).
-
-**Avant tout `gh pr create` : vérifie deux fois la base.** Si tu hésites, c'est `--base staging`.
+Pourquoi : si tu PR vers main directement, main avance avant staging → la
+release PR staging→main devient un calvaire de conflits (incident 2026-04-25).
 
 ---
 
-## Principe fondamental : 1 PR = 1 bloc de travail coherent
+## Checklist OBLIGATOIRE avant nouvelle branche / nouvelle PR
 
-Les vrais developpeurs seniors **ne creent PAS une PR par sprint/sous-tache**.
-Ils creent une PR par **bloc coherent** qui a du sens pour le reviewer.
+4 questions. Si une seule réponse est ambiguë → demander Romeo (cas business).
 
-### MAUVAIS workflow (a bannir)
+### 1. Une PR ouverte couvre-t-elle déjà le sujet ?
 
-```
-Sprint 1 -> branche -> commit -> push -> PR -> CI -> merge (15 min perdues)
-Sprint 2 -> branche -> commit -> push -> PR -> CI -> merge (15 min perdues)
-Sprint 3 -> branche -> commit -> push -> PR -> CI -> merge (15 min perdues)
+```bash
+gh pr list --state open --base staging --json number,title,headRefName
 ```
 
-= 45 min en overhead CI/review/merge pour 3 sprints.
+"Même sujet fonctionnel" = même tag `[APP-DOMAIN-*]` ou même page/feature
+métier. **Si OUI** → continuer sur sa branche, ajouter un commit. Pas de nouvelle PR.
 
-### BON workflow (obligatoire)
+### 2. La correction est-elle dans la même boucle d'itération ?
 
+Si Romeo enchaîne plusieurs corrections sur le même écran/feature dans la
+même session, c'est UNE itération → UNE branche. **Si OUI** → continuer.
+
+### 3. Romeo a-t-il explicitement dit "fais une nouvelle PR" ?
+
+L'agent ne décide pas seul de séparer. **Si NON** → reste sur la branche en
+cours. Par défaut, commit sur la branche en cours.
+
+### 4. Le sujet touche-t-il un RPC, une fonction DB, ou une colonne ?
+
+Si oui, la PR DOIT inclure dans le même commit (ou un 2e commit) :
+
+```bash
+pnpm run generate:types
+git add packages/@verone/types/src/supabase.ts
 ```
-Bloc (ex: Migration Responsive) -> 1 branche ->
-  commit 1 + push (sauvegarde)
-  commit 2 + push (sauvegarde)
-  commit 3 + push (sauvegarde)
-  ...
-  commit N + push (sauvegarde)
-  -> 1 PR quand le bloc est fini -> 1 CI -> 1 merge
+
+Sans ça, le check `Supabase TS types drift (blocking)` fail au merge release
+main → PR de rattrapage = ~25 min. Si `pnpm run generate:types` échoue,
+utiliser `mcp__supabase__generate_typescript_types` (attention : omet
+`graphql_public`, télécharger artifact `supabase-types-drift` du CI failed
+pour fichier byte-for-byte conforme).
+
+### Démarrage de session
+
+```bash
+gh pr list --state open --base staging --json number,title,headRefName,isDraft
 ```
 
-= 15 min de CI total, meme pour 10 sous-taches.
+### Si la règle semble impossible à respecter
+
+Cas : Romeo demande pendant une PR ouverte un fix totalement indépendant
+et urgent. Demander : "Branche X (PR #YYY pour A). Tu veux Y dans la même
+PR ou une PR dédiée ?" Attendre. Une demande inutile coûte 5 s, une PR
+éclatée coûte 1 h de rebase.
 
 ---
 
-## Regles strictes
+## Principe : 1 PR = 1 bloc cohérent
+
+Pas une PR par sprint. UNE PR par bloc cohérent qui a du sens pour le reviewer.
+
+| Mauvais (banni)       | Bon (obligatoire)                       |
+| --------------------- | --------------------------------------- |
+| Sprint 1 → PR → merge | Sprint 1 → commit + push (même branche) |
+| Sprint 2 → PR → merge | Sprint 2 → commit + push (même branche) |
+| Sprint 3 → PR → merge | Sprint 3 → commit + push (même branche) |
+| 45 min CI overhead    | Bloc complet → 1 PR → 1 CI (15 min)     |
+
+Exemples de blocs cohérents (= 1 PR) :
+
+- Migration responsive Pattern A complet (factures + commandes + stocks ensemble)
+- Sprint finance entier (R1 → R7)
+- Bundling thématique (Meta + Google Merchant + Site Internet ensemble)
+
+---
+
+## Règles strictes
 
 ### Commits & Push
 
-**TOUJOURS** :
+**TOUJOURS** : commit après chaque sous-tâche, push après chaque commit,
+format `[APP-DOMAIN-NNN] type: description`, `git push --force-with-lease`
+(jamais `--force` nu).
 
-- Commit apres chaque sous-tache terminee (bonne granularite pour rollback)
-- Push apres chaque commit (sauvegarde, pas de travail perdu)
-- Format commit : `[APP-DOMAIN-NNN] type: description`
+**JAMAIS** : commit "WIP" vague, `--force` nu, commit sans Task ID (sauf
+`[NO-TASK]`), `git worktree add`.
 
-**JAMAIS** :
+### PR
 
-- Commit "WIP" vague sans contenu clair
-- Push force (`--force`) sans autorisation Romeo
-- Commit sans Task ID (sauf `[NO-TASK]` pour chores)
-
-### Pull Requests
-
-**UNE PR = UN BLOC COHERENT**, pas une sous-tache.
-
-Exemples de blocs coherents (= 1 PR chacun) :
-
-- **Infrastructure responsive** = 1 PR = ~18 fichiers d'un coup
-- **Migration responsive Pattern A critique** = 1 PR = toutes les pages du pattern (factures + commandes + stocks ensemble)
-- **Migration responsive Pattern A + B** = 1 PR = patterns apparentes fusionnes
-- **Sprint finance entier** = 1 PR = ensemble des fixes lies
-
-Exemples de ce qu'il NE faut PAS faire (1 PR par page) :
-
-- PR "migrer /factures"
-- PR "migrer /commandes/clients"
-- PR "migrer /commandes/fournisseurs"
-- PR "migrer /stocks/inventaire"
-- ...
-
-=> BANNI. Regrouper en 1 seule PR "[BO-UI-RESP-003] Pattern A critique".
+UNE PR = UN BLOC COHÉRENT. PR uniquement quand bloc fonctionnellement
+complet ET reviewer PASS. Sinon continuer commits/push sur la branche.
 
 ### Merge
 
-- **1 merge squash par PR** (pour garder historique propre)
-- Merge SEULEMENT quand le bloc entier est fini
-- NE JAMAIS merger en cours de bloc pour "avancer"
+1 merge squash par PR. Merge SEULEMENT quand bloc entier fini. JAMAIS en
+cours de bloc pour "avancer".
 
 ### Branches
 
-- Une seule branche par bloc de travail
-- Branche vit plusieurs jours si necessaire (normal pour senior)
-- Rebase regulier sur staging pour eviter conflits : `git rebase origin/staging`
+Une branche par bloc. Vit plusieurs jours si nécessaire. Bascule via
+`git checkout` (avec `git stash` si dirty). JAMAIS `git worktree add`.
 
 ---
 
-## Comment regrouper les sprints
+## Quand CRÉER une PR
 
-### Sprint responsive (exemple)
+Tous ces critères doivent être remplis :
 
-Au lieu de 7 PRs (003, 004, 005, 006, 007, 008, 009), creer 2-3 PRs :
-
-**Option A : 1 grosse PR**
-
-- 1 branche `feat/responsive-migration-global`
-- 7 commits (un par pattern)
-- 1 PR `[BO-UI-RESP-MIGRATION] Migration responsive complete (150+ pages)`
-
-**Option B : 2-3 PRs thematiques** (recommande pour reviews plus faciles)
-
-- PR 1 `[BO-UI-RESP-LISTS] Patterns A + B (listes CRUD et filtres)` = sprints 003, 004, 005
-- PR 2 `[BO-UI-RESP-DETAILS] Patterns C + D (detail et dashboards)` = sprints 006, 007
-- PR 3 `[BO-UI-RESP-FORMS] Patterns E + F (modals et forms)` = sprints 008
-- PR 4 `[BO-UI-RESP-APPS] LinkMe + site-internet` = sprint 009
-
-### Point de controle
-
-Commit apres chaque pattern migre (sauvegarde intermediaire), push systematique,
-mais PR UNIQUEMENT quand plusieurs patterns sont fusibles en un bloc coherent.
-
----
-
-## Quand CREER une PR (et pas avant)
-
-Creer une PR SEULEMENT si tous ces criteres sont remplis :
-
-- [ ] Le bloc de travail est fonctionnellement complet (pas mi-fini)
-- [ ] Pas de regression sur les pages deja migrees
-- [ ] Type-check + build verts localement
+- [ ] Bloc fonctionnellement complet (pas mi-fini)
+- [ ] Pas de régression sur les pages déjà migrées
+- [ ] Type-check + build verts localement (ou CI)
 - [ ] Tests Playwright OK (si applicable)
-- [ ] Reviewer-agent PASS
-- [ ] Le bloc regroupe 3+ sous-taches ou est un bloc atomique critique
+- [ ] Reviewer-agent PASS dans `docs/scratchpad/review-report-*.md`
+- [ ] Bloc regroupe 3+ sous-tâches OU bloc atomique critique
 
-Si un seul critere manque : continuer a commit/push sur la branche, pas de PR.
-
----
+Un seul critère manquant : pas de PR, continuer commits/push.
 
 ## Quand MERGER une PR
 
-Merger SEULEMENT si :
-
-- [ ] CI verte (type-check + build + tests)
+- [ ] CI verte (type-check + build + tests + drift DB)
 - [ ] Reviewer-agent PASS
-- [ ] Romeo a valide explicitement (ou workflow autonome pre-approuve)
 - [ ] Aucun CRITICAL dans le review report
+- [ ] Romeo a validé OU CI verte sur sprint pré-approuvé (cf. mémoire feedback `ci_green_auto_merge`)
 
-Merger en `--squash` pour garder historique propre.
-
----
-
-## Ce que ca change concretement pour les agents
-
-### Avant (mauvais)
-
-```
-Sprint 003 :
-- branche feat/BO-UI-RESP-003
-- commits
-- PR #XXX
-- merge
-- ACTIVE.md update
-
-Sprint 004 :
-- branche feat/BO-UI-RESP-004
-- commits
-- PR #YYY
-- merge
-- ACTIVE.md update
-```
-
-### Apres (bon)
-
-```
-Bloc "Migration listes" :
-- branche feat/responsive-lists
-- commit (sprint 003) + push
-- commit (sprint 004) + push
-- commit (sprint 005) + push
-- 1 PR [BO-UI-RESP-LISTS] Migration responsive listes (40 pages)
-- 1 merge
-- ACTIVE.md update : 3 sprints marques FAIT d'un coup
-```
+Merger en `--squash --delete-branch`.
 
 ---
 
-## Exceptions (quand 1 sprint = 1 PR)
+## Anti-patterns interdits (checklist branche/PR)
 
-Cas ou c'est OK d'avoir 1 PR par sprint :
-
-1. **Sprint d'infrastructure** : pose les fondations (ex: BO-UI-RESP-001)
-2. **Sprint d'audit pur** : pas de code, juste un rapport
-3. **Hotfix urgent** : bug production a deployer vite
-4. **Sprint experimental** : test d'approche, peut etre annule
-
-Dans ces cas seulement, creer la PR juste apres le sprint.
-
-Sinon : **grouper toujours**.
+- ❌ Nouvelle branche pour fix UX d'un bandeau déjà en PR ouverte
+- ❌ 2 branches pour 2 commits qui touchent les mêmes fichiers
+- ❌ Merger une PR puis créer immédiatement une autre PR sur le même écran pour un raffinement (le raffinement aurait dû être un commit de plus avant le merge)
+- ❌ Force-rebase à répétition parce que les branches partent de staging à des moments différents
 
 ---
 
-## Communication Romeo <-> agent
+## Communication Romeo ↔ agent
 
-Romeo veut AVANCER vite. Les agents doivent :
-
-- Commit/push regulier (rassurer que ca avance)
-- NE PAS creer de PR intermediaires
-- Rapport apres chaque commit important (pas apres chaque ligne)
-- Demander validation UNIQUEMENT quand la PR est prete a merger
-
-Si Romeo dit "continue", l'agent enchaine les sprints sur la meme branche
-SANS creer de PR entre chaque.
+Commit/push régulier (rassure que ça avance), pas de PR intermédiaire,
+rapport après chaque commit important (pas après chaque ligne), demander
+validation UNIQUEMENT quand PR prête à merger. Si Romeo dit "continue",
+enchaîner sprints sur la même branche sans PR entre chaque.
 
 ---
 
-## Playbooks (1 recette specifique Verone)
+## Playbooks
 
-Pour la migration responsive uniquement, consulter `.claude/playbooks/migrate-page-responsive.md` qui capture le fix du bug "Rendered more hooks" du pilote v1 FAIL.
+Pour la migration responsive uniquement, voir `.claude/playbooks/migrate-page-responsive.md` (capture le fix du bug "Rendered more hooks" du pilote v1 FAIL).
 
-Les autres playbooks ont ete supprimes (voir `DECISIONS.md` ADR-011) car ils dupliquaient les capacites natives de Claude Code (workflow git, debug, CI). Pour ces cas, utiliser les regles de cette page + `.claude/rules/code-standards.md` + `.claude/rules/playwright.md`.
+Autres playbooks supprimés (ADR-011) : doublonnaient les capacités natives.
 
 ---
 
-## Resume en 3 lignes
+## Résumé en 3 lignes
 
-1. **Commit + push souvent** pour sauvegarder
-2. **PR uniquement quand un bloc coherent (3+ sprints) est fini**
-3. **Merge uniquement quand tout est valide**
+1. Commit + push souvent (sauvegarde)
+2. PR uniquement quand bloc cohérent (3+ sprints) fini
+3. Merge uniquement quand tout validé
 
 ---
 
 ## Incident 2026-04-28 — bundling thématique manqué (1h50 perdues)
 
-**Contexte** : Romeo a enchaîné 3 demandes liées à la section Canaux de Vente :
-
-1. Fix bug Meta (page liste vide après drop colonnes `custom_*`)
-2. "Tu corriges Google Merchant"
-3. "Tu corriges Site Internet"
-
-**Erreur de l'agent** : a créé **4 PRs séparées** (#822 Meta, #823 Google, #824 Site, #826 types-drift de rattrapage) au lieu de **1 PR bundle** `[BO-CHAN-CLEANUP-001]`.
-
-**Coût** : 4 cycles CI staging + 1 cycle CI main FAILED + 1 PR de rattrapage + 1 cycle CI staging + 1 cycle CI main re-run = **~1h50** de cycles CI, vs **~25 min** estimés pour un bundle propre.
+Romeo a enchaîné 3 fixes Canaux de Vente (Meta + Google Merchant + Site
+Internet). L'agent a créé **4 PRs séparées** (#822, #823, #824, #826) au
+lieu de **1 PR bundle**. Coût : 1h50 de CI vs 25 min en bundle propre.
 
 **Causes racines** :
 
-1. L'agent a interprété "L'un après l'autre" littéralement = 1 PR par sujet. Or "l'un après l'autre" voulait dire "fais d'abord X dans la branche puis Y dans la même branche, je merge le bloc à la fin".
-2. La migration SQL Meta nécessitait une régénération `pnpm run generate:types` : pas faite dans la PR Meta → drift TS détecté à la PR release main → PR de rattrapage #826.
+1. Interprétation littérale de "L'un après l'autre" = 1 PR par sujet (faux : voulait dire commits successifs sur même branche).
+2. Migration SQL Meta sans régen types → drift TS détecté → PR de rattrapage.
 
-**Règles de prévention OBLIGATOIRES** :
+**Règle de prévention** : à la 2e demande dans le même domaine fonctionnel,
+demander : "Vu que [Y] suit [X] dans le même domaine ([canaux-vente]), je
+mets sur la même branche en 2 commits, 1 seule PR. OK ?". Attendre confirmation.
 
-### 1. Détecter le bundling potentiel à la 2e demande
+Question 4 de la checklist (régen types) couvre l'autre cause racine.
 
-Si Romeo demande un 2e fix et que ce fix est dans le même domaine fonctionnel que le 1er (mêmes pages, même section UI, même feature), **NE PAS créer une nouvelle branche/PR**. Au lieu de ça :
+### Détection systématique des onglets fantômes
 
-```
-"Vu que [Y] suit [X] dans le même domaine ([canaux-vente]),
- je mets sur la même branche en 2 commits, 1 seule PR. OK ?"
-```
-
-Attendre confirmation. Si OK → continuer sur la branche actuelle.
-
-### 2. Toujours bundler la régénération TS dans la PR de migration
-
-Si une PR contient une migration SQL qui touche un RPC, une fonction, ou une colonne :
-
-```bash
-pnpm run generate:types
-git add packages/@verone/types/src/supabase.ts
-git commit -m "chore: regenerate Supabase types after [TASK-ID] migration"
-```
-
-**Ce commit doit être dans la même PR que la migration.** Sinon le check `Supabase TS types drift (blocking)` du CI release main fail et il faut une PR de rattrapage (incident 2026-04-28).
-
-Si `pnpm run generate:types` échoue (Unauthorized par exemple), utiliser `mcp__supabase__generate_typescript_types` MAIS prendre conscience que le résultat omet le schema `graphql_public` et il faudra rectifier via l'artifact `supabase-types-drift` du CI.
-
-### 3. Détection systématique des onglets fantômes
-
-Si on touche au composant `apps/back-office/src/components/layout/channel-tabs.tsx` ou si on découvre un lien 404 :
-
-```bash
-# Vérifier que chaque href de vraie route (pas ?tab=...) existe en repo
-ls apps/back-office/src/app/(protected)/canaux-vente/[channel]/
-```
-
-Audit complet des onglets de TOUS les canaux à faire **dans la même PR**, pas un canal à la fois.
+Si on touche `apps/back-office/src/components/layout/channel-tabs.tsx` ou
+si on découvre un lien 404 → audit complet des onglets de TOUS les canaux
+dans la même PR.
 
 ---
 
 ## Référence
 
-Référencé par :
-
-- `CLAUDE.md` racine (section INTERDICTIONS ABSOLUES)
-- `.claude/rules/branch-strategy.md` (checklist 3 questions)
-- `.claude/DECISIONS.md` (ADR-022 sur l'incident 2026-04-28)
+- `.claude/rules/no-worktree-solo.md` — workflow solo
+- `.claude/DECISIONS.md` ADR-022 (incident 2026-04-28), ADR-024 (workflow solo restauré 2026-05-02), ADR-025 (fusion `[INFRA-LEAN-001]` 2026-05-02), ADR-027 (compaction `[INFRA-LEAN-002]` 2026-05-02)

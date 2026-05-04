@@ -1,8 +1,10 @@
 'use client';
 
 import type { SourcingProduct } from '@verone/products';
-import { Badge } from '@verone/ui';
+import { Badge, CloudflareImage } from '@verone/ui';
 import { Package } from 'lucide-react';
+
+import { getPrimaryImage } from './sourcing-page.helpers';
 
 const STATUS_LABELS: Record<string, { label: string; variant: string }> = {
   need_identified: {
@@ -55,9 +57,8 @@ export function SourcingCardView({ products, onView }: SourcingCardViewProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {products.map(product => {
-        const imageUrl =
-          product.product_images?.find(img => img.is_primary)?.public_url ??
-          product.product_images?.[0]?.public_url;
+        const primaryImage = getPrimaryImage(product);
+        const hasImage = primaryImage.cloudflareId ?? primaryImage.publicUrl;
         const supplierName =
           product.supplier?.trade_name ?? product.supplier?.legal_name;
         const statusInfo = STATUS_LABELS[product.sourcing_status ?? ''];
@@ -70,12 +71,14 @@ export function SourcingCardView({ products, onView }: SourcingCardViewProps) {
           >
             {/* Image */}
             <div className="relative aspect-square bg-gray-50">
-              {imageUrl ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={imageUrl}
+              {hasImage ? (
+                <CloudflareImage
+                  cloudflareId={primaryImage.cloudflareId}
+                  fallbackSrc={primaryImage.publicUrl}
                   alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">

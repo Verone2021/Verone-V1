@@ -1,10 +1,9 @@
 'use client';
 
-import Image from 'next/image';
-
 import { Package, Search, Check, Plus, Loader2, X } from 'lucide-react';
 
 import { CategoryFilterCombobox } from '@verone/categories';
+import { CloudflareImage } from '@verone/ui';
 import { cn } from '@verone/utils';
 
 import type { SelectionItem } from '../../../hooks/linkme/use-linkme-selections';
@@ -111,9 +110,11 @@ export function ProductSelectionSection({
                     : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'
                 )}
               >
-                {item.product_image_url ? (
-                  <Image
-                    src={item.product_image_url}
+                {(item.product_image_cloudflare_id ??
+                item.product_image_url) ? (
+                  <CloudflareImage
+                    cloudflareId={item.product_image_cloudflare_id}
+                    fallbackSrc={item.product_image_url}
                     alt={item.product?.name ?? ''}
                     width={56}
                     height={56}

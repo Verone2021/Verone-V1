@@ -1,8 +1,23 @@
 import type { Metadata } from 'next';
 
 import { createClient } from '@supabase/supabase-js';
+import { buildCloudflareImageUrl } from '@verone/utils';
 
 import type { CatalogueProduct } from '@/hooks/use-catalogue-products';
+
+function resolveSocialImage(
+  cloudflareId: string | null,
+  fallback: string | null
+): string | null {
+  if (cloudflareId) {
+    try {
+      return buildCloudflareImageUrl(cloudflareId, 'public');
+    } catch {
+      // Cloudflare non configuré côté serveur → fallback
+    }
+  }
+  return fallback;
+}
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -24,13 +39,20 @@ export async function generateMetadata({
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey);
-  const result = await supabase.rpc('get_site_internet_products');
+  const result = await supabase.rpc('get_site_internet_products', {
+    p_brand_slug: 'verone',
+  });
   const products = (result.data as CatalogueProduct[]) ?? [];
   const product = products.find(p => p.slug === slug);
 
   if (!product) {
     return { title: 'Produit introuvable | Vérone' };
   }
+
+  const socialImage = resolveSocialImage(
+    product.primary_cloudflare_image_id,
+    product.primary_image_url
+  );
 
   return {
     title: product.seo_title ?? product.name,
@@ -49,8 +71,8 @@ export async function generateMetadata({
         `${product.name} — Vérone`,
       url: `${siteUrl}/produit/${slug}`,
       type: 'website',
-      ...(product.primary_image_url
-        ? { images: [{ url: product.primary_image_url, alt: product.name }] }
+      ...(socialImage
+        ? { images: [{ url: socialImage, alt: product.name }] }
         : {}),
     },
     twitter: {
@@ -58,9 +80,7 @@ export async function generateMetadata({
       title: product.name,
       description:
         product.seo_meta_description ?? product.description ?? product.name,
-      ...(product.primary_image_url
-        ? { images: [product.primary_image_url] }
-        : {}),
+      ...(socialImage ? { images: [socialImage] } : {}),
     },
   };
 }

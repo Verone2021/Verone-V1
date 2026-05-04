@@ -10,8 +10,10 @@ import type {
   VariantGroupUpdateData,
 } from './types/variant-group.types';
 import {
+  propagateColorToProducts,
   propagateCommonAttributesToProducts,
   propagateCostPriceToProducts,
+  propagateMaterialToProducts,
   propagateSupplierToProducts,
   propagateWeightToProducts,
 } from './utils/variant-group-propagation';
@@ -48,12 +50,21 @@ export function useVariantGroupCrud(deps: VariantGroupCrudDeps) {
             suitable_rooms: data.suitable_rooms ?? null,
             supplier_id: data.supplier_id ?? null,
             has_common_supplier: data.has_common_supplier ?? false,
+            common_cost_price: data.common_cost_price ?? null,
+            has_common_cost_price: data.has_common_cost_price ?? false,
+            common_eco_tax: data.common_eco_tax ?? null,
+            common_material: data.common_material ?? null,
+            has_common_material: data.has_common_material ?? false,
+            common_color: data.common_color ?? null,
+            has_common_color: data.has_common_color ?? false,
+            material_name_position: data.material_name_position ?? 'none',
+            color_name_position: data.color_name_position ?? 'none',
             product_count: 0,
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase strict enum types pour suitable_rooms nécessitent cast
         ] as any)
         .select(
-          'id, name, base_sku, subcategory_id, variant_type, product_count, has_common_supplier, supplier_id, dimensions_length, dimensions_width, dimensions_height, dimensions_unit, style, suitable_rooms, common_weight, has_common_weight, archived_at, created_at, updated_at'
+          'id, name, base_sku, subcategory_id, variant_type, product_count, has_common_supplier, supplier_id, dimensions_length, dimensions_width, dimensions_height, dimensions_unit, style, suitable_rooms, common_weight, has_common_weight, common_cost_price, has_common_cost_price, common_eco_tax, common_material, has_common_material, common_color, has_common_color, material_name_position, color_name_position, archived_at, created_at, updated_at'
         )
         .single();
 
@@ -64,6 +75,64 @@ export function useVariantGroupCrud(deps: VariantGroupCrudDeps) {
           variant: 'destructive',
         });
         return null;
+      }
+
+      // Attacher le produit témoin au groupe avec variant_position=1
+      if (data.matrix_product_id) {
+        const groupId = String(newGroup.id);
+        const { error: attachError } = await supabase
+          .from('products')
+          .update({ variant_group_id: groupId, variant_position: 1 })
+          .eq('id', data.matrix_product_id);
+
+        if (attachError) {
+          logger.error(
+            'Échec rattachement produit témoin au groupe',
+            new Error(attachError.message),
+            {
+              operation: 'attach_matrix_product_failed',
+              groupId,
+              matrixProductId: data.matrix_product_id,
+            }
+          );
+          toast({
+            title: 'Attention',
+            description:
+              "Groupe créé mais le produit témoin n'a pas pu être ajouté automatiquement. Ajoutez-le manuellement.",
+            variant: 'destructive',
+          });
+        }
+      }
+
+      // Propager les attributs communs (matiere/couleur) au produit temoin nouvellement attache
+      const groupId = String(newGroup.id);
+      if (data.has_common_material && data.common_material) {
+        await propagateMaterialToProducts(
+          supabase,
+          groupId,
+          data.common_material
+        );
+      }
+      if (data.has_common_color && data.common_color) {
+        await propagateColorToProducts(supabase, groupId, data.common_color);
+      }
+      if (data.has_common_supplier && data.supplier_id) {
+        await propagateSupplierToProducts(supabase, groupId, data.supplier_id);
+      }
+      if (data.has_common_weight && data.common_weight != null) {
+        await propagateWeightToProducts(
+          supabase,
+          groupId,
+          Number(data.common_weight)
+        );
+      }
+      if (data.has_common_cost_price && data.common_cost_price != null) {
+        await propagateCostPriceToProducts(
+          supabase,
+          groupId,
+          Number(data.common_cost_price),
+          data.common_eco_tax ?? null
+        );
       }
 
       toast({
@@ -168,6 +237,18 @@ export function useVariantGroupCrud(deps: VariantGroupCrudDeps) {
         updateData.has_common_cost_price = data.has_common_cost_price;
       if (data.common_eco_tax !== undefined)
         updateData.common_eco_tax = data.common_eco_tax;
+      if (data.common_material !== undefined)
+        updateData.common_material = data.common_material;
+      if (data.has_common_material !== undefined)
+        updateData.has_common_material = data.has_common_material;
+      if (data.common_color !== undefined)
+        updateData.common_color = data.common_color;
+      if (data.has_common_color !== undefined)
+        updateData.has_common_color = data.has_common_color;
+      if (data.material_name_position !== undefined)
+        updateData.material_name_position = data.material_name_position;
+      if (data.color_name_position !== undefined)
+        updateData.color_name_position = data.color_name_position;
 
       logger.info('Mise à jour variant group', {
         operation: 'update_variant_group',
@@ -180,7 +261,7 @@ export function useVariantGroupCrud(deps: VariantGroupCrudDeps) {
         .update(updateData)
         .eq('id', groupId)
         .select(
-          'id, name, base_sku, subcategory_id, variant_type, product_count, has_common_supplier, supplier_id, dimensions_length, dimensions_width, dimensions_height, dimensions_unit, style, suitable_rooms, common_weight, has_common_weight, archived_at, created_at, updated_at'
+          'id, name, base_sku, subcategory_id, variant_type, product_count, has_common_supplier, supplier_id, dimensions_length, dimensions_width, dimensions_height, dimensions_unit, style, suitable_rooms, common_weight, has_common_weight, common_cost_price, has_common_cost_price, common_eco_tax, common_material, has_common_material, common_color, has_common_color, material_name_position, color_name_position, archived_at, created_at, updated_at'
         )
         .single();
 
@@ -259,6 +340,30 @@ export function useVariantGroupCrud(deps: VariantGroupCrudDeps) {
           operation: 'disable_common_eco_tax',
           groupId,
         });
+      }
+
+      // Propagation matiere commune
+      if (
+        data.has_common_material !== undefined ||
+        data.common_material !== undefined
+      ) {
+        if (data.has_common_material && data.common_material) {
+          await propagateMaterialToProducts(
+            supabase,
+            groupId,
+            data.common_material
+          );
+        }
+      }
+
+      // Propagation couleur commune
+      if (
+        data.has_common_color !== undefined ||
+        data.common_color !== undefined
+      ) {
+        if (data.has_common_color && data.common_color) {
+          await propagateColorToProducts(supabase, groupId, data.common_color);
+        }
       }
 
       // Propagation attributs communs (dimensions, noms, etc.)

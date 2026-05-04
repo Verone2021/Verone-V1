@@ -203,27 +203,38 @@ export function OrganisationCard({
                 );
               })()}
             </div>
-            {/* Adresse principale */}
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
-              {(order.organisation.address_line1 ??
-              order.organisation.postal_code) ? (
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  {[
-                    order.organisation.address_line1,
-                    order.organisation.postal_code,
-                    order.organisation.city,
-                  ]
-                    .filter(Boolean)
-                    .join(', ')}
-                </span>
-              ) : (
-                <span className="text-amber-600 flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3" />
-                  Adresse principale : Non renseignée
-                </span>
-              )}
-            </div>
+            {/* Adresse principale — masquée si vide mais facturation renseignée
+                (la facturation s'affiche en dessous et fait office d'adresse principale) */}
+            {(() => {
+              const hasMain =
+                order.organisation.address_line1 ??
+                order.organisation.postal_code;
+              const hasBilling =
+                order.organisation.billing_address_line1 ??
+                order.organisation.billing_postal_code;
+              if (!hasMain && hasBilling) return null;
+              return (
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                  {hasMain ? (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {[
+                        order.organisation.address_line1,
+                        order.organisation.postal_code,
+                        order.organisation.city,
+                      ]
+                        .filter(Boolean)
+                        .join(', ')}
+                    </span>
+                  ) : (
+                    <span className="text-amber-600 flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      Adresse principale : Non renseignée
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
             {/* Adresse de facturation */}
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
               {(order.organisation.billing_address_line1 ??

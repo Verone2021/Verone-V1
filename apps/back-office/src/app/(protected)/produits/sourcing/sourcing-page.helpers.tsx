@@ -4,6 +4,7 @@ import { colors } from '@verone/ui/design-system';
 
 export interface ProductImage {
   public_url: string | null;
+  cloudflare_image_id?: string | null;
   is_primary: boolean;
 }
 
@@ -11,6 +12,11 @@ export interface ProductWithImages {
   id: string;
   name: string;
   product_images?: ProductImage[];
+}
+
+export interface PrimaryImageRefs {
+  cloudflareId: string | null;
+  publicUrl: string | null;
 }
 
 export function getStatusBadge(productStatus: string | undefined) {
@@ -100,9 +106,14 @@ export function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('fr-FR');
 }
 
-export function getPrimaryImage(product: SourcingProduct): string | null {
+export function getPrimaryImage(product: SourcingProduct): PrimaryImageRefs {
   const images = product.product_images as ProductImage[] | undefined;
-  if (!images || images.length === 0) return null;
-  const primary = images.find(img => img.is_primary);
-  return primary?.public_url ?? images[0]?.public_url ?? null;
+  if (!images || images.length === 0) {
+    return { cloudflareId: null, publicUrl: null };
+  }
+  const primary = images.find(img => img.is_primary) ?? images[0];
+  return {
+    cloudflareId: primary?.cloudflare_image_id ?? null,
+    publicUrl: primary?.public_url ?? null,
+  };
 }

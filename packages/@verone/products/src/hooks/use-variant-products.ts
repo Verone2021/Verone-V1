@@ -103,6 +103,69 @@ export function useVariantProducts() {
         return false;
       }
 
+      // Propager les attributs communs (matiere, couleur, fournisseur, poids, prix)
+      // au produit nouvellement attache pour garantir la coherence avec le groupe
+      const { data: groupData } = await supabase
+        .from('variant_groups')
+        .select(
+          'has_common_material, common_material, has_common_color, common_color, has_common_supplier, supplier_id, has_common_weight, common_weight, has_common_cost_price, common_cost_price, common_eco_tax'
+        )
+        .eq('id', variantGroupId)
+        .single();
+
+      if (groupData) {
+        const productUpdates: Record<string, unknown> = {};
+        const variantAttrUpdates: Record<string, unknown> = {};
+
+        // Récupérer variant_attributes existants pour merge
+        const { data: currentProduct } = await supabase
+          .from('products')
+          .select('variant_attributes')
+          .eq('id', productId)
+          .single();
+        const currentAttrs =
+          (currentProduct?.variant_attributes as Record<
+            string,
+            unknown
+          > | null) ?? {};
+
+        if (groupData.has_common_material && groupData.common_material) {
+          variantAttrUpdates.material = groupData.common_material;
+        }
+        if (groupData.has_common_color && groupData.common_color) {
+          variantAttrUpdates.color = groupData.common_color;
+        }
+        if (groupData.has_common_supplier && groupData.supplier_id) {
+          productUpdates.supplier_id = groupData.supplier_id;
+        }
+        if (groupData.has_common_weight && groupData.common_weight != null) {
+          productUpdates.weight = groupData.common_weight;
+        }
+        if (
+          groupData.has_common_cost_price &&
+          groupData.common_cost_price != null
+        ) {
+          productUpdates.cost_price = groupData.common_cost_price;
+          if (groupData.common_eco_tax != null) {
+            productUpdates.eco_tax_default = groupData.common_eco_tax;
+          }
+        }
+
+        if (Object.keys(variantAttrUpdates).length > 0) {
+          productUpdates.variant_attributes = {
+            ...currentAttrs,
+            ...variantAttrUpdates,
+          };
+        }
+
+        if (Object.keys(productUpdates).length > 0) {
+          await supabase
+            .from('products')
+            .update(productUpdates)
+            .eq('id', productId);
+        }
+      }
+
       toast({
         title: 'Succès',
         description: 'Produit ajouté au groupe de variantes',

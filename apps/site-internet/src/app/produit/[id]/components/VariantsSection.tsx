@@ -6,11 +6,12 @@
 
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
 import { useQuery } from '@tanstack/react-query';
 import { Package, Loader2 } from 'lucide-react';
+
+import { CloudflareImage } from '@verone/ui';
 
 import { createClient } from '@/lib/supabase/client';
 
@@ -20,6 +21,7 @@ interface VariantCard {
   name: string;
   sku: string;
   primary_image_url: string | null;
+  primary_cloudflare_image_id: string | null;
   price_ttc: number;
   discount_rate: number | null;
   is_eligible: boolean;
@@ -52,7 +54,9 @@ export function VariantsSection({
       if (!variantGroupId) return [];
 
       // Récupérer TOUTES les variantes éligibles du variant_group via RPC
-      const { data, error } = await supabase.rpc('get_site_internet_products');
+      const { data, error } = await supabase.rpc('get_site_internet_products', {
+        p_brand_slug: 'verone',
+      });
 
       if (error) {
         console.error('❌ Erreur fetch variants:', error);
@@ -67,6 +71,7 @@ export function VariantsSection({
         name: string;
         sku: string;
         primary_image_url: string | null;
+        primary_cloudflare_image_id: string | null;
         price_ttc: number;
         discount_rate: number | null;
         is_eligible: boolean;
@@ -85,6 +90,7 @@ export function VariantsSection({
           name: p.name,
           sku: p.sku,
           primary_image_url: p.primary_image_url,
+          primary_cloudflare_image_id: p.primary_cloudflare_image_id,
           price_ttc: p.price_ttc,
           discount_rate: p.discount_rate,
           is_eligible: p.is_eligible,
@@ -143,19 +149,14 @@ export function VariantsSection({
                       : 'border-gray-200 hover:border-gray-400'
                   }`}
                 >
-                  {variant.primary_image_url ? (
-                    <Image
-                      src={variant.primary_image_url}
-                      alt={variant.name}
-                      fill
-                      className="object-contain p-1 bg-white"
-                      sizes="56px"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full bg-gray-50 text-gray-300 text-xs">
-                      ?
-                    </div>
-                  )}
+                  <CloudflareImage
+                    cloudflareId={variant.primary_cloudflare_image_id}
+                    fallbackSrc={variant.primary_image_url}
+                    alt={variant.name}
+                    fill
+                    className="object-contain p-1 bg-white"
+                    sizes="56px"
+                  />
                 </div>
 
                 {/* Tooltip au survol - apparaît au-dessus */}

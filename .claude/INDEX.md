@@ -1,6 +1,6 @@
 # INDEX — `.claude/` Verone Back Office
 
-**Dernière mise à jour** : 2026-04-19 (Phase 2 restructuration)
+**Dernière mise à jour** : 2026-05-02 — `[INFRA-LEAN-001]` Niveau 1 : fusion `branch-strategy` → `workflow.md`, fusion `playwright-artifacts` → `playwright.md`, élagage CLAUDE.md racine (221 → 158 lignes).
 
 Sommaire unique de la config agent. Si tu cherches où est une règle, un agent, un playbook, tu commences ici.
 
@@ -9,37 +9,41 @@ Sommaire unique de la config agent. Si tu cherches où est une règle, un agent,
 ## 🟢 Point d'entrée agent
 
 1. `CLAUDE.md` (racine) — identité, workflow, interdictions
-2. `.claude/rules/autonomy-boundaries.md` — feu vert / orange / rouge par action
+2. `.claude/rules/communication-style.md` — règle 6 anti-paralysie (agent décide seul sur sujets techniques)
 3. `.claude/work/ACTIVE.md` (gitignored, local) — file de tâches active (source unique)
 
 ---
 
-## Rules (8 fichiers)
+## Rules (13 fichiers)
 
 Règles stables lues automatiquement par l'agent.
 
-- `.claude/rules/autonomy-boundaries.md` — Quand l'agent agit seul vs attend Romeo _(NOUVEAU Phase 2)_
 - `.claude/rules/code-standards.md` — TypeScript, async, composants, API, logout
+- `.claude/rules/communication-style.md` — Roméo est utilisateur final non-développeur, français simple sans jargon
 - `.claude/rules/database.md` — Migrations, RLS patterns, post-migration
 - `.claude/rules/finance.md` — Règles métier devis / factures / proformas (R1 à R7)
-- `.claude/rules/playwright.md` — Mode vision, screenshots, workflow
+- `.claude/rules/playwright.md` — Mode vision, screenshots, workflow + artefacts (fusion `playwright-artifacts.md` 2026-05-02)
 - `.claude/rules/responsive.md` — Breakpoints + 5 techniques responsive obligatoires
 - `.claude/rules/stock-triggers-protected.md` — Triggers stock IMMUABLES
-- `.claude/rules/workflow.md` — Git, PR, merge, 1 PR = 1 bloc cohérent
+- `.claude/rules/workflow.md` — Git, PR, merge, 1 PR = 1 bloc cohérent + checklist 4 questions (fusion `branch-strategy.md` 2026-05-02)
+- `.claude/rules/no-worktree-solo.md` — Workflow solo, JAMAIS `git worktree add`
+- `.claude/rules/data-fetching.md` — TanStack Query, useEffect deps, Supabase select
+- `.claude/rules/no-phantom-data.md` — Zéro donnée fantôme en prod
+- `.claude/rules/agent-autonomy-external.md` — Agent fait tout lui-même via CLI/MCP
+- `.claude/rules/active-md-maintenance.md` — Nettoyage post-merge obligatoire de `ACTIVE.md`, jamais de tâche résolue > 7 jours
 
 _Note : sous-dossier `.claude/rules/domain/` envisagé dans ADR-004 mais non appliqué (faux positif du check-integrity). Toutes les règles restent à plat dans `.claude/rules/`._
 
 ---
 
-## Agents (5 fichiers)
+## Agents (4 fichiers)
 
-- `.claude/agents/dev-agent.md` — Code + TDD + changelog (**actif**)
-- `.claude/agents/reviewer-agent.md` — Code reviewer impartial read-only (**actif**)
-- `.claude/agents/verify-agent.md` — Type-check + build + tests (**actif**)
-- `.claude/agents/ops-agent.md` — Push, PR, merge après review PASS (**actif**)
-- `.claude/agents/perf-optimizer.md` — Audit perf, dead code, bundle, overfetch (**restauré 2026-04-19**, mémoire dans `.claude/agent-memory/perf-optimizer/`)
+- `.claude/agents/dev-agent.md` — Code + TDD + changelog (**actif**, gros sprints)
+- `.claude/agents/reviewer-agent.md` — Code reviewer impartial read-only (**actif**, avant gros merges)
+- `.claude/agents/ops-agent.md` — Push, PR, merge (**optionnel** depuis Niveau 2 — gros blocs uniquement)
+- `.claude/agents/perf-optimizer.md` — Audit perf, dead code, bundle, overfetch (mémoire dans `.claude/agent-memory/perf-optimizer/`)
 
-_Agents supprimés (0 usage en 3 mois — voir `DECISIONS.md` ADR-009)_ : `writer-agent`, `market-agent`.\_
+_Agents supprimés_ : `writer-agent`, `market-agent` (ADR-009 — 0 usage en 3 mois) ; `verify-agent` (ADR-027 — Niveau 2, déjà couvert par CI).
 
 ---
 
@@ -188,7 +192,7 @@ Rapports récents clés (actifs dans scratchpad) :
 ## Roadmap restructuration
 
 - **Phase 1 — Nettoyage** ✅ (chemins corrigés, script check-open-prs créé, INDEX cohérent, README daté)
-- **Phase 2 — Restructuration** ⚠️ partielle (DECISIONS + autonomy-boundaries + playbooks + check-config-integrity gardés ; queue/done supprimés en `[INFRA-DOC-006]` car jamais utilisés — ACTIVE.md reste la source unique)
+- **Phase 2 — Restructuration** ⚠️ partielle (DECISIONS + playbooks + check-config-integrity gardés ; queue/done supprimés en `[INFRA-DOC-006]` ; `autonomy-boundaries.md` supprimé en `[INFRA-LEAN-001]` 2026-05-02 — ADR-026, redondant avec règle 6 anti-paralysie ; ACTIVE.md reste la source unique)
 - **Phase 3 — Automation** 🚫 abandonnée (dépendait de queue/, devenue caduque)
 - **CLAUDE.md v2** 🔲 (PR `[INFRA-DOC-007]` : passage 250 → 120 lignes via pointeurs vers `rules/`)
 
@@ -200,10 +204,9 @@ Voir `docs/scratchpad/automation-roadmap.md` (historique uniquement).
 
 | Fichier                                    | Contenu                 |
 | ------------------------------------------ | ----------------------- |
-| `.claude/rules/playwright-artifacts.md`    | Playwright Artifacts    |
 | `.claude/rules/no-phantom-data.md`         | No Phantom Data         |
 | `.claude/rules/agent-autonomy-external.md` | Agent Autonomy External |
-| `.claude/rules/branch-strategy.md`         | Branch Strategy         |
+| `.claude/rules/no-worktree-solo.md`        | No Worktree (solo)      |
 | `.claude/rules/data-fetching.md`           | Data Fetching           |
 
 ---

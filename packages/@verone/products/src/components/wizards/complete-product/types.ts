@@ -42,7 +42,7 @@ export interface WizardFormData {
   margin_percentage: string;
 
   // Caractéristiques techniques
-  brand: string;
+  manufacturer: string;
   variant_attributes: Record<string, unknown>;
   dimensions: Record<string, unknown>;
   weight: string;
@@ -85,7 +85,7 @@ export const DEFAULT_FORM_DATA: WizardFormData = {
   cost_price: '',
   target_margin_percentage: '',
   margin_percentage: '',
-  brand: '',
+  manufacturer: '',
   variant_attributes: {},
   dimensions: {},
   weight: '',

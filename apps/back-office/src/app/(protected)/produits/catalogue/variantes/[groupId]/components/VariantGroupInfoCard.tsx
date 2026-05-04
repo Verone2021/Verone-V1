@@ -80,9 +80,7 @@ export function VariantGroupInfoCard({
                 autoFocus
               >
                 <option value="color">Couleur</option>
-                <option value="size">Taille</option>
                 <option value="material">Matériau</option>
-                <option value="pattern">Motif</option>
               </select>
               {savingType && (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black" />
@@ -241,6 +239,36 @@ export function VariantGroupInfoCard({
                 (appliqué automatiquement à tous les produits du groupe)
               </span>
             </div>
+          </div>
+        )}
+
+        {/* Matière commune */}
+        {variantGroup.has_common_material && variantGroup.common_material && (
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-1">
+              Matière commune
+            </label>
+            <Badge
+              variant="outline"
+              className="bg-blue-50 text-blue-700 border-blue-200"
+            >
+              {variantGroup.common_material}
+            </Badge>
+          </div>
+        )}
+
+        {/* Couleur commune */}
+        {variantGroup.has_common_color && variantGroup.common_color && (
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-1">
+              Couleur commune
+            </label>
+            <Badge
+              variant="outline"
+              className="bg-blue-50 text-blue-700 border-blue-200"
+            >
+              {variantGroup.common_color}
+            </Badge>
           </div>
         )}
       </div>

@@ -7,11 +7,6 @@ export type Json =
   | Json[];
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: '13.0.5';
-  };
   graphql_public: {
     Tables: {
       [_ in never]: never;
@@ -886,6 +881,51 @@ export type Database = {
           },
         ];
       };
+      brands: {
+        Row: {
+          brand_color: string | null;
+          created_at: string;
+          description: string | null;
+          display_order: number;
+          id: string;
+          is_active: boolean;
+          logo_url: string | null;
+          name: string;
+          slug: string;
+          social_handles: Json | null;
+          updated_at: string;
+          website_url: string | null;
+        };
+        Insert: {
+          brand_color?: string | null;
+          created_at?: string;
+          description?: string | null;
+          display_order?: number;
+          id?: string;
+          is_active?: boolean;
+          logo_url?: string | null;
+          name: string;
+          slug: string;
+          social_handles?: Json | null;
+          updated_at?: string;
+          website_url?: string | null;
+        };
+        Update: {
+          brand_color?: string | null;
+          created_at?: string;
+          description?: string | null;
+          display_order?: number;
+          id?: string;
+          is_active?: boolean;
+          logo_url?: string | null;
+          name?: string;
+          slug?: string;
+          social_handles?: Json | null;
+          updated_at?: string;
+          website_url?: string | null;
+        };
+        Relationships: [];
+      };
       categories: {
         Row: {
           cloudflare_image_id: string | null;
@@ -1047,6 +1087,7 @@ export type Database = {
           is_active: boolean | null;
           is_featured: boolean | null;
           is_public_showcase: boolean | null;
+          is_published_on_channel: boolean;
           markup_rate: number | null;
           max_margin_rate: number | null;
           min_margin_rate: number | null;
@@ -1081,6 +1122,7 @@ export type Database = {
           is_active?: boolean | null;
           is_featured?: boolean | null;
           is_public_showcase?: boolean | null;
+          is_published_on_channel?: boolean;
           markup_rate?: number | null;
           max_margin_rate?: number | null;
           min_margin_rate?: number | null;
@@ -1115,6 +1157,7 @@ export type Database = {
           is_active?: boolean | null;
           is_featured?: boolean | null;
           is_public_showcase?: boolean | null;
+          is_published_on_channel?: boolean;
           markup_rate?: number | null;
           max_margin_rate?: number | null;
           min_margin_rate?: number | null;
@@ -4713,6 +4756,174 @@ export type Database = {
         };
         Relationships: [];
       };
+      media_asset_publications: {
+        Row: {
+          asset_id: string;
+          channel: string;
+          created_at: string;
+          created_by: string | null;
+          external_url: string | null;
+          id: string;
+          notes: string | null;
+          published_at: string;
+          unpublished_at: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          asset_id: string;
+          channel: string;
+          created_at?: string;
+          created_by?: string | null;
+          external_url?: string | null;
+          id?: string;
+          notes?: string | null;
+          published_at?: string;
+          unpublished_at?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          asset_id?: string;
+          channel?: string;
+          created_at?: string;
+          created_by?: string | null;
+          external_url?: string | null;
+          id?: string;
+          notes?: string | null;
+          published_at?: string;
+          unpublished_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'media_asset_publications_asset_id_fkey';
+            columns: ['asset_id'];
+            isOneToOne: false;
+            referencedRelation: 'media_assets';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      media_assets: {
+        Row: {
+          ai_prompt_used: string | null;
+          alt_text: string | null;
+          archived_at: string | null;
+          asset_type: string;
+          brand_ids: string[];
+          cloudflare_image_id: string | null;
+          created_at: string;
+          created_by: string | null;
+          file_size: number | null;
+          filename: string | null;
+          format: string | null;
+          height: number | null;
+          id: string;
+          notes: string | null;
+          product_id: string | null;
+          public_url: string | null;
+          source: string;
+          source_product_image_id: string | null;
+          storage_path: string | null;
+          tags: string[];
+          updated_at: string;
+          variant_group_id: string | null;
+          width: number | null;
+        };
+        Insert: {
+          ai_prompt_used?: string | null;
+          alt_text?: string | null;
+          archived_at?: string | null;
+          asset_type?: string;
+          brand_ids?: string[];
+          cloudflare_image_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          file_size?: number | null;
+          filename?: string | null;
+          format?: string | null;
+          height?: number | null;
+          id?: string;
+          notes?: string | null;
+          product_id?: string | null;
+          public_url?: string | null;
+          source?: string;
+          source_product_image_id?: string | null;
+          storage_path?: string | null;
+          tags?: string[];
+          updated_at?: string;
+          variant_group_id?: string | null;
+          width?: number | null;
+        };
+        Update: {
+          ai_prompt_used?: string | null;
+          alt_text?: string | null;
+          archived_at?: string | null;
+          asset_type?: string;
+          brand_ids?: string[];
+          cloudflare_image_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          file_size?: number | null;
+          filename?: string | null;
+          format?: string | null;
+          height?: number | null;
+          id?: string;
+          notes?: string | null;
+          product_id?: string | null;
+          public_url?: string | null;
+          source?: string;
+          source_product_image_id?: string | null;
+          storage_path?: string | null;
+          tags?: string[];
+          updated_at?: string;
+          variant_group_id?: string | null;
+          width?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'media_assets_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'media_assets_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'media_assets_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'media_assets_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'media_assets_source_product_image_id_fkey';
+            columns: ['source_product_image_id'];
+            isOneToOne: true;
+            referencedRelation: 'product_images';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'media_assets_variant_group_id_fkey';
+            columns: ['variant_group_id'];
+            isOneToOne: false;
+            referencedRelation: 'variant_groups';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       meta_commerce_syncs: {
         Row: {
           catalog_id: string;
@@ -6229,13 +6440,15 @@ export type Database = {
           affiliate_commission_rate: number | null;
           affiliate_payout_ht: number | null;
           affiliate_rejection_reason: string | null;
+          ai_generated_metadata: Json | null;
           archived_at: string | null;
           article_type: Database['public']['Enums']['article_type'];
           assigned_client_id: string | null;
           availability_type:
             | Database['public']['Enums']['availability_type_enum']
             | null;
-          brand: string | null;
+          brand_ids: string[] | null;
+          commercial_name: string | null;
           completion_percentage: number | null;
           completion_status: string | null;
           condition: string | null;
@@ -6254,6 +6467,8 @@ export type Database = {
           created_by_affiliate: string | null;
           creation_mode: string | null;
           description: string | null;
+          description_long: string | null;
+          description_short: string | null;
           dimensions: Json | null;
           eco_tax_default: number | null;
           enseigne_id: string | null;
@@ -6263,6 +6478,7 @@ export type Database = {
           internal_notes: string | null;
           is_published_online: boolean | null;
           item_group_id: string | null;
+          manufacturer: string | null;
           margin_percentage: number | null;
           meta_description: string | null;
           meta_title: string | null;
@@ -6300,6 +6516,7 @@ export type Database = {
           supplier_moq: number | null;
           supplier_page_url: string | null;
           supplier_reference: string | null;
+          tags: string[] | null;
           target_margin_percentage: number | null;
           target_price: number | null;
           technical_description: string | null;
@@ -6320,13 +6537,15 @@ export type Database = {
           affiliate_commission_rate?: number | null;
           affiliate_payout_ht?: number | null;
           affiliate_rejection_reason?: string | null;
+          ai_generated_metadata?: Json | null;
           archived_at?: string | null;
           article_type?: Database['public']['Enums']['article_type'];
           assigned_client_id?: string | null;
           availability_type?:
             | Database['public']['Enums']['availability_type_enum']
             | null;
-          brand?: string | null;
+          brand_ids?: string[] | null;
+          commercial_name?: string | null;
           completion_percentage?: number | null;
           completion_status?: string | null;
           condition?: string | null;
@@ -6345,6 +6564,8 @@ export type Database = {
           created_by_affiliate?: string | null;
           creation_mode?: string | null;
           description?: string | null;
+          description_long?: string | null;
+          description_short?: string | null;
           dimensions?: Json | null;
           eco_tax_default?: number | null;
           enseigne_id?: string | null;
@@ -6354,6 +6575,7 @@ export type Database = {
           internal_notes?: string | null;
           is_published_online?: boolean | null;
           item_group_id?: string | null;
+          manufacturer?: string | null;
           margin_percentage?: number | null;
           meta_description?: string | null;
           meta_title?: string | null;
@@ -6391,6 +6613,7 @@ export type Database = {
           supplier_moq?: number | null;
           supplier_page_url?: string | null;
           supplier_reference?: string | null;
+          tags?: string[] | null;
           target_margin_percentage?: number | null;
           target_price?: number | null;
           technical_description?: string | null;
@@ -6411,13 +6634,15 @@ export type Database = {
           affiliate_commission_rate?: number | null;
           affiliate_payout_ht?: number | null;
           affiliate_rejection_reason?: string | null;
+          ai_generated_metadata?: Json | null;
           archived_at?: string | null;
           article_type?: Database['public']['Enums']['article_type'];
           assigned_client_id?: string | null;
           availability_type?:
             | Database['public']['Enums']['availability_type_enum']
             | null;
-          brand?: string | null;
+          brand_ids?: string[] | null;
+          commercial_name?: string | null;
           completion_percentage?: number | null;
           completion_status?: string | null;
           condition?: string | null;
@@ -6436,6 +6661,8 @@ export type Database = {
           created_by_affiliate?: string | null;
           creation_mode?: string | null;
           description?: string | null;
+          description_long?: string | null;
+          description_short?: string | null;
           dimensions?: Json | null;
           eco_tax_default?: number | null;
           enseigne_id?: string | null;
@@ -6445,6 +6672,7 @@ export type Database = {
           internal_notes?: string | null;
           is_published_online?: boolean | null;
           item_group_id?: string | null;
+          manufacturer?: string | null;
           margin_percentage?: number | null;
           meta_description?: string | null;
           meta_title?: string | null;
@@ -6482,6 +6710,7 @@ export type Database = {
           supplier_moq?: number | null;
           supplier_page_url?: string | null;
           supplier_reference?: string | null;
+          tags?: string[] | null;
           target_margin_percentage?: number | null;
           target_price?: number | null;
           technical_description?: string | null;
@@ -6972,6 +7201,7 @@ export type Database = {
       };
       sales_channels: {
         Row: {
+          brand_id: string | null;
           code: string;
           config: Json | null;
           contact_email: string | null;
@@ -6996,6 +7226,7 @@ export type Database = {
           updated_at: string | null;
         };
         Insert: {
+          brand_id?: string | null;
           code: string;
           config?: Json | null;
           contact_email?: string | null;
@@ -7020,6 +7251,7 @@ export type Database = {
           updated_at?: string | null;
         };
         Update: {
+          brand_id?: string | null;
           code?: string;
           config?: Json | null;
           contact_email?: string | null;
@@ -7043,7 +7275,15 @@ export type Database = {
           site_name?: string | null;
           updated_at?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'sales_channels_brand_id_fkey';
+            columns: ['brand_id'];
+            isOneToOne: false;
+            referencedRelation: 'brands';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       sales_order_events: {
         Row: {
@@ -9591,6 +9831,7 @@ export type Database = {
       };
       user_profiles: {
         Row: {
+          active_brand_id: string | null;
           app_source: Database['public']['Enums']['app_type'] | null;
           avatar_url: string | null;
           client_type: Database['public']['Enums']['client_type'] | null;
@@ -9610,6 +9851,7 @@ export type Database = {
           user_type: Database['public']['Enums']['user_type'] | null;
         };
         Insert: {
+          active_brand_id?: string | null;
           app_source?: Database['public']['Enums']['app_type'] | null;
           avatar_url?: string | null;
           client_type?: Database['public']['Enums']['client_type'] | null;
@@ -9629,6 +9871,7 @@ export type Database = {
           user_type?: Database['public']['Enums']['user_type'] | null;
         };
         Update: {
+          active_brand_id?: string | null;
           app_source?: Database['public']['Enums']['app_type'] | null;
           avatar_url?: string | null;
           client_type?: Database['public']['Enums']['client_type'] | null;
@@ -9660,6 +9903,13 @@ export type Database = {
             columns: ['organisation_id'];
             isOneToOne: false;
             referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'user_profiles_active_brand_id_fkey';
+            columns: ['active_brand_id'];
+            isOneToOne: false;
+            referencedRelation: 'brands';
             referencedColumns: ['id'];
           },
           {
@@ -9748,19 +9998,25 @@ export type Database = {
           archived_at: string | null;
           auto_name_pattern: string | null;
           base_sku: string;
+          color_name_position: string;
+          common_color: string | null;
           common_cost_price: number | null;
           common_dimensions: Json | null;
           common_eco_tax: number | null;
+          common_material: string | null;
           common_weight: number | null;
           created_at: string | null;
           dimensions_height: number | null;
           dimensions_length: number | null;
           dimensions_unit: string | null;
           dimensions_width: number | null;
+          has_common_color: boolean;
           has_common_cost_price: boolean;
+          has_common_material: boolean;
           has_common_supplier: boolean;
           has_common_weight: boolean;
           id: string;
+          material_name_position: string;
           name: string;
           product_count: number | null;
           style: string | null;
@@ -9774,19 +10030,25 @@ export type Database = {
           archived_at?: string | null;
           auto_name_pattern?: string | null;
           base_sku: string;
+          color_name_position?: string;
+          common_color?: string | null;
           common_cost_price?: number | null;
           common_dimensions?: Json | null;
           common_eco_tax?: number | null;
+          common_material?: string | null;
           common_weight?: number | null;
           created_at?: string | null;
           dimensions_height?: number | null;
           dimensions_length?: number | null;
           dimensions_unit?: string | null;
           dimensions_width?: number | null;
+          has_common_color?: boolean;
           has_common_cost_price?: boolean;
+          has_common_material?: boolean;
           has_common_supplier?: boolean;
           has_common_weight?: boolean;
           id?: string;
+          material_name_position?: string;
           name: string;
           product_count?: number | null;
           style?: string | null;
@@ -9800,19 +10062,25 @@ export type Database = {
           archived_at?: string | null;
           auto_name_pattern?: string | null;
           base_sku?: string;
+          color_name_position?: string;
+          common_color?: string | null;
           common_cost_price?: number | null;
           common_dimensions?: Json | null;
           common_eco_tax?: number | null;
+          common_material?: string | null;
           common_weight?: number | null;
           created_at?: string | null;
           dimensions_height?: number | null;
           dimensions_length?: number | null;
           dimensions_unit?: string | null;
           dimensions_width?: number | null;
+          has_common_color?: boolean;
           has_common_cost_price?: boolean;
+          has_common_material?: boolean;
           has_common_supplier?: boolean;
           has_common_weight?: boolean;
           id?: string;
+          material_name_position?: string;
           name?: string;
           product_count?: number | null;
           style?: string | null;
@@ -12451,11 +12719,11 @@ export type Database = {
       get_google_merchant_eligible_products: {
         Args: never;
         Returns: {
-          brand: string;
           description: string;
           gtin: string;
           id: string;
           image_url: string;
+          manufacturer: string;
           name: string;
           price_ht_cents: number;
           price_ttc_cents: number;
@@ -13000,10 +13268,9 @@ export type Database = {
         Returns: Json;
       };
       get_site_internet_products: {
-        Args: never;
+        Args: { p_brand_slug?: string };
         Returns: {
           assembly_price: number;
-          brand: string;
           color: string;
           cost_price: number;
           delivery_delay_weeks_max: number;
@@ -13018,11 +13285,13 @@ export type Database = {
           ineligibility_reasons: string[];
           is_eligible: boolean;
           is_published: boolean;
+          manufacturer: string;
           metadata: Json;
           name: string;
           price_ht: number;
           price_source: string;
           price_ttc: number;
+          primary_cloudflare_image_id: string;
           primary_image_url: string;
           product_id: string;
           product_type: string;
@@ -13785,6 +14054,31 @@ export type Database = {
           partner_name: string;
           remaining: number;
           total_ttc: number;
+        }[];
+      };
+      suggest_variant_groups: {
+        Args: {
+          p_max_cluster_size?: number;
+          p_max_results?: number;
+          p_min_cluster_size?: number;
+        };
+        Returns: {
+          common_cost_price: number;
+          common_weight: number;
+          confidence: string;
+          detected_axis: string;
+          has_common_cost_price: boolean;
+          has_common_supplier: boolean;
+          has_common_weight: boolean;
+          product_cloudflare_image_ids: string[];
+          product_count: number;
+          product_ids: string[];
+          product_image_urls: string[];
+          product_names: string[];
+          product_skus: string[];
+          stem: string;
+          supplier_id: string;
+          supplier_name: string;
         }[];
       };
       test_custom_access_token_hook: {

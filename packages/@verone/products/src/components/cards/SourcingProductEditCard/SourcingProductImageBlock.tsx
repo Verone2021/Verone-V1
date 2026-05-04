@@ -2,6 +2,8 @@
 
 import { Camera, Package } from 'lucide-react';
 
+import { CloudflareImage } from '@verone/ui';
+
 import type { ProductImage, SourcingProduct } from './types';
 
 interface SourcingProductImageBlockProps {
@@ -19,7 +21,9 @@ export function SourcingProductImageBlock({
   imagesLoading = false,
   onOpenPhotosModal,
 }: SourcingProductImageBlockProps) {
-  const imageUrl = primaryImage?.public_url;
+  const cloudflareId = primaryImage?.cloudflare_image_id ?? null;
+  const publicUrl = primaryImage?.public_url ?? null;
+  const hasImage = !!(cloudflareId ?? publicUrl);
   const imageCount = images.length;
 
   return (
@@ -27,15 +31,14 @@ export function SourcingProductImageBlock({
       className="relative flex-shrink-0 w-32 h-32 bg-gray-100 rounded-lg overflow-hidden cursor-pointer group border border-gray-200"
       onClick={onOpenPhotosModal}
     >
-      {imageUrl && !imagesLoading ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={imageUrl}
+      {hasImage && !imagesLoading ? (
+        <CloudflareImage
+          cloudflareId={cloudflareId}
+          fallbackSrc={publicUrl}
           alt={primaryImage?.alt_text ?? product.name}
+          width={128}
+          height={128}
           className="w-full h-full object-contain"
-          onError={e => {
-            (e.target as HTMLImageElement).style.display = 'none';
-          }}
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center">

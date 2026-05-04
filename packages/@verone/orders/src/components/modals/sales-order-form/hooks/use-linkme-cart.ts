@@ -87,6 +87,7 @@ export function useLinkMeCart({
       commission_rate: (item.commission_rate ?? 0) / 100,
       linkme_selection_item_id: item.id,
       product_image_url: item.product_image_url,
+      product_image_cloudflare_id: item.product_image_cloudflare_id,
     };
 
     setLinkmeCart(prev => {

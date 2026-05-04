@@ -34,6 +34,7 @@ export interface SelectionItem {
   product_name: string;
   product_reference: string;
   product_image_url: string | null;
+  product_cloudflare_image_id: string | null;
   product_stock_real: number;
   product_stock_forecasted: number;
   category_name: string | null;
@@ -73,6 +74,7 @@ interface SelectionItemWithProduct {
 interface ProductImageRow {
   product_id: string;
   public_url: string | null;
+  cloudflare_image_id: string | null;
 }
 
 interface ChannelPricingWithProducts {
@@ -139,17 +141,21 @@ export function useSelectionItems(selectionId: string | null) {
 
       const productIds = (data ?? []).map(item => item.product_id);
       let imageMap = new Map<string, string | null>();
+      let cloudflareImageMap = new Map<string, string | null>();
 
       if (productIds.length > 0) {
         const { data: images } = await supabase
           .from('product_images')
-          .select('product_id, public_url')
+          .select('product_id, public_url, cloudflare_image_id')
           .in('product_id', productIds)
           .eq('is_primary', true)
           .returns<ProductImageRow[]>();
 
         imageMap = new Map(
           (images ?? []).map(img => [img.product_id, img.public_url])
+        );
+        cloudflareImageMap = new Map(
+          (images ?? []).map(img => [img.product_id, img.cloudflare_image_id])
         );
       }
 
@@ -167,6 +173,8 @@ export function useSelectionItems(selectionId: string | null) {
         product_name: item.product?.name ?? '',
         product_reference: item.product?.sku ?? '',
         product_image_url: imageMap.get(item.product_id) ?? null,
+        product_cloudflare_image_id:
+          cloudflareImageMap.get(item.product_id) ?? null,
         product_stock_real: item.product?.stock_real ?? 0,
         product_stock_forecasted:
           (item.product?.stock_real ?? 0) +

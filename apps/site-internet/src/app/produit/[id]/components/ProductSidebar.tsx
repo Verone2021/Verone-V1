@@ -2,7 +2,7 @@
  * ProductSidebar - Sidebar sticky fiche produit (40% largeur)
  * Features:
  * - Sticky top-20
- * - Titre + Marque conditionnelle
+ * - Titre + Fabricant conditionnelle
  * - Prix TTC + Éco-participation (ligne séparée)
  * - Variantes photos 56x56px
  * - Quantité + Checkbox montage
@@ -13,14 +13,14 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, type ChangeEvent } from 'react';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import {
   ButtonUnified,
+  CloudflareImage,
   Label,
   Input,
   Checkbox,
@@ -42,7 +42,7 @@ interface ProductSidebarProps {
     product_id: string;
     name: string;
     slug: string;
-    brand: string | null; // Afficher UNIQUEMENT si renseigné
+    manufacturer: string | null; // Afficher UNIQUEMENT si renseigné
     price_ttc: number | null;
     discount_rate: number | null;
     eco_participation_amount: number | null; // Ligne séparée sous prix
@@ -53,6 +53,7 @@ interface ProductSidebarProps {
     variant_group_id: string | null;
     eligible_variants_count: number;
     primary_image_url: string | null;
+    primary_cloudflare_image_id: string | null;
     sku: string | null;
   };
   variants?: Array<{
@@ -60,6 +61,7 @@ interface ProductSidebarProps {
     slug: string;
     name: string;
     primary_image_url: string | null;
+    primary_cloudflare_image_id: string | null;
   }>;
   currentProductId: string;
 }
@@ -128,11 +130,11 @@ export function ProductSidebar({
             {product.name}
           </h1>
 
-          {/* Marque UNIQUEMENT si renseignée (pas de fallback "Vérone") */}
+          {/* Fabricant UNIQUEMENT si renseignée (pas de fallback "Vérone") */}
           {/* Lien désactivé tant que la route /marques/[slug] n'existe pas (audit 2026-04-26 Bug 1) */}
-          {product.brand && (
+          {product.manufacturer && (
             <span className="text-sm text-muted-foreground mt-2 inline-block">
-              par {product.brand}
+              par {product.manufacturer}
             </span>
           )}
         </div>
@@ -205,19 +207,14 @@ export function ProductSidebar({
                         : 'border-gray-200 hover:border-gray-400'
                     }`}
                   >
-                    {variant.primary_image_url ? (
-                      <Image
-                        src={variant.primary_image_url}
-                        alt={variant.name}
-                        fill
-                        className="object-contain p-1 bg-white"
-                        sizes="56px"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full bg-gray-50 text-gray-300 text-xs">
-                        ?
-                      </div>
-                    )}
+                    <CloudflareImage
+                      cloudflareId={variant.primary_cloudflare_image_id}
+                      fallbackSrc={variant.primary_image_url}
+                      alt={variant.name}
+                      fill
+                      className="object-contain p-1 bg-white"
+                      sizes="56px"
+                    />
                   </div>
 
                   {/* Tooltip au survol */}
@@ -242,8 +239,8 @@ export function ProductSidebar({
             type="number"
             min={1}
             value={quantity}
-            onChange={e =>
-              setQuantity(Math.max(1, parseInt(e.target.value) || 1))
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))
             }
             className="w-24"
           />
@@ -306,6 +303,7 @@ export function ProductSidebar({
               assembly_price: product.assembly_price ?? 0,
               eco_participation: ecoParticipation,
               primary_image_url: product.primary_image_url,
+              primary_cloudflare_image_id: product.primary_cloudflare_image_id,
               sku: product.sku,
             })
               .then(() => {

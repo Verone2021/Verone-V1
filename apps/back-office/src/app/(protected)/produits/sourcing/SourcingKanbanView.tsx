@@ -1,8 +1,10 @@
 'use client';
 
 import type { SourcingProduct } from '@verone/products';
-import { Badge } from '@verone/ui';
+import { Badge, CloudflareImage } from '@verone/ui';
 import { Package } from 'lucide-react';
+
+import { getPrimaryImage } from './sourcing-page.helpers';
 
 const PIPELINE_COLUMNS = [
   {
@@ -74,9 +76,8 @@ function KanbanCard({
   product: SourcingProduct;
   onView: (id: string) => void;
 }) {
-  const imageUrl =
-    product.product_images?.find(img => img.is_primary)?.public_url ??
-    product.product_images?.[0]?.public_url;
+  const primaryImage = getPrimaryImage(product);
+  const hasImage = primaryImage.cloudflareId ?? primaryImage.publicUrl;
   const supplierName =
     product.supplier?.trade_name ?? product.supplier?.legal_name;
   const daysCreated = Math.floor(
@@ -90,13 +91,17 @@ function KanbanCard({
       className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer space-y-2"
     >
       <div className="flex items-start gap-2.5">
-        {imageUrl ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={imageUrl}
-            alt={product.name}
-            className="w-12 h-12 rounded border border-gray-100 object-cover flex-shrink-0"
-          />
+        {hasImage ? (
+          <div className="w-12 h-12 rounded border border-gray-100 overflow-hidden flex-shrink-0">
+            <CloudflareImage
+              cloudflareId={primaryImage.cloudflareId}
+              fallbackSrc={primaryImage.publicUrl}
+              alt={product.name}
+              width={48}
+              height={48}
+              className="w-full h-full object-cover"
+            />
+          </div>
         ) : (
           <div className="w-12 h-12 rounded border border-gray-100 bg-gray-50 flex items-center justify-center flex-shrink-0">
             <Package className="h-5 w-5 text-gray-300" />

@@ -28,6 +28,7 @@ export interface FetchedProduct {
 export interface ProductImageRef {
   product_id: string;
   public_url: string;
+  cloudflare_image_id: string | null;
 }
 
 /** Données de mise à jour pour un variant group */
@@ -50,4 +51,18 @@ export interface VariantGroupUpdateData {
   common_cost_price?: number | null;
   has_common_cost_price?: boolean;
   common_eco_tax?: number | null;
+  common_material?: string | null;
+  has_common_material?: boolean;
+  common_color?: string | null;
+  has_common_color?: boolean;
+  material_name_position?:
+    | 'none'
+    | 'before_group'
+    | 'after_group'
+    | 'before_variant';
+  color_name_position?:
+    | 'none'
+    | 'before_group'
+    | 'after_group'
+    | 'before_variant';
 }

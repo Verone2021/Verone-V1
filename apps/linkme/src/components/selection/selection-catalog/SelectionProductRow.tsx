@@ -7,9 +7,9 @@
  * @since 2026-04-14
  */
 
-import Image from 'next/image';
+import { AlertTriangle, EyeOff } from 'lucide-react';
 
-import { AlertTriangle, EyeOff, Package } from 'lucide-react';
+import { CloudflareImage } from '@verone/ui';
 
 import type { SelectionItem } from '../../../lib/hooks/use-user-selection';
 
@@ -91,19 +91,14 @@ export function SelectionProductRow({
       }`}
     >
       <div className="relative h-16 w-16 flex-shrink-0 rounded-md bg-gray-50 overflow-hidden">
-        {item.product_image_url ? (
-          <Image
-            src={item.product_image_url}
-            alt={item.product_name}
-            fill
-            className="object-cover"
-            sizes="64px"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <Package className="h-6 w-6 text-gray-200" />
-          </div>
-        )}
+        <CloudflareImage
+          cloudflareId={item.product_cloudflare_image_id ?? null}
+          fallbackSrc={item.product_image_url}
+          alt={item.product_name}
+          fill
+          className="object-cover"
+          sizes="64px"
+        />
       </div>
 
       <div className="flex-1 min-w-0">

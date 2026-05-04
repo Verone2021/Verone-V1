@@ -14,8 +14,6 @@
 
 import { useState, useMemo, useEffect } from 'react';
 
-import Image from 'next/image';
-
 import { Card } from '@tremor/react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -31,7 +29,13 @@ import {
   Calendar,
 } from 'lucide-react';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
+import {
+  CloudflareImage,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@verone/ui';
 
 import { useProductSalesDetail } from '@/lib/hooks/use-product-sales-detail';
 
@@ -265,20 +269,15 @@ export function ProductSalesDetailModal({
             <DialogHeader>
               <div className="flex items-center gap-3">
                 {/* Product image */}
-                <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
-                  {data.productImageUrl ? (
-                    <Image
-                      src={data.productImageUrl}
-                      alt={data.productName}
-                      width={48}
-                      height={48}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Package className="h-5 w-5 text-gray-400" />
-                    </div>
-                  )}
+                <div className="relative w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
+                  <CloudflareImage
+                    cloudflareId={data.productCloudflareId ?? null}
+                    fallbackSrc={data.productImageUrl}
+                    alt={data.productName}
+                    fill
+                    className="object-cover"
+                    sizes="48px"
+                  />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">

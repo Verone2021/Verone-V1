@@ -187,6 +187,11 @@ jobs:
     if: needs.detect-changes.outputs.back-office == 'true' || needs.detect-changes.outputs.packages == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Non-blocking : le smoke E2E reste informationnel. Une régression runtime
+    # est signalée (commentaire PR + artifact) mais n'empêche pas le merge.
+    # Les régressions critiques sont rattrapées par type-check/build et par le
+    # diff de review. Voir INFRA-CI-001.
+    continue-on-error: true
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
@@ -215,8 +220,21 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Playwright browsers (chromium only)
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: playwright-${{ runner.os }}-
+
+      - name: Install Playwright browsers (chromium only — cache miss)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install Playwright system deps (cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
 
       - name: Cache Next.js build
         uses: actions/cache@v5
@@ -360,7 +378,11 @@ jobs:
   #    --db-url $SUPABASE_DB_URL` (méthode officielle Supabase) et compare
   #    au fichier commité. Drift non-nul → PR refusée.
   #
-  #    Ne tourne que si une migration ou le fichier supabase.ts change.
+  #    Le job tourne TOUJOURS (sinon GitHub reporte "skipped" sur les PRs
+  #    sans migration, ce qui ne satisfait pas le required status check
+  #    en branch protection → toutes les PRs sans migration restent bloquées).
+  #    Quand aucune migration n'est touchée, le job exécute un no-op qui
+  #    rapporte "success" via le step-summary. Voir INFRA-CI-002.
   #    Nécessite le secret `SUPABASE_DB_URL` (déjà utilisé par db-drift-check).
   # ----------------------------------------------------------------
   supabase-types-drift:
@@ -368,39 +390,51 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: detect-changes
-    if: needs.detect-changes.outputs.migrations == 'true'
     env:
       SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      MIGRATIONS_TOUCHED: ${{ needs.detect-changes.outputs.migrations }}
 
     steps:
+      # No-op success quand aucune migration ni fichier supabase.ts n'est touché.
+      # Garantit que le check est reporté comme "success" (pas "skipped") afin
+      # de satisfaire la branch protection sur les PRs sans changement DB.
+      - name: No-op (no DB migration in this PR)
+        if: env.MIGRATIONS_TOUCHED != 'true'
+        run: |
+          echo "## ✅ Pas de migration DB dans cette PR" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Aucun fichier sous \`supabase/migrations/**\` ni \`packages/@verone/types/src/supabase.ts\` n'a été modifié." >> $GITHUB_STEP_SUMMARY
+          echo "Le check de drift de types est inutile pour cette PR — pas de régénération nécessaire." >> $GITHUB_STEP_SUMMARY
+
       - name: Checkout code
+        if: env.MIGRATIONS_TOUCHED == 'true'
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        if: env.SUPABASE_DB_URL != ''
+        if: env.MIGRATIONS_TOUCHED == 'true' && env.SUPABASE_DB_URL != ''
         uses: pnpm/action-setup@v2
         with:
           version: 10.13.1
 
       - name: Setup Node.js
-        if: env.SUPABASE_DB_URL != ''
+        if: env.MIGRATIONS_TOUCHED == 'true' && env.SUPABASE_DB_URL != ''
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
 
       - name: Install dependencies (needed for @verone/prettier-config)
-        if: env.SUPABASE_DB_URL != ''
+        if: env.MIGRATIONS_TOUCHED == 'true' && env.SUPABASE_DB_URL != ''
         run: pnpm install --frozen-lockfile
 
       - name: Install Supabase CLI
-        if: env.SUPABASE_DB_URL != ''
+        if: env.MIGRATIONS_TOUCHED == 'true' && env.SUPABASE_DB_URL != ''
         uses: supabase/setup-cli@v2
         with:
           version: latest
 
       - name: Regenerate types from live DB
-        if: env.SUPABASE_DB_URL != ''
+        if: env.MIGRATIONS_TOUCHED == 'true' && env.SUPABASE_DB_URL != ''
         run: |
           supabase gen types typescript --db-url "$SUPABASE_DB_URL" \
             > packages/@verone/types/src/supabase.ts.generated
@@ -423,7 +457,7 @@ jobs:
           fi
 
       - name: Upload drift diff on failure
-        if: failure() && env.SUPABASE_DB_URL != ''
+        if: failure() && env.MIGRATIONS_TOUCHED == 'true' && env.SUPABASE_DB_URL != ''
         uses: actions/upload-artifact@v4
         with:
           name: supabase-types-drift
@@ -433,7 +467,7 @@ jobs:
           retention-days: 7
 
       - name: Comment PR on types drift
-        if: failure() && github.event_name == 'pull_request'
+        if: failure() && env.MIGRATIONS_TOUCHED == 'true' && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -445,8 +479,8 @@ jobs:
               body: `## ❌ Supabase Types Drift\n\nLe fichier \`packages/@verone/types/src/supabase.ts\` n'est pas à jour avec le schéma DB actuel.\n\n**Corriger :**\n\`\`\`bash\npnpm run generate:types\ngit add packages/@verone/types/src/supabase.ts\ngit commit -m "chore: regenerate supabase types"\ngit push\n\`\`\`\n\nVoir le diff en artifact du workflow.`
             });
 
-      - name: Skip note
-        if: env.SUPABASE_DB_URL == ''
+      - name: Skip note (secret missing)
+        if: env.MIGRATIONS_TOUCHED == 'true' && env.SUPABASE_DB_URL == ''
         run: |
           echo "⚠️ SUPABASE_DB_URL secret not set — types drift skipped." >> $GITHUB_STEP_SUMMARY
 

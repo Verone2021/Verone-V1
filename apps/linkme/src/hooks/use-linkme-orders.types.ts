@@ -15,6 +15,7 @@ export interface OrderItem {
   product_name: string;
   product_sku: string;
   product_image_url: string | null;
+  product_cloudflare_image_id: string | null;
   quantity: number;
   unit_price_ht: number;
   total_ht: number;
@@ -212,6 +213,7 @@ export interface QueryLinkmeDetailsRow {
 export interface ProductImageRow {
   product_id: string;
   public_url: string | null;
+  cloudflare_image_id: string | null;
 }
 
 // ============================================

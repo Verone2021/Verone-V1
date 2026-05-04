@@ -43,6 +43,7 @@ export interface AffiliateProduct {
   created_at: string;
   updated_at: string;
   product_image_url: string | null;
+  cloudflare_image_id?: string | null;
 }
 
 export interface CreateAffiliateProductInput {
@@ -95,7 +96,7 @@ export function useAffiliateProducts() {
         const { data, error } = await supabase
           .from('products')
           .select(
-            'id, name, sku, description, affiliate_payout_ht, affiliate_commission_rate, affiliate_approval_status, affiliate_rejection_reason, dimensions, store_at_verone, created_at, updated_at, product_images(public_url, display_order)'
+            'id, name, sku, description, affiliate_payout_ht, affiliate_commission_rate, affiliate_approval_status, affiliate_rejection_reason, dimensions, store_at_verone, created_at, updated_at, product_images(public_url, cloudflare_image_id, display_order)'
           )
           .eq('created_by_affiliate', affiliate.id)
           .order('created_at', { ascending: false });
@@ -105,10 +106,14 @@ export function useAffiliateProducts() {
           throw error;
         }
 
-        // Map product_images join to product_image_url
+        // Map product_images join to product_image_url + cloudflare_image_id
         return (data ?? []).map(p => {
           const images = (p as Record<string, unknown>).product_images as
-            | { public_url: string; display_order: number | null }[]
+            | {
+                public_url: string;
+                cloudflare_image_id: string | null;
+                display_order: number | null;
+              }[]
             | null;
           const sorted = (images ?? []).sort(
             (a, b) => (a.display_order ?? 999) - (b.display_order ?? 999)
@@ -116,6 +121,7 @@ export function useAffiliateProducts() {
           return {
             ...p,
             product_image_url: sorted[0]?.public_url ?? null,
+            cloudflare_image_id: sorted[0]?.cloudflare_image_id ?? null,
             product_images: undefined,
           } as unknown as AffiliateProduct;
         });
@@ -143,20 +149,27 @@ export function useAffiliateProducts() {
       const productIds = products.map(p => p.id);
       const { data: images } = await supabase
         .from('product_images')
-        .select('product_id, public_url, display_order')
+        .select('product_id, public_url, cloudflare_image_id, display_order')
         .in('product_id', productIds)
         .order('display_order', { ascending: true });
 
-      const imageMap = new Map<string, string>();
+      const imageMap = new Map<
+        string,
+        { public_url: string; cloudflare_image_id: string | null }
+      >();
       for (const img of images ?? []) {
         if (!imageMap.has(img.product_id)) {
-          imageMap.set(img.product_id, img.public_url ?? '');
+          imageMap.set(img.product_id, {
+            public_url: img.public_url ?? '',
+            cloudflare_image_id: img.cloudflare_image_id ?? null,
+          });
         }
       }
 
       return products.map(p => ({
         ...p,
-        product_image_url: imageMap.get(p.id) ?? null,
+        product_image_url: imageMap.get(p.id)?.public_url ?? null,
+        cloudflare_image_id: imageMap.get(p.id)?.cloudflare_image_id ?? null,
       }));
     },
     enabled: !!enseigneId || (isOrganisationAdmin && !!organisationId),

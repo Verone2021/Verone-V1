@@ -37,7 +37,7 @@ export function useCompleteProductWizard({
     const { data, error } = await supabase
       .from('products')
       .select(
-        'id, name, slug, description, selling_points, condition, availability_type, video_url, subcategory_id, supplier_id, supplier_page_url, supplier_reference, cost_price, target_margin_percentage, margin_percentage, brand, variant_attributes, dimensions, weight, gtin, product_type, assigned_client_id, creation_mode, requires_sample, stock_quantity, stock_real, stock_forecasted_in, stock_forecasted_out, min_stock, reorder_point'
+        'id, name, slug, description, selling_points, condition, availability_type, video_url, subcategory_id, supplier_id, supplier_page_url, supplier_reference, cost_price, target_margin_percentage, margin_percentage, manufacturer, variant_attributes, dimensions, weight, gtin, product_type, assigned_client_id, creation_mode, requires_sample, stock_quantity, stock_real, stock_forecasted_in, stock_forecasted_out, min_stock, reorder_point'
       )
       .eq('id', id)
       .single();
@@ -79,7 +79,7 @@ export function useCompleteProductWizard({
           target_margin_percentage:
             draft.target_margin_percentage?.toString() ?? '',
           margin_percentage: draft.margin_percentage?.toString() ?? '',
-          brand: draft.brand ?? '',
+          manufacturer: draft.manufacturer ?? '',
           variant_attributes: (draft.variant_attributes ?? {}) as Record<
             string,
             unknown
@@ -166,7 +166,7 @@ export function useCompleteProductWizard({
         margin_percentage: formData.margin_percentage
           ? parseFloat(formData.margin_percentage)
           : undefined,
-        brand: formData.brand ?? undefined,
+        manufacturer: formData.manufacturer ?? undefined,
         variant_attributes:
           Object.keys(formData.variant_attributes).length > 0
             ? formData.variant_attributes

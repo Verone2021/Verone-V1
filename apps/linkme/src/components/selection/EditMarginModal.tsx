@@ -16,7 +16,8 @@
  */
 
 import { useState, useMemo } from 'react';
-import Image from 'next/image';
+
+import { CloudflareImage } from '@verone/ui';
 
 import {
   calculateMargin,
@@ -26,7 +27,6 @@ import {
 import {
   X,
   Loader2,
-  Package,
   Check,
   TrendingUp,
   AlertTriangle,
@@ -198,19 +198,14 @@ export function EditMarginModal({
 
         {/* Produit - Image plus grande */}
         <div className="px-6 py-4 bg-gray-50 border-b flex items-center gap-4">
-          <div className="w-16 h-16 bg-white rounded-xl overflow-hidden flex-shrink-0 border shadow-sm relative">
-            {item.product_image_url ? (
-              <Image
-                src={item.product_image_url}
-                alt={item.product_name}
-                fill
-                className="object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-300">
-                <Package className="h-8 w-8" />
-              </div>
-            )}
+          <div className="relative w-16 h-16 bg-white rounded-xl overflow-hidden flex-shrink-0 border shadow-sm">
+            <CloudflareImage
+              cloudflareId={item.product_cloudflare_image_id ?? null}
+              fallbackSrc={item.product_image_url}
+              alt={item.product_name}
+              fill
+              className="object-cover"
+            />
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-semibold text-gray-900 truncate">

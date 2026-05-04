@@ -353,6 +353,8 @@ La convention plate du scratchpad (réaffirmée dans `docs/scratchpad/README.md`
 - ADR-015 : Interdit absolu de solliciter Romeo pour vérifier sur un site externe (2026-04-23)
 - ADR-016 : E2E smoke tests bloquants en CI + runtime guards contre les régressions silencieuses (2026-04-24)
 - ADR-018 : Script `db-drift-check.py` contre le drift silencieux de schéma DB (2026-04-24)
+- ADR-022 : Bundling thématique obligatoire pour PRs liées (2026-04-28)
+- ADR-023 : Multi-agent workflow — branche tôt, push draft, rebase précoce, worktree (2026-04-30) — **ANNULÉE 2026-05-02 (workflow solo restauré, voir `.claude/rules/no-worktree-solo.md`)**
 
 ---
 
@@ -738,3 +740,350 @@ La règle `1 PR = 1 BLOC COHÉRENT` existait déjà dans `.claude/rules/workflow
 - `CLAUDE.md` racine section INTERDICTIONS ABSOLUES
 - `.claude/rules/workflow.md` section "Incident 2026-04-28"
 - `.claude/rules/branch-strategy.md` checklist question 4
+
+---
+
+## ADR-023 — Multi-agent workflow : branche tôt, push draft, rebase précoce, worktree (2026-04-30) — **ANNULÉE 2026-05-02**
+
+> ⚠️ **ANNULÉE 2026-05-02** : workflow solo restauré. Cette ADR a introduit `git worktree add` et un workflow multi-agents qui s'est révélé chaotique pour Roméo qui travaille **seul** sur le repo. Plusieurs worktrees créés (`verone-mkt-002/`, `verone-bo-var-form-002/`, `verone-hotfix-003/`) ont causé une confusion majeure : Roméo perdait le fil de quel dossier contenait quel sprint, le serveur dev Next.js servait le code d'un mauvais worktree (pages 500 inexpliquées), cycles CI doublés.
+>
+> **Voir `.claude/rules/no-worktree-solo.md`** pour la règle qui remplace celle-ci. Le fichier `.claude/rules/multi-agent-workflow.md` a été supprimé. Toutes les références dans `CLAUDE.md`, `INDEX.md`, `workflow.md`, `branch-strategy.md`, `autonomy-boundaries.md`, `dev-agent.md`, `ops-agent.md`, `pr.md` ont été nettoyées.
+>
+> Le contenu ci-dessous est conservé comme **trace historique** uniquement.
+
+**Contexte** : Romeo travaille régulièrement avec plusieurs agents Claude Code en parallèle (sessions différentes, ou un agent qui dispatche un sous-agent via Agent tool). Il observe que ces sessions multi-agents génèrent des conflits récurrents qui lui font perdre une demi-journée chaque fois (cycle CI 30 min + rebase manuel + retry).
+
+L'audit (cette session 2026-04-30) révèle :
+
+1. **Mémoires perso codifiées, mais pas dans le repo** — 4 mémoires en `~/.claude/projects/.../memory/` (`feedback_rebase_first_branch_early.md`, `feedback_stacked_prs_and_blocking_checks.md`, `feedback_multi_agent_scope.md`, `feedback_multi_agent_use_worktree.md`) couvrent exactement la pratique senior 2026. Mais elles sont attachées à une session/agent — quand Romeo lance un autre agent ou un nouveau Claude Code, il ne les lit pas. Les autres agents ne lisent que `CLAUDE.md` + `.claude/rules/*`.
+
+2. **Lacunes dans `.claude/rules/`** :
+   - `git worktree` pour multi-agents non documenté nulle part
+   - Rebase précoce mentionné en passant ("rebase régulier") mais sans timing ni pourquoi
+   - Push draft immédiat non explicité (la règle disait "PR draft quand bloc complet")
+   - Stacked PRs (B depuis A) absents
+   - Section `## Fichiers touchés` dans PR description absente
+   - Anti-pattern « j'attends l'autre agent » non interdit explicitement
+
+3. **Incident 2026-04-30** : pendant cette session, l'agent allait faire `git fetch && git checkout staging && git pull --rebase` dans le working dir partagé alors qu'un autre agent travaillait dessus sur sa propre branche. Romeo a interrompu : `git checkout staging` aurait viré l'autre agent de sa branche au milieu de son travail. Romeo a aussi mergé 3 PRs avec `--admin` la veille pour bypasser un drift TS, ce qui a propagé un faux signal en prod.
+
+**Décision** :
+
+1. **Créer `.claude/rules/multi-agent-workflow.md`** (~310 lignes, source de vérité unique). Codifie la pratique senior 2026 :
+   - Branche créée IMMÉDIATEMENT depuis `staging` à jour, push draft tout de suite
+   - Rebase précoce avant chaque push (réflexe toutes les 1-2h), pas une fois en fin de bloc
+   - `git worktree add` OBLIGATOIRE en multi-agents (autre agent dans working dir partagé)
+   - Sous-agent (Agent tool) : `isolation: "worktree"` systématique en multi-agents
+   - Stacked PRs (B depuis A) si dépendance forte
+   - Section `## Fichiers touchés` en haut de chaque PR description (visibilité multi-agents)
+   - `git push --force-with-lease` jamais `--force` nu
+   - Fix CI blocking par commit atomique sur même branche, JAMAIS `--admin`
+   - INTERDIT explicite : « j'attends que l'autre agent finisse »
+
+2. **Mettre à jour les fichiers existants** pour pointer vers le nouveau et compléter les anti-patterns :
+   - `CLAUDE.md` racine (table SOURCES DE VERITE + section WORKFLOW GIT + INTERDICTIONS ABSOLUES)
+   - `.claude/rules/workflow.md` (pointer + section Rebase précoce + Push draft immédiat)
+   - `.claude/rules/branch-strategy.md` (5e question dans la checklist : « autre agent en parallèle ? »)
+   - `.claude/rules/autonomy-boundaries.md` (`git worktree add` en FEU VERT, `--force` nu et `git checkout` en working dir partagé en FEU ROUGE)
+   - `.claude/INDEX.md` (liste Rules passe à 14 fichiers)
+   - `.claude/agents/dev-agent.md` (workflow inclut branche+push draft immédiat, anti-pattern « j'attends » interdit)
+   - `.claude/agents/ops-agent.md` (workflow standard mis à jour avec rebase précoce, push draft, worktree, fichiers touchés, jamais `--admin`)
+   - `.claude/commands/pr.md` (rebase précoce dans Phase 2, section Fichiers touchés dans body, draft par défaut, `--force-with-lease`)
+
+3. **Documenter dans cet ADR** la pratique senior 2026 et les sources externes (trunk-based development DORA/Accelerate, Phabricator/Graphite stacked PRs Meta, Git worktree natif depuis 2.5 en 2015, GitHub branch protection rules avec enforce_admins).
+
+**Conséquences** :
+
+- Tout futur agent (humain Claude Code, sous-agent dev-agent, etc.), même sans accès aux mémoires perso, lira ces règles à chaque démarrage et appliquera le workflow senior. Fin des conflits récurrents qui faisaient perdre une demi-journée à Romeo.
+- Le tool Agent avec `isolation: "worktree"` devient le default en multi-agents (au lieu d'une option ignorée).
+- `--admin` est désormais INTERDIT ABSOLU codifié dans 4 fichiers (rules + agents + CLAUDE.md), pas juste en mémoire perso.
+- La pratique « branche tôt » remplace l'anti-pattern « j'attends », qui apparaissait régulièrement quand un agent était poliment en train de proposer d'attendre la fin d'une release main.
+- L'incident 2026-04-30 ne se reproduit plus : l'agent qui voit qu'un autre agent travaille fait `git worktree add` automatiquement.
+
+**Trace** :
+
+- 9 fichiers modifiés dans la même session :
+  - `CLAUDE.md` (4 sections)
+  - `.claude/rules/multi-agent-workflow.md` (CRÉÉ)
+  - `.claude/rules/workflow.md` (3 sections)
+  - `.claude/rules/branch-strategy.md` (3 sections)
+  - `.claude/rules/autonomy-boundaries.md` (3 sections)
+  - `.claude/INDEX.md` (2 sections)
+  - `.claude/agents/dev-agent.md` (2 sections)
+  - `.claude/agents/ops-agent.md` (5 sections)
+  - `.claude/commands/pr.md` (4 sections)
+  - `.claude/DECISIONS.md` (cet ADR)
+
+**Sources externes (best practices senior 2026)** :
+
+- Trunk-based development : DORA reports, _Accelerate_ (Forsgren/Humble/Kim, IT Revolution Press)
+- Stacked PRs : Phabricator (Meta), Graphite, Reviewable
+- Git worktree : Git 2.5 (2015), https://git-scm.com/docs/git-worktree
+- Branch protection rules : https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository
+- `--force-with-lease` vs `--force` : https://git-scm.com/docs/git-push
+- Anthropic Claude Code Agent tool : `isolation: "worktree"` natif
+
+**Référence** : session 2026-04-30 avec Romeo, audit complet `.claude/` puis codification.
+
+---
+
+## ADR-024 — Workflow solo restauré, suppression worktree (2026-05-02)
+
+**Contexte** : ADR-023 (introduite le 2026-04-30) a imposé `git worktree add` pour gérer plusieurs agents en parallèle dans le working dir. La pratique a généré du chaos pour Roméo qui travaille **seul** sur le repo :
+
+1. Plusieurs worktrees créés et oubliés : `/Users/romeodossantos/verone-mkt-002/`, `/Users/romeodossantos/verone-bo-var-form-002/`, `/Users/romeodossantos/verone-hotfix-003/`. Roméo perdait le fil de quel dossier contenait quel sprint.
+2. Confusion serveur dev : le serveur Next.js sur `localhost:3000` servait le code d'un worktree non-actif → pages 500 inexpliquées, perte de temps à diagnostiquer.
+3. Cycles CI doublés : PRs créées en draft "pour visibilité multi-agents" alors que personne n'en avait besoin.
+4. Le 2026-05-02, Romeo a explicitement demandé la remise en ordre complète : suppression de tous les worktrees, retour à `git checkout` simple dans `/Users/romeodossantos/verone-back-office-V1`, suppression de `multi-agent-workflow.md`, nettoyage de `.claude/` et `CLAUDE.md`.
+
+**Décision** :
+
+1. **Supprimer `.claude/rules/multi-agent-workflow.md`** complètement (418 lignes).
+2. **Créer `.claude/rules/no-worktree-solo.md`** comme nouvelle source de vérité sur la stratégie de branche solo (1 dossier, 1 branche à la fois, bascule via `git checkout` + `git stash`).
+3. **Marquer ADR-023 ANNULÉE** dans cette ADR (trace historique conservée).
+4. **Nettoyer toutes les mentions worktree/multi-agents** dans : `CLAUDE.md` racine (sections WORKFLOW GIT, INTERDICTIONS ABSOLUES, SOURCES DE VERITE), `.claude/INDEX.md`, `.claude/rules/{workflow,branch-strategy,autonomy-boundaries}.md`, `.claude/agents/{dev-agent,ops-agent}.md`, `.claude/commands/pr.md`.
+5. **Conserver les autres règles** introduites par ADR-023 qui restent valides indépendamment du multi-agents : `--force-with-lease` au lieu de `--force` nu, JAMAIS `gh pr merge --admin`, section `## Fichiers touchés` dans body PR (toujours utile pour review). Ces règles ne sont PAS retirées.
+6. **Ajouter `git worktree add` à la liste des INTERDICTIONS ABSOLUES** dans `CLAUDE.md`.
+
+**Conséquences** :
+
+- Workflow simplifié : 1 dossier `/Users/romeodossantos/verone-back-office-V1`, 1 branche checkée à la fois. Bascule via `git checkout <autre-branche>` (avec `git stash` si dirty).
+- Plus de confusion entre dossiers physiques. Le serveur dev sur `localhost:3000` sert toujours le code de la branche checkée dans le main working dir.
+- Sous-agents (Agent tool) ne reçoivent plus `isolation: "worktree"` — ils opèrent dans le même working dir.
+- Si vraiment un cas multi-agents survient (Roméo + un agent en parallèle), coordination par `git status` + `git pull --ff-only`. Pas de worktree.
+- ADR-023 reste visible dans `DECISIONS.md` comme trace historique (annulation explicite).
+
+**Trace** :
+
+- 9 fichiers modifiés / 1 supprimé / 1 créé dans cette session :
+  - `.claude/rules/multi-agent-workflow.md` (SUPPRIMÉ — 418 lignes)
+  - `.claude/rules/no-worktree-solo.md` (CRÉÉ)
+  - `CLAUDE.md` racine (3 sections nettoyées + 1 nouvelle interdiction ajoutée)
+  - `.claude/INDEX.md` (3 sections nettoyées)
+  - `.claude/rules/autonomy-boundaries.md` (3 sections nettoyées)
+  - `.claude/rules/workflow.md` (3 sections nettoyées)
+  - `.claude/rules/branch-strategy.md` (3 sections nettoyées + 5e question retirée)
+  - `.claude/agents/dev-agent.md` (2 sections nettoyées)
+  - `.claude/agents/ops-agent.md` (5 sections nettoyées)
+  - `.claude/commands/pr.md` (4 sections nettoyées)
+  - `.claude/DECISIONS.md` (ADR-023 marquée ANNULÉE + cette ADR-024)
+
+**Référence** : session 2026-05-02 avec Romeo, demande explicite de remise en ordre complète.
+
+---
+
+## ADR-025 — `[INFRA-LEAN-001]` Niveau 1 — Allègement faible config Claude (2026-05-02)
+
+**Contexte** : Roméo observait un overhead de 25 à 50 min par sprint avant que la CI tourne, anormalement long pour un dev solo. Un audit indépendant 2026-05-02 a confirmé : 7 260 lignes de configuration chargées au démarrage de chaque session (~72 600 tokens), 7 thèmes répétés dans 3 à 9 fichiers, chaîne d'assistants spécialisés qui double partiellement la CI GitHub. Sources externes consultées (Anthropic Best Practices, blog subagents, Hightower « Stop Stuffing Everything into One CLAUDE.md », équipe APAC token economics) convergent : élaguer, fusionner, charger à la demande.
+
+**Décision** : appliquer le **Niveau 1** (allègement faible, sans risque, aucune règle métier touchée) en 5 mouvements :
+
+1. **Élaguer `CLAUDE.md` racine** de 221 → 158 lignes (−28 %) en supprimant les détails redondants déjà présents dans les règles. Sections compressées : WORKFLOW GIT (20 → 8 lignes), INTERDICTIONS ABSOLUES (41 → résumés courts + pointeurs), SOURCES DE VERITE (table compactée), Fichiers auto-générés (15 → 6 lignes), COMMANDES (11 → 3 lignes).
+
+2. **Fusionner `branch-strategy.md` (162 lignes) dans `workflow.md`** comme nouvelle section « Checklist OBLIGATOIRE avant nouvelle branche / nouvelle PR » (4 questions : PR ouverte sur même sujet, même boucle d'itération, demande explicite Romeo, RPC/migration → régen types). Pointeurs mis à jour dans : `CLAUDE.md`, `INDEX.md`, `agents/ops-agent.md`, `commands/pr.md`, `rules/no-worktree-solo.md`, `work/BO-MKT-roadmap.md`.
+
+3. **Fusionner `playwright-artifacts.md` (152 lignes) dans `playwright.md`** comme nouvelle section « Artefacts — rangement et cycle de vie ». Pointeur mis à jour dans `rules/agent-autonomy-external.md`.
+
+4. **Supprimer les rappels worktree en double** : `agents/dev-agent.md` (1 doublon supprimé), `agents/ops-agent.md` (2 doublons supprimés). Conservés : la règle source `no-worktree-solo.md`, le rappel FEU ROUGE dans `autonomy-boundaries.md`, le rappel inline pédagogique dans `commands/pr.md`.
+
+5. **Mettre à jour `INDEX.md`** : compteur Rules 15 → 13, table en bas nettoyée des fichiers fusionnés, mention de la fusion dans l'en-tête.
+
+**Sous-agents NON touchés** (réservés au Niveau 2 si Niveau 1 valide après 2 sprints réels) : `verify-agent`, `ops-agent`, `reviewer-agent`, `dev-agent`, `perf-optimizer`. Aucune règle métier touchée.
+
+**Conséquences mesurables** :
+
+| Indicateur                     | Avant                                     | Après Niveau 1         | Gain                   |
+| ------------------------------ | ----------------------------------------- | ---------------------- | ---------------------- |
+| Fichiers de règles             | 15                                        | 13                     | −2                     |
+| Lignes `CLAUDE.md` racine      | 221                                       | 158                    | −28 %                  |
+| Lignes `workflow.md`           | 324 (+ 162 pour `branch-strategy.md`)     | 348 (consolidé)        | −138 lignes effectives |
+| Lignes `playwright.md`         | 90 (+ 152 pour `playwright-artifacts.md`) | 226 (consolidé)        | −16 lignes effectives  |
+| Doublons "JAMAIS git worktree" | 5 occurrences                             | 3 (sources distinctes) | −2                     |
+
+Estimation gain tokens chargés au démarrage de session : **−10 000 à −15 000 tokens** (−15 % environ). Aucune perte de contenu critique : les checks reviewer-agent restent obligatoires avant promote ready, toutes les règles métier (finance, stock, no-phantom-data, communication, etc.) restent intactes.
+
+**Risques traités** :
+
+- **Lien cassé** : grep complet effectué avant push, aucune référence à `branch-strategy.md` ou `playwright-artifacts.md` ne subsiste hors historique DECISIONS.md (intentionnellement conservé comme trace).
+- **Perte de contenu** : table de correspondance ancien → nouveau dans `docs/scratchpad/dev-plan-2026-05-02-INFRA-LEAN-001.md`, vérifiée à la main.
+- **Historique conservé** : ADR-012 (création `playwright-artifacts.md`) et ADR-022 (référence `branch-strategy.md` checklist Q4) restent dans DECISIONS.md comme trace.
+
+**Plan de validation après merge** :
+
+1. 2 sprints normaux (par ex. BO-MKT-001 + un autre) sans toucher à la config.
+2. Mesurer : temps moyen par sprint a-t-il baissé ? Y a-t-il eu un cas où la fusion a posé problème ?
+3. Si OK → Niveau 2 (suppression `verify-agent`, optionnalisation `ops-agent`, compaction des 3 grosses règles `responsive.md`, `data-fetching.md`).
+4. Niveau 3 NON appliqué — préserver les filets reviewer-agent avant gros merges.
+
+**Trace** :
+
+- Branche : `feat/INFRA-LEAN-001-allegement-config-niveau-1`
+- 9 fichiers modifiés / 2 supprimés / 1 plan + ADR créés :
+  - `CLAUDE.md` racine (réécriture compacte, 221 → 158 lignes)
+  - `.claude/rules/workflow.md` (réécriture, intègre ancien `branch-strategy.md`)
+  - `.claude/rules/playwright.md` (réécriture, intègre ancien `playwright-artifacts.md`)
+  - `.claude/rules/branch-strategy.md` (SUPPRIMÉ)
+  - `.claude/rules/playwright-artifacts.md` (SUPPRIMÉ)
+  - `.claude/rules/no-worktree-solo.md` (pointeurs mis à jour)
+  - `.claude/rules/agent-autonomy-external.md` (pointeur mis à jour)
+  - `.claude/agents/dev-agent.md` (1 doublon worktree supprimé)
+  - `.claude/agents/ops-agent.md` (1 pointeur + 2 doublons worktree supprimés)
+  - `.claude/commands/pr.md` (2 pointeurs mis à jour)
+  - `.claude/work/BO-MKT-roadmap.md` (1 pointeur mis à jour)
+  - `.claude/INDEX.md` (compteur + table mis à jour)
+  - `.claude/DECISIONS.md` (cette ADR-025)
+  - `docs/scratchpad/dev-plan-2026-05-02-INFRA-LEAN-001.md` (CRÉÉ — plan + table de correspondance)
+
+**Sources** :
+
+- Audit indépendant 2026-05-02 (rapport produit en conversation, sources externes Anthropic + Hightower + équipe APAC)
+- Anthropic Best Practices : « Bloated CLAUDE.md files cause Claude to ignore your actual instructions »
+- Anthropic Subagents blog : « Subagents carry overhead. For a quick fix or a focused question, the overhead of delegation outweighs the benefit »
+- Demande explicite Romeo 2026-05-02 : « Lance [INFRA-LEAN-001] Niveau 1 : allègement faible config Claude »
+
+**Référence** : session 2026-05-02 avec Romeo + audit indépendant croisé.
+
+---
+
+## ADR-026 — Suppression de `autonomy-boundaries.md` (système 3-feux) (2026-05-02)
+
+**Contexte** : suite à l'ajout de la règle 6 anti-paralysie de choix dans `.claude/rules/communication-style.md` (ADR ajoutée au sein de `[INFRA-LEAN-001]`), le système 3-feux (FEU VERT / ORANGE / ROUGE) de `autonomy-boundaries.md` est devenu :
+
+1. **Contradictoire** avec la nouvelle règle anti-paralysie. Exemple : autonomy-boundaries listait « Toucher à plus de 5 fichiers » et « Choix de pattern sans playbook » en FEU ORANGE (l'agent demande confirmation), alors qu'anti-paralysie dit explicitement que l'agent décide seul sur tout sujet technique. La cohabitation des deux règles produisait des décisions contradictoires.
+
+2. **Redondant** sur ses sections FEU ROUGE :
+   - Triggers stock → `stock-triggers-protected.md`
+   - Migrations / RLS → `database.md`
+   - Routes API Qonto / webhooks / emails → `code-standards.md` + `CLAUDE.md` racine
+   - Worktree → `no-worktree-solo.md`
+   - `--admin` / `--force` nu / `pnpm dev` → `CLAUDE.md` racine + `workflow.md`
+   - Données fantômes → `no-phantom-data.md`
+   - Anti-GO intermédiaires → règle 6 anti-paralysie
+
+3. **Coûteux** : 229 lignes (~2 300 tokens) chargés à chaque session pour des règles déjà couvertes ailleurs.
+
+**Décision** : supprimer `autonomy-boundaries.md` après audit de complétude.
+
+**Audit de complétude — 5 interdictions FEU ROUGE migrées dans `CLAUDE.md` racine** (vérifié comme non couvertes ailleurs) :
+
+1. **Modifier `.claude/` sans PR dédiée + ADR** — couvre `rules/`, `agents/*.md`, `settings.json`, `.husky/`, `PROTECTED_FILES.json`, `apps/*/CLAUDE.md`, `CLAUDE.md` racine. Ajouté section « Configuration agent » dans INTERDICTIONS ABSOLUES.
+2. **Merger vers `staging` sans ordre Roméo explicite immédiat** (avant : seul main était listé). Ajouté section « Git et merges ».
+3. **`git reset --hard` sur commits déjà mergés** ou rebase interactif sur historique public. Ajouté section « Git et merges ».
+4. **`rm -rf` sur plus d'un fichier** sans inventaire. Ajouté section « Actions destructives ».
+5. **Modifier `.gitignore` sans raison documentée** (peut masquer fichiers sensibles). Ajouté section « Actions destructives ».
+
+Autres FEU ROUGE de l'ancien fichier confirmés déjà couverts ailleurs (pas besoin de migrer) :
+
+- `gh pr merge --admin`, `git push --force` nu, `git worktree add`, lancer `pnpm dev`, `--no-verify`, modifier triggers stock, modifier routes API Qonto/webhooks/emails, migration SQL sans régen types, modifier policies RLS, supprimer migrations, modifier fichiers `@protected`, suppression de branche distante, créer release PR vers main de sa propre initiative, `gh pr create --base main`.
+
+**Trace** :
+
+- 5 fichiers modifiés / 1 supprimé / 1 ADR ajouté :
+  - `.claude/rules/autonomy-boundaries.md` (SUPPRIMÉ — 229 lignes)
+  - `CLAUDE.md` racine (section AUTONOMIE supprimée, IDENTITE refondu, POINT D'ENTREE remplace pointeur, INTERDICTIONS ABSOLUES réorganisé en 5 catégories + 5 trous bouchés, table SOURCES DE VERITE débarrassée d'une ligne)
+  - `.claude/INDEX.md` (POINT D'ENTREE + listing Rules 13 → 12)
+  - `.claude/rules/no-worktree-solo.md` (1 pointeur retiré)
+  - `.claude/DECISIONS.md` (cette ADR-026)
+
+**Conséquences mesurables** :
+
+| Indicateur                               | Avant Niveau 1 | Après Niveau 1 + suppression autonomy-boundaries | Gain total          |
+| ---------------------------------------- | -------------- | ------------------------------------------------ | ------------------- |
+| Fichiers de règles                       | 15             | **12**                                           | **−3**              |
+| Lignes config chargées au démarrage      | 7 260          | ~6 000                                           | **−17 %**           |
+| Tokens chargés au démarrage (estimation) | ~72 600        | ~60 000                                          | **~−12 600 tokens** |
+| Doublons et contradictions               | élevés         | quasi-nuls                                       | qualitatif          |
+
+**Risques traités** :
+
+- **Perte de sécurité** : neutralisée par migration des 5 vraies interdictions absolues qui n'étaient nulle part ailleurs. La sécurité est même renforcée parce que les interdictions sont maintenant directement dans `CLAUDE.md` racine (chargé en premier) au lieu d'un fichier secondaire.
+- **Référence cassée** : grep complet effectué, seules subsistent les références historiques dans `DECISIONS.md` (intentionnellement conservées).
+- **Confusion sur l'autonomie** : remplacée par règle 6 anti-paralysie (claire, binaire : agent décide seul / 4 cas où il demande).
+
+**Sources** :
+
+- Audit indépendant Claude (ce fichier) 2026-05-02 confirmant que ton autre agent (qui a proposé la suppression) avait raison sur le fond, mais sous-estimait 5 trous à boucher.
+- Demande explicite Roméo 2026-05-02 dans la session `[INFRA-LEAN-001]`.
+
+**Référence** : session 2026-05-02 avec Roméo, audit croisé entre 2 agents convergents.
+
+---
+
+## ADR-027 — `[INFRA-LEAN-002]` Niveau 2 — Suppression verify-agent + compaction règles + scratchpad allégé (2026-05-02)
+
+**Contexte** : Niveau 1 (`[INFRA-LEAN-001]`) mergé sur staging. Roméo donne ordre direct d'enchaîner Niveau 2 sans attendre les 2 sprints de validation prévus. Plan d'allègement validé par double audit (interne + indépendant).
+
+**Décision** : appliquer le **Niveau 2** en 4 mouvements :
+
+1. **Supprimer `.claude/agents/verify-agent.md`** (51 lignes). La CI GitHub couvre déjà type-check + build + lint + tests + drift DB + smoke E2E (4 gates bloquants). Le sous-agent `verify` faisait double emploi local. Le coordinateur lance `pnpm type-check` directement si besoin avant push.
+
+2. **Optionnaliser `.claude/agents/ops-agent.md`** (161 → 64 lignes). Le coordinateur fait git/PR/merge directement pour les actions courantes (push, rebase, fusion staging quand CI verte + reviewer PASS). `ops-agent` invoqué uniquement pour : bloc 3+ sprints à orchestrer, release `staging → main` (ordre Roméo immédiat requis), recovery post-incident CI.
+
+3. **Compacter les 3 grosses règles** sans perte de règle critique :
+   - `responsive.md` : 327 → 192 lignes (−41 %). Exemples de code TSX redondants retirés, règles + composants standards + checklist + anti-patterns intacts.
+   - `data-fetching.md` : 289 → 185 lignes (−36 %). 5 leviers conservés, doublons d'explication retirés.
+   - `workflow.md` : 348 → 220 lignes (−37 %). Section "Comment regrouper les sprints" + "Ce que ça change concrètement" + "Quand 1 sprint = 1 PR" intégrées en synthèse plus dense.
+
+4. **Alléger l'obligation scratchpad** dans `CLAUDE.md` racine. Plan + rapport dev obligatoires UNIQUEMENT si :
+   - Sprint > 3 fichiers, OU
+   - Changement de comportement utilisateur visible, OU
+   - Migration DB ou changement métier critique.
+
+   Pour petits correctifs (typo, fix CSS, renommage, ajustement < 3 fichiers) : commit clair + description PR suffisent.
+
+**Conséquences mesurables** :
+
+| Indicateur                               | Avant Niveau 1 | Après Niveau 1 + 2   | Gain total          |
+| ---------------------------------------- | -------------- | -------------------- | ------------------- |
+| Fichiers de règles                       | 15             | 12                   | −3                  |
+| Sous-agents actifs                       | 5              | 4 (dont 1 optionnel) | −1 supprimé         |
+| Lignes config chargées au démarrage      | 7 260          | ~5 200               | −28 %               |
+| Tokens chargés au démarrage (estimation) | ~72 600        | ~52 000              | **~−20 600 tokens** |
+| Doublons et contradictions               | élevés         | nuls                 | qualitatif          |
+| Overhead estimé par sprint               | 25-50 min      | 10-20 min            | **−15 min/sprint**  |
+
+**Mise à jour règle 6 anti-paralysie** : intégration des 3 règles permanentes données par Roméo dans la même session :
+
+- Roméo donne ses consignes à l'impératif (ordres, pas suggestions). Exécution sans confirmation.
+- "Fais X puis Y" = X puis Y dans la foulée. Aucune autorisation intermédiaire.
+- Roméo n'est jamais sollicité pour valider des actions techniques (git, PR, fusion staging, sous-agents, configuration agent).
+
+**Pointeurs mis à jour** :
+
+- `CLAUDE.md` racine : table DELEGATION (verify retiré, ops marqué optionnel) + section SCRATCHPAD (allégée).
+- `.claude/INDEX.md` : compteur Agents 5 → 4.
+- `.claude/commands/README.md` : table agents mise à jour.
+- `.claude/work/AGENT-ENTRY-POINT.md` + `NEXT-SPRINTS.md` : chaîne déléguation.
+- `.claude/rules/communication-style.md` : sous-agents listés (4) + règle 6 enrichie.
+
+**Risques traités** :
+
+- **Type-check/build manqué localement** : neutralisé — la CI bloque déjà le merge si fail. Le coordinateur peut lancer `pnpm --filter @verone/[app] type-check` ponctuellement avant push pour feedback rapide.
+- **Compaction des règles** : aucune règle métier critique retirée. Toutes les règles impératives (`JAMAIS`, `TOUJOURS`), les anti-patterns, les checklists reviewer et les références aux composants standards sont préservées. Seuls les exemples illustratifs longs ont été condensés.
+- **Scratchpad allégé** : pour les petits correctifs, le commit + description PR remplacent largement le plan/rapport. Pour les gros sprints, l'obligation reste.
+
+**Trace** :
+
+- Branche : `feat/INFRA-LEAN-002-niveau-2-config`
+- Fichiers modifiés / supprimés / créés :
+  - `.claude/agents/verify-agent.md` (SUPPRIMÉ)
+  - `.claude/agents/ops-agent.md` (réécrit compact, 161 → 64 lignes)
+  - `.claude/rules/responsive.md` (compacté, 327 → 192 lignes)
+  - `.claude/rules/data-fetching.md` (compacté, 289 → 185 lignes)
+  - `.claude/rules/workflow.md` (compacté, 348 → 220 lignes)
+  - `.claude/rules/communication-style.md` (règle 6 enrichie + sous-agents 5 → 4)
+  - `CLAUDE.md` racine (DELEGATION mise à jour + SCRATCHPAD allégé)
+  - `.claude/INDEX.md` (compteur Agents 5 → 4)
+  - `.claude/commands/README.md` (table agents)
+  - `.claude/work/AGENT-ENTRY-POINT.md` + `NEXT-SPRINTS.md` (chaîne mise à jour)
+  - `.claude/DECISIONS.md` (cette ADR-027)
+  - 2 mémoires feedback ajoutées : `feedback_anti_paralysie_choix.md`, `feedback_mode_imperatif_romeo.md`
+
+**Sources** :
+
+- Audit indépendant Claude `[INFRA-LEAN-001]` 2026-05-02 confirmant Niveau 2 comme étape recommandée.
+- Demande explicite Roméo 2026-05-02 dans la session : "Tu enchaînes le Niveau 2 maintenant, sans attendre."
+- Anthropic Best Practices 2026 : "Subagents carry overhead. For a quick fix or a focused question, the overhead of delegation outweighs the benefit."
+- Hightower mars 2026 : "Use CLAUDE.md for what applies everywhere, rules for what applies to specific areas, keep it lean."
+
+**Référence** : session 2026-05-02 avec Roméo, enchaînement Niveau 1 + Niveau 2 dans la même journée.

@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { CloudflareImage } from '@verone/ui';
 import { Label } from '@verone/ui';
 import {
   Select,
@@ -14,7 +15,6 @@ import {
 } from '@verone/ui';
 import { Textarea } from '@verone/ui';
 import { cn, formatCurrency } from '@verone/utils';
-import Image from 'next/image';
 import {
   Plus,
   X,
@@ -312,9 +312,11 @@ export function LinkMeWorkflow({
                       )}
                     >
                       <div className="flex items-center gap-3">
-                        {item.product_image_url ? (
-                          <Image
-                            src={item.product_image_url}
+                        {(item.product_image_cloudflare_id ??
+                        item.product_image_url) ? (
+                          <CloudflareImage
+                            cloudflareId={item.product_image_cloudflare_id}
+                            fallbackSrc={item.product_image_url}
                             alt={item.product?.name ?? 'Produit'}
                             width={48}
                             height={48}
@@ -447,9 +449,11 @@ export function LinkMeWorkflow({
                         className="border rounded-lg p-2 bg-gray-50"
                       >
                         <div className="w-16 h-16 mx-auto mb-2 overflow-hidden rounded">
-                          {item.product_image_url ? (
-                            <Image
-                              src={item.product_image_url}
+                          {(item.product_image_cloudflare_id ??
+                          item.product_image_url) ? (
+                            <CloudflareImage
+                              cloudflareId={item.product_image_cloudflare_id}
+                              fallbackSrc={item.product_image_url}
                               alt={item.product?.name ?? 'Produit'}
                               width={64}
                               height={64}

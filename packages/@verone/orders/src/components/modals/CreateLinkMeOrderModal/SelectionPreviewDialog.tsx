@@ -1,7 +1,6 @@
 'use client';
 
-import Image from 'next/image';
-
+import { CloudflareImage } from '@verone/ui';
 import { X, Package, Loader2 } from 'lucide-react';
 
 import type { SelectionDetail } from '../../../hooks/linkme/use-linkme-selections';
@@ -52,9 +51,11 @@ export function SelectionPreviewDialog({
                     className="border rounded-lg p-2 bg-gray-50 hover:bg-gray-100 transition-colors"
                   >
                     <div className="w-16 h-16 mx-auto mb-2 overflow-hidden rounded">
-                      {item.product_image_url ? (
-                        <Image
-                          src={item.product_image_url}
+                      {(item.product_image_cloudflare_id ??
+                      item.product_image_url) ? (
+                        <CloudflareImage
+                          cloudflareId={item.product_image_cloudflare_id}
+                          fallbackSrc={item.product_image_url}
                           alt={item.product?.name ?? 'Produit'}
                           width={64}
                           height={64}

@@ -5435,7 +5435,7 @@ export type Database = {
           availability_type:
             | Database['public']['Enums']['availability_type_enum']
             | null;
-          brand: string | null;
+          manufacturer: string | null;
           completion_percentage: number | null;
           completion_status: string | null;
           condition: string | null;
@@ -5494,7 +5494,7 @@ export type Database = {
           availability_type?:
             | Database['public']['Enums']['availability_type_enum']
             | null;
-          brand?: string | null;
+          manufacturer?: string | null;
           completion_percentage?: number | null;
           completion_status?: string | null;
           condition?: string | null;
@@ -5553,7 +5553,7 @@ export type Database = {
           availability_type?:
             | Database['public']['Enums']['availability_type_enum']
             | null;
-          brand?: string | null;
+          manufacturer?: string | null;
           completion_percentage?: number | null;
           completion_status?: string | null;
           condition?: string | null;
@@ -8873,7 +8873,7 @@ export type Database = {
       get_google_merchant_eligible_products: {
         Args: never;
         Returns: {
-          brand: string;
+          manufacturer: string;
           description: string;
           gtin: string;
           id: string;
@@ -9303,7 +9303,7 @@ export type Database = {
         Args: never;
         Returns: {
           assembly_price: number;
-          brand: string;
+          manufacturer: string;
           delivery_delay_weeks_max: number;
           delivery_delay_weeks_min: number;
           description: string;

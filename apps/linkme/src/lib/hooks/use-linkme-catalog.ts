@@ -39,6 +39,7 @@ export interface LinkMeCatalogProduct {
   public_price_ht: number | null; // Tarif public HT
   channel_commission_rate: number | null; // Commission LinkMe % (pour calcul prix client)
   image_url: string | null;
+  cloudflare_image_id: string | null;
   is_featured: boolean;
   subcategory_id: string | null;
   subcategory_name: string | null;
@@ -175,6 +176,7 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
   interface ProductImage {
     product_id: string;
     public_url: string | null;
+    cloudflare_image_id: string | null;
   }
 
   /**
@@ -208,7 +210,7 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
       // Images primaires
       supabase
         .from('product_images')
-        .select('product_id, public_url')
+        .select('product_id, public_url, cloudflare_image_id')
         .in('product_id', productIds)
         .eq('is_primary', true)
         .returns<ProductImage[]>(),
@@ -241,8 +243,17 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
         .returns<SupplierOrganisation[]>(),
     ]);
 
-  const imageMap = new Map<string, string | null>(
-    (imagesResult.data ?? []).map(img => [img.product_id, img.public_url])
+  const imageMap = new Map<
+    string,
+    { public_url: string | null; cloudflare_image_id: string | null }
+  >(
+    (imagesResult.data ?? []).map(img => [
+      img.product_id,
+      {
+        public_url: img.public_url,
+        cloudflare_image_id: img.cloudflare_image_id,
+      },
+    ])
   );
 
   interface CategoryData {
@@ -302,7 +313,9 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
       selling_price_ht: sellingPrice,
       public_price_ht: cp.public_price_ht,
       channel_commission_rate: cp.channel_commission_rate ?? null,
-      image_url: imageMap.get(cp.product_id) ?? null,
+      image_url: imageMap.get(cp.product_id)?.public_url ?? null,
+      cloudflare_image_id:
+        imageMap.get(cp.product_id)?.cloudflare_image_id ?? null,
       is_featured: cp.is_featured ?? false,
       subcategory_id: subcategoryId,
       subcategory_name: categoryData?.subcategory_name ?? null,
@@ -392,6 +405,7 @@ interface ChannelPricingWithProductDetail {
  */
 interface ProductImageWithUrl {
   public_url: string | null;
+  cloudflare_image_id: string | null;
 }
 
 /**
@@ -452,7 +466,7 @@ export function useCatalogProduct(catalogId: string | null) {
       // Fetch image primaire
       const { data: images } = await supabase
         .from('product_images')
-        .select('public_url')
+        .select('public_url, cloudflare_image_id')
         .eq('product_id', data.product_id)
         .eq('is_primary', true)
         .limit(1)
@@ -477,6 +491,7 @@ export function useCatalogProduct(catalogId: string | null) {
         selling_price_ht: data.custom_price_ht ?? calculatedPrice,
         public_price_ht: data.public_price_ht,
         image_url: images?.[0]?.public_url ?? null,
+        cloudflare_image_id: images?.[0]?.cloudflare_image_id ?? null,
         is_featured: data.is_featured ?? false,
         stock_real: product?.stock_real ?? 0,
         min_margin_rate: data.min_margin_rate,

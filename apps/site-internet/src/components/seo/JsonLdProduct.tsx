@@ -1,14 +1,31 @@
+import { buildCloudflareImageUrl } from '@verone/utils';
+
 interface JsonLdProductProps {
   name: string;
   description: string | null;
   slug: string;
   price: number | null;
   imageUrl: string | null;
-  brand: string | null;
+  cloudflareImageId?: string | null;
+  manufacturer: string | null;
   sku: string | null;
   inStock?: boolean;
   reviewCount?: number;
   averageRating?: number;
+}
+
+function resolveSeoImage(
+  cloudflareImageId: string | null | undefined,
+  fallback: string | null
+): string | null {
+  if (cloudflareImageId) {
+    try {
+      return buildCloudflareImageUrl(cloudflareImageId, 'public');
+    } catch {
+      // Cloudflare non configuré côté serveur → fallback
+    }
+  }
+  return fallback;
 }
 
 export function JsonLdProduct({
@@ -17,13 +34,15 @@ export function JsonLdProduct({
   slug,
   price,
   imageUrl,
-  brand,
+  cloudflareImageId,
+  manufacturer,
   sku,
   inStock = true,
   reviewCount,
   averageRating,
 }: JsonLdProductProps) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://verone.fr';
+  const seoImage = resolveSeoImage(cloudflareImageId, imageUrl);
 
   const jsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
@@ -32,13 +51,14 @@ export function JsonLdProduct({
     description:
       description ?? `${name} — Vérone, concept store déco & mobilier`,
     url: `${siteUrl}/produit/${slug}`,
-    ...(imageUrl ? { image: imageUrl } : {}),
+    ...(seoImage ? { image: seoImage } : {}),
     ...(sku ? { sku } : {}),
-    ...(brand
+    // Schema.org standard property name 'brand' (kept), value comes from product manufacturer
+    ...(manufacturer
       ? {
           brand: {
             '@type': 'Brand',
-            name: brand,
+            name: manufacturer,
           },
         }
       : {}),

@@ -128,7 +128,7 @@ export function useCatalogueFilters() {
 
       if (filters.selectedBrands.length > 0) {
         result = result.filter(p =>
-          filters.selectedBrands.includes(p.brand ?? '')
+          filters.selectedBrands.includes(p.manufacturer ?? '')
         );
       }
 

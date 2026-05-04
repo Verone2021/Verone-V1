@@ -132,8 +132,10 @@ export function ProductViewMode({
               <h1 className="text-3xl font-bold text-black leading-tight mb-2">
                 {product.name}
               </h1>
-              {product.brand && (
-                <p className="text-lg text-gray-600">par {product.brand}</p>
+              {product.manufacturer && (
+                <p className="text-lg text-gray-600">
+                  par {product.manufacturer}
+                </p>
               )}
             </div>
 

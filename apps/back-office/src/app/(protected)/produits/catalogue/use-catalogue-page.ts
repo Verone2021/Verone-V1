@@ -19,6 +19,8 @@ import { toast } from 'sonner';
 import type { FilterState } from '@/components/catalogue/CatalogueFilterPanel';
 
 import type { Filters } from './types';
+import { useBulkActions } from './use-bulk-actions';
+import { useBulkSelection } from './use-bulk-selection';
 import { useQuickEdit } from './use-quick-edit';
 import { useCatalogueTabs } from './use-catalogue-tabs';
 
@@ -35,6 +37,7 @@ export function useCataloguePage() {
     setFilters: setCatalogueFilters,
     loadArchivedProducts,
     loadIncompleteProducts,
+    loadCatalogueData,
     archiveProduct,
     unarchiveProduct,
     deleteProduct,
@@ -84,6 +87,8 @@ export function useCataloguePage() {
         searchParams.get('condition')?.split(',').filter(Boolean) ?? [],
       completionLevels:
         searchParams.get('completion')?.split(',').filter(Boolean) ?? [],
+      internalBrandIds:
+        searchParams.get('brands_internal')?.split(',').filter(Boolean) ?? [],
     }),
     [searchParams]
   );
@@ -139,6 +144,8 @@ export function useCataloguePage() {
         params.set('condition', newFilters.conditions.join(','));
       if (newFilters.completionLevels.length)
         params.set('completion', newFilters.completionLevels.join(','));
+      if (newFilters.internalBrandIds.length)
+        params.set('brands_internal', newFilters.internalBrandIds.join(','));
 
       const qs = params.toString();
       router.replace(qs ? `?${qs}` : '/produits/catalogue', { scroll: false });
@@ -161,6 +168,7 @@ export function useCataloguePage() {
         stockLevels: newFilters.stockLevels,
         conditions: newFilters.conditions,
         completionLevels: newFilters.completionLevels,
+        internalBrandIds: newFilters.internalBrandIds,
         page: 1,
       });
       syncFiltersToUrl(newFilters, tab ?? tabs.activeTab);
@@ -188,7 +196,8 @@ export function useCataloguePage() {
         urlFilters.missingFields.length > 0 ||
         urlFilters.stockLevels.length > 0 ||
         urlFilters.conditions.length > 0 ||
-        urlFilters.completionLevels.length > 0;
+        urlFilters.completionLevels.length > 0 ||
+        urlFilters.internalBrandIds.length > 0;
 
       if (hasUrlFilters) {
         setCatalogueFilters({
@@ -202,6 +211,7 @@ export function useCataloguePage() {
           stockLevels: urlFilters.stockLevels,
           conditions: urlFilters.conditions,
           completionLevels: urlFilters.completionLevels,
+          internalBrandIds: urlFilters.internalBrandIds,
         });
       }
     }
@@ -263,6 +273,7 @@ export function useCataloguePage() {
       stockLevels: [],
       conditions: [],
       completionLevels: [],
+      internalBrandIds: [],
     };
     applyFilters(emptyFilters);
   };
@@ -277,7 +288,8 @@ export function useCataloguePage() {
     filters.missingFields.length > 0 ||
     filters.stockLevels.length > 0 ||
     filters.conditions.length > 0 ||
-    filters.completionLevels.length > 0;
+    filters.completionLevels.length > 0 ||
+    filters.internalBrandIds.length > 0;
 
   const searchItems = useMemo(() => {
     return products.map(product => ({
@@ -306,9 +318,48 @@ export function useCataloguePage() {
       stockLevels: newFilterState.stockLevels,
       conditions: newFilterState.conditions,
       completionLevels: newFilterState.completionLevels,
+      internalBrandIds: filters.internalBrandIds,
     };
     applyFilters(newFilters);
   };
+
+  /**
+   * Synchronise internalBrandIds avec activeBrandId (BrandSwitcher header).
+   * Appelé depuis page.tsx via useEffect quand useActiveBrand change.
+   * Met à jour le state local + les filtres du hook useCatalogue (déclenche fetch)
+   * + la querystring URL.
+   */
+  const setInternalBrandFilter = useCallback(
+    (brandId: string | null) => {
+      const next = brandId ? [brandId] : [];
+      setFilters(prev => {
+        if (
+          prev.internalBrandIds.length === next.length &&
+          prev.internalBrandIds[0] === next[0]
+        ) {
+          return prev;
+        }
+        const updated = { ...prev, internalBrandIds: next };
+        setCatalogueFilters({
+          search: updated.search,
+          families: updated.families,
+          categories: updated.categories,
+          subcategories: updated.subcategories,
+          suppliers: updated.suppliers,
+          statuses: updated.statuses,
+          missingFields: updated.missingFields,
+          stockLevels: updated.stockLevels,
+          conditions: updated.conditions,
+          completionLevels: updated.completionLevels,
+          internalBrandIds: updated.internalBrandIds,
+          page: 1,
+        });
+        syncFiltersToUrl(updated);
+        return updated;
+      });
+    },
+    [setCatalogueFilters, syncFiltersToUrl]
+  );
 
   const handleProductUpdated = useCallback(async () => {
     if (tabs.activeTab === 'incomplete') {
@@ -383,6 +434,42 @@ export function useCataloguePage() {
     }
   };
 
+  // Bulk selection / actions (SI-PROD-001)
+  const bulkSelection = useBulkSelection();
+  const [bulkPriceOpen, setBulkPriceOpen] = useState(false);
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
+
+  const refreshAfterBulk = useCallback(async () => {
+    await loadCatalogueData();
+    if (tabs.activeTab === 'incomplete') {
+      try {
+        const result = await loadIncompleteProductsRef.current({
+          ...(filtersRef.current as unknown as Filters),
+          page: tabs.incompletePage,
+        });
+        tabs.setIncompleteProducts(result.products);
+        tabs.setIncompleteTotal(result.total);
+      } catch (err) {
+        console.error('[Catalogue] refresh after bulk failed:', err);
+      }
+    }
+    if (tabs.activeTab === 'archived') {
+      try {
+        const result = await loadArchivedProductsRef.current(
+          filtersRef.current
+        );
+        tabs.setArchivedProducts(result.products);
+      } catch (err) {
+        console.error('[Catalogue] refresh archived after bulk failed:', err);
+      }
+    }
+  }, [loadCatalogueData, tabs]);
+
+  const bulkActions = useBulkActions({
+    onAfterMutation: refreshAfterBulk,
+    onClearSelection: bulkSelection.clear,
+  });
+
   const dashboardSLO = checkSLOCompliance(startTime, 'dashboard');
 
   return {
@@ -425,6 +512,7 @@ export function useCataloguePage() {
     handleSearchSelect,
     handleFiltersChange,
     applyFilters,
+    setInternalBrandFilter,
     syncFiltersToUrl,
     handleArchiveProduct,
     handleDeleteProduct,
@@ -432,6 +520,13 @@ export function useCataloguePage() {
     filtersRef,
     loadIncompleteProductsRef,
     handleProductUpdated,
+    // Bulk selection + actions (SI-PROD-001)
+    bulkSelection,
+    bulkActions,
+    bulkPriceOpen,
+    setBulkPriceOpen,
+    bulkStatusOpen,
+    setBulkStatusOpen,
     // Tabs state (spread from useCatalogueTabs)
     ...tabs,
     // Quick edit (spread from useQuickEdit)

@@ -146,7 +146,7 @@ export interface CreateProductData {
   variant_attributes?: Record<string, unknown>;
   dimensions?: Record<string, unknown>;
   weight?: number;
-  brand?: string;
+  manufacturer?: string;
 
   // URLs et références
   video_url?: string;
@@ -236,7 +236,7 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
           supplier_reference: productData.supplier_reference,
           gtin: productData.gtin,
           supplier_id: productData.supplier_id,
-          brand: productData.brand,
+          manufacturer: productData.manufacturer,
           target_margin_percentage: productData.target_margin_percentage,
           status: productData.status,
           completion_status: productData.completion_status,

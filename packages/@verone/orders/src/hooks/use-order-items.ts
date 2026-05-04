@@ -141,6 +141,7 @@ export function useOrderItems({
             eco_tax_default,
             product_images (
               public_url,
+              cloudflare_image_id,
               is_primary,
               display_order
             )
@@ -217,6 +218,7 @@ export function useOrderItems({
             eco_tax_default,
             product_images (
               public_url,
+              cloudflare_image_id,
               is_primary,
               display_order
             )
@@ -280,6 +282,7 @@ export function useOrderItems({
             eco_tax_default,
             product_images (
               public_url,
+              cloudflare_image_id,
               is_primary,
               display_order
             )
