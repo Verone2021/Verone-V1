@@ -261,7 +261,13 @@ export function RightColumn({
       />
 
       {/* FACTURES */}
-      <InvoicesSection orderId={order.id} />
+      <InvoicesSection
+        orderId={order.id}
+        clientEmail={order.organisation?.email ?? ''}
+        clientName={
+          order.organisation?.trade_name ?? order.organisation?.legal_name ?? ''
+        }
+      />
 
       {/* NOTES */}
       <Card>
