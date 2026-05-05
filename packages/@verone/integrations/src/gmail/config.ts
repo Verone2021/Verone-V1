@@ -2,19 +2,38 @@
  * Gmail Inbound — Configuration
  *
  * Variables d'environnement requises (à ajouter dans .env.local et Vercel) :
- *   GMAIL_SERVICE_ACCOUNT_EMAIL   — email du service account Google Cloud
+ *   GMAIL_SERVICE_ACCOUNT_EMAIL    — email du service account Google Cloud
  *   GMAIL_SERVICE_ACCOUNT_PRIVATE_KEY — clé PEM du service account (avec \n)
  *   GMAIL_PUBSUB_VERIFICATION_TOKEN — token partagé pour vérifier les appels Pub/Sub
- *   GMAIL_WATCH_ADDRESSES — CSV des adresses surveillées (4 groupes)
+ *   GMAIL_WATCH_ADDRESSES          — CSV des boîtes Gmail individuelles surveillées
+ *                                    (1 ou plusieurs vraies boîtes utilisateur)
+ *   GMAIL_ACCEPTED_ALIASES         — CSV des alias destinataires acceptés. Un message
+ *                                    reçu dans une boîte surveillée n'est inséré que
+ *                                    si son Delivered-To (ou To) contient un de ces
+ *                                    alias. Les autres messages sont ignorés (mails
+ *                                    persos de la boîte surveillée).
  */
 
 export const GMAIL_SCOPES = [
   'https://www.googleapis.com/auth/gmail.readonly',
 ] as const;
 
-/** Adresses surveillées, déduites de GMAIL_WATCH_ADDRESSES */
+/** Boîtes Gmail individuelles surveillées (compte utilisateur, pas alias/groupe). */
 export function getWatchAddresses(): string[] {
   const raw = process.env.GMAIL_WATCH_ADDRESSES ?? '';
+  return raw
+    .split(',')
+    .map(a => a.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+/**
+ * Aliases acceptés pour insertion dans email_messages, déduits de
+ * GMAIL_ACCEPTED_ALIASES. Permet de filtrer les mails persos reçus
+ * dans la boîte surveillée.
+ */
+export function getAcceptedAliases(): string[] {
+  const raw = process.env.GMAIL_ACCEPTED_ALIASES ?? '';
   return raw
     .split(',')
     .map(a => a.trim().toLowerCase())
