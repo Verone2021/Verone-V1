@@ -19,6 +19,8 @@ import { NextResponse } from 'next/server';
 
 import { startWatchAll } from '@verone/integrations/gmail';
 
+import { createAdminClient } from '@verone/utils/supabase/admin';
+
 import { requireBackofficeAdmin } from '@/lib/guards';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -41,6 +43,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   try {
     const result = await startWatchAll(topicName);
+
+    // Initialise gmail_watch_state pour chaque boîte surveillée. Le
+    // historyId initial sert de point de départ exclusif pour le 1er
+    // fetch déclenché par Pub/Sub (qui ratera sinon le 1er message).
+    if (result.successes.length > 0) {
+      const supabase = createAdminClient();
+      const rows = result.successes.map(s => ({
+        email_address: s.emailAddress.toLowerCase(),
+        last_history_id: s.historyId,
+        watch_expires_at: s.expirationDate,
+      }));
+      const { error: upsertError } = await supabase
+        .from('gmail_watch_state')
+        .upsert(rows, { onConflict: 'email_address' });
+      if (upsertError) {
+        console.error(
+          '[Gmail Watch Init] upsert gmail_watch_state failed:',
+          upsertError
+        );
+      }
+    }
 
     return NextResponse.json({
       ok: result.failures.length === 0,
