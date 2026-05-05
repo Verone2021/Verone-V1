@@ -31,6 +31,8 @@ const securityHeaders = {
         'blob:',
         'https://aorroydfjsrygmosnzrl.supabase.co',
         'https://*.supabase.co',
+        'https://imagedelivery.net', // Cloudflare Images CDN
+        'https://images.veronecollections.fr', // Cloudflare Images custom domain
         'https://*.gstatic.com', // Google static resources (Fonts)
         'https://basemaps.cartocdn.com', // CartoDB map tile images
         'https://*.basemaps.cartocdn.com', // CartoDB tile subdomains
