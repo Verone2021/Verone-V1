@@ -29,10 +29,12 @@ import { createAdminClient } from '@verone/utils/supabase/admin';
 // Schémas Zod
 // ---------------------------------------------------------------------------
 
-/** Payload décodé du champ `message.data` Pub/Sub (base64 JSON) */
+/** Payload décodé du champ `message.data` Pub/Sub (base64 JSON).
+ *  Gmail envoie historyId comme number, donc on coerce pour rester compatible
+ *  avec une string côté Gmail API client. */
 const PubSubDataSchema = z.object({
   emailAddress: z.string().email(),
-  historyId: z.string(),
+  historyId: z.coerce.string(),
 });
 
 /** Corps brut d'une notification Pub/Sub */
