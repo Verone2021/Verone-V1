@@ -247,21 +247,43 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  // 5. Récupération des nouveaux messages via Gmail API
+  // 5. Récupération du startHistoryId : on utilise le dernier historyId
+  // connu pour cette boîte (gmail_watch_state) car users.history.list
+  // traite startHistoryId comme EXCLUSIVE. Sans ça, on rate systématiquement
+  // le message qui a déclenché la notification Pub/Sub courante.
+  const supabaseAdmin = createAdminClient();
+  const { data: watchState } = await supabaseAdmin
+    .from('gmail_watch_state')
+    .select('last_history_id')
+    .eq('email_address', emailAddress.toLowerCase())
+    .maybeSingle();
+
+  const startHistoryId = watchState?.last_history_id ?? historyId;
+
+  // 6. Récupération des nouveaux messages via Gmail API
   let messages: ParsedEmail[];
   try {
-    messages = await fetchNewMessages(emailAddress, historyId);
+    messages = await fetchNewMessages(emailAddress, startHistoryId);
   } catch (err) {
     console.error('[Gmail Inbound] Erreur Gmail API', err);
     // On retourne 200 pour éviter la boucle de retries Pub/Sub infinie
     return NextResponse.json({ ok: true, gmailError: true });
   }
 
+  // Avancer le pointeur startHistoryId même si pas de message (notif d'autre type)
+  await supabaseAdmin.from('gmail_watch_state').upsert(
+    {
+      email_address: emailAddress.toLowerCase(),
+      last_history_id: historyId,
+    },
+    { onConflict: 'email_address' }
+  );
+
   if (messages.length === 0) {
     return NextResponse.json({ ok: true, inserted: 0 });
   }
 
-  // 6. Filtrage par alias accepté + INSERT dans email_messages
+  // 7. Filtrage par alias accepté + INSERT dans email_messages
   let insertedCount = 0;
   let skippedNoAlias = 0;
   let skippedUnknownBrand = 0;
@@ -283,7 +305,8 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   console.warn(
-    `[Gmail Inbound] boîte=${emailAddress} reçus=${String(messages.length)} ` +
+    `[Gmail Inbound] boîte=${emailAddress} startId=${startHistoryId} ` +
+      `nextId=${historyId} reçus=${String(messages.length)} ` +
       `insérés=${String(insertedCount)} skip_no_alias=${String(skippedNoAlias)} ` +
       `skip_unknown_brand=${String(skippedUnknownBrand)}`
   );

@@ -28,6 +28,7 @@ jobs:
       site-internet: ${{ steps.filter.outputs.site-internet }}
       packages: ${{ steps.filter.outputs.packages }}
       migrations: ${{ steps.filter.outputs.migrations }}
+      e2e-needed: ${{ steps.filter.outputs.e2e-needed }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -56,6 +57,27 @@ jobs:
               - 'supabase/migrations/**'
               - 'packages/@verone/types/src/supabase.ts'
               - 'packages/@verone/types/src/database.ts'
+            # e2e-needed = patterns qui justifient un E2E Playwright.
+            # Restreint aux fichiers UI / flows critiques afin d'épargner
+            # ~10 min de CI sur les PRs purement backend (api/**, integrations,
+            # utils, types Supabase régénérés, migrations DB, docs). Voir
+            # INFRA-CI-001.
+            e2e-needed:
+              - 'apps/back-office/src/app/(protected)/**'
+              - 'apps/back-office/src/app/(public)/**'
+              - 'apps/back-office/src/components/**'
+              - 'apps/back-office/middleware.ts'
+              - 'apps/back-office/next.config.*'
+              - 'apps/back-office/package.json'
+              - 'tests/e2e/**'
+              - 'tests/auth.setup.ts'
+              - 'playwright.config.ts'
+              - 'packages/@verone/ui/**'
+              - 'packages/@verone/forms/**'
+              - 'packages/@verone/finance/**'
+              - 'packages/@verone/orders/**'
+              - 'packages/@verone/hooks/**'
+              - 'pnpm-lock.yaml'
 
   # ----------------------------------------------------------------
   # 2. Quality checks — only on affected apps
@@ -183,14 +205,18 @@ jobs:
   e2e-smoke:
     name: E2E Smoke (Playwright — back-office)
     needs: [detect-changes, quality]
-    # Ne tourner que si back-office ou packages partagés ont changé.
-    if: needs.detect-changes.outputs.back-office == 'true' || needs.detect-changes.outputs.packages == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     # Non-blocking : le smoke E2E reste informationnel. Une régression runtime
     # est signalée (commentaire PR + artifact) mais n'empêche pas le merge.
     # Les régressions critiques sont rattrapées par type-check/build et par le
     # diff de review. Voir INFRA-CI-001.
+    #
+    # Skip conditionnel sur PR backend pure : si aucun fichier UI/Playwright
+    # n'est touché (output `e2e-needed` du job detect-changes), le job exécute
+    # uniquement un step no-op et reporte "success" en quelques secondes.
+    # Pattern emprunté à supabase-types-drift pour satisfaire les required
+    # status checks de la branch protection même quand le job ne fait rien.
     continue-on-error: true
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
@@ -201,26 +227,43 @@ jobs:
       # Creds utilisateur de test (à configurer dans GitHub Secrets)
       E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
       E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+      E2E_NEEDED: ${{ needs.detect-changes.outputs.e2e-needed }}
 
     steps:
+      # No-op success quand aucun fichier UI/Playwright n'est touché.
+      # Garantit que le check est reporté comme "success" (pas "skipped") afin
+      # de satisfaire la branch protection sur les PRs backend pures.
+      - name: No-op (no UI change in this PR)
+        if: env.E2E_NEEDED != 'true'
+        run: |
+          echo "## ✅ Pas de changement UI dans cette PR" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Aucun fichier UI back-office, composant partagé (@verone/ui, forms, finance, orders, hooks), middleware, config Next ou test Playwright n'a été modifié." >> $GITHUB_STEP_SUMMARY
+          echo "Le smoke E2E est inutile pour cette PR — pas d'exécution nécessaire." >> $GITHUB_STEP_SUMMARY
+
       - name: Checkout code
+        if: env.E2E_NEEDED == 'true'
         uses: actions/checkout@v4
 
       - name: Setup pnpm
+        if: env.E2E_NEEDED == 'true'
         uses: pnpm/action-setup@v2
         with:
           version: 10.13.1
 
       - name: Setup Node.js
+        if: env.E2E_NEEDED == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
 
       - name: Install dependencies
+        if: env.E2E_NEEDED == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Cache Playwright browsers
+        if: env.E2E_NEEDED == 'true'
         id: playwright-cache
         uses: actions/cache@v4
         with:
@@ -229,14 +272,15 @@ jobs:
           restore-keys: playwright-${{ runner.os }}-
 
       - name: Install Playwright browsers (chromium only — cache miss)
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        if: env.E2E_NEEDED == 'true' && steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Install Playwright system deps (cache hit)
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        if: env.E2E_NEEDED == 'true' && steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium
 
       - name: Cache Next.js build
+        if: env.E2E_NEEDED == 'true'
         uses: actions/cache@v5
         with:
           path: apps/back-office/.next/cache
@@ -246,11 +290,13 @@ jobs:
             ${{ runner.os }}-nextjs-bo-
 
       - name: Build back-office
+        if: env.E2E_NEEDED == 'true'
         run: pnpm --filter @verone/back-office build
         env:
           NODE_OPTIONS: --max-old-space-size=8192
 
       - name: Start back-office (background)
+        if: env.E2E_NEEDED == 'true'
         run: |
           pnpm --filter @verone/back-office start > /tmp/next-start.log 2>&1 &
           echo $! > /tmp/next-start.pid
@@ -264,6 +310,7 @@ jobs:
           done
 
       - name: Run smoke tests (smoke-finance-modals + smoke-critical-workflows)
+        if: env.E2E_NEEDED == 'true'
         run: |
           pnpm exec playwright test \
             tests/e2e/smoke/smoke-finance-modals.spec.ts \
@@ -280,7 +327,7 @@ jobs:
           BASE_URL: http://localhost:3000
 
       - name: Upload Playwright report on failure
-        if: failure()
+        if: failure() && env.E2E_NEEDED == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
@@ -290,7 +337,7 @@ jobs:
           retention-days: 7
 
       - name: Comment PR on smoke failure
-        if: failure() && github.event_name == 'pull_request'
+        if: failure() && env.E2E_NEEDED == 'true' && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -303,7 +350,7 @@ jobs:
             });
 
       - name: Smoke summary
-        if: success()
+        if: success() && env.E2E_NEEDED == 'true'
         run: |
           echo "## ✅ E2E Smoke Tests Passed" >> $GITHUB_STEP_SUMMARY
           echo "Parcours critiques back-office validés sans console error ni warning React critique." >> $GITHUB_STEP_SUMMARY
