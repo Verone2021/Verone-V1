@@ -294,6 +294,9 @@ importers:
       '@types/qrcode':
         specifier: ^1.5.6
         version: 1.5.6
+      '@verone/integrations':
+        specifier: workspace:*
+        version: link:../../packages/@verone/integrations
       '@verone/marketing':
         specifier: workspace:*
         version: link:../../packages/@verone/marketing
@@ -309,6 +312,9 @@ importers:
       html2canvas:
         specifier: ^1.4.1
         version: 1.4.1
+      isomorphic-dompurify:
+        specifier: ^2.25.0
+        version: 2.31.0
       jspdf:
         specifier: ^4.0.0
         version: 4.0.0
@@ -753,6 +759,9 @@ importers:
       google-auth-library:
         specifier: ^9.15.0
         version: 9.15.1
+      googleapis:
+        specifier: ^144.0.0
+        version: 144.0.0
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -5292,9 +5301,17 @@ packages:
     resolution: {integrity: sha512-YsFPGVgDFf4IzSwbwIR0iaFJQFmR5Jp7V1WuYSjuRgAm9yWqsMhKE9YPlL+wvFLnc/wMiFV4SQUD9Y/JMpxIxQ==}
     engines: {node: '>=14'}
 
+  googleapis-common@7.2.0:
+    resolution: {integrity: sha512-/fhDZEJZvOV3X5jmD+fKxMqma5q2Q9nZNSF3kn1F18tpxmA86BcTxAGBQdM0N89Z3bEaIs+HVznSmFJEAmMTjA==}
+    engines: {node: '>=14.0.0'}
+
   googleapis-common@8.0.0:
     resolution: {integrity: sha512-66if47It7y+Sab3HMkwEXx1kCq9qUC9px8ZXoj1CMrmLmUw81GpbnsNlXnlyZyGbGPGcj+tDD9XsZ23m7GLaJQ==}
     engines: {node: '>=18.0.0'}
+
+  googleapis@144.0.0:
+    resolution: {integrity: sha512-ELcWOXtJxjPX4vsKMh+7V+jZvgPwYMlEhQFiu2sa9Qmt5veX8nwXPksOWGGN6Zk4xCiLygUyaz7xGtcMO+Onxw==}
+    engines: {node: '>=14.0.0'}
 
   googleapis@170.1.0:
     resolution: {integrity: sha512-RLbc7yG6qzZqvAmGcgjvNIoZ7wpcCFxtc+HN+46etxDrlO4a8l5Cb7NxNQGhV91oRmL7mt56VoRoypAtEQEIKg==}
@@ -7552,6 +7569,7 @@ packages:
 
   uuid@9.0.1:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   vaul@1.1.2:
@@ -12500,6 +12518,18 @@ snapshots:
 
   google-logging-utils@1.1.2: {}
 
+  googleapis-common@7.2.0:
+    dependencies:
+      extend: 3.0.2
+      gaxios: 6.7.1
+      google-auth-library: 9.15.1
+      qs: 6.14.1
+      url-template: 2.0.8
+      uuid: 9.0.1
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+
   googleapis-common@8.0.0:
     dependencies:
       extend: 3.0.2
@@ -12508,6 +12538,14 @@ snapshots:
       qs: 6.14.1
       url-template: 2.0.8
     transitivePeerDependencies:
+      - supports-color
+
+  googleapis@144.0.0:
+    dependencies:
+      google-auth-library: 9.15.1
+      googleapis-common: 7.2.0
+    transitivePeerDependencies:
+      - encoding
       - supports-color
 
   googleapis@170.1.0:

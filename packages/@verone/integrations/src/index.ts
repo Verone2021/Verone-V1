@@ -8,3 +8,6 @@ export * from './google-merchant';
 
 // Qonto (banking)
 export * from './qonto';
+
+// Gmail Inbound
+export * from './gmail';

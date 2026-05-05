@@ -20,7 +20,8 @@
   "dependencies": {
     "@verone/utils": "workspace:*",
     "@verone/types": "workspace:*",
-    "google-auth-library": "^9.15.0"
+    "google-auth-library": "^9.15.0",
+    "googleapis": "^144.0.0"
   },
   "peerDependencies": {
     "react": "^18.2.0"
@@ -43,6 +44,11 @@
       "types": "./src/qonto/index.ts",
       "import": "./src/qonto/index.ts",
       "require": "./src/qonto/index.ts"
+    },
+    "./gmail": {
+      "types": "./src/gmail/index.ts",
+      "import": "./src/gmail/index.ts",
+      "require": "./src/gmail/index.ts"
     }
   }
 }
