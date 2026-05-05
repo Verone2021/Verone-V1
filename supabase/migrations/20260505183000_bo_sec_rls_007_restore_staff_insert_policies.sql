@@ -26,15 +26,17 @@
 --
 -- Tables couvertes
 -- ----------------
--- 1. sales_orders                    (création commande client)
--- 2. sales_order_items               (lignes de commande)
--- 3. sales_order_events              (événements / notes internes)
--- 4. sales_order_shipments           (création expédition)
--- 5. purchase_orders                 (création commande fournisseur)
--- 6. purchase_order_items            (lignes PO)
--- 7. financial_documents             (factures, devis, proformas via BO)
--- 8. financial_document_items        (lignes factures/devis)
--- 9. organisations                   (création organisation depuis BO)
+--  1. sales_orders                   (création commande client)
+--  2. sales_order_items              (lignes de commande)
+--  3. sales_order_events             (événements / notes internes)
+--  4. sales_order_shipments          (création expédition)
+--  5. purchase_orders                (création commande fournisseur)
+--  6. purchase_order_items           (lignes PO)
+--  7. financial_documents            (factures, devis, proformas via BO)
+--  8. financial_document_items       (lignes factures/devis)
+--  9. organisations                  (création organisation depuis BO)
+-- 10. stock_movements                (ajustements stock manuels staff)
+-- 11. storage_pricing_tiers          (tarifs stockage LinkMe — admin BO)
 --
 -- Pattern : `is_backoffice_user()` — fonction officielle du repo, déjà
 -- utilisée sur 30+ tables. Aucun risque sécurité supplémentaire.
@@ -150,6 +152,34 @@ CREATE POLICY staff_insert_financial_document_items
 DROP POLICY IF EXISTS staff_insert_organisations ON public.organisations;
 CREATE POLICY staff_insert_organisations
   ON public.organisations
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (public.is_backoffice_user());
+
+
+-- -----------------------------------------------------------------------
+-- 10. stock_movements — staff INSERT
+-- -----------------------------------------------------------------------
+-- Couvre les ajustements de stock manuels (use-stock-adjustment-form,
+-- packages/@verone/stock/use-stock). Les triggers SECURITY DEFINER qui
+-- créent des stock_movements (update_stock_on_shipment, etc.) bypassent
+-- la RLS automatiquement et ne sont pas affectés. La règle
+-- stock-triggers-protected.md reste respectée : aucun trigger touché.
+DROP POLICY IF EXISTS staff_insert_stock_movements ON public.stock_movements;
+CREATE POLICY staff_insert_stock_movements
+  ON public.stock_movements
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (public.is_backoffice_user());
+
+
+-- -----------------------------------------------------------------------
+-- 11. storage_pricing_tiers — staff INSERT
+-- -----------------------------------------------------------------------
+-- Création des tarifs de stockage LinkMe depuis le back-office admin.
+DROP POLICY IF EXISTS staff_insert_storage_pricing_tiers ON public.storage_pricing_tiers;
+CREATE POLICY staff_insert_storage_pricing_tiers
+  ON public.storage_pricing_tiers
   FOR INSERT
   TO authenticated
   WITH CHECK (public.is_backoffice_user());
