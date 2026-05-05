@@ -12,6 +12,12 @@ export interface ParsedEmail {
   fromEmail: string;
   fromName: string | null;
   toAddress: string;
+  /**
+   * Tous les Delivered-To headers (en minuscules, normalisés).
+   * Plusieurs valeurs possibles si le message a transité par des forwards/aliases.
+   * Sert à identifier l'alias d'origine quand on surveille une boîte centrale.
+   */
+  deliveredTo: string[];
   subject: string | null;
   snippet: string | null;
   bodyText: string | null;
@@ -104,6 +110,14 @@ export function parseGmailMessage(
   const subject = getHeader(headers, 'Subject');
   const dateStr = getHeader(headers, 'Date');
 
+  // Tous les Delivered-To (peut être multiple si chaîne de forward/alias)
+  const deliveredTo: string[] = [];
+  for (const h of headers) {
+    if (h.name?.toLowerCase() === 'delivered-to' && h.value) {
+      deliveredTo.push(h.value.toLowerCase().trim());
+    }
+  }
+
   // Date de réception
   let receivedAt: Date;
   if (message.internalDate) {
@@ -148,6 +162,7 @@ export function parseGmailMessage(
     fromEmail,
     fromName,
     toAddress,
+    deliveredTo,
     subject,
     snippet: message.snippet ?? null,
     bodyText,

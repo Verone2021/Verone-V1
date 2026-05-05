@@ -19,6 +19,7 @@ import type { ParsedEmail } from '@verone/integrations/gmail';
 import {
   detectBrand,
   fetchNewMessages,
+  getAcceptedAliases,
   ORDER_REGEX,
 } from '@verone/integrations/gmail';
 
@@ -45,6 +46,48 @@ const PubSubBodySchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Helper — résolution de l'alias destinataire dans un message
+// ---------------------------------------------------------------------------
+
+/**
+ * Extrait l'email pur d'une chaîne pouvant être au format "Nom <email>" ou "email".
+ */
+function extractEmail(raw: string): string {
+  const match = raw.match(/<(.+?)>/);
+  return (match?.[1] ?? raw).trim().toLowerCase();
+}
+
+/**
+ * Cherche dans Delivered-To puis dans To si un des aliases acceptés
+ * est destinataire du message. Retourne l'alias trouvé ou null.
+ *
+ * Pourquoi : on surveille une boîte centrale (ex: romeo@) qui reçoit aussi
+ * des mails persos. Seuls les messages adressés aux aliases configurés
+ * (contact@, commandes@, …) doivent atterrir dans le back-office.
+ */
+function findMatchingAlias(
+  msg: ParsedEmail,
+  acceptedAliases: string[]
+): string | null {
+  if (acceptedAliases.length === 0) return null;
+
+  const candidates = new Set<string>();
+  for (const dt of msg.deliveredTo) {
+    candidates.add(extractEmail(dt));
+  }
+  if (msg.toAddress) {
+    for (const part of msg.toAddress.split(/[,;]/)) {
+      candidates.add(extractEmail(part));
+    }
+  }
+
+  for (const c of candidates) {
+    if (acceptedAliases.includes(c)) return c;
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Helper — résolution commande liée
 // ---------------------------------------------------------------------------
 
@@ -68,7 +111,8 @@ async function resolveLinkedOrder(
 
 async function insertEmailMessage(
   msg: ParsedEmail,
-  brand: 'verone' | 'linkme'
+  brand: 'verone' | 'linkme',
+  matchedAlias: string
 ): Promise<boolean> {
   const supabase = createAdminClient();
 
@@ -91,7 +135,7 @@ async function insertEmailMessage(
     gmail_thread_id: msg.gmailThreadId,
     gmail_history_id: msg.gmailHistoryId,
     brand,
-    to_address: msg.toAddress,
+    to_address: matchedAlias,
     from_email: msg.fromEmail,
     from_name: msg.fromName,
     subject: msg.subject,
@@ -189,12 +233,16 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const { emailAddress, historyId } = pubSubData;
 
-  // 4. Détection de la marque
-  const brand = detectBrand(emailAddress);
-  if (!brand) {
-    // Adresse non gérée — on répond 200 pour éviter les retries Pub/Sub
-    console.warn(`[Gmail Inbound] Adresse non gérée : ${emailAddress}`);
-    return NextResponse.json({ ok: true, skipped: true });
+  // 4. Récupération des aliases acceptés (filtre sur Delivered-To)
+  const acceptedAliases = getAcceptedAliases();
+  if (acceptedAliases.length === 0) {
+    console.error(
+      '[Gmail Inbound] GMAIL_ACCEPTED_ALIASES vide — aucun filtre, tout serait inséré'
+    );
+    return NextResponse.json(
+      { error: 'Configuration serveur incomplète (GMAIL_ACCEPTED_ALIASES)' },
+      { status: 500 }
+    );
   }
 
   // 5. Récupération des nouveaux messages via Gmail API
@@ -211,16 +259,37 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, inserted: 0 });
   }
 
-  // 6. INSERT dans email_messages (Supabase Admin — bypass RLS)
+  // 6. Filtrage par alias accepté + INSERT dans email_messages
   let insertedCount = 0;
+  let skippedNoAlias = 0;
+  let skippedUnknownBrand = 0;
 
   for (const msg of messages) {
-    const success = await insertEmailMessage(msg, brand);
+    const matchedAlias = findMatchingAlias(msg, acceptedAliases);
+    if (!matchedAlias) {
+      // Mail perso (boîte surveillée) — pas d'alias acceptés dans Delivered-To/To
+      skippedNoAlias++;
+      continue;
+    }
+    const brand = detectBrand(matchedAlias);
+    if (!brand) {
+      skippedUnknownBrand++;
+      continue;
+    }
+    const success = await insertEmailMessage(msg, brand, matchedAlias);
     if (success) insertedCount++;
   }
 
   console.warn(
-    `[Gmail Inbound] ${String(insertedCount)} email(s) insérés pour ${emailAddress}`
+    `[Gmail Inbound] boîte=${emailAddress} reçus=${String(messages.length)} ` +
+      `insérés=${String(insertedCount)} skip_no_alias=${String(skippedNoAlias)} ` +
+      `skip_unknown_brand=${String(skippedUnknownBrand)}`
   );
-  return NextResponse.json({ ok: true, inserted: insertedCount });
+  return NextResponse.json({
+    ok: true,
+    received: messages.length,
+    inserted: insertedCount,
+    skippedNoAlias,
+    skippedUnknownBrand,
+  });
 }
