@@ -8,8 +8,12 @@
  * des variables d'environnement Gmail, puis tous les 7 jours pour renouveler
  * (un cron sera ajouté en sprint suivant).
  *
- * Réponse :
+ * Réponse succès :
  *   { ok: true, summary: { watched, failed }, successes: [...], failures: [...] }
+ *
+ * Réponse erreur tracker (HTTP 500) :
+ *   { ok: false, code: 'TRACKER_INIT_FAILED', error: '...', hint: '...',
+ *     successes: [...] }
  *
  * Sécurité : authentification admin back-office requise.
  */
@@ -47,12 +51,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Initialise gmail_watch_state pour chaque boîte surveillée. Le
     // historyId initial sert de point de départ exclusif pour le 1er
     // fetch déclenché par Pub/Sub (qui ratera sinon le 1er message).
+    //
+    // CRITIQUE : si l'upsert échoue, le pipeline Pub/Sub ne fonctionnera pas
+    // (startHistoryId manquant). On propage l'erreur en HTTP 500 pour que
+    // l'admin sache que le watch Gmail est créé mais le tracker DB ne l'est pas.
     if (result.successes.length > 0) {
       const supabase = createAdminClient();
       const rows = result.successes.map(s => ({
         email_address: s.emailAddress.toLowerCase(),
         last_history_id: s.historyId,
-        watch_expires_at: s.expirationDate,
+        watch_expires_at:
+          s.expirationDate !== 'unknown' ? s.expirationDate : null,
       }));
       const { error: upsertError } = await supabase
         .from('gmail_watch_state')
@@ -61,6 +70,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         console.error(
           '[Gmail Watch Init] upsert gmail_watch_state failed:',
           upsertError
+        );
+        // Les watches Gmail ont été créés côté Google mais le tracker DB a
+        // échoué. On retourne HTTP 500 explicite — ne pas retourner 200/ok:true
+        // qui masquerait le problème et casserait le pipeline Pub/Sub.
+        return NextResponse.json(
+          {
+            ok: false,
+            code: 'TRACKER_INIT_FAILED',
+            error: upsertError.message,
+            hint: "Le watch Gmail est créé côté Google mais le tracker DB n'est pas amorcé. Le pipeline Pub/Sub ne fonctionnera pas tant que ce point n'est pas corrigé.",
+            successes: result.successes,
+          },
+          { status: 500 }
         );
       }
     }
