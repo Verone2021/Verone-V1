@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS public.email_messages (
   raw_headers JSONB,
 
   -- Lien automatique vers commande (si numéro détecté)
-  linked_order_id UUID REFERENCES public.sales_orders(id) ON DELETE SET NULL,
+  linked_order_id UUID REFERENCES sales_orders(id) ON DELETE SET NULL,
   linked_order_number TEXT,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
