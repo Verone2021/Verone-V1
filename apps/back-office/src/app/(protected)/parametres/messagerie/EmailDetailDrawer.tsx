@@ -19,13 +19,13 @@ import {
 } from '@verone/ui';
 import { ExternalLink, Mail, Paperclip } from 'lucide-react';
 
-import type { EmailMessage } from './types';
+import type { EmailMessageEnriched } from './types';
 
 interface EmailDetailDrawerProps {
-  email: EmailMessage | null;
+  email: EmailMessageEnriched | null;
   open: boolean;
   onClose: () => void;
-  onToggleRead: (email: EmailMessage) => void;
+  onToggleRead: (email: EmailMessageEnriched) => void;
 }
 
 function formatDate(iso: string): string {
