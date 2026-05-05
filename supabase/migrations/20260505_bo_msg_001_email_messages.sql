@@ -59,11 +59,19 @@ CREATE INDEX IF NOT EXISTS idx_email_messages_unread
 CREATE INDEX IF NOT EXISTS idx_email_messages_thread
   ON public.email_messages (gmail_thread_id);
 
--- Trigger updated_at
+-- Trigger updated_at (fonction dédiée car set_updated_at générique n'existe pas)
+CREATE OR REPLACE FUNCTION public.update_email_messages_updated_at()
+  RETURNS TRIGGER AS $$
+  BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+  END;
+  $$ LANGUAGE plpgsql;
+
 CREATE TRIGGER set_email_messages_updated_at
   BEFORE UPDATE ON public.email_messages
   FOR EACH ROW
-  EXECUTE FUNCTION public.set_updated_at();
+  EXECUTE FUNCTION public.update_email_messages_updated_at();
 
 -- RLS : seul le staff back-office accède à ces emails
 ALTER TABLE public.email_messages ENABLE ROW LEVEL SECURITY;

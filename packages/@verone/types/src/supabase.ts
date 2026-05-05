@@ -7,30 +7,10 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '13.0.5';
   };
   public: {
     Tables: {
@@ -2421,6 +2401,111 @@ export type Database = {
           subject?: string;
         };
         Relationships: [];
+      };
+      email_messages: {
+        Row: {
+          body_html: string | null;
+          body_text: string | null;
+          brand: string;
+          created_at: string;
+          from_email: string;
+          from_name: string | null;
+          gmail_history_id: string | null;
+          gmail_message_id: string;
+          gmail_thread_id: string;
+          has_attachments: boolean;
+          id: string;
+          is_read: boolean;
+          linked_order_id: string | null;
+          linked_order_number: string | null;
+          raw_headers: Json | null;
+          received_at: string;
+          snippet: string | null;
+          subject: string | null;
+          to_address: string;
+          updated_at: string;
+        };
+        Insert: {
+          body_html?: string | null;
+          body_text?: string | null;
+          brand: string;
+          created_at?: string;
+          from_email: string;
+          from_name?: string | null;
+          gmail_history_id?: string | null;
+          gmail_message_id: string;
+          gmail_thread_id: string;
+          has_attachments?: boolean;
+          id?: string;
+          is_read?: boolean;
+          linked_order_id?: string | null;
+          linked_order_number?: string | null;
+          raw_headers?: Json | null;
+          received_at: string;
+          snippet?: string | null;
+          subject?: string | null;
+          to_address: string;
+          updated_at?: string;
+        };
+        Update: {
+          body_html?: string | null;
+          body_text?: string | null;
+          brand?: string;
+          created_at?: string;
+          from_email?: string;
+          from_name?: string | null;
+          gmail_history_id?: string | null;
+          gmail_message_id?: string;
+          gmail_thread_id?: string;
+          has_attachments?: boolean;
+          id?: string;
+          is_read?: boolean;
+          linked_order_id?: string | null;
+          linked_order_number?: string | null;
+          raw_headers?: Json | null;
+          received_at?: string;
+          snippet?: string | null;
+          subject?: string | null;
+          to_address?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'email_messages_linked_order_id_fkey';
+            columns: ['linked_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'affiliate_pending_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'email_messages_linked_order_id_fkey';
+            columns: ['linked_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_enriched';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'email_messages_linked_order_id_fkey';
+            columns: ['linked_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_orders_with_margins';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'email_messages_linked_order_id_fkey';
+            columns: ['linked_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'sales_orders';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'email_messages_linked_order_id_fkey';
+            columns: ['linked_order_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['sales_order_id'];
+          },
+        ];
       };
       email_templates: {
         Row: {
@@ -14638,9 +14723,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       affiliate_product_approval_status: [

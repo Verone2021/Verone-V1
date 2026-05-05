@@ -57,7 +57,7 @@ export default async function MessageriePage() {
     console.error('[Messagerie] Erreur fetch emails', error);
   }
 
-  const emails = (data ?? []) as EmailMessage[];
+  const emails = (data ?? []) as unknown as EmailMessage[];
 
   // Adresses de surveillance pour le filtre
   const watchAddresses = (process.env.GMAIL_WATCH_ADDRESSES ?? '')
