@@ -46,3 +46,6 @@ export type Organisation = OrganisationRow & {
 // Types créations
 export type CreateCollectionData =
   Database['public']['Tables']['collections']['Insert'];
+
+// Email Messages (BO-MSG-001)
+export type * from './email-messages';
