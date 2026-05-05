@@ -3565,6 +3565,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      gmail_watch_state: {
+        Row: {
+          created_at: string;
+          email_address: string;
+          last_history_id: string;
+          updated_at: string;
+          watch_expires_at: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          email_address: string;
+          last_history_id: string;
+          updated_at?: string;
+          watch_expires_at?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          email_address?: string;
+          last_history_id?: string;
+          updated_at?: string;
+          watch_expires_at?: string | null;
+        };
+        Relationships: [];
+      };
       google_merchant_syncs: {
         Row: {
           clicks: number | null;
