@@ -7,30 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
@@ -2436,10 +2416,16 @@ export type Database = {
           has_attachments: boolean
           id: string
           is_read: boolean
+          linked_contact_id: string | null
           linked_order_id: string | null
           linked_order_number: string | null
+          linked_organisation_id: string | null
+          linked_user_id: string | null
           raw_headers: Json | null
           received_at: string
+          replied_at: string | null
+          reply_message_id: string | null
+          sent_by_user_id: string | null
           snippet: string | null
           subject: string | null
           to_address: string
@@ -2458,10 +2444,16 @@ export type Database = {
           has_attachments?: boolean
           id?: string
           is_read?: boolean
+          linked_contact_id?: string | null
           linked_order_id?: string | null
           linked_order_number?: string | null
+          linked_organisation_id?: string | null
+          linked_user_id?: string | null
           raw_headers?: Json | null
           received_at: string
+          replied_at?: string | null
+          reply_message_id?: string | null
+          sent_by_user_id?: string | null
           snippet?: string | null
           subject?: string | null
           to_address: string
@@ -2480,16 +2472,29 @@ export type Database = {
           has_attachments?: boolean
           id?: string
           is_read?: boolean
+          linked_contact_id?: string | null
           linked_order_id?: string | null
           linked_order_number?: string | null
+          linked_organisation_id?: string | null
+          linked_user_id?: string | null
           raw_headers?: Json | null
           received_at?: string
+          replied_at?: string | null
+          reply_message_id?: string | null
+          sent_by_user_id?: string | null
           snippet?: string | null
           subject?: string | null
           to_address?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "email_messages_linked_contact_id_fkey"
+            columns: ["linked_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "email_messages_linked_order_id_fkey"
             columns: ["linked_order_id"]
@@ -2524,6 +2529,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_transactions_missing_invoice"
             referencedColumns: ["sales_order_id"]
+          },
+          {
+            foreignKeyName: "email_messages_linked_organisation_id_fkey"
+            columns: ["linked_organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -14060,6 +14072,14 @@ export type Database = {
         Args: { minutes_stuck?: number }
         Returns: number
       }
+      resolve_email_links: {
+        Args: { p_from_email: string }
+        Returns: {
+          linked_contact_id: string
+          linked_organisation_id: string
+          linked_user_id: string
+        }[]
+      }
       resync_all_product_stocks: {
         Args: never
         Returns: {
@@ -14735,9 +14755,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       affiliate_product_approval_status: [
