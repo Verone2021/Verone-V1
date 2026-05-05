@@ -30,6 +30,7 @@ import {
   Wand2,
   Image,
   Award,
+  Mail,
 } from 'lucide-react';
 
 // Interface pour les éléments de navigation
@@ -332,5 +333,17 @@ export const getNavItems = (
     title: 'Paramètres',
     href: '/parametres',
     icon: Settings,
+    children: [
+      {
+        title: 'Vue d’ensemble',
+        href: '/parametres',
+        icon: Settings,
+      },
+      {
+        title: 'Messagerie',
+        href: '/parametres/messagerie',
+        icon: Mail,
+      },
+    ],
   },
 ];
