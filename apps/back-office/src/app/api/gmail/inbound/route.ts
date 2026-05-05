@@ -125,8 +125,10 @@ async function insertEmailMessage(
 // ---------------------------------------------------------------------------
 
 export async function POST(request: Request): Promise<NextResponse> {
-  // 1. Vérification du token partagé (Bearer)
-  const authHeader = request.headers.get('authorization') ?? '';
+  // 1. Vérification du token partagé (header Authorization OU query string ?token=)
+  // Pub/Sub n'autorise pas les headers personnalisés sur les push subscriptions :
+  // soit OIDC (JWT signé Google), soit token en URL. On accepte les deux formes
+  // de Bearer pour rester compatibles avec les deux modes de configuration.
   const expectedToken = process.env.GMAIL_PUBSUB_VERIFICATION_TOKEN;
 
   if (!expectedToken) {
@@ -137,8 +139,14 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  const [, token] = authHeader.split(' ');
-  if (token !== expectedToken) {
+  const authHeader = request.headers.get('authorization') ?? '';
+  const headerToken = authHeader.startsWith('Bearer ')
+    ? authHeader.slice('Bearer '.length)
+    : '';
+  const queryToken = new URL(request.url).searchParams.get('token') ?? '';
+  const providedToken = headerToken || queryToken;
+
+  if (providedToken !== expectedToken) {
     console.warn('[Gmail Inbound] Token invalide, requête rejetée');
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   }
