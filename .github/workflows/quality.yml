@@ -769,3 +769,34 @@ jobs:
           echo "⚠️ Secrets SUPABASE_ACCESS_TOKEN / SUPABASE_PROJECT_REF absents." >> $GITHUB_STEP_SUMMARY
           echo "Configure-les dans repo settings → Secrets → Actions." >> $GITHUB_STEP_SUMMARY
           echo "Token : https://supabase.com/dashboard/account/tokens" >> $GITHUB_STEP_SUMMARY
+
+  # ----------------------------------------------------------------
+  # Alias retro-compat : la branch protection de staging/main exige
+  # un check nommé "E2E Smoke (Playwright — back-office)" historique.
+  # Ce job consolide les nouveaux checks (golden + domaine) sous ce
+  # nom hérité, pour ne pas avoir à modifier la protection.
+  # À supprimer le jour où on met à jour les protections branch.
+  # ----------------------------------------------------------------
+  e2e-smoke-aggregate:
+    name: E2E Smoke (Playwright — back-office)
+    needs: [detect-changes, smoke-golden, smoke-domaine]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Aggregate result
+        run: |
+          E2E_NEEDED="${{ needs.detect-changes.outputs.e2e-needed }}"
+          GOLDEN="${{ needs.smoke-golden.result }}"
+          DOMAINE="${{ needs.smoke-domaine.result }}"
+          echo "e2e-needed=$E2E_NEEDED golden=$GOLDEN domaine=$DOMAINE"
+          # Si E2E pas nécessaire (PR backend pure) → succès direct
+          if [ "$E2E_NEEDED" != "true" ]; then
+            echo "✅ E2E non requis pour ce changement"
+            exit 0
+          fi
+          # E2E nécessaire : golden ET domaine doivent avoir réussi
+          if [ "$GOLDEN" != "success" ] || [ "$DOMAINE" != "success" ]; then
+            echo "❌ smoke-golden=$GOLDEN smoke-domaine=$DOMAINE"
+            exit 1
+          fi
+          echo "✅ E2E smoke complet OK"
