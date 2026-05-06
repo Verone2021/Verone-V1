@@ -1,17 +1,8 @@
 'use client';
 
-/**
- * ComposeMailModal — modal de composition / réponse de mail (BO-MSG-010A).
- *
- * Stratégie « fallback Gmail » : pas d'envoi direct via Gmail API (sprint
- * BO-MSG-010B après activation du scope gmail.send côté Workspace admin).
- * Le composant pré-remplit le mail à partir d'un template + variables du
- * contexte, puis offre :
- *   1. Copier dans le presse-papier (le contenu html prêt à coller dans Gmail)
- *   2. Ouvrir Gmail compose pré-rempli (URL https://mail.google.com/mail/?view=cm…)
- *
- * Les templates sont stockés dans la table email_templates.
- */
+// ComposeMailModal — modal de composition/reponse de mail (BO-MSG-010).
+// 3 modes d'envoi : Copier (HTML), Ouvrir Gmail (text/plain), Envoyer
+// directement via /api/gmail/send (BO-MSG-010B, scope gmail.send requis).
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -22,10 +13,22 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@verone/ui';
-import { Copy, ExternalLink, Mail, Reply } from 'lucide-react';
+import {
+  AlertCircle,
+  Copy,
+  ExternalLink,
+  Mail,
+  Reply,
+  Send,
+} from 'lucide-react';
 
 import { useSupabase } from '@/components/providers/supabase-provider';
 
+import {
+  buildGmailComposeUrl,
+  fillTemplate,
+  stripHtml,
+} from './compose-helpers';
 import type { EmailMessageEnriched } from './types';
 
 interface EmailTemplateLite {
@@ -53,66 +56,6 @@ interface ComposeMailModalProps {
   defaultBrand?: 'verone' | 'linkme';
 }
 
-/**
- * Remplace {{variable}} par la valeur correspondante dans le mapping.
- * Les variables non fournies sont laissées telles quelles, l'utilisateur les
- * complète à la main dans le textarea.
- */
-function fillTemplate(
-  template: string,
-  values: Record<string, string | undefined>
-): string {
-  return template.replace(
-    /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g,
-    (match, varName) => {
-      const v = values[varName as string];
-      return v ?? match;
-    }
-  );
-}
-
-/**
- * Construit l'URL Gmail Compose pré-remplie. Documentation Google :
- * https://developers.google.com/gmail/api/guides/uploads (web compose URL).
- *
- * Format : https://mail.google.com/mail/?view=cm&fs=1&to=…&cc=…&su=…&body=…
- *
- * Limite : le body est en text/plain (pas html). Si le template est HTML,
- * on génère une version texte basique via strip-tags. Pour préserver la mise
- * en forme HTML, l'utilisateur doit utiliser le bouton « Copier ».
- */
-function buildGmailComposeUrl(args: {
-  to: string;
-  cc?: string;
-  subject: string;
-  bodyText: string;
-}): string {
-  const params = new URLSearchParams({
-    view: 'cm',
-    fs: '1',
-    to: args.to,
-    su: args.subject,
-    body: args.bodyText,
-  });
-  if (args.cc && args.cc.trim() !== '') {
-    params.set('cc', args.cc);
-  }
-  return `https://mail.google.com/mail/?${params.toString()}`;
-}
-
-/** Strip basique des balises HTML pour générer un fallback texte. */
-function stripHtml(html: string): string {
-  return html
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-    .replace(/<br\s*\/?\s*>/gi, '\n')
-    .replace(/<\/p>/gi, '\n\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-}
-
 export function ComposeMailModal({
   open,
   onClose,
@@ -128,8 +71,16 @@ export function ComposeMailModal({
   const [subject, setSubject] = useState('');
   const [bodyHtml, setBodyHtml] = useState('');
   const [copied, setCopied] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [sendSuccess, setSendSuccess] = useState(false);
+  const [fromAlias, setFromAlias] = useState<'contact' | 'commandes'>(
+    'contact'
+  );
+  const [composeBrand, setComposeBrand] = useState<'verone' | 'linkme'>(
+    'verone'
+  );
 
-  // Brand inférée pour pré-filtrer les templates
   const inferredBrand = useMemo<'verone' | 'linkme' | undefined>(() => {
     if (defaultBrand) return defaultBrand;
     if (replyTo?.brand === 'verone' || replyTo?.brand === 'linkme') {
@@ -138,7 +89,6 @@ export function ComposeMailModal({
     return undefined;
   }, [defaultBrand, replyTo]);
 
-  // Charge les templates actifs (filtrés par brand côté client)
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
@@ -166,7 +116,6 @@ export function ComposeMailModal({
     };
   }, [open, supabase]);
 
-  // Pré-remplit lors de l'ouverture (mode reply)
   useEffect(() => {
     if (!open) return;
     if (replyTo) {
@@ -176,17 +125,26 @@ export function ComposeMailModal({
         baseSubject.startsWith('Re:') ? baseSubject : `Re: ${baseSubject}`
       );
       setBodyHtml('');
+      const parentTo = replyTo.to_address.toLowerCase();
+      if (parentTo.startsWith('commandes@')) {
+        setFromAlias('commandes');
+      } else {
+        setFromAlias('contact');
+      }
+      setComposeBrand(replyTo.brand);
     } else {
       setTo('');
       setSubject('');
       setBodyHtml('');
+      if (defaultBrand) setComposeBrand(defaultBrand);
     }
     setCc('');
     setSelectedTemplateId('');
     setCopied(false);
-  }, [open, replyTo]);
+    setSendError(null);
+    setSendSuccess(false);
+  }, [open, replyTo, defaultBrand]);
 
-  // Templates filtrés par brand inférée
   const filteredTemplates = useMemo(() => {
     if (!inferredBrand) return templates;
     return templates.filter(
@@ -194,7 +152,6 @@ export function ComposeMailModal({
     );
   }, [templates, inferredBrand]);
 
-  // Variables disponibles depuis le contexte (mail parent + client)
   const contextValues = useMemo<Record<string, string | undefined>>(() => {
     const orgName = replyTo?.organisation?.name;
     const contactFirst = replyTo?.contact?.first_name ?? undefined;
@@ -231,7 +188,6 @@ export function ComposeMailModal({
 
   const handleCopyHtml = useCallback(async () => {
     try {
-      // Copy en clipboard avec html + texte (compatible Gmail web compose)
       const text = stripHtml(bodyHtml);
       if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
         await navigator.clipboard.write([
@@ -252,6 +208,73 @@ export function ComposeMailModal({
       );
     }
   }, [bodyHtml]);
+
+  const handleSendDirect = useCallback(async () => {
+    setSendError(null);
+    setSendSuccess(false);
+    if (!to.trim() || !subject.trim() || !bodyHtml.trim()) {
+      setSendError('Destinataire, sujet et corps sont obligatoires.');
+      return;
+    }
+    const fromDomain =
+      composeBrand === 'verone' ? 'veronecollections.fr' : 'linkme.network';
+    const fromAddress = `${fromAlias}@${fromDomain}`;
+    try {
+      setSending(true);
+      const resp = await fetch('/api/gmail/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          fromAddress,
+          to,
+          cc: cc.trim() === '' ? undefined : cc,
+          subject,
+          bodyHtml,
+          bodyText: stripHtml(bodyHtml),
+          threadId: replyTo?.gmail_thread_id ?? undefined,
+          inReplyToMessageId: replyTo?.gmail_message_id ?? undefined,
+          parentEmailId: replyTo?.id ?? undefined,
+          brand: composeBrand,
+          templateId:
+            selectedTemplateId !== '' ? selectedTemplateId : undefined,
+        }),
+      });
+      const data = (await resp.json().catch(() => null)) as {
+        error?: string;
+        code?: string;
+        hint?: string;
+        ok?: boolean;
+      } | null;
+      if (!resp.ok || !data?.ok) {
+        const baseMsg = data?.error ?? `Erreur ${resp.status}`;
+        const fullMsg = data?.hint ? `${baseMsg} — ${data.hint}` : baseMsg;
+        setSendError(fullMsg);
+        return;
+      }
+      setSendSuccess(true);
+      window.setTimeout(() => {
+        onClose();
+      }, 1500);
+    } catch (err) {
+      console.error('[ComposeMail] send failed', err);
+      setSendError(
+        err instanceof Error ? err.message : "Erreur d'envoi inconnue"
+      );
+    } finally {
+      setSending(false);
+    }
+  }, [
+    to,
+    cc,
+    subject,
+    bodyHtml,
+    fromAlias,
+    composeBrand,
+    replyTo,
+    selectedTemplateId,
+    onClose,
+  ]);
 
   const handleOpenGmail = useCallback(() => {
     const text = stripHtml(bodyHtml);
@@ -287,7 +310,48 @@ export function ComposeMailModal({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-          {/* Template selector */}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs font-medium text-gray-700 uppercase tracking-wide">
+                Envoyer depuis (marque)
+              </label>
+              <select
+                value={composeBrand}
+                onChange={e =>
+                  setComposeBrand(e.target.value as 'verone' | 'linkme')
+                }
+                className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-black"
+              >
+                <option value="verone">Vérone</option>
+                <option value="linkme">LinkMe</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-700 uppercase tracking-wide">
+                Alias
+              </label>
+              <select
+                value={fromAlias}
+                onChange={e =>
+                  setFromAlias(e.target.value as 'contact' | 'commandes')
+                }
+                className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-black"
+              >
+                <option value="contact">contact@</option>
+                <option value="commandes">commandes@</option>
+              </select>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 -mt-2">
+            Mail envoyé depuis :{' '}
+            <code className="bg-gray-100 px-1.5 py-0.5 rounded">
+              {fromAlias}@
+              {composeBrand === 'verone'
+                ? 'veronecollections.fr'
+                : 'linkme.network'}
+            </code>
+          </p>
+
           <div>
             <label className="text-xs font-medium text-gray-700 uppercase tracking-wide">
               Template
@@ -316,7 +380,6 @@ export function ComposeMailModal({
             )}
           </div>
 
-          {/* To */}
           <div>
             <label className="text-xs font-medium text-gray-700 uppercase tracking-wide">
               À
@@ -330,7 +393,6 @@ export function ComposeMailModal({
             />
           </div>
 
-          {/* Cc */}
           <div>
             <label className="text-xs font-medium text-gray-700 uppercase tracking-wide">
               Cc (optionnel)
@@ -344,7 +406,6 @@ export function ComposeMailModal({
             />
           </div>
 
-          {/* Subject */}
           <div>
             <label className="text-xs font-medium text-gray-700 uppercase tracking-wide">
               Sujet
@@ -358,7 +419,6 @@ export function ComposeMailModal({
             />
           </div>
 
-          {/* Body */}
           <div>
             <label className="text-xs font-medium text-gray-700 uppercase tracking-wide">
               Message (HTML)
@@ -377,12 +437,25 @@ export function ComposeMailModal({
           </div>
         </div>
 
-        {/* Footer actions */}
+        {sendError && (
+          <div className="px-6 py-3 bg-red-50 border-t border-red-200 flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-red-800">{sendError}</p>
+          </div>
+        )}
+        {sendSuccess && (
+          <div className="px-6 py-3 bg-green-50 border-t border-green-200">
+            <p className="text-sm text-green-800 font-medium">
+              Mail envoyé. Fermeture en cours…
+            </p>
+          </div>
+        )}
+
         <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row gap-2 justify-between bg-gray-50">
           <Button variant="outline" onClick={onClose}>
             Fermer
           </Button>
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
             <Button
               variant="outline"
               onClick={() => {
@@ -391,15 +464,27 @@ export function ComposeMailModal({
               disabled={!bodyHtml.trim()}
             >
               <Copy className="h-4 w-4 mr-2" />
-              {copied ? 'Copié ✓' : 'Copier le mail'}
+              {copied ? 'Copié ✓' : 'Copier'}
             </Button>
             <Button
-              variant="default"
+              variant="outline"
               onClick={handleOpenGmail}
               disabled={!to.trim() || !subject.trim()}
             >
               <ExternalLink className="h-4 w-4 mr-2" />
               Ouvrir dans Gmail
+            </Button>
+            <Button
+              variant="default"
+              onClick={() => {
+                void handleSendDirect();
+              }}
+              disabled={
+                sending || !to.trim() || !subject.trim() || !bodyHtml.trim()
+              }
+            >
+              <Send className="h-4 w-4 mr-2" />
+              {sending ? 'Envoi…' : 'Envoyer maintenant'}
             </Button>
           </div>
         </div>
