@@ -15,6 +15,11 @@ import {
   createAdminClient,
   createServerClient,
 } from '@verone/utils/supabase/server';
+import { computeFinancialTotals } from '@verone/finance/lib/finance-totals';
+import type {
+  FinancialItem,
+  FinancialFees,
+} from '@verone/finance/lib/finance-totals';
 
 type Organisation = Database['public']['Tables']['organisations']['Row'];
 type IndividualCustomer =
@@ -362,16 +367,24 @@ export async function POST(request: NextRequest): Promise<
 
     // INSERT dans financial_documents — uniquement pour les organisations (partner_id FK NOT NULL)
     if (clientType === 'organization') {
-      // Calculer les totaux depuis les items
-      const totalHt = items.reduce(
-        (sum, item) => sum + item.unitPrice * item.quantity,
-        0
-      );
-      const totalVat = items.reduce(
-        (sum, item) => sum + item.unitPrice * item.quantity * item.vatRate,
-        0
-      );
-      const totalTtc = totalHt + totalVat;
+      // [BO-FIN-046] Module finance-totals unique (R1 zéro discordance)
+      const serviceItems: FinancialItem[] = items.map(item => ({
+        quantity: item.quantity,
+        unit_price_ht: item.unitPrice,
+        tax_rate: item.vatRate,
+      }));
+      const zeroFees: FinancialFees = {
+        shipping_cost_ht: 0,
+        handling_cost_ht: 0,
+        insurance_cost_ht: 0,
+        fees_vat_rate: 0,
+      };
+      const computed = computeFinancialTotals(serviceItems, zeroFees, {
+        strict: false,
+      });
+      const totalHt = computed.totalHt;
+      const totalVat = computed.totalVat;
+      const totalTtc = computed.totalTtc;
 
       const insertPayload: Database['public']['Tables']['financial_documents']['Insert'] =
         {

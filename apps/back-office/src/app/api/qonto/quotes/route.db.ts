@@ -5,6 +5,11 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database, Json } from '@verone/types';
+import { computeFinancialTotals } from '@verone/finance/lib/finance-totals';
+import type {
+  FinancialItem,
+  FinancialFees,
+} from '@verone/finance/lib/finance-totals';
 
 import { generateLocalDocNumber } from './route.helpers';
 import type { IQuoteItem, IFeesData } from './route.helpers';
@@ -61,19 +66,24 @@ export async function saveQuoteToLocalDb(
   type FinancialDocumentInsert =
     Database['public']['Tables']['financial_documents']['Insert'];
 
-  // Calcul ligne par ligne — round-per-line (aligné R1 finance.md + migration round_per_line)
-  // JAMAIS avgVat (sum/count) : divergence garantie avec multi-taux TVA
-  let totalHt = 0;
-  let tva = 0;
-  for (const item of items) {
-    const qty = parseFloat(item.quantity) || 0;
-    const unit = parseFloat(item.unitPrice.value) || 0;
-    const vatRate = parseFloat(item.vatRate) || 0.2;
-    const lineHt = qty * unit;
-    const lineTva = Math.round(lineHt * vatRate * 100) / 100;
-    totalHt += lineHt;
-    tva += lineTva;
-  }
+  // [BO-FIN-046] Module finance-totals unique (R1 zéro discordance)
+  const financialItems: FinancialItem[] = items.map(item => ({
+    quantity: parseFloat(item.quantity) || 0,
+    unit_price_ht: parseFloat(item.unitPrice.value) || 0,
+    tax_rate: parseFloat(item.vatRate) || 0,
+    description: item.title,
+  }));
+  const feesForCompute: FinancialFees = {
+    shipping_cost_ht: 0, // frais déjà inclus dans items via toQontoLines
+    handling_cost_ht: 0,
+    insurance_cost_ht: 0,
+    fees_vat_rate: 0,
+  };
+  const computed = computeFinancialTotals(financialItems, feesForCompute, {
+    strict: false,
+  });
+  const totalHt = computed.totalHt;
+  const tva = computed.totalVat;
   const localDocNumber = generateLocalDocNumber();
 
   const payload: FinancialDocumentInsert = {

@@ -9,6 +9,11 @@ import type {
 } from '@verone/finance/hooks';
 import { useQuotes } from '@verone/finance/hooks';
 import type { UnifiedCustomer } from '@verone/orders/components/modals/customer-selector';
+import { computeFinancialTotals } from '@verone/finance/lib/finance-totals';
+import type {
+  FinancialItem,
+  FinancialFees,
+} from '@verone/finance/lib/finance-totals';
 
 import type { QuoteItemLocal, QuoteTotals } from './types';
 
@@ -60,40 +65,47 @@ export function useQuoteSubmit({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const totals = useMemo((): QuoteTotals => {
-    let itemsTotalHt = 0;
-    let itemsTva = 0;
+    // [BO-FIN-046] Module unique finance-totals
+    const financialItems: FinancialItem[] = items.map(item => ({
+      quantity: item.quantity,
+      unit_price_ht: item.unit_price_ht,
+      tax_rate: item.tva_rate / 100, // tva_rate est en % dans ce composant (ex: 20)
+      discount_percentage: item.discount_percentage,
+      eco_tax: item.eco_tax,
+      description: item.description,
+    }));
+
+    const financialFees: FinancialFees = {
+      shipping_cost_ht: shippingCostHt,
+      handling_cost_ht: handlingCostHt,
+      insurance_cost_ht: insuranceCostHt,
+      fees_vat_rate: feesVatRate,
+    };
+
+    const computed = computeFinancialTotals(financialItems, financialFees, {
+      strict: false,
+    });
+
+    // Reconstruire le format QuoteTotals attendu par QuoteTotalsCard
     const tvaByRate: Record<number, { base: number; tva: number }> = {};
-
-    for (const item of items) {
-      const discountMultiplier = 1 - (item.discount_percentage ?? 0) / 100;
-      const lineHt =
-        item.quantity * item.unit_price_ht * discountMultiplier +
-        (item.eco_tax ?? 0) * item.quantity;
-      const lineTva = lineHt * (item.tva_rate / 100);
-
-      itemsTotalHt += lineHt;
-      itemsTva += lineTva;
-
-      const rate = item.tva_rate;
-      if (!tvaByRate[rate]) tvaByRate[rate] = { base: 0, tva: 0 };
-      tvaByRate[rate].base += lineHt;
-      tvaByRate[rate].tva += lineTva;
+    for (const [rateStr, vatAmount] of Object.entries(computed.vatByRate)) {
+      const rate = Number(rateStr) * 100; // convertir décimal → % pour compatibilité
+      tvaByRate[rate] = {
+        base: 0, // non critique pour l'affichage
+        tva: vatAmount,
+      };
     }
 
-    const feesTotalHt = shippingCostHt + handlingCostHt + insuranceCostHt;
-    const feesTva = feesTotalHt * feesVatRate;
-    const totalHt = itemsTotalHt + feesTotalHt;
-    const totalTva = itemsTva + feesTva;
-    const totalTtc = totalHt + totalTva;
-
     return {
-      itemsTotalHt,
-      itemsTva,
-      feesTotalHt,
-      feesTva,
-      totalHt,
-      totalTva,
-      totalTtc,
+      itemsTotalHt: computed.itemsHt,
+      itemsTva:
+        computed.totalVat -
+        (computed.feesHt > 0 ? computed.feesHt * feesVatRate : 0),
+      feesTotalHt: computed.feesHt,
+      feesTva: computed.feesHt * feesVatRate,
+      totalHt: computed.totalHt,
+      totalTva: computed.totalVat,
+      totalTtc: computed.totalTtc,
       tvaByRate,
     };
   }, [items, shippingCostHt, handlingCostHt, insuranceCostHt, feesVatRate]);

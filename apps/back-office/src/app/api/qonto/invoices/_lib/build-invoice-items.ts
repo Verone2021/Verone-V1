@@ -1,3 +1,9 @@
+import { toQontoLines } from '@verone/finance/lib/finance-totals';
+import type {
+  FinancialItem,
+  FinancialFees,
+} from '@verone/finance/lib/finance-totals';
+
 import type {
   ISalesOrderWithCustomer,
   IFeesData,
@@ -10,87 +16,42 @@ export function buildInvoiceItems(
   fees: IFeesData | undefined,
   customLines: ICustomLine[] | undefined
 ): IInvoiceItem[] {
-  const items: IInvoiceItem[] = (order.sales_order_items ?? []).map(item => ({
-    title: item.products?.name ?? 'Article',
-    description: item.notes ?? undefined,
-    quantity: String(item.quantity ?? 1),
-    unit: 'pièce',
-    unitPrice: {
-      value: String(item.unit_price_ht ?? 0),
-      currency: 'EUR',
-    },
-    vatRate: String(item.tax_rate ?? 0.2), // tax_rate est déjà en decimal (0.2 = 20%)
-    // Pour stockage local
-    product_id: item.products?.id,
-    unit_price_ht: item.unit_price_ht ?? 0,
-    quantity_num: item.quantity ?? 1,
-    vat_rate_num: item.tax_rate ?? 0.2,
-  }));
-
   // Déterminer la TVA des frais (priorité: body > commande > défaut 20%)
   const feesVatRate = fees?.fees_vat_rate ?? order.fees_vat_rate ?? 0.2;
 
-  // Ajouter les frais de livraison
-  const shippingCost = fees?.shipping_cost_ht ?? order.shipping_cost_ht ?? 0;
-  if (shippingCost > 0) {
-    items.push({
-      title: 'Frais de livraison',
-      description: undefined,
-      quantity: '1',
-      unit: 'forfait',
-      unitPrice: {
-        value: String(shippingCost),
-        currency: 'EUR',
-      },
-      vatRate: String(feesVatRate),
-      unit_price_ht: shippingCost,
-      quantity_num: 1,
-      vat_rate_num: feesVatRate,
-    });
-  }
+  // Convertir les items de la commande en FinancialItem
+  const financialItems: FinancialItem[] = (order.sales_order_items ?? []).map(
+    item => ({
+      quantity: item.quantity ?? 1,
+      unit_price_ht: item.unit_price_ht ?? 0,
+      tax_rate: item.tax_rate, // null accepté — strict: false en aval
+      description: item.products?.name ?? 'Article',
+    })
+  );
 
-  // Ajouter les frais de manutention
-  const handlingCost = fees?.handling_cost_ht ?? order.handling_cost_ht ?? 0;
-  if (handlingCost > 0) {
-    items.push({
-      title: 'Frais de manutention',
-      description: undefined,
-      quantity: '1',
-      unit: 'forfait',
-      unitPrice: {
-        value: String(handlingCost),
-        currency: 'EUR',
-      },
-      vatRate: String(feesVatRate),
-      unit_price_ht: handlingCost,
-      quantity_num: 1,
-      vat_rate_num: feesVatRate,
-    });
-  }
+  // Métadonnées pour les lignes Qonto (product_id, notes)
+  const itemsMeta = (order.sales_order_items ?? []).map(item => ({
+    product_id: item.products?.id,
+    title: item.products?.name ?? 'Article',
+    description: item.notes ?? undefined,
+    unit: 'pièce',
+  }));
 
-  // Ajouter les frais d'assurance
-  const insuranceCost = fees?.insurance_cost_ht ?? order.insurance_cost_ht ?? 0;
-  if (insuranceCost > 0) {
-    items.push({
-      title: "Frais d'assurance",
-      description: undefined,
-      quantity: '1',
-      unit: 'forfait',
-      unitPrice: {
-        value: String(insuranceCost),
-        currency: 'EUR',
-      },
-      vatRate: String(feesVatRate),
-      unit_price_ht: insuranceCost,
-      quantity_num: 1,
-      vat_rate_num: feesVatRate,
-    });
-  }
+  // Frais pour toQontoLines
+  const financialFees: FinancialFees = {
+    shipping_cost_ht: fees?.shipping_cost_ht ?? order.shipping_cost_ht ?? 0,
+    handling_cost_ht: fees?.handling_cost_ht ?? order.handling_cost_ht ?? 0,
+    insurance_cost_ht: fees?.insurance_cost_ht ?? order.insurance_cost_ht ?? 0,
+    fees_vat_rate: feesVatRate,
+  };
 
-  // Ajouter les lignes personnalisées (custom lines)
+  // Construire les lignes via le module unique
+  const qontoLines = toQontoLines(financialItems, financialFees, itemsMeta);
+
+  // Ajouter les lignes personnalisées
   if (customLines && customLines.length > 0) {
     for (const line of customLines) {
-      items.push({
+      qontoLines.push({
         title: line.title,
         description: line.description,
         quantity: String(line.quantity),
@@ -107,5 +68,17 @@ export function buildInvoiceItems(
     }
   }
 
-  return items;
+  // Retourner au format IInvoiceItem (compatible avec le reste du code)
+  return qontoLines.map(line => ({
+    title: line.title,
+    description: line.description,
+    quantity: line.quantity,
+    unit: line.unit,
+    unitPrice: line.unitPrice,
+    vatRate: line.vatRate,
+    product_id: line.product_id,
+    unit_price_ht: line.unit_price_ht,
+    quantity_num: line.quantity_num,
+    vat_rate_num: line.vat_rate_num,
+  }));
 }

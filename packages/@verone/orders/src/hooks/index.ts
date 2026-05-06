@@ -1,5 +1,6 @@
 // Auto-generated hooks index for @verone/orders
 
+export * from './use-has-finalized-invoice';
 export * from './use-unified-sample-eligibility';
 export * from './use-sample-eligibility-rule';
 export * from './use-purchase-orders';
