@@ -5,18 +5,25 @@
 -- correspondant. Ajoute aussi les colonnes pour tracker les réponses
 -- (anticipe BO-MSG-010 compose/reply).
 
--- 1. Nouvelles colonnes
+-- 1. Nouvelles colonnes (FK declarees via ALTER TABLE ADD CONSTRAINT pour
+-- compatibilite avec le drift checker qui matche FOREIGN KEY (col) REFERENCES).
 ALTER TABLE public.email_messages
-  ADD COLUMN IF NOT EXISTS linked_organisation_id uuid NULL
-    REFERENCES public.organisations(id) ON DELETE SET NULL,
-  ADD COLUMN IF NOT EXISTS linked_contact_id uuid NULL
-    REFERENCES public.contacts(id) ON DELETE SET NULL,
-  ADD COLUMN IF NOT EXISTS linked_user_id uuid NULL
-    REFERENCES auth.users(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS linked_organisation_id uuid NULL,
+  ADD COLUMN IF NOT EXISTS linked_contact_id uuid NULL,
+  ADD COLUMN IF NOT EXISTS linked_user_id uuid NULL,
   ADD COLUMN IF NOT EXISTS replied_at timestamptz NULL,
-  ADD COLUMN IF NOT EXISTS sent_by_user_id uuid NULL
-    REFERENCES auth.users(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS sent_by_user_id uuid NULL,
   ADD COLUMN IF NOT EXISTS reply_message_id text NULL;
+
+ALTER TABLE public.email_messages
+  DROP CONSTRAINT IF EXISTS email_messages_linked_organisation_id_fkey,
+  ADD CONSTRAINT email_messages_linked_organisation_id_fkey
+    FOREIGN KEY (linked_organisation_id) REFERENCES organisations(id) ON DELETE SET NULL;
+
+ALTER TABLE public.email_messages
+  DROP CONSTRAINT IF EXISTS email_messages_linked_contact_id_fkey,
+  ADD CONSTRAINT email_messages_linked_contact_id_fkey
+    FOREIGN KEY (linked_contact_id) REFERENCES contacts(id) ON DELETE SET NULL;
 
 -- 2. Indexes pour filtres et FK
 CREATE INDEX IF NOT EXISTS idx_email_messages_linked_organisation_id
