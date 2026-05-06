@@ -75,11 +75,6 @@ export default async function MessageriePage() {
     .filter(Boolean);
 
   return (
-    <div className="space-y-6">
-      <MessagerieClient
-        initialEmails={emails}
-        watchAddresses={watchAddresses}
-      />
-    </div>
+    <MessagerieClient initialEmails={emails} watchAddresses={watchAddresses} />
   );
 }

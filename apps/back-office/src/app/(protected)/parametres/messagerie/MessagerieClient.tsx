@@ -25,11 +25,15 @@ import {
 import { cn } from '@verone/utils';
 import { ExternalLink, Inbox, Mail, Paperclip } from 'lucide-react';
 
+import { MessagesTabsBar } from '@/components/messages-tabs-bar';
 import { useSupabase } from '@/components/providers/supabase-provider';
 
 import { ComposeMailModal } from './ComposeMailModal';
 import { EmailDetailDrawer } from './EmailDetailDrawer';
+import { MailsKpiBar } from './MailsKpiBar';
 import type { EmailMessageEnriched, MessagerieFilters } from './types';
+
+type KpiKey = 'unread' | 'replied_today' | 'linked_order' | null;
 
 interface MessagerieClientProps {
   initialEmails: EmailMessageEnriched[];
@@ -103,6 +107,7 @@ export function MessagerieClient({
   const [composeOpen, setComposeOpen] = useState(false);
   const [composeReplyTo, setComposeReplyTo] =
     useState<EmailMessageEnriched | null>(null);
+  const [activeKpi, setActiveKpi] = useState<KpiKey>(null);
 
   const handleOpenCompose = useCallback(() => {
     setComposeReplyTo(null);
@@ -120,6 +125,12 @@ export function MessagerieClient({
 
   // Filtrage local
   const filteredEmails = useMemo(() => {
+    const now = new Date();
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
     return emails.filter(email => {
       if (filters.brand !== 'all' && email.brand !== filters.brand)
         return false;
@@ -136,9 +147,16 @@ export function MessagerieClient({
         const inSnippet = email.snippet?.toLowerCase().includes(q) ?? false;
         if (!inSubject && !inFrom && !inSnippet) return false;
       }
+      // Filtre KPI
+      if (activeKpi === 'unread' && email.is_read) return false;
+      if (activeKpi === 'linked_order' && !email.linked_order_id) return false;
+      if (activeKpi === 'replied_today') {
+        if (!email.replied_at) return false;
+        if (new Date(email.replied_at) < startOfToday) return false;
+      }
       return true;
     });
-  }, [emails, filters]);
+  }, [emails, filters, activeKpi]);
 
   const handleOpenEmail = useCallback(
     (email: EmailMessageEnriched) => {
@@ -338,7 +356,15 @@ export function MessagerieClient({
 
   return (
     <>
-      <div className="space-y-4">
+      <MessagesTabsBar />
+      <div className="space-y-4 px-4 sm:px-6 py-6">
+        {/* Mini-dashboard KPIs */}
+        <MailsKpiBar
+          emails={emails}
+          activeKpi={activeKpi}
+          onKpiClick={setActiveKpi}
+        />
+
         {/* Toolbar */}
         <ResponsiveToolbar
           title="Messagerie"
