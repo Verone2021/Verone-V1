@@ -1,8 +1,8 @@
 {
-  "anon_security_definer_function_executable": 314,
+  "anon_security_definer_function_executable": 315,
   "auth_leaked_password_protection": 1,
   "auth_users_exposed": 1,
-  "authenticated_security_definer_function_executable": 314,
+  "authenticated_security_definer_function_executable": 315,
   "extension_in_public": 0,
   "function_search_path_mutable": 24,
   "materialized_view_in_api": 0,
