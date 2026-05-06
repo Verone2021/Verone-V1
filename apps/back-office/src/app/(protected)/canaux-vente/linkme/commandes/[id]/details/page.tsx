@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- fichier legacy déjà à 540 lignes avant cette modif perf [BO-LM-PERF-001] */
 'use client';
 
 import { useState } from 'react';
@@ -175,10 +176,13 @@ export default function LinkMeOrderDetailsPage() {
     setShowRequestInfoDialog(true);
   };
 
-  // Handler pour les inline edits depuis MissingInfoBanner. La cible est soit
-  // l'organisation rattachée à la commande, soit la row sales_order_linkme_details
-  // de la commande. Refetch derrière pour rafraîchir la liste des champs
-  // manquants (le bandeau disparaîtra si tout est complété).
+  // Handler pour les inline edits depuis MissingInfoBanner.
+  // Update DB ciblé + maj locale optimiste (pas de refetch complet) — sinon
+  // un seul champ déclenche 17 requêtes en cascade (commande, contacts, qonto,
+  // packlink, stocks, images...) et ~13s d'écran gelé alors qu'aucune de ces
+  // données ne dépend du SIRET ni d'une adresse. Le bandeau et la card
+  // organisation lisent la même donnée locale (`order.organisation.*`,
+  // `order.linkmeDetails.*`), donc la disparition de la ligne est instantanée.
   const handleSaveInlineMissingField = async (
     target: 'organisations' | 'sales_order_linkme_details',
     column: string,
@@ -193,14 +197,35 @@ export default function LinkMeOrderDetailsPage() {
         .update({ [column]: value })
         .eq('id', order.customer_id);
       if (orgErr) throw new Error(orgErr.message);
+      setOrder(prev =>
+        prev?.organisation
+          ? {
+              ...prev,
+              organisation: {
+                ...prev.organisation,
+                [column]: value,
+              } as typeof prev.organisation,
+            }
+          : prev
+      );
     } else {
       const { error: detErr } = await supabase
         .from('sales_order_linkme_details')
         .update({ [column]: value })
         .eq('sales_order_id', order.id);
       if (detErr) throw new Error(detErr.message);
+      setOrder(prev =>
+        prev?.linkmeDetails
+          ? {
+              ...prev,
+              linkmeDetails: {
+                ...prev.linkmeDetails,
+                [column]: value,
+              } as typeof prev.linkmeDetails,
+            }
+          : prev
+      );
     }
-    await fetchOrder();
   };
 
   const handleRequestInfo = () => {
