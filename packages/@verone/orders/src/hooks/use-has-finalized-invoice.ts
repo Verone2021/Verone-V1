@@ -16,8 +16,17 @@ import { createClient } from '@verone/utils/supabase/client';
 
 /**
  * Statuts qui figent les frais (R6 finance.md).
- * Note: l'enum DB document_status n'a pas de valeur "finalized" — on utilise
- * 'sent', 'paid', 'partially_paid' comme équivalents "facture finalisée".
+ *
+ * IMPORTANT — choix du champ DB :
+ * La table `financial_documents` n'expose qu'UNE seule colonne de statut,
+ * appelée `status` (typée enum `document_status`). La colonne nommée
+ * littéralement `document_status` mentionnée dans le brief BO-FIN-046
+ * n'existe PAS en base — vérifié sur le schéma actuel
+ * (cf. supabase.d.ts financial_documents.Row).
+ *
+ * L'enum `document_status` ne contient pas de valeur "finalized" : on
+ * considère qu'une facture est figée dès qu'elle est `sent`, `paid` ou
+ * `partially_paid` (sémantique métier "envoyée au client, plus modifiable").
  */
 const FINALIZED_STATUSES = ['sent', 'paid', 'partially_paid'] as const;
 
