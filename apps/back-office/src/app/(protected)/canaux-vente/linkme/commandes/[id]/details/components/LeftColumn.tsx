@@ -119,7 +119,17 @@ export function LeftColumn({
         onSaved={onRefetchOrder}
       />
 
-      <OrderTotalsCard totalHt={order.total_ht} totalTtc={order.total_ttc} />
+      <OrderTotalsCard
+        items={order.items.map(item => ({
+          quantity: item.quantity,
+          unit_price_ht: item.unit_price_ht,
+          tax_rate: item.tax_rate,
+        }))}
+        shippingCostHt={order.shipping_cost_ht ?? 0}
+        handlingCostHt={order.handling_cost_ht ?? 0}
+        insuranceCostHt={order.insurance_cost_ht ?? 0}
+        feesVatRate={order.fees_vat_rate ?? 0.2}
+      />
 
       <CommissionVersementCard enrichedItems={enrichedItems} />
 

@@ -24,6 +24,19 @@ export function useOrderSelect(
 
   const supabase = useMemo(() => createClient(), []);
 
+  // Le tableau `statuses` est recréé par le caller à chaque render (default
+  // value `[...DEFAULT_STATUSES]`, ou prop spreadée). Le mettre en dep d'un
+  // useCallback déclenche une boucle infinie : loadOrders -> setOrders ->
+  // re-render parent -> nouveau tableau -> nouveau useCallback -> useEffect
+  // -> loadOrders. On hash le tableau en string stable via useMemo + JSON
+  // (clé canonique tri+join) et on travaille sur ce hash dans les deps.
+  const statusesKey = useMemo(
+    () => [...statuses].sort().join(','),
+    // ESLint ne sait pas que statuses est intentionnellement traité par hash.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [statuses.join(',')]
+  );
+
   const loadOrders = useCallback(async () => {
     setLoading(true);
     try {
@@ -157,7 +170,10 @@ export function useOrderSelect(
     } finally {
       setLoading(false);
     }
-  }, [supabase, statuses]);
+    // statuses est lu via la closure mais sa stabilité est garantie par
+    // statusesKey (hash string) — voir commentaire ci-dessus.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase, statusesKey]);
 
   const fetchOrderDetails = useCallback(
     async (orderId: string): Promise<IOrderForDocument | null> => {
