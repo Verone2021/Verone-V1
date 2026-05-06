@@ -70,16 +70,13 @@ export function useSalesOrdersWriteMutations({
         if (soNumberResult.error) throw soNumberResult.error;
         const soNumber = soNumberResult.data as unknown as string;
 
-        const totalHT = data.items.reduce(
-          (sum, item) =>
-            sum +
-            item.quantity *
-              item.unit_price_ht *
-              (1 - (item.discount_percentage ?? 0) / 100),
-          0
-        );
-        const totalTTC = totalHT * (1 + 0.2);
-
+        // [BO-ORDER-PERF-001 / BO-FIN-046] total_ht et total_ttc sont
+        // recalculés automatiquement par le trigger DB
+        // recalculate_sales_order_totals dès l'INSERT des items juste après
+        // (formule round-per-line cohérente avec Qonto, factures et devis).
+        // On insère donc 0/0 ici plutôt que de dupliquer le calcul avec un
+        // taux 20% hardcodé qui était incompatible avec les commandes
+        // multi-taux (TVA 5,5% / 10% / DOM-TOM).
         const orderResult = await supabase
           .from('sales_orders')
           .insert([
@@ -101,8 +98,8 @@ export function useSalesOrdersWriteMutations({
               billing_address: data.billing_address,
               payment_terms: data.payment_terms,
               notes: data.notes,
-              total_ht: totalHT,
-              total_ttc: totalTTC,
+              total_ht: 0,
+              total_ttc: 0,
               created_by: (await supabase.auth.getUser()).data.user?.id,
               tax_rate: 0.2,
               shipping_cost_ht: data.shipping_cost_ht ?? 0,
