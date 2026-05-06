@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database, Json } from '@verone/types';
 import { createServerClient } from '@verone/utils/supabase/server';
+import {
+  computeFinancialTotals,
+  FORMULA_VERSION,
+} from '@verone/finance/lib/finance-totals';
+import type {
+  FinancialItem,
+  FinancialFees,
+} from '@verone/finance/lib/finance-totals';
 import type {
   ISalesOrderWithCustomer,
   IInvoiceItem,
@@ -50,17 +58,25 @@ export async function persistFinancialDocument(
     finalizedInvoice,
   } = ctx;
 
-  // [BO-FIN-009 Phase 2] Round-per-line aligné avec trigger DB (R1 zéro discordance Qonto)
-  let totalHt = 0;
-  let totalTtc = 0;
-  for (const item of items) {
-    const lineHt = (item.unit_price_ht ?? 0) * (item.quantity_num ?? 1);
-    const lineTtc =
-      Math.round(lineHt * (1 + (item.vat_rate_num ?? 0.2)) * 100) / 100;
-    totalHt += lineHt;
-    totalTtc += lineTtc;
-  }
-  const totalVat = Math.round((totalTtc - totalHt) * 100) / 100;
+  // [BO-FIN-046] Module finance-totals unique (R1 zéro discordance Qonto)
+  const financialItems: FinancialItem[] = items.map(item => ({
+    quantity: item.quantity_num ?? 1,
+    unit_price_ht: item.unit_price_ht ?? 0,
+    tax_rate: item.vat_rate_num ?? 0,
+    description: item.title,
+  }));
+  const financialFees: FinancialFees = {
+    shipping_cost_ht: 0, // frais déjà inclus dans items via buildInvoiceItems
+    handling_cost_ht: 0,
+    insurance_cost_ht: 0,
+    fees_vat_rate: 0,
+  };
+  const computed = computeFinancialTotals(financialItems, financialFees, {
+    strict: false,
+  });
+  const totalHt = computed.totalHt;
+  const totalTtc = computed.totalTtc;
+  const totalVat = computed.totalVat;
 
   // Déterminer le partner_id (organisation uniquement pour l'instant)
   // [BO-FIN-039] partner_id = org commande TOUJOURS (R5 finance.md)
@@ -147,12 +163,12 @@ export async function persistFinancialDocument(
       localDocumentId = insertedDoc.id;
 
       // INSERT dans financial_document_items
-      // [BO-FIN-009 Phase 2] Round-per-line par item, aligné avec trigger DB
+      // [BO-FIN-046] Round-per-line via module unique + formula_version
       const documentItems = items.map((item, index) => {
         const qty = item.quantity_num ?? 1;
         const unitPriceHt = item.unit_price_ht ?? 0;
-        const vatRate = item.vat_rate_num ?? 0.2;
-        const lineHt = unitPriceHt * qty;
+        const vatRate = item.vat_rate_num ?? 0;
+        const lineHt = Math.round(unitPriceHt * qty * 100) / 100;
         const lineTtc = Math.round(lineHt * (1 + vatRate) * 100) / 100;
         const lineTva = Math.round((lineTtc - lineHt) * 100) / 100;
         return {
@@ -167,6 +183,7 @@ export async function persistFinancialDocument(
           tva_amount: lineTva,
           total_ttc: lineTtc,
           sort_order: index,
+          formula_version: FORMULA_VERSION,
         };
       });
 
