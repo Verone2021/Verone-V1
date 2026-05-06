@@ -61,6 +61,11 @@
       "types": "./src/pdf-templates/index.ts",
       "import": "./src/pdf-templates/index.ts",
       "require": "./src/pdf-templates/index.ts"
+    },
+    "./lib/finance-totals": {
+      "types": "./src/lib/finance-totals/index.ts",
+      "import": "./src/lib/finance-totals/index.ts",
+      "require": "./src/lib/finance-totals/index.ts"
     }
   },
   "devDependencies": {
