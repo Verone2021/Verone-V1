@@ -12,7 +12,7 @@
 
 import { createServerClient } from '@verone/utils/supabase/server';
 
-import type { EmailMessage } from './types';
+import type { EmailMessageEnriched } from './types';
 import { MessagerieClient } from './MessagerieClient';
 
 export const metadata = {
@@ -23,32 +23,41 @@ export const metadata = {
 export default async function MessageriePage() {
   const supabase = await createServerClient();
 
-  // Fetch 50 derniers emails — colonnes explicites, pas de select('*')
+  // Fetch 50 derniers emails — colonnes explicites + jointures organisations/contacts
+  // pour afficher le client identifié (BO-MSG-009).
   const { data, error } = await supabase
     .from('email_messages')
     .select(
-      [
-        'id',
-        'gmail_message_id',
-        'gmail_thread_id',
-        'gmail_history_id',
-        'brand',
-        'to_address',
-        'from_email',
-        'from_name',
-        'subject',
-        'snippet',
-        'body_text',
-        'body_html',
-        'received_at',
-        'is_read',
-        'has_attachments',
-        'raw_headers',
-        'linked_order_id',
-        'linked_order_number',
-        'created_at',
-        'updated_at',
-      ].join(', ')
+      `
+        id,
+        gmail_message_id,
+        gmail_thread_id,
+        gmail_history_id,
+        brand,
+        to_address,
+        from_email,
+        from_name,
+        subject,
+        snippet,
+        body_text,
+        body_html,
+        received_at,
+        is_read,
+        has_attachments,
+        raw_headers,
+        linked_order_id,
+        linked_order_number,
+        linked_organisation_id,
+        linked_contact_id,
+        linked_user_id,
+        replied_at,
+        sent_by_user_id,
+        reply_message_id,
+        created_at,
+        updated_at,
+        organisation:organisations!email_messages_linked_organisation_id_fkey ( id, name ),
+        contact:contacts!email_messages_linked_contact_id_fkey ( id, first_name, last_name )
+      `
     )
     .order('received_at', { ascending: false })
     .limit(50);
@@ -57,7 +66,7 @@ export default async function MessageriePage() {
     console.error('[Messagerie] Erreur fetch emails', error);
   }
 
-  const emails = (data ?? []) as unknown as EmailMessage[];
+  const emails = (data ?? []) as unknown as EmailMessageEnriched[];
 
   // Adresses de surveillance pour le filtre
   const watchAddresses = (process.env.GMAIL_WATCH_ADDRESSES ?? '')
@@ -66,11 +75,6 @@ export default async function MessageriePage() {
     .filter(Boolean);
 
   return (
-    <div className="space-y-6">
-      <MessagerieClient
-        initialEmails={emails}
-        watchAddresses={watchAddresses}
-      />
-    </div>
+    <MessagerieClient initialEmails={emails} watchAddresses={watchAddresses} />
   );
 }

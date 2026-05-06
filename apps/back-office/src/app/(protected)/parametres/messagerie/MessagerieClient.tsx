@@ -12,6 +12,7 @@ import Link from 'next/link';
 
 import {
   Badge,
+  Button,
   ResponsiveDataView,
   ResponsiveToolbar,
   Table,
@@ -22,16 +23,48 @@ import {
   TableRow,
 } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { ExternalLink, Inbox, Paperclip } from 'lucide-react';
+import { ExternalLink, Inbox, Mail, Paperclip } from 'lucide-react';
 
+import { MessagesTabsBar } from '@/components/messages-tabs-bar';
 import { useSupabase } from '@/components/providers/supabase-provider';
 
+import { ComposeMailModal } from './ComposeMailModal';
 import { EmailDetailDrawer } from './EmailDetailDrawer';
-import type { EmailMessage, MessagerieFilters } from './types';
+import { MailsKpiBar } from './MailsKpiBar';
+import type { EmailMessageEnriched, MessagerieFilters } from './types';
+
+type KpiKey = 'unread' | 'replied_today' | 'linked_order' | null;
 
 interface MessagerieClientProps {
-  initialEmails: EmailMessage[];
+  initialEmails: EmailMessageEnriched[];
   watchAddresses: string[];
+}
+
+/**
+ * Format affichable du client identifié (organisation ou contact).
+ * Retourne null si aucun croisement n'a été trouvé sur from_email.
+ */
+function getClientDisplay(email: EmailMessageEnriched): {
+  label: string;
+  href: string;
+} | null {
+  if (email.organisation) {
+    return {
+      label: email.organisation.name,
+      href: `/contacts-organisations/${email.organisation.id}`,
+    };
+  }
+  if (email.contact) {
+    const fullName = [email.contact.first_name, email.contact.last_name]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    return {
+      label: fullName || email.from_email,
+      href: `/contacts-organisations/${email.contact.id}`,
+    };
+  }
+  return null;
 }
 
 function formatDate(iso: string): string {
@@ -61,18 +94,43 @@ export function MessagerieClient({
   watchAddresses,
 }: MessagerieClientProps) {
   const supabase = useSupabase();
-  const [emails, setEmails] = useState<EmailMessage[]>(initialEmails);
+  const [emails, setEmails] = useState<EmailMessageEnriched[]>(initialEmails);
   const [filters, setFilters] = useState<MessagerieFilters>({
     brand: 'all',
     toAddress: '',
     status: 'all',
     search: '',
   });
-  const [selectedEmail, setSelectedEmail] = useState<EmailMessage | null>(null);
+  const [selectedEmail, setSelectedEmail] =
+    useState<EmailMessageEnriched | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [composeReplyTo, setComposeReplyTo] =
+    useState<EmailMessageEnriched | null>(null);
+  const [activeKpi, setActiveKpi] = useState<KpiKey>(null);
+
+  const handleOpenCompose = useCallback(() => {
+    setComposeReplyTo(null);
+    setComposeOpen(true);
+  }, []);
+
+  const handleReply = useCallback((email: EmailMessageEnriched) => {
+    setComposeReplyTo(email);
+    setComposeOpen(true);
+  }, []);
+
+  const handleCloseCompose = useCallback(() => {
+    setComposeOpen(false);
+  }, []);
 
   // Filtrage local
   const filteredEmails = useMemo(() => {
+    const now = new Date();
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
     return emails.filter(email => {
       if (filters.brand !== 'all' && email.brand !== filters.brand)
         return false;
@@ -89,12 +147,19 @@ export function MessagerieClient({
         const inSnippet = email.snippet?.toLowerCase().includes(q) ?? false;
         if (!inSubject && !inFrom && !inSnippet) return false;
       }
+      // Filtre KPI
+      if (activeKpi === 'unread' && email.is_read) return false;
+      if (activeKpi === 'linked_order' && !email.linked_order_id) return false;
+      if (activeKpi === 'replied_today') {
+        if (!email.replied_at) return false;
+        if (new Date(email.replied_at) < startOfToday) return false;
+      }
       return true;
     });
-  }, [emails, filters]);
+  }, [emails, filters, activeKpi]);
 
   const handleOpenEmail = useCallback(
-    (email: EmailMessage) => {
+    (email: EmailMessageEnriched) => {
       setSelectedEmail(email);
       setDrawerOpen(true);
 
@@ -119,7 +184,7 @@ export function MessagerieClient({
   );
 
   const handleToggleRead = useCallback(
-    (email: EmailMessage) => {
+    (email: EmailMessageEnriched) => {
       const newValue = !email.is_read;
       void supabase
         .from('email_messages')
@@ -148,7 +213,7 @@ export function MessagerieClient({
   }, []);
 
   // Rendu d'une ligne (desktop)
-  const renderTableRow = (email: EmailMessage) => (
+  const renderTableRow = (email: EmailMessageEnriched) => (
     <TableRow
       key={email.id}
       className={cn(
@@ -174,6 +239,24 @@ export function MessagerieClient({
             </span>
           )}
         </div>
+      </TableCell>
+      <TableCell className="hidden md:table-cell min-w-[140px]">
+        {(() => {
+          const client = getClientDisplay(email);
+          if (!client) {
+            return <span className="text-xs text-gray-400">—</span>;
+          }
+          return (
+            <Link
+              href={client.href}
+              className="text-sm text-blue-600 hover:underline truncate max-w-[180px] inline-block"
+              onClick={e => e.stopPropagation()}
+              title={client.label}
+            >
+              {client.label}
+            </Link>
+          );
+        })()}
       </TableCell>
       <TableCell className="min-w-[200px]">
         <div className="flex items-center gap-1.5">
@@ -212,7 +295,7 @@ export function MessagerieClient({
   );
 
   // Rendu d'une carte (mobile)
-  const renderEmailCard = (email: EmailMessage) => (
+  const renderEmailCard = (email: EmailMessageEnriched) => (
     <div
       key={email.id}
       className={cn(
@@ -235,6 +318,19 @@ export function MessagerieClient({
       >
         {email.from_name ?? email.from_email}
       </p>
+      {(() => {
+        const client = getClientDisplay(email);
+        return client ? (
+          <Link
+            href={client.href}
+            className="text-xs text-blue-600 hover:underline truncate inline-block mb-1"
+            onClick={e => e.stopPropagation()}
+            title={client.label}
+          >
+            {client.label}
+          </Link>
+        ) : null;
+      })()}
       <p className="text-sm text-gray-600 truncate mb-1">
         {email.subject ?? '(sans objet)'}
       </p>
@@ -260,7 +356,15 @@ export function MessagerieClient({
 
   return (
     <>
-      <div className="space-y-4">
+      <MessagesTabsBar />
+      <div className="space-y-4 px-4 sm:px-6 py-6">
+        {/* Mini-dashboard KPIs */}
+        <MailsKpiBar
+          emails={emails}
+          activeKpi={activeKpi}
+          onKpiClick={setActiveKpi}
+        />
+
         {/* Toolbar */}
         <ResponsiveToolbar
           title="Messagerie"
@@ -268,6 +372,12 @@ export function MessagerieClient({
             unreadCount > 0
               ? `${unreadCount} non-lu${unreadCount > 1 ? 's' : ''}`
               : `${emails.length} email${emails.length > 1 ? 's' : ''}`
+          }
+          primaryAction={
+            <Button onClick={handleOpenCompose}>
+              <Mail className="h-4 w-4 mr-2" />
+              Composer
+            </Button>
           }
           search={
             <input
@@ -334,7 +444,7 @@ export function MessagerieClient({
         />
 
         {/* Liste */}
-        <ResponsiveDataView<EmailMessage>
+        <ResponsiveDataView<EmailMessageEnriched>
           data={filteredEmails}
           loading={false}
           emptyMessage={
@@ -357,6 +467,9 @@ export function MessagerieClient({
                   <TableRow>
                     <TableHead className="w-[90px]">Marque</TableHead>
                     <TableHead className="min-w-[160px]">De</TableHead>
+                    <TableHead className="hidden md:table-cell min-w-[140px]">
+                      Client
+                    </TableHead>
                     <TableHead className="min-w-[200px]">Sujet</TableHead>
                     <TableHead className="hidden lg:table-cell w-[140px]">
                       Reçu le
@@ -382,6 +495,14 @@ export function MessagerieClient({
         open={drawerOpen}
         onClose={handleCloseDrawer}
         onToggleRead={handleToggleRead}
+        onReply={handleReply}
+      />
+
+      {/* Modal compose / reply */}
+      <ComposeMailModal
+        open={composeOpen}
+        onClose={handleCloseCompose}
+        replyTo={composeReplyTo}
       />
     </>
   );

@@ -11,14 +11,26 @@ import {
 } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { Check, ChevronDown, Layers } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 import { useActiveBrand } from '@/hooks/use-active-brand';
 
 const ALL_BRANDS_LABEL = 'Toutes les marques';
 
+// Routes où le filtre marque global n'a pas de sens (filtre déjà intégré dans la liste).
+const HIDDEN_ON_PATHS = ['/parametres/messagerie', '/messages/mails'];
+
 export function BrandSwitcher() {
+  const pathname = usePathname();
   const { activeBrand, brands, isAllBrands, setActiveBrand, isLoading } =
     useActiveBrand();
+
+  if (
+    pathname &&
+    HIDDEN_ON_PATHS.some(p => pathname === p || pathname.startsWith(`${p}/`))
+  ) {
+    return null;
+  }
 
   if (isLoading) {
     return (

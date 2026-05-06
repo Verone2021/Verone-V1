@@ -3,7 +3,11 @@
  * EmailMessage vient de @verone/types (email-messages.ts).
  */
 
-export type { EmailMessage, EmailBrand } from '@verone/types';
+export type {
+  EmailMessage,
+  EmailMessageEnriched,
+  EmailBrand,
+} from '@verone/types';
 
 export type EmailMessageBrand = 'verone' | 'linkme';
 

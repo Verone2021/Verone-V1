@@ -18,6 +18,16 @@ export const GMAIL_SCOPES = [
   'https://www.googleapis.com/auth/gmail.readonly',
 ] as const;
 
+/**
+ * Scopes utilisés pour l'envoi de mails depuis le BO (BO-MSG-010B).
+ * Doit être autorisé séparément dans la Domain-Wide Delegation Workspace
+ * (admin.google.com → Sécurité → API controls → DWD → ajouter le client_id
+ * existant avec ce scope).
+ */
+export const GMAIL_SEND_SCOPES = [
+  'https://www.googleapis.com/auth/gmail.send',
+] as const;
+
 /** Boîtes Gmail individuelles surveillées (compte utilisateur, pas alias/groupe). */
 export function getWatchAddresses(): string[] {
   const raw = process.env.GMAIL_WATCH_ADDRESSES ?? '';
