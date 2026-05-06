@@ -122,6 +122,10 @@ export interface Invoice {
   partner_id?: string | null;
   partner_legal_name?: string | null;
   partner_trade_name?: string | null;
+  /** [BO-FIN-046 Étape 6] Timestamp création document (financial_documents.created_at) */
+  document_created_at?: string | null;
+  /** [BO-FIN-046 Étape 6] Timestamp dernière modification commande (sales_orders.updated_at) */
+  order_updated_at?: string | null;
 }
 
 // =====================================================================

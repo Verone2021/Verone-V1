@@ -8,19 +8,20 @@
  * UNIQUEMENT si le document est en `draft` ET que la commande a été modifiée
  * après la création du document (out-of-sync).
  *
- * Au clic, ouvre `RegenerateDocumentConfirmModal` qui laisse l'utilisateur
- * choisir quelles `customLines` et `notes` préserver, puis POST vers la route
- * de régénération existante (`/api/qonto/{quotes|invoices}/by-order/[id]/regenerate[-proforma]`).
+ * [BO-FIN-046 Étape 6.2] Cascade devis ↔ facture :
+ * Si la commande a aussi un document du type opposé (draft), propose
+ * "Régénérer les deux" comme option par défaut.
  *
  * Zéro modification du workflow existant — composant additif uniquement.
  */
 
 import { useCallback, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { RefreshCw } from 'lucide-react';
 
 import { Button } from '@verone/ui';
 import { useToast } from '@verone/common/hooks';
+import { createClient } from '@verone/utils/supabase/client';
 
 import {
   DocumentOutOfSyncBadge,
@@ -61,6 +62,36 @@ export interface DocumentResyncActionProps {
 }
 
 // ---------------------------------------------------------------------------
+// Helper — appel API de régénération unitaire
+// ---------------------------------------------------------------------------
+
+async function regenerateDocument(
+  documentType: 'quote' | 'proforma',
+  orderId: string,
+  preservedCustomLines: ICustomLineToPreserve[],
+  preservedNotes: string
+): Promise<{ success: boolean; error?: string; message?: string }> {
+  const path =
+    documentType === 'quote'
+      ? `/api/qonto/quotes/by-order/${orderId}/regenerate`
+      : `/api/qonto/invoices/by-order/${orderId}/regenerate-proforma`;
+
+  const response = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      preservedCustomLines,
+      preservedNotes: preservedNotes || undefined,
+    }),
+  });
+  return response.json() as Promise<{
+    success: boolean;
+    error?: string;
+    message?: string;
+  }>;
+}
+
+// ---------------------------------------------------------------------------
 // Composant
 // ---------------------------------------------------------------------------
 
@@ -87,55 +118,84 @@ export function DocumentResyncAction({
     documentStatus === 'draft' &&
     isDocumentOutOfSync(orderUpdatedAt, documentCreatedAt);
 
+  // [BO-FIN-046 Étape 6.2] Détection document compagnon (type opposé, draft)
+  const companionType =
+    documentType === 'quote' ? 'customer_invoice' : 'customer_quote';
+  const { data: hasCompanion = false } = useQuery({
+    queryKey: ['document-companion-draft', orderId, documentType],
+    queryFn: async (): Promise<boolean> => {
+      if (!orderId || !outOfSync) return false;
+      const supabase = createClient();
+      const { count } = await supabase
+        .from('financial_documents')
+        .select('id', { count: 'exact', head: true })
+        .eq('sales_order_id', orderId)
+        .eq('document_type', companionType)
+        .eq('status', 'draft')
+        .is('deleted_at', null);
+      return (count ?? 0) > 0;
+    },
+    staleTime: 30_000,
+    enabled: outOfSync && !!orderId,
+  });
+
+  const invalidateAll = useCallback(async () => {
+    const defaultKeys =
+      documentType === 'quote'
+        ? [['quotes-by-order', orderId]]
+        : [['invoices-by-order', orderId]];
+    const allKeys = [...defaultKeys, ...(invalidateQueryKeys ?? [])];
+    await Promise.all(
+      allKeys.map(key => queryClient.invalidateQueries({ queryKey: key }))
+    );
+  }, [documentType, orderId, invalidateQueryKeys, queryClient]);
+
   const handleConfirm = useCallback(
     async (
       preservedCustomLines: ICustomLineToPreserve[],
-      preservedNotes: string
+      preservedNotes: string,
+      cascade = false
     ): Promise<void> => {
       setIsLoading(true);
       try {
-        const path =
-          documentType === 'quote'
-            ? `/api/qonto/quotes/by-order/${orderId}/regenerate`
-            : `/api/qonto/invoices/by-order/${orderId}/regenerate-proforma`;
-
-        const response = await fetch(path, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            preservedCustomLines,
-            preservedNotes: preservedNotes || undefined,
-          }),
-        });
-
-        const data = (await response.json()) as {
-          success?: boolean;
-          error?: string;
-          message?: string;
-          newRevisionNumber?: number;
-        };
-
-        if (!response.ok || !data.success) {
+        const data = await regenerateDocument(
+          documentType,
+          orderId,
+          preservedCustomLines,
+          preservedNotes
+        );
+        if (!data.success)
           throw new Error(data.error ?? 'Echec de la re-synchronisation');
+
+        // Cascade : régénérer aussi le document compagnon
+        if (cascade && hasCompanion) {
+          const companionDocType =
+            documentType === 'quote' ? 'proforma' : 'quote';
+          const cascadeData = await regenerateDocument(
+            companionDocType,
+            orderId,
+            [],
+            ''
+          );
+          if (!cascadeData.success) {
+            toast({
+              title: 'Attention',
+              description:
+                "Le document principal a été régénéré, mais l'autre document n'a pas pu être mis à jour : " +
+                (cascadeData.error ?? 'erreur inconnue'),
+              variant: 'default',
+            });
+          }
         }
 
         toast({
           title: 'Re-synchronise',
           description:
             data.message ??
-            `${documentType === 'quote' ? 'Devis' : 'Proforma'} regenere avec succes.`,
+            `${documentType === 'quote' ? 'Devis' : 'Proforma'} regenere avec succes${cascade && hasCompanion ? ' (les deux documents)' : ''}.`,
         });
 
-        // Invalider les query keys fournis + keys par défaut
-        const defaultKeys =
-          documentType === 'quote'
-            ? [['quotes-by-order', orderId]]
-            : [['invoices-by-order', orderId]];
-        const allKeys = [...defaultKeys, ...(invalidateQueryKeys ?? [])];
-        await Promise.all(
-          allKeys.map(key => queryClient.invalidateQueries({ queryKey: key }))
-        );
-
+        await invalidateAll();
         setModalOpen(false);
         onSuccess?.();
       } catch (error) {
@@ -155,7 +215,7 @@ export function DocumentResyncAction({
         setIsLoading(false);
       }
     },
-    [documentType, orderId, toast, queryClient, invalidateQueryKeys, onSuccess]
+    [documentType, orderId, hasCompanion, toast, invalidateAll, onSuccess]
   );
 
   if (!outOfSync) return null;
@@ -171,6 +231,22 @@ export function DocumentResyncAction({
           documentStatus={documentStatus}
         />
       )}
+      {/* [BO-FIN-046 6.2] Bouton cascade si document compagnon détecté */}
+      {hasCompanion && (
+        <Button
+          variant="outline"
+          size={buttonSize}
+          onClick={() => {
+            void handleConfirm([], existingNotes, true);
+          }}
+          className="gap-1.5 border-orange-400 text-orange-800 hover:bg-orange-50 font-medium"
+          title="Régénérer ce document ET le document lié (devis/proforma) en une seule action."
+          disabled={isLoading}
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          Régénérer les deux
+        </Button>
+      )}
       <Button
         variant="outline"
         size={buttonSize}
@@ -179,7 +255,7 @@ export function DocumentResyncAction({
         title="La commande a ete modifiee apres la creation de ce document. Cliquez pour regenerer avec les donnees actuelles."
       >
         <RefreshCw className="h-3.5 w-3.5" />
-        Re-synchroniser
+        {hasCompanion ? 'Régénérer celui-ci' : 'Re-synchroniser'}
       </Button>
 
       <RegenerateDocumentConfirmModal
@@ -189,7 +265,7 @@ export function DocumentResyncAction({
         existingCustomLines={existingCustomLines}
         existingNotes={existingNotes}
         onConfirm={(lines, notes) => {
-          void handleConfirm(lines, notes);
+          void handleConfirm(lines, notes, false);
         }}
         isLoading={isLoading}
       />

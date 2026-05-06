@@ -12,7 +12,13 @@ type DocWithExtras = {
   amount_paid?: number | null;
   total_ttc?: number | null;
   partner_id?: string | null;
-  sales_orders?: { order_number: string | null } | null;
+  /** [BO-FIN-046 Étape 6] Timestamp création document pour détection out-of-sync */
+  created_at?: string | null;
+  sales_orders?: {
+    order_number: string | null;
+    /** [BO-FIN-046 Étape 6] Timestamp dernière modification commande */
+    updated_at: string | null;
+  } | null;
   organisations?: {
     legal_name: string | null;
     trade_name: string | null;
@@ -33,8 +39,9 @@ export async function enrichInvoicesList(
     // Note: local_pdf_path sera disponible après migration 20260122_005
     const { data: localDocs } = await supabase
       .from('financial_documents')
+      // [BO-FIN-046 Étape 6] Ajout created_at + sales_orders.updated_at pour détection out-of-sync
       .select(
-        'id, qonto_invoice_id, deleted_at, sales_order_id, status, amount_paid, partner_id, total_ttc, sales_orders!financial_documents_sales_order_id_fkey(order_number), organisations!financial_documents_partner_id_fkey(legal_name, trade_name)'
+        'id, qonto_invoice_id, deleted_at, sales_order_id, status, amount_paid, partner_id, total_ttc, created_at, sales_orders!financial_documents_sales_order_id_fkey(order_number, updated_at), organisations!financial_documents_partner_id_fkey(legal_name, trade_name)'
       )
       .in('qonto_invoice_id', qontoInvoiceIds);
 
@@ -59,6 +66,9 @@ export async function enrichInvoicesList(
               partner_id: doc.partner_id ?? null,
               partner_legal_name: doc.organisations?.legal_name ?? null,
               partner_trade_name: doc.organisations?.trade_name ?? null,
+              // [BO-FIN-046 Étape 6] Out-of-sync detection fields
+              document_created_at: doc.created_at ?? null,
+              order_updated_at: doc.sales_orders?.updated_at ?? null,
             };
           }
           return acc;
@@ -94,6 +104,9 @@ export async function enrichInvoicesList(
         partner_id: localData?.partner_id ?? null,
         partner_legal_name: localData?.partner_legal_name ?? null,
         partner_trade_name: localData?.partner_trade_name ?? null,
+        // [BO-FIN-046 Étape 6] Out-of-sync detection
+        document_created_at: localData?.document_created_at ?? null,
+        order_updated_at: localData?.order_updated_at ?? null,
       };
     }
   );

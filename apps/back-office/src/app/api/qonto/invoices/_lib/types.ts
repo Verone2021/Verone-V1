@@ -93,4 +93,8 @@ export interface ILocalDocData {
   partner_id: string | null;
   partner_legal_name: string | null;
   partner_trade_name: string | null;
+  /** [BO-FIN-046 Étape 6] Création document (pour détection out-of-sync) */
+  document_created_at?: string | null;
+  /** [BO-FIN-046 Étape 6] Dernière modification commande (pour détection out-of-sync) */
+  order_updated_at?: string | null;
 }
