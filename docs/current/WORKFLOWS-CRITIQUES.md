@@ -253,6 +253,64 @@ Couvert partiellement par `workflow-stock-expeditions.spec.ts`. Test dedie a cre
 
 ---
 
+## Workflow 9 — Modification commande validée → cascade documents liés (CRITIQUE)
+
+**Niveau** : Critique
+**Frequence** : Plusieurs fois par semaine
+**Sprint de creation** : BO-FIN-046 (2026-05-06)
+
+### Contexte
+
+Quand une commande a déjà un devis ou une proforma en brouillon liés, et qu'on modifie la commande (dévalidation → modification → revalidation), les documents doivent proposer une resynchronisation pour rester cohérents avec les nouveaux montants. Sans ça, le devis peut afficher 1 000 € alors que la commande est à 1 200 € après modification.
+
+### Parcours : Modifier une commande validée avec documents liés
+
+```
+/commandes/clients → detail commande → Dévalider → Modifier items/frais → Revalider
+→ Page /factures ou /devis → Badge "Non synchronisé" → Cliquer Re-synchroniser
+→ Modal confirmation cascade → Régénérer les deux documents
+```
+
+### Étapes détaillées
+
+| Étape | Action                                        | Composant                 | Point critique                             |
+| ----- | --------------------------------------------- | ------------------------- | ------------------------------------------ |
+| 1     | Commande validée avec devis + proforma drafts | `/commandes/clients/[id]` | Documents liés visibles                    |
+| 2     | Clic "Dévalider"                              | `OrderDevalidateBanner`   | Trigger DB rollback stock prévisionnel     |
+| 3     | Modifier items ou frais                       | `SalesOrderFormModal`     | Guard draft-only respecté                  |
+| 4     | Revalider la commande                         | Bouton validation         | Triggers DB recalculent totaux             |
+| 5     | Naviguer vers /factures                       | `InvoicesTable`           | **Badge orange "Non synchronisé" visible** |
+| 6     | Cliquer Re-synchroniser                       | `DocumentResyncAction`    | Modal cascade proposé                      |
+| 7     | Confirmer "Régénérer les deux"                | Modal confirmation        | Appels API séquentiels                     |
+| 8     | Vérification finale                           | DB + UI                   | Totaux identiques sur 4 surfaces           |
+
+### Règle de cohérence des 4 surfaces
+
+Après régénération, ces 4 valeurs doivent être **strictement identiques** (zéro centime d'écart) :
+
+1. `sales_orders.total_ttc` (DB)
+2. Total TTC affiché dans le modal devis (`QuoteTotalsSection`)
+3. Total TTC affiché dans le modal facture (`InvoiceTotalsSection`)
+4. Total TTC envoyé à Qonto (payload `createClientInvoice` / `createClientQuote`)
+
+### Chemins qui déclenchent ce workflow
+
+- Modification items (quantité, prix, remise) sur commande draft → revalidation
+- Modification frais (livraison, manutention, assurance) sur commande draft ou validated
+- Changement `fees_vat_rate`
+
+### Blocages connus
+
+- Frais figés si facture finalisée/envoyée/payée liée (R6 finance.md)
+- Items figés si commande ≠ draft (dévalider d'abord)
+- Régénération de document finalisé interdite (HTTP 409)
+
+### Test E2E
+
+`tests/e2e/finance-totals-coherence.spec.ts` — couvre ce workflow sur 5 commandes types.
+
+---
+
 ## Regles de mise a jour
 
 1. **Tout sprint** touchant a un workflow critique doit mettre a jour ce document
@@ -262,4 +320,4 @@ Couvert partiellement par `workflow-stock-expeditions.spec.ts`. Test dedie a cre
 
 ---
 
-**Dernier audit** : 2026-04-16 par Claude (creation initiale suite a mission Playwright)
+**Dernier audit** : 2026-05-06 par Claude (ajout Workflow 9 — BO-FIN-046)
