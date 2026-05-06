@@ -265,14 +265,24 @@ export function useOrderDetailsPage() {
     if (!editingStep) return;
     try {
       await updateDetails.mutateAsync({ orderId, updates: editForm });
+      // Maj locale optimiste — l'édition d'un step contact (responsable /
+      // billing / delivery_address / delivery_options) ne touche que la row
+      // sales_order_linkme_details. Aucun trigger métier (stock, commission,
+      // Qonto, Packlink). Pas besoin de recharger toute la commande.
+      const patch = editForm;
+      setOrder(prev =>
+        prev?.linkmeDetails
+          ? {
+              ...prev,
+              linkmeDetails: {
+                ...prev.linkmeDetails,
+                ...patch,
+              } as typeof prev.linkmeDetails,
+            }
+          : prev
+      );
       setEditingStep(null);
       setEditForm({});
-      void fetchOrder().catch(err => {
-        console.error(
-          '[LinkMeOrderDetails] Refetch after save edit failed:',
-          err
-        );
-      });
     } catch (err) {
       console.error('Erreur mise à jour:', err);
     }
@@ -442,12 +452,19 @@ export function useOrderDetailsPage() {
       delivery_city: useShipping ? org.shipping_city : org.city,
     };
     await updateDetails.mutateAsync({ orderId, updates });
-    void fetchOrder().catch((err: unknown) => {
-      console.error(
-        '[LinkMeOrderDetails] Refetch after use org address failed:',
-        err
-      );
-    });
+    // Maj locale optimiste — la copie d'adresse organisation vers la livraison
+    // ne touche que sales_order_linkme_details. Aucun trigger métier impacté.
+    setOrder(prev =>
+      prev?.linkmeDetails
+        ? {
+            ...prev,
+            linkmeDetails: {
+              ...prev.linkmeDetails,
+              ...updates,
+            } as typeof prev.linkmeDetails,
+          }
+        : prev
+    );
   };
 
   const handleOpenContactDialog = (
