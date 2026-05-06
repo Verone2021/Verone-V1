@@ -2542,37 +2542,49 @@ export type Database = {
       email_templates: {
         Row: {
           active: boolean | null;
+          body_text: string | null;
+          brand: string | null;
           category: string | null;
           created_at: string | null;
+          default_alias: string | null;
           html_body: string;
           id: string;
           name: string;
           slug: string;
           subject: string;
+          tags: string[];
           updated_at: string | null;
           variables: Json | null;
         };
         Insert: {
           active?: boolean | null;
+          body_text?: string | null;
+          brand?: string | null;
           category?: string | null;
           created_at?: string | null;
+          default_alias?: string | null;
           html_body: string;
           id?: string;
           name: string;
           slug: string;
           subject: string;
+          tags?: string[];
           updated_at?: string | null;
           variables?: Json | null;
         };
         Update: {
           active?: boolean | null;
+          body_text?: string | null;
+          brand?: string | null;
           category?: string | null;
           created_at?: string | null;
+          default_alias?: string | null;
           html_body?: string;
           id?: string;
           name?: string;
           slug?: string;
           subject?: string;
+          tags?: string[];
           updated_at?: string | null;
           variables?: Json | null;
         };
