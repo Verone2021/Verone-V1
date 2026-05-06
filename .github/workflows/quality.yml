@@ -5,6 +5,7 @@ on:
     branches: [main, staging, integration/*]
   push:
     branches: [main, staging]
+  workflow_dispatch:
 
 permissions:
   actions: write
@@ -176,6 +177,18 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
+      # ---- Upload back-office .next pour les jobs E2E ----
+      # Évite que chaque job E2E refasse un `next build` (~5 min) alors que
+      # ce job a déjà produit le bundle. Pattern senior shared-build.
+      - name: Upload back-office .next artifact (for E2E jobs)
+        if: needs.detect-changes.outputs.e2e-needed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: back-office-build
+          path: apps/back-office/.next
+          retention-days: 1
+          include-hidden-files: true
+
       # ---- PR comment on failure ----
       - name: Comment PR on Failure
         if: failure() && github.event_name == 'pull_request'
@@ -197,73 +210,45 @@ jobs:
           echo "Apps checked: **${{ steps.flags.outputs.apps }}**" >> $GITHUB_STEP_SUMMARY
 
   # ----------------------------------------------------------------
-  # 3. E2E Smoke tests — détecte les régressions runtime invisibles
-  #    au type-check (SELECT SQL manquant, Fragment sans key, useEffect
-  #    infini, props optionnels non propagés, etc.).
-  #    Gate bloquant : si un smoke échoue, le merge est refusé.
+  # 3a. E2E Niveau 1 — smoke-golden
+  #     Gate PR : 1 spec, ~30 sec. Valide le golden path minimal.
+  #     Lancé sur toute PR UI (e2e-needed == true).
+  #     Continue-on-error : informationnel (non-bloquant au merge).
   # ----------------------------------------------------------------
-  e2e-smoke:
-    name: E2E Smoke (Playwright — back-office)
+  smoke-golden:
+    name: E2E smoke-golden (Niveau 1 — ~30 sec)
     needs: [detect-changes, quality]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    # Non-blocking : le smoke E2E reste informationnel. Une régression runtime
-    # est signalée (commentaire PR + artifact) mais n'empêche pas le merge.
-    # Les régressions critiques sont rattrapées par type-check/build et par le
-    # diff de review. Voir INFRA-CI-001.
-    #
-    # Skip conditionnel sur PR backend pure : si aucun fichier UI/Playwright
-    # n'est touché (output `e2e-needed` du job detect-changes), le job exécute
-    # uniquement un step no-op et reporte "success" en quelques secondes.
-    # Pattern emprunté à supabase-types-drift pour satisfaire les required
-    # status checks de la branch protection même quand le job ne fait rien.
+    timeout-minutes: 5
     continue-on-error: true
+    if: needs.detect-changes.outputs.e2e-needed == 'true' && github.event_name == 'pull_request'
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-      # Creds Supabase (déjà disponibles dans les secrets du repo)
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      # Creds utilisateur de test (à configurer dans GitHub Secrets)
-      E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
-      E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
-      E2E_NEEDED: ${{ needs.detect-changes.outputs.e2e-needed }}
+      E2E_USER_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+      E2E_USER_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
 
     steps:
-      # No-op success quand aucun fichier UI/Playwright n'est touché.
-      # Garantit que le check est reporté comme "success" (pas "skipped") afin
-      # de satisfaire la branch protection sur les PRs backend pures.
-      - name: No-op (no UI change in this PR)
-        if: env.E2E_NEEDED != 'true'
-        run: |
-          echo "## ✅ Pas de changement UI dans cette PR" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Aucun fichier UI back-office, composant partagé (@verone/ui, forms, finance, orders, hooks), middleware, config Next ou test Playwright n'a été modifié." >> $GITHUB_STEP_SUMMARY
-          echo "Le smoke E2E est inutile pour cette PR — pas d'exécution nécessaire." >> $GITHUB_STEP_SUMMARY
-
       - name: Checkout code
-        if: env.E2E_NEEDED == 'true'
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        if: env.E2E_NEEDED == 'true'
         uses: pnpm/action-setup@v2
         with:
           version: 10.13.1
 
       - name: Setup Node.js
-        if: env.E2E_NEEDED == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
 
       - name: Install dependencies
-        if: env.E2E_NEEDED == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Cache Playwright browsers
-        if: env.E2E_NEEDED == 'true'
         id: playwright-cache
         uses: actions/cache@v4
         with:
@@ -272,72 +257,48 @@ jobs:
           restore-keys: playwright-${{ runner.os }}-
 
       - name: Install Playwright browsers (chromium only — cache miss)
-        if: env.E2E_NEEDED == 'true' && steps.playwright-cache.outputs.cache-hit != 'true'
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Install Playwright system deps (cache hit)
-        if: env.E2E_NEEDED == 'true' && steps.playwright-cache.outputs.cache-hit == 'true'
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium
 
-      - name: Cache Next.js build
-        if: env.E2E_NEEDED == 'true'
-        uses: actions/cache@v5
+      - name: Download back-office .next artifact (built by quality job)
+        uses: actions/download-artifact@v4
         with:
-          path: apps/back-office/.next/cache
-          key: ${{ runner.os }}-nextjs-bo-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/back-office/**/*.ts', 'apps/back-office/**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-bo-${{ hashFiles('pnpm-lock.yaml') }}-
-            ${{ runner.os }}-nextjs-bo-
-
-      - name: Build back-office
-        if: env.E2E_NEEDED == 'true'
-        run: pnpm --filter @verone/back-office build
-        env:
-          NODE_OPTIONS: --max-old-space-size=8192
+          name: back-office-build
+          path: apps/back-office/.next
 
       - name: Start back-office (background)
-        if: env.E2E_NEEDED == 'true'
         run: |
           pnpm --filter @verone/back-office start > /tmp/next-start.log 2>&1 &
           echo $! > /tmp/next-start.pid
-          # Attendre que le serveur réponde (max 60 s)
           for i in {1..60}; do
             if curl -sf http://localhost:3000/login > /dev/null; then
-              echo "✅ Back-office up on :3000"
+              echo "Back-office up on :3000"
               break
             fi
             sleep 1
           done
 
-      - name: Run smoke tests (smoke-finance-modals + smoke-critical-workflows)
-        if: env.E2E_NEEDED == 'true'
-        run: |
-          pnpm exec playwright test \
-            tests/e2e/smoke/smoke-finance-modals.spec.ts \
-            tests/e2e/smoke/smoke-critical-workflows.spec.ts \
-            tests/e2e/smoke/smoke-stock.spec.ts \
-            tests/e2e/smoke/smoke-commandes.spec.ts \
-            tests/e2e/smoke/smoke-finance.spec.ts \
-            tests/e2e/smoke/smoke-linkme.spec.ts \
-            tests/e2e/smoke/smoke-canaux.spec.ts \
-            tests/e2e/smoke/smoke-produits.spec.ts \
-            tests/e2e/smoke/smoke-contacts.spec.ts \
-            --reporter=list
+      - name: Run smoke golden (1 spec, ~30 sec)
+        run: pnpm exec playwright test tests/e2e/smoke/smoke-golden.spec.ts --reporter=list
         env:
           BASE_URL: http://localhost:3000
 
       - name: Upload Playwright report on failure
-        if: failure() && env.E2E_NEEDED == 'true'
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-smoke-golden
           path: |
             tests/reports/
             test-results/
           retention-days: 7
 
       - name: Comment PR on smoke failure
-        if: failure() && env.E2E_NEEDED == 'true' && github.event_name == 'pull_request'
+        if: failure() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -346,14 +307,228 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `## ❌ E2E Smoke Tests Failed\n\nUn parcours utilisateur critique est cassé (console error ou warning React critique détecté au runtime).\n\nVoir le [workflow log](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) et le Playwright report attaché.\n\n**Reproduire en local :**\n\`\`\`bash\npnpm --filter @verone/back-office build\npnpm --filter @verone/back-office start &\npnpm exec playwright test tests/e2e/smoke/smoke-finance-modals.spec.ts tests/e2e/smoke/smoke-critical-workflows.spec.ts\n\`\`\``
+              body: `## ❌ E2E Smoke Golden Échoué (Niveau 1)\n\nLe parcours utilisateur de base est cassé : dashboard → commandes → LinkMe.\n\nSpec : \`tests/e2e/smoke/smoke-golden.spec.ts\`\n\nVoir le [log du job smoke-golden](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) pour le détail.`
             });
 
-      - name: Smoke summary
-        if: success() && env.E2E_NEEDED == 'true'
+  # ----------------------------------------------------------------
+  # 3b. E2E Niveau 2 — smoke-domaine (sharded 4 runners)
+  #     Lance les 9 specs smoke domaine en parallèle.
+  #     Sur PR UI + push main. ~2 min wall-clock.
+  #     Dépend de smoke-golden (si golden fail → domaine skip).
+  # ----------------------------------------------------------------
+  smoke-domaine:
+    name: E2E smoke-domaine shard ${{ matrix.shard }}/4 (Niveau 2)
+    needs: [detect-changes, quality, smoke-golden]
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    continue-on-error: true
+    if: >
+      needs.detect-changes.outputs.e2e-needed == 'true' &&
+      (github.event_name == 'pull_request' || github.ref == 'refs/heads/main')
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      E2E_USER_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+      E2E_USER_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10.13.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: playwright-${{ runner.os }}-
+
+      - name: Install Playwright browsers (chromium only — cache miss)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install Playwright system deps (cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
+
+      - name: Download back-office .next artifact (built by quality job)
+        uses: actions/download-artifact@v4
+        with:
+          name: back-office-build
+          path: apps/back-office/.next
+
+      - name: Start back-office (background)
         run: |
-          echo "## ✅ E2E Smoke Tests Passed" >> $GITHUB_STEP_SUMMARY
-          echo "Parcours critiques back-office validés sans console error ni warning React critique." >> $GITHUB_STEP_SUMMARY
+          pnpm --filter @verone/back-office start > /tmp/next-start.log 2>&1 &
+          echo $! > /tmp/next-start.pid
+          for i in {1..60}; do
+            if curl -sf http://localhost:3000/login > /dev/null; then
+              echo "Back-office up on :3000"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Run smoke domaine (shard ${{ matrix.shard }}/4)
+        run: |
+          pnpm exec playwright test \
+            --shard=${{ matrix.shard }}/4 \
+            tests/e2e/smoke/smoke-finance.spec.ts \
+            tests/e2e/smoke/smoke-finance-modals.spec.ts \
+            tests/e2e/smoke/smoke-commandes.spec.ts \
+            tests/e2e/smoke/smoke-stock.spec.ts \
+            tests/e2e/smoke/smoke-canaux.spec.ts \
+            tests/e2e/smoke/smoke-produits.spec.ts \
+            tests/e2e/smoke/smoke-contacts.spec.ts \
+            tests/e2e/smoke/smoke-linkme.spec.ts \
+            tests/e2e/smoke/smoke-ambassador.spec.ts \
+            --reporter=list
+        env:
+          BASE_URL: http://localhost:3000
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-smoke-domaine-shard-${{ matrix.shard }}
+          path: |
+            tests/reports/
+            test-results/
+          retention-days: 7
+
+      - name: Comment PR on smoke failure
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ❌ E2E Smoke Domaine Échoué (Niveau 2 — shard ${{ matrix.shard }}/4)\n\nUne régression a été détectée dans le shard ${{ matrix.shard }}/4 des tests domaine.\n\nVoir le [log du job smoke-domaine](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) et le Playwright report en artifact \`playwright-report-smoke-domaine-shard-${{ matrix.shard }}\`.`
+            });
+
+  # ----------------------------------------------------------------
+  # 3c. E2E Niveau 3 — e2e-full (sharded 4 runners)
+  #     Workflows métier complets. Sur push main OU workflow_dispatch.
+  #     ~5 min wall-clock.
+  # ----------------------------------------------------------------
+  e2e-full:
+    name: E2E full shard ${{ matrix.shard }}/4 (Niveau 3)
+    needs: [detect-changes, quality]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      E2E_USER_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+      E2E_USER_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10.13.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: playwright-${{ runner.os }}-
+
+      - name: Install Playwright browsers (chromium only — cache miss)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install Playwright system deps (cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
+
+      - name: Download back-office .next artifact (built by quality job)
+        uses: actions/download-artifact@v4
+        with:
+          name: back-office-build
+          path: apps/back-office/.next
+
+      - name: Start back-office (background)
+        run: |
+          pnpm --filter @verone/back-office start > /tmp/next-start.log 2>&1 &
+          echo $! > /tmp/next-start.pid
+          for i in {1..60}; do
+            if curl -sf http://localhost:3000/login > /dev/null; then
+              echo "Back-office up on :3000"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Run e2e full (shard ${{ matrix.shard }}/4)
+        run: |
+          pnpm exec playwright test \
+            --shard=${{ matrix.shard }}/4 \
+            tests/e2e/workflows/ \
+            tests/e2e/stocks/ \
+            tests/e2e/smoke/smoke-147-pages.spec.ts \
+            tests/e2e/smoke/smoke-critical-workflows.spec.ts \
+            tests/e2e/linkme-org-independante-workflow.spec.ts \
+            tests/e2e/linkme-public-selection.spec.ts \
+            tests/e2e/si-pricing-minimum-guard.spec.ts \
+            --reporter=list
+        env:
+          BASE_URL: http://localhost:3000
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-e2e-full-shard-${{ matrix.shard }}
+          path: |
+            tests/reports/
+            test-results/
+          retention-days: 7
 
   # ----------------------------------------------------------------
   # 4. DB FK drift check — gate bloquant (ADR-018)
@@ -594,3 +769,34 @@ jobs:
           echo "⚠️ Secrets SUPABASE_ACCESS_TOKEN / SUPABASE_PROJECT_REF absents." >> $GITHUB_STEP_SUMMARY
           echo "Configure-les dans repo settings → Secrets → Actions." >> $GITHUB_STEP_SUMMARY
           echo "Token : https://supabase.com/dashboard/account/tokens" >> $GITHUB_STEP_SUMMARY
+
+  # ----------------------------------------------------------------
+  # Alias retro-compat : la branch protection de staging/main exige
+  # un check nommé "E2E Smoke (Playwright — back-office)" historique.
+  # Ce job consolide les nouveaux checks (golden + domaine) sous ce
+  # nom hérité, pour ne pas avoir à modifier la protection.
+  # À supprimer le jour où on met à jour les protections branch.
+  # ----------------------------------------------------------------
+  e2e-smoke-aggregate:
+    name: E2E Smoke (Playwright — back-office)
+    needs: [detect-changes, smoke-golden, smoke-domaine]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Aggregate result
+        run: |
+          E2E_NEEDED="${{ needs.detect-changes.outputs.e2e-needed }}"
+          GOLDEN="${{ needs.smoke-golden.result }}"
+          DOMAINE="${{ needs.smoke-domaine.result }}"
+          echo "e2e-needed=$E2E_NEEDED golden=$GOLDEN domaine=$DOMAINE"
+          # Si E2E pas nécessaire (PR backend pure) → succès direct
+          if [ "$E2E_NEEDED" != "true" ]; then
+            echo "✅ E2E non requis pour ce changement"
+            exit 0
+          fi
+          # E2E nécessaire : golden ET domaine doivent avoir réussi
+          if [ "$GOLDEN" != "success" ] || [ "$DOMAINE" != "success" ]; then
+            echo "❌ smoke-golden=$GOLDEN smoke-domaine=$DOMAINE"
+            exit 1
+          fi
+          echo "✅ E2E smoke complet OK"
