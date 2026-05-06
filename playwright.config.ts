@@ -13,10 +13,10 @@ export default defineConfig({
   testMatch: '**/*.spec.ts',
 
   // Exécution des tests
-  fullyParallel: false, // Séquentiel pour éviter conflits données
+  fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : 1, // Un seul worker pour tests métier
+  workers: process.env.CI ? 4 : 1,
 
   // Reporter
   reporter: [
