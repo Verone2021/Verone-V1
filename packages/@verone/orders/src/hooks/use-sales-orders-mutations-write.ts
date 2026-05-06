@@ -264,6 +264,33 @@ export function useSalesOrdersWriteMutations({
         if (existingOrder.payment_status_v2 === 'paid')
           throw new Error('Impossible de modifier une commande déjà payée');
 
+        // [BO-FIN-046 Étape 5 — R6 finance.md] Guard frais : si une facture
+        // finalisée est liée à la commande, les champs frais sont figés.
+        const FEE_FIELDS = [
+          'shipping_cost_ht',
+          'handling_cost_ht',
+          'insurance_cost_ht',
+          'fees_vat_rate',
+        ] as const;
+        const hasFeeUpdate = FEE_FIELDS.some(
+          field => field in (data as Record<string, unknown>)
+        );
+        if (hasFeeUpdate) {
+          const { count: finalizedCount } = await supabase
+            .from('financial_documents')
+            .select('id', { count: 'exact', head: true })
+            .eq('sales_order_id', orderId)
+            .eq('document_type', 'customer_invoice')
+            .in('status', ['sent', 'paid', 'partially_paid'])
+            .is('deleted_at', null);
+          if ((finalizedCount ?? 0) > 0) {
+            throw new Error(
+              'Frais figés : une facture officielle a été émise pour cette commande. ' +
+                'Pour modifier les frais, créez un avoir.'
+            );
+          }
+        }
+
         const existingItemsResult = await supabase
           .from('sales_order_items')
           .select(

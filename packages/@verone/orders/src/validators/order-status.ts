@@ -217,11 +217,18 @@ export function isOrderLocked(status: SalesOrderStatus | string): boolean {
  * car ils n'affectent ni les prix lockés, ni la commission LinkMe, ni le
  * stock. Ils sont figés une fois la commande expédiée.
  *
- * Pour un verrouillage strict lors d'une facture finalisée liée,
- * le composant parent doit combiner avec sa propre logique
- * `hasActiveFinalizedInvoice`.
+ * [BO-FIN-046 Étape 5 — R6 finance.md — Verrouillage post-facturation]
+ * Si `hasFinalizedInvoice = true`, les frais sont également figés même en
+ * status `draft` ou `validated` (une facture officielle a été émise).
+ *
+ * @param status - Statut de la commande
+ * @param hasFinalizedInvoice - true si une facture sent/paid/partially_paid existe
  */
-export function canEditFees(status: SalesOrderStatus | string): boolean {
+export function canEditFees(
+  status: SalesOrderStatus | string,
+  hasFinalizedInvoice = false
+): boolean {
+  if (hasFinalizedInvoice) return false;
   return status === 'draft' || status === 'validated';
 }
 
