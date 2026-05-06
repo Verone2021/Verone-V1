@@ -374,17 +374,13 @@ export function useSalesOrdersWriteMutations({
           }
         }
 
-        const totalHT = items.reduce(
-          (sum, item) =>
-            sum +
-            item.quantity *
-              item.unit_price_ht *
-              (1 - (item.discount_percentage ?? 0) / 100),
-          0
-        );
+        // [BO-FIN-046] Ne plus calculer total_ht/total_ttc côté JS —
+        // le trigger DB recalculate_sales_order_totals (round-per-line) les met à jour
+        // automatiquement lors de l'INSERT/UPDATE/DELETE des sales_order_items ci-dessus.
+        // On met uniquement à jour les champs métier (adresses, notes, dates, etc.).
         const { error: updateOrderError } = await supabase
           .from('sales_orders')
-          .update({ ...data, total_ht: totalHT, total_ttc: totalHT * 1.2 })
+          .update(data)
           .eq('id', orderId);
         if (updateOrderError) throw updateOrderError;
 
