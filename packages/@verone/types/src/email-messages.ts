@@ -50,8 +50,39 @@ export interface EmailMessage {
   linked_order_id: string | null;
   linked_order_number: string | null;
 
+  /** Organisation cliente identifiée à partir de from_email (BO-MSG-009) */
+  linked_organisation_id: string | null;
+  /** Contact identifié à partir de from_email (BO-MSG-009) */
+  linked_contact_id: string | null;
+  /** Utilisateur LinkMe identifié à partir de from_email (BO-MSG-009) */
+  linked_user_id: string | null;
+
+  /** Timestamp de la réponse depuis le BO (BO-MSG-010, anticipé en BO-MSG-009) */
+  replied_at: string | null;
+  /** Auteur de la réponse côté BO. NULL pour les mails entrants. */
+  sent_by_user_id: string | null;
+  /** Gmail message id de la réponse envoyée depuis le BO. */
+  reply_message_id: string | null;
+
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * EmailMessage enrichi avec les jointures vers organisations et contacts
+ * (utilisé par la liste Messagerie pour afficher le client identifié).
+ */
+export interface EmailMessageEnriched extends EmailMessage {
+  organisation: {
+    id: string;
+    legal_name: string | null;
+    trade_name: string | null;
+  } | null;
+  contact: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+  } | null;
 }
 
 /**

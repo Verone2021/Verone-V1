@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- fichier legacy déjà à 517 lignes avant cette modif perf [BO-LM-PERF-001] */
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
@@ -280,26 +281,51 @@ export function useOrderDetailsPage() {
   const handleConfirmContact = async () => {
     if (!contactDialogFor || !selectedContactId) return;
     const supabase = createClient();
+    const role = contactDialogFor;
     const fkField =
-      contactDialogFor === 'responsable'
+      role === 'responsable'
         ? 'responsable_contact_id'
-        : contactDialogFor === 'billing'
+        : role === 'billing'
           ? 'billing_contact_id'
           : 'delivery_contact_id';
+    const contactKey =
+      role === 'responsable'
+        ? 'responsable_contact'
+        : role === 'billing'
+          ? 'billing_contact'
+          : 'delivery_contact';
     try {
       const { error: updateError } = await supabase
         .from('sales_orders')
         .update({ [fkField]: selectedContactId })
         .eq('id', orderId);
       if (updateError) throw updateError;
+      // Maj locale optimiste — on récupère le contact depuis la liste déjà
+      // chargée (camelCase ContactBOWithSource) et on le mappe en ContactRef
+      // (snake_case). Pas de refetch : un changement de FK contact ne touche
+      // ni le stock ni les devis Qonto ni Packlink.
+      const picked = availableContacts.find(c => c.id === selectedContactId);
+      const contactRef: ContactRef | null = picked
+        ? {
+            id: picked.id,
+            first_name: picked.firstName,
+            last_name: picked.lastName,
+            email: picked.email,
+            phone: picked.phone,
+            title: picked.title,
+          }
+        : null;
+      setOrder(prev =>
+        prev
+          ? {
+              ...prev,
+              [fkField]: selectedContactId,
+              [contactKey]: contactRef,
+            }
+          : prev
+      );
       setContactDialogFor(null);
       setSelectedContactId(null);
-      void fetchOrder().catch(err => {
-        console.error(
-          '[LinkMeOrderDetails] Refetch after contact select failed:',
-          err
-        );
-      });
     } catch (err) {
       console.error('Erreur mise à jour contact:', err);
     }
@@ -308,8 +334,10 @@ export function useOrderDetailsPage() {
   const handleCreateAndSelectContact = async (
     contactData: NewContactFormData
   ) => {
+    const role = contactDialogFor;
+    if (!role) return;
     const isDeliveryOnly =
-      contactDialogFor === 'delivery' && !organisationId && !enseigneId;
+      role === 'delivery' && !organisationId && !enseigneId;
     const result = await createContactBO.mutateAsync({
       organisationId:
         isDeliveryOnly || isSuccursale
@@ -321,28 +349,53 @@ export function useOrderDetailsPage() {
       email: contactData.email,
       phone: contactData.phone || undefined,
       title: contactData.title || undefined,
-      isPrimaryContact: contactDialogFor === 'responsable',
-      isBillingContact: contactDialogFor === 'billing',
+      isPrimaryContact: role === 'responsable',
+      isBillingContact: role === 'billing',
     });
     const supabase = createClient();
     const fkField =
-      contactDialogFor === 'responsable'
+      role === 'responsable'
         ? 'responsable_contact_id'
-        : contactDialogFor === 'billing'
+        : role === 'billing'
           ? 'billing_contact_id'
           : 'delivery_contact_id';
-    await supabase
+    const contactKey =
+      role === 'responsable'
+        ? 'responsable_contact'
+        : role === 'billing'
+          ? 'billing_contact'
+          : 'delivery_contact';
+    const { error: updateError } = await supabase
       .from('sales_orders')
       .update({ [fkField]: result.id })
       .eq('id', orderId);
+    if (updateError) {
+      console.error('Erreur attache contact:', updateError);
+      return;
+    }
+    // Maj locale optimiste — l'objet ContactRef est construit depuis le
+    // formulaire de création (camelCase NewContactFormData → snake_case
+    // ContactRef). Pas de refetch : la création d'un contact ne touche ni le
+    // stock, ni les devis, ni l'expédition.
+    const contactRef: ContactRef = {
+      id: result.id,
+      first_name: contactData.firstName,
+      last_name: contactData.lastName,
+      email: contactData.email,
+      phone: contactData.phone || null,
+      title: contactData.title || null,
+    };
+    setOrder(prev =>
+      prev
+        ? {
+            ...prev,
+            [fkField]: result.id,
+            [contactKey]: contactRef,
+          }
+        : prev
+    );
     setContactDialogFor(null);
     setSelectedContactId(null);
-    void fetchOrder().catch(err => {
-      console.error(
-        '[LinkMeOrderDetails] Refetch after create contact failed:',
-        err
-      );
-    });
   };
 
   const handleUpdateOrganisation = useCallback(

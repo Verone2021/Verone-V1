@@ -19,13 +19,13 @@ import {
 } from '@verone/ui';
 import { ExternalLink, Mail, Paperclip } from 'lucide-react';
 
-import type { EmailMessage } from './types';
+import type { EmailMessageEnriched } from './types';
 
 interface EmailDetailDrawerProps {
-  email: EmailMessage | null;
+  email: EmailMessageEnriched | null;
   open: boolean;
   onClose: () => void;
-  onToggleRead: (email: EmailMessage) => void;
+  onToggleRead: (email: EmailMessageEnriched) => void;
 }
 
 function formatDate(iso: string): string {
@@ -129,7 +129,7 @@ export function EmailDetailDrawer({
         </div>
 
         {/* Footer actions */}
-        <div className="px-6 py-4 border-t flex-shrink-0 flex items-center justify-end gap-2">
+        <div className="px-6 py-4 border-t flex-shrink-0 flex items-center justify-between gap-2">
           <button
             onClick={handleToggleRead}
             className="text-sm text-gray-600 hover:text-gray-900 underline"

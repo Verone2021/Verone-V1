@@ -47,6 +47,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Initialise gmail_watch_state pour chaque boîte surveillée. Le
     // historyId initial sert de point de départ exclusif pour le 1er
     // fetch déclenché par Pub/Sub (qui ratera sinon le 1er message).
+    // Si l'upsert échoue, on propage 500 — sinon le watch côté Gmail
+    // est créé mais le tracker DB reste vide → pipeline mort sans alerte
+    // visible (incident BO-MSG-007 du 2026-05-06).
     if (result.successes.length > 0) {
       const supabase = createAdminClient();
       const rows = result.successes.map(s => ({
@@ -61,6 +64,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         console.error(
           '[Gmail Watch Init] upsert gmail_watch_state failed:',
           upsertError
+        );
+        return NextResponse.json(
+          {
+            ok: false,
+            code: 'TRACKER_INIT_FAILED',
+            error: upsertError.message,
+            hint: "Le watch Gmail est créé mais le tracker DB n'est pas amorcé. Les notifications Pub/Sub n'inséreront pas les nouveaux mails tant que ce point n'est pas corrigé. Vérifier les contraintes de la table gmail_watch_state ou la policy RLS.",
+            topicName,
+            successes: result.successes,
+            failures: result.failures,
+          },
+          { status: 500 }
         );
       }
     }

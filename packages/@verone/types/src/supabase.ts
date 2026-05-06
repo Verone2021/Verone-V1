@@ -2436,10 +2436,16 @@ export type Database = {
           has_attachments: boolean;
           id: string;
           is_read: boolean;
+          linked_contact_id: string | null;
           linked_order_id: string | null;
           linked_order_number: string | null;
+          linked_organisation_id: string | null;
+          linked_user_id: string | null;
           raw_headers: Json | null;
           received_at: string;
+          replied_at: string | null;
+          reply_message_id: string | null;
+          sent_by_user_id: string | null;
           snippet: string | null;
           subject: string | null;
           to_address: string;
@@ -2458,10 +2464,16 @@ export type Database = {
           has_attachments?: boolean;
           id?: string;
           is_read?: boolean;
+          linked_contact_id?: string | null;
           linked_order_id?: string | null;
           linked_order_number?: string | null;
+          linked_organisation_id?: string | null;
+          linked_user_id?: string | null;
           raw_headers?: Json | null;
           received_at: string;
+          replied_at?: string | null;
+          reply_message_id?: string | null;
+          sent_by_user_id?: string | null;
           snippet?: string | null;
           subject?: string | null;
           to_address: string;
@@ -2480,16 +2492,29 @@ export type Database = {
           has_attachments?: boolean;
           id?: string;
           is_read?: boolean;
+          linked_contact_id?: string | null;
           linked_order_id?: string | null;
           linked_order_number?: string | null;
+          linked_organisation_id?: string | null;
+          linked_user_id?: string | null;
           raw_headers?: Json | null;
           received_at?: string;
+          replied_at?: string | null;
+          reply_message_id?: string | null;
+          sent_by_user_id?: string | null;
           snippet?: string | null;
           subject?: string | null;
           to_address?: string;
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'email_messages_linked_contact_id_fkey';
+            columns: ['linked_contact_id'];
+            isOneToOne: false;
+            referencedRelation: 'contacts';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'email_messages_linked_order_id_fkey';
             columns: ['linked_order_id'];
@@ -2525,42 +2550,61 @@ export type Database = {
             referencedRelation: 'v_transactions_missing_invoice';
             referencedColumns: ['sales_order_id'];
           },
+          {
+            foreignKeyName: 'email_messages_linked_organisation_id_fkey';
+            columns: ['linked_organisation_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
         ];
       };
       email_templates: {
         Row: {
           active: boolean | null;
+          body_text: string | null;
+          brand: string | null;
           category: string | null;
           created_at: string | null;
+          default_alias: string | null;
           html_body: string;
           id: string;
           name: string;
           slug: string;
           subject: string;
+          tags: string[];
           updated_at: string | null;
           variables: Json | null;
         };
         Insert: {
           active?: boolean | null;
+          body_text?: string | null;
+          brand?: string | null;
           category?: string | null;
           created_at?: string | null;
+          default_alias?: string | null;
           html_body: string;
           id?: string;
           name: string;
           slug: string;
           subject: string;
+          tags?: string[];
           updated_at?: string | null;
           variables?: Json | null;
         };
         Update: {
           active?: boolean | null;
+          body_text?: string | null;
+          brand?: string | null;
           category?: string | null;
           created_at?: string | null;
+          default_alias?: string | null;
           html_body?: string;
           id?: string;
           name?: string;
           slug?: string;
           subject?: string;
+          tags?: string[];
           updated_at?: string | null;
           variables?: Json | null;
         };
@@ -14085,6 +14129,14 @@ export type Database = {
       reset_stuck_mcp_tasks: {
         Args: { minutes_stuck?: number };
         Returns: number;
+      };
+      resolve_email_links: {
+        Args: { p_from_email: string };
+        Returns: {
+          linked_contact_id: string;
+          linked_organisation_id: string;
+          linked_user_id: string;
+        }[];
       };
       resync_all_product_stocks: {
         Args: never;

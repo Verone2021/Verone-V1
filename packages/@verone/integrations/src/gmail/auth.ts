@@ -10,24 +10,13 @@ import { JWT } from 'google-auth-library';
 
 import { GMAIL_SCOPES, validateGmailEnv } from './config';
 
-/**
- * Crée un client JWT impersonant une adresse Gmail spécifique.
- * Cela permet au service account de lire la boîte de l'adresse cible
- * via Domain-Wide Delegation.
- *
- * @param emailAddress Adresse Gmail à impersonner (ex: contact@veronecollections.fr)
- */
-export function createGmailJwtClient(emailAddress: string): JWT {
+function loadServiceAccountKey(): { clientEmail: string; privateKey: string } {
   validateGmailEnv();
-
   const clientEmail = process.env.GMAIL_SERVICE_ACCOUNT_EMAIL!;
   let privateKey = process.env.GMAIL_SERVICE_ACCOUNT_PRIVATE_KEY!;
-
-  // Normaliser les \n littéraux (format courant dans les .env)
   if (privateKey.includes('\\n')) {
     privateKey = privateKey.replace(/\\n/g, '\n');
   }
-
   if (
     !privateKey.includes('BEGIN PRIVATE KEY') ||
     !privateKey.includes('END PRIVATE KEY')
@@ -36,7 +25,18 @@ export function createGmailJwtClient(emailAddress: string): JWT {
       '[Gmail Auth] GMAIL_SERVICE_ACCOUNT_PRIVATE_KEY format invalide (PEM attendu).'
     );
   }
+  return { clientEmail, privateKey };
+}
 
+/**
+ * Crée un client JWT impersonant une adresse Gmail spécifique en lecture
+ * (scope gmail.readonly). Utilisé par les fonctions d'inbound (watch,
+ * history, messages.get).
+ *
+ * @param emailAddress Adresse Gmail à impersonner (ex: contact@veronecollections.fr)
+ */
+export function createGmailJwtClient(emailAddress: string): JWT {
+  const { clientEmail, privateKey } = loadServiceAccountKey();
   return new JWT({
     email: clientEmail,
     key: privateKey,

@@ -14,6 +14,7 @@ import {
   Filter,
   CheckCircle2,
   XCircle,
+  Trash2,
 } from 'lucide-react';
 
 import { useSupabase } from '@/components/providers/supabase-provider';
@@ -23,13 +24,18 @@ interface EmailTemplate {
   name: string;
   slug: string;
   subject: string;
-  html_body: string;
   variables: string[];
   category: string | null;
+  brand: 'verone' | 'linkme' | 'all' | null;
+  default_alias: 'contact' | 'commandes' | null;
+  tags: string[];
   active: boolean | null;
   created_at: string | null;
   updated_at: string | null;
 }
+
+const LIST_COLUMNS =
+  'id, name, slug, subject, variables, category, brand, default_alias, tags, active, created_at, updated_at';
 
 export default function EmailTemplatesPage() {
   const supabase = useSupabase();
@@ -37,34 +43,62 @@ export default function EmailTemplatesPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const loadTemplates = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('email_templates')
+        .select(LIST_COLUMNS)
+        .order('category', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      const items = (data ?? []).map(item => ({
+        ...item,
+        variables: Array.isArray(item.variables) ? item.variables : [],
+        tags: Array.isArray(item.tags) ? item.tags : [],
+      }));
+      setTemplates(items as EmailTemplate[]);
+    } catch (error) {
+      console.error('Error loading templates:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [supabase]);
 
   useEffect(() => {
-    async function loadTemplates() {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('email_templates')
-          .select('*') // TODO: specify columns
-          .order('category', { ascending: true })
-          .order('name', { ascending: true });
-
-        if (error) throw error;
-        const templates = (data ?? []).map(item => ({
-          ...item,
-          variables: Array.isArray(item.variables) ? item.variables : [],
-        }));
-        setTemplates(templates as EmailTemplate[]);
-      } catch (error) {
-        console.error('Error loading templates:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     void loadTemplates().catch(error => {
       console.error('[EmailsPage] loadTemplates failed:', error);
     });
-  }, [supabase]);
+  }, [loadTemplates]);
+
+  const handleDelete = React.useCallback(
+    async (template: EmailTemplate) => {
+      const confirmed = window.confirm(
+        `Supprimer définitivement le template « ${template.name} » ?\n\nCette action est irréversible.`
+      );
+      if (!confirmed) return;
+      try {
+        setDeletingId(template.id);
+        const { error } = await supabase
+          .from('email_templates')
+          .delete()
+          .eq('id', template.id);
+        if (error) throw error;
+        setTemplates(prev => prev.filter(t => t.id !== template.id));
+      } catch (error) {
+        console.error('[EmailsPage] delete failed:', error);
+        window.alert(
+          "Suppression impossible. Vérifie que le template n'est pas utilisé ailleurs."
+        );
+      } finally {
+        setDeletingId(null);
+      }
+    },
+    [supabase]
+  );
 
   const filteredTemplates = templates.filter(template => {
     const matchesSearch =
@@ -88,15 +122,13 @@ export default function EmailTemplatesPage() {
     <div className="space-y-6">
       {/* Page header */}
       <div className="border-b border-gray-200 pb-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Mail className="h-8 w-8 text-black" />
-            <div>
-              <h1 className="text-2xl font-bold text-black">Templates Email</h1>
-              <p className="text-gray-600">
-                Gérer les modèles d'emails automatiques
-              </p>
-            </div>
+        <div className="flex items-center space-x-3">
+          <Mail className="h-8 w-8 text-black" />
+          <div>
+            <h1 className="text-2xl font-bold text-black">Templates Email</h1>
+            <p className="text-gray-600">
+              Gérer les modèles d'emails (devis, factures, relances, etc.)
+            </p>
           </div>
         </div>
       </div>
@@ -235,6 +267,19 @@ export default function EmailTemplatesPage() {
                       Éditer
                     </ButtonUnified>
                   </Link>
+                  <ButtonUnified
+                    variant="destructive"
+                    size="sm"
+                    disabled={deletingId === template.id}
+                    onClick={() => {
+                      void handleDelete(template).catch(err =>
+                        console.error('[EmailsPage] delete failed:', err)
+                      );
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {deletingId === template.id ? '…' : 'Supprimer'}
+                  </ButtonUnified>
                 </div>
               </div>
             </div>
