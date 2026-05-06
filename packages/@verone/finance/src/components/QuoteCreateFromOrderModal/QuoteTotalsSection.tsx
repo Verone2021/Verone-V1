@@ -1,10 +1,17 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import { Card, CardContent } from '@verone/ui';
 
 import type { ICustomLine, IOrderForDocument } from '../OrderSelectModal';
 import type { IQuoteFeesState } from './types';
 import { formatAmount } from './quote-utils';
+import { computeFinancialTotals } from '@verone/finance/lib/finance-totals';
+import type {
+  FinancialItem,
+  FinancialFees,
+} from '@verone/finance/lib/finance-totals';
 
 interface IQuoteTotalsSectionProps {
   order: IOrderForDocument;
@@ -19,43 +26,41 @@ export function QuoteTotalsSection({
 }: IQuoteTotalsSectionProps): React.ReactNode {
   const { shippingCostHt, handlingCostHt, insuranceCostHt, feesVatRate } = fees;
 
-  const vatByRate: Record<number, number> = {};
-  let totalHt = 0;
+  const totals = useMemo(() => {
+    const items: FinancialItem[] = [
+      ...(order.sales_order_items ?? []).map(item => ({
+        quantity: item.quantity,
+        unit_price_ht: item.unit_price_ht,
+        tax_rate: item.tax_rate,
+        description: item.products?.name ?? 'Article',
+      })),
+      ...customLines.map(line => ({
+        quantity: line.quantity,
+        unit_price_ht: line.unit_price_ht,
+        tax_rate: line.vat_rate,
+        description: line.title,
+      })),
+    ];
 
-  // 1. Articles de la commande
-  order.sales_order_items?.forEach(item => {
-    const rate = item.tax_rate || 0;
-    const lineHt = item.quantity * item.unit_price_ht;
-    const lineVat = lineHt * rate;
-    totalHt += lineHt;
-    vatByRate[rate] = (vatByRate[rate] || 0) + lineVat;
-  });
+    const feesData: FinancialFees = {
+      shipping_cost_ht: shippingCostHt,
+      handling_cost_ht: handlingCostHt,
+      insurance_cost_ht: insuranceCostHt,
+      fees_vat_rate: feesVatRate,
+    };
 
-  // 2. Frais de service
-  const totalFees = shippingCostHt + handlingCostHt + insuranceCostHt;
-  if (totalFees > 0) {
-    totalHt += totalFees;
-    const feesVat = totalFees * feesVatRate;
-    vatByRate[feesVatRate] = (vatByRate[feesVatRate] || 0) + feesVat;
-  }
+    return computeFinancialTotals(items, feesData, { strict: false });
+  }, [
+    order.sales_order_items,
+    customLines,
+    shippingCostHt,
+    handlingCostHt,
+    insuranceCostHt,
+    feesVatRate,
+  ]);
 
-  // 3. Lignes personnalisées
-  customLines.forEach(line => {
-    const lineHt = line.quantity * line.unit_price_ht;
-    const lineVat = lineHt * line.vat_rate;
-    totalHt += lineHt;
-    vatByRate[line.vat_rate] = (vatByRate[line.vat_rate] || 0) + lineVat;
-  });
-
-  const totalVat = Object.values(vatByRate).reduce((sum, v) => sum + v, 0);
-  const totalTtc = totalHt + totalVat;
-
-  const articlesTotal =
-    order.sales_order_items?.reduce(
-      (sum, item) => sum + item.quantity * item.unit_price_ht,
-      0
-    ) ?? 0;
-
+  const articlesTotal = totals.itemsHt;
+  const totalFees = totals.feesHt;
   const customLinesTotal = customLines.reduce(
     (sum, l) => sum + l.quantity * l.unit_price_ht,
     0
@@ -67,7 +72,7 @@ export function QuoteTotalsSection({
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Articles commande</span>
-            <span>{formatAmount(articlesTotal)}</span>
+            <span>{formatAmount(articlesTotal - customLinesTotal)}</span>
           </div>
           {totalFees > 0 && (
             <div className="flex justify-between">
@@ -85,9 +90,9 @@ export function QuoteTotalsSection({
           )}
           <div className="flex justify-between border-t pt-2 mt-2">
             <span className="font-medium">Total HT</span>
-            <span className="font-medium">{formatAmount(totalHt)}</span>
+            <span className="font-medium">{formatAmount(totals.totalHt)}</span>
           </div>
-          {Object.entries(vatByRate)
+          {Object.entries(totals.vatByRate)
             .sort(([a], [b]) => Number(b) - Number(a))
             .map(([rate, amount]) => (
               <div key={rate} className="flex justify-between">
@@ -99,7 +104,7 @@ export function QuoteTotalsSection({
             ))}
           <div className="flex justify-between border-t pt-2 mt-2 font-bold text-base">
             <span>Total TTC</span>
-            <span>{formatAmount(totalTtc)}</span>
+            <span>{formatAmount(totals.totalTtc)}</span>
           </div>
         </div>
       </CardContent>
