@@ -4,9 +4,14 @@
 
 import type { Database, Json } from '@verone/types';
 import type { ISalesOrderWithCustomer, IFeesData } from '../../../_lib/types';
+import { computeFinancialTotals } from '@verone/finance/lib/finance-totals';
+import type {
+  FinancialItem,
+  FinancialFees,
+} from '@verone/finance/lib/finance-totals';
 
 // ---------------------------------------------------------------------------
-// Calcul totaux (round-per-line, R1)
+// Calcul totaux (round-per-line, R1) — [BO-FIN-046] via module unique
 // ---------------------------------------------------------------------------
 
 export interface IInvoiceItemTotals {
@@ -20,15 +25,25 @@ export function computeProformaTotals(items: IInvoiceItemTotals[]): {
   totalVat: number;
   totalTtc: number;
 } {
-  let totalHt = 0;
-  let totalVat = 0;
-  for (const item of items) {
-    const lineHt = (item.unit_price_ht ?? 0) * (item.quantity_num ?? 1);
-    const lineVat = Math.round(lineHt * (item.vat_rate_num ?? 0.2) * 100) / 100;
-    totalHt += lineHt;
-    totalVat += lineVat;
-  }
-  return { totalHt, totalVat, totalTtc: totalHt + totalVat };
+  const financialItems: FinancialItem[] = items.map(item => ({
+    quantity: item.quantity_num ?? 1,
+    unit_price_ht: item.unit_price_ht ?? 0,
+    tax_rate: item.vat_rate_num ?? 0,
+  }));
+  const zeroFees: FinancialFees = {
+    shipping_cost_ht: 0,
+    handling_cost_ht: 0,
+    insurance_cost_ht: 0,
+    fees_vat_rate: 0,
+  };
+  const computed = computeFinancialTotals(financialItems, zeroFees, {
+    strict: false,
+  });
+  return {
+    totalHt: computed.totalHt,
+    totalVat: computed.totalVat,
+    totalTtc: computed.totalTtc,
+  };
 }
 
 // ---------------------------------------------------------------------------
