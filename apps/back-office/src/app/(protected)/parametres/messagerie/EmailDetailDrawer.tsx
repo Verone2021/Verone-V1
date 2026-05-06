@@ -26,8 +26,6 @@ interface EmailDetailDrawerProps {
   open: boolean;
   onClose: () => void;
   onToggleRead: (email: EmailMessageEnriched) => void;
-  /** Callback pour ouvrir le modal de réponse (BO-MSG-010A). Optionnel. */
-  onReply?: (email: EmailMessageEnriched) => void;
 }
 
 function formatDate(iso: string): string {
@@ -45,15 +43,10 @@ export function EmailDetailDrawer({
   open,
   onClose,
   onToggleRead,
-  onReply,
 }: EmailDetailDrawerProps) {
   const handleToggleRead = useCallback(() => {
     if (email) onToggleRead(email);
   }, [email, onToggleRead]);
-
-  const handleReply = useCallback(() => {
-    if (email && onReply) onReply(email);
-  }, [email, onReply]);
 
   if (!email) return null;
 
@@ -143,15 +136,6 @@ export function EmailDetailDrawer({
           >
             Marquer comme {email.is_read ? 'non-lu' : 'lu'}
           </button>
-          {onReply && (
-            <button
-              onClick={handleReply}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-black text-white rounded-md hover:bg-gray-800 transition-colors"
-            >
-              <Mail className="h-4 w-4" />
-              Répondre
-            </button>
-          )}
         </div>
       </SheetContent>
     </Sheet>

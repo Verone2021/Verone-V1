@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 import { ButtonUnified } from '@verone/ui';
 import { Input } from '@verone/ui';
@@ -15,7 +14,6 @@ import {
   Filter,
   CheckCircle2,
   XCircle,
-  Plus,
   Trash2,
 } from 'lucide-react';
 
@@ -41,7 +39,6 @@ const LIST_COLUMNS =
 
 export default function EmailTemplatesPage() {
   const supabase = useSupabase();
-  const router = useRouter();
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -125,23 +122,14 @@ export default function EmailTemplatesPage() {
     <div className="space-y-6">
       {/* Page header */}
       <div className="border-b border-gray-200 pb-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Mail className="h-8 w-8 text-black" />
-            <div>
-              <h1 className="text-2xl font-bold text-black">Templates Email</h1>
-              <p className="text-gray-600">
-                Gérer les modèles d'emails (devis, factures, relances, etc.)
-              </p>
-            </div>
+        <div className="flex items-center space-x-3">
+          <Mail className="h-8 w-8 text-black" />
+          <div>
+            <h1 className="text-2xl font-bold text-black">Templates Email</h1>
+            <p className="text-gray-600">
+              Gérer les modèles d'emails (devis, factures, relances, etc.)
+            </p>
           </div>
-          <ButtonUnified
-            variant="default"
-            onClick={() => router.push('/parametres/emails/nouveau')}
-          >
-            <Plus className="h-4 w-4" />
-            Nouveau template
-          </ButtonUnified>
         </div>
       </div>
 

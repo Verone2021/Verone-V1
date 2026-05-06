@@ -12,7 +12,6 @@ import Link from 'next/link';
 
 import {
   Badge,
-  Button,
   ResponsiveDataView,
   ResponsiveToolbar,
   Table,
@@ -23,12 +22,11 @@ import {
   TableRow,
 } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { ExternalLink, Inbox, Mail, Paperclip } from 'lucide-react';
+import { ExternalLink, Inbox, Paperclip } from 'lucide-react';
 
 import { MessagesTabsBar } from '@/components/messages-tabs-bar';
 import { useSupabase } from '@/components/providers/supabase-provider';
 
-import { ComposeMailModal } from './ComposeMailModal';
 import { EmailDetailDrawer } from './EmailDetailDrawer';
 import { MailsKpiBar } from './MailsKpiBar';
 import type { EmailMessageEnriched, MessagerieFilters } from './types';
@@ -106,24 +104,7 @@ export function MessagerieClient({
   const [selectedEmail, setSelectedEmail] =
     useState<EmailMessageEnriched | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [composeOpen, setComposeOpen] = useState(false);
-  const [composeReplyTo, setComposeReplyTo] =
-    useState<EmailMessageEnriched | null>(null);
   const [activeKpi, setActiveKpi] = useState<KpiKey>(null);
-
-  const handleOpenCompose = useCallback(() => {
-    setComposeReplyTo(null);
-    setComposeOpen(true);
-  }, []);
-
-  const handleReply = useCallback((email: EmailMessageEnriched) => {
-    setComposeReplyTo(email);
-    setComposeOpen(true);
-  }, []);
-
-  const handleCloseCompose = useCallback(() => {
-    setComposeOpen(false);
-  }, []);
 
   // Filtrage local
   const filteredEmails = useMemo(() => {
@@ -375,12 +356,6 @@ export function MessagerieClient({
               ? `${unreadCount} non-lu${unreadCount > 1 ? 's' : ''}`
               : `${emails.length} email${emails.length > 1 ? 's' : ''}`
           }
-          primaryAction={
-            <Button onClick={handleOpenCompose}>
-              <Mail className="h-4 w-4 mr-2" />
-              Composer
-            </Button>
-          }
           search={
             <input
               type="text"
@@ -497,14 +472,6 @@ export function MessagerieClient({
         open={drawerOpen}
         onClose={handleCloseDrawer}
         onToggleRead={handleToggleRead}
-        onReply={handleReply}
-      />
-
-      {/* Modal compose / reply */}
-      <ComposeMailModal
-        open={composeOpen}
-        onClose={handleCloseCompose}
-        replyTo={composeReplyTo}
       />
     </>
   );
