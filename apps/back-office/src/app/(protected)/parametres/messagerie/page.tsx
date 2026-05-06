@@ -55,7 +55,7 @@ export default async function MessageriePage() {
         reply_message_id,
         created_at,
         updated_at,
-        organisation:organisations!email_messages_linked_organisation_id_fkey ( id, name ),
+        organisation:organisations!email_messages_linked_organisation_id_fkey ( id, legal_name, trade_name ),
         contact:contacts!email_messages_linked_contact_id_fkey ( id, first_name, last_name )
       `
     )

@@ -75,7 +75,8 @@ export interface EmailMessage {
 export interface EmailMessageEnriched extends EmailMessage {
   organisation: {
     id: string;
-    name: string;
+    legal_name: string | null;
+    trade_name: string | null;
   } | null;
   contact: {
     id: string;
