@@ -36,6 +36,7 @@ import {
 
 import {
   DocumentDiscordanceBadge,
+  DocumentResyncAction,
   DocumentSourceBadge,
 } from '@verone/finance/components';
 
@@ -214,6 +215,20 @@ export function InvoicesTable({
                         >
                           {invoice.order_number}
                         </button>
+                      )}
+                      {/* [BO-FIN-046 Étape 6] Badge + bouton re-sync si facture brouillon désynchronisée */}
+                      {isDraft && invoice.sales_order_id && (
+                        <div className="mt-1">
+                          <DocumentResyncAction
+                            documentType="proforma"
+                            orderId={invoice.sales_order_id}
+                            documentStatus={invoice.status}
+                            orderUpdatedAt={invoice.order_updated_at}
+                            documentCreatedAt={invoice.document_created_at}
+                            size="sm"
+                            invalidateQueryKeys={[['invoices-list']]}
+                          />
+                        </div>
                       )}
                     </TableCell>
 
