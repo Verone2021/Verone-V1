@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 
 import {
   OrderShipmentHistoryCard,
@@ -11,26 +11,58 @@ import type { ShipmentHistoryItem } from '@verone/orders/components/modals/order
 import { SendShippingTrackingModal } from '@verone/orders/components/modals';
 import type { SalesOrder } from '@verone/orders/hooks';
 
-import type { OrderWithDetails } from './types';
+// Contacts primitifs pour le modal d'envoi tracking
+interface ContactPrimitive {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+}
+
+interface OrganisationPrimitive {
+  id: string;
+  email: string | null;
+  trade_name: string | null;
+}
 
 interface ShipmentCardsSectionProps {
-  order: OrderWithDetails;
+  // Primitifs stables — React.memo comparaison par défaut (égalité référentielle)
+  orderId: string;
+  orderStatus: string;
+  orderNumber: string;
+  // Organisation et contacts — passés en objets déjà construits par RightColumn
+  // (null si non renseignés). Ces valeurs changent rarement en cours de session.
+  organisation: OrganisationPrimitive | null;
+  responsableContact: ContactPrimitive | null;
+  billingContact: ContactPrimitive | null;
+  deliveryContact: ContactPrimitive | null;
   onOpenShipmentModal: () => void;
 }
 
 /**
  * Displays shipment status card + shipment history card for a LinkMe order.
  * Fetches its own data via useShipmentHistory (open=true, always mounted).
+ *
+ * Wrapped in React.memo — re-renders only when one of the primitive props
+ * changes (orderId, orderStatus, orderNumber). Contact/organisation objects
+ * are stable across typical edits (missing-info, date, notes), so the memo
+ * effectively prevents unnecessary re-renders caused by parent setOrder calls.
  */
-export function ShipmentCardsSection({
-  order,
+export const ShipmentCardsSection = memo(function ShipmentCardsSection({
+  orderId,
+  orderStatus,
+  orderNumber,
+  organisation,
+  responsableContact,
+  billingContact,
+  deliveryContact,
   onOpenShipmentModal,
 }: ShipmentCardsSectionProps) {
   const [reloadKey, setReloadKey] = useState(0);
   const [syncing, setSyncing] = useState(false);
 
   const { shipmentHistory, salesOrderItems } = useShipmentHistory(
-    order.id,
+    orderId,
     true,
     reloadKey
   );
@@ -44,7 +76,7 @@ export function ShipmentCardsSection({
     void fetch('/api/packlink/shipments/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sales_order_id: order.id }),
+      body: JSON.stringify({ sales_order_id: orderId }),
     })
       .catch(err => {
         console.error('[ShipmentCardsSection] sync failed:', err);
@@ -53,45 +85,45 @@ export function ShipmentCardsSection({
         setReloadKey(k => k + 1);
         setSyncing(false);
       });
-  }, [order.id, syncing]);
+  }, [orderId, syncing]);
 
   if (shipmentHistory.length === 0) return null;
 
   // Build minimal order shape for SendShippingTrackingModal
   // OrderWithDetails uses `organisation` (singular), no individual_customers
   const orderForModal = {
-    id: order.id,
-    order_number: order.order_number,
-    organisations: order.organisation
+    id: orderId,
+    order_number: orderNumber,
+    organisations: organisation
       ? {
-          id: order.organisation.id,
-          email: order.organisation.email ?? null,
-          trade_name: order.organisation.trade_name ?? null,
+          id: organisation.id,
+          email: organisation.email,
+          trade_name: organisation.trade_name,
         }
       : null,
     individual_customers: null,
-    responsable_contact: order.responsable_contact
+    responsable_contact: responsableContact
       ? {
-          id: order.responsable_contact.id,
-          first_name: order.responsable_contact.first_name,
-          last_name: order.responsable_contact.last_name,
-          email: order.responsable_contact.email,
+          id: responsableContact.id,
+          first_name: responsableContact.first_name,
+          last_name: responsableContact.last_name,
+          email: responsableContact.email,
         }
       : null,
-    billing_contact: order.billing_contact
+    billing_contact: billingContact
       ? {
-          id: order.billing_contact.id,
-          first_name: order.billing_contact.first_name,
-          last_name: order.billing_contact.last_name,
-          email: order.billing_contact.email,
+          id: billingContact.id,
+          first_name: billingContact.first_name,
+          last_name: billingContact.last_name,
+          email: billingContact.email,
         }
       : null,
-    delivery_contact: order.delivery_contact
+    delivery_contact: deliveryContact
       ? {
-          id: order.delivery_contact.id,
-          first_name: order.delivery_contact.first_name,
-          last_name: order.delivery_contact.last_name,
-          email: order.delivery_contact.email,
+          id: deliveryContact.id,
+          first_name: deliveryContact.first_name,
+          last_name: deliveryContact.last_name,
+          email: deliveryContact.email,
         }
       : null,
   };
@@ -101,8 +133,8 @@ export function ShipmentCardsSection({
       <OrderShipmentStatusCard
         order={
           {
-            id: order.id,
-            status: order.status as SalesOrder['status'],
+            id: orderId,
+            status: orderStatus as SalesOrder['status'],
             shipped_at: undefined,
             delivered_at: undefined,
           } as SalesOrder
@@ -110,7 +142,7 @@ export function ShipmentCardsSection({
         shipmentHistory={shipmentHistory}
         readOnly={false}
         canShip={
-          order.status === 'validated' || order.status === 'partially_shipped'
+          orderStatus === 'validated' || orderStatus === 'partially_shipped'
         }
         onOpenShipmentModal={onOpenShipmentModal}
       />
@@ -118,7 +150,7 @@ export function ShipmentCardsSection({
         shipmentHistory={shipmentHistory}
         order={
           {
-            id: order.id,
+            id: orderId,
             sales_order_items: salesOrderItems.map(i => ({
               id: i.id,
               quantity: i.quantity,
@@ -152,4 +184,4 @@ export function ShipmentCardsSection({
       )}
     </>
   );
-}
+});

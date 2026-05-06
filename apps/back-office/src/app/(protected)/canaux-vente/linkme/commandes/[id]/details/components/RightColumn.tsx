@@ -157,7 +157,48 @@ export function RightColumn({
 
       {/* EXPEDITION — historique + statut (PR #716) */}
       <ShipmentCardsSection
-        order={order}
+        orderId={order.id}
+        orderStatus={order.status}
+        orderNumber={order.order_number}
+        organisation={
+          order.organisation
+            ? {
+                id: order.organisation.id,
+                email: order.organisation.email ?? null,
+                trade_name: order.organisation.trade_name ?? null,
+              }
+            : null
+        }
+        responsableContact={
+          order.responsable_contact
+            ? {
+                id: order.responsable_contact.id,
+                first_name: order.responsable_contact.first_name,
+                last_name: order.responsable_contact.last_name,
+                email: order.responsable_contact.email,
+              }
+            : null
+        }
+        billingContact={
+          order.billing_contact
+            ? {
+                id: order.billing_contact.id,
+                first_name: order.billing_contact.first_name,
+                last_name: order.billing_contact.last_name,
+                email: order.billing_contact.email,
+              }
+            : null
+        }
+        deliveryContact={
+          order.delivery_contact
+            ? {
+                id: order.delivery_contact.id,
+                first_name: order.delivery_contact.first_name,
+                last_name: order.delivery_contact.last_name,
+                email: order.delivery_contact.email,
+              }
+            : null
+        }
         onOpenShipmentModal={onOpenShipmentModal}
       />
 
