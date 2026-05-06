@@ -49,8 +49,10 @@ function getClientDisplay(email: EmailMessageEnriched): {
   href: string;
 } | null {
   if (email.organisation) {
+    const orgLabel =
+      email.organisation.trade_name ?? email.organisation.legal_name ?? '';
     return {
-      label: email.organisation.name,
+      label: orgLabel || email.from_email,
       href: `/contacts-organisations/${email.organisation.id}`,
     };
   }
