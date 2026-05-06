@@ -27,12 +27,19 @@ interface EmailTemplate {
   slug: string;
   subject: string;
   html_body: string;
+  body_text: string | null;
   variables: string[];
   category: string | null;
+  brand: 'verone' | 'linkme' | 'all' | null;
+  default_alias: 'contact' | 'commandes' | null;
+  tags: string[];
   active: boolean | null;
   created_at: string | null;
   updated_at: string | null;
 }
+
+const TEMPLATE_COLUMNS =
+  'id, name, slug, subject, html_body, body_text, variables, category, brand, default_alias, tags, active, created_at, updated_at';
 
 export default function EditEmailTemplatePage() {
   const params = useParams();
@@ -50,7 +57,13 @@ export default function EditEmailTemplatePage() {
   const [name, setName] = useState('');
   const [subject, setSubject] = useState('');
   const [htmlBody, setHtmlBody] = useState('');
+  const [bodyText, setBodyText] = useState('');
   const [category, setCategory] = useState('general');
+  const [brand, setBrand] = useState<'verone' | 'linkme' | 'all' | ''>('');
+  const [defaultAlias, setDefaultAlias] = useState<
+    'contact' | 'commandes' | ''
+  >('');
+  const [tagsInput, setTagsInput] = useState('');
   const [active, setActive] = useState(true);
   const [variablesInput, setVariablesInput] = useState('');
 
@@ -59,7 +72,7 @@ export default function EditEmailTemplatePage() {
       setLoading(true);
       const { data, error } = await supabase
         .from('email_templates')
-        .select('*') // TODO: specify columns
+        .select(TEMPLATE_COLUMNS)
         .eq('slug', slug)
         .single();
 
@@ -68,13 +81,20 @@ export default function EditEmailTemplatePage() {
       const templateData = {
         ...data,
         variables: Array.isArray(data.variables) ? data.variables : [],
+        tags: Array.isArray(data.tags) ? data.tags : [],
       };
 
       setTemplate(templateData as EmailTemplate);
       setName(data.name);
       setSubject(data.subject);
       setHtmlBody(data.html_body);
+      setBodyText(data.body_text ?? '');
       setCategory(data.category ?? 'general');
+      setBrand((data.brand as 'verone' | 'linkme' | 'all' | null) ?? '');
+      setDefaultAlias(
+        (data.default_alias as 'contact' | 'commandes' | null) ?? ''
+      );
+      setTagsInput(Array.isArray(data.tags) ? data.tags.join(', ') : '');
       setActive(data.active ?? true);
       setVariablesInput(
         Array.isArray(data.variables) ? data.variables.join(', ') : ''
@@ -104,6 +124,10 @@ export default function EditEmailTemplatePage() {
         .split(',')
         .map(v => v.trim())
         .filter(v => v.length > 0);
+      const tags = tagsInput
+        .split(',')
+        .map(t => t.trim())
+        .filter(t => t.length > 0);
 
       const { error } = await supabase
         .from('email_templates')
@@ -111,7 +135,11 @@ export default function EditEmailTemplatePage() {
           name,
           subject,
           html_body: htmlBody,
+          body_text: bodyText.trim() === '' ? null : bodyText,
           category,
+          brand: brand === '' ? null : brand,
+          default_alias: defaultAlias === '' ? null : defaultAlias,
+          tags,
           active,
           variables,
         })
@@ -281,6 +309,26 @@ export default function EditEmailTemplatePage() {
               Handlebars supportée: {`{{#if condition}}...{{/if}}`}
             </p>
           </div>
+
+          {/* Body Text fallback */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Type className="h-5 w-5 text-gray-600" />
+              <label className="text-sm font-medium text-black">
+                Version texte (fallback)
+              </label>
+            </div>
+            <textarea
+              value={bodyText}
+              onChange={e => setBodyText(e.target.value)}
+              className="w-full min-h-[160px] p-4 border border-gray-300 rounded-md bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+              placeholder="Version texte du mail (optionnelle, generee depuis HTML si vide)"
+            />
+            <p className="text-xs text-gray-500 mt-2">
+              Recommandé pour la délivrabilité (Gmail apprécie text/plain).
+              Variables identiques au HTML.
+            </p>
+          </div>
         </div>
 
         {/* Sidebar */}
@@ -302,8 +350,88 @@ export default function EditEmailTemplatePage() {
               <option value="linkme">LinkMe</option>
               <option value="orders">Commandes</option>
               <option value="invoices">Factures</option>
+              <option value="quotes">Devis</option>
+              <option value="payment_reminders">Relances paiement</option>
+              <option value="contact_requests">Demandes de contact</option>
               <option value="notifications">Notifications</option>
             </select>
+          </div>
+
+          {/* Marque */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Tag className="h-5 w-5 text-gray-600" />
+              <label className="text-sm font-medium text-black">Marque</label>
+            </div>
+            <select
+              value={brand}
+              onChange={e =>
+                setBrand(e.target.value as 'verone' | 'linkme' | 'all' | '')
+              }
+              className="w-full h-10 px-3 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+            >
+              <option value="">— Non spécifié —</option>
+              <option value="all">Toutes</option>
+              <option value="verone">Vérone</option>
+              <option value="linkme">LinkMe</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-2">
+              Pré-filtre dans le sélecteur de templates de la modal Composer.
+            </p>
+          </div>
+
+          {/* Default alias */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Mail className="h-5 w-5 text-gray-600" />
+              <label className="text-sm font-medium text-black">
+                Alias par défaut
+              </label>
+            </div>
+            <select
+              value={defaultAlias}
+              onChange={e =>
+                setDefaultAlias(e.target.value as 'contact' | 'commandes' | '')
+              }
+              className="w-full h-10 px-3 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+            >
+              <option value="">— Non spécifié —</option>
+              <option value="contact">contact@</option>
+              <option value="commandes">commandes@</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-2">
+              Adresse expéditrice pré-remplie quand on ouvre la modal Composer.
+            </p>
+          </div>
+
+          {/* Tags */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="mb-4">
+              <label className="text-sm font-medium text-black">Tags</label>
+              <p className="text-xs text-gray-500 mt-1">
+                Liste séparée par des virgules (ex: relance, devis, urgent)
+              </p>
+            </div>
+            <Input
+              type="text"
+              value={tagsInput}
+              onChange={e => setTagsInput(e.target.value)}
+              placeholder="relance, devis, urgent"
+            />
+            <div className="mt-3 flex flex-wrap gap-1">
+              {tagsInput
+                .split(',')
+                .map(t => t.trim())
+                .filter(t => t)
+                .map(tag => (
+                  <span
+                    key={tag}
+                    className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded"
+                  >
+                    {tag}
+                  </span>
+                ))}
+            </div>
           </div>
 
           {/* Active status */}
