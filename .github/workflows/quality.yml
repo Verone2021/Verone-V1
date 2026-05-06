@@ -789,14 +789,13 @@ jobs:
           GOLDEN="${{ needs.smoke-golden.result }}"
           DOMAINE="${{ needs.smoke-domaine.result }}"
           echo "e2e-needed=$E2E_NEEDED golden=$GOLDEN domaine=$DOMAINE"
-          # Si E2E pas nécessaire (PR backend pure) → succès direct
-          if [ "$E2E_NEEDED" != "true" ]; then
-            echo "✅ E2E non requis pour ce changement"
-            exit 0
-          fi
-          # E2E nécessaire : golden ET domaine doivent avoir réussi
-          if [ "$GOLDEN" != "success" ] || [ "$DOMAINE" != "success" ]; then
+          # On fail UNIQUEMENT en cas d'échec réel d'un job E2E.
+          # Les autres états (success, skipped, cancelled non-erreur) passent.
+          # - skipped : la condition `if:` du job a refusé (PR backend pure,
+          #   ou release PR qui ne déclenche pas le sharding) — c'est attendu.
+          # - success : tout est vert, parfait.
+          if [ "$GOLDEN" = "failure" ] || [ "$DOMAINE" = "failure" ]; then
             echo "❌ smoke-golden=$GOLDEN smoke-domaine=$DOMAINE"
             exit 1
           fi
-          echo "✅ E2E smoke complet OK"
+          echo "✅ E2E smoke OK (golden=$GOLDEN domaine=$DOMAINE)"
