@@ -2792,6 +2792,7 @@ export type Database = {
           discount_percentage: number | null;
           document_id: string;
           eco_tax: number | null;
+          formula_version: string;
           id: string;
           linkme_selection_item_id: string | null;
           product_id: string | null;
@@ -2812,6 +2813,7 @@ export type Database = {
           discount_percentage?: number | null;
           document_id: string;
           eco_tax?: number | null;
+          formula_version?: string;
           id?: string;
           linkme_selection_item_id?: string | null;
           product_id?: string | null;
@@ -2832,6 +2834,7 @@ export type Database = {
           discount_percentage?: number | null;
           document_id?: string;
           eco_tax?: number | null;
+          formula_version?: string;
           id?: string;
           linkme_selection_item_id?: string | null;
           product_id?: string | null;
@@ -8078,6 +8081,7 @@ export type Database = {
           total_ht: number;
           total_ttc: number;
           updated_at: string;
+          updated_by: string | null;
           warehouse_exit_at: string | null;
           warehouse_exit_by: string | null;
         };
@@ -8150,6 +8154,7 @@ export type Database = {
           total_ht?: number;
           total_ttc?: number;
           updated_at?: string;
+          updated_by?: string | null;
           warehouse_exit_at?: string | null;
           warehouse_exit_by?: string | null;
         };
@@ -8222,6 +8227,7 @@ export type Database = {
           total_ht?: number;
           total_ttc?: number;
           updated_at?: string;
+          updated_by?: string | null;
           warehouse_exit_at?: string | null;
           warehouse_exit_by?: string | null;
         };
