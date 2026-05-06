@@ -177,6 +177,18 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
+      # ---- Upload back-office .next pour les jobs E2E ----
+      # Évite que chaque job E2E refasse un `next build` (~5 min) alors que
+      # ce job a déjà produit le bundle. Pattern senior shared-build.
+      - name: Upload back-office .next artifact (for E2E jobs)
+        if: needs.detect-changes.outputs.e2e-needed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: back-office-build
+          path: apps/back-office/.next
+          retention-days: 1
+          include-hidden-files: true
+
       # ---- PR comment on failure ----
       - name: Comment PR on Failure
         if: failure() && github.event_name == 'pull_request'
@@ -252,19 +264,11 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium
 
-      - name: Cache Next.js build
-        uses: actions/cache@v5
+      - name: Download back-office .next artifact (built by quality job)
+        uses: actions/download-artifact@v4
         with:
-          path: apps/back-office/.next/cache
-          key: ${{ runner.os }}-nextjs-bo-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/back-office/**/*.ts', 'apps/back-office/**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-bo-${{ hashFiles('pnpm-lock.yaml') }}-
-            ${{ runner.os }}-nextjs-bo-
-
-      - name: Build back-office
-        run: pnpm --filter @verone/back-office build
-        env:
-          NODE_OPTIONS: --max-old-space-size=8192
+          name: back-office-build
+          path: apps/back-office/.next
 
       - name: Start back-office (background)
         run: |
@@ -314,7 +318,7 @@ jobs:
   # ----------------------------------------------------------------
   smoke-domaine:
     name: E2E smoke-domaine shard ${{ matrix.shard }}/4 (Niveau 2)
-    needs: [detect-changes, smoke-golden]
+    needs: [detect-changes, quality, smoke-golden]
     runs-on: ubuntu-latest
     timeout-minutes: 8
     continue-on-error: true
@@ -367,19 +371,11 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium
 
-      - name: Cache Next.js build
-        uses: actions/cache@v5
+      - name: Download back-office .next artifact (built by quality job)
+        uses: actions/download-artifact@v4
         with:
-          path: apps/back-office/.next/cache
-          key: ${{ runner.os }}-nextjs-bo-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/back-office/**/*.ts', 'apps/back-office/**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-bo-${{ hashFiles('pnpm-lock.yaml') }}-
-            ${{ runner.os }}-nextjs-bo-
-
-      - name: Build back-office
-        run: pnpm --filter @verone/back-office build
-        env:
-          NODE_OPTIONS: --max-old-space-size=8192
+          name: back-office-build
+          path: apps/back-office/.next
 
       - name: Start back-office (background)
         run: |
@@ -440,7 +436,7 @@ jobs:
   # ----------------------------------------------------------------
   e2e-full:
     name: E2E full shard ${{ matrix.shard }}/4 (Niveau 3)
-    needs: [detect-changes]
+    needs: [detect-changes, quality]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     continue-on-error: true
@@ -491,19 +487,11 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium
 
-      - name: Cache Next.js build
-        uses: actions/cache@v5
+      - name: Download back-office .next artifact (built by quality job)
+        uses: actions/download-artifact@v4
         with:
-          path: apps/back-office/.next/cache
-          key: ${{ runner.os }}-nextjs-bo-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/back-office/**/*.ts', 'apps/back-office/**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-bo-${{ hashFiles('pnpm-lock.yaml') }}-
-            ${{ runner.os }}-nextjs-bo-
-
-      - name: Build back-office
-        run: pnpm --filter @verone/back-office build
-        env:
-          NODE_OPTIONS: --max-old-space-size=8192
+          name: back-office-build
+          path: apps/back-office/.next
 
       - name: Start back-office (background)
         run: |
