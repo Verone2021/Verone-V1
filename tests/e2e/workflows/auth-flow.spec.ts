@@ -1,3 +1,4 @@
+// auth-flow uses its own credentials (testing the login flow itself); other specs use storageState.
 import { test, expect } from '@playwright/test';
 
 /**
@@ -10,6 +11,9 @@ import { test, expect } from '@playwright/test';
  * 4. Protected routes redirect unauthenticated users
  * 5. Session persists across navigation
  */
+
+const EMAIL = process.env.E2E_USER_EMAIL ?? 'veronebyromeo@gmail.com';
+const PASSWORD = process.env.E2E_USER_PASSWORD ?? 'Abc123456';
 
 test.describe('Authentication Flow', () => {
   // This test does NOT use the shared auth state
@@ -52,12 +56,8 @@ test.describe('Authentication Flow', () => {
     await page.goto('/login');
     await page.waitForLoadState('networkidle');
 
-    await page
-      .getByRole('textbox', { name: /email/i })
-      .fill('veronebyromeo@gmail.com');
-    await page
-      .getByRole('textbox', { name: /mot de passe/i })
-      .fill('Abc123456');
+    await page.getByRole('textbox', { name: /email/i }).fill(EMAIL);
+    await page.getByRole('textbox', { name: /mot de passe/i }).fill(PASSWORD);
     await page.getByRole('button', { name: /se connecter/i }).click();
 
     // Should redirect to dashboard
