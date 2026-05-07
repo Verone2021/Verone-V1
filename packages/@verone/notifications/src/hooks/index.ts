@@ -27,3 +27,7 @@ export * from './use-all-notifications-count';
 
 // Sidebar consolidated counts hook (2026-03-17)
 export * from './use-sidebar-counts';
+
+// Communications unified view hook (2026-05-07 — BO-MSG-018)
+export * from './use-communications';
+export * from './use-unread-mails-count';

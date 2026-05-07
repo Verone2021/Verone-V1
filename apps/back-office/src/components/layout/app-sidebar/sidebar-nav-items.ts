@@ -65,7 +65,7 @@ export const getNavItems = (
     icon: Home,
   },
   {
-    title: 'Messages',
+    title: 'Centre de traitement',
     href: '/messages',
     icon: MessageCircle,
     badge:
@@ -75,6 +75,11 @@ export const getNavItems = (
       0
         ? 'urgent'
         : undefined,
+  },
+  {
+    title: 'Messagerie',
+    href: '/parametres/messagerie',
+    icon: Mail,
   },
   {
     title: 'Organisations & Contacts',
@@ -231,13 +236,6 @@ export const getNavItems = (
         badgeVariant: linkmePendingCount > 0 ? 'urgent' : undefined,
       },
       {
-        title: 'Messages LinkMe',
-        href: '/canaux-vente/linkme/messages',
-        icon: MessageCircle,
-        badge: linkmeMissingInfoCount,
-        badgeVariant: linkmeMissingInfoCount > 0 ? 'urgent' : undefined,
-      },
-      {
         title: 'Site Internet',
         href: '/canaux-vente/site-internet',
         icon: Globe,
@@ -338,11 +336,6 @@ export const getNavItems = (
         title: 'Vue d’ensemble',
         href: '/parametres',
         icon: Settings,
-      },
-      {
-        title: 'Messagerie',
-        href: '/parametres/messagerie',
-        icon: Mail,
       },
     ],
   },
