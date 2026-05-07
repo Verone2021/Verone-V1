@@ -9,6 +9,55 @@ import type {
   IAddressData,
 } from './types';
 
+/**
+ * [BO-FIN-FEES-002] Normalise billing_address quel que soit son format en base.
+ *
+ * Postgres stocke `billing_address` en JSONB qui accepte tout type. Plusieurs
+ * formats anormaux ont été observés en production (incident 2026-05-07) :
+ *   - `null`
+ *   - `{ city, postal_code, address_line1, country }`         → format normal
+ *   - `"{\"city\":\"...\",\"postal_code\":\"...\"}"` (string) → JSON double-encodé
+ *   - `{ address: "texte libre" }`                            → wizard cassé
+ *
+ * Cette fonction retourne un objet plat `{ city, postal_code, ... }` ou null.
+ * Le code appelant ajoute un fallback sur l'organisation customer en cas de null.
+ */
+function normalizeBillingAddress(
+  raw: unknown
+): Record<string, string | undefined> | null {
+  if (raw === null || raw === undefined) return null;
+
+  // Cas string JSON encodée
+  if (typeof raw === 'string') {
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      return normalizeBillingAddress(parsed);
+    } catch {
+      return null;
+    }
+  }
+
+  if (typeof raw !== 'object' || Array.isArray(raw)) return null;
+
+  const obj = raw as Record<string, unknown>;
+
+  // Cas { address: ... } : descendre d'un niveau si address est un object
+  if (
+    'address' in obj &&
+    typeof obj.address === 'object' &&
+    obj.address !== null
+  ) {
+    return normalizeBillingAddress(obj.address);
+  }
+
+  // Cas object plat normal
+  const result: Record<string, string | undefined> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (typeof v === 'string') result[k] = v;
+  }
+  return result;
+}
+
 export async function resolveQontoClient(
   qontoClient: QontoClient,
   typedOrder: ISalesOrderWithCustomer,
@@ -106,15 +155,36 @@ export async function resolveQontoClient(
 
   // Résoudre l'adresse de facturation :
   // Priorité 1: adresse envoyée depuis le modal (body)
-  // Priorité 2: billing_address JSONB de la commande en DB
-  const dbBillingAddress = typedOrder.billing_address as Record<
-    string,
-    string
-  > | null;
+  // Priorité 2: billing_address JSONB de la commande en DB (normalisée)
+  // Priorité 3: [BO-FIN-FEES-002] Fallback sur l'organisation (defense in depth)
+  //
+  // [BO-FIN-FEES-002 — Defense in depth] Avant 2026-05-07, ce code lisait
+  // `typedOrder.billing_address as Record<string, string>` directement, ce
+  // qui plantait silencieusement quand billing_address était :
+  //  - stocké comme STRING JSON encodée (jsonb_typeof = 'string')
+  //  - structuré comme `{ address: "texte libre" }` (sans city/postal_code)
+  // Le helper normalize ci-dessous parse ces formats anormaux pour récupérer
+  // un objet plat. Si la commande a quand même billing_address vide, on fallback
+  // sur les colonnes billing_* de l'organisation customer.
+  const dbBillingAddress = normalizeBillingAddress(typedOrder.billing_address);
 
-  const city = bodyBillingAddress?.city ?? dbBillingAddress?.city;
+  const orgFallback =
+    typedOrder.customer_type === 'organization' && typedOrder.customer
+      ? (typedOrder.customer as Organisation)
+      : null;
+
+  const city =
+    bodyBillingAddress?.city ??
+    dbBillingAddress?.city ??
+    orgFallback?.billing_city ??
+    orgFallback?.city ??
+    undefined;
   const zipCode =
-    bodyBillingAddress?.postal_code ?? dbBillingAddress?.postal_code;
+    bodyBillingAddress?.postal_code ??
+    dbBillingAddress?.postal_code ??
+    orgFallback?.billing_postal_code ??
+    orgFallback?.postal_code ??
+    undefined;
 
   if (!city || !zipCode) {
     console.warn(
@@ -133,6 +203,7 @@ export async function resolveQontoClient(
             hasZipCode: !!zipCode,
             bodyBillingAddress,
             dbBillingAddress,
+            orgFallbackUsed: !!orgFallback,
           },
         },
         { status: 400 }
@@ -145,9 +216,15 @@ export async function resolveQontoClient(
     dbBillingAddress?.street ??
     dbBillingAddress?.address ??
     dbBillingAddress?.address_line1 ??
+    orgFallback?.billing_address_line1 ??
+    orgFallback?.address_line1 ??
     '';
   const countryCode =
-    bodyBillingAddress?.country ?? dbBillingAddress?.country ?? 'FR';
+    bodyBillingAddress?.country ??
+    dbBillingAddress?.country ??
+    orgFallback?.billing_country ??
+    orgFallback?.country ??
+    'FR';
 
   const qontoAddress = {
     streetAddress,
