@@ -51,6 +51,7 @@ type KpiKey = 'unread' | 'replied_today' | 'linked_order' | null;
 interface MessagerieClientProps {
   initialCommunications: Communication[];
   watchAddresses: string[];
+  initialFilters?: MessagerieFilters;
 }
 
 function formatDate(iso: string): string {
@@ -129,21 +130,27 @@ function getCounterpartyDisplay(comm: Communication): string {
   return comm.counterparty_email;
 }
 
+const DEFAULT_FILTERS: MessagerieFilters = {
+  direction: 'all',
+  brand: 'all',
+  kind: 'all',
+  toAddress: '',
+  status: 'all',
+  search: '',
+};
+
 export function MessagerieClient({
   initialCommunications,
   watchAddresses,
+  initialFilters,
 }: MessagerieClientProps) {
   const supabase = useSupabase();
   const [communications, setCommunications] = useState<Communication[]>(
     initialCommunications
   );
   const [filters, setFilters] = useState<MessagerieFilters>({
-    direction: 'all',
-    brand: 'all',
-    kind: 'all',
-    toAddress: '',
-    status: 'all',
-    search: '',
+    ...DEFAULT_FILTERS,
+    ...(initialFilters ?? {}),
   });
   const [selected, setSelected] = useState<Communication | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);

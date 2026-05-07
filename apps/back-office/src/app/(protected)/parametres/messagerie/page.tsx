@@ -26,8 +26,21 @@ export const metadata = {
 const COLUMNS =
   'id, direction, kind, brand, counterparty_email, counterparty_name, our_address, subject, preview, body_text, body_html, attachments, has_attachments, event_at, is_read, replied_at, sent_by, organisation_id, contact_id, sales_order_id, sales_order_number, consultation_id, document_type, document_id, document_number, gmail_thread_id, gmail_message_id, status, error_message';
 
-export default async function MessageriePage() {
+interface MessageriePageProps {
+  searchParams?: Promise<{
+    direction?: string;
+    brand?: string;
+    kind?: string;
+    status?: string;
+    search?: string;
+  }>;
+}
+
+export default async function MessageriePage({
+  searchParams,
+}: MessageriePageProps) {
   const supabase = await createServerClient();
+  const params = (await searchParams) ?? {};
 
   // Fetch 100 dernières communications via la vue unifiée (BO-MSG-018)
   const { data, error } = await (
@@ -68,6 +81,34 @@ export default async function MessageriePage() {
     <MessagerieClient
       initialCommunications={communications}
       watchAddresses={watchAddresses}
+      initialFilters={{
+        direction:
+          params.direction === 'sent' || params.direction === 'received'
+            ? params.direction
+            : 'all',
+        brand:
+          params.brand === 'verone' || params.brand === 'linkme'
+            ? params.brand
+            : 'all',
+        kind: ([
+          'inbound_email',
+          'document',
+          'consultation',
+          'info_request',
+        ].includes(params.kind ?? '')
+          ? params.kind
+          : 'all') as
+          | 'all'
+          | 'inbound_email'
+          | 'document'
+          | 'consultation'
+          | 'info_request',
+        status:
+          params.status === 'read' || params.status === 'unread'
+            ? params.status
+            : 'all',
+        search: params.search ?? '',
+      }}
     />
   );
 }
