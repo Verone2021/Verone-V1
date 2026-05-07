@@ -189,7 +189,7 @@ export async function GET(
         return new NextResponse(pdfBuffer, {
           headers: {
             'Content-Type': 'application/pdf',
-            'Content-Disposition': `inline; filename="facture-${documentNumber ?? id}.pdf"`,
+            'Content-Disposition': `attachment; filename="facture-${documentNumber ?? id}.pdf"`,
             'Content-Length': String(pdfBuffer.byteLength),
             'X-PDF-Source': 'local',
           },
@@ -222,7 +222,7 @@ export async function GET(
               return new NextResponse(uploadedBuffer, {
                 headers: {
                   'Content-Type': 'application/pdf',
-                  'Content-Disposition': `inline; filename="${documentNumber ?? id}.pdf"`,
+                  'Content-Disposition': `attachment; filename="${documentNumber ?? id}.pdf"`,
                   'Content-Length': String(uploadedBuffer.byteLength),
                   'X-PDF-Source': 'uploaded',
                 },
@@ -357,7 +357,7 @@ export async function GET(
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="facture-${invoice.invoice_number ?? id}.pdf"`,
+        'Content-Disposition': `attachment; filename="facture-${invoice.invoice_number ?? id}.pdf"`,
         'Content-Length': String(pdfBuffer.byteLength),
         'X-PDF-Source': 'qonto',
       },

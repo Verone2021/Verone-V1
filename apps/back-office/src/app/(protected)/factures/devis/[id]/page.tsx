@@ -241,7 +241,7 @@ export default function QuoteDetailPage({ params }: QuoteDetailPageProps) {
           <Button
             variant="outline"
             onClick={() =>
-              window.open(`/api/qonto/quotes/${quote.id}/pdf`, '_blank')
+              window.open(`/api/qonto/quotes/${quote.id}/view`, '_blank')
             }
           >
             <ExternalLink className="mr-2 h-4 w-4" />
