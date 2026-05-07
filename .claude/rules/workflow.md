@@ -126,6 +126,27 @@ complet ET reviewer PASS. Sinon continuer commits/push sur la branche.
 1 merge squash par PR. Merge SEULEMENT quand bloc entier fini. JAMAIS en
 cours de bloc pour "avancer".
 
+**RÈGLE ABSOLUE — ZÉRO MERGE INTERMÉDIAIRE** (ajoutée 2026-05-07 après
+incident de lenteur perçue par Roméo) :
+
+- Sur un chantier multi-phases (ex: refonte RLS Phase 1+2+3, sprint perf
+  vagues 1+2+3), **UNE SEULE** PR mergée à la TOUTE FIN.
+- Pendant le chantier : commit + push, c'est tout. Pas de `gh pr merge`,
+  pas de `--auto`, pas de "petit merge intermédiaire pour valider".
+- Chaque merge = CI complète + déploiement Vercel + déploiement Supabase
+  = 5 à 15 minutes d'attente bloquante. Multiplier les merges = perdre
+  Roméo en attente sur des cycles inutiles.
+- Les développeurs seniors ne mergent pas toutes les 5 minutes. Tu non plus.
+- Une seule PR ouverte qui s'enrichit au fur et à mesure des phases.
+  À la toute fin, Roméo donne UN GO, tu merges UNE FOIS.
+
+**Exception** : hotfix critique en production (page cassée, paiement
+bloqué). Tu préviens Roméo, il décide. Sinon : pas de merge intermédiaire.
+
+**S'applique à TOUS les agents** : coordinateur, dev-agent, ops-agent,
+reviewer-agent, perf-optimizer. Si un agent propose un merge en cours
+de chantier, le coordinateur refuse et continue les commits.
+
 ### Branches
 
 Une branche par bloc. Vit plusieurs jours si nécessaire. Bascule via
@@ -148,12 +169,19 @@ Un seul critère manquant : pas de PR, continuer commits/push.
 
 ## Quand MERGER une PR
 
+- [ ] **Le chantier complet est terminé** (toutes les phases, pas qu'une seule)
 - [ ] CI verte (type-check + build + tests + drift DB)
 - [ ] Reviewer-agent PASS
 - [ ] Aucun CRITICAL dans le review report
-- [ ] Romeo a validé OU CI verte sur sprint pré-approuvé (cf. mémoire feedback `ci_green_auto_merge`)
+- [ ] Romeo a validé explicitement le merge final
 
-Merger en `--squash --delete-branch`.
+Merger en `--squash --delete-branch`. **UNE SEULE FOIS PAR CHANTIER.**
+
+Le mergé automatique sur "CI verte = merge auto" (ancienne mémoire
+`ci_green_auto_merge`) est **suspendu** : la CI verte d'une phase
+intermédiaire ne déclenche PAS de merge. Seule la fin du chantier complet
+
+- GO Roméo déclenche le merge.
 
 ---
 
@@ -163,6 +191,8 @@ Merger en `--squash --delete-branch`.
 - ❌ 2 branches pour 2 commits qui touchent les mêmes fichiers
 - ❌ Merger une PR puis créer immédiatement une autre PR sur le même écran pour un raffinement (le raffinement aurait dû être un commit de plus avant le merge)
 - ❌ Force-rebase à répétition parce que les branches partent de staging à des moments différents
+- ❌ **Merger une phase intermédiaire d'un chantier multi-phases** (ex: merger Phase 1 RLS alors que Phase 2 et 3 sont prévues sur le même sujet). UNE PR mergée à la toute fin du chantier.
+- ❌ **`gh pr merge --auto` sur un chantier en cours** — l'auto-merge déclenche le merge dès que la CI passe, ce qui contourne la règle "merger seulement à la fin du chantier complet".
 
 ---
 
