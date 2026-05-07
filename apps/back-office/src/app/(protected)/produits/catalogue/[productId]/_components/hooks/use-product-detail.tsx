@@ -33,6 +33,9 @@ export function useProductDetail() {
   const router = useRouter();
   const productId = params.productId as string;
 
+  // [BO-PERF-QUICKWINS-001] client créé au scope du hook (stable, pas recréé à chaque callback)
+  const supabase = useMemo(() => createClient(), []);
+
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true); // Chargement initial uniquement
   const [isRefreshing, setIsRefreshing] = useState(false); // Refresh post-mutation (silencieux)
@@ -71,13 +74,28 @@ export function useProductDetail() {
           return;
         }
 
-        const supabase = createClient();
-
+        // [BO-PERF-QUICKWINS-001] select explicite : seules les colonnes consommées par la fiche produit
         const { data, error: fetchError } = await supabase
           .from('products')
           .select(
             `
-          *,
+          id, name, sku, slug, description, description_long, description_short,
+          technical_description, internal_notes, meta_title, meta_description,
+          selling_points, variant_attributes, dimensions,
+          cost_price, cost_net_avg, margin_percentage, eco_tax_default,
+          stock_real, stock_forecasted_out, stock_quantity, min_stock, stock_status,
+          weight, condition, manufacturer, gtin, brand_ids,
+          product_status, product_type, article_type, availability_type,
+          is_published_online, has_images,
+          subcategory_id, supplier_id, variant_group_id, enseigne_id, assigned_client_id,
+          created_by_affiliate, consultation_id,
+          supplier_moq, supplier_reference, supplier_page_url,
+          style, suitable_rooms, video_url, tags,
+          created_at, updated_at, archived_at,
+          affiliate_approval_status, affiliate_approved_at, affiliate_approved_by,
+          affiliate_commission_rate, affiliate_payout_ht, affiliate_rejection_reason,
+          rejection_reason, publication_date, unpublication_date,
+          show_on_linkme_globe, store_at_verone, requires_sample,
           enseigne:enseignes!products_enseigne_id_fkey(
             id,
             name
@@ -159,7 +177,7 @@ export function useProductDetail() {
         checkSLOCompliance(startTime, 'dashboard');
       }
     },
-    [productId, router]
+    [productId, router, supabase]
   );
 
   const handleProductUpdate = useCallback(
@@ -167,7 +185,7 @@ export function useProductDetail() {
       setProduct(prev => (prev ? { ...prev, ...updatedData } : null));
 
       try {
-        const supabase = createClient();
+        // [BO-PERF-QUICKWINS-001] utilise le client stable du scope du hook
         const updatePayload: ProductUpdate = updatedData;
         const { error: updateError } = await supabase
           .from('products')
@@ -205,7 +223,7 @@ export function useProductDetail() {
         });
       }
     },
-    [productId, fetchProduct]
+    [productId, fetchProduct, supabase]
   );
 
   const handleShare = useCallback(() => {
@@ -227,7 +245,7 @@ export function useProductDetail() {
     if (!uuidRegex.test(productId)) return;
 
     const fetchChannelPricing = async () => {
-      const supabase = createClient();
+      // [BO-PERF-QUICKWINS-001] utilise le client stable du scope du hook
       const { data: channels } = await supabase
         .from('sales_channels')
         .select('id, name, code')
@@ -264,7 +282,7 @@ export function useProductDetail() {
     void fetchChannelPricing().catch(err => {
       console.error('[ProductDetail] Channel pricing fetch failed:', err);
     });
-  }, [productId]);
+  }, [productId, supabase]);
 
   const breadcrumbParts = useMemo(() => {
     if (!product) return [];
