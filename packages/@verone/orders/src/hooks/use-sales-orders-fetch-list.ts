@@ -200,7 +200,12 @@ export function useFetchOrdersList({
           { id: string; qontoId: string | null; number: string; status: string }
         >();
         const quoteMap = new Map<string, { qontoId: string; number: string }>();
-        // [BO-RLS-PERF-002] Set des sales_order_id avec au moins un doc draft désynchronisé
+        // [BO-RLS-PERF-002 — neutralisé 2026-05-07] Set des sales_order_id
+        // avec au moins un doc draft désynchronisé. Critère initial cassé
+        // (orderUpdatedAt > docCreatedAt → 100% faux positifs après UPDATEs
+        // billing_address). Le set reste vide tant que le bon critère
+        // (écart de montant TTC) n'est pas implémenté. Audit Qonto API
+        // requis aussi pour devis orphelins locaux (SO-00131, SO-00157).
         const desyncOrderIds = new Set<string>();
         const creatorsMap = new Map<
           string,
@@ -371,20 +376,9 @@ export function useFetchOrdersList({
                 status: inv.status,
               });
             }
-            // [BO-RLS-PERF-002] Désynchro: doc draft + commande modifiée
-            // APRÈS la création du doc (orderUpdatedAt > docCreatedAt)
-            if (inv.status === 'draft' && inv.created_at) {
-              const order = typedOrdersData.find(
-                o => o.id === inv.sales_order_id
-              );
-              if (
-                order?.updated_at &&
-                new Date(order.updated_at).getTime() >
-                  new Date(inv.created_at).getTime()
-              ) {
-                desyncOrderIds.add(inv.sales_order_id);
-              }
-            }
+            // [BO-RLS-PERF-002 — désactivé 2026-05-07] Le calcul de
+            // désynchronisation est désactivé: voir la déclaration
+            // desyncOrderIds plus haut pour le contexte. Le set reste vide.
           }
           for (const p of packlinkData ?? []) {
             if (p.sales_order_id) pendingPacklinkSet.add(p.sales_order_id);
