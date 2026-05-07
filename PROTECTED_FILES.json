@@ -2,8 +2,8 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Protected Files Configuration",
   "description": "Definit les fichiers et dossiers proteges necessitant une autorisation speciale pour modification",
-  "version": "3.0.0",
-  "lastUpdated": "2026-03-27",
+  "version": "3.1.0",
+  "lastUpdated": "2026-05-07",
   "protected": {
     "description": "Fichiers/dossiers INTERDITS de modification directe sans autorisation owner",
     "patterns": [
@@ -26,7 +26,15 @@
       ".env.local",
       ".env.production",
       "CLAUDE.md",
-      "PROTECTED_FILES.json"
+      "PROTECTED_FILES.json",
+      "apps/back-office/src/app/api/qonto/**",
+      "apps/back-office/src/app/api/qonto/invoices/_lib/resolve-qonto-client.ts",
+      "apps/back-office/src/app/api/qonto/quotes/route.helpers.ts",
+      "apps/back-office/src/app/api/qonto/quotes/route.context.ts",
+      "apps/back-office/src/app/api/qonto/quotes/route.post.ts",
+      "apps/back-office/src/app/api/qonto/quotes/route.db.ts",
+      "apps/back-office/src/app/api/qonto/invoices/by-order/[orderId]/regenerate-proforma/**",
+      "apps/back-office/src/app/api/qonto/quotes/by-order/[orderId]/regenerate/**"
     ],
     "notes": [
       "Modification = Backup obligatoire + PR avec justification detaillee",

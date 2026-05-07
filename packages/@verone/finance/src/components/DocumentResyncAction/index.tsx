@@ -4,7 +4,7 @@
  * DocumentResyncAction — Badge + bouton "Re-synchroniser" + modal confirmation.
  *
  * [BO-FIN-009 Phase 4 — R3 finance.md — Option A]
- * Affiche un badge orange "Non synchronisé" et un bouton "Re-synchroniser"
+ * Affiche un badge ambre "À régénérer" et un bouton "Régénérer"
  * UNIQUEMENT si le document est en `draft` ET que la commande a été modifiée
  * après la création du document (out-of-sync).
  *
@@ -12,7 +12,13 @@
  * Si la commande a aussi un document du type opposé (draft), propose
  * "Régénérer les deux" comme option par défaut.
  *
- * Zéro modification du workflow existant — composant additif uniquement.
+ * [BO-RLS-PERF-002 étape 3 + bug fix] Refonte 2026-05-07:
+ * - Tous les boutons ouvrent maintenant le modal de confirmation (le bouton
+ *   "Régénérer les deux" déclenchait avant l'action sans confirmation = bug)
+ * - Le modal affiche un récap des nouveaux totaux + diff avant/après
+ * - Visuel du badge amélioré (DocumentOutOfSyncBadge)
+ *
+ * Zéro modification du workflow API existant — composant additif uniquement.
  */
 
 import { useCallback, useState } from 'react';
@@ -47,6 +53,8 @@ export interface DocumentResyncActionProps {
   orderUpdatedAt: string | null | undefined;
   /** Timestamp de création du document (financial_documents.created_at ou issue_date) */
   documentCreatedAt: string | null | undefined;
+  /** [BO-RLS-PERF-002] ID du document actuel (financial_documents.id) — pour comparaison avant/après dans le modal */
+  currentDocumentId?: string;
   /** CustomLines existantes à proposer à la préservation dans le modal */
   existingCustomLines?: ICustomLineToPreserve[];
   /** Notes existantes à proposer à la préservation dans le modal */
@@ -101,6 +109,7 @@ export function DocumentResyncAction({
   documentStatus,
   orderUpdatedAt,
   documentCreatedAt,
+  currentDocumentId,
   existingCustomLines = [],
   existingNotes = '',
   size = 'sm',
@@ -111,6 +120,7 @@ export function DocumentResyncAction({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalCascade, setModalCascade] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // Affichage conditionnel : seulement si draft + out-of-sync
@@ -189,14 +199,15 @@ export function DocumentResyncAction({
         }
 
         toast({
-          title: 'Re-synchronise',
+          title: 'Régénéré',
           description:
             data.message ??
-            `${documentType === 'quote' ? 'Devis' : 'Proforma'} regenere avec succes${cascade && hasCompanion ? ' (les deux documents)' : ''}.`,
+            `${documentType === 'quote' ? 'Devis' : 'Proforma'} régénéré avec succès${cascade && hasCompanion ? ' (les deux documents)' : ''}.`,
         });
 
         await invalidateAll();
         setModalOpen(false);
+        setModalCascade(false);
         onSuccess?.();
       } catch (error) {
         console.error(
@@ -231,15 +242,18 @@ export function DocumentResyncAction({
           documentStatus={documentStatus}
         />
       )}
-      {/* [BO-FIN-046 6.2] Bouton cascade si document compagnon détecté */}
+      {/* [BO-FIN-046 6.2 + BO-RLS-PERF-002 bug fix] Le bouton ouvre maintenant
+          le modal au lieu de déclencher l'action direct (correction du bug
+          d'action irréversible sans confirmation) */}
       {hasCompanion && (
         <Button
           variant="outline"
           size={buttonSize}
           onClick={() => {
-            void handleConfirm([], existingNotes, true);
+            setModalCascade(true);
+            setModalOpen(true);
           }}
-          className="gap-1.5 border-orange-400 text-orange-800 hover:bg-orange-50 font-medium"
+          className="gap-1.5 border-amber-400 bg-amber-50 text-amber-900 hover:bg-amber-100 font-medium shadow-sm"
           title="Régénérer ce document ET le document lié (devis/proforma) en une seule action."
           disabled={isLoading}
         >
@@ -250,22 +264,32 @@ export function DocumentResyncAction({
       <Button
         variant="outline"
         size={buttonSize}
-        onClick={() => setModalOpen(true)}
-        className="gap-1.5 border-orange-300 text-orange-700 hover:bg-orange-50"
-        title="La commande a ete modifiee apres la creation de ce document. Cliquez pour regenerer avec les donnees actuelles."
+        onClick={() => {
+          setModalCascade(false);
+          setModalOpen(true);
+        }}
+        className="gap-1.5 border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 shadow-sm"
+        title="La commande a été modifiée après la création de ce document. Cliquez pour régénérer avec les données actuelles."
       >
         <RefreshCw className="h-3.5 w-3.5" />
-        {hasCompanion ? 'Régénérer celui-ci' : 'Re-synchroniser'}
+        {hasCompanion ? 'Régénérer celui-ci' : 'Régénérer'}
       </Button>
 
       <RegenerateDocumentConfirmModal
         open={modalOpen}
-        onOpenChange={setModalOpen}
+        onOpenChange={open => {
+          setModalOpen(open);
+          if (!open) setModalCascade(false);
+        }}
         documentType={documentType}
         existingCustomLines={existingCustomLines}
         existingNotes={existingNotes}
-        onConfirm={(lines, notes) => {
-          void handleConfirm(lines, notes, false);
+        orderId={orderId}
+        currentDocumentId={currentDocumentId}
+        cascadeMode={modalCascade && hasCompanion}
+        companionType={documentType === 'quote' ? 'proforma' : 'quote'}
+        onConfirm={(lines, notes, cascade) => {
+          void handleConfirm(lines, notes, cascade);
         }}
         isLoading={isLoading}
       />

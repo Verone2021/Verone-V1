@@ -167,6 +167,7 @@ export function InvoicesSection({
                 <DocumentResyncAction
                   documentType="proforma"
                   orderId={orderId}
+                  currentDocumentId={invoice.id}
                   documentStatus={invoice.status}
                   orderUpdatedAt={orderUpdatedAt}
                   documentCreatedAt={

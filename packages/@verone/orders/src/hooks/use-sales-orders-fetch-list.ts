@@ -64,8 +64,7 @@ export function useFetchOrdersList({
             id, product_id, quantity, unit_price_ht, total_ht, tax_rate,
             products (
               id, name, sku, stock_quantity, stock_real,
-              stock_forecasted_in, stock_forecasted_out,
-              product_images!left (public_url, is_primary)
+              stock_forecasted_in, stock_forecasted_out
             )
           )
         `
@@ -159,10 +158,6 @@ export function useFetchOrdersList({
               stock_real: number | null;
               stock_forecasted_in: number | null;
               stock_forecasted_out: number | null;
-              product_images: Array<{
-                public_url: string | null;
-                is_primary: boolean | null;
-              }> | null;
             } | null;
           }> | null;
         };
@@ -400,17 +395,15 @@ export function useFetchOrdersList({
               : null;
           }
 
+          // [BO-RLS-PERF-002] Images retirées de la query liste — les
+          // images ne sont affichées que dans le détail (modal qui a sa
+          // propre query fetchOrder). primary_image_url reste à null ici
+          // pour compatibilité de type.
           const enrichedItems = (order.sales_order_items ?? []).map(item => {
             const prod = item.products;
             return {
               ...item,
-              products: prod
-                ? {
-                    ...prod,
-                    primary_image_url:
-                      prod.product_images?.[0]?.public_url ?? null,
-                  }
-                : null,
+              products: prod ? { ...prod, primary_image_url: null } : null,
             };
           });
 

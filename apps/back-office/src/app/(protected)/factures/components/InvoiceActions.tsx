@@ -58,15 +58,33 @@ export function InvoiceActions({
   const actions: ResponsiveAction[] = [];
 
   if (isDraft) {
-    // Brouillon : Modifier (link), Finaliser, Supprimer
-    actions.push({
-      label: 'Modifier le brouillon',
-      icon: Pencil,
-      onClick: () => {
-        router.push(`/factures/${invoice.id}/edit?type=invoice`);
-      },
-      alwaysVisible: true,
-    });
+    // [BO-RLS-PERF-002] Refonte factures brouillons:
+    // - Facture liée à une commande → "Voir" (lecture seule, modification
+    //   par régénération depuis la commande source)
+    // - Facture de service (sales_order_id IS NULL, R7) → "Modifier" direct
+    const isService = !invoice.sales_order_id;
+
+    if (isService) {
+      // Facture de service : édition directe possible
+      actions.push({
+        label: 'Modifier le brouillon',
+        icon: Pencil,
+        onClick: () => {
+          router.push(`/factures/${invoice.id}/edit?type=invoice`);
+        },
+        alwaysVisible: true,
+      });
+    } else {
+      // Facture liée à commande : voir uniquement (modifier via régénération)
+      actions.push({
+        label: 'Voir',
+        icon: Eye,
+        onClick: () => {
+          router.push(`/factures/${invoice.id}?type=invoice`);
+        },
+        alwaysVisible: true,
+      });
+    }
 
     if (onFinalize) {
       actions.push({

@@ -147,17 +147,53 @@ export function mapQontoQuote(
 }
 
 /**
+ * [BO-FIN-FEES-002] Normalise un billing_address JSONB quel que soit son format.
+ * Voir resolve-qonto-client.ts pour la documentation complète des cas gérés.
+ */
+function normalizeBillingAddressJSONB(
+  raw: unknown
+): Record<string, string | undefined> | null {
+  if (raw === null || raw === undefined) return null;
+  if (typeof raw === 'string') {
+    try {
+      return normalizeBillingAddressJSONB(JSON.parse(raw));
+    } catch {
+      return null;
+    }
+  }
+  if (typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const obj = raw as Record<string, unknown>;
+  if (
+    'address' in obj &&
+    typeof obj.address === 'object' &&
+    obj.address !== null
+  ) {
+    return normalizeBillingAddressJSONB(obj.address);
+  }
+  const result: Record<string, string | undefined> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (typeof v === 'string') result[k] = v;
+  }
+  return result;
+}
+
+/**
  * Résout l'adresse de facturation selon les 3 priorités :
  * 1. bodyBillingAddress (envoyé par le modal)
- * 2. orderBillingAddress (JSONB de la commande en DB)
- * 3. colonnes directes de l'organisation (fallback)
+ * 2. orderBillingAddress (JSONB de la commande en DB, normalisé)
+ * 3. colonnes directes de l'organisation (fallback billing_* puis * direct)
+ *
+ * [BO-FIN-FEES-002] Le paramètre orderBillingAddress accepte maintenant
+ * `unknown` pour gérer les formats anormaux (string JSON encodée,
+ * `{ address: "..." }`). La normalisation est interne à la fonction.
  */
 export function resolveBillingAddress(
   bodyBillingAddress: IPostRequestBody['billingAddress'],
-  orderBillingAddress: Record<string, string> | null,
+  orderBillingAddress: unknown,
   customerType: string,
   customer: Organisation | IndividualCustomer | null
 ): IResolvedBillingAddress | null {
+  const dbAddr = normalizeBillingAddressJSONB(orderBillingAddress);
   let city: string | undefined;
   let zipCode: string | undefined;
   let street = '';
@@ -168,21 +204,17 @@ export function resolveBillingAddress(
     zipCode = bodyBillingAddress.postal_code;
     street = bodyBillingAddress.address_line1 ?? '';
     country = bodyBillingAddress.country ?? 'FR';
-  } else if (orderBillingAddress?.city) {
-    city = orderBillingAddress.city;
-    zipCode = orderBillingAddress.postal_code;
-    street =
-      orderBillingAddress.street ??
-      orderBillingAddress.address ??
-      orderBillingAddress.address_line1 ??
-      '';
-    country = orderBillingAddress.country ?? 'FR';
+  } else if (dbAddr?.city) {
+    city = dbAddr.city;
+    zipCode = dbAddr.postal_code;
+    street = dbAddr.street ?? dbAddr.address ?? dbAddr.address_line1 ?? '';
+    country = dbAddr.country ?? 'FR';
   } else if (customerType === 'organization' && customer) {
     const org = customer as Organisation;
-    city = org.city ?? undefined;
-    zipCode = org.postal_code ?? undefined;
-    street = org.address_line1 ?? '';
-    country = org.country ?? 'FR';
+    city = org.billing_city ?? org.city ?? undefined;
+    zipCode = org.billing_postal_code ?? org.postal_code ?? undefined;
+    street = org.billing_address_line1 ?? org.address_line1 ?? '';
+    country = org.billing_country ?? org.country ?? 'FR';
   }
 
   if (!city && !zipCode) return null;
