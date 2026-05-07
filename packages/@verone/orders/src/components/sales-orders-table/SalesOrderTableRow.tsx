@@ -10,6 +10,7 @@ import { cn, formatCurrency, formatDate } from '@verone/utils';
 import { ChevronDown, FileText, Truck } from 'lucide-react';
 
 import type { SalesOrder, SalesOrderItem } from '../../hooks/use-sales-orders';
+import { OrderResyncButton } from './OrderResyncButton';
 import { SalesOrderActionMenu } from '../SalesOrderActionMenu';
 import {
   statusColors,
@@ -151,19 +152,18 @@ export function SalesOrderTableRow({
                 Packlink a payer
               </a>
             )}
-            {/* [BO-RLS-PERF-002 — révision 2026-05-07] Badge désynchro au
-                centime près. Affiché si la commande a au moins un devis OU
-                une facture brouillon dont le total TTC s'écarte de plus de
-                1 centime du total TTC de la commande (filtré côté hook). */}
-            {order.has_desync_draft && (
-              <span
-                className="inline-flex items-center gap-1 rounded border border-amber-400 bg-amber-50 px-1 py-0.5 text-[10px] font-medium text-amber-800"
-                title="Un devis ou une facture brouillon liée a un montant différent de la commande. Régénérez-le depuis la page facture/devis ou la fiche commande."
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                À régénérer
-              </span>
-            )}
+            {/* [BO-RLS-PERF-002 — révision 2026-05-07] Bouton "Synchroniser"
+                qui ouvre le modal devis et/ou facture brouillon pré-rempli
+                depuis la commande. L'utilisateur clique Valider, le modal
+                régénère le document chez Qonto + crée la trace locale.
+                Critère d'affichage : devis Qonto orphelin sans trace locale
+                OU trace locale brouillon avec écart > 1 cent vs commande. */}
+            <OrderResyncButton
+              order={order}
+              onResynced={() => {
+                if (typeof window !== 'undefined') window.location.reload();
+              }}
+            />
           </div>
         </TableCell>
         <TableCell>
