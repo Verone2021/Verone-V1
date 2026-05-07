@@ -33,6 +33,7 @@ interface MessageriePageProps {
     kind?: string;
     status?: string;
     search?: string;
+    toAddress?: string;
   }>;
 }
 
@@ -108,6 +109,7 @@ export default async function MessageriePage({
             ? params.status
             : 'all',
         search: params.search ?? '',
+        toAddress: params.toAddress ?? '',
       }}
     />
   );
