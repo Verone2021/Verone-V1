@@ -1099,3 +1099,22 @@ Autres FEU ROUGE de l'ancien fichier confirmés déjà couverts ailleurs (pas be
 **Conséquence** : `.claude/rules/workflow.md` enrichi d'une section « RÈGLE ABSOLUE — ZÉRO MERGE INTERMÉDIAIRE » (sous `### Merge`), checklist « Quand MERGER une PR » étendue d'un critère « Le chantier complet est terminé », 2 anti-patterns explicites ajoutés (merger une phase intermédiaire, `gh pr merge --auto` en cours de chantier). La règle s'applique à TOUS les agents (coordinateur, dev-agent, ops-agent, reviewer-agent, perf-optimizer). Mémoire utilisateur `feedback_no_intermediate_merges.md` créée pour rappel persistant. Hotfix critique en prod reste exception (Roméo décide au cas par cas).
 
 **Référence** : session 2026-05-07. PR #941 (perf vague 1) déjà mergée AVANT la règle — ne sera pas inversée car déjà déployée. PR #942 (RLS phase 1) sera maintenue ouverte et étendue avec les phases 2 et 3 sur la même branche jusqu'à la fin du chantier RLS.
+
+---
+
+## ADR-029 — Règle JSONB : CHECK constraint obligatoire (2026-05-07)
+
+**Contexte** : 2026-05-07. Roméo signale des proformas avec totaux aberrants. Investigation : 17 commandes (depuis le 19 mars 2026) avaient `billing_address` stocké comme STRING JSON encodée au lieu d'OBJECT JSON. PostgreSQL JSONB accepte n'importe quel type (string, array, object, scalar) sans avertissement, et TypeScript le type comme `Json` qui accepte aussi tout. Conséquence : le wizard SalesOrderForm a inséré `JSON.stringify(addr)` au lieu d'`addr` pendant 6 semaines sans qu'aucun garde-fou (TS, CI, types Supabase) ne détecte la divergence. Le bug est devenu visible quand le code Qonto a tenté de lire `billing_address.city` et trouvé `undefined`.
+
+**Décision** : règle absolue ajoutée dans `.claude/rules/database.md` section R-JSONB : toute colonne JSONB qui doit stocker un objet structuré DOIT être assortie d'une CHECK constraint `jsonb_typeof = 'object'`. Sans cette contrainte, le bug n'est détectable qu'à la lecture, donc invisible plusieurs semaines/mois. Avec, l'INSERT est rejeté à la source en dev.
+
+**Conséquence** :
+
+- Migration `20260507170000_bo_fin_fees_002_jsonb_address_constraints.sql` : 7 CHECK constraints ajoutées (`sales_orders.billing_address/shipping_address`, `financial_documents.billing_address/shipping_address`, `affiliate_pending_orders.billing_address/shipping_address`, `purchase_orders.delivery_address`).
+- Migration de correction des données préalable : 17 strings reparsées en objects via `(col #>> '{}')::jsonb`.
+- `.claude/rules/database.md` : section R-JSONB obligatoire à respecter pour toute future colonne JSONB.
+- Code resolve-qonto-client.ts + route.helpers.ts : ajout d'un parser tolérant en defense in depth (BO-FIN-FEES-002).
+- Wizard SalesOrderFormModal : suppression de l'INSERT `{ address: "string libre" }` — fallback sur les colonnes `billing_*` de l'organisation customer.
+- `PROTECTED_FILES.json` v3.1.0 : ajout du chemin `apps/back-office/src/app/api/qonto/**` aux fichiers interdits de modification sans owner.
+
+**Référence** : incident 2026-05-07. Roméo verbatim : « les développeurs senior comment font pour que Claude ne fasse pas d'erreur de typage ? C'est le b.a.-ba du coding ». Réponse documentée : avec des CHECK constraints DB, parce que TypeScript ne peut pas attraper ce genre d'erreur sur les types JSONB permissifs.
