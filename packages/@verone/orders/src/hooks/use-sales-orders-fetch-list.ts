@@ -5,7 +5,7 @@
  * Extracted from use-sales-orders-fetch.ts for max-lines compliance
  */
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -431,31 +431,14 @@ export function useFetchOrdersList({
               }
             }
           }
-          // Critère A: devis Qonto lié sans trace locale active = orphelin
-          // Local doit être miroir Qonto. Sans trace locale → à régénérer.
-          // Statuts terminaux exclus (devis figé après émission/expédition).
-          const orderHasLocalQuoteDraft = new Set<string>();
-          for (const inv of invoicesData ?? []) {
-            if (
-              inv.sales_order_id &&
-              inv.document_type === 'customer_quote' &&
-              inv.status === 'draft' &&
-              inv.quote_status !== 'superseded'
-            ) {
-              orderHasLocalQuoteDraft.add(inv.sales_order_id);
-            }
-          }
-          const finalStatuses = ['shipped', 'delivered', 'closed', 'cancelled'];
-          for (const order of typedOrdersData) {
-            if (
-              order.quote_qonto_id &&
-              !orderHasLocalQuoteDraft.has(order.id) &&
-              order.status !== null &&
-              !finalStatuses.includes(order.status)
-            ) {
-              markDesync(order.id, 'quote');
-            }
-          }
+          // [BO-RLS-PERF-002 — révision 2026-05-07] Critère A "orphelin Qonto"
+          // (sans trace locale = désync) RETIRÉ après feedback Roméo.
+          // Raison: trop agressif — un devis Qonto sans trace locale peut être
+          // parfaitement aligné avec la commande (cf. SO-2026-00167). Le badge
+          // signalait à tort des commandes correctes. Pour vraiment savoir si
+          // un orphelin Qonto est aligné, il faudrait appeler Qonto API à chaque
+          // chargement de liste (coûteux). On garde uniquement le critère B
+          // (écart de montant TTC > 1 cent sur trace locale brouillon active).
           for (const p of packlinkData ?? []) {
             if (p.sales_order_id) pendingPacklinkSet.add(p.sales_order_id);
           }
@@ -567,6 +550,24 @@ export function useFetchOrdersList({
     },
     [supabase, setLoading, setOrders, toastRef]
   );
+
+  // [BO-RLS-PERF-002] Refetch silencieux déclenché par CustomEvent.
+  // Permet aux composants enfants (OrderResyncButton) de refresh la liste
+  // sans recharger la page, sans propager fetchOrders à travers la hiérarchie.
+  const fetchOrdersRef = useRef(fetchOrders);
+  useEffect(() => {
+    fetchOrdersRef.current = fetchOrders;
+  }, [fetchOrders]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = (): void => {
+      void fetchOrdersRef.current();
+    };
+    window.addEventListener('verone:orders:refetch', handler);
+    return () => {
+      window.removeEventListener('verone:orders:refetch', handler);
+    };
+  }, []);
 
   return fetchOrders;
 }

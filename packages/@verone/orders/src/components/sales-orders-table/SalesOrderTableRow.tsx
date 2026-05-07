@@ -161,7 +161,10 @@ export function SalesOrderTableRow({
             <OrderResyncButton
               order={order}
               onResynced={() => {
-                if (typeof window !== 'undefined') window.location.reload();
+                // Refetch silencieux de la liste — pas de reload page brutal
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new Event('verone:orders:refetch'));
+                }
               }}
             />
           </div>
