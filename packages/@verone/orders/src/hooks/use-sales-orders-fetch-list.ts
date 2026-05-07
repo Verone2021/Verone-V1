@@ -200,12 +200,10 @@ export function useFetchOrdersList({
           { id: string; qontoId: string | null; number: string; status: string }
         >();
         const quoteMap = new Map<string, { qontoId: string; number: string }>();
-        // [BO-RLS-PERF-002 — neutralisé 2026-05-07] Set des sales_order_id
-        // avec au moins un doc draft désynchronisé. Critère initial cassé
-        // (orderUpdatedAt > docCreatedAt → 100% faux positifs après UPDATEs
-        // billing_address). Le set reste vide tant que le bon critère
-        // (écart de montant TTC) n'est pas implémenté. Audit Qonto API
-        // requis aussi pour devis orphelins locaux (SO-00131, SO-00157).
+        // [BO-RLS-PERF-002 — révision 2026-05-07] Désynchronisation calculée
+        // au centime près: ABS(doc.total_ttc - so.total_ttc) > 0,01 €. Couvre
+        // devis ET factures brouillons. Filtrage `deleted_at IS NULL` +
+        // `quote_status != 'superseded'` pour ne tenir compte que des docs actifs.
         const desyncOrderIds = new Set<string>();
         const creatorsMap = new Map<
           string,
@@ -263,7 +261,7 @@ export function useFetchOrdersList({
               supabase
                 .from('financial_documents')
                 .select(
-                  'id, sales_order_id, document_number, qonto_invoice_id, status, created_at, document_type'
+                  'id, sales_order_id, document_number, qonto_invoice_id, status, created_at, document_type, total_ttc, quote_status'
                 )
                 .in('sales_order_id', orderIds)
                 .in('document_type', ['customer_invoice', 'customer_quote'])
@@ -279,6 +277,8 @@ export function useFetchOrdersList({
                     status: string;
                     created_at: string | null;
                     document_type: string;
+                    total_ttc: number | null;
+                    quote_status: string | null;
                   }> | null
               )
               .catch(() => null),
@@ -365,6 +365,13 @@ export function useFetchOrdersList({
               });
             }
           }
+          // Map order_id → total_ttc commande pour comparaison rapide
+          const orderTotalTtcMap = new Map<string, number>();
+          for (const o of typedOrdersData) {
+            if (o.total_ttc !== null && o.total_ttc !== undefined) {
+              orderTotalTtcMap.set(o.id, Number(o.total_ttc));
+            }
+          }
           for (const inv of invoicesData ?? []) {
             if (!inv.sales_order_id) continue;
             // Stocker uniquement les factures (pas les devis) dans invoiceMap
@@ -376,9 +383,22 @@ export function useFetchOrdersList({
                 status: inv.status,
               });
             }
-            // [BO-RLS-PERF-002 — désactivé 2026-05-07] Le calcul de
-            // désynchronisation est désactivé: voir la déclaration
-            // desyncOrderIds plus haut pour le contexte. Le set reste vide.
+            // [BO-RLS-PERF-002 — révision 2026-05-07] Désynchro = écart de
+            // montant TTC > 1 centime sur un brouillon actif (devis OU
+            // facture). Exclure superseded (révision périmée).
+            if (
+              inv.status === 'draft' &&
+              inv.quote_status !== 'superseded' &&
+              inv.total_ttc !== null
+            ) {
+              const orderTotal = orderTotalTtcMap.get(inv.sales_order_id);
+              if (
+                orderTotal !== undefined &&
+                Math.abs(Number(inv.total_ttc) - orderTotal) > 0.01
+              ) {
+                desyncOrderIds.add(inv.sales_order_id);
+              }
+            }
           }
           for (const p of packlinkData ?? []) {
             if (p.sales_order_id) pendingPacklinkSet.add(p.sales_order_id);

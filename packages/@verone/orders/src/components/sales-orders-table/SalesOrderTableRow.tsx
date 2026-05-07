@@ -151,13 +151,19 @@ export function SalesOrderTableRow({
                 Packlink a payer
               </a>
             )}
-            {/* [BO-RLS-PERF-002] Badge désynchronisation NEUTRALISÉ 2026-05-07
-                Le critère initial (orderUpdatedAt > docCreatedAt) générait
-                100% de faux positifs après les UPDATEs billing_address massifs.
-                Le bon critère doit comparer le montant TTC commande vs doc
-                (ABS > 0,01 €) — à réimplémenter dans une session ultérieure
-                avec audit Qonto API pour les devis orphelins (SO-00131,
-                SO-00157, etc. ont un quote_qonto_id sans entrée locale). */}
+            {/* [BO-RLS-PERF-002 — révision 2026-05-07] Badge désynchro au
+                centime près. Affiché si la commande a au moins un devis OU
+                une facture brouillon dont le total TTC s'écarte de plus de
+                1 centime du total TTC de la commande (filtré côté hook). */}
+            {order.has_desync_draft && (
+              <span
+                className="inline-flex items-center gap-1 rounded border border-amber-400 bg-amber-50 px-1 py-0.5 text-[10px] font-medium text-amber-800"
+                title="Un devis ou une facture brouillon liée a un montant différent de la commande. Régénérez-le depuis la page facture/devis ou la fiche commande."
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                À régénérer
+              </span>
+            )}
           </div>
         </TableCell>
         <TableCell>
