@@ -1,4 +1,3 @@
-/* eslint-disable max-lines -- fichier refondu BO-MSG-018, héritage pré-existant 511 lignes */
 'use client';
 
 /**
@@ -14,36 +13,22 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
-import Link from 'next/link';
-
 import {
-  Badge,
   ResponsiveDataView,
   ResponsiveToolbar,
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from '@verone/ui';
-import { cn } from '@verone/utils';
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  ExternalLink,
-  FileText,
-  Inbox,
-  MessageCircle,
-  Paperclip,
-  Receipt,
-  HelpCircle,
-} from 'lucide-react';
+import { Inbox } from 'lucide-react';
 
 import { useSupabase } from '@/components/providers/supabase-provider';
 
 import { CommunicationDetailDrawer } from './CommunicationDetailDrawer';
 import { MailsKpiBar } from './MailsKpiBar';
+import { MessagerieCard, MessagerieTableRow } from './MessagerieRowHelpers';
 import type { Communication, MessagerieFilters } from './types';
 
 type KpiKey = 'unread' | 'replied_today' | 'linked_order' | null;
@@ -52,82 +37,6 @@ interface MessagerieClientProps {
   initialCommunications: Communication[];
   watchAddresses: string[];
   initialFilters?: MessagerieFilters;
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-function BrandBadge({ brand }: { brand: Communication['brand'] }) {
-  if (!brand) return null;
-  return (
-    <Badge
-      variant={brand === 'verone' ? 'default' : 'info'}
-      size="sm"
-      className="whitespace-nowrap"
-    >
-      {brand === 'verone' ? 'Vérone' : 'LinkMe'}
-    </Badge>
-  );
-}
-
-function DirectionIcon({
-  direction,
-}: {
-  direction: Communication['direction'];
-}) {
-  if (direction === 'received') {
-    return (
-      <ArrowDownLeft
-        className="h-4 w-4 text-blue-600 flex-shrink-0"
-        aria-label="Reçu"
-      />
-    );
-  }
-  return (
-    <ArrowUpRight
-      className="h-4 w-4 text-green-600 flex-shrink-0"
-      aria-label="Envoyé"
-    />
-  );
-}
-
-function KindLabel({ kind }: { kind: Communication['kind'] }) {
-  const config: Record<
-    Communication['kind'],
-    { label: string; icon: typeof FileText }
-  > = {
-    inbound_email: { label: 'Mail reçu', icon: Inbox },
-    document_quote: { label: 'Devis', icon: FileText },
-    document_invoice: { label: 'Facture', icon: Receipt },
-    document_proforma: { label: 'Proforma', icon: Receipt },
-    document_credit_note: { label: 'Avoir', icon: Receipt },
-    consultation: { label: 'Consultation', icon: MessageCircle },
-    info_request: { label: 'Demande infos', icon: HelpCircle },
-  };
-  const { label, icon: Icon } = config[kind] ?? {
-    label: kind,
-    icon: FileText,
-  };
-  return (
-    <span className="inline-flex items-center gap-1 text-xs text-gray-600">
-      <Icon className="h-3.5 w-3.5 flex-shrink-0" />
-      <span className="truncate">{label}</span>
-    </span>
-  );
-}
-
-function getCounterpartyDisplay(comm: Communication): string {
-  if (comm.counterparty_name && comm.counterparty_name.trim() !== '') {
-    return comm.counterparty_name;
-  }
-  return comm.counterparty_email;
 }
 
 const DEFAULT_FILTERS: MessagerieFilters = {
@@ -255,144 +164,6 @@ export function MessagerieClient({
   const handleCloseDrawer = useCallback(() => {
     setDrawerOpen(false);
   }, []);
-
-  // Rendu d'une ligne (desktop)
-  const renderTableRow = (c: Communication) => {
-    const counterparty = getCounterpartyDisplay(c);
-    const isUnread = c.direction === 'received' && !c.is_read;
-    return (
-      <TableRow
-        key={c.id}
-        className={cn(
-          'cursor-pointer hover:bg-gray-50 transition-colors',
-          isUnread && 'bg-blue-50/50 font-semibold'
-        )}
-        onClick={() => handleOpen(c)}
-      >
-        <TableCell className="w-[60px]">
-          <DirectionIcon direction={c.direction} />
-        </TableCell>
-        <TableCell className="w-[90px]">
-          <BrandBadge brand={c.brand} />
-        </TableCell>
-        <TableCell className="min-w-[160px]">
-          <div className="flex flex-col gap-0.5">
-            <span
-              className="text-sm truncate max-w-[200px]"
-              title={c.counterparty_email}
-            >
-              {counterparty}
-            </span>
-            {c.counterparty_name && (
-              <span className="text-xs text-gray-500 truncate max-w-[200px]">
-                {c.counterparty_email}
-              </span>
-            )}
-          </div>
-        </TableCell>
-        <TableCell className="hidden md:table-cell w-[140px]">
-          <KindLabel kind={c.kind} />
-        </TableCell>
-        <TableCell className="min-w-[200px]">
-          <div className="flex items-center gap-1.5">
-            {isUnread && (
-              <span className="h-2 w-2 rounded-full bg-blue-500 flex-shrink-0" />
-            )}
-            {c.has_attachments && (
-              <Paperclip className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-            )}
-            <span
-              className="text-sm truncate max-w-[300px]"
-              title={c.subject ?? ''}
-            >
-              {c.subject ?? '(sans objet)'}
-            </span>
-          </div>
-        </TableCell>
-        <TableCell className="hidden lg:table-cell w-[140px] text-xs text-gray-500 whitespace-nowrap">
-          {formatDate(c.event_at)}
-        </TableCell>
-        <TableCell className="hidden xl:table-cell w-[130px]">
-          {c.sales_order_number && c.sales_order_id ? (
-            <Link
-              href={`/commandes/clients/${c.sales_order_id}`}
-              className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
-              onClick={e => e.stopPropagation()}
-            >
-              <ExternalLink className="h-3 w-3 flex-shrink-0" />
-              {c.sales_order_number}
-            </Link>
-          ) : c.consultation_id ? (
-            <Link
-              href={`/consultations/${c.consultation_id}`}
-              className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
-              onClick={e => e.stopPropagation()}
-            >
-              <ExternalLink className="h-3 w-3 flex-shrink-0" />
-              Consultation
-            </Link>
-          ) : (
-            <span className="text-xs text-gray-400">—</span>
-          )}
-        </TableCell>
-      </TableRow>
-    );
-  };
-
-  // Rendu d'une carte (mobile)
-  const renderCard = (c: Communication) => {
-    const counterparty = getCounterpartyDisplay(c);
-    const isUnread = c.direction === 'received' && !c.is_read;
-    return (
-      <div
-        key={c.id}
-        className={cn(
-          'bg-white rounded-lg border border-gray-200 p-4 cursor-pointer hover:shadow-sm transition-shadow',
-          isUnread && 'border-l-4 border-l-blue-500'
-        )}
-        onClick={() => handleOpen(c)}
-      >
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <div className="flex items-center gap-2">
-            <DirectionIcon direction={c.direction} />
-            <BrandBadge brand={c.brand} />
-          </div>
-          <span className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
-            {formatDate(c.event_at)}
-          </span>
-        </div>
-        <p
-          className={cn(
-            'text-sm mb-1 truncate',
-            isUnread ? 'font-semibold text-gray-900' : 'text-gray-700'
-          )}
-        >
-          {counterparty}
-        </p>
-        <div className="mb-1">
-          <KindLabel kind={c.kind} />
-        </div>
-        <p className="text-sm text-gray-600 truncate mb-1">
-          {c.subject ?? '(sans objet)'}
-        </p>
-        {c.preview && (
-          <p className="text-xs text-gray-400 truncate">{c.preview}</p>
-        )}
-        {c.sales_order_number && c.sales_order_id && (
-          <div className="mt-2">
-            <Link
-              href={`/commandes/clients/${c.sales_order_id}`}
-              className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
-              onClick={e => e.stopPropagation()}
-            >
-              <ExternalLink className="h-3 w-3" />
-              Commande {c.sales_order_number}
-            </Link>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   const unreadCount = communications.filter(
     c => c.direction === 'received' && !c.is_read
@@ -547,11 +318,17 @@ export function MessagerieClient({
                     </TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>{items.map(c => renderTableRow(c))}</TableBody>
+                <TableBody>
+                  {items.map(c => (
+                    <MessagerieTableRow key={c.id} c={c} onOpen={handleOpen} />
+                  ))}
+                </TableBody>
               </Table>
             </div>
           )}
-          renderCard={c => renderCard(c)}
+          renderCard={c => (
+            <MessagerieCard key={c.id} c={c} onOpen={handleOpen} />
+          )}
         />
       </div>
 
