@@ -147,10 +147,11 @@ export function useDocumentDetail({
 
     const supabase = createClient();
     const loadCustomerData = async () => {
+      // [BO-PERF-QUICKWINS-001] Fusion des 2 SELECT sales_orders en 1 seul
       const { data } = await supabase
         .from('sales_orders')
         .select(
-          'customer_id, status, customer:organisations!sales_orders_customer_id_fkey(legal_name, trade_name)'
+          'customer_id, status, billing_contact_id, responsable_contact_id, delivery_contact_id, customer:organisations!sales_orders_customer_id_fkey(legal_name, trade_name)'
         )
         .eq('id', orderLink.sales_order_id)
         .single();
@@ -172,20 +173,12 @@ export function useDocumentDetail({
         }
       }
 
-      // Load contacts linked to the sales order
-      const { data: orderData } = await supabase
-        .from('sales_orders')
-        .select(
-          'billing_contact_id, responsable_contact_id, delivery_contact_id'
-        )
-        .eq('id', orderLink.sales_order_id)
-        .single();
-
-      if (orderData) {
+      // Load contacts linked to the sales order (in parallel with nothing — already merged above)
+      if (data) {
         const contactIds = [
-          orderData.billing_contact_id,
-          orderData.responsable_contact_id,
-          orderData.delivery_contact_id,
+          data.billing_contact_id,
+          data.responsable_contact_id,
+          data.delivery_contact_id,
         ].filter((cid): cid is string => !!cid);
 
         const uniqueIds = [...new Set(contactIds)];
@@ -205,9 +198,9 @@ export function useDocumentDetail({
                 name: `${c.first_name ?? ''} ${c.last_name ?? ''}`.trim(),
                 email: c.email,
                 role:
-                  c.id === orderData.billing_contact_id
+                  c.id === data.billing_contact_id
                     ? 'Facturation'
-                    : c.id === orderData.responsable_contact_id
+                    : c.id === data.responsable_contact_id
                       ? 'Responsable'
                       : 'Livraison',
               }));
