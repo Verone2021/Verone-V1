@@ -10,6 +10,7 @@ import { cn, formatCurrency, formatDate } from '@verone/utils';
 import { ChevronDown, FileText, Truck } from 'lucide-react';
 
 import type { SalesOrder, SalesOrderItem } from '../../hooks/use-sales-orders';
+import { OrderResyncButton } from './OrderResyncButton';
 import { SalesOrderActionMenu } from '../SalesOrderActionMenu';
 import {
   statusColors,
@@ -151,6 +152,21 @@ export function SalesOrderTableRow({
                 Packlink a payer
               </a>
             )}
+            {/* [BO-RLS-PERF-002 — révision 2026-05-07] Bouton "Synchroniser"
+                qui ouvre le modal devis et/ou facture brouillon pré-rempli
+                depuis la commande. L'utilisateur clique Valider, le modal
+                régénère le document chez Qonto + crée la trace locale.
+                Critère d'affichage : devis Qonto orphelin sans trace locale
+                OU trace locale brouillon avec écart > 1 cent vs commande. */}
+            <OrderResyncButton
+              order={order}
+              onResynced={() => {
+                // Refetch silencieux de la liste — pas de reload page brutal
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new Event('verone:orders:refetch'));
+                }
+              }}
+            />
           </div>
         </TableCell>
         <TableCell>

@@ -222,6 +222,7 @@ export function InvoicesTable({
                           <DocumentResyncAction
                             documentType="proforma"
                             orderId={invoice.sales_order_id}
+                            currentDocumentId={invoice.id}
                             documentStatus={invoice.status}
                             orderUpdatedAt={invoice.order_updated_at}
                             documentCreatedAt={invoice.document_created_at}

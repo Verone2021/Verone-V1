@@ -11,10 +11,38 @@ globs: supabase/migrations/**, packages/@verone/types/**
 - Ne JAMAIS faire INSERT/UPDATE/DELETE de donnees metier via SQL brut
 - Ne JAMAIS recalculer `retrocession_rate` (vient de `margin_rate / 100`)
 - Ne JAMAIS referencer `user_profiles.app` (n'existe pas) ni `raw_user_meta_data` (obsolete)
+- Ne JAMAIS creer une colonne JSONB sans CHECK `jsonb_typeof = 'object'` (cf. R-JSONB ci-dessous)
 - TOUJOURS activer RLS sur les nouvelles tables
 - TOUJOURS executer `python3 scripts/generate-docs.py --db` apres chaque migration
 - TOUJOURS lire `docs/current/database/schema/` AVANT de toucher une table
 - TOUJOURS regenerer les types apres chaque migration : `supabase gen types typescript`
+
+## R-JSONB — Toute colonne JSONB doit avoir une CHECK sur jsonb_typeof
+
+**Règle absolue** (ajoutée 2026-05-07 après incident BO-FIN-FEES-002).
+
+Toute colonne `JSONB` qui doit stocker un objet structuré DOIT être assortie d'une CHECK constraint qui force ce type :
+
+```sql
+ALTER TABLE ma_table
+  ADD CONSTRAINT ma_table_ma_colonne_object_only
+  CHECK (ma_colonne IS NULL OR jsonb_typeof(ma_colonne) = 'object');
+```
+
+**Pourquoi** : PostgreSQL JSONB accepte n'importe quoi (string, array, object, scalar). TypeScript le type comme `Json` qui accepte aussi tout. Donc un dev peut écrire `JSON.stringify(addr)` au lieu de `addr` et l'INSERT passe sans erreur. Le bug est invisible jusqu'à ce qu'un consommateur lise et trouve `null.city` au lieu de `"Paris"`.
+
+Sans CHECK, ce bug ne sera jamais détecté en CI ni en type-check. Avec CHECK, l'INSERT est rejeté à la source, en dev, lors du premier essai.
+
+**Incident historique** : 2026-05-07. `sales_orders.billing_address` sans CHECK. 17 commandes (depuis le 19 mars 2026) ont eu `billing_address` stocké comme STRING JSON au lieu d'OBJECT. Bug invisible 6 semaines avant qu'un utilisateur constate des proformas aux totaux faux.
+
+**Tables couvertes** (migration `20260507170000_bo_fin_fees_002_jsonb_address_constraints.sql`) :
+
+- `sales_orders.billing_address`, `sales_orders.shipping_address`
+- `financial_documents.billing_address`, `financial_documents.shipping_address`
+- `affiliate_pending_orders.billing_address`, `affiliate_pending_orders.shipping_address`
+- `purchase_orders.delivery_address`
+
+**Avant de créer toute nouvelle colonne JSONB** : ajouter la CHECK constraint dans la même migration.
 
 ## STANDARDS
 

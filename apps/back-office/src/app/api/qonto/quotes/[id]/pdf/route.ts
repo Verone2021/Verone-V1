@@ -64,13 +64,15 @@ export async function GET(
         '[API Qonto Quote PDF] Serving from local storage:',
         storagePath
       );
-      const pdfBuffer = await localPdf.arrayBuffer();
-
-      return new NextResponse(pdfBuffer, {
+      // [BO-RLS-PERF-002 — restauré 2026-05-07] Pattern blob obligatoire
+      // pour que le bouton "Télécharger" du viewer Chrome fonctionne (sinon
+      // download vide). Régression du fix c1206abe (déc 2025) "proxy
+      // attachment downloads instead of redirect" qui interdit Content-Length
+      // explicite + arrayBuffer (cause download vide via Chrome viewer).
+      return new NextResponse(localPdf, {
         headers: {
           'Content-Type': 'application/pdf',
           'Content-Disposition': `inline; filename="devis-${quoteNumber}.pdf"`,
-          'Content-Length': String(pdfBuffer.byteLength),
           'X-PDF-Source': 'local',
         },
       });
@@ -133,11 +135,11 @@ export async function GET(
       );
     }
 
-    const pdfBuffer = await pdfResponse.arrayBuffer();
+    // Convertir en blob (pattern c1206abe — fix download vide via Chrome viewer)
+    const pdfBlob = await pdfResponse.blob();
 
-    // Vérifier que le PDF n'est pas vide
-    if (pdfBuffer.byteLength === 0) {
-      console.error('[API Qonto Quote PDF] PDF buffer is empty!');
+    if (pdfBlob.size === 0) {
+      console.error('[API Qonto Quote PDF] PDF blob is empty!');
       return NextResponse.json(
         {
           success: false,
@@ -149,12 +151,14 @@ export async function GET(
 
     // ========================================
     // ÉTAPE 3: Store-on-read (non-bloquant)
+    // Conserver l'arrayBuffer pour le store-on-read (Supabase Storage requiert)
     // ========================================
+    const pdfBufferForStorage = await pdfBlob.arrayBuffer();
     void (async () => {
       try {
         const { error: uploadError } = await supabase.storage
           .from('justificatifs')
-          .upload(storagePath, pdfBuffer, {
+          .upload(storagePath, pdfBufferForStorage, {
             contentType: 'application/pdf',
             upsert: true,
           });
@@ -179,12 +183,12 @@ export async function GET(
       );
     });
 
-    // Retourner le PDF avec les bons headers pour VISUALISATION (inline)
-    return new NextResponse(pdfBuffer, {
+    // Retourner le PDF (pattern blob, sans Content-Length explicite — fix
+    // c1206abe pour que le bouton "Télécharger" du viewer Chrome marche)
+    return new NextResponse(pdfBlob, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `inline; filename="devis-${quoteNumber}.pdf"`,
-        'Content-Length': String(pdfBuffer.byteLength),
         'X-PDF-Source': 'qonto',
       },
     });

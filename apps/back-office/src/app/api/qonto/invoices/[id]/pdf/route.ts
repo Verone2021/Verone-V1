@@ -184,13 +184,11 @@ export async function GET(
         .download(localPdfPath);
 
       if (!downloadError && pdfData) {
-        const pdfBuffer = await pdfData.arrayBuffer();
-
-        return new NextResponse(pdfBuffer, {
+        // Pattern blob (fix c1206abe — sinon download vide via Chrome viewer)
+        return new NextResponse(pdfData, {
           headers: {
             'Content-Type': 'application/pdf',
             'Content-Disposition': `inline; filename="facture-${documentNumber ?? id}.pdf"`,
-            'Content-Length': String(pdfBuffer.byteLength),
             'X-PDF-Source': 'local',
           },
         });
@@ -217,13 +215,12 @@ export async function GET(
         try {
           const uploadedResponse = await fetch(docFull.uploaded_file_url);
           if (uploadedResponse.ok) {
-            const uploadedBuffer = await uploadedResponse.arrayBuffer();
-            if (uploadedBuffer.byteLength > 0) {
-              return new NextResponse(uploadedBuffer, {
+            const uploadedBlob = await uploadedResponse.blob();
+            if (uploadedBlob.size > 0) {
+              return new NextResponse(uploadedBlob, {
                 headers: {
                   'Content-Type': 'application/pdf',
                   'Content-Disposition': `inline; filename="${documentNumber ?? id}.pdf"`,
-                  'Content-Length': String(uploadedBuffer.byteLength),
                   'X-PDF-Source': 'uploaded',
                 },
               });
@@ -311,13 +308,13 @@ export async function GET(
       );
     }
 
-    const pdfBuffer = await pdfResponse.arrayBuffer();
+    // Pattern blob (fix c1206abe — sinon download vide via Chrome viewer)
+    const pdfBlob = await pdfResponse.blob();
 
-    console.warn('[API Invoice PDF] PDF buffer size:', pdfBuffer.byteLength);
+    console.warn('[API Invoice PDF] PDF blob size:', pdfBlob.size);
 
-    // Vérifier que le PDF n'est pas vide
-    if (pdfBuffer.byteLength === 0) {
-      console.error('[API Invoice PDF] PDF buffer is empty!');
+    if (pdfBlob.size === 0) {
+      console.error('[API Invoice PDF] PDF blob is empty!');
       return NextResponse.json(
         {
           success: false,
@@ -340,12 +337,19 @@ export async function GET(
       const fileName = `${documentNumber ?? id}.pdf`;
       const storagePath = `${typeFolder}/${year}/${fileName}`;
 
-      // Store-on-read en arrière-plan (non-bloquant pour la réponse)
-      void storeLocalPdf(supabase, documentId, pdfBuffer, storagePath, {
-        qonto_pdf_url: invoice.pdf_url,
-        qonto_attachment_id: invoice.attachment_id,
-        qonto_public_url: invoice.public_url,
-      }).catch((error: unknown) => {
+      // ArrayBuffer requis par Supabase Storage upload
+      const pdfBufferForStorage = await pdfBlob.arrayBuffer();
+      void storeLocalPdf(
+        supabase,
+        documentId,
+        pdfBufferForStorage,
+        storagePath,
+        {
+          qonto_pdf_url: invoice.pdf_url,
+          qonto_attachment_id: invoice.attachment_id,
+          qonto_public_url: invoice.public_url,
+        }
+      ).catch((error: unknown) => {
         console.error(
           '[API Invoice PDF] Store-on-read background error:',
           error
@@ -353,12 +357,11 @@ export async function GET(
       });
     }
 
-    // Retourner le PDF avec les bons headers pour VISUALISATION (inline)
-    return new NextResponse(pdfBuffer, {
+    // Retourner le PDF (pattern blob, sans Content-Length explicite)
+    return new NextResponse(pdfBlob, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `inline; filename="facture-${invoice.invoice_number ?? id}.pdf"`,
-        'Content-Length': String(pdfBuffer.byteLength),
         'X-PDF-Source': 'qonto',
       },
     });

@@ -58,15 +58,29 @@ export function InvoiceActions({
   const actions: ResponsiveAction[] = [];
 
   if (isDraft) {
-    // Brouillon : Modifier (link), Finaliser, Supprimer
+    // [BO-RLS-PERF-002] Œil "Voir" présent sur TOUS les brouillons
+    // (service + liés commande), demande Roméo 2026-05-07. Modifier reste
+    // uniquement sur les services (R7). Pour les brouillons liés à une
+    // commande, la modification se fait via régénération depuis la commande.
     actions.push({
-      label: 'Modifier le brouillon',
-      icon: Pencil,
+      label: 'Voir',
+      icon: Eye,
       onClick: () => {
-        router.push(`/factures/${invoice.id}/edit?type=invoice`);
+        router.push(`/factures/${invoice.id}?type=invoice`);
       },
       alwaysVisible: true,
     });
+
+    const isService = !invoice.sales_order_id;
+    if (isService) {
+      actions.push({
+        label: 'Modifier le brouillon',
+        icon: Pencil,
+        onClick: () => {
+          router.push(`/factures/${invoice.id}/edit?type=invoice`);
+        },
+      });
+    }
 
     if (onFinalize) {
       actions.push({
