@@ -10547,6 +10547,40 @@ export type Database = {
           },
         ];
       };
+      client_communications_unified: {
+        Row: {
+          attachments: Json | null;
+          body_html: string | null;
+          body_text: string | null;
+          brand: string | null;
+          consultation_id: string | null;
+          contact_id: string | null;
+          counterparty_email: string | null;
+          counterparty_name: string | null;
+          direction: string | null;
+          document_id: string | null;
+          document_number: string | null;
+          document_type: string | null;
+          error_message: string | null;
+          event_at: string | null;
+          gmail_message_id: string | null;
+          gmail_thread_id: string | null;
+          has_attachments: boolean | null;
+          id: string | null;
+          is_read: boolean | null;
+          kind: string | null;
+          organisation_id: string | null;
+          our_address: string | null;
+          preview: string | null;
+          replied_at: string | null;
+          sales_order_id: string | null;
+          sales_order_number: string | null;
+          sent_by: string | null;
+          status: string | null;
+          subject: string | null;
+        };
+        Relationships: [];
+      };
       customer_samples_view: {
         Row: {
           archived_at: string | null;
