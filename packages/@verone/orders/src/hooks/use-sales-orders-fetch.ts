@@ -28,7 +28,7 @@ export function useSalesOrdersFetch({
   setLoading,
   setOrders,
   setCurrentOrder,
-  setStats,
+  setStats: _setStats,
 }: FetchDeps) {
   const fetchOrders = useFetchOrdersList({
     supabase,
@@ -228,91 +228,15 @@ export function useSalesOrdersFetch({
     [supabase, setLoading, setCurrentOrder, toastRef]
   );
 
-  const fetchStats = useCallback(
-    async (filters?: SalesOrderFilters) => {
-      try {
-        let query = supabase
-          .from('sales_orders')
-          .select('status, total_ht, total_ttc');
-        if (filters?.channel_id)
-          query = query.eq('channel_id', filters.channel_id);
-        if (filters?.date_from)
-          query = query.gte('created_at', filters.date_from);
-        if (filters?.date_to) query = query.lte('created_at', filters.date_to);
-
-        const { data, error } = await query;
-        if (error) throw error;
-
-        const statsData = data?.reduce(
-          (acc, order) => {
-            acc.total_orders++;
-            acc.total_ht += order.total_ht ?? 0;
-            acc.total_ttc += order.total_ttc ?? 0;
-            switch (order.status) {
-              case 'draft':
-                acc.orders_by_status.draft++;
-                acc.pending_orders++;
-                break;
-              case 'validated':
-                acc.orders_by_status.validated++;
-                acc.pending_orders++;
-                break;
-              case 'partially_shipped':
-                acc.orders_by_status.partially_shipped++;
-                acc.pending_orders++;
-                break;
-              case 'shipped':
-                acc.orders_by_status.shipped++;
-                acc.shipped_orders++;
-                break;
-              case 'cancelled':
-                acc.orders_by_status.cancelled++;
-                acc.cancelled_orders++;
-                break;
-            }
-            return acc;
-          },
-          {
-            total_orders: 0,
-            total_ht: 0,
-            total_ttc: 0,
-            total_tva: 0,
-            total_value: 0,
-            average_basket: 0,
-            pending_orders: 0,
-            shipped_orders: 0,
-            cancelled_orders: 0,
-            orders_by_status: {
-              draft: 0,
-              validated: 0,
-              partially_shipped: 0,
-              shipped: 0,
-              cancelled: 0,
-            },
-          }
-        );
-
-        if (statsData) {
-          statsData.total_tva = statsData.total_ttc - statsData.total_ht;
-          statsData.average_basket =
-            statsData.total_orders > 0
-              ? statsData.total_ttc / statsData.total_orders
-              : 0;
-          statsData.total_value = statsData.total_ttc;
-        }
-
-        setStats(statsData ?? null);
-      } catch (error: unknown) {
-        const errMsg =
-          error instanceof Error ? error.message : 'Erreur inconnue';
-        console.error(
-          'Erreur lors de la récupération des statistiques:',
-          errMsg
-        );
-      }
-    },
-    [supabase, setStats]
-  );
+  // [BO-ORDER-PERF-001] Neutralisé : fetchStats faisait un SELECT sans LIMIT
+  // sur sales_orders pour calculer en JS des totaux que useSalesOrdersStats
+  // calcule déjà depuis les orders en mémoire. Suppression de la requête =
+  // 1 aller-retour réseau de moins par chargement et par mutation.
+  // Signature préservée pour ne casser aucun consommateur externe.
+  const fetchStats = useCallback(async (_filters?: SalesOrderFilters) => {
+    // no-op intentionnel — voir commentaire ci-dessus
+    return;
+  }, []);
 
   return { fetchOrders, fetchOrder, fetchStats };
 }

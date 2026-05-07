@@ -52,6 +52,7 @@ export function useFetchOrdersList({
           individual_customer_id, eco_tax_total, order_date, created_by,
           responsable_contact_id, billing_contact_id, delivery_contact_id,
           shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate,
+          quote_qonto_id, quote_number,
           sales_channel:sales_channels!left(id, name, code),
           billing_contact:contacts!sales_orders_billing_contact_id_fkey(id, first_name, last_name, email, phone),
           delivery_contact:contacts!sales_orders_delivery_contact_id_fkey(id, first_name, last_name, email, phone),
@@ -109,6 +110,8 @@ export function useFetchOrdersList({
           responsable_contact_id: string | null;
           billing_contact_id: string | null;
           delivery_contact_id: string | null;
+          quote_qonto_id: string | null;
+          quote_number: string | null;
           sales_channel: { id: string; name: string; code: string } | null;
           billing_contact: {
             id: string;
@@ -207,11 +210,24 @@ export function useFetchOrdersList({
         const orgsMap = new Map<string, Record<string, unknown>>();
         const individualsMap = new Map<string, Record<string, unknown>>();
 
+        const pendingPacklinkSet = new Set<string>();
+
+        // Devis : déjà inclus dans la requête principale (quote_qonto_id, quote_number)
+        // → construction directe depuis typedOrdersData, pas de requête supplémentaire.
+        for (const order of typedOrdersData) {
+          if (order.quote_qonto_id) {
+            quoteMap.set(order.id, {
+              qontoId: order.quote_qonto_id,
+              number: order.quote_number ?? '-',
+            });
+          }
+        }
+
         if (orderIds.length > 0) {
           const [
             linksData,
             invoicesData,
-            quotesData,
+            packlinkData,
             profilesData,
             orgsData,
             individualsData,
@@ -260,19 +276,19 @@ export function useFetchOrdersList({
                   }> | null
               )
               .catch(() => null),
+            // Packlink "a_payer" : intégré au Promise.all (était séquentiel avant
+            // [BO-ORDER-PERF-001]) — gain ~200-500 ms par chargement.
             Promise.resolve(
               supabase
-                .from('sales_orders')
-                .select('id, quote_qonto_id, quote_number')
-                .in('id', orderIds)
-                .not('quote_qonto_id', 'is', null)
+                .from('sales_order_shipments')
+                .select('sales_order_id')
+                .in('sales_order_id', orderIds)
+                .eq('packlink_status', 'a_payer')
             )
               .then(
                 r =>
                   r.data as Array<{
-                    id: string;
-                    quote_qonto_id: string | null;
-                    quote_number: string | null;
+                    sales_order_id: string | null;
                   }> | null
               )
               .catch(() => null),
@@ -352,12 +368,8 @@ export function useFetchOrdersList({
                 status: inv.status,
               });
           }
-          for (const row of quotesData ?? []) {
-            if (row.quote_qonto_id)
-              quoteMap.set(row.id, {
-                qontoId: row.quote_qonto_id,
-                number: row.quote_number ?? '-',
-              });
+          for (const p of packlinkData ?? []) {
+            if (p.sales_order_id) pendingPacklinkSet.add(p.sales_order_id);
           }
           for (const profile of profilesData ?? []) {
             if (profile.user_id)
@@ -370,20 +382,6 @@ export function useFetchOrdersList({
           for (const org of orgsData ?? []) orgsMap.set(org.id, org);
           for (const ind of individualsData ?? [])
             individualsMap.set(ind.id, ind);
-        }
-
-        const pendingPacklinkSet = new Set<string>();
-        if (orderIds.length > 0) {
-          const { data: pendingPacklink } = await supabase
-            .from('sales_order_shipments')
-            .select('sales_order_id')
-            .in('sales_order_id', orderIds)
-            .eq('packlink_status', 'a_payer');
-          for (const p of (pendingPacklink ?? []) as Array<{
-            sales_order_id: string | null;
-          }>) {
-            if (p.sales_order_id) pendingPacklinkSet.add(p.sales_order_id);
-          }
         }
 
         const ordersWithCustomers = typedOrdersData.map(order => {
