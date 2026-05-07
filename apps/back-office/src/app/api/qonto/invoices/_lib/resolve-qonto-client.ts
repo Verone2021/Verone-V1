@@ -10,6 +10,41 @@ import type {
 } from './types';
 
 /**
+ * Normalise un nom de pays vers son code ISO 2 lettres (Qonto exigence).
+ * Régression observée 2026-05-07: country="France" en DB → 422 Qonto.
+ */
+function normalizeCountryCode(input: string | undefined | null): string {
+  if (!input) return 'FR';
+  const trimmed = input.trim();
+  if (trimmed.length === 2) return trimmed.toUpperCase();
+  const map: Record<string, string> = {
+    FRANCE: 'FR',
+    BELGIQUE: 'BE',
+    BELGIUM: 'BE',
+    LUXEMBOURG: 'LU',
+    ALLEMAGNE: 'DE',
+    GERMANY: 'DE',
+    ESPAGNE: 'ES',
+    SPAIN: 'ES',
+    ITALIE: 'IT',
+    ITALY: 'IT',
+    'PAYS-BAS': 'NL',
+    NETHERLANDS: 'NL',
+    HOLLANDE: 'NL',
+    SUISSE: 'CH',
+    SWITZERLAND: 'CH',
+    'ROYAUME-UNI': 'GB',
+    'UNITED KINGDOM': 'GB',
+    PORTUGAL: 'PT',
+    'ETATS-UNIS': 'US',
+    USA: 'US',
+    'UNITED STATES': 'US',
+    CANADA: 'CA',
+  };
+  return map[trimmed.toUpperCase()] ?? 'FR';
+}
+
+/**
  * [BO-FIN-FEES-002] Normalise billing_address quel que soit son format en base.
  *
  * Postgres stocke `billing_address` en JSONB qui accepte tout type. Plusieurs
@@ -219,12 +254,15 @@ export async function resolveQontoClient(
     orgFallback?.billing_address_line1 ??
     orgFallback?.address_line1 ??
     '';
-  const countryCode =
+  const rawCountry =
     bodyBillingAddress?.country ??
     dbBillingAddress?.country ??
     orgFallback?.billing_country ??
     orgFallback?.country ??
     'FR';
+  // Qonto exige le code ISO 2 lettres. Normalise les valeurs longues
+  // historiques ("France" → "FR") qui causent un 422 sinon.
+  const countryCode = normalizeCountryCode(rawCountry);
 
   const qontoAddress = {
     streetAddress,
