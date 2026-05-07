@@ -51,10 +51,49 @@ export function OrderResyncButton({
   const needQuote = order.desync_quote === true;
   const needProforma = order.desync_proforma === true;
 
+  // Label compact: juste le type du document à synchroniser
   let label = 'Synchroniser';
-  if (needQuote && needProforma) label = 'Synchroniser devis et facture';
-  else if (needQuote) label = 'Synchroniser devis';
-  else if (needProforma) label = 'Synchroniser facture';
+  if (needQuote && needProforma) label = 'Devis + facture';
+  else if (needQuote) label = 'Devis';
+  else if (needProforma) label = 'Facture brouillon';
+
+  // Descriptif d'écart à afficher à côté du bouton
+  const orderTotal = order.total_ttc ?? null;
+  const fmt = (n: number): string =>
+    new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+    }).format(n);
+  const diffParts: string[] = [];
+  if (
+    needQuote &&
+    order.desync_quote_doc_total !== null &&
+    order.desync_quote_doc_total !== undefined &&
+    orderTotal !== null
+  ) {
+    const diff = Number(order.desync_quote_doc_total) - Number(orderTotal);
+    const sign = diff > 0 ? '+' : '';
+    diffParts.push(
+      `Devis ${fmt(Number(order.desync_quote_doc_total))} (${sign}${fmt(diff)})`
+    );
+  } else if (needQuote) {
+    diffParts.push('Devis sans trace locale');
+  }
+  if (
+    needProforma &&
+    order.desync_proforma_doc_total !== null &&
+    order.desync_proforma_doc_total !== undefined &&
+    orderTotal !== null
+  ) {
+    const diff = Number(order.desync_proforma_doc_total) - Number(orderTotal);
+    const sign = diff > 0 ? '+' : '';
+    diffParts.push(
+      `Facture ${fmt(Number(order.desync_proforma_doc_total))} (${sign}${fmt(diff)})`
+    );
+  } else if (needProforma) {
+    diffParts.push('Facture sans trace locale');
+  }
+  const description = diffParts.join(' · ');
 
   const handleClick = (e: React.MouseEvent): void => {
     e.stopPropagation();
@@ -100,20 +139,27 @@ export function OrderResyncButton({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={isLoading}
-        className="inline-flex items-center gap-1 rounded border border-amber-400 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 hover:bg-amber-100 hover:border-amber-500 disabled:opacity-60 disabled:cursor-wait transition-colors"
-        title={`Cliquer pour ouvrir le modal pré-rempli depuis la commande ${order.order_number}.`}
-      >
-        {isLoading ? (
-          <Loader2 className="h-3 w-3 animate-spin" />
-        ) : (
-          <RefreshCw className="h-3 w-3" />
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+        <button
+          type="button"
+          onClick={handleClick}
+          disabled={isLoading}
+          className="inline-flex items-center gap-1 rounded border border-amber-400 bg-amber-50 px-1.5 py-0 text-[10px] leading-4 font-medium text-amber-800 hover:bg-amber-100 hover:border-amber-500 disabled:opacity-60 disabled:cursor-wait transition-colors"
+          title={`Cliquer pour ouvrir le modal pré-rempli depuis la commande ${order.order_number}.`}
+        >
+          {isLoading ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3 w-3" />
+          )}
+          {label}
+        </button>
+        {description && (
+          <span className="text-[10px] text-amber-700/80 truncate">
+            {description}
+          </span>
         )}
-        {label}
-      </button>
+      </span>
 
       {needQuote && quoteModalOpen && (
         <QuoteCreateFromOrderModal

@@ -209,6 +209,9 @@ export interface SalesOrder {
   // Détail des types désynchronisés (pour bouton "Synchroniser")
   desync_quote?: boolean;
   desync_proforma?: boolean;
+  // Totaux TTC des docs désynchronisés (pour libellé descriptif "Écart X €")
+  desync_quote_doc_total?: number | null;
+  desync_proforma_doc_total?: number | null;
 }
 
 export interface SalesOrderItem {

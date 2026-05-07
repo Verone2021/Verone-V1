@@ -205,21 +205,33 @@ export function useFetchOrdersList({
         //   B) Trace locale brouillon avec écart total > 0,01 € vs commande
         // Local DOIT être miroir de Qonto. Sans trace locale = à régénérer.
         const desyncOrderIds = new Set<string>();
-        // Détail par type pour bouton "Synchroniser devis" / "Synchroniser facture"
+        // Détail par type + écart de montant TTC (pour libellé descriptif UI)
         const desyncTypesMap = new Map<
           string,
-          { quote: boolean; proforma: boolean }
+          {
+            quote: boolean;
+            proforma: boolean;
+            quoteDocTotal: number | null;
+            proformaDocTotal: number | null;
+          }
         >();
         const markDesync = (
           orderId: string,
-          type: 'quote' | 'proforma'
+          type: 'quote' | 'proforma',
+          docTotal: number | null = null
         ): void => {
           desyncOrderIds.add(orderId);
           const cur = desyncTypesMap.get(orderId) ?? {
             quote: false,
             proforma: false,
+            quoteDocTotal: null,
+            proformaDocTotal: null,
           };
           cur[type] = true;
+          if (type === 'quote' && docTotal !== null)
+            cur.quoteDocTotal = docTotal;
+          if (type === 'proforma' && docTotal !== null)
+            cur.proformaDocTotal = docTotal;
           desyncTypesMap.set(orderId, cur);
         };
         const creatorsMap = new Map<
@@ -413,7 +425,8 @@ export function useFetchOrdersList({
               ) {
                 markDesync(
                   inv.sales_order_id,
-                  inv.document_type === 'customer_quote' ? 'quote' : 'proforma'
+                  inv.document_type === 'customer_quote' ? 'quote' : 'proforma',
+                  Number(inv.total_ttc)
                 );
               }
             }
@@ -515,6 +528,10 @@ export function useFetchOrdersList({
             has_desync_draft: desyncOrderIds.has(order.id),
             desync_quote: desyncTypesMap.get(order.id)?.quote ?? false,
             desync_proforma: desyncTypesMap.get(order.id)?.proforma ?? false,
+            desync_quote_doc_total:
+              desyncTypesMap.get(order.id)?.quoteDocTotal ?? null,
+            desync_proforma_doc_total:
+              desyncTypesMap.get(order.id)?.proformaDocTotal ?? null,
             is_matched: !!matchInfo,
             matched_transaction_id: matchInfo?.transaction_id ?? null,
             matched_transaction_label: matchInfo?.label ?? null,
