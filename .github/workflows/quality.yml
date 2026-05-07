@@ -159,19 +159,13 @@ jobs:
           echo "apps=$APPS_CHANGED" >> $GITHUB_OUTPUT
           echo "📦 Apps to check: $APPS_CHANGED"
 
-      # ---- ESLint (fast, always global) ----
-      - name: ESLint
-        run: pnpm lint
-
-      # ---- Type-Check (filtered) ----
-      - name: Type-Check (${{ steps.flags.outputs.apps }})
-        run: pnpm turbo run type-check ${{ steps.flags.outputs.filters }}
-        env:
-          NODE_OPTIONS: --max-old-space-size=4096
-
-      # ---- Build (filtered) ----
-      - name: Build (${{ steps.flags.outputs.apps }})
-        run: pnpm turbo run build ${{ steps.flags.outputs.filters }}
+      # ---- Lint + Type-Check + Build (parallel via Turbo) — INFRA-CI-TURBO-001
+      # Avant : 3 steps séquentiels (~6 min : 60s lint + 90s type-check + 180s build)
+      # Après : 1 invocation turbo qui parallélise au DAG (~3 min wall-clock)
+      # + lint utilise désormais le même --filter que type-check/build (avant
+      #   `pnpm lint` lintait les 30 packages systématiquement).
+      - name: Lint + Type-Check + Build (${{ steps.flags.outputs.apps }})
+        run: pnpm turbo run lint type-check build ${{ steps.flags.outputs.filters }} --concurrency=100%
         env:
           NODE_OPTIONS: --max-old-space-size=8192
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
@@ -200,7 +194,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `## ❌ Quality Checks Failed\n\nApps checked: **${{ steps.flags.outputs.apps }}**\n\nSee [workflow logs](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for details.\n\n**Fix locally:**\n\`\`\`bash\npnpm lint\npnpm turbo run type-check ${{ steps.flags.outputs.filters }}\npnpm turbo run build ${{ steps.flags.outputs.filters }}\n\`\`\``
+              body: `## ❌ Quality Checks Failed\n\nApps checked: **${{ steps.flags.outputs.apps }}**\n\nSee [workflow logs](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for details.\n\n**Fix locally:**\n\`\`\`bash\npnpm turbo run lint type-check build ${{ steps.flags.outputs.filters }}\n\`\`\``
             });
 
       - name: Summary
