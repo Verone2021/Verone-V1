@@ -129,7 +129,6 @@ export function AppHeader({ className }: AppHeaderProps) {
 
       if (user) {
         const supabase = createClient();
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- supabase client non typé en amont
         const { data: userRole } = await supabase
           .from('user_app_roles')
           .select('role')
@@ -138,7 +137,6 @@ export function AppHeader({ className }: AppHeaderProps) {
           .eq('is_active', true)
           .maybeSingle();
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access -- supabase client non typé
         setUserRole(userRole?.role ?? null);
       }
     };

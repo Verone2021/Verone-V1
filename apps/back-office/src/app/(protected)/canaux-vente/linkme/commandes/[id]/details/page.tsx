@@ -1,4 +1,4 @@
-/* eslint-disable max-lines, @typescript-eslint/no-unsafe-assignment -- fichier legacy déjà à 540 lignes avant cette modif perf [BO-LM-PERF-001] + hook useOrderDetailsPage retourne types inferés non typés strict */
+/* eslint-disable max-lines -- fichier legacy déjà à 540 lignes avant cette modif perf [BO-LM-PERF-001] */
 'use client';
 
 import { useState } from 'react';
