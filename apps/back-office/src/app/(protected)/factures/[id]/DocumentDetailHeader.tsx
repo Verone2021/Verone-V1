@@ -119,10 +119,31 @@ export function DocumentDetailHeader({
           Voir PDF
         </Button>
 
-        {/* Edit (drafts only) */}
-        {isDraft && (
+        {/* Edit (drafts only) — [BO-RLS-PERF-002] refonte:
+            - Facture brouillon liée à commande : "Modifier la commande source"
+              (la régénération depuis commande recrée le brouillon à jour)
+            - Facture de service (pas de salesOrderId) : "Modifier" direct
+            - Devis brouillon : comportement inchangé (modifier direct)
+        */}
+        {isDraft && documentType === 'invoice' && salesOrderId && (
           <Button variant="outline" asChild>
-            <Link href={`/factures/${id}/edit?type=${documentType}`}>
+            <Link href={`/commandes/clients?orderId=${salesOrderId}`}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Modifier la commande source
+            </Link>
+          </Button>
+        )}
+        {isDraft && documentType === 'invoice' && !salesOrderId && (
+          <Button variant="outline" asChild>
+            <Link href={`/factures/${id}/edit?type=invoice`}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Modifier
+            </Link>
+          </Button>
+        )}
+        {isDraft && documentType === 'quote' && (
+          <Button variant="outline" asChild>
+            <Link href={`/factures/${id}/edit?type=quote`}>
               <Pencil className="h-4 w-4 mr-2" />
               Modifier
             </Link>
