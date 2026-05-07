@@ -202,6 +202,10 @@ export interface SalesOrder {
 
   // Packlink pending shipment flag (enriched in fetchOrders)
   has_pending_packlink?: boolean;
+
+  // [BO-RLS-PERF-002] Au moins un doc draft (devis OU facture) désynchronisé
+  // (commande modifiée après création du doc → régénération recommandée)
+  has_desync_draft?: boolean;
 }
 
 export interface SalesOrderItem {

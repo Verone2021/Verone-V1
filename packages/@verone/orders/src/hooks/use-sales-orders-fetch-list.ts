@@ -53,6 +53,7 @@ export function useFetchOrdersList({
           responsable_contact_id, billing_contact_id, delivery_contact_id,
           shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate,
           quote_qonto_id, quote_number,
+          updated_at,
           sales_channel:sales_channels!left(id, name, code),
           billing_contact:contacts!sales_orders_billing_contact_id_fkey(id, first_name, last_name, email, phone),
           delivery_contact:contacts!sales_orders_delivery_contact_id_fkey(id, first_name, last_name, email, phone),
@@ -111,6 +112,7 @@ export function useFetchOrdersList({
           delivery_contact_id: string | null;
           quote_qonto_id: string | null;
           quote_number: string | null;
+          updated_at: string | null;
           sales_channel: { id: string; name: string; code: string } | null;
           billing_contact: {
             id: string;
@@ -198,6 +200,8 @@ export function useFetchOrdersList({
           { id: string; qontoId: string | null; number: string; status: string }
         >();
         const quoteMap = new Map<string, { qontoId: string; number: string }>();
+        // [BO-RLS-PERF-002] Set des sales_order_id avec au moins un doc draft désynchronisé
+        const desyncOrderIds = new Set<string>();
         const creatorsMap = new Map<
           string,
           { first_name: string; last_name: string; email: string | null }
@@ -254,10 +258,10 @@ export function useFetchOrdersList({
               supabase
                 .from('financial_documents')
                 .select(
-                  'id, sales_order_id, document_number, qonto_invoice_id, status'
+                  'id, sales_order_id, document_number, qonto_invoice_id, status, created_at, document_type'
                 )
                 .in('sales_order_id', orderIds)
-                .eq('document_type', 'customer_invoice')
+                .in('document_type', ['customer_invoice', 'customer_quote'])
                 .is('deleted_at', null)
             )
               .then(
@@ -268,6 +272,8 @@ export function useFetchOrdersList({
                     document_number: string;
                     qonto_invoice_id: string | null;
                     status: string;
+                    created_at: string | null;
+                    document_type: string;
                   }> | null
               )
               .catch(() => null),
@@ -355,13 +361,30 @@ export function useFetchOrdersList({
             }
           }
           for (const inv of invoicesData ?? []) {
-            if (inv.sales_order_id)
+            if (!inv.sales_order_id) continue;
+            // Stocker uniquement les factures (pas les devis) dans invoiceMap
+            if (inv.document_type === 'customer_invoice') {
               invoiceMap.set(inv.sales_order_id, {
                 id: inv.id,
                 qontoId: inv.qonto_invoice_id,
                 number: inv.document_number,
                 status: inv.status,
               });
+            }
+            // [BO-RLS-PERF-002] Désynchro: doc draft + commande modifiée
+            // APRÈS la création du doc (orderUpdatedAt > docCreatedAt)
+            if (inv.status === 'draft' && inv.created_at) {
+              const order = typedOrdersData.find(
+                o => o.id === inv.sales_order_id
+              );
+              if (
+                order?.updated_at &&
+                new Date(order.updated_at).getTime() >
+                  new Date(inv.created_at).getTime()
+              ) {
+                desyncOrderIds.add(inv.sales_order_id);
+              }
+            }
           }
           for (const p of packlinkData ?? []) {
             if (p.sales_order_id) pendingPacklinkSet.add(p.sales_order_id);
@@ -432,6 +455,7 @@ export function useFetchOrdersList({
             quote_qonto_id: quoteMap.get(order.id)?.qontoId ?? null,
             quote_number: quoteMap.get(order.id)?.number ?? null,
             has_pending_packlink: pendingPacklinkSet.has(order.id),
+            has_desync_draft: desyncOrderIds.has(order.id),
             is_matched: !!matchInfo,
             matched_transaction_id: matchInfo?.transaction_id ?? null,
             matched_transaction_label: matchInfo?.label ?? null,

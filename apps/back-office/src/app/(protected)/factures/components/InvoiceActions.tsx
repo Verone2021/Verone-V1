@@ -58,31 +58,27 @@ export function InvoiceActions({
   const actions: ResponsiveAction[] = [];
 
   if (isDraft) {
-    // [BO-RLS-PERF-002] Refonte factures brouillons:
-    // - Facture liée à une commande → "Voir" (lecture seule, modification
-    //   par régénération depuis la commande source)
-    // - Facture de service (sales_order_id IS NULL, R7) → "Modifier" direct
-    const isService = !invoice.sales_order_id;
+    // [BO-RLS-PERF-002] Œil "Voir" présent sur TOUS les brouillons
+    // (service + liés commande), demande Roméo 2026-05-07. Modifier reste
+    // uniquement sur les services (R7). Pour les brouillons liés à une
+    // commande, la modification se fait via régénération depuis la commande.
+    actions.push({
+      label: 'Voir',
+      icon: Eye,
+      onClick: () => {
+        router.push(`/factures/${invoice.id}?type=invoice`);
+      },
+      alwaysVisible: true,
+    });
 
+    const isService = !invoice.sales_order_id;
     if (isService) {
-      // Facture de service : édition directe possible
       actions.push({
         label: 'Modifier le brouillon',
         icon: Pencil,
         onClick: () => {
           router.push(`/factures/${invoice.id}/edit?type=invoice`);
         },
-        alwaysVisible: true,
-      });
-    } else {
-      // Facture liée à commande : voir uniquement (modifier via régénération)
-      actions.push({
-        label: 'Voir',
-        icon: Eye,
-        onClick: () => {
-          router.push(`/factures/${invoice.id}?type=invoice`);
-        },
-        alwaysVisible: true,
       });
     }
 
