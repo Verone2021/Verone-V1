@@ -138,6 +138,26 @@ Mon premier audit excluait les commandes sans document local lié (à cause d'un
 
 ---
 
+## CAUSE RACINE IDENTIFIÉE EN FIN DE SESSION (à investiguer)
+
+**SO-00157** vu côté UI : commande 1 627,37 € TTC, devis D-2026-043 (`pending_approval`) = 1 207,37 € TTC. Écart = **−420 €** = exactement `350 € × 1,20` = **les frais de livraison TTC manquants dans le devis**.
+
+**Hypothèse forte** : le code de création de devis (`/api/qonto/quotes/route.post.ts` ou ses helpers) n'envoie PAS les frais shipping/handling/insurance comme ligne(s) à Qonto. Les frais existent en base sur `sales_orders.shipping_cost_ht` et sur l'UI commande (qui les affiche correctement), mais ne se retrouvent pas dans le devis Qonto.
+
+**Conséquence** : tous les devis créés depuis une commande qui a des frais > 0 sont sous-évalués du montant des frais TTC. Bug invisible tant qu'on ne compare pas commande vs devis manuellement.
+
+**SO-00174** : devis 204,18 € vs commande 216,18 € = écart −12 € TTC = `10 € × 1,20`. Donc 10 € HT manquants dans le devis (probablement frais partiellement inclus, ou commande modifiée après création devis).
+
+**SO-00173** : devis 1 103,76 € vs commande 1 044,96 € = écart **+58,80 €** (devis SUPÉRIEUR). Sens inverse, probablement une ligne libre ajoutée manuellement dans Qonto.
+
+**À investiguer en priorité absolue** :
+
+1. Lire `apps/back-office/src/app/api/qonto/quotes/route.post.ts` et ses helpers (`buildQuoteItems` ou équivalent).
+2. Vérifier si les frais sont envoyés comme ligne supplémentaire à Qonto.
+3. Si non → c'est LA cause racine. Comparer avec le code de création de proforma (qui marche : les 4 brouillons régénérés ont les bons totaux).
+
+---
+
 ## À faire dans la prochaine session
 
 ### Priorité haute
