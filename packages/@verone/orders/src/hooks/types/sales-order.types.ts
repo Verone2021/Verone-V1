@@ -206,9 +206,6 @@ export interface SalesOrder {
   // [BO-RLS-PERF-002] Au moins un doc draft (devis OU facture) désynchronisé
   // (commande modifiée après création du doc → régénération recommandée)
   has_desync_draft?: boolean;
-  // Détail des types désynchronisés (pour bouton "Resync" 1 clic)
-  desync_quote?: boolean;
-  desync_proforma?: boolean;
 }
 
 export interface SalesOrderItem {

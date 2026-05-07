@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 
 import Link from 'next/link';
 
 import { ProductThumbnail } from '@verone/products';
 import { Badge, TableCell, TableRow } from '@verone/ui';
-import { useToast } from '@verone/common/hooks';
 import { cn, formatCurrency, formatDate } from '@verone/utils';
-import { ChevronDown, FileText, Loader2, RefreshCw, Truck } from 'lucide-react';
+import { ChevronDown, FileText, Truck } from 'lucide-react';
 
 import type { SalesOrder, SalesOrderItem } from '../../hooks/use-sales-orders';
 import { SalesOrderActionMenu } from '../SalesOrderActionMenu';
@@ -66,96 +65,6 @@ export function SalesOrderTableRow({
   onDelete,
   onLinkTransaction,
 }: ISalesOrderTableRowProps): React.ReactNode {
-  const { toast } = useToast();
-  const [resyncLoading, setResyncLoading] = useState(false);
-
-  const handleResync = async (): Promise<void> => {
-    if (resyncLoading) return;
-    setResyncLoading(true);
-    const calls: Array<Promise<{ ok: boolean; type: string; err?: string }>> =
-      [];
-    if (order.desync_quote) {
-      calls.push(
-        fetch(`/api/qonto/quotes/by-order/${order.id}/regenerate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            preservedCustomLines: [],
-            preservedNotes: '',
-          }),
-        })
-          .then(async r => {
-            const j = (await r.json().catch(() => ({}))) as {
-              success?: boolean;
-              error?: string;
-            };
-            return {
-              ok: r.ok && j.success === true,
-              type: 'devis',
-              err: j.error,
-            };
-          })
-          .catch((e: unknown) => ({
-            ok: false,
-            type: 'devis',
-            err: e instanceof Error ? e.message : 'Erreur réseau',
-          }))
-      );
-    }
-    if (order.desync_proforma) {
-      calls.push(
-        fetch(`/api/qonto/invoices/by-order/${order.id}/regenerate-proforma`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            preservedCustomLines: [],
-            preservedNotes: '',
-          }),
-        })
-          .then(async r => {
-            const j = (await r.json().catch(() => ({}))) as {
-              success?: boolean;
-              error?: string;
-            };
-            return {
-              ok: r.ok && j.success === true,
-              type: 'facture brouillon',
-              err: j.error,
-            };
-          })
-          .catch((e: unknown) => ({
-            ok: false,
-            type: 'facture brouillon',
-            err: e instanceof Error ? e.message : 'Erreur réseau',
-          }))
-      );
-    }
-    try {
-      const results = await Promise.all(calls);
-      const failures = results.filter(r => !r.ok);
-      if (failures.length === 0) {
-        toast({
-          title: 'Resynchronisé',
-          description:
-            results.length > 1
-              ? 'Devis et facture brouillon régénérés.'
-              : `${results[0]?.type === 'devis' ? 'Devis' : 'Facture brouillon'} régénéré.`,
-        });
-        if (typeof window !== 'undefined') window.location.reload();
-      } else {
-        toast({
-          title: 'Erreur partielle',
-          description: failures
-            .map(f => `${f.type}: ${f.err ?? 'échec'}`)
-            .join(' | '),
-          variant: 'destructive',
-        });
-      }
-    } finally {
-      setResyncLoading(false);
-    }
-  };
-
   const customerDisplayName =
     order.customer_type === 'organization' && order.organisations
       ? order.organisations.trade_name &&
@@ -242,28 +151,18 @@ export function SalesOrderTableRow({
                 Packlink a payer
               </a>
             )}
-            {/* [BO-RLS-PERF-002 — révision 2026-05-07] Bouton resync 1 clic.
-                Affiché si: trace locale brouillon avec écart > 0,01 € OU
-                devis Qonto orphelin (sans trace locale). Au clic, régénère
-                devis et/ou facture brouillon depuis la commande. */}
+            {/* [BO-RLS-PERF-002 — révision 2026-05-07] Badge désynchro au
+                centime près. Affiché si la commande a au moins un devis OU
+                une facture brouillon dont le total TTC s'écarte de plus de
+                1 centime du total TTC de la commande (filtré côté hook). */}
             {order.has_desync_draft && (
-              <button
-                type="button"
-                disabled={resyncLoading}
-                onClick={e => {
-                  e.stopPropagation();
-                  void handleResync();
-                }}
-                className="inline-flex items-center gap-1 rounded border border-amber-400 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 hover:bg-amber-100 hover:border-amber-500 disabled:opacity-60 disabled:cursor-wait transition-colors"
-                title={`Régénérer ${[order.desync_quote && 'le devis', order.desync_proforma && 'la facture brouillon'].filter(Boolean).join(' et ')} depuis la commande.`}
+              <span
+                className="inline-flex items-center gap-1 rounded border border-amber-400 bg-amber-50 px-1 py-0.5 text-[10px] font-medium text-amber-800"
+                title="Un devis ou une facture brouillon liée a un montant différent de la commande. Régénérez-le depuis la page facture/devis ou la fiche commande."
               >
-                {resyncLoading ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-3 w-3" />
-                )}
-                {resyncLoading ? 'Resync...' : 'Resynchroniser'}
-              </button>
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                À régénérer
+              </span>
             )}
           </div>
         </TableCell>
