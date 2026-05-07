@@ -200,11 +200,28 @@ export function useFetchOrdersList({
           { id: string; qontoId: string | null; number: string; status: string }
         >();
         const quoteMap = new Map<string, { qontoId: string; number: string }>();
-        // [BO-RLS-PERF-002 — révision 2026-05-07] Désynchronisation calculée
-        // au centime près: ABS(doc.total_ttc - so.total_ttc) > 0,01 €. Couvre
-        // devis ET factures brouillons. Filtrage `deleted_at IS NULL` +
-        // `quote_status != 'superseded'` pour ne tenir compte que des docs actifs.
+        // [BO-RLS-PERF-002 — révision 2026-05-07] Désynchronisation détectée si:
+        //   A) Devis Qonto lié sans trace locale active (orphelin Qonto) → resync
+        //   B) Trace locale brouillon avec écart total > 0,01 € vs commande
+        // Local DOIT être miroir de Qonto. Sans trace locale = à régénérer.
         const desyncOrderIds = new Set<string>();
+        // Détail par type (devis ou facture brouillon) pour bouton 1 clic
+        const desyncTypesMap = new Map<
+          string,
+          { quote: boolean; proforma: boolean }
+        >();
+        const markDesync = (
+          orderId: string,
+          type: 'quote' | 'proforma'
+        ): void => {
+          desyncOrderIds.add(orderId);
+          const cur = desyncTypesMap.get(orderId) ?? {
+            quote: false,
+            proforma: false,
+          };
+          cur[type] = true;
+          desyncTypesMap.set(orderId, cur);
+        };
         const creatorsMap = new Map<
           string,
           { first_name: string; last_name: string; email: string | null }
@@ -372,6 +389,10 @@ export function useFetchOrdersList({
               orderTotalTtcMap.set(o.id, Number(o.total_ttc));
             }
           }
+          // Sets des order_id qui ont AU MOINS un brouillon actif local
+          // (pour détecter les commandes avec quote_qonto_id orphelin)
+          const orderHasLocalQuoteDraft = new Set<string>();
+          const orderHasLocalProformaDraft = new Set<string>();
           for (const inv of invoicesData ?? []) {
             if (!inv.sales_order_id) continue;
             // Stocker uniquement les factures (pas les devis) dans invoiceMap
@@ -383,21 +404,44 @@ export function useFetchOrdersList({
                 status: inv.status,
               });
             }
-            // [BO-RLS-PERF-002 — révision 2026-05-07] Désynchro = écart de
-            // montant TTC > 1 centime sur un brouillon actif (devis OU
-            // facture). Exclure superseded (révision périmée).
+            // Critère B: trace locale brouillon active avec écart > 1 cent
             if (
               inv.status === 'draft' &&
               inv.quote_status !== 'superseded' &&
               inv.total_ttc !== null
             ) {
+              if (inv.document_type === 'customer_quote')
+                orderHasLocalQuoteDraft.add(inv.sales_order_id);
+              if (inv.document_type === 'customer_invoice')
+                orderHasLocalProformaDraft.add(inv.sales_order_id);
               const orderTotal = orderTotalTtcMap.get(inv.sales_order_id);
               if (
                 orderTotal !== undefined &&
                 Math.abs(Number(inv.total_ttc) - orderTotal) > 0.01
               ) {
-                desyncOrderIds.add(inv.sales_order_id);
+                markDesync(
+                  inv.sales_order_id,
+                  inv.document_type === 'customer_quote' ? 'quote' : 'proforma'
+                );
               }
+            }
+          }
+          // Critère A: devis Qonto lié sans trace locale active = orphelin
+          // Local doit être miroir Qonto. Sans trace locale → à régénérer.
+          for (const order of typedOrdersData) {
+            const finalStatuses = [
+              'shipped',
+              'delivered',
+              'closed',
+              'cancelled',
+            ];
+            if (
+              order.quote_qonto_id &&
+              !orderHasLocalQuoteDraft.has(order.id) &&
+              order.status !== null &&
+              !finalStatuses.includes(order.status)
+            ) {
+              markDesync(order.id, 'quote');
             }
           }
           for (const p of packlinkData ?? []) {
@@ -470,6 +514,8 @@ export function useFetchOrdersList({
             quote_number: quoteMap.get(order.id)?.number ?? null,
             has_pending_packlink: pendingPacklinkSet.has(order.id),
             has_desync_draft: desyncOrderIds.has(order.id),
+            desync_quote: desyncTypesMap.get(order.id)?.quote ?? false,
+            desync_proforma: desyncTypesMap.get(order.id)?.proforma ?? false,
             is_matched: !!matchInfo,
             matched_transaction_id: matchInfo?.transaction_id ?? null,
             matched_transaction_label: matchInfo?.label ?? null,

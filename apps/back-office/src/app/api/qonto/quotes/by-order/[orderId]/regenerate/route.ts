@@ -164,19 +164,33 @@ export async function POST(
       );
     }
 
+    // Cas orphelin Qonto : aucune trace locale mais sales_orders.quote_qonto_id
+    // pointe sur un devis Qonto réel. On régénère pour reconstruire la trace
+    // locale propre et écraser l'ancien Qonto.
+    let orphanQontoId: string | null = null;
     if (!existingDocs || existingDocs.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            'Aucun devis draft lié à cette commande. Créer un nouveau devis depuis la commande.',
-        },
-        { status: 409 }
-      );
+      const { data: orderRow } = await supabase
+        .from('sales_orders')
+        .select('quote_qonto_id')
+        .eq('id', orderId)
+        .single();
+      const qontoId = (orderRow as { quote_qonto_id?: string | null } | null)
+        ?.quote_qonto_id;
+      if (!qontoId) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              'Aucun devis lié à cette commande. Créer un nouveau devis depuis la commande.',
+          },
+          { status: 409 }
+        );
+      }
+      orphanQontoId = qontoId;
     }
 
-    // R4 : refus si un devis finalisé/accepté existe
-    const finalizedDoc = existingDocs.find(
+    // R4 : refus si un devis finalisé/accepté existe (cas trace locale présente)
+    const finalizedDoc = (existingDocs ?? []).find(
       d => d.status !== 'draft' && d.status !== 'cancelled'
     );
     if (finalizedDoc) {
@@ -190,7 +204,7 @@ export async function POST(
       );
     }
 
-    const draftDocs = existingDocs.filter(d => d.status === 'draft');
+    const draftDocs = (existingDocs ?? []).filter(d => d.status === 'draft');
     const supersededIds = draftDocs.map(d => d.id);
 
     // revision_number correct depuis la DB via requête séparée
@@ -211,39 +225,49 @@ export async function POST(
       newRevisionNumber = maxRev + 1;
     }
 
-    // Soft-delete local EN PREMIER (bloquant) — garantit l'atomicité
-    const { error: softDeleteError } = await supabase
-      .from('financial_documents')
-      .update({
-        quote_status: 'superseded',
-        deleted_at: new Date().toISOString(),
-      })
-      .in('id', supersededIds);
+    // Soft-delete local (uniquement si traces locales présentes)
+    if (supersededIds.length > 0) {
+      const { error: softDeleteError } = await supabase
+        .from('financial_documents')
+        .update({
+          quote_status: 'superseded',
+          deleted_at: new Date().toISOString(),
+        })
+        .in('id', supersededIds);
 
-    if (softDeleteError) {
-      console.error('[Regenerate Quote] Soft delete failed:', softDeleteError);
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Erreur lors du soft-delete des devis existants : ${softDeleteError.message}`,
-        },
-        { status: 500 }
-      );
+      if (softDeleteError) {
+        console.error(
+          '[Regenerate Quote] Soft delete failed:',
+          softDeleteError
+        );
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Erreur lors du soft-delete des devis existants : ${softDeleteError.message}`,
+          },
+          { status: 500 }
+        );
+      }
     }
 
-    // Qonto delete (non-bloquant, avec log explicite)
+    // Qonto delete (non-bloquant). Couvre traces locales ET orphelin Qonto
+    // sans trace locale (cas legacy avant BO-FIN-009 Phase 4 mi-avril).
     const qontoClient = getQontoClient();
-    for (const doc of draftDocs) {
-      if (doc.qonto_invoice_id) {
-        try {
-          await qontoClient.deleteClientQuote(doc.qonto_invoice_id);
-        } catch (err) {
-          console.error(
-            `[Regenerate Quote] Qonto delete failed for quote ${doc.qonto_invoice_id}:`,
-            err
-          );
-          // Non-bloquant — soft-delete local déjà effectué
-        }
+    const qontoIdsToDelete = [
+      ...draftDocs
+        .map(d => d.qonto_invoice_id)
+        .filter((id): id is string => !!id),
+      ...(orphanQontoId ? [orphanQontoId] : []),
+    ];
+    for (const qid of qontoIdsToDelete) {
+      try {
+        await qontoClient.deleteClientQuote(qid);
+      } catch (err) {
+        console.error(
+          `[Regenerate Quote] Qonto delete failed for quote ${qid}:`,
+          err
+        );
+        // Non-bloquant — soft-delete local déjà effectué
       }
     }
 
