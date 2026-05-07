@@ -69,7 +69,7 @@ export async function GET(
       return new NextResponse(pdfBuffer, {
         headers: {
           'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="devis-${quoteNumber}.pdf"`,
+          'Content-Disposition': `inline; filename="devis-${quoteNumber}.pdf"`,
           'Content-Length': String(pdfBuffer.byteLength),
           'X-PDF-Source': 'local',
         },
@@ -183,7 +183,7 @@ export async function GET(
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="devis-${quoteNumber}.pdf"`,
+        'Content-Disposition': `inline; filename="devis-${quoteNumber}.pdf"`,
         'Content-Length': String(pdfBuffer.byteLength),
         'X-PDF-Source': 'qonto',
       },
