@@ -1,18 +1,21 @@
 /**
- * Types locaux pour la page Messagerie (BO-MSG-001).
- * EmailMessage vient de @verone/types (email-messages.ts).
+ * Types pour la page Messagerie HUB unifié (BO-MSG-018).
+ *
+ * Re-export depuis @verone/notifications pour éviter la duplication.
+ * Les types canoniques vivent dans le hook `useCommunications`.
  */
 
 export type {
-  EmailMessage,
-  EmailMessageEnriched,
-  EmailBrand,
-} from '@verone/types';
-
-export type EmailMessageBrand = 'verone' | 'linkme';
+  Communication,
+  CommunicationDirection,
+  CommunicationBrand,
+  CommunicationKind,
+} from '@verone/notifications';
 
 export interface MessagerieFilters {
-  brand: EmailMessageBrand | 'all';
+  direction: 'all' | 'sent' | 'received';
+  brand: 'all' | 'verone' | 'linkme';
+  kind: 'all' | 'inbound_email' | 'document' | 'consultation' | 'info_request';
   toAddress: string;
   status: 'all' | 'read' | 'unread';
   search: string;

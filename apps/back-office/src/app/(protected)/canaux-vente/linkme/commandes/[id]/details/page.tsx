@@ -1,4 +1,4 @@
-/* eslint-disable max-lines -- fichier legacy déjà à 540 lignes avant cette modif perf [BO-LM-PERF-001] */
+/* eslint-disable max-lines, @typescript-eslint/no-unsafe-assignment -- fichier legacy déjà à 540 lignes avant cette modif perf [BO-LM-PERF-001] + hook useOrderDetailsPage retourne types inferés non typés strict */
 'use client';
 
 import { useState } from 'react';
@@ -22,6 +22,7 @@ import {
   InvoiceCreateFromOrderModal,
   type IOrderForDocument,
 } from '@verone/finance/components';
+import { OrderCommunicationsCard } from '@verone/notifications';
 import { SalesOrderShipmentModal } from '@verone/orders';
 
 import type { NewContactFormData } from '../../../components/contacts/NewContactForm';
@@ -421,6 +422,12 @@ export default function LinkMeOrderDetailsPage() {
           historyLoading={historyLoading}
         />
       </div>
+
+      {/* Communications — mails entrants + sortants liés à la commande (BO-MSG-018) */}
+      <OrderCommunicationsCard
+        salesOrderId={order.id}
+        hubHref={`/parametres/messagerie?direction=all`}
+      />
 
       <EditDialogs
         order={order}
