@@ -7,30 +7,10 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '13.0.5';
   };
   public: {
     Tables: {
@@ -10046,7 +10026,6 @@ export type Database = {
       };
       user_profiles: {
         Row: {
-          active_brand_id: string | null;
           app_source: Database['public']['Enums']['app_type'] | null;
           avatar_url: string | null;
           client_type: Database['public']['Enums']['client_type'] | null;
@@ -10066,7 +10045,6 @@ export type Database = {
           user_type: Database['public']['Enums']['user_type'] | null;
         };
         Insert: {
-          active_brand_id?: string | null;
           app_source?: Database['public']['Enums']['app_type'] | null;
           avatar_url?: string | null;
           client_type?: Database['public']['Enums']['client_type'] | null;
@@ -10086,7 +10064,6 @@ export type Database = {
           user_type?: Database['public']['Enums']['user_type'] | null;
         };
         Update: {
-          active_brand_id?: string | null;
           app_source?: Database['public']['Enums']['app_type'] | null;
           avatar_url?: string | null;
           client_type?: Database['public']['Enums']['client_type'] | null;
@@ -10118,13 +10095,6 @@ export type Database = {
             columns: ['organisation_id'];
             isOneToOne: false;
             referencedRelation: 'organisations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'user_profiles_active_brand_id_fkey';
-            columns: ['active_brand_id'];
-            isOneToOne: false;
-            referencedRelation: 'brands';
             referencedColumns: ['id'];
           },
           {
@@ -14895,9 +14865,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       affiliate_product_approval_status: [
