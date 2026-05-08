@@ -266,25 +266,24 @@ export function useFetchOrder(orderId: string) {
       if (enrichedData && enrichedData.length > 0) {
         const typed = enrichedData as LinkmeOrderItemEnrichedRaw[];
 
-        // Fetch stock + cloudflare image ids for all products
+        // Fetch stock + cloudflare image ids for all products (en parallele)
         const productIds = typed.map(i => i.product_id).filter(Boolean);
-        const { data: stockData } =
+        const [{ data: stockData }, { data: imageData }] =
           productIds.length > 0
-            ? await supabase
-                .from('products')
-                .select(
-                  'id, stock_real, stock_forecasted_in, stock_forecasted_out'
-                )
-                .in('id', productIds)
-            : { data: null };
-        const { data: imageData } =
-          productIds.length > 0
-            ? await supabase
-                .from('product_images')
-                .select('product_id, cloudflare_image_id')
-                .in('product_id', productIds)
-                .eq('is_primary', true)
-            : { data: null };
+            ? await Promise.all([
+                supabase
+                  .from('products')
+                  .select(
+                    'id, stock_real, stock_forecasted_in, stock_forecasted_out'
+                  )
+                  .in('id', productIds),
+                supabase
+                  .from('product_images')
+                  .select('product_id, cloudflare_image_id')
+                  .in('product_id', productIds)
+                  .eq('is_primary', true),
+              ])
+            : [{ data: null }, { data: null }];
         const cloudflareIdByProductId = new Map<string, string>();
         (imageData ?? []).forEach(
           (row: { product_id: string; cloudflare_image_id: string | null }) => {

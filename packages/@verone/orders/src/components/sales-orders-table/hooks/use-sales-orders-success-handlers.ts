@@ -5,7 +5,11 @@ import type { SalesOrder } from '../../../hooks/use-sales-orders';
 interface UseSalesOrdersSuccessHandlersParams {
   channelId: string | null;
   fetchOrders: (filters?: { channel_id: string }) => Promise<void>;
-  fetchStats: (filters?: { channel_id: string }) => Promise<void>;
+  /**
+   * @deprecated fetchStats is a no-op (cf. use-sales-orders-fetch.ts:236).
+   * Kept in the signature only to avoid breaking the SalesOrdersTable parent.
+   */
+  fetchStats?: (filters?: { channel_id: string }) => Promise<void>;
   onOrderCreated?: () => void;
   onOrderUpdated?: () => void;
   setShowCreateModal: (v: boolean) => void;
@@ -20,7 +24,6 @@ interface UseSalesOrdersSuccessHandlersParams {
 export function useSalesOrdersSuccessHandlers({
   channelId,
   fetchOrders,
-  fetchStats,
   onOrderCreated,
   onOrderUpdated,
   setShowCreateModal,
@@ -40,9 +43,6 @@ export function useSalesOrdersSuccessHandlers({
     void fetchOrders(filters).catch((err: unknown) => {
       console.error('[SalesOrdersTable] fetchOrders failed:', err);
     });
-    void fetchStats(filters).catch((err: unknown) => {
-      console.error('[SalesOrdersTable] fetchStats failed:', err);
-    });
     toast({
       title: 'Succes',
       description: 'Expedition enregistree avec succes',
@@ -56,9 +56,6 @@ export function useSalesOrdersSuccessHandlers({
     void fetchOrders(filters).catch((err: unknown) => {
       console.error('[SalesOrdersTable] fetchOrders failed:', err);
     });
-    void fetchStats(filters).catch((err: unknown) => {
-      console.error('[SalesOrdersTable] fetchStats failed:', err);
-    });
     onOrderCreated?.();
   };
 
@@ -68,9 +65,6 @@ export function useSalesOrdersSuccessHandlers({
     const filters = channelId ? { channel_id: channelId } : undefined;
     void fetchOrders(filters).catch((err: unknown) => {
       console.error('[SalesOrdersTable] fetchOrders failed:', err);
-    });
-    void fetchStats(filters).catch((err: unknown) => {
-      console.error('[SalesOrdersTable] fetchStats failed:', err);
     });
     onOrderUpdated?.();
   };
