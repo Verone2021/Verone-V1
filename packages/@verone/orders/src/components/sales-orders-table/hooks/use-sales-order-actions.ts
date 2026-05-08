@@ -269,9 +269,7 @@ export function useSalesOrderActions({
       setShowValidateConfirmation(false);
       setOrderToValidate(null);
 
-      // Rafraichir la liste
-      const filters = channelId ? { channel_id: channelId } : undefined;
-      await fetchOrders(filters);
+      // updateStatus declenche deja fetchOrders en interne (use-sales-orders-mutations.ts:182)
       onOrderUpdated?.();
     } catch (error) {
       console.error('Erreur lors de la validation:', error);
