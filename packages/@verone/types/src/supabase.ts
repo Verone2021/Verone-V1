@@ -7,30 +7,10 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '13.0.5';
   };
   public: {
     Tables: {
@@ -5010,17 +4990,22 @@ export type Database = {
           file_size: number | null;
           filename: string | null;
           format: string | null;
+          generation_at: string | null;
+          generation_model: string | null;
           height: number | null;
           id: string;
           legacy_supabase_url: string | null;
           migrated_to_cloudflare_at: string | null;
+          mise_en_scene: string | null;
           notes: string | null;
           product_id: string | null;
           public_url: string | null;
           source: string;
+          source_image_ids: string[] | null;
           source_product_image_id: string | null;
           storage_path: string | null;
           tags: string[];
+          target_channel: string | null;
           updated_at: string;
           variant_group_id: string | null;
           width: number | null;
@@ -5037,17 +5022,22 @@ export type Database = {
           file_size?: number | null;
           filename?: string | null;
           format?: string | null;
+          generation_at?: string | null;
+          generation_model?: string | null;
           height?: number | null;
           id?: string;
           legacy_supabase_url?: string | null;
           migrated_to_cloudflare_at?: string | null;
+          mise_en_scene?: string | null;
           notes?: string | null;
           product_id?: string | null;
           public_url?: string | null;
           source?: string;
+          source_image_ids?: string[] | null;
           source_product_image_id?: string | null;
           storage_path?: string | null;
           tags?: string[];
+          target_channel?: string | null;
           updated_at?: string;
           variant_group_id?: string | null;
           width?: number | null;
@@ -5064,17 +5054,22 @@ export type Database = {
           file_size?: number | null;
           filename?: string | null;
           format?: string | null;
+          generation_at?: string | null;
+          generation_model?: string | null;
           height?: number | null;
           id?: string;
           legacy_supabase_url?: string | null;
           migrated_to_cloudflare_at?: string | null;
+          mise_en_scene?: string | null;
           notes?: string | null;
           product_id?: string | null;
           public_url?: string | null;
           source?: string;
+          source_image_ids?: string[] | null;
           source_product_image_id?: string | null;
           storage_path?: string | null;
           tags?: string[];
+          target_channel?: string | null;
           updated_at?: string;
           variant_group_id?: string | null;
           width?: number | null;
@@ -14885,9 +14880,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       affiliate_product_approval_status: [
