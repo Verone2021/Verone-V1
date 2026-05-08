@@ -1397,7 +1397,9 @@ export type Database = {
           enseigne_id: string | null;
           estimated_response_date: string | null;
           id: string;
+          image_migrated_to_cloudflare_at: string | null;
           image_url: string | null;
+          legacy_image_url: string | null;
           notes_internes: string | null;
           organisation_id: string | null;
           priority_level: number | null;
@@ -1425,7 +1427,9 @@ export type Database = {
           enseigne_id?: string | null;
           estimated_response_date?: string | null;
           id?: string;
+          image_migrated_to_cloudflare_at?: string | null;
           image_url?: string | null;
+          legacy_image_url?: string | null;
           notes_internes?: string | null;
           organisation_id?: string | null;
           priority_level?: number | null;
@@ -1453,7 +1457,9 @@ export type Database = {
           enseigne_id?: string | null;
           estimated_response_date?: string | null;
           id?: string;
+          image_migrated_to_cloudflare_at?: string | null;
           image_url?: string | null;
+          legacy_image_url?: string | null;
           notes_internes?: string | null;
           organisation_id?: string | null;
           priority_level?: number | null;
@@ -2617,6 +2623,8 @@ export type Database = {
           description: string | null;
           id: string;
           is_active: boolean;
+          legacy_logo_url: string | null;
+          logo_migrated_to_cloudflare_at: string | null;
           logo_url: string | null;
           member_count: number;
           name: string;
@@ -2630,6 +2638,8 @@ export type Database = {
           description?: string | null;
           id?: string;
           is_active?: boolean;
+          legacy_logo_url?: string | null;
+          logo_migrated_to_cloudflare_at?: string | null;
           logo_url?: string | null;
           member_count?: number;
           name: string;
@@ -2643,6 +2653,8 @@ export type Database = {
           description?: string | null;
           id?: string;
           is_active?: boolean;
+          legacy_logo_url?: string | null;
+          logo_migrated_to_cloudflare_at?: string | null;
           logo_url?: string | null;
           member_count?: number;
           name?: string;
@@ -4691,7 +4703,9 @@ export type Database = {
           created_at: string | null;
           description: string | null;
           id: string;
+          image_migrated_to_cloudflare_at: string | null;
           image_url: string | null;
+          legacy_image_url: string | null;
           name: string;
           orders_count: number | null;
           price_display_mode: string | null;
@@ -4709,7 +4723,9 @@ export type Database = {
           created_at?: string | null;
           description?: string | null;
           id?: string;
+          image_migrated_to_cloudflare_at?: string | null;
           image_url?: string | null;
+          legacy_image_url?: string | null;
           name: string;
           orders_count?: number | null;
           price_display_mode?: string | null;
@@ -4727,7 +4743,9 @@ export type Database = {
           created_at?: string | null;
           description?: string | null;
           id?: string;
+          image_migrated_to_cloudflare_at?: string | null;
           image_url?: string | null;
+          legacy_image_url?: string | null;
           name?: string;
           orders_count?: number | null;
           price_display_mode?: string | null;
@@ -4994,6 +5012,8 @@ export type Database = {
           format: string | null;
           height: number | null;
           id: string;
+          legacy_supabase_url: string | null;
+          migrated_to_cloudflare_at: string | null;
           notes: string | null;
           product_id: string | null;
           public_url: string | null;
@@ -5019,6 +5039,8 @@ export type Database = {
           format?: string | null;
           height?: number | null;
           id?: string;
+          legacy_supabase_url?: string | null;
+          migrated_to_cloudflare_at?: string | null;
           notes?: string | null;
           product_id?: string | null;
           public_url?: string | null;
@@ -5044,6 +5066,8 @@ export type Database = {
           format?: string | null;
           height?: number | null;
           id?: string;
+          legacy_supabase_url?: string | null;
+          migrated_to_cloudflare_at?: string | null;
           notes?: string | null;
           product_id?: string | null;
           public_url?: string | null;
@@ -5531,9 +5555,11 @@ export type Database = {
           is_service_provider: boolean | null;
           kbis_url: string | null;
           latitude: number | null;
+          legacy_logo_url: string | null;
           legal_form: string | null;
           legal_name: string;
           linkme_code: string | null;
+          logo_migrated_to_cloudflare_at: string | null;
           logo_url: string | null;
           longitude: number | null;
           minimum_order_amount: number | null;
@@ -5620,9 +5646,11 @@ export type Database = {
           is_service_provider?: boolean | null;
           kbis_url?: string | null;
           latitude?: number | null;
+          legacy_logo_url?: string | null;
           legal_form?: string | null;
           legal_name: string;
           linkme_code?: string | null;
+          logo_migrated_to_cloudflare_at?: string | null;
           logo_url?: string | null;
           longitude?: number | null;
           minimum_order_amount?: number | null;
@@ -5709,9 +5737,11 @@ export type Database = {
           is_service_provider?: boolean | null;
           kbis_url?: string | null;
           latitude?: number | null;
+          legacy_logo_url?: string | null;
           legal_form?: string | null;
           legal_name?: string;
           linkme_code?: string | null;
+          logo_migrated_to_cloudflare_at?: string | null;
           logo_url?: string | null;
           longitude?: number | null;
           minimum_order_amount?: number | null;
@@ -6299,6 +6329,8 @@ export type Database = {
           id: string;
           image_type: Database['public']['Enums']['image_type_enum'] | null;
           is_primary: boolean | null;
+          legacy_supabase_url: string | null;
+          migrated_to_cloudflare_at: string | null;
           product_id: string;
           public_url: string | null;
           storage_path: string;
@@ -6317,6 +6349,8 @@ export type Database = {
           id?: string;
           image_type?: Database['public']['Enums']['image_type_enum'] | null;
           is_primary?: boolean | null;
+          legacy_supabase_url?: string | null;
+          migrated_to_cloudflare_at?: string | null;
           product_id: string;
           public_url?: string | null;
           storage_path: string;
@@ -6335,6 +6369,8 @@ export type Database = {
           id?: string;
           image_type?: Database['public']['Enums']['image_type_enum'] | null;
           is_primary?: boolean | null;
+          legacy_supabase_url?: string | null;
+          migrated_to_cloudflare_at?: string | null;
           product_id?: string;
           public_url?: string | null;
           storage_path?: string;
