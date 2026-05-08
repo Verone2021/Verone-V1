@@ -98,14 +98,14 @@ export function SourceImagesSection({
                 </div>
               )}
 
-              {/* Bouton supprimer */}
+              {/* Bouton supprimer — visible mobile (touch), hover desktop */}
               <button
                 type="button"
                 onClick={() => handleRemove(asset.id)}
-                className="absolute right-0.5 top-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+                className="absolute right-0.5 top-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white transition-opacity focus:opacity-100 md:h-6 md:w-6 md:bg-black/60 md:opacity-0 md:group-hover:opacity-100"
                 aria-label={`Retirer l'image`}
               >
-                <X className="h-3 w-3" />
+                <X className="h-4 w-4 md:h-3 md:w-3" />
               </button>
             </div>
           ))}

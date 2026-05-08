@@ -122,7 +122,10 @@ export class GeminiClient {
     sourceImages: GeminiImageSource[],
     prompt: string
   ): Promise<{ imageBase64: string; mimeType: string }> {
-    const url = `${GEMINI_API_BASE}/${model}:generateContent?key=${this.apiKey}`;
+    // API key passée via header x-goog-api-key (recommandation Google).
+    // Évite la fuite de la clé dans les logs Sentry/Datadog qui peuvent
+    // capturer l'URL en cas d'erreur réseau.
+    const url = `${GEMINI_API_BASE}/${model}:generateContent`;
 
     // Construction du body : images sources en premier, puis le prompt texte
     const imageParts = sourceImages.map(img => ({
@@ -152,6 +155,7 @@ export class GeminiClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-goog-api-key': this.apiKey,
         },
         body: JSON.stringify(body),
         signal: controller.signal,

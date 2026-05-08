@@ -316,7 +316,7 @@ export function MarketingStudio() {
                 value={promptDisplayed}
                 onChange={handlePromptChange}
                 rows={6}
-                className="resize-none text-xs"
+                className="resize-none text-sm md:text-xs"
                 placeholder="Le prompt sera généré automatiquement selon vos choix..."
               />
               {customPrompt !== null && (
@@ -324,7 +324,7 @@ export function MarketingStudio() {
                   variant="ghost"
                   size="sm"
                   onClick={handleResetPrompt}
-                  className="h-8 text-xs text-muted-foreground"
+                  className="h-8 text-sm text-muted-foreground md:text-xs"
                 >
                   Réinitialiser au prompt automatique
                 </Button>
@@ -344,7 +344,7 @@ export function MarketingStudio() {
           </Button>
 
           {!isFormValid && selectedAssetIds.length === 0 && (
-            <p className="text-center text-xs text-muted-foreground">
+            <p className="text-center text-sm text-muted-foreground md:text-xs">
               Sélectionnez au moins une image source pour générer.
             </p>
           )}
