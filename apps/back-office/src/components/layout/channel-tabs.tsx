@@ -5,17 +5,15 @@
  * Features:
  * - Contextual tabs (only displays when in a sales channel)
  * - Breadcrumbs with back button to channels hub
- * - Grouped dropdown tabs for channels with many pages (LinkMe)
+ * - Grouped dropdown tabs (open on CLICK, not hover) for accessibility
  * - Active tab highlighting with bottom border
- *
- * @see /Users/romeodossantos/.claude/plans/greedy-chasing-hinton.md
  */
 
 'use client';
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { cn } from '@verone/utils';
 import { ChevronDown, Settings } from 'lucide-react';
 
@@ -36,10 +34,6 @@ function isGroup(item: TabItem): item is TabGroup {
   return 'tabs' in item;
 }
 
-/**
- * Tab configuration per sales channel
- * LinkMe uses grouped tabs (dropdowns) to reduce from 13 to 6 visible items
- */
 const CHANNEL_TABS: Record<string, TabItem[]> = {
   linkme: [
     { label: 'Dashboard', href: '/canaux-vente/linkme' },
@@ -55,12 +49,27 @@ const CHANNEL_TABS: Record<string, TabItem[]> = {
       label: 'Commerce',
       tabs: [
         { label: 'Catalogue', href: '/canaux-vente/linkme/catalogue' },
+        { label: 'Vedettes', href: '/canaux-vente/linkme/catalogue/vedettes' },
+        {
+          label: 'Fournisseurs',
+          href: '/canaux-vente/linkme/catalogue/fournisseurs',
+        },
         { label: 'Sélections', href: '/canaux-vente/linkme/selections' },
         { label: 'Commandes', href: '/canaux-vente/linkme/commandes' },
+        { label: 'Approbations', href: '/canaux-vente/linkme/approbations' },
       ],
     },
-    { label: 'Commissions', href: '/canaux-vente/linkme/commissions' },
-    { label: 'Messages', href: '/canaux-vente/linkme/messages' },
+    {
+      label: 'Paiements',
+      tabs: [
+        { label: 'Commissions', href: '/canaux-vente/linkme/commissions' },
+        {
+          label: 'Demandes paiement',
+          href: '/canaux-vente/linkme/demandes-paiement',
+        },
+      ],
+    },
+    { label: 'Stockage', href: '/canaux-vente/linkme/stockage' },
     {
       label: 'Config',
       icon: 'settings',
@@ -69,7 +78,10 @@ const CHANNEL_TABS: Record<string, TabItem[]> = {
           label: 'Configuration',
           href: '/canaux-vente/linkme/configuration',
         },
-        { label: 'Stockage', href: '/canaux-vente/linkme/stockage' },
+        {
+          label: 'Configuration prix',
+          href: '/canaux-vente/linkme/catalogue/configuration',
+        },
       ],
     },
   ],
@@ -121,9 +133,6 @@ const CHANNEL_TABS: Record<string, TabItem[]> = {
   meta: [{ label: 'Dashboard', href: '/canaux-vente/meta' }],
 };
 
-/**
- * Channel display names for breadcrumbs
- */
 const CHANNEL_NAMES: Record<string, string> = {
   linkme: 'LinkMe',
   'site-internet': 'Site Internet',
@@ -132,7 +141,11 @@ const CHANNEL_NAMES: Record<string, string> = {
 };
 
 /**
- * DropdownTab — A tab that opens a dropdown menu on hover
+ * DropdownTab — A tab that opens a dropdown menu on CLICK (not hover).
+ * Closes on:
+ *  - click outside (document listener)
+ *  - link selection (item click)
+ *  - Escape key
  */
 function DropdownTab({
   group,
@@ -142,26 +155,41 @@ function DropdownTab({
   pathname: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   const isGroupActive = group.tabs.some(tab => pathname.startsWith(tab.href));
 
-  const handleMouseEnter = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setIsOpen(true);
-  };
+  useEffect(() => {
+    if (!isOpen) return;
 
-  const handleMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => setIsOpen(false), 150);
-  };
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsOpen(false);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isOpen]);
 
   return (
-    <div
-      className="relative"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
+    <div className="relative" ref={wrapperRef}>
       <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen(prev => !prev)}
         className={cn(
           'flex items-center gap-1 py-3 border-b-2 transition-colors whitespace-nowrap text-sm',
           isGroupActive
@@ -183,13 +211,17 @@ function DropdownTab({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 z-50 mt-0 min-w-[180px] rounded-md border border-neutral-200 bg-white py-1 shadow-lg">
+        <div
+          role="menu"
+          className="absolute top-full left-0 z-50 mt-0 min-w-[200px] rounded-md border border-neutral-200 bg-white py-1 shadow-lg"
+        >
           {group.tabs.map(tab => {
             const isActive = pathname.startsWith(tab.href);
             return (
               <Link
                 key={tab.href}
                 href={tab.href}
+                role="menuitem"
                 className={cn(
                   'block px-4 py-2 text-sm transition-colors',
                   isActive
@@ -208,16 +240,9 @@ function DropdownTab({
   );
 }
 
-/**
- * ChannelTabs - Horizontal tab navigation for sales channels
- *
- * Only renders when user is inside a sales channel (/canaux-vente/*)
- * Includes breadcrumbs and back button for easy navigation
- */
 export function ChannelTabs() {
   const pathname = usePathname();
 
-  // Detect which channel is active
   let activeChannel: string | null = null;
   let tabItems: TabItem[] = [];
 
@@ -235,7 +260,6 @@ export function ChannelTabs() {
     tabItems = CHANNEL_TABS.meta;
   }
 
-  // Only render tabs if user is in a sales channel
   if (!activeChannel) return null;
 
   const channelName = CHANNEL_NAMES[activeChannel];
@@ -255,8 +279,9 @@ export function ChannelTabs() {
           <span className="text-neutral-900 font-medium">{channelName}</span>
         </div>
 
-        {/* Tabs Navigation */}
-        <div className="flex gap-8 overflow-x-auto scrollbar-thin scrollbar-thumb-neutral-300 scrollbar-track-transparent">
+        {/* Tabs Navigation — flex-wrap au lieu de overflow-x-auto pour ne
+            pas couper les dropdowns qui sortent vers le bas. */}
+        <div className="flex flex-wrap gap-x-8 gap-y-0">
           {tabItems.map((item, index) => {
             if (isGroup(item)) {
               return (

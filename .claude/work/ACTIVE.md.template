@@ -1,0 +1,43 @@
+# `ACTIVE.md` — file de tâches active
+
+**Ce fichier est un TEMPLATE versionné.** Le vrai `ACTIVE.md` (sans
+`.template`) vit en local sur la machine de Roméo, est gitignored, et n'est
+jamais commité (cf. `.gitignore` `.claude/work/`).
+
+Si l'agent ne trouve pas `ACTIVE.md` au démarrage de session : il copie ce
+template vers `.claude/work/ACTIVE.md` et c'est tout. Pas d'autre
+initialisation.
+
+Maintenance détaillée : `.claude/rules/active-md-maintenance.md`.
+
+---
+
+## Priorités immédiates (1 à 5 max)
+
+_Maximum 5 entrées. Au-delà = backlog déguisé. Format : `- [TASK-ID] description courte`._
+
+- [ ] _(rien en cours — en attente d'un brief Roméo)_
+
+---
+
+## Tâches en cours (1 ou 2 max)
+
+_Pas plus de 2 tâches en cours en parallèle. Si plus, c'est multi-tasking irréaliste._
+
+- [ ] _(aucune)_
+
+---
+
+## Décisions en attente Roméo
+
+_Question sortie d'un travail technique nécessitant un choix produit/business/financier/DB. Format : `- [date YYYY-MM-DD] [TASK-ID] question courte`._
+
+- _(aucune)_
+
+---
+
+## Backlog (optionnel, max 10)
+
+_Idées identifiées mais pas encore prioritaires. Si plus de 10, élaguer._
+
+- _(vide)_

@@ -765,6 +765,9 @@ importers:
       react:
         specifier: ^18.2.0
         version: 18.3.1
+      zod:
+        specifier: ^4.1.12
+        version: 4.1.12
     devDependencies:
       typescript:
         specifier: ^5.3.3
@@ -790,6 +793,9 @@ importers:
 
   packages/@verone/marketing:
     dependencies:
+      '@tanstack/react-query':
+        specifier: ^5.20.1
+        version: 5.90.7(react@18.3.1)
       '@verone/products':
         specifier: workspace:*
         version: link:../products
@@ -805,6 +811,12 @@ importers:
       react-dom:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
+      sonner:
+        specifier: ^1.7.0
+        version: 1.7.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      zod:
+        specifier: ^4.1.12
+        version: 4.1.12
 
   packages/@verone/notifications:
     dependencies:

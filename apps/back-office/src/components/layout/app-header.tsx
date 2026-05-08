@@ -31,8 +31,6 @@ import {
   Mail,
 } from 'lucide-react';
 
-import { BrandSwitcher } from '@/components/layout/brand-switcher';
-
 function UserMenu({
   userRole,
   onLogout,
@@ -190,10 +188,7 @@ export function AppHeader({ className }: AppHeaderProps) {
 
       {/* Actions utilisateur */}
       <div className="flex items-center space-x-2">
-        {/* BrandSwitcher — filtre marque interne (Vérone/Boêmia/Solar/Flos) */}
-        <BrandSwitcher />
-
-        {/* Date — masquée < md pour libérer la place au BrandSwitcher mobile */}
+        {/* Date */}
         <div className="hidden md:block text-xs text-slate-600 px-3 border-r border-slate-200">
           {new Date().toLocaleDateString('fr-FR', {
             weekday: 'short',

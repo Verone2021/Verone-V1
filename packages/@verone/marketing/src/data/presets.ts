@@ -257,6 +257,54 @@ export const PRESETS: Preset[] = [
     template:
       '{{PRODUCT}} integrated into a Christmas table setting: linen tablecloth in cream, two place settings with vintage flatware, dried orange slices, cinnamon sticks, pine branches, two unlit cream taper candles, a small stoneware bowl with mulled wine spices. 50mm lens, f/3.5, slight high angle. Soft warm late afternoon golden light. Slow living Christmas editorial, ivory-amber-pine palette. Photorealistic, cinematic realism. 4:5 portrait.',
   },
+  // ============================================================
+  // LINKME — L1 à L5
+  // ============================================================
+  {
+    id: 'L1',
+    brand: 'linkme',
+    name: 'L1 — Dashboard SaaS desktop',
+    description: 'Mockup MacBook Pro, héro feature visible, gradient marine',
+    format: '16:9',
+    template:
+      'Photorealistic product screenshot mockup of {{PRODUCT}} displayed on a MacBook Pro 16" screen, angled 3/4 view on a clean desk surface. The screen shows a modern B2B SaaS dashboard interface with marine deep gradient (#183559) header, turquoise (#5DBEBB) accent elements, and crisp white content cards. Background: cool white studio with subtle depth. 85mm lens, f/5.6, slightly elevated angle. Cold studio lighting, three-point setup with soft fill. Stripe Atlas / Linear app quality, sharp UI detail. Photorealistic, ultra-sharp screen resolution, cinematic product photography. 16:9 horizontal format.',
+  },
+  {
+    id: 'L2',
+    brand: 'linkme',
+    name: 'L2 — Story IG B2B',
+    description: 'Portrait bureau pro, ordinateur visible, stat metric overlay',
+    format: '9:16',
+    template:
+      'Hero vertical lifestyle shot of {{PRODUCT}} in a modern professional office setting. Scene: person at desk with open laptop showing a B2B SaaS interface, cup of black coffee on light walnut desk, clean background of glass partition wall. Vertical 9:16 composition with generous negative space at top for metric/stat overlay text. 50mm lens, f/2.8 shallow depth, eye-level. Soft natural daylight from window, cool-to-neutral tone. Vercel marketing / Linear visual style, professional confident aesthetic. Photorealistic, cinematic realism. 9:16 vertical.',
+  },
+  {
+    id: 'L3',
+    brand: 'linkme',
+    name: 'L3 — Hero packshot tech',
+    description: 'Apple-style packshot, fond marine, lumière 3 points',
+    format: '1:1',
+    template:
+      '{{PRODUCT}} rendered as a hero packshot. Centered isolated product on a seamless dark marine gradient backdrop (#183559 at top fading to #0D2040 at base). Three-point studio lighting: main from upper left at 45°, rim light from behind creating edge glow in turquoise (#5DBEBB), soft fill from right. 100mm macro lens, f/8, perfectly straight angle. Subtle reflection on glass-like surface below. Apple product launch style for B2B SaaS, clean and confident. Photorealistic, ultra-sharp detail, cinematic realism. 1:1 square format.',
+  },
+  {
+    id: 'L4',
+    brand: 'linkme',
+    name: 'L4 — Lifestyle bureau pro',
+    description: 'Bureau direction, baie vitrée, ordinateur sur dashboard',
+    format: '4:5',
+    template:
+      'Editorial lifestyle shot of {{PRODUCT}} integrated into a premium executive office space: floor-to-ceiling window with city skyline blurred behind, black leather executive chair, dark walnut desk, laptop open on a B2B SaaS dashboard with marine/turquoise interface. Single architectural succulent in ceramic pot. 35mm lens, f/3.5, eye-level. Bright cool natural daylight from window, controlled interior warm accent. Stripe / Notion / Linear brand photography style, confident professional aesthetic. Photorealistic, cinematic realism. 4:5 portrait for feed.',
+  },
+  {
+    id: 'L5',
+    brand: 'linkme',
+    name: 'L5 — Statement typo Linear-style',
+    description: 'Typographie gras pleine page, gradient marine-turquoise',
+    format: '1:1',
+    template:
+      'Bold typographic statement composition featuring {{PRODUCT}}. Full-bleed deep marine gradient background (#183559 to #0D2040), with large bold sans-serif headline text in clean white as primary visual element, turquoise accent line (#5DBEBB) running horizontally below the headline. Minimal geometric elements: a single thin border rectangle in turquoise, slight glassmorphism card panel with blur effect in bottom third. No photography, no clutter. Linear app / Vercel marketing landing page aesthetic, confident minimalist B2B style. High-resolution digital graphic render. 1:1 square format.',
+  },
 ];
 
 export const getPresetsByBrand = (brand: string): Preset[] =>

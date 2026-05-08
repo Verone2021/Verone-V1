@@ -1118,3 +1118,28 @@ Autres FEU ROUGE de l'ancien fichier confirmés déjà couverts ailleurs (pas be
 - `PROTECTED_FILES.json` v3.1.0 : ajout du chemin `apps/back-office/src/app/api/qonto/**` aux fichiers interdits de modification sans owner.
 
 **Référence** : incident 2026-05-07. Roméo verbatim : « les développeurs senior comment font pour que Claude ne fasse pas d'erreur de typage ? C'est le b.a.-ba du coding ». Réponse documentée : avec des CHECK constraints DB, parce que TypeScript ne peut pas attraper ce genre d'erreur sur les types JSONB permissifs.
+
+---
+
+## ADR-030 — Lifecycle des mémoires `feedback_*` et règles `.claude/rules/` (2026-05-08)
+
+**Contexte** : audit 2026-05-08 (`[INFRA-AGENT-COHERENCE-001]`) à la demande de Roméo après que tous les agents ont reproduit pour la énième fois le pattern « 3 commits → 3 push → 3 cycles CI » au lieu de grouper en 1 PR. L'audit a révélé que les règles évoluent vite (ADRs hebdomadaires) mais les mémoires `feedback_*` correspondantes ne sont jamais nettoyées quand une nouvelle règle arrive. Résultat : 3 mémoires contradictoires sur le merge auto staging, 2 sur l'usage de `git worktree`, 2 sur le pattern multi-phases. L'agent qui ouvre la doc voit toutes ces voix en parallèle, sans arbitre, et applique la première qu'il rencontre. Comportement chaotique session après session.
+
+**Décision** : créer `.claude/rules/memory-lifecycle.md` qui formalise 5 règles de maintenance — une seule source de vérité par sujet, suppression des mémoires obsolètes à l'ajout d'une nouvelle règle, audit périodique trimestriel, anti-patterns interdits explicites. Branchée par `CLAUDE.md` racine table SOURCES DE VÉRITÉ et par `.claude/INDEX.md`. Suppression immédiate des 3 mémoires utilisateur déjà identifiées comme obsolètes :
+
+- `feedback_ci_green_auto_merge.md` (annulé par `feedback_no_auto_merge_staging.md` + workflow.md « auto-merge suspendu »)
+- `feedback_multi_agent_use_worktree.md` (annulé par `no-worktree-solo.md` + ADR-024)
+- `feedback_integration_branch_one_merge.md` (annulé par ADR-028 + `feedback_no_intermediate_merges.md`)
+
+**Conséquence** :
+
+- `.claude/rules/memory-lifecycle.md` créé (5 règles).
+- `CLAUDE.md` racine : table SOURCES DE VÉRITÉ enrichie d'une ligne « Lifecycle mémoires/règles ».
+- `.claude/INDEX.md` : compteur Rules 13 → 14.
+- 3 mémoires utilisateur supprimées définitivement (cf. liste ci-dessus).
+- `feedback_no_intermediate_go.md` : référence à `autonomy-boundaries.md` (supprimé en ADR-026) corrigée → pointe vers règle 6 de `communication-style.md`.
+- `MEMORY.md` (index utilisateur) : entrées obsolètes supprimées, deux nouvelles ajoutées explicitant `feedback_no_auto_merge_staging` et `feedback_no_intermediate_merges`.
+- `.claude/work/ACTIVE.md.template` créé (le vrai `ACTIVE.md` reste gitignored mais l'agent peut désormais l'initialiser proprement à partir du template).
+- Hook `.claude/hooks/check-pr-duplication.sh` ajouté + branché dans `.claude/settings.json` PreToolUse `Bash(gh pr create*)` : bloque la création d'une 2e PR pour le même TASK-ID. En contrepartie, le hook redondant PreToolUse `Bash(git push*)` (qui dupliquait `.husky/pre-push`) est retiré : `validate-affected-apps.sh` continue de tourner via le hook git natif uniquement.
+
+**Référence** : audit complet `docs/scratchpad/dev-plan-2026-05-08-BO-BRAND-CLEANUP-LINKME-NAV.md` puis prompt audit 2026-05-08. Verbatim Roméo : « Tu as bien décomposé le fichier Claude, tous les agents, tous les skills, tu as bien tout regardé en fond et en comble ou tu as fait un audit superficiel ? […] Pas de supposition, que du concret. »

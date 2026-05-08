@@ -5010,17 +5010,22 @@ export type Database = {
           file_size: number | null;
           filename: string | null;
           format: string | null;
+          generation_at: string | null;
+          generation_model: string | null;
           height: number | null;
           id: string;
           legacy_supabase_url: string | null;
           migrated_to_cloudflare_at: string | null;
+          mise_en_scene: string | null;
           notes: string | null;
           product_id: string | null;
           public_url: string | null;
           source: string;
+          source_image_ids: string[] | null;
           source_product_image_id: string | null;
           storage_path: string | null;
           tags: string[];
+          target_channel: string | null;
           updated_at: string;
           variant_group_id: string | null;
           width: number | null;
@@ -5037,17 +5042,22 @@ export type Database = {
           file_size?: number | null;
           filename?: string | null;
           format?: string | null;
+          generation_at?: string | null;
+          generation_model?: string | null;
           height?: number | null;
           id?: string;
           legacy_supabase_url?: string | null;
           migrated_to_cloudflare_at?: string | null;
+          mise_en_scene?: string | null;
           notes?: string | null;
           product_id?: string | null;
           public_url?: string | null;
           source?: string;
+          source_image_ids?: string[] | null;
           source_product_image_id?: string | null;
           storage_path?: string | null;
           tags?: string[];
+          target_channel?: string | null;
           updated_at?: string;
           variant_group_id?: string | null;
           width?: number | null;
@@ -5064,17 +5074,22 @@ export type Database = {
           file_size?: number | null;
           filename?: string | null;
           format?: string | null;
+          generation_at?: string | null;
+          generation_model?: string | null;
           height?: number | null;
           id?: string;
           legacy_supabase_url?: string | null;
           migrated_to_cloudflare_at?: string | null;
+          mise_en_scene?: string | null;
           notes?: string | null;
           product_id?: string | null;
           public_url?: string | null;
           source?: string;
+          source_image_ids?: string[] | null;
           source_product_image_id?: string | null;
           storage_path?: string | null;
           tags?: string[];
+          target_channel?: string | null;
           updated_at?: string;
           variant_group_id?: string | null;
           width?: number | null;
@@ -10046,7 +10061,6 @@ export type Database = {
       };
       user_profiles: {
         Row: {
-          active_brand_id: string | null;
           app_source: Database['public']['Enums']['app_type'] | null;
           avatar_url: string | null;
           client_type: Database['public']['Enums']['client_type'] | null;
@@ -10066,7 +10080,6 @@ export type Database = {
           user_type: Database['public']['Enums']['user_type'] | null;
         };
         Insert: {
-          active_brand_id?: string | null;
           app_source?: Database['public']['Enums']['app_type'] | null;
           avatar_url?: string | null;
           client_type?: Database['public']['Enums']['client_type'] | null;
@@ -10086,7 +10099,6 @@ export type Database = {
           user_type?: Database['public']['Enums']['user_type'] | null;
         };
         Update: {
-          active_brand_id?: string | null;
           app_source?: Database['public']['Enums']['app_type'] | null;
           avatar_url?: string | null;
           client_type?: Database['public']['Enums']['client_type'] | null;
@@ -10118,13 +10130,6 @@ export type Database = {
             columns: ['organisation_id'];
             isOneToOne: false;
             referencedRelation: 'organisations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'user_profiles_active_brand_id_fkey';
-            columns: ['active_brand_id'];
-            isOneToOne: false;
-            referencedRelation: 'brands';
             referencedColumns: ['id'];
           },
           {

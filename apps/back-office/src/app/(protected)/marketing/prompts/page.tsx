@@ -1,33 +1,22 @@
 'use client';
 
-import { PromptBuilder } from '@verone/marketing';
-import { toast } from 'sonner';
+import { MarketingStudio } from '@verone/marketing';
 
 export default function MarketingPromptsPage() {
   return (
-    <div className="container mx-auto space-y-6 p-4 md:p-6">
+    <div className="mx-auto space-y-6 p-4 md:p-6">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">
-          Studio Marketing — Prompts Nano Banana
+          Studio Marketing IA — Génération d&apos;images
         </h1>
         <p className="text-sm text-muted-foreground">
-          Choisis une marque et un preset pour générer un prompt structuré
-          (Subject + Action + Scene + Camera + Lighting + Style + Realism +
-          Format) prêt à coller dans Gemini Nano Banana.
+          Sélectionnez vos produits, vos images de référence, choisissez la
+          marque et la mise en scène. L&apos;IA génère une image cohérente avec
+          votre charte, prête pour vos canaux.
         </p>
       </header>
 
-      <PromptBuilder
-        onCopySuccess={() =>
-          toast.success('Prompt copié', {
-            description:
-              'Colle-le dans Gemini Nano Banana avec ton image de référence.',
-          })
-        }
-        onCopyError={err =>
-          toast.error('Copie impossible', { description: err.message })
-        }
-      />
+      <MarketingStudio />
     </div>
   );
 }
