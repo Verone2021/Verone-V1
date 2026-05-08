@@ -184,11 +184,11 @@
         ]
       },
       {
-        "matcher": "Bash(git push*)",
+        "matcher": "Bash(gh pr create*)",
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/validate-affected-apps.sh"
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/check-pr-duplication.sh"
           }
         ]
       },
