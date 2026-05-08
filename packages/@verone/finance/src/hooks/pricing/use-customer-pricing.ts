@@ -15,12 +15,9 @@ export function useCustomerPricing(
     queryKey: ['customer-pricing', customerId, customerType],
     queryFn: async (): Promise<CustomerPricing[]> => {
       try {
-        // [BO-PERF-QUICKWINS-001] select explicite (colonnes de CustomerPricing)
         const { data, error } = await supabase
           .from('customer_pricing')
-          .select(
-            'id, customer_id, customer_type, product_id, custom_price_ht, discount_rate, retrocession_rate, contract_reference, min_quantity, valid_from, valid_until, is_active, approval_status, notes'
-          )
+          .select('*')
           .eq('customer_id', customerId)
           .eq('customer_type', customerType)
           .eq('is_active', true)

@@ -91,9 +91,9 @@ export function useFacturesPage(): FacturesPageState {
   }, [searchParams]);
 
   const fetchState = useFacturesFetch();
-  // [BO-PERF-TANSTACK-001] Les useEffect de chargement paresseux ont été
-  // supprimés : useQuery dans useFacturesFetch gère le fetch automatiquement
-  // au mount et met en cache 60s — pas de re-fetch au switch d'onglet.
+  // qontoQuotes / creditNotes sont exposés au consumer via ...fetchState (return).
+  // On ne les déstructure plus ici car les conditions length===0 ont été
+  // remplacées par des flags loaded (cf data-fetching rule).
   const {
     invoices,
     fetchInvoicesAsync,
@@ -115,6 +115,13 @@ export function useFacturesPage(): FacturesPageState {
   const [showRapprochementModal, setShowRapprochementModal] = useState(false);
   const [rapprochementOrder, setRapprochementOrder] =
     useState<OrderForLink | null>(null);
+  // Flags loaded — évite la triple boucle infinie quand Qonto renvoie 0
+  // documents (factures, devis ou avoirs). Cf .claude/rules/data-fetching.md
+  // (rule data-fetching, anti-pattern 1).
+  const [invoicesLoaded, setInvoicesLoaded] = useState(false);
+  const [quotesLoaded, setQuotesLoaded] = useState(false);
+  const [creditNotesLoaded, setCreditNotesLoaded] = useState(false);
+
   const { fetchOrder } = useSalesOrders();
   const {
     transactions: missingInvoices,
@@ -123,6 +130,28 @@ export function useFacturesPage(): FacturesPageState {
     refresh: refreshMissing,
     count: missingCount,
   } = useMissingInvoices();
+
+  useEffect(() => {
+    void fetchInvoicesAsync().finally(() => setInvoicesLoaded(true));
+  }, [fetchInvoicesAsync]);
+
+  useEffect(() => {
+    if (activeTab === 'factures' && !invoicesLoaded) {
+      void fetchInvoicesAsync().finally(() => setInvoicesLoaded(true));
+    } else if (activeTab === 'devis' && !quotesLoaded) {
+      void fetchQontoQuotesAsync().finally(() => setQuotesLoaded(true));
+    } else if (activeTab === 'avoirs' && !creditNotesLoaded) {
+      void fetchCreditNotesAsync().finally(() => setCreditNotesLoaded(true));
+    }
+  }, [
+    activeTab,
+    invoicesLoaded,
+    quotesLoaded,
+    creditNotesLoaded,
+    fetchInvoicesAsync,
+    fetchQontoQuotesAsync,
+    fetchCreditNotesAsync,
+  ]);
 
   const transactionForUpload: TransactionForUpload | null = useMemo(() => {
     if (!selectedMissingTx) return null;

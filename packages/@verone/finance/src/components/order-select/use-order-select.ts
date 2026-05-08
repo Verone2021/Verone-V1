@@ -59,49 +59,42 @@ export function useOrderSelect(
         .map(o => o.customer_id)
         .filter((id): id is string => id !== null);
 
-      // [BO-PERF-QUICKWINS-001] Requêtes orgs + indivs en parallèle (Promise.all)
       const orgMap = new Map<string, { name: string; email: string | null }>();
+      if (orgIds.length > 0) {
+        const { data: orgs } = await supabase
+          .from('organisations')
+          .select('id, legal_name, trade_name, email')
+          .in('id', orgIds);
+        if (orgs) {
+          for (const org of orgs) {
+            orgMap.set(org.id, {
+              name: org.trade_name ?? org.legal_name ?? 'Organisation',
+              email: org.email,
+            });
+          }
+        }
+      }
+
       const indivMap = new Map<
         string,
         { name: string; email: string | null }
       >();
-
-      await Promise.all([
-        orgIds.length > 0
-          ? supabase
-              .from('organisations')
-              .select('id, legal_name, trade_name, email')
-              .in('id', orgIds)
-              .then(({ data: orgs }) => {
-                if (orgs) {
-                  for (const org of orgs) {
-                    orgMap.set(org.id, {
-                      name: org.trade_name ?? org.legal_name ?? 'Organisation',
-                      email: org.email,
-                    });
-                  }
-                }
-              })
-          : Promise.resolve(),
-        indivIds.length > 0
-          ? supabase
-              .from('individual_customers')
-              .select('id, first_name, last_name, email')
-              .in('id', indivIds)
-              .then(({ data: indivs }) => {
-                if (indivs) {
-                  for (const indiv of indivs) {
-                    indivMap.set(indiv.id, {
-                      name:
-                        `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim() ||
-                        'Client',
-                      email: indiv.email,
-                    });
-                  }
-                }
-              })
-          : Promise.resolve(),
-      ]);
+      if (indivIds.length > 0) {
+        const { data: indivs } = await supabase
+          .from('individual_customers')
+          .select('id, first_name, last_name, email')
+          .in('id', indivIds);
+        if (indivs) {
+          for (const indiv of indivs) {
+            indivMap.set(indiv.id, {
+              name:
+                `${indiv.first_name ?? ''} ${indiv.last_name ?? ''}`.trim() ||
+                'Client',
+              email: indiv.email,
+            });
+          }
+        }
+      }
 
       const orderIds = ordersData.map(o => o.id);
       const invoicedOrderIds = new Set<string>();

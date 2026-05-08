@@ -1,16 +1,7 @@
 'use client';
 
-/**
- * [BO-PERF-TANSTACK-001] Migré vers useQuery pour les 3 listes Qonto.
- * Avant : useState + useCallback fetch manuel, re-fetch à chaque switch d'onglet.
- * Après : cache partagé staleTime 60s — switch d'onglet = cache hit, 0 requête.
- * Les fonctions fetchXxxAsync sont préservées (API publique) mais deviennent
- * des invalidations de cache plutôt que des fetches directs.
- */
+import { useState, useCallback } from 'react';
 
-import { useCallback, useState } from 'react';
-
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import type {
@@ -46,101 +37,71 @@ export interface FacturesFetchState {
   handleDownloadCreditNotePdf: (creditNote: CreditNote) => void;
 }
 
-// --- Fonctions fetch pures (queryFn) ---
-
-async function fetchInvoicesFromApi(): Promise<Invoice[]> {
-  const response = await fetch('/api/qonto/invoices');
-  const data = (await response.json()) as InvoicesResponse;
-  if (!response.ok || !data.success)
-    throw new Error(data.error ?? 'Failed to fetch invoices');
-  return data.invoices ?? [];
-}
-
-async function fetchQuotesFromApi(): Promise<QontoQuote[]> {
-  const response = await fetch('/api/qonto/quotes');
-  const data = (await response.json()) as QontoQuotesResponse;
-  if (!response.ok || !data.success)
-    throw new Error(data.error ?? 'Failed to fetch quotes');
-  return data.quotes ?? [];
-}
-
-async function fetchCreditNotesFromApi(): Promise<CreditNote[]> {
-  const response = await fetch('/api/qonto/credit-notes');
-  const data = (await response.json()) as CreditNotesResponse;
-  if (!response.ok || !data.success)
-    throw new Error(data.error ?? 'Failed to fetch credit notes');
-  return data.credit_notes ?? [];
-}
-
 export function useFacturesFetch(): FacturesFetchState {
-  const queryClient = useQueryClient();
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loadingInvoices, setLoadingInvoices] = useState(true);
+  const [errorInvoices, setErrorInvoices] = useState<string | null>(null);
 
-  // État local pour les erreurs (non géré par useQuery car les consumers
-  // lisent errorInvoices directement et le clearent via setErrorInvoices)
-  const [errorInvoicesOverride, setErrorInvoices] = useState<string | null>(
-    null
-  );
+  const [qontoQuotes, setQontoQuotes] = useState<QontoQuote[]>([]);
+  const [loadingQuotes, setLoadingQuotes] = useState(false);
+  const [errorQuotes, setErrorQuotes] = useState<string | null>(null);
+
+  const [creditNotes, setCreditNotes] = useState<CreditNote[]>([]);
+  const [loadingCreditNotes, setLoadingCreditNotes] = useState(false);
+  const [errorCreditNotes, setErrorCreditNotes] = useState<string | null>(null);
+
   const [quoteToDelete, setQuoteToDelete] = useState<QontoQuote | null>(null);
   const [deletingQuote, setDeletingQuote] = useState(false);
 
-  // --- useQuery #1 : factures ---
-  const {
-    data: invoices = [],
-    isLoading: loadingInvoices,
-    error: invoicesError,
-  } = useQuery({
-    queryKey: ['invoices', 'list'],
-    queryFn: fetchInvoicesFromApi,
-    staleTime: 60_000,
-  });
-
-  // --- useQuery #2 : devis Qonto (lazy : pas de fetch automatique au mount) ---
-  const {
-    data: qontoQuotes = [],
-    isLoading: loadingQuotes,
-    error: quotesError,
-  } = useQuery({
-    queryKey: ['quotes', 'list'],
-    queryFn: fetchQuotesFromApi,
-    staleTime: 60_000,
-    // enabled: false par défaut — chargé à la demande via fetchQontoQuotesAsync
-    // Mais on l'active au premier appel via prefetch/invalidation.
-    // On garde enabled:true pour que useQuery refetch si le cache est périmé.
-    enabled: true,
-  });
-
-  // --- useQuery #3 : avoirs ---
-  const {
-    data: creditNotes = [],
-    isLoading: loadingCreditNotes,
-    error: creditNotesError,
-  } = useQuery({
-    queryKey: ['credit_notes', 'list'],
-    queryFn: fetchCreditNotesFromApi,
-    staleTime: 60_000,
-    enabled: true,
-  });
-
-  const errorInvoices =
-    errorInvoicesOverride ??
-    (invoicesError instanceof Error ? invoicesError.message : null);
-  const errorQuotes = quotesError instanceof Error ? quotesError.message : null;
-  const errorCreditNotes =
-    creditNotesError instanceof Error ? creditNotesError.message : null;
-
-  // --- Compat API : fonctions fetchXxxAsync deviennent des invalidations ---
   const fetchInvoicesAsync = useCallback(async (): Promise<void> => {
+    setLoadingInvoices(true);
     setErrorInvoices(null);
-    await queryClient.invalidateQueries({ queryKey: ['invoices', 'list'] });
-  }, [queryClient]);
+    try {
+      const response = await fetch('/api/qonto/invoices');
+      const data = (await response.json()) as InvoicesResponse;
+      if (!response.ok || !data.success)
+        throw new Error(data.error ?? 'Failed to fetch invoices');
+      setInvoices(data.invoices ?? []);
+    } catch (err) {
+      setErrorInvoices(err instanceof Error ? err.message : 'Erreur inconnue');
+    } finally {
+      setLoadingInvoices(false);
+    }
+  }, []);
 
   const fetchQontoQuotesAsync = useCallback(async (): Promise<void> => {
-    await queryClient.invalidateQueries({ queryKey: ['quotes', 'list'] });
-  }, [queryClient]);
+    setLoadingQuotes(true);
+    setErrorQuotes(null);
+    try {
+      const response = await fetch('/api/qonto/quotes');
+      const data = (await response.json()) as QontoQuotesResponse;
+      if (!response.ok || !data.success)
+        throw new Error(data.error ?? 'Failed to fetch quotes');
+      setQontoQuotes(data.quotes ?? []);
+    } catch (err) {
+      setErrorQuotes(err instanceof Error ? err.message : 'Erreur inconnue');
+    } finally {
+      setLoadingQuotes(false);
+    }
+  }, []);
 
   const fetchCreditNotesAsync = useCallback(async (): Promise<void> => {
-    await queryClient.invalidateQueries({ queryKey: ['credit_notes', 'list'] });
-  }, [queryClient]);
+    setLoadingCreditNotes(true);
+    setErrorCreditNotes(null);
+    try {
+      const response = await fetch('/api/qonto/credit-notes');
+      const data = (await response.json()) as CreditNotesResponse;
+      if (!response.ok || !data.success)
+        throw new Error(data.error ?? 'Failed to fetch credit notes');
+      setCreditNotes(data.credit_notes ?? []);
+    } catch (err) {
+      setErrorCreditNotes(
+        err instanceof Error ? err.message : 'Erreur inconnue'
+      );
+    } finally {
+      setLoadingCreditNotes(false);
+    }
+  }, []);
 
   const handleDeleteQuote = (): void => {
     if (!quoteToDelete) return;
@@ -154,7 +115,7 @@ export function useFacturesFetch(): FacturesFetchState {
         if (!response.ok || !data.success)
           throw new Error(data.error ?? 'Erreur lors de la suppression');
         toast.success('Devis supprime');
-        await queryClient.invalidateQueries({ queryKey: ['quotes', 'list'] });
+        void fetchQontoQuotesAsync();
       } catch (err) {
         console.error('[Factures] deleteQuote error:', err);
         toast.error(

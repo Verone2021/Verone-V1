@@ -3,16 +3,11 @@
 /**
  * Sales Orders — fetchOrders (list all orders with enrichment)
  * Extracted from use-sales-orders-fetch.ts for max-lines compliance
- *
- * [BO-PERF-TANSTACK-001] useQueryClient intégré : chaque fetchOrders alimente
- * le cache TanStack queryKey ['sales_orders'] en plus du useState local.
- * Permet à useSalesOrdersQuery (lecture seule) de rester en sync sans refetch.
  */
 
 import { useCallback, useEffect, useRef } from 'react';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { useQueryClient } from '@tanstack/react-query';
 
 import type { SalesOrder, SalesOrderFilters } from './types/sales-order.types';
 
@@ -37,8 +32,6 @@ export function useFetchOrdersList({
   setLoading,
   setOrders,
 }: FetchListDeps) {
-  const queryClient = useQueryClient();
-
   const fetchOrders = useCallback(
     async (filters?: SalesOrderFilters) => {
       setLoading(true);
@@ -533,14 +526,7 @@ export function useFetchOrdersList({
           };
         });
 
-        const finalOrders = ordersWithCustomers as unknown as SalesOrder[];
-        setOrders(finalOrders);
-        // [BO-PERF-TANSTACK-001] Alimenter le cache TanStack sans clé de filtre
-        // (liste complète non filtrée). Les consumers useSalesOrdersQuery restent
-        // en sync sans refetch supplémentaire.
-        if (!filters || Object.keys(filters).length === 0) {
-          queryClient.setQueryData(['sales_orders', 'list'], finalOrders);
-        }
+        setOrders(ordersWithCustomers as unknown as SalesOrder[]);
       } catch (error: unknown) {
         const errMsg =
           error instanceof Error ? error.message : 'Erreur inconnue';
@@ -562,7 +548,7 @@ export function useFetchOrdersList({
         setLoading(false);
       }
     },
-    [supabase, setLoading, setOrders, toastRef, queryClient]
+    [supabase, setLoading, setOrders, toastRef]
   );
 
   // [BO-RLS-PERF-002] Refetch silencieux déclenché par CustomEvent.

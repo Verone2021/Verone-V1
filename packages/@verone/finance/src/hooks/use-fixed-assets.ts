@@ -131,14 +131,11 @@ export function useFixedAssets() {
       const supabase = createClient();
 
       /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
-      // [BO-PERF-QUICKWINS-001] select explicite (colonnes de FixedAsset)
       const { data, error: fetchError } = await (
         supabase as { from: CallableFunction }
       )
         .from('fixed_assets')
-        .select(
-          'id, label, description, pcg_account, pcg_amortissement, asset_category, acquisition_date, acquisition_amount, supplier_name, invoice_reference, depreciation_method, depreciation_duration_years, residual_value, total_depreciated, status, disposal_date, disposal_amount, created_at, updated_at'
-        )
+        .select('*')
         .order('acquisition_date', { ascending: false });
       /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 

@@ -14,12 +14,9 @@ export function useSalesChannels() {
     queryKey: ['sales-channels'],
     queryFn: async (): Promise<SalesChannel[]> => {
       try {
-        // [BO-PERF-QUICKWINS-001] select explicite (colonnes de SalesChannel)
         const { data, error } = await (supabase as { from: CallableFunction })
           .from('sales_channels')
-          .select(
-            'id, code, name, description, default_discount_rate, is_active, requires_approval, min_order_value, display_order, icon_name'
-          )
+          .select('*')
           .eq('is_active', true)
           .order('display_order', { ascending: true });
 
@@ -56,12 +53,9 @@ export function useChannelPricing(productId: string) {
     queryKey: ['channel-pricing', productId],
     queryFn: async (): Promise<ChannelPricing[]> => {
       try {
-        // [BO-PERF-QUICKWINS-001] select explicite (colonnes de ChannelPricing)
         const { data, error } = await (supabase as { from: CallableFunction })
           .from('channel_pricing')
-          .select(
-            `id, product_id, channel_id, custom_price_ht, public_price_ht, discount_rate, markup_rate, min_quantity, valid_from, valid_until, is_active, notes, sales_channels (code, name)`
-          )
+          .select(`*, sales_channels (code, name)`)
           .eq('product_id', productId)
           .eq('is_active', true)
           .order('min_quantity', { ascending: true });
