@@ -1,14 +1,11 @@
 /**
  * @verone/utils/upload/smart-upload
- * Wrapper d'upload intelligent: Cloudflare Images si configuré, Supabase Storage sinon.
+ * Upload Cloudflare Images uniquement (BO-IMG-CF-002, 2026-05-08).
  *
- * Usage:
- *   const result = await smartUploadImage(file, { bucket: 'product-images', path: 'products/xxx/img.jpg' });
- *   if (result.cloudflareImageId) {
- *     // utiliser Cloudflare
- *   } else {
- *     // utiliser result.supabasePublicUrl
- *   }
+ * Décision : plus de fallback Supabase Storage. Toutes les images Verone
+ * vivent désormais sur Cloudflare Images. Si la configuration Cloudflare
+ * est manquante, on lève une erreur explicite (le runtime production en
+ * a TOUJOURS besoin).
  */
 
 import {
@@ -16,17 +13,22 @@ import {
   uploadImageToCloudflare,
 } from '../cloudflare/images';
 import type { CloudflareUploadMetadata } from '../cloudflare/images';
-import { createClient } from '../supabase/client';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 export interface SmartUploadOptions {
-  /** Bucket Supabase Storage (fallback si Cloudflare non configuré) */
-  bucket: string;
-  /** Path dans Supabase Storage (ex: "products/uuid/timestamp.jpg") */
-  path: string;
+  /**
+   * @deprecated conservé pour compat ascendante des appelants. Plus utilisé
+   * en runtime depuis BO-IMG-CF-002. Tous les uploads vont sur Cloudflare.
+   */
+  bucket?: string;
+  /**
+   * @deprecated conservé pour compat ascendante des appelants. Plus utilisé
+   * en runtime depuis BO-IMG-CF-002.
+   */
+  path?: string;
   /** ID de l'entité propriétaire (pour les métadonnées Cloudflare) */
   ownerId?: string;
   /** Type d'entité (pour les métadonnées Cloudflare) */
@@ -34,11 +36,18 @@ export interface SmartUploadOptions {
 }
 
 export interface SmartUploadResult {
-  /** Présent si uploadé vers Cloudflare Images */
-  cloudflareImageId?: string;
-  /** Présent si uploadé vers Supabase Storage */
+  /** Identifiant Cloudflare Images de l'image uploadée. Toujours présent. */
+  cloudflareImageId: string;
+  /**
+   * @deprecated Toujours `undefined` depuis BO-IMG-CF-002. Conservé pour
+   * compat ascendante des appelants existants. Les consommateurs doivent
+   * utiliser `cloudflareImageId` et laisser le trigger DB générer l'URL.
+   */
   supabasePublicUrl?: string;
-  /** Path dans Supabase Storage (présent si Supabase utilisé) */
+  /**
+   * @deprecated Toujours `undefined` depuis BO-IMG-CF-002. Conservé pour
+   * compat ascendante des appelants existants.
+   */
   storagePath?: string;
 }
 
@@ -47,64 +56,26 @@ export interface SmartUploadResult {
 // ============================================================================
 
 /**
- * Upload une image vers Cloudflare Images si configuré, sinon vers Supabase Storage.
+ * Upload une image vers Cloudflare Images.
  *
- * Comportement:
- * - Si `isCloudflareConfigured()` → upload vers Cloudflare → retourne `{ cloudflareImageId }`
- * - Sinon → upload vers Supabase Storage → retourne `{ supabasePublicUrl, storagePath }`
- *
- * Les deux chemins sont mutuellement exclusifs dans le résultat.
- * Le composant consommateur doit persister les deux champs en DB pour backward compat.
+ * Échoue avec une erreur explicite si la configuration Cloudflare est absente :
+ * pas de fallback Supabase. Toute image Verone doit vivre sur Cloudflare.
  */
 export async function smartUploadImage(
   file: File,
   options: SmartUploadOptions
 ): Promise<SmartUploadResult> {
-  if (isCloudflareConfigured()) {
-    return uploadViaCloudflare(file, options);
+  if (!isCloudflareConfigured()) {
+    throw new Error(
+      'Cloudflare Images non configuré : variables CLOUDFLARE_IMAGES_* manquantes. ' +
+        "L'upload vers Supabase Storage n'est plus supporté (BO-IMG-CF-002)."
+    );
   }
-  return uploadViaSupabase(file, options);
-}
 
-// ============================================================================
-// IMPLEMENTATIONS
-// ============================================================================
-
-async function uploadViaCloudflare(
-  file: File,
-  options: SmartUploadOptions
-): Promise<SmartUploadResult> {
   const result = await uploadImageToCloudflare(file, {
     ownerId: options.ownerId,
     ownerType: options.ownerType,
   });
 
   return { cloudflareImageId: result.id };
-}
-
-async function uploadViaSupabase(
-  file: File,
-  options: SmartUploadOptions
-): Promise<SmartUploadResult> {
-  const supabase = createClient();
-
-  const { data: uploadData, error: uploadError } = await supabase.storage
-    .from(options.bucket)
-    .upload(options.path, file, {
-      cacheControl: '3600',
-      upsert: false,
-    });
-
-  if (uploadError) {
-    throw new Error(`Supabase Storage upload échoué: ${uploadError.message}`);
-  }
-
-  const { data: urlData } = supabase.storage
-    .from(options.bucket)
-    .getPublicUrl(options.path);
-
-  return {
-    supabasePublicUrl: urlData.publicUrl,
-    storagePath: uploadData.path,
-  };
 }

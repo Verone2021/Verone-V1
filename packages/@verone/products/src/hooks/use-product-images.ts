@@ -156,7 +156,7 @@ export function useProductImages({
           .from('product_images')
           .insert([imageData])
           .select(
-            'id, product_id, public_url, cloudflare_image_id, storage_path, display_order, alt_text, is_primary, image_type, file_size, format, width, height, created_by, created_at, updated_at'
+            'id, product_id, public_url, cloudflare_image_id, storage_path, display_order, alt_text, is_primary, image_type, file_size, format, width, height, created_by, created_at, updated_at, legacy_supabase_url, migrated_to_cloudflare_at'
           )
           .single();
 
