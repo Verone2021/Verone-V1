@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useProductImages } from '@verone/products';
 import { checkSLOCompliance } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
@@ -28,20 +29,216 @@ import type {
   ChannelPricingRow,
 } from '../types';
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Fetcher extraite du hook — stable, pas de closure sur des refs
+async function fetchProductById(
+  productId: string,
+  supabase: ReturnType<typeof createClient>
+): Promise<Product> {
+  const startTime = Date.now();
+  const { data, error: fetchError } = await supabase
+    .from('products')
+    .select(
+      `
+      id, name, sku, slug, description, description_long, description_short,
+      technical_description, internal_notes, meta_title, meta_description,
+      selling_points, variant_attributes, dimensions,
+      cost_price, cost_net_avg, margin_percentage, eco_tax_default,
+      stock_real, stock_forecasted_out, stock_quantity, min_stock, stock_status,
+      weight, condition, manufacturer, gtin, brand_ids,
+      product_status, product_type, article_type, availability_type,
+      is_published_online, has_images,
+      subcategory_id, supplier_id, variant_group_id, enseigne_id, assigned_client_id,
+      created_by_affiliate, consultation_id,
+      supplier_moq, supplier_reference, supplier_page_url,
+      style, suitable_rooms, video_url, tags,
+      created_at, updated_at, archived_at,
+      affiliate_approval_status, affiliate_approved_at, affiliate_approved_by,
+      affiliate_commission_rate, affiliate_payout_ht, affiliate_rejection_reason,
+      rejection_reason, publication_date, unpublication_date,
+      show_on_linkme_globe, store_at_verone, requires_sample,
+      enseigne:enseignes!products_enseigne_id_fkey(
+        id,
+        name
+      ),
+      assigned_client:organisations!products_assigned_client_id_fkey(
+        id,
+        legal_name,
+        trade_name
+      ),
+      supplier:organisations!supplier_id(
+        id,
+        legal_name,
+        trade_name,
+        website,
+        is_active,
+        type
+      ),
+      subcategory:subcategories(
+        id,
+        name,
+        slug,
+        category:categories(
+          id,
+          name,
+          slug,
+          family:families(
+            id,
+            name,
+            slug
+          )
+        )
+      ),
+      variant_group:variant_groups(
+        id,
+        name,
+        dimensions_length,
+        dimensions_width,
+        dimensions_height,
+        dimensions_unit,
+        common_weight,
+        has_common_weight,
+        common_cost_price,
+        has_common_cost_price,
+        style,
+        suitable_rooms,
+        has_common_supplier,
+        supplier_id
+      ),
+      affiliate_creator:linkme_affiliates!products_created_by_affiliate_fkey(
+        id,
+        display_name,
+        enseigne:enseignes(id, name),
+        organisation:organisations!linkme_affiliates_organisation_id_fkey(id, legal_name, trade_name)
+      )
+    `
+    )
+    .eq('id', productId)
+    .single();
+
+  checkSLOCompliance(startTime, 'dashboard');
+
+  if (fetchError) throw new Error(fetchError.message);
+  if (!data) throw new Error('Produit non trouvé');
+
+  return data as Product;
+}
+
 export function useProductDetail() {
   const params = useParams();
   const router = useRouter();
   const productId = params.productId as string;
 
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true); // Chargement initial uniquement
-  const [isRefreshing, setIsRefreshing] = useState(false); // Refresh post-mutation (silencieux)
-  const [error, setError] = useState<string | null>(null);
+  // Client Supabase stable pour tout le hook
+  const supabase = useMemo(() => createClient(), []);
+  const queryClient = useQueryClient();
+
+  // --- État UI (inchangé) ---
   const [activeTab, setActiveTab] = useState('general');
   const [showPhotosModal, setShowPhotosModal] = useState(false);
   const [showDescriptionsModal, setShowDescriptionsModal] = useState(false);
   const [isCategorizeModalOpen, setIsCategorizeModalOpen] = useState(false);
   const [channelPricing, setChannelPricing] = useState<ChannelPricingRow[]>([]);
+
+  // Validation UUID avant fetch
+  const isValidId = Boolean(productId && UUID_REGEX.test(productId));
+
+  // --- useQuery pour le produit ---
+  const {
+    data: product = null,
+    isLoading: loading,
+    isRefetching: isRefreshing,
+    error: queryError,
+  } = useQuery({
+    queryKey: ['product', productId],
+    queryFn: () => fetchProductById(productId, supabase),
+    enabled: isValidId,
+    staleTime: 30_000,
+  });
+
+  const error = queryError
+    ? queryError instanceof Error
+      ? queryError.message
+      : 'Erreur lors du chargement du produit'
+    : null;
+
+  // Redirect si ID invalide
+  useEffect(() => {
+    if (productId && !isValidId) {
+      router.push('/produits/catalogue');
+    }
+  }, [productId, isValidId, router]);
+
+  // --- useMutation pour les updates produit ---
+  const updateMutation = useMutation({
+    mutationFn: async (updatedData: Partial<ProductRow>) => {
+      const updatePayload: ProductUpdate = updatedData;
+      const { error: updateError } = await supabase
+        .from('products')
+        .update(updatePayload)
+        .eq('id', productId);
+      if (updateError) throw new Error(updateError.message);
+      return updatedData;
+    },
+    onMutate: async (updatedData: Partial<ProductRow>) => {
+      // Optimistic update : modifier le cache immédiatement (0 clignotement)
+      await queryClient.cancelQueries({ queryKey: ['product', productId] });
+      const previousProduct = queryClient.getQueryData<Product>([
+        'product',
+        productId,
+      ]);
+      queryClient.setQueryData<Product>(['product', productId], old =>
+        old ? ({ ...old, ...updatedData } as Product) : old
+      );
+      return { previousProduct };
+    },
+    onError: (_err, _vars, context) => {
+      // Rollback optimistic update en cas d'erreur
+      if (context?.previousProduct) {
+        queryClient.setQueryData(
+          ['product', productId],
+          context.previousProduct
+        );
+      }
+      console.error(
+        '[ProductDetail] Update failed, rolled back optimistic update'
+      );
+    },
+    onSuccess: async (_data, updatedData) => {
+      console.warn(
+        '[ProductDetail] Produit sauvegardé en DB:',
+        Object.keys(updatedData)
+      );
+      // Pour les champs relationnels (FK), refetch silencieux pour récupérer les objets joints
+      if (
+        'subcategory_id' in updatedData ||
+        'supplier_id' in updatedData ||
+        'enseigne_id' in updatedData ||
+        'assigned_client_id' in updatedData
+      ) {
+        await queryClient.invalidateQueries({
+          queryKey: ['product', productId],
+        });
+      }
+    },
+  });
+
+  const handleProductUpdate = useCallback(
+    async (updatedData: Partial<ProductRow>) => {
+      await updateMutation.mutateAsync(updatedData);
+    },
+    [updateMutation]
+  );
+
+  // Compat : fetchProduct exposé pour les consumers qui l'appellent directement
+  const fetchProduct = useCallback(
+    async (_options?: { silent?: boolean }) => {
+      await queryClient.invalidateQueries({ queryKey: ['product', productId] });
+    },
+    [queryClient, productId]
+  );
 
   const {
     images: productImages,
@@ -52,182 +249,11 @@ export function useProductDetail() {
     autoFetch: true,
   });
 
-  const fetchProduct = useCallback(
-    async (options?: { silent?: boolean }) => {
-      const startTime = Date.now();
-      const isSilent = options?.silent ?? false;
-      try {
-        if (isSilent) {
-          setIsRefreshing(true);
-        } else {
-          setLoading(true);
-        }
-        setError(null);
-
-        const uuidRegex =
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        if (!productId || !uuidRegex.test(productId)) {
-          router.push('/produits/catalogue');
-          return;
-        }
-
-        const supabase = createClient();
-
-        const { data, error: fetchError } = await supabase
-          .from('products')
-          .select(
-            `
-          *,
-          enseigne:enseignes!products_enseigne_id_fkey(
-            id,
-            name
-          ),
-          assigned_client:organisations!products_assigned_client_id_fkey(
-            id,
-            legal_name,
-            trade_name
-          ),
-          supplier:organisations!supplier_id(
-            id,
-            legal_name,
-            trade_name,
-            website,
-            is_active,
-            type
-          ),
-          subcategory:subcategories(
-            id,
-            name,
-            slug,
-            category:categories(
-              id,
-              name,
-              slug,
-              family:families(
-                id,
-                name,
-                slug
-              )
-            )
-          ),
-          variant_group:variant_groups(
-            id,
-            name,
-            dimensions_length,
-            dimensions_width,
-            dimensions_height,
-            dimensions_unit,
-            common_weight,
-            has_common_weight,
-            common_cost_price,
-            has_common_cost_price,
-            style,
-            suitable_rooms,
-            has_common_supplier,
-            supplier_id
-          ),
-          affiliate_creator:linkme_affiliates!products_created_by_affiliate_fkey(
-            id,
-            display_name,
-            enseigne:enseignes(id, name),
-            organisation:organisations!linkme_affiliates_organisation_id_fkey(id, legal_name, trade_name)
-          )
-        `
-          )
-          .eq('id', productId)
-          .single();
-
-        if (fetchError) {
-          throw new Error(fetchError.message);
-        }
-
-        if (!data) {
-          throw new Error('Produit non trouvé');
-        }
-
-        setProduct(data as Product);
-      } catch (err) {
-        console.error('Erreur lors du chargement du produit:', err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Erreur lors du chargement du produit'
-        );
-      } finally {
-        setLoading(false);
-        setIsRefreshing(false);
-        checkSLOCompliance(startTime, 'dashboard');
-      }
-    },
-    [productId, router]
-  );
-
-  const handleProductUpdate = useCallback(
-    async (updatedData: Partial<ProductRow>) => {
-      setProduct(prev => (prev ? { ...prev, ...updatedData } : null));
-
-      try {
-        const supabase = createClient();
-        const updatePayload: ProductUpdate = updatedData;
-        const { error: updateError } = await supabase
-          .from('products')
-          .update(updatePayload)
-          .eq('id', productId);
-
-        if (updateError) {
-          console.error('Erreur sauvegarde produit:', updateError);
-          void fetchProduct({ silent: true }).catch(fetchError => {
-            console.error('[ProductDetail] Rollback fetch failed:', fetchError);
-          });
-        } else {
-          console.warn(
-            '[ProductDetail] Produit sauvegardé en DB:',
-            Object.keys(updatedData)
-          );
-          if (
-            'subcategory_id' in updatedData ||
-            'supplier_id' in updatedData ||
-            'enseigne_id' in updatedData ||
-            'assigned_client_id' in updatedData
-          ) {
-            void fetchProduct({ silent: true }).catch(fetchError => {
-              console.error(
-                '[ProductDetail] Fetch after update failed:',
-                fetchError
-              );
-            });
-          }
-        }
-      } catch (err) {
-        console.error('Erreur sauvegarde produit:', err);
-        void fetchProduct({ silent: true }).catch(fetchError => {
-          console.error('[ProductDetail] Rollback fetch failed:', fetchError);
-        });
-      }
-    },
-    [productId, fetchProduct]
-  );
-
-  const handleShare = useCallback(() => {
-    if (product?.slug) {
-      router.push(`/share/product/${product.slug}`);
-    }
-  }, [product?.slug, router]);
-
+  // --- Channel pricing (useEffect stable — pas de fonction instable dans les deps) ---
   useEffect(() => {
-    void fetchProduct().catch(err => {
-      console.error('[ProductDetail] Initial fetch failed:', err);
-    });
-  }, [fetchProduct]);
-
-  useEffect(() => {
-    if (!productId) return;
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(productId)) return;
+    if (!isValidId) return;
 
     const fetchChannelPricing = async () => {
-      const supabase = createClient();
       const { data: channels } = await supabase
         .from('sales_channels')
         .select('id, name, code')
@@ -264,8 +290,15 @@ export function useProductDetail() {
     void fetchChannelPricing().catch(err => {
       console.error('[ProductDetail] Channel pricing fetch failed:', err);
     });
-  }, [productId]);
+  }, [productId, isValidId, supabase]);
 
+  const handleShare = useCallback(() => {
+    if (product?.slug) {
+      router.push(`/share/product/${product.slug}`);
+    }
+  }, [product?.slug, router]);
+
+  // --- Computed values (identiques à avant) ---
   const breadcrumbParts = useMemo(() => {
     if (!product) return [];
     const parts: string[] = [];
