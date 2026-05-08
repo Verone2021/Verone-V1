@@ -2,7 +2,7 @@
 
 import { BrandChip } from '@verone/products/components/badges';
 
-import { useActiveBrand } from '@/hooks/use-active-brand';
+import { useBrands } from '@/hooks/use-brands';
 
 interface ProductBrandChipsProps {
   brandIds: string[] | undefined | null;
@@ -12,23 +12,13 @@ interface ProductBrandChipsProps {
   className?: string;
 }
 
-/**
- * Affiche les marques internes Vérone Group d'un produit sous forme de chips colorées.
- * Utilise `useActiveBrand` pour récupérer la liste des brands (cache 5 min partagé
- * avec le BrandSwitcher header — pas de fetch supplémentaire).
- *
- * Cas spéciaux :
- * - brandIds vide / undefined : rien affiché (produit white-label)
- * - collapsed + 1 brand : affiche la chip
- * - collapsed + N brands (>1) : affiche la 1ère + tooltip "+N autres"
- */
 export function ProductBrandChips({
   brandIds,
   size = 'xs',
   collapsed = false,
   className,
 }: ProductBrandChipsProps) {
-  const { brands } = useActiveBrand();
+  const { brands } = useBrands();
 
   if (!brandIds || brandIds.length === 0) return null;
 
