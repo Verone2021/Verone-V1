@@ -1,8 +1,11 @@
 #!/bin/sh
-# PRE-PUSH SIMPLIFIÉ 2026
-# Objectif : Push rapide, CI/CD valide
+# PRE-PUSH GUARD — INFRA-CI-GUARD-001 (2026-05-08)
+#
+# Règle : aucun push ne quitte cette machine sans avoir passé type-check + lint
+# sur les apps touchées. Évite ~7 min de CI par fail détectable localement.
+#
+# Logique partagée avec .claude/settings.json PreToolUse(git push) :
+# voir .claude/hooks/validate-affected-apps.sh
 
-echo "🚀 Pre-push (simplifié 2026)..."
-echo "ℹ️  Validation complète (ESLint + Type-check + Build + Tests) dans GitHub Actions CI/CD"
-echo "ℹ️  Résultats en ~3-5 minutes sur la PR"
-echo "✅ Push autorisé - CI/CD prend le relais"
+REPO_ROOT=$(git rev-parse --show-toplevel)
+exec "$REPO_ROOT/.claude/hooks/validate-affected-apps.sh"

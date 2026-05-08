@@ -93,8 +93,8 @@ export function useSalesOrderSubmit({
   selectedCustomer,
   orderDate,
   expectedDeliveryDate,
-  shippingAddress,
-  billingAddress,
+  shippingAddress: _shippingAddress,
+  billingAddress: _billingAddress,
   paymentTermsType,
   paymentTermsNotes,
   channelId,
@@ -263,12 +263,14 @@ export function useSalesOrderSubmit({
         const updateData = {
           order_date: orderDate,
           expected_delivery_date: expectedDeliveryDate ?? undefined,
-          shipping_address: shippingAddress
-            ? { address: shippingAddress }
-            : undefined,
-          billing_address: billingAddress
-            ? { address: billingAddress }
-            : undefined,
+          // [BO-FIN-FEES-002] Ne plus stocker { address: "string libre" } qui
+          // est inexploitable côté Qonto. Le code Qonto fait maintenant un
+          // fallback sur les colonnes billing_*/shipping_* de l'organisation
+          // customer (defense in depth dans resolve-qonto-client.ts +
+          // route.helpers.ts). Le textarea du wizard reste affiché pour
+          // info utilisateur mais n'est pas re-persisté en JSONB.
+          shipping_address: undefined,
+          billing_address: undefined,
           payment_terms_type: paymentTermsType ?? undefined,
           payment_terms_notes: paymentTermsNotes ?? undefined,
           channel_id: channelId ?? undefined,
@@ -289,12 +291,9 @@ export function useSalesOrderSubmit({
               : 'individual',
           order_date: orderDate,
           expected_delivery_date: expectedDeliveryDate ?? undefined,
-          shipping_address: shippingAddress
-            ? { address: shippingAddress }
-            : undefined,
-          billing_address: billingAddress
-            ? { address: billingAddress }
-            : undefined,
+          // [BO-FIN-FEES-002] cf. update branch ci-dessus.
+          shipping_address: undefined,
+          billing_address: undefined,
           payment_terms_type: paymentTermsType ?? undefined,
           payment_terms_notes: paymentTermsNotes ?? undefined,
           channel_id: channelId ?? undefined,

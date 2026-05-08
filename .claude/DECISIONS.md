@@ -1087,3 +1087,34 @@ Autres FEU ROUGE de l'ancien fichier confirmés déjà couverts ailleurs (pas be
 - Hightower mars 2026 : "Use CLAUDE.md for what applies everywhere, rules for what applies to specific areas, keep it lean."
 
 **Référence** : session 2026-05-02 avec Roméo, enchaînement Niveau 1 + Niveau 2 dans la même journée.
+
+---
+
+## ADR-028 — Zéro merge intermédiaire sur chantier multi-phases (2026-05-07)
+
+**Contexte** : pendant la session 2026-05-07 (chantier perf back-office en plusieurs vagues + chantier RLS en plusieurs phases), le coordinateur a tenté de merger entre chaque vague/phase pour valider progressivement. Roméo a signalé que ces merges intermédiaires faisaient perdre énormément de temps : chaque merge déclenche CI complète + déploiement Vercel + déploiement Supabase, soit 5 à 15 minutes d'attente bloquante par cycle. Multiplié par N phases d'un même chantier, le rythme devient celui d'un escargot. Verbatim Roméo : « Je ne veux plus merge systématiquement. Ça fait perdre beaucoup de temps. On avance comme des escargots. Les développeurs seniors ne marchent pas tous les 5 minutes. »
+
+**Décision** : sur un chantier multi-phases, **UNE SEULE PR mergée à la toute fin**. Pendant le chantier, uniquement commits + push. Aucun `gh pr merge`, aucun `--auto`. La règle « CI verte = merge auto » (mémoire utilisateur `ci_green_auto_merge`) est suspendue pour les phases intermédiaires : seule la fin du chantier complet + GO Roméo explicite déclenche le merge.
+
+**Conséquence** : `.claude/rules/workflow.md` enrichi d'une section « RÈGLE ABSOLUE — ZÉRO MERGE INTERMÉDIAIRE » (sous `### Merge`), checklist « Quand MERGER une PR » étendue d'un critère « Le chantier complet est terminé », 2 anti-patterns explicites ajoutés (merger une phase intermédiaire, `gh pr merge --auto` en cours de chantier). La règle s'applique à TOUS les agents (coordinateur, dev-agent, ops-agent, reviewer-agent, perf-optimizer). Mémoire utilisateur `feedback_no_intermediate_merges.md` créée pour rappel persistant. Hotfix critique en prod reste exception (Roméo décide au cas par cas).
+
+**Référence** : session 2026-05-07. PR #941 (perf vague 1) déjà mergée AVANT la règle — ne sera pas inversée car déjà déployée. PR #942 (RLS phase 1) sera maintenue ouverte et étendue avec les phases 2 et 3 sur la même branche jusqu'à la fin du chantier RLS.
+
+---
+
+## ADR-029 — Règle JSONB : CHECK constraint obligatoire (2026-05-07)
+
+**Contexte** : 2026-05-07. Roméo signale des proformas avec totaux aberrants. Investigation : 17 commandes (depuis le 19 mars 2026) avaient `billing_address` stocké comme STRING JSON encodée au lieu d'OBJECT JSON. PostgreSQL JSONB accepte n'importe quel type (string, array, object, scalar) sans avertissement, et TypeScript le type comme `Json` qui accepte aussi tout. Conséquence : le wizard SalesOrderForm a inséré `JSON.stringify(addr)` au lieu d'`addr` pendant 6 semaines sans qu'aucun garde-fou (TS, CI, types Supabase) ne détecte la divergence. Le bug est devenu visible quand le code Qonto a tenté de lire `billing_address.city` et trouvé `undefined`.
+
+**Décision** : règle absolue ajoutée dans `.claude/rules/database.md` section R-JSONB : toute colonne JSONB qui doit stocker un objet structuré DOIT être assortie d'une CHECK constraint `jsonb_typeof = 'object'`. Sans cette contrainte, le bug n'est détectable qu'à la lecture, donc invisible plusieurs semaines/mois. Avec, l'INSERT est rejeté à la source en dev.
+
+**Conséquence** :
+
+- Migration `20260507170000_bo_fin_fees_002_jsonb_address_constraints.sql` : 7 CHECK constraints ajoutées (`sales_orders.billing_address/shipping_address`, `financial_documents.billing_address/shipping_address`, `affiliate_pending_orders.billing_address/shipping_address`, `purchase_orders.delivery_address`).
+- Migration de correction des données préalable : 17 strings reparsées en objects via `(col #>> '{}')::jsonb`.
+- `.claude/rules/database.md` : section R-JSONB obligatoire à respecter pour toute future colonne JSONB.
+- Code resolve-qonto-client.ts + route.helpers.ts : ajout d'un parser tolérant en defense in depth (BO-FIN-FEES-002).
+- Wizard SalesOrderFormModal : suppression de l'INSERT `{ address: "string libre" }` — fallback sur les colonnes `billing_*` de l'organisation customer.
+- `PROTECTED_FILES.json` v3.1.0 : ajout du chemin `apps/back-office/src/app/api/qonto/**` aux fichiers interdits de modification sans owner.
+
+**Référence** : incident 2026-05-07. Roméo verbatim : « les développeurs senior comment font pour que Claude ne fasse pas d'erreur de typage ? C'est le b.a.-ba du coding ». Réponse documentée : avec des CHECK constraints DB, parce que TypeScript ne peut pas attraper ce genre d'erreur sur les types JSONB permissifs.

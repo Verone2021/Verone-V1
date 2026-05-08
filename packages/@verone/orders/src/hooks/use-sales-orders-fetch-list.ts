@@ -5,7 +5,7 @@
  * Extracted from use-sales-orders-fetch.ts for max-lines compliance
  */
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -53,6 +53,7 @@ export function useFetchOrdersList({
           responsable_contact_id, billing_contact_id, delivery_contact_id,
           shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate,
           quote_qonto_id, quote_number,
+          updated_at,
           sales_channel:sales_channels!left(id, name, code),
           billing_contact:contacts!sales_orders_billing_contact_id_fkey(id, first_name, last_name, email, phone),
           delivery_contact:contacts!sales_orders_delivery_contact_id_fkey(id, first_name, last_name, email, phone),
@@ -64,8 +65,7 @@ export function useFetchOrdersList({
             id, product_id, quantity, unit_price_ht, total_ht, tax_rate,
             products (
               id, name, sku, stock_quantity, stock_real,
-              stock_forecasted_in, stock_forecasted_out,
-              product_images!left (public_url, is_primary)
+              stock_forecasted_in, stock_forecasted_out
             )
           )
         `
@@ -112,6 +112,7 @@ export function useFetchOrdersList({
           delivery_contact_id: string | null;
           quote_qonto_id: string | null;
           quote_number: string | null;
+          updated_at: string | null;
           sales_channel: { id: string; name: string; code: string } | null;
           billing_contact: {
             id: string;
@@ -159,10 +160,6 @@ export function useFetchOrdersList({
               stock_real: number | null;
               stock_forecasted_in: number | null;
               stock_forecasted_out: number | null;
-              product_images: Array<{
-                public_url: string | null;
-                is_primary: boolean | null;
-              }> | null;
             } | null;
           }> | null;
         };
@@ -203,6 +200,40 @@ export function useFetchOrdersList({
           { id: string; qontoId: string | null; number: string; status: string }
         >();
         const quoteMap = new Map<string, { qontoId: string; number: string }>();
+        // [BO-RLS-PERF-002 — révision 2026-05-07] Désynchronisation détectée si:
+        //   A) Devis Qonto lié sans trace locale active (orphelin Qonto) → resync
+        //   B) Trace locale brouillon avec écart total > 0,01 € vs commande
+        // Local DOIT être miroir de Qonto. Sans trace locale = à régénérer.
+        const desyncOrderIds = new Set<string>();
+        // Détail par type + écart de montant TTC (pour libellé descriptif UI)
+        const desyncTypesMap = new Map<
+          string,
+          {
+            quote: boolean;
+            proforma: boolean;
+            quoteDocTotal: number | null;
+            proformaDocTotal: number | null;
+          }
+        >();
+        const markDesync = (
+          orderId: string,
+          type: 'quote' | 'proforma',
+          docTotal: number | null = null
+        ): void => {
+          desyncOrderIds.add(orderId);
+          const cur = desyncTypesMap.get(orderId) ?? {
+            quote: false,
+            proforma: false,
+            quoteDocTotal: null,
+            proformaDocTotal: null,
+          };
+          cur[type] = true;
+          if (type === 'quote' && docTotal !== null)
+            cur.quoteDocTotal = docTotal;
+          if (type === 'proforma' && docTotal !== null)
+            cur.proformaDocTotal = docTotal;
+          desyncTypesMap.set(orderId, cur);
+        };
         const creatorsMap = new Map<
           string,
           { first_name: string; last_name: string; email: string | null }
@@ -259,10 +290,10 @@ export function useFetchOrdersList({
               supabase
                 .from('financial_documents')
                 .select(
-                  'id, sales_order_id, document_number, qonto_invoice_id, status'
+                  'id, sales_order_id, document_number, qonto_invoice_id, status, created_at, document_type, total_ttc, quote_status'
                 )
                 .in('sales_order_id', orderIds)
-                .eq('document_type', 'customer_invoice')
+                .in('document_type', ['customer_invoice', 'customer_quote'])
                 .is('deleted_at', null)
             )
               .then(
@@ -273,6 +304,10 @@ export function useFetchOrdersList({
                     document_number: string;
                     qonto_invoice_id: string | null;
                     status: string;
+                    created_at: string | null;
+                    document_type: string;
+                    total_ttc: number | null;
+                    quote_status: string | null;
                   }> | null
               )
               .catch(() => null),
@@ -359,15 +394,51 @@ export function useFetchOrdersList({
               });
             }
           }
+          // Map order_id → total_ttc commande pour comparaison rapide
+          const orderTotalTtcMap = new Map<string, number>();
+          for (const o of typedOrdersData) {
+            if (o.total_ttc !== null && o.total_ttc !== undefined) {
+              orderTotalTtcMap.set(o.id, Number(o.total_ttc));
+            }
+          }
           for (const inv of invoicesData ?? []) {
-            if (inv.sales_order_id)
+            if (!inv.sales_order_id) continue;
+            // Stocker uniquement les factures (pas les devis) dans invoiceMap
+            if (inv.document_type === 'customer_invoice') {
               invoiceMap.set(inv.sales_order_id, {
                 id: inv.id,
                 qontoId: inv.qonto_invoice_id,
                 number: inv.document_number,
                 status: inv.status,
               });
+            }
+            // Critère B: trace locale brouillon active avec écart > 1 cent
+            if (
+              inv.status === 'draft' &&
+              inv.quote_status !== 'superseded' &&
+              inv.total_ttc !== null
+            ) {
+              const orderTotal = orderTotalTtcMap.get(inv.sales_order_id);
+              if (
+                orderTotal !== undefined &&
+                Math.abs(Number(inv.total_ttc) - orderTotal) > 0.01
+              ) {
+                markDesync(
+                  inv.sales_order_id,
+                  inv.document_type === 'customer_quote' ? 'quote' : 'proforma',
+                  Number(inv.total_ttc)
+                );
+              }
+            }
           }
+          // [BO-RLS-PERF-002 — révision 2026-05-07] Critère A "orphelin Qonto"
+          // (sans trace locale = désync) RETIRÉ après feedback Roméo.
+          // Raison: trop agressif — un devis Qonto sans trace locale peut être
+          // parfaitement aligné avec la commande (cf. SO-2026-00167). Le badge
+          // signalait à tort des commandes correctes. Pour vraiment savoir si
+          // un orphelin Qonto est aligné, il faudrait appeler Qonto API à chaque
+          // chargement de liste (coûteux). On garde uniquement le critère B
+          // (écart de montant TTC > 1 cent sur trace locale brouillon active).
           for (const p of packlinkData ?? []) {
             if (p.sales_order_id) pendingPacklinkSet.add(p.sales_order_id);
           }
@@ -400,17 +471,15 @@ export function useFetchOrdersList({
               : null;
           }
 
+          // [BO-RLS-PERF-002] Images retirées de la query liste — les
+          // images ne sont affichées que dans le détail (modal qui a sa
+          // propre query fetchOrder). primary_image_url reste à null ici
+          // pour compatibilité de type.
           const enrichedItems = (order.sales_order_items ?? []).map(item => {
             const prod = item.products;
             return {
               ...item,
-              products: prod
-                ? {
-                    ...prod,
-                    primary_image_url:
-                      prod.product_images?.[0]?.public_url ?? null,
-                  }
-                : null,
+              products: prod ? { ...prod, primary_image_url: null } : null,
             };
           });
 
@@ -439,6 +508,13 @@ export function useFetchOrdersList({
             quote_qonto_id: quoteMap.get(order.id)?.qontoId ?? null,
             quote_number: quoteMap.get(order.id)?.number ?? null,
             has_pending_packlink: pendingPacklinkSet.has(order.id),
+            has_desync_draft: desyncOrderIds.has(order.id),
+            desync_quote: desyncTypesMap.get(order.id)?.quote ?? false,
+            desync_proforma: desyncTypesMap.get(order.id)?.proforma ?? false,
+            desync_quote_doc_total:
+              desyncTypesMap.get(order.id)?.quoteDocTotal ?? null,
+            desync_proforma_doc_total:
+              desyncTypesMap.get(order.id)?.proformaDocTotal ?? null,
             is_matched: !!matchInfo,
             matched_transaction_id: matchInfo?.transaction_id ?? null,
             matched_transaction_label: matchInfo?.label ?? null,
@@ -474,6 +550,24 @@ export function useFetchOrdersList({
     },
     [supabase, setLoading, setOrders, toastRef]
   );
+
+  // [BO-RLS-PERF-002] Refetch silencieux déclenché par CustomEvent.
+  // Permet aux composants enfants (OrderResyncButton) de refresh la liste
+  // sans recharger la page, sans propager fetchOrders à travers la hiérarchie.
+  const fetchOrdersRef = useRef(fetchOrders);
+  useEffect(() => {
+    fetchOrdersRef.current = fetchOrders;
+  }, [fetchOrders]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = (): void => {
+      void fetchOrdersRef.current();
+    };
+    window.addEventListener('verone:orders:refetch', handler);
+    return () => {
+      window.removeEventListener('verone:orders:refetch', handler);
+    };
+  }, []);
 
   return fetchOrders;
 }

@@ -25,12 +25,17 @@ interface DocumentOutOfSyncBadgeProps {
 }
 
 /**
- * Badge orange affiché uniquement quand :
+ * Badge ambre affiché uniquement quand :
  * - Le document est en statut 'draft'
  * - La commande a été modifiée APRES la création du document
  *
  * Indique que le document n'est plus synchronisé avec la commande.
  * Utilisé sur les listes /devis et /factures pour signaler les documents à régénérer.
+ *
+ * [BO-RLS-PERF-002 étape 4] Refonte visuelle pour meilleure visibilité :
+ * - Fond ambre plus marqué + bordure visible
+ * - Pulse subtil sur l'icône pour attirer l'œil sans saturer
+ * - Texte raccourci ("À regénérer") plus actionnable que "Non synchronisé"
  */
 export function DocumentOutOfSyncBadge({
   orderUpdatedAt,
@@ -45,13 +50,13 @@ export function DocumentOutOfSyncBadge({
     <Badge
       variant="outline"
       className={cn(
-        'bg-orange-50 text-orange-700 border-orange-200 gap-1',
+        'gap-1.5 border-amber-400 bg-amber-100 px-2 py-0.5 text-amber-900 font-medium shadow-sm',
         className
       )}
-      title="Commande modifiee apres la creation de ce document - Re-synchroniser recommande"
+      title="La commande source a été modifiée après la création de ce brouillon. Régénération recommandée pour synchroniser les montants."
     >
-      <AlertTriangle className="h-3 w-3" />
-      Non synchronise
+      <AlertTriangle className="h-3 w-3 animate-pulse text-amber-700" />À
+      régénérer
     </Badge>
   );
 }

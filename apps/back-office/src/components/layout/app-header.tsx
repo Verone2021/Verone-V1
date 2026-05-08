@@ -4,8 +4,13 @@ import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { NotificationsDropdown } from '@verone/notifications';
-import { Button, useSidebar } from '@verone/ui';
+import Link from 'next/link';
+
+import {
+  NotificationsDropdown,
+  useUnreadMailsCount,
+} from '@verone/notifications';
+import { Badge, Button, useSidebar } from '@verone/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +21,15 @@ import {
 import { cn } from '@verone/utils';
 import { getUserSafe } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
-import { User, LogOut, Settings, Users, Activity, Menu } from 'lucide-react';
+import {
+  User,
+  LogOut,
+  Settings,
+  Users,
+  Activity,
+  Menu,
+  Mail,
+} from 'lucide-react';
 
 import { BrandSwitcher } from '@/components/layout/brand-switcher';
 
@@ -73,6 +86,29 @@ function UserMenu({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+function MessagerieButton() {
+  const unreadCount = useUnreadMailsCount();
+  return (
+    <Link
+      href="/parametres/messagerie"
+      className="relative inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-gray-100 transition-colors"
+      aria-label={`Messagerie${unreadCount > 0 ? ` — ${unreadCount} non-lu${unreadCount > 1 ? 's' : ''}` : ''}`}
+      title="Messagerie"
+    >
+      <Mail className="h-5 w-5 text-gray-700" />
+      {unreadCount > 0 && (
+        <Badge
+          variant="destructive"
+          size="sm"
+          className="absolute -top-0.5 -right-0.5 h-4 min-w-[16px] px-1 text-[10px] leading-none flex items-center justify-center"
+        >
+          {unreadCount > 99 ? '99+' : unreadCount}
+        </Badge>
+      )}
+    </Link>
   );
 }
 
@@ -165,6 +201,9 @@ export function AppHeader({ className }: AppHeaderProps) {
             month: 'short',
           })}
         </div>
+
+        {/* Messagerie - icône enveloppe avec compteur mails non-lus (BO-MSG-018) */}
+        <MessagerieButton />
 
         {/* Notifications - Dropdown intelligent avec liste complète */}
         <NotificationsDropdown />

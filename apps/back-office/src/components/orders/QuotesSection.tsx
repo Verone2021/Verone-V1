@@ -164,6 +164,7 @@ export function QuotesSection({
                 <DocumentResyncAction
                   documentType="quote"
                   orderId={orderId}
+                  currentDocumentId={quote.id}
                   documentStatus={quote.status}
                   orderUpdatedAt={orderUpdatedAt}
                   documentCreatedAt={

@@ -1,20 +1,19 @@
 'use client';
 
 /**
- * MailsKpiBar — mini-dashboard 4 KPI au-dessus de la liste mails
- * (BO-MSG-015 phase 2). Compteurs calculés côté client depuis les emails
- * passés en props.
+ * MailsKpiBar — mini-dashboard 4 KPI au-dessus de la liste messagerie
+ * (BO-MSG-018). Compteurs calculés côté client sur la vue unifiée.
  */
 
 import { useMemo } from 'react';
 
 import { cn } from '@verone/utils';
-import { Inbox, Link2, Mail, Reply } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, Inbox, Link2 } from 'lucide-react';
 
-import type { EmailMessageEnriched } from './types';
+import type { Communication } from './types';
 
 interface MailsKpiBarProps {
-  emails: EmailMessageEnriched[];
+  communications: Communication[];
   /** Filtre actif sur la liste : permet d'afficher la KPI sélectionnée. */
   activeKpi?: 'unread' | 'replied_today' | 'linked_order' | null;
   onKpiClick?: (
@@ -23,7 +22,7 @@ interface MailsKpiBarProps {
 }
 
 export function MailsKpiBar({
-  emails,
+  communications,
   activeKpi = null,
   onKpiClick,
 }: MailsKpiBarProps): JSX.Element {
@@ -34,24 +33,26 @@ export function MailsKpiBar({
       now.getMonth(),
       now.getDate()
     );
+    let received = 0;
+    let sent = 0;
     let unread = 0;
-    let repliedToday = 0;
     let linkedOrder = 0;
-    for (const e of emails) {
-      if (!e.is_read) unread++;
-      if (e.replied_at) {
-        const r = new Date(e.replied_at);
+    let repliedToday = 0;
+    for (const c of communications) {
+      if (c.direction === 'received') {
+        received++;
+        if (!c.is_read) unread++;
+      } else {
+        sent++;
+      }
+      if (c.sales_order_id) linkedOrder++;
+      if (c.replied_at) {
+        const r = new Date(c.replied_at);
         if (r >= startOfToday) repliedToday++;
       }
-      if (e.linked_order_id) linkedOrder++;
     }
-    return {
-      total: emails.length,
-      unread,
-      repliedToday,
-      linkedOrder,
-    };
-  }, [emails]);
+    return { received, sent, unread, linkedOrder, repliedToday };
+  }, [communications]);
 
   type CardKey = 'unread' | 'replied_today' | 'linked_order' | null;
   const cards: Array<{
@@ -62,24 +63,24 @@ export function MailsKpiBar({
     tone: string;
   }> = [
     {
+      key: 'unread',
+      label: 'Mails non-lus',
+      value: stats.unread,
+      icon: ArrowDownLeft,
+      tone: 'bg-blue-50 text-blue-700',
+    },
+    {
       key: null,
-      label: 'Total reçus',
-      value: stats.total,
+      label: 'Reçus',
+      value: stats.received,
       icon: Inbox,
       tone: 'bg-gray-100 text-gray-700',
     },
     {
-      key: 'unread',
-      label: 'Non lus',
-      value: stats.unread,
-      icon: Mail,
-      tone: 'bg-blue-50 text-blue-700',
-    },
-    {
-      key: 'replied_today',
-      label: "Répondus aujourd'hui",
-      value: stats.repliedToday,
-      icon: Reply,
+      key: null,
+      label: 'Envoyés',
+      value: stats.sent,
+      icon: ArrowUpRight,
       tone: 'bg-green-50 text-green-700',
     },
     {
@@ -95,13 +96,17 @@ export function MailsKpiBar({
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {cards.map(card => {
         const Icon = card.icon;
-        const isActive = activeKpi === card.key;
-        const clickable = Boolean(onKpiClick);
+        const isActive = activeKpi === card.key && card.key !== null;
+        const clickable = Boolean(onKpiClick) && card.key !== null;
         return (
           <button
             key={card.label}
             type="button"
-            onClick={() => onKpiClick?.(isActive ? null : card.key)}
+            onClick={() => {
+              if (card.key !== null) {
+                onKpiClick?.(isActive ? null : card.key);
+              }
+            }}
             disabled={!clickable}
             className={cn(
               'rounded-lg border p-4 flex items-start gap-3 transition-all text-left',

@@ -182,6 +182,24 @@
             "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/validate-playwright-screenshot.sh"
           }
         ]
+      },
+      {
+        "matcher": "Bash(git push*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/validate-affected-apps.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit(*) || Write(*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/check-eslint-disable.sh"
+          }
+        ]
       }
     ],
     "PostToolUse": [
