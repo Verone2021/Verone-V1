@@ -186,6 +186,39 @@ les checks Install dependencies.
 
 ---
 
+## Reviewer audit — fixes appliqués (commit `3b2b253`)
+
+Le reviewer-agent a audité la PR (rapport
+`docs/scratchpad/review-report-2026-05-08-marketing-image-generation.md`)
+et identifié 2 CRITICAL + 2 WARNING. Tous fixés :
+
+**CRITICAL fix 1 — Route API > 400 lignes** :
+La route `route.ts` faisait 507 lignes (limite 400). Extrait 7 helpers
+(`resolveCloudflareEnv`, `fetchImageAsBase64`, `getBrandUuid`,
+`uploadToCloudflareWithCustomId`, `deleteFromCloudflare`, `shortHash`,
+`yyyymmdd`, `buildCustomId`, `buildFilenameFromCustomId`) dans
+`route-helpers.ts`. Route : 378 lignes. Helpers : 171 lignes.
+
+**CRITICAL fix 2 — Touch target invisible mobile** :
+Bouton croix de retrait d'image source dans `SourceImagesSection.tsx` était
+`h-6 w-6` avec `opacity-0 group-hover:opacity-100` — invisible sur mobile
+(pas de hover). Maintenant : `h-8 w-8` visible sur mobile (touch),
+`md:h-6 md:w-6 md:opacity-0 md:group-hover:opacity-100` sur desktop.
+
+**WARNING fix 1 — Gemini API key dans URL** :
+`client.ts` passait la clé via `?key=...` query param. Risque de fuite dans
+les logs Sentry/Datadog en cas d'erreur réseau. Maintenant : passé via
+header `x-goog-api-key` (recommandation Google).
+
+**WARNING fix 2 — text-xs sans qualification** :
+Textarea du prompt + helper text étaient `text-xs` sans breakpoint.
+Maintenant : `text-sm md:text-xs` pour lisibilité mobile.
+
+L'INFO sur le singleton `GeminiClient` non invalidable est notée pour
+Phase 2 (rotation de clé sans redéploiement).
+
+---
+
 ## Hors scope (Phase 2+)
 
 - Édition templates de prompts depuis l'UI (admin)
