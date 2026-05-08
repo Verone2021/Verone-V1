@@ -49,6 +49,20 @@ export const BRANDS: Brand[] = [
       'cottagecore, slow living, autumn cozy, candlelit, dried botanicals, natural materials, hygge',
     avoid: 'tons saturés froids, ambiances industrielles ou tech, plastique',
   },
+  {
+    slug: 'linkme',
+    name: 'LinkMe',
+    description:
+      'Plateforme B2B SaaS de distribution — mood Stripe / Linear / Vercel',
+    visualIdentity:
+      'tech professionnel B2B SaaS, glassmorphism subtil, gradient marine-turquoise, clean dashboard look',
+    palette:
+      "marine profond #183559, turquoise lagon #5DBEBB, bleu accent #3976BB, blanc clean, gris perle, JAMAIS d'or (réservé Vérone)",
+    keywords:
+      'B2B SaaS dashboard, Stripe Atlas style, Linear app, Vercel marketing, modern fintech, professional, confident, warm',
+    avoid:
+      'or, doré, jaune (réservé Vérone), tons pastel, ambiances bohèmes, glassmorphism agressif, bounce animations, emoji',
+  },
 ];
 
 export const getBrand = (slug: string): Brand | undefined =>

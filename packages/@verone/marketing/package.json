@@ -12,9 +12,12 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
+    "@tanstack/react-query": "^5.20.1",
     "@verone/products": "workspace:*",
     "@verone/ui": "workspace:*",
-    "@verone/utils": "workspace:*"
+    "@verone/utils": "workspace:*",
+    "sonner": "^1.7.0",
+    "zod": "^4.1.12"
   },
   "peerDependencies": {
     "react": "^18.2.0",
@@ -35,6 +38,21 @@
       "types": "./src/data/index.ts",
       "import": "./src/data/index.ts",
       "require": "./src/data/index.ts"
+    },
+    "./lib": {
+      "types": "./src/lib/index.ts",
+      "import": "./src/lib/index.ts",
+      "require": "./src/lib/index.ts"
+    },
+    "./types": {
+      "types": "./src/types.ts",
+      "import": "./src/types.ts",
+      "require": "./src/types.ts"
+    },
+    "./hooks": {
+      "types": "./src/hooks/index.ts",
+      "import": "./src/hooks/index.ts",
+      "require": "./src/hooks/index.ts"
     }
   }
 }
