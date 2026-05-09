@@ -253,21 +253,62 @@ Tous ces critères doivent être remplis :
 
 Un seul critère manquant : pas de PR, continuer commits/push.
 
-## Quand MERGER une PR
+## Quand MERGER une PR — AUTO-MERGE PAR DÉFAUT (ADR-032 — 2026-05-09)
 
-- [ ] **Le chantier complet est terminé** (toutes les phases, pas qu'une seule)
-- [ ] CI verte (type-check + build + tests + drift DB)
-- [ ] Reviewer-agent PASS
+**Pratique senior standard** (Google, Meta, GitHub, Vercel) : la PR est
+créée AVEC auto-merge activé. La CI = sanity check, pas une décision.
+Si la CI passe verte → merge automatique. Si elle échoue → on corrige.
+Pas de validation humaine post-CI.
+
+### Procédure obligatoire à la création de PR
+
+Dès `gh pr create` réussi, l'agent enchaîne **immédiatement** :
+
+```bash
+gh pr merge <num> --auto --squash --delete-branch
+```
+
+Cette commande dit à GitHub : « fusionne dès que tous les checks
+required passent verts ». Roméo ne touche à rien. Pas de retour pour
+demander « merge ? ».
+
+### Critères pour activer auto-merge
+
+Tous ces critères doivent être remplis **AVANT** d'activer auto-merge :
+
+- [ ] Bloc fonctionnellement complet (pas mi-fini)
+- [ ] Pas de régression sur les pages déjà migrées (vérifié localement)
+- [ ] Reviewer-agent PASS dans `docs/scratchpad/review-report-*.md` si
+      applicable au type de chantier
 - [ ] Aucun CRITICAL dans le review report
-- [ ] Romeo a validé explicitement le merge final
+- [ ] Bloc regroupe 3+ sous-tâches OU bloc atomique critique
 
-Merger en `--squash --delete-branch`. **UNE SEULE FOIS PAR CHANTIER.**
+Une fois activé : auto-merge **fusionnera tout seul** dès la CI verte.
+Pas de validation Roméo intermédiaire. Pas de « j'attends et je
+décide ».
 
-Le mergé automatique sur "CI verte = merge auto" (ancienne mémoire
-`ci_green_auto_merge`) est **suspendu** : la CI verte d'une phase
-intermédiaire ne déclenche PAS de merge. Seule la fin du chantier complet
+### Cas où l'agent NE active PAS auto-merge
 
-- GO Roméo déclenche le merge.
+- Hotfix critique production : Roméo doit voir la PR avant merge pour
+  arbitrer.
+- Modification base de données (migration, RLS, triggers) : un humain
+  doit valider l'impact métier.
+- Action irréversible (suppression colonne, drop table) : Roméo
+  arbitre.
+- Trade financier réel ou changement de logique facturation/paiement.
+
+Pour TOUS LES AUTRES CAS (refactor, feature, fix UX, doc, infra,
+nettoyage `.claude/`) : auto-merge activé immédiatement.
+
+### Squash et delete branch
+
+Toujours `--squash --delete-branch`. Un commit propre par PR sur
+staging, branche distante supprimée à la fusion.
+
+### Chantier multi-phases
+
+Voir section « ZÉRO PUSH ENTRE SOUS-TÂCHES » : 1 PR par chantier complet,
+auto-merge activé une fois la dernière phase poussée.
 
 ---
 

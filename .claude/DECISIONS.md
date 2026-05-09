@@ -1192,3 +1192,26 @@ Autres FEU ROUGE de l'ancien fichier confirmés déjà couverts ailleurs (pas be
 - Compaction règles à 8-10 fichiers (vs 13 actuel) : nécessite analyses de fusion (data-fetching ↔ code-standards, communication-style ↔ CLAUDE.md). À faire dans une PR de cleanup ciblée.
 
 **Référence** : `docs/scratchpad/audit-2026-05-09-experience-dev.md` (rapport exhaustif des 3 vagues).
+
+---
+
+## ADR-032 — `[BO-INFRA-DX-002]` Auto-merge par défaut sur toute PR (2026-05-09)
+
+**Contexte** : juste après le merge de la PR #968 (ADR-031 simplification expérience de développement), Roméo a craqué sur la friction restante : il a dû attendre que je lui demande « merge ? » alors que la CI était déjà verte. Verbatim : « Lorsqu'on fait une CI, ça veut dire qu'on va merge, sinon on ne fait pas de CI. C'est quoi les meilleures pratiques des développeurs seniors ? Je voudrais savoir. ». La règle ancienne `workflow.md` section « Quand MERGER une PR » exigeait « Romeo a validé explicitement le merge final ». La mémoire `feedback_no_auto_merge_staging.md` (2026-05-06) renforçait : « JAMAIS gh pr merge sans que Roméo ait dit explicitement merge ». Cumulé : Roméo devait revenir manuellement valider chaque merge même quand la CI était verte. C'est exactement l'inverse de la pratique senior standard.
+
+**Décision** : adopter le pattern auto-merge par défaut, pratique documentée chez Google, Meta, GitHub, Vercel. Toute PR créée par l'agent est immédiatement assortie de `gh pr merge <num> --auto --squash --delete-branch`. GitHub fusionne automatiquement dès que tous les checks required passent verts. Roméo ne touche à rien.
+
+**Conséquence** :
+
+- `.claude/rules/workflow.md` section « Quand MERGER une PR » réécrite : auto-merge par défaut, procédure obligatoire à la création de PR, critères pour activer auto-merge, cas où l'agent N'active PAS auto-merge (hotfix critique prod, migration DB/RLS, action irréversible, trade financier/facturation).
+- Mémoire `feedback_no_auto_merge_staging.md` supprimée définitivement (incompatible avec la nouvelle règle).
+- Mémoire `feedback_auto_merge_default.md` créée pour ancrer le nouveau comportement.
+- `MEMORY.md` (index utilisateur) mis à jour : entrée « Pas de merge auto » remplacée par « Auto-merge par défaut ».
+- Cycle commit → CI verte → merge devient mécanique : pas de retour humain post-CI.
+
+**Hors périmètre — futurs gains complémentaires** :
+
+- `paths-ignore: ['docs/**', '.claude/**', '*.md']` sur `quality.yml` : skip CI quand seuls des fichiers doc/règles changent. Nécessite gestion des branch protection required checks (workflow phantom de fallback) — à traiter dans une PR dédiée pour ne pas casser la protection main.
+- TypeScript Project References (90 s → 30 s sur type-check).
+
+**Référence** : verbatim Roméo 2026-05-09 « si on fait une CI, c'est pour merger ». Sources externes : pratique standard documentée (GitHub auto-merge feature, Google trunk-based development, Meta diff-based merge).
