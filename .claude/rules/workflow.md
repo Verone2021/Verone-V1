@@ -1,12 +1,40 @@
 # Règles Workflow Verone
 
-**Source de vérité unique** pour Git / PR / merge + checklist 4 questions
-avant nouvelle branche (anciennement `branch-strategy.md`, fusionnée en
-`[INFRA-LEAN-001]`).
+**Source de vérité unique** pour Git / PR / merge + workflow solo (jamais
+`git worktree`) + checklist 4 questions avant nouvelle branche.
 
-> Compactée en `[INFRA-LEAN-002]` — exemples redondants retirés.
+> Historique : ancien `branch-strategy.md` fusionné en `[INFRA-LEAN-001]`,
+> compaction en `[INFRA-LEAN-002]`, fusion `no-worktree-solo.md` en
+> `[BO-INFRA-DX-001]` ADR-031.
 
-**Voir aussi** : `.claude/rules/no-worktree-solo.md` — JAMAIS `git worktree add`.
+---
+
+## Workflow solo — JAMAIS de `git worktree`
+
+Roméo travaille **seul** sur ce repo, dans **un seul dossier physique** :
+`/Users/romeodossantos/verone-back-office-V1`. Les sprints n'ont besoin
+que d'**une branche à la fois**. Bascule via `git checkout` (avec
+`git stash` si dirty). Pas de worktree, pas de dossier secondaire.
+
+**Interdictions absolues** :
+
+- `git worktree add ...`
+- Tool `Agent` avec `isolation: "worktree"` — toujours laisser ce
+  paramètre vide ou non spécifié.
+- `git worktree list` / `remove` autorisé uniquement pour ménage si un
+  worktree résiduel traîne.
+
+**Pourquoi** : l'ancienne règle `multi-agent-workflow.md` (PR #862, ADR-023
+2026-04-30) imposait `git worktree add` pour gérer plusieurs agents en
+parallèle. Résultat chaotique pour un dev solo : worktrees multiples,
+serveur Next.js qui servait le code d'un autre worktree, cycles CI
+doublés. ADR-024 (2026-05-02) a annulé ADR-023 et restauré le workflow
+standard.
+
+**Si Roméo lance un autre agent en parallèle (rare)** : ils partagent le
+même dossier et la même branche. Coordination via `git status` et
+`git pull --ff-only`. Pas de worktree. Si conflit récurrent, arrêter
+un des deux agents.
 
 ---
 
@@ -109,12 +137,16 @@ Exemples de blocs cohérents (= 1 PR) :
 
 ### Commits & Push
 
-**TOUJOURS** : commit après chaque sous-tâche, push après chaque commit,
-format `[APP-DOMAIN-NNN] type: description`, `git push --force-with-lease`
-(jamais `--force` nu).
+**TOUJOURS** : commit après chaque sous-tâche cohérente (sauvegarde
+locale, historique propre), format `[APP-DOMAIN-NNN] type: description`,
+`git push --force-with-lease` quand on pousse (jamais `--force` nu).
+
+**Push : UNE SEULE FOIS à la fin du chantier complet** — voir section
+« RÈGLE ABSOLUE — ZÉRO PUSH ENTRE SOUS-TÂCHES » ci-dessous.
 
 **JAMAIS** : commit "WIP" vague, `--force` nu, commit sans Task ID (sauf
-`[NO-TASK]`), `git worktree add`.
+`[NO-TASK]`), `git worktree add`, push entre phases d'un chantier
+multi-phases.
 
 ### PR
 
@@ -146,6 +178,60 @@ bloqué). Tu préviens Roméo, il décide. Sinon : pas de merge intermédiaire.
 **S'applique à TOUS les agents** : coordinateur, dev-agent,
 reviewer-agent, perf-optimizer. Si un agent propose un merge en cours
 de chantier, le coordinateur refuse et continue les commits.
+
+---
+
+## RÈGLE ABSOLUE — ZÉRO PUSH ENTRE SOUS-TÂCHES (ajoutée 2026-05-09 ADR-031)
+
+**Sur un chantier multi-phases ou multi-vagues, l'agent ne pousse PAS
+entre les phases.** Une seule PR, ouverte une seule fois à la toute fin,
+avec un seul cycle CI complet.
+
+Pourquoi : chaque `git push` sur une PR ouverte déclenche un cycle CI
+complet (5 à 15 minutes). Pousser à la fin de la Vague 1 puis encore à
+la fin de la Vague 2 = 2 cycles CI = 10-30 min payés inutilement, alors
+qu'un seul cycle aurait validé l'ensemble.
+
+**Procédure correcte sur un chantier multi-phases** :
+
+1. Création de la branche au début (depuis `staging` à jour).
+2. `git commit` après chaque sous-tâche cohérente (sauvegarde locale,
+   permet de retrouver l'historique). **Pas de push.**
+3. `git commit` accumulés sur la branche locale jusqu'à ce que TOUTES
+   les phases soient finies.
+4. Vérification locale : type-check, lint, tests Playwright si pertinent.
+5. **UN SEUL `git push -u origin <branche>` à la toute fin.**
+6. **UN SEUL `gh pr create`** (ou édition de la PR existante si elle est
+   déjà ouverte avec le mauvais titre — corriger le titre/description
+   pour refléter le bloc complet).
+7. Roméo donne UN GO. Merge UNE fois. Cycle CI UNIQUE.
+
+**Cas où l'agent peut pousser AVANT la fin** (rare, exceptionnel) :
+
+- Sauvegarde longue : la branche contient > 4 h de travail non sauvegardé
+  et le risque de perte de la machine est réel. Pousser comme « WIP » et
+  prévenir Roméo : « Je pousse pour sauvegarder, ne déclenche pas la CI
+  encore ». Marquer la PR en draft.
+- Roméo demande explicitement : « pousse maintenant, je veux voir ».
+
+**Cas où l'agent ne pousse JAMAIS** :
+
+- Fin d'une phase intermédiaire d'un chantier multi-phases (ex: fin de
+  Vague 1 alors que Vague 2 et Vague 3 sont prévues sur le même
+  chantier).
+- « Je pousse pour que tu voies l'avancée » → NON. Le statut s'annonce
+  en français dans la conversation, pas via un push.
+- « Je pousse pour avoir un retour CI partiel » → NON. La CI se paie une
+  fois, à la fin.
+
+**Référence senior** : c'est la pratique standard d'un dev expérimenté
+solo sur une CI lente. Trunk-based development avec push fréquent
+suppose une CI < 90 secondes (Google, Meta) ou une équipe qui se relaie.
+Pour Verone (CI 8-15 min, dev solo), la règle « 1 chantier = 1 push final »
+est la seule économie viable.
+
+**S'applique à TOUS les agents** : coordinateur, dev-agent,
+reviewer-agent, perf-optimizer.
 
 ### Branches
 
@@ -248,5 +334,4 @@ dans la même PR.
 
 ## Référence
 
-- `.claude/rules/no-worktree-solo.md` — workflow solo
-- `.claude/DECISIONS.md` ADR-022 (incident 2026-04-28), ADR-024 (workflow solo restauré 2026-05-02), ADR-025 (fusion `[INFRA-LEAN-001]` 2026-05-02), ADR-027 (compaction `[INFRA-LEAN-002]` 2026-05-02)
+- `.claude/DECISIONS.md` ADR-022 (incident 2026-04-28), ADR-024 (workflow solo restauré 2026-05-02), ADR-025 (fusion `[INFRA-LEAN-001]` 2026-05-02), ADR-027 (compaction `[INFRA-LEAN-002]` 2026-05-02), ADR-031 (fusion `no-worktree-solo` 2026-05-09)

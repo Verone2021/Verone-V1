@@ -7,32 +7,28 @@
     "turbo.json"
   ],
   "globalPassThroughEnv": ["TURBO_TOKEN", "TURBO_TEAM", "VERCEL_URL"],
-  "globalEnv": [
-    "NEXT_PUBLIC_SUPABASE_URL",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-    "DATABASE_URL",
-    "QONTO_AUTH_MODE",
-    "QONTO_ORGANIZATION_ID",
-    "QONTO_API_KEY",
-    "QONTO_API_BASE_URL",
-    "SUPABASE_SERVICE_ROLE_KEY",
-    "LINKME_PUBLIC_URL",
-    "GMAIL_SERVICE_ACCOUNT_EMAIL",
-    "GMAIL_SERVICE_ACCOUNT_PRIVATE_KEY",
-    "GMAIL_PUBSUB_TOPIC",
-    "GMAIL_PUBSUB_VERIFICATION_TOKEN",
-    "GMAIL_WATCH_ADDRESSES",
-    "GMAIL_ACCEPTED_ALIASES"
-  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"],
       "cache": true,
       "env": [
+        "NODE_ENV",
         "NEXT_PUBLIC_SUPABASE_URL",
         "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-        "NODE_ENV"
+        "DATABASE_URL",
+        "SUPABASE_SERVICE_ROLE_KEY",
+        "QONTO_AUTH_MODE",
+        "QONTO_ORGANIZATION_ID",
+        "QONTO_API_KEY",
+        "QONTO_API_BASE_URL",
+        "LINKME_PUBLIC_URL",
+        "GMAIL_SERVICE_ACCOUNT_EMAIL",
+        "GMAIL_SERVICE_ACCOUNT_PRIVATE_KEY",
+        "GMAIL_PUBSUB_TOPIC",
+        "GMAIL_PUBSUB_VERIFICATION_TOKEN",
+        "GMAIL_WATCH_ADDRESSES",
+        "GMAIL_ACCEPTED_ALIASES"
       ]
     },
     "dev": {

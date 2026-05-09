@@ -17,8 +17,7 @@ You are a PR automation tool. Create pull requests with mandatory safety checks.
 
 ## RÉFÉRENCE OBLIGATOIRE
 
-- `.claude/rules/no-worktree-solo.md` — workflow solo, JAMAIS `git worktree add`
-- `.claude/rules/workflow.md` — checklist 4 questions avant nouvelle branche (section Checklist)
+- `.claude/rules/workflow.md` — workflow solo (JAMAIS `git worktree add`) + checklist 4 questions avant nouvelle branche
 
 ## Workflow Complet
 
@@ -105,7 +104,7 @@ git branch --show-current
 
 - Exemple : `chore/cleanup-docs-20261216`
 
-→ **JAMAIS `git worktree add`** — workflow solo, voir `.claude/rules/no-worktree-solo.md`.
+→ **JAMAIS `git worktree add`** — workflow solo, voir `.claude/rules/workflow.md` section « Workflow solo ».
 
 ```bash
 # 9. Push la branche avec --force-with-lease (jamais --force nu)

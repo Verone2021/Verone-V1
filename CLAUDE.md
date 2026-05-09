@@ -34,9 +34,9 @@ Avant de coder : lire le schema DB du domaine (`docs/current/database/schema/`),
 
 ## WORKFLOW GIT
 
-**Source unique** : `.claude/rules/workflow.md` (Git, PR, merge, checklist
-avant nouvelle branche, bundling, incident 2026-04-28). Plus
-`.claude/rules/no-worktree-solo.md` (workflow solo).
+**Source unique** : `.claude/rules/workflow.md` (Git, PR, merge, workflow
+solo / pas de worktree, checklist avant nouvelle branche, bundling,
+incident 2026-04-28).
 
 Règle d'or : **1 PR = 1 BLOC COHERENT**, jamais 1 PR par sprint. Branche
 créée depuis `staging` à jour. PR toujours vers `staging`. `git push --force-with-lease`,
@@ -123,7 +123,7 @@ Détails dans les règles citées. Résumés courts ici :
 
 ### Git et merges
 
-- **`git worktree add`** — `.claude/rules/no-worktree-solo.md`.
+- **`git worktree add`** — `.claude/rules/workflow.md` section « Workflow solo ».
 - **`git push --force` nu** — toujours `--force-with-lease`.
 - **`git push --force` sur `main` ou `staging`** (même avec `--force-with-lease`).
 - **`git reset --hard` sur commits déjà mergés** ou rebase interactif sur historique public.
@@ -164,7 +164,6 @@ Détails dans les règles citées. Résumés courts ici :
 | Style communication       | `.claude/rules/communication-style.md`         |
 | Data fetching & perf      | `.claude/rules/data-fetching.md`               |
 | Workflow git/PR + branche | `.claude/rules/workflow.md`                    |
-| Pas de worktree (solo)    | `.claude/rules/no-worktree-solo.md`            |
 | Zéro donnée fantôme       | `.claude/rules/no-phantom-data.md`             |
 | Autonomie externe         | `.claude/rules/agent-autonomy-external.md`     |
 | Lifecycle mémoires/règles | `.claude/rules/memory-lifecycle.md`            |

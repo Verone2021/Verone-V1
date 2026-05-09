@@ -26,7 +26,6 @@ Règles stables lues automatiquement par l'agent.
 - `.claude/rules/responsive.md` — Breakpoints + 5 techniques responsive obligatoires
 - `.claude/rules/stock-triggers-protected.md` — Triggers stock IMMUABLES
 - `.claude/rules/workflow.md` — Git, PR, merge, 1 PR = 1 bloc cohérent + checklist 4 questions (fusion `branch-strategy.md` 2026-05-02)
-- `.claude/rules/no-worktree-solo.md` — Workflow solo, JAMAIS `git worktree add`
 - `.claude/rules/data-fetching.md` — TanStack Query, useEffect deps, Supabase select
 - `.claude/rules/no-phantom-data.md` — Zéro donnée fantôme en prod
 - `.claude/rules/agent-autonomy-external.md` — Agent fait tout lui-même via CLI/MCP
@@ -205,7 +204,6 @@ Voir `docs/scratchpad/automation-roadmap.md` (historique uniquement).
 | ------------------------------------------ | ----------------------- |
 | `.claude/rules/no-phantom-data.md`         | No Phantom Data         |
 | `.claude/rules/agent-autonomy-external.md` | Agent Autonomy External |
-| `.claude/rules/no-worktree-solo.md`        | No Worktree (solo)      |
 | `.claude/rules/data-fetching.md`           | Data Fetching           |
 
 ---

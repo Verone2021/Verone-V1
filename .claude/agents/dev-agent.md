@@ -31,7 +31,7 @@ Tu es un developpeur senior. Tu recois un brief et tu livres du code propre.
 
 1. **Spec** — Clarifie les requirements. Ne code JAMAIS sans spec validee.
 2. **Plan** — Decompose en taches testables. Ecris le plan dans `docs/scratchpad/dev-plan-{date}.md`.
-3. **Branche** — Crée la branche depuis `staging` à jour : `git checkout -b <type>/<TASK-ID>-<description>` dans `/Users/romeodossantos/verone-back-office-V1`. JAMAIS `git worktree add` (cf. `.claude/rules/no-worktree-solo.md`).
+3. **Branche** — Crée la branche depuis `staging` à jour : `git checkout -b <type>/<TASK-ID>-<description>` dans `/Users/romeodossantos/verone-back-office-V1`. JAMAIS `git worktree add` (cf. `.claude/rules/workflow.md` section « Workflow solo »).
 4. **Implement** — Code en suivant les standards du projet.
 5. **Verify** — `pnpm --filter @verone/[app] type-check` DOIT passer. Ne dis JAMAIS "done" sans preuve.
 6. **Report** — Depose un resume dans `docs/scratchpad/dev-report-{date}.md`.

@@ -1146,7 +1146,7 @@ Autres FEU ROUGE de l'ancien fichier confirmés déjà couverts ailleurs (pas be
 
 ---
 
-## ADR-031 — `[BO-INFRA-DX-001]` Vague 1 — Simplification expérience de développement (2026-05-09)
+## ADR-031 — `[BO-INFRA-DX-001]` Simplification complète expérience de développement (2026-05-09)
 
 **Contexte** : audit exhaustif demandé par Roméo (2026-05-09) après constat que les cycles commit → push → PR → merge prennent 15-20 min au lieu de 3-4 min. 6 agents Explore lancés en parallèle ont cartographié : workflows GitHub Actions (5 fichiers, `quality.yml` = 33 KB / 9 jobs), hooks Husky (4 hooks, dont pre-push qui refait du type-check + lint déjà couvert par la CI), 14 règles Claude (2 222 lignes, avec doublons workflow + no-worktree, communication-style + CLAUDE.md, useEffect dans 3 fichiers), 30 mémoires `feedback_*` dont plusieurs obsolètes, 3 versions de la roadmap marketing (v1, v2, v3) co-existantes, 17 scripts dont `db-schema-snapshot.json` (773 KB versionnés sans consommateur), `ops-agent.md` déprécié mais toujours présent, et 2 scripts `.claude/scripts/` jamais appelés (`check-responsive-violations.sh`, `check-open-prs.sh` mentionné dans CLAUDE.md mais non automatisé).
 
@@ -1175,9 +1175,20 @@ Autres FEU ROUGE de l'ancien fichier confirmés déjà couverts ailleurs (pas be
 - CI sur push main : -5 min (e2e-full retiré).
 - Charge mentale agent : 14 règles toujours en place mais 1 agent et 4 fichiers `work/` orphelins en moins ; cleanup mémoires `feedback_*` reporté à la Vague 2.
 
-**Hors périmètre Vague 1** (à traiter ensuite) :
+**Vague 2 (incluse dans ce même bloc, pas de PR séparée)** :
 
-- Vague 2 : fusion `no-worktree-solo.md` → `workflow.md`, ESLint cache, scoping `globalEnv` Turbo, compaction `DECISIONS.md`.
-- Vague 3 : TypeScript Project References, gitignore de `db-schema-snapshot.json`, compaction règles à 8-10 fichiers.
+- `turbo.json` : 13 secrets serveur (QONTO\_\*, GMAIL\_\*, LINKME_PUBLIC_URL, DATABASE_URL, SUPABASE_SERVICE_ROLE_KEY) sortis de `globalEnv` et déplacés vers `tasks.build.env`. Conséquence : un changement de secret ne casse plus le cache de `lint`, `type-check`, `format`. Lint et type-check restent rapides après chaque mise à jour de secret.
+- Fusion `.claude/rules/no-worktree-solo.md` (137 lignes) → section « Workflow solo » de `.claude/rules/workflow.md`. Rules : 14 → 13. Toutes les références orphelines mises à jour (`CLAUDE.md`, `INDEX.md`, `dev-agent.md`, `commands/pr.md`).
+
+**Vague 3 (incluse dans ce même bloc)** :
+
+- `scripts/db-schema-snapshot.json` (773 KB) confirmé gitignored — déjà dans `.gitignore` mais ajout d'un commentaire explicite « regenerated from live DB via scripts/generate-docs.py ». Le fichier reste utilisable comme fallback offline pour la régénération de doc.
+- **Nouvelle règle dans `workflow.md`** : ZÉRO PUSH ENTRE SOUS-TÂCHES. Sur un chantier multi-phases ou multi-vagues, l'agent ne pousse pas entre les phases. Une seule PR, un seul cycle CI à la toute fin. Suppression de la mémoire utilisateur `feedback_rebase_first_branch_early.md` qui contredisait (elle promouvait « push initial draft immédiat » dans un contexte multi-agents qui n'existe plus en solo). Création de `feedback_no_push_between_phases.md`. Mise à jour de `MEMORY.md` (index utilisateur) et `feedback_no_worktree_solo.md` (référence corrigée vers `workflow.md`).
+
+**Hors périmètre — reporté en PR séparée** (refactor structurel, risque réel) :
+
+- TypeScript Project References : conversion `extends` → `references` dans 5 `tsconfig.json`. Risque de casser les builds. À traiter dans une PR dédiée avec tests progressifs (1 app à la fois). Gain attendu : type-check 90 s → 30-40 s.
+- ESLint cache local sur chaque `apps/*/package.json` : nécessite édition de chaque package.json. Gain modeste (~30 s sur lint local répété), reporté.
+- Compaction règles à 8-10 fichiers (vs 13 actuel) : nécessite analyses de fusion (data-fetching ↔ code-standards, communication-style ↔ CLAUDE.md). À faire dans une PR de cleanup ciblée.
 
 **Référence** : `docs/scratchpad/audit-2026-05-09-experience-dev.md` (rapport exhaustif des 3 vagues).
