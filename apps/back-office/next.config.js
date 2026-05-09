@@ -81,6 +81,19 @@ const nextConfig = {
     ];
   },
 
+  // Rewrite (transparent pour l'utilisateur): /produits/catalogue/<uuid> → /produits/catalogue/detail/<uuid>.
+  // Workaround edge case Vercel/Next.js qui retire la route /produits/catalogue/[id] du manifest
+  // quand le segment dynamique vit au même niveau que ~10 dossiers/fichiers siblings.
+  async rewrites() {
+    return [
+      {
+        source:
+          '/produits/catalogue/:id([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})',
+        destination: '/produits/catalogue/detail/:id',
+      },
+    ];
+  },
+
   // Monorepo transpilation - transpile ALL workspace packages
   transpilePackages: [
     '@verone/admin',

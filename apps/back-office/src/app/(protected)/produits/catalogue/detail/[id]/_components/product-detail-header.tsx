@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { duplicateProduct } from '../../../actions/duplicate-product';
+import { duplicateProduct } from '../../../../actions/duplicate-product';
 
 import type { Product, SourcingInfo } from './types';
 
