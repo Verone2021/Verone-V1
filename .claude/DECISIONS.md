@@ -1215,3 +1215,37 @@ Autres FEU ROUGE de l'ancien fichier confirmés déjà couverts ailleurs (pas be
 - TypeScript Project References (90 s → 30 s sur type-check).
 
 **Référence** : verbatim Roméo 2026-05-09 « si on fait une CI, c'est pour merger ». Sources externes : pratique standard documentée (GitHub auto-merge feature, Google trunk-based development, Meta diff-based merge).
+
+---
+
+## ADR-033 — `[INFRA-AGENT-SENIOR-001]` Règles anti-raccourcis senior + ESLint déterministe (2026-05-09)
+
+**Contexte** : pendant l'implémentation de PR #985 (Type Coverage Gate, Sprint 3a du chantier global perf), CI a échoué avec 45 `any` implicites dans 5 fichiers `consultations/[consultationId]/`. Le coordinateur a proposé de baisser le seuil `--at-least 99.22 → 99.0` pour « donner de la marge ». Roméo a refusé : « Non, je ne veux pas avoir des marques. Je veux tout corriger. » Puis : « Je t'ai demandé de regarder comment faisaient les développeurs seniors. Je ne t'ai pas dit de boucher les coins. » Puis : « comment font les développeurs seniors pour que Claude Code et les agents prennent cela en compte ? Je voudrais qu'on n'ait pas de hook bloquant. »
+
+**Recherche** (sources concrètes, pas inventées) :
+
+- [Anthropic Best Practices for Claude Code](https://code.claude.com/docs/en/best-practices) : tableau d'exemple littéral _« the build fails with this error: [paste error]. fix it and verify the build succeeds. **Address the root cause, don't suppress the error.** »_ C'est exactement le principe à codifier.
+- [GitHub Issue anthropics/claude-code#32163](https://github.com/anthropics/claude-code/issues/32163) (closed not-planned) : compliance avec règles markdown ~60-70 % avec un CLAUDE.md long, déclin linéaire avec le nombre d'instructions. _« Prompt-based rules are wishes. Code-based enforcement is control. »_ → besoin de doubler les règles markdown par des règles ESLint déterministes qui s'exécutent en CI.
+- [typescript-eslint blog — Avoiding `any`s](https://typescript-eslint.io/blog/avoiding-anys/) et [ban-ts-comment rule](https://typescript-eslint.io/rules/ban-ts-comment/) : config officielle pour interdire `@ts-ignore` et exiger une justification ≥ 20 caractères sur `@ts-expect-error`. Plus `reportUnusedDisableDirectives: 'error'` pour détecter les directives obsolètes.
+
+**Décision** : 4 niveaux de défense, aucun hook bloquant.
+
+1. **Niveau 1 — Règle markdown** : section « ANTI-RACCOURCIS — RÉFLEXE SENIOR » ajoutée à `.claude/rules/code-standards.md`. Citation Anthropic littérale, liste interdits (baisse de seuil, `@ts-ignore`, `eslint-disable` sans justification, `as any`, `!`, `.skip`), workflow obligatoire pour fix CI rouge, références skills `/fix-warnings` et `/simplify`.
+2. **Niveau 2 — Sous-agents** : `dev-agent.md` reçoit une section « ANTI-RACCOURCIS » + 2 nouvelles entrées dans « TU NE FAIS PAS » (ne baisse jamais un seuil, ne supprime jamais un warning sans justification + lien bug). `reviewer-agent.md` reçoit un nouvel « Axe 1-bis » avec détection automatique des raccourcis dans le diff (`grep` sur les patterns suspects → CRITICAL FAIL automatique).
+3. **Niveau 3 — ESLint déterministe** : dans `eslint.config.mjs`, `@typescript-eslint/ban-ts-comment` upgradé avec config stricte (`'ts-expect-error': 'allow-with-description'`, `'ts-ignore': true`, `'ts-nocheck': true`, `minimumDescriptionLength: 20`). Ajout de `linterOptions.reportUnusedDisableDirectives: 'error'` au niveau global pour détecter les `eslint-disable` devenus obsolètes.
+4. **Pas de hook bloquant pre-commit** (Romeo l'a explicitement refusé). La barrière finale = la CI au merge. Les nouvelles règles ESLint tournent dans le job lint normal — non bloquantes au commit, bloquantes au merge.
+
+**Conséquence** :
+
+- `.claude/rules/code-standards.md` étend la section ANTI-RACCOURCIS (sources Anthropic + GitHub issue + typescript-eslint blog + incident référence).
+- `.claude/agents/dev-agent.md` et `.claude/agents/reviewer-agent.md` mis à jour.
+- `eslint.config.mjs` enforce automatiquement la règle. Toute PR qui ajoute un `@ts-ignore`, un `as any`, ou un `eslint-disable` non justifié → CI rouge.
+- `.claude/INDEX.md` met à jour la ligne `code-standards.md` pour mentionner la nouvelle section.
+- Aucun hook husky/pre-commit ajouté.
+
+**Hors périmètre — futurs chantiers** :
+
+- Project references TypeScript (90 s → 30 s sur type-check) — ADR séparé quand prêt.
+- Compaction règles à 8-10 fichiers — voir ADR-031 pour la suite.
+
+**Référence** : verbatim Roméo 2026-05-09 « je veux tout corriger », « comment font les développeurs seniors pour que Claude Code et les agents prennent cela en compte ? ». Sources : Anthropic Best Practices, GitHub anthropics/claude-code#32163, typescript-eslint.io.

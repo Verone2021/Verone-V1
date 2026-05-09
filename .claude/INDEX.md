@@ -18,7 +18,7 @@ Sommaire unique de la config agent. Si tu cherches où est une règle, un agent,
 
 Règles stables lues automatiquement par l'agent.
 
-- `.claude/rules/code-standards.md` — TypeScript, async, composants, API, logout
+- `.claude/rules/code-standards.md` — TypeScript, async, composants, API, logout, **anti-raccourcis senior** (ADR-033, 2026-05-09)
 - `.claude/rules/communication-style.md` — Roméo est utilisateur final non-développeur, français simple sans jargon
 - `.claude/rules/database.md` — Migrations, RLS patterns, post-migration
 - `.claude/rules/finance.md` — Règles métier devis / factures / proformas (R1 à R7)

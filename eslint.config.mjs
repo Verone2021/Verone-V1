@@ -29,6 +29,19 @@ const compat = new FlatCompat({
 
 export default defineConfig([
   // ==========================================================================
+  // LINTER OPTIONS — global, anti-raccourcis senior
+  // ==========================================================================
+  // Détecte les `// eslint-disable-*` qui ne désactivent plus rien (le bug
+  // sous-jacent a été corrigé) → erreur, oblige à les retirer. Empêche les
+  // directives obsolètes de masquer de futures violations sur la même ligne.
+  // Source : eslint.org/docs/latest/use/configure/rules#reporting-on-unused-disable-directives
+  {
+    linterOptions: {
+      reportUnusedDisableDirectives: 'error',
+    },
+  },
+
+  // ==========================================================================
   // GLOBAL IGNORES
   // ==========================================================================
   {
@@ -172,8 +185,21 @@ export default defineConfig([
       // Unnecessary assertions
       '@typescript-eslint/no-unnecessary-type-assertion': 'error',
 
-      // Ban ts-comment: Relaxed (sometimes needed)
-      '@typescript-eslint/ban-ts-comment': 'error',
+      // Ban ts-comment: SENIOR — pas de @ts-ignore (utilisera @ts-expect-error
+      // qui se nettoie automatiquement quand le bug sous-jacent est corrigé).
+      // @ts-expect-error doit être justifié (>= 20 caractères de raison).
+      // Source : typescript-eslint.io/rules/ban-ts-comment
+      // Anti-raccourci documenté dans .claude/rules/code-standards.md section ANTI-RACCOURCIS.
+      '@typescript-eslint/ban-ts-comment': [
+        'error',
+        {
+          'ts-expect-error': 'allow-with-description',
+          'ts-ignore': true,
+          'ts-nocheck': true,
+          'ts-check': false,
+          minimumDescriptionLength: 20,
+        },
+      ],
 
       // Require imports: Relaxed for scripts
       '@typescript-eslint/no-require-imports': 'error',
