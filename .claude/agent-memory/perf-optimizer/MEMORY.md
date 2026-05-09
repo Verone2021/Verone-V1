@@ -6,11 +6,12 @@
 - **Composants** : `docs/current/INDEX-COMPOSANTS-FORMULAIRES.md` — pour detecter doublons
 - **Dependances** : `docs/current/DEPENDANCES-PACKAGES.md` — pour detecter dead imports
 
-# Last updated: 2026-04-27 (audit data-fetching back-office ajouté)
+# Last updated: 2026-05-09 (audit complet commandes clients ajouté)
 
 ## Rapports Disponibles
 
-- Data-fetching BO : `docs/scratchpad/audit-2026-04-27-data-fetching-bo.md` (nouveau)
+- Commandes clients BO (COMPLET) : `docs/scratchpad/dev-report-2026-05-09-perf-commandes-audit-complet.md` (nouveau)
+- Data-fetching BO : `docs/scratchpad/audit-2026-04-27-data-fetching-bo.md`
 - Pricing/Commissions LinkMe : `docs/current/perf/audit-pricing-commissions-linkme-2026-03-18.md`
 - Back-office : `docs/current/perf/audit-back-office-2026-03-11.md`
 - LinkMe : `docs/current/perf/audit-2026-03-11-linkme.md`
@@ -169,6 +170,16 @@ useState+useEffect+fetch dans use-linkme-analytics.ts. Pas de cache React Query.
 
 Charge TOUTES les commandes de linkme_orders_with_margins (vue 8 LEFT JOIN) sans filtre date.
 Calcul de moyenne mensuelle en JS. Solution : RPC get_linkme_dashboard_kpis() SQL.
+
+## Commandes Clients — Hotspots confirmés (2026-05-09)
+
+- `use-sales-orders-fetch-list.ts:71-78` : stock items chargé en liste (stock_quantity, stock_real, stock_forecasted) → inutile, retirer
+- `use-universal-order-header.ts` : 3 appels séquentiels à l'ouverture fiche (commande → client → creator RPC) → paralléliser
+- `use-order-items.ts:112` : `createClient()` non wrappé dans useMemo → instable, risque boucle similaire à incident 16 avril
+- `use-order-items.ts:133,211,274` : `select('*')` dans 3 endroits → corriger
+- TanStack cache partiellement implémenté (queryClient.setQueryData) mais jamais LU par SalesOrdersTable — travail à moitié fait
+- Page commandes est `'use client'` alors que prop `preloadedOrders` est déjà prête → candidat RSC prioritaire
+- Pas d'index manquant sur sales_orders (32 index, seq scan correct sur 168 lignes)
 
 ## Boucles useEffect détectées (2026-04-27)
 
