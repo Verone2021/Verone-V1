@@ -7,6 +7,8 @@
 
 import { useCallback } from 'react';
 
+import { useQueryClient } from '@tanstack/react-query';
+
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type {
@@ -33,6 +35,8 @@ export function useSalesOrdersPayments({
   fetchOrder,
   currentOrderRef,
 }: PaymentDeps) {
+  // [BO-PERF-ORDERS-002] Notifie les consumers TanStack Query après chaque paiement.
+  const queryClient = useQueryClient();
   const markAsPaid = useCallback(
     async (orderId: string, amount?: number) => {
       try {
@@ -61,6 +65,8 @@ export function useSalesOrdersPayments({
         });
 
         await fetchOrders();
+        // [BO-PERF-ORDERS-002] Notifie les consumers TanStack Query après le paiement.
+        await queryClient.invalidateQueries({ queryKey: ['sales_orders'] });
         if (currentOrderRef.current?.id === orderId) {
           await fetchOrder(orderId);
         }
@@ -76,7 +82,7 @@ export function useSalesOrdersPayments({
         throw error;
       }
     },
-    [supabase, fetchOrders, fetchOrder, currentOrderRef, toastRef]
+    [supabase, queryClient, fetchOrders, fetchOrder, currentOrderRef, toastRef]
   );
 
   const markAsManuallyPaid = useCallback(
@@ -119,6 +125,8 @@ export function useSalesOrdersPayments({
         });
 
         await fetchOrders();
+        // [BO-PERF-ORDERS-002] Notifie les consumers TanStack Query après le paiement manuel.
+        await queryClient.invalidateQueries({ queryKey: ['sales_orders'] });
         if (currentOrderRef.current?.id === orderId) {
           await fetchOrder(orderId);
         }
@@ -134,7 +142,7 @@ export function useSalesOrdersPayments({
         throw error;
       }
     },
-    [supabase, fetchOrders, fetchOrder, currentOrderRef, toastRef]
+    [supabase, queryClient, fetchOrders, fetchOrder, currentOrderRef, toastRef]
   );
 
   const fetchOrderPayments = useCallback(
@@ -178,8 +186,10 @@ export function useSalesOrdersPayments({
       });
 
       await fetchOrders();
+      // [BO-PERF-ORDERS-002] Notifie les consumers TanStack Query après la suppression.
+      await queryClient.invalidateQueries({ queryKey: ['sales_orders'] });
     },
-    [supabase, fetchOrders, toastRef]
+    [supabase, queryClient, fetchOrders, toastRef]
   );
 
   return {
