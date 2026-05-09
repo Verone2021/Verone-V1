@@ -77,7 +77,13 @@ export function useFetchOrdersList({
         `
           )
           .order('created_at', { ascending: false })
-          .limit(500);
+          // [BO-PERF-ORDERS-003] Limite abaissée à 50 (était 500).
+          // La pagination côté client (useSalesOrdersPagination) affiche 20
+          // lignes par page — inutile de charger 10× plus que nécessaire.
+          // À anticiper : si le volume dépasse 200 commandes et que l'utilisateur
+          // a besoin de filtrer sur toutes les commandes, envisager une pagination
+          // curseur serveur à ce moment-là (CS-3 de l'audit).
+          .limit(50);
 
         if (filters?.customer_id)
           query = query.eq('customer_id', filters.customer_id);

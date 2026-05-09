@@ -49,7 +49,11 @@ export default async function SalesOrdersPage() {
     `
     )
     .order('created_at', { ascending: false })
-    .limit(500);
+    // [BO-PERF-ORDERS-003] Limite réduite à 50 — la pagination JS côté client
+    // (enablePagination + defaultItemsPerPage=20) affiche 20 lignes par page.
+    // Charger 500 lignes pour en afficher 20 est un gaspillage.
+    // Le client-side hook rechargera les 500 si nécessaire via fetchOrders().
+    .limit(50);
 
   // Cast via unknown : la requête SSR ne charge pas les enrichissements
   // (creator, invoice, shipment, etc.) — SalesOrdersTable les chargera
