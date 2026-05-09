@@ -23,7 +23,7 @@ catalogue/
 ├── nouveau/                    # Création produit rapide
 ├── create/                     # Wizard création produit complet (4 étapes)
 ├── edit/                       # Édition produits
-├── [productId]/                # Détail produit
+├── [id]/                       # Détail produit
 ├── dashboard/                  # Dashboard catalogue
 ├── sourcing/                   # Mode sourcing (workflow simplifié)
 ├── archived/                   # Produits archivés
