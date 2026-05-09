@@ -28,7 +28,11 @@
         "GMAIL_PUBSUB_TOPIC",
         "GMAIL_PUBSUB_VERIFICATION_TOKEN",
         "GMAIL_WATCH_ADDRESSES",
-        "GMAIL_ACCEPTED_ALIASES"
+        "GMAIL_ACCEPTED_ALIASES",
+        "CRON_SECRET",
+        "RESEND_API_KEY",
+        "RESEND_FROM_EMAIL",
+        "RESEND_REPLY_TO"
       ]
     },
     "dev": {
