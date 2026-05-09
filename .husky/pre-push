@@ -1,11 +1,11 @@
 #!/bin/sh
-# PRE-PUSH GUARD — INFRA-CI-GUARD-001 (2026-05-08)
+# PRE-PUSH MINIMAL — INFRA-DX-001 (2026-05-09)
 #
-# Règle : aucun push ne quitte cette machine sans avoir passé type-check + lint
-# sur les apps touchées. Évite ~7 min de CI par fail détectable localement.
+# La CI GitHub Actions fait le type-check + lint complet sur la PR
+# (workflow .github/workflows/quality.yml job "quality"). Refaire le même
+# travail localement coûte 8-15s par push pour zéro information nouvelle.
 #
-# Logique partagée avec .claude/settings.json PreToolUse(git push) :
-# voir .claude/hooks/validate-affected-apps.sh
+# Le pre-push reste pour permettre l'ajout de hooks futurs (ex: scan
+# secrets, blocage push direct sur main) sans recréer un hook vide.
 
-REPO_ROOT=$(git rev-parse --show-toplevel)
-exec "$REPO_ROOT/.claude/hooks/validate-affected-apps.sh"
+exit 0

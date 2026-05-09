@@ -14,18 +14,17 @@ Dis simplement ce que tu veux faire. Claude lit ACTIVE.md et choisit le bon work
 - "Le logo ne s'affiche pas" → Bug fix rapide (oneshot)
 - "Ajoute un champ date de livraison" → Feature (dev-agent)
 - "Fais un audit du code" → Audit (reviewer-agent)
-- "PR" → Pipeline PR (ops-agent)
+- "PR" → Le coordinateur fait commit + push + PR directement (cf. règle 6 anti-paralysie)
 
 ## Les agents
 
-| Agent            | Role                          | Quand                                         |
-| ---------------- | ----------------------------- | --------------------------------------------- |
-| `dev-agent`      | Code, TDD, changelog          | Gros sprint > 5 outils ou > 10 fichiers       |
-| `reviewer-agent` | Audit qualite read-only       | Avant gros merge, apres implementation        |
-| `ops-agent`      | PR, push, deploy              | Optionnel — gros bloc, release main, recovery |
-| `perf-optimizer` | Audit perf, dead code, bundle | Audit periodique, perf degradee               |
+| Agent            | Role                          | Quand                                   |
+| ---------------- | ----------------------------- | --------------------------------------- |
+| `dev-agent`      | Code, TDD, changelog          | Gros sprint > 5 outils ou > 10 fichiers |
+| `reviewer-agent` | Audit qualite read-only       | Avant gros merge, apres implementation  |
+| `perf-optimizer` | Audit perf, dead code, bundle | Audit periodique, perf degradee         |
 
-Note : `verify-agent` supprime en `[INFRA-LEAN-002]` (CI couvre type-check + build + tests).
+Notes : `verify-agent` supprime en `[INFRA-LEAN-002]` (CI couvre type-check + build + tests). `ops-agent` supprime en `[BO-INFRA-DX-001]` ADR-031 (chevauchait la règle 6 anti-paralysie : le coordinateur fait git/PR/merge directement).
 
 ## Commandes disponibles
 

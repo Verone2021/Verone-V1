@@ -96,7 +96,6 @@ next-env.d.ts
 .claude/*-temp*
 .claude/*.log
 .claude/work/*
-!.claude/work/ACTIVE.md.template
 
 # Local runbook & secrets vault — never committed (one per machine)
 .claude/local/
@@ -204,4 +203,5 @@ docs/current/database/schema/06-linkme.md
 docs/current/database/schema/07-notifications.md
 docs/current/database/schema/08-utilisateurs.md
 docs/current/database/schema/09-autres.md
+# DB schema snapshot (regenerated from live DB via scripts/generate-docs.py)
 scripts/db-schema-snapshot.json

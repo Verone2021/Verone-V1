@@ -425,8 +425,11 @@ jobs:
 
   # ----------------------------------------------------------------
   # 3c. E2E Niveau 3 — e2e-full (sharded 4 runners)
-  #     Workflows métier complets. Sur push main OU workflow_dispatch.
-  #     ~5 min wall-clock.
+  #     Workflows métier complets. Manuel uniquement (workflow_dispatch).
+  #     Retiré du push main automatique en BO-INFRA-DX-001 (2026-05-09) :
+  #     5 min payés à chaque release main pour 0 décision (déjà
+  #     non-bloquant). À déclencher à la main avant un gros release ou
+  #     dans une session debug. ~5 min wall-clock.
   # ----------------------------------------------------------------
   e2e-full:
     name: E2E full shard ${{ matrix.shard }}/4 (Niveau 3)
@@ -434,7 +437,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     continue-on-error: true
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
