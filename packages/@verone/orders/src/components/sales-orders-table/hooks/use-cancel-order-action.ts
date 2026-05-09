@@ -19,10 +19,29 @@ export type CancelApiResponse =
 
 // ----------------------------------------------------------------
 
+/**
+ * Déclenche un refetch de la liste via le CustomEvent écouté par useFetchOrdersList.
+ * [BO-PERF-ORDERS-002] Remplace les appels directs fetchOrders(filters) + fetchStats(filters)
+ * pour éviter de passer ces fonctions en prop et supprimer les risques de double-fetch.
+ */
+function dispatchOrdersRefetch(): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent('verone:orders:refetch'));
+}
+
 interface UseCancelOrderActionParams {
   channelId: string | null;
   orderToCancel: string | null;
+  /**
+   * @deprecated [BO-PERF-ORDERS-002] fetchOrders n'est plus appelé directement ici.
+   * On passe par le CustomEvent 'verone:orders:refetch' pour éviter les props drilling
+   * et garantir un seul refetch via le listener stable dans useFetchOrdersList.
+   * Conservé dans la signature pour rétrocompatibilité avec l'appelant useSalesOrderActions.
+   */
   fetchOrders: (filters?: { channel_id: string }) => Promise<void>;
+  /**
+   * @deprecated fetchStats is a no-op (cf. use-sales-orders-fetch.ts:236).
+   */
   fetchStats: (filters?: { channel_id: string }) => Promise<void>;
   onOrderUpdated?: () => void;
   setShowCancelConfirmation: (v: boolean) => void;
@@ -34,10 +53,12 @@ interface UseCancelOrderActionParams {
 }
 
 export function useCancelOrderAction({
-  channelId,
+  // fetchOrders, fetchStats et channelId reçus mais non utilisés —
+  // voir jsdoc @deprecated ci-dessus. On passe par CustomEvent à la place.
+  fetchOrders: _fetchOrders,
+  fetchStats: _fetchStats,
+  channelId: _channelId,
   orderToCancel,
-  fetchOrders,
-  fetchStats,
   onOrderUpdated,
   setShowCancelConfirmation,
   setOrderToCancel,
@@ -105,9 +126,9 @@ export function useCancelOrderAction({
             : 'Commande annulee avec succes',
       });
 
-      const filters = channelId ? { channel_id: channelId } : undefined;
-      await fetchOrders(filters);
-      await fetchStats(filters);
+      // [BO-PERF-ORDERS-002] Refetch via CustomEvent (listener stable dans useFetchOrdersList)
+      // au lieu de fetchOrders(filters) + fetchStats(filters) (7+1 requêtes évitées ici).
+      dispatchOrdersRefetch();
       onOrderUpdated?.();
     } catch (error) {
       console.error("Erreur lors de l'annulation:", error);
@@ -151,9 +172,8 @@ export function useCancelOrderAction({
             : 'Commande annulee avec succes',
       });
 
-      const filters = channelId ? { channel_id: channelId } : undefined;
-      await fetchOrders(filters);
-      await fetchStats(filters);
+      // [BO-PERF-ORDERS-002] Refetch via CustomEvent (même pattern que handleCancelConfirmed)
+      dispatchOrdersRefetch();
       onOrderUpdated?.();
     } catch (error) {
       console.error('Erreur garde-fou annulation:', error);
