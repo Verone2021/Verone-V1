@@ -26,7 +26,6 @@ Règles stables lues automatiquement par l'agent.
 - `.claude/rules/responsive.md` — Breakpoints + 5 techniques responsive obligatoires
 - `.claude/rules/stock-triggers-protected.md` — Triggers stock IMMUABLES
 - `.claude/rules/workflow.md` — Git, PR, merge, 1 PR = 1 bloc cohérent + checklist 4 questions (fusion `branch-strategy.md` 2026-05-02)
-- `.claude/rules/no-worktree-solo.md` — Workflow solo, JAMAIS `git worktree add`
 - `.claude/rules/data-fetching.md` — TanStack Query, useEffect deps, Supabase select
 - `.claude/rules/no-phantom-data.md` — Zéro donnée fantôme en prod
 - `.claude/rules/agent-autonomy-external.md` — Agent fait tout lui-même via CLI/MCP
@@ -37,14 +36,13 @@ _Note : sous-dossier `.claude/rules/domain/` envisagé dans ADR-004 mais non app
 
 ---
 
-## Agents (4 fichiers)
+## Agents (3 fichiers)
 
 - `.claude/agents/dev-agent.md` — Code + TDD + changelog (**actif**, gros sprints)
 - `.claude/agents/reviewer-agent.md` — Code reviewer impartial read-only (**actif**, avant gros merges)
-- `.claude/agents/ops-agent.md` — Push, PR, merge (**optionnel** depuis Niveau 2 — gros blocs uniquement)
 - `.claude/agents/perf-optimizer.md` — Audit perf, dead code, bundle, overfetch (mémoire dans `.claude/agent-memory/perf-optimizer/`)
 
-_Agents supprimés_ : `writer-agent`, `market-agent` (ADR-009 — 0 usage en 3 mois) ; `verify-agent` (ADR-027 — Niveau 2, déjà couvert par CI).
+_Agents supprimés_ : `writer-agent`, `market-agent` (ADR-009 — 0 usage en 3 mois) ; `verify-agent` (ADR-027 — Niveau 2, déjà couvert par CI) ; `ops-agent` (ADR-031 — 2026-05-09, déprécié depuis Niveau 2 et chevauchait la règle 6 anti-paralysie).
 
 ---
 
@@ -96,11 +94,10 @@ Commandes slash disponibles dans Claude Code.
 
 ---
 
-## Scripts (9 fichiers)
+## Scripts (8 fichiers)
 
 - `.claude/scripts/auto-sync-with-main.sh` — Bloque commit si branche en retard sur staging
-- `.claude/scripts/check-open-prs.sh` — Liste PRs ouvertes + conflits + oublis _(créé Phase 1)_
-- `.claude/scripts/check-responsive-violations.sh` — Audit anti-patterns responsive
+- `.claude/scripts/check-open-prs.sh` — Liste PRs ouvertes + conflits + oublis (utilitaire manuel, plus automatisé)
 - `.claude/scripts/clarify-before-code.sh` — Hook UserPromptSubmit checklist
 - `.claude/scripts/cleanup-active-tasks.sh` — Détecte tâches terminées dans ACTIVE.md
 - `.claude/scripts/cleanup-scratchpad.sh` — Nettoyage scratchpad auto (post-merge + post-push). Archive 13 préfixes à 14j, session-\* à 30j, purge archive/ à 90j. Voir ADR-014.
@@ -207,7 +204,6 @@ Voir `docs/scratchpad/automation-roadmap.md` (historique uniquement).
 | ------------------------------------------ | ----------------------- |
 | `.claude/rules/no-phantom-data.md`         | No Phantom Data         |
 | `.claude/rules/agent-autonomy-external.md` | Agent Autonomy External |
-| `.claude/rules/no-worktree-solo.md`        | No Worktree (solo)      |
 | `.claude/rules/data-fetching.md`           | Data Fetching           |
 
 ---

@@ -109,9 +109,8 @@ pnpm --filter @verone/back-office type-check
 pnpm --filter @verone/back-office build
 # Exit 0
 
-# 5.6 Script anti-pattern
-bash .claude/scripts/check-responsive-violations.sh
-# Zero violation critique
+# 5.6 Audit anti-pattern : grep manuel (script supprimé en BO-INFRA-DX-001)
+grep -rn 'w-screen\|w-auto\b' apps/back-office/src/app/<page> || echo 'OK'
 ```
 
 ### 6. Playwright runtime (ÉTAPE CRITIQUE — absente en v1 = bug React non détecté)

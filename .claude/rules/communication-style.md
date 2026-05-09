@@ -146,7 +146,6 @@ Les **6 règles ci-dessus** (et notamment la règle 6 anti-paralysie) s'applique
 
 - `dev-agent`
 - `reviewer-agent`
-- `ops-agent`
 - `perf-optimizer`
 
 **Conséquence pratique** : un sous-agent ne pose JAMAIS de question à Roméo directement. S'il a un doute technique, il décide lui-même selon la règle 6 et le note dans son rapport interne. S'il rencontre un des 4 cas où Roméo doit décider (DB, irréversible, business, financier), il s'arrête et c'est le coordinateur qui tranche ensuite.
@@ -197,7 +196,6 @@ Référencé par :
 - `.claude/INDEX.md` (liste des règles)
 - `.claude/agents/dev-agent.md`
 - `.claude/agents/reviewer-agent.md`
-- `.claude/agents/ops-agent.md`
 - `.claude/agents/perf-optimizer.md`
 
 Complémentaire de `.claude/rules/agent-autonomy-external.md` (l'agent fait tout via CLI/MCP, ne demande jamais à Roméo d'aller sur un site externe). Les deux protègent Roméo : sa charge mentale et son temps.

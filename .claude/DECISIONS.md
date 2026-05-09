@@ -1143,3 +1143,75 @@ Autres FEU ROUGE de l'ancien fichier confirmés déjà couverts ailleurs (pas be
 - Hook `.claude/hooks/check-pr-duplication.sh` ajouté + branché dans `.claude/settings.json` PreToolUse `Bash(gh pr create*)` : bloque la création d'une 2e PR pour le même TASK-ID. En contrepartie, le hook redondant PreToolUse `Bash(git push*)` (qui dupliquait `.husky/pre-push`) est retiré : `validate-affected-apps.sh` continue de tourner via le hook git natif uniquement.
 
 **Référence** : audit complet `docs/scratchpad/dev-plan-2026-05-08-BO-BRAND-CLEANUP-LINKME-NAV.md` puis prompt audit 2026-05-08. Verbatim Roméo : « Tu as bien décomposé le fichier Claude, tous les agents, tous les skills, tu as bien tout regardé en fond et en comble ou tu as fait un audit superficiel ? […] Pas de supposition, que du concret. »
+
+---
+
+## ADR-031 — `[BO-INFRA-DX-001]` Simplification complète expérience de développement (2026-05-09)
+
+**Contexte** : audit exhaustif demandé par Roméo (2026-05-09) après constat que les cycles commit → push → PR → merge prennent 15-20 min au lieu de 3-4 min. 6 agents Explore lancés en parallèle ont cartographié : workflows GitHub Actions (5 fichiers, `quality.yml` = 33 KB / 9 jobs), hooks Husky (4 hooks, dont pre-push qui refait du type-check + lint déjà couvert par la CI), 14 règles Claude (2 222 lignes, avec doublons workflow + no-worktree, communication-style + CLAUDE.md, useEffect dans 3 fichiers), 30 mémoires `feedback_*` dont plusieurs obsolètes, 3 versions de la roadmap marketing (v1, v2, v3) co-existantes, 17 scripts dont `db-schema-snapshot.json` (773 KB versionnés sans consommateur), `ops-agent.md` déprécié mais toujours présent, et 2 scripts `.claude/scripts/` jamais appelés (`check-responsive-violations.sh`, `check-open-prs.sh` mentionné dans CLAUDE.md mais non automatisé).
+
+**Décision Vague 1** (sans risque, faisable en 1 h) :
+
+1. **Hooks locaux** :
+   - `.lintstagedrc.js` : retrait de `--max-warnings=0` sur ESLint (1 warning anodin bloquait le commit). Garde `--fix` pour l'auto-correction.
+   - `.husky/pre-push` : suppression de l'appel à `validate-affected-apps.sh` (refait localement le type-check + lint que la CI fait déjà sur la PR). Hook réduit à `exit 0` pour rester réactivable. Gain : 8-15 s par push.
+
+2. **CI** :
+   - `.github/workflows/quality.yml` job `e2e-full` : retrait du déclenchement automatique sur push main. Conservé en `workflow_dispatch` uniquement. Gain : 5 min payés inutilement à chaque release main pour un job déjà non-bloquant.
+
+3. **Cleanup `.claude/`** :
+   - Suppression `agents/ops-agent.md` (déprécié depuis Niveau 2, chevauche la règle 6 anti-paralysie).
+   - Suppression `scripts/check-responsive-violations.sh` (jamais appelé).
+   - Suppression `work/test-write.md` (vide), `work/ACTIVE.md.template` (template trompeur).
+   - Suppression des 3 versions concurrentes de la roadmap marketing (`work/BO-MKT-roadmap.md` v1, `BO-MKT-roadmap-v2.md`, `BO-BRAND-MKT-roadmap-v3.md`) et de `work/PROMPTS-TO-COPY.md` (152 L de prompts archivés jamais relus). Tous les fichiers `work/` sont de toute façon gitignored ; l'unique vivant reste `NEXT-SPRINTS.md`.
+   - `INDEX.md` : compteur Agents 4 → 3, mention `ops-agent` supprimée.
+   - `CLAUDE.md` racine : retrait de la ligne « Au demarrage de session : `bash .claude/scripts/check-open-prs.sh` » qui n'a jamais été automatisée.
+   - `.gitignore` : retrait de l'exception `!.claude/work/ACTIVE.md.template` devenue inutile.
+
+**Conséquence** :
+
+- Cycle commit → push local : ~30-60 s → 3-5 s sur la machine de Roméo (gain ~90 %).
+- CI sur PR backend : 12-15 min → ~10-12 min (e2e-full retiré du push staging).
+- CI sur push main : -5 min (e2e-full retiré).
+- Charge mentale agent : 14 règles toujours en place mais 1 agent et 4 fichiers `work/` orphelins en moins ; cleanup mémoires `feedback_*` reporté à la Vague 2.
+
+**Vague 2 (incluse dans ce même bloc, pas de PR séparée)** :
+
+- `turbo.json` : 13 secrets serveur (QONTO\_\*, GMAIL\_\*, LINKME_PUBLIC_URL, DATABASE_URL, SUPABASE_SERVICE_ROLE_KEY) sortis de `globalEnv` et déplacés vers `tasks.build.env`. Conséquence : un changement de secret ne casse plus le cache de `lint`, `type-check`, `format`. Lint et type-check restent rapides après chaque mise à jour de secret.
+- Fusion `.claude/rules/no-worktree-solo.md` (137 lignes) → section « Workflow solo » de `.claude/rules/workflow.md`. Rules : 14 → 13. Toutes les références orphelines mises à jour (`CLAUDE.md`, `INDEX.md`, `dev-agent.md`, `commands/pr.md`).
+
+**Vague 3 (incluse dans ce même bloc)** :
+
+- `scripts/db-schema-snapshot.json` (773 KB) confirmé gitignored — déjà dans `.gitignore` mais ajout d'un commentaire explicite « regenerated from live DB via scripts/generate-docs.py ». Le fichier reste utilisable comme fallback offline pour la régénération de doc.
+- **Nouvelle règle dans `workflow.md`** : ZÉRO PUSH ENTRE SOUS-TÂCHES. Sur un chantier multi-phases ou multi-vagues, l'agent ne pousse pas entre les phases. Une seule PR, un seul cycle CI à la toute fin. Suppression de la mémoire utilisateur `feedback_rebase_first_branch_early.md` qui contredisait (elle promouvait « push initial draft immédiat » dans un contexte multi-agents qui n'existe plus en solo). Création de `feedback_no_push_between_phases.md`. Mise à jour de `MEMORY.md` (index utilisateur) et `feedback_no_worktree_solo.md` (référence corrigée vers `workflow.md`).
+
+**Hors périmètre — reporté en PR séparée** (refactor structurel, risque réel) :
+
+- TypeScript Project References : conversion `extends` → `references` dans 5 `tsconfig.json`. Risque de casser les builds. À traiter dans une PR dédiée avec tests progressifs (1 app à la fois). Gain attendu : type-check 90 s → 30-40 s.
+- ESLint cache local sur chaque `apps/*/package.json` : nécessite édition de chaque package.json. Gain modeste (~30 s sur lint local répété), reporté.
+- Compaction règles à 8-10 fichiers (vs 13 actuel) : nécessite analyses de fusion (data-fetching ↔ code-standards, communication-style ↔ CLAUDE.md). À faire dans une PR de cleanup ciblée.
+
+**Référence** : `docs/scratchpad/audit-2026-05-09-experience-dev.md` (rapport exhaustif des 3 vagues).
+
+---
+
+## ADR-032 — `[BO-INFRA-DX-002]` Auto-merge par défaut sur toute PR (2026-05-09)
+
+**Contexte** : juste après le merge de la PR #968 (ADR-031 simplification expérience de développement), Roméo a craqué sur la friction restante : il a dû attendre que je lui demande « merge ? » alors que la CI était déjà verte. Verbatim : « Lorsqu'on fait une CI, ça veut dire qu'on va merge, sinon on ne fait pas de CI. C'est quoi les meilleures pratiques des développeurs seniors ? Je voudrais savoir. ». La règle ancienne `workflow.md` section « Quand MERGER une PR » exigeait « Romeo a validé explicitement le merge final ». La mémoire `feedback_no_auto_merge_staging.md` (2026-05-06) renforçait : « JAMAIS gh pr merge sans que Roméo ait dit explicitement merge ». Cumulé : Roméo devait revenir manuellement valider chaque merge même quand la CI était verte. C'est exactement l'inverse de la pratique senior standard.
+
+**Décision** : adopter le pattern auto-merge par défaut, pratique documentée chez Google, Meta, GitHub, Vercel. Toute PR créée par l'agent est immédiatement assortie de `gh pr merge <num> --auto --squash --delete-branch`. GitHub fusionne automatiquement dès que tous les checks required passent verts. Roméo ne touche à rien.
+
+**Conséquence** :
+
+- `.claude/rules/workflow.md` section « Quand MERGER une PR » réécrite : auto-merge par défaut, procédure obligatoire à la création de PR, critères pour activer auto-merge, cas où l'agent N'active PAS auto-merge (hotfix critique prod, migration DB/RLS, action irréversible, trade financier/facturation).
+- Mémoire `feedback_no_auto_merge_staging.md` supprimée définitivement (incompatible avec la nouvelle règle).
+- Mémoire `feedback_auto_merge_default.md` créée pour ancrer le nouveau comportement.
+- `MEMORY.md` (index utilisateur) mis à jour : entrée « Pas de merge auto » remplacée par « Auto-merge par défaut ».
+- Cycle commit → CI verte → merge devient mécanique : pas de retour humain post-CI.
+
+**Hors périmètre — futurs gains complémentaires** :
+
+- `paths-ignore: ['docs/**', '.claude/**', '*.md']` sur `quality.yml` : skip CI quand seuls des fichiers doc/règles changent. Nécessite gestion des branch protection required checks (workflow phantom de fallback) — à traiter dans une PR dédiée pour ne pas casser la protection main.
+- TypeScript Project References (90 s → 30 s sur type-check).
+
+**Référence** : verbatim Roméo 2026-05-09 « si on fait une CI, c'est pour merger ». Sources externes : pratique standard documentée (GitHub auto-merge feature, Google trunk-based development, Meta diff-based merge).
