@@ -14,7 +14,7 @@
   "scripts": {
     "type-check": "tsc --noEmit",
     "build": "tsc",
-    "lint": "eslint src --max-warnings=0"
+    "lint": "eslint src --max-warnings=0 --cache --cache-location .eslintcache --cache-strategy content"
   },
   "author": "Romeo Dos Santos",
   "license": "MIT",

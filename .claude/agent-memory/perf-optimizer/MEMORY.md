@@ -195,6 +195,16 @@ Pattern positif confirmé : `resetNewCustomerForm` désormais en useCallback (fi
 
 Contrairement à l'audit 2026-03-11, les invalidateQueries dans le BO sont maintenant TOUS corrects (Promise.all ou await). Les 6 occurrences signalées en mars ont été corrigées.
 
+## CI/ESLint/TypeScript — Audit 2026-05-09
+
+Rapport : `docs/scratchpad/dev-report-2026-05-09-audit-eslint-ts-ci.md`
+
+- ESLint config saine (flat config v9). Manque `--cache` dans tous les scripts lint.
+- CI doublon CRITIQUE : quality.yml tourne 3-4x par feature. Supprimer push:[main,staging] = -50% CI.
+- incremental:true actif mais .tsbuildinfo absent du cache CI = no-op. Ajouter au cache = -60-90s.
+- Contradiction tsconfig root : strict:true + noImplicitAny:false. moduleResolution:"node" vs packages "bundler".
+- Knip blocker (docs-governance.yml) RÉSOLU — fichier supprimé.
+
 ## select('\*') BO (49 occurrences, 2026-04-27)
 
 Top hotspots actualisés :
