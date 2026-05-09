@@ -10,8 +10,8 @@
       "main": true
     }
   },
-  "ignoreCommand": "if [ \"$VERCEL_GIT_COMMIT_REF\" != \"main\" ]; then echo 'Skip preview — deploy only on main'; exit 1; fi && npx turbo-ignore --fallback=HEAD^1",
-  "buildCommand": "turbo run build --filter=@verone/back-office",
+  "ignoreCommand": "if [ \"$VERCEL_GIT_COMMIT_REF\" != \"main\" ]; then echo 'Skip preview — deploy only on main'; exit 1; fi",
+  "buildCommand": "pnpm --filter=@verone/back-office... build",
   "devCommand": "npm run dev",
   "installCommand": "pnpm install",
   "outputDirectory": "apps/back-office/.next",
