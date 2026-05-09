@@ -1,5 +1,6 @@
 'use client';
 
+// cache-bust 2026-05-08T23:50 — force Vercel rebuild of [productId] route after manifest desync
 import { TabsNavigation, TabContent } from '@verone/ui';
 
 import { ProductDetailHeader } from './_components/product-detail-header';
