@@ -71,8 +71,7 @@ export function useFetchOrdersList({
           sales_order_items (
             id, product_id, quantity, unit_price_ht, total_ht, tax_rate,
             products (
-              id, name, sku, stock_quantity, stock_real,
-              stock_forecasted_in, stock_forecasted_out
+              id, name, sku
             )
           )
         `
@@ -163,10 +162,6 @@ export function useFetchOrdersList({
               id: string;
               name: string | null;
               sku: string | null;
-              stock_quantity: number | null;
-              stock_real: number | null;
-              stock_forecasted_in: number | null;
-              stock_forecasted_out: number | null;
             } | null;
           }> | null;
         };
