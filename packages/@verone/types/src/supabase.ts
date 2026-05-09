@@ -6707,6 +6707,8 @@ export type Database = {
           item_group_id: string | null;
           manufacturer: string | null;
           margin_percentage: number | null;
+          marketing_blocked: boolean;
+          marketing_blocked_reason: string | null;
           meta_description: string | null;
           meta_title: string | null;
           min_stock: number | null;
@@ -6739,7 +6741,11 @@ export type Database = {
           style: string | null;
           subcategory_id: string | null;
           suitable_rooms: Database['public']['Enums']['room_type'][] | null;
+          supplier_availability_notes: string | null;
+          supplier_availability_status: string;
           supplier_id: string | null;
+          supplier_last_checked_at: string | null;
+          supplier_last_checked_by: string | null;
           supplier_moq: number | null;
           supplier_page_url: string | null;
           supplier_reference: string | null;
@@ -6804,6 +6810,8 @@ export type Database = {
           item_group_id?: string | null;
           manufacturer?: string | null;
           margin_percentage?: number | null;
+          marketing_blocked?: boolean;
+          marketing_blocked_reason?: string | null;
           meta_description?: string | null;
           meta_title?: string | null;
           min_stock?: number | null;
@@ -6836,7 +6844,11 @@ export type Database = {
           style?: string | null;
           subcategory_id?: string | null;
           suitable_rooms?: Database['public']['Enums']['room_type'][] | null;
+          supplier_availability_notes?: string | null;
+          supplier_availability_status?: string;
           supplier_id?: string | null;
+          supplier_last_checked_at?: string | null;
+          supplier_last_checked_by?: string | null;
           supplier_moq?: number | null;
           supplier_page_url?: string | null;
           supplier_reference?: string | null;
@@ -6901,6 +6913,8 @@ export type Database = {
           item_group_id?: string | null;
           manufacturer?: string | null;
           margin_percentage?: number | null;
+          marketing_blocked?: boolean;
+          marketing_blocked_reason?: string | null;
           meta_description?: string | null;
           meta_title?: string | null;
           min_stock?: number | null;
@@ -6933,7 +6947,11 @@ export type Database = {
           style?: string | null;
           subcategory_id?: string | null;
           suitable_rooms?: Database['public']['Enums']['room_type'][] | null;
+          supplier_availability_notes?: string | null;
+          supplier_availability_status?: string;
           supplier_id?: string | null;
+          supplier_last_checked_at?: string | null;
+          supplier_last_checked_by?: string | null;
           supplier_moq?: number | null;
           supplier_page_url?: string | null;
           supplier_reference?: string | null;
