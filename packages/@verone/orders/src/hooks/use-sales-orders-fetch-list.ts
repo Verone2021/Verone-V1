@@ -530,9 +530,15 @@ export function useFetchOrdersList({
 
         const finalOrders = ordersWithCustomers as unknown as SalesOrder[];
         setOrders(finalOrders);
-        // [BO-PERF-TANSTACK-001] Alimenter le cache TanStack sans clé de filtre
-        // (liste complète non filtrée). Les consumers useSalesOrdersQuery restent
-        // en sync sans refetch supplémentaire.
+        // [BO-PERF-TANSTACK-001 + BO-PERF-ORDERS-001] Alimenter le cache TanStack
+        // pour toutes les variantes de filtre (pas seulement la liste sans filtre).
+        // Permet aux remontages composants de lire depuis le cache si < 30s.
+        const channelKey = filters?.channel_id ?? null;
+        queryClient.setQueryData(
+          ['sales_orders', 'list', channelKey],
+          finalOrders
+        );
+        // Rétrocompatibilité : alimentation de la clé legacy sans channelId
         if (!filters || Object.keys(filters).length === 0) {
           queryClient.setQueryData(['sales_orders', 'list'], finalOrders);
         }
