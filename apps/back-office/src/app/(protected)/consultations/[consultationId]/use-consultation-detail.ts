@@ -94,7 +94,7 @@ export function useConsultationDetail(consultationId: string) {
   } = useConsultationHistory(consultationId);
 
   useEffect(() => {
-    void fetchConsultations().catch(error => {
+    void fetchConsultations().catch((error: unknown) => {
       console.error('[ConsultationDetail] Fetch failed:', error);
     });
   }, [fetchConsultations]);
@@ -170,7 +170,7 @@ export function useConsultationDetail(consultationId: string) {
   };
 
   const handleItemsChanged = useCallback(() => {
-    void fetchConsultationItems(consultationId).catch(err => {
+    void fetchConsultationItems(consultationId).catch((err: unknown) => {
       console.error('[ConsultationDetail] Refresh items failed:', err);
     });
   }, [fetchConsultationItems, consultationId]);
@@ -195,7 +195,7 @@ export function useConsultationDetail(consultationId: string) {
         setPdfImages({ consultationImages: [], productImages });
         setShowPdfPreview(true);
       })
-      .catch(err => {
+      .catch((err: unknown) => {
         console.error('[PDF] Image preload failed:', err);
         setShowPdfPreview(true);
       })
@@ -208,7 +208,7 @@ export function useConsultationDetail(consultationId: string) {
       .then(productImages => {
         setEmailPdfImages({ consultationImages: [], productImages });
       })
-      .catch(err => {
+      .catch((err: unknown) => {
         console.error('[Email] Image preload failed:', err);
       })
       .finally(() => {
@@ -300,7 +300,7 @@ export function useConsultationDetail(consultationId: string) {
 
       setOrderForQuoteModal(orderData);
       setShowQuoteModal(true);
-    })().catch(err => {
+    })().catch((err: unknown) => {
       console.error('[ConsultationDetail] Open quote modal failed:', err);
     });
   };
@@ -311,7 +311,7 @@ export function useConsultationDetail(consultationId: string) {
     void (async () => {
       await refetchLinkedQuotes();
       await fetchHistory();
-    })().catch(err => {
+    })().catch((err: unknown) => {
       console.error('[ConsultationDetail] Refresh failed:', err);
     });
     window.open(`/factures/devis/${quoteId}`, '_blank');
@@ -333,7 +333,7 @@ export function useConsultationDetail(consultationId: string) {
             await fetch(`/api/qonto/quotes/${quote.qonto_invoice_id}`, {
               method: 'DELETE',
             });
-          } catch (err) {
+          } catch (err: unknown) {
             console.error('[ConsultationDetail] Qonto delete failed:', err);
             // Continue with local delete even if Qonto fails
           }
@@ -343,7 +343,7 @@ export function useConsultationDetail(consultationId: string) {
           await refetchLinkedQuotes();
           await fetchHistory();
         }
-      })().catch(err => {
+      })().catch((err: unknown) => {
         console.error('[ConsultationDetail] Delete quote failed:', err);
       });
     }
