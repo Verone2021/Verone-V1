@@ -5,16 +5,17 @@ import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { QuickSourcingModal, useSourcingProducts } from '@verone/products';
-import { ButtonV2 } from '@verone/ui';
+import { ButtonV2, Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import { colors, spacing } from '@verone/ui/design-system';
 import { debounce } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
-import { Plus } from 'lucide-react';
+import { Plus, Package, Chrome } from 'lucide-react';
 
 import { SourcingCardView } from './SourcingCardView';
 import { SourcingFilters } from './SourcingFilters';
 import { SourcingKanbanView } from './SourcingKanbanView';
 import { SourcingKpiCards } from './SourcingKpiCards';
+import { SourcingPluginTab } from './SourcingPluginTab';
 import { SourcingProductList } from './SourcingProductList';
 import type { SourcingViewMode } from './SourcingViewToggle';
 import { SourcingViewToggle } from './SourcingViewToggle';
@@ -34,6 +35,7 @@ export default function SourcingPage() {
   const [isQuickSourcingModalOpen, setIsQuickSourcingModalOpen] =
     useState(false);
   const [completedThisMonth, setCompletedThisMonth] = useState(0);
+  const [activeTab, setActiveTab] = useState<'produits' | 'plugin'>('produits');
 
   const debouncedSearch = useMemo(
     () =>
@@ -192,77 +194,102 @@ export default function SourcingPage() {
             Gestion des produits à sourcer et validation catalogue
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <SourcingViewToggle view={viewMode} onViewChange={setViewMode} />
-          <ButtonV2
-            variant="primary"
-            icon={Plus}
-            onClick={() => setIsQuickSourcingModalOpen(true)}
-          >
-            Nouveau Sourcing
-          </ButtonV2>
-        </div>
+        {activeTab === 'produits' && (
+          <div className="flex items-center gap-3">
+            <SourcingViewToggle view={viewMode} onViewChange={setViewMode} />
+            <ButtonV2
+              variant="primary"
+              icon={Plus}
+              onClick={() => setIsQuickSourcingModalOpen(true)}
+            >
+              Nouveau Sourcing
+            </ButtonV2>
+          </div>
+        )}
       </div>
 
-      <SourcingKpiCards stats={stats} loading={loading} />
+      <Tabs
+        value={activeTab}
+        onValueChange={value => setActiveTab(value as 'produits' | 'plugin')}
+        className="w-full"
+      >
+        <TabsList variant="underline" className="w-full justify-start border-b">
+          <TabsTrigger value="produits" variant="underline">
+            <Package className="h-4 w-4 mr-2" />
+            Produits
+          </TabsTrigger>
+          <TabsTrigger value="plugin" variant="underline">
+            <Chrome className="h-4 w-4 mr-2" />
+            Plugin navigateur
+          </TabsTrigger>
+        </TabsList>
 
-      <SourcingFilters
-        searchTerm={searchTerm}
-        onSearchChange={value => {
-          setSearchTerm(value);
-          debouncedSearch(value);
-        }}
-        statusFilter={statusFilter}
-        onStatusChange={setStatusFilter}
-        sourcingTypeFilter={sourcingTypeFilter}
-        onSourcingTypeChange={setSourcingTypeFilter}
-        supplierFilter={supplierFilter}
-        onSupplierChange={setSupplierFilter}
-        pipelineFilter={pipelineFilter}
-        onPipelineChange={setPipelineFilter}
-        priorityFilter={priorityFilter}
-        onPriorityChange={setPriorityFilter}
-      />
+        <TabsContent value="produits" className="space-y-6 pt-6">
+          <SourcingKpiCards stats={stats} loading={loading} />
 
-      {viewMode === 'list' && (
-        <SourcingProductList
-          products={filteredAndSortedProducts}
-          sortBy={sortBy}
-          sortDir={sortDir}
-          onSort={col => {
-            if (sortBy === col) {
-              setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
-            } else {
-              setSortBy(col);
-              setSortDir('desc');
-            }
-          }}
-          loading={loading}
-          error={error}
-          onView={id => router.push(`/produits/sourcing/produits/${id}`)}
-          onViewSupplier={supplierId =>
-            router.push(`/organisations/${supplierId}`)
-          }
-          onEdit={id => router.push(`/produits/sourcing/produits/${id}`)}
-          onValidate={handleValidate}
-          onArchive={handleArchive}
-          onDelete={handleDelete}
-        />
-      )}
+          <SourcingFilters
+            searchTerm={searchTerm}
+            onSearchChange={value => {
+              setSearchTerm(value);
+              debouncedSearch(value);
+            }}
+            statusFilter={statusFilter}
+            onStatusChange={setStatusFilter}
+            sourcingTypeFilter={sourcingTypeFilter}
+            onSourcingTypeChange={setSourcingTypeFilter}
+            supplierFilter={supplierFilter}
+            onSupplierChange={setSupplierFilter}
+            pipelineFilter={pipelineFilter}
+            onPipelineChange={setPipelineFilter}
+            priorityFilter={priorityFilter}
+            onPriorityChange={setPriorityFilter}
+          />
 
-      {viewMode === 'kanban' && (
-        <SourcingKanbanView
-          products={filteredAndSortedProducts}
-          onView={id => router.push(`/produits/sourcing/produits/${id}`)}
-        />
-      )}
+          {viewMode === 'list' && (
+            <SourcingProductList
+              products={filteredAndSortedProducts}
+              sortBy={sortBy}
+              sortDir={sortDir}
+              onSort={col => {
+                if (sortBy === col) {
+                  setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+                } else {
+                  setSortBy(col);
+                  setSortDir('desc');
+                }
+              }}
+              loading={loading}
+              error={error}
+              onView={id => router.push(`/produits/sourcing/produits/${id}`)}
+              onViewSupplier={supplierId =>
+                router.push(`/organisations/${supplierId}`)
+              }
+              onEdit={id => router.push(`/produits/sourcing/produits/${id}`)}
+              onValidate={handleValidate}
+              onArchive={handleArchive}
+              onDelete={handleDelete}
+            />
+          )}
 
-      {viewMode === 'card' && (
-        <SourcingCardView
-          products={filteredAndSortedProducts}
-          onView={id => router.push(`/produits/sourcing/produits/${id}`)}
-        />
-      )}
+          {viewMode === 'kanban' && (
+            <SourcingKanbanView
+              products={filteredAndSortedProducts}
+              onView={id => router.push(`/produits/sourcing/produits/${id}`)}
+            />
+          )}
+
+          {viewMode === 'card' && (
+            <SourcingCardView
+              products={filteredAndSortedProducts}
+              onView={id => router.push(`/produits/sourcing/produits/${id}`)}
+            />
+          )}
+        </TabsContent>
+
+        <TabsContent value="plugin" className="pt-6">
+          <SourcingPluginTab />
+        </TabsContent>
+      </Tabs>
 
       <QuickSourcingModal
         open={isQuickSourcingModalOpen}
