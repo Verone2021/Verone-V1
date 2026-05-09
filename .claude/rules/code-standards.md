@@ -17,6 +17,64 @@ globs: apps/**/*.tsx, apps/**/*.ts, packages/**/*.tsx, packages/**/*.ts
 - TOUJOURS typer le client Supabase : `createClient<Database>()`
 - TOUJOURS `await queryClient.invalidateQueries()` dans `onSuccess` de `useMutation`
 
+## ANTI-RACCOURCIS — REFLEXE SENIOR (lecture obligatoire avant tout fix CI rouge)
+
+**Citation Anthropic best-practices** (`code.claude.com/docs/en/best-practices`,
+section « Give Claude a way to verify its work ») :
+
+> _« the build fails with this error: [paste error]. fix it and verify the
+> build succeeds. **Address the root cause, don't suppress the error.** »_
+
+Quand une CI tourne rouge, un warning ESLint apparaît, un seuil
+type-coverage ne passe pas, **on corrige la cause racine, on ne masque pas
+le signal.** Ce n'est PAS du pragmatisme, c'est la cause #1 d'accumulation
+de dette technique invisible.
+
+### INTERDIT — réflexes junior à éliminer
+
+- ❌ Baisser un seuil pour faire passer la CI (`--at-least 99.22 → 99.0`,
+  `--max-warnings=0 → 5`, etc.) — la marge cache la dette
+- ❌ `// @ts-ignore` sans justification — utiliser `// @ts-expect-error: <raison ≥ 20 caractères>`
+  qui se nettoie automatiquement quand le bug sous-jacent est corrigé
+  ([typescript-eslint.io/rules/prefer-ts-expect-error](https://typescript-eslint.io/rules/prefer-ts-expect-error/))
+- ❌ `// eslint-disable-next-line` sans commentaire explicatif sur la même ligne
+- ❌ `as any` ou `as unknown as X` — utiliser un type guard ou Zod
+- ❌ `!` (non-null assertion) sauf si vraiment nécessaire ET commentée
+- ❌ `.skip` / `xfail` sur un test qui flake — corriger la cause du flake
+
+### OBLIGATOIRE — réflexe senior
+
+1. **Investiguer** : `gh run view <id> --log-failed | tail -50` pour lire l'erreur réelle
+2. **Localiser** : identifier les fichiers + lignes fautifs
+3. **Corriger** la cause racine (typer correctement, fixer la logique, etc.)
+4. **Vérifier en local** : le check qui a fail doit passer en local (`pnpm --filter <app> lint`,
+   `pnpm --filter <app> type-check`, `pnpm --filter <app> type-coverage`)
+5. **Pousser** seulement quand vert localement
+
+### Outils de référence
+
+- **Skill `/fix-warnings`** (`.claude/commands/fix-warnings.md`) — workflow 6 phases pour les warnings ESLint
+- **Skill `/simplify`** — revue qualité après modification
+- **Type guards + Zod** plutôt que `as`
+- **Types `Database` de `@verone/types`** plutôt que `any` sur retours Supabase
+
+### Référence externe
+
+- Limite reconnue des règles markdown : adhérence d'environ 60-70 % avec
+  un CLAUDE.md long, déclin linéaire avec le nombre d'instructions
+  ([GitHub anthropics/claude-code#32163](https://github.com/anthropics/claude-code/issues/32163)).
+  C'est pourquoi cette règle est doublée par des règles ESLint déterministes
+  (`@typescript-eslint/ban-ts-comment` strict, `reportUnusedDisableDirectives: 'error'`)
+  qui s'exécutent dans la CI (jamais en hook bloquant pre-commit).
+
+### Incident référence
+
+2026-05-09 PR #985 (Type Coverage Gate) : 45 `any` implicites dans 5
+fichiers `consultations/[consultationId]/`. Coordinateur a proposé
+« je baisse le seuil de 99.22 à 99.0 ». Roméo a refusé : « je veux tout
+corriger ». Délégué à dev-agent → 5 fichiers typés proprement avec types
+`Database`, coverage passé de 99.22 → 99.24 %. Voir ADR-033.
+
 ## STANDARDS
 
 ### Limites de Taille

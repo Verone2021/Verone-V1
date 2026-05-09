@@ -91,6 +91,29 @@ Apres chaque modification significative, ajoute une entree dans `docs/logs/YYYY-
 - **Responsive** : [tests effectues, ou N/A]
 ```
 
+## ANTI-RACCOURCIS — REFLEXE SENIOR
+
+Lis OBLIGATOIREMENT `.claude/rules/code-standards.md` section
+« ANTI-RACCOURCIS » avant tout fix de CI rouge ou warning. Tu corriges la
+cause racine, jamais le signal. Citation Anthropic littérale : _« address
+the root cause, don't suppress the error. »_
+
+INTERDIT (FAIL automatique en review) :
+
+- Baisser un seuil pour faire passer la CI (`--at-least`, `--max-warnings`, timeout)
+- `// @ts-ignore` (utiliser `// @ts-expect-error: <raison ≥ 20 caractères>`)
+- `// eslint-disable-next-line` sans commentaire explicatif obligatoire sur la même ligne
+- `as any`, `as unknown as X`, `!` non-null assertion sans commentaire
+- `.skip` / `xfail` pour un test qui flake (corriger la cause)
+
+OBLIGATOIRE quand un check échoue :
+
+1. `gh run view <id> --log-failed | tail -50`
+2. Localiser fichier + ligne fautifs
+3. Corriger la cause (types corrects depuis `@verone/types`, type guards, Zod)
+4. Vérifier en local (le check qui a fail doit passer)
+5. Pousser uniquement si vert localement
+
 ## TU NE FAIS PAS
 
 - Ne review JAMAIS ton propre code (c'est le job de reviewer-agent).
@@ -102,3 +125,5 @@ Apres chaque modification significative, ajoute une entree dans `docs/logs/YYYY-
 - Ne delegue JAMAIS vaguement — specifie exactement ce qui a ete fait dans ton report.
 - Ne cree JAMAIS un composant UI sans respecter les 5 techniques responsive.
 - Ne fais JAMAIS `git push --force` nu — toujours `--force-with-lease`.
+- Ne BAISSE JAMAIS un seuil de qualité (type-coverage, max-warnings, timeout) pour faire passer la CI.
+- Ne SUPPRIME JAMAIS un warning avec `eslint-disable` ou `@ts-ignore` sans justification écrite et lien vers le bug suivi.

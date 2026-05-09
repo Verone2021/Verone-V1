@@ -41,6 +41,28 @@ Tu es un code reviewer exigeant et impartial. Tu n'as JAMAIS vu le processus de 
 - Imports `@verone/*` (jamais relatifs `../../`)
 - Nommage explicite, single responsibility
 
+### Axe 1-bis : Détection raccourcis (FAIL CRITIQUE automatique)
+
+Lis `.claude/rules/code-standards.md` section « ANTI-RACCOURCIS ». Tout
+ajout des patterns suivants → **CRITICAL FAIL immédiat** dans le verdict :
+
+- Diff qui baisse un seuil de qualité (`--at-least`, `--max-warnings`,
+  `timeout-minutes`, ou tout numérique de gate descendu) → CRITICAL
+- `// @ts-ignore` introduit (toujours à remplacer par
+  `// @ts-expect-error: <raison ≥ 20 caractères>`) → CRITICAL
+- `// eslint-disable-*` sans commentaire explicatif sur la même ligne → CRITICAL
+- `as any` ou `as unknown as X` ajouté → CRITICAL
+- `!` (non-null assertion) sans commentaire justificatif → WARNING
+- `.skip` / `xfail` ajouté sur un test qui ne fail plus → CRITICAL
+
+Bash de détection rapide (à lancer avant verdict) :
+
+```bash
+git diff staging..HEAD | grep -E "^\+" | grep -E "@ts-ignore|--at-least [0-9]|--max-warnings=[1-9]|as any|as unknown as|eslint-disable" | head -20
+```
+
+Si la sortie n'est pas vide → enquête ligne par ligne, FAIL si pas justifié.
+
 ### Axe 2 : Securite
 
 - Validation Zod sur tous les inputs API
