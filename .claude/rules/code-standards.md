@@ -42,21 +42,29 @@ de dette technique invisible.
 - ❌ `!` (non-null assertion) sauf si vraiment nécessaire ET commentée
 - ❌ `.skip` / `xfail` sur un test qui flake — corriger la cause du flake
 
-### OBLIGATOIRE — réflexe senior
+### OBLIGATOIRE — réflexe senior (workflow systématique)
 
 1. **Investiguer** : `gh run view <id> --log-failed | tail -50` pour lire l'erreur réelle
-2. **Localiser** : identifier les fichiers + lignes fautifs
-3. **Corriger** la cause racine (typer correctement, fixer la logique, etc.)
-4. **Vérifier en local** : le check qui a fail doit passer en local (`pnpm --filter <app> lint`,
+2. **Identifier le type de check qui a fail** :
+   - **Lint warnings ESLint** → **lancer `/fix-warnings` IMMÉDIATEMENT** (workflow 6 phases dans `.claude/commands/fix-warnings.md` : Discovery → Analysis → Planning → Implementation → Validation → TypeScript). C'est le réflexe par défaut, pas une option.
+   - **Type-check `tsc`** → lire l'erreur, corriger avec types Database (`@verone/types`), type guards, Zod
+   - **Type-coverage `--at-least`** → typer les expressions `any` implicites listées par CI, corriger avec types stricts (jamais baisser le seuil, jamais `--ignore-files` sur du code qu'on écrit ; OK seulement sur des fichiers auto-générés type `.next/types/`)
+   - **Test échoué** → comprendre le test, corriger la cause (jamais `.skip`)
+3. **Localiser** : identifier les fichiers + lignes fautifs (le log CI les liste)
+4. **Corriger** la cause racine (typer correctement, fixer la logique, etc.)
+5. **Vérifier en local** : le check qui a fail doit passer en local (`pnpm --filter <app> lint`,
    `pnpm --filter <app> type-check`, `pnpm --filter <app> type-coverage`)
-5. **Pousser** seulement quand vert localement
+6. **Pousser** seulement quand vert localement
 
-### Outils de référence
+### Outils — par type de problème
 
-- **Skill `/fix-warnings`** (`.claude/commands/fix-warnings.md`) — workflow 6 phases pour les warnings ESLint
-- **Skill `/simplify`** — revue qualité après modification
-- **Type guards + Zod** plutôt que `as`
-- **Types `Database` de `@verone/types`** plutôt que `any` sur retours Supabase
+| Symptôme CI               | Skill / outil par défaut                                                                            |
+| ------------------------- | --------------------------------------------------------------------------------------------------- |
+| Warnings ESLint           | **`/fix-warnings`** (obligatoire — workflow 6 phases documenté)                                     |
+| Revue qualité après modif | `/simplify`                                                                                         |
+| Cast forcé `any`          | Type guards + Zod (jamais `as any`)                                                                 |
+| Retour Supabase non typé  | Types `Database` de `@verone/types`                                                                 |
+| `@ts-ignore` tentant      | `// @ts-expect-error: <raison ≥ 20 caractères>` (auto-nettoyé quand le bug sous-jacent est corrigé) |
 
 ### Référence externe
 
