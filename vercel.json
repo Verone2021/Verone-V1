@@ -10,7 +10,7 @@
       "main": true
     }
   },
-  "ignoreCommand": "if [ \"$VERCEL_GIT_COMMIT_REF\" != \"main\" ]; then echo 'Skip preview — deploy only on main'; exit 1; fi",
+  "ignoreCommand": "if [ \"$VERCEL_GIT_COMMIT_REF\" = \"main\" ]; then echo 'Build on main'; exit 1; else echo 'Skip preview — only main builds'; exit 0; fi",
   "buildCommand": "pnpm --filter=@verone/back-office... build",
   "devCommand": "npm run dev",
   "installCommand": "pnpm install",
