@@ -29,8 +29,6 @@ Langue : francais. Code/commits : anglais.
 3. Le playbook associe dans `.claude/playbooks/` si la tache en reference un
 4. Le(s) fichier(s) `.claude/rules/*` pertinents pour le domaine
 
-Au demarrage de session : `bash .claude/scripts/check-open-prs.sh`
-
 Avant de coder : lire le schema DB du domaine (`docs/current/database/schema/`),
 3 fichiers similaires (Triple Lecture), `git log`, le `CLAUDE.md` de l'app.
 
@@ -73,12 +71,11 @@ Tests Playwright 5 tailles avant PR UI : 375 / 768 / 1024 / 1440 / 1920 px.
 
 ## DELEGATION AUTOMATIQUE
 
-| Tache                             | Agent            | Quand l'invoquer                                           |
-| --------------------------------- | ---------------- | ---------------------------------------------------------- |
-| Code / implementation gros sprint | `dev-agent`      | Tâche > 5 outils ou > 10 fichiers                          |
-| Audit qualité avant gros merge    | `reviewer-agent` | Toujours avant promote ready d'un bloc                     |
-| Push / PR / merge (gros bloc)     | `ops-agent`      | **Optionnel** — bloc 3+ sprints, release main, recovery CI |
-| Audit perf / dead code / bundle   | `perf-optimizer` | Sur demande Roméo                                          |
+| Tache                             | Agent            | Quand l'invoquer                       |
+| --------------------------------- | ---------------- | -------------------------------------- |
+| Code / implementation gros sprint | `dev-agent`      | Tâche > 5 outils ou > 10 fichiers      |
+| Audit qualité avant gros merge    | `reviewer-agent` | Toujours avant promote ready d'un bloc |
+| Audit perf / dead code / bundle   | `perf-optimizer` | Sur demande Roméo                      |
 
 Le coordinateur fait git/CI/petits fixes **directement** (cf. règle 6
 anti-paralysie). Type-check + build + tests sont déjà couverts par la CI

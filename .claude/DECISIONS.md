@@ -1143,3 +1143,41 @@ Autres FEU ROUGE de l'ancien fichier confirmés déjà couverts ailleurs (pas be
 - Hook `.claude/hooks/check-pr-duplication.sh` ajouté + branché dans `.claude/settings.json` PreToolUse `Bash(gh pr create*)` : bloque la création d'une 2e PR pour le même TASK-ID. En contrepartie, le hook redondant PreToolUse `Bash(git push*)` (qui dupliquait `.husky/pre-push`) est retiré : `validate-affected-apps.sh` continue de tourner via le hook git natif uniquement.
 
 **Référence** : audit complet `docs/scratchpad/dev-plan-2026-05-08-BO-BRAND-CLEANUP-LINKME-NAV.md` puis prompt audit 2026-05-08. Verbatim Roméo : « Tu as bien décomposé le fichier Claude, tous les agents, tous les skills, tu as bien tout regardé en fond et en comble ou tu as fait un audit superficiel ? […] Pas de supposition, que du concret. »
+
+---
+
+## ADR-031 — `[BO-INFRA-DX-001]` Vague 1 — Simplification expérience de développement (2026-05-09)
+
+**Contexte** : audit exhaustif demandé par Roméo (2026-05-09) après constat que les cycles commit → push → PR → merge prennent 15-20 min au lieu de 3-4 min. 6 agents Explore lancés en parallèle ont cartographié : workflows GitHub Actions (5 fichiers, `quality.yml` = 33 KB / 9 jobs), hooks Husky (4 hooks, dont pre-push qui refait du type-check + lint déjà couvert par la CI), 14 règles Claude (2 222 lignes, avec doublons workflow + no-worktree, communication-style + CLAUDE.md, useEffect dans 3 fichiers), 30 mémoires `feedback_*` dont plusieurs obsolètes, 3 versions de la roadmap marketing (v1, v2, v3) co-existantes, 17 scripts dont `db-schema-snapshot.json` (773 KB versionnés sans consommateur), `ops-agent.md` déprécié mais toujours présent, et 2 scripts `.claude/scripts/` jamais appelés (`check-responsive-violations.sh`, `check-open-prs.sh` mentionné dans CLAUDE.md mais non automatisé).
+
+**Décision Vague 1** (sans risque, faisable en 1 h) :
+
+1. **Hooks locaux** :
+   - `.lintstagedrc.js` : retrait de `--max-warnings=0` sur ESLint (1 warning anodin bloquait le commit). Garde `--fix` pour l'auto-correction.
+   - `.husky/pre-push` : suppression de l'appel à `validate-affected-apps.sh` (refait localement le type-check + lint que la CI fait déjà sur la PR). Hook réduit à `exit 0` pour rester réactivable. Gain : 8-15 s par push.
+
+2. **CI** :
+   - `.github/workflows/quality.yml` job `e2e-full` : retrait du déclenchement automatique sur push main. Conservé en `workflow_dispatch` uniquement. Gain : 5 min payés inutilement à chaque release main pour un job déjà non-bloquant.
+
+3. **Cleanup `.claude/`** :
+   - Suppression `agents/ops-agent.md` (déprécié depuis Niveau 2, chevauche la règle 6 anti-paralysie).
+   - Suppression `scripts/check-responsive-violations.sh` (jamais appelé).
+   - Suppression `work/test-write.md` (vide), `work/ACTIVE.md.template` (template trompeur).
+   - Suppression des 3 versions concurrentes de la roadmap marketing (`work/BO-MKT-roadmap.md` v1, `BO-MKT-roadmap-v2.md`, `BO-BRAND-MKT-roadmap-v3.md`) et de `work/PROMPTS-TO-COPY.md` (152 L de prompts archivés jamais relus). Tous les fichiers `work/` sont de toute façon gitignored ; l'unique vivant reste `NEXT-SPRINTS.md`.
+   - `INDEX.md` : compteur Agents 4 → 3, mention `ops-agent` supprimée.
+   - `CLAUDE.md` racine : retrait de la ligne « Au demarrage de session : `bash .claude/scripts/check-open-prs.sh` » qui n'a jamais été automatisée.
+   - `.gitignore` : retrait de l'exception `!.claude/work/ACTIVE.md.template` devenue inutile.
+
+**Conséquence** :
+
+- Cycle commit → push local : ~30-60 s → 3-5 s sur la machine de Roméo (gain ~90 %).
+- CI sur PR backend : 12-15 min → ~10-12 min (e2e-full retiré du push staging).
+- CI sur push main : -5 min (e2e-full retiré).
+- Charge mentale agent : 14 règles toujours en place mais 1 agent et 4 fichiers `work/` orphelins en moins ; cleanup mémoires `feedback_*` reporté à la Vague 2.
+
+**Hors périmètre Vague 1** (à traiter ensuite) :
+
+- Vague 2 : fusion `no-worktree-solo.md` → `workflow.md`, ESLint cache, scoping `globalEnv` Turbo, compaction `DECISIONS.md`.
+- Vague 3 : TypeScript Project References, gitignore de `db-schema-snapshot.json`, compaction règles à 8-10 fichiers.
+
+**Référence** : `docs/scratchpad/audit-2026-05-09-experience-dev.md` (rapport exhaustif des 3 vagues).

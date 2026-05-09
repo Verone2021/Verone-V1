@@ -143,7 +143,7 @@ incident de lenteur perçue par Roméo) :
 **Exception** : hotfix critique en production (page cassée, paiement
 bloqué). Tu préviens Roméo, il décide. Sinon : pas de merge intermédiaire.
 
-**S'applique à TOUS les agents** : coordinateur, dev-agent, ops-agent,
+**S'applique à TOUS les agents** : coordinateur, dev-agent,
 reviewer-agent, perf-optimizer. Si un agent propose un merge en cours
 de chantier, le coordinateur refuse et continue les commits.
 

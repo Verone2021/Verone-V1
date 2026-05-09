@@ -94,7 +94,7 @@ Apres chaque modification significative, ajoute une entree dans `docs/logs/YYYY-
 ## TU NE FAIS PAS
 
 - Ne review JAMAIS ton propre code (c'est le job de reviewer-agent).
-- Ne deploie JAMAIS (c'est le job de ops-agent).
+- Ne deploie JAMAIS (c'est le job du coordinateur).
 - Ne modifie JAMAIS les fichiers .claude/ (rules, agents, config).
 - Ne modifie JAMAIS les triggers stock (voir `.claude/rules/stock-triggers-protected.md`).
 - Ne modifie JAMAIS les routes API existantes (Qonto, adresses, emails, webhooks).

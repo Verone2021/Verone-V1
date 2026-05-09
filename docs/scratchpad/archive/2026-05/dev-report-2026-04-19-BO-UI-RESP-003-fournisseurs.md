@@ -17,23 +17,23 @@ Runtime Playwright a tester par parent.
 
 ## Fichiers modifies
 
-| Fichier | Lignes | Statut |
-|---------|--------|--------|
-| `FournisseursTable.tsx` | 393 | MODIFIE — orchestrateur ResponsiveDataView |
-| `FournisseurActions.tsx` | 154 | CREE — ResponsiveActionMenu zero hooks |
-| `FournisseurMobileCard.tsx` | 161 | CREE — carte mobile |
-| `use-fournisseurs-filters.ts` | 193 | MODIFIE — orders: PurchaseOrderExtended[] |
-| `use-fournisseurs-page.ts` | 290 | MODIFIE — cast propre + import PurchaseOrderExtended |
+| Fichier                       | Lignes | Statut                                               |
+| ----------------------------- | ------ | ---------------------------------------------------- |
+| `FournisseursTable.tsx`       | 393    | MODIFIE — orchestrateur ResponsiveDataView           |
+| `FournisseurActions.tsx`      | 154    | CREE — ResponsiveActionMenu zero hooks               |
+| `FournisseurMobileCard.tsx`   | 161    | CREE — carte mobile                                  |
+| `use-fournisseurs-filters.ts` | 193    | MODIFIE — orders: PurchaseOrderExtended[]            |
+| `use-fournisseurs-page.ts`    | 290    | MODIFIE — cast propre + import PurchaseOrderExtended |
 
 ---
 
 ## Hooks audit
 
-| Fichier | Hooks | Position | Verdict |
-|---------|-------|----------|---------|
-| `FournisseursTable.tsx` | Aucun hook | N/A | OK — orchestrateur pur |
-| `FournisseurMobileCard.tsx` | Aucun hook | N/A | OK — composant pur |
-| `FournisseurActions.tsx` | Aucun hook | N/A | OK — composant pur |
+| Fichier                     | Hooks      | Position | Verdict                |
+| --------------------------- | ---------- | -------- | ---------------------- |
+| `FournisseursTable.tsx`     | Aucun hook | N/A      | OK — orchestrateur pur |
+| `FournisseurMobileCard.tsx` | Aucun hook | N/A      | OK — composant pur     |
+| `FournisseurActions.tsx`    | Aucun hook | N/A      | OK — composant pur     |
 
 Les callbacks de navigation (onView, onEdit, etc.) sont passes en props depuis page.tsx.
 Aucun hook dans une lambda, aucun hook conditionnel, aucun hook apres early return.
@@ -60,6 +60,7 @@ Aucun hook dans une lambda, aucun hook conditionnel, aucun hook apres early retu
 et `order as PurchaseOrderExtended` dans use-fournisseurs-filters.ts
 
 **Apres** :
+
 - `FournisseursTableProps.filteredOrders: PurchaseOrderExtended[]` — typage fort
 - `use-fournisseurs-filters.ts` param `orders: PurchaseOrderExtended[]` — cast supprime
 - `use-fournisseurs-page.ts` : cast unique `orders as PurchaseOrderExtended[]` avec

@@ -96,7 +96,6 @@ next-env.d.ts
 .claude/*-temp*
 .claude/*.log
 .claude/work/*
-!.claude/work/ACTIVE.md.template
 
 # Local runbook & secrets vault — never committed (one per machine)
 .claude/local/
