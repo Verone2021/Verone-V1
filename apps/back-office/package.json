@@ -9,6 +9,7 @@
     "lint": "eslint . --max-warnings=0 --cache --cache-location .eslintcache --cache-strategy content",
     "lint:fix": "eslint . --fix",
     "type-check": "tsc --noEmit",
+    "type-coverage": "type-coverage --strict --at-least 99.22 --ignore-files \"**/.next/**\"",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

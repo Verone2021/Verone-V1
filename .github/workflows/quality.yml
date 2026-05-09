@@ -218,6 +218,30 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
+      # ---- Type Coverage Gate (baseline-protected) ----
+      # Bloque le merge si la couverture de types descend sous le seuil par app.
+      # Méthode senior : pas de big bang strict mode — verrou progressif sur le
+      # pourcentage actuel. Le code legacy reste tel quel, mais toute régression
+      # (nouveau `any` implicite introduit) bloque la PR.
+      # Baselines mesurées 2026-05-09 : back-office 99.22, linkme 99.56, site-internet 98.12
+      - name: Type Coverage — back-office
+        if: needs.detect-changes.outputs.back-office == 'true' || needs.detect-changes.outputs.packages == 'true'
+        run: pnpm --filter @verone/back-office type-coverage
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+
+      - name: Type Coverage — linkme
+        if: needs.detect-changes.outputs.linkme == 'true' || needs.detect-changes.outputs.packages == 'true'
+        run: pnpm --filter @verone/linkme type-coverage
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+
+      - name: Type Coverage — site-internet
+        if: needs.detect-changes.outputs.site-internet == 'true' || needs.detect-changes.outputs.packages == 'true'
+        run: pnpm --filter @verone/site-internet type-coverage
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+
       # ---- Upload back-office .next pour les jobs E2E ----
       # Évite que chaque job E2E refasse un `next build` (~5 min) alors que
       # ce job a déjà produit le bundle. Pattern senior shared-build.

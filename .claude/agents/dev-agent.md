@@ -109,10 +109,13 @@ INTERDIT (FAIL automatique en review) :
 OBLIGATOIRE quand un check échoue :
 
 1. `gh run view <id> --log-failed | tail -50`
-2. Localiser fichier + ligne fautifs
-3. Corriger la cause (types corrects depuis `@verone/types`, type guards, Zod)
-4. Vérifier en local (le check qui a fail doit passer)
-5. Pousser uniquement si vert localement
+2. **Identifier le type de check** et appliquer le bon outil :
+   - **Warnings ESLint** → lancer **`/fix-warnings`** IMMÉDIATEMENT (workflow 6 phases dans `.claude/commands/fix-warnings.md`). Réflexe par défaut, pas une option.
+   - **Type-check / type-coverage** → corriger avec types `Database` (`@verone/types`), type guards, Zod
+3. Localiser fichier + ligne fautifs
+4. Corriger la cause (jamais raccourci)
+5. Vérifier en local (le check qui a fail doit passer)
+6. Pousser uniquement si vert localement
 
 ## TU NE FAIS PAS
 

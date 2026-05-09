@@ -50,7 +50,8 @@ export function ConsultationOrderDialog({
           totalHT: 0,
         });
       }
-      const group = groups.get(key)!;
+      const group = groups.get(key);
+      if (!group) continue;
       group.items.push(item);
       const costPrice =
         item.cost_price_override ?? item.product?.cost_price ?? 0;
