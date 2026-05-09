@@ -110,35 +110,118 @@ export function useSalesOrdersFetch({
           >;
         };
 
+        // [BO-PERF-ORDERS-001] Parallélisation : customer, creator, transactions
+        // sont tous indépendants de la requête principale. On les lance ensemble.
+        type MatchInfo = {
+          transaction_id: string;
+          label: string;
+          amount: number;
+          emitted_at: string | null;
+          attachment_ids: string[] | null;
+        };
+
+        const orgPromise: Promise<Record<string, unknown> | null> =
+          orderData.customer_type === 'organization' && orderData.customer_id
+            ? (async () => {
+                try {
+                  const { data } = await supabase
+                    .from('organisations')
+                    .select(
+                      'id, legal_name, trade_name, email, phone, website, address_line1, address_line2, postal_code, city, region, country, siret, vat_number, billing_address_line1, billing_address_line2, billing_city, billing_postal_code, billing_country, shipping_address_line1, shipping_address_line2, shipping_city, shipping_postal_code, shipping_country, has_different_shipping_address, enseigne_id, is_enseigne_parent'
+                    )
+                    .eq('id', orderData.customer_id!)
+                    .single();
+                  return data as Record<string, unknown> | null;
+                } catch {
+                  return null;
+                }
+              })()
+            : Promise.resolve(null);
+
+        const individualPromise: Promise<Record<string, unknown> | null> =
+          orderData.customer_type === 'individual' &&
+          orderData.individual_customer_id
+            ? (async () => {
+                try {
+                  const { data } = await supabase
+                    .from('individual_customers')
+                    .select(
+                      'id, first_name, last_name, email, phone, address_line1, address_line2, postal_code, city'
+                    )
+                    .eq('id', orderData.individual_customer_id!)
+                    .single();
+                  return data as Record<string, unknown> | null;
+                } catch {
+                  return null;
+                }
+              })()
+            : Promise.resolve(null);
+
+        const creatorPromise: Promise<{
+          first_name: string;
+          last_name: string;
+          email: string | null;
+        } | null> = orderData.created_by
+          ? (async () => {
+              try {
+                const rpcResult = await supabase.rpc('get_user_info', {
+                  p_user_id: orderData.created_by!,
+                });
+                const arr = rpcResult.data as unknown as Array<{
+                  first_name: string | null;
+                  last_name: string | null;
+                  email: string | null;
+                }> | null;
+                if (arr && arr.length > 0) {
+                  return {
+                    first_name: arr[0].first_name ?? 'Utilisateur',
+                    last_name: arr[0].last_name ?? '',
+                    email: arr[0].email ?? null,
+                  };
+                }
+                return null;
+              } catch {
+                return null;
+              }
+            })()
+          : Promise.resolve(null);
+
+        // Fetch ALL linked transactions (N-N supported via transaction_document_links).
+        // Legacy singleton fields (matched_transaction_id, ...) remain = first row, for
+        // backwards compatibility with consumers that read only the first match.
+        const transactionsPromise = (async () => {
+          try {
+            const { data } = await supabase
+              .from('transaction_document_links')
+              .select(
+                'transaction_id, created_at, bank_transactions!inner (id, label, amount, emitted_at, attachment_ids)'
+              )
+              .eq('sales_order_id', orderId)
+              .order('created_at', { ascending: true });
+            return data;
+          } catch {
+            return null;
+          }
+        })();
+
+        const [org, individual, creatorInfo, linkRows] = await Promise.all([
+          orgPromise,
+          individualPromise,
+          creatorPromise,
+          transactionsPromise,
+        ]);
+
         let customerData: Record<
           string,
           Record<string, unknown> | null
         > | null = null;
 
-        if (
-          orderData.customer_type === 'organization' &&
-          orderData.customer_id
-        ) {
-          const { data: org } = await supabase
-            .from('organisations')
-            .select(
-              'id, legal_name, trade_name, email, phone, website, address_line1, address_line2, postal_code, city, region, country, siret, vat_number, billing_address_line1, billing_address_line2, billing_city, billing_postal_code, billing_country, shipping_address_line1, shipping_address_line2, shipping_city, shipping_postal_code, shipping_country, has_different_shipping_address, enseigne_id, is_enseigne_parent'
-            )
-            .eq('id', orderData.customer_id)
-            .single();
+        if (org) {
           customerData = { organisations: org };
-        } else if (
-          orderData.customer_type === 'individual' &&
-          orderData.individual_customer_id
-        ) {
-          const { data: individual } = await supabase
-            .from('individual_customers')
-            .select(
-              'id, first_name, last_name, email, phone, address_line1, address_line2, postal_code, city'
-            )
-            .eq('id', orderData.individual_customer_id)
-            .single();
-          customerData = { individual_customers: individual };
+        } else if (individual) {
+          customerData = {
+            individual_customers: individual,
+          };
         }
 
         const enrichedItems = (orderData.sales_order_items ?? []).map(item => {
@@ -154,49 +237,6 @@ export function useSalesOrdersFetch({
               : null,
           };
         });
-
-        let creatorInfo: {
-          first_name: string;
-          last_name: string;
-          email: string | null;
-        } | null = null;
-
-        if (orderData.created_by) {
-          const rpcResult = await supabase.rpc('get_user_info', {
-            p_user_id: orderData.created_by,
-          });
-          const userInfoArray = rpcResult.data as unknown as Array<{
-            first_name: string | null;
-            last_name: string | null;
-            email: string | null;
-          }> | null;
-          if (userInfoArray && userInfoArray.length > 0) {
-            creatorInfo = {
-              first_name: userInfoArray[0].first_name ?? 'Utilisateur',
-              last_name: userInfoArray[0].last_name ?? '',
-              email: userInfoArray[0].email ?? null,
-            };
-          }
-        }
-
-        type MatchInfo = {
-          transaction_id: string;
-          label: string;
-          amount: number;
-          emitted_at: string | null;
-          attachment_ids: string[] | null;
-        };
-
-        // Fetch ALL linked transactions (N-N supported via transaction_document_links).
-        // Legacy singleton fields (matched_transaction_id, ...) remain = first row, for
-        // backwards compatibility with consumers that read only the first match.
-        const { data: linkRows } = await supabase
-          .from('transaction_document_links')
-          .select(
-            'transaction_id, created_at, bank_transactions!inner (id, label, amount, emitted_at, attachment_ids)'
-          )
-          .eq('sales_order_id', orderId)
-          .order('created_at', { ascending: true });
 
         const matchInfos: MatchInfo[] = (linkRows ?? [])
           .map(row => {
