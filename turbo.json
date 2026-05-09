@@ -40,7 +40,7 @@
       "persistent": true
     },
     "lint": {
-      "dependsOn": ["^build"],
+      "dependsOn": [],
       "outputs": [],
       "cache": true,
       "inputs": [
@@ -53,7 +53,7 @@
       ]
     },
     "lint:fix": {
-      "dependsOn": ["^build"],
+      "dependsOn": [],
       "outputs": [],
       "inputs": [
         "**/*.ts",

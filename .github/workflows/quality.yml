@@ -3,6 +3,12 @@ name: Quality Checks
 on:
   pull_request:
     branches: [main, staging, integration/*]
+    paths-ignore:
+      - 'docs/**'
+      - '.claude/**'
+      - '**/*.md'
+      - 'LICENSE'
+      - '.gitignore'
   workflow_dispatch:
 
 permissions:
@@ -108,18 +114,33 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # ---- Next.js build cache (official pattern from nextjs.org/docs) ----
-      - name: Cache Next.js builds
+      # ---- Next.js build cache per app (narrow keys = better cache hit ratio) ----
+      - name: Cache Next.js back-office
         uses: actions/cache@v5
         with:
-          path: |
-            apps/back-office/.next/cache
-            apps/linkme/.next/cache
-            apps/site-internet/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('**/*.ts', '**/*.tsx') }}
+          path: apps/back-office/.next/cache
+          key: ${{ runner.os }}-nextjs-bo-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/back-office/**/*.ts', 'apps/back-office/**/*.tsx', 'packages/**/*.ts', 'packages/**/*.tsx') }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
-            ${{ runner.os }}-nextjs-
+            ${{ runner.os }}-nextjs-bo-${{ hashFiles('pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-bo-
+
+      - name: Cache Next.js linkme
+        uses: actions/cache@v5
+        with:
+          path: apps/linkme/.next/cache
+          key: ${{ runner.os }}-nextjs-lm-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/linkme/**/*.ts', 'apps/linkme/**/*.tsx', 'packages/**/*.ts', 'packages/**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-lm-${{ hashFiles('pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-lm-
+
+      - name: Cache Next.js site-internet
+        uses: actions/cache@v5
+        with:
+          path: apps/site-internet/.next/cache
+          key: ${{ runner.os }}-nextjs-si-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/site-internet/**/*.ts', 'apps/site-internet/**/*.tsx', 'packages/**/*.ts', 'packages/**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-si-${{ hashFiles('pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-si-
 
       # ---- ESLint cache (content-based, invalidated when files change) ----
       - name: Cache ESLint
