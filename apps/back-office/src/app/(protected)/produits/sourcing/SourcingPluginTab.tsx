@@ -1,50 +1,52 @@
 'use client';
 
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
+import { Download, Globe, ShoppingBag } from 'lucide-react';
+
 import {
-  Download,
-  Chrome,
-  FolderOpen,
-  Sparkles,
-  ShieldCheck,
-  Globe,
-  Package,
-  ShoppingBag,
-} from 'lucide-react';
+  DevModeToggleIllustration,
+  LoadUnpackedIllustration,
+  PinIconIllustration,
+} from './SourcingPluginChromeIllustrations';
+import {
+  ChromeUrlBarIllustration,
+  DownloadIllustration,
+  UnzipIllustration,
+} from './SourcingPluginIllustrations';
 
 const EXTENSION_ZIP_URL = '/extensions/verone-sourcing-extension.zip';
 const EXTENSION_VERSION = '1.0.1';
 
 const installSteps = [
   {
-    icon: Download,
     title: '1. Télécharger le plugin',
-    body: 'Cliquez sur le bouton ci-dessus. Un fichier ZIP est enregistré dans votre dossier Téléchargements.',
+    body: 'Cliquez sur le bouton « Télécharger le plugin » ci-dessus. Un fichier ZIP est enregistré dans votre dossier Téléchargements.',
+    Illustration: DownloadIllustration,
   },
   {
-    icon: FolderOpen,
     title: '2. Dézipper l’archive',
     body: 'Faites un clic droit sur le ZIP, puis « Extraire tout » (Windows) ou double-cliquez (Mac). Vous obtenez un dossier nommé verone-sourcing-extension.',
+    Illustration: UnzipIllustration,
   },
   {
-    icon: Chrome,
     title: '3. Ouvrir la page Extensions de Chrome',
     body: 'Dans Chrome, copiez chrome://extensions/ dans la barre d’adresse et appuyez sur Entrée.',
+    Illustration: ChromeUrlBarIllustration,
   },
   {
-    icon: ShieldCheck,
     title: '4. Activer le mode développeur',
     body: 'En haut à droite de la page Extensions, basculez l’interrupteur « Mode développeur ».',
+    Illustration: DevModeToggleIllustration,
   },
   {
-    icon: Package,
     title: '5. Charger l’extension',
     body: 'Cliquez sur « Charger l’extension non empaquetée », puis sélectionnez le dossier dézippé à l’étape 2.',
+    Illustration: LoadUnpackedIllustration,
   },
   {
-    icon: Sparkles,
     title: '6. Épingler l’icône',
     body: 'Cliquez sur l’icône puzzle dans la barre Chrome et épinglez « Verone Sourcing Import » pour la garder visible.',
+    Illustration: PinIconIllustration,
   },
 ] as const;
 
@@ -111,17 +113,15 @@ export function SourcingPluginTab(): JSX.Element {
           </p>
         </CardHeader>
         <CardContent>
-          <ol className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <ol className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {installSteps.map(step => {
-              const Icon = step.icon;
+              const Illustration = step.Illustration;
               return (
                 <li
                   key={step.title}
-                  className="flex gap-3 rounded-md border bg-card p-4"
+                  className="flex flex-col gap-3 rounded-md border bg-card p-4"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <Icon className="h-5 w-5" />
-                  </div>
+                  <Illustration />
                   <div className="space-y-1">
                     <p className="font-medium leading-tight">{step.title}</p>
                     <p className="text-sm text-muted-foreground">{step.body}</p>
