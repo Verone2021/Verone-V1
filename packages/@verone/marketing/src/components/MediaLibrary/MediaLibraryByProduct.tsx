@@ -50,7 +50,7 @@ export type AssetGroup =
   | {
       kind: 'unattached';
       id: 'unattached';
-      name: 'À attribuer';
+      name: 'Sans produit lié';
       brandIds: string[];
       assets: MediaAsset[];
     };
@@ -175,7 +175,7 @@ export function MediaLibraryByProduct({
       result.push({
         kind: 'unattached',
         id: 'unattached',
-        name: 'À attribuer',
+        name: 'Sans produit lié',
         brandIds: [],
         assets: unattached,
       });
@@ -300,8 +300,8 @@ function ProductGroupCard({
               </Badge>
             )}
             {isUnattached && (
-              <Badge variant="destructive" className="text-[10px]">
-                Action requise
+              <Badge variant="secondary" className="text-[10px]">
+                Contenu de marque
               </Badge>
             )}
           </div>
@@ -322,8 +322,8 @@ function ProductGroupCard({
 
         {isUnattached && (
           <p className="mb-3 text-xs text-amber-700">
-            Ces photos ne sont rattachées à aucun produit. Clique sur une photo
-            pour l'attribuer.
+            Visuels de marque sans produit lié (citations, ambiances,
+            événements).
           </p>
         )}
 

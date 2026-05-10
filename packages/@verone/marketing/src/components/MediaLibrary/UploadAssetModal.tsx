@@ -74,6 +74,8 @@ export function UploadAssetModal({
   uploading,
 }: UploadAssetModalProps) {
   const [entries, setEntries] = React.useState<FileEntry[]>([]);
+  // Mode "Contenu de marque" : photo de marque sans rattachement produit obligatoire
+  const [brandContentMode, _setBrandContentMode] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Pont Studio Marketing → DAM : on lit le dernier prompt copié (si < 24 h)
@@ -210,8 +212,11 @@ export function UploadAssetModal({
   const isValid = React.useMemo(
     () =>
       entries.length > 0 &&
-      entries.every(e => e.pickedItem !== null && e.brandIds.length > 0),
-    [entries]
+      entries.every(
+        e =>
+          (brandContentMode || e.pickedItem !== null) && e.brandIds.length > 0
+      ),
+    [entries, brandContentMode]
   );
 
   const handleSubmit = React.useCallback(async () => {
@@ -221,7 +226,7 @@ export function UploadAssetModal({
     let errorCount = 0;
 
     for (const entry of entries) {
-      if (!entry.pickedItem) continue;
+      if (!brandContentMode && !entry.pickedItem) continue;
       try {
         await onUpload(entry.file, {
           assetType: entry.assetType,
@@ -234,9 +239,9 @@ export function UploadAssetModal({
                 .filter(Boolean)
             : [],
           productId:
-            entry.pickedItem.kind === 'product' ? entry.pickedItem.id : null,
+            entry.pickedItem?.kind === 'product' ? entry.pickedItem.id : null,
           variantGroupId:
-            entry.pickedItem.kind === 'variant_group'
+            entry.pickedItem?.kind === 'variant_group'
               ? entry.pickedItem.id
               : null,
           source: entry.source,
@@ -263,7 +268,7 @@ export function UploadAssetModal({
     }
 
     onClose();
-  }, [entries, isValid, onUpload, onClose]);
+  }, [entries, isValid, onUpload, onClose, brandContentMode]);
 
   return (
     <Dialog
@@ -383,6 +388,7 @@ export function UploadAssetModal({
                   <ProductOrVariantPicker
                     value={entry.pickedItem}
                     onChange={item => setPickedItemForEntry(index, item)}
+                    eligibilityFilter="marketing_eligible"
                   />
                 </div>
 

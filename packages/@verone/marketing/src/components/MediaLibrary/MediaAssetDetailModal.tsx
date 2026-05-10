@@ -33,7 +33,15 @@ import {
 } from '@verone/ui/components/ui/select';
 import { Badge } from '@verone/ui/components/ui/badge';
 import { CloudflareImage } from '@verone/ui/components/ui/cloudflare-image';
-import { Archive, Copy, ExternalLink, Save, Sparkles } from 'lucide-react';
+import {
+  Archive,
+  Check,
+  Copy,
+  ExternalLink,
+  Save,
+  Sparkles,
+  X as XIcon,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import type { BrandInfo } from './MediaAssetCard';
@@ -88,6 +96,7 @@ export function MediaAssetDetailModal({
   const [notes, setNotes] = React.useState('');
   const [saving, setSaving] = React.useState(false);
   const [archiving, setArchiving] = React.useState(false);
+  const [reviewing, setReviewing] = React.useState(false);
 
   // Sync state quand l'asset change
   React.useEffect(() => {
@@ -147,6 +156,27 @@ export function MediaAssetDetailModal({
     }
   }, [asset, onArchive, onClose]);
 
+  const handleReview = React.useCallback(
+    async (status: 'approved' | 'rejected') => {
+      if (!asset) return;
+      try {
+        setReviewing(true);
+        await onUpdate(asset.id, {
+          review_status: status,
+          reviewed_at: new Date().toISOString(),
+        });
+        toast.success(
+          status === 'approved' ? 'Photo approuvée' : 'Photo rejetée'
+        );
+      } catch {
+        toast.error('Erreur lors de la validation');
+      } finally {
+        setReviewing(false);
+      }
+    },
+    [asset, onUpdate]
+  );
+
   const handleNavigateToProduct = React.useCallback(() => {
     if (asset?.source_product_image_id && onNavigateToProduct) {
       onNavigateToProduct(asset.source_product_image_id);
@@ -167,11 +197,26 @@ export function MediaAssetDetailModal({
     >
       <DialogContent className="flex h-screen flex-col md:h-auto md:max-w-3xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 flex-wrap">
             Détail de la photo
             {isLinkedToProduct && (
               <Badge variant="secondary" className="text-xs font-normal">
                 Lié à un produit
+              </Badge>
+            )}
+            {asset.review_status === 'pending_review' && (
+              <Badge className="bg-orange-100 text-orange-800 border-orange-200 text-xs font-normal">
+                En attente de validation
+              </Badge>
+            )}
+            {asset.review_status === 'approved' && (
+              <Badge className="bg-green-100 text-green-800 border-green-200 text-xs font-normal">
+                Approuvée
+              </Badge>
+            )}
+            {asset.review_status === 'rejected' && (
+              <Badge variant="destructive" className="text-xs font-normal">
+                Rejetée
               </Badge>
             )}
           </DialogTitle>
@@ -356,6 +401,34 @@ export function MediaAssetDetailModal({
         </div>
 
         <DialogFooter className="flex-col gap-2 md:flex-row">
+          {/* Actions de validation IA */}
+          {asset.review_status === 'pending_review' && (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  void handleReview('rejected');
+                }}
+                disabled={reviewing || saving || archiving}
+                className="w-full min-h-[44px] md:min-h-[36px] md:w-auto text-destructive hover:text-destructive"
+              >
+                <XIcon className="mr-2 h-4 w-4" />
+                Rejeter
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  void handleReview('approved');
+                }}
+                disabled={reviewing || saving || archiving}
+                className="w-full min-h-[44px] md:min-h-[36px] md:w-auto text-green-700 hover:text-green-700 border-green-200"
+              >
+                <Check className="mr-2 h-4 w-4" />
+                Approuver
+              </Button>
+            </>
+          )}
+
           {/* Archiver */}
           <AlertDialog>
             <AlertDialogTrigger asChild>

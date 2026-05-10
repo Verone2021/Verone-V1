@@ -27,3 +27,4 @@ export * from './use-media-assets';
 export * from './use-media-asset-publications';
 export * from './use-marketing-eligibility';
 export * from './use-supplier-availability';
+export * from './use-media-assets-pending-count';

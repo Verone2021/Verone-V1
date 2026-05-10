@@ -12,6 +12,7 @@ import type { MediaAsset, MediaAssetType } from '@verone/products';
 import {
   MediaLibraryToolbar,
   type PublicationStatusFilter,
+  type ReviewStatusFilter,
 } from './MediaLibraryToolbar';
 import { MediaLibraryByProduct } from './MediaLibraryByProduct';
 import { UploadAssetModal } from './UploadAssetModal';
@@ -43,6 +44,8 @@ export function MediaLibraryView({
   );
   const [publicationStatus, setPublicationStatus] =
     React.useState<PublicationStatusFilter>('all');
+  const [reviewStatus, setReviewStatus] =
+    React.useState<ReviewStatusFilter>('all');
 
   // Modals
   const [uploadOpen, setUploadOpen] = React.useState(false);
@@ -77,6 +80,7 @@ export function MediaLibraryView({
     search: debouncedSearch,
     archived: false,
     pageSize: 1000, // Vue groupée : on charge tout d'un coup pour grouper côté client
+    reviewStatus: reviewStatus === 'all' ? undefined : reviewStatus,
   });
 
   // Compteur de publications par asset (pour badge "Publié N×" sur chaque carte)
@@ -175,10 +179,12 @@ export function MediaLibraryView({
         brandId={brandId}
         assetType={assetType}
         publicationStatus={publicationStatus}
+        reviewStatus={reviewStatus}
         onSearchChange={setSearch}
         onBrandChange={setBrandId}
         onAssetTypeChange={setAssetType}
         onPublicationStatusChange={setPublicationStatus}
+        onReviewStatusChange={setReviewStatus}
         onUploadClick={() => setUploadOpen(true)}
       />
 

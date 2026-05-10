@@ -37,6 +37,8 @@ export interface UseMediaAssetsOptions {
   archived?: boolean;
   pageSize?: number;
   enabled?: boolean;
+  /** Filtre review_status : 'all' (défaut) | 'pending_review' | 'approved' | 'rejected' */
+  reviewStatus?: 'all' | 'pending_review' | 'approved' | 'rejected';
 }
 
 interface UseMediaAssetsReturn {
@@ -71,6 +73,7 @@ export function useMediaAssets({
   archived = false,
   pageSize = 50,
   enabled = true,
+  reviewStatus,
 }: UseMediaAssetsOptions = {}): UseMediaAssetsReturn {
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [loading, setLoading] = useState(false);
@@ -113,11 +116,16 @@ export function useMediaAssets({
         query = query.is('archived_at', null);
       }
 
+      // Filtre statut de validation
+      if (reviewStatus && reviewStatus !== 'all') {
+        query = query.eq('review_status', reviewStatus);
+      }
+
       return query
         .order('created_at', { ascending: false })
         .range(currentOffset, currentOffset + pageSize - 1);
     },
-    [supabase, brandId, assetType, search, archived, pageSize]
+    [supabase, brandId, assetType, search, archived, pageSize, reviewStatus]
   );
 
   const fetchAssets = useCallback(
@@ -188,7 +196,7 @@ export function useMediaAssets({
   useEffect(() => {
     setLoaded(false);
     setOffset(0);
-  }, [brandId, assetType, search, archived, pageSize]);
+  }, [brandId, assetType, search, archived, pageSize, reviewStatus]);
 
   // Mutations déléguées au hook séparé (split pour respecter limite 400 lignes)
   const {

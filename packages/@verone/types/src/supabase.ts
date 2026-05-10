@@ -5020,6 +5020,9 @@ export type Database = {
           notes: string | null;
           product_id: string | null;
           public_url: string | null;
+          review_status: string;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
           source: string;
           source_image_ids: string[] | null;
           source_product_image_id: string | null;
@@ -5052,6 +5055,9 @@ export type Database = {
           notes?: string | null;
           product_id?: string | null;
           public_url?: string | null;
+          review_status?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
           source?: string;
           source_image_ids?: string[] | null;
           source_product_image_id?: string | null;
@@ -5084,6 +5090,9 @@ export type Database = {
           notes?: string | null;
           product_id?: string | null;
           public_url?: string | null;
+          review_status?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
           source?: string;
           source_image_ids?: string[] | null;
           source_product_image_id?: string | null;

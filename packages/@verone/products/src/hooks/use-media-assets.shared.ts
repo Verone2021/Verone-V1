@@ -34,9 +34,10 @@ export interface UploadAssetInput {
   tags?: string[];
   notes?: string;
   /**
-   * Produit auquel rattacher la photo. Au moins un des deux (productId,
-   * variantGroupId) doit être renseigné — Romeo a verrouillé "zéro photo
-   * en vrac" lors du sprint BO-MKT-DAM-002.
+   * Produit auquel rattacher la photo.
+   * - Mode normal : au moins un des deux (productId, variantGroupId) doit être renseigné.
+   * - Mode brand_content : les deux peuvent être null — la photo est une photo de marque
+   *   non rattachée à un produit spécifique.
    */
   productId?: string | null;
   variantGroupId?: string | null;
@@ -72,6 +73,9 @@ export const MEDIA_ASSET_SELECT_COLS = [
   'variant_group_id',
   'source',
   'ai_prompt_used',
+  'review_status',
+  'reviewed_at',
+  'reviewed_by',
   'created_at',
   'updated_at',
   'archived_at',
