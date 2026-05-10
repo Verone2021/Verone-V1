@@ -17,7 +17,11 @@ import {
   useGoogleMerchantProducts,
   useSiteTopProducts,
 } from '@verone/channels';
-import { useChannelStatsAggregated } from '@verone/marketing';
+import {
+  useChannelStatsAggregated,
+  useTopImages,
+  TopImagesGrid,
+} from '@verone/marketing';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { arrayToCSV, downloadCSV } from '@verone/utils/export/csv';
@@ -379,18 +383,33 @@ export default function MarketingPerformancePage() {
         </TabsContent>
 
         <TabsContent value="images" className="space-y-6">
-          <div className="rounded-lg border border-dashed border-gray-300 bg-white p-12 text-center">
-            <ImageIcon className="mx-auto h-12 w-12 text-gray-300" />
-            <h3 className="mt-3 text-sm font-medium text-gray-900">
-              Top images — bientôt disponible
-            </h3>
-            <p className="mt-2 text-xs text-gray-500">
-              Le suivi des vues par image nécessite l&apos;activation du Pixel
-              Meta + Conversions API (sprint à venir).
-            </p>
-          </div>
+          <TopImagesContent
+            channelCode="meta"
+            startDate={startDate}
+            endDate={endDate}
+          />
         </TabsContent>
       </Tabs>
     </div>
   );
+}
+
+interface TopImagesContentProps {
+  channelCode: string;
+  startDate: string;
+  endDate: string;
+}
+
+function TopImagesContent({
+  channelCode,
+  startDate,
+  endDate,
+}: TopImagesContentProps) {
+  const { data, isLoading } = useTopImages({
+    channelCode,
+    startDate,
+    endDate,
+    limit: 30,
+  });
+  return <TopImagesGrid images={data ?? []} loading={isLoading} />;
 }

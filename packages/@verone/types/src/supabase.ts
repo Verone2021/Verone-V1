@@ -4995,6 +4995,53 @@ export type Database = {
         };
         Relationships: [];
       };
+      media_asset_analytics: {
+        Row: {
+          asset_id: string;
+          channel_code: string;
+          clicks: number;
+          conversions: number;
+          created_at: string;
+          id: string;
+          impressions: number;
+          period_date: string;
+          saves: number;
+          updated_at: string;
+        };
+        Insert: {
+          asset_id: string;
+          channel_code: string;
+          clicks?: number;
+          conversions?: number;
+          created_at?: string;
+          id?: string;
+          impressions?: number;
+          period_date: string;
+          saves?: number;
+          updated_at?: string;
+        };
+        Update: {
+          asset_id?: string;
+          channel_code?: string;
+          clicks?: number;
+          conversions?: number;
+          created_at?: string;
+          id?: string;
+          impressions?: number;
+          period_date?: string;
+          saves?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'media_asset_analytics_asset_id_fkey';
+            columns: ['asset_id'];
+            isOneToOne: false;
+            referencedRelation: 'media_assets';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       media_asset_publications: {
         Row: {
           asset_id: string;
@@ -13314,6 +13361,17 @@ export type Database = {
           total_tasks: number;
         }[];
       };
+      get_media_asset_analytics_summary: {
+        Args: { p_asset_id: string; p_period_days?: number };
+        Returns: {
+          channels_count: number;
+          last_activity: string;
+          total_clicks: number;
+          total_conversions: number;
+          total_impressions: number;
+          total_saves: number;
+        }[];
+      };
       get_meta_commerce_products: {
         Args: never;
         Returns: {
@@ -13874,6 +13932,26 @@ export type Database = {
         }[];
       };
       get_test_progress_summary: { Args: never; Returns: Json };
+      get_top_images: {
+        Args: {
+          p_channel_code: string;
+          p_end_date: string;
+          p_limit?: number;
+          p_start_date: string;
+        };
+        Returns: {
+          alt_text: string;
+          asset_id: string;
+          ctr: number;
+          filename: string;
+          product_id: string;
+          public_url: string;
+          total_clicks: number;
+          total_conversions: number;
+          total_impressions: number;
+          total_saves: number;
+        }[];
+      };
       get_transaction_history: {
         Args: { p_transaction_id: string };
         Returns: {

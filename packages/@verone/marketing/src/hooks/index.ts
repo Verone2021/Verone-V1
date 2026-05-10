@@ -9,3 +9,8 @@ export {
   type ChannelStatsProductRow,
   type UseChannelStatsProductHistoryOptions,
 } from './use-channel-stats-product-history';
+export {
+  useTopImages,
+  type TopImageRow,
+  type UseTopImagesOptions,
+} from './use-top-images';
