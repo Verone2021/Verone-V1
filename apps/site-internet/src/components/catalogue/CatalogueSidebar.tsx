@@ -27,22 +27,22 @@ function FilterSection({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="border-b border-verone-gray-200 py-4">
+    <div className="border-b border-verone-pearl-soft py-5">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center justify-between w-full text-left"
+        className="flex w-full items-center justify-between text-left"
       >
-        <span className="text-xs font-semibold text-verone-black uppercase tracking-wide">
+        <span className="font-dm-sans text-[11px] font-light uppercase tracking-[0.32em] text-verone-charbon">
           {title}
         </span>
         <ChevronDown
-          className={`h-4 w-4 text-verone-gray-400 transition-transform duration-200 ${
+          className={`h-4 w-4 text-verone-pearl transition-transform duration-200 ${
             open ? 'rotate-180' : ''
           }`}
         />
       </button>
-      {open && <div className="mt-3 space-y-2">{children}</div>}
+      {open && <div className="mt-4 space-y-3">{children}</div>}
     </div>
   );
 }
@@ -56,18 +56,20 @@ interface CheckboxItemProps {
 
 function CheckboxItem({ label, count, checked, onChange }: CheckboxItemProps) {
   return (
-    <label className="flex items-center gap-2 cursor-pointer group">
+    <label className="group flex cursor-pointer items-center gap-3">
       <input
         type="checkbox"
         checked={checked}
         onChange={onChange}
-        className="h-4 w-4 rounded-none border-verone-gray-300 text-verone-black focus:ring-verone-black"
+        className="h-4 w-4 rounded-none border border-verone-charbon bg-transparent text-verone-charbon accent-verone-charbon focus:ring-0 focus:ring-offset-0"
       />
-      <span className="text-sm text-verone-gray-700 group-hover:text-verone-black transition-colors flex-1">
+      <span className="flex-1 font-montserrat text-[14px] text-verone-charbon transition-colors duration-[180ms] ease-editorial group-hover:text-verone-or">
         {label}
       </span>
       {count !== undefined && (
-        <span className="text-xs text-verone-gray-400">{count}</span>
+        <span className="font-montserrat text-[12px] text-verone-pearl">
+          {count}
+        </span>
       )}
     </label>
   );
@@ -108,17 +110,17 @@ export function CatalogueSidebar({
   const colors = getValuesWithCounts(products, p => p.color);
 
   return (
-    <aside className={`w-[280px] shrink-0 ${className}`}>
+    <aside className={`w-[240px] shrink-0 ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-sm font-semibold text-verone-black uppercase tracking-wide">
-          Filtres
+      <div className="mb-2 flex items-center justify-between border-b border-verone-pearl-soft pb-4">
+        <h2 className="font-dm-sans text-[11px] font-light uppercase tracking-[0.32em] text-verone-charbon">
+          Filtrer
         </h2>
         {hasActiveFilters && (
           <button
             type="button"
             onClick={onClearAll}
-            className="flex items-center gap-1 text-xs text-verone-gray-500 hover:text-verone-black transition-colors"
+            className="flex items-center gap-1 font-montserrat text-[11px] text-verone-pearl transition-colors duration-[180ms] ease-editorial hover:text-verone-or"
           >
             <X className="h-3 w-3" />
             Tout effacer
@@ -128,7 +130,7 @@ export function CatalogueSidebar({
 
       {/* Categories */}
       {categories.length > 0 && (
-        <FilterSection title="Catégories">
+        <FilterSection title="Catégorie">
           {categories.map(({ value, count }) => (
             <CheckboxItem
               key={value}
@@ -143,7 +145,7 @@ export function CatalogueSidebar({
 
       {/* Rooms */}
       {rooms.length > 0 && (
-        <FilterSection title="Pièces">
+        <FilterSection title="Pièce">
           {rooms.map(({ value, count }) => (
             <CheckboxItem
               key={value}
@@ -173,7 +175,7 @@ export function CatalogueSidebar({
 
       {/* Colors */}
       {colors.length > 0 && (
-        <FilterSection title="Couleurs">
+        <FilterSection title="Couleur">
           <div className="flex flex-wrap gap-2">
             {colors.map(({ value }) => {
               const hex = getColorHex(value);
@@ -185,10 +187,10 @@ export function CatalogueSidebar({
                   key={value}
                   type="button"
                   onClick={() => onToggleColor(value)}
-                  className={`w-7 h-7 rounded-full border-2 transition-all ${
+                  className={`h-7 w-7 rounded-full border transition-all duration-[180ms] ease-editorial ${
                     isSelected
-                      ? 'border-verone-black scale-110 ring-1 ring-verone-black ring-offset-1'
-                      : 'border-verone-gray-300 hover:border-verone-gray-500'
+                      ? 'border-verone-charbon ring-1 ring-verone-charbon ring-offset-1'
+                      : 'border-verone-pearl-soft hover:border-verone-pearl'
                   }`}
                   style={{ backgroundColor: hex }}
                   title={getColorLabel(value)}
@@ -202,7 +204,7 @@ export function CatalogueSidebar({
 
       {/* Price */}
       <FilterSection title="Prix">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <input
             type="number"
             placeholder="Min"
@@ -211,9 +213,9 @@ export function CatalogueSidebar({
               const val = e.target.value ? Number(e.target.value) : null;
               onSetPriceRange(val, filters.priceMax);
             }}
-            className="w-full border border-verone-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-verone-black"
+            className="w-full border-0 border-b border-verone-charbon bg-transparent px-0 py-2 font-montserrat text-[14px] tabular-nums text-verone-charbon placeholder:text-verone-pearl focus:border-verone-or focus:outline-none focus:ring-0"
           />
-          <span className="text-verone-gray-400 text-xs">—</span>
+          <span className="font-montserrat text-verone-pearl">—</span>
           <input
             type="number"
             placeholder="Max"
@@ -222,25 +224,25 @@ export function CatalogueSidebar({
               const val = e.target.value ? Number(e.target.value) : null;
               onSetPriceRange(filters.priceMin, val);
             }}
-            className="w-full border border-verone-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-verone-black"
+            className="w-full border-0 border-b border-verone-charbon bg-transparent px-0 py-2 font-montserrat text-[14px] tabular-nums text-verone-charbon placeholder:text-verone-pearl focus:border-verone-or focus:outline-none focus:ring-0"
           />
         </div>
-        <div className="flex flex-wrap gap-1.5 mt-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           {[
             { label: '< 100 €', min: null, max: 100 },
-            { label: '100 - 300 €', min: 100, max: 300 },
-            { label: '300 - 500 €', min: 300, max: 500 },
+            { label: '100 – 300 €', min: 100, max: 300 },
+            { label: '300 – 500 €', min: 300, max: 500 },
             { label: '> 500 €', min: 500, max: null },
           ].map(preset => (
             <button
               key={preset.label}
               type="button"
               onClick={() => onSetPriceRange(preset.min, preset.max)}
-              className={`px-2.5 py-1 text-xs border transition-colors ${
+              className={`border px-3 py-1 font-montserrat text-[11px] transition-colors duration-[180ms] ease-editorial ${
                 filters.priceMin === preset.min &&
                 filters.priceMax === preset.max
-                  ? 'border-verone-black bg-verone-black text-verone-white'
-                  : 'border-verone-gray-300 text-verone-gray-600 hover:border-verone-black'
+                  ? 'border-verone-charbon bg-verone-charbon text-verone-white'
+                  : 'border-verone-pearl-soft text-verone-pearl hover:border-verone-charbon hover:text-verone-charbon'
               }`}
             >
               {preset.label}
