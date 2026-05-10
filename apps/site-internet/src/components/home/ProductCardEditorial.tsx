@@ -61,7 +61,7 @@ export function ProductCardEditorial({
       href={`/produit/${slug}`}
       className="group block transition-shadow duration-[320ms] ease-editorial hover:shadow-[0_12px_40px_-16px_rgba(29,29,27,0.18)]"
     >
-      <div className="relative aspect-[4/5] overflow-hidden bg-verone-pearl-soft">
+      <div className="relative aspect-[4/5] overflow-hidden bg-verone-white">
         {imageUrl || cloudflareImageId ? (
           <CloudflareImage
             cloudflareId={cloudflareImageId ?? null}
@@ -69,8 +69,8 @@ export function ProductCardEditorial({
             alt={name}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
-            className={`object-cover grayscale transition-all duration-[700ms] ease-editorial group-hover:scale-[1.03] group-hover:grayscale-0 ${
-              isOutOfStock ? 'opacity-50' : ''
+            className={`object-contain p-6 transition-transform duration-[700ms] ease-editorial group-hover:scale-[1.04] ${
+              isOutOfStock ? 'opacity-60' : ''
             }`}
             priority={priority}
           />
