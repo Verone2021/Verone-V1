@@ -13975,6 +13975,10 @@ export type Database = {
         };
         Returns: boolean;
       };
+      is_product_marketing_eligible: {
+        Args: { p_product_id: string };
+        Returns: boolean;
+      };
       is_staff_user_cached: { Args: never; Returns: boolean };
       is_tester_or_admin: { Args: never; Returns: boolean };
       is_transaction_locked: { Args: { p_tx_date: string }; Returns: boolean };
