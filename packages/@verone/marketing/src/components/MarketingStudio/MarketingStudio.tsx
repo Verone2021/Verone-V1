@@ -279,6 +279,11 @@ export function MarketingStudio() {
                 selectedAssetIds={selectedAssetIds}
                 onChange={setSelectedAssetIds}
                 onOpenPicker={() => setPickerOpen(true)}
+                disabledReason={
+                  !noProduct && pickedItems.length === 0
+                    ? "Choisis d'abord un produit à l'étape 1, ou active « Visuel sans produit lié »."
+                    : null
+                }
               />
             </CardContent>
           </Card>
@@ -392,13 +397,30 @@ export function MarketingStudio() {
         </div>
       </div>
 
-      {/* Modal picker */}
+      {/* Modal picker — restreint aux images du produit/variante sélectionné(e) */}
       <MediaPickerModal
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onSelect={handlePickerSelect}
         initialSelectedIds={selectedAssetIds}
         brands={brandInfoList}
+        productId={
+          noProduct
+            ? null
+            : pickedItems[0]?.kind === 'product'
+              ? pickedItems[0].id
+              : null
+        }
+        variantGroupId={
+          noProduct
+            ? null
+            : pickedItems[0]?.kind === 'variant_group'
+              ? pickedItems[0].id
+              : pickedItems[0]?.kind === 'product'
+                ? (pickedItems[0].variantGroupId ?? null)
+                : null
+        }
+        onlyUnattached={noProduct}
       />
     </div>
   );

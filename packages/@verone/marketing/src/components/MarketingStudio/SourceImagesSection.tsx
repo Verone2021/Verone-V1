@@ -24,6 +24,8 @@ interface SourceImagesSectionProps {
   onChange: (ids: string[]) => void;
   onOpenPicker: () => void;
   maxImages?: number;
+  /** Si fourni, désactive le bouton d'ajout et affiche le message en dessous. */
+  disabledReason?: string | null;
 }
 
 // ============================================================================
@@ -55,6 +57,7 @@ export function SourceImagesSection({
   onChange,
   onOpenPicker,
   maxImages = 5,
+  disabledReason,
 }: SourceImagesSectionProps) {
   const { data: assets = [] } = useQuery<SourceImageAsset[]>({
     queryKey: ['media_assets_by_ids', selectedAssetIds],
@@ -114,17 +117,23 @@ export function SourceImagesSection({
 
       {/* Bouton d'ajout */}
       {canAddMore && (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onOpenPicker}
-          className="h-11 w-full sm:w-auto md:h-9"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          {selectedAssetIds.length === 0
-            ? 'Choisir des images sources'
-            : `Ajouter des images (${selectedAssetIds.length}/${maxImages})`}
-        </Button>
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onOpenPicker}
+            disabled={!!disabledReason}
+            className="h-11 w-full sm:w-auto md:h-9"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            {selectedAssetIds.length === 0
+              ? 'Choisir des images sources'
+              : `Ajouter des images (${selectedAssetIds.length}/${maxImages})`}
+          </Button>
+          {disabledReason && (
+            <p className="text-xs text-muted-foreground">{disabledReason}</p>
+          )}
+        </>
       )}
 
       {!canAddMore && (

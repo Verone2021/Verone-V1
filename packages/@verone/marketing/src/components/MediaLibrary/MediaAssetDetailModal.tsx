@@ -43,6 +43,10 @@ import {
   X as XIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
+
+import { createClient } from '@verone/utils/supabase/client';
+import { MEDIA_ASSETS_PENDING_COUNT_QUERY_KEY } from '@verone/notifications';
 
 import type { BrandInfo } from './MediaAssetCard';
 import type { MediaAsset, MediaAssetType } from '@verone/products';
@@ -156,14 +160,26 @@ export function MediaAssetDetailModal({
     }
   }, [asset, onArchive, onClose]);
 
+  const queryClient = useQueryClient();
+
   const handleReview = React.useCallback(
     async (status: 'approved' | 'rejected') => {
       if (!asset) return;
       try {
         setReviewing(true);
+        // Récupérer l'utilisateur connecté pour tracer qui a validé
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         await onUpdate(asset.id, {
           review_status: status,
           reviewed_at: new Date().toISOString(),
+          reviewed_by: user?.id ?? null,
+        });
+        // Rafraîchir le badge sidebar « À valider » immédiatement
+        await queryClient.invalidateQueries({
+          queryKey: MEDIA_ASSETS_PENDING_COUNT_QUERY_KEY,
         });
         toast.success(
           status === 'approved' ? 'Photo approuvée' : 'Photo rejetée'
@@ -174,7 +190,7 @@ export function MediaAssetDetailModal({
         setReviewing(false);
       }
     },
-    [asset, onUpdate]
+    [asset, onUpdate, queryClient]
   );
 
   const handleNavigateToProduct = React.useCallback(() => {
