@@ -11,8 +11,12 @@
  *   (Meta data 2025).
  *
  * Variables d'environnement requises :
- *   - NEXT_PUBLIC_META_PIXEL_ID : ID du pixel (publique)
- *   - META_CAPI_ACCESS_TOKEN : token d'acces serveur (secret, jamais expose au client)
+ *   - NEXT_PUBLIC_META_PIXEL_ID : ID du pixel/dataset (publique)
+ *   - META_CAPI_ACCESS_TOKEN ou META_ACCESS_TOKEN : token d'acces serveur
+ *     (secret). Le code utilise en priorite META_CAPI_ACCESS_TOKEN si defini,
+ *     sinon fallback sur META_ACCESS_TOKEN (System User VeroneCatalog deja
+ *     configure en Vercel). Doc Meta : "System User access token is the
+ *     recommended method for Conversions API".
  *
  * Match keys hashees SHA-256 (sauf fbp / fbc qui sont en clair).
  */
@@ -20,7 +24,11 @@
 import { createHash } from 'node:crypto';
 
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
-const ACCESS_TOKEN = process.env.META_CAPI_ACCESS_TOKEN;
+// Reuse System User token (META_ACCESS_TOKEN) si pas de token CAPI dedie.
+// Le System User VeroneCatalog a "Controle total" sur l app/dataset, ce qui
+// suffit pour soumettre des events CAPI.
+const ACCESS_TOKEN =
+  process.env.META_CAPI_ACCESS_TOKEN ?? process.env.META_ACCESS_TOKEN;
 const GRAPH_API_VERSION = 'v22.0';
 
 export type MetaCapiEventName =
@@ -109,7 +117,8 @@ export async function sendMetaCapiEvent(
       ok: false,
       status: 0,
       body: null,
-      error: 'NEXT_PUBLIC_META_PIXEL_ID ou META_CAPI_ACCESS_TOKEN manquant',
+      error:
+        'NEXT_PUBLIC_META_PIXEL_ID ou META_CAPI_ACCESS_TOKEN/META_ACCESS_TOKEN manquant',
     };
   }
 
