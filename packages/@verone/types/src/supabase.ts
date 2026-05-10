@@ -7,30 +7,10 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '13.0.5';
   };
   public: {
     Tables: {
@@ -1375,6 +1355,71 @@ export type Database = {
           },
           {
             foreignKeyName: 'channel_product_metadata_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+        ];
+      };
+      channel_stats_snapshots: {
+        Row: {
+          channel_code: string;
+          clicks: number;
+          conversions: number;
+          created_at: string;
+          id: string;
+          impressions: number;
+          product_id: string;
+          revenue_ht: number;
+          snapshot_date: string;
+        };
+        Insert: {
+          channel_code: string;
+          clicks?: number;
+          conversions?: number;
+          created_at?: string;
+          id?: string;
+          impressions?: number;
+          product_id: string;
+          revenue_ht?: number;
+          snapshot_date: string;
+        };
+        Update: {
+          channel_code?: string;
+          clicks?: number;
+          conversions?: number;
+          created_at?: string;
+          id?: string;
+          impressions?: number;
+          product_id?: string;
+          revenue_ht?: number;
+          snapshot_date?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'channel_stats_snapshots_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'channel_stats_snapshots_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'channel_stats_snapshots_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'channel_stats_snapshots_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
@@ -12857,6 +12902,38 @@ export type Database = {
           old_price: number;
         }[];
       };
+      get_channel_stats_aggregated: {
+        Args: {
+          p_channel_code: string;
+          p_end_date: string;
+          p_start_date: string;
+        };
+        Returns: {
+          conversion_rate: number;
+          snapshot_date: string;
+          total_clicks: number;
+          total_conversions: number;
+          total_impressions: number;
+          total_revenue_ht: number;
+        }[];
+      };
+      get_channel_stats_history: {
+        Args: {
+          p_channel_code: string;
+          p_end_date: string;
+          p_product_id?: string;
+          p_start_date: string;
+        };
+        Returns: {
+          clicks: number;
+          conversions: number;
+          impressions: number;
+          product_id: string;
+          product_name: string;
+          revenue_ht: number;
+          snapshot_date: string;
+        }[];
+      };
       get_cleanup_candidates: {
         Args: { p_days_threshold?: number };
         Returns: {
@@ -14329,6 +14406,7 @@ export type Database = {
       set_closed_fiscal_year: { Args: { p_year: number }; Returns: Json };
       set_current_user_id: { Args: { user_id: string }; Returns: undefined };
       slugify: { Args: { text_input: string }; Returns: string };
+      snapshot_channel_stats: { Args: never; Returns: undefined };
       submit_affiliate_product_for_approval: {
         Args: { p_product_id: string };
         Returns: boolean;
@@ -14931,9 +15009,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       affiliate_product_approval_status: [
