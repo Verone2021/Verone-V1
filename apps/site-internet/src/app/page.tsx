@@ -6,99 +6,26 @@ import { ArrowRight } from 'lucide-react';
 
 import { HeroSection } from '@/components/home/HeroSection';
 import { FeaturedProductsSection } from '@/components/home/FeaturedProductsSection';
-import { CategoryTiles } from '@/components/home/CategoryTiles';
 import { InspirationBanner } from '@/components/home/InspirationBanner';
-import { HomepageReviews } from '@/components/home/HomepageReviews';
 import { NewsletterSection } from '@/components/home/NewsletterSection';
-import { useCatalogueProducts } from '@/hooks/use-catalogue-products';
 import { useCollections } from '@/hooks/use-collections';
-import { useReassuranceContent } from '@/hooks/use-site-content';
 
 export default function HomePage() {
-  const { data: products } = useCatalogueProducts({
-    sortBy: 'newest',
-    limit: 6,
-    offset: 0,
-  });
-
   const { data: collections } = useCollections();
   const featuredCollections = collections?.slice(0, 3);
-  const { data: reassuranceContent } = useReassuranceContent();
-
-  const defaultValues: Array<{
-    title: string;
-    description: string;
-    icon: string;
-  }> = [
-    {
-      title: 'Sourcing créatif',
-      description:
-        'On chine, on déniche, on sélectionne : chaque pièce est choisie pour son originalité et sa qualité.',
-      icon: '🔍',
-    },
-    {
-      title: 'Qualité-prix',
-      description:
-        'Des produits de qualité à des prix justes, sans les marges excessives du circuit traditionnel.',
-      icon: '💰',
-    },
-    {
-      title: 'Sélection curatée',
-      description:
-        'Notre catalogue est petit, mais chaque pièce y est pour une bonne raison. On ne vend que ce qui nous plaît.',
-      icon: '✨',
-    },
-    {
-      title: 'Service attentif',
-      description:
-        'Une petite équipe qui connaît ses produits. On répond vite, on conseille bien.',
-      icon: '🤝',
-    },
-  ];
-  const reassuranceItems = reassuranceContent?.items ?? defaultValues;
 
   return (
     <div>
-      {/* 1. Hero — split layout avec image produit */}
+      {/* 1. Hero typographique centré (Sprint 1 ✅) */}
       <HeroSection />
 
-      {/* 2. Catégories — tuiles visuelles (legacy, à retirer Sprint 4) */}
-      {products && products.length > 0 && <CategoryTiles products={products} />}
-
-      {/* 3. Nos trouvailles — 4 produits éditoriaux (Sprint 2) */}
+      {/* 2. Nos trouvailles — 4 produits éditoriaux (Sprint 2 ✅) */}
       <FeaturedProductsSection />
 
-      {/* 4. Valeurs / Reassurance — fond noir, 4 colonnes avec icônes */}
-      <section className="bg-verone-black py-12 md:py-24">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400 mb-3">
-              Notre philosophie
-            </p>
-            <h2 className="font-playfair text-4xl font-bold text-verone-white">
-              Ce qui nous différencie
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 text-center">
-            {defaultValues.map((item, index) => (
-              <div key={index}>
-                <p className="text-4xl mb-4">{item.icon}</p>
-                <h4 className="font-playfair text-lg font-semibold text-verone-white mb-3">
-                  {reassuranceItems[index]?.title ?? item.title}
-                </h4>
-                <p className="text-sm text-verone-gray-400 leading-relaxed">
-                  {reassuranceItems[index]?.description ?? item.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 5. Inspiration — bannière plein écran */}
+      {/* 3. Bannière éditoriale (Sprint 3 — refonte à venir, ancien composant en place) */}
       <InspirationBanner />
 
-      {/* 6. Collections */}
+      {/* 4. Collections (Sprint 4 — refonte à venir, version legacy en place) */}
       {featuredCollections && featuredCollections.length > 0 && (
         <section className="py-12 md:py-24">
           <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
@@ -151,10 +78,7 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* 7. Avis clients */}
-      <HomepageReviews />
-
-      {/* 8. Newsletter */}
+      {/* 5. Newsletter (Sprint 5 — refonte à venir, ancien composant en place) */}
       <NewsletterSection />
     </div>
   );
