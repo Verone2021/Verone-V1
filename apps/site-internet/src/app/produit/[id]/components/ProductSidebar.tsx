@@ -4,33 +4,33 @@
  * - Sticky top-20
  * - Titre + Fabricant conditionnelle
  * - Prix TTC + Éco-participation (ligne séparée)
- * - Variantes photos 56x56px
- * - Quantité + Checkbox montage
- * - CTA "Ajouter au panier"
+ * - Variantes photos 60x60px
+ * - Quantité stepper + Checkbox montage
+ * - CTA "Ajouter au panier" charbon plein largeur
  * - Icône Favoris (absolute top-right)
  * - Infos réassurance (livraison, retours)
+ *
+ * Design 2026 — Bodoni / Montserrat / DM Sans, charbon / or / pearl.
+ * Refonte visuelle 2026-05-11 (Stitch) — logique inchangée.
  */
 
 'use client';
 
-import { useState, type ChangeEvent } from 'react';
+import { useState } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import {
-  ButtonUnified,
   CloudflareImage,
   Label,
-  Input,
   Checkbox,
-  Separator,
   Popover,
   PopoverTrigger,
   PopoverContent,
 } from '@verone/ui';
 import { formatPrice } from '@verone/utils';
-import { ShoppingCart, Heart, Truck, Shield, Info, Check } from 'lucide-react';
+import { Heart, Truck, Shield, Info, Check, Minus, Plus } from 'lucide-react';
 
 import { trackAddToCart } from '@/components/analytics/GoogleAnalytics';
 import { useCart } from '@/contexts/CartContext';
@@ -42,10 +42,10 @@ interface ProductSidebarProps {
     product_id: string;
     name: string;
     slug: string;
-    manufacturer: string | null; // Afficher UNIQUEMENT si renseigné
+    manufacturer: string | null;
     price_ttc: number | null;
     discount_rate: number | null;
-    eco_participation_amount: number | null; // Ligne séparée sous prix
+    eco_participation_amount: number | null;
     requires_assembly: boolean | null;
     assembly_price: number | null;
     delivery_delay_weeks_min: number | null;
@@ -97,13 +97,14 @@ export function ProductSidebar({
   const deliveryDelay =
     product.delivery_delay_weeks_min && product.delivery_delay_weeks_max
       ? `Livré en ${product.delivery_delay_weeks_min}-${product.delivery_delay_weeks_max} semaines`
-      : 'Livraison sous 10-14 jours ouvres';
+      : 'Livraison sous 10-14 jours ouvrés';
 
   return (
     <div className="lg:sticky lg:top-20 lg:h-fit">
-      <div className="bg-white border rounded-lg p-6 space-y-6 relative">
+      <div className="relative space-y-8 pt-4 lg:pt-12">
         {/* Icône Favoris (absolute top-right) */}
         <button
+          type="button"
           disabled={isToggling}
           onClick={() => {
             if (!user) {
@@ -112,43 +113,37 @@ export function ProductSidebar({
             }
             toggleWishlist(product.product_id);
           }}
-          className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50"
+          className="absolute right-0 top-0 p-2 transition-colors duration-[180ms] ease-editorial hover:text-verone-or disabled:opacity-50"
           aria-label={
             isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'
           }
         >
           <Heart
             className={`h-5 w-5 transition-colors ${
-              isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'
+              isFavorite ? 'fill-verone-or text-verone-or' : 'text-verone-pearl'
             }`}
           />
         </button>
 
-        {/* Titre produit */}
-        <div>
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight pr-12">
-            {product.name}
-          </h1>
-
-          {/* Fabricant UNIQUEMENT si renseignée (pas de fallback "Vérone") */}
-          {/* Lien désactivé tant que la route /marques/[slug] n'existe pas (audit 2026-04-26 Bug 1) */}
+        {/* Header Info */}
+        <div className="space-y-3">
           {product.manufacturer && (
-            <span className="text-sm text-muted-foreground mt-2 inline-block">
+            <span className="block font-montserrat text-[12px] uppercase tracking-[0.18em] text-verone-pearl">
               par {product.manufacturer}
             </span>
           )}
-        </div>
 
-        <Separator />
+          <h1 className="pr-12 font-bodoni text-[28px] font-black leading-tight text-verone-charbon md:text-[32px]">
+            {product.name}
+          </h1>
 
-        {/* Prix TTC */}
-        <div className="space-y-2">
-          <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="text-3xl md:text-4xl font-bold">
+          {/* Prix TTC */}
+          <div className="flex flex-wrap items-baseline gap-3 pt-2">
+            <span className="font-montserrat text-[24px] font-bold tabular-nums text-verone-charbon">
               {formatPrice(priceTTC)}
             </span>
             {hasDiscount && (
-              <span className="inline-block text-sm font-semibold text-red-600 bg-red-50 px-2 py-1 rounded">
+              <span className="bg-verone-charbon px-2 py-1 font-montserrat text-[11px] font-semibold uppercase tracking-[0.16em] text-verone-or">
                 -{Math.round(product.discount_rate! * 100)}%
               </span>
             )}
@@ -156,101 +151,130 @@ export function ProductSidebar({
 
           {/* Éco-participation (ligne séparée) */}
           {ecoParticipation > 0 && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1 font-montserrat text-[12px] text-verone-pearl">
               <span>dont Éco-participation</span>
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="p-0.5 hover:bg-gray-100 rounded-full">
+                  <button
+                    type="button"
+                    className="p-0.5 transition-colors hover:text-verone-charbon"
+                    aria-label="Info éco-participation"
+                  >
                     <Info className="h-3 w-3" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-64 text-sm">
-                  L'éco-participation finance le recyclage des meubles usagés
-                  conformément à la réglementation française.
+                  L&apos;éco-participation finance le recyclage des meubles
+                  usagés conformément à la réglementation française.
                 </PopoverContent>
               </Popover>
-              <span className="font-medium">
+              <span className="font-medium text-verone-charbon">
                 {formatPrice(ecoParticipation)}
               </span>
             </div>
           )}
 
-          <p className="text-xs text-muted-foreground">TVA incluse</p>
+          <p className="font-montserrat text-[12px] text-verone-pearl">
+            TVA incluse
+          </p>
 
           {/* Stock status */}
-          <div className="flex items-center gap-1.5 mt-1">
-            <span className="w-2 h-2 rounded-full bg-green-500" />
-            <span className="text-xs font-medium text-green-700">En stock</span>
+          <div className="mt-1 flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-green-500" />
+            <span className="font-montserrat text-[12px] text-verone-charbon">
+              En stock
+            </span>
           </div>
         </div>
 
         {/* Variantes (SI eligible_variants_count > 1) */}
         {product.variant_group_id && product.eligible_variants_count > 1 && (
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">
-              Choisissez votre variante
+          <div className="space-y-4 border-t border-verone-pearl-soft pt-6">
+            <Label className="font-dm-sans text-[11px] font-light uppercase tracking-[0.32em] text-verone-charbon">
+              Choisis ta variante
             </Label>
 
-            <div className="flex flex-wrap gap-2">
-              {variants.map(variant => (
-                <Link
-                  key={variant.product_id}
-                  href={`/produit/${variant.slug}`}
-                  className="group relative"
-                  title={variant.name}
-                >
-                  {/* Photo 56x56px avec border active state */}
-                  <div
-                    className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                      currentProductId === variant.product_id
-                        ? 'border-gray-900 ring-2 ring-gray-200'
-                        : 'border-gray-200 hover:border-gray-400'
-                    }`}
+            <div className="flex flex-wrap gap-3">
+              {variants.map(variant => {
+                const isActive = currentProductId === variant.product_id;
+                return (
+                  <Link
+                    key={variant.product_id}
+                    href={`/produit/${variant.slug}`}
+                    className="group relative"
+                    title={variant.name}
                   >
-                    <CloudflareImage
-                      cloudflareId={variant.primary_cloudflare_image_id}
-                      fallbackSrc={variant.primary_image_url}
-                      alt={variant.name}
-                      fill
-                      className="object-contain p-1 bg-white"
-                      sizes="56px"
-                    />
-                  </div>
+                    <div
+                      className={`relative h-[60px] w-[60px] overflow-hidden transition-all duration-[180ms] ease-editorial ${
+                        isActive
+                          ? 'ring-2 ring-verone-charbon ring-offset-2'
+                          : 'ring-1 ring-verone-pearl-soft hover:ring-verone-pearl'
+                      }`}
+                    >
+                      <CloudflareImage
+                        cloudflareId={variant.primary_cloudflare_image_id}
+                        fallbackSrc={variant.primary_image_url}
+                        alt={variant.name}
+                        fill
+                        className="bg-verone-white object-contain p-1"
+                        sizes="60px"
+                      />
+                    </div>
 
-                  {/* Tooltip au survol */}
-                  <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-10 shadow-lg">
-                    {variant.name}
-                  </span>
-                </Link>
-              ))}
+                    {/* Tooltip au survol */}
+                    <span className="pointer-events-none absolute -top-10 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap bg-verone-charbon px-3 py-1.5 font-montserrat text-[11px] text-verone-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100">
+                      {variant.name}
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         )}
 
-        <Separator />
-
-        {/* Quantité */}
-        <div className="space-y-2">
-          <Label htmlFor="quantity" className="text-sm font-medium">
+        {/* Quantité — stepper */}
+        <div className="space-y-3 border-t border-verone-pearl-soft pt-6">
+          <Label
+            htmlFor="quantity"
+            className="font-dm-sans text-[11px] font-light uppercase tracking-[0.32em] text-verone-charbon"
+          >
             Quantité
           </Label>
-          <Input
-            id="quantity"
-            type="number"
-            min={1}
-            value={quantity}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))
-            }
-            className="w-24"
-          />
+          <div className="inline-flex items-center border border-verone-pearl-soft">
+            <button
+              type="button"
+              onClick={() => setQuantity(q => Math.max(1, q - 1))}
+              className="flex h-10 w-10 items-center justify-center text-verone-charbon transition-colors duration-[180ms] ease-editorial hover:bg-verone-pearl-soft"
+              aria-label="Diminuer la quantité"
+            >
+              <Minus className="h-3.5 w-3.5" />
+            </button>
+            <input
+              id="quantity"
+              type="number"
+              min={1}
+              value={quantity}
+              onChange={e =>
+                setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))
+              }
+              className="w-12 border-0 bg-transparent p-0 text-center font-montserrat text-[14px] tabular-nums text-verone-charbon focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            />
+            <button
+              type="button"
+              onClick={() => setQuantity(q => q + 1)}
+              className="flex h-10 w-10 items-center justify-center text-verone-charbon transition-colors duration-[180ms] ease-editorial hover:bg-verone-pearl-soft"
+              aria-label="Augmenter la quantité"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* Checkbox Service Montage (SI requires_assembly) */}
         {product.requires_assembly &&
           product.assembly_price &&
           product.assembly_price > 0 && (
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-3 border-t border-verone-pearl-soft pt-6">
               <Checkbox
                 id="assembly"
                 checked={includeAssembly}
@@ -261,36 +285,35 @@ export function ProductSidebar({
               <div className="flex-1">
                 <Label
                   htmlFor="assembly"
-                  className="text-sm font-normal cursor-pointer"
+                  className="cursor-pointer font-montserrat text-[14px] text-verone-charbon"
                 >
                   Service de montage
-                  <span className="font-medium ml-1">
+                  <span className="ml-1 font-medium">
                     (+{formatPrice(product.assembly_price)})
                   </span>
                 </Label>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="mt-0.5 font-montserrat text-[12px] text-verone-pearl">
                   Montage professionnel à domicile
                 </p>
               </div>
             </div>
           )}
 
-        <Separator />
-
         {/* Total Prix (si assembly inclus) */}
         {includeAssembly && assemblyPrice > 0 && (
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-medium">Total</span>
-            <span className="text-lg font-bold">{formatPrice(totalPrice)}</span>
+          <div className="flex items-center justify-between border-t border-verone-pearl-soft pt-6">
+            <span className="font-montserrat text-[14px] text-verone-charbon">
+              Total
+            </span>
+            <span className="font-montserrat text-[18px] font-bold tabular-nums text-verone-charbon">
+              {formatPrice(totalPrice)}
+            </span>
           </div>
         )}
 
-        {/* CTA "Ajouter au panier" */}
-        <ButtonUnified
-          variant={addedToCart ? 'secondary' : 'default'}
-          size="lg"
-          icon={addedToCart ? Check : ShoppingCart}
-          className="w-full"
+        {/* CTA "Ajouter au panier" — charbon plein largeur */}
+        <button
+          type="button"
           onClick={() => {
             void addItem({
               product_id: product.product_id,
@@ -320,24 +343,30 @@ export function ProductSidebar({
                 console.error('[ProductSidebar] Ajout panier failed:', error);
               });
           }}
+          className="flex w-full items-center justify-center gap-2 bg-verone-charbon px-6 py-4 font-montserrat text-[14px] font-medium uppercase tracking-[0.16em] text-verone-white transition-all duration-[180ms] ease-editorial hover:shadow-[inset_0_0_0_1px_#C9A961]"
         >
-          {addedToCart ? 'Ajouté au panier !' : 'Ajouter au panier'}
-        </ButtonUnified>
+          {addedToCart ? (
+            <>
+              <Check className="h-4 w-4" />
+              Ajouté au panier
+            </>
+          ) : (
+            <>Ajouter au panier</>
+          )}
+        </button>
 
         {/* Délai livraison */}
-        <p className="text-sm text-muted-foreground text-center">
+        <p className="text-center font-montserrat text-[13px] text-verone-pearl">
           {deliveryDelay}
         </p>
 
-        <Separator />
-
         {/* Infos réassurance */}
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center gap-2 text-muted-foreground">
+        <div className="space-y-3 border-t border-verone-pearl-soft pt-6 font-montserrat text-[13px]">
+          <div className="flex items-center gap-2 text-verone-pearl">
             <Truck className="h-4 w-4 flex-shrink-0" />
             <span>Livraison suivie</span>
           </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
+          <div className="flex items-center gap-2 text-verone-pearl">
             <Shield className="h-4 w-4 flex-shrink-0" />
             <span>Retours gratuits 30 jours</span>
           </div>
