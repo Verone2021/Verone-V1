@@ -12,6 +12,7 @@ import type { MediaAsset, MediaAssetType } from '@verone/products';
 import {
   MediaLibraryToolbar,
   type PublicationStatusFilter,
+  type ReviewStatusFilter,
 } from './MediaLibraryToolbar';
 import { MediaLibraryByProduct } from './MediaLibraryByProduct';
 import { UploadAssetModal } from './UploadAssetModal';
@@ -25,6 +26,12 @@ import type { BrandInfo } from './MediaAssetCard';
 export interface MediaLibraryViewProps {
   brands: BrandInfo[];
   onNavigateToProduct?: (sourceProductImageId: string) => void;
+  /**
+   * Si true, ouvre automatiquement la modale d'upload au montage.
+   * Utilisé par le pont « Génération manuelle Gemini » qui redirige
+   * ici avec ?import=manual_gen pour proposer l'import direct.
+   */
+  autoOpenUpload?: boolean;
 }
 
 // ============================================================================
@@ -34,6 +41,7 @@ export interface MediaLibraryViewProps {
 export function MediaLibraryView({
   brands,
   onNavigateToProduct,
+  autoOpenUpload = false,
 }: MediaLibraryViewProps) {
   // Filtres
   const [search, setSearch] = React.useState('');
@@ -43,9 +51,11 @@ export function MediaLibraryView({
   );
   const [publicationStatus, setPublicationStatus] =
     React.useState<PublicationStatusFilter>('all');
+  const [reviewStatus, setReviewStatus] =
+    React.useState<ReviewStatusFilter>('all');
 
-  // Modals
-  const [uploadOpen, setUploadOpen] = React.useState(false);
+  // Modals — uploadOpen initialisé via autoOpenUpload pour le pont Studio→Bibliothèque
+  const [uploadOpen, setUploadOpen] = React.useState(autoOpenUpload);
   const [selectedAsset, setSelectedAsset] = React.useState<MediaAsset | null>(
     null
   );
@@ -77,6 +87,7 @@ export function MediaLibraryView({
     search: debouncedSearch,
     archived: false,
     pageSize: 1000, // Vue groupée : on charge tout d'un coup pour grouper côté client
+    reviewStatus: reviewStatus === 'all' ? undefined : reviewStatus,
   });
 
   // Compteur de publications par asset (pour badge "Publié N×" sur chaque carte)
@@ -175,10 +186,12 @@ export function MediaLibraryView({
         brandId={brandId}
         assetType={assetType}
         publicationStatus={publicationStatus}
+        reviewStatus={reviewStatus}
         onSearchChange={setSearch}
         onBrandChange={setBrandId}
         onAssetTypeChange={setAssetType}
         onPublicationStatusChange={setPublicationStatus}
+        onReviewStatusChange={setReviewStatus}
         onUploadClick={() => setUploadOpen(true)}
       />
 

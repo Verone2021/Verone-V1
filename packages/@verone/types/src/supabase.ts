@@ -5020,6 +5020,9 @@ export type Database = {
           notes: string | null;
           product_id: string | null;
           public_url: string | null;
+          review_status: string;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
           source: string;
           source_image_ids: string[] | null;
           source_product_image_id: string | null;
@@ -5052,6 +5055,9 @@ export type Database = {
           notes?: string | null;
           product_id?: string | null;
           public_url?: string | null;
+          review_status?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
           source?: string;
           source_image_ids?: string[] | null;
           source_product_image_id?: string | null;
@@ -5084,6 +5090,9 @@ export type Database = {
           notes?: string | null;
           product_id?: string | null;
           public_url?: string | null;
+          review_status?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
           source?: string;
           source_image_ids?: string[] | null;
           source_product_image_id?: string | null;
@@ -6707,6 +6716,8 @@ export type Database = {
           item_group_id: string | null;
           manufacturer: string | null;
           margin_percentage: number | null;
+          marketing_blocked: boolean;
+          marketing_blocked_reason: string | null;
           meta_description: string | null;
           meta_title: string | null;
           min_stock: number | null;
@@ -6739,7 +6750,11 @@ export type Database = {
           style: string | null;
           subcategory_id: string | null;
           suitable_rooms: Database['public']['Enums']['room_type'][] | null;
+          supplier_availability_notes: string | null;
+          supplier_availability_status: string;
           supplier_id: string | null;
+          supplier_last_checked_at: string | null;
+          supplier_last_checked_by: string | null;
           supplier_moq: number | null;
           supplier_page_url: string | null;
           supplier_reference: string | null;
@@ -6804,6 +6819,8 @@ export type Database = {
           item_group_id?: string | null;
           manufacturer?: string | null;
           margin_percentage?: number | null;
+          marketing_blocked?: boolean;
+          marketing_blocked_reason?: string | null;
           meta_description?: string | null;
           meta_title?: string | null;
           min_stock?: number | null;
@@ -6836,7 +6853,11 @@ export type Database = {
           style?: string | null;
           subcategory_id?: string | null;
           suitable_rooms?: Database['public']['Enums']['room_type'][] | null;
+          supplier_availability_notes?: string | null;
+          supplier_availability_status?: string;
           supplier_id?: string | null;
+          supplier_last_checked_at?: string | null;
+          supplier_last_checked_by?: string | null;
           supplier_moq?: number | null;
           supplier_page_url?: string | null;
           supplier_reference?: string | null;
@@ -6901,6 +6922,8 @@ export type Database = {
           item_group_id?: string | null;
           manufacturer?: string | null;
           margin_percentage?: number | null;
+          marketing_blocked?: boolean;
+          marketing_blocked_reason?: string | null;
           meta_description?: string | null;
           meta_title?: string | null;
           min_stock?: number | null;
@@ -6933,7 +6956,11 @@ export type Database = {
           style?: string | null;
           subcategory_id?: string | null;
           suitable_rooms?: Database['public']['Enums']['room_type'][] | null;
+          supplier_availability_notes?: string | null;
+          supplier_availability_status?: string;
           supplier_id?: string | null;
+          supplier_last_checked_at?: string | null;
+          supplier_last_checked_by?: string | null;
           supplier_moq?: number | null;
           supplier_page_url?: string | null;
           supplier_reference?: string | null;
@@ -13946,6 +13973,10 @@ export type Database = {
           p_order_id: string;
           p_selection_id: string;
         };
+        Returns: boolean;
+      };
+      is_product_marketing_eligible: {
+        Args: { p_product_id: string };
         Returns: boolean;
       };
       is_staff_user_cached: { Args: never; Returns: boolean };

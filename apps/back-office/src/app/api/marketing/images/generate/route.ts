@@ -342,6 +342,7 @@ export async function POST(
       mise_en_scene: presetId,
       target_channel: targetChannel,
       tags: ['ai-generated', brandSlug, targetChannel],
+      review_status: 'pending_review',
       created_by: user.id,
     })
     .select('id, cloudflare_image_id, public_url, alt_text')

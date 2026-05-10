@@ -57,7 +57,8 @@ export const getNavItems = (
   _linkmeApprovalsCount: number,
   formSubmissionsCount: number,
   linkmeMissingInfoCount: number,
-  unreadNotificationsCount: number
+  unreadNotificationsCount: number,
+  mediaPendingCount: number = 0
 ): NavItem[] => [
   {
     title: 'Dashboard',
@@ -319,6 +320,8 @@ export const getNavItems = (
         title: 'Bibliothèque',
         href: '/marketing/bibliotheque',
         icon: Image,
+        badge: mediaPendingCount,
+        badgeVariant: mediaPendingCount > 0 ? 'urgent' : undefined,
       },
       {
         title: 'Marques',
