@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { Filter, Search, X } from 'lucide-react';
 
-import { ProductCardEditorial } from '@/components/home/ProductCardEditorial';
+import { CardProductLuxury } from '@/components/ui/CardProductLuxury';
 import { CatalogueSidebar } from '@/components/catalogue/CatalogueSidebar';
 import { CatalogueMobileFilters } from '@/components/catalogue/CatalogueMobileFilters';
 import {
@@ -113,92 +113,74 @@ export default function CataloguePage() {
     router.replace('/catalogue', { scroll: false });
   };
 
-  // Pagination compacte type Stitch : 1 2 3 … N
-  const visiblePages = useMemo(() => {
-    if (totalPages <= 5) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-    const pages: (number | 'ellipsis')[] = [];
-    if (currentPage <= 3) {
-      pages.push(1, 2, 3, 'ellipsis', totalPages);
-    } else if (currentPage >= totalPages - 2) {
-      pages.push(1, 'ellipsis', totalPages - 2, totalPages - 1, totalPages);
-    } else {
-      pages.push(1, 'ellipsis', currentPage, 'ellipsis', totalPages);
-    }
-    return pages;
-  }, [currentPage, totalPages]);
-
   return (
-    <div className="mx-auto max-w-[1440px] px-5 pb-32 pt-12 md:px-16 md:pb-24 md:pt-16">
-      {/* Header centré (Stitch) */}
-      <header className="mb-16 text-center md:mb-24">
-        <span className="block font-dm-sans text-[12px] font-light uppercase tracking-[0.32em] text-verone-or">
-          Catalogue
-        </span>
-        <h1 className="mt-6 font-bodoni text-[36px] font-black leading-[1.1] text-verone-charbon md:text-[48px]">
-          La sélection
+    <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12 pb-32 md:pb-12">
+      {/* Header — pb-32 sur mobile pour la banniere cookies (audit 2026-04-26 Bug 8) */}
+      <div className="mb-12">
+        <h1 className="font-playfair text-3xl md:text-5xl font-bold text-verone-black mb-4">
+          Notre Sélection
         </h1>
-      </header>
+        <p className="text-lg text-verone-gray-600">
+          Des pièces originales de déco et mobilier, sourcées avec soin, au
+          juste prix
+        </p>
+      </div>
 
-      {/* Search + Sort bar — bordures minimales */}
-      <div className="mb-10 flex flex-col gap-3 border-y border-verone-pearl-soft py-4 md:flex-row md:items-center md:py-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-verone-pearl" />
-          <input
-            type="text"
-            placeholder="Rechercher une pièce…"
-            value={searchQuery}
-            onChange={e => {
-              setSearchQuery(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="w-full border-0 bg-transparent py-2 pl-9 pr-9 font-montserrat text-sm text-verone-charbon placeholder:text-verone-pearl focus:outline-none focus:ring-0"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => {
-                setSearchQuery('');
+      {/* Search + Sort bar */}
+      <div className="bg-verone-white border border-verone-gray-200 p-4 md:p-6 mb-8">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-verone-gray-400" />
+            <input
+              type="text"
+              placeholder="Rechercher un produit..."
+              value={searchQuery}
+              onChange={e => {
+                setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="absolute right-3 top-1/2 -translate-y-1/2"
-              aria-label="Effacer la recherche"
-            >
-              <X className="h-4 w-4 text-verone-pearl transition-colors duration-[180ms] ease-editorial hover:text-verone-charbon" />
-            </button>
-          )}
-        </div>
-
-        <div className="flex gap-3">
+              className="w-full border border-verone-gray-300 rounded-none pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-verone-black"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setCurrentPage(1);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+              >
+                <X className="h-4 w-4 text-verone-gray-400 hover:text-verone-black" />
+              </button>
+            )}
+          </div>
           <select
             value={sortBy}
             onChange={e => handleSort(e.target.value as SortOption)}
-            className="border-0 border-l border-verone-pearl-soft bg-transparent px-3 py-2 font-montserrat text-sm text-verone-charbon focus:outline-none focus:ring-0"
-            aria-label="Trier par"
+            className="border border-verone-gray-300 rounded-none px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-verone-black"
           >
-            <option value="newest">Trier : Nouveautés</option>
-            <option value="oldest">Trier : Plus anciens</option>
-            <option value="name_asc">Trier : Nom A–Z</option>
-            <option value="name_desc">Trier : Nom Z–A</option>
-            <option value="price_asc">Trier : Prix croissant</option>
-            <option value="price_desc">Trier : Prix décroissant</option>
+            <option value="newest">Nouveautés</option>
+            <option value="oldest">Plus anciens</option>
+            <option value="name_asc">Nom A-Z</option>
+            <option value="name_desc">Nom Z-A</option>
+            <option value="price_asc">Prix croissant</option>
+            <option value="price_desc">Prix décroissant</option>
           </select>
 
           {/* Mobile filter toggle */}
           <button
             type="button"
             onClick={() => setMobileFiltersOpen(true)}
-            className={`flex items-center gap-2 border px-4 py-2 font-montserrat text-xs font-medium uppercase tracking-[0.16em] transition-colors duration-[180ms] ease-editorial lg:hidden ${
+            className={`lg:hidden flex items-center gap-2 px-4 py-3 border text-sm transition-colors ${
               hasSidebarFilters
-                ? 'border-verone-charbon bg-verone-charbon text-verone-white'
-                : 'border-verone-charbon text-verone-charbon hover:bg-verone-charbon hover:text-verone-white'
+                ? 'border-verone-black bg-verone-black text-verone-white'
+                : 'border-verone-gray-300 text-verone-gray-700 hover:border-verone-black'
             }`}
           >
             <Filter className="h-4 w-4" />
             Filtres
             {activeFilterCount > 0 && (
-              <span className="flex h-5 w-5 items-center justify-center bg-verone-or font-montserrat text-[10px] font-semibold text-verone-charbon">
+              <span className="flex items-center justify-center w-5 h-5 bg-verone-white text-verone-black text-xs font-semibold rounded-full">
                 {activeFilterCount}
               </span>
             )}
@@ -207,7 +189,7 @@ export default function CataloguePage() {
       </div>
 
       {/* Layout: sidebar + grid */}
-      <div className="flex gap-12">
+      <div className="flex gap-8">
         {/* Sidebar (desktop only) */}
         {allProducts && allProducts.length > 0 && (
           <CatalogueSidebar
@@ -247,106 +229,106 @@ export default function CataloguePage() {
         )}
 
         {/* Products area */}
-        <div className="min-w-0 flex-1">
-          {/* Result count */}
-          {!isLoading && filteredProducts.length > 0 && (
-            <p className="mb-6 font-montserrat text-[13px] text-verone-pearl">
-              {filteredProducts.length} pièce
-              {filteredProducts.length > 1 ? 's' : ''}
-              {totalPages > 1 && ` — page ${currentPage} sur ${totalPages}`}
-            </p>
-          )}
-
+        <div className="flex-1 min-w-0">
           {isLoading ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="aspect-[4/5] bg-verone-pearl-soft" />
-                  <div className="mt-5 space-y-2">
-                    <div className="h-4 w-3/4 bg-verone-pearl-soft" />
-                    <div className="h-4 w-1/3 bg-verone-pearl-soft" />
+                <div
+                  key={i}
+                  className="border border-verone-gray-200 animate-pulse"
+                >
+                  <div className="bg-verone-gray-200 aspect-square" />
+                  <div className="p-6 space-y-3">
+                    <div className="h-6 bg-verone-gray-200 rounded" />
+                    <div className="h-4 bg-verone-gray-100 rounded w-2/3" />
                   </div>
                 </div>
               ))}
             </div>
           ) : paginatedProducts.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <p className="text-sm text-verone-gray-600 mb-6">
+                {filteredProducts.length} produit
+                {filteredProducts.length > 1 ? 's' : ''} trouvé
+                {filteredProducts.length > 1 ? 's' : ''}
+                {totalPages > 1 && ` — page ${currentPage} sur ${totalPages}`}
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {paginatedProducts.map(
                   (product: CatalogueProduct, index: number) => (
-                    <ProductCardEditorial
+                    <CardProductLuxury
                       key={product.product_id}
+                      id={product.product_id}
                       name={product.name}
-                      slug={product.slug}
-                      priceTtc={product.price_ttc}
+                      description={product.seo_meta_description ?? undefined}
+                      price={product.price_ttc}
                       imageUrl={product.primary_image_url}
                       cloudflareImageId={product.primary_cloudflare_image_id}
+                      href={`/produit/${product.slug}`}
                       priority={index < 3}
+                      subcategoryName={product.subcategory_name ?? undefined}
+                      discountRate={product.discount_rate ?? undefined}
+                      publicationDate={product.publication_date ?? undefined}
                       stockStatus={product.stock_status}
-                      discountRate={product.discount_rate}
-                      showCents
+                      variantsCount={
+                        product.eligible_variants_count > 1
+                          ? product.eligible_variants_count
+                          : undefined
+                      }
                     />
                   )
                 )}
               </div>
 
-              {/* Pagination minimaliste type Stitch */}
+              {/* Pagination */}
               {totalPages > 1 && (
-                <div className="mt-16 flex items-center justify-center gap-4 font-montserrat text-[14px]">
+                <div className="flex justify-center items-center gap-2 mt-12">
                   <button
                     type="button"
                     onClick={() => handlePage(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="transition-colors duration-[180ms] ease-editorial disabled:cursor-not-allowed disabled:text-verone-pearl-soft hover:text-verone-or"
-                    aria-label="Page précédente"
+                    className="px-4 py-2 text-sm border border-verone-gray-300 hover:border-verone-black transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
-                    ←
+                    Précédent
                   </button>
-                  {visiblePages.map((p, idx) =>
-                    p === 'ellipsis' ? (
-                      <span key={`e-${idx}`} className="text-verone-pearl">
-                        …
-                      </span>
-                    ) : (
-                      <button
-                        key={p}
-                        type="button"
-                        onClick={() => handlePage(p)}
-                        className={`pb-1 transition-colors duration-[180ms] ease-editorial ${
-                          currentPage === p
-                            ? 'border-b border-verone-charbon text-verone-charbon'
-                            : 'text-verone-pearl hover:text-verone-charbon'
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    )
-                  )}
+                  {Array.from({ length: totalPages }).map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => handlePage(i + 1)}
+                      className={`w-10 h-10 text-sm border transition-colors ${
+                        currentPage === i + 1
+                          ? 'border-verone-black bg-verone-black text-verone-white'
+                          : 'border-verone-gray-300 hover:border-verone-black'
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
                   <button
                     type="button"
                     onClick={() => handlePage(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="transition-colors duration-[180ms] ease-editorial disabled:cursor-not-allowed disabled:text-verone-pearl-soft hover:text-verone-or"
-                    aria-label="Page suivante"
+                    className="px-4 py-2 text-sm border border-verone-gray-300 hover:border-verone-black transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
-                    →
+                    Suivant
                   </button>
                 </div>
               )}
             </>
           ) : (
-            <div className="py-24 text-center">
-              <p className="mb-4 font-bodoni text-[28px] font-black text-verone-charbon">
-                Aucune pièce ne correspond.
+            <div className="text-center py-24">
+              <p className="font-playfair text-2xl text-verone-gray-500 mb-4">
+                Aucun produit trouvé
               </p>
-              <p className="mb-6 font-montserrat text-sm text-verone-pearl">
-                Essaie de modifier tes filtres.
+              <p className="text-verone-gray-400 mb-6">
+                Essayez de modifier vos filtres
               </p>
               {hasActiveFilters && (
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="font-montserrat text-xs font-medium uppercase tracking-[0.16em] text-verone-charbon underline decoration-verone-or decoration-1 underline-offset-[6px] transition-colors duration-[180ms] ease-editorial hover:text-verone-or"
+                  className="text-sm text-verone-black underline"
                 >
                   Effacer tous les filtres
                 </button>
