@@ -13674,6 +13674,22 @@ export type Database = {
           weight: number;
         }[];
       };
+      get_site_top_products: {
+        Args: {
+          p_channel_code: string;
+          p_limit?: number;
+          p_period_days?: number;
+        };
+        Returns: {
+          order_count: number;
+          primary_image_url: string;
+          product_id: string;
+          product_name: string;
+          sku: string;
+          total_quantity: number;
+          total_revenue_ht: number;
+        }[];
+      };
       get_smart_stock_status: {
         Args: { p_product_id: string };
         Returns: {
