@@ -33,23 +33,23 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="bg-verone-black text-verone-white">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-12">
+    <footer className="bg-verone-charbon text-verone-white">
+      <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8 lg:py-20">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-5 lg:gap-12">
           {/* Brand */}
           <div>
-            <h3 className="font-playfair text-2xl font-bold text-verone-white mb-4 tracking-tight">
+            <h3 className="mb-4 font-bodoni text-2xl font-black tracking-tight text-verone-white">
               Vérone
             </h3>
-            <p className="text-sm text-verone-gray-400 leading-relaxed">
-              Concept store en ligne — déco et mobilier original, sourcé avec
-              soin, au juste prix.
+            <p className="font-montserrat text-sm font-light leading-relaxed text-verone-pearl">
+              Mille pièces vues, cinquante retenues. Pas un catalogue. Un
+              regard.
             </p>
           </div>
 
           {/* Navigation */}
           <div>
-            <h4 className="text-verone-white text-xs font-semibold mb-6 uppercase tracking-widest">
+            <h4 className="mb-6 font-dm-sans text-[11px] font-light uppercase tracking-[0.32em] text-verone-pearl">
               Navigation
             </h4>
             <ul className="space-y-3">
@@ -57,7 +57,7 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-verone-gray-400 hover:text-verone-white transition-colors duration-300"
+                    className="font-montserrat text-sm text-verone-pearl transition-colors duration-[180ms] ease-editorial hover:text-verone-or"
                   >
                     {link.label}
                   </Link>
@@ -68,7 +68,7 @@ export function Footer() {
 
           {/* Help */}
           <div>
-            <h4 className="text-verone-white text-xs font-semibold mb-6 uppercase tracking-widest">
+            <h4 className="mb-6 font-dm-sans text-[11px] font-light uppercase tracking-[0.32em] text-verone-pearl">
               Aide
             </h4>
             <ul className="space-y-3">
@@ -76,7 +76,7 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-verone-gray-400 hover:text-verone-white transition-colors duration-300"
+                    className="font-montserrat text-sm text-verone-pearl transition-colors duration-[180ms] ease-editorial hover:text-verone-or"
                   >
                     {link.label}
                   </Link>
@@ -87,7 +87,7 @@ export function Footer() {
 
           {/* Legal */}
           <div>
-            <h4 className="text-verone-white text-xs font-semibold mb-6 uppercase tracking-widest">
+            <h4 className="mb-6 font-dm-sans text-[11px] font-light uppercase tracking-[0.32em] text-verone-pearl">
               Légal
             </h4>
             <ul className="space-y-3">
@@ -95,7 +95,7 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-verone-gray-400 hover:text-verone-white transition-colors duration-300"
+                    className="font-montserrat text-sm text-verone-pearl transition-colors duration-[180ms] ease-editorial hover:text-verone-or"
                   >
                     {link.label}
                   </Link>
@@ -111,10 +111,10 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-16 pt-8 border-t border-verone-gray-800">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="mt-16 border-t border-white/10 pt-8">
+          <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
             {/* Copyright */}
-            <p className="text-sm text-verone-gray-500">
+            <p className="font-montserrat text-sm text-verone-pearl">
               &copy; {new Date().getFullYear()} Vérone. Tous droits réservés.
             </p>
 
@@ -128,7 +128,7 @@ export function Footer() {
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-verone-gray-500 hover:text-verone-white transition-colors duration-300"
+                    className="text-verone-pearl transition-colors duration-[180ms] ease-editorial hover:text-verone-or"
                     aria-label={social.label}
                   >
                     <Icon className="h-5 w-5" />
