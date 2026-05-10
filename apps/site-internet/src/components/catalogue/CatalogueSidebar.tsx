@@ -11,6 +11,8 @@ import {
   getStyleLabel,
   getColorHex,
   getColorLabel,
+  expandColorValue,
+  canonicalColorKey,
 } from '@/lib/filter-labels';
 
 interface FilterSectionProps {
@@ -105,7 +107,9 @@ export function CatalogueSidebar({
   const rooms = getArrayValuesWithCounts(products, p => p.suitable_rooms);
   const styles = getValuesWithCounts(products, p => p.style);
   const brands = getValuesWithCounts(products, p => p.manufacturer);
-  const colors = getValuesWithCounts(products, p => p.color);
+  // Couleurs : splitter les valeurs composées ("Beige,Blanc" → 2 entrées) et
+  // dédupliquer case-insensitive ("beige" + "Beige" = 1 entrée "Beige")
+  const colors = getColorValuesWithCounts(products);
 
   return (
     <aside className={`w-[280px] shrink-0 ${className}`}>
@@ -300,5 +304,32 @@ function getArrayValuesWithCounts(
   }
   return [...map.entries()]
     .map(([value, count]) => ({ value, count }))
+    .sort((a, b) => a.value.localeCompare(b.value));
+}
+
+/**
+ * Helper couleurs : dédoublonne case-insensitive + splitte les valeurs
+ * composées ("Beige,Blanc" → 2 entrées). Retient le label le plus joli
+ * (capitalisé). Sortie triée alphabétiquement.
+ */
+function getColorValuesWithCounts(
+  products: CatalogueProduct[]
+): { value: string; count: number }[] {
+  const map = new Map<string, { label: string; count: number }>();
+  for (const p of products) {
+    if (!p.color) continue;
+    for (const piece of expandColorValue(p.color)) {
+      const key = canonicalColorKey(piece);
+      if (!key) continue;
+      const existing = map.get(key);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        map.set(key, { label: getColorLabel(piece), count: 1 });
+      }
+    }
+  }
+  return [...map.values()]
+    .map(({ label, count }) => ({ value: label, count }))
     .sort((a, b) => a.value.localeCompare(b.value));
 }

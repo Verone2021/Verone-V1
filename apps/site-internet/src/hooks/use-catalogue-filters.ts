@@ -135,9 +135,14 @@ export function useCatalogueFilters() {
       if (filters.selectedColors.length > 0) {
         result = result.filter(p => {
           if (!p.color) return false;
-          const normalizedColor = p.color.toLowerCase();
-          return filters.selectedColors.some(
-            c => c.toLowerCase() === normalizedColor
+          // Splitter sur "," pour gérer les couleurs composées
+          // (ex: "Beige,Blanc" matche aussi bien "Beige" que "Blanc")
+          const productColors = p.color
+            .split(',')
+            .map(c => c.trim().toLowerCase())
+            .filter(Boolean);
+          return filters.selectedColors.some(selected =>
+            productColors.includes(selected.toLowerCase())
           );
         });
       }

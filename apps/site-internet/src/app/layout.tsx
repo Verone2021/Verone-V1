@@ -1,4 +1,10 @@
-import { Playfair_Display, Inter } from 'next/font/google';
+import {
+  Playfair_Display,
+  Inter,
+  Bodoni_Moda,
+  Montserrat,
+  DM_Sans,
+} from 'next/font/google';
 
 import type { Metadata } from 'next';
 
@@ -13,7 +19,30 @@ import { JsonLdOrganization } from '@/components/seo/JsonLdOrganization';
 
 import { Providers } from './providers';
 
-// Fonts Vérone Luxury
+// Fonts Vérone — design system 2026 (Stitch)
+const bodoniModa = Bodoni_Moda({
+  subsets: ['latin'],
+  weight: ['400', '700', '900'],
+  style: ['normal', 'italic'],
+  variable: '--font-bodoni',
+  display: 'swap',
+});
+
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-montserrat',
+  display: 'swap',
+});
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  weight: ['300', '400', '500'],
+  variable: '--font-dm-sans',
+  display: 'swap',
+});
+
+// Fonts legacy — conservées pour pages non encore migrées (catalogue, fiche produit, etc.)
 const playfairDisplay = Playfair_Display({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700', '800'],
@@ -73,8 +102,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr" className={`${playfairDisplay.variable} ${inter.variable}`}>
-      <body className="min-h-screen bg-verone-white font-inter antialiased">
+    <html
+      lang="fr"
+      className={`${bodoniModa.variable} ${montserrat.variable} ${dmSans.variable} ${playfairDisplay.variable} ${inter.variable}`}
+    >
+      <body className="min-h-screen bg-verone-white font-montserrat antialiased">
         <GoogleAnalytics />
         <MetaPixel />
         <JsonLdOrganization />
