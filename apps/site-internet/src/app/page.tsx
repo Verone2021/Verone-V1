@@ -5,17 +5,17 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
 import { HeroSection } from '@/components/home/HeroSection';
+import { FeaturedProductsSection } from '@/components/home/FeaturedProductsSection';
 import { CategoryTiles } from '@/components/home/CategoryTiles';
 import { InspirationBanner } from '@/components/home/InspirationBanner';
 import { HomepageReviews } from '@/components/home/HomepageReviews';
 import { NewsletterSection } from '@/components/home/NewsletterSection';
-import { CardProductLuxury } from '@/components/ui/CardProductLuxury';
 import { useCatalogueProducts } from '@/hooks/use-catalogue-products';
 import { useCollections } from '@/hooks/use-collections';
 import { useReassuranceContent } from '@/hooks/use-site-content';
 
 export default function HomePage() {
-  const { data: products, isLoading: productsLoading } = useCatalogueProducts({
+  const { data: products } = useCatalogueProducts({
     sortBy: 'newest',
     limit: 6,
     offset: 0,
@@ -62,71 +62,11 @@ export default function HomePage() {
       {/* 1. Hero — split layout avec image produit */}
       <HeroSection />
 
-      {/* 2. Catégories — tuiles visuelles */}
+      {/* 2. Catégories — tuiles visuelles (legacy, à retirer Sprint 4) */}
       {products && products.length > 0 && <CategoryTiles products={products} />}
 
-      {/* 3. Produits vedettes — "Nos trouvailles" */}
-      <section className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-12 md:py-24">
-        <div className="text-center mb-12">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
-            Pièces sélectionnées
-          </p>
-          <h2 className="font-playfair text-4xl font-bold text-verone-black">
-            Nos trouvailles
-          </h2>
-        </div>
-
-        {productsLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="animate-pulse">
-                <div className="bg-verone-gray-200 h-80" />
-                <div className="p-6 space-y-3">
-                  <div className="h-6 bg-verone-gray-200 rounded w-3/4" />
-                  <div className="h-4 bg-verone-gray-100 rounded w-1/2" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {products && products.length > 0 && (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {products.slice(0, 6).map((p, index) => (
-                <CardProductLuxury
-                  key={p.product_id}
-                  id={p.product_id}
-                  name={p.name}
-                  description={p.seo_meta_description ?? undefined}
-                  price={p.price_ttc}
-                  imageUrl={p.primary_image_url}
-                  href={`/produit/${p.slug}`}
-                  priority={index < 3}
-                  subcategoryName={p.subcategory_name ?? undefined}
-                  discountRate={p.discount_rate ?? undefined}
-                  publicationDate={p.publication_date ?? undefined}
-                  stockStatus={p.stock_status}
-                  variantsCount={
-                    p.eligible_variants_count > 1
-                      ? p.eligible_variants_count
-                      : undefined
-                  }
-                />
-              ))}
-            </div>
-            <div className="text-center mt-12">
-              <Link
-                href="/catalogue"
-                className="inline-flex items-center gap-2 px-8 py-3 border border-verone-black text-verone-black text-sm uppercase tracking-wide hover:bg-verone-black hover:text-verone-white transition-all duration-300"
-              >
-                Découvrir la sélection
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </>
-        )}
-      </section>
+      {/* 3. Nos trouvailles — 4 produits éditoriaux (Sprint 2) */}
+      <FeaturedProductsSection />
 
       {/* 4. Valeurs / Reassurance — fond noir, 4 colonnes avec icônes */}
       <section className="bg-verone-black py-12 md:py-24">
