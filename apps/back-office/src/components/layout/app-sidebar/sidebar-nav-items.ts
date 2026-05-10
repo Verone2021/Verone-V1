@@ -330,6 +330,11 @@ export const getNavItems = (
         icon: BarChart2,
       },
       {
+        title: 'Calendrier',
+        href: '/marketing/calendrier',
+        icon: CalendarClock,
+      },
+      {
         title: 'Marques',
         href: '/marques',
         icon: Award,

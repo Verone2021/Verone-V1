@@ -8682,6 +8682,65 @@ export type Database = {
           },
         ];
       };
+      scheduled_publications: {
+        Row: {
+          asset_id: string;
+          caption: string | null;
+          channel_code: string;
+          created_at: string;
+          created_by: string | null;
+          error_message: string | null;
+          external_url: string | null;
+          hashtags: string[] | null;
+          id: string;
+          published_at: string | null;
+          retry_count: number;
+          scheduled_at: string;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          asset_id: string;
+          caption?: string | null;
+          channel_code: string;
+          created_at?: string;
+          created_by?: string | null;
+          error_message?: string | null;
+          external_url?: string | null;
+          hashtags?: string[] | null;
+          id?: string;
+          published_at?: string | null;
+          retry_count?: number;
+          scheduled_at: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          asset_id?: string;
+          caption?: string | null;
+          channel_code?: string;
+          created_at?: string;
+          created_by?: string | null;
+          error_message?: string | null;
+          external_url?: string | null;
+          hashtags?: string[] | null;
+          id?: string;
+          published_at?: string | null;
+          retry_count?: number;
+          scheduled_at?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'scheduled_publications_asset_id_fkey';
+            columns: ['asset_id'];
+            isOneToOne: false;
+            referencedRelation: 'media_assets';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       shopping_carts: {
         Row: {
           abandoned_cart_email_sent_at: string | null;
@@ -13706,6 +13765,26 @@ export type Database = {
           sample_percentage: number;
           table_name: string;
           total_products: number;
+        }[];
+      };
+      get_scheduled_publications_calendar: {
+        Args: { p_end_date: string; p_start_date: string };
+        Returns: {
+          asset_alt_text: string;
+          asset_filename: string;
+          asset_id: string;
+          asset_public_url: string;
+          caption: string;
+          channel_code: string;
+          error_message: string;
+          external_url: string;
+          hashtags: string[];
+          id: string;
+          product_id: string;
+          published_at: string;
+          retry_count: number;
+          scheduled_at: string;
+          status: string;
         }[];
       };
       get_section_progress: {
