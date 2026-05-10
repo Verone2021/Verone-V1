@@ -1,5 +1,11 @@
 import Script from 'next/script';
 
+import {
+  generateEventId,
+  sendCapiEvent,
+  type CapiCustomData,
+} from './meta-capi-client';
+
 const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
 // Typed window extension for fbq
@@ -85,14 +91,17 @@ export function trackMetaViewContent(product: {
 }) {
   if (!META_PIXEL_ID) return;
   const fbq = getFbq();
-  fbq?.('track', 'ViewContent', {
+  const eventId = generateEventId();
+  const customData: CapiCustomData = {
     content_ids: [resolveContentId(product.sku, product.id)],
     content_name: product.name,
     content_type: 'product',
     content_category: product.category,
     value: product.price,
     currency: 'EUR',
-  });
+  };
+  fbq?.('track', 'ViewContent', customData, { eventID: eventId });
+  sendCapiEvent({ eventName: 'ViewContent', eventId, customData });
 }
 
 export function trackMetaAddToCart(product: {
@@ -104,14 +113,17 @@ export function trackMetaAddToCart(product: {
 }) {
   if (!META_PIXEL_ID) return;
   const fbq = getFbq();
-  fbq?.('track', 'AddToCart', {
+  const eventId = generateEventId();
+  const customData: CapiCustomData = {
     content_ids: [resolveContentId(product.sku, product.id)],
     content_name: product.name,
     content_type: 'product',
     value: product.price * product.quantity,
     currency: 'EUR',
     num_items: product.quantity,
-  });
+  };
+  fbq?.('track', 'AddToCart', customData, { eventID: eventId });
+  sendCapiEvent({ eventName: 'AddToCart', eventId, customData });
 }
 
 export function trackMetaInitiateCheckout(params: {
@@ -121,13 +133,16 @@ export function trackMetaInitiateCheckout(params: {
 }) {
   if (!META_PIXEL_ID) return;
   const fbq = getFbq();
-  fbq?.('track', 'InitiateCheckout', {
+  const eventId = generateEventId();
+  const customData: CapiCustomData = {
     value: params.value,
     currency: 'EUR',
     num_items: params.itemCount,
     content_ids: resolveContentIds(params.items),
     content_type: 'product',
-  });
+  };
+  fbq?.('track', 'InitiateCheckout', customData, { eventID: eventId });
+  sendCapiEvent({ eventName: 'InitiateCheckout', eventId, customData });
 }
 
 export function trackMetaPurchase(params: {
@@ -138,12 +153,19 @@ export function trackMetaPurchase(params: {
 }) {
   if (!META_PIXEL_ID) return;
   const fbq = getFbq();
-  fbq?.('track', 'Purchase', {
+  const eventId = generateEventId();
+  const customData: CapiCustomData = {
     value: params.value,
     currency: 'EUR',
     content_ids: resolveContentIds(params.items),
     content_type: 'product',
     num_items: params.itemCount,
     order_id: params.transactionId,
+  };
+  fbq?.('track', 'Purchase', customData, { eventID: eventId });
+  sendCapiEvent({
+    eventName: 'Purchase',
+    eventId,
+    customData,
   });
 }

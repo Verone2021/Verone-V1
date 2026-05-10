@@ -14,6 +14,7 @@ import {
 
 import {
   MarketingEligibilitySection,
+  ProductPerformanceSection,
   SupplierAvailabilitySection,
 } from '@verone/products/components/sections';
 
@@ -125,6 +126,9 @@ export function ProductPublicationTab({ product }: ProductPublicationTabProps) {
     <div className="space-y-6">
       {/* Marketing eligibility */}
       <MarketingEligibilitySection productId={product.id} />
+
+      {/* Performance marketing par canal */}
+      <ProductPerformanceSection productId={product.id} />
 
       {/* Supplier availability */}
       <SupplierAvailabilitySection productId={product.id} />

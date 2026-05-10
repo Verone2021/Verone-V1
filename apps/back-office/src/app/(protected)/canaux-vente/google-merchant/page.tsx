@@ -14,11 +14,14 @@ import { GmFiltersBar } from './_components/gm-filters';
 import { GmHeader } from './_components/gm-header';
 import { GmProductsTable } from './_components/gm-products-table';
 import { GmStatsCards } from './_components/gm-stats-cards';
+import { GmTopProductsTab } from './_components/gm-top-products-tab';
 import { DEFAULT_GM_FILTERS } from './_components/types';
 import type { GoogleMerchantFilters } from './_components/types';
 
 export default function GoogleMerchantPage() {
-  const [activeTab, setActiveTab] = useState<'synced' | 'add'>('synced');
+  const [activeTab, setActiveTab] = useState<'synced' | 'top' | 'add'>(
+    'synced'
+  );
   const [isSyncing, setIsSyncing] = useState(false);
   const [filters, setFilters] =
     useState<GoogleMerchantFilters>(DEFAULT_GM_FILTERS);
@@ -149,6 +152,18 @@ export default function GoogleMerchantPage() {
             type="button"
             className={cn(
               'pb-2 text-sm font-medium border-b-2 transition-colors',
+              activeTab === 'top'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            )}
+            onClick={() => setActiveTab('top')}
+          >
+            Top produits
+          </button>
+          <button
+            type="button"
+            className={cn(
+              'pb-2 text-sm font-medium border-b-2 transition-colors',
               activeTab === 'add'
                 ? 'border-primary text-primary'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -160,7 +175,7 @@ export default function GoogleMerchantPage() {
         </div>
       </div>
 
-      {activeTab === 'synced' ? (
+      {activeTab === 'synced' && (
         <div className="space-y-4">
           <GmFiltersBar
             filters={filters}
@@ -169,9 +184,9 @@ export default function GoogleMerchantPage() {
           />
           <GmProductsTable products={filtered} loading={isLoading} />
         </div>
-      ) : (
-        <AddProductsTab />
       )}
+      {activeTab === 'top' && <GmTopProductsTab />}
+      {activeTab === 'add' && <AddProductsTab />}
     </div>
   );
 }

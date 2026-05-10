@@ -266,3 +266,128 @@ export function getGeminiClient(): GeminiClient {
   geminiClientInstance ??= new GeminiClient();
   return geminiClientInstance;
 }
+
+// =====================================================================
+// TEXT GENERATION (hashtags, copy, descriptions)
+// =====================================================================
+//
+// Module séparé du chemin image car les modèles texte de Gemini
+// (gemini-2.5-flash, gemini-2.0-flash) sont plus stables et n'ont
+// pas besoin du mode `responseModalities: ['Image']`.
+
+const DEFAULT_TEXT_MODEL = 'gemini-2.5-flash';
+
+export interface GenerateGeminiTextOptions {
+  prompt: string;
+  /** Override du modèle. Default : gemini-2.5-flash */
+  model?: string;
+  /** Temperature (0-1). Default : 0.7 pour creative, 0.3 pour structuré */
+  temperature?: number;
+  /** Max tokens output. Default : 512 */
+  maxOutputTokens?: number;
+}
+
+export interface GenerateGeminiTextResult {
+  text: string;
+  modelUsed: string;
+}
+
+interface GeminiTextResponseShape {
+  candidates?: Array<{
+    content?: { parts?: Array<{ text?: string }> };
+  }>;
+  promptFeedback?: { blockReason?: string };
+}
+
+/**
+ * Appel léger pour génération de texte (hashtags, captions, descriptions).
+ * Utilise gemini-2.5-flash par défaut. Pas de fallback model — si l'appel
+ * échoue, on remonte l'erreur (les routes API gèrent le retry à leur niveau).
+ */
+export async function generateGeminiText(
+  options: GenerateGeminiTextOptions
+): Promise<GenerateGeminiTextResult> {
+  const apiKey = process.env['GOOGLE_GEMINI_API_KEY'];
+  if (!apiKey) {
+    throw new GeminiError('GOOGLE_GEMINI_API_KEY is not set.', 'AUTH_ERROR', 0);
+  }
+
+  const model = options.model ?? DEFAULT_TEXT_MODEL;
+  const url = `${GEMINI_API_BASE}/${model}:generateContent`;
+
+  const body = {
+    contents: [{ parts: [{ text: options.prompt }] }],
+    generationConfig: {
+      temperature: options.temperature ?? 0.7,
+      maxOutputTokens: options.maxOutputTokens ?? 512,
+    },
+  };
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey,
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+  } catch (fetchError) {
+    clearTimeout(timeoutId);
+    if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+      throw new GeminiError(
+        `Gemini text request timed out after ${TIMEOUT_MS / 1000}s`,
+        'TIMEOUT',
+        408
+      );
+    }
+    throw new GeminiError(
+      fetchError instanceof Error ? fetchError.message : 'Network error',
+      'NETWORK_ERROR',
+      0
+    );
+  }
+
+  clearTimeout(timeoutId);
+
+  if (!response.ok) {
+    let errorData: Record<string, unknown> = {};
+    try {
+      errorData = (await response.json()) as Record<string, unknown>;
+    } catch {
+      // Non-JSON
+    }
+    throw createGeminiErrorFromResponse(response.status, errorData);
+  }
+
+  const raw = (await response.json()) as GeminiTextResponseShape;
+
+  if (raw.promptFeedback?.blockReason) {
+    throw new GeminiError(
+      'Gemini text blocked by safety filters',
+      'SAFETY_BLOCK',
+      200,
+      { promptFeedback: raw.promptFeedback }
+    );
+  }
+
+  const candidate = raw.candidates?.[0];
+  const text = candidate?.content?.parts
+    ?.map(p => p.text ?? '')
+    .filter(Boolean)
+    .join('')
+    .trim();
+
+  if (!text) {
+    throw new GeminiError('Gemini text response empty', 'SERVER_ERROR', 200, {
+      raw,
+    });
+  }
+
+  return { text, modelUsed: model };
+}

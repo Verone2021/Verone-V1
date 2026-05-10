@@ -376,6 +376,48 @@ export type Database = {
           },
         ];
       };
+      ai_generation_logs: {
+        Row: {
+          cost_cents_estimated: number | null;
+          created_at: string;
+          endpoint: string;
+          error_code: string | null;
+          id: string;
+          latency_ms: number | null;
+          model: string;
+          request_metadata: Json | null;
+          tokens_input: number | null;
+          tokens_output: number | null;
+          user_id: string | null;
+        };
+        Insert: {
+          cost_cents_estimated?: number | null;
+          created_at?: string;
+          endpoint: string;
+          error_code?: string | null;
+          id?: string;
+          latency_ms?: number | null;
+          model: string;
+          request_metadata?: Json | null;
+          tokens_input?: number | null;
+          tokens_output?: number | null;
+          user_id?: string | null;
+        };
+        Update: {
+          cost_cents_estimated?: number | null;
+          created_at?: string;
+          endpoint?: string;
+          error_code?: string | null;
+          id?: string;
+          latency_ms?: number | null;
+          model?: string;
+          request_metadata?: Json | null;
+          tokens_input?: number | null;
+          tokens_output?: number | null;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
       ambassador_attributions: {
         Row: {
           attribution_method: string;
@@ -1375,6 +1417,71 @@ export type Database = {
           },
           {
             foreignKeyName: 'channel_product_metadata_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+        ];
+      };
+      channel_stats_snapshots: {
+        Row: {
+          channel_code: string;
+          clicks: number;
+          conversions: number;
+          created_at: string;
+          id: string;
+          impressions: number;
+          product_id: string;
+          revenue_ht: number;
+          snapshot_date: string;
+        };
+        Insert: {
+          channel_code: string;
+          clicks?: number;
+          conversions?: number;
+          created_at?: string;
+          id?: string;
+          impressions?: number;
+          product_id: string;
+          revenue_ht?: number;
+          snapshot_date: string;
+        };
+        Update: {
+          channel_code?: string;
+          clicks?: number;
+          conversions?: number;
+          created_at?: string;
+          id?: string;
+          impressions?: number;
+          product_id?: string;
+          revenue_ht?: number;
+          snapshot_date?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'channel_stats_snapshots_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'channel_stats_snapshots_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'channel_stats_snapshots_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'channel_stats_snapshots_product_id_fkey';
             columns: ['product_id'];
             isOneToOne: false;
             referencedRelation: 'stock_alerts_view';
@@ -4950,6 +5057,53 @@ export type Database = {
         };
         Relationships: [];
       };
+      media_asset_analytics: {
+        Row: {
+          asset_id: string;
+          channel_code: string;
+          clicks: number;
+          conversions: number;
+          created_at: string;
+          id: string;
+          impressions: number;
+          period_date: string;
+          saves: number;
+          updated_at: string;
+        };
+        Insert: {
+          asset_id: string;
+          channel_code: string;
+          clicks?: number;
+          conversions?: number;
+          created_at?: string;
+          id?: string;
+          impressions?: number;
+          period_date: string;
+          saves?: number;
+          updated_at?: string;
+        };
+        Update: {
+          asset_id?: string;
+          channel_code?: string;
+          clicks?: number;
+          conversions?: number;
+          created_at?: string;
+          id?: string;
+          impressions?: number;
+          period_date?: string;
+          saves?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'media_asset_analytics_asset_id_fkey';
+            columns: ['asset_id'];
+            isOneToOne: false;
+            referencedRelation: 'media_assets';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       media_asset_publications: {
         Row: {
           asset_id: string;
@@ -5883,6 +6037,101 @@ export type Database = {
           updated_at?: string | null;
         };
         Relationships: [];
+      };
+      pinterest_pin_syncs: {
+        Row: {
+          conversions: number;
+          created_at: string;
+          error_message: string | null;
+          id: string;
+          impressions: number;
+          outbound_clicks: number;
+          pin_clicks: number;
+          pinterest_board_id: string | null;
+          pinterest_pin_id: string | null;
+          pinterest_status: string | null;
+          pinterest_status_checked_at: string | null;
+          pinterest_status_detail: Json | null;
+          product_id: string;
+          response_data: Json | null;
+          revenue_ht: number;
+          saves: number;
+          sync_status: string;
+          synced_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          conversions?: number;
+          created_at?: string;
+          error_message?: string | null;
+          id?: string;
+          impressions?: number;
+          outbound_clicks?: number;
+          pin_clicks?: number;
+          pinterest_board_id?: string | null;
+          pinterest_pin_id?: string | null;
+          pinterest_status?: string | null;
+          pinterest_status_checked_at?: string | null;
+          pinterest_status_detail?: Json | null;
+          product_id: string;
+          response_data?: Json | null;
+          revenue_ht?: number;
+          saves?: number;
+          sync_status?: string;
+          synced_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          conversions?: number;
+          created_at?: string;
+          error_message?: string | null;
+          id?: string;
+          impressions?: number;
+          outbound_clicks?: number;
+          pin_clicks?: number;
+          pinterest_board_id?: string | null;
+          pinterest_pin_id?: string | null;
+          pinterest_status?: string | null;
+          pinterest_status_checked_at?: string | null;
+          pinterest_status_detail?: Json | null;
+          product_id?: string;
+          response_data?: Json | null;
+          revenue_ht?: number;
+          saves?: number;
+          sync_status?: string;
+          synced_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'pinterest_pin_syncs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: true;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'pinterest_pin_syncs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: true;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'pinterest_pin_syncs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: true;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'pinterest_pin_syncs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: true;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+        ];
       };
       price_list_history: {
         Row: {
@@ -8544,6 +8793,65 @@ export type Database = {
             columns: ['supplier_id'];
             isOneToOne: false;
             referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      scheduled_publications: {
+        Row: {
+          asset_id: string;
+          caption: string | null;
+          channel_code: string;
+          created_at: string;
+          created_by: string | null;
+          error_message: string | null;
+          external_url: string | null;
+          hashtags: string[] | null;
+          id: string;
+          published_at: string | null;
+          retry_count: number;
+          scheduled_at: string;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          asset_id: string;
+          caption?: string | null;
+          channel_code: string;
+          created_at?: string;
+          created_by?: string | null;
+          error_message?: string | null;
+          external_url?: string | null;
+          hashtags?: string[] | null;
+          id?: string;
+          published_at?: string | null;
+          retry_count?: number;
+          scheduled_at: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          asset_id?: string;
+          caption?: string | null;
+          channel_code?: string;
+          created_at?: string;
+          created_by?: string | null;
+          error_message?: string | null;
+          external_url?: string | null;
+          hashtags?: string[] | null;
+          id?: string;
+          published_at?: string | null;
+          retry_count?: number;
+          scheduled_at?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'scheduled_publications_asset_id_fkey';
+            columns: ['asset_id'];
+            isOneToOne: false;
+            referencedRelation: 'media_assets';
             referencedColumns: ['id'];
           },
         ];
@@ -12757,6 +13065,29 @@ export type Database = {
           users_count: number;
         }[];
       };
+      get_ai_usage_by_endpoint: {
+        Args: { p_period_days?: number };
+        Returns: {
+          avg_latency_ms: number;
+          endpoint: string;
+          error_count: number;
+          total_calls: number;
+          total_cost_cents: number;
+        }[];
+      };
+      get_ai_usage_stats: {
+        Args: { p_period_days?: number };
+        Returns: {
+          avg_latency_ms: number;
+          error_count: number;
+          error_rate: number;
+          total_calls: number;
+          total_cost_cents: number;
+          total_tokens_input: number;
+          total_tokens_output: number;
+          unique_users: number;
+        }[];
+      };
       get_all_storage_overview: {
         Args: never;
         Returns: {
@@ -12855,6 +13186,38 @@ export type Database = {
           changed_by_email: string;
           new_price: number;
           old_price: number;
+        }[];
+      };
+      get_channel_stats_aggregated: {
+        Args: {
+          p_channel_code: string;
+          p_end_date: string;
+          p_start_date: string;
+        };
+        Returns: {
+          conversion_rate: number;
+          snapshot_date: string;
+          total_clicks: number;
+          total_conversions: number;
+          total_impressions: number;
+          total_revenue_ht: number;
+        }[];
+      };
+      get_channel_stats_history: {
+        Args: {
+          p_channel_code: string;
+          p_end_date: string;
+          p_product_id?: string;
+          p_start_date: string;
+        };
+        Returns: {
+          clicks: number;
+          conversions: number;
+          impressions: number;
+          product_id: string;
+          product_name: string;
+          revenue_ht: number;
+          snapshot_date: string;
         }[];
       };
       get_cleanup_candidates: {
@@ -13237,6 +13600,17 @@ export type Database = {
           total_tasks: number;
         }[];
       };
+      get_media_asset_analytics_summary: {
+        Args: { p_asset_id: string; p_period_days?: number };
+        Returns: {
+          channels_count: number;
+          last_activity: string;
+          total_clicks: number;
+          total_conversions: number;
+          total_impressions: number;
+          total_saves: number;
+        }[];
+      };
       get_meta_commerce_products: {
         Args: never;
         Returns: {
@@ -13339,6 +13713,47 @@ export type Database = {
       };
       get_pending_approvals_count: { Args: never; Returns: number };
       get_pending_storage_requests_count: { Args: never; Returns: number };
+      get_pinterest_pin_products: {
+        Args: never;
+        Returns: {
+          conversions: number;
+          error_message: string;
+          id: string;
+          impressions: number;
+          outbound_clicks: number;
+          pin_clicks: number;
+          pinterest_board_id: string;
+          pinterest_pin_id: string;
+          pinterest_status: string;
+          primary_image_url: string;
+          product_id: string;
+          product_name: string;
+          revenue_ht: number;
+          saves: number;
+          sku: string;
+          sync_status: string;
+          synced_at: string;
+        }[];
+      };
+      get_pinterest_pin_stats: {
+        Args: never;
+        Returns: {
+          active_products: number;
+          conversion_rate: number;
+          error_products: number;
+          last_sync_at: string;
+          pending_products: number;
+          rejected_products: number;
+          save_rate: number;
+          total_conversions: number;
+          total_impressions: number;
+          total_outbound_clicks: number;
+          total_pin_clicks: number;
+          total_products: number;
+          total_revenue_ht: number;
+          total_saves: number;
+        }[];
+      };
       get_primary_contact: {
         Args: { org_id: string };
         Returns: {
@@ -13508,6 +13923,26 @@ export type Database = {
           total_products: number;
         }[];
       };
+      get_scheduled_publications_calendar: {
+        Args: { p_end_date: string; p_start_date: string };
+        Returns: {
+          asset_alt_text: string;
+          asset_filename: string;
+          asset_id: string;
+          asset_public_url: string;
+          caption: string;
+          channel_code: string;
+          error_message: string;
+          external_url: string;
+          hashtags: string[];
+          id: string;
+          product_id: string;
+          published_at: string;
+          retry_count: number;
+          scheduled_at: string;
+          status: string;
+        }[];
+      };
       get_section_progress: {
         Args: { limit_param?: number; section_name_param: string };
         Returns: Json;
@@ -13595,6 +14030,22 @@ export type Database = {
           variants_count: number;
           video_url: string;
           weight: number;
+        }[];
+      };
+      get_site_top_products: {
+        Args: {
+          p_channel_code: string;
+          p_limit?: number;
+          p_period_days?: number;
+        };
+        Returns: {
+          order_count: number;
+          primary_image_url: string;
+          product_id: string;
+          product_name: string;
+          sku: string;
+          total_quantity: number;
+          total_revenue_ht: number;
         }[];
       };
       get_smart_stock_status: {
@@ -13781,6 +14232,26 @@ export type Database = {
         }[];
       };
       get_test_progress_summary: { Args: never; Returns: Json };
+      get_top_images: {
+        Args: {
+          p_channel_code: string;
+          p_end_date: string;
+          p_limit?: number;
+          p_start_date: string;
+        };
+        Returns: {
+          alt_text: string;
+          asset_id: string;
+          ctr: number;
+          filename: string;
+          product_id: string;
+          public_url: string;
+          total_clicks: number;
+          total_conversions: number;
+          total_impressions: number;
+          total_saves: number;
+        }[];
+      };
       get_transaction_history: {
         Args: { p_transaction_id: string };
         Returns: {
@@ -14329,6 +14800,7 @@ export type Database = {
       set_closed_fiscal_year: { Args: { p_year: number }; Returns: Json };
       set_current_user_id: { Args: { user_id: string }; Returns: undefined };
       slugify: { Args: { text_input: string }; Returns: string };
+      snapshot_channel_stats: { Args: never; Returns: undefined };
       submit_affiliate_product_for_approval: {
         Args: { p_product_id: string };
         Returns: boolean;

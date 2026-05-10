@@ -31,6 +31,7 @@ import {
   Image,
   Award,
   Mail,
+  BarChart2,
 } from 'lucide-react';
 
 // Interface pour les éléments de navigation
@@ -322,6 +323,16 @@ export const getNavItems = (
         icon: Image,
         badge: mediaPendingCount,
         badgeVariant: mediaPendingCount > 0 ? 'urgent' : undefined,
+      },
+      {
+        title: 'Performance',
+        href: '/marketing/performance',
+        icon: BarChart2,
+      },
+      {
+        title: 'Calendrier',
+        href: '/marketing/calendrier',
+        icon: CalendarClock,
       },
       {
         title: 'Marques',

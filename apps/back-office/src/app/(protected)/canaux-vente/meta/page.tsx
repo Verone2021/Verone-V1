@@ -14,11 +14,14 @@ import { MetaFiltersBar } from './_components/meta-filters';
 import { MetaHeader } from './_components/meta-header';
 import { MetaProductsTable } from './_components/meta-products-table';
 import { MetaStatsCards } from './_components/meta-stats-cards';
+import { MetaTopProductsTab } from './_components/meta-top-products-tab';
 import { DEFAULT_META_FILTERS } from './_components/types';
 import type { MetaFilters } from './_components/types';
 
 export default function MetaCommercePage() {
-  const [activeTab, setActiveTab] = useState<'synced' | 'add'>('synced');
+  const [activeTab, setActiveTab] = useState<'synced' | 'top' | 'add'>(
+    'synced'
+  );
   const [isSyncing, setIsSyncing] = useState(false);
   const [filters, setFilters] = useState<MetaFilters>(DEFAULT_META_FILTERS);
   const queryClient = useQueryClient();
@@ -150,6 +153,18 @@ export default function MetaCommercePage() {
             type="button"
             className={cn(
               'pb-2 text-sm font-medium border-b-2 transition-colors',
+              activeTab === 'top'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            )}
+            onClick={() => setActiveTab('top')}
+          >
+            Top produits
+          </button>
+          <button
+            type="button"
+            className={cn(
+              'pb-2 text-sm font-medium border-b-2 transition-colors',
               activeTab === 'add'
                 ? 'border-primary text-primary'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -161,7 +176,7 @@ export default function MetaCommercePage() {
         </div>
       </div>
 
-      {activeTab === 'synced' ? (
+      {activeTab === 'synced' && (
         <div className="space-y-4">
           <MetaFiltersBar
             filters={filters}
@@ -170,9 +185,9 @@ export default function MetaCommercePage() {
           />
           <MetaProductsTable products={filtered} loading={isLoading} />
         </div>
-      ) : (
-        <AddProductsTab />
       )}
+      {activeTab === 'top' && <MetaTopProductsTab />}
+      {activeTab === 'add' && <AddProductsTab />}
     </div>
   );
 }
