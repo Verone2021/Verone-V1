@@ -20,3 +20,4 @@ export { ProductProfitabilitySection } from './ProductProfitabilitySection';
 export { SerpPreview } from './SerpPreview';
 export { MarketingEligibilitySection } from './MarketingEligibilitySection';
 export { SupplierAvailabilitySection } from './SupplierAvailabilitySection';
+export { ProductPerformanceSection } from './ProductPerformanceSection';
