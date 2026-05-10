@@ -90,7 +90,7 @@ export function ProductCardEditorial({
       </div>
 
       <div className="mt-5 flex flex-col gap-1">
-        <h3 className="font-montserrat text-[15px] font-normal leading-snug text-verone-charbon transition-colors duration-[180ms] ease-editorial group-hover:text-verone-or group-hover:underline group-hover:decoration-verone-or group-hover:decoration-1 group-hover:underline-offset-4">
+        <h3 className="line-clamp-2 min-h-[2.625rem] font-montserrat text-[15px] font-normal leading-snug text-verone-charbon transition-colors duration-[180ms] ease-editorial group-hover:text-verone-or group-hover:underline group-hover:decoration-verone-or group-hover:decoration-1 group-hover:underline-offset-4">
           {name}
         </h3>
         <div className="flex items-baseline gap-2">
