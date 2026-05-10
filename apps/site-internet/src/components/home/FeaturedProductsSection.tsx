@@ -16,9 +16,9 @@ export function FeaturedProductsSection() {
   return (
     <section className="bg-verone-white px-6 py-24 md:px-16 md:py-24">
       <div className="mx-auto flex max-w-[1440px] flex-col items-center gap-12">
-        <span className="font-dm-sans text-[11px] font-light uppercase tracking-[0.32em] text-verone-pearl md:text-xs">
+        <h2 className="font-bodoni text-[32px] font-black leading-[1.1] text-verone-charbon md:text-[44px]">
           Nos trouvailles
-        </span>
+        </h2>
 
         {isLoading && (
           <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
