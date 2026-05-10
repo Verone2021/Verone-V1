@@ -20,6 +20,15 @@ export interface StoredPrompt {
   presetId: string | null;
   productLabel: string | null;
   copiedAt: number; // ms epoch
+  /**
+   * Métadonnées du contexte studio au moment du copier — pour permettre à la
+   * modale d'upload de la DAM de pré-remplir le bon produit + canal cible
+   * + ai_prompt_used quand on revient après une génération manuelle Gemini.
+   */
+  productId?: string | null;
+  variantGroupId?: string | null;
+  targetChannel?: string | null;
+  sourceImageIds?: string[];
 }
 
 function isStoredPrompt(value: unknown): value is StoredPrompt {

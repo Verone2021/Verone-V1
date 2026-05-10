@@ -26,6 +26,12 @@ import type { BrandInfo } from './MediaAssetCard';
 export interface MediaLibraryViewProps {
   brands: BrandInfo[];
   onNavigateToProduct?: (sourceProductImageId: string) => void;
+  /**
+   * Si true, ouvre automatiquement la modale d'upload au montage.
+   * Utilisé par le pont « Génération manuelle Gemini » qui redirige
+   * ici avec ?import=manual_gen pour proposer l'import direct.
+   */
+  autoOpenUpload?: boolean;
 }
 
 // ============================================================================
@@ -35,6 +41,7 @@ export interface MediaLibraryViewProps {
 export function MediaLibraryView({
   brands,
   onNavigateToProduct,
+  autoOpenUpload = false,
 }: MediaLibraryViewProps) {
   // Filtres
   const [search, setSearch] = React.useState('');
@@ -47,8 +54,8 @@ export function MediaLibraryView({
   const [reviewStatus, setReviewStatus] =
     React.useState<ReviewStatusFilter>('all');
 
-  // Modals
-  const [uploadOpen, setUploadOpen] = React.useState(false);
+  // Modals — uploadOpen initialisé via autoOpenUpload pour le pont Studio→Bibliothèque
+  const [uploadOpen, setUploadOpen] = React.useState(autoOpenUpload);
   const [selectedAsset, setSelectedAsset] = React.useState<MediaAsset | null>(
     null
   );

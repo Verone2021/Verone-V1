@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { MediaLibraryView } from '@verone/marketing';
 import { createClient } from '@verone/utils/supabase/client';
@@ -9,6 +9,8 @@ import type { BrandInfo } from '@verone/marketing';
 
 export default function MarketingBibliothequePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const autoOpenUpload = searchParams.get('import') === 'manual_gen';
   const [brands, setBrands] = useState<BrandInfo[]>([]);
 
   useEffect(() => {
@@ -44,6 +46,7 @@ export default function MarketingBibliothequePage() {
       <MediaLibraryView
         brands={brands}
         onNavigateToProduct={handleNavigateToProduct}
+        autoOpenUpload={autoOpenUpload}
       />
     </div>
   );

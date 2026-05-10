@@ -13,7 +13,7 @@ import { Button } from '@verone/ui/components/ui/button';
 import { ProductOrVariantPicker } from '@verone/products';
 import type { PickedItem } from '@verone/products';
 import { createClient } from '@verone/utils/supabase/client';
-import { Wand2 } from 'lucide-react';
+import { Sparkles, Wand2 } from 'lucide-react';
 import { Switch } from '@verone/ui/components/ui/switch';
 import { Label } from '@verone/ui/components/ui/label';
 
@@ -28,6 +28,7 @@ import { PresetSelector } from '../PromptBuilder/PresetSelector';
 import { ChannelSelector } from './ChannelSelector';
 import { SourceImagesSection } from './SourceImagesSection';
 import { MediaPickerModal } from './MediaPickerModal';
+import { ManualGenerationModal } from './ManualGenerationModal';
 import { GenerationResultCard } from './GenerationResultCard';
 import type { BrandInfo } from '../MediaLibrary/MediaAssetCard';
 
@@ -99,6 +100,7 @@ export function MarketingStudio() {
     React.useState<TargetChannel>('instagram');
   const [customPrompt, setCustomPrompt] = React.useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = React.useState(false);
+  const [manualOpen, setManualOpen] = React.useState(false);
 
   const {
     generatePreview,
@@ -365,7 +367,7 @@ export function MarketingStudio() {
             </CardContent>
           </Card>
 
-          {/* Bouton Générer */}
+          {/* Bouton Générer (API Gemini payante) */}
           <Button
             size="lg"
             className="h-12 w-full text-base"
@@ -374,6 +376,19 @@ export function MarketingStudio() {
           >
             <Wand2 className="mr-2 h-5 w-5" />
             {isGenerating ? 'Génération en cours...' : "Générer l'image"}
+          </Button>
+
+          {/* Alternative gratuite : bouton de génération manuelle Gemini */}
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="h-12 w-full text-base"
+            onClick={() => setManualOpen(true)}
+            disabled={!isFormValid}
+          >
+            <Sparkles className="mr-2 h-5 w-5" />
+            Générer manuellement sur Gemini (gratuit)
           </Button>
 
           {!isFormValid && selectedAssetIds.length === 0 && (
@@ -421,6 +436,34 @@ export function MarketingStudio() {
                 : null
         }
         onlyUnattached={noProduct}
+      />
+
+      {/* Modal génération manuelle Gemini (gratuit) */}
+      <ManualGenerationModal
+        open={manualOpen}
+        onClose={() => setManualOpen(false)}
+        prompt={promptDisplayed}
+        brandSlug={brand}
+        presetId={presetId}
+        targetChannel={targetChannel}
+        productLabel={pickedItems[0]?.displayName ?? null}
+        productId={
+          noProduct
+            ? null
+            : pickedItems[0]?.kind === 'product'
+              ? pickedItems[0].id
+              : null
+        }
+        variantGroupId={
+          noProduct
+            ? null
+            : pickedItems[0]?.kind === 'variant_group'
+              ? pickedItems[0].id
+              : pickedItems[0]?.kind === 'product'
+                ? (pickedItems[0].variantGroupId ?? null)
+                : null
+        }
+        sourceImageIds={selectedAssetIds}
       />
     </div>
   );
