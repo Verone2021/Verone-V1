@@ -6018,6 +6018,101 @@ export type Database = {
         };
         Relationships: [];
       };
+      pinterest_pin_syncs: {
+        Row: {
+          conversions: number;
+          created_at: string;
+          error_message: string | null;
+          id: string;
+          impressions: number;
+          outbound_clicks: number;
+          pin_clicks: number;
+          pinterest_board_id: string | null;
+          pinterest_pin_id: string | null;
+          pinterest_status: string | null;
+          pinterest_status_checked_at: string | null;
+          pinterest_status_detail: Json | null;
+          product_id: string;
+          response_data: Json | null;
+          revenue_ht: number;
+          saves: number;
+          sync_status: string;
+          synced_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          conversions?: number;
+          created_at?: string;
+          error_message?: string | null;
+          id?: string;
+          impressions?: number;
+          outbound_clicks?: number;
+          pin_clicks?: number;
+          pinterest_board_id?: string | null;
+          pinterest_pin_id?: string | null;
+          pinterest_status?: string | null;
+          pinterest_status_checked_at?: string | null;
+          pinterest_status_detail?: Json | null;
+          product_id: string;
+          response_data?: Json | null;
+          revenue_ht?: number;
+          saves?: number;
+          sync_status?: string;
+          synced_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          conversions?: number;
+          created_at?: string;
+          error_message?: string | null;
+          id?: string;
+          impressions?: number;
+          outbound_clicks?: number;
+          pin_clicks?: number;
+          pinterest_board_id?: string | null;
+          pinterest_pin_id?: string | null;
+          pinterest_status?: string | null;
+          pinterest_status_checked_at?: string | null;
+          pinterest_status_detail?: Json | null;
+          product_id?: string;
+          response_data?: Json | null;
+          revenue_ht?: number;
+          saves?: number;
+          sync_status?: string;
+          synced_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'pinterest_pin_syncs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: true;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'pinterest_pin_syncs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: true;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'pinterest_pin_syncs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: true;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'pinterest_pin_syncs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: true;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+        ];
+      };
       price_list_history: {
         Row: {
           change_reason: string | null;
@@ -13598,6 +13693,47 @@ export type Database = {
       };
       get_pending_approvals_count: { Args: never; Returns: number };
       get_pending_storage_requests_count: { Args: never; Returns: number };
+      get_pinterest_pin_products: {
+        Args: never;
+        Returns: {
+          conversions: number;
+          error_message: string;
+          id: string;
+          impressions: number;
+          outbound_clicks: number;
+          pin_clicks: number;
+          pinterest_board_id: string;
+          pinterest_pin_id: string;
+          pinterest_status: string;
+          primary_image_url: string;
+          product_id: string;
+          product_name: string;
+          revenue_ht: number;
+          saves: number;
+          sku: string;
+          sync_status: string;
+          synced_at: string;
+        }[];
+      };
+      get_pinterest_pin_stats: {
+        Args: never;
+        Returns: {
+          active_products: number;
+          conversion_rate: number;
+          error_products: number;
+          last_sync_at: string;
+          pending_products: number;
+          rejected_products: number;
+          save_rate: number;
+          total_conversions: number;
+          total_impressions: number;
+          total_outbound_clicks: number;
+          total_pin_clicks: number;
+          total_products: number;
+          total_revenue_ht: number;
+          total_saves: number;
+        }[];
+      };
       get_primary_contact: {
         Args: { org_id: string };
         Returns: {
