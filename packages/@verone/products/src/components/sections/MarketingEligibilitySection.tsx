@@ -2,7 +2,16 @@
 
 import React, { useState } from 'react';
 
-import { Globe, ShoppingBag, BarChart2, Megaphone } from 'lucide-react';
+import {
+  AlertTriangle,
+  BarChart2,
+  Box,
+  CheckCircle2,
+  Clock,
+  Globe,
+  Megaphone,
+  ShoppingBag,
+} from 'lucide-react';
 
 import { Badge } from '@verone/ui/components/ui/badge';
 import { Button } from '@verone/ui/components/ui/button';
@@ -11,7 +20,10 @@ import { Switch } from '@verone/ui/components/ui/switch';
 import { Textarea } from '@verone/ui/components/ui/textarea';
 import { cn } from '@verone/utils';
 
-import { useMarketingEligibility } from '../../hooks/use-marketing-eligibility';
+import {
+  useMarketingEligibility,
+  type MarketingStockLevel,
+} from '../../hooks/use-marketing-eligibility';
 
 // ============================================================================
 // TYPES
@@ -56,6 +68,54 @@ function ChannelLight({
   );
 }
 
+// Couleur + libellé du voyant stock — règle "Tolérante" (avertissement, pas blocage)
+function getStockBadge(
+  level: MarketingStockLevel,
+  stockReal: number,
+  stockForecastedIn: number
+): {
+  Icon: React.ElementType;
+  label: string;
+  color: string;
+  textColor: string;
+  ringColor: string;
+} {
+  switch (level) {
+    case 'in_stock':
+      return {
+        Icon: CheckCircle2,
+        label: `Stock OK (${stockReal})`,
+        color: 'bg-green-50',
+        textColor: 'text-green-700',
+        ringColor: 'ring-green-200',
+      };
+    case 'preorder':
+      return {
+        Icon: Clock,
+        label: 'Précommande active',
+        color: 'bg-blue-50',
+        textColor: 'text-blue-700',
+        ringColor: 'ring-blue-200',
+      };
+    case 'reorder_pending':
+      return {
+        Icon: Clock,
+        label: `Réappro en cours (+${stockForecastedIn})`,
+        color: 'bg-orange-50',
+        textColor: 'text-orange-700',
+        ringColor: 'ring-orange-200',
+      };
+    case 'out_of_stock':
+      return {
+        Icon: AlertTriangle,
+        label: 'Stock épuisé sans réappro',
+        color: 'bg-red-50',
+        textColor: 'text-red-700',
+        ringColor: 'ring-red-200',
+      };
+  }
+}
+
 function getIneligibilityReason(
   archived: boolean,
   productStatus: string,
@@ -93,6 +153,9 @@ export function MarketingEligibilitySection({
     isOnGoogleMerchant,
     productStatus,
     archived,
+    stockReal,
+    stockForecastedIn,
+    stockLevel,
     isEligible,
     loading,
     saving,
@@ -182,6 +245,37 @@ export function MarketingEligibilitySection({
           )}
         </p>
       )}
+
+      {/* Voyant stock — avertissement non-bloquant */}
+      {(() => {
+        const stockBadge = getStockBadge(
+          stockLevel,
+          stockReal,
+          stockForecastedIn
+        );
+        return (
+          <div
+            className={cn(
+              'mb-3 flex items-center gap-2 rounded-md p-2 ring-1',
+              stockBadge.color,
+              stockBadge.ringColor
+            )}
+          >
+            <stockBadge.Icon
+              className={cn('h-4 w-4 shrink-0', stockBadge.textColor)}
+            />
+            <span className={cn('text-xs font-medium', stockBadge.textColor)}>
+              <Box className="mr-1 inline h-3 w-3" />
+              {stockBadge.label}
+            </span>
+            {stockLevel === 'out_of_stock' && (
+              <span className="ml-auto text-[10px] text-red-600">
+                À publier avec prudence
+              </span>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Voyants canaux */}
       <div className="mb-4 space-y-2 rounded-md bg-gray-50 p-3">

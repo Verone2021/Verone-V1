@@ -181,6 +181,8 @@ export interface PublicationCount {
   asset_id: string;
   active_count: number;
   total_count: number;
+  /** Liste des canaux où l'image est ACTUELLEMENT publiée (pour badges anti-doublon). */
+  active_channels: string[];
 }
 
 export async function fetchPublicationCounts(
@@ -192,7 +194,7 @@ export async function fetchPublicationCounts(
   const supabase = createClient();
   const { data, error } = await supabase
     .from('media_asset_publications')
-    .select('asset_id, unpublished_at')
+    .select('asset_id, channel, unpublished_at')
     .in('asset_id', assetIds);
 
   if (error) {
@@ -207,9 +209,15 @@ export async function fetchPublicationCounts(
       asset_id: row.asset_id,
       active_count: 0,
       total_count: 0,
+      active_channels: [] as string[],
     };
     existing.total_count += 1;
-    if (!row.unpublished_at) existing.active_count += 1;
+    if (!row.unpublished_at) {
+      existing.active_count += 1;
+      if (row.channel && !existing.active_channels.includes(row.channel)) {
+        existing.active_channels.push(row.channel);
+      }
+    }
     result.set(row.asset_id, existing);
   }
   return result;

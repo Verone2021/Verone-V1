@@ -55,6 +55,36 @@ export type AssetGroup =
       assets: MediaAsset[];
     };
 
+// Style + initiale pour les badges canal (anti-doublon)
+function getChannelBadgeStyle(channel: string): string {
+  const c = channel.toLowerCase();
+  if (c.includes('meta') || c.includes('facebook') || c.includes('instagram'))
+    return 'bg-blue-600 text-white';
+  if (c.includes('pinterest')) return 'bg-red-600 text-white';
+  if (c.includes('site') || c.includes('website') || c.includes('verone'))
+    return 'bg-stone-700 text-white';
+  if (c.includes('whatsapp')) return 'bg-green-600 text-white';
+  if (c.includes('email') || c.includes('newsletter'))
+    return 'bg-purple-600 text-white';
+  if (c.includes('merchant') || c.includes('google'))
+    return 'bg-amber-600 text-white';
+  return 'bg-gray-600 text-white';
+}
+
+function getChannelInitial(channel: string): string {
+  const c = channel.toLowerCase();
+  if (c.includes('instagram')) return 'IG';
+  if (c.includes('facebook') || (c.includes('meta') && !c.includes('merchant')))
+    return 'FB';
+  if (c.includes('pinterest')) return 'P';
+  if (c.includes('whatsapp')) return 'W';
+  if (c.includes('email') || c.includes('newsletter')) return 'M';
+  if (c.includes('merchant') || c.includes('google')) return 'G';
+  if (c.includes('site') || c.includes('website') || c.includes('verone'))
+    return 'S';
+  return channel.slice(0, 2).toUpperCase();
+}
+
 interface MediaLibraryByProductProps {
   assets: MediaAsset[];
   brands: BrandInfo[];
@@ -331,6 +361,7 @@ function ProductGroupCard({
           {previewAssets.map(asset => {
             const pubCount = publicationCounts?.get(asset.id);
             const activePubs = pubCount?.active_count ?? 0;
+            const activeChannels = pubCount?.active_channels ?? [];
             return (
               <button
                 key={asset.id}
@@ -363,6 +394,25 @@ function ProductGroupCard({
                   >
                     IA
                   </span>
+                )}
+                {/* Badges canaux publiés (anti-doublon) */}
+                {activeChannels.length > 0 && (
+                  <div className="absolute bottom-1 left-1 flex gap-0.5">
+                    {activeChannels.slice(0, 4).map(ch => (
+                      <span
+                        key={ch}
+                        className={`inline-flex h-4 min-w-[1rem] items-center justify-center rounded-sm px-1 text-[9px] font-bold uppercase shadow ${getChannelBadgeStyle(ch)}`}
+                        title={`Déjà publié sur ${ch}`}
+                      >
+                        {getChannelInitial(ch)}
+                      </span>
+                    ))}
+                    {activeChannels.length > 4 && (
+                      <span className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded-sm bg-gray-700/80 px-1 text-[9px] font-bold text-white shadow">
+                        +{activeChannels.length - 4}
+                      </span>
+                    )}
+                  </div>
                 )}
               </button>
             );
