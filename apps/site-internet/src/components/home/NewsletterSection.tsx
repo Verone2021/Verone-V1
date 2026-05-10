@@ -46,19 +46,14 @@ export function NewsletterSection() {
 
   return (
     <section className="bg-verone-charbon px-6 py-24 md:px-16 md:py-24">
-      <div className="mx-auto flex max-w-[700px] flex-col items-center gap-8 text-center">
-        <span className="font-dm-sans text-[11px] font-light uppercase tracking-[0.32em] text-verone-or md:text-xs">
+      <div className="mx-auto flex max-w-[640px] flex-col items-center gap-10 text-center">
+        <span className="font-dm-sans text-[12px] font-medium uppercase tracking-[0.32em] text-verone-or">
           Reste informé
         </span>
 
-        <h2 className="font-bodoni text-[32px] font-black leading-[1.1] text-verone-white md:text-[44px]">
+        <h2 className="font-bodoni text-[40px] font-black leading-[1.04] text-verone-white md:text-[52px]">
           Les pièces qui arrivent. En avant-première.
         </h2>
-
-        <p className="max-w-[420px] font-montserrat text-[15px] font-light leading-[1.7] text-verone-pearl">
-          Une à deux fois par mois. Les nouvelles trouvailles, et rien
-          d&apos;autre.
-        </p>
 
         {status === 'success' ? (
           <p className="font-montserrat text-sm text-verone-or">
@@ -72,23 +67,26 @@ export function NewsletterSection() {
                 setStatus('error');
               });
             }}
-            className="mt-4 flex w-full max-w-[480px] flex-col gap-4 sm:flex-row sm:items-end"
+            className="flex w-full max-w-[400px] flex-col items-center gap-8"
           >
+            <label htmlFor="newsletter-email" className="sr-only">
+              Ton adresse email
+            </label>
             <input
+              id="newsletter-email"
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="Ton email"
+              placeholder="Ton adresse email"
               required
-              aria-label="Adresse email"
-              className="flex-1 border-0 border-b border-verone-white/40 bg-transparent px-1 py-3 font-montserrat text-sm text-verone-white placeholder:text-verone-pearl focus:border-verone-or focus:outline-none"
+              className="w-full border-0 border-b border-verone-white bg-transparent px-0 py-3 text-center font-montserrat text-base text-verone-white placeholder:text-verone-pearl focus:border-verone-or focus:outline-none focus:ring-0"
             />
             <button
               type="submit"
               disabled={status === 'loading'}
-              className="border border-verone-white bg-verone-white px-8 py-3 font-montserrat text-xs font-medium uppercase tracking-[0.16em] text-verone-charbon transition-all duration-[180ms] ease-editorial hover:shadow-[inset_0_0_0_1px_#C9A961] disabled:opacity-50"
+              className="bg-verone-white px-8 py-4 font-montserrat text-xs font-medium uppercase tracking-[0.16em] text-verone-charbon transition-all duration-[180ms] ease-editorial hover:shadow-[inset_0_0_0_1px_#C9A961] disabled:opacity-50"
             >
-              {status === 'loading' ? 'Envoi…' : "S'inscrire"}
+              {status === 'loading' ? 'Envoi…' : 'Rejoindre la liste'}
             </button>
           </form>
         )}
@@ -98,6 +96,10 @@ export function NewsletterSection() {
             Une erreur est survenue. Réessaie dans un instant.
           </p>
         )}
+
+        <p className="font-montserrat text-[12px] text-verone-pearl">
+          Pas de spam. Une sélection, quand elle est prête.
+        </p>
 
         <p className="font-montserrat text-xs text-verone-pearl">
           En t&apos;inscrivant, tu acceptes notre{' '}

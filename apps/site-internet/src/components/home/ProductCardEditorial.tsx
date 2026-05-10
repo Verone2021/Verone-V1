@@ -43,7 +43,7 @@ export function ProductCardEditorial({
             alt={name}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
-            className="object-cover transition-transform duration-[620ms] ease-editorial group-hover:scale-[1.03]"
+            className="object-cover grayscale transition-all duration-[700ms] ease-editorial group-hover:scale-[1.03] group-hover:grayscale-0"
             priority={priority}
           />
         ) : (
