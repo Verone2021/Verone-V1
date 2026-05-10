@@ -356,6 +356,48 @@ export type Database = {
           },
         ];
       };
+      ai_generation_logs: {
+        Row: {
+          cost_cents_estimated: number | null;
+          created_at: string;
+          endpoint: string;
+          error_code: string | null;
+          id: string;
+          latency_ms: number | null;
+          model: string;
+          request_metadata: Json | null;
+          tokens_input: number | null;
+          tokens_output: number | null;
+          user_id: string | null;
+        };
+        Insert: {
+          cost_cents_estimated?: number | null;
+          created_at?: string;
+          endpoint: string;
+          error_code?: string | null;
+          id?: string;
+          latency_ms?: number | null;
+          model: string;
+          request_metadata?: Json | null;
+          tokens_input?: number | null;
+          tokens_output?: number | null;
+          user_id?: string | null;
+        };
+        Update: {
+          cost_cents_estimated?: number | null;
+          created_at?: string;
+          endpoint?: string;
+          error_code?: string | null;
+          id?: string;
+          latency_ms?: number | null;
+          model?: string;
+          request_metadata?: Json | null;
+          tokens_input?: number | null;
+          tokens_output?: number | null;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
       ambassador_attributions: {
         Row: {
           attribution_method: string;
@@ -12847,6 +12889,29 @@ export type Database = {
           organisation_name: string;
           slug: string;
           users_count: number;
+        }[];
+      };
+      get_ai_usage_by_endpoint: {
+        Args: { p_period_days?: number };
+        Returns: {
+          avg_latency_ms: number;
+          endpoint: string;
+          error_count: number;
+          total_calls: number;
+          total_cost_cents: number;
+        }[];
+      };
+      get_ai_usage_stats: {
+        Args: { p_period_days?: number };
+        Returns: {
+          avg_latency_ms: number;
+          error_count: number;
+          error_rate: number;
+          total_calls: number;
+          total_cost_cents: number;
+          total_tokens_input: number;
+          total_tokens_output: number;
+          unique_users: number;
         }[];
       };
       get_all_storage_overview: {

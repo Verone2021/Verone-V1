@@ -15,6 +15,8 @@ import {
 } from '@verone/integrations/gemini/client';
 import { createServerClient } from '@verone/utils/supabase/server';
 
+import { logAiGeneration } from '@/lib/ai-logging';
+
 const RequestSchema = z.object({
   productId: z.string().uuid(),
   targetChannel: z.enum([
@@ -128,6 +130,7 @@ CAPTION: caption ${parsed.data.targetChannel} de 100-200 caracteres, friendly, p
 Pas d autre texte, juste les 3 lignes avec les marqueurs.`;
 
   let result: GenerateGeminiTextResult;
+  const startTime = Date.now();
   try {
     result = await generateGeminiText({
       prompt,
@@ -135,6 +138,17 @@ Pas d autre texte, juste les 3 lignes avec les marqueurs.`;
       maxOutputTokens: 600,
     });
   } catch (err) {
+    void logAiGeneration({
+      endpoint: 'marketing/copy',
+      model: 'gemini-2.5-flash',
+      latencyMs: Date.now() - startTime,
+      errorCode: err instanceof Error ? err.message.slice(0, 64) : 'unknown',
+      metadata: {
+        targetChannel: parsed.data.targetChannel,
+        brand: parsed.data.brand,
+        productId: parsed.data.productId,
+      },
+    });
     return NextResponse.json(
       {
         error: 'Gemini error',
@@ -143,6 +157,17 @@ Pas d autre texte, juste les 3 lignes avec les marqueurs.`;
       { status: 502 }
     );
   }
+  void logAiGeneration({
+    endpoint: 'marketing/copy',
+    model: result.modelUsed,
+    latencyMs: Date.now() - startTime,
+    tokensOutput: Math.ceil(result.text.length / 4),
+    metadata: {
+      targetChannel: parsed.data.targetChannel,
+      brand: parsed.data.brand,
+      productId: parsed.data.productId,
+    },
+  });
 
   const parsedCopy = parseCopyOutput(result.text);
   if (!parsedCopy) {
