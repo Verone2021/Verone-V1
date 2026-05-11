@@ -9,14 +9,13 @@ export function JsonLdOrganization() {
       'Concept store en ligne de déco et mobilier original. Sourcing créatif, prix justes, sélection curatée.',
     contactPoint: {
       '@type': 'ContactPoint',
-      telephone: '+33-1-23-45-67-89',
+      email: 'contact@verone.fr',
       contactType: 'customer service',
       availableLanguage: 'French',
     },
     sameAs: [
-      'https://facebook.com',
-      'https://instagram.com',
-      'https://twitter.com',
+      'https://www.instagram.com/veronecollections',
+      'https://www.facebook.com/veronecollections',
     ],
   };
 
