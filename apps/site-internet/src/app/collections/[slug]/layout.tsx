@@ -50,7 +50,7 @@ export async function generateMetadata({
       collection.meta_description ??
       collection.description ??
       `Collection ${collection.name} — Vérone`,
-    alternates: { canonical: `/collections/${slug}` },
+    alternates: { canonical: `${siteUrl}/collections/${slug}` },
     openGraph: {
       title: collection.name,
       description: collection.meta_description ?? collection.description ?? '',

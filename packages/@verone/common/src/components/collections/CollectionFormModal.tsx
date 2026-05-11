@@ -117,6 +117,11 @@ export function CollectionFormModal({
   const [visibility, setVisibility] = useState<'public' | 'private'>('private');
   const [isActive, setIsActive] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Champs SEO
+  const [metaTitle, setMetaTitle] = useState('');
+  const [metaDescription, setMetaDescription] = useState('');
+  const [editorialText, setEditorialText] = useState('');
+  const [imageAlt, setImageAlt] = useState('');
 
   useEffect(() => {
     if (collection && mode === 'edit') {
@@ -129,6 +134,22 @@ export function CollectionFormModal({
         (collection.visibility as 'public' | 'private') ?? 'private'
       );
       setIsActive(collection.is_active ?? true);
+      setMetaTitle(
+        (collection as Collection & { meta_title?: string | null })
+          .meta_title ?? ''
+      );
+      setMetaDescription(
+        (collection as Collection & { meta_description?: string | null })
+          .meta_description ?? ''
+      );
+      setEditorialText(
+        (collection as Collection & { editorial_text?: string | null })
+          .editorial_text ?? ''
+      );
+      setImageAlt(
+        (collection as Collection & { image_alt?: string | null }).image_alt ??
+          ''
+      );
     } else {
       setName('');
       setDescription('');
@@ -137,6 +158,10 @@ export function CollectionFormModal({
       setTags([]);
       setVisibility('private');
       setIsActive(true);
+      setMetaTitle('');
+      setMetaDescription('');
+      setEditorialText('');
+      setImageAlt('');
     }
   }, [collection, mode, isOpen]);
 
@@ -165,6 +190,10 @@ export function CollectionFormModal({
         theme_tags: tags,
         visibility,
         is_active: isActive,
+        meta_title: metaTitle.trim() || null,
+        meta_description: metaDescription.trim() || null,
+        editorial_text: editorialText.trim() || null,
+        image_alt: imageAlt.trim() || null,
       });
       onClose();
     } catch (error) {
@@ -350,6 +379,119 @@ export function CollectionFormModal({
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Section SEO */}
+            <div className="space-y-4 pt-4 border-t">
+              <Label className="text-sm font-semibold text-gray-900">
+                SEO &amp; Référencement
+              </Label>
+
+              {/* Meta title */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <Label htmlFor="meta_title" className="text-sm font-medium">
+                    Titre SEO
+                  </Label>
+                  <span
+                    className={`text-xs ${
+                      metaTitle.length === 0
+                        ? 'text-gray-400'
+                        : metaTitle.length < 30
+                          ? 'text-red-600'
+                          : metaTitle.length <= 60
+                            ? 'text-green-600'
+                            : 'text-gray-500'
+                    }`}
+                  >
+                    {metaTitle.length} / 60
+                  </span>
+                </div>
+                <Input
+                  id="meta_title"
+                  value={metaTitle}
+                  onChange={e => setMetaTitle(e.target.value)}
+                  placeholder="Titre affiché dans Google (30-60 caractères recommandés)"
+                  maxLength={60}
+                />
+              </div>
+
+              {/* Meta description */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <Label
+                    htmlFor="meta_description"
+                    className="text-sm font-medium"
+                  >
+                    Meta description
+                  </Label>
+                  <span
+                    className={`text-xs ${
+                      metaDescription.length === 0
+                        ? 'text-gray-400'
+                        : metaDescription.length < 70
+                          ? 'text-red-600'
+                          : metaDescription.length <= 155
+                            ? 'text-green-600'
+                            : 'text-gray-500'
+                    }`}
+                  >
+                    {metaDescription.length} / 155
+                  </span>
+                </div>
+                <Textarea
+                  id="meta_description"
+                  value={metaDescription}
+                  onChange={e => setMetaDescription(e.target.value)}
+                  placeholder="Description affichée dans les résultats Google (70-155 caractères recommandés)"
+                  maxLength={155}
+                  rows={3}
+                />
+              </div>
+
+              {/* Texte éditorial */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <Label
+                    htmlFor="editorial_text"
+                    className="text-sm font-medium"
+                  >
+                    Texte éditorial (visible sur la page collection — optimisé
+                    SEO)
+                  </Label>
+                  <span className="text-xs text-gray-400">
+                    {editorialText.length} car.
+                    {editorialText.length > 0 && editorialText.length < 100 && (
+                      <span className="text-orange-500 ml-1">
+                        (recommandé : 100-200)
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <Textarea
+                  id="editorial_text"
+                  value={editorialText}
+                  onChange={e => setEditorialText(e.target.value)}
+                  placeholder="Présentez cette collection en 100-200 mots pour améliorer son référencement naturel..."
+                  rows={4}
+                />
+              </div>
+
+              {/* Alt image */}
+              <div>
+                <Label
+                  htmlFor="image_alt"
+                  className="text-sm font-medium mb-1 block"
+                >
+                  Texte alternatif de l&apos;image principale
+                </Label>
+                <Input
+                  id="image_alt"
+                  value={imageAlt}
+                  onChange={e => setImageAlt(e.target.value)}
+                  placeholder="Description de l'image pour l'accessibilité et Google Images"
+                />
+              </div>
             </div>
 
             {/* Paramètres */}

@@ -4,7 +4,7 @@
 // Hook métier — EditSiteInternetProductModal
 // =============================================================================
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@verone/common/hooks';
@@ -32,6 +32,7 @@ interface UseEditSiteInternetProductReturn {
   fetchImages: () => Promise<void>;
   setPrimaryImage: (id: string) => Promise<void>;
   deleteImage: (id: string) => Promise<void>;
+  updateImageAltText: (imageId: string, altText: string) => Promise<void>;
   productImages: {
     id: string;
     public_url: string;
@@ -115,6 +116,18 @@ export function useEditSiteInternetProduct(
 
     return data.id;
   };
+
+  // Mutation update alt_text d'une image
+  const updateImageAltText = useCallback(
+    async (imageId: string, altText: string): Promise<void> => {
+      const { error } = await supabase
+        .from('product_images')
+        .update({ alt_text: altText })
+        .eq('id', imageId);
+      if (error) throw error;
+    },
+    [supabase]
+  );
 
   // Mutation update
   const updateProduct = useMutation({
@@ -236,6 +249,7 @@ export function useEditSiteInternetProduct(
     fetchImages,
     setPrimaryImage,
     deleteImage,
+    updateImageAltText,
     productImages,
     updateProduct,
     handleSubmit,
