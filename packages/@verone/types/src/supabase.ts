@@ -7,30 +7,10 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '13.0.5';
   };
   public: {
     Tables: {
@@ -1911,6 +1891,36 @@ export type Database = {
           updated_at?: string | null;
           visibility?: string;
           visible_channels?: string[] | null;
+        };
+        Relationships: [];
+      };
+      color_options: {
+        Row: {
+          created_at: string;
+          hex_code: string;
+          id: string;
+          is_active: boolean;
+          name: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          hex_code: string;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          hex_code?: string;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          sort_order?: number;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -7702,6 +7712,36 @@ export type Database = {
           },
         ];
       };
+      room_options: {
+        Row: {
+          created_at: string;
+          id: string;
+          is_active: boolean;
+          label: string;
+          sort_order: number;
+          updated_at: string;
+          value: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          label: string;
+          sort_order?: number;
+          updated_at?: string;
+          value: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          label?: string;
+          sort_order?: number;
+          updated_at?: string;
+          value?: string;
+        };
+        Relationships: [];
+      };
       sales_channels: {
         Row: {
           brand_id: string | null;
@@ -9899,6 +9939,36 @@ export type Database = {
           min_volume_m3?: number;
           price_per_m3?: number;
           updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      style_options: {
+        Row: {
+          created_at: string;
+          id: string;
+          is_active: boolean;
+          label: string;
+          sort_order: number;
+          updated_at: string;
+          value: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          label: string;
+          sort_order?: number;
+          updated_at?: string;
+          value: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          label?: string;
+          sort_order?: number;
+          updated_at?: string;
+          value?: string;
         };
         Relationships: [];
       };
@@ -14421,6 +14491,10 @@ export type Database = {
       };
       initialize_dashboard_tests: { Args: never; Returns: undefined };
       insert_sales_order_items: { Args: { p_items: Json }; Returns: undefined };
+      invoke_edge_function: {
+        Args: { p_function_name: string };
+        Returns: number;
+      };
       is_back_office_admin: { Args: never; Returns: boolean };
       is_back_office_admin_or_owner: { Args: never; Returns: boolean };
       is_back_office_owner: { Args: never; Returns: boolean };
@@ -15403,9 +15477,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       affiliate_product_approval_status: [
