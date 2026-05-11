@@ -50,7 +50,7 @@ export function Footer() {
           {/* Navigation */}
           <div>
             <h4 className="mb-6 font-dm-sans text-[11px] font-light uppercase tracking-[0.32em] text-verone-pearl">
-              Navigation
+              EXPLORER
             </h4>
             <ul className="space-y-3">
               {footerLinks.navigation.map(link => (
@@ -69,7 +69,7 @@ export function Footer() {
           {/* Help */}
           <div>
             <h4 className="mb-6 font-dm-sans text-[11px] font-light uppercase tracking-[0.32em] text-verone-pearl">
-              Aide
+              INFOS
             </h4>
             <ul className="space-y-3">
               {footerLinks.help.map(link => (

@@ -48,13 +48,10 @@ export function NewsletterSignup() {
   return (
     <div>
       <h4 className="text-verone-white text-xs font-semibold mb-4 uppercase tracking-widest">
-        Newsletter
+        DANS TON INBOX
       </h4>
-      <p className="text-sm text-verone-gray-400 mb-4">
-        Recevez nos nouveautés et offres exclusives
-      </p>
       {status === 'success' ? (
-        <p className="text-sm text-green-400">Merci pour votre inscription !</p>
+        <p className="text-sm text-green-400">Merci, c&apos;est noté.</p>
       ) : (
         <form
           onSubmit={e => {
@@ -69,7 +66,7 @@ export function NewsletterSignup() {
             type="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
-            placeholder="votre@email.com"
+            placeholder="ton adresse email"
             required
             className="flex-1 px-3 py-2 bg-verone-gray-800 border border-verone-gray-700 text-verone-white text-sm rounded-none placeholder:text-verone-gray-500 focus:outline-none focus:border-verone-gray-500"
           />
@@ -84,7 +81,7 @@ export function NewsletterSignup() {
       )}
       {status === 'error' && (
         <p className="text-xs text-red-400 mt-2">
-          Une erreur est survenue. Réessayez.
+          Une erreur est survenue. Réessaie dans un instant.
         </p>
       )}
     </div>

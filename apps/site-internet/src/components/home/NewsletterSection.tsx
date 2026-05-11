@@ -48,11 +48,11 @@ export function NewsletterSection() {
     <section className="bg-verone-charbon px-6 py-24 md:px-16 md:py-24">
       <div className="mx-auto flex max-w-[640px] flex-col items-center gap-10 text-center">
         <span className="font-dm-sans text-[12px] font-medium uppercase tracking-[0.32em] text-verone-or">
-          Reste informé
+          DANS TON INBOX
         </span>
 
         <h2 className="font-bodoni text-[40px] font-black leading-[1.04] text-verone-white md:text-[52px]">
-          Les pièces qui arrivent. En avant-première.
+          Les nouvelles trouvailles. Avant tout le monde.
         </h2>
 
         {status === 'success' ? (
@@ -86,7 +86,7 @@ export function NewsletterSection() {
               disabled={status === 'loading'}
               className="bg-verone-white px-8 py-4 font-montserrat text-xs font-medium uppercase tracking-[0.16em] text-verone-charbon transition-all duration-[180ms] ease-editorial hover:shadow-[inset_0_0_0_1px_#C9A961] disabled:opacity-50"
             >
-              {status === 'loading' ? 'Envoi…' : 'Rejoindre la liste'}
+              {status === 'loading' ? 'Envoi…' : "S'INSCRIRE"}
             </button>
           </form>
         )}

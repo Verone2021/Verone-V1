@@ -13,7 +13,7 @@ export function CollectionsSection() {
     <section className="bg-verone-white px-6 py-24 md:px-16 md:py-24">
       <div className="mx-auto flex max-w-[1440px] flex-col items-center gap-16">
         <span className="font-dm-sans text-[12px] font-medium uppercase tracking-[0.32em] text-verone-pearl">
-          Nos collections
+          NOS COLLECTIONS
         </span>
 
         {isLoading && (

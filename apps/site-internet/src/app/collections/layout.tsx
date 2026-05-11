@@ -1,15 +1,15 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Nos collections',
+  title: 'Collections déco par univers | Vérone',
   description:
-    'Pas un catalogue fourre-tout. Trois univers, trois regards différents — chacun trié avec le même niveau d’exigence.',
+    "Salon, Chambre, Extérieur. Trois univers éditoriaux, chacun trié avec le même niveau d'exigence. Trouve la pièce qu'il te faut.",
   alternates: { canonical: '/collections' },
   openGraph: {
     type: 'website',
-    title: 'Nos collections — Vérone',
+    title: 'Collections déco par univers | Vérone',
     description:
-      'Trois univers, trois regards. Chaque espace, une sélection rigoureuse.',
+      "Salon, Chambre, Extérieur. Trois univers éditoriaux, chacun trié avec le même niveau d'exigence. Trouve la pièce qu'il te faut.",
   },
 };
 
