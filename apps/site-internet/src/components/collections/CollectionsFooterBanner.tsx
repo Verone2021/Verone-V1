@@ -11,7 +11,7 @@ export function CollectionsFooterBanner() {
         href="/catalogue"
         className="inline-flex items-center justify-center bg-verone-white px-10 py-4 font-montserrat text-xs font-medium uppercase tracking-[0.32em] text-verone-charbon transition-all duration-[180ms] ease-editorial hover:shadow-[inset_0_0_0_1px_#C9A961]"
       >
-        Voir toute la sélection
+        VOIR TOUTE LA SÉLECTION
       </Link>
     </section>
   );

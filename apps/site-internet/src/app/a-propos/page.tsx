@@ -6,9 +6,9 @@ import { ManifesteAbout } from '@/components/about/ManifesteAbout';
 import { ClotureAbout } from '@/components/about/ClotureAbout';
 
 export const metadata: Metadata = {
-  title: 'À propos',
+  title: 'À propos de Vérone — Pas un catalogue, un regard',
   description:
-    'Vérone ne vend pas des objets. Vérone choisit des pièces. Mille vues, cinquante retenues. Pas un algorithme, pas une tendance. Un regard.',
+    "Vérone sélectionne ce qui mérite d'exister. Découvre l'histoire derrière ce regard exigeant — mille pièces vues, cinquante retenues. Ce que nous sommes.",
   alternates: { canonical: '/a-propos' },
 };
 
