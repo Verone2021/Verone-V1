@@ -92,6 +92,7 @@ export function useEditSiteInternetProduct(
   const [formData, setFormData] = useState<Partial<ProductFormData>>({
     slug: product.slug ?? '',
     is_published_online: product.is_published,
+    is_featured_home: false,
     meta_title: '',
     meta_description: '',
     custom_price_ht: product.price_ht ?? undefined,
@@ -148,6 +149,7 @@ export function useEditSiteInternetProduct(
           meta_title: data.meta_title,
           meta_description: data.meta_description,
           is_published_online: data.is_published_online,
+          is_featured_home: data.is_featured_home ?? false,
           publication_date: publicationDate,
           unpublication_date: data.unpublication_date
             ? new Date(data.unpublication_date).toISOString()

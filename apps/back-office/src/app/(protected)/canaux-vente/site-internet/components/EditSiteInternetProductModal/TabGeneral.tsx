@@ -39,6 +39,24 @@ export function TabGeneral({
           />
         </div>
 
+        <div className="flex items-center justify-between">
+          <div>
+            <Label>Mettre en avant sur la homepage</Label>
+            <p className="text-sm text-gray-500">
+              Apparaît dans la section &quot;Ce qui vient d&apos;entrer&quot;
+            </p>
+          </div>
+          <Switch
+            checked={formData.is_featured_home ?? false}
+            onCheckedChange={checked =>
+              setFormData({
+                ...formData,
+                is_featured_home: checked,
+              })
+            }
+          />
+        </div>
+
         {/* Publication planifiee */}
         <div className="grid grid-cols-2 gap-4">
           <div>

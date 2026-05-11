@@ -7135,6 +7135,7 @@ export type Database = {
           has_images: boolean;
           id: string;
           internal_notes: string | null;
+          is_featured_home: boolean;
           is_published_online: boolean | null;
           item_group_id: string | null;
           manufacturer: string | null;
@@ -7238,6 +7239,7 @@ export type Database = {
           has_images?: boolean;
           id?: string;
           internal_notes?: string | null;
+          is_featured_home?: boolean;
           is_published_online?: boolean | null;
           item_group_id?: string | null;
           manufacturer?: string | null;
@@ -7341,6 +7343,7 @@ export type Database = {
           has_images?: boolean;
           id?: string;
           internal_notes?: string | null;
+          is_featured_home?: boolean;
           is_published_online?: boolean | null;
           item_group_id?: string | null;
           manufacturer?: string | null;
