@@ -90,31 +90,32 @@ export function MediaAssetCard({
         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
       />
 
-      {/* Overlay au hover */}
-      <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/70 via-transparent to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
-        {/* Badge type */}
-        <Badge variant="secondary" className="mb-1 w-fit text-[10px]">
+      {/* Overlay au hover — badge type uniquement */}
+      <div className="absolute inset-0 flex flex-col justify-start bg-gradient-to-b from-black/50 via-transparent to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
+        <Badge variant="secondary" className="w-fit text-[10px]">
           {ASSET_TYPE_LABEL[asset.asset_type] ?? asset.asset_type}
         </Badge>
+      </div>
 
-        {/* Badges marques */}
-        <div className="flex flex-wrap gap-1">
+      {/* Overlay permanent — badges marque toujours visibles */}
+      {assetBrands.length > 0 && (
+        <div className="absolute inset-x-0 bottom-0 flex flex-wrap gap-0.5 bg-gradient-to-t from-black/60 to-transparent p-1">
           {assetBrands.slice(0, 2).map(brand => (
             <span
               key={brand.id}
-              className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium text-white"
+              className="inline-flex items-center rounded px-1 py-0.5 text-[9px] font-medium text-white"
               style={{ backgroundColor: getBrandColor(brand) }}
             >
               {brand.name}
             </span>
           ))}
           {assetBrands.length > 2 && (
-            <span className="inline-flex items-center rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-medium text-white">
+            <span className="inline-flex items-center rounded bg-white/20 px-1 py-0.5 text-[9px] font-medium text-white">
               +{assetBrands.length - 2}
             </span>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
