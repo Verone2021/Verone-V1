@@ -306,6 +306,24 @@ export const getNavItems = (
       },
     ],
   },
+  // ============ CONTENU ============
+  {
+    title: 'Journal',
+    href: '/journal',
+    icon: BookOpen,
+    children: [
+      {
+        title: 'Tous les articles',
+        href: '/journal',
+        icon: FileText,
+      },
+      {
+        title: 'Nouvel article',
+        href: '/journal/nouveau',
+        icon: FileText,
+      },
+    ],
+  },
   // ============ MARKETING ============
   {
     title: 'Marketing',
