@@ -1952,8 +1952,10 @@ export type Database = {
           description: string | null;
           description_long: string | null;
           display_order: number | null;
+          editorial_text: string | null;
           event_tags: string[] | null;
           id: string;
+          image_alt: string | null;
           image_url: string | null;
           is_active: boolean | null;
           is_featured: boolean | null;
@@ -1988,8 +1990,10 @@ export type Database = {
           description?: string | null;
           description_long?: string | null;
           display_order?: number | null;
+          editorial_text?: string | null;
           event_tags?: string[] | null;
           id?: string;
+          image_alt?: string | null;
           image_url?: string | null;
           is_active?: boolean | null;
           is_featured?: boolean | null;
@@ -2024,8 +2028,10 @@ export type Database = {
           description?: string | null;
           description_long?: string | null;
           display_order?: number | null;
+          editorial_text?: string | null;
           event_tags?: string[] | null;
           id?: string;
+          image_alt?: string | null;
           image_url?: string | null;
           is_active?: boolean | null;
           is_featured?: boolean | null;
@@ -14978,8 +14984,10 @@ export type Database = {
           description: string | null;
           description_long: string | null;
           display_order: number | null;
+          editorial_text: string | null;
           event_tags: string[] | null;
           id: string;
+          image_alt: string | null;
           image_url: string | null;
           is_active: boolean | null;
           is_featured: boolean | null;
