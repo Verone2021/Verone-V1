@@ -1,10 +1,16 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Collections',
+  title: 'Nos collections',
   description:
-    'Découvrez nos collections de déco et mobilier original. Des pièces sourcées avec soin, pour un intérieur qui vous ressemble.',
+    'Pas un catalogue fourre-tout. Trois univers, trois regards différents — chacun trié avec le même niveau d’exigence.',
   alternates: { canonical: '/collections' },
+  openGraph: {
+    type: 'website',
+    title: 'Nos collections — Vérone',
+    description:
+      'Trois univers, trois regards. Chaque espace, une sélection rigoureuse.',
+  },
 };
 
 export default function CollectionsLayout({
