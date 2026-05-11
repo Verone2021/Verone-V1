@@ -1,14 +1,17 @@
+import Image from 'next/image';
+
 export function StorytellingAbout() {
   return (
     <section className="flex min-h-screen w-full flex-col items-stretch bg-verone-white md:flex-row md:py-0">
       {/* Colonne gauche : photo éditoriale (55%) */}
-      <div className="relative h-[400px] w-full bg-verone-pearl-soft sm:h-[512px] md:h-auto md:min-h-[600px] md:w-[55%]">
-        {/* Photo à uploader : textures travertin / chêne — fallback fond pearl-soft */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="font-dm-sans text-[11px] font-light uppercase tracking-[0.32em] text-verone-pearl">
-            Photo éditoriale à venir
-          </span>
-        </div>
+      <div className="relative h-[400px] w-full overflow-hidden bg-verone-pearl-soft sm:h-[512px] md:h-auto md:min-h-[600px] md:w-[55%]">
+        <Image
+          src="https://imagedelivery.net/a-LEt3vfWH1BG-ME-lftDA/f694f991-0994-4277-e1ae-63aec4d87700/public"
+          alt="Console en bois et métal — Vérone Collections"
+          fill
+          className="object-cover object-center"
+          sizes="(max-width: 768px) 100vw, 55vw"
+        />
       </div>
 
       {/* Colonne droite : prose narrative (45%) */}
