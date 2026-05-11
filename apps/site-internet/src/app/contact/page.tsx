@@ -54,7 +54,7 @@ export default function ContactPage() {
         <h1 className="font-bodoni text-[36px] font-black leading-[1.1] text-verone-charbon md:text-[56px]">
           Une question.
           <br />
-          Une commande.
+          Une commande sur mesure.
           <br />
           Autre chose.
         </h1>
@@ -187,10 +187,10 @@ export default function ContactPage() {
           Email direct
         </p>
         <a
-          href="mailto:contact@verone.fr"
+          href="mailto:contact@veronecollections.fr"
           className="mt-3 inline-block font-montserrat text-base text-verone-charbon underline decoration-verone-or decoration-1 underline-offset-[6px] transition-colors duration-300 hover:text-verone-or"
         >
-          contact@verone.fr
+          contact@veronecollections.fr
         </a>
         <p className="mt-6 font-montserrat text-xs text-verone-pearl">
           Réponse sous 48 h en semaine.

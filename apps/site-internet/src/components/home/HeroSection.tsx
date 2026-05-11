@@ -7,9 +7,9 @@ const HERO_DEFAULTS = {
   title: "Un regard sur ce qui mérite d'être là",
   subtitle:
     'Déco et mobilier — mille pièces vues, cinquante retenues. Ce vase, cette lampe, ce bout de tissu. Pas un catalogue. Un regard.',
-  cta_text: 'Découvrir la sélection',
+  cta_text: 'DÉCOUVRIR LA SÉLECTION',
   cta_link: '/catalogue',
-  cta_secondary_text: 'Nos collections',
+  cta_secondary_text: 'NOS COLLECTIONS',
   cta_secondary_link: '/catalogue?view=collections',
 } as const;
 
@@ -61,7 +61,7 @@ export async function HeroSection() {
     <section className="flex min-h-[90vh] flex-col items-center justify-center bg-verone-white px-6 py-24 md:px-16 md:py-24">
       <div className="flex max-w-[1000px] flex-col items-center gap-8 text-center">
         <span className="font-dm-sans text-[11px] font-light uppercase tracking-[0.32em] text-verone-pearl md:text-xs">
-          Sélection éditoriale
+          SÉLECTION ÉDITORIALE
         </span>
 
         <h1 className="max-w-[900px] font-bodoni text-[44px] font-black leading-[1.04] text-verone-charbon sm:text-5xl md:text-7xl lg:text-[96px]">

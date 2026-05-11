@@ -18,8 +18,13 @@ const VALEURS = [
   },
   {
     number: '03',
-    title: 'Le prix juste',
-    body: 'Le beau n’a pas à coûter une fortune. Nos pièces commencent à 20 €. Le prix ne fait pas la valeur — le choix, oui.',
+    title: 'Le temps long',
+    body: "On ne suit pas les tendances. On choisit ce qui tient — dans le temps, dans l'espace, dans la tête.",
+  },
+  {
+    number: '04',
+    title: 'La relation',
+    body: "Nos clients reviennent. Pas par habitude — parce qu'ils savent que ce qu'ils trouveront ici a été pensé pour eux.",
   },
 ] as const;
 
@@ -29,7 +34,7 @@ export function ManifesteAbout() {
       {/* Eyebrow */}
       <div className="mb-12 text-center md:mb-16">
         <span className="font-dm-sans text-[12px] font-light uppercase tracking-[0.32em] text-verone-pearl">
-          Ce qui nous guide
+          CE QUI NOUS GUIDE
         </span>
       </div>
 

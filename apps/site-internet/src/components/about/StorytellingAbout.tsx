@@ -15,22 +15,41 @@ export function StorytellingAbout() {
       <div className="flex w-full items-center justify-center px-6 py-16 md:w-[45%] md:px-16 md:py-24 lg:px-24">
         <div className="flex max-w-md flex-col gap-8 font-montserrat text-[17px] font-normal leading-[1.7] text-verone-charbon">
           <p>
-            Chez Vérone, nous ne croyons pas à l&apos;accumulation. Nous croyons
-            à la résonance. Chaque objet qui entre dans notre sélection a été
-            scruté, touché, éprouvé. Il doit posséder cette âme silencieuse qui
-            transforme un espace en lieu de vie.
+            Il y a une ville en Italie où les plus grands créateurs de mobilier
+            du monde viennent se faire juger.
+            <br />
+            Pas candidater. Juger.
           </p>
           <p>
-            Notre quête nous mène des carrières de travertin de Toscane aux
-            ateliers de menuiserie du Jura. Nous privilégions le temps long et
-            le geste juste. Pas de tendances éphémères, mais des pièces qui
-            s&apos;ennoblissent avec les années.
+            À Vérone, on n&apos;entre pas parce qu&apos;on a rempli un dossier.
+            On entre parce que quelqu&apos;un a regardé, a pris le temps, et a
+            décidé que ça méritait d&apos;être là. Le reste n&apos;entre pas.
           </p>
           <p>
-            C&apos;est cette exigence qui définit notre regard. Un luxe qui ne
-            s&apos;affiche pas, mais qui se ressent. Une certaine idée de
-            l&apos;intérieur, faite de vide et de présence.
+            Tu sais reconnaître une belle pièce quand tu en vois une. Ce
+            n&apos;est pas une question d&apos;expertise — c&apos;est physique.
+            La matière, la proportion, ce que l&apos;objet fait à l&apos;espace
+            rien qu&apos;en étant là. Tu le sais avant même de comprendre
+            pourquoi.
           </p>
+          <p>Le problème, c&apos;est de la trouver.</p>
+          <p>
+            Dix mille références pour en repérer trois qui méritent
+            d&apos;exister. Les bonnes adresses supposent un budget sans
+            contrainte. Entre les deux, personne n&apos;avait décidé de faire
+            vraiment le travail.
+          </p>
+          <p>Vérone est née de cette absence.</p>
+          <p>
+            On regarde mille pièces. Ce vase qui change une table rien
+            qu&apos;en y étant posé. Ce bout de tissu qui donne chaud rien
+            qu&apos;à le regarder. Cette lampe dont tu ne comprends pas tout de
+            suite pourquoi tu ne peux pas t&apos;en détacher. Sur mille pièces
+            vues, cinquante entrent. Les autres non — pas parce qu&apos;elles
+            sont mauvaises, parce qu&apos;elles n&apos;ont rien à dire.
+          </p>
+          <p>Ce n&apos;est pas un catalogue. C&apos;est un regard.</p>
+          <p>Et ce regard, on te le prête.</p>
         </div>
       </div>
     </section>

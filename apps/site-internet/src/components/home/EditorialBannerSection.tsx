@@ -9,7 +9,7 @@ export function EditorialBannerSection() {
 
       <blockquote className="relative z-10 mx-auto max-w-[800px] px-6 text-center md:px-16">
         <p className="font-bodoni text-[28px] font-normal italic leading-[1.25] text-verone-white sm:text-[32px] md:text-[38px]">
-          « Ce n&apos;est pas un catalogue. C&apos;est un regard. »
+          « Pas tout. Pas n&apos;importe quoi. Ce qui mérite d&apos;être là. »
         </p>
       </blockquote>
     </section>
