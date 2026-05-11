@@ -34,7 +34,7 @@ export async function generateMetadata({
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    return { title: 'Produit | Vérone' };
+    return { title: 'Produit' };
   }
 
   const supabase = createSupabaseClient<Database>(supabaseUrl, supabaseKey);
@@ -49,7 +49,7 @@ export async function generateMetadata({
     .single();
 
   if (!product) {
-    return { title: 'Produit introuvable | Vérone' };
+    return { title: 'Produit introuvable' };
   }
 
   const displayName = product.commercial_name ?? product.name;
