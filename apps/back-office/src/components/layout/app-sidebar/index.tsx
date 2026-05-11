@@ -8,6 +8,7 @@ import { featureFlags } from '@verone/utils/feature-flags';
 import {
   useSidebarCounts,
   useDatabaseNotifications,
+  useMediaAssetsPendingCount,
 } from '@verone/notifications';
 
 import { getNavItems } from './sidebar-nav-items';
@@ -39,6 +40,7 @@ function SidebarContent() {
     linkmeMissingInfo: linkmeMissingInfoCount,
   } = useSidebarCounts();
   const { unreadCount: unreadNotificationsCount } = useDatabaseNotifications();
+  const mediaPendingCount = useMediaAssetsPendingCount();
 
   // State local sidebar (expanded items, active helpers, module name)
   const {
@@ -63,7 +65,8 @@ function SidebarContent() {
       linkmeApprovalsCount,
       formSubmissionsCount,
       linkmeMissingInfoCount,
-      unreadNotificationsCount
+      unreadNotificationsCount,
+      mediaPendingCount
     );
 
     // Masquer Finance si financeEnabled = false (module fusionné)
@@ -84,6 +87,7 @@ function SidebarContent() {
     formSubmissionsCount,
     linkmeMissingInfoCount,
     unreadNotificationsCount,
+    mediaPendingCount,
   ]);
 
   // Fonction récursive pour rendre les enfants (support multi-niveaux) - Reserved

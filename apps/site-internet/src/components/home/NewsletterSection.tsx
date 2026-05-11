@@ -45,22 +45,19 @@ export function NewsletterSection() {
   };
 
   return (
-    <section className="bg-verone-black py-24">
-      <div className="max-w-2xl mx-auto px-6 lg:px-8 text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400 mb-4">
-          Newsletter
-        </p>
-        <h2 className="font-playfair text-3xl md:text-4xl font-bold text-verone-white mb-4">
-          Rejoignez l&apos;univers Vérone
+    <section className="bg-verone-charbon px-6 py-24 md:px-16 md:py-24">
+      <div className="mx-auto flex max-w-[640px] flex-col items-center gap-10 text-center">
+        <span className="font-dm-sans text-[12px] font-medium uppercase tracking-[0.32em] text-verone-or">
+          Reste informé
+        </span>
+
+        <h2 className="font-bodoni text-[40px] font-black leading-[1.04] text-verone-white md:text-[52px]">
+          Les pièces qui arrivent. En avant-première.
         </h2>
-        <p className="text-sm text-verone-gray-400 mb-8">
-          Recevez en exclusivité nos nouvelles trouvailles, inspirations et
-          offres.
-        </p>
 
         {status === 'success' ? (
-          <p className="text-green-400 text-sm font-medium">
-            Merci pour votre inscription !
+          <p className="font-montserrat text-sm text-verone-or">
+            Merci, c&apos;est noté. Surveille ta boîte mail.
           </p>
         ) : (
           <form
@@ -70,40 +67,49 @@ export function NewsletterSection() {
                 setStatus('error');
               });
             }}
-            className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+            className="flex w-full max-w-[400px] flex-col items-center gap-8"
           >
+            <label htmlFor="newsletter-email" className="sr-only">
+              Ton adresse email
+            </label>
             <input
+              id="newsletter-email"
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="Votre email"
+              placeholder="Ton adresse email"
               required
-              className="flex-1 px-4 py-3.5 bg-verone-gray-800 border border-verone-gray-700 text-verone-white text-sm placeholder:text-verone-gray-500 focus:outline-none focus:border-verone-gray-500"
+              className="w-full border-0 border-b border-verone-white bg-transparent px-0 py-3 text-center font-montserrat text-base text-verone-white placeholder:text-verone-pearl focus:border-verone-or focus:outline-none focus:ring-0"
             />
             <button
               type="submit"
               disabled={status === 'loading'}
-              className="px-8 py-3.5 bg-amber-700 text-verone-white text-sm font-semibold uppercase tracking-wide hover:bg-amber-600 transition-colors disabled:opacity-50"
+              className="bg-verone-white px-8 py-4 font-montserrat text-xs font-medium uppercase tracking-[0.16em] text-verone-charbon transition-all duration-[180ms] ease-editorial hover:shadow-[inset_0_0_0_1px_#C9A961] disabled:opacity-50"
             >
-              S&apos;abonner
+              {status === 'loading' ? 'Envoi…' : 'Rejoindre la liste'}
             </button>
           </form>
         )}
 
         {status === 'error' && (
-          <p className="text-xs text-red-400 mt-3">
-            Une erreur est survenue. Réessayez.
+          <p className="font-montserrat text-xs text-red-300">
+            Une erreur est survenue. Réessaie dans un instant.
           </p>
         )}
 
-        <p className="text-xs text-verone-gray-500 mt-4">
-          En vous inscrivant, vous acceptez notre{' '}
+        <p className="font-montserrat text-[12px] text-verone-pearl">
+          Pas de spam. Une sélection, quand elle est prête.
+        </p>
+
+        <p className="font-montserrat text-xs text-verone-pearl">
+          En t&apos;inscrivant, tu acceptes notre{' '}
           <Link
             href="/confidentialite"
-            className="underline hover:text-verone-gray-300 transition-colors"
+            className="underline decoration-verone-or decoration-1 underline-offset-2 transition-colors duration-[180ms] ease-editorial hover:text-verone-or"
           >
             politique de confidentialité
           </Link>
+          .
         </p>
       </div>
     </section>

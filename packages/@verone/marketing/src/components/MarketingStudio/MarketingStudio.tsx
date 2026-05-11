@@ -13,7 +13,9 @@ import { Button } from '@verone/ui/components/ui/button';
 import { ProductOrVariantPicker } from '@verone/products';
 import type { PickedItem } from '@verone/products';
 import { createClient } from '@verone/utils/supabase/client';
-import { Wand2 } from 'lucide-react';
+import { Sparkles, Wand2 } from 'lucide-react';
+import { Switch } from '@verone/ui/components/ui/switch';
+import { Label } from '@verone/ui/components/ui/label';
 
 import { BRANDS } from '../../data/brands';
 import { getPresetsByBrand } from '../../data/presets';
@@ -26,6 +28,7 @@ import { PresetSelector } from '../PromptBuilder/PresetSelector';
 import { ChannelSelector } from './ChannelSelector';
 import { SourceImagesSection } from './SourceImagesSection';
 import { MediaPickerModal } from './MediaPickerModal';
+import { ManualGenerationModal } from './ManualGenerationModal';
 import { GenerationResultCard } from './GenerationResultCard';
 import type { BrandInfo } from '../MediaLibrary/MediaAssetCard';
 
@@ -86,6 +89,7 @@ export function MarketingStudio() {
   const { brandSlugById, brandInfoList } = useBrandSlugMap();
 
   // State formulaire
+  const [noProduct, setNoProduct] = React.useState(false);
   const [pickedItems, setPickedItems] = React.useState<PickedItem[]>([]);
   const [selectedAssetIds, setSelectedAssetIds] = React.useState<string[]>([]);
   const [brand, setBrand] = React.useState<BrandSlug>('verone');
@@ -96,6 +100,7 @@ export function MarketingStudio() {
     React.useState<TargetChannel>('instagram');
   const [customPrompt, setCustomPrompt] = React.useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = React.useState(false);
+  const [manualOpen, setManualOpen] = React.useState(false);
 
   const {
     generatePreview,
@@ -108,14 +113,15 @@ export function MarketingStudio() {
   } = useGenerateMarketingImage();
 
   // Marques disponibles dérivées du produit sélectionné
+  // En mode "sans produit lié" : toutes les marques disponibles
   const availableBrandSlugs = React.useMemo<BrandSlug[]>(() => {
-    if (pickedItems.length === 0) return ALL_SLUGS;
+    if (noProduct || pickedItems.length === 0) return ALL_SLUGS;
     const slugs = pickedItems
       .flatMap(item => item.brandIds)
       .map(id => brandSlugById[id])
       .filter((s): s is BrandSlug => Boolean(s));
     return slugs.length > 0 ? [...new Set(slugs)] : ALL_SLUGS;
-  }, [pickedItems, brandSlugById]);
+  }, [noProduct, pickedItems, brandSlugById]);
 
   // Auto-sélectionner la marque si une seule est disponible
   React.useEffect(() => {
@@ -202,6 +208,13 @@ export function MarketingStudio() {
     handleGenerate();
   }, [resetPreview, handleGenerate]);
 
+  const handleNoProductToggle = React.useCallback((checked: boolean) => {
+    setNoProduct(checked);
+    if (checked) {
+      setPickedItems([]);
+    }
+  }, []);
+
   const handlePickerSelect = React.useCallback((ids: string[]) => {
     setSelectedAssetIds(ids);
   }, []);
@@ -217,7 +230,8 @@ export function MarketingStudio() {
     setCustomPrompt(null);
   }, []);
 
-  const showBrandSelector = availableBrandSlugs.length !== 1;
+  // En mode "sans produit lié" : le sélecteur de marque est toujours visible
+  const showBrandSelector = noProduct || availableBrandSlugs.length !== 1;
 
   return (
     <div className="space-y-6">
@@ -231,11 +245,27 @@ export function MarketingStudio() {
                 Étape 1 — Produit(s)
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <ProductOrVariantPicker
-                value={pickedItems[0] ?? null}
-                onChange={item => setPickedItems(item ? [item] : [])}
-              />
+            <CardContent className="space-y-3">
+              <div className="flex items-center gap-3">
+                <Switch
+                  id="no-product-toggle"
+                  checked={noProduct}
+                  onCheckedChange={handleNoProductToggle}
+                />
+                <Label
+                  htmlFor="no-product-toggle"
+                  className="cursor-pointer text-sm text-muted-foreground"
+                >
+                  Visuel sans produit lié (citation, ambiance, événement)
+                </Label>
+              </div>
+              {!noProduct && (
+                <ProductOrVariantPicker
+                  value={pickedItems[0] ?? null}
+                  onChange={item => setPickedItems(item ? [item] : [])}
+                  eligibilityFilter="marketing_eligible"
+                />
+              )}
             </CardContent>
           </Card>
 
@@ -251,6 +281,11 @@ export function MarketingStudio() {
                 selectedAssetIds={selectedAssetIds}
                 onChange={setSelectedAssetIds}
                 onOpenPicker={() => setPickerOpen(true)}
+                disabledReason={
+                  !noProduct && pickedItems.length === 0
+                    ? "Choisis d'abord un produit à l'étape 1, ou active « Visuel sans produit lié »."
+                    : null
+                }
               />
             </CardContent>
           </Card>
@@ -332,7 +367,7 @@ export function MarketingStudio() {
             </CardContent>
           </Card>
 
-          {/* Bouton Générer */}
+          {/* Bouton Générer (API Gemini payante) */}
           <Button
             size="lg"
             className="h-12 w-full text-base"
@@ -341,6 +376,19 @@ export function MarketingStudio() {
           >
             <Wand2 className="mr-2 h-5 w-5" />
             {isGenerating ? 'Génération en cours...' : "Générer l'image"}
+          </Button>
+
+          {/* Alternative gratuite : bouton de génération manuelle Gemini */}
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="h-12 w-full text-base"
+            onClick={() => setManualOpen(true)}
+            disabled={!isFormValid}
+          >
+            <Sparkles className="mr-2 h-5 w-5" />
+            Générer manuellement sur Gemini (gratuit)
           </Button>
 
           {!isFormValid && selectedAssetIds.length === 0 && (
@@ -364,13 +412,58 @@ export function MarketingStudio() {
         </div>
       </div>
 
-      {/* Modal picker */}
+      {/* Modal picker — restreint aux images du produit/variante sélectionné(e) */}
       <MediaPickerModal
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onSelect={handlePickerSelect}
         initialSelectedIds={selectedAssetIds}
         brands={brandInfoList}
+        productId={
+          noProduct
+            ? null
+            : pickedItems[0]?.kind === 'product'
+              ? pickedItems[0].id
+              : null
+        }
+        variantGroupId={
+          noProduct
+            ? null
+            : pickedItems[0]?.kind === 'variant_group'
+              ? pickedItems[0].id
+              : pickedItems[0]?.kind === 'product'
+                ? (pickedItems[0].variantGroupId ?? null)
+                : null
+        }
+        onlyUnattached={noProduct}
+      />
+
+      {/* Modal génération manuelle Gemini (gratuit) */}
+      <ManualGenerationModal
+        open={manualOpen}
+        onClose={() => setManualOpen(false)}
+        prompt={promptDisplayed}
+        brandSlug={brand}
+        presetId={presetId}
+        targetChannel={targetChannel}
+        productLabel={pickedItems[0]?.displayName ?? null}
+        productId={
+          noProduct
+            ? null
+            : pickedItems[0]?.kind === 'product'
+              ? pickedItems[0].id
+              : null
+        }
+        variantGroupId={
+          noProduct
+            ? null
+            : pickedItems[0]?.kind === 'variant_group'
+              ? pickedItems[0].id
+              : pickedItems[0]?.kind === 'product'
+                ? (pickedItems[0].variantGroupId ?? null)
+                : null
+        }
+        sourceImageIds={selectedAssetIds}
       />
     </div>
   );

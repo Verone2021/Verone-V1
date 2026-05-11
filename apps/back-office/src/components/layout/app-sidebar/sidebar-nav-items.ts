@@ -31,6 +31,7 @@ import {
   Image,
   Award,
   Mail,
+  BarChart2,
 } from 'lucide-react';
 
 // Interface pour les éléments de navigation
@@ -57,7 +58,8 @@ export const getNavItems = (
   _linkmeApprovalsCount: number,
   formSubmissionsCount: number,
   linkmeMissingInfoCount: number,
-  unreadNotificationsCount: number
+  unreadNotificationsCount: number,
+  mediaPendingCount: number = 0
 ): NavItem[] => [
   {
     title: 'Dashboard',
@@ -304,6 +306,24 @@ export const getNavItems = (
       },
     ],
   },
+  // ============ CONTENU ============
+  {
+    title: 'Journal',
+    href: '/journal',
+    icon: BookOpen,
+    children: [
+      {
+        title: 'Tous les articles',
+        href: '/journal',
+        icon: FileText,
+      },
+      {
+        title: 'Nouvel article',
+        href: '/journal/nouveau',
+        icon: FileText,
+      },
+    ],
+  },
   // ============ MARKETING ============
   {
     title: 'Marketing',
@@ -319,6 +339,18 @@ export const getNavItems = (
         title: 'Bibliothèque',
         href: '/marketing/bibliotheque',
         icon: Image,
+        badge: mediaPendingCount,
+        badgeVariant: mediaPendingCount > 0 ? 'urgent' : undefined,
+      },
+      {
+        title: 'Performance',
+        href: '/marketing/performance',
+        icon: BarChart2,
+      },
+      {
+        title: 'Calendrier',
+        href: '/marketing/calendrier',
+        icon: CalendarClock,
       },
       {
         title: 'Marques',

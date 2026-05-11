@@ -12,3 +12,6 @@ export * from './meta';
 
 // Publication par canal (BO-BRAND-003b)
 export * from './use-product-channel-publication';
+
+// Top produits site internet (BO-MKT-METRICS-001b)
+export * from './use-site-top-products';

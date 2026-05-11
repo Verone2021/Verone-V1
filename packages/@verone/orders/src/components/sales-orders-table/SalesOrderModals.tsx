@@ -77,9 +77,12 @@ interface SalesOrderModalsProps {
 }
 
 export function SalesOrderModals({
-  channelId,
-  fetchOrders,
-  fetchStats,
+  // [BO-PERF-ORDERS-002] channelId, fetchOrders et fetchStats ne sont plus utilisés
+  // directement ici — on passe par CustomEvent 'verone:orders:refetch'. Conservés
+  // dans l'interface pour ne pas casser les appelants (SalesOrdersTable).
+  channelId: _channelId,
+  fetchOrders: _fetchOrders,
+  fetchStats: _fetchStats,
   onOrderUpdated,
   renderEditModal,
   renderCreateModal,
@@ -132,13 +135,11 @@ export function SalesOrderModals({
         open={showOrderDetail}
         onClose={handleCloseOrderDetail}
         onUpdate={() => {
-          const filters = channelId ? { channel_id: channelId } : undefined;
-          void fetchOrders(filters).catch((err: unknown) => {
-            console.error('[SalesOrdersTable] fetchOrders failed:', err);
-          });
-          void fetchStats(filters).catch((err: unknown) => {
-            console.error('[SalesOrdersTable] fetchStats failed:', err);
-          });
+          // [BO-PERF-ORDERS-002] Déclencher le refetch via CustomEvent au lieu de
+          // passer fetchOrders en prop. Découplé, évite les doubles appels.
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('verone:orders:refetch'));
+          }
           onOrderUpdated?.();
         }}
         onOpenShipmentModal={

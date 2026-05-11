@@ -37,6 +37,14 @@ export interface UseMediaAssetsOptions {
   archived?: boolean;
   pageSize?: number;
   enabled?: boolean;
+  /** Filtre review_status : 'all' (défaut) | 'pending_review' | 'approved' | 'rejected' */
+  reviewStatus?: 'all' | 'pending_review' | 'approved' | 'rejected';
+  /** Restreindre aux images d'un produit précis (uuid). Mutuellement exclusif avec variantGroupId/onlyUnattached. */
+  productId?: string | null;
+  /** Restreindre aux images d'un groupe de variantes (uuid). Couvre toutes les photos liées au groupe ET aux produits du groupe. */
+  variantGroupId?: string | null;
+  /** Si true, ne renvoie QUE les photos sans produit ni groupe (contenus de marque). */
+  onlyUnattached?: boolean;
 }
 
 interface UseMediaAssetsReturn {
@@ -71,7 +79,14 @@ export function useMediaAssets({
   archived = false,
   pageSize = 50,
   enabled = true,
+  reviewStatus,
+  productId,
+  variantGroupId,
+  onlyUnattached,
 }: UseMediaAssetsOptions = {}): UseMediaAssetsReturn {
+  const [variantGroupProductIds, setVariantGroupProductIds] = useState<
+    string[] | null
+  >(null);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,12 +128,70 @@ export function useMediaAssets({
         query = query.is('archived_at', null);
       }
 
+      // Filtre statut de validation
+      if (reviewStatus && reviewStatus !== 'all') {
+        query = query.eq('review_status', reviewStatus);
+      }
+
+      // Filtre rattachement produit / variante / sans rattachement
+      // Priorité : onlyUnattached > variantGroupId > productId
+      if (onlyUnattached) {
+        query = query.is('product_id', null).is('variant_group_id', null);
+      } else if (variantGroupId) {
+        // Couvre les photos liées au groupe directement OU à un produit du groupe
+        const productIdsForGroup = variantGroupProductIds ?? [];
+        if (productIdsForGroup.length > 0) {
+          const escapedIds = productIdsForGroup.map(id => `"${id}"`).join(',');
+          query = query.or(
+            `variant_group_id.eq.${variantGroupId},product_id.in.(${escapedIds})`
+          );
+        } else {
+          query = query.eq('variant_group_id', variantGroupId);
+        }
+      } else if (productId) {
+        query = query.eq('product_id', productId);
+      }
+
       return query
         .order('created_at', { ascending: false })
         .range(currentOffset, currentOffset + pageSize - 1);
     },
-    [supabase, brandId, assetType, search, archived, pageSize]
+    [
+      supabase,
+      brandId,
+      assetType,
+      search,
+      archived,
+      pageSize,
+      reviewStatus,
+      productId,
+      variantGroupId,
+      onlyUnattached,
+      variantGroupProductIds,
+    ]
   );
+
+  // Quand on filtre par variantGroupId, on a besoin des product_ids des produits
+  // qui appartiennent au groupe pour ratisser large (photos taggées sur les
+  // produits enfants et pas sur le groupe lui-même).
+  useEffect(() => {
+    if (!variantGroupId) {
+      setVariantGroupProductIds(null);
+      return;
+    }
+    let cancelled = false;
+    void supabase
+      .from('products')
+      .select('id')
+      .eq('variant_group_id', variantGroupId)
+      .then(({ data }) => {
+        if (cancelled) return;
+        setVariantGroupProductIds((data ?? []).map(r => r.id));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [variantGroupId, supabase]);
 
   const fetchAssets = useCallback(
     async (reset = true) => {
@@ -188,7 +261,17 @@ export function useMediaAssets({
   useEffect(() => {
     setLoaded(false);
     setOffset(0);
-  }, [brandId, assetType, search, archived, pageSize]);
+  }, [
+    brandId,
+    assetType,
+    search,
+    archived,
+    pageSize,
+    reviewStatus,
+    productId,
+    variantGroupId,
+    onlyUnattached,
+  ]);
 
   // Mutations déléguées au hook séparé (split pour respecter limite 400 lignes)
   const {

@@ -3,8 +3,12 @@ name: Quality Checks
 on:
   pull_request:
     branches: [main, staging, integration/*]
-  push:
-    branches: [main, staging]
+    paths-ignore:
+      - 'docs/**'
+      - '.claude/**'
+      - '**/*.md'
+      - 'LICENSE'
+      - '.gitignore'
   workflow_dispatch:
 
 permissions:
@@ -87,7 +91,7 @@ jobs:
     name: ESLint + Type-Check + Build
     needs: detect-changes
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 20
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
@@ -110,18 +114,61 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # ---- Next.js build cache (official pattern from nextjs.org/docs) ----
-      - name: Cache Next.js builds
+      # ---- Next.js build cache per app (narrow keys = better cache hit ratio) ----
+      - name: Cache Next.js back-office
+        uses: actions/cache@v5
+        with:
+          path: apps/back-office/.next/cache
+          key: ${{ runner.os }}-nextjs-bo-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/back-office/**/*.ts', 'apps/back-office/**/*.tsx', 'packages/**/*.ts', 'packages/**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-bo-${{ hashFiles('pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-bo-
+
+      - name: Cache Next.js linkme
+        uses: actions/cache@v5
+        with:
+          path: apps/linkme/.next/cache
+          key: ${{ runner.os }}-nextjs-lm-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/linkme/**/*.ts', 'apps/linkme/**/*.tsx', 'packages/**/*.ts', 'packages/**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-lm-${{ hashFiles('pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-lm-
+
+      - name: Cache Next.js site-internet
+        uses: actions/cache@v5
+        with:
+          path: apps/site-internet/.next/cache
+          key: ${{ runner.os }}-nextjs-si-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/site-internet/**/*.ts', 'apps/site-internet/**/*.tsx', 'packages/**/*.ts', 'packages/**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-si-${{ hashFiles('pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-si-
+
+      # ---- ESLint cache (content-based, invalidated when files change) ----
+      - name: Cache ESLint
         uses: actions/cache@v5
         with:
           path: |
-            apps/back-office/.next/cache
-            apps/linkme/.next/cache
-            apps/site-internet/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('**/*.ts', '**/*.tsx') }}
+            apps/back-office/.eslintcache
+            apps/linkme/.eslintcache
+            apps/site-internet/.eslintcache
+            packages/@verone/*/.eslintcache
+          key: ${{ runner.os }}-eslint-${{ hashFiles('eslint.config.mjs', 'pnpm-lock.yaml') }}-${{ hashFiles('**/*.ts', '**/*.tsx') }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
-            ${{ runner.os }}-nextjs-
+            ${{ runner.os }}-eslint-${{ hashFiles('eslint.config.mjs', 'pnpm-lock.yaml') }}-
+            ${{ runner.os }}-eslint-
+
+      # ---- TypeScript incremental cache (tsbuildinfo) ----
+      - name: Cache tsbuildinfo
+        uses: actions/cache@v5
+        with:
+          path: |
+            apps/back-office/tsconfig.tsbuildinfo
+            apps/linkme/tsconfig.tsbuildinfo
+            apps/site-internet/tsconfig.tsbuildinfo
+            tsconfig.tsbuildinfo
+          key: ${{ runner.os }}-tsbuildinfo-${{ hashFiles('**/tsconfig*.json', 'pnpm-lock.yaml') }}-${{ hashFiles('**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-tsbuildinfo-${{ hashFiles('**/tsconfig*.json', 'pnpm-lock.yaml') }}-
+            ${{ runner.os }}-tsbuildinfo-
 
       # ---- Determine which --filter flags to use ----
       - name: Build filter flags
@@ -170,6 +217,30 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=8192
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+      # ---- Type Coverage Gate (baseline-protected) ----
+      # Bloque le merge si la couverture de types descend sous le seuil par app.
+      # Méthode senior : pas de big bang strict mode — verrou progressif sur le
+      # pourcentage actuel. Le code legacy reste tel quel, mais toute régression
+      # (nouveau `any` implicite introduit) bloque la PR.
+      # Baselines mesurées 2026-05-09 : back-office 99.22, linkme 99.56, site-internet 98.12
+      - name: Type Coverage — back-office
+        if: needs.detect-changes.outputs.back-office == 'true' || needs.detect-changes.outputs.packages == 'true'
+        run: pnpm --filter @verone/back-office type-coverage
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+
+      - name: Type Coverage — linkme
+        if: needs.detect-changes.outputs.linkme == 'true' || needs.detect-changes.outputs.packages == 'true'
+        run: pnpm --filter @verone/linkme type-coverage
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+
+      - name: Type Coverage — site-internet
+        if: needs.detect-changes.outputs.site-internet == 'true' || needs.detect-changes.outputs.packages == 'true'
+        run: pnpm --filter @verone/site-internet type-coverage
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
 
       # ---- Upload back-office .next pour les jobs E2E ----
       # Évite que chaque job E2E refasse un `next build` (~5 min) alors que

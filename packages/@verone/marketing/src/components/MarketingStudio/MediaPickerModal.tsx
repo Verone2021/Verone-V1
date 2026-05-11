@@ -20,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@verone/ui/components/ui/select';
-import { Checkbox } from '@verone/ui/components/ui/checkbox';
 import { CloudflareImage } from '@verone/ui/components/ui/cloudflare-image';
 import { ImageIcon, Loader2 } from 'lucide-react';
 import type { BrandInfo } from '../MediaLibrary/MediaAssetCard';
@@ -41,6 +40,19 @@ interface MediaPickerModalProps {
   onSelect: (assetIds: string[]) => void;
   initialSelectedIds?: string[];
   brands: BrandInfo[];
+  /**
+   * Restreindre aux images d'un produit. Si fourni, masque les filtres marque/type
+   * (qui n'ont plus de sens dans ce périmètre restreint).
+   */
+  productId?: string | null;
+  /**
+   * Restreindre aux images d'un groupe de variantes (toutes variantes confondues).
+   */
+  variantGroupId?: string | null;
+  /**
+   * Si true, n'affiche QUE les photos sans produit lié (contenus de marque).
+   */
+  onlyUnattached?: boolean;
 }
 
 // ============================================================================
@@ -53,7 +65,11 @@ export function MediaPickerModal({
   onSelect,
   initialSelectedIds = [],
   brands,
+  productId,
+  variantGroupId,
+  onlyUnattached,
 }: MediaPickerModalProps) {
+  const isScopeRestricted = !!productId || !!variantGroupId || !!onlyUnattached;
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
   const [brandId, setBrandId] = React.useState<string>('all');
@@ -77,11 +93,14 @@ export function MediaPickerModal({
   }, [open, initialSelectedIds]);
 
   const { assets, loading } = useMediaAssets({
-    brandId: brandId === 'all' ? null : brandId,
-    assetType,
+    brandId: isScopeRestricted || brandId === 'all' ? null : brandId,
+    assetType: isScopeRestricted ? 'all' : assetType,
     search: debouncedSearch,
     archived: false,
     pageSize: 100,
+    productId: productId ?? null,
+    variantGroupId: variantGroupId ?? null,
+    onlyUnattached: !!onlyUnattached,
   });
 
   const toggleSelection = React.useCallback((assetId: string) => {
@@ -113,46 +132,54 @@ export function MediaPickerModal({
     >
       <DialogContent className="flex h-screen max-h-screen flex-col p-0 sm:h-auto sm:max-h-[85vh] sm:max-w-[90vw]">
         <DialogHeader className="border-b px-4 py-3 sm:px-6">
-          <DialogTitle>Choisir des images sources</DialogTitle>
+          <DialogTitle>
+            {onlyUnattached
+              ? 'Choisir des images sans produit lié'
+              : isScopeRestricted
+                ? 'Images du produit sélectionné'
+                : 'Choisir des images sources'}
+          </DialogTitle>
         </DialogHeader>
 
-        {/* Filtres */}
-        <div className="flex flex-col gap-2 border-b px-4 py-3 sm:flex-row sm:px-6">
-          <Input
-            value={search}
-            onChange={handleSearchChange}
-            placeholder="Rechercher..."
-            className="w-full sm:w-[200px]"
-          />
-          <Select value={brandId} onValueChange={setBrandId}>
-            <SelectTrigger className="min-h-[44px] w-full sm:min-h-[36px] sm:w-[160px]">
-              <SelectValue placeholder="Toutes les marques" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les marques</SelectItem>
-              {brands.map(b => (
-                <SelectItem key={b.id} value={b.id}>
-                  {b.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={assetType}
-            onValueChange={v => setAssetType(v as MediaAssetType | 'all')}
-          >
-            <SelectTrigger className="min-h-[44px] w-full sm:min-h-[36px] sm:w-[140px]">
-              <SelectValue placeholder="Tous les types" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les types</SelectItem>
-              <SelectItem value="product">Produit</SelectItem>
-              <SelectItem value="lifestyle">Lifestyle</SelectItem>
-              <SelectItem value="packshot">Packshot</SelectItem>
-              <SelectItem value="ambiance">Ambiance</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Filtres — masqués quand le périmètre est restreint à un produit/variante */}
+        {!isScopeRestricted && (
+          <div className="flex flex-col gap-2 border-b px-4 py-3 sm:flex-row sm:px-6">
+            <Input
+              value={search}
+              onChange={handleSearchChange}
+              placeholder="Rechercher..."
+              className="w-full sm:w-[200px]"
+            />
+            <Select value={brandId} onValueChange={setBrandId}>
+              <SelectTrigger className="min-h-[44px] w-full sm:min-h-[36px] sm:w-[160px]">
+                <SelectValue placeholder="Toutes les marques" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes les marques</SelectItem>
+                {brands.map(b => (
+                  <SelectItem key={b.id} value={b.id}>
+                    {b.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={assetType}
+              onValueChange={v => setAssetType(v as MediaAssetType | 'all')}
+            >
+              <SelectTrigger className="min-h-[44px] w-full sm:min-h-[36px] sm:w-[140px]">
+                <SelectValue placeholder="Tous les types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les types</SelectItem>
+                <SelectItem value="product">Produit</SelectItem>
+                <SelectItem value="lifestyle">Lifestyle</SelectItem>
+                <SelectItem value="packshot">Packshot</SelectItem>
+                <SelectItem value="ambiance">Ambiance</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         {/* Grille d'images */}
         <div className="flex-1 overflow-y-auto px-4 py-3 sm:px-6">
@@ -205,19 +232,19 @@ export function MediaPickerModal({
                       </div>
                     )}
 
-                    {/* Checkbox overlay */}
-                    <div
-                      className={`absolute left-1 top-1 transition-opacity ${
+                    {/* Checkbox overlay (span visuel — éviter <button> imbriqué) */}
+                    <span
+                      className={`absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded border border-white bg-white/80 transition-opacity ${
                         isSelected
                           ? 'opacity-100'
                           : 'opacity-0 group-hover:opacity-100'
                       }`}
+                      aria-hidden="true"
                     >
-                      <Checkbox
-                        checked={isSelected}
-                        className="pointer-events-none h-5 w-5 border-white bg-white/80"
-                      />
-                    </div>
+                      {isSelected && (
+                        <span className="block h-3 w-3 rounded-sm bg-primary" />
+                      )}
+                    </span>
                   </button>
                 );
               })}

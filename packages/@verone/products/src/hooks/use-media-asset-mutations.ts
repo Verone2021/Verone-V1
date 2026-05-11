@@ -68,6 +68,12 @@ export function useMediaAssetMutations({
           ownerType: 'product',
         });
 
+        // Workflow validation : les images IA passent par la file d'attente,
+        // les uploads manuels purs sont approuvés directement (l'employé a
+        // déjà vu son fichier avant de l'importer).
+        const reviewStatus =
+          metadata.source === 'ai_generated' ? 'pending_review' : 'approved';
+
         const insertData: MediaAssetInsert = {
           asset_type: metadata.assetType,
           brand_ids: metadata.brandIds,
@@ -86,6 +92,7 @@ export function useMediaAssetMutations({
             metadata.source === 'ai_generated'
               ? (metadata.aiPromptUsed ?? null)
               : null,
+          review_status: reviewStatus,
         };
 
         const { data, error: insertError } = await supabase

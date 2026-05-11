@@ -12,6 +12,12 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
+import {
+  MarketingEligibilitySection,
+  ProductPerformanceSection,
+  SupplierAvailabilitySection,
+} from '@verone/products/components/sections';
+
 import type { Product } from './types';
 
 interface ChannelStatus {
@@ -118,6 +124,15 @@ export function ProductPublicationTab({ product }: ProductPublicationTabProps) {
 
   return (
     <div className="space-y-6">
+      {/* Marketing eligibility */}
+      <MarketingEligibilitySection productId={product.id} />
+
+      {/* Performance marketing par canal */}
+      <ProductPerformanceSection productId={product.id} />
+
+      {/* Supplier availability */}
+      <SupplierAvailabilitySection productId={product.id} />
+
       {/* Readiness score */}
       <section className="bg-white rounded-lg border border-neutral-200 p-5">
         <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">

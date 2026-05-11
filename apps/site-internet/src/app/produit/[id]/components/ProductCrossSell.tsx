@@ -52,7 +52,7 @@ export function ProductCrossSell({ currentProductId }: ProductCrossSellProps) {
               </div>
 
               <div className="p-3 space-y-1">
-                <h3 className="text-sm font-medium line-clamp-2 group-hover:text-verone-gray-600 transition-colors">
+                <h3 className="text-sm font-medium line-clamp-2 min-h-[2.5rem] group-hover:text-verone-gray-600 transition-colors">
                   {product.name}
                 </h3>
                 <p className="text-base font-semibold">

@@ -14,6 +14,13 @@ module.exports = {
           black: '#000000',
           white: '#FFFFFF',
 
+          // Brand tokens (design system 2026 — Stitch validé)
+          charbon: '#1d1d1b',
+          or: '#C9A961',
+          'or-hover': '#B8954A',
+          pearl: '#9B9B98',
+          'pearl-soft': '#E6E5E2',
+
           // Gris sophistiqués (neutrals)
           gray: {
             50: '#FAFAFA',
@@ -36,9 +43,17 @@ module.exports = {
       },
 
       fontFamily: {
-        // Typographie Luxury
+        // Typographie Luxury (legacy, conservée pour pages non encore migrées)
         playfair: ['Playfair Display', 'serif'],
         inter: ['Inter', 'sans-serif'],
+        // Typographie 2026 — design system Stitch
+        bodoni: ['var(--font-bodoni)', 'serif'],
+        montserrat: ['var(--font-montserrat)', 'sans-serif'],
+        'dm-sans': ['var(--font-dm-sans)', 'sans-serif'],
+      },
+
+      transitionTimingFunction: {
+        editorial: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
       },
 
       spacing: {

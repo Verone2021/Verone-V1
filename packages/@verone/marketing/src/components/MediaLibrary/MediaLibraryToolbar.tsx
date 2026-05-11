@@ -27,16 +27,24 @@ export type PublicationStatusFilter =
   | 'unused'
   | 'ai_generated';
 
+export type ReviewStatusFilter =
+  | 'all'
+  | 'pending_review'
+  | 'approved'
+  | 'rejected';
+
 interface MediaLibraryToolbarProps {
   brands: BrandInfo[];
   search: string;
   brandId: string;
   assetType: MediaAssetType | 'all';
   publicationStatus: PublicationStatusFilter;
+  reviewStatus: ReviewStatusFilter;
   onSearchChange: (value: string) => void;
   onBrandChange: (value: string) => void;
   onAssetTypeChange: (value: MediaAssetType | 'all') => void;
   onPublicationStatusChange: (value: PublicationStatusFilter) => void;
+  onReviewStatusChange: (value: ReviewStatusFilter) => void;
   onUploadClick: () => void;
 }
 
@@ -50,10 +58,12 @@ export function MediaLibraryToolbar({
   brandId,
   assetType,
   publicationStatus,
+  reviewStatus,
   onSearchChange,
   onBrandChange,
   onAssetTypeChange,
   onPublicationStatusChange,
+  onReviewStatusChange,
   onUploadClick,
 }: MediaLibraryToolbarProps) {
   const handleSearchChange = React.useCallback(
@@ -124,6 +134,21 @@ export function MediaLibraryToolbar({
               <SelectItem value="published">Publiées (≥ 1 fois)</SelectItem>
               <SelectItem value="unused">Jamais utilisées</SelectItem>
               <SelectItem value="ai_generated">Générées par IA</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={reviewStatus}
+            onValueChange={v => onReviewStatusChange(v as ReviewStatusFilter)}
+          >
+            <SelectTrigger className="w-full min-h-[44px] md:min-h-[36px] md:w-[180px]">
+              <SelectValue placeholder="Validation" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes validations</SelectItem>
+              <SelectItem value="pending_review">En attente</SelectItem>
+              <SelectItem value="approved">Approuvées</SelectItem>
+              <SelectItem value="rejected">Rejetées</SelectItem>
             </SelectContent>
           </Select>
         </>

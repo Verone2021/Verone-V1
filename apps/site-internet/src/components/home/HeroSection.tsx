@@ -1,116 +1,91 @@
-'use client';
-
 import Link from 'next/link';
 
-import { CloudflareImage } from '@verone/ui';
+import { createClient } from '@supabase/supabase-js';
 
-import { ArrowRight } from 'lucide-react';
+// Valeurs par défaut si la table site_content est vide ou inaccessible
+const HERO_DEFAULTS = {
+  title: "Un regard sur ce qui mérite d'être là",
+  subtitle:
+    'Déco et mobilier — mille pièces vues, cinquante retenues. Ce vase, cette lampe, ce bout de tissu. Pas un catalogue. Un regard.',
+  cta_text: 'Découvrir la sélection',
+  cta_link: '/catalogue',
+  cta_secondary_text: 'Nos collections',
+  cta_secondary_link: '/catalogue?view=collections',
+} as const;
 
-import { useHeroContent } from '@/hooks/use-site-content';
-import { useCatalogueProducts } from '@/hooks/use-catalogue-products';
+interface HeroContent {
+  title?: string;
+  subtitle?: string;
+  cta_text?: string;
+  cta_link?: string;
+  cta_secondary_text?: string;
+  cta_secondary_link?: string;
+  image_url?: string | null;
+}
 
-export function HeroSection() {
-  const { data: heroContent } = useHeroContent();
-  const { data: products } = useCatalogueProducts({
-    sortBy: 'newest',
-    limit: 1,
-    offset: 0,
-  });
+async function fetchHeroContent(): Promise<HeroContent> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  const title = heroContent?.title ?? 'Des trouvailles qui changent tout';
-  const subtitle =
-    heroContent?.subtitle ??
-    'Concept store en ligne — produits originaux, sourcés avec soin, au juste prix';
-  const ctaText = heroContent?.cta_text ?? 'Découvrir la sélection';
-  const ctaLink = heroContent?.cta_link ?? '/catalogue';
+  if (!supabaseUrl || !supabaseKey) return {};
 
-  const heroCloudflareId = products?.[0]?.primary_cloudflare_image_id ?? null;
+  try {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { data } = await supabase
+      .from('site_content')
+      .select('content_value')
+      .eq('content_key', 'hero')
+      .single();
+
+    if (!data?.content_value) return {};
+    return data.content_value as HeroContent;
+  } catch {
+    // Silently fall back to defaults if the table is empty or unreachable
+    return {};
+  }
+}
+
+export async function HeroSection() {
+  const cms = await fetchHeroContent();
+
+  const title = cms.title ?? HERO_DEFAULTS.title;
+  const subtitle = cms.subtitle ?? HERO_DEFAULTS.subtitle;
+  const ctaText = cms.cta_text ?? HERO_DEFAULTS.cta_text;
+  const ctaLink = cms.cta_link ?? HERO_DEFAULTS.cta_link;
+  const ctaSecondaryText =
+    cms.cta_secondary_text ?? HERO_DEFAULTS.cta_secondary_text;
+  const ctaSecondaryLink =
+    cms.cta_secondary_link ?? HERO_DEFAULTS.cta_secondary_link;
 
   return (
-    <section className="relative min-h-[90vh] flex items-center bg-verone-white overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-r from-verone-gray-50 via-verone-white to-verone-gray-50" />
+    <section className="flex min-h-[90vh] flex-col items-center justify-center bg-verone-white px-6 py-24 md:px-16 md:py-24">
+      <div className="flex max-w-[1000px] flex-col items-center gap-8 text-center">
+        <span className="font-dm-sans text-[11px] font-light uppercase tracking-[0.32em] text-verone-pearl md:text-xs">
+          Sélection éditoriale
+        </span>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Left: Text */}
-          <div className="py-16 lg:py-24">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-6 animate-fade-in-up">
-              Concept Store
-            </p>
+        <h1 className="max-w-[900px] font-bodoni text-[44px] font-black leading-[1.04] text-verone-charbon sm:text-5xl md:text-7xl lg:text-[96px]">
+          {title}
+        </h1>
 
-            <h1
-              className="font-playfair text-5xl md:text-6xl lg:text-7xl font-bold text-verone-black tracking-tight leading-[1.05] mb-8 animate-fade-in-up"
-              style={{ animationDelay: '0.1s' }}
-            >
-              {title}
-            </h1>
+        <p className="max-w-[480px] font-montserrat text-base font-light leading-[1.7] text-verone-pearl md:text-[17px]">
+          {subtitle}
+        </p>
 
-            <p
-              className="text-lg text-verone-gray-600 max-w-lg mb-10 leading-relaxed animate-fade-in-up"
-              style={{ animationDelay: '0.2s' }}
-            >
-              {subtitle}
-            </p>
-
-            <div
-              className="flex flex-col sm:flex-row items-start gap-4 animate-fade-in-up"
-              style={{ animationDelay: '0.3s' }}
-            >
-              <Link
-                href={ctaLink}
-                className="group inline-flex items-center gap-2 px-8 py-4 bg-verone-black text-verone-white text-sm font-semibold uppercase tracking-wide hover:bg-verone-gray-800 transition-all duration-300 shadow-md hover:shadow-luxury"
-              >
-                {ctaText}
-                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-              </Link>
-
-              <Link
-                href="/collections"
-                className="inline-flex items-center gap-2 px-8 py-4 border-2 border-verone-black text-verone-black text-sm font-semibold uppercase tracking-wide hover:bg-verone-black hover:text-verone-white transition-all duration-300"
-              >
-                Collections
-              </Link>
-            </div>
-          </div>
-
-          {/* Right: Product Image */}
-          <div
-            className="relative hidden lg:block animate-fade-in-up"
-            style={{ animationDelay: '0.4s' }}
+        <div className="mt-4 flex flex-col items-stretch gap-4 sm:mt-8 sm:flex-row sm:items-center">
+          <Link
+            href={ctaLink}
+            className="group relative inline-flex items-center justify-center border border-verone-charbon bg-verone-charbon px-8 py-4 font-montserrat text-xs font-medium uppercase tracking-[0.16em] text-verone-white transition-all duration-[180ms] ease-editorial hover:shadow-[inset_0_0_0_1px_#C9A961]"
           >
-            {heroCloudflareId ? (
-              <div className="relative aspect-[4/5] overflow-hidden bg-verone-gray-50">
-                <CloudflareImage
-                  cloudflareId={heroCloudflareId}
-                  alt="Produit vedette Vérone"
-                  fill
-                  sizes="50vw"
-                  className="object-contain p-8"
-                  priority
-                />
-              </div>
-            ) : (
-              <div className="aspect-[4/5] bg-verone-gray-100 flex items-center justify-center">
-                <p className="text-verone-gray-400 text-sm uppercase tracking-wider">
-                  Concept Store
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+            {ctaText}
+          </Link>
 
-      {/* Scroll Indicator */}
-      <div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-fade-in"
-        style={{ animationDelay: '0.8s' }}
-      >
-        <div className="flex flex-col items-center gap-2">
-          <div className="h-12 w-[1px] bg-verone-gray-400 animate-pulse" />
-          <p className="text-xs text-verone-gray-500 uppercase tracking-wider">
-            Défiler
-          </p>
+          <Link
+            href={ctaSecondaryLink}
+            className="inline-flex items-center justify-center border border-verone-or bg-transparent px-8 py-4 font-montserrat text-xs font-medium uppercase tracking-[0.16em] text-verone-or transition-all duration-[180ms] ease-editorial hover:bg-verone-or hover:text-verone-charbon"
+          >
+            {ctaSecondaryText}
+          </Link>
         </div>
       </div>
     </section>

@@ -34,8 +34,8 @@ import { useConsultationDetail } from './use-consultation-detail';
 
 export default function ConsultationDetailPage() {
   const router = useRouter();
-  const params = useParams();
-  const consultationId = params.consultationId as string;
+  const params = useParams<{ consultationId: string }>();
+  const consultationId = params.consultationId;
 
   const detail = useConsultationDetail(consultationId);
   const [showMarginReport, setShowMarginReport] = useState(false);
@@ -101,7 +101,7 @@ export default function ConsultationDetailPage() {
             creatingOrder={detail.creatingOrder}
             onEdit={() => detail.setShowEditModal(true)}
             onStatusChange={status => {
-              void detail.handleStatusChange(status).catch(error => {
+              void detail.handleStatusChange(status).catch((error: unknown) => {
                 console.error(
                   '[ConsultationDetailPage] Status change failed:',
                   error
@@ -109,36 +109,44 @@ export default function ConsultationDetailPage() {
               });
             }}
             onValidate={() => {
-              void detail.handleValidateConsultation().catch(error => {
-                console.error(
-                  '[ConsultationDetailPage] Validate failed:',
-                  error
-                );
-              });
+              void detail
+                .handleValidateConsultation()
+                .catch((error: unknown) => {
+                  console.error(
+                    '[ConsultationDetailPage] Validate failed:',
+                    error
+                  );
+                });
             }}
             onUnvalidate={() => {
-              void detail.handleUnvalidateConsultation().catch(error => {
-                console.error(
-                  '[ConsultationDetailPage] Unvalidate failed:',
-                  error
-                );
-              });
+              void detail
+                .handleUnvalidateConsultation()
+                .catch((error: unknown) => {
+                  console.error(
+                    '[ConsultationDetailPage] Unvalidate failed:',
+                    error
+                  );
+                });
             }}
             onArchive={() => {
-              void detail.handleArchiveConsultation().catch(error => {
-                console.error(
-                  '[ConsultationDetailPage] Archive failed:',
-                  error
-                );
-              });
+              void detail
+                .handleArchiveConsultation()
+                .catch((error: unknown) => {
+                  console.error(
+                    '[ConsultationDetailPage] Archive failed:',
+                    error
+                  );
+                });
             }}
             onUnarchive={() => {
-              void detail.handleUnarchiveConsultation().catch(error => {
-                console.error(
-                  '[ConsultationDetailPage] Unarchive failed:',
-                  error
-                );
-              });
+              void detail
+                .handleUnarchiveConsultation()
+                .catch((error: unknown) => {
+                  console.error(
+                    '[ConsultationDetailPage] Unarchive failed:',
+                    error
+                  );
+                });
             }}
             onDelete={() => detail.setShowDeleteModal(true)}
             onEmail={detail.handleOpenEmail}
@@ -146,7 +154,7 @@ export default function ConsultationDetailPage() {
             onMarginReport={() => setShowMarginReport(true)}
             onCreateQuote={detail.handleOpenQuoteModal}
             onCreateOrder={() => {
-              void detail.handleCreateOrder().catch(error => {
+              void detail.handleCreateOrder().catch((error: unknown) => {
                 console.error(
                   '[ConsultationDetailPage] Create order failed:',
                   error
@@ -219,7 +227,7 @@ export default function ConsultationDetailPage() {
         creatingSO={detail.creatingOrder}
         onCreateSalesOrder={() => {
           setShowOrderDialog(false);
-          void detail.handleCreateOrder().catch(error => {
+          void detail.handleCreateOrder().catch((error: unknown) => {
             console.error('[ConsultationDetailPage] Create SO failed:', error);
           });
         }}

@@ -141,7 +141,7 @@ export function ConsultationModals({
           qonto_invoice_id: q.qonto_invoice_id,
         }))}
         onSent={() => {
-          void fetchHistory().catch(err => {
+          void fetchHistory().catch((err: unknown) => {
             console.error(
               '[ConsultationModals] Refresh history after email:',
               err
@@ -231,7 +231,7 @@ export function ConsultationModals({
               variant="destructive"
               disabled={deleting}
               onClick={() => {
-                void handleDeleteConsultation().catch(error => {
+                void handleDeleteConsultation().catch((error: unknown) => {
                   console.error('[ConsultationModals] Delete failed:', error);
                 });
               }}

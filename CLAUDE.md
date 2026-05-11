@@ -68,6 +68,7 @@ Tests Playwright 5 tailles avant PR UI : 375 / 768 / 1024 / 1440 / 1920 px.
 - JAMAIS `array.length === N` comme condition `useEffect` (piege 27 avril 2026)
 - JAMAIS `select('*')` Supabase — colonnes explicites
 - Logout : `window.location.href`, jamais `router.push()`
+- ANTI-RACCOURCIS senior (ADR-033) : JAMAIS baisser un seuil pour faire passer la CI, JAMAIS `@ts-ignore` (utiliser `@ts-expect-error: <raison>`), JAMAIS `eslint-disable` sans justification — _« address the root cause, don't suppress the error »_ (Anthropic best-practices). Détail : `.claude/rules/code-standards.md` section ANTI-RACCOURCIS.
 
 ## DELEGATION AUTOMATIQUE
 

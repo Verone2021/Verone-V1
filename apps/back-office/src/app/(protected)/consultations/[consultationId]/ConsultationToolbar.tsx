@@ -140,7 +140,7 @@ export function ConsultationToolbar({
                     disabled={consultation.status === opt.value}
                     onClick={() => {
                       void Promise.resolve(onStatusChange(opt.value)).catch(
-                        err => {
+                        (err: unknown) => {
                           console.error(
                             '[ConsultationToolbar] Status change failed:',
                             err
@@ -162,7 +162,7 @@ export function ConsultationToolbar({
             {!consultation.validated_at && !consultation.archived_at && (
               <DropdownMenuItem
                 onClick={() => {
-                  void Promise.resolve(onValidate()).catch(err => {
+                  void Promise.resolve(onValidate()).catch((err: unknown) => {
                     console.error(
                       '[ConsultationToolbar] Validate failed:',
                       err
@@ -179,7 +179,7 @@ export function ConsultationToolbar({
             {consultation.validated_at && !consultation.archived_at && (
               <DropdownMenuItem
                 onClick={() => {
-                  void Promise.resolve(onUnvalidate()).catch(err => {
+                  void Promise.resolve(onUnvalidate()).catch((err: unknown) => {
                     console.error(
                       '[ConsultationToolbar] Unvalidate failed:',
                       err
@@ -196,7 +196,7 @@ export function ConsultationToolbar({
             {!consultation.archived_at && (
               <DropdownMenuItem
                 onClick={() => {
-                  void Promise.resolve(onArchive()).catch(err => {
+                  void Promise.resolve(onArchive()).catch((err: unknown) => {
                     console.error('[ConsultationToolbar] Archive failed:', err);
                   });
                 }}
@@ -210,7 +210,7 @@ export function ConsultationToolbar({
             {consultation.archived_at && (
               <DropdownMenuItem
                 onClick={() => {
-                  void Promise.resolve(onUnarchive()).catch(err => {
+                  void Promise.resolve(onUnarchive()).catch((err: unknown) => {
                     console.error(
                       '[ConsultationToolbar] Unarchive failed:',
                       err
@@ -265,7 +265,7 @@ export function ConsultationToolbar({
               : undefined
           }
           onClick={() => {
-            void Promise.resolve(onCreateOrder()).catch(err => {
+            void Promise.resolve(onCreateOrder()).catch((err: unknown) => {
               console.error('[ConsultationToolbar] Create order failed:', err);
             });
           }}

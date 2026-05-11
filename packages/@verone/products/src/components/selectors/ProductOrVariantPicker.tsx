@@ -48,6 +48,12 @@ interface ProductOrVariantPickerProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  /**
+   * 'all' (défaut) : tous les produits non-archivés.
+   * 'marketing_eligible' : filtre les produits actifs / preorder / non-bloqués
+   *   ET publiés sur le Site Internet ou actifs sur Meta.
+   */
+  eligibilityFilter?: 'all' | 'marketing_eligible';
 }
 
 interface ProductRow {
@@ -57,6 +63,7 @@ interface ProductRow {
   sku: string | null;
   brand_ids: string[] | null;
   variant_group_id: string | null;
+  is_published_online: boolean | null;
   supplier: { trade_name: string | null; legal_name: string } | null;
 }
 
@@ -93,6 +100,7 @@ export function ProductOrVariantPicker({
   placeholder = 'Rechercher un produit ou une variante…',
   disabled = false,
   className,
+  eligibilityFilter = 'all',
 }: ProductOrVariantPickerProps) {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState('');
@@ -114,12 +122,19 @@ export function ProductOrVariantPicker({
         const productsQuery = supabase
           .from('products')
           .select(
-            'id, name, commercial_name, sku, brand_ids, variant_group_id, supplier:organisations!supplier_id(trade_name, legal_name)'
+            'id, name, commercial_name, sku, brand_ids, variant_group_id, is_published_online, supplier:organisations!supplier_id(trade_name, legal_name)'
           )
           .is('archived_at', null)
           .neq('creation_mode', 'sourcing')
           .order('updated_at', { ascending: false })
           .limit(RESULT_LIMIT);
+
+        // Filtre eligibilité marketing
+        if (eligibilityFilter === 'marketing_eligible') {
+          productsQuery
+            .in('product_status', ['active', 'preorder'])
+            .eq('marketing_blocked', false);
+        }
 
         const variantGroupsQuery = supabase
           .from('variant_groups')
@@ -135,10 +150,17 @@ export function ProductOrVariantPicker({
           variantGroupsQuery.ilike('name', `%${term}%`);
         }
 
-        const [productsResult, variantGroupsResult] = await Promise.all([
-          productsQuery,
-          variantGroupsQuery,
-        ]);
+        // En mode marketing_eligible : requête parallèle sur meta_commerce_syncs
+        const metaQuery =
+          eligibilityFilter === 'marketing_eligible'
+            ? supabase
+                .from('meta_commerce_syncs')
+                .select('product_id')
+                .eq('meta_status', 'active')
+            : Promise.resolve({ data: [], error: null });
+
+        const [productsResult, variantGroupsResult, metaResult] =
+          await Promise.all([productsQuery, variantGroupsQuery, metaQuery]);
 
         if (cancelled) return;
 
@@ -148,9 +170,22 @@ export function ProductOrVariantPicker({
             productsResult.error
           );
         } else {
-          setProducts(
-            (productsResult.data as unknown as ProductRow[] | null) ?? []
-          );
+          let rows =
+            (productsResult.data as unknown as ProductRow[] | null) ?? [];
+
+          // Filtre côté JS : publié sur Site OU actif sur Meta
+          if (eligibilityFilter === 'marketing_eligible') {
+            const metaActiveIds = new Set(
+              ((metaResult.data ?? []) as { product_id: string }[]).map(
+                r => r.product_id
+              )
+            );
+            rows = rows.filter(
+              p => p.is_published_online === true || metaActiveIds.has(p.id)
+            );
+          }
+
+          setProducts(rows);
         }
 
         if (variantGroupsResult.error) {
@@ -173,7 +208,7 @@ export function ProductOrVariantPicker({
     return () => {
       cancelled = true;
     };
-  }, [debouncedSearch]);
+  }, [debouncedSearch, eligibilityFilter]);
 
   const handleSelectProduct = React.useCallback(
     (row: ProductRow) => {

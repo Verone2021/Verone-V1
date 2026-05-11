@@ -7,6 +7,8 @@
 
 import { useCallback } from 'react';
 
+import { useQueryClient } from '@tanstack/react-query';
+
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type {
@@ -51,6 +53,8 @@ export function useSalesOrdersWriteMutations({
   checkStockAvailability,
   getAvailableStock,
 }: WriteMutationDeps) {
+  // [BO-PERF-ORDERS-002] Notifie les consumers TanStack Query après chaque écriture.
+  const queryClient = useQueryClient();
   const createOrder = useCallback(
     async (data: CreateSalesOrderData, autoReserve = false) => {
       setLoading(true);
@@ -206,6 +210,8 @@ export function useSalesOrdersWriteMutations({
         });
         try {
           await fetchOrders();
+          // [BO-PERF-ORDERS-002] Notifie les consumers TanStack Query après la création.
+          await queryClient.invalidateQueries({ queryKey: ['sales_orders'] });
         } catch {
           /* Non-blocking */
         }
@@ -228,7 +234,14 @@ export function useSalesOrdersWriteMutations({
         setLoading(false);
       }
     },
-    [supabase, fetchOrders, checkStockAvailability, toastRef, setLoading]
+    [
+      supabase,
+      queryClient,
+      fetchOrders,
+      checkStockAvailability,
+      toastRef,
+      setLoading,
+    ]
   );
 
   const updateOrderWithItems = useCallback(
@@ -413,6 +426,8 @@ export function useSalesOrdersWriteMutations({
           description: `Commande ${existingOrder.order_number} mise à jour avec succès`,
         });
         await fetchOrders();
+        // [BO-PERF-ORDERS-002] Notifie les consumers TanStack Query après la mise à jour.
+        await queryClient.invalidateQueries({ queryKey: ['sales_orders'] });
         if (currentOrderRef.current?.id === orderId) await fetchOrder(orderId);
         return true;
       } catch (error: unknown) {
@@ -432,6 +447,7 @@ export function useSalesOrdersWriteMutations({
     },
     [
       supabase,
+      queryClient,
       fetchOrders,
       fetchOrder,
       getAvailableStock,

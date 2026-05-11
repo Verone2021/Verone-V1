@@ -25,6 +25,7 @@ import {
   FileText,
   Tag,
   Megaphone,
+  TrendingUp,
 } from 'lucide-react';
 
 // Lazy-loaded sections : audit Bug 0 (404 BO /canaux-vente/site-internet).
@@ -129,6 +130,13 @@ const ReviewsSection = dynamic(
     })),
   { ssr: false, loading: () => null }
 );
+const SiteTopProductsSection = dynamic(
+  () =>
+    import('./components/SiteTopProductsSection').then(m => ({
+      default: m.SiteTopProductsSection,
+    })),
+  { ssr: false, loading: () => null }
+);
 
 /**
  * Page Canal Site Internet - Back Office CMS
@@ -202,7 +210,7 @@ export default function SiteInternetPage() {
           className="space-y-6"
         >
           {/* Navigation Tabs */}
-          <TabsList className="grid grid-cols-11 w-full">
+          <TabsList className="grid grid-cols-12 w-full">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <LayoutDashboard className="h-4 w-4" />
               Dashboard
@@ -252,6 +260,13 @@ export default function SiteInternetPage() {
             >
               <Megaphone className="h-4 w-4" />
               Ambassadeurs
+            </TabsTrigger>
+            <TabsTrigger
+              value="top-produits"
+              className="flex items-center gap-2"
+            >
+              <TrendingUp className="h-4 w-4" />
+              Top produits
             </TabsTrigger>
           </TabsList>
 
@@ -310,6 +325,11 @@ export default function SiteInternetPage() {
             <CMSSection />
             <CmsPagesSection />
             <NewsletterSection />
+          </TabsContent>
+
+          {/* Tab: Top produits (revenu site internet) */}
+          <TabsContent value="top-produits" className="space-y-6">
+            <SiteTopProductsSection channelCode="site_internet" />
           </TabsContent>
         </Tabs>
       </div>

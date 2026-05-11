@@ -31,3 +31,6 @@ export * from './use-sidebar-counts';
 // Communications unified view hook (2026-05-07 — BO-MSG-018)
 export * from './use-communications';
 export * from './use-unread-mails-count';
+
+// Marketing media pending count (2026-05-10 — BO-MKT-001c)
+export * from './use-media-assets-pending-count';

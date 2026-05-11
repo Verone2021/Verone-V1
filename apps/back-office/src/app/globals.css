@@ -38,6 +38,13 @@
 }
 
 /* Centrage renforcé pour la page d'accueil Vérone */
+@layer components {
+  /* Champ formulaire standard — utilisé dans le module Journal */
+  .input-base {
+    @apply w-full border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-400 focus:outline-none;
+  }
+}
+
 @layer utilities {
   .verone-homepage-center {
     display: flex;
