@@ -17,6 +17,7 @@ export const productSchema = z.object({
     .optional()
     .nullable(),
   is_published_online: z.boolean(),
+  is_featured_home: z.boolean().default(false),
   publication_date: z.string().optional().nullable(),
   unpublication_date: z.string().optional().nullable(),
 

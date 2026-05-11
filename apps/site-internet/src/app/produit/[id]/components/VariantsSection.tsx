@@ -141,9 +141,9 @@ export function VariantsSection({
                 data-testid="variant-card"
                 title={variant.name} // Accessibilité
               >
-                {/* Photo 56x56px avec border active state */}
+                {/* Photo 60x60px avec border active state */}
                 <div
-                  className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                  className={`relative w-[60px] h-[60px] rounded-none overflow-hidden border-2 transition-all duration-200 ${
                     currentProductId === variant.product_id
                       ? 'border-gray-900 ring-2 ring-gray-200'
                       : 'border-gray-200 hover:border-gray-400'
@@ -154,8 +154,8 @@ export function VariantsSection({
                     fallbackSrc={variant.primary_image_url}
                     alt={variant.name}
                     fill
-                    className="object-contain p-1 bg-white"
-                    sizes="56px"
+                    className="object-cover bg-white"
+                    sizes="60px"
                   />
                 </div>
 

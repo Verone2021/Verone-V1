@@ -26,7 +26,7 @@ export async function generateMetadata({
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    return { title: 'Collection | Vérone' };
+    return { title: 'Collection' };
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey);
@@ -41,7 +41,7 @@ export async function generateMetadata({
   const collection = data as CollectionMeta | null;
 
   if (!collection) {
-    return { title: 'Collection introuvable | Vérone' };
+    return { title: 'Collection introuvable' };
   }
 
   return {
