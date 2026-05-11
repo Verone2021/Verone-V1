@@ -32,6 +32,7 @@ import {
   Award,
   Mail,
   BarChart2,
+  BookMarked,
 } from 'lucide-react';
 
 // Interface pour les éléments de navigation
@@ -351,6 +352,11 @@ export const getNavItems = (
         title: 'Calendrier',
         href: '/marketing/calendrier',
         icon: CalendarClock,
+      },
+      {
+        title: 'Guide Publication',
+        href: '/marketing/guide-meta',
+        icon: BookMarked,
       },
       {
         title: 'Marques',
