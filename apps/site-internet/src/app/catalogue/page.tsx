@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { Filter, Search, X } from 'lucide-react';
+import { Filter, Search, SlidersHorizontal, X } from 'lucide-react';
 
 import { CardProductLuxury } from '@/components/ui/CardProductLuxury';
 import { CatalogueSidebar } from '@/components/catalogue/CatalogueSidebar';
@@ -38,6 +38,20 @@ export default function CataloguePage() {
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  // Filtre collapsible desktop — caché par défaut, mémorisé dans localStorage
+  const [filterOpen, setFilterOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('verone_catalogue_filter_open') === 'true';
+  });
+
+  const toggleFilter = useCallback(() => {
+    setFilterOpen(prev => {
+      const next = !prev;
+      localStorage.setItem('verone_catalogue_filter_open', String(next));
+      return next;
+    });
+  }, []);
 
   const {
     filters,
@@ -117,10 +131,13 @@ export default function CataloguePage() {
     <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12 pb-32 md:pb-12">
       {/* Header — pb-32 sur mobile pour la banniere cookies (audit 2026-04-26 Bug 8) */}
       <div className="mb-12">
-        <h1 className="font-playfair text-3xl md:text-5xl font-bold text-verone-black mb-4">
-          Notre Sélection
+        <span className="font-dm-sans text-[11px] font-light uppercase tracking-[0.3em] text-verone-or mb-4 block">
+          CATALOGUE
+        </span>
+        <h1 className="font-bodoni text-3xl md:text-5xl font-black text-verone-charbon mb-4">
+          La sélection.
         </h1>
-        <p className="text-lg text-verone-gray-600">
+        <p className="text-base text-verone-gray-600 font-montserrat">
           Des pièces originales de déco et mobilier, sourcées avec soin, au
           juste prix
         </p>
@@ -188,50 +205,86 @@ export default function CataloguePage() {
         </div>
       </div>
 
+      {/* Toggle filtres desktop — caché sur mobile (bouton mobile existe déjà) */}
+      <div className="hidden lg:flex items-center gap-3 mb-6">
+        <button
+          type="button"
+          onClick={toggleFilter}
+          className={`flex items-center gap-2 px-4 py-2 border text-xs font-dm-sans uppercase tracking-wider transition-colors ${
+            filterOpen
+              ? 'border-verone-black bg-verone-black text-verone-white'
+              : 'border-verone-gray-300 text-verone-gray-700 hover:border-verone-black'
+          }`}
+        >
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          Filtrer
+          {activeFilterCount > 0 && (
+            <span
+              className={`flex items-center justify-center w-4 h-4 text-[10px] font-semibold rounded-full ${
+                filterOpen
+                  ? 'bg-verone-white text-verone-black'
+                  : 'bg-verone-black text-verone-white'
+              }`}
+            >
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
+        {filterOpen && (
+          <span className="text-xs text-verone-gray-500">
+            Les filtres sont affichés
+          </span>
+        )}
+      </div>
+
       {/* Layout: sidebar + grid */}
       <div className="flex gap-8">
-        {/* Sidebar (desktop only) */}
-        {allProducts && allProducts.length > 0 && (
-          <CatalogueSidebar
-            products={allProducts}
-            filters={filters}
-            onToggleCategory={v => {
-              toggleCategory(v);
-              setCurrentPage(1);
-            }}
-            onToggleRoom={v => {
-              toggleRoom(v);
-              setCurrentPage(1);
-            }}
-            onToggleStyle={v => {
-              toggleStyle(v);
-              setCurrentPage(1);
-            }}
-            onToggleBrand={v => {
-              toggleBrand(v);
-              setCurrentPage(1);
-            }}
-            onToggleColor={v => {
-              toggleColor(v);
-              setCurrentPage(1);
-            }}
-            onSetPriceRange={(min, max) => {
-              setPriceRange(min, max);
-              setCurrentPage(1);
-            }}
-            onClearAll={() => {
-              clearSidebarFilters();
-              setCurrentPage(1);
-            }}
-            hasActiveFilters={hasSidebarFilters}
-            className="hidden lg:block"
-          />
-        )}
+        {/* Sidebar (desktop only, visible si filterOpen OU si filtres actifs) */}
+        {allProducts &&
+          allProducts.length > 0 &&
+          (filterOpen || hasSidebarFilters) && (
+            <CatalogueSidebar
+              products={allProducts}
+              filters={filters}
+              onToggleCategory={v => {
+                toggleCategory(v);
+                setCurrentPage(1);
+              }}
+              onToggleRoom={v => {
+                toggleRoom(v);
+                setCurrentPage(1);
+              }}
+              onToggleStyle={v => {
+                toggleStyle(v);
+                setCurrentPage(1);
+              }}
+              onToggleBrand={v => {
+                toggleBrand(v);
+                setCurrentPage(1);
+              }}
+              onToggleColor={v => {
+                toggleColor(v);
+                setCurrentPage(1);
+              }}
+              onSetPriceRange={(min, max) => {
+                setPriceRange(min, max);
+                setCurrentPage(1);
+              }}
+              onClearAll={() => {
+                clearSidebarFilters();
+                setCurrentPage(1);
+              }}
+              hasActiveFilters={hasSidebarFilters}
+              className="hidden lg:block"
+            />
+          )}
 
         {/* Products area */}
         <div className="flex-1 min-w-0">
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div
+              className={`grid gap-8 grid-cols-1 md:grid-cols-2 ${filterOpen || hasSidebarFilters ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}
+            >
               {Array.from({ length: 6 }).map((_, i) => (
                 <div
                   key={i}
@@ -253,7 +306,9 @@ export default function CataloguePage() {
                 {filteredProducts.length > 1 ? 's' : ''}
                 {totalPages > 1 && ` — page ${currentPage} sur ${totalPages}`}
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div
+                className={`grid gap-8 grid-cols-1 md:grid-cols-2 ${filterOpen || hasSidebarFilters ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}
+              >
                 {paginatedProducts.map(
                   (product: CatalogueProduct, index: number) => (
                     <CardProductLuxury
@@ -318,7 +373,7 @@ export default function CataloguePage() {
             </>
           ) : (
             <div className="text-center py-24">
-              <p className="font-playfair text-2xl text-verone-gray-500 mb-4">
+              <p className="font-bodoni text-2xl text-verone-gray-500 mb-4">
                 Aucun produit trouvé
               </p>
               <p className="text-verone-gray-400 mb-6">

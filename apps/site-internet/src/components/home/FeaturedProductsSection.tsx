@@ -2,16 +2,17 @@
 
 import Link from 'next/link';
 
-import { useCatalogueProducts } from '@/hooks/use-catalogue-products';
+import { useFeaturedHomeProducts } from '@/hooks/use-featured-home-products';
 
 import { ProductCardEditorial } from './ProductCardEditorial';
 
 export function FeaturedProductsSection() {
-  const { data: products, isLoading } = useCatalogueProducts({
-    sortBy: 'newest',
-    limit: 4,
-    offset: 0,
-  });
+  const { data: products, isLoading } = useFeaturedHomeProducts();
+
+  // Filtrer les produits sans slug (ne peuvent pas être liés)
+  const displayProducts = (products ?? []).filter(
+    (p): p is typeof p & { slug: string } => p.slug !== null && p.slug !== ''
+  );
 
   return (
     <section className="bg-verone-white px-6 py-24 md:px-16 md:py-24">
@@ -34,12 +35,12 @@ export function FeaturedProductsSection() {
           </div>
         )}
 
-        {!isLoading && products && products.length > 0 && (
+        {!isLoading && displayProducts.length > 0 && (
           <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {products.slice(0, 4).map((product, index) => (
+            {displayProducts.slice(0, 4).map((product, index) => (
               <ProductCardEditorial
-                key={product.product_id}
-                name={product.name}
+                key={product.id}
+                name={product.commercial_name ?? product.name}
                 slug={product.slug}
                 priceTtc={product.price_ttc}
                 imageUrl={product.primary_image_url}
@@ -50,7 +51,7 @@ export function FeaturedProductsSection() {
           </div>
         )}
 
-        {!isLoading && products && products.length > 0 && (
+        {!isLoading && displayProducts.length > 0 && (
           <Link
             href="/catalogue"
             className="font-montserrat text-xs font-medium uppercase tracking-[0.16em] text-verone-charbon underline decoration-verone-or decoration-1 underline-offset-[6px] transition-colors duration-[180ms] ease-editorial hover:text-verone-or"

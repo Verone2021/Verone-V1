@@ -9,7 +9,7 @@ import { JournalHero } from '@/components/journal/JournalHero';
 import { getPublishedArticles } from '@/lib/article-queries';
 
 export const metadata: Metadata = {
-  title: 'Journal — Idées déco & guides intérieur | Vérone',
+  title: 'Journal — Idées déco & guides intérieur',
   description:
     'Inspiration, guides pratiques et tendances pour aménager ton intérieur avec goût. Le journal Vérone.',
   openGraph: {

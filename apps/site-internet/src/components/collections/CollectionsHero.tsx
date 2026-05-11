@@ -10,7 +10,7 @@ export function CollectionsHero() {
         Une sélection.
       </h1>
       <p className="mt-8 max-w-[480px] font-montserrat text-base font-normal leading-[1.7] text-verone-pearl md:text-[17px]">
-        Pas un catalogue fourre-tout. Trois univers, trois regards différents.
+        Pas un catalogue fourre-tout. Deux univers, deux regards distincts.
         Chacun trié avec le même niveau d&apos;exigence.
       </p>
     </section>

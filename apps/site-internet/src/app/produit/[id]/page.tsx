@@ -298,13 +298,13 @@ export default function ProductPage({
             productName={product.name}
           />
 
-          {/* Description courte (optionnel) */}
+          {/* Description — visible au-dessus des accordéons, suffixe Sourcing filtré */}
           {product.description && (
-            <div className="prose prose-sm max-w-none">
-              <p className="text-gray-700 leading-relaxed line-clamp-3">
-                {product.description}
-              </p>
-            </div>
+            <p className="text-sm text-neutral-600 leading-relaxed">
+              {product.description
+                .replace(/\s*Sourcing curaté Vérone Collections\.?\s*$/i, '')
+                .trim()}
+            </p>
           )}
 
           {/* Accordions sections détaillées */}
