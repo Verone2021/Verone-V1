@@ -131,10 +131,13 @@ export default function CataloguePage() {
     <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12 pb-32 md:pb-12">
       {/* Header — pb-32 sur mobile pour la banniere cookies (audit 2026-04-26 Bug 8) */}
       <div className="mb-12">
-        <h1 className="font-playfair text-3xl md:text-5xl font-bold text-verone-black mb-4">
-          Notre Sélection
+        <span className="font-dm-sans text-[11px] font-light uppercase tracking-[0.3em] text-verone-or mb-4 block">
+          CATALOGUE
+        </span>
+        <h1 className="font-bodoni text-3xl md:text-5xl font-black text-verone-charbon mb-4">
+          La sélection.
         </h1>
-        <p className="text-lg text-verone-gray-600">
+        <p className="text-base text-verone-gray-600 font-montserrat">
           Des pièces originales de déco et mobilier, sourcées avec soin, au
           juste prix
         </p>
@@ -370,7 +373,7 @@ export default function CataloguePage() {
             </>
           ) : (
             <div className="text-center py-24">
-              <p className="font-playfair text-2xl text-verone-gray-500 mb-4">
+              <p className="font-bodoni text-2xl text-verone-gray-500 mb-4">
                 Aucun produit trouvé
               </p>
               <p className="text-verone-gray-400 mb-6">
