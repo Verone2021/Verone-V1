@@ -600,6 +600,144 @@ export type Database = {
         };
         Relationships: [];
       };
+      articles: {
+        Row: {
+          archived_at: string | null;
+          author_avatar_url: string | null;
+          author_name: string;
+          author_role: string | null;
+          body_markdown: string;
+          canonical_url: string | null;
+          category: string;
+          cover_image_alt: string;
+          cover_image_url: string | null;
+          created_at: string;
+          excerpt: string;
+          external_backlinks: Json;
+          featured_product_ids: string[];
+          id: string;
+          internal_links: Json;
+          is_featured: boolean;
+          last_viewed_at: string | null;
+          locale: string;
+          meta_description: string | null;
+          meta_title: string | null;
+          og_description: string | null;
+          og_image_alt: string | null;
+          og_image_url: string | null;
+          og_title: string | null;
+          published_at: string | null;
+          reading_time_minutes: number;
+          related_article_ids: string[];
+          robots_follow: boolean;
+          robots_index: boolean;
+          scheduled_at: string | null;
+          schema_type: string;
+          search_vector: unknown;
+          share_count: number;
+          slug: string;
+          status: string;
+          subtitle: string | null;
+          tags: string[];
+          title: string;
+          translation_group_id: string | null;
+          twitter_card: string;
+          updated_at: string;
+          view_count: number;
+          word_count: number | null;
+        };
+        Insert: {
+          archived_at?: string | null;
+          author_avatar_url?: string | null;
+          author_name?: string;
+          author_role?: string | null;
+          body_markdown: string;
+          canonical_url?: string | null;
+          category: string;
+          cover_image_alt: string;
+          cover_image_url?: string | null;
+          created_at?: string;
+          excerpt: string;
+          external_backlinks?: Json;
+          featured_product_ids?: string[];
+          id?: string;
+          internal_links?: Json;
+          is_featured?: boolean;
+          last_viewed_at?: string | null;
+          locale?: string;
+          meta_description?: string | null;
+          meta_title?: string | null;
+          og_description?: string | null;
+          og_image_alt?: string | null;
+          og_image_url?: string | null;
+          og_title?: string | null;
+          published_at?: string | null;
+          reading_time_minutes?: number;
+          related_article_ids?: string[];
+          robots_follow?: boolean;
+          robots_index?: boolean;
+          scheduled_at?: string | null;
+          schema_type?: string;
+          search_vector?: unknown;
+          share_count?: number;
+          slug: string;
+          status?: string;
+          subtitle?: string | null;
+          tags?: string[];
+          title: string;
+          translation_group_id?: string | null;
+          twitter_card?: string;
+          updated_at?: string;
+          view_count?: number;
+          word_count?: number | null;
+        };
+        Update: {
+          archived_at?: string | null;
+          author_avatar_url?: string | null;
+          author_name?: string;
+          author_role?: string | null;
+          body_markdown?: string;
+          canonical_url?: string | null;
+          category?: string;
+          cover_image_alt?: string;
+          cover_image_url?: string | null;
+          created_at?: string;
+          excerpt?: string;
+          external_backlinks?: Json;
+          featured_product_ids?: string[];
+          id?: string;
+          internal_links?: Json;
+          is_featured?: boolean;
+          last_viewed_at?: string | null;
+          locale?: string;
+          meta_description?: string | null;
+          meta_title?: string | null;
+          og_description?: string | null;
+          og_image_alt?: string | null;
+          og_image_url?: string | null;
+          og_title?: string | null;
+          published_at?: string | null;
+          reading_time_minutes?: number;
+          related_article_ids?: string[];
+          robots_follow?: boolean;
+          robots_index?: boolean;
+          scheduled_at?: string | null;
+          schema_type?: string;
+          search_vector?: unknown;
+          share_count?: number;
+          slug?: string;
+          status?: string;
+          subtitle?: string | null;
+          tags?: string[];
+          title?: string;
+          translation_group_id?: string | null;
+          twitter_card?: string;
+          updated_at?: string;
+          view_count?: number;
+          word_count?: number | null;
+        };
+        Relationships: [];
+      };
       audit_logs: {
         Row: {
           action: string;
@@ -1911,6 +2049,36 @@ export type Database = {
           updated_at?: string | null;
           visibility?: string;
           visible_channels?: string[] | null;
+        };
+        Relationships: [];
+      };
+      color_options: {
+        Row: {
+          created_at: string;
+          hex_code: string;
+          id: string;
+          is_active: boolean;
+          name: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          hex_code: string;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          hex_code?: string;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          sort_order?: number;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -7702,6 +7870,36 @@ export type Database = {
           },
         ];
       };
+      room_options: {
+        Row: {
+          created_at: string;
+          id: string;
+          is_active: boolean;
+          label: string;
+          sort_order: number;
+          updated_at: string;
+          value: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          label: string;
+          sort_order?: number;
+          updated_at?: string;
+          value: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          label?: string;
+          sort_order?: number;
+          updated_at?: string;
+          value?: string;
+        };
+        Relationships: [];
+      };
       sales_channels: {
         Row: {
           brand_id: string | null;
@@ -9899,6 +10097,36 @@ export type Database = {
           min_volume_m3?: number;
           price_per_m3?: number;
           updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      style_options: {
+        Row: {
+          created_at: string;
+          id: string;
+          is_active: boolean;
+          label: string;
+          sort_order: number;
+          updated_at: string;
+          value: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          label: string;
+          sort_order?: number;
+          updated_at?: string;
+          value: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          label?: string;
+          sort_order?: number;
+          updated_at?: string;
+          value?: string;
         };
         Relationships: [];
       };
@@ -14407,6 +14635,7 @@ export type Database = {
       };
       has_been_ordered: { Args: { p_product_id: string }; Returns: boolean };
       has_scope: { Args: { required_scope: string }; Returns: boolean };
+      increment_article_view: { Args: { p_slug: string }; Returns: undefined };
       increment_promo_usage: {
         Args: { p_discount_id: string };
         Returns: undefined;
@@ -14421,6 +14650,10 @@ export type Database = {
       };
       initialize_dashboard_tests: { Args: never; Returns: undefined };
       insert_sales_order_items: { Args: { p_items: Json }; Returns: undefined };
+      invoke_edge_function: {
+        Args: { p_function_name: string };
+        Returns: number;
+      };
       is_back_office_admin: { Args: never; Returns: boolean };
       is_back_office_admin_or_owner: { Args: never; Returns: boolean };
       is_back_office_owner: { Args: never; Returns: boolean };
