@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import { HeroAbout } from '@/components/about/HeroAbout';
 import { StorytellingAbout } from '@/components/about/StorytellingAbout';
+import { ManifesteAbout } from '@/components/about/ManifesteAbout';
 import { ClotureAbout } from '@/components/about/ClotureAbout';
 
 export const metadata: Metadata = {
@@ -20,7 +21,8 @@ export default function AProposPage() {
       {/* 2. Storytelling — photo gauche + prose droite (Stitch ✅) */}
       <StorytellingAbout />
 
-      {/* 3. Manifeste 3 valeurs avec filets — en attente du frame Stitch */}
+      {/* 3. Manifeste — 3 valeurs avec filets verticaux (Stitch ✅) */}
+      <ManifesteAbout />
 
       {/* 4. Clôture citation "Habiter le silence" (Stitch ✅) */}
       <ClotureAbout />
