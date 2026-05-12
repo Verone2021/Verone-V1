@@ -18,7 +18,7 @@ export function usePaymentRequestsAdmin(
       // Note: Table linkme_payment_requests créée par migration 20251211_001
       // Les types Supabase seront mis à jour après `supabase gen types`
       const baseQuery = supabase
-        .from('linkme_payment_requests' as 'linkme_affiliates') // Cast temporaire
+        .from('linkme_payment_requests')
         .select(
           `
           id,
@@ -91,13 +91,35 @@ export function useMarkAsPaid() {
     }) => {
       // Cast temporaire en attendant supabase gen types
       const { error } = await supabase
-        .from('linkme_payment_requests' as 'linkme_affiliates')
+        .from('linkme_payment_requests')
         .update({
           status: 'paid',
           paid_at: new Date().toISOString(),
           payment_reference: paymentReference,
         })
         .eq('id', requestId);
+
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['admin-payment-requests'],
+      });
+    },
+  });
+}
+
+export function useAdminCancelPaymentRequest() {
+  const queryClient = useQueryClient();
+  const supabase = createClient();
+
+  return useMutation({
+    mutationFn: async (requestId: string) => {
+      const { error } = await supabase
+        .from('linkme_payment_requests')
+        .update({ status: 'cancelled' })
+        .eq('id', requestId)
+        .in('status', ['pending', 'invoice_received']);
 
       if (error) throw error;
     },

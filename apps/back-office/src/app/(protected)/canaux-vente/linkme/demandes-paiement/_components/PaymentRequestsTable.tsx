@@ -1,6 +1,14 @@
 'use client';
 
-import { Banknote, Download, Inbox, Loader2, Mail, User } from 'lucide-react';
+import {
+  Banknote,
+  Download,
+  Eye,
+  Inbox,
+  Loader2,
+  Mail,
+  User,
+} from 'lucide-react';
 import Link from 'next/link';
 
 import { Card } from '@verone/ui';
@@ -106,6 +114,13 @@ export function PaymentRequestsTable({
               </td>
               <td className="px-4 py-3">
                 <div className="flex items-center justify-center gap-2">
+                  <Link
+                    href={`/canaux-vente/linkme/demandes-paiement/${request.id}`}
+                    className="p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors"
+                    title="Voir le détail"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Link>
                   {request.affiliateEmail && (
                     <a
                       href={generateMailtoLink(request)}

@@ -125,6 +125,7 @@ export function usePaymentRequestDetail(requestId: string | null) {
             id,
             order_id,
             order_number,
+            order_date,
             order_amount_ht,
             affiliate_commission,
             affiliate_commission_ttc,
@@ -149,6 +150,7 @@ export function usePaymentRequestDetail(requestId: string | null) {
           id: string;
           order_id: string;
           order_number: string;
+          order_date: string | null;
           order_amount_ht: number;
           affiliate_commission: number;
           affiliate_commission_ttc: number;
@@ -173,7 +175,7 @@ export function usePaymentRequestDetail(requestId: string | null) {
           marginRateApplied: 0,
           status: comm.status as 'pending' | 'validated' | 'paid' | 'cancelled',
           createdAt: comm.created_at || '',
-          orderDate: comm.created_at || '',
+          orderDate: comm.order_date || comm.created_at || '',
           validatedAt: null,
           paidAt: null,
           selectionName: comm.linkme_selections?.name || 'Sélection inconnue',

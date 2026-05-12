@@ -148,44 +148,55 @@ function PaymentRequestRow({
       </div>
 
       {/* Actions */}
-      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-        {/* Facture uploadée */}
-        {request.invoiceFileUrl ? (
-          <a
-            href={request.invoiceFileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-700"
-          >
-            <Download className="h-3.5 w-3.5" />
-            Voir la facture
-          </a>
-        ) : request.status === 'pending' ? (
-          <button
-            onClick={() => {
-              onUploadClick(request.id);
-            }}
-            className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-          >
-            <Upload className="h-3.5 w-3.5" />
-            Uploader ma facture
-          </button>
-        ) : (
-          <span className="text-xs text-gray-400">En attente de facture</span>
-        )}
+      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Facture uploadée */}
+          {request.invoiceFileUrl ? (
+            <a
+              href={request.invoiceFileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-700"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Voir la facture
+            </a>
+          ) : request.status === 'pending' ? (
+            <button
+              onClick={() => {
+                onUploadClick(request.id);
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              Uploader ma facture
+            </button>
+          ) : (
+            <span className="text-xs text-gray-400">En attente de facture</span>
+          )}
 
-        {/* Paiement proof */}
-        {request.status === 'paid' && request.paymentProofUrl && (
-          <a
-            href={request.paymentProofUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-xs text-emerald-600 hover:text-emerald-700"
-          >
-            <Eye className="h-3.5 w-3.5" />
-            Justificatif paiement
-          </a>
-        )}
+          {/* Paiement proof */}
+          {request.status === 'paid' && request.paymentProofUrl && (
+            <a
+              href={request.paymentProofUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-xs text-emerald-600 hover:text-emerald-700"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              Justificatif paiement
+            </a>
+          )}
+        </div>
+
+        {/* Lien détail */}
+        <Link
+          href={`/commissions/demandes/${request.id}`}
+          className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-2 py-1.5 rounded-lg transition-colors"
+        >
+          <Eye className="h-3.5 w-3.5" />
+          Voir le détail
+        </Link>
       </div>
     </div>
   );

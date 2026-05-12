@@ -9,6 +9,7 @@ import {
   CreditCard,
   Loader2,
   User,
+  XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -16,6 +17,7 @@ import { useParams } from 'next/navigation';
 import { Card } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 
+import { useAdminCancelPaymentRequest } from '../_components/hooks';
 import { StatusBadge } from '../_components/StatusBadge';
 import { formatCurrency, formatDate } from '../_components/helpers';
 import { type PaymentRequestStatus } from '../_components/types';
@@ -62,6 +64,9 @@ export default function PaymentRequestDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const { mutateAsync: cancelRequest, isPending: isCancelling } =
+    useAdminCancelPaymentRequest();
+
   const fetchData = useCallback(async () => {
     const supabase = createClient();
     setIsLoading(true);
@@ -85,7 +90,7 @@ export default function PaymentRequestDetailPage() {
       };
 
       const { data: prRows, error: prError } = await supabase
-        .from('linkme_payment_requests' as 'linkme_affiliates')
+        .from('linkme_payment_requests')
         .select(
           `id, request_number, total_amount_ht, total_amount_ttc, status,
            payment_reference, paid_at, created_at, notes,
@@ -115,7 +120,7 @@ export default function PaymentRequestDetailPage() {
       });
 
       const { data: itemsData, error: itemsError } = await supabase
-        .from('linkme_payment_request_items' as 'linkme_affiliates')
+        .from('linkme_payment_request_items')
         .select(
           `commission_amount_ttc,
            linkme_commissions (
@@ -205,7 +210,32 @@ export default function PaymentRequestDetailPage() {
             Créée le {formatDate(request.created_at)}
           </p>
         </div>
-        <StatusBadge status={request.status} />
+        <div className="flex items-center gap-3">
+          <StatusBadge status={request.status} />
+          {(request.status === 'pending' ||
+            request.status === 'invoice_received') && (
+            <button
+              onClick={() => {
+                if (
+                  window.confirm(
+                    'Annuler cette demande ? Les commissions seront remises en "à payer".'
+                  )
+                ) {
+                  void cancelRequest(request.id)
+                    .then(() => fetchData())
+                    .catch(err =>
+                      console.error('[PaymentRequestDetail] cancel error:', err)
+                    );
+                }
+              }}
+              disabled={isCancelling}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 border border-red-200 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+            >
+              <XCircle className="h-4 w-4" />
+              Annuler la demande
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Cartes info */}
