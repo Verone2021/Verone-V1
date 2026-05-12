@@ -81,7 +81,9 @@ async function sendRejectionEmails(
   const results = await Promise.allSettled(
     recipientEmails.map(email =>
       resendClient.emails.send({
-        from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
+        from:
+          process.env.RESEND_FROM_COMMANDES_LINKME ??
+          'commandes@linkme.network',
         to: email,
         subject: `Demande de stockage non validée - ${productName}`,
         html: emailHtml,
