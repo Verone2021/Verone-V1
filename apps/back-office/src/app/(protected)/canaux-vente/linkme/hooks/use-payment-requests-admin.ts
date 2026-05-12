@@ -324,15 +324,12 @@ async function createPaymentRequestFn(
   validateCommissions(commissions, commissionIds.length);
   const { totalHT, totalTTC } = computePaymentTotals(commissions);
 
-  // 2. Créer la demande
-  // Générer un numéro de demande unique
-  const requestNumber = `DMV-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`;
-
+  // 2. Créer la demande — request_number généré par le trigger DB (PR-YYYY-NNNNNN)
   const { data: request, error: createError } = await supabase
     .from('linkme_payment_requests')
     .insert({
       affiliate_id: affiliateId,
-      request_number: requestNumber,
+      request_number: '',
       total_amount_ht: totalHT,
       total_amount_ttc: totalTTC,
       status: 'pending',
