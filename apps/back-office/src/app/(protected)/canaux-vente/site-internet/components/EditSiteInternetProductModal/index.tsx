@@ -47,6 +47,7 @@ export function EditSiteInternetProductModal({
     fetchImages,
     setPrimaryImage,
     deleteImage,
+    updateImageAltText,
     productImages,
     updateProduct,
     handleSubmit,
@@ -161,6 +162,7 @@ export function EditSiteInternetProductModal({
                     fetchImages={fetchImages}
                     setPrimaryImage={setPrimaryImage}
                     deleteImage={deleteImage}
+                    updateImageAltText={updateImageAltText}
                     onAddImages={() => setShowPhotosModal(true)}
                   />
                 </TabsContent>

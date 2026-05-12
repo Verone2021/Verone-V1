@@ -66,11 +66,11 @@ export const metadata: Metadata = {
     },
   },
   title: {
-    default: 'Vérone — Concept Store Déco & Mobilier Original',
+    default: 'Sélection déco design — Vérone, le regard qui choisit',
     template: '%s | Vérone',
   },
   description:
-    'Vérone déniche pour vous des pièces originales de décoration et mobilier. Sourcing créatif, produits introuvables ailleurs, prix justes. Livraison soignée en France.',
+    'Boutique déco en ligne. Mille pièces vues, cinquante retenues. Objets et mobilier sélectionnés avec exigence — pas un catalogue, un regard.',
   metadataBase: new URL(siteUrl),
   alternates: {
     canonical: '/',
@@ -79,16 +79,16 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'fr_FR',
     siteName: 'Vérone',
-    title: 'Vérone — Concept Store Déco & Mobilier Original',
+    title: 'Sélection déco design — Vérone, le regard qui choisit',
     description:
-      'Concept store en ligne — produits originaux de déco et mobilier, sourcés avec soin, au juste prix.',
+      'Boutique déco en ligne. Mille pièces vues, cinquante retenues. Objets et mobilier sélectionnés avec exigence — pas un catalogue, un regard.',
     url: siteUrl,
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Vérone — Concept Store Déco & Mobilier Original',
+    title: 'Sélection déco design — Vérone, le regard qui choisit',
     description:
-      'Concept store en ligne — produits originaux de déco et mobilier, sourcés avec soin, au juste prix.',
+      'Boutique déco en ligne. Mille pièces vues, cinquante retenues. Objets et mobilier sélectionnés avec exigence — pas un catalogue, un regard.',
   },
   robots: {
     index: true,

@@ -4,8 +4,10 @@
 // Onglet Images — Statistiques, Galerie, Actions overlay, Ajout
 // =============================================================================
 
+import { useState } from 'react';
+
 import { useToast } from '@verone/common/hooks';
-import { ButtonV2 } from '@verone/ui';
+import { ButtonV2, Input, Label } from '@verone/ui';
 import { Badge, CloudflareImage } from '@verone/ui';
 import { cn } from '@verone/utils';
 import {
@@ -31,6 +33,7 @@ interface TabImagesProps {
   fetchImages: () => Promise<void>;
   setPrimaryImage: (id: string) => Promise<void>;
   deleteImage: (id: string) => Promise<void>;
+  updateImageAltText: (imageId: string, altText: string) => Promise<void>;
   onAddImages: () => void;
 }
 
@@ -40,9 +43,12 @@ export function TabImages({
   fetchImages,
   setPrimaryImage,
   deleteImage,
+  updateImageAltText,
   onAddImages,
 }: TabImagesProps) {
   const { toast } = useToast();
+  // Stocke les valeurs en cours de saisie (avant blur) par imageId
+  const [altTextDraft, setAltTextDraft] = useState<Record<string, string>>({});
 
   return (
     <div className="space-y-6">
@@ -118,114 +124,155 @@ export function TabImages({
               <div
                 key={image.id}
                 className={cn(
-                  'relative group border-2 rounded-xl overflow-hidden transition-all duration-200 hover:shadow-lg',
+                  'flex flex-col border-2 rounded-xl overflow-hidden transition-all duration-200 hover:shadow-lg',
                   image.is_primary
                     ? 'border-blue-500 shadow-lg ring-4 ring-blue-100'
                     : 'border-gray-200 hover:border-gray-300'
                 )}
               >
-                {/* Image */}
-                <div className="aspect-square relative bg-gray-100">
-                  <CloudflareImage
-                    cloudflareId={image.cloudflare_image_id}
-                    fallbackSrc={image.public_url ?? ''}
-                    alt={image.alt_text ?? `Photo ${index + 1}`}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  />
-                </div>
-
-                {/* Badge image principale */}
-                {image.is_primary && (
-                  <div className="absolute top-3 left-3 z-10">
-                    <Badge className="bg-blue-500 text-white text-xs font-medium flex items-center gap-1 px-2 py-1">
-                      <Star className="h-3 w-3 fill-white" />
-                      Principale
-                    </Badge>
+                {/* Image + overlay */}
+                <div className="relative group">
+                  {/* Image */}
+                  <div className="aspect-square relative bg-gray-100">
+                    <CloudflareImage
+                      cloudflareId={image.cloudflare_image_id}
+                      fallbackSrc={image.public_url ?? ''}
+                      alt={image.alt_text ?? `Photo ${index + 1}`}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    />
                   </div>
-                )}
 
-                {/* Overlay avec contrôles */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-end justify-center p-3 z-20">
-                  <div className="flex space-x-2 z-30">
-                    {/* Bouton définir comme principale */}
-                    {!image.is_primary && (
+                  {/* Badge image principale */}
+                  {image.is_primary && (
+                    <div className="absolute top-3 left-3 z-10">
+                      <Badge className="bg-blue-500 text-white text-xs font-medium flex items-center gap-1 px-2 py-1">
+                        <Star className="h-3 w-3 fill-white" />
+                        Principale
+                      </Badge>
+                    </div>
+                  )}
+
+                  {/* Overlay avec contrôles */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-end justify-center p-3 z-20">
+                    <div className="flex space-x-2 z-30">
+                      {/* Bouton définir comme principale */}
+                      {!image.is_primary && (
+                        <ButtonV2
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => {
+                            void (async () => {
+                              try {
+                                await setPrimaryImage(image.id);
+                                toast({
+                                  title: 'Image principale définie',
+                                  description:
+                                    "L'image a été définie comme principale avec succès",
+                                });
+                              } catch (_error) {
+                                toast({
+                                  title: 'Erreur',
+                                  description:
+                                    "Impossible de définir l'image comme principale",
+                                  variant: 'destructive',
+                                });
+                              }
+                            })().catch(error => {
+                              console.error(
+                                '[EditSiteInternetProductModal] setPrimaryImage failed:',
+                                error
+                              );
+                            });
+                          }}
+                          className="h-9 px-3 bg-white/90 hover:bg-white text-black border-0 relative z-40"
+                        >
+                          <Star className="h-4 w-4 mr-1" />
+                          Principal
+                        </ButtonV2>
+                      )}
+
+                      {/* Bouton suppression */}
                       <ButtonV2
                         size="sm"
-                        variant="secondary"
+                        variant="destructive"
                         onClick={() => {
                           void (async () => {
-                            try {
-                              await setPrimaryImage(image.id);
+                            if (image.is_primary) {
                               toast({
-                                title: 'Image principale définie',
+                                title: 'Image principale',
                                 description:
-                                  "L'image a été définie comme principale avec succès",
+                                  'Définissez une autre image comme principale avant de supprimer',
+                                variant: 'destructive',
+                              });
+                              return;
+                            }
+                            try {
+                              await deleteImage(image.id);
+                              toast({
+                                title: 'Image supprimée',
+                                description:
+                                  "L'image a été supprimée avec succès",
                               });
                             } catch (_error) {
                               toast({
                                 title: 'Erreur',
-                                description:
-                                  "Impossible de définir l'image comme principale",
+                                description: "Impossible de supprimer l'image",
                                 variant: 'destructive',
                               });
                             }
                           })().catch(error => {
                             console.error(
-                              '[EditSiteInternetProductModal] setPrimaryImage failed:',
+                              '[EditSiteInternetProductModal] deleteImage failed:',
                               error
                             );
                           });
                         }}
-                        className="h-9 px-3 bg-white/90 hover:bg-white text-black border-0 relative z-40"
+                        className="h-9 px-3 bg-red-500/90 hover:bg-red-600 text-white border-0 relative z-40"
                       >
-                        <Star className="h-4 w-4 mr-1" />
-                        Principal
+                        <Trash2 className="h-4 w-4" />
                       </ButtonV2>
-                    )}
-
-                    {/* Bouton suppression */}
-                    <ButtonV2
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => {
-                        void (async () => {
-                          if (image.is_primary) {
-                            toast({
-                              title: 'Image principale',
-                              description:
-                                'Définissez une autre image comme principale avant de supprimer',
-                              variant: 'destructive',
-                            });
-                            return;
-                          }
-                          try {
-                            await deleteImage(image.id);
-                            toast({
-                              title: 'Image supprimée',
-                              description:
-                                "L'image a été supprimée avec succès",
-                            });
-                          } catch (_error) {
-                            toast({
-                              title: 'Erreur',
-                              description: "Impossible de supprimer l'image",
-                              variant: 'destructive',
-                            });
-                          }
-                        })().catch(error => {
-                          console.error(
-                            '[EditSiteInternetProductModal] deleteImage failed:',
-                            error
-                          );
-                        });
-                      }}
-                      className="h-9 px-3 bg-red-500/90 hover:bg-red-600 text-white border-0 relative z-40"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </ButtonV2>
+                    </div>
                   </div>
+                </div>
+
+                {/* Champ alt_text — SEO + accessibilité */}
+                <div className="p-2 bg-white">
+                  <Label
+                    htmlFor={`alt-text-${image.id}`}
+                    className="text-xs text-gray-500 mb-1 block"
+                  >
+                    Texte alternatif (SEO + accessibilité)
+                  </Label>
+                  <Input
+                    id={`alt-text-${image.id}`}
+                    value={altTextDraft[image.id] ?? image.alt_text ?? ''}
+                    onChange={e =>
+                      setAltTextDraft(prev => ({
+                        ...prev,
+                        [image.id]: e.target.value,
+                      }))
+                    }
+                    onBlur={() => {
+                      const newAlt = altTextDraft[image.id];
+                      if (newAlt === undefined) return;
+                      void updateImageAltText(image.id, newAlt).catch(err => {
+                        console.error(
+                          '[TabImages] updateImageAltText failed:',
+                          err
+                        );
+                        toast({
+                          title: 'Erreur',
+                          description:
+                            'Impossible de sauvegarder le texte alternatif',
+                          variant: 'destructive',
+                        });
+                      });
+                    }}
+                    placeholder={`Photo ${index + 1} du produit`}
+                    className="text-xs h-8"
+                  />
                 </div>
               </div>
             ))}

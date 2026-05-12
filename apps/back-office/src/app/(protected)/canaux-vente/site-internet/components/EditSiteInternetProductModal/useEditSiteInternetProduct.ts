@@ -4,7 +4,7 @@
 // Hook métier — EditSiteInternetProductModal
 // =============================================================================
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@verone/common/hooks';
@@ -32,6 +32,7 @@ interface UseEditSiteInternetProductReturn {
   fetchImages: () => Promise<void>;
   setPrimaryImage: (id: string) => Promise<void>;
   deleteImage: (id: string) => Promise<void>;
+  updateImageAltText: (imageId: string, altText: string) => Promise<void>;
   productImages: {
     id: string;
     public_url: string;
@@ -91,6 +92,7 @@ export function useEditSiteInternetProduct(
   const [formData, setFormData] = useState<Partial<ProductFormData>>({
     slug: product.slug ?? '',
     is_published_online: product.is_published,
+    is_featured_home: false,
     meta_title: '',
     meta_description: '',
     custom_price_ht: product.price_ht ?? undefined,
@@ -116,6 +118,18 @@ export function useEditSiteInternetProduct(
     return data.id;
   };
 
+  // Mutation update alt_text d'une image
+  const updateImageAltText = useCallback(
+    async (imageId: string, altText: string): Promise<void> => {
+      const { error } = await supabase
+        .from('product_images')
+        .update({ alt_text: altText })
+        .eq('id', imageId);
+      if (error) throw error;
+    },
+    [supabase]
+  );
+
   // Mutation update
   const updateProduct = useMutation({
     mutationFn: async (data: Partial<ProductFormData>) => {
@@ -135,6 +149,7 @@ export function useEditSiteInternetProduct(
           meta_title: data.meta_title,
           meta_description: data.meta_description,
           is_published_online: data.is_published_online,
+          is_featured_home: data.is_featured_home ?? false,
           publication_date: publicationDate,
           unpublication_date: data.unpublication_date
             ? new Date(data.unpublication_date).toISOString()
@@ -236,6 +251,7 @@ export function useEditSiteInternetProduct(
     fetchImages,
     setPrimaryImage,
     deleteImage,
+    updateImageAltText,
     productImages,
     updateProduct,
     handleSubmit,

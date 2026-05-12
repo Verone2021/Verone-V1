@@ -31,7 +31,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
   if (!images || images.length === 0) {
     return (
       <div className="space-y-4">
-        <div className="h-[500px] max-h-[60vh] bg-gray-200 rounded-lg flex items-center justify-center">
+        <div className="relative aspect-[4/5] bg-gray-200 overflow-hidden flex items-center justify-center">
           <span className="text-gray-400">Aucune image</span>
         </div>
       </div>
@@ -43,17 +43,18 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
 
   return (
     <div className="space-y-4">
-      {/* Image principale cliquable pour lightbox */}
+      {/* Image principale cliquable pour lightbox — ratio 4:5 */}
       <button
         onClick={() => setShowLightbox(true)}
-        className="relative h-[500px] max-h-[60vh] w-full bg-gray-50 rounded-lg overflow-hidden group cursor-zoom-in"
+        className="relative aspect-[4/5] w-full bg-gray-50 overflow-hidden group cursor-zoom-in"
       >
         <CloudflareImage
           cloudflareId={selected.cloudflareId}
           fallbackSrc={selected.url}
           alt={productName}
           fill
-          className="object-contain p-4"
+          className="object-cover object-center"
+          sizes="(max-width: 768px) 100vw, 60vw"
           priority
         />
       </button>

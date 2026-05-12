@@ -34,6 +34,7 @@ import {
   BarChart2,
   Palette,
   Sofa,
+  BookMarked,
 } from 'lucide-react';
 
 // Interface pour les éléments de navigation
@@ -308,6 +309,24 @@ export const getNavItems = (
       },
     ],
   },
+  // ============ CONTENU ============
+  {
+    title: 'Journal',
+    href: '/journal',
+    icon: BookOpen,
+    children: [
+      {
+        title: 'Tous les articles',
+        href: '/journal',
+        icon: FileText,
+      },
+      {
+        title: 'Nouvel article',
+        href: '/journal/nouveau',
+        icon: FileText,
+      },
+    ],
+  },
   // ============ MARKETING ============
   {
     title: 'Marketing',
@@ -335,6 +354,11 @@ export const getNavItems = (
         title: 'Calendrier',
         href: '/marketing/calendrier',
         icon: CalendarClock,
+      },
+      {
+        title: 'Guide Publication',
+        href: '/marketing/guide-meta',
+        icon: BookMarked,
       },
       {
         title: 'Marques',

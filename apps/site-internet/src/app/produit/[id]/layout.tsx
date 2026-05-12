@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@verone/types';
 import { buildCloudflareImageUrl } from '@verone/utils';
-
-import type { CatalogueProduct } from '@/hooks/use-catalogue-products';
 
 function resolveSocialImage(
   cloudflareId: string | null,
@@ -35,51 +34,67 @@ export async function generateMetadata({
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    return { title: 'Produit | Vérone' };
+    return { title: 'Produit' };
   }
 
-  const supabase = createClient(supabaseUrl, supabaseKey);
-  const result = await supabase.rpc('get_site_internet_products', {
-    p_brand_slug: 'verone',
-  });
-  const products = (result.data as CatalogueProduct[]) ?? [];
-  const product = products.find(p => p.slug === slug);
+  const supabase = createSupabaseClient<Database>(supabaseUrl, supabaseKey);
+
+  const { data: product } = await supabase
+    .from('products')
+    .select(
+      'id, name, commercial_name, meta_title, meta_description, description_short'
+    )
+    .eq('slug', slug)
+    .eq('is_published_online', true)
+    .single();
 
   if (!product) {
-    return { title: 'Produit introuvable | Vérone' };
+    return { title: 'Produit introuvable' };
   }
 
+  const displayName = product.commercial_name ?? product.name;
+
+  // Récupère l'image principale séparément pour garder un select explicite
+  const { data: images } = await supabase
+    .from('product_images')
+    .select('cloudflare_image_id, public_url, is_primary')
+    .eq('product_id', product.id)
+    .limit(10);
+
+  const imageList = images ?? [];
+  const primaryImg =
+    imageList.find(img => img.is_primary) ?? imageList[0] ?? null;
   const socialImage = resolveSocialImage(
-    product.primary_cloudflare_image_id,
-    product.primary_image_url
+    primaryImg?.cloudflare_image_id ?? null,
+    primaryImg?.public_url ?? null
   );
 
   return {
-    title: product.seo_title ?? product.name,
+    title: product.meta_title ?? displayName,
     description:
-      product.seo_meta_description ??
-      product.description ??
-      `${product.name} — Vérone, concept store déco & mobilier`,
+      product.meta_description ??
+      product.description_short ??
+      `${displayName} — Vérone, concept store déco & mobilier`,
     alternates: {
-      canonical: `/produit/${slug}`,
+      canonical: `${siteUrl}/produit/${slug}`,
     },
     openGraph: {
-      title: product.name,
+      title: displayName,
       description:
-        product.seo_meta_description ??
-        product.description ??
-        `${product.name} — Vérone`,
+        product.meta_description ??
+        product.description_short ??
+        `${displayName} — Vérone`,
       url: `${siteUrl}/produit/${slug}`,
       type: 'website',
       ...(socialImage
-        ? { images: [{ url: socialImage, alt: product.name }] }
+        ? { images: [{ url: socialImage, alt: displayName }] }
         : {}),
     },
     twitter: {
       card: 'summary_large_image',
-      title: product.name,
+      title: displayName,
       description:
-        product.seo_meta_description ?? product.description ?? product.name,
+        product.meta_description ?? product.description_short ?? displayName,
       ...(socialImage ? { images: [socialImage] } : {}),
     },
   };

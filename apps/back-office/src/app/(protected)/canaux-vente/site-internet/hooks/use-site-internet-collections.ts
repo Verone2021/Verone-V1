@@ -289,6 +289,10 @@ export function useUpdateCollection() {
         visibility?: string;
         is_active?: boolean;
         image_url?: string;
+        meta_title?: string | null;
+        meta_description?: string | null;
+        editorial_text?: string | null;
+        image_alt?: string | null;
       };
     }) => {
       const { error } = await supabase

@@ -166,6 +166,13 @@ export function MediaLibraryView({
     [updateAssetMetadata]
   );
 
+  const handleBrandUpdate = React.useCallback(
+    async (assetId: string, brandIds: string[]) => {
+      await updateAssetMetadata(assetId, { brand_ids: brandIds });
+    },
+    [updateAssetMetadata]
+  );
+
   const handleArchive = React.useCallback(
     async (id: string) => {
       await archiveAsset(id);
@@ -201,6 +208,7 @@ export function MediaLibraryView({
         loading={loading}
         publicationCounts={publicationCounts}
         onAssetClick={handleAssetClick}
+        onBrandUpdate={handleBrandUpdate}
       />
 
       <UploadAssetModal

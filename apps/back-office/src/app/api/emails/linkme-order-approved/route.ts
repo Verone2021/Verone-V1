@@ -140,7 +140,8 @@ export async function POST(request: NextRequest) {
 
     const resendClient = getResendClient();
     const { data, error } = await resendClient.emails.send({
-      from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
+      from:
+        process.env.RESEND_FROM_COMMANDES_LINKME ?? 'commandes@linkme.network',
       to: ownerEmail,
       subject: `Votre commande ${orderNumber} a été approuvée - Action requise`,
       html: emailHtml,

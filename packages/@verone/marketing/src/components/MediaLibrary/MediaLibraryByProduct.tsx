@@ -2,11 +2,16 @@
 
 import * as React from 'react';
 
-import { Layers, Package } from 'lucide-react';
+import { Layers, Package, Tag } from 'lucide-react';
 
 import { Badge } from '@verone/ui/components/ui/badge';
 import { Card, CardContent } from '@verone/ui/components/ui/card';
 import { CloudflareImage } from '@verone/ui/components/ui/cloudflare-image';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@verone/ui/components/ui/popover';
 import { cn } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 
@@ -15,6 +20,19 @@ import type { MediaAsset, PublicationCount } from '@verone/products';
 import type { BrandInfo } from './MediaAssetCard';
 
 const supabase = createClient();
+
+// Palette couleurs marque (synchronisée avec MediaAssetCard)
+const BRAND_COLOR_FALLBACK: Record<string, string> = {
+  verone: '#f97316',
+  boemia: '#8b5cf6',
+  solar: '#eab308',
+  flos: '#22c55e',
+};
+
+function getBrandColor(brand: BrandInfo): string {
+  if (brand.brand_color) return brand.brand_color;
+  return BRAND_COLOR_FALLBACK[brand.slug] ?? '#6b7280';
+}
 
 // ============================================================================
 // TYPES
@@ -92,6 +110,7 @@ interface MediaLibraryByProductProps {
   publicationCounts?: Map<string, PublicationCount>;
   onGroupClick?: (group: AssetGroup) => void;
   onAssetClick?: (asset: MediaAsset) => void;
+  onBrandUpdate?: (assetId: string, brandIds: string[]) => Promise<void>;
 }
 
 // ============================================================================
@@ -105,6 +124,7 @@ export function MediaLibraryByProduct({
   publicationCounts,
   onGroupClick,
   onAssetClick,
+  onBrandUpdate,
 }: MediaLibraryByProductProps) {
   const [products, setProducts] = React.useState<Record<string, ProductMeta>>(
     {}
@@ -267,6 +287,7 @@ export function MediaLibraryByProduct({
           publicationCounts={publicationCounts}
           onClick={() => onGroupClick?.(group)}
           onAssetClick={onAssetClick}
+          onBrandUpdate={onBrandUpdate}
         />
       ))}
     </div>
@@ -283,6 +304,7 @@ interface ProductGroupCardProps {
   publicationCounts?: Map<string, PublicationCount>;
   onClick?: () => void;
   onAssetClick?: (asset: MediaAsset) => void;
+  onBrandUpdate?: (assetId: string, brandIds: string[]) => Promise<void>;
 }
 
 function ProductGroupCard({
@@ -291,6 +313,7 @@ function ProductGroupCard({
   publicationCounts,
   onClick,
   onAssetClick,
+  onBrandUpdate,
 }: ProductGroupCardProps) {
   const groupBrands = brands.filter(b => group.brandIds.includes(b.id));
   const previewAssets = group.assets.slice(0, 6);
@@ -362,12 +385,22 @@ function ProductGroupCard({
             const pubCount = publicationCounts?.get(asset.id);
             const activePubs = pubCount?.active_count ?? 0;
             const activeChannels = pubCount?.active_channels ?? [];
+            const assetBrands = brands.filter(b =>
+              asset.brand_ids.includes(b.id)
+            );
             return (
-              <button
+              <div
                 key={asset.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => onAssetClick?.(asset)}
-                className="group relative aspect-square overflow-hidden rounded-md border border-border bg-muted transition-shadow hover:shadow-md"
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onAssetClick?.(asset);
+                  }
+                }}
+                className="group relative aspect-square cursor-pointer overflow-hidden rounded-md border border-border bg-muted transition-shadow hover:shadow-md"
                 aria-label={asset.alt_text ?? 'Voir la photo'}
               >
                 <CloudflareImage
@@ -389,11 +422,22 @@ function ProductGroupCard({
                 )}
                 {asset.source === 'ai_generated' && (
                   <span
-                    className="absolute left-1 top-1 inline-flex items-center rounded-full bg-fuchsia-600/90 px-1.5 py-0.5 text-[10px] font-medium text-white shadow"
+                    className={cn(
+                      'absolute inline-flex items-center rounded-full bg-fuchsia-600/90 px-1.5 py-0.5 text-[10px] font-medium text-white shadow',
+                      isUnattached ? 'left-6 top-1' : 'left-1 top-1'
+                    )}
                     title="Image générée par IA"
                   >
                     IA
                   </span>
+                )}
+                {/* Bouton quick-edit marque — uniquement sur les photos sans produit */}
+                {isUnattached && onBrandUpdate && (
+                  <BrandQuickEdit
+                    asset={asset}
+                    brands={brands}
+                    onBrandUpdate={onBrandUpdate}
+                  />
                 )}
                 {/* Badges canaux publiés (anti-doublon) */}
                 {activeChannels.length > 0 && (
@@ -414,7 +458,26 @@ function ProductGroupCard({
                     )}
                   </div>
                 )}
-              </button>
+                {/* Badges marque permanents (bottom-right, évite collision canaux) */}
+                {assetBrands.length > 0 && (
+                  <div className="absolute bottom-0 right-0 flex flex-wrap justify-end gap-0.5 bg-gradient-to-t from-black/60 to-transparent p-1">
+                    {assetBrands.slice(0, 2).map(brand => (
+                      <span
+                        key={brand.id}
+                        className="inline-flex items-center rounded px-1 py-0.5 text-[9px] font-medium text-white"
+                        style={{ backgroundColor: getBrandColor(brand) }}
+                      >
+                        {brand.name}
+                      </span>
+                    ))}
+                    {assetBrands.length > 2 && (
+                      <span className="inline-flex items-center rounded bg-white/20 px-1 py-0.5 text-[9px] font-medium text-white">
+                        +{assetBrands.length - 2}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
             );
           })}
           {moreCount > 0 && (
@@ -429,5 +492,87 @@ function ProductGroupCard({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+// ============================================================================
+// SUB-COMPONENT — Quick-edit marque (uniquement pour le groupe "unattached")
+// ============================================================================
+
+interface BrandQuickEditProps {
+  asset: MediaAsset;
+  brands: BrandInfo[];
+  onBrandUpdate: (assetId: string, brandIds: string[]) => Promise<void>;
+}
+
+function BrandQuickEdit({ asset, brands, onBrandUpdate }: BrandQuickEditProps) {
+  const [pending, setPending] = React.useState(false);
+
+  const handleToggle = async (brandId: string) => {
+    if (pending) return;
+    const current = asset.brand_ids ?? [];
+    const next = current.includes(brandId)
+      ? current.filter(id => id !== brandId)
+      : [...current, brandId];
+    setPending(true);
+    try {
+      await onBrandUpdate(asset.id, next);
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          onClick={e => e.stopPropagation()}
+          className="absolute left-1 top-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-black/50 text-white shadow hover:bg-black/70"
+          title="Changer la marque"
+          aria-label="Changer la marque de cette photo"
+        >
+          <Tag className="h-3 w-3" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-44 p-2"
+        onClick={e => e.stopPropagation()}
+        side="right"
+        align="start"
+      >
+        <p className="mb-2 text-[10px] font-medium text-muted-foreground">
+          Marques
+        </p>
+        <div className="flex flex-col gap-1">
+          {brands.map(brand => {
+            const isChecked = (asset.brand_ids ?? []).includes(brand.id);
+            return (
+              <button
+                key={brand.id}
+                type="button"
+                disabled={pending}
+                onClick={() => void handleToggle(brand.id).catch(console.error)}
+                className={cn(
+                  'flex items-center gap-1.5 rounded px-1.5 py-1 text-[11px] transition-colors',
+                  isChecked
+                    ? 'bg-primary/10 font-medium text-primary'
+                    : 'text-foreground hover:bg-muted'
+                )}
+              >
+                <span
+                  className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                  style={{ backgroundColor: getBrandColor(brand) }}
+                />
+                {brand.name}
+                {isChecked && (
+                  <span className="ml-auto text-[9px] text-primary">✓</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

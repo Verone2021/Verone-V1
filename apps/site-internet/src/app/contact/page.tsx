@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 
-import { Mail, MapPin } from 'lucide-react';
-
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,174 +38,164 @@ export default function ContactPage() {
         setSubmitError(data.error ?? 'Une erreur est survenue');
       }
     } catch {
-      setSubmitError('Erreur de connexion. Veuillez réessayer.');
+      setSubmitError('Erreur de connexion. Réessaie dans un instant.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-6 lg:px-8 py-16">
-      <div className="text-center mb-16">
-        <h1 className="font-playfair text-4xl md:text-5xl font-bold text-verone-black mb-4">
-          Contactez-nous
+    <main className="bg-verone-white pb-20">
+      {/* Hero */}
+      <section className="mx-auto max-w-[640px] px-5 pt-24 text-center md:px-0 md:pt-32">
+        <span className="mb-6 block font-dm-sans text-[11px] font-light uppercase tracking-[0.3em] text-verone-or">
+          Contact
+        </span>
+        <h1 className="font-bodoni text-[36px] font-black leading-[1.1] text-verone-charbon md:text-[56px]">
+          Une question.
+          <br />
+          Une commande sur mesure.
+          <br />
+          Autre chose.
         </h1>
-        <p className="text-verone-gray-500 max-w-2xl mx-auto leading-relaxed">
-          Notre équipe est à votre disposition pour répondre à toutes vos
-          questions
+        <p className="mt-8 font-montserrat text-base text-verone-pearl">
+          On répond vite. Et en humain.
         </p>
-      </div>
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
-        {/* Contact info */}
-        <div className="lg:col-span-2 space-y-8">
-          <div>
-            <h2 className="font-playfair text-xl font-semibold text-verone-black mb-6">
-              Nos coordonnées
-            </h2>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <Mail className="h-5 w-5 text-verone-gray-400 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-verone-black">Email</p>
-                  <a
-                    href="mailto:romeo@veronecollections.fr"
-                    className="text-sm text-verone-gray-600 hover:text-verone-black transition-colors"
-                  >
-                    romeo@veronecollections.fr
-                  </a>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-verone-gray-400 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-verone-black">
-                    Adresse
-                  </p>
-                  <p className="text-sm text-verone-gray-600">Paris, France</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="border border-verone-gray-200 rounded-lg p-6">
-            <h3 className="font-medium text-verone-black mb-2">
-              Horaires du service client
+      {/* Form */}
+      <section className="mx-auto mt-16 max-w-[640px] px-5 md:px-0">
+        {submitted ? (
+          <div className="border border-verone-or/40 bg-verone-pearl-soft/30 p-10 text-center">
+            <h3 className="font-bodoni text-[28px] font-black text-verone-charbon">
+              C&apos;est noté.
             </h3>
-            <div className="text-sm text-verone-gray-600 space-y-1">
-              <p>Lundi - Vendredi : 9h00 - 18h00</p>
-              <p>Samedi : 10h00 - 17h00</p>
-              <p>Dimanche : Fermé</p>
-            </div>
+            <p className="mt-4 font-montserrat text-sm text-verone-pearl">
+              On t&apos;a bien reçu. On revient vers toi dans les 48 h.
+            </p>
           </div>
-        </div>
-
-        {/* Contact form */}
-        <div className="lg:col-span-3">
-          {submitted ? (
-            <div className="border border-green-200 bg-green-50 rounded-lg p-8 text-center">
-              <h3 className="text-lg font-semibold text-green-800 mb-2">
-                Message envoyé
-              </h3>
-              <p className="text-sm text-green-700">
-                Merci pour votre message. Notre équipe vous répondra dans les
-                meilleurs délais.
-              </p>
-            </div>
-          ) : (
-            <form
-              onSubmit={e => {
-                void handleSubmit(e).catch(error => {
-                  console.error('[Contact] Submit failed:', error);
-                });
-              }}
-              className="space-y-5"
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="name"
-                    className="block text-sm font-medium text-verone-gray-700 mb-1.5"
-                  >
-                    Nom complet
-                  </label>
-                  <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    required
-                    className="w-full px-4 py-3 border border-verone-gray-300 rounded-lg focus:ring-2 focus:ring-verone-black focus:border-transparent outline-none transition-all text-sm"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-medium text-verone-gray-700 mb-1.5"
-                  >
-                    Email
-                  </label>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    className="w-full px-4 py-3 border border-verone-gray-300 rounded-lg focus:ring-2 focus:ring-verone-black focus:border-transparent outline-none transition-all text-sm"
-                  />
-                </div>
-              </div>
-              <div>
-                <label
-                  htmlFor="subject"
-                  className="block text-sm font-medium text-verone-gray-700 mb-1.5"
-                >
-                  Sujet
-                </label>
-                <select
-                  id="subject"
-                  name="subject"
-                  required
-                  className="w-full px-4 py-3 border border-verone-gray-300 rounded-lg focus:ring-2 focus:ring-verone-black focus:border-transparent outline-none transition-all text-sm"
-                >
-                  <option value="">Sélectionnez un sujet</option>
-                  <option value="product">Question sur un produit</option>
-                  <option value="order">Suivi de commande</option>
-                  <option value="delivery">Livraison</option>
-                  <option value="return">Retour ou échange</option>
-                  <option value="project">Projet d&apos;aménagement</option>
-                  <option value="other">Autre</option>
-                </select>
-              </div>
-              <div>
-                <label
-                  htmlFor="message"
-                  className="block text-sm font-medium text-verone-gray-700 mb-1.5"
-                >
-                  Message
-                </label>
-                <textarea
-                  id="message"
-                  name="message"
-                  required
-                  rows={6}
-                  className="w-full px-4 py-3 border border-verone-gray-300 rounded-lg focus:ring-2 focus:ring-verone-black focus:border-transparent outline-none transition-all text-sm resize-none"
-                />
-              </div>
-              {submitError && (
-                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">
-                  {submitError}
-                </p>
-              )}
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-verone-black text-verone-white py-3 rounded-lg font-medium hover:bg-verone-gray-800 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        ) : (
+          <form
+            onSubmit={e => {
+              void handleSubmit(e).catch(error => {
+                console.error('[Contact] Submit failed:', error);
+              });
+            }}
+            className="flex flex-col gap-8"
+          >
+            {/* Nom */}
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="name"
+                className="font-dm-sans text-[10px] font-light uppercase tracking-[0.2em] text-verone-pearl"
               >
-                {isSubmitting ? 'Envoi en cours...' : 'Envoyer le message'}
-              </button>
-            </form>
-          )}
-        </div>
-      </div>
-    </div>
+                Ton prénom
+              </label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                required
+                className="w-full border-0 border-b border-verone-charbon/30 bg-transparent px-0 py-3 font-montserrat text-base text-verone-charbon transition-colors duration-300 placeholder:text-verone-pearl/40 focus:border-verone-charbon focus:outline-none focus:ring-0"
+              />
+            </div>
+
+            {/* Email */}
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="email"
+                className="font-dm-sans text-[10px] font-light uppercase tracking-[0.2em] text-verone-pearl"
+              >
+                Ton adresse email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                className="w-full border-0 border-b border-verone-charbon/30 bg-transparent px-0 py-3 font-montserrat text-base text-verone-charbon transition-colors duration-300 placeholder:text-verone-pearl/40 focus:border-verone-charbon focus:outline-none focus:ring-0"
+              />
+            </div>
+
+            {/* Subject */}
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="subject"
+                className="font-dm-sans text-[10px] font-light uppercase tracking-[0.2em] text-verone-pearl"
+              >
+                De quoi s&apos;agit-il&nbsp;?
+              </label>
+              <select
+                id="subject"
+                name="subject"
+                required
+                defaultValue=""
+                className="w-full cursor-pointer appearance-none border-0 border-b border-verone-charbon/30 bg-transparent px-0 py-3 font-montserrat text-base text-verone-charbon transition-colors duration-300 focus:border-verone-charbon focus:outline-none focus:ring-0"
+              >
+                <option value="" disabled>
+                  Sélectionne une option
+                </option>
+                <option value="product">Une question sur un produit</option>
+                <option value="order">Une commande ou un devis</option>
+                <option value="return">Un retour ou un problème</option>
+                <option value="other">Autre chose</option>
+              </select>
+            </div>
+
+            {/* Message */}
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="message"
+                className="font-dm-sans text-[10px] font-light uppercase tracking-[0.2em] text-verone-pearl"
+              >
+                Ton message
+              </label>
+              <textarea
+                id="message"
+                name="message"
+                required
+                rows={4}
+                className="w-full resize-none border-0 border-b border-verone-charbon/30 bg-transparent px-0 py-3 font-montserrat text-base text-verone-charbon transition-colors duration-300 placeholder:text-verone-pearl/40 focus:border-verone-charbon focus:outline-none focus:ring-0"
+              />
+            </div>
+
+            {submitError && (
+              <p className="font-montserrat text-xs text-red-600">
+                {submitError}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="mt-4 flex h-[52px] w-full items-center justify-center bg-verone-charbon font-montserrat text-xs font-medium uppercase tracking-[0.2em] text-verone-white transition-colors duration-500 hover:bg-verone-or disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSubmitting ? 'Envoi…' : 'Envoyer'}
+            </button>
+          </form>
+        )}
+      </section>
+
+      {/* Filet décoratif or */}
+      <section className="mx-auto mt-24 max-w-7xl px-5 md:px-16">
+        <hr className="border-t border-verone-or opacity-50" />
+      </section>
+
+      {/* Informations complémentaires */}
+      <section className="mx-auto mt-12 max-w-[640px] px-5 text-center md:px-0">
+        <p className="font-dm-sans text-[11px] font-light uppercase tracking-[0.3em] text-verone-pearl">
+          Email direct
+        </p>
+        <a
+          href="mailto:contact@veronecollections.fr"
+          className="mt-3 inline-block font-montserrat text-base text-verone-charbon underline decoration-verone-or decoration-1 underline-offset-[6px] transition-colors duration-300 hover:text-verone-or"
+        >
+          contact@veronecollections.fr
+        </a>
+        <p className="mt-6 font-montserrat text-xs text-verone-pearl">
+          Réponse sous 48 h en semaine.
+        </p>
+      </section>
+    </main>
   );
 }
