@@ -24,7 +24,8 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? 'noreply@verone.com';
+const FROM_EMAIL =
+  process.env.RESEND_FROM_CONTACT_VERONE ?? 'contact@veronecollections.fr';
 
 /**
  * Générer le contenu HTML de l'email
@@ -179,7 +180,7 @@ export async function POST(request: NextRequest) {
 
     // Envoyer l'email via Resend
     const { data, error: resendError } = await resend.emails.send({
-      from: `Vérone Back-Office <${FROM_EMAIL}>`,
+      from: `Vérone <${FROM_EMAIL}>`,
       to: [body.recipientEmail],
       subject: `Réponse à votre demande - Vérone`,
       html: htmlContent,

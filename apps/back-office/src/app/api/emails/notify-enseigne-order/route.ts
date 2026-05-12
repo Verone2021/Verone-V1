@@ -194,7 +194,8 @@ export async function POST(request: NextRequest) {
 
     const resendClient = getResendClient();
     const { data, error } = await resendClient.emails.send({
-      from: process.env.RESEND_FROM_EMAIL ?? 'notifications@verone.fr',
+      from:
+        process.env.RESEND_FROM_COMMANDES_LINKME ?? 'commandes@linkme.network',
       to: recipients,
       subject: `[LinkMe] Nouvelle commande Enseigne ${body.orderNumber}`,
       html: emailHtml,

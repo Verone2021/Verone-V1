@@ -126,7 +126,8 @@ function buildStep4EmailPromises(params: {
   notifyAdmin: boolean;
   adminEmail: string;
 }) {
-  const fromEmail = process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr';
+  const fromEmail =
+    process.env.RESEND_FROM_COMMANDES_LINKME ?? 'commandes@linkme.network';
   const promises = [
     params.resendClient.emails.send({
       from: fromEmail,
