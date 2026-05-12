@@ -32,6 +32,8 @@ import {
   Award,
   Mail,
   BarChart2,
+  Palette,
+  Sofa,
   BookMarked,
 } from 'lucide-react';
 
@@ -371,9 +373,24 @@ export const getNavItems = (
     icon: Settings,
     children: [
       {
-        title: 'Vue d’ensemble',
+        title: "Vue d'ensemble",
         href: '/parametres',
         icon: Settings,
+      },
+      {
+        title: 'Couleurs',
+        href: '/parametres/couleurs',
+        icon: Palette,
+      },
+      {
+        title: 'Pièces',
+        href: '/parametres/pieces',
+        icon: Sofa,
+      },
+      {
+        title: 'Styles',
+        href: '/parametres/styles',
+        icon: Sparkles,
       },
     ],
   },

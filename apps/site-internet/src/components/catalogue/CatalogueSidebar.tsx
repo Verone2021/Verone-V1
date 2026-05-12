@@ -6,14 +6,10 @@ import { ChevronDown, X } from 'lucide-react';
 
 import type { CatalogueProduct } from '@/hooks/use-catalogue-products';
 import type { CatalogueFiltersState } from '@/hooks/use-catalogue-filters';
-import {
-  getRoomLabel,
-  getStyleLabel,
-  getColorHex,
-  getColorLabel,
-  expandColorValue,
-  canonicalColorKey,
-} from '@/lib/filter-labels';
+import { useColorOptions, type ColorOption } from '@/hooks/use-color-options';
+import { useRoomOptions, type RoomOption } from '@/hooks/use-room-options';
+import { useStyleOptions, type StyleOption } from '@/hooks/use-style-options';
+import { expandColorValue, canonicalColorKey } from '@/lib/filter-labels';
 
 interface FilterSectionProps {
   title: string;
@@ -102,14 +98,23 @@ export function CatalogueSidebar({
   hasActiveFilters,
   className = '',
 }: CatalogueSidebarProps) {
-  // Extract unique values with counts
+  // Vocabulaire contrôlé depuis tables de référence (Niveau 3 SITE-CAT-002)
+  const { data: colorOptions = [] } = useColorOptions();
+  const { data: roomOptions = [] } = useRoomOptions();
+  const { data: styleOptions = [] } = useStyleOptions();
+
+  // Catégories et fabricants : pas de table de référence (FK ou texte libre éditorial)
   const categories = getValuesWithCounts(products, p => p.subcategory_name);
-  const rooms = getArrayValuesWithCounts(products, p => p.suitable_rooms);
-  const styles = getValuesWithCounts(products, p => p.style);
   const brands = getValuesWithCounts(products, p => p.manufacturer);
-  // Couleurs : splitter les valeurs composées ("Beige,Blanc" → 2 entrées) et
-  // dédupliquer case-insensitive ("beige" + "Beige" = 1 entrée "Beige")
-  const colors = getColorValuesWithCounts(products);
+
+  // Intersection : tables de référence actives ∩ valeurs présentes dans products
+  const rooms = intersectArrayField(
+    roomOptions,
+    products,
+    p => p.suitable_rooms
+  );
+  const styles = intersectScalarField(styleOptions, products, p => p.style);
+  const colors = intersectColors(colorOptions, products);
 
   return (
     <aside className={`w-[280px] shrink-0 ${className}`}>
@@ -148,10 +153,10 @@ export function CatalogueSidebar({
       {/* Rooms */}
       {rooms.length > 0 && (
         <FilterSection title="Pièces">
-          {rooms.map(({ value, count }) => (
+          {rooms.map(({ value, label, count }) => (
             <CheckboxItem
               key={value}
-              label={getRoomLabel(value)}
+              label={label}
               count={count}
               checked={filters.selectedRooms.includes(value)}
               onChange={() => onToggleRoom(value)}
@@ -163,10 +168,10 @@ export function CatalogueSidebar({
       {/* Style */}
       {styles.length > 0 && (
         <FilterSection title="Style">
-          {styles.map(({ value, count }) => (
+          {styles.map(({ value, label, count }) => (
             <CheckboxItem
               key={value}
-              label={getStyleLabel(value)}
+              label={label}
               count={count}
               checked={filters.selectedStyles.includes(value)}
               onChange={() => onToggleStyle(value)}
@@ -179,24 +184,23 @@ export function CatalogueSidebar({
       {colors.length > 0 && (
         <FilterSection title="Couleurs">
           <div className="flex flex-wrap gap-2">
-            {colors.map(({ value }) => {
-              const hex = getColorHex(value);
+            {colors.map(({ name, hexCode }) => {
               const isSelected = filters.selectedColors.some(
-                c => c.toLowerCase() === value.toLowerCase()
+                c => c.toLowerCase() === name.toLowerCase()
               );
               return (
                 <button
-                  key={value}
+                  key={name}
                   type="button"
-                  onClick={() => onToggleColor(value)}
+                  onClick={() => onToggleColor(name)}
                   className={`w-7 h-7 rounded-full border-2 transition-all ${
                     isSelected
                       ? 'border-verone-black scale-110 ring-1 ring-verone-black ring-offset-1'
                       : 'border-verone-gray-300 hover:border-verone-gray-500'
                   }`}
-                  style={{ backgroundColor: hex }}
-                  title={getColorLabel(value)}
-                  aria-label={getColorLabel(value)}
+                  style={{ backgroundColor: hexCode }}
+                  title={name}
+                  aria-label={name}
                 />
               );
             })}
@@ -288,48 +292,79 @@ function getValuesWithCounts(
     .sort((a, b) => a.value.localeCompare(b.value));
 }
 
-// Helper: extract unique values with count from an array field
-function getArrayValuesWithCounts(
+/**
+ * Intersection : table de référence (snake_case value + label) ∩ valeurs
+ * présentes dans un champ array de products (ex: suitable_rooms).
+ * Garde l'ordre de sort_order de la table de référence, filtre out les
+ * options non présentes dans le catalogue affiché.
+ */
+function intersectArrayField(
+  options: RoomOption[],
   products: CatalogueProduct[],
   accessor: (p: CatalogueProduct) => string[] | null
-): { value: string; count: number }[] {
-  const map = new Map<string, number>();
+): { value: string; label: string; count: number }[] {
+  const counts = new Map<string, number>();
   for (const p of products) {
     const arr = accessor(p);
     if (arr) {
-      for (const val of arr) {
-        map.set(val, (map.get(val) ?? 0) + 1);
+      for (const v of arr) {
+        counts.set(v, (counts.get(v) ?? 0) + 1);
       }
     }
   }
-  return [...map.entries()]
-    .map(([value, count]) => ({ value, count }))
-    .sort((a, b) => a.value.localeCompare(b.value));
+  return options
+    .map(o => ({
+      value: o.value,
+      label: o.label,
+      count: counts.get(o.value) ?? 0,
+    }))
+    .filter(o => o.count > 0);
 }
 
 /**
- * Helper couleurs : dédoublonne case-insensitive + splitte les valeurs
- * composées ("Beige,Blanc" → 2 entrées). Retient le label le plus joli
- * (capitalisé). Sortie triée alphabétiquement.
+ * Idem mais pour un champ scalaire (style: string).
  */
-function getColorValuesWithCounts(
+function intersectScalarField(
+  options: StyleOption[],
+  products: CatalogueProduct[],
+  accessor: (p: CatalogueProduct) => string | null
+): { value: string; label: string; count: number }[] {
+  const counts = new Map<string, number>();
+  for (const p of products) {
+    const v = accessor(p);
+    if (v) counts.set(v, (counts.get(v) ?? 0) + 1);
+  }
+  return options
+    .map(o => ({
+      value: o.value,
+      label: o.label,
+      count: counts.get(o.value) ?? 0,
+    }))
+    .filter(o => o.count > 0);
+}
+
+/**
+ * Couleurs : intersection entre color_options actives et les couleurs
+ * effectivement utilisées par les produits affichés. Splitte les valeurs
+ * composées ("Beige,Blanc" → Beige + Blanc) et compare en lowercase.
+ */
+function intersectColors(
+  options: ColorOption[],
   products: CatalogueProduct[]
-): { value: string; count: number }[] {
-  const map = new Map<string, { label: string; count: number }>();
+): { name: string; hexCode: string; count: number }[] {
+  const counts = new Map<string, number>();
   for (const p of products) {
     if (!p.color) continue;
     for (const piece of expandColorValue(p.color)) {
       const key = canonicalColorKey(piece);
-      if (!key) continue;
-      const existing = map.get(key);
-      if (existing) {
-        existing.count += 1;
-      } else {
-        map.set(key, { label: getColorLabel(piece), count: 1 });
-      }
+      if (key) counts.set(key, (counts.get(key) ?? 0) + 1);
     }
   }
-  return [...map.values()]
-    .map(({ label, count }) => ({ value: label, count }))
-    .sort((a, b) => a.value.localeCompare(b.value));
+  return options
+    .map(o => ({
+      name: o.name,
+      hexCode: o.hex_code,
+      count: counts.get(canonicalColorKey(o.name)) ?? 0,
+    }))
+    .filter(o => o.count > 0);
 }

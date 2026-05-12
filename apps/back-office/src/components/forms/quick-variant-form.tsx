@@ -13,6 +13,7 @@ import { Input } from '@verone/ui';
 import { Label } from '@verone/ui';
 import { Save, Loader2, Euro } from 'lucide-react';
 
+import { ColorSelect } from './ColorSelect';
 import { type VariantType } from './quick-variant-form-constants';
 import {
   ImageUploadSection,
@@ -94,13 +95,13 @@ function VariantAttributesSection({
 }: VariantAttributesSectionProps) {
   return (
     <div className="space-y-4">
-      {/* FIXME: DynamicColorSelector component doesn't exist in @verone/ui */}
       <div>
         <Label>Couleur</Label>
-        <Input
+        <ColorSelect
           value={formData.color}
-          onChange={e => onColorChange(e.target.value)}
-          placeholder="Rechercher ou créer une couleur..."
+          onChange={onColorChange}
+          placeholder="Sélectionner une couleur…"
+          className="w-full"
         />
       </div>
       <div className="grid grid-cols-2 gap-4">

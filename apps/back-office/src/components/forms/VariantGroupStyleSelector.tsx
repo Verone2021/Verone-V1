@@ -2,7 +2,7 @@
 
 import { cn } from '@verone/utils';
 
-import { DECORATIVE_STYLES } from './variant-group-form.types';
+import { useActiveStyleOptions } from '@/hooks/use-style-options';
 
 interface VariantGroupStyleSelectorProps {
   style: string;
@@ -13,10 +13,28 @@ export function VariantGroupStyleSelector({
   style,
   onStyleChange,
 }: VariantGroupStyleSelectorProps) {
+  const { styleOptions, isLoading } = useActiveStyleOptions();
+
+  if (isLoading) {
+    return (
+      <p className="text-xs text-gray-400 italic py-2">
+        Chargement des styles…
+      </p>
+    );
+  }
+
+  if (styleOptions.length === 0) {
+    return (
+      <p className="text-xs text-gray-400 italic py-2">
+        Aucun style disponible.
+      </p>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {DECORATIVE_STYLES.map(styleOption => {
+        {styleOptions.map(styleOption => {
           const isSelected = style === styleOption.value;
           return (
             <button
@@ -30,18 +48,7 @@ export function VariantGroupStyleSelector({
                   : 'border-gray-300 hover:border-gray-400 hover:shadow-sm'
               )}
             >
-              <div className="text-2xl mb-1">{styleOption.icon}</div>
-              <div className="space-y-1">
-                <div className="font-medium text-sm">{styleOption.label}</div>
-                <div
-                  className={cn(
-                    'text-xs',
-                    isSelected ? 'text-gray-200' : 'text-gray-500'
-                  )}
-                >
-                  {styleOption.description}
-                </div>
-              </div>
+              <div className="font-medium text-sm">{styleOption.label}</div>
             </button>
           );
         })}
