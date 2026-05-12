@@ -18,12 +18,12 @@ import { useParams } from 'next/navigation';
 
 import { Card } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
-import type { Database } from '@verone/types';
 
 import {
-  useAdminCancelPaymentRequest,
+  useCancelPaymentRequestAdmin,
   usePaymentHistory,
-} from '../hooks/use-payment-requests-admin';
+  type PaymentRecord,
+} from '../../hooks/use-payment-requests-admin';
 import { ProcessPaymentModal } from '../_components/ProcessPaymentModal';
 import { StatusBadge } from '../_components/StatusBadge';
 import { formatCurrency, formatDate } from '../_components/helpers';
@@ -73,17 +73,18 @@ export default function PaymentRequestDetailPage() {
   const [showProcessModal, setShowProcessModal] = useState(false);
 
   const { mutateAsync: cancelRequest, isPending: isCancelling } =
-    useAdminCancelPaymentRequest();
+    useCancelPaymentRequestAdmin();
 
-  const { data: payments } = usePaymentHistory(id);
+  const { data: paymentsRaw } = usePaymentHistory(id);
+  const payments: PaymentRecord[] = paymentsRaw ?? [];
 
-  const alreadyPaidTTC = (payments ?? []).reduce(
-    (sum, p) => sum + p.amount_ttc,
+  const alreadyPaidTTC = payments.reduce(
+    (sum: number, p: PaymentRecord) => sum + p.amount_ttc,
     0
   );
 
   const fetchData = useCallback(async () => {
-    const supabase = createClient<Database>();
+    const supabase = createClient();
     setIsLoading(true);
     setError(null);
 
@@ -273,7 +274,14 @@ export default function PaymentRequestDetailPage() {
                   )
                 ) {
                   void cancelRequest(request.id)
-                    .then(() => fetchData())
+                    .then(() => {
+                      void fetchData().catch(err =>
+                        console.error(
+                          '[PaymentRequestDetail] fetchData error:',
+                          err
+                        )
+                      );
+                    })
                     .catch(err =>
                       console.error('[PaymentRequestDetail] cancel error:', err)
                     );
@@ -466,9 +474,9 @@ export default function PaymentRequestDetailPage() {
         <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
             <Receipt className="h-4 w-4 text-gray-400" />
-            Paiements effectués ({(payments ?? []).length})
+            Paiements effectués ({payments.length})
           </h2>
-          {(payments ?? []).length > 0 && (
+          {payments.length > 0 && (
             <span className="text-xs text-gray-500">
               Total versé : {formatCurrency(alreadyPaidTTC)} /{' '}
               {formatCurrency(request.total_amount_ttc)}
@@ -476,7 +484,7 @@ export default function PaymentRequestDetailPage() {
           )}
         </div>
 
-        {!payments || payments.length === 0 ? (
+        {payments.length === 0 ? (
           <div className="p-8 text-center text-sm text-gray-400 space-y-3">
             <p>Aucun paiement enregistré.</p>
             {canProcess && (

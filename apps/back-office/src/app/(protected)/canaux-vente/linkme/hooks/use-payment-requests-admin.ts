@@ -9,7 +9,10 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
-import type { Database } from '@verone/types';
+
+// Singleton client — pattern standard du repo (cf. use-linkme-enseigne-customers.ts)
+// Évite de recréer le client à chaque appel de hook.
+const supabase = createClient();
 
 // ============================================================================
 // Types
@@ -140,8 +143,6 @@ export interface PaymentRecord {
 // ============================================================================
 
 export function usePaymentRequestsCounts() {
-  const supabase = createClient<Database>();
-
   return useQuery({
     queryKey: ['payment-requests-counts'],
     queryFn: async (): Promise<PaymentRequestCounts> => {
@@ -190,8 +191,6 @@ export function usePaymentRequestsCounts() {
 export function usePaymentRequestsAdmin(
   statusFilter?: PaymentRequestStatus | 'all'
 ) {
-  const supabase = createClient<Database>();
-
   return useQuery({
     queryKey: ['payment-requests-admin', statusFilter],
     queryFn: async (): Promise<PaymentRequestAdmin[]> => {
@@ -266,8 +265,6 @@ export function usePaymentRequestsAdmin(
 // ============================================================================
 
 export function useRecentPaymentRequests(limit: number = 5) {
-  const supabase = createClient<Database>();
-
   return useQuery({
     queryKey: ['payment-requests-recent', limit],
     queryFn: async (): Promise<PaymentRequestSnake[]> => {
@@ -324,8 +321,6 @@ export function useRecentPaymentRequests(limit: number = 5) {
 // ============================================================================
 
 export function usePaymentHistory(requestId: string | null) {
-  const supabase = createClient<Database>();
-
   return useQuery({
     queryKey: ['payment-history', requestId],
     queryFn: async (): Promise<PaymentRecord[]> => {
@@ -369,7 +364,6 @@ interface AddPaymentInput {
 
 export function useAddPayment() {
   const queryClient = useQueryClient();
-  const supabase = createClient<Database>();
 
   return useMutation({
     mutationFn: async (input: AddPaymentInput): Promise<void> => {
@@ -421,7 +415,6 @@ interface DeletePaymentInput {
 
 export function useDeletePayment() {
   const queryClient = useQueryClient();
-  const supabase = createClient<Database>();
 
   return useMutation({
     mutationFn: async (input: DeletePaymentInput): Promise<void> => {
@@ -459,7 +452,6 @@ export function useDeletePayment() {
 
 export function useCancelPaymentRequestAdmin() {
   const queryClient = useQueryClient();
-  const supabase = createClient<Database>();
 
   return useMutation({
     mutationFn: async (requestId: string): Promise<void> => {
@@ -534,7 +526,6 @@ function computePaymentTotals(commissions: CommissionForPayment[]) {
 async function createPaymentRequestFn(
   input: CreatePaymentRequestAdminInput
 ): Promise<PaymentRequestSnake> {
-  const supabase = createClient<Database>();
   const { affiliateId, commissionIds } = input;
 
   const { data: commissions, error: commError } = await supabase
