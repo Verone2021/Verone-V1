@@ -14421,6 +14421,10 @@ export type Database = {
       };
       initialize_dashboard_tests: { Args: never; Returns: undefined };
       insert_sales_order_items: { Args: { p_items: Json }; Returns: undefined };
+      invoke_edge_function: {
+        Args: { p_function_name: string };
+        Returns: number;
+      };
       is_back_office_admin: { Args: never; Returns: boolean };
       is_back_office_admin_or_owner: { Args: never; Returns: boolean };
       is_back_office_owner: { Args: never; Returns: boolean };
