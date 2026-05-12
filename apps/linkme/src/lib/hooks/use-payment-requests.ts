@@ -175,7 +175,7 @@ export function usePaymentRequestDetail(requestId: string | null) {
           marginRateApplied: 0,
           status: comm.status as 'pending' | 'validated' | 'paid' | 'cancelled',
           createdAt: comm.created_at || '',
-          orderDate: comm.order_date || comm.created_at || '',
+          orderDate: comm.order_date ?? comm.created_at ?? '',
           validatedAt: null,
           paidAt: null,
           selectionName: comm.linkme_selections?.name || 'Sélection inconnue',
