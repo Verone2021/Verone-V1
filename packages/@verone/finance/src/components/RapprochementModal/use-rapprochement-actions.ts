@@ -12,6 +12,7 @@ import type {
 
 interface UseActionsParams {
   transactionId: string | undefined;
+  amount: number;
   remainingAmount: number;
   allocatedAmount: string;
   selectedDocumentId: string | null;
@@ -30,6 +31,7 @@ interface UseActionsParams {
 
 export function useRapprochementActions({
   transactionId,
+  amount,
   remainingAmount,
   allocatedAmount,
   selectedDocumentId,
@@ -67,6 +69,24 @@ export function useRapprochementActions({
       )) as { data: unknown; error: { message: string } | null };
 
       if (error) throw new Error(error.message);
+
+      // Auto-assign catégorie PCG si absente (non-bloquant)
+      void (async () => {
+        const { data: txState } = await supabase
+          .from('bank_transactions')
+          .select('category_pcg')
+          .eq('id', transactionId)
+          .single();
+        if (!txState?.category_pcg) {
+          const autoCategory = amount > 0 ? '707' : '607';
+          await supabase
+            .from('bank_transactions')
+            .update({ category_pcg: autoCategory })
+            .eq('id', transactionId);
+        }
+      })().catch(err =>
+        console.warn('[RapprochementModal] Auto-PCG failed:', err)
+      );
 
       // Auto-attach PDF comme justificatif Qonto (non-bloquant)
       void autoAttachPDF(selectedDocumentId);
@@ -110,6 +130,24 @@ export function useRapprochementActions({
       )) as { data: unknown; error: { message: string } | null };
 
       if (error) throw new Error(error.message);
+
+      // Auto-assign catégorie PCG si absente (non-bloquant)
+      void (async () => {
+        const { data: txState } = await supabase
+          .from('bank_transactions')
+          .select('category_pcg')
+          .eq('id', transactionId)
+          .single();
+        if (!txState?.category_pcg) {
+          const autoCategory = amount > 0 ? '707' : '607';
+          await supabase
+            .from('bank_transactions')
+            .update({ category_pcg: autoCategory })
+            .eq('id', transactionId);
+        }
+      })().catch(err =>
+        console.warn('[RapprochementModal] Auto-PCG failed:', err)
+      );
 
       // Auto-attach: résoudre la facture liée à la commande et attacher son PDF
       const { data: linkedDoc } = await supabase
@@ -163,6 +201,24 @@ export function useRapprochementActions({
       )) as { data: unknown; error: { message: string } | null };
 
       if (error) throw new Error(error.message);
+
+      // Auto-assign catégorie PCG si absente (non-bloquant)
+      void (async () => {
+        const { data: txState } = await supabase
+          .from('bank_transactions')
+          .select('category_pcg')
+          .eq('id', transactionId)
+          .single();
+        if (!txState?.category_pcg) {
+          const autoCategory = amount > 0 ? '707' : '607';
+          await supabase
+            .from('bank_transactions')
+            .update({ category_pcg: autoCategory })
+            .eq('id', transactionId);
+        }
+      })().catch(err =>
+        console.warn('[RapprochementModal] Auto-PCG failed:', err)
+      );
 
       // Auto-attach: résoudre la facture fournisseur liée et attacher son PDF
       const { data: linkedSupplierDoc } = await supabase

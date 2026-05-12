@@ -30,7 +30,8 @@ export function calculateMatchScore(
     organisation_id?: string;
     customer_name?: string;
   },
-  counterpartyName?: string | null
+  counterpartyName?: string | null,
+  transactionLabel?: string | null
 ): { score: number; reasons: string[] } {
   const reasons: string[] = [];
   const absAmount = Math.abs(transactionAmount);
@@ -38,12 +39,16 @@ export function calculateMatchScore(
   const isExactAmount = amountDiff < 0.01;
 
   // NAME MATCHING: split customer_name par ' | ' pour tester legal ET trade
+  // Utiliser transactionLabel comme fallback si counterpartyName est null
+  // (bank_transactions.counterparty_name est NULL sur ~680/680 transactions,
+  //  le vrai libellé est dans bank_transactions.label)
+  const effectiveCounterparty = counterpartyName ?? transactionLabel ?? null;
   let nameMatches = false;
-  if (order.customer_name && counterpartyName) {
+  if (order.customer_name && effectiveCounterparty) {
     const names = order.customer_name
       .split(' | ')
       .map(n => n.toLowerCase().trim());
-    const cpLower = counterpartyName.toLowerCase().trim();
+    const cpLower = effectiveCounterparty.toLowerCase().trim();
     // Bidirectionnel : counterparty ⊂ nom OU mot du nom ⊂ counterparty
     nameMatches = names.some(name => {
       if (name.length < 3) return false;

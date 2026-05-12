@@ -12,6 +12,7 @@ interface UseScoringParams {
   transactionDate: string | undefined;
   organisationId?: string | null;
   counterpartyName?: string | null;
+  transactionLabel?: string | null;
 }
 
 export function useRapprochementScoring({
@@ -21,6 +22,7 @@ export function useRapprochementScoring({
   transactionDate,
   organisationId,
   counterpartyName,
+  transactionLabel,
 }: UseScoringParams) {
   // Calculer les scores de matching pour les commandes
   const ordersWithScores = useMemo(() => {
@@ -31,7 +33,8 @@ export function useRapprochementScoring({
           transactionDate,
           organisationId ?? undefined,
           order,
-          counterpartyName
+          counterpartyName,
+          transactionLabel
         );
         return {
           ...order,
@@ -56,7 +59,14 @@ export function useRapprochementScoring({
     }
 
     return result;
-  }, [orders, amount, transactionDate, organisationId, counterpartyName]);
+  }, [
+    orders,
+    amount,
+    transactionDate,
+    organisationId,
+    counterpartyName,
+    transactionLabel,
+  ]);
 
   // Top suggestions pour commandes clients (score >= 40)
   const suggestions = useMemo(() => {
@@ -77,7 +87,8 @@ export function useRapprochementScoring({
             organisation_id: po.supplier_id,
             customer_name: po.supplier_name,
           },
-          counterpartyName
+          counterpartyName,
+          transactionLabel
         );
         return {
           ...po,
@@ -88,7 +99,13 @@ export function useRapprochementScoring({
       .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
 
     return result;
-  }, [purchaseOrders, amount, transactionDate, counterpartyName]);
+  }, [
+    purchaseOrders,
+    amount,
+    transactionDate,
+    counterpartyName,
+    transactionLabel,
+  ]);
 
   // Top suggestions pour commandes fournisseurs (score >= 40)
   const purchaseOrderSuggestions = useMemo(() => {
