@@ -1,6 +1,7 @@
 'use client';
 
 import { Banknote, Download, Inbox, Loader2, Mail, User } from 'lucide-react';
+import Link from 'next/link';
 
 import { Card } from '@verone/ui';
 
@@ -70,9 +71,12 @@ export function PaymentRequestsTable({
           {requests.map(request => (
             <tr key={request.id} className="hover:bg-gray-50">
               <td className="px-4 py-3">
-                <span className="text-sm font-medium text-gray-900">
+                <Link
+                  href={`/canaux-vente/linkme/demandes-paiement/${request.id}`}
+                  className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                >
                   {request.requestNumber}
-                </span>
+                </Link>
               </td>
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2">
