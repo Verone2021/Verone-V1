@@ -4,10 +4,12 @@ import { useCallback, useEffect, useState } from 'react';
 
 import {
   ArrowLeft,
+  Banknote,
   Calendar,
   CheckCircle2,
   CreditCard,
   Loader2,
+  Receipt,
   User,
   XCircle,
 } from 'lucide-react';
@@ -16,11 +18,16 @@ import { useParams } from 'next/navigation';
 
 import { Card } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
+import type { Database } from '@verone/types';
 
-import { useAdminCancelPaymentRequest } from '../_components/hooks';
+import {
+  useAdminCancelPaymentRequest,
+  usePaymentHistory,
+} from '../hooks/use-payment-requests-admin';
+import { ProcessPaymentModal } from '../_components/ProcessPaymentModal';
 import { StatusBadge } from '../_components/StatusBadge';
 import { formatCurrency, formatDate } from '../_components/helpers';
-import { type PaymentRequestStatus } from '../_components/types';
+import type { PaymentRequestStatus } from '../_components/types';
 
 interface CommissionRow {
   order_number: string;
@@ -63,12 +70,20 @@ export default function PaymentRequestDetailPage() {
   const [commissions, setCommissions] = useState<CommissionRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showProcessModal, setShowProcessModal] = useState(false);
 
   const { mutateAsync: cancelRequest, isPending: isCancelling } =
     useAdminCancelPaymentRequest();
 
+  const { data: payments } = usePaymentHistory(id);
+
+  const alreadyPaidTTC = (payments ?? []).reduce(
+    (sum, p) => sum + p.amount_ttc,
+    0
+  );
+
   const fetchData = useCallback(async () => {
-    const supabase = createClient();
+    const supabase = createClient<Database>();
     setIsLoading(true);
     setError(null);
 
@@ -189,6 +204,31 @@ export default function PaymentRequestDetailPage() {
     0
   );
 
+  const canProcess =
+    request.status === 'invoice_received' ||
+    request.status === 'partially_paid';
+
+  const remainingTTC = Math.max(0, request.total_amount_ttc - alreadyPaidTTC);
+
+  // Build a PaymentRequestAdmin-compatible object for ProcessPaymentModal
+  const requestForModal = {
+    id: request.id,
+    requestNumber: request.request_number,
+    affiliateId: '',
+    affiliateName: request.affiliate_name,
+    affiliateEmail: request.affiliate_email,
+    totalAmountHT: request.total_amount_ht,
+    totalAmountTTC: request.total_amount_ttc,
+    status: request.status,
+    invoiceFileUrl: null,
+    invoiceFileName: null,
+    invoiceReceivedAt: null,
+    paidAt: request.paid_at,
+    paymentReference: request.payment_reference,
+    createdAt: request.created_at,
+    alreadyPaidTTC,
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Retour */}
@@ -201,7 +241,7 @@ export default function PaymentRequestDetailPage() {
       </Link>
 
       {/* En-tête */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             {request.request_number}
@@ -210,8 +250,19 @@ export default function PaymentRequestDetailPage() {
             Créée le {formatDate(request.created_at)}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <StatusBadge status={request.status} />
+
+          {canProcess && (
+            <button
+              onClick={() => setShowProcessModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-emerald-700 border border-emerald-200 hover:bg-emerald-50 rounded-lg transition-colors"
+            >
+              <Banknote className="h-4 w-4" />
+              Traiter le paiement
+            </button>
+          )}
+
           {(request.status === 'pending' ||
             request.status === 'invoice_received') && (
             <button
@@ -285,6 +336,23 @@ export default function PaymentRequestDetailPage() {
                   {request.payment_reference}
                 </p>
               )}
+            </div>
+          </Card>
+        )}
+
+        {request.status === 'partially_paid' && (
+          <Card className="p-4 flex items-center gap-3">
+            <div className="p-2 bg-amber-100 rounded-lg">
+              <Banknote className="h-4 w-4 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Restant dû</p>
+              <p className="text-sm font-semibold text-amber-600">
+                {formatCurrency(remainingTTC)}
+              </p>
+              <p className="text-xs text-gray-400">
+                Versé : {formatCurrency(alreadyPaidTTC)}
+              </p>
             </div>
           </Card>
         )}
@@ -392,6 +460,91 @@ export default function PaymentRequestDetailPage() {
           </div>
         )}
       </Card>
+
+      {/* Bloc paiements effectués */}
+      <Card className="overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <Receipt className="h-4 w-4 text-gray-400" />
+            Paiements effectués ({(payments ?? []).length})
+          </h2>
+          {(payments ?? []).length > 0 && (
+            <span className="text-xs text-gray-500">
+              Total versé : {formatCurrency(alreadyPaidTTC)} /{' '}
+              {formatCurrency(request.total_amount_ttc)}
+            </span>
+          )}
+        </div>
+
+        {!payments || payments.length === 0 ? (
+          <div className="p-8 text-center text-sm text-gray-400 space-y-3">
+            <p>Aucun paiement enregistré.</p>
+            {canProcess && (
+              <button
+                onClick={() => setShowProcessModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors"
+              >
+                <Banknote className="h-4 w-4" />
+                Traiter le paiement
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {payments.map(p => (
+              <div
+                key={p.id}
+                className="px-4 py-3 flex items-center justify-between gap-4"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900">
+                    {p.payment_reference}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {formatDate(p.payment_date)}
+                    {p.notes && (
+                      <span className="ml-2 text-gray-400">— {p.notes}</span>
+                    )}
+                  </p>
+                </div>
+                <span className="text-sm font-semibold text-emerald-600 flex-shrink-0">
+                  {formatCurrency(p.amount_ttc)}
+                </span>
+              </div>
+            ))}
+            {/* Pied récap */}
+            <div className="px-4 py-3 bg-gray-50 border-t-2 border-gray-200 flex items-center justify-between">
+              <span className="text-sm font-semibold text-gray-700">
+                Total payé
+              </span>
+              <div className="text-right">
+                <span className="text-sm font-bold text-emerald-700">
+                  {formatCurrency(alreadyPaidTTC)}
+                </span>
+                {request.status === 'partially_paid' && (
+                  <p className="text-xs text-amber-600">
+                    Reste : {formatCurrency(remainingTTC)}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* Modal paiement */}
+      <ProcessPaymentModal
+        isOpen={showProcessModal}
+        request={requestForModal}
+        alreadyPaidTTC={alreadyPaidTTC}
+        onClose={() => setShowProcessModal(false)}
+        onSuccess={() => {
+          void fetchData().catch(err =>
+            console.error('[PaymentRequestDetail] refetch after payment:', err)
+          );
+          setShowProcessModal(false);
+        }}
+      />
     </div>
   );
 }

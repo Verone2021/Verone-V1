@@ -206,6 +206,7 @@ export function formatCompactNumber(value: number): string {
 export type PaymentRequestStatus =
   | 'pending'
   | 'invoice_received'
+  | 'partially_paid'
   | 'paid'
   | 'cancelled';
 
@@ -247,6 +248,7 @@ export const PAYMENT_REQUEST_STATUS_LABELS: Record<
 > = {
   pending: 'En attente de facture',
   invoice_received: 'Facture reçue',
+  partially_paid: 'Partiellement payée',
   paid: 'Payée',
   cancelled: 'Annulée',
 };
@@ -258,6 +260,7 @@ export const PAYMENT_REQUEST_STATUS_COLORS: Record<
 > = {
   pending: 'orange',
   invoice_received: 'blue',
+  partially_paid: 'amber',
   paid: 'green',
   cancelled: 'red',
 };

@@ -19,17 +19,17 @@ import Link from 'next/link';
 import { Card } from '@tremor/react';
 import {
   ArrowLeft,
-  FileText,
-  Upload,
+  Banknote,
+  CheckCircle2,
+  Clock,
   Download,
   Eye,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  Banknote,
+  FileText,
+  Inbox,
   Loader2,
   AlertCircle,
-  Inbox,
+  Upload,
+  XCircle,
 } from 'lucide-react';
 
 import {
@@ -58,6 +58,11 @@ function StatusBadge({ status }: { status: PaymentRequestStatus }) {
       color: 'text-blue-600',
       bg: 'bg-blue-100',
     },
+    partially_paid: {
+      icon: Banknote,
+      color: 'text-amber-600',
+      bg: 'bg-amber-100',
+    },
     paid: {
       icon: CheckCircle2,
       color: 'text-emerald-600',
@@ -66,7 +71,7 @@ function StatusBadge({ status }: { status: PaymentRequestStatus }) {
     cancelled: { icon: XCircle, color: 'text-gray-500', bg: 'bg-gray-100' },
   };
 
-  const { icon: Icon, color, bg } = config[status] || config.pending;
+  const { icon: Icon, color, bg } = config[status] ?? config.pending;
 
   return (
     <span
@@ -355,7 +360,10 @@ export default function PaymentRequestsPage() {
   const groupedRequests = {
     active:
       requests?.filter(
-        r => r.status === 'pending' || r.status === 'invoice_received'
+        r =>
+          r.status === 'pending' ||
+          r.status === 'invoice_received' ||
+          r.status === 'partially_paid'
       ) ?? [],
     paid: requests?.filter(r => r.status === 'paid') ?? [],
     cancelled: requests?.filter(r => r.status === 'cancelled') ?? [],

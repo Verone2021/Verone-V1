@@ -380,6 +380,48 @@ export function useUploadInvoice() {
 }
 
 // ============================================================================
+// Hook: Historique des paiements d'une demande (lecture seule pour l'affilié)
+// RLS: l'affilié peut seulement lire ses propres paiements (SELECT only).
+// ============================================================================
+
+interface PaymentRecord {
+  id: string;
+  amount_ttc: number;
+  payment_reference: string;
+  payment_date: string;
+  notes: string | null;
+  created_at: string;
+}
+
+export function usePaymentRequestPayments(requestId: string | null) {
+  return useQuery({
+    queryKey: ['payment-request-payments', requestId],
+    queryFn: async (): Promise<PaymentRecord[]> => {
+      if (!requestId) return [];
+
+      const { data, error } = await supabase
+        .from('linkme_payments')
+        .select(
+          'id, amount_ttc, payment_reference, payment_date, notes, created_at'
+        )
+        .eq('payment_request_id', requestId)
+        .order('payment_date', { ascending: false })
+        .order('created_at', { ascending: false })
+        .returns<PaymentRecord[]>();
+
+      if (error) {
+        console.error('[usePaymentRequestPayments] fetch error:', error);
+        throw error;
+      }
+
+      return data ?? [];
+    },
+    enabled: !!requestId,
+    staleTime: 60_000,
+  });
+}
+
+// ============================================================================
 // Mutation: Annuler une demande (affilié)
 // ============================================================================
 

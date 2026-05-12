@@ -4,10 +4,10 @@
  * Gestion des demandes de versement des affiliés :
  * - Liste de toutes les demandes
  * - Filtres par statut
- * - Actions : voir facture, marquer payé, annuler
+ * - Actions : voir facture, traiter paiement (total ou partiel), annuler
  *
  * @module PaymentRequestsAdminPage
- * @since 2025-12-11
+ * @since 2025-12-11 · updated 2026-05-13 (partially_paid + ProcessPaymentModal)
  */
 
 'use client';
@@ -16,14 +16,14 @@ import { useState } from 'react';
 
 import { Filter } from 'lucide-react';
 
-import { MarkAsPaidModal } from './_components/MarkAsPaidModal';
-import { PaymentRequestsStats } from './_components/PaymentRequestsStats';
-import { PaymentRequestsTable } from './_components/PaymentRequestsTable';
-import { usePaymentRequestsAdmin } from './_components/hooks';
 import {
+  usePaymentRequestsAdmin,
   type PaymentRequestAdmin,
   type PaymentRequestStatus,
-} from './_components/types';
+} from '../hooks/use-payment-requests-admin';
+import { ProcessPaymentModal } from './_components/ProcessPaymentModal';
+import { PaymentRequestsStats } from './_components/PaymentRequestsStats';
+import { PaymentRequestsTable } from './_components/PaymentRequestsTable';
 
 export default function PaymentRequestsAdminPage() {
   const [statusFilter, setStatusFilter] = useState<
@@ -67,6 +67,7 @@ export default function PaymentRequestsAdminPage() {
           <option value="all">Tous les statuts</option>
           <option value="pending">En attente de facture</option>
           <option value="invoice_received">Facture reçue</option>
+          <option value="partially_paid">Partiellement payée</option>
           <option value="paid">Payées</option>
           <option value="cancelled">Annulées</option>
         </select>
@@ -75,12 +76,13 @@ export default function PaymentRequestsAdminPage() {
       <PaymentRequestsTable
         requests={requests}
         isLoading={isLoading}
-        onMarkAsPaid={setSelectedRequest}
+        onProcessPayment={setSelectedRequest}
       />
 
-      <MarkAsPaidModal
+      <ProcessPaymentModal
         isOpen={!!selectedRequest}
         request={selectedRequest}
+        alreadyPaidTTC={selectedRequest?.alreadyPaidTTC ?? 0}
         onClose={() => setSelectedRequest(null)}
         onSuccess={() => {
           void refetch().catch(err => {

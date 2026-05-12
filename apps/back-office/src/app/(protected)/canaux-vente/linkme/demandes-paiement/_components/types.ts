@@ -1,27 +1,13 @@
-import { Clock, FileText, CheckCircle2, XCircle } from 'lucide-react';
+import { Banknote, CheckCircle2, Clock, FileText, XCircle } from 'lucide-react';
 
-export type PaymentRequestStatus =
-  | 'pending'
-  | 'invoice_received'
-  | 'paid'
-  | 'cancelled';
+// Re-export depuis le module consolidé pour compatibilité des composants locaux.
+// Les composants qui importaient depuis ./types continuent de fonctionner.
+export type {
+  PaymentRequestAdmin,
+  PaymentRequestStatus,
+} from '../../hooks/use-payment-requests-admin';
 
-export interface PaymentRequestAdmin {
-  id: string;
-  requestNumber: string;
-  affiliateId: string;
-  affiliateName: string;
-  affiliateEmail: string;
-  totalAmountHT: number;
-  totalAmountTTC: number;
-  status: PaymentRequestStatus;
-  invoiceFileUrl: string | null;
-  invoiceFileName: string | null;
-  invoiceReceivedAt: string | null;
-  paidAt: string | null;
-  paymentReference: string | null;
-  createdAt: string;
-}
+import type { PaymentRequestStatus } from '../../hooks/use-payment-requests-admin';
 
 export interface PaymentRequestRaw {
   id: string;
@@ -45,6 +31,7 @@ export interface PaymentRequestRaw {
 export const STATUS_LABELS: Record<PaymentRequestStatus, string> = {
   pending: 'En attente de facture',
   invoice_received: 'Facture reçue',
+  partially_paid: 'Partiellement payée',
   paid: 'Payée',
   cancelled: 'Annulée',
 };
@@ -59,6 +46,15 @@ export const STATUS_CONFIG: Record<
     color: 'text-blue-600',
     bg: 'bg-blue-100',
   },
-  paid: { icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-100' },
+  partially_paid: {
+    icon: Banknote,
+    color: 'text-amber-600',
+    bg: 'bg-amber-100',
+  },
+  paid: {
+    icon: CheckCircle2,
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-100',
+  },
   cancelled: { icon: XCircle, color: 'text-gray-500', bg: 'bg-gray-100' },
 };

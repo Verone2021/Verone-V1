@@ -23,6 +23,7 @@ import { Card } from '@tremor/react';
 
 import {
   usePaymentRequestDetail,
+  usePaymentRequestPayments,
   useUploadInvoice,
 } from '../../../../../lib/hooks/use-payment-requests';
 import type { PaymentRequestStatus } from '../../../../../types/analytics';
@@ -42,6 +43,11 @@ function StatusBadge({ status }: { status: PaymentRequestStatus }) {
       icon: FileText,
       color: 'text-blue-600',
       bg: 'bg-blue-100',
+    },
+    partially_paid: {
+      icon: Banknote,
+      color: 'text-amber-600',
+      bg: 'bg-amber-100',
     },
     paid: {
       icon: CheckCircle2,
@@ -205,6 +211,12 @@ export default function PaymentRequestDetailPage() {
   const [showUploadModal, setShowUploadModal] = useState(false);
 
   const { data: request, isLoading, refetch } = usePaymentRequestDetail(id);
+  const { data: payments } = usePaymentRequestPayments(id);
+
+  const alreadyPaidTTC = (payments ?? []).reduce(
+    (sum, p) => sum + p.amount_ttc,
+    0
+  );
 
   if (isLoading) {
     return (
@@ -318,6 +330,25 @@ export default function PaymentRequestDetailPage() {
         </Card>
       )}
 
+      {/* Statut partiellement payé */}
+      {request.status === 'partially_paid' && (
+        <Card className="p-4 border-l-4 border-amber-400 bg-amber-50">
+          <div className="flex items-center gap-3">
+            <Banknote className="h-5 w-5 text-amber-600 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-amber-800">
+                Paiement partiel reçu ({formatCurrency(alreadyPaidTTC)})
+              </p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                Restant :{' '}
+                {formatCurrency(request.totalAmountTTC - alreadyPaidTTC)} — en
+                cours de traitement.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Action : upload facture */}
       {request.status === 'pending' && (
         <Card className="p-4 border-l-4 border-orange-400 bg-orange-50">
@@ -426,6 +457,55 @@ export default function PaymentRequestDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Paiements reçus */}
+      {payments && payments.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-gray-700">
+              Paiements reçus ({payments.length})
+            </h2>
+            <span className="text-xs text-gray-500">
+              Total : {formatCurrency(alreadyPaidTTC)}
+            </span>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {payments.map(p => (
+              <div
+                key={p.id}
+                className="px-4 py-3 flex items-center justify-between gap-3"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900">
+                    {p.payment_reference}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {formatDateFR(p.payment_date, {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                    {p.notes && <span className="ml-2">— {p.notes}</span>}
+                  </p>
+                </div>
+                <span className="text-sm font-semibold text-emerald-600 flex-shrink-0">
+                  {formatCurrency(p.amount_ttc)}
+                </span>
+              </div>
+            ))}
+          </div>
+          {request.status === 'partially_paid' && (
+            <div className="px-4 py-3 border-t-2 border-gray-200 bg-gray-50 flex items-center justify-between">
+              <span className="text-sm font-semibold text-gray-700">
+                Restant attendu
+              </span>
+              <span className="text-sm font-bold text-amber-600">
+                {formatCurrency(request.totalAmountTTC - alreadyPaidTTC)}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Modal upload */}
       {showUploadModal && (

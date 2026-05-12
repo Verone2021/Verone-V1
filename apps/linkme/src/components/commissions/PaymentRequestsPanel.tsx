@@ -12,17 +12,18 @@ import { useState, useRef } from 'react';
 
 import { Card } from '@tremor/react';
 import {
-  FileText,
-  Upload,
+  Banknote,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
   Download,
   Eye,
-  Clock,
-  CheckCircle2,
-  XCircle,
+  FileText,
+  Inbox,
   Loader2,
   AlertCircle,
-  Inbox,
-  ChevronRight,
+  Upload,
+  XCircle,
 } from 'lucide-react';
 
 import {
@@ -50,6 +51,11 @@ function StatusBadge({ status }: { status: PaymentRequestStatus }) {
       icon: FileText,
       color: 'text-blue-600',
       bg: 'bg-blue-100',
+    },
+    partially_paid: {
+      icon: Banknote,
+      color: 'text-amber-600',
+      bg: 'bg-amber-100',
     },
     paid: {
       icon: CheckCircle2,

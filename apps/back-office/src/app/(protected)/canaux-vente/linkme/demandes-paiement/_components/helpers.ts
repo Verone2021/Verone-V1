@@ -1,4 +1,4 @@
-import { type PaymentRequestAdmin } from './types';
+import type { PaymentRequestAdmin } from './types';
 
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('fr-FR', {
@@ -33,8 +33,15 @@ export function generateMailtoLink(request: PaymentRequestAdmin): string {
     body += `Nous avons bien reçu votre facture pour la demande ${request.requestNumber}.\n\n`;
     body += `Montant : ${formatCurrency(request.totalAmountTTC)} TTC\n\n`;
     body += `Le paiement sera effectué dans les meilleurs délais.\n\n`;
+  } else if (request.status === 'partially_paid') {
+    const remaining = request.totalAmountTTC - request.alreadyPaidTTC;
+    body += `Votre demande de versement ${request.requestNumber} est partiellement réglée.\n\n`;
+    body += `Montant total : ${formatCurrency(request.totalAmountTTC)} TTC\n`;
+    body += `Déjà versé : ${formatCurrency(request.alreadyPaidTTC)} TTC\n`;
+    body += `Solde restant : ${formatCurrency(remaining)} TTC\n\n`;
+    body += `Le solde restant sera versé prochainement.\n\n`;
   } else if (request.status === 'paid') {
-    body += `Votre demande de versement ${request.requestNumber} a été réglée.\n\n`;
+    body += `Votre demande de versement ${request.requestNumber} a été intégralement réglée.\n\n`;
     body += `Montant versé : ${formatCurrency(request.totalAmountTTC)} TTC\n`;
     if (request.paymentReference) {
       body += `Référence de paiement : ${request.paymentReference}\n`;
