@@ -82,6 +82,7 @@ export interface CommissionsPageState {
   enseignes: Array<{ id: string; name: string }>;
   // Selection
   selectedIds: string[];
+  hasMixedAffiliates: boolean;
   toggleSelect: (id: string) => void;
   toggleSelectAll: (list: Commission[]) => void;
   // Tabs / navigation

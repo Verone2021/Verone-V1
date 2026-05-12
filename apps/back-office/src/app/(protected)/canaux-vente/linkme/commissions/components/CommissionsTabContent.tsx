@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@verone/ui';
-import { Banknote, CheckCircle } from 'lucide-react';
+import { AlertTriangle, Banknote, CheckCircle } from 'lucide-react';
 
 import { TABS_CONFIG } from '../constants';
 import type { TabType } from '../types';
@@ -58,7 +58,7 @@ export function CommissionsTabContent({
           {tab === 'payables' && state.selectedIds.length > 0 && (
             <ButtonV2
               onClick={state.openPaymentModal}
-              disabled={state.processing}
+              disabled={state.processing || state.hasMixedAffiliates}
             >
               <Banknote className="h-4 w-4 mr-2" />
               Payer ({state.selectedIds.length})
@@ -83,6 +83,16 @@ export function CommissionsTabContent({
         </div>
       </CardHeader>
       <CardContent>
+        {tab === 'payables' && state.hasMixedAffiliates && (
+          <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+            <span>
+              Vous avez sélectionné des commissions de plusieurs affiliés.
+              Impossible de créer une demande de paiement. Sélectionnez les
+              commissions d&apos;un seul affilié (utilisez le filtre Affilié).
+            </span>
+          </div>
+        )}
         <CommissionsFilters
           searchTerm={state.searchTerm}
           onSearchChange={v => {

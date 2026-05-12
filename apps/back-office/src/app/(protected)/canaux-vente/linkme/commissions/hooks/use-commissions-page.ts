@@ -199,11 +199,30 @@ export function useCommissionsPage(): CommissionsPageState {
     return filtered;
   }
 
+  const selectedAffiliateIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const c of commissions) {
+      if (selectedIds.includes(c.id)) ids.add(c.affiliate_id);
+    }
+    return ids;
+  }, [commissions, selectedIds]);
+
+  const hasMixedAffiliates = selectedAffiliateIds.size > 1;
+
   function openPaymentModal() {
     if (selectedIds.length === 0) {
       toast({
         title: 'Aucune sélection',
         description: 'Veuillez sélectionner au moins une commission',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (hasMixedAffiliates) {
+      toast({
+        title: 'Plusieurs affiliés sélectionnés',
+        description:
+          "Impossible de créer une demande de paiement mélangeant plusieurs affiliés. Sélectionnez les commissions d'un seul affilié (filtre Affilié).",
         variant: 'destructive',
       });
       return;
@@ -350,6 +369,7 @@ export function useCommissionsPage(): CommissionsPageState {
     resetFilters,
     enseignes,
     selectedIds,
+    hasMixedAffiliates,
     toggleSelect,
     toggleSelectAll,
     activeTab,
