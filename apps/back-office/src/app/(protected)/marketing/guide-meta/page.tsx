@@ -2,7 +2,6 @@ import Link from 'next/link';
 
 import { BookOpen, CheckCircle2, ExternalLink } from 'lucide-react';
 
-import { Alert, AlertDescription } from '@verone/ui/components/ui/alert';
 import { Badge } from '@verone/ui/components/ui/badge';
 import {
   Card,
@@ -165,16 +164,16 @@ export default function GuideMetaPage() {
       </section>
 
       {/* Bientôt disponible */}
-      <Alert>
+      <div className="rounded-lg border bg-muted/50 p-4">
         <Badge variant="secondary" className="mb-2 text-[10px]">
           Bientôt disponible
         </Badge>
-        <AlertDescription className="text-sm">
+        <p className="text-sm text-muted-foreground">
           Quand les accès API Meta seront connectés, tu pourras programmer tes
           publications directement depuis le Calendrier de ce back-office, sans
           passer par Meta Business Suite.
-        </AlertDescription>
-      </Alert>
+        </p>
+      </div>
     </div>
   );
 }

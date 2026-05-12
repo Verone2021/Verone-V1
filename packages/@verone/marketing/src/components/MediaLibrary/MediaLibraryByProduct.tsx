@@ -389,11 +389,18 @@ function ProductGroupCard({
               asset.brand_ids.includes(b.id)
             );
             return (
-              <button
+              <div
                 key={asset.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => onAssetClick?.(asset)}
-                className="group relative aspect-square overflow-hidden rounded-md border border-border bg-muted transition-shadow hover:shadow-md"
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onAssetClick?.(asset);
+                  }
+                }}
+                className="group relative aspect-square cursor-pointer overflow-hidden rounded-md border border-border bg-muted transition-shadow hover:shadow-md"
                 aria-label={asset.alt_text ?? 'Voir la photo'}
               >
                 <CloudflareImage
@@ -470,7 +477,7 @@ function ProductGroupCard({
                     )}
                   </div>
                 )}
-              </button>
+              </div>
             );
           })}
           {moreCount > 0 && (
