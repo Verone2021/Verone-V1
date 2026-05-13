@@ -118,22 +118,6 @@ export function useSalesOrdersMutations({
   const updateStatus = useCallback(
     async (orderId: string, newStatus: SalesOrderStatus) => {
       setLoading(true);
-
-      // [BO-PERF-ORDERS-003] Optimistic update — mise à jour immédiate du cache
-      // avant la requête serveur. Si la mutation échoue, on rollback.
-      const previousData = queryClient.getQueriesData<SalesOrder[]>({
-        queryKey: ['sales_orders', 'list'],
-      });
-      queryClient.setQueriesData<SalesOrder[]>(
-        { queryKey: ['sales_orders', 'list'] },
-        old => {
-          if (!Array.isArray(old)) return old;
-          return old.map(o =>
-            o.id === orderId ? { ...o, status: newStatus } : o
-          );
-        }
-      );
-
       try {
         const {
           data: { user },
@@ -221,10 +205,6 @@ export function useSalesOrdersMutations({
           window.dispatchEvent(new CustomEvent('stock-alerts-refresh'));
         }
       } catch (error: unknown) {
-        // [BO-PERF-ORDERS-003] Rollback optimistic sur erreur
-        for (const [key, data] of previousData) {
-          queryClient.setQueryData(key, data);
-        }
         console.error('Erreur lors du changement de statut:', error);
         toastRef.current({
           title: 'Erreur',
