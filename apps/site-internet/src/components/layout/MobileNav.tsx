@@ -14,6 +14,7 @@ const navigationLinks = [
   { href: '/', label: 'Accueil' },
   { href: '/catalogue', label: 'Catalogue' },
   { href: '/collections', label: 'Collections' },
+  { href: '/journal', label: 'Journal' },
   { href: '/a-propos', label: 'À propos' },
   { href: '/contact', label: 'Contact' },
   { href: '/compte/favoris', label: 'Mes favoris' },

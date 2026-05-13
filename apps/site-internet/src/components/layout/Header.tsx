@@ -54,6 +54,12 @@ export function Header() {
                   Collections
                 </Link>
                 <Link
+                  href="/journal"
+                  className="font-montserrat text-xs font-medium uppercase tracking-[0.16em] text-verone-white transition-colors duration-[180ms] ease-editorial hover:text-verone-or"
+                >
+                  Journal
+                </Link>
+                <Link
                   href="/a-propos"
                   className="font-montserrat text-xs font-medium uppercase tracking-[0.16em] text-verone-white transition-colors duration-[180ms] ease-editorial hover:text-verone-or"
                 >
