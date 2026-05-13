@@ -10,6 +10,7 @@ import {
 import { toast } from 'sonner';
 
 import { useCataloguePage } from './use-catalogue-page';
+import { useTogglePublishCatalogue } from './use-toggle-publish-catalogue';
 import { CatalogueHeader } from './CatalogueHeader';
 import { CatalogueSavedViews } from './CatalogueSavedViews';
 import { CatalogueTabs } from './CatalogueTabs';
@@ -29,6 +30,8 @@ import { QuickEditDimensionsDialog } from './modals/QuickEditDimensionsDialog';
 
 export default function CataloguePage() {
   const ctx = useCataloguePage();
+  const { togglePublish, pendingIds: publishPendingIds } =
+    useTogglePublishCatalogue();
 
   // Early returns for initial load and error
   if (ctx.loading && ctx.products.length === 0) {
@@ -197,6 +200,8 @@ export default function CataloguePage() {
                   onToggleAll={() =>
                     ctx.bulkSelection.toggleAll(currentProducts)
                   }
+                  onTogglePublish={togglePublish}
+                  publishPendingIds={publishPendingIds}
                 />
               )}
 

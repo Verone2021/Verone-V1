@@ -39,6 +39,7 @@ const EMPTY_FILTERS: Filters = {
   conditions: [],
   completionLevels: [],
   internalBrandIds: [],
+  publicationStatus: [],
 };
 
 const SYSTEM_VIEWS: SavedView[] = [
@@ -51,7 +52,19 @@ const SYSTEM_VIEWS: SavedView[] = [
     filters: {
       ...EMPTY_FILTERS,
       statuses: ['active'],
-      completionLevels: ['high'],
+      publicationStatus: ['unpublished'],
+    },
+    system: true,
+  },
+  {
+    id: 'sys-published',
+    label: 'Publiés en ligne',
+    description: 'Produits actuellement visibles sur le site Vérone',
+    emoji: '✅',
+    tab: 'active',
+    filters: {
+      ...EMPTY_FILTERS,
+      publicationStatus: ['published'],
     },
     system: true,
   },
@@ -81,8 +94,8 @@ const SYSTEM_VIEWS: SavedView[] = [
   },
   {
     id: 'sys-low-margin',
-    label: 'Marge faible',
-    description: 'Produits actifs avec une marge < 50%',
+    label: 'Complétude faible',
+    description: 'Produits actifs avec une fiche < 80% complète',
     emoji: '📉',
     tab: 'active',
     filters: {

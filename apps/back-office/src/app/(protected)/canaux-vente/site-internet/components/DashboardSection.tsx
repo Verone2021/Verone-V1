@@ -13,7 +13,6 @@ import {
 
 import { useSiteInternetCollections } from '../hooks/use-site-internet-collections';
 import { useSiteInternetDashboard } from '../hooks/use-site-internet-dashboard';
-import { useSiteInternetProducts } from '../hooks/use-site-internet-products';
 
 interface DashboardSectionProps {
   onNavigate: (tab: string) => void;
@@ -49,13 +48,15 @@ function formatCurrency(amount: number): string {
 }
 
 export function DashboardSection({ onNavigate }: DashboardSectionProps) {
-  const { data: products } = useSiteInternetProducts();
+  // BO-PUBLICATION-001 — KPIs publiés/non-publiés depuis le hook dashboard
+  // (vrais comptes Supabase sur products.is_published_online + product_status)
+  // au lieu de filtrer les produits du canal site-internet.
   const { data: collections } = useSiteInternetCollections();
   const { kpis, isLoading } = useSiteInternetDashboard();
 
-  const publishedCount = products?.filter(p => p.is_published).length ?? 0;
-  const totalCount = products?.length ?? 0;
-  const unpublishedCount = totalCount - publishedCount;
+  const publishedCount = kpis?.productsPublishedCount ?? 0;
+  const totalCount = kpis?.productsActiveCount ?? 0;
+  const unpublishedCount = kpis?.productsUnpublishedCount ?? 0;
   const activeCollections = collections?.filter(c => c.is_active).length ?? 0;
 
   return (

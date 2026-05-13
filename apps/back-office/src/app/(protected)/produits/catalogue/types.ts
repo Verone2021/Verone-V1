@@ -31,4 +31,6 @@ export interface Filters {
   completionLevels: string[];
   /** Filtre marque interne (Vérone/Boêmia/Solar/Flos). Pré-rempli depuis useActiveBrand (BrandSwitcher header). */
   internalBrandIds: string[];
+  /** Filtre publication site internet — 'published' = is_published_online=true, 'unpublished' = false/null */
+  publicationStatus: ('published' | 'unpublished')[];
 }

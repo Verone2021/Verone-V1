@@ -5,7 +5,7 @@ import { memo, useCallback } from 'react';
 import type { Product } from '@verone/categories';
 import { useProductImages } from '@verone/products';
 import type { QuickEditField } from '@verone/products';
-import { Badge, Checkbox, CloudflareImage } from '@verone/ui';
+import { Badge, Checkbox, CloudflareImage, Switch } from '@verone/ui';
 import type { Database } from '@verone/types';
 import { cn } from '@verone/utils';
 import { Package, Pencil } from 'lucide-react';
@@ -28,6 +28,11 @@ interface ProductRowProps {
   selectable?: boolean;
   selected?: boolean;
   onToggleSelect?: (productId: string) => void;
+  onTogglePublish?: (
+    productId: string,
+    nextPublished: boolean
+  ) => Promise<boolean>;
+  isPublishPending?: boolean;
 }
 
 export const ProductRow = memo(function ProductRow({
@@ -38,6 +43,8 @@ export const ProductRow = memo(function ProductRow({
   selectable = false,
   selected = false,
   onToggleSelect,
+  onTogglePublish,
+  isPublishPending = false,
 }: ProductRowProps) {
   const { primaryImage: fetchedImage, loading: imageLoading } =
     useProductImages({
@@ -266,6 +273,29 @@ export const ProductRow = memo(function ProductRow({
             {product.completion_percentage ?? 0}%
           </span>
         </div>
+      </td>
+
+      <td
+        className="py-2 px-2 text-center hidden lg:table-cell"
+        onClick={e => e.stopPropagation()}
+      >
+        <Switch
+          checked={product.is_published_online === true}
+          onCheckedChange={checked => {
+            if (onTogglePublish) {
+              void onTogglePublish(product.id, checked).catch(err => {
+                console.error('[ProductRow] togglePublish failed:', err);
+              });
+            }
+          }}
+          disabled={isPublishPending || !onTogglePublish}
+          aria-label={
+            product.is_published_online
+              ? 'Dépublier du site'
+              : 'Publier sur le site'
+          }
+          className="data-[state=checked]:bg-green-500"
+        />
       </td>
 
       <td className="py-2 px-2">
