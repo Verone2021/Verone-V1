@@ -48,6 +48,7 @@ export interface Product {
     name: string;
   };
   has_images?: boolean;
+  is_published_online?: boolean | null;
   stock_real?: number;
   min_stock?: number;
   stock_quantity?: number;

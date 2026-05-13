@@ -1,12 +1,13 @@
 /**
  * Page « Pour les créateurs » - LinkMe
  *
- * Landing persona créateurs de contenu (Instagram, TikTok, YouTube,
- * newsletters). Positionnement : monétiser son audience avec les
- * marques que tu choisis, sans stock ni logistique.
+ * Landing persona créateurs de contenu.
+ * Positionnement : ambassadeur de marque avec une vraie marge.
+ * Keyword cible : "ambassadeur de marque"
  *
  * @module PourLesCreateursPage
  * @since 2026-05-13
+ * @updated 2026-05-13 - LM-PUB-002 : réécriture contenu V2, SSG forcé
  */
 
 import Link from 'next/link';
@@ -15,23 +16,25 @@ import {
   ArrowRight,
   CheckCircle2,
   LayoutGrid,
-  Sparkles,
   SlidersHorizontal,
   Share2,
-  Wallet,
-  Tag,
-  Coins,
+  X,
 } from 'lucide-react';
 import type { Metadata } from 'next';
 
+export const dynamic = 'force-static';
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
-  title: 'Monétise ton audience avec les marques que tu choisis',
+  title:
+    'LinkMe pour les créateurs — Ambassadeur de marque avec une vraie marge',
   description:
-    'Fini les 2 % Amazon. Avec LinkMe, tu choisis tes marques, tu fixes ta marge, tu touches une vraie commission. Accès sur demande.',
+    'LinkMe te donne accès à un catalogue de marques sélectionnées. Tu fixes ta marge, tu partages ta sélection. Commission réelle sur chaque vente.',
   openGraph: {
-    title: 'Monétise ton audience avec les marques que tu choisis — LinkMe',
+    title:
+      'LinkMe pour les créateurs — Ambassadeur de marque avec une vraie marge',
     description:
-      'Catalogue multi-marques (déco, éclairage, végétal, électronique). Marge libre. Aucun stock à gérer.',
+      'LinkMe te donne accès à un catalogue de marques sélectionnées. Tu fixes ta marge, tu partages ta sélection. Commission réelle sur chaque vente.',
     url: '/pour-les-createurs',
   },
   alternates: {
@@ -39,77 +42,83 @@ export const metadata: Metadata = {
   },
 };
 
-const ELIGIBILITY = [
-  'Tu animes une audience entre 1 000 et 50 000 abonnés (Instagram, TikTok, YouTube, newsletter, blog).',
-  'Tu publies du contenu lifestyle, déco, tech, mode, cuisine, bien-être ou voyage.',
-  'Tu produis du contenu régulièrement (au moins 2 publications par mois).',
-  "Tu n'as pas envie de gérer du stock, de l'expédition ou du service client.",
-];
-
 const STEPS = [
   {
     number: '01',
     icon: LayoutGrid,
-    title: 'Parcours le catalogue',
+    title: 'Parcours le catalogue multi-marques',
     description:
-      'Accède aux produits de toutes les marques sélectionnées sur LinkMe — déco, éclairage, végétal, électronique et plus.',
+      'Choisis tes produits dans le catalogue multi-marques — déco, éclairage, végétal, électronique et plus.',
     color: '#5DBEBB',
     bgGradient: 'from-[#5DBEBB]/10 to-[#5DBEBB]/5',
   },
   {
     number: '02',
-    icon: Sparkles,
-    title: 'Crée ta sélection',
+    icon: SlidersHorizontal,
+    title: 'Configure ta marge produit par produit',
     description:
-      'Compose une ou plusieurs sélections cohérentes avec ton audience. Chaque sélection a son propre lien partageable.',
+      "Pour chaque produit de ta sélection, fixe ton prix de vente dans la fourchette autorisée. Le système feux tricolores te guide : vert pour vendre vite, orange pour l'équilibre, rouge pour maximiser ta marge unitaire.",
     color: '#7E84C0',
     bgGradient: 'from-[#7E84C0]/10 to-[#7E84C0]/5',
   },
   {
     number: '03',
-    icon: SlidersHorizontal,
-    title: 'Configure ta marge',
+    icon: Share2,
+    title: 'Partage ta sélection à ton audience',
     description:
-      'Pour chaque produit, tu fixes la marge que tu veux ajouter au prix base fournisseur. Le feu tricolore te guide.',
+      'Touche ta commission sur chaque vente générée via ton lien. Tracée en temps réel dans ton dashboard.',
     color: '#3976BB',
     bgGradient: 'from-[#3976BB]/10 to-[#3976BB]/5',
   },
+];
+
+const COMPARISON_ROWS = [
   {
-    number: '04',
-    icon: Share2,
-    title: 'Partage ton lien',
-    description:
-      'Stories, posts, bio, newsletter, vidéos. Ton lien est unique et traçable. Tu touches ta marge sur chaque commande.',
-    color: '#5DBEBB',
-    bgGradient: 'from-[#5DBEBB]/10 to-[#5DBEBB]/5',
+    label: 'Commission',
+    linkme: 'Marge que tu configures',
+    amazon: '1–3 % fixe',
+  },
+  {
+    label: 'Catalogue',
+    linkme: 'Marques sélectionnées',
+    amazon: '350 M produits génériques',
+  },
+  {
+    label: 'Image',
+    linkme: 'Ta sélection, ton univers',
+    amazon: 'Page Amazon',
+  },
+  {
+    label: 'Accès',
+    linkme: 'Sur demande (réseau qualitatif)',
+    amazon: 'Ouvert à tous',
   },
 ];
 
-const EARNINGS_EXAMPLES = [
+const FAQ_ITEMS = [
   {
-    icon: Tag,
-    productLabel: 'Lampe d’ambiance — base 80 €',
-    margin: '+25 %',
-    yourEarning: '20 €',
-    color: '#5DBEBB',
+    q: "C'est quoi la différence avec un programme d'affiliation classique ?",
+    a: 'Avec un programme classique, ta commission est fixée par la marque — souvent entre 1 et 5 %. Avec LinkMe, tu fixes toi-même ta marge sur chaque produit, dans une fourchette autorisée. Tu travailles avec plusieurs marques depuis un seul endroit, et tu gardes une image cohérente au lieu de renvoyer vers des pages Amazon ou Zalando.',
   },
   {
-    icon: Coins,
-    productLabel: 'Table basse — base 280 €',
-    margin: '+18 %',
-    yourEarning: '50 €',
-    color: '#7E84C0',
+    q: 'Combien puis-je gagner comme ambassadeur LinkMe ?',
+    a: "Ça dépend de ta marge configurée et du volume de ventes que tu génères. Les ambassadeurs actifs touchent entre 15 % et 35 % sur chaque produit vendu. Sur une lampe à 120 € avec une marge de 25 %, tu touches 30 €. Sur 10 ventes par mois, c'est 300 €. Tu vois ton gain estimé en temps réel avant de publier.",
   },
   {
-    icon: Wallet,
-    productLabel: 'Enceinte connectée — base 195 €',
-    margin: '+30 %',
-    yourEarning: '58 €',
-    color: '#3976BB',
+    q: "Est-ce qu'il faut un minimum d'abonnés ?",
+    a: "Non. On ne regarde pas le nombre d'abonnés mais la qualité et la cohérence de ton audience. Un créateur avec 2 000 abonnés très engagés sur la déco convertit souvent mieux qu'un compte généraliste à 50 000. On regarde ton profil, tes contenus, ton univers.",
+  },
+  {
+    q: 'Qui gère les commandes et les livraisons ?',
+    a: 'LinkMe gère tout de A à Z : commandes, expéditions, service client, retours, facturation. Toi, tu te concentres sur la recommandation. Tu ne vois jamais un colis, tu ne réponds jamais à un client mécontent.',
+  },
+  {
+    q: 'Comment je reçois mes commissions ?',
+    a: 'Tes commissions sont versées directement sur ton compte bancaire, à un rythme régulier (mensuel par défaut). Tu reçois un récapitulatif clair de tes ventes et commissions, prêt pour ta comptabilité. Aucune facture à produire, aucune relance.',
   },
 ];
 
-export default function PourLesCreateursPage(): JSX.Element {
+export default function PourLesCreateursPage() {
   return (
     <>
       {/* Hero */}
@@ -123,17 +132,11 @@ export default function PourLesCreateursPage(): JSX.Element {
             </span>
           </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#183559] leading-tight">
-            Monétise ton audience avec{' '}
+            Recommande les bonnes marques.{' '}
             <span className="bg-gradient-to-r from-[#5DBEBB] via-[#7E84C0] to-[#3976BB] bg-clip-text text-transparent">
-              les marques que tu choisis
+              Encaisse vraiment.
             </span>
-            .
           </h1>
-          <p className="mt-6 text-lg text-[#183559]/70 max-w-2xl mx-auto">
-            Fini les 2 % Amazon. Tu sélectionnes des produits dans un catalogue
-            multi-marques, tu fixes ta marge, tu touches une vraie commission
-            sur chaque vente. Sans stock, sans logistique.
-          </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/contact"
@@ -152,48 +155,81 @@ export default function PourLesCreateursPage(): JSX.Element {
         </div>
       </section>
 
-      {/* Eligibility */}
+      {/* Douleur */}
       <section className="py-16 lg:py-24 bg-gray-50/50">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#183559]">
-              Tu corresponds si…
-            </h2>
-            <p className="mt-4 text-lg text-[#183559]/60 max-w-2xl mx-auto">
-              LinkMe sélectionne ses ambassadeurs. Voici les critères qu&apos;on
-              regarde quand tu fais ta demande.
-            </p>
-          </div>
-          <ul className="grid md:grid-cols-2 gap-4">
-            {ELIGIBILITY.map(item => (
-              <li
-                key={item}
-                className="flex items-start gap-3 bg-white rounded-xl p-5 border border-gray-100"
-              >
-                <CheckCircle2 className="h-5 w-5 text-[#5DBEBB] mt-0.5 flex-shrink-0" />
-                <span className="text-[#183559]/80">{item}</span>
-              </li>
-            ))}
-          </ul>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-xl sm:text-2xl font-medium text-[#183559] leading-relaxed">
+            Tu envoies des liens Amazon à 2&nbsp;% de commission.
+            <br />
+            <span className="text-[#183559]/60">
+              Ton audience mérite mieux. Toi aussi.
+            </span>
+          </p>
         </div>
       </section>
 
-      {/* How it works */}
+      {/* Différenciation — tableau */}
       <section className="py-16 lg:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#183559]">
+              LinkMe vs Amazon Affiliation
+            </h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="text-left py-3 px-4 font-semibold text-[#183559]/50 w-1/3" />
+                  <th className="text-center py-3 px-4 font-semibold text-[#5DBEBB]">
+                    LinkMe
+                  </th>
+                  <th className="text-center py-3 px-4 font-semibold text-[#183559]/40">
+                    Amazon Affiliation
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {COMPARISON_ROWS.map((row, i) => (
+                  <tr
+                    key={row.label}
+                    className={i % 2 === 0 ? 'bg-gray-50/40' : 'bg-white'}
+                  >
+                    <td className="py-4 px-4 font-medium text-[#183559]">
+                      {row.label}
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      <span className="inline-flex items-center gap-1.5 text-[#183559]/80">
+                        <CheckCircle2 className="h-4 w-4 text-[#5DBEBB] flex-shrink-0" />
+                        {row.linkme}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      <span className="inline-flex items-center gap-1.5 text-[#183559]/40">
+                        <X className="h-4 w-4 text-gray-300 flex-shrink-0" />
+                        {row.amazon}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      {/* Comment ça marche */}
+      <section className="py-16 lg:py-24 bg-gray-50/50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <span className="inline-block px-4 py-1.5 bg-[#5DBEBB]/10 rounded-full text-sm font-medium text-[#5DBEBB] mb-4">
-              4 étapes
+              3 étapes
             </span>
             <h2 className="text-3xl sm:text-4xl font-bold text-[#183559]">
               Comment ça marche
             </h2>
-            <p className="mt-4 text-lg text-[#183559]/60 max-w-2xl mx-auto">
-              De la première sélection à la première commission, tout est en
-              ligne et autonome.
-            </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
             {STEPS.map(step => (
               <div
                 key={step.number}
@@ -227,69 +263,54 @@ export default function PourLesCreateursPage(): JSX.Element {
         </div>
       </section>
 
-      {/* Earnings */}
-      <section className="py-16 lg:py-24 bg-gray-50/50">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#183559]">
-              Ce que tu touches concrètement
-            </h2>
-            <p className="mt-4 text-lg text-[#183559]/60 max-w-2xl mx-auto">
-              Tu fixes ta marge entre 15 % et 35 % selon le produit. Voici trois
-              exemples réalistes.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {EARNINGS_EXAMPLES.map(ex => (
-              <div
-                key={ex.productLabel}
-                className="bg-white rounded-2xl p-6 border border-gray-100 text-center"
-              >
-                <div
-                  className="w-12 h-12 mx-auto rounded-xl flex items-center justify-center mb-4"
-                  style={{ backgroundColor: `${ex.color}15` }}
-                >
-                  <ex.icon className="h-6 w-6" style={{ color: ex.color }} />
-                </div>
-                <p className="text-sm text-[#183559]/60 mb-2">
-                  {ex.productLabel}
-                </p>
-                <p className="text-xs text-[#183559]/40 mb-1">
-                  Marge configurée
-                </p>
-                <p
-                  className="text-lg font-semibold mb-3"
-                  style={{ color: ex.color }}
-                >
-                  {ex.margin}
-                </p>
-                <p className="text-xs text-[#183559]/40 mb-1">
-                  Tu touches par vente
-                </p>
-                <p className="text-3xl font-bold text-[#183559]">
-                  {ex.yourEarning}
-                </p>
-              </div>
-            ))}
-          </div>
-          <p className="text-center text-sm text-[#183559]/50 mt-8">
-            Les chiffres sont des exemples. La marge réelle dépend du produit et
-            de la marque choisie.
+      {/* Pour qui */}
+      <section className="py-16 lg:py-24 bg-white">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-[#183559] mb-6">
+            Pour qui ?
+          </h2>
+          <p className="text-lg text-[#183559]/70 leading-relaxed">
+            LinkMe est fait pour toi si tu crées du contenu autour de la maison,
+            la déco, le lifestyle — et que ton audience te fait confiance pour
+            ses choix produits.
           </p>
         </div>
       </section>
 
-      {/* Final CTA */}
+      {/* FAQ */}
+      <section className="py-16 lg:py-24 bg-gray-50/50">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#183559]">
+              Questions fréquentes
+            </h2>
+          </div>
+          <div className="space-y-3">
+            {FAQ_ITEMS.map(item => (
+              <details
+                key={item.q}
+                className="group bg-white rounded-xl border border-gray-100 open:shadow-sm"
+              >
+                <summary className="flex items-center justify-between cursor-pointer list-none p-5 font-semibold text-[#183559]">
+                  <span>{item.q}</span>
+                  <CheckCircle2 className="h-5 w-5 text-[#5DBEBB] flex-shrink-0 transition-transform group-open:rotate-45" />
+                </summary>
+                <p className="px-5 pb-5 text-sm text-[#183559]/70 leading-relaxed">
+                  {item.a}
+                </p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA final */}
       <section className="relative py-16 lg:py-24 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#183559] via-[#183559] to-[#3976BB]" />
         <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">
-            Prêt à monétiser ton audience pour de vrai ?
+            Ta prochaine recommandation mérite d&apos;être rémunérée.
           </h2>
-          <p className="mt-6 text-lg text-white/70 max-w-xl mx-auto">
-            Tu envoies ta demande. On regarde ton profil. On t&apos;ouvre
-            l&apos;accès au catalogue.
-          </p>
           <div className="mt-10">
             <Link
               href="/contact"

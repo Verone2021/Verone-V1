@@ -29,6 +29,7 @@ const NAV_ITEMS = [
   { label: 'Accueil', href: '/' },
   { label: 'Pour les créateurs', href: '/pour-les-createurs' },
   { label: 'Pour les pros', href: '/pour-les-pros' },
+  { label: 'Pour les enseignes', href: '/pour-les-enseignes' },
   { label: 'Comment ça marche', href: '/comment-ca-marche' },
   { label: 'À propos', href: '/about' },
   { label: 'Contact', href: '/contact' },

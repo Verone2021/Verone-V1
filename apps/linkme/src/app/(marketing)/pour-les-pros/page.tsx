@@ -2,12 +2,13 @@
  * Page « Pour les pros » - LinkMe
  *
  * Landing persona professionnels prescripteurs : architectes
- * d'intérieur, décorateurs, home stagers, coachs immobiliers,
- * stylistes. Positionnement : transformer chaque recommandation
- * client en commission, sans stock ni logistique.
+ * d'intérieur, décorateurs, stylistes, consultants HCR, agents immobiliers.
+ * Positionnement : commission sur les prescriptions.
+ * Keyword cible : "commission sur recommandation"
  *
  * @module PourLesProsPage
  * @since 2026-05-13
+ * @updated 2026-05-13 - LM-PUB-002 : réécriture contenu V2, SSG forcé
  */
 
 import Link from 'next/link';
@@ -15,25 +16,23 @@ import Link from 'next/link';
 import {
   ArrowRight,
   CheckCircle2,
-  Compass,
-  Palette,
-  Home,
-  Briefcase,
-  Camera,
-  X,
-  ShieldCheck,
+  LayoutGrid,
+  SlidersHorizontal,
+  Share2,
 } from 'lucide-react';
 import type { Metadata } from 'next';
 
+export const dynamic = 'force-static';
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
-  title: 'Architectes, décorateurs, prescripteurs — touchez une commission',
+  title: 'LinkMe pour les professionnels — Commission sur vos prescriptions',
   description:
-    'Vous recommandez déjà des produits à vos clients. Transformez chaque recommandation en revenu avec LinkMe. Sans stock, sans logistique.',
+    'Architectes, décorateurs, consultants — transformez chaque recommandation client en commission. Catalogue multi-marques, marge libre, zéro logistique.',
   openGraph: {
-    title:
-      'Architectes, décorateurs, prescripteurs — touchez une commission — LinkMe',
+    title: 'LinkMe pour les professionnels — Commission sur vos prescriptions',
     description:
-      'Catalogue multi-marques, marge libre, commission claire. Votre client commande, vous touchez votre marge.',
+      'Architectes, décorateurs, consultants — transformez chaque recommandation client en commission. Catalogue multi-marques, marge libre, zéro logistique.',
     url: '/pour-les-pros',
   },
   alternates: {
@@ -41,116 +40,81 @@ export const metadata: Metadata = {
   },
 };
 
-const PERSONAS = [
-  {
-    icon: Compass,
-    title: "Architecte d'intérieur",
-    description:
-      'Tu prescris des produits dans tes projets. Touche une commission au lieu de simplement renvoyer vers une marque.',
-    color: '#5DBEBB',
-  },
-  {
-    icon: Palette,
-    title: 'Décorateur',
-    description:
-      'Tes clients te demandent où acheter ce que tu choisis. Donne-leur un lien, garde une marge.',
-    color: '#7E84C0',
-  },
-  {
-    icon: Home,
-    title: 'Home stager',
-    description:
-      'Tu équipes des biens en vente ou en location. Transforme tes choix en revenu récurrent.',
-    color: '#3976BB',
-  },
-  {
-    icon: Briefcase,
-    title: 'Coach immobilier',
-    description:
-      'Tu accompagnes des acheteurs sur la décoration et l’aménagement. Monétise tes recommandations.',
-    color: '#5DBEBB',
-  },
-  {
-    icon: Camera,
-    title: 'Styliste / set designer',
-    description:
-      'Tu sources du mobilier et de la déco pour des shootings. Réutilise tes choix pour gagner sur chaque vente.',
-    color: '#7E84C0',
-  },
-];
-
 const STEPS = [
   {
     number: '01',
-    title: 'Accès au catalogue',
+    icon: LayoutGrid,
+    title: 'Accède au catalogue multi-marques',
     description:
-      'On valide ton profil pro et on t’ouvre le catalogue multi-marques. Tu vois les prix base fournisseur et les marges possibles.',
+      "On valide ton profil pro et on t'ouvre le catalogue multi-marques — déco, éclairage, végétal, électronique et plus. Tu vois les prix base fournisseur et les marges possibles.",
     color: '#5DBEBB',
+    bgGradient: 'from-[#5DBEBB]/10 to-[#5DBEBB]/5',
   },
   {
     number: '02',
-    title: 'Recommandation client',
+    icon: SlidersHorizontal,
+    title: 'Crée une sélection par projet ou client',
     description:
-      'Tu identifies les produits que tu veux conseiller. Tu crées une sélection par projet ou par client.',
+      'Tu identifies les produits que tu veux conseiller. Tu crées une sélection adaptée à chaque projet. Ton client reçoit son lien dans le livrable.',
     color: '#7E84C0',
+    bgGradient: 'from-[#7E84C0]/10 to-[#7E84C0]/5',
   },
   {
     number: '03',
-    title: 'Commande via ton lien',
+    icon: Share2,
+    title: 'Ton client commande, tu encaisses',
     description:
-      "Ton client passe commande via le lien que tu lui as envoyé. Tu n'avances pas un centime, tu ne gères pas l'expédition.",
+      "Ton client passe commande via le lien que tu lui as envoyé. Tu n'avances pas un centime, tu ne gères pas l'expédition. Ta commission arrive directement sur ton compte.",
     color: '#3976BB',
+    bgGradient: 'from-[#3976BB]/10 to-[#3976BB]/5',
+  },
+];
+
+const FOR_WHO = [
+  "Architectes d'intérieur",
+  'Décorateurs',
+  'Stylistes',
+  'Consultants hôtels-cafés-restaurants',
+  'Agents immobiliers',
+  'Tout professionnel qui prescrit des produits à ses clients',
+];
+
+const FAQ_ITEMS = [
+  {
+    q: "Est-ce que mes clients voient que j'utilise LinkMe ?",
+    a: "Non, sauf si tu le mentionnes toi-même. La page de sélection porte ton nom et ton univers. Le client voit ta sélection, pas la plateforme qui l'héberge. Tu restes la référence, LinkMe est invisible.",
   },
   {
-    number: '04',
-    title: 'Commission',
-    description:
-      'Tu reçois ta marge sur chaque commande, virée directement sur ton compte. Tracé, transparent, sans paperasse.',
-    color: '#5DBEBB',
+    q: 'Puis-je créer une sélection différente par projet ou client ?',
+    a: "Oui, c'est fait pour ça. Tu crées autant de sélections que tu as de projets ou de clients. Chaque sélection a son propre lien, sa propre mise en page, ses propres produits et marges. Tout est indépendant.",
+  },
+  {
+    q: "Qu'est-ce qui se passe si mon client retourne un produit ?",
+    a: "Le retour est géré par LinkMe, pas par toi. Ta commission n'est versée que sur les commandes effectivement livrées et non retournées dans le délai légal. Tu n'as aucune démarche à faire.",
+  },
+  {
+    q: 'Y a-t-il un engagement minimum ou un abonnement ?',
+    a: "Non. L'accès est gratuit. Aucun abonnement, aucun minimum de ventes, aucun engagement de durée. Tu utilises LinkMe quand tu en as besoin, tu ne paies rien sinon.",
+  },
+  {
+    q: 'Comment est-ce que je justifie la commission auprès de mes clients ?',
+    a: "La plupart du temps, tu n'as pas à le justifier — ton client paie le prix que tu as fixé, et la commission est incluse. Si tu préfères la transparence, tu peux simplement expliquer que tu travailles avec une plateforme multi-marques qui gère la logistique. Certains pros en font même un argument : ils offrent un service complet (sélection + commande + livraison) sans frais supplémentaires pour le client.",
   },
 ];
 
-const COMPARISON_TRADITIONAL = [
-  'Remise négociée à la tête du client',
-  'Conditions floues, qui change selon la marque',
-  'Versée à l’occasion, parfois en différé',
-  'Souvent invisible pour ton client',
-  'Tu deviens dépendant d’une seule marque',
-];
-
-const COMPARISON_LINKME = [
-  'Marge claire, configurée par toi, produit par produit',
-  'Conditions identiques sur tout le catalogue',
-  'Commission virée automatiquement à chaque vente',
-  'Ton client voit le prix final, rien de caché',
-  'Tu travailles avec plusieurs marques en parallèle',
-];
-
-export default function PourLesProsPage(): JSX.Element {
+export default function PourLesProsPage() {
   return (
     <>
       {/* Hero */}
       <section className="relative pt-24 pb-16 lg:pt-32 lg:pb-24 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#3976BB]/10 via-white to-[#7E84C0]/5" />
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#7E84C0]/10 rounded-full mb-6">
-            <span className="w-2 h-2 bg-[#7E84C0] rounded-full animate-pulse" />
-            <span className="text-sm font-medium text-[#7E84C0]">
-              Accès sur demande
-            </span>
-          </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#183559] leading-tight">
-            Transforme chaque{' '}
+            Vos prescriptions ont toujours eu de la valeur.{' '}
             <span className="bg-gradient-to-r from-[#5DBEBB] via-[#7E84C0] to-[#3976BB] bg-clip-text text-transparent">
-              recommandation en revenu
+              Maintenant elles ont un prix.
             </span>
-            .
           </h1>
-          <p className="mt-6 text-lg text-[#183559]/70 max-w-2xl mx-auto">
-            Tu conseilles déjà des produits à tes clients. Avec LinkMe, chaque
-            recommandation devient une commission claire — sur un catalogue
-            multi-marques, sans stock à gérer ni logistique à porter.
-          </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/contact"
@@ -169,147 +133,139 @@ export default function PourLesProsPage(): JSX.Element {
         </div>
       </section>
 
-      {/* Pour qui */}
+      {/* Douleur */}
+      <section className="py-16 lg:py-24 bg-gray-50/50">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-xl sm:text-2xl font-medium text-[#183559] leading-relaxed">
+            Architectes, décorateurs, consultants HCR — tu passes des heures à
+            sourcer les bons produits pour tes clients.
+            <br />
+            <span className="text-[#183559]/60">
+              Ils achètent ailleurs. Tu n&apos;en vois pas la couleur.
+            </span>
+          </p>
+        </div>
+      </section>
+
+      {/* Cas d'usage */}
+      <section className="py-16 lg:py-24 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-gradient-to-br from-[#183559] to-[#3976BB] rounded-2xl p-8 lg:p-10 text-white">
+            <h2 className="text-2xl font-bold mb-4">Un exemple concret</h2>
+            <p className="text-white/80 text-lg leading-relaxed">
+              Un architecte d&apos;intérieur travaille sur 5&nbsp;projets
+              simultanément. Pour chaque projet, il crée une sélection LinkMe
+              des produits qu&apos;il recommande. Son client reçoit le lien dans
+              le livrable. Il commande. L&apos;architecte touche sa commission.
+              Sans gérer stock ni livraison.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Comment ça marche */}
       <section className="py-16 lg:py-24 bg-gray-50/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
+            <span className="inline-block px-4 py-1.5 bg-[#5DBEBB]/10 rounded-full text-sm font-medium text-[#5DBEBB] mb-4">
+              3 étapes
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#183559]">
+              Comment ça marche
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {STEPS.map(step => (
+              <div
+                key={step.number}
+                className="relative bg-white rounded-2xl p-6 border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-300"
+              >
+                <div className="flex items-center gap-4 mb-4">
+                  <div
+                    className={`w-12 h-12 rounded-xl bg-gradient-to-br ${step.bgGradient} flex items-center justify-center`}
+                  >
+                    <step.icon
+                      className="h-6 w-6"
+                      style={{ color: step.color }}
+                    />
+                  </div>
+                  <span
+                    className="text-3xl font-bold"
+                    style={{ color: `${step.color}30` }}
+                  >
+                    {step.number}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-[#183559] mb-2">
+                  {step.title}
+                </h3>
+                <p className="text-sm text-[#183559]/60 leading-relaxed">
+                  {step.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pour qui */}
+      <section className="py-16 lg:py-24 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
             <h2 className="text-3xl sm:text-4xl font-bold text-[#183559]">
               Pour qui ?
             </h2>
-            <p className="mt-4 text-lg text-[#183559]/60 max-w-2xl mx-auto">
-              Si tu prescris du produit physique dans ton activité, LinkMe est
-              pour toi.
-            </p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-5">
-            {PERSONAS.map(p => (
-              <div
-                key={p.title}
-                className="bg-white rounded-2xl p-5 border border-gray-100 hover:shadow-md transition-shadow"
+          <ul className="grid sm:grid-cols-2 gap-4">
+            {FOR_WHO.map(item => (
+              <li
+                key={item}
+                className="flex items-start gap-3 bg-gray-50/60 rounded-xl p-4"
               >
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
-                  style={{ backgroundColor: `${p.color}15` }}
-                >
-                  <p.icon className="h-6 w-6" style={{ color: p.color }} />
-                </div>
-                <h3 className="text-base font-semibold text-[#183559] mb-2">
-                  {p.title}
-                </h3>
-                <p className="text-sm text-[#183559]/60 leading-relaxed">
-                  {p.description}
-                </p>
-              </div>
+                <CheckCircle2 className="h-5 w-5 text-[#5DBEBB] mt-0.5 flex-shrink-0" />
+                <span className="text-[#183559]/80">{item}</span>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
 
-      {/* Comment ça fonctionne pour un pro */}
-      <section className="py-16 lg:py-24 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#183559]">
-              Comment ça fonctionne pour un pro
-            </h2>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {STEPS.map(s => (
-              <div
-                key={s.number}
-                className="relative bg-white rounded-2xl p-6 border border-gray-100"
-              >
-                <span
-                  className="text-4xl font-bold absolute top-4 right-5"
-                  style={{ color: `${s.color}30` }}
-                >
-                  {s.number}
-                </span>
-                <h3 className="text-lg font-bold text-[#183559] mb-2 pr-10">
-                  {s.title}
-                </h3>
-                <p className="text-sm text-[#183559]/60 leading-relaxed">
-                  {s.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Comparatif */}
+      {/* FAQ */}
       <section className="py-16 lg:py-24 bg-gray-50/50">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
             <h2 className="text-3xl sm:text-4xl font-bold text-[#183559]">
-              La différence avec les remises fournisseurs habituelles
+              Questions fréquentes
             </h2>
-            <p className="mt-4 text-lg text-[#183559]/60 max-w-2xl mx-auto">
-              On compare franchement. Les remises fournisseurs traditionnelles
-              ont leurs avantages — mais pas tous.
-            </p>
           </div>
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Traditionnel */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                  <X className="h-5 w-5 text-gray-500" />
-                </div>
-                <h3 className="text-lg font-bold text-[#183559]">
-                  Remise fournisseur classique
-                </h3>
-              </div>
-              <ul className="space-y-3">
-                {COMPARISON_TRADITIONAL.map(item => (
-                  <li
-                    key={item}
-                    className="flex items-start gap-3 text-sm text-[#183559]/70"
-                  >
-                    <X className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* LinkMe */}
-            <div className="bg-white rounded-2xl p-6 border-2 border-[#5DBEBB]/40 shadow-md">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-10 rounded-lg bg-[#5DBEBB]/15 flex items-center justify-center">
-                  <ShieldCheck className="h-5 w-5 text-[#5DBEBB]" />
-                </div>
-                <h3 className="text-lg font-bold text-[#183559]">
-                  Avec LinkMe
-                </h3>
-              </div>
-              <ul className="space-y-3">
-                {COMPARISON_LINKME.map(item => (
-                  <li
-                    key={item}
-                    className="flex items-start gap-3 text-sm text-[#183559]/80"
-                  >
-                    <CheckCircle2 className="h-4 w-4 text-[#5DBEBB] mt-0.5 flex-shrink-0" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <div className="space-y-3">
+            {FAQ_ITEMS.map(item => (
+              <details
+                key={item.q}
+                className="group bg-white rounded-xl border border-gray-100 open:shadow-sm"
+              >
+                <summary className="flex items-center justify-between cursor-pointer list-none p-5 font-semibold text-[#183559]">
+                  <span>{item.q}</span>
+                  <CheckCircle2 className="h-5 w-5 text-[#5DBEBB] flex-shrink-0 transition-transform group-open:rotate-45" />
+                </summary>
+                <p className="px-5 pb-5 text-sm text-[#183559]/70 leading-relaxed">
+                  {item.a}
+                </p>
+              </details>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Final CTA */}
+      {/* CTA final */}
       <section className="relative py-16 lg:py-24 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#183559] via-[#183559] to-[#3976BB]" />
         <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">
-            Tu prescris déjà. Désormais, tu gagnes aussi.
+            Tes conseils génèrent déjà des ventes.
+            <br />
+            Commence à en voir la couleur.
           </h2>
-          <p className="mt-6 text-lg text-white/70 max-w-xl mx-auto">
-            On regarde ton profil pro, on t&apos;ouvre l&apos;accès au catalogue
-            multi-marques. Tu commences à recommander en touchant ta commission.
-          </p>
           <div className="mt-10">
             <Link
               href="/contact"

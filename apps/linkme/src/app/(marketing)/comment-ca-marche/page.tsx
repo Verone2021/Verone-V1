@@ -1,37 +1,37 @@
 /**
  * Page « Comment ça marche » - LinkMe
  *
- * Explication détaillée du fonctionnement de LinkMe en 3 étapes,
- * du feu tricolore, des commandes / paiement et de ce que LinkMe
- * prend en charge pour l'ambassadeur. Aucune mention de marque.
+ * Explication du fonctionnement de LinkMe en 3 étapes,
+ * feu tricolore, encart réseau, FAQ.
+ * Keyword cible : "affiliation sans stock comment ça marche"
  *
  * @module CommentCaMarchePage
  * @since 2026-05-13
+ * @updated 2026-05-13 - LM-PUB-002 : réécriture contenu V2, SSG forcé
  */
 
 import Link from 'next/link';
 
 import {
   ArrowRight,
+  CheckCircle2,
   LayoutGrid,
   SlidersHorizontal,
   Share2,
-  Truck,
-  Headphones,
-  FileText,
-  CreditCard,
-  CheckCircle2,
 } from 'lucide-react';
 import type { Metadata } from 'next';
 
+export const dynamic = 'force-static';
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
-  title: 'Comment fonctionne LinkMe — Affiliation produit physique',
+  title: 'Comment fonctionne LinkMe — Affiliation sans stock en 3 étapes',
   description:
-    'Catalogue multi-marques, marge configurable, lien partageable. Voilà comment LinkMe fonctionne en 3 étapes.',
+    'De la création de ta première sélection à ta première commission, LinkMe fonctionne en 3 étapes. Catalogue multi-marques, marge configurable, lien partageable.',
   openGraph: {
-    title: 'Comment fonctionne LinkMe — Affiliation produit physique',
+    title: 'Comment fonctionne LinkMe — Affiliation sans stock en 3 étapes',
     description:
-      'Tu choisis tes produits, tu fixes ta marge, tu partages ton lien. LinkMe gère la logistique, le service client, la facturation.',
+      'De la création de ta première sélection à ta première commission, LinkMe fonctionne en 3 étapes. Catalogue multi-marques, marge configurable, lien partageable.',
     url: '/comment-ca-marche',
   },
   alternates: {
@@ -43,79 +43,56 @@ const MAIN_STEPS = [
   {
     number: '01',
     icon: LayoutGrid,
-    title: 'Accède au catalogue',
+    title: 'Parcours le catalogue multi-marques',
     description:
-      "Une fois ton accès validé, tu vois l'intégralité du catalogue multi-marques. Chaque produit a son prix base fournisseur, ses visuels prêts à l'emploi et sa fiche détaillée.",
+      'Explore les produits de toutes les marques sélectionnées sur LinkMe — déco, éclairage, végétal, électronique et plus. Sélectionne ceux qui correspondent à ton univers ou aux besoins de tes clients. Chaque produit a une fiche complète : visuels, description, prix de base fournisseur, marge maximale autorisée.',
     color: '#5DBEBB',
     bgGradient: 'from-[#5DBEBB]/10 to-[#5DBEBB]/5',
   },
   {
     number: '02',
     icon: SlidersHorizontal,
-    title: 'Configure ta marge',
+    title: 'Configure ta marge produit par produit',
     description:
-      'Pour chaque produit de ta sélection, tu fixes la marge que tu veux ajouter au prix base fournisseur. Notre feu tricolore te guide pour rester compétitif sans casser ta rentabilité.',
+      "Pour chaque produit de ta sélection, fixe ton prix de vente dans la fourchette autorisée. Le système feux tricolores te guide : vert pour vendre vite, orange pour l'équilibre, rouge pour maximiser ta marge unitaire. Tu décides. Pas de règle imposée.",
     color: '#7E84C0',
     bgGradient: 'from-[#7E84C0]/10 to-[#7E84C0]/5',
   },
   {
     number: '03',
     icon: Share2,
-    title: 'Partage et touche ta commission',
+    title: 'Partage ta sélection et encaisse',
     description:
-      'Ton lien est unique et traçable. Quand un client commande via ce lien, LinkMe gère la commande de A à Z et tu touches ta marge — automatiquement, sans facture à produire.',
+      'Ta sélection a son propre lien partageable. Diffuse-la à ton audience, tes clients, ton réseau. Chaque vente générée via ton lien te rapporte ta marge — tracée en temps réel dans ton dashboard.',
     color: '#3976BB',
     bgGradient: 'from-[#3976BB]/10 to-[#3976BB]/5',
   },
 ];
 
-const LINKME_HANDLES = [
+const FAQ_ITEMS = [
   {
-    icon: Truck,
-    title: 'Logistique',
-    description:
-      "Préparation, expédition, suivi de commande. Le client reçoit son produit sans que tu n'aies à intervenir.",
+    q: 'Qui gère les commandes et les livraisons ?',
+    a: "LinkMe gère tout de A à Z : commandes, expéditions, suivi de livraison, service client, retours, facturation. Tu n'avances pas un centime, tu ne gères jamais un colis, tu ne réponds pas à un client mécontent. Tu te concentres sur ta recommandation.",
   },
   {
-    icon: Headphones,
-    title: 'Service client',
-    description:
-      "Questions avant achat, suivi de commande, retours, SAV. L'équipe LinkMe gère, tu restes recommandeur, pas vendeur.",
+    q: 'Combien de temps pour créer ma première sélection ?',
+    a: "Moins d'une heure pour une première sélection de 5 à 10 produits. Tu parcours le catalogue, tu sélectionnes ce que tu veux, tu configures ta marge. Le lien est généré immédiatement. Tu peux le partager le jour même.",
   },
   {
-    icon: FileText,
-    title: 'Facturation',
-    description:
-      'Le client reçoit une facture conforme. Tu reçois un récapitulatif mensuel clair de tes commissions, prêt pour ta compta.',
+    q: 'Est-ce que je peux avoir plusieurs sélections ?',
+    a: 'Oui, autant que tu veux. Tu peux créer une sélection par thème, par saison, par projet client, par audience. Chaque sélection a son propre lien et ses propres statistiques. Certains ambassadeurs en gèrent une dizaine en parallèle.',
   },
   {
-    icon: CreditCard,
-    title: 'Paiement de ta commission',
-    description:
-      'Versement de ta marge directement sur ton compte bancaire, à un rythme régulier. Aucune relance, aucune paperasse.',
+    q: 'Comment je reçois mes paiements ?',
+    a: 'Tes commissions sont virées directement sur ton compte bancaire, à un rythme mensuel par défaut. Tu reçois un récapitulatif clair de tes ventes et commissions. Aucune facture à produire, aucune relance.',
+  },
+  {
+    q: "Qu'est-ce qui se passe si un produit est en rupture de stock ?",
+    a: "Le produit en rupture est automatiquement signalé dans ton tableau de bord et masqué dans ta sélection publique. Ton client ne voit pas un produit qu'il ne peut pas commander. Tu es notifié dès que le stock est réapprovisionné.",
   },
 ];
 
-const FAQ = [
-  {
-    q: 'Combien je touche par vente ?',
-    a: 'Tu fixes ta marge librement entre une fourchette minimale et maximale dépendant du produit. Concrètement, tu peux choisir entre 15 % et 35 % selon les marques et catégories. Tu vois ton gain estimé en temps réel.',
-  },
-  {
-    q: 'Je dois payer pour utiliser LinkMe ?',
-    a: 'Non. L’accès est gratuit pour l’ambassadeur. LinkMe se rémunère via une commission de 5 % calculée sur la vente, pas sur ta marge.',
-  },
-  {
-    q: 'Que se passe-t-il si un client retourne un produit ?',
-    a: "Le retour est géré par LinkMe. Ta commission n'est versée que sur les commandes effectivement livrées et non retournées dans le délai légal.",
-  },
-  {
-    q: 'Combien de temps pour avoir un accès ?',
-    a: "On regarde chaque demande individuellement, en général sous 5 jours ouvrés. On revient vers toi avec un OK et un onboarding express, ou on t'explique pourquoi ce n'est pas le moment.",
-  },
-];
-
-export default function CommentCaMarchePage(): JSX.Element {
+export default function CommentCaMarchePage() {
   return (
     <>
       {/* Hero */}
@@ -123,17 +100,13 @@ export default function CommentCaMarchePage(): JSX.Element {
         <div className="absolute inset-0 bg-gradient-to-br from-[#5DBEBB]/10 via-white to-[#3976BB]/5" />
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#183559] leading-tight">
-            Le fonctionnement de LinkMe en{' '}
+            Simple.{' '}
             <span className="bg-gradient-to-r from-[#5DBEBB] via-[#7E84C0] to-[#3976BB] bg-clip-text text-transparent">
-              3 étapes
+              En trois étapes.
             </span>
-            .
           </h1>
           <p className="mt-6 text-lg text-[#183559]/70 max-w-2xl mx-auto">
-            LinkMe est une marketplace d&apos;affiliation multi-marques. Tu
-            choisis tes produits dans un catalogue ouvert (déco, éclairage,
-            végétal, électronique et plus), tu fixes ta marge, tu partages ton
-            lien. LinkMe s&apos;occupe du reste.
+            De la création de ta première sélection à ta première commission.
           </p>
         </div>
       </section>
@@ -175,128 +148,26 @@ export default function CommentCaMarchePage(): JSX.Element {
         </div>
       </section>
 
-      {/* Feu tricolore */}
+      {/* Encart réseaux */}
       <section className="py-16 lg:py-24 bg-gray-50/50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#183559]">
-              Le feu tricolore
+          <div className="bg-gradient-to-br from-[#183559] to-[#3976BB] rounded-2xl p-8 lg:p-10 text-white text-center">
+            <h2 className="text-2xl font-bold mb-4">
+              Vous êtes une enseigne ou un réseau ?
             </h2>
-            <p className="mt-4 text-lg text-[#183559]/60 max-w-2xl mx-auto">
-              Pour chaque produit, on t&apos;affiche une jauge visuelle qui te
-              guide vers le bon équilibre prix-marché et marge.
+            <p className="text-white/80 text-lg leading-relaxed mb-8 max-w-2xl mx-auto">
+              Le fonctionnement est le même, à l&apos;échelle. La tête de réseau
+              configure le catalogue et les taux de commission. Chaque point de
+              vente reçoit son propre compte. Déploiement en moins d&apos;une
+              semaine.
             </p>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 border border-gray-100">
-            <div className="space-y-5">
-              <div className="flex items-start gap-4">
-                <span className="w-4 h-4 rounded-full bg-green-400 mt-1 flex-shrink-0" />
-                <div>
-                  <h3 className="font-semibold text-[#183559] mb-1">
-                    Zone verte — Compétitif
-                  </h3>
-                  <p className="text-sm text-[#183559]/60">
-                    Tu restes nettement sous le prix marché. Conversion
-                    optimale, volume au rendez-vous.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <span className="w-4 h-4 rounded-full bg-orange-400 mt-1 flex-shrink-0" />
-                <div>
-                  <h3 className="font-semibold text-[#183559] mb-1">
-                    Zone orange — Équilibré
-                  </h3>
-                  <p className="text-sm text-[#183559]/60">
-                    Bon compromis marge / volume. Tu gardes une marge
-                    confortable sans freiner la conversion.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <span className="w-4 h-4 rounded-full bg-red-400 mt-1 flex-shrink-0" />
-                <div>
-                  <h3 className="font-semibold text-[#183559] mb-1">
-                    Zone rouge — Élevé
-                  </h3>
-                  <p className="text-sm text-[#183559]/60">
-                    Tu maximises ta marge, le volume risque de baisser. À
-                    réserver aux produits exclusifs ou aux audiences très
-                    qualifiées.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Commandes et paiement */}
-      <section className="py-16 lg:py-24 bg-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#183559]">
-              Les commandes et le paiement
-            </h2>
-            <p className="mt-4 text-lg text-[#183559]/60 max-w-2xl mx-auto">
-              Tu n&apos;avances rien, tu ne factures personne, tu ne gères aucun
-              colis.
-            </p>
-          </div>
-
-          <ol className="space-y-4">
-            {[
-              'Ton client commande via ton lien. Il paie directement sur LinkMe.',
-              'LinkMe prélève sa commission de 5 % et la TVA applicable.',
-              "L'expédition est lancée immédiatement par la marque sélectionnée. Le suivi est partagé avec le client.",
-              'Ta marge est versée sur ton compte bancaire selon le rythme convenu (mensuel par défaut).',
-            ].map((step, i) => (
-              <li
-                key={step}
-                className="flex items-start gap-4 bg-gray-50/60 rounded-xl p-4"
-              >
-                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-[#5DBEBB]/15 text-[#5DBEBB] font-semibold flex items-center justify-center">
-                  {i + 1}
-                </span>
-                <span className="text-[#183559]/80 leading-relaxed">
-                  {step}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* Ce que LinkMe fait pour toi */}
-      <section className="py-16 lg:py-24 bg-gray-50/50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#183559]">
-              Ce que LinkMe fait pour toi
-            </h2>
-            <p className="mt-4 text-lg text-[#183559]/60 max-w-2xl mx-auto">
-              Tu n&apos;as ni stock, ni service client, ni facturation à gérer.
-              Tu te concentres sur ta recommandation.
-            </p>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {LINKME_HANDLES.map(it => (
-              <div
-                key={it.title}
-                className="bg-white rounded-2xl p-6 border border-gray-100"
-              >
-                <div className="w-12 h-12 rounded-xl bg-[#5DBEBB]/10 flex items-center justify-center mb-4">
-                  <it.icon className="h-6 w-6 text-[#5DBEBB]" />
-                </div>
-                <h3 className="text-base font-semibold text-[#183559] mb-2">
-                  {it.title}
-                </h3>
-                <p className="text-sm text-[#183559]/60 leading-relaxed">
-                  {it.description}
-                </p>
-              </div>
-            ))}
+            <Link
+              href="/pour-les-enseignes"
+              className="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold text-[#183559] bg-white rounded-xl hover:bg-gray-50 transition-all shadow-lg"
+            >
+              Voir la démo réseau
+              <ArrowRight className="h-5 w-5" />
+            </Link>
           </div>
         </div>
       </section>
@@ -310,14 +181,14 @@ export default function CommentCaMarchePage(): JSX.Element {
             </h2>
           </div>
           <div className="space-y-3">
-            {FAQ.map(item => (
+            {FAQ_ITEMS.map(item => (
               <details
                 key={item.q}
                 className="group bg-gray-50/60 rounded-xl border border-gray-100 open:bg-white open:shadow-sm"
               >
                 <summary className="flex items-center justify-between cursor-pointer list-none p-5 font-semibold text-[#183559]">
                   <span>{item.q}</span>
-                  <CheckCircle2 className="h-5 w-5 text-[#5DBEBB] transition-transform group-open:rotate-45" />
+                  <CheckCircle2 className="h-5 w-5 text-[#5DBEBB] flex-shrink-0 transition-transform group-open:rotate-45" />
                 </summary>
                 <p className="px-5 pb-5 text-sm text-[#183559]/70 leading-relaxed">
                   {item.a}
@@ -328,24 +199,26 @@ export default function CommentCaMarchePage(): JSX.Element {
         </div>
       </section>
 
-      {/* Final CTA */}
+      {/* CTA double */}
       <section className="relative py-16 lg:py-24 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#183559] via-[#183559] to-[#3976BB]" />
         <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">
             Prêt à essayer LinkMe ?
           </h2>
-          <p className="mt-6 text-lg text-white/70 max-w-xl mx-auto">
-            Accès sur demande. Tu remplis ton profil, on regarde, on
-            t&apos;ouvre le catalogue.
-          </p>
-          <div className="mt-10">
+          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/contact"
-              className="group inline-flex items-center gap-3 px-8 py-4 text-lg font-semibold text-[#183559] bg-white rounded-xl hover:bg-gray-50 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02]"
+              className="group inline-flex items-center justify-center gap-3 px-8 py-4 text-lg font-semibold text-[#183559] bg-white rounded-xl hover:bg-gray-50 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02]"
             >
               Demander l&apos;accès
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <Link
+              href="/pour-les-enseignes"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 text-lg font-semibold text-white border-2 border-white/30 rounded-xl hover:bg-white/10 transition-colors"
+            >
+              Voir une démo réseau
             </Link>
           </div>
         </div>

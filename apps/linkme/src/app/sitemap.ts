@@ -2,9 +2,12 @@
  * Sitemap dynamique LinkMe
  *
  * Genere automatiquement le sitemap.xml pour le SEO
+ * Pages marketing publiques incluses : about, contact, comment-ca-marche,
+ * pour-les-createurs, pour-les-pros, pour-les-enseignes.
  *
  * @module Sitemap
  * @since 2026-01-23
+ * @updated 2026-05-14 - LM-PUB-002 release reconciliation
  */
 
 import type { MetadataRoute } from 'next';
@@ -51,6 +54,30 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: 'yearly',
       priority: 0.3,
+    },
+    {
+      url: `${SITE_URL}/pour-les-createurs`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/pour-les-pros`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/comment-ca-marche`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/pour-les-enseignes`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.8,
     },
   ];
 

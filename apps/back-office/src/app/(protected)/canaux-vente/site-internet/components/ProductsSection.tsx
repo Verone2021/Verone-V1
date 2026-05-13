@@ -27,6 +27,7 @@ import {
   useRemoveProductFromSiteInternet,
   useAddProductsToSiteInternet,
   useAddVariantGroupToSiteInternet,
+  PublicationBlockedError,
 } from '../hooks/use-site-internet-products';
 import type { SiteInternetProduct } from '../types';
 import { ProductsTable } from './ProductsTable';
@@ -88,12 +89,20 @@ export function ProductsSection() {
           title: isPublished ? 'Produit depublie' : 'Produit publie',
           description: `Le produit a ete ${isPublished ? 'retire du' : 'ajoute au'} site internet.`,
         });
-      } catch {
-        toast({
-          title: 'Erreur',
-          description: 'Impossible de modifier le statut du produit.',
-          variant: 'destructive',
-        });
+      } catch (err) {
+        if (err instanceof PublicationBlockedError) {
+          toast({
+            title: 'Publication bloquée',
+            description: `Champs manquants : ${err.missingFields.join(', ')}`,
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Erreur',
+            description: 'Impossible de modifier le statut du produit.',
+            variant: 'destructive',
+          });
+        }
       }
     },
     [togglePublication, toast]

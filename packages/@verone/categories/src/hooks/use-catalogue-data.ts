@@ -62,7 +62,7 @@ const PRODUCT_SELECT = `
   target_margin_percentage, target_price,
   stock_status, product_status, condition,
   subcategory_id, supplier_id, manufacturer, brand_ids,
-  has_images, dimensions, weight,
+  has_images, is_published_online, dimensions, weight,
   archived_at, created_at, updated_at,
   supplier:organisations!supplier_id(id, legal_name, trade_name),
   subcategories!subcategory_id(id, name)

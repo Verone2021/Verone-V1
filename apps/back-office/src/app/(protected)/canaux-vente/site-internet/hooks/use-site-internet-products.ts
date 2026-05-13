@@ -42,8 +42,28 @@ export function useSiteInternetProducts() {
 }
 
 /**
- * Toggle publication produit (avec optimistic update)
+ * Toggle publication produit (avec optimistic update).
+ *
+ * BO-PUBLICATION-001 — passe par les API /api/products/[id]/publish et
+ * /unpublish (qui appliquent le garde-fou 7 critères côté serveur), au
+ * lieu d'un UPDATE direct sur la table. Si l'API retourne 422 (champs
+ * obligatoires manquants), la liste est remontée via l'erreur.
  */
+interface PublishApiErrorBody {
+  success: false;
+  error: string;
+  missingFields?: string[];
+}
+
+export class PublicationBlockedError extends Error {
+  missingFields: string[];
+  constructor(missingFields: string[]) {
+    super('Publication bloquée : champs obligatoires manquants');
+    this.name = 'PublicationBlockedError';
+    this.missingFields = missingFields;
+  }
+}
+
 export function useToggleProductPublication() {
   const queryClient = useQueryClient();
 
@@ -55,29 +75,29 @@ export function useToggleProductPublication() {
       productId: string;
       isPublished: boolean;
     }) => {
-      const { error } = await supabase
-        .from('products')
-        .update({
-          is_published_online: isPublished,
-          publication_date: isPublished ? new Date().toISOString() : null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', productId);
+      const endpoint = isPublished
+        ? `/api/products/${productId}/publish`
+        : `/api/products/${productId}/unpublish`;
+      const res = await fetch(endpoint, { method: 'POST' });
+      const body: unknown = await res.json();
 
-      if (error) throw error;
+      if (!res.ok) {
+        const errBody = body as PublishApiErrorBody;
+        if (res.status === 422 && errBody.missingFields?.length) {
+          throw new PublicationBlockedError(errBody.missingFields);
+        }
+        throw new Error(errBody.error ?? 'Erreur publication');
+      }
     },
     onMutate: async ({ productId, isPublished }) => {
-      // 1. Cancel ongoing queries
       await queryClient.cancelQueries({
         queryKey: ['site-internet-products'],
       });
 
-      // 2. Snapshot previous value
       const previousData = queryClient.getQueryData<SiteInternetProduct[]>([
         'site-internet-products',
       ]);
 
-      // 3. Optimistically update cache
       if (previousData) {
         queryClient.setQueryData<SiteInternetProduct[]>(
           ['site-internet-products'],
@@ -90,11 +110,9 @@ export function useToggleProductPublication() {
         );
       }
 
-      // 4. Return context for rollback
       return { previousData };
     },
     onError: (err, variables, context) => {
-      // 5. Rollback on error
       if (context?.previousData) {
         queryClient.setQueryData(
           ['site-internet-products'],
@@ -103,10 +121,11 @@ export function useToggleProductPublication() {
       }
     },
     onSettled: async () => {
-      // 6. Refetch to sync with server
       await queryClient.invalidateQueries({
         queryKey: ['site-internet-products'],
       });
+      await queryClient.invalidateQueries({ queryKey: ['catalogue'] });
+      await queryClient.invalidateQueries({ queryKey: ['products'] });
     },
   });
 }
