@@ -4,13 +4,17 @@
  * Landing Page Pricing Section - LinkMe
  *
  * Explication du modele de pricing:
- * - Produits catalogue Verone uniquement (modele public)
- * - Systeme de feux tricolore interactif
+ * - Produits du catalogue multi-marques (modèle public)
+ * - Système de feux tricolore interactif
  * - Formule de calcul transparente
- * - Commission LinkMe de 5%
+ * - Commission LinkMe de 5 %
  *
  * @module LandingPricing
  * @since 2026-01-23
+ * @updated 2026-05-13 - LM-MKT-002 : rename « Prix base Verone » →
+ *                       « Prix base fournisseur » (positionnement
+ *                       multi-marques). Aucune logique de calcul
+ *                       modifiée.
  */
 
 import { useState, useMemo } from 'react';
@@ -24,7 +28,7 @@ const TVA_RATE = 0.2; // 20%
 // Exemple de produit pour la demo
 const EXAMPLE_PRODUCT = {
   name: 'Table basse design',
-  basePrice: 180, // Prix base Verone HT
+  basePrice: 180, // Prix base fournisseur HT
   publicPrice: 299, // Prix public TTC (reference marche)
 };
 
@@ -172,7 +176,7 @@ export function LandingPricing(): JSX.Element {
             <div className="bg-gray-50 rounded-xl p-4 mb-6">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-[#183559]/70">
-                  Prix base Verone (HT)
+                  Prix base fournisseur (HT)
                 </span>
                 <span className="font-bold text-[#183559]">
                   {EXAMPLE_PRODUCT.basePrice} EUR

@@ -42,43 +42,35 @@ export function LandingCTA() {
 
         {/* Title */}
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight">
-          Pret a rejoindre notre{' '}
+          Prêt à rejoindre notre{' '}
           <span className="bg-gradient-to-r from-[#5DBEBB] to-[#7E84C0] bg-clip-text text-transparent">
-            reseau
+            réseau
           </span>{' '}
           ?
         </h2>
 
         {/* Subtitle */}
         <p className="mt-6 text-lg text-white/70 max-w-2xl mx-auto">
-          Commencez des aujourd&apos;hui a monetiser votre audience. Inscription
-          gratuite, sans engagement.
+          Configurez votre catalogue, vos prix et vos marges. On s&apos;occupe
+          du reste.
         </p>
 
         {/* CTA Button */}
         <div className="mt-10">
           <Link
-            href="#contact"
+            href="/contact"
             className="group inline-flex items-center gap-3 px-8 py-4 text-lg font-semibold text-[#183559] bg-white rounded-xl hover:bg-gray-50 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02]"
           >
-            Devenir partenaire
+            Demander l&apos;accès
             <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
 
-        {/* Trust indicators */}
+        {/* Trust indicator (un seul, factuel) */}
         <div className="mt-8 flex items-center justify-center gap-6 text-white/50 text-sm">
           <span className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
-            Inscription gratuite
-          </span>
-          <span className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
-            Sans engagement
-          </span>
-          <span className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
-            Support dedie
+            Support dédié
           </span>
         </div>
       </div>

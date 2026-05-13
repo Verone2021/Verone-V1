@@ -14,20 +14,19 @@ const SITE_NAME = 'LinkMe by Verone';
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "LinkMe - Plateforme d'affiliation B2B | Verone",
+    default: "LinkMe - Marketplace d'affiliation multi-marques",
     template: '%s | LinkMe',
   },
   description:
-    "Rejoignez LinkMe, la plateforme d'affiliation B2B pour les professionnels du mobilier et de la decoration d'interieur. Monetisez votre reseau avec des commissions attractives.",
+    "Rejoins LinkMe, la marketplace d'affiliation multi-marques. Catalogue déco, éclairage, végétal, électronique et plus. Tu choisis tes marques, tu fixes ta marge, tu touches ta commission. Accès sur demande.",
   keywords: [
-    'affiliation B2B',
-    'plateforme affiliation',
-    'mobilier interieur',
-    'decoration interieur',
-    'commission vente',
+    'affiliation multi-marques',
+    'marketplace affiliation',
+    'ambassadeur marques',
+    'commission produit physique',
+    'créateur de contenu',
     'partenariat professionnel',
     'LinkMe',
-    'Verone',
   ],
   authors: [{ name: 'Verone', url: 'https://verone.io' }],
   creator: 'Verone',
@@ -48,23 +47,23 @@ export const metadata: Metadata = {
     locale: 'fr_FR',
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: "LinkMe - Plateforme d'affiliation B2B",
+    title: "LinkMe - Marketplace d'affiliation multi-marques",
     description:
-      "Monetisez votre reseau avec LinkMe, la plateforme d'affiliation B2B pour le mobilier et la decoration d'interieur.",
+      'Deviens ambassadeur de marques sélectionnées sur LinkMe. Catalogue multi-marques (déco, éclairage, végétal, électronique et plus). Tu fixes ta marge, tu touches ta commission.',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'LinkMe - Plateforme affiliation B2B',
+        alt: "LinkMe - Marketplace d'affiliation multi-marques",
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: "LinkMe - Plateforme d'affiliation B2B",
+    title: "LinkMe - Marketplace d'affiliation multi-marques",
     description:
-      "Monetisez votre reseau avec LinkMe, la plateforme d'affiliation B2B pour le mobilier et la decoration d'interieur.",
+      'Deviens ambassadeur de marques sélectionnées sur LinkMe. Catalogue multi-marques (déco, éclairage, végétal, électronique et plus). Tu fixes ta marge, tu touches ta commission.',
     images: ['/og-image.png'],
     creator: '@verone_io',
   },

@@ -1,10 +1,14 @@
 /**
- * Page A propos - LinkMe
+ * Page À propos - LinkMe
  *
- * Presentation de LinkMe et de sa mission
+ * Présentation de LinkMe comme marketplace d'affiliation multi-marques.
  *
  * @module AboutPage
  * @since 2026-01-23
+ * @updated 2026-05-13 - LM-MKT-001 : accents.
+ * @updated 2026-05-13 - LM-MKT-002 : repositionnement marketplace
+ *                       multi-marques, suppression de toute mention
+ *                       nominative de marque.
  */
 
 import Link from 'next/link';
@@ -20,13 +24,13 @@ import {
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'A propos',
+  title: 'À propos',
   description:
-    "Decouvrez LinkMe, la plateforme d'affiliation B2B nouvelle generation pour les professionnels de la decoration et du mobilier d'interieur.",
+    "LinkMe est une marketplace d'affiliation multi-marques. Catalogue déco, éclairage, végétal, électronique et plus. Pensée pour les créateurs de contenu, les professionnels prescripteurs et les enseignes têtes de réseau.",
   openGraph: {
-    title: 'A propos de LinkMe',
+    title: 'À propos de LinkMe',
     description:
-      "LinkMe democratise l'affiliation B2B pour les professionnels du mobilier et de la decoration d'interieur.",
+      "Une marketplace d'affiliation ouverte aux marques. Aucun stock, aucune logistique pour les ambassadeurs.",
     url: '/about',
   },
   alternates: {
@@ -39,34 +43,35 @@ const VALUES = [
     icon: Target,
     title: 'Transparence',
     description:
-      'Pricing clair et visible. Pas de frais caches, vous savez exactement ce que vous gagnez sur chaque vente.',
+      'Prix base fournisseur affiché, marge libre, commission claire. Tu sais exactement ce que tu gagnes sur chaque vente, sur chaque marque.',
   },
   {
     icon: Lightbulb,
-    title: 'Simplicite',
+    title: 'Simplicité',
     description:
-      'Contenu pret a l emploi: images optimisees, descriptions, prix recommandes. Concentrez-vous sur la vente.',
+      "Contenu prêt à l'emploi pour chaque produit : visuels optimisés, descriptions, prix recommandés. Tu te concentres sur la recommandation.",
   },
   {
     icon: TrendingUp,
     title: 'Performance',
     description:
-      'Analytics en temps reel pour suivre vos ventes et optimiser vos selections. Decisions basees sur les donnees.',
+      'Analytics multi-marques en temps réel : ventes, clics, conversion par sélection. Tu pilotes ce qui marche, tu ajustes le reste.',
   },
   {
     icon: Users,
     title: 'Partenariat',
     description:
-      'Une relation gagnant-gagnant. Votre succes est notre succes. Support dedie pour vous accompagner.',
+      'Une relation gagnant-gagnant entre ambassadeurs, marques et LinkMe. Aucun engagement, accès sur demande.',
   },
 ];
 
 const FEATURES = [
-  'Commissions definies par produit ET par selection',
-  'Creez plusieurs selections adaptees a vos audiences',
-  'Integration multicanale: social, web, email',
-  'Suivi en temps reel de vos performances',
-  'Paiements simplifies et securises',
+  'Catalogue multi-marques (déco, éclairage, végétal, électronique et plus)',
+  'Marge libre, configurable produit par produit',
+  'Plusieurs sélections adaptées à chaque audience',
+  'Intégration multicanale : réseaux sociaux, site web, email',
+  'Aucun stock, aucune logistique côté ambassadeur',
+  'Paiements simplifiés et sécurisés',
 ];
 
 export default function AboutPage() {
@@ -75,16 +80,18 @@ export default function AboutPage() {
       {/* Hero */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-16 lg:mb-24">
         <h1 className="text-4xl sm:text-5xl font-bold text-[#183559] mb-6">
-          Democratiser l&apos;affiliation{' '}
+          Une marketplace d&apos;affiliation{' '}
           <span className="bg-gradient-to-r from-[#5DBEBB] to-[#7E84C0] bg-clip-text text-transparent">
-            B2B professionnelle
+            ouverte aux marques
           </span>
+          .
         </h1>
         <p className="text-lg text-[#183559]/70 max-w-2xl mx-auto">
-          LinkMe est ne pour repondre aux defis de l&apos;affiliation
-          traditionnelle: rigidite, opacite, complexite. Notre mission est de
-          creer un ecosysteme ou chaque professionnel peut monetiser son reseau
-          simplement.
+          LinkMe connecte un catalogue multi-marques à des ambassadeurs
+          qualifiés — créateurs de contenu, professionnels prescripteurs,
+          enseignes têtes de réseau. Aucun stock, aucune logistique pour
+          l&apos;ambassadeur. Toute marque qualifiée peut rejoindre le
+          catalogue.
         </p>
       </section>
 
@@ -95,10 +102,10 @@ export default function AboutPage() {
             <div>
               <h2 className="text-3xl font-bold mb-6">Notre vision</h2>
               <p className="text-white/80 text-lg leading-relaxed mb-6">
-                Nous croyons que l&apos;affiliation B2B doit etre accessible a
-                tous les professionnels, pas seulement aux grandes enseignes.
-                LinkMe offre une flexibilite inegalee avec des commissions
-                personnalisables par produit et par selection.
+                L&apos;affiliation traditionnelle est rigide, opaque et réservée
+                aux gros acteurs. LinkMe la rouvre : une marketplace où chaque
+                ambassadeur choisit ses marques, fixe sa marge et touche une
+                vraie commission — sans gérer stock ni logistique.
               </p>
               <ul className="space-y-3">
                 {FEATURES.map(feature => (
@@ -114,27 +121,28 @@ export default function AboutPage() {
                 LinkMe, c&apos;est quoi ?
               </h3>
               <p className="text-white/70 mb-4">
-                Une plateforme d&apos;affiliation nouvelle generation qui
-                combine:
+                Trois rôles, une seule plateforme :
               </p>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-[#5DBEBB]/20 flex items-center justify-center">
                     <span className="text-[#5DBEBB] font-bold">1</span>
                   </div>
-                  <span>Affiliation classique</span>
+                  <span>Marques sélectionnées qui exposent leur catalogue</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-[#7E84C0]/20 flex items-center justify-center">
                     <span className="text-[#7E84C0] font-bold">2</span>
                   </div>
-                  <span>Marketplace produits</span>
+                  <span>Ambassadeurs qui créent leurs sélections</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-[#3976BB]/20 flex items-center justify-center">
                     <span className="text-[#3976BB] font-bold">3</span>
                   </div>
-                  <span>Outils SaaS integres</span>
+                  <span>
+                    LinkMe qui gère logistique, paiements et commission
+                  </span>
                 </div>
               </div>
             </div>
@@ -169,17 +177,17 @@ export default function AboutPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-gradient-to-r from-[#5DBEBB]/10 to-[#7E84C0]/10 rounded-2xl p-8 lg:p-12 text-center">
           <h2 className="text-2xl lg:text-3xl font-bold text-[#183559] mb-4">
-            Pret a rejoindre LinkMe ?
+            Prêt à devenir ambassadeur ?
           </h2>
           <p className="text-[#183559]/70 mb-8 max-w-xl mx-auto">
-            Contactez-nous pour decouvrir comment LinkMe peut transformer votre
-            activite.
+            Accès sur demande. On regarde ton profil, on t&apos;ouvre le
+            catalogue multi-marques, tu commences à recommander.
           </p>
           <Link
             href="/contact"
             className="inline-flex items-center gap-2 px-6 py-3 bg-[#5DBEBB] text-white font-semibold rounded-xl hover:bg-[#4CA9A6] transition-colors"
           >
-            Nous contacter
+            Demander l&apos;accès
             <ArrowRight className="h-5 w-5" />
           </Link>
         </div>
