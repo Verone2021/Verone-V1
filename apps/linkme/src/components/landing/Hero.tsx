@@ -13,6 +13,8 @@
  * @since 2026-01-07
  * @updated 2026-05-13 - LM-MKT-001 : repositionnement copy, accents,
  *                       chiffres statiques (suppression de usePublicStats).
+ * @updated 2026-05-13 - LM-MKT-002 : positionnement multi-marques /
+ *                       ambassadeur (H1 + sous-titre).
  */
 
 import Link from 'next/link';
@@ -60,16 +62,18 @@ export function LandingHero(): JSX.Element {
 
             {/* Title */}
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#183559] leading-tight">
-              LinkMe connecte vos franchisés, vos clients ou votre équipe à un{' '}
+              Deviens ambassadeur de{' '}
               <span className="bg-gradient-to-r from-[#5DBEBB] via-[#7E84C0] to-[#3976BB] bg-clip-text text-transparent">
-                catalogue produits sélectionné
-              </span>{' '}
-              — avec vos prix, votre marge, votre commission.
+                marques sélectionnées
+              </span>
+              .
             </h1>
 
             {/* Subtitle */}
             <p className="mt-6 text-lg text-[#183559]/70 max-w-xl mx-auto lg:mx-0">
-              Vous configurez une fois. Ils commandent à leur rythme.
+              Tu choisis tes produits dans un catalogue multi-marques — déco,
+              éclairage, végétal, électronique et plus encore. Tu fixes ta
+              marge, tu touches ta commission.
             </p>
 
             {/* CTAs */}

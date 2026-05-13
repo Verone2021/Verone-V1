@@ -32,7 +32,9 @@ const LINKS = {
     { label: 'Contact', href: '/contact' },
   ],
   useful: [
-    { label: 'Comment ça marche', href: '#how-it-works' },
+    { label: 'Pour les créateurs', href: '/pour-les-createurs' },
+    { label: 'Pour les pros', href: '/pour-les-pros' },
+    { label: 'Comment ça marche', href: '/comment-ca-marche' },
     { label: 'Conditions générales', href: '/cgu' },
     { label: 'Politique de confidentialité', href: '/privacy' },
   ],
