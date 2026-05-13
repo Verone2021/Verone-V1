@@ -89,6 +89,10 @@ export function useCataloguePage() {
         searchParams.get('completion')?.split(',').filter(Boolean) ?? [],
       internalBrandIds:
         searchParams.get('brands_internal')?.split(',').filter(Boolean) ?? [],
+      publicationStatus: (searchParams
+        .get('publication')
+        ?.split(',')
+        .filter(Boolean) ?? []) as ('published' | 'unpublished')[],
     }),
     [searchParams]
   );
@@ -146,6 +150,8 @@ export function useCataloguePage() {
         params.set('completion', newFilters.completionLevels.join(','));
       if (newFilters.internalBrandIds.length)
         params.set('brands_internal', newFilters.internalBrandIds.join(','));
+      if (newFilters.publicationStatus.length)
+        params.set('publication', newFilters.publicationStatus.join(','));
 
       const qs = params.toString();
       router.replace(qs ? `?${qs}` : '/produits/catalogue', { scroll: false });
@@ -157,6 +163,13 @@ export function useCataloguePage() {
   const applyFilters = useCallback(
     (newFilters: Filters, tab?: string) => {
       setFilters(newFilters);
+      // Map publicationStatus → publishedOnline pour CatalogueFilters
+      const publishedOnline: 'all' | 'published' | 'unpublished' | undefined =
+        newFilters.publicationStatus.length === 1
+          ? newFilters.publicationStatus[0]
+          : newFilters.publicationStatus.length === 0
+            ? undefined
+            : 'all';
       setCatalogueFilters({
         search: newFilters.search,
         families: newFilters.families,
@@ -169,6 +182,7 @@ export function useCataloguePage() {
         conditions: newFilters.conditions,
         completionLevels: newFilters.completionLevels,
         internalBrandIds: newFilters.internalBrandIds,
+        publishedOnline,
         page: 1,
       });
       syncFiltersToUrl(newFilters, tab ?? tabs.activeTab);
@@ -197,9 +211,20 @@ export function useCataloguePage() {
         urlFilters.stockLevels.length > 0 ||
         urlFilters.conditions.length > 0 ||
         urlFilters.completionLevels.length > 0 ||
-        urlFilters.internalBrandIds.length > 0;
+        urlFilters.internalBrandIds.length > 0 ||
+        urlFilters.publicationStatus.length > 0;
 
       if (hasUrlFilters) {
+        const publishedOnlineInit:
+          | 'all'
+          | 'published'
+          | 'unpublished'
+          | undefined =
+          urlFilters.publicationStatus.length === 1
+            ? urlFilters.publicationStatus[0]
+            : urlFilters.publicationStatus.length === 0
+              ? undefined
+              : 'all';
         setCatalogueFilters({
           search: urlFilters.search,
           families: urlFilters.families,
@@ -212,6 +237,7 @@ export function useCataloguePage() {
           conditions: urlFilters.conditions,
           completionLevels: urlFilters.completionLevels,
           internalBrandIds: urlFilters.internalBrandIds,
+          publishedOnline: publishedOnlineInit,
         });
       }
     }
@@ -274,6 +300,7 @@ export function useCataloguePage() {
       conditions: [],
       completionLevels: [],
       internalBrandIds: [],
+      publicationStatus: [],
     };
     applyFilters(emptyFilters);
   };
@@ -289,7 +316,8 @@ export function useCataloguePage() {
     filters.stockLevels.length > 0 ||
     filters.conditions.length > 0 ||
     filters.completionLevels.length > 0 ||
-    filters.internalBrandIds.length > 0;
+    filters.internalBrandIds.length > 0 ||
+    filters.publicationStatus.length > 0;
 
   const searchItems = useMemo(() => {
     return products.map(product => ({
@@ -319,6 +347,7 @@ export function useCataloguePage() {
       conditions: newFilterState.conditions,
       completionLevels: newFilterState.completionLevels,
       internalBrandIds: filters.internalBrandIds,
+      publicationStatus: filters.publicationStatus,
     };
     applyFilters(newFilters);
   };
@@ -340,6 +369,12 @@ export function useCataloguePage() {
           return prev;
         }
         const updated = { ...prev, internalBrandIds: next };
+        const publishedOnline: 'all' | 'published' | 'unpublished' | undefined =
+          updated.publicationStatus.length === 1
+            ? updated.publicationStatus[0]
+            : updated.publicationStatus.length === 0
+              ? undefined
+              : 'all';
         setCatalogueFilters({
           search: updated.search,
           families: updated.families,
@@ -352,6 +387,7 @@ export function useCataloguePage() {
           conditions: updated.conditions,
           completionLevels: updated.completionLevels,
           internalBrandIds: updated.internalBrandIds,
+          publishedOnline,
           page: 1,
         });
         syncFiltersToUrl(updated);

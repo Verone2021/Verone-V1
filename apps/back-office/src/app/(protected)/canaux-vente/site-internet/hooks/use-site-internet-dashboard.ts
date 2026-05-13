@@ -15,6 +15,10 @@ interface DashboardKPIs {
   reviewsPending: number;
   ordersLastMonth: number;
   revenueLastMonth: number;
+  /** BO-PUBLICATION-001 — Produits actifs publiés sur le site (is_published_online=true) */
+  productsPublishedCount: number;
+  /** BO-PUBLICATION-001 — Produits actifs au catalogue (product_status='active', non archivés) */
+  productsActiveCount: number;
 }
 
 function getMonthRange(monthsAgo: number): { start: string; end: string } {
@@ -50,6 +54,8 @@ async function fetchDashboardKPIs(): Promise<DashboardKPIs> {
     reviewsPendingResult,
     ordersLastMonthResult,
     revenueLastMonthResult,
+    productsPublishedResult,
+    productsActiveResult,
   ] = await Promise.all([
     // Orders this month (excluding cancelled and draft)
     supabase
@@ -100,6 +106,20 @@ async function fetchDashboardKPIs(): Promise<DashboardKPIs> {
       .eq('payment_status_v2', 'paid')
       .gte('created_at', lastMonth.start)
       .lte('created_at', lastMonth.end),
+
+    // BO-PUBLICATION-001 — Produits publiés sur le site
+    supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_published_online', true)
+      .is('archived_at', null),
+
+    // BO-PUBLICATION-001 — Produits actifs au catalogue
+    supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .eq('product_status', 'active')
+      .is('archived_at', null),
   ]);
 
   const revenueThis = (revenueThisMonthResult.data ?? []).reduce(
@@ -121,6 +141,8 @@ async function fetchDashboardKPIs(): Promise<DashboardKPIs> {
     reviewsPending: reviewsPendingResult.count ?? 0,
     ordersLastMonth: ordersLastMonthResult.count ?? 0,
     revenueLastMonth: Math.round(revenueLast * 100) / 100,
+    productsPublishedCount: productsPublishedResult.count ?? 0,
+    productsActiveCount: productsActiveResult.count ?? 0,
   };
 }
 
@@ -143,6 +165,12 @@ export function useSiteInternetDashboard() {
           reviewsPending: data.reviewsPending,
           ordersTrend: calcTrend(data.ordersThisMonth, data.ordersLastMonth),
           revenueTrend: calcTrend(data.revenueThisMonth, data.revenueLastMonth),
+          productsPublishedCount: data.productsPublishedCount,
+          productsActiveCount: data.productsActiveCount,
+          productsUnpublishedCount: Math.max(
+            data.productsActiveCount - data.productsPublishedCount,
+            0
+          ),
         }
       : null,
   };

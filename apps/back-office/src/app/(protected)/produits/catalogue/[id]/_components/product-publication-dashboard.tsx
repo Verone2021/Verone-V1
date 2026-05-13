@@ -147,12 +147,57 @@ export function ProductPublicationDashboard({
         linkLabel: !hasPricingChannel ? '→ Onglet Tarification' : undefined,
         linkTabId: !hasPricingChannel ? 'pricing' : undefined,
       },
-      // ─ Optionnels (3) ─
+      // BO-PUBLICATION-001 — Poids + dimensions + meta description requis
+      {
+        key: 'weight',
+        label: 'Poids',
+        ok:
+          product.weight !== null &&
+          product.weight !== undefined &&
+          Number(product.weight) > 0,
+        required: true,
+        linkLabel:
+          product.weight === null ||
+          product.weight === undefined ||
+          Number(product.weight) <= 0
+            ? '→ Onglet Caractéristiques'
+            : undefined,
+        linkTabId:
+          product.weight === null ||
+          product.weight === undefined ||
+          Number(product.weight) <= 0
+            ? 'characteristics'
+            : undefined,
+      },
+      {
+        key: 'dimensions',
+        label: 'Dimensions',
+        ok:
+          product.dimensions !== null &&
+          product.dimensions !== undefined &&
+          typeof product.dimensions === 'object' &&
+          Object.keys(product.dimensions as Record<string, unknown>).length > 0,
+        required: true,
+        linkLabel:
+          !product.dimensions ||
+          typeof product.dimensions !== 'object' ||
+          Object.keys(product.dimensions as Record<string, unknown>).length ===
+            0
+            ? '→ Onglet Caractéristiques'
+            : undefined,
+        linkTabId:
+          !product.dimensions ||
+          typeof product.dimensions !== 'object' ||
+          Object.keys(product.dimensions as Record<string, unknown>).length ===
+            0
+            ? 'characteristics'
+            : undefined,
+      },
       {
         key: 'meta_description',
         label: 'Meta description SEO',
         ok: Boolean(product.meta_description?.trim()),
-        required: false,
+        required: true,
       },
       {
         key: 'status',

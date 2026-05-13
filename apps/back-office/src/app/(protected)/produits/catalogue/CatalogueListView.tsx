@@ -31,6 +31,11 @@ interface CatalogueListViewProps {
   someSelected?: boolean;
   onToggleSelect?: (id: string) => void;
   onToggleAll?: () => void;
+  onTogglePublish?: (
+    productId: string,
+    nextPublished: boolean
+  ) => Promise<boolean>;
+  publishPendingIds?: Set<string>;
 }
 
 export function CatalogueListView({
@@ -45,6 +50,8 @@ export function CatalogueListView({
   someSelected = false,
   onToggleSelect,
   onToggleAll,
+  onTogglePublish,
+  publishPendingIds,
 }: CatalogueListViewProps) {
   const router = useRouter();
   const [sortField, setSortField] = useState<SortField>('name');
@@ -212,6 +219,9 @@ export function CatalogueListView({
                   onSort={handleSort}
                   className="text-center hidden xl:table-cell"
                 />
+                <th className="py-2 px-2 text-xs font-semibold text-gray-500 uppercase text-center hidden lg:table-cell">
+                  En ligne
+                </th>
                 <SortableHeader
                   label="Statut"
                   field="product_status"
@@ -232,6 +242,8 @@ export function CatalogueListView({
                   selectable={selectable}
                   selected={isSelected?.(product.id) ?? false}
                   onToggleSelect={onToggleSelect}
+                  onTogglePublish={onTogglePublish}
+                  isPublishPending={publishPendingIds?.has(product.id) ?? false}
                 />
               ))}
             </tbody>

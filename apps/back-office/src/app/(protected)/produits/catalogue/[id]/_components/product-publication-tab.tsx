@@ -56,7 +56,12 @@ export function ProductPublicationTab({ product }: ProductPublicationTabProps) {
     void fetchChannels();
   }, [product.id]);
 
-  // Publication readiness checks
+  // Publication readiness checks — BO-PUBLICATION-001 garde-fou 7 critères
+  const dimsRaw = product.dimensions as Record<string, unknown> | null;
+  const hasDimensions =
+    dimsRaw !== null &&
+    typeof dimsRaw === 'object' &&
+    Object.keys(dimsRaw).length > 0;
   const checks = [
     {
       label: 'Nom du produit',
@@ -71,11 +76,24 @@ export function ProductPublicationTab({ product }: ProductPublicationTabProps) {
     {
       label: 'Meta description SEO',
       ok: Boolean(product.meta_description?.trim()),
-      required: false,
+      required: true,
     },
     { label: 'Image(s)', ok: product.has_images === true, required: true },
     { label: 'Categorie', ok: Boolean(product.subcategory_id), required: true },
     { label: 'Slug URL', ok: Boolean(product.slug), required: true },
+    {
+      label: 'Poids',
+      ok:
+        product.weight !== null &&
+        product.weight !== undefined &&
+        Number(product.weight) > 0,
+      required: true,
+    },
+    {
+      label: 'Dimensions',
+      ok: hasDimensions,
+      required: true,
+    },
     {
       label: 'Prix de vente (canal)',
       ok: channels.some(c => c.custom_price_ht && c.custom_price_ht > 0),
