@@ -5,6 +5,11 @@
  * "Ce qui vient d'entrer" de la homepage.
  *
  * Fallback : si 0 produits featured, retourne les 4 plus récents publiés.
+ *
+ * Implementation note : la table `products` n'expose pas `primary_image_url`
+ * ni `primary_cloudflare_image_id` (colonnes calculées). On passe donc par la
+ * RPC `get_site_internet_products` (SECURITY DEFINER, accessible anon) pour
+ * obtenir les images, puis on intersecte avec la liste des featured.
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -22,20 +27,22 @@ export interface FeaturedHomeProduct {
   is_published_online: boolean;
 }
 
-interface ProductRow {
-  id: string;
+interface RpcProductRow {
+  product_id: string;
   name: string;
-  commercial_name: string | null;
-  slug: string | null;
+  slug: string;
+  price_ttc: number | null;
   primary_image_url: string | null;
+  primary_cloudflare_image_id: string | null;
+  is_published: boolean;
+  publication_date: string | null;
 }
 
-interface ChannelPricingRow {
-  custom_price_ht: number | null;
+interface FeaturedIdRow {
+  id: string;
+  commercial_name: string | null;
+  publication_date: string | null;
 }
-
-// Taux TVA par défaut (20 %) — utilisé uniquement comme fallback si channel_pricing absent
-const DEFAULT_VAT_RATE = 1.2;
 
 export function useFeaturedHomeProducts() {
   const supabase = createUntypedClient();
@@ -43,100 +50,81 @@ export function useFeaturedHomeProducts() {
   return useQuery({
     queryKey: ['featured_home_products'],
     queryFn: async (): Promise<FeaturedHomeProduct[]> => {
-      // 1. Tenter les produits marqués is_featured_home
-      const { data: featured, error: featuredError } = await supabase
+      // 1. Tirer la liste des IDs marqués is_featured_home (table products) —
+      //    on prend uniquement les colonnes qui existent réellement.
+      const { data: featuredIdsRaw, error: featuredError } = await supabase
         .from('products')
-        .select(
-          'id, name, commercial_name, slug, primary_image_url, primary_cloudflare_image_id, is_published_online'
-        )
+        .select('id, commercial_name, publication_date')
         .eq('is_featured_home', true)
         .eq('is_published_online', true)
         .limit(4);
 
       if (featuredError) {
-        console.error('[useFeaturedHomeProducts] fetch error:', featuredError);
-      }
-
-      const rows = (featured ?? []) as Array<
-        ProductRow & {
-          primary_cloudflare_image_id: string | null;
-          is_published_online: boolean;
-        }
-      >;
-
-      // 2. Fallback : 4 derniers publiés si aucun featured
-      if (rows.length === 0) {
-        const { data: fallback, error: fallbackError } = await supabase
-          .from('products')
-          .select(
-            'id, name, commercial_name, slug, primary_image_url, primary_cloudflare_image_id, is_published_online'
-          )
-          .eq('is_published_online', true)
-          .order('publication_date', { ascending: false })
-          .limit(4);
-
-        if (fallbackError) {
-          console.error(
-            '[useFeaturedHomeProducts] fallback fetch error:',
-            fallbackError
-          );
-          return [];
-        }
-
-        return ((fallback ?? []) as typeof rows).map(p => ({
-          id: p.id,
-          name: p.name,
-          commercial_name: p.commercial_name,
-          slug: p.slug,
-          price_ttc: null,
-          primary_image_url: p.primary_image_url,
-          primary_cloudflare_image_id: p.primary_cloudflare_image_id,
-          is_published_online: p.is_published_online,
-        }));
-      }
-
-      // 3. Récupérer les prix canal site_internet pour les produits featured
-      const productIds = rows.map(p => p.id);
-      const { data: channelId } = await supabase
-        .from('sales_channels')
-        .select('id')
-        .eq('code', 'site_internet')
-        .single();
-
-      let priceMap: Record<string, number | null> = {};
-
-      if (channelId && typeof channelId === 'object' && 'id' in channelId) {
-        const { data: pricingRows } = await supabase
-          .from('channel_pricing')
-          .select('product_id, custom_price_ht')
-          .eq('channel_id', (channelId as { id: string }).id)
-          .in('product_id', productIds)
-          .limit(4);
-
-        priceMap = Object.fromEntries(
-          (
-            (pricingRows ?? []) as Array<
-              ChannelPricingRow & { product_id: string }
-            >
-          ).map(r => [
-            r.product_id,
-            r.custom_price_ht != null
-              ? Math.round(r.custom_price_ht * DEFAULT_VAT_RATE * 100) / 100
-              : null,
-          ])
+        console.error(
+          '[useFeaturedHomeProducts] featured ids error:',
+          featuredError
         );
       }
 
-      return rows.map(p => ({
-        id: p.id,
-        name: p.name,
-        commercial_name: p.commercial_name,
-        slug: p.slug,
-        price_ttc: priceMap[p.id] ?? null,
-        primary_image_url: p.primary_image_url,
-        primary_cloudflare_image_id: p.primary_cloudflare_image_id,
-        is_published_online: p.is_published_online,
-      }));
+      const featuredRows = (featuredIdsRaw ?? []) as FeaturedIdRow[];
+
+      // 2. Récupérer le catalogue complet enrichi via RPC (images incluses).
+      //    Le client est untyped (RPC retournant `any`) ; on capture en deux
+      //    temps pour éviter le warning @typescript-eslint/no-unsafe-assignment
+      //    sur la destructuration.
+      const rpcResponse = await supabase.rpc('get_site_internet_products', {
+        p_brand_slug: 'verone',
+      });
+      const rpcError = rpcResponse.error;
+      const rpcDataRaw = rpcResponse.data as unknown;
+
+      if (rpcError) {
+        console.error('[useFeaturedHomeProducts] RPC error:', rpcError);
+        return [];
+      }
+
+      const rpcRows = (rpcDataRaw ?? []) as RpcProductRow[];
+
+      // 3. Cas 1 — au moins un featured : intersecter RPC avec ces IDs.
+      if (featuredRows.length > 0) {
+        const featuredById = new Map(featuredRows.map(f => [f.id, f]));
+        const featured = rpcRows
+          .filter(r => featuredById.has(r.product_id))
+          .slice(0, 4)
+          .map(r => ({
+            id: r.product_id,
+            name: r.name,
+            commercial_name:
+              featuredById.get(r.product_id)?.commercial_name ?? null,
+            slug: r.slug,
+            price_ttc: r.price_ttc,
+            primary_image_url: r.primary_image_url,
+            primary_cloudflare_image_id: r.primary_cloudflare_image_id,
+            is_published_online: r.is_published,
+          }));
+
+        if (featured.length > 0) return featured;
+      }
+
+      // 4. Fallback — pas de featured ou intersection vide : 4 plus récents publiés.
+      return rpcRows
+        .filter(r => r.is_published)
+        .sort((a, b) => {
+          const da = a.publication_date ? Date.parse(a.publication_date) : 0;
+          const db = b.publication_date ? Date.parse(b.publication_date) : 0;
+          return db - da;
+        })
+        .slice(0, 4)
+        .map(r => ({
+          id: r.product_id,
+          name: r.name,
+          commercial_name: null,
+          slug: r.slug,
+          price_ttc: r.price_ttc,
+          primary_image_url: r.primary_image_url,
+          primary_cloudflare_image_id: r.primary_cloudflare_image_id,
+          is_published_online: r.is_published,
+        }));
     },
     staleTime: 60_000,
   });

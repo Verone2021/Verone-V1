@@ -225,7 +225,7 @@ export default function ProductPage({
 
   // ===== PRODUCT PAGE LAYOUT =====
   return (
-    <div className="container max-w-7xl mx-auto px-4 py-8 pb-28 lg:pb-8">
+    <div className="container max-w-7xl mx-auto px-4 py-6 pb-28 lg:pb-6">
       {/* JSON-LD Product Schema */}
       <JsonLdProduct
         name={product.name}
@@ -276,10 +276,11 @@ export default function ProductPage({
         </ol>
       </nav>
 
-      {/* Layout 2 colonnes 60/40 */}
-      <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 lg:gap-12">
-        {/* ===== COLONNE GAUCHE (60%) ===== */}
-        <div className="space-y-8">
+      {/* Layout 2 colonnes — colonne image contenue (max-w-[480px]) pour
+          éviter l'effet "image qui prend tout l'écran" à 1440px+ */}
+      <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6 lg:gap-8">
+        {/* ===== COLONNE GAUCHE — image + descriptions + accordions ===== */}
+        <div className="space-y-6">
           {/* Galerie photos avec lightbox (Cloudflare-aware) */}
           <ProductGallery
             images={

@@ -23,6 +23,18 @@ type Props = {
   children: React.ReactNode;
 };
 
+interface RpcProductSummary {
+  product_id: string;
+  name: string;
+  slug: string;
+  seo_title: string | null;
+  seo_meta_description: string | null;
+  description: string | null;
+  primary_cloudflare_image_id: string | null;
+  primary_image_url: string | null;
+  is_published: boolean;
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -39,51 +51,46 @@ export async function generateMetadata({
 
   const supabase = createSupabaseClient<Database>(supabaseUrl, supabaseKey);
 
-  const { data: product } = await supabase
-    .from('products')
-    .select(
-      'id, name, commercial_name, meta_title, meta_description, description_short'
-    )
-    .eq('slug', slug)
-    .eq('is_published_online', true)
-    .single();
+  // La table `products` n'est pas accessible aux anon (RLS) → passer par la
+  // RPC SECURITY DEFINER déjà utilisée côté client.
+  const { data: rpcDataRaw, error: rpcError } = await supabase.rpc(
+    'get_site_internet_products',
+    { p_brand_slug: 'verone' }
+  );
+
+  if (rpcError) {
+    console.error('[metadata produit] rpc error', rpcError);
+    return { title: 'Produit' };
+  }
+
+  const rpcRows = (rpcDataRaw ?? []) as unknown as RpcProductSummary[];
+  const product = rpcRows.find(r => r.slug === slug && r.is_published);
 
   if (!product) {
     return { title: 'Produit introuvable' };
   }
 
-  const displayName = product.commercial_name ?? product.name;
-
-  // Récupère l'image principale séparément pour garder un select explicite
-  const { data: images } = await supabase
-    .from('product_images')
-    .select('cloudflare_image_id, public_url, is_primary')
-    .eq('product_id', product.id)
-    .limit(10);
-
-  const imageList = images ?? [];
-  const primaryImg =
-    imageList.find(img => img.is_primary) ?? imageList[0] ?? null;
+  const displayName = product.name;
   const socialImage = resolveSocialImage(
-    primaryImg?.cloudflare_image_id ?? null,
-    primaryImg?.public_url ?? null
+    product.primary_cloudflare_image_id,
+    product.primary_image_url
   );
 
+  const seoTitle = product.seo_title ?? displayName;
+  const seoDescription =
+    product.seo_meta_description ??
+    product.description ??
+    `${displayName} — Vérone, concept store déco & mobilier`;
+
   return {
-    title: product.meta_title ?? displayName,
-    description:
-      product.meta_description ??
-      product.description_short ??
-      `${displayName} — Vérone, concept store déco & mobilier`,
+    title: seoTitle,
+    description: seoDescription,
     alternates: {
       canonical: `${siteUrl}/produit/${slug}`,
     },
     openGraph: {
       title: displayName,
-      description:
-        product.meta_description ??
-        product.description_short ??
-        `${displayName} — Vérone`,
+      description: seoDescription,
       url: `${siteUrl}/produit/${slug}`,
       type: 'website',
       ...(socialImage
@@ -93,8 +100,7 @@ export async function generateMetadata({
     twitter: {
       card: 'summary_large_image',
       title: displayName,
-      description:
-        product.meta_description ?? product.description_short ?? displayName,
+      description: seoDescription,
       ...(socialImage ? { images: [socialImage] } : {}),
     },
   };
