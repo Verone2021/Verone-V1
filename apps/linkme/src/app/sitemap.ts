@@ -7,6 +7,7 @@
  *
  * @module Sitemap
  * @since 2026-01-23
+ * @updated 2026-05-14 - LM-PUB-002 release reconciliation
  */
 
 import type { MetadataRoute } from 'next';
