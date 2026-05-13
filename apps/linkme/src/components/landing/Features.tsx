@@ -3,13 +3,14 @@
 /**
  * Landing Page Features Section - LinkMe
  *
- * Section presentant les 3 avantages cles:
- * - Commissions attractives
- * - Suivi en temps reel
- * - Paiement simplifie
+ * Section présentant les 3 avantages clés :
+ * - Marges configurables
+ * - Suivi en temps réel
+ * - Paiement simplifié
  *
  * @module LandingFeatures
  * @since 2026-01-07
+ * @updated 2026-05-13 - LM-MKT-001 : accents.
  */
 
 import { Percent, Activity, CreditCard } from 'lucide-react';
@@ -20,23 +21,23 @@ const FEATURES = [
     icon: Percent,
     title: 'Marges configurables',
     description:
-      'Configurez vos marges produit par produit selon votre strategie. Transparence totale sur vos gains avec notre systeme de calcul en temps reel.',
+      'Configurez vos marges produit par produit selon votre stratégie. Transparence totale sur vos gains avec notre système de calcul en temps réel.',
     color: '#5DBEBB',
     bgGradient: 'from-[#5DBEBB]/10 to-[#5DBEBB]/5',
   },
   {
     icon: Activity,
-    title: 'Suivi en temps reel',
+    title: 'Suivi en temps réel',
     description:
-      'Dashboard intuitif pour suivre vos ventes, commissions et performances. Donnees actualisees en continu.',
+      'Dashboard intuitif pour suivre vos ventes, commissions et performances. Données actualisées en continu.',
     color: '#7E84C0',
     bgGradient: 'from-[#7E84C0]/10 to-[#7E84C0]/5',
   },
   {
     icon: CreditCard,
-    title: 'Paiement simplifie',
+    title: 'Paiement simplifié',
     description:
-      'Recevez vos commissions directement sur votre compte. Processus de paiement rapide et securise.',
+      'Recevez vos commissions directement sur votre compte. Processus de paiement rapide et sécurisé.',
     color: '#3976BB',
     bgGradient: 'from-[#3976BB]/10 to-[#3976BB]/5',
   },
@@ -56,8 +57,8 @@ export function LandingFeatures() {
             ?
           </h2>
           <p className="mt-4 text-lg text-[#183559]/60 max-w-2xl mx-auto">
-            Notre plateforme vous offre tous les outils necessaires pour
-            developper votre activite d&apos;affiliation.
+            Notre plateforme vous offre tous les outils nécessaires pour
+            développer votre activité d&apos;affiliation.
           </p>
         </div>
 
@@ -105,7 +106,7 @@ export function LandingFeatures() {
         {/* Additional info */}
         <div className="mt-12 text-center">
           <p className="text-sm text-[#183559]/50">
-            Rejoignez notre reseau de partenaires professionnels
+            Rejoignez notre réseau de partenaires professionnels
           </p>
         </div>
       </div>
