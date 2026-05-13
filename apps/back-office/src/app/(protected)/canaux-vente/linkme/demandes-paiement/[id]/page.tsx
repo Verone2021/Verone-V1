@@ -8,6 +8,8 @@ import {
   Calendar,
   CheckCircle2,
   CreditCard,
+  Download,
+  FileText,
   Loader2,
   Receipt,
   User,
@@ -49,6 +51,9 @@ interface PaymentRequestDetail {
   paid_at: string | null;
   created_at: string;
   notes: string | null;
+  invoice_file_url: string | null;
+  invoice_file_name: string | null;
+  invoice_received_at: string | null;
 }
 
 interface ItemRow {
@@ -99,6 +104,9 @@ export default function PaymentRequestDetailPage() {
         paid_at: string | null;
         created_at: string;
         notes: string | null;
+        invoice_file_url: string | null;
+        invoice_file_name: string | null;
+        invoice_received_at: string | null;
         linkme_affiliates: {
           display_name: string;
           email: string | null;
@@ -110,6 +118,7 @@ export default function PaymentRequestDetailPage() {
         .select(
           `id, request_number, total_amount_ht, total_amount_ttc, status,
            payment_reference, paid_at, created_at, notes,
+           invoice_file_url, invoice_file_name, invoice_received_at,
            linkme_affiliates ( display_name, email )`
         )
         .eq('id', id)
@@ -133,6 +142,9 @@ export default function PaymentRequestDetailPage() {
         paid_at: raw.paid_at,
         created_at: raw.created_at,
         notes: raw.notes,
+        invoice_file_url: raw.invoice_file_url,
+        invoice_file_name: raw.invoice_file_name,
+        invoice_received_at: raw.invoice_received_at,
       });
 
       const { data: itemsData, error: itemsError } = await supabase
@@ -385,6 +397,36 @@ export default function PaymentRequestDetailPage() {
       {request.notes && (
         <Card className="p-4 border-l-4 border-blue-400 bg-blue-50">
           <p className="text-sm text-blue-800">{request.notes}</p>
+        </Card>
+      )}
+
+      {/* Facture reçue */}
+      {request.invoice_file_url && (
+        <Card className="p-4 flex items-center justify-between gap-4 flex-wrap border-l-4 border-emerald-400 bg-emerald-50">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 bg-emerald-100 rounded-lg flex-shrink-0">
+              <FileText className="h-4 w-4 text-emerald-700" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-emerald-900">
+                Facture déposée par l&apos;affilié
+              </p>
+              <p className="text-xs text-emerald-700 truncate">
+                {request.invoice_file_name ?? 'Facture PDF'}
+                {request.invoice_received_at &&
+                  ` — reçue le ${formatDate(request.invoice_received_at)}`}
+              </p>
+            </div>
+          </div>
+          <a
+            href={request.invoice_file_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-emerald-700 border border-emerald-300 hover:bg-emerald-100 rounded-lg transition-colors flex-shrink-0"
+          >
+            <Download className="h-4 w-4" />
+            Télécharger
+          </a>
         </Card>
       )}
 
