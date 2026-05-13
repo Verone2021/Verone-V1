@@ -7,8 +7,6 @@
 
 import { useCallback } from 'react';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type { CreateSalesOrderItemData } from './types/sales-order.types';
@@ -36,8 +34,6 @@ export function useSalesOrdersStock({
   currentOrderRef,
   getAvailableStock,
 }: StockDeps) {
-  // [BO-PERF-ORDERS-002] Notifie les consumers TanStack Query après sortie entrepôt.
-  const queryClient = useQueryClient();
   const checkStockAvailability = useCallback(
     async (items: CreateSalesOrderItemData[]) => {
       const availabilityCheck: Array<{
@@ -119,8 +115,6 @@ export function useSalesOrdersStock({
         });
 
         await fetchOrders();
-        // [BO-PERF-ORDERS-002] Notifie les consumers TanStack Query après sortie entrepôt.
-        await queryClient.invalidateQueries({ queryKey: ['sales_orders'] });
         if (currentOrderRef.current?.id === orderId) {
           await fetchOrder(orderId);
         }
@@ -138,7 +132,7 @@ export function useSalesOrdersStock({
         throw error;
       }
     },
-    [supabase, queryClient, fetchOrders, fetchOrder, currentOrderRef, toastRef]
+    [supabase, fetchOrders, fetchOrder, currentOrderRef, toastRef]
   );
 
   return { checkStockAvailability, getStockWithForecasted, markWarehouseExit };

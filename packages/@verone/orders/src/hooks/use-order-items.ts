@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
@@ -101,72 +101,6 @@ interface UseOrderItemsReturn {
   refetch: () => Promise<void>;
 }
 
-// [BO-PERF-ORDERS-001] Selects explicites selon orderType (interdit select('*')).
-// purchase_order_items n'a pas tax_rate, quantity_shipped, retrocession_*.
-// sales_order_items n'a pas quantity_received.
-const PURCHASE_ITEMS_SELECT = `
-  id,
-  purchase_order_id,
-  product_id,
-  quantity,
-  unit_price_ht,
-  discount_percentage,
-  eco_tax,
-  total_ht,
-  notes,
-  quantity_received,
-  sample_type,
-  customer_organisation_id,
-  customer_individual_id,
-  created_at,
-  products (
-    id,
-    name,
-    sku,
-    cost_price,
-    eco_tax_default,
-    product_images (
-      public_url,
-      cloudflare_image_id,
-      is_primary,
-      display_order
-    )
-  )
-`;
-
-const SALES_ITEMS_SELECT = `
-  id,
-  sales_order_id,
-  product_id,
-  quantity,
-  unit_price_ht,
-  discount_percentage,
-  eco_tax,
-  total_ht,
-  notes,
-  tax_rate,
-  quantity_shipped,
-  sample_type,
-  customer_organisation_id,
-  customer_individual_id,
-  retrocession_rate,
-  retrocession_amount,
-  created_at,
-  products (
-    id,
-    name,
-    sku,
-    cost_price,
-    eco_tax_default,
-    product_images (
-      public_url,
-      cloudflare_image_id,
-      is_primary,
-      display_order
-    )
-  )
-`;
-
 export function useOrderItems({
   orderId,
   orderType,
@@ -175,19 +109,13 @@ export function useOrderItems({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // [BO-PERF-ORDERS-001] useMemo évite de recréer le client à chaque render,
-  // ce qui rendrait supabase instable comme dep de fetchItems → boucle infinie.
-  // Même risque que l'incident prod du 16 avril 2026.
-
-  const supabase = useMemo(() => createClient(), []);
+  const supabase = createClient();
 
   // Configuration dynamique selon orderType
   const table =
     orderType === 'purchase' ? 'purchase_order_items' : 'sales_order_items';
   const fkColumn =
     orderType === 'purchase' ? 'purchase_order_id' : 'sales_order_id';
-  const itemsSelect =
-    orderType === 'purchase' ? PURCHASE_ITEMS_SELECT : SALES_ITEMS_SELECT;
 
   // Récupérer items avec produits associés
   const fetchItems = useCallback(async () => {
@@ -202,22 +130,38 @@ export function useOrderItems({
     try {
       const { data, error: fetchError } = await supabase
         .from(table)
-        .select(itemsSelect)
+        .select(
+          `
+          *,
+          products (
+            id,
+            name,
+            sku,
+            cost_price,
+            eco_tax_default,
+            product_images (
+              public_url,
+              cloudflare_image_id,
+              is_primary,
+              display_order
+            )
+          )
+        `
+        )
         .eq(fkColumn, orderId)
         .order('created_at', { ascending: true });
 
       if (fetchError) throw fetchError;
 
-      // Cast via unknown : Supabase TS ne peut pas inférer depuis une variable
-      // string (itemsSelect). Les colonnes sont exhaustives, le cast est safe.
-      setItems((data || []) as unknown as OrderItem[]);
+      // Cast to OrderItem[] car les types Supabase ne sont pas à jour avec eco_tax
+      setItems((data || []) as OrderItem[]);
     } catch (err) {
       console.error(`❌ [useOrderItems] Erreur fetch items ${orderType}:`, err);
       setError(err instanceof Error ? err.message : 'Erreur fetch items');
     } finally {
       setLoading(false);
     }
-  }, [orderId, orderType, table, fkColumn, supabase, itemsSelect]);
+  }, [orderId, orderType, table, fkColumn, supabase]);
 
   // Charger items au montage et quand orderId change
   useEffect(() => {
@@ -263,7 +207,24 @@ export function useOrderItems({
         const { data: newItem, error: insertError } = await supabaseGeneric
           .from(table)
           .insert(itemData)
-          .select(itemsSelect)
+          .select(
+            `
+          *,
+          products (
+            id,
+            name,
+            sku,
+            cost_price,
+            eco_tax_default,
+            product_images (
+              public_url,
+              cloudflare_image_id,
+              is_primary,
+              display_order
+            )
+          )
+        `
+          )
           .single();
 
         if (insertError) throw insertError;
@@ -283,7 +244,7 @@ export function useOrderItems({
         throw err;
       }
     },
-    [orderId, orderType, table, fkColumn, supabase, fetchItems, itemsSelect]
+    [orderId, orderType, table, fkColumn, supabase, fetchItems]
   );
 
   // Modifier item UNIVERSEL
@@ -310,7 +271,24 @@ export function useOrderItems({
           .from(table)
           .update(updateData)
           .eq('id', itemId)
-          .select(itemsSelect)
+          .select(
+            `
+          *,
+          products (
+            id,
+            name,
+            sku,
+            cost_price,
+            eco_tax_default,
+            product_images (
+              public_url,
+              cloudflare_image_id,
+              is_primary,
+              display_order
+            )
+          )
+        `
+          )
           .single();
 
         if (updateError) throw updateError;
@@ -321,7 +299,7 @@ export function useOrderItems({
         // Trigger recalcul automatique via DB trigger
         await fetchItems();
 
-        return updated as unknown as OrderItem;
+        return updated as OrderItem;
       } catch (err) {
         console.error(
           `❌ [useOrderItems] Erreur modification item ${orderType}:`,
@@ -330,7 +308,7 @@ export function useOrderItems({
         throw err;
       }
     },
-    [orderType, table, supabase, fetchItems, itemsSelect]
+    [orderType, table, supabase, fetchItems]
   );
 
   // Supprimer item UNIVERSEL

@@ -7,8 +7,6 @@
 
 import { useCallback } from 'react';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import type {
   SalesOrderStatus,
   SalesOrder,
@@ -36,11 +34,6 @@ export function useSalesOrdersMutations({
   checkStockAvailability,
   getAvailableStock,
 }: MutationDeps) {
-  // [BO-PERF-ORDERS-002] Notifie les consumers TanStack (useSalesOrdersQuery)
-  // après chaque mutation. Ne remplace pas fetchOrders (le useState local en dépend
-  // pour mettre à jour l'affichage dans SalesOrdersTable via fetchedOrders).
-  const queryClient = useQueryClient();
-
   const { createOrder, updateOrderWithItems } = useSalesOrdersWriteMutations({
     supabase,
     toastRef,
@@ -86,8 +79,6 @@ export function useSalesOrdersMutations({
           description: 'Commande mise à jour avec succès',
         });
         await fetchOrders();
-        // [BO-PERF-ORDERS-002] Notifie les consumers TanStack Query après la mutation.
-        await queryClient.invalidateQueries({ queryKey: ['sales_orders'] });
         if (currentOrderRef.current?.id === orderId) await fetchOrder(orderId);
       } catch (error: unknown) {
         console.error('Erreur lors de la mise à jour:', error);
@@ -104,36 +95,12 @@ export function useSalesOrdersMutations({
         setLoading(false);
       }
     },
-    [
-      supabase,
-      queryClient,
-      fetchOrders,
-      fetchOrder,
-      currentOrderRef,
-      toastRef,
-      setLoading,
-    ]
+    [supabase, fetchOrders, fetchOrder, currentOrderRef, toastRef, setLoading]
   );
 
   const updateStatus = useCallback(
     async (orderId: string, newStatus: SalesOrderStatus) => {
       setLoading(true);
-
-      // [BO-PERF-ORDERS-003] Optimistic update — mise à jour immédiate du cache
-      // avant la requête serveur. Si la mutation échoue, on rollback.
-      const previousData = queryClient.getQueriesData<SalesOrder[]>({
-        queryKey: ['sales_orders', 'list'],
-      });
-      queryClient.setQueriesData<SalesOrder[]>(
-        { queryKey: ['sales_orders', 'list'] },
-        old => {
-          if (!Array.isArray(old)) return old;
-          return old.map(o =>
-            o.id === orderId ? { ...o, status: newStatus } : o
-          );
-        }
-      );
-
       try {
         const {
           data: { user },
@@ -213,18 +180,12 @@ export function useSalesOrdersMutations({
           description: `Commande marquée comme ${newStatus}`,
         });
         await fetchOrders();
-        // [BO-PERF-ORDERS-002] Notifie les consumers TanStack Query après la mutation.
-        await queryClient.invalidateQueries({ queryKey: ['sales_orders'] });
         if (currentOrderRef.current?.id === orderId) await fetchOrder(orderId);
 
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('stock-alerts-refresh'));
         }
       } catch (error: unknown) {
-        // [BO-PERF-ORDERS-003] Rollback optimistic sur erreur
-        for (const [key, data] of previousData) {
-          queryClient.setQueryData(key, data);
-        }
         console.error('Erreur lors du changement de statut:', error);
         toastRef.current({
           title: 'Erreur',
@@ -239,15 +200,7 @@ export function useSalesOrdersMutations({
         setLoading(false);
       }
     },
-    [
-      supabase,
-      queryClient,
-      fetchOrders,
-      fetchOrder,
-      currentOrderRef,
-      toastRef,
-      setLoading,
-    ]
+    [supabase, fetchOrders, fetchOrder, currentOrderRef, toastRef, setLoading]
   );
 
   const shipItems = useCallback(
@@ -416,8 +369,6 @@ export function useSalesOrdersMutations({
           description: 'Commande supprimée avec succès',
         });
         await fetchOrders();
-        // [BO-PERF-ORDERS-002] Notifie les consumers TanStack Query après la mutation.
-        await queryClient.invalidateQueries({ queryKey: ['sales_orders'] });
         if (currentOrderRef.current?.id === orderId) setCurrentOrder(null);
       } catch (error: unknown) {
         console.error('Erreur lors de la suppression:', error);
@@ -436,7 +387,6 @@ export function useSalesOrdersMutations({
     },
     [
       supabase,
-      queryClient,
       fetchOrders,
       currentOrderRef,
       setCurrentOrder,

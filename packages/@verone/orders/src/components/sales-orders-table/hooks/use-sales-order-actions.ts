@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import { useSearchParams, useRouter } from 'next/navigation';
 
 import { useToast } from '@verone/common';
@@ -90,7 +88,6 @@ export function useSalesOrderActions({
   const searchParams = useSearchParams();
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
-  const queryClient = useQueryClient();
 
   // FIX: Refs stables pour eviter re-fetch en StrictMode
   const fetchOrdersRef = useRef(fetchOrders);
@@ -102,26 +99,6 @@ export function useSalesOrderActions({
   useEffect(() => {
     // OPTIMISE: Ne pas fetch si preloadedOrders fourni (evite double fetch)
     if (preloadedOrders) return;
-
-    // [BO-PERF-ORDERS-001] Lire le cache TanStack avant de fetcher.
-    // Si les données ont moins de 30s, le composant parent (SalesOrdersTable)
-    // les affiche depuis le cache — pas besoin de refetcher.
-    const STALE_TIME_MS = 30_000;
-    const channelKey = channelId ?? null;
-    const cacheState = queryClient.getQueryState([
-      'sales_orders',
-      'list',
-      channelKey,
-    ]);
-    const cacheAge =
-      cacheState?.dataUpdatedAt != null
-        ? Date.now() - cacheState.dataUpdatedAt
-        : Infinity;
-    if (cacheAge < STALE_TIME_MS) {
-      // Cache frais — les données sont déjà dans le state via setQueryData
-      // précédent. Pas de fetch réseau nécessaire.
-      return;
-    }
 
     let stale = false;
     const filters = channelId ? { channel_id: channelId } : undefined;
@@ -158,7 +135,7 @@ export function useSalesOrderActions({
     return () => {
       stale = true;
     };
-  }, [channelId, preloadedOrders, queryClient]);
+  }, [channelId, preloadedOrders]);
 
   // Ouvrir automatiquement le modal si query param ?id= present
   useEffect(() => {
