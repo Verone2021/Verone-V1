@@ -2,6 +2,8 @@
  * Sitemap dynamique LinkMe
  *
  * Genere automatiquement le sitemap.xml pour le SEO
+ * Pages marketing publiques incluses : about, contact, comment-ca-marche,
+ * pour-les-createurs, pour-les-pros, pour-les-enseignes.
  *
  * @module Sitemap
  * @since 2026-01-23
