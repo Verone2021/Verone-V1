@@ -81,7 +81,10 @@ export function PaymentRequestsTable({
               0,
               request.totalAmountTTC - request.alreadyPaidTTC
             );
+            // On peut enregistrer un paiement dès qu'une demande existe — même sans
+            // facture déposée (cas régularisation : la facture peut exister déjà côté Qonto).
             const canProcess =
+              request.status === 'pending' ||
               request.status === 'invoice_received' ||
               request.status === 'partially_paid';
 
