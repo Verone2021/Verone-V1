@@ -143,13 +143,16 @@ export function useSalesOrdersFetch({
 
         const enrichedItems = (orderData.sales_order_items ?? []).map(item => {
           const prod = item.products;
+          const primary =
+            prod?.product_images?.find(img => img.is_primary) ??
+            prod?.product_images?.[0] ??
+            null;
           return {
             ...item,
             products: prod
               ? {
                   ...prod,
-                  primary_image_url:
-                    prod.product_images?.[0]?.public_url ?? null,
+                  primary_image_url: primary?.public_url ?? null,
                 }
               : null,
           };
