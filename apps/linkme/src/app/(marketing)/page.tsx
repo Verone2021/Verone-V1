@@ -6,10 +6,9 @@
  *
  * @module HomePage
  * @since 2026-01-23
+ * @updated 2026-05-13 - LM-MKT-001 : composants 100 % statiques, plus de
+ *                       fetch côté client → on laisse Next.js prérendrer.
  */
-
-// Force dynamic rendering car les composants utilisent react-query
-export const dynamic = 'force-dynamic';
 
 import {
   LandingHero,

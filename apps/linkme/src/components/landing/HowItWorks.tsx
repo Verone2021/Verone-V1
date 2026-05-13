@@ -3,14 +3,15 @@
 /**
  * Landing Page "How It Works" Section - LinkMe
  *
- * Section expliquant le fonctionnement en 4 etapes:
- * - Creez vos selections
- * - Definissez vos marges
+ * Section expliquant le fonctionnement en 4 étapes :
+ * - Créez vos sélections
+ * - Définissez vos marges
  * - Partagez vos liens
  * - Suivez vos gains
  *
  * @module LandingHowItWorks
  * @since 2026-01-23
+ * @updated 2026-05-13 - LM-MKT-001 : accents + valeurs mockup non vides.
  */
 
 import { LayoutGrid, SlidersHorizontal, Share2, BarChart3 } from 'lucide-react';
@@ -19,18 +20,18 @@ const STEPS = [
   {
     number: '01',
     icon: LayoutGrid,
-    title: 'Creez vos selections',
+    title: 'Créez vos sélections',
     description:
-      'Parcourez notre catalogue de produits et creez des selections personnalisees pour votre audience. Chaque selection a son propre lien partageable.',
+      'Parcourez notre catalogue de produits et créez des sélections personnalisées pour votre audience. Chaque sélection a son propre lien partageable.',
     color: '#5DBEBB',
     bgGradient: 'from-[#5DBEBB]/10 to-[#5DBEBB]/5',
   },
   {
     number: '02',
     icon: SlidersHorizontal,
-    title: 'Definissez vos marges',
+    title: 'Définissez vos marges',
     description:
-      'Ajustez vos marges produit par produit. Notre systeme de feux tricolore vous guide pour trouver le prix optimal entre competitivite et rentabilite.',
+      'Ajustez vos marges produit par produit. Notre système de feux tricolore vous guide pour trouver le prix optimal entre compétitivité et rentabilité.',
     color: '#7E84C0',
     bgGradient: 'from-[#7E84C0]/10 to-[#7E84C0]/5',
   },
@@ -39,7 +40,7 @@ const STEPS = [
     icon: Share2,
     title: 'Partagez vos liens',
     description:
-      'Diffusez vos selections sur vos reseaux sociaux, votre site web, ou par email. Chaque lien est unique et tracable.',
+      'Diffusez vos sélections sur vos réseaux sociaux, votre site web, ou par email. Chaque lien est unique et traçable.',
     color: '#3976BB',
     bgGradient: 'from-[#3976BB]/10 to-[#3976BB]/5',
   },
@@ -48,7 +49,7 @@ const STEPS = [
     icon: BarChart3,
     title: 'Suivez vos gains',
     description:
-      'Visualisez vos ventes et commissions en temps reel dans votre dashboard. Recevez vos paiements de maniere simple et securisee.',
+      'Visualisez vos ventes et commissions en temps réel dans votre dashboard. Recevez vos paiements de manière simple et sécurisée.',
     color: '#5DBEBB',
     bgGradient: 'from-[#5DBEBB]/10 to-[#5DBEBB]/5',
   },
@@ -61,17 +62,17 @@ export function LandingHowItWorks(): JSX.Element {
         {/* Section header */}
         <div className="text-center mb-12 lg:mb-16">
           <span className="inline-block px-4 py-1.5 bg-[#5DBEBB]/10 rounded-full text-sm font-medium text-[#5DBEBB] mb-4">
-            Comment ca marche
+            Comment ça marche
           </span>
           <h2 className="text-3xl sm:text-4xl font-bold text-[#183559]">
             Lancez-vous en{' '}
             <span className="bg-gradient-to-r from-[#5DBEBB] to-[#7E84C0] bg-clip-text text-transparent">
-              4 etapes
+              4 étapes
             </span>
           </h2>
           <p className="mt-4 text-lg text-[#183559]/60 max-w-2xl mx-auto">
-            De la creation de votre premiere selection a votre premier paiement,
-            tout est simplifie.
+            De la création de votre première sélection à votre premier paiement,
+            tout est simplifié.
           </p>
         </div>
 
@@ -137,34 +138,36 @@ export function LandingHowItWorks(): JSX.Element {
                   <div className="text-sm text-gray-500 mb-1">
                     Ventes ce mois
                   </div>
-                  <div className="text-2xl font-bold text-[#183559]">--</div>
+                  <div className="text-2xl font-bold text-[#183559]">
+                    3 200 €
+                  </div>
                   <div className="text-xs text-[#5DBEBB]">
-                    Commencez a vendre
+                    +12 % vs mois dernier
                   </div>
                 </div>
                 <div className="bg-white rounded-xl p-4 shadow-sm">
                   <div className="text-sm text-gray-500 mb-1">Commissions</div>
-                  <div className="text-2xl font-bold text-[#183559]">0 EUR</div>
-                  <div className="text-xs text-gray-400">En attente</div>
+                  <div className="text-2xl font-bold text-[#183559]">416 €</div>
+                  <div className="text-xs text-[#5DBEBB]">Versées</div>
                 </div>
                 <div className="bg-white rounded-xl p-4 shadow-sm">
-                  <div className="text-sm text-gray-500 mb-1">Selections</div>
-                  <div className="text-2xl font-bold text-[#183559]">0</div>
-                  <div className="text-xs text-gray-400">Creez-en une !</div>
+                  <div className="text-sm text-gray-500 mb-1">Sélections</div>
+                  <div className="text-2xl font-bold text-[#183559]">7</div>
+                  <div className="text-xs text-[#5DBEBB]">Actives</div>
                 </div>
               </div>
 
               {/* Chart placeholder */}
               <div className="mt-4 bg-white rounded-xl p-4 shadow-sm">
                 <div className="text-sm font-medium text-gray-700 mb-4">
-                  Evolution des ventes
+                  Évolution des ventes
                 </div>
                 <div className="h-32 flex items-end justify-between gap-2 px-4">
-                  {[20, 35, 25, 45, 30, 55, 40, 60, 45, 70, 50, 65].map(
+                  {[18, 25, 30, 38, 42, 48, 55, 62, 68, 75, 82, 90].map(
                     (h, i) => (
                       <div
                         key={i}
-                        className="flex-1 bg-gradient-to-t from-[#5DBEBB]/80 to-[#5DBEBB]/40 rounded-t opacity-50"
+                        className="flex-1 bg-gradient-to-t from-[#5DBEBB] to-[#5DBEBB]/60 rounded-t"
                         style={{ height: `${h}%` }}
                       />
                     )

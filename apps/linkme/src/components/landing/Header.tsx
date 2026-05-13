@@ -6,7 +6,7 @@
  * Header responsive avec:
  * - Logo a gauche
  * - Navigation centrale (desktop)
- * - CTAs a droite (Se connecter + Devenir partenaire)
+ * - CTAs à droite (Se connecter + Demander l'accès)
  * - Menu mobile avec Sheet
  *
  * Note: Ce header n'est visible que par les visiteurs NON connectés.
@@ -27,8 +27,8 @@ import { Menu, X, LogIn, ArrowRight } from 'lucide-react';
 // Navigation items
 const NAV_ITEMS = [
   { label: 'Accueil', href: '/' },
-  { label: 'Comment ca marche', href: '#how-it-works' },
-  { label: 'A propos', href: '/about' },
+  { label: 'Comment ça marche', href: '#how-it-works' },
+  { label: 'À propos', href: '/about' },
   { label: 'Contact', href: '/contact' },
 ];
 
@@ -77,7 +77,7 @@ export function LandingHeader(): JSX.Element {
               href="/contact"
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#5DBEBB] to-[#5DBEBB]/80 rounded-lg hover:from-[#4CA9A6] hover:to-[#4CA9A6]/80 transition-all shadow-sm hover:shadow-md"
             >
-              Devenir partenaire
+              Demander l&apos;accès
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -126,7 +126,7 @@ export function LandingHeader(): JSX.Element {
                 className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#5DBEBB] to-[#5DBEBB]/80 rounded-lg hover:from-[#4CA9A6] hover:to-[#4CA9A6]/80 transition-all"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Devenir partenaire
+                Demander l&apos;accès
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>

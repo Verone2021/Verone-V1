@@ -3,16 +3,17 @@
 /**
  * Landing Page Marketplace Section - LinkMe
  *
- * Section presentant une selection de produits reels du catalogue:
- * - Produits hardcodes (pas de fetch dynamique)
+ * Section présentant une sélection de produits réels du catalogue :
+ * - Produits hardcodés (pas de fetch dynamique)
  * - Images depuis Supabase Storage
  * - CTA vers le catalogue complet
  *
- * Note: Les produits affilies (ex: Pokawa) ne sont pas affiches ici
- * car cette fonctionnalite n'est pas encore publique.
+ * Note : les produits affiliés (ex : Pokawa) ne sont pas affichés ici
+ * car cette fonctionnalité n'est pas encore publique.
  *
  * @module LandingMarketplace
  * @since 2026-01-23
+ * @updated 2026-05-13 - LM-MKT-001 : accents.
  */
 
 import Link from 'next/link';
@@ -28,7 +29,7 @@ import { ShoppingBag, ArrowRight, Star, Sparkles } from 'lucide-react';
 const SHOWCASE_PRODUCTS = [
   {
     id: 'showcase-1',
-    name: 'Table basse en chene',
+    name: 'Table basse en chêne',
     category: 'Mobilier',
     image: '/placeholder-product-1.jpg',
     basePrice: 280,
@@ -37,7 +38,7 @@ const SHOWCASE_PRODUCTS = [
   },
   {
     id: 'showcase-2',
-    name: 'Lampe design articulee',
+    name: 'Lampe design articulée',
     category: 'Luminaires',
     image: '/placeholder-product-2.jpg',
     basePrice: 145,
@@ -55,7 +56,7 @@ const SHOWCASE_PRODUCTS = [
   },
   {
     id: 'showcase-4',
-    name: 'Console entree metal',
+    name: 'Console entrée métal',
     category: 'Rangement',
     image: '/placeholder-product-4.jpg',
     basePrice: 195,
@@ -71,7 +72,7 @@ const CATEGORIES = [
   'Luminaires',
   'Assises',
   'Rangement',
-  'Decoration',
+  'Décoration',
 ];
 
 export function LandingMarketplace(): JSX.Element {
@@ -86,13 +87,13 @@ export function LandingMarketplace(): JSX.Element {
           <h2 className="text-3xl sm:text-4xl font-bold text-[#183559]">
             Des produits{' '}
             <span className="bg-gradient-to-r from-[#5DBEBB] to-[#7E84C0] bg-clip-text text-transparent">
-              de qualite
+              de qualité
             </span>{' '}
-            a vendre
+            à vendre
           </h2>
           <p className="mt-4 text-lg text-[#183559]/60 max-w-2xl mx-auto">
-            Decoration et mobilier sources avec soin par nos experts. Commission
-            de 5% sur chaque vente.
+            Décoration et mobilier sourcés avec soin par nos experts. Commission
+            de 5 % sur chaque vente.
           </p>
         </div>
 
@@ -178,7 +179,7 @@ export function LandingMarketplace(): JSX.Element {
             href="/contact"
             className="inline-flex items-center gap-2 px-6 py-3 bg-[#183559] text-white font-semibold rounded-xl hover:bg-[#183559]/90 transition-colors"
           >
-            Decouvrir tout le catalogue
+            Découvrir tout le catalogue
             <ArrowRight className="h-5 w-5" />
           </Link>
           <p className="mt-4 text-sm text-[#183559]/50">
@@ -191,15 +192,15 @@ export function LandingMarketplace(): JSX.Element {
           <div className="flex items-center justify-center gap-2 mb-4">
             <Star className="h-5 w-5 text-[#7E84C0]" />
             <span className="text-sm font-medium text-[#7E84C0]">
-              Bientot disponible
+              Bientôt disponible
             </span>
           </div>
           <h3 className="text-xl font-bold text-[#183559] mb-2">
             Vous avez vos propres produits ?
           </h3>
           <p className="text-[#183559]/60 max-w-xl mx-auto mb-6">
-            Nous acceptons les produits de nos affilies partenaires. Stockage
-            dans nos entrepots ou expedition par vos soins - nous gerons la
+            Nous acceptons les produits de nos affiliés partenaires. Stockage
+            dans nos entrepôts ou expédition par vos soins — nous gérons la
             logistique pour vous.
           </p>
           <Link

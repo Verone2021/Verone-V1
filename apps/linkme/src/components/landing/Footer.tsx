@@ -28,13 +28,13 @@ import {
 // Footer links
 const LINKS = {
   about: [
-    { label: 'A propos', href: '/about' },
+    { label: 'À propos', href: '/about' },
     { label: 'Contact', href: '/contact' },
   ],
   useful: [
-    { label: 'Comment ca marche', href: '#how-it-works' },
-    { label: 'Conditions generales', href: '/cgu' },
-    { label: 'Politique de confidentialite', href: '/privacy' },
+    { label: 'Comment ça marche', href: '#how-it-works' },
+    { label: 'Conditions générales', href: '/cgu' },
+    { label: 'Politique de confidentialité', href: '/privacy' },
   ],
 };
 
@@ -64,7 +64,7 @@ export function LandingFooter(): JSX.Element {
             </Link>
             <p className="text-white/60 text-sm leading-relaxed">
               Plateforme d&apos;affiliation B2B pour les professionnels de la
-              decoration et du mobilier d&apos;interieur.
+              décoration et du mobilier d&apos;intérieur.
             </p>
             {/* Social links */}
             <div className="flex items-center gap-3 mt-6">
@@ -83,7 +83,7 @@ export function LandingFooter(): JSX.Element {
 
           {/* Links - A propos */}
           <div>
-            <h3 className="font-semibold text-base mb-4">A propos</h3>
+            <h3 className="font-semibold text-base mb-4">À propos</h3>
             <ul className="space-y-3">
               {LINKS.about.map(link => (
                 <li key={link.label}>
@@ -119,7 +119,7 @@ export function LandingFooter(): JSX.Element {
           <div>
             <h3 className="font-semibold text-base mb-4">Newsletter</h3>
             <p className="text-white/60 text-sm mb-4">
-              Bientot disponible - Inscrivez-vous pour recevoir nos actualites.
+              Bientôt disponible — inscrivez-vous pour recevoir nos actualités.
             </p>
             {/* Newsletter desactivee pour l'instant */}
             <div className="relative mb-6 opacity-50 pointer-events-none">
@@ -162,7 +162,7 @@ export function LandingFooter(): JSX.Element {
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-white/40 text-sm">
             &copy; {new Date().getFullYear()} LinkMe by Verone. Tous droits
-            reserves.
+            réservés.
           </p>
           <div className="flex items-center gap-6 text-sm text-white/40">
             <Link href="/cgu" className="hover:text-white transition-colors">
@@ -172,7 +172,7 @@ export function LandingFooter(): JSX.Element {
               href="/privacy"
               className="hover:text-white transition-colors"
             >
-              Confidentialite
+              Confidentialité
             </Link>
             <Link
               href="/cookies"

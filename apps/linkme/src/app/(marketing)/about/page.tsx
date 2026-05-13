@@ -1,10 +1,11 @@
 /**
- * Page A propos - LinkMe
+ * Page À propos - LinkMe
  *
- * Presentation de LinkMe et de sa mission
+ * Présentation de LinkMe et de sa mission.
  *
  * @module AboutPage
  * @since 2026-01-23
+ * @updated 2026-05-13 - LM-MKT-001 : accents.
  */
 
 import Link from 'next/link';
@@ -20,13 +21,13 @@ import {
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'A propos',
+  title: 'À propos',
   description:
-    "Decouvrez LinkMe, la plateforme d'affiliation B2B nouvelle generation pour les professionnels de la decoration et du mobilier d'interieur.",
+    "Découvrez LinkMe, la plateforme d'affiliation B2B nouvelle génération pour les professionnels de la décoration et du mobilier d'intérieur.",
   openGraph: {
-    title: 'A propos de LinkMe',
+    title: 'À propos de LinkMe',
     description:
-      "LinkMe democratise l'affiliation B2B pour les professionnels du mobilier et de la decoration d'interieur.",
+      "LinkMe démocratise l'affiliation B2B pour les professionnels du mobilier et de la décoration d'intérieur.",
     url: '/about',
   },
   alternates: {
@@ -39,34 +40,34 @@ const VALUES = [
     icon: Target,
     title: 'Transparence',
     description:
-      'Pricing clair et visible. Pas de frais caches, vous savez exactement ce que vous gagnez sur chaque vente.',
+      'Pricing clair et visible. Pas de frais cachés, vous savez exactement ce que vous gagnez sur chaque vente.',
   },
   {
     icon: Lightbulb,
-    title: 'Simplicite',
+    title: 'Simplicité',
     description:
-      'Contenu pret a l emploi: images optimisees, descriptions, prix recommandes. Concentrez-vous sur la vente.',
+      "Contenu prêt à l'emploi : images optimisées, descriptions, prix recommandés. Concentrez-vous sur la vente.",
   },
   {
     icon: TrendingUp,
     title: 'Performance',
     description:
-      'Analytics en temps reel pour suivre vos ventes et optimiser vos selections. Decisions basees sur les donnees.',
+      'Analytics en temps réel pour suivre vos ventes et optimiser vos sélections. Décisions basées sur les données.',
   },
   {
     icon: Users,
     title: 'Partenariat',
     description:
-      'Une relation gagnant-gagnant. Votre succes est notre succes. Support dedie pour vous accompagner.',
+      'Une relation gagnant-gagnant. Votre succès est notre succès. Support dédié pour vous accompagner.',
   },
 ];
 
 const FEATURES = [
-  'Commissions definies par produit ET par selection',
-  'Creez plusieurs selections adaptees a vos audiences',
-  'Integration multicanale: social, web, email',
-  'Suivi en temps reel de vos performances',
-  'Paiements simplifies et securises',
+  'Commissions définies par produit ET par sélection',
+  'Créez plusieurs sélections adaptées à vos audiences',
+  'Intégration multicanale : social, web, email',
+  'Suivi en temps réel de vos performances',
+  'Paiements simplifiés et sécurisés',
 ];
 
 export default function AboutPage() {
@@ -75,15 +76,15 @@ export default function AboutPage() {
       {/* Hero */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-16 lg:mb-24">
         <h1 className="text-4xl sm:text-5xl font-bold text-[#183559] mb-6">
-          Democratiser l&apos;affiliation{' '}
+          Démocratiser l&apos;affiliation{' '}
           <span className="bg-gradient-to-r from-[#5DBEBB] to-[#7E84C0] bg-clip-text text-transparent">
             B2B professionnelle
           </span>
         </h1>
         <p className="text-lg text-[#183559]/70 max-w-2xl mx-auto">
-          LinkMe est ne pour repondre aux defis de l&apos;affiliation
-          traditionnelle: rigidite, opacite, complexite. Notre mission est de
-          creer un ecosysteme ou chaque professionnel peut monetiser son reseau
+          LinkMe est né pour répondre aux défis de l&apos;affiliation
+          traditionnelle : rigidité, opacité, complexité. Notre mission est de
+          créer un écosystème où chaque professionnel peut monétiser son réseau
           simplement.
         </p>
       </section>
@@ -95,10 +96,10 @@ export default function AboutPage() {
             <div>
               <h2 className="text-3xl font-bold mb-6">Notre vision</h2>
               <p className="text-white/80 text-lg leading-relaxed mb-6">
-                Nous croyons que l&apos;affiliation B2B doit etre accessible a
+                Nous croyons que l&apos;affiliation B2B doit être accessible à
                 tous les professionnels, pas seulement aux grandes enseignes.
-                LinkMe offre une flexibilite inegalee avec des commissions
-                personnalisables par produit et par selection.
+                LinkMe offre une flexibilité inégalée avec des commissions
+                personnalisables par produit et par sélection.
               </p>
               <ul className="space-y-3">
                 {FEATURES.map(feature => (
@@ -114,8 +115,8 @@ export default function AboutPage() {
                 LinkMe, c&apos;est quoi ?
               </h3>
               <p className="text-white/70 mb-4">
-                Une plateforme d&apos;affiliation nouvelle generation qui
-                combine:
+                Une plateforme d&apos;affiliation nouvelle génération qui
+                combine :
               </p>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -134,7 +135,7 @@ export default function AboutPage() {
                   <div className="w-10 h-10 rounded-lg bg-[#3976BB]/20 flex items-center justify-center">
                     <span className="text-[#3976BB] font-bold">3</span>
                   </div>
-                  <span>Outils SaaS integres</span>
+                  <span>Outils SaaS intégrés</span>
                 </div>
               </div>
             </div>
@@ -169,11 +170,11 @@ export default function AboutPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-gradient-to-r from-[#5DBEBB]/10 to-[#7E84C0]/10 rounded-2xl p-8 lg:p-12 text-center">
           <h2 className="text-2xl lg:text-3xl font-bold text-[#183559] mb-4">
-            Pret a rejoindre LinkMe ?
+            Prêt à rejoindre LinkMe ?
           </h2>
           <p className="text-[#183559]/70 mb-8 max-w-xl mx-auto">
-            Contactez-nous pour decouvrir comment LinkMe peut transformer votre
-            activite.
+            Contactez-nous pour découvrir comment LinkMe peut transformer votre
+            activité.
           </p>
           <Link
             href="/contact"

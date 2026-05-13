@@ -1,53 +1,46 @@
-'use client';
-
 /**
  * Landing Page Hero Section - LinkMe
  *
- * Section hero avec:
- * - Titre accrocheur avec gradient
- * - Sous-titre explicatif
- * - 2 CTAs (Devenir partenaire + En savoir plus)
- * - Logos partenaires (Trusted by)
- * - Statistiques en temps réel depuis Supabase
- * - Illustration/Image
+ * Section hero avec :
+ * - Badge « Accès sur demande »
+ * - H1 positionnement produit (B2B configurable)
+ * - 2 CTAs (Demander l'accès + En savoir plus)
+ * - 3 chiffres statiques (CA produits, unités, pays couverts)
+ * - Logos partenaires
+ * - Mockup illustratif
  *
  * @module LandingHero
  * @since 2026-01-07
- * @updated 2026-01-23 - Utilisation de vraies stats via usePublicStats
+ * @updated 2026-05-13 - LM-MKT-001 : repositionnement copy, accents,
+ *                       chiffres statiques (suppression de usePublicStats).
  */
 
 import Link from 'next/link';
 
-import { ArrowRight, TrendingUp, Users, Wallet, Loader2 } from 'lucide-react';
+import { ArrowRight, TrendingUp, Package, Globe } from 'lucide-react';
 
-import {
-  usePublicStats,
-  formatPublicStat,
-  formatPublicAmount,
-} from '@/lib/hooks/use-public-stats';
+const HERO_STATS = [
+  {
+    label: 'CA produits générés',
+    value: '74 000 €',
+    hint: 'en 2024',
+    icon: TrendingUp,
+  },
+  {
+    label: 'Unités commandées',
+    value: '1 153',
+    hint: 'via la plateforme',
+    icon: Package,
+  },
+  {
+    label: 'Pays couverts',
+    value: '4',
+    hint: 'France, Belgique, Luxembourg, Suisse',
+    icon: Globe,
+  },
+];
 
-export function LandingHero() {
-  const { data: stats, isLoading } = usePublicStats();
-
-  // Stats à afficher avec vraies données ou fallback
-  const displayStats = [
-    {
-      label: 'Affilies actifs',
-      value: stats ? formatPublicStat(stats.totalAffiliates) : '-',
-      icon: Users,
-    },
-    {
-      label: 'Commissions versees',
-      value: stats ? `${formatPublicAmount(stats.totalCommissionsPaid)}€` : '-',
-      icon: Wallet,
-    },
-    {
-      label: 'Selections creees',
-      value: stats ? formatPublicStat(stats.totalSelections) : '-',
-      icon: TrendingUp,
-    },
-  ];
-
+export function LandingHero(): JSX.Element {
   return (
     <section className="relative pt-24 pb-16 lg:pt-32 lg:pb-24 overflow-hidden">
       {/* Background gradient */}
@@ -61,24 +54,22 @@ export function LandingHero() {
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#5DBEBB]/10 rounded-full mb-6">
               <span className="w-2 h-2 bg-[#5DBEBB] rounded-full animate-pulse" />
               <span className="text-sm font-medium text-[#5DBEBB]">
-                Plateforme d&apos;affiliation B2B
+                Accès sur demande
               </span>
             </div>
 
             {/* Title */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#183559] leading-tight">
-              Monetisez votre{' '}
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#183559] leading-tight">
+              LinkMe connecte vos franchisés, vos clients ou votre équipe à un{' '}
               <span className="bg-gradient-to-r from-[#5DBEBB] via-[#7E84C0] to-[#3976BB] bg-clip-text text-transparent">
-                reseau
+                catalogue produits sélectionné
               </span>{' '}
-              avec LinkMe
+              — avec vos prix, votre marge, votre commission.
             </h1>
 
             {/* Subtitle */}
             <p className="mt-6 text-lg text-[#183559]/70 max-w-xl mx-auto lg:mx-0">
-              Rejoignez notre plateforme d&apos;affiliation et gagnez des
-              commissions sur chaque vente. Suivi en temps reel, paiements
-              simplifies.
+              Vous configurez une fois. Ils commandent à leur rythme.
             </p>
 
             {/* CTAs */}
@@ -87,7 +78,7 @@ export function LandingHero() {
                 href="/contact"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-gradient-to-r from-[#5DBEBB] to-[#5DBEBB]/80 rounded-xl hover:from-[#4CA9A6] hover:to-[#4CA9A6]/80 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02]"
               >
-                Devenir partenaire
+                Demander l&apos;accès
                 <ArrowRight className="h-5 w-5" />
               </Link>
               <Link
@@ -98,22 +89,21 @@ export function LandingHero() {
               </Link>
             </div>
 
-            {/* Stats - Vraies données depuis Supabase */}
+            {/* Stats — chiffres statiques */}
             <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {displayStats.map(stat => (
+              {HERO_STATS.map(stat => (
                 <div
                   key={stat.label}
                   className="text-center lg:text-left p-3 rounded-xl bg-white/60 backdrop-blur-sm border border-gray-100"
                 >
                   <stat.icon className="h-5 w-5 text-[#5DBEBB] mx-auto lg:mx-0 mb-1" />
                   <div className="text-2xl font-bold text-[#183559]">
-                    {isLoading ? (
-                      <Loader2 className="h-5 w-5 animate-spin inline" />
-                    ) : (
-                      stat.value
-                    )}
+                    {stat.value}
                   </div>
                   <div className="text-xs text-[#183559]/60">{stat.label}</div>
+                  <div className="text-[11px] text-[#183559]/40 mt-0.5">
+                    {stat.hint}
+                  </div>
                 </div>
               ))}
             </div>
@@ -131,7 +121,7 @@ export function LandingHero() {
                 </div>
                 <div className="h-8 px-4 py-1 bg-gray-200 rounded-md flex items-center justify-center">
                   <span className="text-xs font-semibold text-gray-500">
-                    BLACK & WHITE
+                    BLACK &amp; WHITE
                   </span>
                 </div>
               </div>
