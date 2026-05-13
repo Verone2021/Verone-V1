@@ -55,15 +55,38 @@ const ClientsSection = dynamic(
     })),
   { ssr: false, loading: () => null }
 );
-const CMSSection = dynamic(
-  () =>
-    import('./components/CMSSection').then(m => ({ default: m.CMSSection })),
-  { ssr: false, loading: () => null }
-);
 const CmsPagesSection = dynamic(
   () =>
     import('./components/CmsPagesSection').then(m => ({
       default: m.CmsPagesSection,
+    })),
+  { ssr: false, loading: () => null }
+);
+const HomePageEditor = dynamic(
+  () =>
+    import('./components/HomePageEditor').then(m => ({
+      default: m.HomePageEditor,
+    })),
+  { ssr: false, loading: () => null }
+);
+const AboutPageEditor = dynamic(
+  () =>
+    import('./components/AboutPageEditor').then(m => ({
+      default: m.AboutPageEditor,
+    })),
+  { ssr: false, loading: () => null }
+);
+const JournalLinkCard = dynamic(
+  () =>
+    import('./components/JournalLinkCard').then(m => ({
+      default: m.JournalLinkCard,
+    })),
+  { ssr: false, loading: () => null }
+);
+const FooterPlaceholder = dynamic(
+  () =>
+    import('./components/FooterPlaceholder').then(m => ({
+      default: m.FooterPlaceholder,
     })),
   { ssr: false, loading: () => null }
 );
@@ -246,9 +269,9 @@ export default function SiteInternetPage() {
               <Star className="h-4 w-4" />
               Avis
             </TabsTrigger>
-            <TabsTrigger value="contenu" className="flex items-center gap-2">
+            <TabsTrigger value="pages" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Contenu
+              Pages
             </TabsTrigger>
             <TabsTrigger value="promos" className="flex items-center gap-2">
               <Tag className="h-4 w-4" />
@@ -320,11 +343,43 @@ export default function SiteInternetPage() {
             <AmbassadorsSection />
           </TabsContent>
 
-          {/* Tab: Contenu CMS + Pages + Newsletter */}
-          <TabsContent value="contenu" className="space-y-6">
-            <CMSSection />
-            <CmsPagesSection />
-            <NewsletterSection />
+          {/* Tab: Pages — sous-onglets miroir des pages du site
+              (Accueil, À propos, Footer, Pages CMS, Journal, Newsletter) */}
+          <TabsContent value="pages" className="space-y-4">
+            <Tabs defaultValue="accueil" className="space-y-4">
+              <TabsList className="grid grid-cols-6 w-full max-w-3xl">
+                <TabsTrigger value="accueil">Accueil</TabsTrigger>
+                <TabsTrigger value="a-propos">À propos</TabsTrigger>
+                <TabsTrigger value="footer">Footer</TabsTrigger>
+                <TabsTrigger value="cms-pages">CGV / FAQ</TabsTrigger>
+                <TabsTrigger value="journal">Journal</TabsTrigger>
+                <TabsTrigger value="newsletter">Newsletter</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="accueil" className="space-y-6">
+                <HomePageEditor />
+              </TabsContent>
+
+              <TabsContent value="a-propos" className="space-y-6">
+                <AboutPageEditor />
+              </TabsContent>
+
+              <TabsContent value="footer" className="space-y-6">
+                <FooterPlaceholder />
+              </TabsContent>
+
+              <TabsContent value="cms-pages" className="space-y-6">
+                <CmsPagesSection />
+              </TabsContent>
+
+              <TabsContent value="journal" className="space-y-6">
+                <JournalLinkCard />
+              </TabsContent>
+
+              <TabsContent value="newsletter" className="space-y-6">
+                <NewsletterSection />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           {/* Tab: Top produits (revenu site internet) */}

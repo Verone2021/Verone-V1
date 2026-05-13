@@ -5,8 +5,7 @@ import { useState, useEffect } from 'react';
 
 import { X, Tag, Plus } from 'lucide-react';
 
-// TODO: Déplacer CollectionImageUpload vers @verone/common
-// import { CollectionImageUpload } from '@/components/business/collection-image-upload';
+import { CollectionImageUpload } from './CollectionImageUpload';
 import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
@@ -253,23 +252,28 @@ export function CollectionFormModal({
                 />
               </div>
 
-              {/* Image de couverture - ALIGNÉE SUR LARGEUR FORMULAIRE */}
-              {/* TODO: Réactiver quand CollectionImageUpload sera dans @verone/common
-            <div>
-              <Label className="text-sm font-medium">Image de couverture</Label>
-              <div className="mt-2 w-full">
-                <CollectionImageUpload
-                  {...({
-                    collectionId: collection?.id ?? '',
-                    onImageUpload: (imageId, publicUrl) => {
-                      console.log('✅ Image collection uploadée:', imageId);
-                    },
-                    className: 'w-full',
-                  } as any)}
-                />
+              {/* Image de couverture — réactivée 2026-05-13 (BO-SITE-CMS-001).
+                  L'upload écrit dans collection_images (is_primary=true). Le
+                  site-internet lit via JOIN sur collection_images (avec
+                  fallback collections.image_url pour les images historiques). */}
+              <div>
+                <Label className="text-sm font-medium">
+                  Image de couverture
+                </Label>
+                <div className="mt-2 w-full">
+                  {mode === 'edit' && collection?.id ? (
+                    <CollectionImageUpload
+                      collectionId={collection.id}
+                      className="w-full"
+                    />
+                  ) : (
+                    <p className="text-xs text-gray-500 italic">
+                      Créez d&apos;abord la collection, puis re-ouvrez-la pour
+                      ajouter une image.
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-            */}
             </div>
 
             {/* Style - UNE SEULE FOIS */}
