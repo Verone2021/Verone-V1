@@ -18,12 +18,12 @@ export const metadata: Metadata = {
     template: '%s | LinkMe',
   },
   description:
-    "Rejoignez LinkMe, la plateforme d'affiliation B2B pour les professionnels du mobilier et de la decoration d'interieur. Monetisez votre reseau avec des commissions attractives.",
+    "Rejoignez LinkMe, la plateforme d'affiliation B2B pour les professionnels du mobilier et de la décoration d'intérieur. Monétisez votre réseau avec des commissions attractives.",
   keywords: [
     'affiliation B2B',
     'plateforme affiliation',
-    'mobilier interieur',
-    'decoration interieur',
+    'mobilier intérieur',
+    'décoration intérieur',
     'commission vente',
     'partenariat professionnel',
     'LinkMe',
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     title: "LinkMe - Plateforme d'affiliation B2B",
     description:
-      "Monetisez votre reseau avec LinkMe, la plateforme d'affiliation B2B pour le mobilier et la decoration d'interieur.",
+      "Monétisez votre réseau avec LinkMe, la plateforme d'affiliation B2B pour le mobilier et la décoration d'intérieur.",
     images: [
       {
         url: '/og-image.png',
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: "LinkMe - Plateforme d'affiliation B2B",
     description:
-      "Monetisez votre reseau avec LinkMe, la plateforme d'affiliation B2B pour le mobilier et la decoration d'interieur.",
+      "Monétisez votre réseau avec LinkMe, la plateforme d'affiliation B2B pour le mobilier et la décoration d'intérieur.",
     images: ['/og-image.png'],
     creator: '@verone_io',
   },
