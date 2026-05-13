@@ -8,14 +8,22 @@ import { useCollections } from '@/hooks/use-collections';
 export function CollectionsListGrid() {
   const { data: collections, isLoading } = useCollections();
 
+  // Grid : 2 colonnes par défaut, 3 colonnes quand on a au moins 3 collections.
+  // Évite les énormes tuiles à 50 % d'écran chacune quand le catalogue n'a que
+  // 2 collections (cas constaté en prod 2026-05-13).
+  const colsClass =
+    (collections?.length ?? 0) >= 3
+      ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+      : 'grid-cols-1 md:grid-cols-2';
+
   if (isLoading) {
     return (
       <section className="w-full bg-verone-white px-1">
-        <div className="grid grid-cols-1 gap-[6px] md:grid-cols-3">
+        <div className={`grid gap-[6px] ${colsClass}`}>
           {[0, 1, 2].map(i => (
             <div
               key={i}
-              className="relative aspect-[4/5] animate-pulse bg-verone-pearl-soft"
+              className="relative aspect-[3/4] animate-pulse bg-verone-pearl-soft"
             />
           ))}
         </div>
@@ -35,20 +43,20 @@ export function CollectionsListGrid() {
 
   return (
     <section className="w-full bg-verone-white px-1">
-      <div className="grid grid-cols-1 gap-[6px] md:grid-cols-3">
+      <div className={`grid gap-[6px] ${colsClass}`}>
         {collections.map(collection => (
           <Link
             key={collection.id}
             href={`/collections/${collection.slug ?? collection.id}`}
-            className="group relative aspect-[4/5] cursor-pointer overflow-hidden bg-verone-pearl-soft"
+            className="group relative aspect-[3/4] cursor-pointer overflow-hidden bg-verone-pearl-soft"
           >
             {collection.image_url ? (
               <Image
                 src={collection.image_url}
                 alt={collection.name}
                 fill
-                sizes="(max-width: 768px) 100vw, 33vw"
-                className="object-cover transition-transform duration-[700ms] ease-editorial group-hover:scale-105"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover object-center"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center">

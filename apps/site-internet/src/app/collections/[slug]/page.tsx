@@ -47,11 +47,11 @@ export default function CollectionDetailPage({
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Back link */}
       <Link
         href="/collections"
-        className="inline-flex items-center gap-2 text-sm text-verone-gray-500 hover:text-verone-black transition-colors mb-8"
+        className="inline-flex items-center gap-2 text-sm text-verone-gray-500 hover:text-verone-black transition-colors mb-6"
       >
         <ArrowLeft className="h-4 w-4" />
         Toutes les collections
@@ -102,21 +102,22 @@ export default function CollectionDetailPage({
             ]}
           />
 
-          {/* Collection header */}
-          <div className="mb-12">
+          {/* Collection header — bandeau discret aspect 16:6, hauteur max
+              280px pour éviter l'effet "image plein écran zoomée" */}
+          <div className="mb-8">
             {collection.image_url && (
-              <div className="relative h-64 md:h-80 rounded-lg overflow-hidden mb-8">
+              <div className="relative aspect-[16/6] max-h-[280px] w-full rounded-lg overflow-hidden mb-6">
                 <Image
                   src={collection.image_url}
                   alt={collection.name}
                   fill
                   sizes="100vw"
-                  className="object-cover"
+                  className="object-cover object-center"
                   priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                <div className="absolute bottom-0 left-0 p-4 md:p-8">
-                  <h1 className="font-playfair text-3xl md:text-4xl font-bold text-white">
+                <div className="absolute bottom-0 left-0 p-4 md:p-6">
+                  <h1 className="font-playfair text-2xl md:text-3xl font-semibold text-white">
                     {collection.name}
                   </h1>
                 </div>
@@ -124,7 +125,7 @@ export default function CollectionDetailPage({
             )}
 
             {!collection.image_url && (
-              <h1 className="font-playfair text-3xl md:text-4xl font-bold text-verone-black mb-4">
+              <h1 className="font-playfair text-2xl md:text-3xl font-semibold text-verone-black mb-4">
                 {collection.name}
               </h1>
             )}
@@ -152,7 +153,7 @@ export default function CollectionDetailPage({
 
           {/* Products grid */}
           {products && products.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {products.map((p, index) => (
                 <CardProductLuxury
                   key={p.product_id}

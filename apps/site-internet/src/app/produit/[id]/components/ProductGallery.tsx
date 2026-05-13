@@ -30,8 +30,8 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
 
   if (!images || images.length === 0) {
     return (
-      <div className="space-y-4">
-        <div className="relative aspect-[4/5] bg-gray-200 overflow-hidden flex items-center justify-center">
+      <div className="space-y-4 max-w-[480px] mx-auto lg:mx-0">
+        <div className="relative aspect-square bg-gray-200 overflow-hidden flex items-center justify-center">
           <span className="text-gray-400">Aucune image</span>
         </div>
       </div>
@@ -42,19 +42,22 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
   if (!selected) return null;
 
   return (
-    <div className="space-y-4">
-      {/* Image principale cliquable pour lightbox — ratio 4:5 */}
+    // Container limité à 480px : évite l'image qui prend tout l'écran sur
+    // desktop large (1440px+). Sur mobile, l'image reste full-width.
+    <div className="space-y-3 w-full max-w-[480px] mx-auto lg:mx-0">
+      {/* Image principale cliquable pour lightbox — ratio carré + contain pour
+          ne plus jamais tronquer la photo source */}
       <button
         onClick={() => setShowLightbox(true)}
-        className="relative aspect-[4/5] w-full bg-gray-50 overflow-hidden group cursor-zoom-in"
+        className="relative aspect-square w-full bg-gray-50 overflow-hidden group cursor-zoom-in"
       >
         <CloudflareImage
           cloudflareId={selected.cloudflareId}
           fallbackSrc={selected.url}
           alt={productName}
           fill
-          className="object-cover object-center"
-          sizes="(max-width: 768px) 100vw, 60vw"
+          className="object-contain object-center p-2"
+          sizes="(max-width: 768px) 100vw, 480px"
           priority
         />
       </button>
