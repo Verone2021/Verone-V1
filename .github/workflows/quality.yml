@@ -242,11 +242,9 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=8192
 
-      # ---- Upload back-office .next pour les jobs E2E ----
-      # Évite que chaque job E2E refasse un `next build` (~5 min) alors que
-      # ce job a déjà produit le bundle. Pattern senior shared-build.
+      # [INFRA-CI-NO-E2E-001] Upload .next pour E2E désactivé (jobs E2E off).
       - name: Upload back-office .next artifact (for E2E jobs)
-        if: needs.detect-changes.outputs.e2e-needed == 'true'
+        if: false && needs.detect-changes.outputs.e2e-needed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: back-office-build
@@ -286,7 +284,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     continue-on-error: true
-    if: needs.detect-changes.outputs.e2e-needed == 'true' && github.event_name == 'pull_request'
+    # [INFRA-CI-NO-E2E-001] Désactivé sur ordre Roméo (2026-05-13). Les tests
+    # E2E ralentissaient la CI (~10 min) sans détecter les vraies régressions
+    # (cf. PR #942 BO-RLS-PERF-002 qui a cassé les photos commandes en prod
+    # pendant 6 jours sans que le smoke ne sourcille). Roméo teste lui-même.
+    if: false && needs.detect-changes.outputs.e2e-needed == 'true' && github.event_name == 'pull_request'
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
@@ -387,7 +389,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     continue-on-error: true
+    # [INFRA-CI-NO-E2E-001] Désactivé — voir smoke-golden ci-dessus.
     if: >
+      false &&
       needs.detect-changes.outputs.e2e-needed == 'true' &&
       (github.event_name == 'pull_request' || github.ref == 'refs/heads/main')
     strategy:
@@ -508,7 +512,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     continue-on-error: true
-    if: github.event_name == 'workflow_dispatch'
+    # [INFRA-CI-NO-E2E-001] Désactivé — voir smoke-golden ci-dessus.
+    if: false && github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
