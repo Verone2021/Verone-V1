@@ -7,8 +7,6 @@
 
 import { useCallback } from 'react';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import type {
   SalesOrderStatus,
   SalesOrder,
@@ -36,11 +34,6 @@ export function useSalesOrdersMutations({
   checkStockAvailability,
   getAvailableStock,
 }: MutationDeps) {
-  // [BO-PERF-ORDERS-002] Notifie les consumers TanStack (useSalesOrdersQuery)
-  // après chaque mutation. Ne remplace pas fetchOrders (le useState local en dépend
-  // pour mettre à jour l'affichage dans SalesOrdersTable via fetchedOrders).
-  const queryClient = useQueryClient();
-
   const { createOrder, updateOrderWithItems } = useSalesOrdersWriteMutations({
     supabase,
     toastRef,
@@ -86,8 +79,6 @@ export function useSalesOrdersMutations({
           description: 'Commande mise à jour avec succès',
         });
         await fetchOrders();
-        // [BO-PERF-ORDERS-002] Notifie les consumers TanStack Query après la mutation.
-        await queryClient.invalidateQueries({ queryKey: ['sales_orders'] });
         if (currentOrderRef.current?.id === orderId) await fetchOrder(orderId);
       } catch (error: unknown) {
         console.error('Erreur lors de la mise à jour:', error);
@@ -104,15 +95,7 @@ export function useSalesOrdersMutations({
         setLoading(false);
       }
     },
-    [
-      supabase,
-      queryClient,
-      fetchOrders,
-      fetchOrder,
-      currentOrderRef,
-      toastRef,
-      setLoading,
-    ]
+    [supabase, fetchOrders, fetchOrder, currentOrderRef, toastRef, setLoading]
   );
 
   const updateStatus = useCallback(
@@ -197,8 +180,6 @@ export function useSalesOrdersMutations({
           description: `Commande marquée comme ${newStatus}`,
         });
         await fetchOrders();
-        // [BO-PERF-ORDERS-002] Notifie les consumers TanStack Query après la mutation.
-        await queryClient.invalidateQueries({ queryKey: ['sales_orders'] });
         if (currentOrderRef.current?.id === orderId) await fetchOrder(orderId);
 
         if (typeof window !== 'undefined') {
@@ -219,15 +200,7 @@ export function useSalesOrdersMutations({
         setLoading(false);
       }
     },
-    [
-      supabase,
-      queryClient,
-      fetchOrders,
-      fetchOrder,
-      currentOrderRef,
-      toastRef,
-      setLoading,
-    ]
+    [supabase, fetchOrders, fetchOrder, currentOrderRef, toastRef, setLoading]
   );
 
   const shipItems = useCallback(
@@ -396,8 +369,6 @@ export function useSalesOrdersMutations({
           description: 'Commande supprimée avec succès',
         });
         await fetchOrders();
-        // [BO-PERF-ORDERS-002] Notifie les consumers TanStack Query après la mutation.
-        await queryClient.invalidateQueries({ queryKey: ['sales_orders'] });
         if (currentOrderRef.current?.id === orderId) setCurrentOrder(null);
       } catch (error: unknown) {
         console.error('Erreur lors de la suppression:', error);
@@ -416,7 +387,6 @@ export function useSalesOrdersMutations({
     },
     [
       supabase,
-      queryClient,
       fetchOrders,
       currentOrderRef,
       setCurrentOrder,
