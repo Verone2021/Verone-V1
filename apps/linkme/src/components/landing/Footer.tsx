@@ -34,6 +34,7 @@ const LINKS = {
   useful: [
     { label: 'Pour les créateurs', href: '/pour-les-createurs' },
     { label: 'Pour les pros', href: '/pour-les-pros' },
+    { label: 'Pour les enseignes', href: '/pour-les-enseignes' },
     { label: 'Comment ça marche', href: '/comment-ca-marche' },
     { label: 'Conditions générales', href: '/cgu' },
     { label: 'Politique de confidentialité', href: '/privacy' },
