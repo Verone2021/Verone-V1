@@ -27,7 +27,9 @@ import { Menu, X, LogIn, ArrowRight } from 'lucide-react';
 // Navigation items
 const NAV_ITEMS = [
   { label: 'Accueil', href: '/' },
-  { label: 'Comment ça marche', href: '#how-it-works' },
+  { label: 'Pour les créateurs', href: '/pour-les-createurs' },
+  { label: 'Pour les pros', href: '/pour-les-pros' },
+  { label: 'Comment ça marche', href: '/comment-ca-marche' },
   { label: 'À propos', href: '/about' },
   { label: 'Contact', href: '/contact' },
 ];
@@ -51,13 +53,13 @@ export function LandingHeader(): JSX.Element {
             />
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
+          {/* Desktop Navigation (lg+ — 6 items, trop dense en md) */}
+          <nav className="hidden lg:flex items-center gap-5 xl:gap-7">
             {NAV_ITEMS.map(item => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-sm font-medium text-[#183559]/70 hover:text-[#183559] transition-colors"
+                className="text-sm font-medium text-[#183559]/70 hover:text-[#183559] transition-colors whitespace-nowrap"
               >
                 {item.label}
               </Link>
@@ -65,7 +67,7 @@ export function LandingHeader(): JSX.Element {
           </nav>
 
           {/* Desktop CTAs */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-3">
             <Link
               href="/login"
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#183559] border border-[#183559]/20 rounded-lg hover:bg-[#183559]/5 transition-colors"
@@ -82,10 +84,10 @@ export function LandingHeader(): JSX.Element {
             </Link>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Button (md inclus — nav desktop seulement à partir de lg) */}
           <button
             type="button"
-            className="md:hidden p-2 text-[#183559] hover:bg-gray-100 rounded-lg transition-colors"
+            className="lg:hidden p-2 text-[#183559] hover:bg-gray-100 rounded-lg transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
           >
@@ -100,7 +102,7 @@ export function LandingHeader(): JSX.Element {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100">
+        <div className="lg:hidden bg-white border-t border-gray-100">
           <div className="px-4 py-4 space-y-3">
             {NAV_ITEMS.map(item => (
               <Link

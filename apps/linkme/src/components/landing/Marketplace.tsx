@@ -14,6 +14,9 @@
  * @module LandingMarketplace
  * @since 2026-01-23
  * @updated 2026-05-13 - LM-MKT-001 : accents.
+ * @updated 2026-05-13 - LM-MKT-002 : catégories et produits showcase
+ *                       multi-catégories (déco, éclairage, végétal,
+ *                       électronique, mobilier).
  */
 
 import Link from 'next/link';
@@ -29,7 +32,7 @@ import { ShoppingBag, ArrowRight, Star, Sparkles } from 'lucide-react';
 const SHOWCASE_PRODUCTS = [
   {
     id: 'showcase-1',
-    name: 'Table basse en chêne',
+    name: 'Table basse design',
     category: 'Mobilier',
     image: '/placeholder-product-1.jpg',
     basePrice: 280,
@@ -38,8 +41,8 @@ const SHOWCASE_PRODUCTS = [
   },
   {
     id: 'showcase-2',
-    name: 'Lampe design articulée',
-    category: 'Luminaires',
+    name: "Lampe d'ambiance LED",
+    category: 'Éclairage',
     image: '/placeholder-product-2.jpg',
     basePrice: 145,
     commission: '5%',
@@ -47,17 +50,17 @@ const SHOWCASE_PRODUCTS = [
   },
   {
     id: 'showcase-3',
-    name: 'Fauteuil velours',
-    category: 'Assises',
+    name: "Plante d'intérieur grand format",
+    category: 'Végétal',
     image: '/placeholder-product-3.jpg',
-    basePrice: 420,
+    basePrice: 89,
     commission: '5%',
     badge: null,
   },
   {
     id: 'showcase-4',
-    name: 'Console entrée métal',
-    category: 'Rangement',
+    name: 'Enceinte connectée',
+    category: 'Électronique',
     image: '/placeholder-product-4.jpg',
     basePrice: 195,
     commission: '5%',
@@ -65,14 +68,14 @@ const SHOWCASE_PRODUCTS = [
   },
 ];
 
-// Categories pour le filtre visuel
+// Catégories pour le filtre visuel (multi-catégories)
 const CATEGORIES = [
   'Tous',
+  'Déco',
+  'Éclairage',
+  'Végétal',
+  'Électronique',
   'Mobilier',
-  'Luminaires',
-  'Assises',
-  'Rangement',
-  'Décoration',
 ];
 
 export function LandingMarketplace(): JSX.Element {
@@ -92,8 +95,9 @@ export function LandingMarketplace(): JSX.Element {
             à vendre
           </h2>
           <p className="mt-4 text-lg text-[#183559]/60 max-w-2xl mx-auto">
-            Décoration et mobilier sourcés avec soin par nos experts. Commission
-            de 5 % sur chaque vente.
+            Produits sourcés avec soin dans plusieurs catégories — déco,
+            éclairage, végétal, électronique et plus. Commission de 5 % sur
+            chaque vente.
           </p>
         </div>
 

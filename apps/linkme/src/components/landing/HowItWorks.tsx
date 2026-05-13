@@ -20,36 +20,36 @@ const STEPS = [
   {
     number: '01',
     icon: LayoutGrid,
-    title: 'Créez vos sélections',
+    title: 'Parcours le catalogue multi-marques',
     description:
-      'Parcourez notre catalogue de produits et créez des sélections personnalisées pour votre audience. Chaque sélection a son propre lien partageable.',
+      'Explore les produits de toutes les marques sélectionnées sur LinkMe — déco, éclairage, végétal, électronique et plus — et crée tes sélections par audience. Chaque sélection a son propre lien partageable.',
     color: '#5DBEBB',
     bgGradient: 'from-[#5DBEBB]/10 to-[#5DBEBB]/5',
   },
   {
     number: '02',
     icon: SlidersHorizontal,
-    title: 'Définissez vos marges',
+    title: 'Configure ta marge',
     description:
-      'Ajustez vos marges produit par produit. Notre système de feux tricolore vous guide pour trouver le prix optimal entre compétitivité et rentabilité.',
+      'Ajuste ta marge produit par produit. Notre système de feux tricolore te guide pour trouver le prix optimal entre compétitivité et rentabilité.',
     color: '#7E84C0',
     bgGradient: 'from-[#7E84C0]/10 to-[#7E84C0]/5',
   },
   {
     number: '03',
     icon: Share2,
-    title: 'Partagez vos liens',
+    title: 'Partage ton lien',
     description:
-      'Diffusez vos sélections sur vos réseaux sociaux, votre site web, ou par email. Chaque lien est unique et traçable.',
+      'Diffuse tes sélections sur tes réseaux sociaux, ton site web ou par email. Chaque lien est unique et traçable.',
     color: '#3976BB',
     bgGradient: 'from-[#3976BB]/10 to-[#3976BB]/5',
   },
   {
     number: '04',
     icon: BarChart3,
-    title: 'Suivez vos gains',
+    title: 'Suis tes gains',
     description:
-      'Visualisez vos ventes et commissions en temps réel dans votre dashboard. Recevez vos paiements de manière simple et sécurisée.',
+      'Visualise tes ventes et commissions en temps réel dans ton dashboard. Reçois tes paiements de manière simple et sécurisée.',
     color: '#5DBEBB',
     bgGradient: 'from-[#5DBEBB]/10 to-[#5DBEBB]/5',
   },
