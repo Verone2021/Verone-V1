@@ -15,10 +15,15 @@ export function cn(...inputs: ClassValue[]) {
  * @returns Prix formaté (ex: "149,90 €")
  */
 export function formatPrice(priceInEuros: number): string {
+  // Format intelligent fr-FR : "9 €" pour un prix entier, "9,50 €" sinon.
+  // Demande Romeo 2026-05-13 — auparavant les prix entiers s'affichaient
+  // "9,00 €" ce qui paraît artificiel sur un site grand public.
+  const isWholeNumber = Number.isInteger(priceInEuros);
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
-    minimumFractionDigits: 2,
+    minimumFractionDigits: isWholeNumber ? 0 : 2,
+    maximumFractionDigits: 2,
   }).format(priceInEuros);
 }
 

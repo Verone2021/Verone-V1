@@ -3,6 +3,8 @@
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 
+import Image from 'next/image';
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -167,7 +169,7 @@ function HeroFormFields({ form, setForm }: HeroFormFieldsProps) {
         </div>
       </div>
       <div>
-        <Label>URL Image Hero</Label>
+        <Label>Image Hero — URL complète OU Cloudflare Image ID</Label>
         <Input
           value={form.image_url ?? ''}
           onChange={e =>
@@ -176,14 +178,44 @@ function HeroFormFields({ form, setForm }: HeroFormFieldsProps) {
               image_url: e.target.value || null,
             }))
           }
-          placeholder="https://..."
+          placeholder="ex: verone/marketing/.../public  OU  https://..."
         />
+        <p className="text-xs text-gray-500 mt-1">
+          Soit l&apos;URL complète, soit l&apos;ID Cloudflare (l&apos;URL est
+          construite automatiquement).
+        </p>
+        {form.image_url && (
+          <div className="mt-3">
+            <Label className="text-xs text-gray-600">Aperçu</Label>
+            <div className="relative mt-1 h-40 w-full max-w-md overflow-hidden rounded border border-gray-200 bg-gray-50">
+              <Image
+                src={resolveHeroPreviewUrl(form.image_url)}
+                alt="Aperçu hero"
+                fill
+                sizes="448px"
+                className="object-contain"
+                unoptimized
+              />
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
 }
 
-function HeroEditor() {
+/**
+ * Construit l'URL d'aperçu hero. Accepte :
+ *  - URL complète (http/https) → utilisée telle quelle
+ *  - ID/path Cloudflare → préfixé avec le domaine imagedelivery.net
+ */
+function resolveHeroPreviewUrl(value: string): string {
+  if (value.startsWith('http://') || value.startsWith('https://')) return value;
+  const cleaned = value.replace(/^\/+/, '').replace(/\/public$/, '');
+  return `https://imagedelivery.net/a-LEt3vfWH1BG-ME-lftDA/${cleaned}/public`;
+}
+
+export function CMSHeroEditor() {
   const { data: hero } = useSiteContentBO<HeroContent>('hero');
   const updateContent = useUpdateSiteContent();
   const [form, setForm] = useState<HeroContent>({
@@ -232,7 +264,7 @@ function HeroEditor() {
 // Reassurance Section Editor
 // ============================================
 
-function ReassuranceEditor() {
+export function CMSReassuranceEditor() {
   const { data: reassurance } =
     useSiteContentBO<ReassuranceContent>('reassurance');
   const updateContent = useUpdateSiteContent();
@@ -394,7 +426,7 @@ function BannerFormFields({ form, setForm }: BannerFormFieldsProps) {
   );
 }
 
-function BannerEditor() {
+export function CMSBannerEditor() {
   const { data: banner } = useSiteContentBO<BannerContent>('banner');
   const updateContent = useUpdateSiteContent();
   const [form, setForm] = useState<BannerContent>({
@@ -446,9 +478,9 @@ function BannerEditor() {
 export function CMSSection() {
   return (
     <div className="space-y-6">
-      <HeroEditor />
-      <ReassuranceEditor />
-      <BannerEditor />
+      <CMSHeroEditor />
+      <CMSReassuranceEditor />
+      <CMSBannerEditor />
     </div>
   );
 }

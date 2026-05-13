@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Heart, ShoppingBag } from 'lucide-react';
 
 import { CloudflareImage } from '@verone/ui';
-import { cn } from '@verone/utils';
+import { cn, formatPrice } from '@verone/utils';
 
 import { StarRating } from './StarRating';
 
@@ -209,12 +209,12 @@ export function CardProductLuxury({
                 )}
               >
                 {price != null && price > 0
-                  ? `${price.toFixed(2)} €`
+                  ? formatPrice(price)
                   : 'Sur demande'}
               </span>
               {hasDiscount && originalPrice != null && (
                 <span className="text-sm text-verone-gray-400 line-through">
-                  {originalPrice.toFixed(2)} €
+                  {formatPrice(originalPrice)}
                 </span>
               )}
             </div>
