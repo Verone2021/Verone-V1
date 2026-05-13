@@ -4453,6 +4453,7 @@ export type Database = {
           margin_rate_applied: number;
           notes: string | null;
           order_amount_ht: number;
+          order_date: string | null;
           order_id: string;
           order_item_id: string | null;
           order_number: string | null;
@@ -4481,6 +4482,7 @@ export type Database = {
           margin_rate_applied: number;
           notes?: string | null;
           order_amount_ht: number;
+          order_date?: string | null;
           order_id: string;
           order_item_id?: string | null;
           order_number?: string | null;
@@ -4509,6 +4511,7 @@ export type Database = {
           margin_rate_applied?: number;
           notes?: string | null;
           order_amount_ht?: number;
+          order_date?: string | null;
           order_id?: string;
           order_item_id?: string | null;
           order_number?: string | null;
@@ -4881,6 +4884,50 @@ export type Database = {
             columns: ['affiliate_id'];
             isOneToOne: false;
             referencedRelation: 'linkme_affiliates';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      linkme_payments: {
+        Row: {
+          amount_ttc: number;
+          created_at: string;
+          id: string;
+          notes: string | null;
+          paid_by: string | null;
+          payment_date: string;
+          payment_proof_url: string | null;
+          payment_reference: string;
+          payment_request_id: string;
+        };
+        Insert: {
+          amount_ttc: number;
+          created_at?: string;
+          id?: string;
+          notes?: string | null;
+          paid_by?: string | null;
+          payment_date?: string;
+          payment_proof_url?: string | null;
+          payment_reference: string;
+          payment_request_id: string;
+        };
+        Update: {
+          amount_ttc?: number;
+          created_at?: string;
+          id?: string;
+          notes?: string | null;
+          paid_by?: string | null;
+          payment_date?: string;
+          payment_proof_url?: string | null;
+          payment_reference?: string;
+          payment_request_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'linkme_payments_payment_request_id_fkey';
+            columns: ['payment_request_id'];
+            isOneToOne: false;
+            referencedRelation: 'linkme_payment_requests';
             referencedColumns: ['id'];
           },
         ];
