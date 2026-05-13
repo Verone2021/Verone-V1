@@ -39,6 +39,7 @@ export function RapprochementModal({
     transactionId,
     transactionQontoId,
     amount,
+    label,
     counterpartyName,
     organisationId,
     onSuccess,

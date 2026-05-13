@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { formatPrice } from '@verone/utils';
 
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -315,7 +316,7 @@ export default async function ComptePage() {
                           )}
                         </p>
                         <p className="text-xs text-verone-gray-500 mt-0.5">
-                          {Number(order.total_ttc).toFixed(2)} &euro;
+                          {formatPrice(Number(order.total_ttc))}
                           {order.carrier_name && (
                             <span className="ml-2">— {order.carrier_name}</span>
                           )}

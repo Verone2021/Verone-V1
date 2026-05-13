@@ -15,6 +15,7 @@ type UseRapprochementParams = Pick<
   | 'transactionId'
   | 'transactionQontoId'
   | 'amount'
+  | 'label'
   | 'counterpartyName'
   | 'organisationId'
   | 'onSuccess'
@@ -25,6 +26,7 @@ export function useRapprochement({
   transactionId,
   transactionQontoId,
   amount,
+  label,
   counterpartyName,
   organisationId,
   onSuccess,
@@ -57,12 +59,14 @@ export function useRapprochement({
     transactionDate: data.transactionDate,
     organisationId,
     counterpartyName,
+    transactionLabel: label,
   });
 
   const vat = useRapprochementVat({ transactionId, transactionQontoId });
 
   const actions = useRapprochementActions({
     transactionId,
+    amount,
     remainingAmount,
     allocatedAmount: selection.allocatedAmount,
     selectedDocumentId: selection.selectedDocumentId,

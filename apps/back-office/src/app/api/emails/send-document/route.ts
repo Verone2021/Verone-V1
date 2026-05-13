@@ -135,7 +135,9 @@ export async function POST(request: NextRequest) {
     const resendClient = getResendClient();
     const { data: emailData, error: emailError } =
       await resendClient.emails.send({
-        from: process.env.RESEND_FROM_EMAIL ?? 'factures@verone.fr',
+        from:
+          process.env.RESEND_FROM_COMMANDES_VERONE ??
+          'commandes@veronecollections.fr',
         to: [to],
         subject,
         html: emailHtml,

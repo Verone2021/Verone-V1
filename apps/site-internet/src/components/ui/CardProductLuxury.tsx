@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Heart, ShoppingBag } from 'lucide-react';
 
 import { CloudflareImage } from '@verone/ui';
-import { cn } from '@verone/utils';
+import { cn, formatPrice } from '@verone/utils';
 
 import { StarRating } from './StarRating';
 
@@ -98,7 +98,7 @@ export function CardProductLuxury({
       )}
 
       <Link href={href} className="block">
-        {/* Image Container — bg-white pour fusionner avec les images sur fond blanc (audit Romeo 2026-04-26) */}
+        {/* Image Container — bg-white pour fusionner avec les images sur fond blanc */}
         <div className="relative bg-white aspect-square overflow-hidden">
           {imageUrl || cloudflareImageId ? (
             <CloudflareImage
@@ -108,9 +108,9 @@ export function CardProductLuxury({
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
               className={cn(
-                // p-8 (au lieu de p-4) pour donner plus d'air autour de l'image, moins zoome
-                // scale-102 (au lieu de scale-105) pour un hover plus subtil
-                'object-contain p-8 group-hover:scale-[1.02] transition-transform duration-700',
+                // p-4 (densifié 2026-05-13) : moins d'air autour = plus de produit visible
+                // Hover scale retiré : plus de zoom involontaire sur le catalogue
+                'object-contain p-4',
                 isOutOfStock && 'opacity-60'
               )}
               priority={priority}
@@ -167,7 +167,7 @@ export function CardProductLuxury({
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-4">
           {/* Category label */}
           {subcategoryName && (
             <p className="text-[10px] text-verone-gray-500 uppercase tracking-widest mb-1">
@@ -175,8 +175,8 @@ export function CardProductLuxury({
             </p>
           )}
 
-          {/* Title Playfair */}
-          <h4 className="font-playfair text-xl font-semibold text-verone-black mb-1 group-hover:text-verone-gray-700 transition-colors duration-300">
+          {/* Title — densifié 2026-05-13 : text-base au lieu de text-xl */}
+          <h4 className="font-playfair text-base font-medium text-verone-black mb-1 group-hover:text-verone-gray-700 transition-colors duration-300">
             {name}
           </h4>
 
@@ -209,12 +209,12 @@ export function CardProductLuxury({
                 )}
               >
                 {price != null && price > 0
-                  ? `${price.toFixed(2)} €`
+                  ? formatPrice(price)
                   : 'Sur demande'}
               </span>
               {hasDiscount && originalPrice != null && (
                 <span className="text-sm text-verone-gray-400 line-through">
-                  {originalPrice.toFixed(2)} €
+                  {formatPrice(originalPrice)}
                 </span>
               )}
             </div>

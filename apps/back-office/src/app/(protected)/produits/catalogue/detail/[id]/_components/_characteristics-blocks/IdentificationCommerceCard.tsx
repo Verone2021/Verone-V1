@@ -10,9 +10,10 @@ import { useCallback } from 'react';
 
 import { useInlineEdit } from '@verone/common/hooks';
 import { formatStyle } from '@verone/products/components/images';
-import { COLLECTION_STYLE_OPTIONS } from '@verone/types';
 import { cn } from '@verone/utils';
 import { Lock } from 'lucide-react';
+
+import { useActiveStyleOptions } from '@/hooks/use-style-options';
 
 import type { Database } from '@verone/types';
 
@@ -38,6 +39,8 @@ export function IdentificationCommerceCard({
   product,
   onProductUpdate,
 }: IdentificationCommerceCardProps) {
+  const { styleOptions } = useActiveStyleOptions();
+
   const { startEdit, updateEditedData, saveChanges, cancelEdit } =
     useInlineEdit({
       productId: product.id,
@@ -150,7 +153,7 @@ export function IdentificationCommerceCard({
             </span>
           ) : (
             <div className="flex flex-wrap gap-1">
-              {COLLECTION_STYLE_OPTIONS.map(opt => (
+              {styleOptions.map(opt => (
                 <button
                   key={opt.value}
                   onClick={() =>

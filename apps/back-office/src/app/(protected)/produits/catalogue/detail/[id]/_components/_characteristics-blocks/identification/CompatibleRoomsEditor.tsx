@@ -7,40 +7,9 @@ import { Lock, Pencil, Check, X } from 'lucide-react';
 
 import type { Database } from '@verone/types';
 
-type RoomType = Database['public']['Enums']['room_type'];
+import { useActiveRoomOptions } from '@/hooks/use-room-options';
 
-const ROOM_LABELS: Record<RoomType, string> = {
-  salon: 'Salon',
-  salle_a_manger: 'Salle à manger',
-  chambre: 'Chambre',
-  bureau: 'Bureau',
-  bibliotheque: 'Bibliothèque',
-  salon_sejour: 'Salon/Séjour',
-  cuisine: 'Cuisine',
-  salle_de_bain: 'Salle de bain',
-  wc: 'WC',
-  toilettes: 'Toilettes',
-  hall_entree: "Hall d'entrée",
-  couloir: 'Couloir',
-  cellier: 'Cellier',
-  buanderie: 'Buanderie',
-  dressing: 'Dressing',
-  cave: 'Cave',
-  grenier: 'Grenier',
-  garage: 'Garage',
-  terrasse: 'Terrasse',
-  balcon: 'Balcon',
-  jardin: 'Jardin',
-  veranda: 'Véranda',
-  loggia: 'Loggia',
-  cour: 'Cour',
-  patio: 'Patio',
-  salle_de_jeux: 'Salle de jeux',
-  salle_de_sport: 'Salle de sport',
-  atelier: 'Atelier',
-  mezzanine: 'Mezzanine',
-  sous_sol: 'Sous-sol',
-};
+type RoomType = Database['public']['Enums']['room_type'];
 
 export interface CompatibleRoomsEditorProps {
   rooms: RoomType[];
@@ -55,9 +24,24 @@ export function CompatibleRoomsEditor({
   initialRooms,
   onSave,
 }: CompatibleRoomsEditorProps) {
+  const { roomOptions } = useActiveRoomOptions();
+
   const [editMode, setEditMode] = useState(false);
   const [draft, setDraft] = useState<RoomType[]>([]);
   const draftRef = useRef<RoomType[]>([]);
+
+  // Build lookup map from DB options (value → label)
+  const roomLabelMap = useCallback(
+    (roomValue: RoomType): string => {
+      const found = roomOptions.find(opt => opt.value === roomValue);
+      // Fallback to the raw value formatted (replace underscores, capitalize)
+      return (
+        found?.label ??
+        roomValue.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase())
+      );
+    },
+    [roomOptions]
+  );
 
   const handleEditStart = useCallback(() => {
     setDraft(initialRooms);
@@ -123,7 +107,7 @@ export function CompatibleRoomsEditor({
                     : 'bg-indigo-50 border-indigo-200 text-indigo-700'
                 )}
               >
-                {ROOM_LABELS[room]}
+                {roomLabelMap(room)}
               </span>
             ))
           ) : (
@@ -138,8 +122,8 @@ export function CompatibleRoomsEditor({
       {editMode && (
         <div>
           <div className="flex flex-wrap gap-1.5 mb-3">
-            {Object.entries(ROOM_LABELS).map(([key, label]) => {
-              const room = key as RoomType;
+            {roomOptions.map(opt => {
+              const room = opt.value as RoomType;
               const isActive = draft.includes(room);
               return (
                 <button
@@ -152,7 +136,7 @@ export function CompatibleRoomsEditor({
                       : 'border-neutral-200 text-neutral-500 hover:border-neutral-400 hover:text-neutral-700'
                   )}
                 >
-                  {label}
+                  {opt.label}
                 </button>
               );
             })}

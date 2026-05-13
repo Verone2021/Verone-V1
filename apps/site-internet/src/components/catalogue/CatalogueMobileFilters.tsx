@@ -39,8 +39,11 @@ export function CatalogueMobileFilters({
 }: CatalogueMobileFiltersProps) {
   if (!isOpen) return null;
 
+  // Drawer utilisé sur TOUTES les tailles (mobile + desktop) depuis le refonte
+  // 2026-05-13 : la sidebar fixe à 280 px sur desktop a été retirée (demande
+  // Romeo de longue date), les filtres ne sont plus accessibles que via ce drawer.
   return (
-    <div className="fixed inset-0 z-50 lg:hidden">
+    <div className="fixed inset-0 z-50">
       {/* Backdrop */}
       <button
         type="button"
@@ -50,7 +53,7 @@ export function CatalogueMobileFilters({
       />
 
       {/* Drawer */}
-      <div className="absolute inset-y-0 left-0 w-[320px] max-w-[85vw] bg-verone-white shadow-xl overflow-y-auto">
+      <div className="absolute inset-y-0 left-0 w-[340px] max-w-[85vw] bg-verone-white shadow-xl overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-verone-gray-200">
           <h2 className="text-sm font-semibold text-verone-black uppercase tracking-wide">

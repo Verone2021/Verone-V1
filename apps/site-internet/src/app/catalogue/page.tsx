@@ -1,19 +1,49 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { Filter, Search, SlidersHorizontal, X } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Filter, Search, X } from 'lucide-react';
 
 import { CardProductLuxury } from '@/components/ui/CardProductLuxury';
-import { CatalogueSidebar } from '@/components/catalogue/CatalogueSidebar';
 import { CatalogueMobileFilters } from '@/components/catalogue/CatalogueMobileFilters';
 import {
   useCatalogueProducts,
   type CatalogueProduct,
 } from '@/hooks/use-catalogue-products';
 import { useCatalogueFilters } from '@/hooks/use-catalogue-filters';
+import { createUntypedClient } from '@/lib/supabase/untyped-client';
+
+interface SubcategoryRef {
+  name: string;
+  slug: string;
+}
+
+/**
+ * Hook minimal pour charger la table `subcategories` (lecture publique anon).
+ * Sert au mapping slug → name quand on arrive depuis le MegaMenu header
+ * (`/catalogue?categorie=<slug>`).
+ */
+function useSubcategoriesSlugMap() {
+  const supabase = createUntypedClient();
+  return useQuery({
+    queryKey: ['subcategories-slug-map'],
+    queryFn: async (): Promise<SubcategoryRef[]> => {
+      const { data, error } = await supabase
+        .from('subcategories')
+        .select('name, slug')
+        .order('name');
+      if (error) {
+        console.error('[useSubcategoriesSlugMap] fetch error:', error);
+        return [];
+      }
+      return (data ?? []) as SubcategoryRef[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
 
 type SortOption =
   | 'name_asc'
@@ -39,20 +69,6 @@ export default function CataloguePage() {
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  // Filtre collapsible desktop — caché par défaut, mémorisé dans localStorage
-  const [filterOpen, setFilterOpen] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem('verone_catalogue_filter_open') === 'true';
-  });
-
-  const toggleFilter = useCallback(() => {
-    setFilterOpen(prev => {
-      const next = !prev;
-      localStorage.setItem('verone_catalogue_filter_open', String(next));
-      return next;
-    });
-  }, []);
-
   const {
     filters,
     toggleCategory,
@@ -71,6 +87,35 @@ export default function CataloguePage() {
     sortBy,
     searchQuery: searchQuery || undefined,
   });
+
+  // Pré-sélection sous-catégorie depuis l'URL (?categorie=<slug>) — venu du
+  // MegaMenu header (lien `/catalogue?categorie=<subcategories.slug>`). On
+  // résout le slug en nom via la table `subcategories` puis on coche la case.
+  const initialCategorieSlug = searchParams.get('categorie');
+  const { data: subcategoriesMap } = useSubcategoriesSlugMap();
+  const presetAppliedRef = useRef(false);
+
+  useEffect(() => {
+    if (presetAppliedRef.current) return;
+    if (!initialCategorieSlug) return;
+    if (!subcategoriesMap || subcategoriesMap.length === 0) return;
+    if (!allProducts) return;
+
+    const wanted = initialCategorieSlug.toLowerCase();
+    const matched = subcategoriesMap.find(s => s.slug === wanted);
+    const matchedName = matched?.name;
+
+    if (matchedName && !filters.selectedCategories.includes(matchedName)) {
+      toggleCategory(matchedName);
+    }
+    presetAppliedRef.current = true;
+  }, [
+    allProducts,
+    filters.selectedCategories,
+    initialCategorieSlug,
+    subcategoriesMap,
+    toggleCategory,
+  ]);
 
   // Apply sidebar filters
   const filteredProducts = useMemo(() => {
@@ -128,24 +173,24 @@ export default function CataloguePage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12 pb-32 md:pb-12">
+    <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 pb-32 md:pb-6">
       {/* Header — pb-32 sur mobile pour la banniere cookies (audit 2026-04-26 Bug 8) */}
-      <div className="mb-12">
-        <span className="font-dm-sans text-[11px] font-light uppercase tracking-[0.3em] text-verone-or mb-4 block">
+      <div className="mb-6">
+        <span className="font-dm-sans text-[11px] font-light uppercase tracking-[0.3em] text-verone-or mb-2 block">
           CATALOGUE
         </span>
-        <h1 className="font-bodoni text-3xl md:text-5xl font-black text-verone-charbon mb-4">
+        <h1 className="font-bodoni text-2xl md:text-3xl font-bold text-verone-charbon mb-2">
           La sélection.
         </h1>
-        <p className="text-base text-verone-gray-600 font-montserrat">
+        <p className="text-sm text-verone-gray-600 font-montserrat">
           Des pièces originales de déco et mobilier, sourcées avec soin, au
           juste prix
         </p>
       </div>
 
       {/* Search + Sort bar */}
-      <div className="bg-verone-white border border-verone-gray-200 p-4 md:p-6 mb-8">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="bg-verone-white border border-verone-gray-200 p-3 md:p-4 mb-4">
+        <div className="flex flex-col md:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-verone-gray-400" />
             <input
@@ -156,7 +201,7 @@ export default function CataloguePage() {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full border border-verone-gray-300 rounded-none pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-verone-black"
+              className="w-full border border-verone-gray-300 rounded-none pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-verone-black"
             />
             {searchQuery && (
               <button
@@ -174,7 +219,7 @@ export default function CataloguePage() {
           <select
             value={sortBy}
             onChange={e => handleSort(e.target.value as SortOption)}
-            className="border border-verone-gray-300 rounded-none px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-verone-black"
+            className="border border-verone-gray-300 rounded-none px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-verone-black"
           >
             <option value="newest">Nouveautés</option>
             <option value="oldest">Plus anciens</option>
@@ -184,11 +229,12 @@ export default function CataloguePage() {
             <option value="price_desc">Prix décroissant</option>
           </select>
 
-          {/* Mobile filter toggle */}
+          {/* Bouton Filtres — drawer plein écran sur TOUS les breakpoints
+              (sidebar desktop fixe retirée 2026-05-13, demande Romeo) */}
           <button
             type="button"
             onClick={() => setMobileFiltersOpen(true)}
-            className={`lg:hidden flex items-center gap-2 px-4 py-3 border text-sm transition-colors ${
+            className={`flex items-center gap-2 px-4 py-2.5 border text-sm transition-colors ${
               hasSidebarFilters
                 ? 'border-verone-black bg-verone-black text-verone-white'
                 : 'border-verone-gray-300 text-verone-gray-700 hover:border-verone-black'
@@ -205,94 +251,19 @@ export default function CataloguePage() {
         </div>
       </div>
 
-      {/* Toggle filtres desktop — caché sur mobile (bouton mobile existe déjà) */}
-      <div className="hidden lg:flex items-center gap-3 mb-6">
-        <button
-          type="button"
-          onClick={toggleFilter}
-          className={`flex items-center gap-2 px-4 py-2 border text-xs font-dm-sans uppercase tracking-wider transition-colors ${
-            filterOpen
-              ? 'border-verone-black bg-verone-black text-verone-white'
-              : 'border-verone-gray-300 text-verone-gray-700 hover:border-verone-black'
-          }`}
-        >
-          <SlidersHorizontal className="h-3.5 w-3.5" />
-          Filtrer
-          {activeFilterCount > 0 && (
-            <span
-              className={`flex items-center justify-center w-4 h-4 text-[10px] font-semibold rounded-full ${
-                filterOpen
-                  ? 'bg-verone-white text-verone-black'
-                  : 'bg-verone-black text-verone-white'
-              }`}
-            >
-              {activeFilterCount}
-            </span>
-          )}
-        </button>
-        {filterOpen && (
-          <span className="text-xs text-verone-gray-500">
-            Les filtres sont affichés
-          </span>
-        )}
-      </div>
-
-      {/* Layout: sidebar + grid */}
-      <div className="flex gap-8">
-        {/* Sidebar (desktop only, visible si filterOpen OU si filtres actifs) */}
-        {allProducts &&
-          allProducts.length > 0 &&
-          (filterOpen || hasSidebarFilters) && (
-            <CatalogueSidebar
-              products={allProducts}
-              filters={filters}
-              onToggleCategory={v => {
-                toggleCategory(v);
-                setCurrentPage(1);
-              }}
-              onToggleRoom={v => {
-                toggleRoom(v);
-                setCurrentPage(1);
-              }}
-              onToggleStyle={v => {
-                toggleStyle(v);
-                setCurrentPage(1);
-              }}
-              onToggleBrand={v => {
-                toggleBrand(v);
-                setCurrentPage(1);
-              }}
-              onToggleColor={v => {
-                toggleColor(v);
-                setCurrentPage(1);
-              }}
-              onSetPriceRange={(min, max) => {
-                setPriceRange(min, max);
-                setCurrentPage(1);
-              }}
-              onClearAll={() => {
-                clearSidebarFilters();
-                setCurrentPage(1);
-              }}
-              hasActiveFilters={hasSidebarFilters}
-              className="hidden lg:block"
-            />
-          )}
-
-        {/* Products area */}
-        <div className="flex-1 min-w-0">
+      {/* Layout simplifié : sidebar desktop retirée, grid pleine largeur */}
+      <div>
+        <div className="min-w-0">
           {isLoading ? (
-            <div
-              className={`grid gap-8 grid-cols-1 md:grid-cols-2 ${filterOpen || hasSidebarFilters ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}
-            >
-              {Array.from({ length: 6 }).map((_, i) => (
+            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
                   className="border border-verone-gray-200 animate-pulse"
                 >
                   <div className="bg-verone-gray-200 aspect-square" />
-                  <div className="p-6 space-y-3">
-                    <div className="h-6 bg-verone-gray-200 rounded" />
+                  <div className="p-4 space-y-2">
+                    <div className="h-5 bg-verone-gray-200 rounded" />
                     <div className="h-4 bg-verone-gray-100 rounded w-2/3" />
                   </div>
                 </div>
@@ -300,15 +271,13 @@ export default function CataloguePage() {
             </div>
           ) : paginatedProducts.length > 0 ? (
             <>
-              <p className="text-sm text-verone-gray-600 mb-6">
+              <p className="text-sm text-verone-gray-600 mb-4">
                 {filteredProducts.length} produit
                 {filteredProducts.length > 1 ? 's' : ''} trouvé
                 {filteredProducts.length > 1 ? 's' : ''}
                 {totalPages > 1 && ` — page ${currentPage} sur ${totalPages}`}
               </p>
-              <div
-                className={`grid gap-8 grid-cols-1 md:grid-cols-2 ${filterOpen || hasSidebarFilters ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}
-              >
+              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {paginatedProducts.map(
                   (product: CatalogueProduct, index: number) => (
                     <CardProductLuxury

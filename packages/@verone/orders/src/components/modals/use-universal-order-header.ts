@@ -1,6 +1,6 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/no-explicit-any */
 
 import { useState, useEffect } from 'react';
 
@@ -40,103 +40,56 @@ export function useUniversalOrderHeader({
           const { data: order, error: orderError } = (await supabase
             .from('sales_orders')
             .select(
-              'id, order_number, status, created_at, expected_delivery_date, total_ht, total_ttc, customer_id, customer_type, individual_customer_id, billing_address, shipping_address, payment_terms, payment_status_v2, tax_rate, currency, eco_tax_vat_rate, shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate, created_by, channel_id, sales_channels!left(id, name, code)'
+              'id, order_number, status, created_at, expected_delivery_date, total_ht, total_ttc, customer_id, customer_type, billing_address, shipping_address, payment_terms, payment_status_v2, tax_rate, currency, eco_tax_vat_rate, shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate, created_by, channel_id, sales_channels!left(id, name, code)'
             )
             .eq('id', orderId)
             .single()) as any;
 
           if (orderError) throw orderError;
 
-          // [BO-PERF-ORDERS-001] Parallélisation customer + creator
-          const orgPromise: Promise<{
-            legal_name: string;
-            trade_name: string | null;
-          } | null> =
-            order.customer_type === 'organization' && order.customer_id
-              ? (async () => {
-                  try {
-                    const { data } = await supabase
-                      .from('organisations')
-                      .select('legal_name, trade_name')
-                      .eq('id', order.customer_id)
-                      .single();
-                    return data as {
-                      legal_name: string;
-                      trade_name: string | null;
-                    } | null;
-                  } catch {
-                    return null;
-                  }
-                })()
-              : Promise.resolve(null);
-
-          const individualPromise: Promise<{
-            first_name: string;
-            last_name: string;
-          } | null> =
-            order.customer_type === 'individual' && order.individual_customer_id
-              ? (async () => {
-                  try {
-                    const { data } = await supabase
-                      .from('individual_customers')
-                      .select('first_name, last_name')
-                      .eq('id', order.individual_customer_id)
-                      .single();
-                    return data as {
-                      first_name: string;
-                      last_name: string;
-                    } | null;
-                  } catch {
-                    return null;
-                  }
-                })()
-              : Promise.resolve(null);
-
-          const creatorPromise: Promise<Array<{
-            first_name: string | null;
-            last_name: string | null;
-            email: string | null;
-          }> | null> = order.created_by
-            ? (async () => {
-                try {
-                  const { data } = await (supabase.rpc as any)(
-                    'get_user_info',
-                    { p_user_id: order.created_by }
-                  );
-                  return data ?? null;
-                } catch {
-                  return null;
-                }
-              })()
-            : Promise.resolve(null);
-
-          const [org, individual, creatorData] = await Promise.all([
-            orgPromise,
-            individualPromise,
-            creatorPromise,
-          ]);
-
           let customerName = 'Client inconnu';
           let customerTradeName: string | null = null;
 
-          if (org) {
-            customerName = org.legal_name || 'Organisation inconnue';
+          if (order.customer_type === 'organization' && order.customer_id) {
+            const { data: org } = await supabase
+              .from('organisations')
+              .select('legal_name, trade_name')
+              .eq('id', order.customer_id)
+              .single();
+            customerName = org?.legal_name || 'Organisation inconnue';
             customerTradeName =
-              org.trade_name && org.trade_name !== org.legal_name
+              org?.trade_name && org.trade_name !== org?.legal_name
                 ? org.trade_name
                 : null;
-          } else if (individual) {
-            customerName = `${individual.first_name} ${individual.last_name}`;
+          } else if (
+            order.customer_type === 'individual' &&
+            order.individual_customer_id
+          ) {
+            const { data: individual } = await supabase
+              .from('individual_customers')
+              .select('first_name, last_name')
+              .eq('id', order.individual_customer_id)
+              .single();
+            customerName = individual
+              ? `${individual.first_name} ${individual.last_name}`
+              : 'Particulier inconnu';
           }
 
           let creatorName = '';
           let creatorEmail = '';
 
-          if (creatorData && creatorData.length > 0) {
-            const firstName = creatorData[0].first_name || 'Utilisateur';
-            const lastName = creatorData[0].last_name || '';
-            creatorName = `${firstName} ${lastName}`.trim();
-            creatorEmail = creatorData[0].email || '';
+          if (order.created_by) {
+            const { data: creatorInfo } = await (supabase.rpc as any)(
+              'get_user_info',
+              { p_user_id: order.created_by }
+            );
+
+            if (creatorInfo && creatorInfo.length > 0) {
+              const firstName = creatorInfo[0].first_name || 'Utilisateur';
+              const lastName = creatorInfo[0].last_name || '';
+              creatorName = `${firstName} ${lastName}`.trim();
+              creatorEmail = creatorInfo[0].email || '';
+            }
           }
 
           const channelName = order.sales_channels?.name || '';

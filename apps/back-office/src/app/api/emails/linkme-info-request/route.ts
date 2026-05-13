@@ -215,7 +215,8 @@ async function sendSingleInfoRequestEmail(
   });
 
   const { error: emailError } = await resendClient.emails.send({
-    from: process.env.RESEND_FROM_EMAIL ?? 'commandes@verone.fr',
+    from:
+      process.env.RESEND_FROM_COMMANDES_LINKME ?? 'commandes@linkme.network',
     to: email,
     subject: `Commande ${orderNumber} - Informations complémentaires requises`,
     html: emailHtml,

@@ -45,6 +45,8 @@ import {
   Plus,
   Pencil,
   Trash2,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -57,6 +59,7 @@ import {
   useDeleteCollection,
   isCollectionVisibleOnChannel,
   useSiteInternetCollectionsStats,
+  useSwapCollectionsOrder,
 } from '../hooks/use-site-internet-collections';
 import { useSiteInternetConfig } from '../hooks/use-site-internet-config';
 
@@ -83,6 +86,7 @@ export function CollectionsSection() {
   const createCollection = useCreateCollection();
   const updateCollection = useUpdateCollection();
   const deleteCollection = useDeleteCollection();
+  const swapOrder = useSwapCollectionsOrder();
 
   const openCreate = useCallback(() => {
     setEditingCollection(undefined);
@@ -255,10 +259,32 @@ export function CollectionsSection() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredCollections.map(collection => {
+                filteredCollections.map((collection, index) => {
                   const isVisible = config
                     ? isCollectionVisibleOnChannel(collection, config.id)
                     : false;
+                  const isFirst = index === 0;
+                  const isLast = index === filteredCollections.length - 1;
+                  const handleMove = (direction: 'up' | 'down') => {
+                    const neighborIdx =
+                      direction === 'up' ? index - 1 : index + 1;
+                    const neighbor = filteredCollections[neighborIdx];
+                    if (!neighbor) return;
+                    const aOrder =
+                      (collection as { sort_order_site?: number | null })
+                        .sort_order_site ?? 100;
+                    const bOrder =
+                      (neighbor as { sort_order_site?: number | null })
+                        .sort_order_site ?? 100;
+                    // Si égalité (collections sans ordre explicite), on
+                    // dérive deux valeurs adjacentes pour casser l'égalité.
+                    const safeA = aOrder === bOrder ? aOrder + 1 : aOrder;
+                    const safeB = aOrder === bOrder ? aOrder : bOrder;
+                    swapOrder.mutate({
+                      a: { id: collection.id, sort_order_site: safeA },
+                      b: { id: neighbor.id, sort_order_site: safeB },
+                    });
+                  };
 
                   return (
                     <TableRow key={collection.id}>
@@ -335,9 +361,32 @@ export function CollectionsSection() {
                         )}
                       </TableCell>
 
-                      {/* Ordre */}
-                      <TableCell className="text-sm text-muted-foreground hidden 2xl:table-cell">
-                        {collection.display_order}
+                      {/* Ordre — boutons ↑↓ + valeur sort_order_site */}
+                      <TableCell className="hidden 2xl:table-cell">
+                        <div className="flex items-center gap-1">
+                          <ButtonV2
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleMove('up')}
+                            disabled={isFirst || swapOrder.isPending}
+                            aria-label="Monter dans l'ordre"
+                          >
+                            <ArrowUp className="h-3.5 w-3.5" />
+                          </ButtonV2>
+                          <ButtonV2
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleMove('down')}
+                            disabled={isLast || swapOrder.isPending}
+                            aria-label="Descendre dans l'ordre"
+                          >
+                            <ArrowDown className="h-3.5 w-3.5" />
+                          </ButtonV2>
+                          <span className="text-xs text-muted-foreground ml-1">
+                            {(collection as { sort_order_site?: number | null })
+                              .sort_order_site ?? '—'}
+                          </span>
+                        </div>
                       </TableCell>
 
                       {/* Toggle Visible Site */}

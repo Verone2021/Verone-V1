@@ -30,17 +30,29 @@ export interface BannerContent {
   text_color: string;
 }
 
+export interface AboutHeroContent {
+  title: string;
+  subtitle: string;
+  image_url: string | null;
+}
+
+export interface AboutStoryContent {
+  paragraphs: string[];
+}
+
 export function useSiteContent<T>(contentKey: string) {
   const supabase = createUntypedClient();
 
   return useQuery({
     queryKey: ['site-content', contentKey],
     queryFn: async (): Promise<T | null> => {
+      // maybeSingle pour gérer le cas où la clé n'existe pas encore
+      // (ex: about_hero/about_story créés à la volée depuis le BO).
       const { data, error } = await supabase
         .from('site_content')
         .select('content_key, content_value')
         .eq('content_key', contentKey)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error(`[useSiteContent] fetch ${contentKey} error:`, error);
@@ -63,4 +75,25 @@ export function useReassuranceContent() {
 
 export function useBannerContent() {
   return useSiteContent<BannerContent>('banner');
+}
+
+export function useAboutHero() {
+  return useSiteContent<AboutHeroContent>('about_hero');
+}
+
+export function useAboutStory() {
+  return useSiteContent<AboutStoryContent>('about_story');
+}
+
+/**
+ * Résout une valeur d'image qui peut être soit une URL complète,
+ * soit un ID/path Cloudflare (sans domaine).
+ */
+export function resolveImageUrl(
+  value: string | null | undefined
+): string | null {
+  if (!value) return null;
+  if (value.startsWith('http://') || value.startsWith('https://')) return value;
+  const cleaned = value.replace(/^\/+/, '').replace(/\/public$/, '');
+  return `https://imagedelivery.net/a-LEt3vfWH1BG-ME-lftDA/${cleaned}/public`;
 }

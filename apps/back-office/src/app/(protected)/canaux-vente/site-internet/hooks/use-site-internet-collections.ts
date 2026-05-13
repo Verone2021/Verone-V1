@@ -14,10 +14,12 @@ const supabase = createClient();
  * Fetch toutes collections
  */
 async function fetchCollections() {
+  // Tri par sort_order_site (cohérent avec ce que lit le site veronecollections.fr).
+  // NULLS LAST pour reléguer les collections sans ordre en bas de la liste.
   const { data, error } = await supabase
     .from('collections')
     .select('*')
-    .order('display_order', { ascending: true });
+    .order('sort_order_site', { ascending: true, nullsFirst: false });
 
   if (error) {
     console.error('Erreur fetch collections:', error);
@@ -25,6 +27,40 @@ async function fetchCollections() {
   }
 
   return (data ?? []) as Collection[];
+}
+
+/**
+ * Échange les sort_order_site entre deux collections adjacentes.
+ * Utilisé par les boutons ↑↓ de la table collections.
+ */
+export function useSwapCollectionsOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      a,
+      b,
+    }: {
+      a: { id: string; sort_order_site: number };
+      b: { id: string; sort_order_site: number };
+    }) => {
+      // 2 UPDATE séquentiels — supabase-js n'a pas de batch natif.
+      const { error: e1 } = await supabase
+        .from('collections')
+        .update({ sort_order_site: b.sort_order_site })
+        .eq('id', a.id);
+      if (e1) throw e1;
+      const { error: e2 } = await supabase
+        .from('collections')
+        .update({ sort_order_site: a.sort_order_site })
+        .eq('id', b.id);
+      if (e2) throw e2;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['site-internet-collections'],
+      });
+    },
+  });
 }
 
 /**
