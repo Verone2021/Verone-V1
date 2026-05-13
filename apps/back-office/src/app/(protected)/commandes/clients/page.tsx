@@ -1,9 +1,11 @@
+'use client';
+
 /**
- * Page Commandes Clients — Server Component
+ * Page Commandes Clients
  *
- * Charge la liste initiale côté serveur (HTML pré-rendu, 0 aller-retour
- * réseau au premier affichage). Les interactions (modals, filtres, actions)
- * restent dans SalesOrdersClientsPage (Client Component).
+ * Utilise le composant SalesOrdersTable reutilisable depuis @verone/orders.
+ * Affiche toutes les commandes (tous canaux confondus).
+ * Filtre par canal disponible: Tous, Site Internet, LinkMe
  *
  * Workflow commandes:
  * - draft → validated → partially_shipped → shipped → delivered
@@ -13,49 +15,141 @@
  * Création commande LinkMe:
  * - Redirige vers /canaux-vente/linkme/commandes?action=new
  * - Single Source of Truth: un seul formulaire LinkMe (canaux-vente)
- *
- * [BO-PERF-ORDERS-001] Migré en Server Component pour pré-rendu SSR.
  */
 
-import type { SalesOrder } from '@verone/orders';
-import { createServerClient } from '@verone/utils/supabase/server';
+import { useCallback, useEffect, useState } from 'react';
 
-import { SalesOrdersClientsPage } from './SalesOrdersClientsPage';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default async function SalesOrdersPage() {
-  const supabase = await createServerClient();
+import { SalesOrderFormModal, SalesOrdersTable } from '@verone/orders';
+import {
+  ButtonUnified,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verone/ui';
+import { Truck } from 'lucide-react';
 
-  // Fetch initial côté serveur — colonnes de base (sans items, sans stock).
-  // SalesOrdersTable rechargera avec tous les enrichissements côté client
-  // si nécessaire, mais l'affichage initial est immédiat.
-  const { data: ordersData } = await supabase
-    .from('sales_orders')
-    .select(
-      `
-      id, order_number, linkme_display_number, created_at, status,
-      total_ht, total_ttc, customer_id, customer_type,
-      expected_delivery_date, created_by_affiliate_id,
-      linkme_selection_id, pending_admin_validation,
-      payment_status_v2, channel_id,
-      individual_customer_id, eco_tax_total, order_date, created_by,
-      responsable_contact_id, billing_contact_id, delivery_contact_id,
-      shipping_cost_ht, handling_cost_ht, insurance_cost_ht, fees_vat_rate,
-      quote_qonto_id, quote_number,
-      updated_at,
-      sales_channel:sales_channels!left(id, name, code),
-      billing_contact:contacts!sales_orders_billing_contact_id_fkey(id, first_name, last_name, email, phone),
-      delivery_contact:contacts!sales_orders_delivery_contact_id_fkey(id, first_name, last_name, email, phone),
-      responsable_contact:contacts!sales_orders_responsable_contact_id_fkey(id, first_name, last_name, email, phone)
-    `
-    )
-    .order('created_at', { ascending: false })
-    .limit(500);
+import { updateSalesOrderStatus } from '@/app/actions/sales-orders';
 
-  // Cast via unknown : la requête SSR ne charge pas les enrichissements
-  // (creator, invoice, shipment, etc.) — SalesOrdersTable les chargera
-  // côté client au montage via fetchOrders(). L'affichage initial utilise
-  // les données de base pour un rendu immédiat.
-  const preloadedOrders = (ordersData ?? []) as unknown as SalesOrder[];
+// IDs des canaux de vente
+const CHANNEL_IDS = {
+  all: null,
+  linkme: '93c68db1-5a30-4168-89ec-6383152be405',
+  siteInternet: '0c2639e9-df80-41fa-84d0-9da96a128f7f',
+} as const;
 
-  return <SalesOrdersClientsPage preloadedOrders={preloadedOrders} />;
+type ChannelFilter = 'all' | 'linkme' | 'siteInternet';
+
+export default function SalesOrdersClientsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [channelFilter, setChannelFilter] = useState<ChannelFilter>('all');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Track where the user came from (e.g. /ventes) to navigate back on modal close
+  const [cameFrom] = useState(() => searchParams.get('from'));
+
+  // Ouvrir le modal si ?action=new
+  useEffect(() => {
+    if (searchParams.get('action') === 'new') {
+      setShowCreateModal(true);
+      // Nettoyer l'URL sans recharger
+      router.replace('/commandes/clients', { scroll: false });
+    }
+  }, [searchParams, router]);
+
+  // When modal closes, return to origin page if applicable
+  const handleModalClose = useCallback(
+    (open: boolean) => {
+      setShowCreateModal(open);
+      if (!open && cameFrom === 'ventes') {
+        router.push('/ventes');
+      }
+    },
+    [cameFrom, router]
+  );
+
+  // Rediriger vers le formulaire LinkMe unique (canaux-vente)
+  const handleCreateLinkMeOrder = useCallback(() => {
+    router.push('/canaux-vente/linkme/commandes?action=new');
+  }, [router]);
+
+  const handleCreateClick = useCallback(() => {
+    if (channelFilter === 'linkme') {
+      handleCreateLinkMeOrder();
+    } else {
+      setShowCreateModal(true);
+    }
+  }, [channelFilter, handleCreateLinkMeOrder]);
+
+  return (
+    <div className="space-y-6 p-6">
+      {/* En-tete */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Back-office - Commandes clients
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Gestion des commandes et expeditions clients
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {/* Filtre par canal */}
+          <Select
+            value={channelFilter}
+            onValueChange={(value: ChannelFilter) => setChannelFilter(value)}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filtrer par canal" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les canaux</SelectItem>
+              <SelectItem value="siteInternet">Site Internet</SelectItem>
+              <SelectItem value="linkme">LinkMe</SelectItem>
+            </SelectContent>
+          </Select>
+          <Link href="/stocks/expeditions">
+            <ButtonUnified variant="outline" icon={Truck}>
+              Expeditions
+            </ButtonUnified>
+          </Link>
+        </div>
+      </div>
+
+      {/* Modal creation commande (controle par la page) */}
+      <SalesOrderFormModal
+        open={showCreateModal}
+        onOpenChange={handleModalClose}
+        onLinkMeClick={handleCreateLinkMeOrder}
+      />
+
+      {/* Table des commandes */}
+      <SalesOrdersTable
+        channelId={CHANNEL_IDS[channelFilter]}
+        showChannelColumn={channelFilter === 'all'}
+        showKPIs
+        allowValidate
+        allowShip
+        allowCancel
+        allowDelete
+        allowEdit
+        updateStatusAction={updateSalesOrderStatus}
+        enablePagination
+        defaultItemsPerPage={20}
+        sortableColumns={{
+          date: true,
+          client: false,
+          amount: true,
+          orderNumber: true,
+        }}
+        onCreateClick={handleCreateClick}
+        onLinkMeClick={handleCreateLinkMeOrder}
+      />
+    </div>
+  );
 }
