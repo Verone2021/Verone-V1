@@ -11,15 +11,26 @@ import type { Metadata } from 'next';
 
 import { ContactForm } from './ContactForm';
 
+export const dynamic = 'force-static';
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: 'Contact',
   description:
-    'Contactez l equipe LinkMe pour devenir affilie, etablir un partenariat ou poser vos questions. Reponse sous 24h.',
+    "Contactez l'équipe LinkMe — demande d'accès, démo réseau, fournisseur ou autre. Réponse sous 24h.",
   openGraph: {
     title: 'Contactez LinkMe',
-    description:
-      'Une question sur notre plateforme d affiliation B2B ? Notre equipe vous repond sous 24h.',
+    description: 'Une question sur LinkMe ? Notre équipe vous répond sous 24h.',
     url: '/contact',
+    type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Contactez LinkMe',
+      },
+    ],
   },
   alternates: {
     canonical: '/contact',

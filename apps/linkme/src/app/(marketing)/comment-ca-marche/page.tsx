@@ -21,18 +21,29 @@ import {
 } from 'lucide-react';
 import type { Metadata } from 'next';
 
+import { FaqJsonLd } from '@/components/seo/JsonLd';
+
 export const dynamic = 'force-static';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'Comment fonctionne LinkMe — Affiliation sans stock en 3 étapes',
+  title: 'Comment fonctionne LinkMe — Affiliation sans stock',
   description:
-    'De la création de ta première sélection à ta première commission, LinkMe fonctionne en 3 étapes. Catalogue multi-marques, marge configurable, lien partageable.',
+    'Choisis tes produits, configure ta marge, partage ton lien. Commission sur chaque vente. Zéro stock, zéro logistique.',
   openGraph: {
     title: 'Comment fonctionne LinkMe — Affiliation sans stock en 3 étapes',
     description:
       'De la création de ta première sélection à ta première commission, LinkMe fonctionne en 3 étapes. Catalogue multi-marques, marge configurable, lien partageable.',
     url: '/comment-ca-marche',
+    type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Comment fonctionne LinkMe',
+      },
+    ],
   },
   alternates: {
     canonical: '/comment-ca-marche',
@@ -95,6 +106,7 @@ const FAQ_ITEMS = [
 export default function CommentCaMarchePage() {
   return (
     <>
+      <FaqJsonLd items={FAQ_ITEMS} />
       {/* Hero */}
       <section className="relative pt-24 pb-16 lg:pt-32 lg:pb-24 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#5DBEBB]/10 via-white to-[#3976BB]/5" />
