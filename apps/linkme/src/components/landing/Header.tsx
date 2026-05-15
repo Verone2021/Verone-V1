@@ -27,12 +27,13 @@ import { Menu, X, LogIn, ArrowRight } from 'lucide-react';
 // Navigation items
 const NAV_ITEMS = [
   { label: 'Accueil', href: '/' },
-  { label: 'Pour les créateurs', href: '/pour-les-createurs' },
-  { label: 'Pour les pros', href: '/pour-les-pros' },
   { label: 'Pour les enseignes', href: '/pour-les-enseignes' },
+  { label: 'Pour les pros', href: '/pour-les-pros' },
+  { label: 'Pour les créateurs', href: '/pour-les-createurs' },
   { label: 'Comment ça marche', href: '/comment-ca-marche' },
+  { label: 'Pour les fournisseurs', href: '/fournisseurs' },
+  { label: 'Blog', href: '/blog' },
   { label: 'À propos', href: '/about' },
-  { label: 'Contact', href: '/contact' },
 ];
 
 export function LandingHeader(): JSX.Element {

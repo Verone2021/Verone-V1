@@ -7,12 +7,30 @@
 
 import type { Metadata } from 'next';
 
+export const dynamic = 'force-static';
+export const revalidate = 86400;
+
 export const metadata: Metadata = {
-  title: "Conditions Generales d'Utilisation",
-  description: "Conditions Generales d'Utilisation de la plateforme LinkMe.",
+  title: "Conditions Générales d'Utilisation",
+  description:
+    "Conditions Générales d'Utilisation de la plateforme d'affiliation multi-marques LinkMe.",
   robots: {
     index: true,
     follow: false,
+  },
+  openGraph: {
+    title: "Conditions Générales d'Utilisation — LinkMe",
+    description: "Conditions Générales d'Utilisation de la plateforme LinkMe.",
+    url: '/cgu',
+    type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'CGU LinkMe',
+      },
+    ],
   },
   alternates: {
     canonical: '/cgu',
@@ -49,9 +67,11 @@ export default function CGUPage() {
 
       <h2>3. Description du service</h2>
       <p>
-        LinkMe est une plateforme d&apos;affiliation B2B permettant aux
-        professionnels de la decoration et du mobilier d&apos;interieur de
-        monetiser leur reseau en recommandant des produits.
+        LinkMe est une plateforme d&apos;affiliation multi-marques permettant
+        aux enseignes, professionnels et créateurs de contenu de monétiser leur
+        réseau en recommandant des produits sélectionnés (déco, éclairage,
+        végétal, électronique et plus). Le catalogue est ouvert à plusieurs
+        marques sélectionnées par l&apos;équipe LinkMe.
       </p>
 
       <h2>4. Inscription et compte utilisateur</h2>

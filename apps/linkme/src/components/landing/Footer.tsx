@@ -25,18 +25,24 @@ import {
   Facebook,
 } from 'lucide-react';
 
-// Footer links
+// Footer links — 3 colonnes
 const LINKS = {
-  about: [
+  navigation: [
+    { label: 'Accueil', href: '/' },
+    { label: 'Pour les enseignes', href: '/pour-les-enseignes' },
+    { label: 'Pour les pros', href: '/pour-les-pros' },
+    { label: 'Pour les créateurs', href: '/pour-les-createurs' },
+    { label: 'Comment ça marche', href: '/comment-ca-marche' },
+    { label: 'Blog', href: '/blog' },
+  ],
+  partners: [
+    { label: 'Pour les fournisseurs', href: '/fournisseurs' },
     { label: 'À propos', href: '/about' },
     { label: 'Contact', href: '/contact' },
   ],
-  useful: [
-    { label: 'Pour les créateurs', href: '/pour-les-createurs' },
-    { label: 'Pour les pros', href: '/pour-les-pros' },
-    { label: 'Pour les enseignes', href: '/pour-les-enseignes' },
-    { label: 'Comment ça marche', href: '/comment-ca-marche' },
-    { label: 'Conditions générales', href: '/cgu' },
+  legal: [
+    { label: 'Mentions légales', href: '/cgu' },
+    { label: 'CGU', href: '/cgu' },
     { label: 'Politique de confidentialité', href: '/privacy' },
   ],
 };
@@ -66,8 +72,8 @@ export function LandingFooter(): JSX.Element {
               />
             </Link>
             <p className="text-white/60 text-sm leading-relaxed">
-              Plateforme d&apos;affiliation B2B pour les professionnels de la
-              décoration et du mobilier d&apos;intérieur.
+              Plateforme d&apos;affiliation multi-marques pour les enseignes,
+              les professionnels prescripteurs et les créateurs de contenu.
             </p>
             {/* Social links */}
             <div className="flex items-center gap-3 mt-6">
@@ -84,11 +90,11 @@ export function LandingFooter(): JSX.Element {
             </div>
           </div>
 
-          {/* Links - A propos */}
+          {/* Links - Navigation */}
           <div>
-            <h3 className="font-semibold text-base mb-4">À propos</h3>
+            <h3 className="font-semibold text-base mb-4">Navigation</h3>
             <ul className="space-y-3">
-              {LINKS.about.map(link => (
+              {LINKS.navigation.map(link => (
                 <li key={link.label}>
                   <Link
                     href={link.href}
@@ -101,11 +107,24 @@ export function LandingFooter(): JSX.Element {
             </ul>
           </div>
 
-          {/* Links - Utiles */}
+          {/* Links - Partenaires & À propos */}
           <div>
-            <h3 className="font-semibold text-base mb-4">Liens utiles</h3>
+            <h3 className="font-semibold text-base mb-4">Partenaires</h3>
             <ul className="space-y-3">
-              {LINKS.useful.map(link => (
+              {LINKS.partners.map(link => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="text-white/60 hover:text-white text-sm transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <h3 className="font-semibold text-base mb-4 mt-6">Légal</h3>
+            <ul className="space-y-3">
+              {LINKS.legal.map(link => (
                 <li key={link.label}>
                   <Link
                     href={link.href}

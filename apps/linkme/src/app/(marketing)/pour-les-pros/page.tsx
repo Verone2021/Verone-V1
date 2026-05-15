@@ -22,18 +22,29 @@ import {
 } from 'lucide-react';
 import type { Metadata } from 'next';
 
+import { FaqJsonLd } from '@/components/seo/JsonLd';
+
 export const dynamic = 'force-static';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'LinkMe pour les professionnels — Commission sur vos prescriptions',
+  title: 'LinkMe pour les pros — Commission sur vos prescriptions',
   description:
-    'Architectes, décorateurs, consultants — transformez chaque recommandation client en commission. Catalogue multi-marques, marge libre, zéro logistique.',
+    'Architectes, décorateurs, consultants — vos prescriptions méritent une commission. Créez votre sélection LinkMe en 10 minutes.',
   openGraph: {
-    title: 'LinkMe pour les professionnels — Commission sur vos prescriptions',
+    title: 'LinkMe pour les pros — Commission sur vos prescriptions',
     description:
-      'Architectes, décorateurs, consultants — transformez chaque recommandation client en commission. Catalogue multi-marques, marge libre, zéro logistique.',
+      'Architectes, décorateurs, consultants — vos prescriptions méritent une commission. Créez votre sélection LinkMe en 10 minutes.',
     url: '/pour-les-pros',
+    type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'LinkMe pour les professionnels',
+      },
+    ],
   },
   alternates: {
     canonical: '/pour-les-pros',
@@ -105,6 +116,7 @@ const FAQ_ITEMS = [
 export default function PourLesProsPage() {
   return (
     <>
+      <FaqJsonLd items={FAQ_ITEMS} />
       {/* Hero */}
       <section className="relative pt-24 pb-16 lg:pt-32 lg:pb-24 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#3976BB]/10 via-white to-[#7E84C0]/5" />
