@@ -14,20 +14,30 @@ import Link from 'next/link';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import type { Metadata } from 'next';
 
+import { FaqJsonLd } from '@/components/seo/JsonLd';
+
 export const dynamic = 'force-static';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title:
-    'LinkMe pour les enseignes — Déployez un catalogue produit à votre réseau',
+  title: 'LinkMe pour les enseignes — Déployez un catalogue produit',
   description:
-    "LinkMe déploie un catalogue multi-marques à tout votre réseau de franchisés en moins d'une semaine. Dashboard central, commissions tracées, zéro stock.",
+    "LinkMe déploie un catalogue multi-marques à tout votre réseau en moins d'une semaine. Dashboard central, commissions tracées.",
   openGraph: {
     title:
       'LinkMe pour les enseignes — Déployez un catalogue produit à votre réseau',
     description:
       "LinkMe déploie un catalogue multi-marques à tout votre réseau de franchisés en moins d'une semaine. Dashboard central, commissions tracées, zéro stock.",
     url: '/pour-les-enseignes',
+    type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'LinkMe pour les enseignes',
+      },
+    ],
   },
   alternates: {
     canonical: '/pour-les-enseignes',
@@ -91,6 +101,7 @@ const FAQ_ITEMS = [
 export default function PourLesEnseignesPage() {
   return (
     <>
+      <FaqJsonLd items={FAQ_ITEMS} />
       {/* Hero */}
       <section className="relative pt-24 pb-16 lg:pt-32 lg:pb-24 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#183559]/8 via-white to-[#5DBEBB]/5" />

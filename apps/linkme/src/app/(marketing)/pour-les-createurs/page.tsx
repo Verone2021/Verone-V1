@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import type { Metadata } from 'next';
 
+import { FaqJsonLd } from '@/components/seo/JsonLd';
+
 export const dynamic = 'force-static';
 export const revalidate = 3600;
 
@@ -36,6 +38,15 @@ export const metadata: Metadata = {
     description:
       'LinkMe te donne accès à un catalogue de marques sélectionnées. Tu fixes ta marge, tu partages ta sélection. Commission réelle sur chaque vente.',
     url: '/pour-les-createurs',
+    type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'LinkMe pour les créateurs',
+      },
+    ],
   },
   alternates: {
     canonical: '/pour-les-createurs',
@@ -121,6 +132,7 @@ const FAQ_ITEMS = [
 export default function PourLesCreateursPage() {
   return (
     <>
+      <FaqJsonLd items={FAQ_ITEMS} />
       {/* Hero */}
       <section className="relative pt-24 pb-16 lg:pt-32 lg:pb-24 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#7E84C0]/10 via-white to-[#5DBEBB]/5" />

@@ -8,9 +8,12 @@
  * @module Sitemap
  * @since 2026-01-23
  * @updated 2026-05-14 - LM-PUB-002 release reconciliation
+ * @updated 2026-05-15 - LM-SEO-NAV-BLOG-001 ajout /fournisseurs + articles blog
  */
 
 import type { MetadataRoute } from 'next';
+
+import { getPublishedArticles } from '@/lib/blog/articles';
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://linkme.verone.io';
 
@@ -79,16 +82,28 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.8,
     },
+    {
+      url: `${SITE_URL}/fournisseurs`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/blog`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    },
   ];
 
-  // TODO: Ajouter les selections publiques dynamiquement
-  // const selections = await getPublicSelections();
-  // const selectionPages = selections.map(s => ({
-  //   url: `${SITE_URL}/s/${s.slug}/catalogue`,
-  //   lastModified: s.updatedAt,
-  //   changeFrequency: 'weekly' as const,
-  //   priority: 0.7,
-  // }));
+  // Articles blog publiés
+  const articles = getPublishedArticles();
+  const articlePages: MetadataRoute.Sitemap = articles.map(article => ({
+    url: `${SITE_URL}/blog/${article.slug}`,
+    lastModified: new Date(article.date),
+    changeFrequency: 'monthly',
+    priority: 0.6,
+  }));
 
-  return [...staticPages];
+  return [...staticPages, ...articlePages];
 }

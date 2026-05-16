@@ -23,15 +23,27 @@ import {
 } from 'lucide-react';
 import type { Metadata } from 'next';
 
+export const dynamic = 'force-static';
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: 'À propos',
   description:
-    "LinkMe est une marketplace d'affiliation multi-marques. Catalogue déco, éclairage, végétal, électronique et plus. Pensée pour les créateurs de contenu, les professionnels prescripteurs et les enseignes têtes de réseau.",
+    'LinkMe connecte un catalogue multi-marques à des ambassadeurs qualifiés — enseignes, professionnels et créateurs. Zéro stock.',
   openGraph: {
     title: 'À propos de LinkMe',
     description:
       "Une marketplace d'affiliation ouverte aux marques. Aucun stock, aucune logistique pour les ambassadeurs.",
     url: '/about',
+    type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'À propos de LinkMe',
+      },
+    ],
   },
   alternates: {
     canonical: '/about',

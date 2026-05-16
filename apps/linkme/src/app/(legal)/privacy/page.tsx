@@ -7,10 +7,13 @@
 
 import type { Metadata } from 'next';
 
+export const dynamic = 'force-static';
+export const revalidate = 86400;
+
 export const metadata: Metadata = {
-  title: 'Politique de Confidentialite',
+  title: 'Politique de Confidentialité',
   description:
-    'Politique de confidentialite et protection des donnees personnelles de LinkMe.',
+    'Politique de confidentialité et protection des données personnelles de LinkMe.',
   robots: {
     index: true,
     follow: false,

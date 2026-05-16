@@ -30,7 +30,11 @@ const PUBLIC_ROUTES: RegExp[] = [
   /^\/pour-les-createurs$/,
   /^\/pour-les-pros$/,
   /^\/pour-les-enseignes$/,
+  /^\/fournisseurs$/,
+  /^\/blog$/,
+  /^\/blog\//,
   /^\/cgu$/,
+  /^\/mentions-legales$/,
   /^\/privacy$/,
   /^\/cookies$/,
   // Routes dynamiques publiques (catalogues white-label, delivery links)

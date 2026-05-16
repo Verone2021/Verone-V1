@@ -7,9 +7,12 @@
 
 import type { Metadata } from 'next';
 
+export const dynamic = 'force-static';
+export const revalidate = 86400;
+
 export const metadata: Metadata = {
   title: 'Politique Cookies',
-  description: 'Politique d utilisation des cookies sur la plateforme LinkMe.',
+  description: "Politique d'utilisation des cookies sur la plateforme LinkMe.",
   robots: {
     index: true,
     follow: false,
