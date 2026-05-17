@@ -10,6 +10,7 @@
 
 export { LandingHeader } from './Header';
 export { LandingHero } from './Hero';
+export { LandingAudienceCards } from './AudienceCards';
 export { LandingFeatures } from './Features';
 export { LandingHowItWorks } from './HowItWorks';
 export { LandingPricing } from './PricingModels';

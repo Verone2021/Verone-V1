@@ -1,20 +1,18 @@
 /**
  * Landing Page Hero Section - LinkMe
  *
- * Section hero avec :
- * - Badge « Accès sur demande »
- * - H1 positionnement produit (B2B configurable)
- * - 2 CTAs (Demander l'accès + En savoir plus)
- * - 3 chiffres statiques (CA produits, unités, pays couverts)
+ * Section hero adressée aux 3 audiences (réseau, pro, créateur) :
+ * - Badge « Accès sur demande · Démo réseau disponible »
+ * - H1 multi-audience
+ * - 2 CTAs (Demander l'accès + Voir une démo réseau)
+ * - 3 chiffres réels (CA généré, unités commandées, pays couverts)
  * - Logos partenaires
  * - Mockup illustratif
  *
  * @module LandingHero
  * @since 2026-01-07
- * @updated 2026-05-13 - LM-MKT-001 : repositionnement copy, accents,
- *                       chiffres statiques (suppression de usePublicStats).
- * @updated 2026-05-13 - LM-MKT-002 : positionnement multi-marques /
- *                       ambassadeur (H1 + sous-titre).
+ * @updated 2026-05-17 - LM-MKT-COPY-001 : rewrite copy multi-audience,
+ *                       chiffres réels Supabase (audit 2026-05-17).
  */
 
 import Link from 'next/link';
@@ -23,14 +21,14 @@ import { ArrowRight, TrendingUp, Package, Globe } from 'lucide-react';
 
 const HERO_STATS = [
   {
-    label: 'CA produits générés',
-    value: '74 000 €',
-    hint: 'en 2024',
+    label: 'CA généré via le réseau',
+    value: '250 000 €+',
+    hint: 'cumulé depuis 2023',
     icon: TrendingUp,
   },
   {
     label: 'Unités commandées',
-    value: '1 153',
+    value: '3 800+',
     hint: 'via la plateforme',
     icon: Package,
   },
@@ -56,24 +54,25 @@ export function LandingHero(): JSX.Element {
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#5DBEBB]/10 rounded-full mb-6">
               <span className="w-2 h-2 bg-[#5DBEBB] rounded-full animate-pulse" />
               <span className="text-sm font-medium text-[#5DBEBB]">
-                Accès sur demande
+                Accès sur demande · Démo réseau disponible
               </span>
             </div>
 
             {/* Title */}
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#183559] leading-tight">
-              Deviens ambassadeur de{' '}
+              Ton réseau génère des ventes.{' '}
               <span className="bg-gradient-to-r from-[#5DBEBB] via-[#7E84C0] to-[#3976BB] bg-clip-text text-transparent">
-                marques sélectionnées
+                LinkMe te les paie.
               </span>
-              .
             </h1>
 
             {/* Subtitle */}
             <p className="mt-6 text-lg text-[#183559]/70 max-w-xl mx-auto lg:mx-0">
-              Tu choisis tes produits dans un catalogue multi-marques — déco,
-              éclairage, végétal, électronique et plus encore. Tu fixes ta
-              marge, tu touches ta commission.
+              Que tu gères un réseau de points de vente, une clientèle de
+              professionnels, ou une audience en ligne — LinkMe te donne un
+              catalogue multi-marques à vendre contre commission. Tu choisis les
+              produits, tu fixes ta marge, tu partages ton lien. Zéro stock.
+              Zéro logistique.
             </p>
 
             {/* CTAs */}
@@ -86,14 +85,14 @@ export function LandingHero(): JSX.Element {
                 <ArrowRight className="h-5 w-5" />
               </Link>
               <Link
-                href="#how-it-works"
+                href="/pour-les-enseignes"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-[#183559] border-2 border-[#183559]/20 rounded-xl hover:bg-[#183559]/5 transition-colors"
               >
-                En savoir plus
+                Voir une démo réseau
               </Link>
             </div>
 
-            {/* Stats — chiffres statiques */}
+            {/* Stats — chiffres réels (Supabase audit 2026-05-17) */}
             <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4">
               {HERO_STATS.map(stat => (
                 <div

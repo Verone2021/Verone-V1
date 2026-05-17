@@ -13,6 +13,7 @@
 
 import {
   LandingHero,
+  LandingAudienceCards,
   LandingFeatures,
   LandingHowItWorks,
   LandingPricing,
@@ -29,6 +30,7 @@ export default function HomePage(): JSX.Element {
     <>
       <OrganizationJsonLd />
       <LandingHero />
+      <LandingAudienceCards />
       <LandingFeatures />
       <LandingHowItWorks />
       <LandingPricing />
