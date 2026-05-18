@@ -198,6 +198,7 @@ export function SalesOrderFormModal({
     insuranceCostHt,
     handlingCostHt,
     ecoTaxVatRate,
+    customerVatRate: selectedCustomer?.default_vat_rate ?? null,
     availableChannels,
     setChannelId,
     setSelectedSalesChannel,

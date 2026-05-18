@@ -34,6 +34,8 @@ export interface UnifiedCustomer {
   prepayment_required?: boolean | null;
   // Canal de vente par défaut
   default_channel_id?: string | null;
+  // TVA par défaut (lue depuis organisations.default_vat_rate)
+  default_vat_rate?: number | null;
   // Adresses pour B2B (organisations)
   billing_address_line1?: string;
   billing_address_line2?: string;
@@ -108,6 +110,7 @@ export function CustomerSelector({
             payment_terms_notes,
             prepayment_required,
             default_channel_id,
+            default_vat_rate,
             billing_address_line1,
             billing_address_line2,
             billing_city,
