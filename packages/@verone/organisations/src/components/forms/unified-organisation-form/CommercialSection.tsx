@@ -12,7 +12,12 @@ import { spacing, colors } from '@verone/ui';
 import { CreditCard } from 'lucide-react';
 import { type UseFormReturn } from 'react-hook-form';
 
-import { CURRENCIES, PAYMENT_TERMS_OPTIONS } from './constants';
+import {
+  CURRENCIES,
+  PAYMENT_TERMS_OPTIONS,
+  VAT_RATES,
+  DEFAULT_VAT_RATE,
+} from './constants';
 import type { OrganisationFormData } from './types';
 
 interface CommercialSectionProps {
@@ -40,7 +45,7 @@ export function CommercialSection({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
+          gridTemplateColumns: 'repeat(3, 1fr)',
           gap: spacing[4],
         }}
       >
@@ -116,6 +121,56 @@ export function CommercialSection({
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Default VAT rate */}
+        <div>
+          <Label
+            htmlFor="default_vat_rate"
+            className="text-sm font-medium"
+            style={{
+              color: colors.text.DEFAULT,
+              display: 'block',
+              marginBottom: spacing[2],
+            }}
+          >
+            TVA par défaut
+          </Label>
+          <Select
+            value={String(form.watch('default_vat_rate') ?? DEFAULT_VAT_RATE)}
+            onValueChange={value =>
+              form.setValue('default_vat_rate', Number(value), {
+                shouldDirty: true,
+              })
+            }
+            disabled={isSubmitting}
+          >
+            <SelectTrigger
+              style={{
+                borderColor: colors.border.DEFAULT,
+                color: colors.text.DEFAULT,
+                borderRadius: '8px',
+              }}
+            >
+              <SelectValue placeholder="Sélectionner une TVA" />
+            </SelectTrigger>
+            <SelectContent>
+              {VAT_RATES.map(option => (
+                <SelectItem key={option.value} value={String(option.value)}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p
+            style={{
+              fontSize: '12px',
+              color: colors.text.muted,
+              marginTop: spacing[1],
+            }}
+          >
+            Pré-remplie selon le pays, modifiable.
+          </p>
         </div>
       </div>
     </div>

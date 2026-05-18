@@ -8,6 +8,7 @@ import { spacing, colors } from '@verone/ui';
 import { MapPin, Navigation } from 'lucide-react';
 import { type UseFormReturn } from 'react-hook-form';
 
+import { defaultVatRateForCountry } from './constants';
 import type { OrganisationFormData } from './types';
 
 interface AddressSectionProps {
@@ -22,14 +23,22 @@ export function AddressSection({
   isCustomer,
 }: AddressSectionProps) {
   const handleBillingAddressSelect = (address: AddressResult) => {
+    const country = address.countryCode ?? 'FR';
     form.setValue('billing_address_line1', address.streetAddress);
     form.setValue('billing_city', address.city);
     form.setValue('billing_postal_code', address.postalCode);
     form.setValue('billing_region', address.region ?? '');
-    form.setValue('billing_country', address.countryCode ?? 'FR');
+    form.setValue('billing_country', country);
     if (!form.getValues('has_different_shipping_address')) {
       form.setValue('latitude', address.latitude ?? null);
       form.setValue('longitude', address.longitude ?? null);
+    }
+    // Auto-fill default VAT rate based on detected country, but only if the
+    // user hasn't manually changed it yet (same logic as DB trigger).
+    if (!form.formState.dirtyFields.default_vat_rate) {
+      form.setValue('default_vat_rate', defaultVatRateForCountry(country), {
+        shouldDirty: false,
+      });
     }
   };
 

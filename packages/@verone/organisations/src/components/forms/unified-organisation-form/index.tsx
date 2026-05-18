@@ -29,6 +29,15 @@ import {
 // Re-export public types for consumers
 export type { OrganisationType, OrganisationFormData } from './types';
 
+// Re-export VAT helpers so consumers (orders, linkme, back-office) can apply
+// the same default rates as the organisation form / DB trigger.
+export {
+  VAT_RATES,
+  DEFAULT_VAT_RATE,
+  defaultVatRateForCountry,
+  formatVatRate,
+} from './constants';
+
 export function UnifiedOrganisationForm({
   isOpen,
   onClose,

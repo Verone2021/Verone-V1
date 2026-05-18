@@ -127,6 +127,7 @@ export function buildOrganisationsOps({
             notes: emptyToNull(data.notes),
             industry_sector: emptyToNull(data.industry_sector),
             payment_terms: emptyToNull(data.payment_terms),
+            default_vat_rate: data.default_vat_rate ?? null,
             supplier_segment: emptyToNull(data.supplier_segment),
             source: data.source ?? 'manual',
             source_type: data.source_type ?? null,
@@ -200,6 +201,7 @@ export function buildOrganisationsOps({
         'notes',
         'industry_sector',
         'payment_terms',
+        'default_vat_rate',
         'supplier_segment',
       ];
 
