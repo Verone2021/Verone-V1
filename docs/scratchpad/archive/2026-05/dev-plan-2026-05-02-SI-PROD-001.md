@@ -28,6 +28,7 @@
 ### Coordination avec PR #875 SI-SEO-001 (autre agent)
 
 PR #875 prévoit dans son commit 2 : "Bouton Dupliquer produit dans catalogue BO". Files annoncés :
+
 - `apps/back-office/src/app/(protected)/produits/actions/duplicate-product.ts` (nouveau)
 - `édit : page liste catalogue produits BO (ajout action Dupliquer)`
 
@@ -36,6 +37,7 @@ Action prévue : intégration du bouton dans `CatalogueListView` (ou un menu d'a
 **Conflit potentiel** : `CatalogueListView.tsx` édité des deux côtés.
 
 **Stratégie** :
+
 - Je SKIP la duplication (déjà dans le scope de PR #875).
 - Mes éditions sur `CatalogueListView.tsx` se concentrent sur la colonne checkbox (en première position) et n'ajoutent pas de bouton "Dupliquer". Si conflit, rebase trivial.
 - Mon scope ne touche pas à `actions/duplicate-product.ts`.
@@ -53,6 +55,7 @@ Action prévue : intégration du bouton dans `CatalogueListView` (ou un menu d'a
 ### Commit 1 — Sélection multi-lignes infrastructure
 
 **Fichiers** :
+
 - édit `apps/back-office/src/app/(protected)/produits/catalogue/types.ts` — type `Selection`
 - édit `apps/back-office/src/app/(protected)/produits/catalogue/use-catalogue-page.ts` — state selectedIds, handlers toggle/clear/all
 - édit `apps/back-office/src/app/(protected)/produits/catalogue/CatalogueListView.tsx` — colonne checkbox + checkbox header
@@ -62,6 +65,7 @@ Action prévue : intégration du bouton dans `CatalogueListView` (ou un menu d'a
 ### Commit 2 — Barre d'actions en masse + mutations
 
 **Fichiers** :
+
 - nouveau `apps/back-office/src/app/(protected)/produits/catalogue/CatalogueBulkActionsBar.tsx` — barre publier/dépublier/statut/prix/archiver/supprimer
 - nouveau `apps/back-office/src/app/(protected)/produits/catalogue/modals/BulkPriceEditDialog.tsx` — modal édition prix en masse
 - nouveau `apps/back-office/src/app/(protected)/produits/catalogue/modals/BulkStatusDialog.tsx` — modal changement statut
@@ -71,6 +75,7 @@ Action prévue : intégration du bouton dans `CatalogueListView` (ou un menu d'a
 ### Commit 3 — Pagination + tri (vérif & polish)
 
 **Fichiers** :
+
 - édit `apps/back-office/src/app/(protected)/produits/catalogue/catalogue-list-helpers.tsx` — ajout colonne `created_at` triable si pertinent
 - édit `apps/back-office/src/app/(protected)/produits/catalogue/CataloguePagination.tsx` — affichage de "X-Y sur Z" si manquant
 
@@ -79,35 +84,46 @@ Action prévue : intégration du bouton dans `CatalogueListView` (ou un menu d'a
 ## Mutations en masse (détails)
 
 ### Publier / dépublier
+
 ```ts
-supabase.from('products')
+supabase
+  .from('products')
   .update({ is_published_online: true | false })
-  .in('id', selectedIds)
+  .in('id', selectedIds);
 ```
+
 Effet : propagation au site-internet via fetch `is_published_online = true`.
 
 ### Changement statut
+
 ```ts
-supabase.from('products')
+supabase
+  .from('products')
   .update({ product_status: 'active' | 'draft' | 'inactive' })
-  .in('id', selectedIds)
+  .in('id', selectedIds);
 ```
 
 ### Édition prix
+
 ```ts
-supabase.from('products')
+supabase
+  .from('products')
   .update({ cost_price: newPrice })
-  .in('id', selectedIds)
+  .in('id', selectedIds);
 ```
+
 **UX** : modal avec choix "remplacer par X €" / "augmenter de X %" / "diminuer de X %".
 
 ### Archiver / désarchiver
+
 Itère `archiveProduct(id)` / `unarchiveProduct(id)` (déjà existant dans `useCatalogue`).
 
 ### Supprimer
+
 Itère `deleteProduct(id)` (déjà existant dans `useCatalogue`).
 
 ### EXCLU du sprint
+
 - Bulk stock direct : violerait les triggers stock protégés. À traiter dans un sprint dédié via `stock_movements`.
 - Import CSV : hors scope.
 - Cross-sell/upsell : hors scope.
