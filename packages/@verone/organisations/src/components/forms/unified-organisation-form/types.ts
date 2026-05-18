@@ -78,6 +78,9 @@ export const baseOrganisationSchema = z.object({
   // Commercial
   currency: z.string().default('EUR'),
   payment_terms: z.string().optional().or(z.literal('')),
+  // TVA par défaut (0 à 1, ex: 0.20 = 20 %). Pré-rempli selon le pays via le
+  // trigger DB trg_calculate_default_vat_rate, modifiable manuellement ici.
+  default_vat_rate: z.number().min(0).max(1).nullable().optional(),
 
   // Supplier specific
   supplier_segment: z.string().optional().or(z.literal('')),

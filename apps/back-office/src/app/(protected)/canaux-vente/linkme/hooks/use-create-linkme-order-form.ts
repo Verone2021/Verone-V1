@@ -208,6 +208,23 @@ export function useCreateLinkMeOrderForm({
     return customers.individuals.find(i => i.id === selectedCustomerId);
   }, [customerType, selectedCustomerId, customers]);
 
+  // TVA par défaut du client (organisations.default_vat_rate). Null pour B2C.
+  const customerVatRate = useMemo<number | null>(() => {
+    if (!selectedCustomer || customerType !== 'organization') return null;
+    return (
+      (selectedCustomer as { default_vat_rate?: number | null })
+        .default_vat_rate ?? null
+    );
+  }, [selectedCustomer, customerType]);
+
+  // Synchroniser la TVA des frais (livraison/manutention/assurance) sur la TVA
+  // du client choisi. customerVatRate est une primitive (number | null) stable.
+  useEffect(() => {
+    if (customerVatRate !== null) {
+      setFraisTaxRate(customerVatRate);
+    }
+  }, [customerVatRate]);
+
   const filteredOrganisations = useMemo(() => {
     if (!searchQuery.trim()) return customers.organisations;
     const q = searchQuery.toLowerCase();
@@ -256,13 +273,21 @@ export function useCreateLinkMeOrderForm({
         shippingCostHt,
         handlingCostHt,
         insuranceCostHt,
-        fraisTaxRate
+        fraisTaxRate,
+        customerVatRate
       ),
-    [cart, shippingCostHt, handlingCostHt, insuranceCostHt, fraisTaxRate]
+    [
+      cart,
+      shippingCostHt,
+      handlingCostHt,
+      insuranceCostHt,
+      fraisTaxRate,
+      customerVatRate,
+    ]
   );
 
   // ---- Cart handlers (extracted) ----
-  const cartHandlers = buildCartHandlers(setCart);
+  const cartHandlers = buildCartHandlers(setCart, customerVatRate);
 
   // ---- Customer create handler ----
   const handleCreateCustomer = async () => {
@@ -339,6 +364,7 @@ export function useCreateLinkMeOrderForm({
         fraisTaxRate,
         selectedSelectionId,
         contactsAddressesData,
+        customerVatRate,
       });
       await createOrder.mutateAsync(input);
       onClose();

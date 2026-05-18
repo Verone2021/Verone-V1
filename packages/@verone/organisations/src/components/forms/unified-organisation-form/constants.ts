@@ -48,3 +48,28 @@ export const _SUPPLIER_SEGMENTS = [
   { value: 'OPERATIONAL', label: 'Opérationnel' },
   { value: 'COMMODITY', label: 'Commodité' },
 ];
+
+// VAT rates — aligned with DB trigger trg_calculate_default_vat_rate
+// (FR → 0.20, autres pays → 0.00)
+export const VAT_RATES = [
+  { value: 0, label: 'Exonéré (0 %)' },
+  { value: 0.055, label: 'Réduit (5,5 %)' },
+  { value: 0.1, label: 'Intermédiaire (10 %)' },
+  { value: 0.2, label: 'Normal (20 %)' },
+] as const;
+
+export const DEFAULT_VAT_RATE = 0.2;
+
+export function defaultVatRateForCountry(
+  country: string | null | undefined
+): number {
+  if (!country || country === 'FR') return 0.2;
+  return 0;
+}
+
+export function formatVatRate(rate: number | null | undefined): string {
+  if (rate === null || rate === undefined) return '—';
+  const pct = rate * 100;
+  const formatted = Number.isInteger(pct) ? pct.toFixed(0) : pct.toFixed(1);
+  return `${formatted.replace('.', ',')} %`;
+}

@@ -139,9 +139,12 @@ export function EditOrderPage({ data }: EditOrderPageProps) {
   );
 
   // ---- Business hooks ----
+  // La TVA de la commande est déjà figée à la validation (règle finance R6).
+  // Les nouveaux items reprennent cette même TVA pour rester cohérents.
   const itemsHook = useEditOrderItems(
     order.sales_order_items,
-    order.shipping_cost_ht
+    order.shipping_cost_ht,
+    order.tax_rate ?? 0.2
   );
 
   const contactsHook = useEditOrderContacts({

@@ -12,7 +12,7 @@ export async function fetchEnseigneOrganisations(
   const { data, error } = await supabase
     .from('organisations')
     .select(
-      'id, legal_name, trade_name, email, phone, address_line1, city, postal_code, billing_address_line1, billing_city, billing_postal_code, siret, is_active, created_at, source_type, source_affiliate_id'
+      'id, legal_name, trade_name, email, phone, address_line1, city, postal_code, billing_address_line1, billing_city, billing_postal_code, siret, is_active, default_vat_rate, created_at, source_type, source_affiliate_id'
     )
     .eq('enseigne_id', enseigneId)
     .eq('type', 'customer')
@@ -36,6 +36,7 @@ export async function fetchEnseigneOrganisations(
     billing_postal_code: org.billing_postal_code ?? null,
     siret: org.siret ?? null,
     is_active: org.is_active ?? true,
+    default_vat_rate: org.default_vat_rate ?? null,
     created_at: org.created_at,
     source_type: org.source_type,
     source_affiliate_id: org.source_affiliate_id,

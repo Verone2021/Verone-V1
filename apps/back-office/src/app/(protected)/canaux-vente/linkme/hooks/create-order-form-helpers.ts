@@ -1,3 +1,5 @@
+import { DEFAULT_VAT_RATE } from '@verone/organisations';
+
 import type {
   LinkMeOrderItemInput,
   CreateLinkMeOrderInput,
@@ -28,8 +30,12 @@ export function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-export function buildCartItemFromSelection(item: SelectionItem): CartItem {
+export function buildCartItemFromSelection(
+  item: SelectionItem,
+  customerVatRate?: number | null
+): CartItem {
   const isAffiliateProduct = !!item.product?.created_by_affiliate;
+  const taxRate = customerVatRate ?? DEFAULT_VAT_RATE;
 
   if (isAffiliateProduct) {
     const affiliateCommRate =
@@ -42,7 +48,7 @@ export function buildCartItemFromSelection(item: SelectionItem): CartItem {
       sku: item.product?.sku ?? '',
       quantity: 1,
       unit_price_ht: sellingPrice,
-      tax_rate: 0.2,
+      tax_rate: taxRate,
       base_price_ht: item.base_price_ht,
       retrocession_rate: affiliateCommRate,
       linkme_selection_item_id: item.id,
@@ -63,7 +69,7 @@ export function buildCartItemFromSelection(item: SelectionItem): CartItem {
     sku: item.product?.sku ?? '',
     quantity: 1,
     unit_price_ht: sellingPrice,
-    tax_rate: 0.2,
+    tax_rate: taxRate,
     base_price_ht: item.base_price_ht,
     retrocession_rate: retrocessionRate,
     linkme_selection_item_id: item.id,
@@ -77,8 +83,10 @@ export function computeCartTotals(
   shippingCostHt: number,
   handlingCostHt: number,
   insuranceCostHt: number,
-  fraisTaxRate: number
+  fraisTaxRate: number,
+  customerVatRate?: number | null
 ) {
+  const fallbackVat = customerVatRate ?? DEFAULT_VAT_RATE;
   const productsHt = cart.reduce(
     (sum, item) => sum + roundMoney(item.unit_price_ht * item.quantity),
     0
@@ -88,7 +96,7 @@ export function computeCartTotals(
 
   const totalTva = cart.reduce((sum, item) => {
     const lineHt = roundMoney(item.unit_price_ht * item.quantity);
-    return sum + roundMoney(lineHt * (item.tax_rate ?? 0.2));
+    return sum + roundMoney(lineHt * (item.tax_rate ?? fallbackVat));
   }, 0);
   const totalTvaFrais = roundMoney(totalFrais * fraisTaxRate);
   const totalTtc = roundMoney(totalHt + totalTva + totalTvaFrais);
@@ -122,6 +130,7 @@ export interface BuildOrderInputParams {
   fraisTaxRate: number;
   selectedSelectionId: string;
   contactsAddressesData: ContactsAddressesData;
+  customerVatRate?: number | null;
 }
 
 export function buildOrderInput(
@@ -140,7 +149,9 @@ export function buildOrderInput(
     fraisTaxRate,
     selectedSelectionId,
     contactsAddressesData,
+    customerVatRate,
   } = params;
+  const fallbackVat = customerVatRate ?? DEFAULT_VAT_RATE;
 
   const contactDetails = buildLinkMeDetails(contactsAddressesData);
   const linkme_details: LinkMeDetailsInput | null = contactDetails
@@ -164,7 +175,7 @@ export function buildOrderInput(
       sku: item.sku,
       quantity: item.quantity,
       unit_price_ht: item.unit_price_ht,
-      tax_rate: item.tax_rate ?? 0.2,
+      tax_rate: item.tax_rate ?? fallbackVat,
       base_price_ht: item.base_price_ht,
       retrocession_rate: item.is_affiliate_product
         ? item.affiliate_commission_rate
