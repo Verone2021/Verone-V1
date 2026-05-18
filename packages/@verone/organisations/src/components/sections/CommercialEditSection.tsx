@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import {
   useInlineEdit,
@@ -8,6 +8,7 @@ import {
 } from '@verone/common/hooks/use-inline-edit';
 import { Button } from '@verone/ui';
 import { cn } from '@verone/utils';
+import { createClient } from '@verone/utils/supabase/client';
 import {
   CreditCard,
   Save,
@@ -95,6 +96,51 @@ export function CommercialEditSection({
       console.error('❌ Erreur mise à jour conditions commerciales:', error);
     },
   });
+
+  // Édition TVA indépendante : la TVA dépend du pays de l'organisation,
+  // pas du fait que ce soit une succursale. Modifiable même quand le reste
+  // de la section commerciale est read-only (hérité de l'enseigne).
+  const [vatEditing, setVatEditing] = useState(false);
+  const [vatValue, setVatValue] = useState<number>(
+    organisation.default_vat_rate ?? DEFAULT_VAT_RATE
+  );
+  const [vatSaving, setVatSaving] = useState(false);
+  const [vatError, setVatError] = useState<string | null>(null);
+
+  const handleVatEdit = () => {
+    setVatValue(organisation.default_vat_rate ?? DEFAULT_VAT_RATE);
+    setVatError(null);
+    setVatEditing(true);
+  };
+
+  const handleVatCancel = () => {
+    setVatEditing(false);
+    setVatError(null);
+  };
+
+  const handleVatSave = async () => {
+    setVatSaving(true);
+    setVatError(null);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('organisations')
+        .update({ default_vat_rate: vatValue })
+        .eq('id', organisation.id);
+      if (error) {
+        setVatError(error.message);
+        return;
+      }
+      onUpdate({ default_vat_rate: vatValue });
+      setVatEditing(false);
+    } catch (err) {
+      setVatError(
+        err instanceof Error ? err.message : 'Erreur mise à jour TVA'
+      );
+    } finally {
+      setVatSaving(false);
+    }
+  };
 
   const section: EditableSection = 'commercial';
   const editData = getEditedData(section) as CommercialEditData | null;
@@ -450,17 +496,79 @@ export function CommercialEditSection({
               </div>
             )}
 
-            {hasVatRate && (
-              <div className="bg-amber-50 p-3 rounded-lg">
-                <div className="text-xs text-amber-700 font-medium mb-1 flex items-center">
-                  <Receipt className="h-3 w-3 mr-1" />
-                  TVA PAR DÉFAUT
+            <div className="bg-amber-50 p-3 rounded-lg">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs text-amber-700 font-medium mb-1 flex items-center">
+                    <Receipt className="h-3 w-3 mr-1" />
+                    TVA PAR DÉFAUT
+                  </div>
+                  {vatEditing ? (
+                    <select
+                      value={String(vatValue)}
+                      onChange={e => setVatValue(parseFloat(e.target.value))}
+                      disabled={vatSaving}
+                      className="w-full px-2 py-1.5 text-sm border border-amber-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    >
+                      {VAT_RATES.map(option => (
+                        <option key={option.value} value={String(option.value)}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="text-sm font-semibold text-amber-900">
+                      {hasVatRate
+                        ? formatVatRate(organisation.default_vat_rate)
+                        : 'Non définie'}
+                    </div>
+                  )}
+                  <p className="mt-1 text-[11px] text-amber-700/80">
+                    Dépend du pays du client (France = 20 %, autres = 0 %).
+                    Appliquée par défaut aux nouvelles commandes.
+                  </p>
+                  {vatError && (
+                    <p className="mt-1 text-[11px] text-red-600">
+                      ❌ {vatError}
+                    </p>
+                  )}
                 </div>
-                <div className="text-sm font-semibold text-amber-900">
-                  {formatVatRate(organisation.default_vat_rate)}
+                <div className="flex-shrink-0 flex gap-1">
+                  {vatEditing ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleVatCancel}
+                        disabled={vatSaving}
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Annuler
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          void handleVatSave();
+                        }}
+                        disabled={
+                          vatSaving ||
+                          vatValue ===
+                            (organisation.default_vat_rate ?? DEFAULT_VAT_RATE)
+                        }
+                      >
+                        <Save className="h-3 w-3 mr-1" />
+                        {vatSaving ? 'Sauvegarde...' : 'Sauvegarder'}
+                      </Button>
+                    </>
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={handleVatEdit}>
+                      <Edit className="h-3 w-3 mr-1" />
+                      Modifier
+                    </Button>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
 
             {organisationType !== 'customer' &&
               organisation.delivery_time_days &&
