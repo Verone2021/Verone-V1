@@ -1,7 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
 
-import { LINKME_CONSTANTS } from '@verone/utils';
-
 import type { EditableItem } from '../types';
 import type { OrderItemData } from '../page';
 import { mapOrderItemToEditable } from '../helpers';
@@ -29,10 +27,15 @@ export interface AddProductInput {
 
 export function useEditOrderItems(
   initialItems: OrderItemData[],
-  shippingCostHt: number | null | undefined
+  shippingCostHt: number | null | undefined,
+  /**
+   * TVA par défaut pour les nouveaux items + fallback de mapping. Vient
+   * généralement de la commande elle-même (déjà figée) ou du client.
+   */
+  defaultTaxRate: number = 0.2
 ) {
   const [items, setItems] = useState<EditableItem[]>(() =>
-    initialItems.map(mapOrderItemToEditable)
+    initialItems.map(item => mapOrderItemToEditable(item, defaultTaxRate))
   );
 
   // ---- Handlers: Items ----
@@ -89,58 +92,64 @@ export function useEditOrderItems(
     );
   }, []);
 
-  const handleAddProducts = useCallback((newProducts: AddProductInput[]) => {
-    setItems(prev => {
-      const updated = [...prev];
-      for (const product of newProducts) {
-        const existingIdx = updated.findIndex(
-          i => i.product_id === product.product_id
-        );
-        if (existingIdx >= 0) {
-          const existing = updated[existingIdx];
-          updated[existingIdx] = {
-            ...existing,
-            quantity: existing._delete
-              ? product.quantity
-              : existing.quantity + product.quantity,
-            _delete: false,
-          };
-        } else {
-          updated.push({
-            id: `new-${product.product_id}`,
-            product_id: product.product_id,
-            product_name: product.product_name,
-            product_sku: product.product_sku,
-            product_image_url: product.product_image_url,
-            quantity: product.quantity,
-            originalQuantity: 0,
-            unit_price_ht: product.unit_price_ht,
-            original_unit_price_ht: product.unit_price_ht,
-            base_price_ht: product.base_price_ht,
-            margin_rate: product.margin_rate,
-            tax_rate: 0.2,
-            _delete: false,
-            _isNew: true,
-            is_affiliate_product: product.is_affiliate_product ?? false,
-            affiliate_commission_rate: product.affiliate_commission_rate ?? 0,
-          });
+  const handleAddProducts = useCallback(
+    (newProducts: AddProductInput[]) => {
+      setItems(prev => {
+        const updated = [...prev];
+        for (const product of newProducts) {
+          const existingIdx = updated.findIndex(
+            i => i.product_id === product.product_id
+          );
+          if (existingIdx >= 0) {
+            const existing = updated[existingIdx];
+            updated[existingIdx] = {
+              ...existing,
+              quantity: existing._delete
+                ? product.quantity
+                : existing.quantity + product.quantity,
+              _delete: false,
+            };
+          } else {
+            updated.push({
+              id: `new-${product.product_id}`,
+              product_id: product.product_id,
+              product_name: product.product_name,
+              product_sku: product.product_sku,
+              product_image_url: product.product_image_url,
+              quantity: product.quantity,
+              originalQuantity: 0,
+              unit_price_ht: product.unit_price_ht,
+              original_unit_price_ht: product.unit_price_ht,
+              base_price_ht: product.base_price_ht,
+              margin_rate: product.margin_rate,
+              tax_rate: defaultTaxRate,
+              _delete: false,
+              _isNew: true,
+              is_affiliate_product: product.is_affiliate_product ?? false,
+              affiliate_commission_rate: product.affiliate_commission_rate ?? 0,
+            });
+          }
         }
-      }
-      return updated;
-    });
-  }, []);
+        return updated;
+      });
+    },
+    [defaultTaxRate]
+  );
 
   // ---- Computed: Totals ----
   const totals = useMemo(() => {
     const roundMoney = (value: number): number => Math.round(value * 100) / 100;
 
     let productsHt = 0;
+    let totalTva = 0;
     let totalCommission = 0;
 
     for (const item of items) {
       if (!item._delete) {
-        productsHt = roundMoney(
-          productsHt + item.quantity * item.unit_price_ht
+        const lineHt = roundMoney(item.quantity * item.unit_price_ht);
+        productsHt = roundMoney(productsHt + lineHt);
+        totalTva = roundMoney(
+          totalTva + lineHt * (item.tax_rate ?? defaultTaxRate)
         );
         // Commission = unit_price * retrocession_rate * quantity
         // Aligned with DB trigger lock_prices_on_order_validation()
@@ -154,12 +163,11 @@ export function useEditOrderItems(
 
     const shippingHt = shippingCostHt ?? 0;
     const totalHt = roundMoney(productsHt + shippingHt);
-    const totalTtc = roundMoney(
-      totalHt * (1 + LINKME_CONSTANTS.DEFAULT_TAX_RATE)
-    );
+    const shippingTva = roundMoney(shippingHt * defaultTaxRate);
+    const totalTtc = roundMoney(totalHt + totalTva + shippingTva);
 
     return { productsHt, shippingHt, totalHt, totalTtc, totalCommission };
-  }, [items, shippingCostHt]);
+  }, [items, shippingCostHt, defaultTaxRate]);
 
   // ---- Computed: Active items count ----
   const activeItemsCount = useMemo(
