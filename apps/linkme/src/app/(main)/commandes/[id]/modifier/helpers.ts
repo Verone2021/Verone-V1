@@ -18,7 +18,10 @@ export function formatPrice(amount: number): string {
 // MAPPING HELPERS
 // ============================================================================
 
-export function mapOrderItemToEditable(item: OrderItemData): EditableItem {
+export function mapOrderItemToEditable(
+  item: OrderItemData,
+  fallbackTaxRate: number = 0.2
+): EditableItem {
   return {
     id: item.id,
     product_id: item.product_id,
@@ -31,7 +34,7 @@ export function mapOrderItemToEditable(item: OrderItemData): EditableItem {
     original_unit_price_ht: item.unit_price_ht,
     base_price_ht: item.base_price_ht_locked ?? 0,
     margin_rate: item.retrocession_rate ?? 0,
-    tax_rate: item.tax_rate ?? 0.2,
+    tax_rate: item.tax_rate ?? fallbackTaxRate,
     _delete: false,
     _isNew: false,
     is_affiliate_product: !!item.product?.created_by_affiliate,

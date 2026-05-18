@@ -24,6 +24,7 @@ tourner le job toujours, et laisser les **steps** être conditionnels.
 ## Audit fait
 
 Lecture intégrale de :
+
 - `.github/workflows/quality.yml` (job `detect-changes`, `quality`,
   `e2e-smoke`, `db-drift-check`, `supabase-types-drift`,
   `supabase-advisors-security`)
@@ -57,6 +58,7 @@ Refactor du job `supabase-types-drift` :
    que les types ne sont pas régénérés → `exit 1` du step regen → job FAIL.
 
 Résultat attendu :
+
 - PR sans migration DB : job tourne, step no-op écrit summary, autres steps
   skippés, **conclusion = success** → PR débloquée.
 - PR avec migration DB + types à jour : job tourne, regen + diff vide,

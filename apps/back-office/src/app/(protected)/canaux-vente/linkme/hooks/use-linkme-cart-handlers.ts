@@ -13,7 +13,8 @@ import {
 } from './create-order-form-helpers';
 
 export function buildCartHandlers(
-  setCart: Dispatch<SetStateAction<CartItem[]>>
+  setCart: Dispatch<SetStateAction<CartItem[]>>,
+  customerVatRate?: number | null
 ) {
   const addProductFromSelection = (item: SelectionItem) => {
     setCart(prev => {
@@ -25,7 +26,7 @@ export function buildCartHandlers(
             : c
         );
       }
-      return [...prev, buildCartItemFromSelection(item)];
+      return [...prev, buildCartItemFromSelection(item, customerVatRate)];
     });
   };
 

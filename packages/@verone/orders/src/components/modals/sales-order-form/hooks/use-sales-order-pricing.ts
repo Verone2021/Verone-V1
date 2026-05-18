@@ -7,6 +7,8 @@ import type { SelectedProduct } from '@verone/products/components/selectors/Univ
 import { useStockMovements } from '@verone/stock/hooks';
 import type { createClient } from '@verone/utils/supabase/client';
 
+import { DEFAULT_VAT_RATE } from '@verone/organisations';
+
 import type { UnifiedCustomer } from '../../../modals/customer-selector';
 import type { OrderItem } from '../OrderItemsTable';
 import type { PricingV2Result } from '../types';
@@ -155,7 +157,7 @@ export function useSalesOrderPricing({
           product_id: product.id,
           quantity: quantity,
           unit_price_ht: finalPrice,
-          tax_rate: 0.2,
+          tax_rate: selectedCustomer?.default_vat_rate ?? DEFAULT_VAT_RATE,
           discount_percentage:
             product.discount_percentage ?? pricing.discount_percentage,
           eco_tax: 0,

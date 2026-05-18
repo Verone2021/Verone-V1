@@ -1,5 +1,6 @@
 'use client';
 
+import { VAT_RATES } from '@verone/organisations';
 import { ButtonV2 } from '@verone/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@verone/ui';
 import { CloudflareImage } from '@verone/ui';
@@ -94,6 +95,7 @@ export function OrderItemsTable({
                   <TableHead className="w-36">Quantité</TableHead>
                   <TableHead className="w-36">Prix unitaire HT</TableHead>
                   <TableHead className="w-28">Remise (%)</TableHead>
+                  <TableHead className="w-28">TVA</TableHead>
                   <TableHead className="w-28">Éco-taxe (€)</TableHead>
                   <TableHead className="w-32">Total HT</TableHead>
                   <TableHead className="w-20">Actions</TableHead>
@@ -185,6 +187,30 @@ export function OrderItemsTable({
                           className="w-full h-8 text-sm"
                           disabled={loading}
                         />
+                      </TableCell>
+                      {/* TVA */}
+                      <TableCell>
+                        <select
+                          value={String(item.tax_rate)}
+                          onChange={e => {
+                            onUpdateItem(
+                              item.id,
+                              'tax_rate',
+                              parseFloat(e.target.value)
+                            );
+                          }}
+                          disabled={loading}
+                          className="w-full h-8 text-sm border border-input rounded-md px-2 bg-background"
+                        >
+                          {VAT_RATES.map(option => (
+                            <option
+                              key={option.value}
+                              value={String(option.value)}
+                            >
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
                       </TableCell>
                       {/* Éco-taxe (€) */}
                       <TableCell>

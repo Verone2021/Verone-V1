@@ -7,3 +7,9 @@ export type {
   OrganisationType,
   OrganisationFormData,
 } from './unified-organisation-form';
+export {
+  VAT_RATES,
+  DEFAULT_VAT_RATE,
+  defaultVatRateForCountry,
+  formatVatRate,
+} from './unified-organisation-form';

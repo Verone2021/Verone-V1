@@ -13,6 +13,7 @@ export interface EnseigneOrganisationCustomer {
   billing_postal_code: string | null;
   siret: string | null;
   is_active: boolean;
+  default_vat_rate: number | null;
   created_at: string | null;
   source_type: 'internal' | 'linkme' | 'site-internet' | 'manual' | null;
   source_affiliate_id: string | null;

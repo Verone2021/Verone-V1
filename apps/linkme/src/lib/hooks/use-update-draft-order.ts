@@ -141,9 +141,10 @@ async function updateDraftOrder(
           console.error('Erreur mise à jour item:', updateItemError);
         }
       } else {
-        // Nouvel item - trouver les infos du produit depuis la sélection
-        // Note: Pour simplifier, on suppose que les nouveaux items ont déjà
-        // toutes les infos nécessaires
+        // Nouvel item — on reprend la TVA de la commande (figée à la
+        // validation, règle finance R6). Fallback 0.20 si la commande
+        // n'avait pas de tax_rate explicite.
+        const orderTaxRate = currentOrder.tax_rate ?? 0.2;
         const { error: insertItemError } = await supabase
           .from('sales_order_items')
           .insert({
@@ -151,7 +152,7 @@ async function updateDraftOrder(
             product_id: item.product_id,
             quantity: item.quantity,
             unit_price_ht: item.unit_price_ht,
-            tax_rate: 0.2, // TVA standard
+            tax_rate: orderTaxRate,
           });
 
         if (insertItemError) {

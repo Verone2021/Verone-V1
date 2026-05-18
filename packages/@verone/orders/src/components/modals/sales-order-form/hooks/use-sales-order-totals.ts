@@ -2,6 +2,8 @@
 
 import { useMemo } from 'react';
 
+import { DEFAULT_VAT_RATE } from '@verone/organisations';
+
 import type { OrderItem } from '../OrderItemsTable';
 import type { SalesChannelType } from '../types';
 
@@ -11,6 +13,8 @@ interface UseSalesOrderTotalsOptions {
   insuranceCostHt: number;
   handlingCostHt: number;
   ecoTaxVatRate: number | null;
+  /** TVA par défaut du client (organisations.default_vat_rate). Fallback DEFAULT_VAT_RATE si null. */
+  customerVatRate?: number | null;
   availableChannels: Array<{ id: string; name: string; code: string }>;
   setChannelId: (id: string | null) => void;
   setSelectedSalesChannel: (channel: SalesChannelType | null) => void;
@@ -23,11 +27,14 @@ export function useSalesOrderTotals({
   insuranceCostHt,
   handlingCostHt,
   ecoTaxVatRate,
+  customerVatRate,
   availableChannels,
   setChannelId,
   setSelectedSalesChannel,
   setWizardStep,
 }: UseSalesOrderTotalsOptions) {
+  const fallbackVatRate = customerVatRate ?? DEFAULT_VAT_RATE;
+
   const totalHTProducts = useMemo(
     () =>
       items.reduce((sum, item) => {
@@ -50,15 +57,17 @@ export function useSalesOrderTotals({
           item.quantity *
           item.unit_price_ht *
           (1 - (item.discount_percentage ?? 0) / 100);
-        const lineTVA = lineHT * (item.tax_rate ?? 0.2);
+        const lineTVA = lineHT * (item.tax_rate ?? fallbackVatRate);
         const ecoTaxHT = (item.eco_tax ?? 0) * item.quantity;
         const ecoTaxTvaRate =
-          ecoTaxVatRate !== null ? ecoTaxVatRate / 100 : item.tax_rate || 0.2;
+          ecoTaxVatRate !== null
+            ? ecoTaxVatRate / 100
+            : (item.tax_rate ?? fallbackVatRate);
         const ecoTaxTVA = ecoTaxHT * ecoTaxTvaRate;
         return sum + lineTVA + ecoTaxTVA;
       }, 0) +
-      totalCharges * 0.2,
-    [items, ecoTaxVatRate, totalCharges]
+      totalCharges * fallbackVatRate,
+    [items, ecoTaxVatRate, totalCharges, fallbackVatRate]
   );
 
   const totalTTC = totalHTProducts + totalCharges + totalTVA;
