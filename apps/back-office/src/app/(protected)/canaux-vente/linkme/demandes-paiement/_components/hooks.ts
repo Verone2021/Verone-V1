@@ -1,6 +1,35 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils/supabase/client';
 
+// ============================================================================
+// Hook: Générer une signed URL pour consulter la facture d'une demande
+// ============================================================================
+
+interface InvoiceSignedUrlResponse {
+  signedUrl: string;
+  expiresAt: string;
+}
+
+export function useLinkmeInvoiceSignedUrl(requestId: string | null) {
+  return useQuery({
+    queryKey: ['linkme-invoice-signed-url', requestId],
+    queryFn: async (): Promise<InvoiceSignedUrlResponse> => {
+      const response = await fetch(
+        `/api/linkme/invoices/${requestId}/signed-url`
+      );
+      if (!response.ok) {
+        const body = (await response.json()) as { error?: string };
+        throw new Error(body.error ?? 'Erreur lors de la génération du lien');
+      }
+      return response.json() as Promise<InvoiceSignedUrlResponse>;
+    },
+    enabled: !!requestId,
+    // Ne pas mettre en cache plus de 55 minutes (signed URL expire en 1h)
+    staleTime: 55 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+  });
+}
+
 import {
   type PaymentRequestAdmin,
   type PaymentRequestRaw,
@@ -27,6 +56,8 @@ export function usePaymentRequestsAdmin(
           total_amount_ht,
           total_amount_ttc,
           status,
+          invoice_received,
+          financial_document_id,
           invoice_file_url,
           invoice_file_name,
           invoice_received_at,
@@ -64,6 +95,8 @@ export function usePaymentRequestsAdmin(
           totalAmountHT: item.total_amount_ht ?? 0,
           totalAmountTTC: item.total_amount_ttc ?? 0,
           status: item.status as PaymentRequestStatus,
+          invoiceReceived: item.invoice_received ?? false,
+          financialDocumentId: item.financial_document_id ?? null,
           invoiceFileUrl: item.invoice_file_url,
           invoiceFileName: item.invoice_file_name,
           invoiceReceivedAt: item.invoice_received_at,

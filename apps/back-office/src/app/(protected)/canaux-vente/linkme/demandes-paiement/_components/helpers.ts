@@ -25,11 +25,11 @@ export function generateMailtoLink(request: PaymentRequestAdmin): string {
 
   let body = `Bonjour ${request.affiliateName},\n\n`;
 
-  if (request.status === 'pending') {
+  if (request.status === 'pending' && !request.invoiceReceived) {
     body += `Votre demande de versement ${request.requestNumber} est en attente de votre facture.\n\n`;
     body += `Montant de la commission : ${formatCurrency(request.totalAmountTTC)} TTC\n\n`;
     body += `Merci de nous faire parvenir votre facture pour que nous puissions procéder au règlement.\n\n`;
-  } else if (request.status === 'invoice_received') {
+  } else if (request.invoiceReceived) {
     body += `Nous avons bien reçu votre facture pour la demande ${request.requestNumber}.\n\n`;
     body += `Montant : ${formatCurrency(request.totalAmountTTC)} TTC\n\n`;
     body += `Le paiement sera effectué dans les meilleurs délais.\n\n`;

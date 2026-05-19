@@ -1,6 +1,16 @@
 'use client';
 
-import { Banknote, Download, Inbox, Loader2, Mail, User } from 'lucide-react';
+import { useState } from 'react';
+
+import {
+  Banknote,
+  Download,
+  FileText,
+  Inbox,
+  Loader2,
+  Mail,
+  User,
+} from 'lucide-react';
 import Link from 'next/link';
 
 import { Card } from '@verone/ui';
@@ -8,6 +18,42 @@ import { Card } from '@verone/ui';
 import { formatCurrency, formatDate, generateMailtoLink } from './helpers';
 import { StatusBadge } from './StatusBadge';
 import { type PaymentRequestAdmin } from './types';
+
+// Bouton téléchargement facture via signed URL (généré à la demande)
+function InvoiceDownloadButton({ requestId }: { requestId: string }) {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleDownload = () => {
+    setIsLoading(true);
+    void fetch(`/api/linkme/invoices/${requestId}/signed-url`)
+      .then(async res => {
+        if (!res.ok) throw new Error('Lien indisponible');
+        const body = (await res.json()) as { signedUrl: string };
+        window.open(body.signedUrl, '_blank', 'noopener,noreferrer');
+      })
+      .catch(() => {
+        // Silencieux — l'utilisateur verra que rien ne s'ouvre
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
+
+  return (
+    <button
+      onClick={handleDownload}
+      disabled={isLoading}
+      className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+      title="Télécharger la facture"
+    >
+      {isLoading ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <Download className="h-4 w-4" />
+      )}
+    </button>
+  );
+}
 
 interface PaymentRequestsTableProps {
   requests: PaymentRequestAdmin[] | undefined;
@@ -116,19 +162,20 @@ export function PaymentRequestsTable({
                     </a>
                   )}
 
-                  {request.invoiceFileUrl && (
-                    <a
-                      href={request.invoiceFileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Voir la facture"
-                    >
-                      <Download className="h-4 w-4" />
-                    </a>
+                  {request.invoiceReceived && (
+                    <>
+                      <span
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 bg-blue-100 rounded-full"
+                        title="Facture déposée"
+                      >
+                        <FileText className="h-3 w-3" />
+                        Facture reçue
+                      </span>
+                      <InvoiceDownloadButton requestId={request.id} />
+                    </>
                   )}
 
-                  {request.status === 'invoice_received' && (
+                  {request.invoiceReceived && request.status === 'pending' && (
                     <button
                       onClick={() => onMarkAsPaid(request)}
                       className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"

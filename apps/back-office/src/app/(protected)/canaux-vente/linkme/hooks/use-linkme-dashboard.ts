@@ -194,12 +194,12 @@ async function fetchDashboardKPIs(): Promise<DashboardKPIs> {
   );
 
   // ========================================
-  // KPI 2: Commissions en attente (pending + invoice_received)
+  // KPI 2: Commissions en attente (status = pending, quelle que soit la facture)
   // ========================================
   const { data: pendingRequests } = await supabase
     .from('linkme_payment_requests')
     .select('id, total_amount_ttc, status')
-    .in('status', ['pending', 'invoice_received'])
+    .eq('status', 'pending')
     .returns<
       Array<Pick<LinkMePaymentRequest, 'id' | 'total_amount_ttc' | 'status'>>
     >();
@@ -272,8 +272,8 @@ function getPaymentStatusLabel(status: string): string {
       return 'Paiement effectué';
     case 'pending':
       return 'En attente';
-    case 'invoice_received':
-      return 'Facture reçue';
+    case 'cancelled':
+      return 'Annulée';
     default:
       return status;
   }

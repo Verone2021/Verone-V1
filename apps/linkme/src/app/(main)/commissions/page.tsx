@@ -68,7 +68,7 @@ export default function CommissionsPage(): JSX.Element {
   // Demandes de versement (pour le count dans le tab)
   const { data: paymentRequests } = useAffiliatePaymentRequests();
   const activeRequestsCount = (paymentRequests ?? []).filter(
-    r => r.status === 'pending' || r.status === 'invoice_received'
+    r => r.status !== 'paid' && r.status !== 'cancelled'
   ).length;
 
   const isLoading = analyticsLoading || commissionsLoading;

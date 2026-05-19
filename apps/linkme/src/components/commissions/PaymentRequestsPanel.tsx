@@ -14,7 +14,6 @@ import { Card } from '@tremor/react';
 import {
   FileText,
   Upload,
-  Download,
   Eye,
   Clock,
   CheckCircle2,
@@ -46,11 +45,6 @@ function StatusBadge({ status }: { status: PaymentRequestStatus }) {
     { icon: typeof Clock; color: string; bg: string }
   > = {
     pending: { icon: Clock, color: 'text-orange-600', bg: 'bg-orange-100' },
-    invoice_received: {
-      icon: FileText,
-      color: 'text-blue-600',
-      bg: 'bg-blue-100',
-    },
     paid: {
       icon: CheckCircle2,
       color: 'text-emerald-600',
@@ -103,8 +97,8 @@ function CompactRequestRow({
         </span>
       </div>
 
-      {/* Action upload si pending */}
-      {request.status === 'pending' && !request.invoiceFileUrl && (
+      {/* Action upload si pas encore de facture */}
+      {request.status === 'pending' && !request.invoiceReceived && (
         <button
           onClick={() => onUploadClick(request.id)}
           className="mt-2 w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[10px] font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
@@ -114,17 +108,12 @@ function CompactRequestRow({
         </button>
       )}
 
-      {/* Lien facture si existe */}
-      {request.invoiceFileUrl && (
-        <a
-          href={request.invoiceFileUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-2 w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[10px] font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
-        >
-          <Download className="h-3 w-3" />
-          Voir facture
-        </a>
+      {/* Indicateur facture déposée */}
+      {request.invoiceReceived && (
+        <span className="mt-2 w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[10px] font-medium text-blue-600 bg-blue-50 rounded-md">
+          <FileText className="h-3 w-3" />
+          Facture déposée
+        </span>
       )}
 
       {/* Lien preuve paiement si payé */}
@@ -309,12 +298,11 @@ export function PaymentRequestsPanel({ className }: PaymentRequestsPanelProps) {
 
   // Stats rapides
   const activeCount =
-    requests?.filter(
-      r => r.status === 'pending' || r.status === 'invoice_received'
-    ).length ?? 0;
+    requests?.filter(r => r.status !== 'paid' && r.status !== 'cancelled')
+      .length ?? 0;
   const totalPending =
     requests
-      ?.filter(r => r.status === 'pending' || r.status === 'invoice_received')
+      ?.filter(r => r.status !== 'paid' && r.status !== 'cancelled')
       .reduce((sum, r) => sum + r.totalAmountTTC, 0) ?? 0;
 
   return (
